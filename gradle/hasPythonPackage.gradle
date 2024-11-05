@@ -48,13 +48,15 @@ task buildPyPackage {
 	outputs.dir(dist)
 
 	doLast {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python ${SUPPORTED_PY_VERSIONS} was not found!")
+		}
+	
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		exec {
 			workingDir { "build/pypkg" }
-			commandLine	rootProject.PYTHON3, "-m", "pip"
-			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
-			args "-f", setuptools
-			args "."
+			commandLine rootProject.PYTHON3
+			args "-m", "pip", "wheel", "-w", "dist/", "--no-index", "--no-deps", "-f", setuptools, "."
 		}
 	}
 }

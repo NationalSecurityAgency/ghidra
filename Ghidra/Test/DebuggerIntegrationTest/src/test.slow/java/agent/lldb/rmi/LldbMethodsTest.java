@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			RemoteMethod refreshAvailable = conn.getMethod("refresh_available");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject available = Objects.requireNonNull(tb.objAny("Available"));
+				TraceObject available = Objects.requireNonNull(tb.objAny0("Available"));
 
 				refreshAvailable.invoke(Map.of("node", available));
 
@@ -107,7 +107,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				conn.execute("breakpoint set --name main");
 				conn.execute("breakpoint set -H --name main");
 				txPut(conn, "breakpoints");
-				TraceObject breakpoints = Objects.requireNonNull(tb.objAny("Breakpoints"));
+				TraceObject breakpoints = Objects.requireNonNull(tb.objAny0("Breakpoints"));
 				refreshBreakpoints.invoke(Map.of("node", breakpoints));
 
 				List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
@@ -145,7 +145,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				waitStopped(conn);
 
 				TraceObject locations =
-					Objects.requireNonNull(tb.objAny("Processes[].Breakpoints"));
+					Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints"));
 				conn.execute("breakpoint set --name main");
 				conn.execute("breakpoint set -H --name main");
 				refreshProcBreakpoints.invoke(Map.of("node", locations));
@@ -183,7 +183,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				waitStopped(conn);
 
 				TraceObject locations =
-					Objects.requireNonNull(tb.objAny("Processes[].Watchpoints"));
+					Objects.requireNonNull(tb.objAny0("Processes[].Watchpoints"));
 				conn.execute("watchpoint set expression -s 1 -- `(void(*)())main`");
 				conn.execute("watchpoint set expression -s 1 -w read -- `(void(*)())main`+-0x20");
 				conn.execute(
@@ -230,7 +230,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			RemoteMethod refreshProcesses = conn.getMethod("refresh_processes");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject processes = Objects.requireNonNull(tb.objAny("Processes"));
+				TraceObject processes = Objects.requireNonNull(tb.objAny0("Processes"));
 
 				refreshProcesses.invoke(Map.of("node", processes));
 
@@ -254,7 +254,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			RemoteMethod refreshEnvironment = conn.getMethod("refresh_environment");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject env = Objects.requireNonNull(tb.objAny(path));
+				TraceObject env = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshEnvironment.invoke(Map.of("node", env));
 
@@ -276,7 +276,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			RemoteMethod refreshThreads = conn.getMethod("refresh_threads");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject threads = Objects.requireNonNull(tb.objAny(path));
+				TraceObject threads = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshThreads.invoke(Map.of("node", threads));
 
@@ -302,7 +302,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				waitTxDone();
 
 				txPut(conn, "frames");
-				TraceObject stack = Objects.requireNonNull(tb.objAny(path));
+				TraceObject stack = Objects.requireNonNull(tb.objAny0(path));
 				refreshStack.invoke(Map.of("node", stack));
 
 				// Would be nice to control / validate the specifics
@@ -355,7 +355,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject memory = Objects.requireNonNull(tb.objAny(path));
+				TraceObject memory = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshMappings.invoke(Map.of("node", memory));
 
@@ -377,7 +377,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject modules = Objects.requireNonNull(tb.objAny(path));
+				TraceObject modules = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshModules.invoke(Map.of("node", modules));
 
@@ -474,7 +474,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc2 = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc2 = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				removeProcess.invoke(Map.of("process", proc2));
 
 				String out = conn.executeCapture("target list");
@@ -545,7 +545,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				detach.invoke(Map.of("process", proc));
 
 				String out = conn.executeCapture("target list");
@@ -565,7 +565,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				launch.invoke(Map.ofEntries(
 					Map.entry("process", proc),
 					Map.entry("file", getSpecimenPrint())));
@@ -587,7 +587,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				launch.invoke(Map.ofEntries(
 					Map.entry("process", proc),
 					Map.entry("file", getSpecimenRead())));
@@ -619,7 +619,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped(conn);
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				kill.invoke(Map.of("process", proc));
 
 				String out = conn.executeCapture("target list");
@@ -677,7 +677,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				txPut(conn, "threads");
 				conn.execute("script lldb.debugger.SetAsync(False)");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 				stepToCall(conn, step_into, thread);
 
 				String dis2 = conn.executeCapture("dis -c2 -s '$pc'");
@@ -704,7 +704,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				txPut(conn, "threads");
 				conn.execute("script lldb.debugger.SetAsync(False)");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 				stepToCall(conn, step_over, thread);
 
 				String dis2 = conn.executeCapture("dis -c2 -s '$pc'");
@@ -733,7 +733,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				txPut(conn, "threads");
 				conn.execute("script lldb.debugger.SetAsync(False)");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 				String dis3 = conn.executeCapture("disassemble -c3 -s '$pc'");
 				// TODO: Examine for control transfer?
 				List<String> lines = List.of(dis3.split("\n"));
@@ -766,7 +766,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				txPut(conn, "threads");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 				activate.invoke(Map.of("thread", thread));
 
 				int initDepth = getDepth(conn);
@@ -796,7 +796,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				txPut(conn, "threads");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 				activate.invoke(Map.of("thread", thread));
 
 				int initDepth = getDepth(conn);
@@ -819,7 +819,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
@@ -861,7 +861,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped(conn);
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
@@ -903,7 +903,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped(conn);
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 				AddressRange range = tb.range(address, address + 0); // length 1
 				breakRange.invoke(Map.of("process", proc, "range", range));
@@ -949,7 +949,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped(conn);
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 				AddressRange range = tb.range(address, address + 0); // length 1
 				breakRange.invoke(Map.of("process", proc, "range", range));
@@ -995,7 +995,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped(conn);
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 				AddressRange range = tb.range(address, address + 0); // length 1
 				breakRange.invoke(Map.of("process", proc, "range", range));
@@ -1063,7 +1063,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				conn.execute("breakpoint set -n main");
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny("Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Breakpoints[]"));
 
 				toggleBreakpoint.invoke(Map.of("breakpoint", bpt, "enabled", false));
 
@@ -1087,7 +1087,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				conn.execute("breakpoint set -n main");
 				txPut(conn, "breakpoints");
 
-				TraceObject loc = Objects.requireNonNull(tb.objAny("Breakpoints[][]"));
+				TraceObject loc = Objects.requireNonNull(tb.objAny0("Breakpoints[][]"));
 
 				toggleBreakpointLocation.invoke(Map.of("location", loc, "enabled", false));
 
@@ -1110,7 +1110,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				conn.execute("breakpoint set -n main");
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny("Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Breakpoints[]"));
 
 				deleteBreakpoint.invoke(Map.of("breakpoint", bpt));
 
@@ -1140,7 +1140,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				assertThat(out, containsString(Long.toHexString(address)));
 
 				txPut(conn, "watchpoints");
-				TraceObject wpt = Objects.requireNonNull(tb.objAny("Processes[].Watchpoints[]"));
+				TraceObject wpt = Objects.requireNonNull(tb.objAny0("Processes[].Watchpoints[]"));
 
 				deleteWatchpoint.invoke(Map.of("watchpoint", wpt));
 

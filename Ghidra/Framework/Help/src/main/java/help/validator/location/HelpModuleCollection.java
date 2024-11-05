@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,10 @@
 package help.validator.location;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.help.HelpSet;
@@ -38,19 +27,9 @@ import javax.help.Map.ID;
 import javax.help.TOCView;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import help.*;
 import help.CustomTOCView.CustomTreeItemDecorator;
-import help.HelpBuildUtils;
-import help.PathKey;
-import help.TOCItemProvider;
-import help.validator.model.AnchorDefinition;
-import help.validator.model.GhidraTOCFile;
-import help.validator.model.HREF;
-import help.validator.model.HelpFile;
-import help.validator.model.HelpTopic;
-import help.validator.model.IMG;
-import help.validator.model.TOCItem;
-import help.validator.model.TOCItemDefinition;
-import help.validator.model.TOCItemExternal;
+import help.validator.model.*;
 
 /**
  * A class that is meant to hold a single help <b>input</b> directory and 0 or more
@@ -130,9 +109,18 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 		if (inputHelp == null && externalHelpSets.size() == 0) {
 			throw new IllegalArgumentException(
-				"Required TOC file does not exist.  " + "You must create a TOC_Source.xml file, " +
+				"Required TOC file does not exist.  You must create a TOC_Source.xml file, " +
 					"even if it is an empty template, or provide a pre-built TOC.  " +
 					"Help directories: " + locations.toString());
+		}
+	}
+
+	public void addGeneratedHelpLocation(File file) {
+		HelpModuleLocation location = new GeneratedDirectoryHelpModuleLocation(file);
+		helpLocations.add(location);
+		HelpSet helpSet = location.getHelpSet();
+		if (helpSet != null) {
+			externalHelpSets.add(helpSet);
 		}
 	}
 
@@ -160,17 +148,17 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 		externalHelpSets = new ArrayList<>();
 		for (HelpModuleLocation location : helpLocations) {
-			if (location.isHelpInputSource()) {
-				continue; // help sets only exist in pre-built help 
-			}
+			doAddHelpSet(location);
+		}
+	}
 
-			HelpSet helpSet = location.getHelpSet();
-			externalHelpSets.add(helpSet);
+	private void doAddHelpSet(HelpModuleLocation location) {
+		if (location.isHelpInputSource()) {
+			return; // help sets only exist in pre-built help 
 		}
 
-		if (externalHelpSets.isEmpty()) {
-			return;
-		}
+		HelpSet helpSet = location.getHelpSet();
+		externalHelpSets.add(helpSet);
 	}
 
 	public boolean containsHelpFiles() {
@@ -230,7 +218,8 @@ public class HelpModuleCollection implements TOCItemProvider {
 	public Collection<AnchorDefinition> getAllAnchorDefinitions() {
 		List<AnchorDefinition> result = new ArrayList<>();
 		for (HelpModuleLocation location : helpLocations) {
-			result.addAll(location.getAllAnchorDefinitions());
+			Collection<AnchorDefinition> anchors = location.getAllAnchorDefinitions();
+			result.addAll(anchors);
 		}
 		return result;
 	}
@@ -250,7 +239,6 @@ public class HelpModuleCollection implements TOCItemProvider {
 		if (helpPath == null) {
 			return null;
 		}
-
 		Map<PathKey, HelpFile> map = getPathHelpFileMap();
 		return map.get(new PathKey(helpPath));
 	}
@@ -373,4 +361,5 @@ public class HelpModuleCollection implements TOCItemProvider {
 	public String toString() {
 		return helpLocations.toString();
 	}
+
 }

@@ -3,6 +3,7 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/serial.filter||GHIDRA||||END|
 os/readme.txt||GHIDRA||||END|
 src/main/java/ghidra/server/remote/ServerHelp.txt||GHIDRA||||END|

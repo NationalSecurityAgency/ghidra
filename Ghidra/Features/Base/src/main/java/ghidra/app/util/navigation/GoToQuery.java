@@ -19,7 +19,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.gotoquery.GoToQueryResultsTableModel;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
@@ -75,7 +74,7 @@ public class GoToQuery {
 
 		Options options = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		this.maxHits =
-			options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
+			options.getInt(SearchConstants.SEARCH_LIMIT_NAME, SearchConstants.DEFAULT_SEARCH_LIMIT);
 		this.fromAddress = fromAddr;
 		this.monitor = monitor;
 	}

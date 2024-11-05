@@ -11,6 +11,7 @@
 ##MODULE IP: PostgresqlJDBC License
 ##MODULE IP: Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/bsim.theme.properties||GHIDRA||||END|
 data/large_32.xml||GHIDRA||||END|
 data/lshweights_32.xml||GHIDRA|||Signature data|END|

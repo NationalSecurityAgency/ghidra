@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,13 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramUserData;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.lang.Processor;
+import ghidra.program.model.lang.ProcessorNotFoundException;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.util.Msg;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.classfinder.ClassSearcher;
@@ -124,6 +129,102 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		}
 	}
 
+	public static class FieldIndex {
+		public static FieldIndex fromData(Data data) {
+			if (!(data.getDataType() instanceof Composite dt)) {
+				return null;
+			}
+			return new FieldIndex(dt);
+		}
+
+		private final Map<String, DataTypeComponent> byName;
+
+		public FieldIndex(Composite dt) {
+			byName = Stream.of(dt.getComponents())
+					.collect(Collectors.toMap(c -> c.getFieldName(), c -> c));
+		}
+
+		public Data getField(Data data, String name) {
+			DataTypeComponent dtComp = byName.get(name);
+			if (dtComp == null) {
+				return null;
+			}
+			return data.getComponent(dtComp.getOrdinal());
+		}
+	}
+
+	public static String tryProgramJvmClass(Program program) {
+		Processor procJvm;
+		try {
+			procJvm = Processor.toProcessor("JVM");
+		}
+		catch (ProcessorNotFoundException e) {
+			return null;
+		}
+		if (program.getLanguage().getProcessor() != procJvm) {
+			return null;
+		}
+		AddressSpace cpool =
+			program.getLanguage().getAddressFactory().getAddressSpace("constantPool");
+
+		Data dClassFile = program.getListing().getDataAt(cpool.getAddress(0));
+		if (dClassFile == null) {
+			return null;
+		}
+		FieldIndex fiClassFile = FieldIndex.fromData(dClassFile);
+		if (fiClassFile == null) {
+			return null;
+		}
+		Data dThisClass = fiClassFile.getField(dClassFile, "this_class");
+		if (dThisClass == null || !(dThisClass.getValue() instanceof Scalar sThisClass)) {
+			return null;
+		}
+		long thisClassCpi = sThisClass.getValue();
+
+		Data dConstantPool = fiClassFile.getField(dClassFile, "constant_pool");
+		if (dConstantPool == null) {
+			return null;
+		}
+		FieldIndex fiConstantPool = FieldIndex.fromData(dConstantPool);
+		if (fiConstantPool == null) {
+			return null;
+		}
+		Data dThisClassConst =
+			fiConstantPool.getField(dConstantPool, "constant_pool_0x%x".formatted(thisClassCpi));
+		if (dThisClassConst == null ||
+			!"CONSTANT_Class_info".equals(dThisClassConst.getDataType().getName())) {
+			return null;
+		}
+
+		FieldIndex fiConstantClassInfo = FieldIndex.fromData(dThisClassConst);
+		if (fiConstantClassInfo == null) {
+			return null;
+		}
+		Data dThisClassNameIndex = fiConstantClassInfo.getField(dThisClassConst, "name_index");
+		if (dThisClassNameIndex == null ||
+			!(dThisClassNameIndex.getValue() instanceof Scalar sThisClassNameIndex)) {
+			return null;
+		}
+		long thisClassNameIndexCpi = sThisClassNameIndex.getValue();
+
+		Data dThisClassNameConst = fiConstantPool.getField(dConstantPool,
+			"constant_pool_0x%x".formatted(thisClassNameIndexCpi));
+		if (dThisClassNameConst == null ||
+			!dThisClassNameConst.getDataType().getName().startsWith("CONSTANT_Utf8_info")) {
+			return null;
+		}
+
+		FieldIndex fiUtf8InfoN = FieldIndex.fromData(dThisClassNameConst);
+		if (fiUtf8InfoN == null) {
+			return null;
+		}
+		Data dThisClassNameData = fiUtf8InfoN.getField(dThisClassNameConst, "data");
+		if (!(dThisClassNameData.getValue() instanceof String thisClassName)) {
+			return null;
+		}
+		return thisClassName;
+	}
+
 	public static File tryProgramPath(String path) {
 		if (path == null) {
 			return null;
@@ -153,6 +254,12 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 	public static String getProgramPath(Program program, boolean isLocal) {
 		if (program == null) {
 			return null;
+		}
+		// TODO: All these tryers should be extension points...?
+		// Probably applicable by language/file type.
+		String jvmClass = tryProgramJvmClass(program);
+		if (jvmClass != null) {
+			return jvmClass;
 		}
 		File exec = tryProgramPath(program.getExecutablePath());
 		if (exec != null) {
@@ -371,8 +478,7 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		toolLaunchConfigs.putSaveState(name, state);
 	}
 
-	protected record ConfigLast(String configName, long last, Program program) {
-	}
+	protected record ConfigLast(String configName, long last, Program program) {}
 
 	protected ConfigLast checkSavedConfig(Program program, ProgramUserData userData,
 			String propName) {

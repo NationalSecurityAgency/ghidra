@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -272,6 +272,9 @@ tasks.register('indexHelp', JavaExec) {
 		// tell the indexer where send its output	
 		args '-db', outputFile.absolutePath			
 		
+		// debug
+		// args '-verbose'		
+		
 		// for each help file that was found, add it as an argument to the indexer
 		helpFiles.each { File file ->
 			args "${file.absolutePath}"
@@ -321,7 +324,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 		// configuration time.		
 		return getHelpInputs(sourceSets.main.runtimeClasspath.files)
 	})
-
+	
 	outputs.dir outputDir
 
 	mainClass = 'help.GHelpBuilder'
@@ -330,8 +333,11 @@ tasks.register('buildHelpFiles', JavaExec) {
 	
 	args '-o', "${outputDir.absolutePath}"	// set the output directory arg
 
+	// to allow remote debugging of the help build jvm
+	// jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=13001'
 	
-	// args '-debug' // print debug info
+	// print debug info
+	// args '-debug' 
 
 	doFirst {		
 	
@@ -368,7 +374,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 				args "${helpJar.absolutePath}"
 			}
 		}		
-		
+
 		// The help dir to process.  This needs to be the last argument to the process, 
 		// thus, this is why it is inside of this block
 		args "${helpRootDir.absolutePath}"	
@@ -393,7 +399,7 @@ tasks.register('buildHelp', Jar) {
 	dependsOn tasks.named('buildHelpFiles')
     duplicatesStrategy 'exclude'
     
-	from "build/help/main"		// include the generated help and index files from 
+	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
 
 	destinationDirectory = file("build/libs")

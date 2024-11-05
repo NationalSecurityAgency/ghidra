@@ -83,7 +83,7 @@ public class DemanglerUtil {
 	 * Deprecated.  Use {@link #demangle(Program, String, Address)}. See class header for more
 	 * details.
 	 *
-	 * Locates all available demanglers and checks to see if the supplied program is
+	 * <p>Locates all available demanglers and checks to see if the supplied program is
 	 * supported, then it attempts to demangle.
 	 *
 	 * <p>This method will use only the default options for demangling.  If you need to
@@ -131,9 +131,9 @@ public class DemanglerUtil {
 	 * {@link Demangler#createMangledContext(String, DemanglerOptions, Program, Address)} and
 	 * {@link Demangler#createDefaultOptions()}.
 	 *
-	 * @param program the program containing the mangled name
+	 * @param program the program containing the mangled name; can be null
 	 * @param mangled the mangled name
-	 * @param address the address of the mangled name
+	 * @param address the address of the mangled name; can be null
 	 * @return the list of {@link DemangledObject}
 	 */
 	public static List<DemangledObject> demangle(Program program, String mangled, Address address) {

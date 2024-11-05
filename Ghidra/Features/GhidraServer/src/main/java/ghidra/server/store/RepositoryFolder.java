@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -313,7 +313,7 @@ public class RepositoryFolder {
 
 	/**
 	 * Returns true if any file/item contained within this folder
-	 * or its descendents is checked-out.
+	 * or its descendants is checked-out.
 	 */
 	private boolean containsCheckout() throws IOException {
 
@@ -376,8 +376,8 @@ public class RepositoryFolder {
 				if (parent == null) {
 					throw new IOException("Root folder may not be moved");
 				}
-				if (newParent.isDescendentOf(this)) {
-					throw new IOException("New folder must not be decendent");
+				if (newParent.isDescendantOf(this)) {
+					throw new IOException("New folder must not be descendant");
 				}
 				if (containsCheckout()) {
 					throw new FileInUseException(
@@ -426,9 +426,9 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns true if this folder is a descendent of the specified folder
+	 * Returns true if this folder is a descendant of the specified folder
 	 */
-	private boolean isDescendentOf(RepositoryFolder folder) {
+	private boolean isDescendantOf(RepositoryFolder folder) {
 		RepositoryFolder rf = parent;
 		while (rf != null) {
 			if (rf == folder) {

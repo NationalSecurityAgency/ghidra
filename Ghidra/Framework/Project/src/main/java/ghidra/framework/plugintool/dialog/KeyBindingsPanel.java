@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -219,8 +219,7 @@ public class KeyBindingsPanel extends JPanel {
 		// the content of the left-hand side label
 		MultiLineLabel mlabel =
 			new MultiLineLabel("To add or change a key binding, select an action\n" +
-				"and type any key combination\n \n" +
-				"To remove a key binding, select an action and\n" + "press <Enter> or <Backspace>");
+				"and type any key combination.");
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
@@ -456,8 +455,8 @@ public class KeyBindingsPanel extends JPanel {
 		ToolActions toolActions = (ToolActions) tool.getToolActions();
 		String errorMessage = toolActions.validateActionKeyBinding(action, ks);
 		if (errorMessage != null) {
-			statusLabel.setText(errorMessage);
 			actionBindingPanel.clearKeyStroke();
+			statusLabel.setText(errorMessage);
 			return;
 		}
 

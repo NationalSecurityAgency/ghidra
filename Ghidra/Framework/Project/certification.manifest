@@ -7,6 +7,7 @@
 ##MODULE IP: Public Domain
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/project.icons.theme.properties||GHIDRA||||END|
 data/project.theme.properties||GHIDRA||||END|

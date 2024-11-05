@@ -448,12 +448,13 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return true;
 		}
 		catch (IOException e) {
-			Msg.error(this, "Cannot send reply", e);
+			Msg.error(this, "Cannot send reply: " + e);
 			return false;
 		}
 	}
 
 	public void receiveLoop() {
+		boolean canSend = true;
 		try {
 			while (true) {
 				RootMessage req = receive();
@@ -468,8 +469,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					continue;
 				}
 
-				if (!send(rep)) {
-					return;
+				/**
+				 * The likely cause of this failing is that the remote end has closed the socket.
+				 * However, we don't return, because there may be commands still in the queue, and
+				 * we should process them until we reach the end of input. This will ensure clients
+				 * that brazenly send a bunch of commands and then disconnect before receiving the
+				 * replies will have their commands processed, even if unsuccessfully.
+				 */
+				if (canSend) {
+					canSend = send(rep);
 				}
 			}
 		}

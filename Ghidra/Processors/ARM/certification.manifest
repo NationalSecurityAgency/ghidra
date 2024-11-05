@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/languages/ARM.cspec||GHIDRA||||END|
 data/languages/ARM.dwarf||GHIDRA||||END|
 data/languages/ARM.gdis||GHIDRA||||END|

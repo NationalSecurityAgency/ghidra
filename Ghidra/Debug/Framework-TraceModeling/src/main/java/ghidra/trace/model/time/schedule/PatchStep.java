@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,6 +82,10 @@ public class PatchStep implements Step {
 	/**
 	 * Generate a single line of Sleigh
 	 * 
+	 * @param language the target language
+	 * @param address the (start) address of the variable
+	 * @param data the bytes to write to the variable
+	 * @return the Sleigh code
 	 * @see #generateSleighLine(Language, Address, byte[], int)
 	 */
 	public static String generateSleighLine(Language language, Address address, byte[] data) {
@@ -169,10 +173,18 @@ public class PatchStep implements Step {
 			if (register == null) {
 				throw new IllegalArgumentException("Could not find a register for " + min);
 			}
+			if (register.getBaseRegister().isProgramCounter()) {
+				register = register.getBaseRegister();
+			}
 			int length = register.getNumBytes();
-			array.getData(min.getOffset(), data, 0, length);
+			array.getData(register.getOffset(), data, 0, length);
 			BigInteger value = Utils.bytesToBigInteger(data, length, language.isBigEndian(), false);
-			result.add(String.format("%s=0x%s", register, value.toString(16)));
+			if (register.isProgramCounter()) {
+				result.add(String.format("goto 0x%s", value.toString(16)));
+			}
+			else {
+				result.add(String.format("%s=0x%s", register, value.toString(16)));
+			}
 			remains.remove(spanOfRegister(register));
 		}
 	}
@@ -230,6 +242,11 @@ public class PatchStep implements Step {
 	@Override
 	public StepType getType() {
 		return StepType.PATCH;
+	}
+
+	@Override
+	public long getSkipCount() {
+		return 0;
 	}
 
 	@Override
@@ -307,7 +324,7 @@ public class PatchStep implements Step {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
+	public void execute(PcodeThread<?> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		emuThread.stepPatch(sleigh);
 	}
@@ -366,20 +383,26 @@ public class PatchStep implements Step {
 		// SemisparseArray is a bit overkill, no?
 		Map<AddressSpace, SemisparseByteArray> result = new TreeMap<>();
 		for (PcodeOp op : prog.getCode()) {
-			// Only accept patches in form [mem/reg] = [constant]
+			// Only accept patches in form [mem/reg] = [constant], or goto [constant]
 			switch (op.getOpcode()) {
-				case PcodeOp.COPY:
+				case PcodeOp.COPY -> {
 					if (!getPatchCopyOp(language, result, op)) {
 						return null;
 					}
-					break;
-				case PcodeOp.STORE:
+				}
+				case PcodeOp.STORE -> {
 					if (!getPatchStoreOp(language, result, op)) {
 						return null;
 					}
-					break;
-				default:
+				}
+				case PcodeOp.BRANCH -> {
+					if (!getPatchBranchOp(language, result, op)) {
+						return null;
+					}
+				}
+				default -> {
 					return null;
+				}
 			}
 		}
 		return result;
@@ -405,8 +428,7 @@ public class PatchStep implements Step {
 	}
 
 	protected boolean getPatchStoreOp(Language language,
-			Map<AddressSpace, SemisparseByteArray> result,
-			PcodeOp op) {
+			Map<AddressSpace, SemisparseByteArray> result, PcodeOp op) {
 		Varnode vnSpace = op.getInput(0);
 		if (!vnSpace.isConstant()) {
 			return false;
@@ -427,4 +449,17 @@ public class PatchStep implements Step {
 		return true;
 	}
 
+	protected boolean getPatchBranchOp(Language language,
+			Map<AddressSpace, SemisparseByteArray> result, PcodeOp op) {
+		Address target = op.getInput(0).getAddress();
+		if (target.getAddressSpace() != language.getDefaultSpace()) {
+			return false;
+		}
+		Register pc = language.getProgramCounter();
+		SemisparseByteArray array =
+			result.computeIfAbsent(pc.getAddressSpace(), as -> new SemisparseByteArray());
+		array.putData(pc.getOffset(),
+			Utils.longToBytes(target.getOffset(), pc.getNumBytes(), language.isBigEndian()));
+		return true;
+	}
 }

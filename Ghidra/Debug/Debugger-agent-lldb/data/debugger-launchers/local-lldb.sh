@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 #@title lldb
+#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>lldb</tt></h3>
 #@desc   <p>
@@ -64,13 +65,24 @@ else
   ttypart=-o "settings set target.output-path $TTY_TARGET" -o "settings set target.input-path $TTY_TARGET"
 fi
 
-"$OPT_LLDB_PATH" \
-  -o "version" \
-  -o "script import ghidralldb" \
-  -o "target create \"$target_image\"" \
-  $argspart \
-  $ttypart \
-  -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
-  -o "ghidra trace start" \
-  -o "ghidra trace sync-enable" \
-  -o "$OPT_START_CMD"
+if [ -z "$target_image" ]
+then
+  "$OPT_LLDB_PATH" \
+    -o "version" \
+    -o "script import ghidralldb" \
+    $ttypart \
+    -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
+    -o "ghidra trace start" \
+    -o "ghidra trace sync-enable"
+else
+  "$OPT_LLDB_PATH" \
+    -o "version" \
+    -o "script import ghidralldb" \
+    -o "target create \"$target_image\"" \
+    $argspart \
+    $ttypart \
+    -o "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
+    -o "ghidra trace start" \
+    -o "ghidra trace sync-enable" \
+    -o "$OPT_START_CMD"
+fi

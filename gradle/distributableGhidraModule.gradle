@@ -28,28 +28,35 @@ apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
 
 rootProject.assembleDistribution {
 	def p = this.project
-
 	def zipPath = getZipPath(p)
 	
-	from (p.projectDir.toString() + "/Module.manifest") {
+	from ("${p.projectDir}/Module.manifest") {
 		into  { zipPath }
 	}
+	
+	from ("${p.projectDir}/README.md") {
+		into  { zipPath }
+	}
+	
+	from ("${p.projectDir}/support") {
+		into  { "${zipPath}/support" }
+	}
 
-	from (p.projectDir.toString() + "/data") {
-		into { zipPath + "/data" }
+	from ("${p.projectDir}/data") {
+		into { "${zipPath}/data" }
 		exclude 'build.xml' // associated with language modules (dev use only)
 	}
 	
-	from (BIN_REPO + '/' + getGhidraRelativePath(p) + "/data") {
-		into { zipPath + "/data" }
+	from ("${BIN_REPO}/${getGhidraRelativePath(p)}/data") {
+		into { "${zipPath}/data" }
 	}
 	
-	from (p.projectDir.toString() + "/build/LICENSE.txt") {
+	from ("${p.projectDir}/build/LICENSE.txt") {
 		into { zipPath }
 	}
 
 	// handle special case where modules build data artifacts into the build dir
-	from (p.projectDir.toString() + "/build/data") {
+	from ("${p.projectDir}/build/data") {
 		into {zipPath + "/data" }
 	}
 	
@@ -200,6 +207,15 @@ plugins.withType(JavaPlugin) {
 	
 	}
 }	
+
+rootProject.assembleMarkdownToHtml {
+	def p = this.project
+	def zipPath = getZipPath(p)
+	
+	from ("${p.projectDir}/README.md") {
+		into { zipPath }
+	}
+}
 	
 /////////////////////////////////////////////////////////////////////////////
 // Native 

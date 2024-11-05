@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.LoadCommand;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -97,7 +97,7 @@ public class CodeSignatureSuperBlob extends CodeSignatureGenericBlob {
 				CodeSignatureGenericBlob blob = indexBlobs.get(i);
 				Data d = DataUtilities.createData(program, addr.add(blobIndex.getOffset()),
 					blob.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				LoadCommand.setEndian(d, true);
+				StructConverter.setEndian(d, true);
 				blob.markup(program, addr.add(blobIndex.getOffset()), header, monitor, log);
 			}
 		}

@@ -77,4 +77,14 @@ public class ProtobufSocket<T extends AbstractMessage> {
 			Msg.error(this, "Unable to close ProtobufSocket");
 		}
 	}
+	
+	public String getRemoteAddress() {
+		try {
+			return channel.getRemoteAddress().toString();
+		}
+		catch (IOException e) {
+			return null;
+		}
+	}
+
 }
