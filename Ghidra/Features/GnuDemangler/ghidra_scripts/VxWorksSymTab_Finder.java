@@ -25,7 +25,7 @@
 // table entries are deleted.  Mangled C++ symbol names are demangled.
 //
 // The VxWorks symbol table is an array [0..n-1] of (struct SYMBOL) entries.
-// The table may be immediately followed or preceeded by an (int) vxSymTblLen
+// The table may be immediately followed or preceded by an (int) vxSymTblLen
 // value.
 //
 // Prerequisites:
