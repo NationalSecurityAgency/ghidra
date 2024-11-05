@@ -217,7 +217,7 @@ public class ToolTaskManager implements Runnable {
 		taskThread.start();
 		try {
 			// Wait for background command task to start its transaction and notify us.
-			// This is done to ensure any preceeding foreground Command transaction
+			// This is done to ensure any preceding foreground Command transaction
 			// becomes entangled with the task execution.
 			wait(1000);
 		}

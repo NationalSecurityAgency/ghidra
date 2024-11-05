@@ -202,8 +202,8 @@ public class CommentUtils {
 			int start = word.getStart();
 			if (offset != start) {
 				// text between annotations
-				String preceeding = text.substring(offset, start);
-				results.add(new StringCommentPart(preceeding, prototype));
+				String preceding = text.substring(offset, start);
+				results.add(new StringCommentPart(preceding, prototype));
 			}
 
 			String annotationText = word.getWord();

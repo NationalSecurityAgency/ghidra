@@ -137,7 +137,7 @@ public class ImportBatchTask extends Task {
 			LoadSpec loadSpec = batchLoadConfig.getLoadSpec(selectedBatchGroupLoadSpec);
 			if (loadSpec == null) {
 				Msg.error(this,
-					"Failed to get load spec from application that matches choosen batch load spec " +
+					"Failed to get load spec from application that matches chosen batch load spec " +
 						selectedBatchGroupLoadSpec);
 				return;
 			}

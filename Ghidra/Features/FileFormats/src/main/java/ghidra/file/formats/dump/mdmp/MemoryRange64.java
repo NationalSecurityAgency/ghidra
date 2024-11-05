@@ -32,7 +32,7 @@ public class MemoryRange64 implements StructConverter {
 	// MemoryRange64 is used for full-memory minidumps where
 	// all of the raw memory is laid out sequentially at the
 	// end of the dump.  There is no need for individual RVAs
-	// as the RVA is the base RVA plus the sum of the preceeding
+	// as the RVA is the base RVA plus the sum of the preceding
 	// data blocks.
 
 	private DumpFileReader reader;

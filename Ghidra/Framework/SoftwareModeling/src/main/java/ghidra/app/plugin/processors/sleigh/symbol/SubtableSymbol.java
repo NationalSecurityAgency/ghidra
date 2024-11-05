@@ -32,7 +32,7 @@ import ghidra.program.model.pcode.DecoderException;
 
 /**
  * A collection of Constructors or a Symbol representing
- * one out of a family of Constructors, choosen based on InstructionContext
+ * one out of a family of Constructors, chosen based on InstructionContext
  */
 public class SubtableSymbol extends TripleSymbol {
 

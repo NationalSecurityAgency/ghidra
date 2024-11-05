@@ -1120,7 +1120,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	/**
 	 * Perform parse of instruction bytes and context to produce an instruction prototype.
 	 * @param instrMemBuffer memory buffer
-	 * @param block fallthrough sequence of instructions preceeding current instruction
+	 * @param block fallthrough sequence of instructions preceding current instruction
 	 * required to facilitate potential crossbuilds for current instruction.
 	 * @return instruction prototype
 	 * @throws InsufficientBytesException

@@ -242,7 +242,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * A composite which immediately preceeds the current address may contain trailing zero-length 
+	 * A composite which immediately precedes the current address may contain trailing zero-length 
 	 * components which implicitly refer to this address and are not rendered by the opened composite.
 	 * This comment is intended to convey the existence of such hidden components which correspond
 	 * to addr.

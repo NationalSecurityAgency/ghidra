@@ -237,7 +237,7 @@ public class ProjectedDatabase {
 			dittedPosition++;//advance past fixedPosition
 		}
 
-		//if all of the preceeding positions are filled, there can't be any backward
+		//if all of the preceding positions are filled, there can't be any backward
 		//extension items
 		if (positionsToSymbols.isEmpty()) {
 			return backwardExtensionItems;

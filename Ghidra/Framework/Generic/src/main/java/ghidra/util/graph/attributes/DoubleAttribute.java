@@ -150,7 +150,7 @@ public class DoubleAttribute<T extends KeyedObject> extends Attribute<T> {
 			catch (ghidra.util.exception.NoValueException exc) {
 				try {
 					value2 = getValue(ko2);
-					return 1; //ko2 is ok so it preceeds ko1
+					return 1; //ko2 is ok so it precedes ko1
 				}
 				catch (ghidra.util.exception.NoValueException exc2) {
 					if ((ko1.key() - ko2.key()) < 0) {

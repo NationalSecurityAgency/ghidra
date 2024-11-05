@@ -343,7 +343,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Write the field to buf at the specified offset.  When writing variable length 
-	 * fields, the length preceeds the actual data. 
+	 * fields, the length precedes the actual data. 
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next available Field offset within buffer, or -1 if end of buffer reached.
@@ -354,7 +354,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Read the field value from buf at the specified offset. When reading variable length 
-	 * fields, the length preceeds the actual data. 
+	 * fields, the length precedes the actual data. 
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next Field offset within buffer, or -1 if end of buffer reached.

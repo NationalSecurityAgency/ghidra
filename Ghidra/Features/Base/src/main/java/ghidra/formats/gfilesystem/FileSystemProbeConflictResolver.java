@@ -31,7 +31,7 @@ public interface FileSystemProbeConflictResolver {
 	 * Picks a single {@link FileSystemInfoRec} to use when mounting a filesystem.
 	 * <p>
 	 * @param factories a {@link List} of {@link FileSystemInfoRec}s.
-	 * @return the choosen FSIR, or null
+	 * @return the chosen FSIR, or null
 	 */
 	default public FileSystemInfoRec resolveFSIR(List<FileSystemInfoRec> factories) {
 		switch (factories.size()) {
@@ -51,7 +51,7 @@ public interface FileSystemProbeConflictResolver {
 	 * This method will only be called if the list contains more than a single item.
 	 * <p>
 	 * @param factories {@link List} of {@link FileSystemInfoRec}, always more than 1 element.
-	 * @return the choosen FSIR, or null
+	 * @return the chosen FSIR, or null
 	 */
 	public FileSystemInfoRec chooseFSIR(List<FileSystemInfoRec> factories);
 

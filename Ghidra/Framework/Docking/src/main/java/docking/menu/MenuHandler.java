@@ -59,7 +59,7 @@ public abstract class MenuHandler implements MenuListener, PopupMenuListener {
 	}
 
 	/**
-	 * Invoked when a menu is no longer selected.  This is always preceeded
+	 * Invoked when a menu is no longer selected.  This is always preceded
 	 * by a menuSelected invocation.  This is invoked prior to the processMenuAction 
 	 * if an action item is selected.
 	 * @see javax.swing.event.MenuListener#menuDeselected(javax.swing.event.MenuEvent)
