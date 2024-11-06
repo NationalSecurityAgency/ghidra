@@ -7,12 +7,12 @@ set -o pipefail
 # https://repo1.maven.org/maven2/io/joern/ghidra/
 # see also https://github.com/NationalSecurityAgency/ghidra/issues/799
 
-VERSION=11.2_PUBLIC_20240926
-VERSION_SHORTER=11.2
+VERSION=11.2.1_PUBLIC_20241105
+VERSION_SHORTER=11.2.1
 VERSION_SHORT=${VERSION_SHORTER}_PUBLIC
 CUSTOM_RELEASE_VERSION=${VERSION}-1
 
-SONATYPE_URL=https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
+SONATYPE_URL=https://central.sonatype.com/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
 REPO_ID=sonatype-nexus-staging-joern
 
@@ -52,7 +52,6 @@ mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFi
 mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFile=pom.xml -Dclassifier=javadoc -Dfile=docs/GhidraAPI_javadoc.zip
 mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFile=pom.xml -Dfile=ghidra.jar
 
-echo "artifacts are now published to sonatype staging. next step: log into https://s01.oss.sonatype.org -> staging repositories -> select the right one -> close -> release"
-echo "you can monitor the maven sync status on https://s01.oss.sonatype.org/content/groups/public/io/joern/ghidra/ and https://repo1.maven.org/maven2/io/joern/ghidra/"
+echo "artifacts are now published to sonatype central. next step: log into https://central.sonatype.com/publishing/deployments and publish it to maven central"
 echo "once it's synchronised to maven central (repo1), update the ghidra version in 'joern/joern-cli/frontends/ghidra2cpg/build.sbt'"
 echo "don't forget to commit and push the local changes in this repo to https://github.com/joernio/ghidra"
