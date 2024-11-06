@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -224,19 +224,30 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		expectU("0:10", "1:10");
 		expectU("0:t0-10", "0:t1-10");
 		// We don't know how many p-code steps complete an instruction step
-		expectU("0:t0-10.1", "0:t0-11");
+		// But we need at least 2 to actually enter the instruction
+		expectU("0:t0-10.2", "0:t0-11");
 		expectU("0:t0-10;t1-5", "0:t0-11;t1-5");
 
 		expectR("0:t0-10", "0:t0-11");
 		expectR("0:t0-10", "0:t0-10;t1-5");
 		expectR("0:t0-10", "0:t0-11;t1-5");
-		expectR("0:t0-10", "0:t0-10.1");
-		expectR("0:t0-10", "0:t0-11.1");
-		expectR("0:t0-10", "0:t0-10;t1-5.1");
-		expectR("0:t0-10", "0:t0-11;t1-5.1");
+		expectR("0:t0-10", "0:t0-10.2");
+		expectR("0:t0-10", "0:t0-11.2");
+		expectR("0:t0-10", "0:t0-10;t1-5.2");
+		expectR("0:t0-10", "0:t0-11;t1-5.2");
 
 		expectE("0:t0-10", "0:t0-10");
-		expectE("0:t0-10.1", "0:t0-10.1");
+		expectE("0:t0-10.2", "0:t0-10.2");
+	}
+
+	@Test
+	public void testCompare2() {
+		TraceSchedule timeL = TraceSchedule.parse("0:t0-2.5");
+		TraceSchedule timeR = TraceSchedule.parse("0:t0-3");
+
+		assertEquals(CompareResult.UNREL_LT, timeL.compareSchedule(timeR));
+		assertEquals(CompareResult.REL_LT, timeL.assumeRecorded().compareSchedule(timeR));
+		assertEquals(CompareResult.UNREL_LT, timeL.compareSchedule(timeR.assumeRecorded()));
 	}
 
 	public String strRelativize(String fromSpec, String toSpec) {

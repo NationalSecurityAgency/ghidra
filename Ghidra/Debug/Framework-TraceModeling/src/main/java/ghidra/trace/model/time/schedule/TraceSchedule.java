@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @return the schedule
 	 */
 	public static final TraceSchedule snap(long snap) {
-		return new TraceSchedule(snap, new Sequence(), new Sequence());
+		return new TraceSchedule(snap, new Sequence(), new Sequence(), Source.RECORD);
 	}
 
 	private static final String PARSE_ERR_MSG =
@@ -55,9 +55,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * threads forward, and/or patching machine state.
 	 * 
 	 * @param spec the string specification
+	 * @param source the presumed source of the schedule
 	 * @return the parsed schedule
 	 */
-	public static TraceSchedule parse(String spec) {
+	public static TraceSchedule parse(String spec, Source source) {
 		String[] parts = spec.split(":", 2);
 		if (parts.length > 2) {
 			throw new AssertionError();
@@ -98,24 +99,76 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			ticks = new Sequence();
 			pTicks = new Sequence();
 		}
-		return new TraceSchedule(snap, ticks, pTicks);
+		return new TraceSchedule(snap, ticks, pTicks, source);
+	}
+
+	/**
+	 * As in {@link #parse(String, Source)}, but assumed abnormal
+	 * 
+	 * @param spec the string specification
+	 * @return the parsed schedule
+	 */
+	public static TraceSchedule parse(String spec) {
+		return parse(spec, Source.INPUT);
+	}
+
+	public enum Source {
+		/**
+		 * The schedule comes from the user or some source other than a recorded emulation schedule.
+		 */
+		INPUT {
+			@Override
+			Source adjust(long pTickCount, long pPatchCount, long pSkipCount) {
+				// The first tick is decode, so <= 1 tick is definitely not a full instruction
+				return pTickCount <= 1 && pPatchCount == 0 && pSkipCount == 0 ? RECORD : INPUT;
+			}
+		},
+		/**
+		 * The schedule comes from recording actual emulation.
+		 * 
+		 * <p>
+		 * Specifically, the p-code steps must be known not to exceed one instruction.
+		 */
+		RECORD {
+			@Override
+			Source adjust(long pTickCount, long pPatchCount, long pSkipCount) {
+				return pPatchCount == 0 && pSkipCount == 0 ? RECORD : INPUT;
+			}
+		};
+
+		abstract Source adjust(long tickCount, long patchCount, long skipCount);
 	}
 
 	private final long snap;
 	private final Sequence steps;
 	private final Sequence pSteps;
+	private final Source source;
 
 	/**
 	 * Construct the given schedule
 	 * 
 	 * @param snap the initial trace snapshot
 	 * @param steps the step sequence
-	 * @param pSteps the of p-code step sequence
+	 * @param pSteps the p-code step sequence
+	 * @param source if the p-code steps are known not to exceed one instruction
 	 */
-	public TraceSchedule(long snap, Sequence steps, Sequence pSteps) {
+	public TraceSchedule(long snap, Sequence steps, Sequence pSteps, Source source) {
 		this.snap = snap;
 		this.steps = steps;
 		this.pSteps = pSteps;
+		this.source = source.adjust(pSteps.totalTickCount(), pSteps.totalPatchCount(),
+			pSteps.totalSkipCount());
+	}
+
+	/**
+	 * Construct the given schedule, but assumed abnormal
+	 * 
+	 * @param snap the initial trace snapshot
+	 * @param steps the step sequence
+	 * @param pSteps the p-code step sequence
+	 */
+	public TraceSchedule(long snap, Sequence steps, Sequence pSteps) {
+		this(snap, steps, pSteps, Source.INPUT);
 	}
 
 	@Override
@@ -152,33 +205,17 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		}
 
 		result = this.steps.compareSeq(that.steps);
-		switch (result) {
-			case UNREL_LT:
-			case UNREL_GT:
-				return result;
-			case REL_LT:
-				if (this.pSteps.isNop()) {
-					return CompareResult.REL_LT;
-				}
-				else {
-					return CompareResult.UNREL_LT;
-				}
-			case REL_GT:
-				if (that.pSteps.isNop()) {
-					return CompareResult.REL_GT;
-				}
-				else {
-					return CompareResult.UNREL_GT;
-				}
-			default: // EQUALS, compare pSteps
-		}
 
-		result = this.pSteps.compareSeq(that.pSteps);
-		if (result != CompareResult.EQUALS) {
-			return result;
-		}
-
-		return CompareResult.EQUALS;
+		return switch (result) {
+			case UNREL_LT, UNREL_GT -> result;
+			case REL_LT -> (this.pSteps.isNop() || this.source == Source.RECORD)
+					? CompareResult.REL_LT
+					: CompareResult.UNREL_LT;
+			case REL_GT -> (that.pSteps.isNop() || that.source == Source.RECORD)
+					? CompareResult.REL_GT
+					: CompareResult.UNREL_GT;
+			default -> this.pSteps.compareSeq(that.pSteps);
+		};
 	}
 
 	@Override
@@ -223,9 +260,18 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
+	 * Check if this schedule has instruction steps
+	 * 
+	 * @return true if this indicates at least one instruction step
+	 */
+	public boolean hasSteps() {
+		return !steps.isNop();
+	}
+
+	/**
 	 * Get the source snapshot
 	 * 
-	 * @return
+	 * @return the snapshot key
 	 */
 	public long getSnap() {
 		return snap;
@@ -234,7 +280,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	/**
 	 * Get the last thread key stepped by this schedule
 	 * 
-	 * @return
+	 * @return the thread key
 	 */
 	public long getLastThreadKey() {
 		long last = pSteps.getLastThreadKey();
@@ -396,6 +442,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 				pRemains.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 		}
 		else {
+			remains = remains.checkFinish(lastThread, machine);
 			lastThread =
 				remains.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
 			lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
@@ -417,7 +464,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public TraceSchedule steppedForward(TraceThread thread, long tickCount) {
 		Sequence steps = this.steps.clone();
 		steps.advance(new TickStep(thread == null ? -1 : thread.getKey(), tickCount));
-		return new TraceSchedule(snap, steps, new Sequence());
+		return new TraceSchedule(snap, steps, new Sequence(), Source.RECORD);
 	}
 
 	/**
@@ -430,7 +477,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public TraceSchedule skippedForward(TraceThread thread, long tickCount) {
 		Sequence steps = this.steps.clone();
 		steps.advance(new SkipStep(thread == null ? -1 : thread.getKey(), tickCount));
-		return new TraceSchedule(snap, steps, new Sequence());
+		return new TraceSchedule(snap, steps, new Sequence(), Source.RECORD);
 	}
 
 	protected TraceSchedule doSteppedBackward(Trace trace, long tickCount, Set<Long> visited) {
@@ -454,7 +501,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		}
 		Sequence steps = this.steps.clone();
 		steps.rewind(tickCount);
-		return new TraceSchedule(snap, steps, new Sequence());
+		return new TraceSchedule(snap, steps, new Sequence(), Source.RECORD);
 	}
 
 	/**
@@ -486,7 +533,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public TraceSchedule steppedPcodeForward(TraceThread thread, int pTickCount) {
 		Sequence pTicks = this.pSteps.clone();
 		pTicks.advance(new TickStep(thread == null ? -1 : thread.getKey(), pTickCount));
-		return new TraceSchedule(snap, steps.clone(), pTicks);
+		return new TraceSchedule(snap, steps.clone(), pTicks, Source.INPUT);
 	}
 
 	/**
@@ -499,7 +546,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public TraceSchedule skippedPcodeForward(TraceThread thread, int pTickCount) {
 		Sequence pTicks = this.pSteps.clone();
 		pTicks.advance(new SkipStep(thread == null ? -1 : thread.getKey(), pTickCount));
-		return new TraceSchedule(snap, steps.clone(), pTicks);
+		return new TraceSchedule(snap, steps.clone(), pTicks, Source.INPUT);
 	}
 
 	/**
@@ -519,7 +566,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		}
 		Sequence pTicks = this.pSteps.clone();
 		pTicks.rewind(pStepCount);
-		return new TraceSchedule(snap, steps.clone(), pTicks);
+		return new TraceSchedule(snap, steps.clone(), pTicks, Source.INPUT);
 	}
 
 	private long keyOf(TraceThread thread) {
@@ -530,6 +577,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * Returns the equivalent of executing this schedule then performing a given patch
 	 * 
 	 * @param thread the thread context for the patch; cannot be null
+	 * @param language the sleigh language for the patch
 	 * @param sleigh a single line of sleigh, excluding the terminating semicolon.
 	 * @return the resulting schedule
 	 */
@@ -538,19 +586,20 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			Sequence pTicks = this.pSteps.clone();
 			pTicks.advance(new PatchStep(thread.getKey(), sleigh));
 			pTicks.coalescePatches(language);
-			return new TraceSchedule(snap, steps.clone(), pTicks);
+			return new TraceSchedule(snap, steps.clone(), pTicks, Source.INPUT);
 		}
 		Sequence ticks = this.steps.clone();
 		ticks.advance(new PatchStep(keyOf(thread), sleigh));
 		ticks.coalescePatches(language);
-		return new TraceSchedule(snap, ticks, new Sequence());
+		return new TraceSchedule(snap, ticks, new Sequence(), Source.RECORD);
 	}
 
 	/**
 	 * Returns the equivalent of executing this schedule then performing the given patches
 	 * 
 	 * @param thread the thread context for the patch; cannot be null
-	 * @param sleigh the lines of sleigh, excluding the terminating semicolons.
+	 * @param language the sleigh language for the patch
+	 * @param sleigh the lines of sleigh, excluding the terminating semicolons
 	 * @return the resulting schedule
 	 */
 	public TraceSchedule patched(TraceThread thread, Language language, List<String> sleigh) {
@@ -560,14 +609,14 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 				pTicks.advance(new PatchStep(thread.getKey(), line));
 			}
 			pTicks.coalescePatches(language);
-			return new TraceSchedule(snap, steps.clone(), pTicks);
+			return new TraceSchedule(snap, steps.clone(), pTicks, Source.INPUT);
 		}
 		Sequence ticks = this.steps.clone();
 		for (String line : sleigh) {
 			ticks.advance(new PatchStep(thread.getKey(), line));
 		}
 		ticks.coalescePatches(language);
-		return new TraceSchedule(snap, ticks, new Sequence());
+		return new TraceSchedule(snap, ticks, new Sequence(), Source.RECORD);
 	}
 
 	/**
@@ -575,7 +624,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * 
 	 * <p>
 	 * This operation cannot be used to append instruction steps after p-code steps. Thus, if this
-	 * schedule contains any p-code steps and {@code} next has instruction steps, an error will be
+	 * schedule contains any p-code steps and {@code next} has instruction steps, an error will be
 	 * 
 	 * @param next the schedule to append. Its snap is ignored.
 	 * @return the complete schedule
@@ -586,14 +635,23 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		if (this.pSteps.isNop()) {
 			Sequence ticks = this.steps.clone();
 			ticks.advance(next.steps);
-			return new TraceSchedule(this.snap, ticks, next.pSteps.clone());
+			return new TraceSchedule(this.snap, ticks, next.pSteps.clone(), next.source);
 		}
 		else if (next.steps.isNop()) {
-			Sequence pTicks = this.steps.clone();
+			Sequence pTicks = this.pSteps.clone();
 			pTicks.advance(next.pSteps);
-			return new TraceSchedule(this.snap, this.steps.clone(), pTicks);
+			return new TraceSchedule(this.snap, this.steps.clone(), pTicks, Source.INPUT);
 		}
 		throw new IllegalArgumentException("Cannot have instructions steps following p-code steps");
+	}
+
+	/**
+	 * Drop the p-code steps
+	 * 
+	 * @return the schedule without ops
+	 */
+	public TraceSchedule dropPSteps() {
+		return new TraceSchedule(this.snap, this.steps, new Sequence());
 	}
 
 	/**
@@ -610,5 +668,9 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		result.add(lastThread);
 		result.remove(null);
 		return result;
+	}
+
+	public TraceSchedule assumeRecorded() {
+		return new TraceSchedule(snap, steps, pSteps, Source.RECORD);
 	}
 }

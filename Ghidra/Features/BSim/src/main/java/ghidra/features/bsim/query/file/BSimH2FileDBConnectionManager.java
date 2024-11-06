@@ -40,6 +40,7 @@ public class BSimH2FileDBConnectionManager {
 	 * Data source map keyed by absolute DB file path
 	 */
 	private static HashMap<BSimServerInfo, BSimH2FileDataSource> dataSourceMap = new HashMap<>();
+	private static boolean shutdownHookInstalled = false;
 
 	/**
 	 * Get all H2 File DB data sorces which exist in the JVM.
@@ -62,6 +63,7 @@ public class BSimH2FileDBConnectionManager {
 		if (fileServerInfo.getDBType() != DBType.file) {
 			throw new IllegalArgumentException("expected file info");
 		}
+		enableShutdownHook();
 		return dataSourceMap.computeIfAbsent(fileServerInfo,
 			info -> new BSimH2FileDataSource(info));
 	}
@@ -100,6 +102,30 @@ public class BSimH2FileDBConnectionManager {
 		dataSourceMap.remove(serverInfo);
 		BSimVectorStoreManager.remove(serverInfo);
 		return true;
+	}
+
+	private static synchronized void enableShutdownHook() {
+		if (shutdownHookInstalled) {
+			return;
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Collection<BSimH2FileDataSource> dataSources = dataSourceMap.values();
+				for (BSimH2FileDataSource ds : dataSources) {
+					int activeConnections = ds.getActiveConnections();
+					if (activeConnections != 0) {
+						Msg.error(BSimH2FileDBConnectionManager.class,
+							activeConnections +
+								" BSim active H2 File connections were not properly closed: " +
+								ds.serverInfo);
+					}
+					ds.close();
+				}
+				dataSourceMap.clear();
+			}
+		});
+		shutdownHookInstalled = true;
 	}
 
 	/**

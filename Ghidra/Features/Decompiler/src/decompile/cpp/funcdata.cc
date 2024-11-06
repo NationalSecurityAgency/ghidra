@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,6 +172,8 @@ void Funcdata::stopProcessing(void)
 {
   flags |= processing_complete;
   obank.destroyDead();		// Free up anything in the dead list
+  if (!isJumptableRecoveryOn())
+    issueDatatypeWarnings();
 #ifdef CPUI_STATISTICS
   glb->stats->process(*this);
 #endif
@@ -468,6 +470,15 @@ void Funcdata::clearCallSpecs(void)
     delete qlst[i];		// Delete each func_callspec
 
   qlst.clear();			// Delete list of pointers
+}
+
+void Funcdata::issueDatatypeWarnings(void)
+
+{
+  list<DatatypeWarning>::const_iterator iter;
+  for(iter=glb->types->beginWarnings();iter!=glb->types->endWarnings();++iter) {
+    warningHeader((*iter).getWarning());
+  }
 }
 
 FuncCallSpecs *Funcdata::getCallSpecs(const PcodeOp *op) const

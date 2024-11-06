@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,14 +81,17 @@ public interface Scheduler {
 
 	/**
 	 * The result of running a machine
+	 * 
+	 * @param schedule the actual schedule executed
+	 * @param error if applicable, the error that interrupted execution
 	 */
-	record RecordRunResult(TraceSchedule schedule, Throwable error) implements RunResult {
-	}
+	record RecordRunResult(TraceSchedule schedule, Throwable error) implements RunResult {}
 
 	/**
 	 * Get the next step to schedule
 	 * 
-	 * @return the (instruction-level) thread and tick count
+	 * @param trace the trace being emulated
+	 * @return the thread and (instruction-level) tick count
 	 */
 	TickStep nextSlice(Trace trace);
 
@@ -118,12 +121,17 @@ public interface Scheduler {
 				TickStep slice = nextSlice(trace);
 				eventThread = slice.getThread(tm, eventThread);
 				emuThread = machine.getThread(eventThread.getPath(), true);
-				if (emuThread.getFrame() != null) {
+				long ticksLeft = slice.tickCount;
+				if (ticksLeft > 0 && emuThread.getFrame() != null) {
+					monitor.checkCancelled();
 					emuThread.finishInstruction();
+					ticksLeft--;
+					completedTicks++;
 				}
-				for (int i = 0; i < slice.tickCount; i++) {
+				while (ticksLeft > 0) {
 					monitor.checkCancelled();
 					emuThread.stepInstruction();
+					ticksLeft--;
 					completedTicks++;
 				}
 				completedSteps = completedSteps.steppedForward(eventThread, completedTicks);
@@ -134,11 +142,11 @@ public interface Scheduler {
 			completedSteps = completedSteps.steppedForward(eventThread, completedTicks);
 			PcodeFrame frame = emuThread.getFrame();
 			if (frame == null) {
-				return new RecordRunResult(completedSteps, e);
+				return new RecordRunResult(completedSteps.assumeRecorded(), e);
 			}
 			// Rewind one so stepping retries the op causing the error
 			frame.stepBack();
-			int count = frame.count();
+			int count = frame.resetCount();
 			if (count == 0) {
 				// If we've decoded, but could not execute the first op, just drop the p-code steps
 				emuThread.dropInstruction();
@@ -146,11 +154,11 @@ public interface Scheduler {
 			}
 			// The +1 accounts for the decode step
 			return new RecordRunResult(
-				completedSteps.steppedPcodeForward(eventThread, count + 1), e);
+				completedSteps.steppedPcodeForward(eventThread, count + 1).assumeRecorded(), e);
 		}
 		catch (CancelledException e) {
 			return new RecordRunResult(
-				completedSteps.steppedForward(eventThread, completedTicks), e);
+				completedSteps.steppedForward(eventThread, completedTicks).assumeRecorded(), e);
 		}
 	}
 }

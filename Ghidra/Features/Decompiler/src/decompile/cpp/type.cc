@@ -513,16 +513,17 @@ void Datatype::encodeTypedef(Encoder &encoder) const
   encoder.closeElement(ELEM_DEF);
 }
 
-/// Calculate \b size rounded up to be a multiple of \b alignment.
-/// This value is returned by getAlignSize().
-void Datatype::calcAlignSize(void)
+/// Calculate size rounded up to be a multiple of \b align.
+/// \param sz is the number of bytes in the data-type before padding
+/// \param align is the alignment of the data-type
+/// \return the aligned size
+int4 Datatype::calcAlignSize(int4 sz,int4 align)
 
 {
-  int4 mod = size % alignment;
+  int4 mod = sz % align;
   if (mod != 0)
-    alignSize = size + (alignment - mod);
-  else
-    alignSize = size;
+    return sz + (align - mod);
+  return sz;
 }
 
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
@@ -1485,13 +1486,15 @@ void TypeEnum::encode(Encoder &encoder) const
 /// Parse a \<type> element with children describing each specific enumeration value.
 /// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
+/// \return any warning associated with the enum
+string TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
 //  uint4 elemId = decoder.openElement();
   decodeBasic(decoder);
   submeta = (metatype == TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM;
   map<uintb,string> nmap;
+  string warning;
 
   for(;;) {
     uint4 childId = decoder.openElement();
@@ -1510,11 +1513,59 @@ void TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
     }
     if (nm.size() == 0)
       throw LowlevelError(name + ": TypeEnum field missing name attribute");
-    nmap[val] = nm;
+    if (nmap.find(val) != nmap.end()) {
+      if (warning.empty())
+	warning = "Enum \"" + name + "\": Some values do not have unique names";
+    }
+    else
+      nmap[val] = nm;
     decoder.closeElement(childId);
   }
   setNameMap(nmap);
 //  decoder.closeElement(elemId);
+  return warning;
+}
+
+/// Establish unique enumeration values for a TypeEnum.
+/// Fill in any values for any names that weren't explicitly assigned and check for duplicates.
+/// \param nmap will contain the map from values to names
+/// \param namelist is the list of names in the enumeration
+/// \param vallist is the corresponding list of values assigned to names in namelist
+/// \param assignlist is true if the corresponding name in namelist has an assigned value
+/// \param te is the TypeEnum that will eventually hold the enumeration values
+void TypeEnum::assignValues(map<uintb,string> &nmap,const vector<string> &namelist,vector<uintb> &vallist,
+			    const vector<bool> &assignlist,const TypeEnum *te)
+{
+  map<uintb,string>::iterator mapiter;
+
+  uintb mask = calc_mask(te->getSize());
+  uintb maxval = 0;
+  for(uint4 i=0;i<namelist.size();++i) {
+    uintb val;
+    if (assignlist[i]) {	// Did the user explicitly set value
+      val = vallist[i];
+      if (val > maxval)
+	maxval = val;
+      val &= mask;
+      mapiter = nmap.find(val);
+      if (mapiter != nmap.end()) {
+	throw LowlevelError("Enum \""+te->name+"\": \""+namelist[i]+"\" is a duplicate value");
+      }
+      nmap[val] = namelist[i];
+    }
+  }
+  for(uint4 i=0;i<namelist.size();++i) {
+    uintb val;
+    if (!assignlist[i]) {
+      do {
+	maxval += 1;
+	val = maxval;
+	val &= mask;
+	mapiter = nmap.find(val);
+      } while(mapiter != nmap.end());
+      nmap[val] = namelist[i];
+    }
+  }
 }
 
 TypeStruct::TypeStruct(const TypeStruct &op)
@@ -1524,47 +1575,22 @@ TypeStruct::TypeStruct(const TypeStruct &op)
   alignSize = op.alignSize;
 }
 
-/// Copy a list of fields into this structure, establishing its size.
+/// Copy a list of fields into this structure, establishing its size and alignment.
 /// Should only be called once when constructing the type.
-/// Size is calculated from the fields unless a \b fixedSize (>0) is passed in.
-/// Alignment is calculated from fields unless a \b fixedAlign (>0) is passed in.
 /// \param fd is the list of fields to copy in
-/// \param fixedSize (if > 0) indicates an overriding size in bytes
-/// \param fixedAlign (if > 0) indicates an overriding alignment in bytes
-void TypeStruct::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign)
+/// \param newSize is the final size of the structure in bytes
+/// \param newAlign is the final alignment of the structure
+void TypeStruct::setFields(const vector<TypeField> &fd,int4 newSize,int4 newAlign)
 
 {
-  vector<TypeField>::const_iterator iter;
-  int4 end;
-				// Need to calculate size and alignment
-  int4 calcSize = 0;
-  int4 calcAlign = 1;
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    field.push_back(*iter);
-    Datatype *fieldType = (*iter).type;
-    end = (*iter).offset + fieldType->getSize();
-    if (end > calcSize)
-      calcSize = end;
-    int4 curAlign = fieldType->getAlignment();
-    if (curAlign > calcAlign)
-      calcAlign = curAlign;
-  }
+  field = fd;
+  size = newSize;
+  alignment = newAlign;
   if (field.size() == 1) {			// A single field
-    if (field[0].type->getSize() == calcSize)	// that fills the whole structure
+    if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special attention
   }
-  if (fixedSize > 0) {		// Try to force a size
-    if (fixedSize < calcSize) // If the forced size is smaller, this is an error
-      throw LowlevelError("Trying to force too small a size on "+name);
-    size = fixedSize;
-  }
-  else
-    size = calcSize;
-  alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
-  calcAlignSize();
-  if (fixedSize <= 0) {	// Unless specifically overridden
-    size = alignSize;	// pad out structure to with alignment bytes
-  }
+  alignSize = calcAlignSize(size,alignment);
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -1813,25 +1839,49 @@ void TypeStruct::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_TYPE);
 }
 
-/// Children of the structure element describe each field.
+/// Read children of the structure element describing each field.  Alignment is calculated from fields unless
+/// the \b alignment field is already >0. The fields must be in order, fit within the \b size field, have a
+/// valid name, and have a valid data-type, or an exception is thrown. Any fields that overlap their previous
+/// field are thrown out and a warning message is returned.
 /// \param decoder is the stream decoder
 /// \param typegrp is the factory owning the new structure
-void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
+/// \return any warning associated with the structure
+string TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
   int4 calcAlign = 1;
-  int4 maxoffset = 0;
+  int4 calcSize = 0;
+  int4 lastOff = -1;
+  string warning;
   while(decoder.peekElement() != 0) {
     field.emplace_back(decoder,typegrp);
-    int4 trialmax = field.back().offset + field.back().type->getSize();
-    if (trialmax > maxoffset)
-      maxoffset = trialmax;
-    if (maxoffset > size) {
+    TypeField &curField(field.back());
+    if (curField.type == (Datatype *)0 || curField.type->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Bad field data-type for structure: "+getName());
+    if (curField.name.size() == 0)
+      throw LowlevelError("Bad field name for structure: "+getName());
+    if (curField.offset < lastOff)
+      throw LowlevelError("Fields are out of order");
+    lastOff = curField.offset;
+    if (curField.offset < calcSize) {
       ostringstream s;
-      s << "Field " << field.back().name << " does not fit in structure " + name;
+      if (warning.empty()) {
+  	s << "Struct \"" << name << "\": ignoring overlapping field \"" << curField.name << "\"";
+      }
+      else {
+  	s << "Struct \"" << name << "\": ignoring multiple overlapping fields";
+      }
+      warning = s.str();
+      field.pop_back();		// Throw out the overlapping field
+      continue;
+    }
+    calcSize = curField.offset + curField.type->getSize();
+    if (calcSize > size) {
+      ostringstream s;
+      s << "Field " << curField.name << " does not fit in structure " + name;
       throw LowlevelError(s.str());
     }
-    int4 curAlign = field.back().type->getAlignment();
+    int4 curAlign = curField.type->getAlignment();
     if (curAlign > calcAlign)
       calcAlign = curAlign;
   }
@@ -1845,7 +1895,8 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
   }
   if (alignment < 1)
     alignment = calcAlign;
-  calcAlignSize();
+  alignSize = calcAlignSize(size, alignment);
+  return warning;
 }
 
 /// If this method is called, the given data-type has a single component that fills it entirely
@@ -1932,21 +1983,30 @@ int4 TypeStruct::findCompatibleResolve(Datatype *ct) const
 
 /// Assign an offset to fields in order so that each field starts at an aligned offset within the structure
 /// \param list is the list of fields
-void TypeStruct::assignFieldOffsets(vector<TypeField> &list)
+/// \param newSize passes back the calculated size of the structure
+/// \param newAlign passes back the calculated alignment
+void TypeStruct::assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign)
 
 {
   int4 offset = 0;
+  newAlign = 1;
   vector<TypeField>::iterator iter;
   for(iter=list.begin();iter!=list.end();++iter) {
+    if ((*iter).type->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Illegal field data-type: void");
     if ((*iter).offset != -1) continue;
     int4 cursize = (*iter).type->getAlignSize();
-    int4 align = (*iter).type->getAlignment() - 1;
+    int4 align = (*iter).type->getAlignment();
+    if (align > newAlign)
+      newAlign = align;
+    align -= 1;
     if (align > 0 && (offset & align)!=0)
       offset = (offset-(offset & align) + (align+1));
     (*iter).offset = offset;
     (*iter).ident = offset;
     offset += cursize;
   }
+  newSize = calcAlignSize(offset, newAlign);
 }
 
 /// Copy a list of fields into this union, establishing its size.
@@ -1954,34 +2014,15 @@ void TypeStruct::assignFieldOffsets(vector<TypeField> &list)
 /// Size is calculated from the fields unless a \b fixedSize (>0) is passed in.
 /// Alignment is calculated from fields unless a \b fixedAlign (>0) is passed in.
 /// \param fd is the list of fields to copy in
-/// \param fixedSize (if > 0) indicates an overriding size in bytes
-/// \param fixedAlign (if > 0) indicates an overriding alignment in bytes
-void TypeUnion::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign)
+/// \param newSize is new size in bytes of the union
+/// \param newAlign is the new alignment
+void TypeUnion::setFields(const vector<TypeField> &fd,int4 newSize,int4 newAlign)
 
 {
-  vector<TypeField>::const_iterator iter;
- 				// Need to calculate size and alignment
-  int4 calcSize = 0;
-  int4 calcAlign = 1;
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    field.push_back(*iter);
-    Datatype *fieldType = field.back().type;
-    int4 end = fieldType->getSize();
-    if (end > calcSize)
-      calcSize = end;
-    int4 curAlign = fieldType->getAlignment();
-    if (curAlign > calcAlign)
-      calcAlign = curAlign;
-  }
-  if (fixedSize > 0) {		// If the caller is trying to force a size
-    if (fixedSize < calcSize)	// If the forced size is smaller, this is an error
-      throw LowlevelError("Trying to force too small a size on "+name);
-    size = fixedSize;
-  }
-  else
-    size = calcSize;
-  alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
-  calcAlignSize();
+  field = fd;
+  size = newSize;
+  alignment = newAlign;
+  alignSize = calcAlignSize(size,alignment);
 }
 
 /// Parse children of the \<type> element describing each field.
@@ -2008,7 +2049,7 @@ void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     markComplete();		// Otherwise the union is complete
   if (alignment < 1)
     alignment = calcAlign;
-  calcAlignSize();
+  alignSize = calcAlignSize(size,alignment);
 }
 
 TypeUnion::TypeUnion(const TypeUnion &op)
@@ -2196,6 +2237,30 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
+void TypeUnion::assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,TypeUnion *tu)
+
+{
+  vector<TypeField>::iterator iter;
+
+  newSize = 0;
+  newAlign = 1;
+  for(iter=list.begin();iter!=list.end();++iter) {
+    Datatype *ct = (*iter).type;
+    // Do some sanity checks on the field
+    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
+      throw LowlevelError("Bad field data-type for union: "+tu->getName());
+    else if ((*iter).name.size() == 0)
+      throw LowlevelError("Bad field name for union: "+tu->getName());
+    (*iter).offset = 0;
+    int4 end = ct->getSize();
+    if (end > newSize)
+      newSize = end;
+    int4 curAlign = ct->getAlignment();
+    if (curAlign > newAlign)
+      newAlign = curAlign;
+  }
+}
+
 TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
   : Datatype(op)
 {
@@ -2209,12 +2274,25 @@ TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype
 {
 #ifdef CPUI_DEBUG
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
-    throw LowlevelError("Parent of partial struct is not a struture or array");
+    throw LowlevelError("Parent of partial struct is not a structure or array");
 #endif
   flags |= has_stripped;
   stripped = strip;
   container = contain;
   offset = off;
+}
+
+/// If the parent is an array, return the element data-type. Otherwise return the \b stripped data-type.
+/// \return the array element data-type or the \b stripped data-type.
+Datatype *TypePartialStruct::getComponentForPtr(void) const
+
+{
+  if (container->getMetatype() == TYPE_ARRAY) {
+    Datatype *eltype = ((TypeArray *)container)->getBase();
+    if (eltype->getMetatype() != TYPE_UNKNOWN && (offset % eltype->getAlignSize()) == 0)
+      return eltype;
+  }
+  return stripped;
 }
 
 void TypePartialStruct::printRaw(ostream &s) const
@@ -3118,6 +3196,7 @@ void TypeFactory::clear(void)
   tree.clear();
   nametree.clear();
   clearCache();
+  warnings.clear();
 }
 
 /// Delete anything that isn't a core type
@@ -3138,6 +3217,7 @@ void TypeFactory::clearNoncore(void)
     tree.erase(iter++);
     delete ct;
   }
+  warnings.clear();
 }
 
 TypeFactory::~TypeFactory(void)
@@ -3325,44 +3405,21 @@ void TypeFactory::setDisplayFormat(Datatype *ct,uint4 format)
   ct->setDisplayFormat(format);
 }
 
-/// Make sure all the offsets are fully established then set fields of the structure
-/// If \b fixedsize is greater than 0, force the final structure to have that size.
+/// Set fields on a structure data-type, establishing its size, alignment, and other properties.
 /// This method should only be used on an incomplete structure. It will mark the structure as complete.
 /// \param fd is the list of fields to set
 /// \param ot is the TypeStruct object to modify
-/// \param fixedsize is -1 or the forced size of the structure
-/// \param fixedalign is -1 or the forced alignment for the structure
+/// \param newSize is the new size of the structure in bytes
+/// \param newAlign is the new alignment of the structure
 /// \param flags are other flags to set on the structure
-void TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
+void TypeFactory::setFields(const vector<TypeField> &fd,TypeStruct *ot,int4 newSize,int4 newAlign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
     throw LowlevelError("Can only set fields on an incomplete structure");
-  int4 offset = 0;
-  vector<TypeField>::iterator iter;
-
-  // Find the maximum offset, from the explicitly set offsets
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    Datatype *ct = (*iter).type;
-    // Do some sanity checks on the field
-    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
-      throw LowlevelError("Bad field data-type for structure: "+ot->getName());
-    else if ((*iter).name.size() == 0)
-      throw LowlevelError("Bad field name for structure: "+ot->getName());
-
-    if ((*iter).offset != -1) {
-      int4 end = (*iter).offset + ct->getSize();
-      if (end > offset)
-	offset = end;
-    }
-  }
-
-  sort(fd.begin(),fd.end());	// Sort fields by offset
-
-  // We could check field overlapping here
 
   tree.erase(ot);
-  ot->setFields(fd,fixedsize,fixedalign);
+  ot->setFields(fd,newSize,newAlign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete));
   tree.insert(ot);
@@ -3370,33 +3427,20 @@ void TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
 }
 
-/// If \b fixedsize is greater than 0, force the final union to have that size.
 /// This method should only be used on an incomplete union. It will mark the union as complete.
 /// \param fd is the list of fields to set
 /// \param ot is the TypeUnion object to modify
-/// \param fixedsize is -1 or the forced size of the union
-/// \param fixedalign is -1 or the forced alignment for the union
+/// \param newSize is the size to associate with the union in bytes
+/// \param newAlign is the alignment to set
 /// \param flags are other flags to set on the union
-void TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
+void TypeFactory::setFields(const vector<TypeField> &fd,TypeUnion *ot,int4 newSize,int4 newAlign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
     throw LowlevelError("Can only set fields on an incomplete union");
-  vector<TypeField>::iterator iter;
-
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    Datatype *ct = (*iter).type;
-    // Do some sanity checks on the field
-    if (ct == (Datatype *)0 || ct->getMetatype() == TYPE_VOID)
-      throw LowlevelError("Bad field data-type for union: "+ot->getName());
-    else if ((*iter).offset != 0)
-      throw LowlevelError("Non-zero field offset for union: "+ot->getName());
-    else if ((*iter).name.size() == 0)
-      throw LowlevelError("Bad field name for union: "+ot->getName());
-  }
 
   tree.erase(ot);
-  ot->setFields(fd,fixedsize,fixedalign);
+  ot->setFields(fd,newSize,newAlign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
   tree.insert(ot);
@@ -3419,52 +3463,14 @@ void TypeFactory::setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags
   tree.insert(newCode);
 }
 
-/// Set the list of enumeration values and identifiers for a TypeEnum
-/// Fill in any values for any names that weren't explicitly assigned
-/// and check for duplicates.
-/// \param namelist is the list of names in the enumeration
-/// \param vallist is the corresponding list of values assigned to names in namelist
-/// \param assignlist is true if the corresponding name in namelist has an assigned value
-/// \param te is the enumeration object to modify
-/// \return true if the modification is successful (no duplicate names)
-bool TypeFactory::setEnumValues(const vector<string> &namelist,
-				const vector<uintb> &vallist,
-				const vector<bool> &assignlist,
-				TypeEnum *te)
+/// \param nmap is the mapping from integer value to name string
+/// \param te is the enumeration whose values/names are set
+void TypeFactory::setEnumValues(const map<uintb,string> &nmap,TypeEnum *te)
+
 {
-  map<uintb,string> nmap;
-  map<uintb,string>::iterator mapiter;
-
-  uintb mask = calc_mask(te->getSize());
-  uintb maxval = 0;
-  for(uint4 i=0;i<namelist.size();++i) {
-    uintb val;
-    if (assignlist[i]) {	// Did the user explicitly set value
-      val = vallist[i];
-      if (val > maxval)
-	maxval = val;
-      val &= mask;
-      mapiter = nmap.find(val);
-      if (mapiter != nmap.end()) return false; // Duplicate value
-      nmap[val] = namelist[i];
-    }
-  }
-  for(uint4 i=0;i<namelist.size();++i) {
-    uintb val;
-    if (!assignlist[i]) {
-      val = maxval;
-      maxval += 1;
-      val &= mask;
-      mapiter = nmap.find(val);
-      if (mapiter != nmap.end()) return false;
-      nmap[val] = namelist[i];
-    }
-  }
-
   tree.erase(te);
   te->setNameMap(nmap);
   tree.insert(te);
-  return true;
 }
 
 /// Recursively write out all the components of a data-type in dependency order
@@ -3673,6 +3679,34 @@ void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
   }
 }
 
+/// Add the data-type and string to the \b warnings container.
+/// \param dt is the data-type associated with the warning
+/// \param warn is the warning string to be displayed to the user
+void TypeFactory::insertWarning(Datatype *dt,string warn)
+
+{
+  if (dt->getId() == 0)
+    throw LowlevelError("Can only issue warnings for named data-types");
+  dt->flags |= Datatype::warning_issued;
+  warnings.emplace_back(dt,warn);
+}
+
+/// Run through the \b warnings and delete any matching the given data-type
+/// \param dt is the given data-type
+void TypeFactory::removeWarning(Datatype *dt)
+
+{
+  list<DatatypeWarning>::iterator iter = warnings.begin();
+  while(iter != warnings.end()) {
+    if ((*iter).dataType->getId() == dt->getId() && (*iter).dataType->getName() == dt->getName()) {
+      iter = warnings.erase(iter);
+    }
+    else {
+      ++iter;
+    }
+  }
+}
+
 /// Find or create a data-type identical to the given data-type except for its name and id.
 /// If the name and id already describe an incompatible data-type, an exception is thrown.
 /// \param ct is the given data-type to clone
@@ -3757,21 +3791,6 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
   TypePointer *res = (TypePointer *) findAdd(tmp);
   res->calcTruncate(*this);
   return res;
-}
-
-/// Don't create more than a depth of 1, i.e. ptr->ptr
-/// \param s is the size of the pointer
-/// \param pt is the pointed-to data-type
-/// \param ws is the wordsize associated with the pointer
-/// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
-
-{
-  if (pt->getMetatype()==TYPE_PTR) {
-    // Make sure that at least we return a pointer to something the size of -pt-
-    pt = getBase(pt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
-  }
-  return getTypePointer(s,pt,ws);
 }
 
 /// \param as is the number of elements in the desired array
@@ -3977,6 +3996,8 @@ void TypeFactory::destroyType(Datatype *ct)
 {
   if (ct->isCoreType())
     throw LowlevelError("Cannot destroy core type");
+  if (ct->hasWarning())
+    removeWarning(ct);
   nametree.erase(ct);
   tree.erase(ct);
   delete ct;
@@ -4163,6 +4184,22 @@ Datatype *TypeFactory::decodeTypedef(Decoder &decoder)
   return getTypedef(defedType, nm, id, format);
 }
 
+/// \param decoder is the stream decoder
+/// \param forcecore is \b true if the data-type is considered core
+/// \return the newly minted enumeration data-type
+Datatype *TypeFactory::decodeEnum(Decoder &decoder,bool forcecore)
+
+{
+  TypeEnum te(1,TYPE_INT); // size and metatype are replaced
+  string warning = te.decode(decoder,*this);
+  if (forcecore)
+    te.flags |= Datatype::coretype;
+  Datatype *res = findAdd(te);
+  if (!warning.empty())
+    insertWarning(res, warning);
+  return res;
+}
+
 /// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions
 /// \param decoder is the stream decoder
 /// \param forcecore is \b true if the data-type is considered core
@@ -4181,7 +4218,7 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
   }
   else if (ct->getMetatype() != TYPE_STRUCT)
     throw LowlevelError("Trying to redefine type: " + ts.name);
-  ts.decodeFields(decoder,*this);
+  string warning = ts.decodeFields(decoder,*this);
   if (!ct->isIncomplete()) {	// Structure of this name was already present
     if (0 != ct->compareDependency(ts))
       throw LowlevelError("Redefinition of structure: " + ts.name);
@@ -4189,6 +4226,8 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
   else {		// If structure is a placeholder stub
     setFields(ts.field,(TypeStruct*)ct,ts.size,ts.alignment,ts.flags);	// Define structure now by copying fields
   }
+  if (!warning.empty())
+    insertWarning(ct, warning);
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4349,12 +4388,8 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
 	return ct;
       }
       else if (attribId == ATTRIB_ENUM && decoder.readBool()) {
-	TypeEnum te(1,TYPE_INT); // size and metatype are replaced
 	decoder.rewindAttributes();
-	te.decode(decoder,*this);
-	if (forcecore)
-	  te.flags |= Datatype::coretype;
-	ct = findAdd(te);
+	ct = decodeEnum(decoder, forcecore);
 	decoder.closeElement(elemId);
 	return ct;
       }

@@ -204,7 +204,7 @@ int4 RuleSelectCse::applyOp(PcodeOp *op,Funcdata &data)
     list.push_back(pair<uintm,PcodeOp *>(hash,otherop));
   }
   if (list.size()<=1) return 0;
-  cseEliminateList(data,list,vlist);
+  data.cseEliminateList(list,vlist);
   if (vlist.empty()) return 0;
   return 1;
 }
@@ -1048,7 +1048,7 @@ PcodeOp *RulePushMulti::findSubstitute(Varnode *in1,Varnode *in2,BlockBasic *bb,
     Varnode *vn = op1->getIn(i);
     if (vn->isConstant()) continue;
     if (vn == op2->getIn(i))	// Find matching inputs to op1 and op2,
-      return cseFindInBlock(op1,vn,bb,earliest); // search for cse of op1 in bb
+      return Funcdata::cseFindInBlock(op1,vn,bb,earliest); // search for cse of op1 in bb
   }
 
   return (PcodeOp *)0;
@@ -1087,7 +1087,7 @@ int4 RulePushMulti::applyOp(PcodeOp *op,Funcdata &data)
   if (op1->code() == CPUI_SUBPIECE) return 0; // SUBPIECE is pulled not pushed
 
   BlockBasic *bl = op->getParent();
-  PcodeOp *earliest = earliestUseInBlock(op->getOut(),bl);
+  PcodeOp *earliest = bl->earliestUse(op->getOut());
   if (op1->code() == CPUI_COPY) { // Special case of MERGE of 2 shadowing varnodes
     if (res==0) return 0;
     PcodeOp *substitute = findSubstitute(buf1[0],buf2[0],bl,earliest);
@@ -3036,13 +3036,13 @@ int4 RuleMultiCollapse::applyOp(PcodeOp *op,Funcdata &data)
       copyr->clearMark();
       op = copyr->getDef();
       if (func_eq) {		// We have only functional equality
-	PcodeOp *earliest = earliestUseInBlock(op->getOut(),op->getParent());
+	PcodeOp *earliest = op->getParent()->earliestUse(op->getOut());
 	newop = defcopyr->getDef();	// We must copy newop (defcopyr)
 	PcodeOp *substitute = (PcodeOp *)0;
 	for(int4 i=0;i<newop->numInput();++i) {
 	  Varnode *invn = newop->getIn(i);
 	  if (!invn->isConstant()) {
-	    substitute = cseFindInBlock(newop,invn,op->getParent(),earliest); // Has newop already been copied in this block
+	    substitute = Funcdata::cseFindInBlock(newop,invn,op->getParent(),earliest); // Has newop already been copied in this block
 	    break;
 	  }
 	}
@@ -3606,7 +3606,7 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *copyop;
   Varnode *vn,*invn;
 
-  if (op->stopsCopyPropagation()) return 0;
+  if (op->isReturnCopy()) return 0;
   for(i=0;i<op->numInput();++i) {
     vn = op->getIn(i);
     if (!vn->isWritten()) continue; // Varnode must be written to
@@ -6627,13 +6627,13 @@ void RulePtrsubUndo::getOpList(vector<uint4> &oplist) const
 /// the sum of all the constants. Additionally pass back the biggest constant coefficient, for any term
 /// formed with INT_MULT.
 /// \param vn is the given root Varnode of the additive tree
-/// \param multiplier will hold the biggest constant coefficient
+/// \param multiplier will hold the biggest constant multiplier or 0, if no multiplier is present
 /// \param maxLevel is the maximum depth to search in the tree
 /// \return the sum of all constants in the additive expression
 int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLevel)
 
 {
-  multiplier = 1;
+  multiplier = 0;
   int8 submultiplier;
   if (vn->isConstant())
     return vn->getOffset();
@@ -6658,7 +6658,8 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
     if (!cvn->isConstant()) return 0;
     multiplier = cvn->getOffset();
     getConstOffsetBack(op->getIn(0), submultiplier, maxLevel);
-    multiplier *= submultiplier;		// Only contribute to the multiplier
+    if (submultiplier > 0)
+      multiplier *= submultiplier;		// Only contribute to the multiplier
   }
   return retval;
 }
@@ -6669,12 +6670,12 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
 /// constant value being added to the PTRSUB.  Additionally pass back the biggest constant coefficient of any
 /// multiplicative term in the expression.
 /// \param op is the given PTRSUB
-/// \param multiplier will hold the biggest multiplicative coefficient
+/// \param multiplier will hold the biggest multiplicative coefficient or 0, if no INT_MULT or PTRADD is present.
 int8 RulePtrsubUndo::getExtraOffset(PcodeOp *op,int8 &multiplier)
 
 {
   int8 extra = 0;
-  multiplier = 1;
+  multiplier = 0;
   int8 submultiplier;
   Varnode *outvn = op->getOut();
   op = outvn->loneDescend();
@@ -6696,9 +6697,10 @@ int8 RulePtrsubUndo::getExtraOffset(PcodeOp *op,int8 &multiplier)
       if (invn->isConstant())					// Only contribute to the extra
 	extra += ptraddmult * (int8)invn->getOffset();		// if the index is constant
       getConstOffsetBack(invn,submultiplier,DEPTH_LIMIT);	// otherwise just contribute to multiplier
-      submultiplier *= ptraddmult;
-      if (submultiplier > multiplier)
-	multiplier = submultiplier;
+      if (submultiplier != 0)
+	ptraddmult *= submultiplier;
+      if (ptraddmult > multiplier)
+	multiplier = ptraddmult;
     }
     else {
       break;
