@@ -22,6 +22,39 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.2.1 Change History (November 2024)</H1>
+<blockquote><p><u><B>New Features</B></u></p>
+<ul>
+    <li><I>Debugger:GDB</I>. Added GDB batch scripts for Windows.  Also, updated ssh+gdb scripts to take path to ssh as an option. (GP-4957, Issue #7069)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Updated RTTI Analyzer to fix incorrect PDB symbols in anonymous namespaces when the PDB does not have complete namespace information and RTTI structures do. (GP-5053, Issue #3213)</li>
+    <li><I>Decompiler</I>. Added support for detecting optimized strings loaded from labeled memory. (GP-4979, Issue #6925, #6985)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Clearing of bad flow after a call that is found to be non-returning will no longer clear DLL Import table entries or defined data beyond <span class="gcode">Undefined&lt;n&gt;</span>. (GP-4696, Issue #6636)</li>
+    <li><I>BSim</I>. Fixed the Elasticsearch <span class="gcode">lsh.zip</span> plug-in for the <span class="gcode">BSimElasticPlugin</span> extension. (GP-5043, Issue #7051, #7054)</li>
+    <li><I>BSim</I>. Corrected <span class="gcode">synchronous_commit</span> setting for BSim postgresql database and eliminated some warnings in the postgresql logs.  We now ensure that all DB connections are closed properly when the Ghidra process exits normally to avoid unnecessary server logging of failed DB connection errors. (GP-5082, Issue #6951)</li>
+    <li><I>DB</I>. Corrected issue closing <span class="gcode">FileDataTypeManager</span> affecting use of DataType Archives on Windows platforms which could produce an error during resource cleanup. (GP-5090)</li>
+    <li><I>Debugger</I>. Fixed issue launching debuggers on Windows where the installation path contains spaces. (GP-5015, Issue #6999)</li>
+    <li><I>Debugger:Emulator</I>. Fixed issue with stale disassembly in Emulator. (GP-4483)</li>
+    <li><I>Debugger:Emulator</I>. Fixed Emulator to heed UI-driven patches to the program counter. (GP-4889, Issue #6867)</li>
+    <li><I>Debugger:Trace</I>. Fixed bug in Listing with <span class="gtitle">Force Full View</span> enabled. (GP-2032)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler causing <em>"Case block has become detached from switch"</em> exceptions. (GP-4899, Issue #6819)</li>
+    <li><I>Decompiler</I>. Fixed bug that could cause an infinite loop in the Decompiler on functions accessing a 1-byte structure. (GP-4972, Issue #6969)</li>
+    <li><I>Decompiler</I>. Fixed infinite loop in the Decompiler associated with overlapping fields in a structure. (GP-4985, Issue #6991)</li>
+    <li><I>Emulator</I>. Fixed issue with slow stepping that occurred in the Emulator after an interrupt. (GP-4231, Issue #6109)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an exception that could occur in the MachoLoader when an External Program had a space in its name/path. (GP-4997, Issue #6989)</li>
+    <li><I>Importer:PE</I>. Fixed an <em>exception</em> that could occur while parsing PE <span class="gcode">Control Flow Guard</span> structures, preventing the binary from successfully importing. (GP-5009, Issue #6960)</li>
+    <li><I>Scripting</I>. Fixed a typo in <span class="gcode">VSCodeProjectScript.java</span> that resulted in the <span class="gcode">Extensions/Ghidra/Skeleton</span> directory not being found. (GP-4971, Issue #6971)</li>
+    <li><I>Scripting</I>. Added vxworks external symbol markup, which was previously ignored. (GP-5000)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.2 Change History (September 2024)</H1>
 <blockquote><p><u><B>New Features</B></u></p>
 <ul>
