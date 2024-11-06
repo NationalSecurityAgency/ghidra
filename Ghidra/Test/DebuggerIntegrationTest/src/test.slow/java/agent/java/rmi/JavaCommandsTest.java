@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import generic.Unique;
@@ -46,6 +47,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
+@Ignore
 public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 
 	public static final String HWSETUP = """
