@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,7 +98,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private static final Set<String> DROPUSER_OPTIONS = Set.of();
 	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
 		AUTH_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
-	
+
 	//@formatter:on
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
 	static {
@@ -670,8 +670,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 
 	/**
 	 * Invoke an external executable/command, display the output and error streams on the console,
-	 * the exit condition of the command is returned.  If the exit condition indicates and error,
-	 * but a line of the error stream matches a provided String, the error is suppressed 
+	 * and return the exit value of the command.  
 	 * @param directory	 is the working directory for the command
 	 * @param command    is the command-line (including arguments)
 	 * @param envvar     if non-null, is an environment variable to set for the command
@@ -1430,21 +1429,21 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private static void printUsage() {
 		//@formatter:off
 		System.err.println("\n" + 
-			"USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n\n" +
-			"                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
-			"                stop       </datadir-path> [--force]\n" +
-			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
-			"                dropuser   </datadir-path> <username>\n" +
-			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
-			"                resetpassword   <username>\n" +
-			"                changeprivilege <username> admin|user\n" + 
-			"\n" + 
-			"Global options:\n" +
-			"   --port|-p <portnum>\n" + 
-			"   --user|-u <username>\n" + 
-			"   --cert </certfile-path>\n" +
-			"\n" +
-			"NOTE: Options with values may also be specified using the form: --option=value\n");
+				"USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n\n" +
+				"                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
+				"                stop       </datadir-path> [--force]\n" +
+				"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
+				"                dropuser   </datadir-path> <username>\n" +
+				"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
+				"                resetpassword   <username>\n" +
+				"                changeprivilege <username> admin|user\n" + 
+				"\n" + 
+				"Global options:\n" +
+				"   --port|-p <portnum>\n" + 
+				"   --user|-u <username>\n" + 
+				"   --cert </certfile-path>\n" +
+				"\n" +
+				"NOTE: Options with values may also be specified using the form: --option=value\n");
 		//@formatter:on
 	}
 
@@ -1521,7 +1520,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			try {
 				while ((line = shellOutput.readLine()) != null) {
 					if (!suppressOutput) {
-						System.out.println(line);
+						System.out.println(" " + line);
 					}
 				}
 			}
