@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,12 @@ public class MDVCall extends MDMemberFunctionInfo {
 		// also "virtual" but "virtual" does not get printed.
 		setThunk();
 		callIndex = new MDEncodedNumber(dmang);
+	}
+
+	@Override
+	public String getModifier() {
+		// TODO: Future specialization on 16-bit or 32plus
+		return getNameModifier_32PlusBitModel();
 	}
 
 	@Override
@@ -197,8 +203,6 @@ public class MDVCall extends MDMemberFunctionInfo {
 		}
 		// TODO evaluate whether parseInternal() or parse.
 		super.parseInternal();
-		// TODO: Future specialization on 16-bit or 32plus
-		nameModifier = getNameModifier_32PlusBitModel();
 	}
 }
 

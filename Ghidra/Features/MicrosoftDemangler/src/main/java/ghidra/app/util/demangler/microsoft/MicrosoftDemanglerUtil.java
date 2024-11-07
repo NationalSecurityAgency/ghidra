@@ -50,22 +50,27 @@ public class MicrosoftDemanglerUtil {
 	 * is not appropriate for {@link MDDataType} and some other types of {@link MDParsableItem}
 	 * @param item the item to convert
 	 * @param mangled the original mangled string
+	 * @param originalDemangled the original demangled string
 	 * @return the {@link DemangledObject} result
 	 * @throws DemangledException up issue converting to a {@link DemangledObject}
 	 */
-	static DemangledObject convertToDemangledObject(MDParsableItem item, String mangled)
+	static DemangledObject convertToDemangledObject(MDParsableItem item, String mangled,
+			String originalDemangled)
 			throws DemangledException {
-		return processItem(item, mangled, item.toString());
+		return processItem(item, mangled, originalDemangled);
 	}
 
 	/**
-	 * Method to convert an {@link MDDataType} into a {@link DemangledDataType}
+	 * Method to convert an {@link MDDataType} into a {@link DemangledDataType}.  Demangler
+	 * needs to have already run to process the type before calling this method
 	 * @param type the type to convert
-	 * @param mangled the original mangled string
+	 * @param mangled the mangled string
+	 * @param originalDemangled the original demangled string
 	 * @return the result
 	 */
-	static DemangledDataType convertToDemangledDataType(MDDataType type, String mangled) {
-		return processDataType(null, type, mangled, type.toString());
+	static DemangledDataType convertToDemangledDataType(MDDataType type, String mangled,
+			String originalDemangled) {
+		return processDataType(null, type, mangled, originalDemangled);
 	}
 
 	//==============================================================================================
@@ -121,14 +126,8 @@ public class MicrosoftDemanglerUtil {
 			}
 		}
 		else if (qual.isAnon()) {
-			// Instead of using the standard qual.toString() method, which returns
-			// "`anonymous namespace'" for anonymous qualifiers, we use qual.getAnonymousName()
-			// which will have the underlying anonymous name of the form "A0xfedcba98" to create
-			// a standardized anonymous name that is distinguishable from other anonymous names.
-			// The standardized name comes from createStandardAnonymousNamespaceNode().  This
-			// is especially important when there are sibling anonymous names.
-			String anon = MDMangUtils.createStandardAnonymousNamespaceNode(qual.getAnonymousName());
-			demangled = new DemangledNamespaceNode(mangled, qual.toString(), anon);
+			String orig = qual.getAnonymousName();
+			demangled = new DemangledNamespaceNode(mangled, orig, qual.toString());
 		}
 		else if (qual.isInterface()) {
 			// TODO: need to do better; setting namespace for now

@@ -148,9 +148,7 @@ public class MDObjectCPP extends MDObject {
 					typeInfo.setTypeCast();
 				}
 				typeInfo.parse();
-				if (!typeInfo.getNameModifier().isEmpty()) {
-					qualifiedName.setNameModifier(typeInfo.getNameModifier());
-				}
+				qualifiedName.setNameModifier(typeInfo);
 				if (qualifiedName.isTypeCast()) {
 					applyFunctionReturnTypeToTypeCastOperatorName();
 				}
