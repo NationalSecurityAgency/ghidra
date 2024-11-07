@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,6 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 		removeWorkPanel();
 
 		editor = createEditor(pluginTool, allowedTypes);
-		editor.setPreferredDataTypeManager(dtm);
 		editor.setConsumeEnterKeyPress(false); // we want to handle Enter key presses
 		editor.addCellEditorListener(new CellEditorListener() {
 			@Override
@@ -110,7 +109,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 
 	protected DataTypeSelectionEditor createEditor(PluginTool tool,
 			AllowedDataTypes allowedDataTypes) {
-		return new DataTypeSelectionEditor(tool, allowedDataTypes);
+		return new DataTypeSelectionEditor(dtm, tool, allowedDataTypes);
 	}
 
 	protected JComponent createEditorPanel(DataTypeSelectionEditor dtEditor) {

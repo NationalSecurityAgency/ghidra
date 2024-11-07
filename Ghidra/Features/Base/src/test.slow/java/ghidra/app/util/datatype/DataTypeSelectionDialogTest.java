@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,7 +125,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 				@Override
 				protected DataTypeSelectionEditor createEditor(PluginTool pluginTool,
 						AllowedDataTypes allowedDataTypes) {
-					return new DataTypeSelectionEditor(pluginTool, allowedDataTypes) {
+					return new DataTypeSelectionEditor(null, pluginTool, allowedDataTypes) {
 
 						@Override
 						protected DropDownSelectionTextField<DataType> createDropDownSelectionTextField(
@@ -1207,8 +1207,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			new DefaultHighlighter.DefaultHighlightPainter(Palette.YELLOW));
 
 		JPanel editorPanel = new JPanel(new BorderLayout());
-		DataTypeSelectionEditor editor = new DataTypeSelectionEditor(tool, AllowedDataTypes.ALL);
-		editor.setPreferredDataTypeManager(program.getDataTypeManager());
+		DataTypeSelectionEditor editor =
+			new DataTypeSelectionEditor(program.getDataTypeManager(), tool, AllowedDataTypes.ALL);
 
 		editorPanel.add(panelUpdateField, BorderLayout.SOUTH);
 		editorPanel.add(editor.getEditorComponent(), BorderLayout.NORTH);
