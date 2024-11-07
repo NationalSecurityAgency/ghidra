@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1434,7 +1434,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			"                stop       </datadir-path> [--force]\n" +
 			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
 			"                dropuser   </datadir-path> <username>\n" +
-			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
+			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
 			"                resetpassword   <username>\n" +
 			"                changeprivilege <username> admin|user\n" + 
 			"\n" + 
