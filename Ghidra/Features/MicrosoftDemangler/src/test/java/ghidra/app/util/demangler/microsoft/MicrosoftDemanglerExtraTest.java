@@ -179,6 +179,29 @@ public class MicrosoftDemanglerExtraTest extends AbstractGenericTest {
 	//==============================================================================================
 
 	@Test
+	public void testVxTableAnonymousNsInOwnerAndBackref() throws Exception {
+		String mangled = "??_7a@?A0xfedcba98@b@@6B012@01@@";
+		String mTruth =
+			"const b::`anonymous namespace'::a::`vftable'{for `b::A0xfedcba98::a's `A0xfedcba98::a'}";
+		String gTruth =
+			"const b::_anon_FEDCBA98::a::`vftable'{for `b::_anon_FEDCBA98::a's `_anon_FEDCBA98::a'}";
+
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
+
+		MicrosoftMangledContext context =
+			demangler.createMangledContext(mangled, null, program32, address32);
+		DemangledObject obj = demangler.demangle(context);
+
+		String originalDemangled = obj.getOriginalDemangled();
+		assertEquals(mTruth, originalDemangled);
+
+		String demangled = demangler.getMdItem().toString();
+		assertEquals(gTruth, demangled);
+	}
+
+	//==============================================================================================
+
+	@Test
 	//This test checks that we can provide a mangled string for a function namespace.
 	// The return String from getOriginalMangled() is not null only for this special
 	// circumstance.  So, in normal processing, we should check it for non-null to

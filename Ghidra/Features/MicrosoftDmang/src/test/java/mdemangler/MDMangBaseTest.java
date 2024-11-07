@@ -4664,6 +4664,25 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	// vbtable with anonymous namespace
+	@Test
+	public void testUnderscore7AnonNs() throws Exception {
+		mangled = "??_7a@?A0xfedcba98@b@@6B@";
+		msTruth = "const b::`anonymous namespace'::a::`vftable'";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// vbtable with anonymous namespace
+	@Test
+	public void testUnderscore7AnonNsAndBackref() throws Exception {
+		mangled = "??_7a@?A0xfedcba98@b@@6B012@01@@";
+		msTruth =
+			"const b::`anonymous namespace'::a::`vftable'{for `b::A0xfedcba98::a's `A0xfedcba98::a'}";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
 	@Test
 	public void testSpecialNames_R() throws Exception {
 		mangled = "??_R0X@8";

@@ -40,6 +40,8 @@ import mdemangler.template.MDTemplateArgumentsList;
 public class MDMang {
 	public static final char DONE = MDCharacterIterator.DONE;
 
+	private MDOutputOptions outputOptions = new MDOutputOptions();
+
 	protected int architectureSize = 32;
 	protected boolean isFunction = false;
 
@@ -110,7 +112,13 @@ public class MDMang {
 	}
 
 	//==============================================================================================
-	// Control
+	// Output Options
+	public MDOutputOptions getOutputOptions() {
+		return outputOptions;
+	}
+
+	//==============================================================================================
+	// Demangling options
 
 	/**
 	 * Controls whether an exception is thrown if there are remaining characters after demangling.
