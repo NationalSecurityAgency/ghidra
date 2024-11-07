@@ -490,11 +490,30 @@ public abstract class ThemeManager {
 
 	/**
 	 * Returns true if the given UI object is using the Aqua Look and Feel.
-	 * @param UI the UI to examine.
+	 * @param UI the UI to examine.  (This parameter is ignored)
 	 * @return true if the UI is using Aqua
+	 * @deprecated use {@link #isUsingAquaUI()}
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public boolean isUsingAquaUI(ComponentUI UI) {
 		return getLookAndFeelType() == LafType.MAC;
+	}
+
+	/**
+	 * Returns true if the current UI is using the Aqua Look and Feel.
+	 * @return true if the UI is using Aqua
+	 */
+	public boolean isUsingAquaUI() {
+		return getLookAndFeelType() == LafType.MAC;
+	}
+
+	/**
+	 * Returns true if the current UI is the FlatLaf Dark or FlatLaf Light Look and Feel.
+	 * @return true if the current UI is the FlatLaf Dark or FlatLaf Light Look and Feel 
+	 */
+	public boolean isUsingFlatUI() {
+		return getLookAndFeelType() == LafType.FLAT_DARK ||
+			getLookAndFeelType() == LafType.FLAT_LIGHT;
 	}
 
 	/**
@@ -618,7 +637,7 @@ public abstract class ThemeManager {
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
 		return switch (OS) {
 			case MAC_OS_X -> new MacTheme();
-			case WINDOWS -> new WindowsTheme(); 
+			case WINDOWS -> new WindowsTheme();
 			default -> new FlatLightTheme();
 		};
 	}
