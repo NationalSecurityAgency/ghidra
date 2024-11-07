@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.joern</groupId>
+  <artifactId>ghidra</artifactId>
+  <version>__VERSION__</version>
+  <packaging>jar</packaging>
+  <description>ghidra re-release for qwiet / shiftleft</description>
+  <url>https://github.com/ShiftLeftSecurity/ghidra/</url>
+  <licenses>
+      <license>
+          <name>Apache-2.0</name>
+          <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+          <distribution>repo</distribution>
+      </license>
+  </licenses>
+  <name>ghidra</name>
+  <scm>
+      <url>https://github.com/ShiftLeftSecurity/ghidra</url>
+      <connection>scm:git@github.com:ShiftLeftSecurity/ghidra.git</connection>
+  </scm>
+  <developers>
+      <developer>
+          <id>itsacoderepo</id>
+          <name>Niko Schmidt</name>
+          <url>https://github.com/itsacoderepo</url>
+          <email>niko@shiftleft.io</email>
+      </developer>
+      <developer>
+          <id>mpollmeier</id>
+          <name>Michael Pollmeier</name>
+          <url>http://www.michaelpollmeier.com</url>
+          <email>michael@michaelpollmeier.com</email>
+      </developer>
+  </developers>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.6.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>sonatype-central-joern</publishingServerId>
+          <deploymentName>ghidra</deploymentName>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
