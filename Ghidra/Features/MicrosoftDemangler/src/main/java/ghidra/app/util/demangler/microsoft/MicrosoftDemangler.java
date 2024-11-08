@@ -112,7 +112,7 @@ public class MicrosoftDemangler implements Demangler {
 			if (mdType == null) {
 				return null;
 			}
-			String originalDemangled = item.toString();
+			String originalDemangled = mdType.toString();
 			demangler.getOutputOptions().setUseEncodedAnonymousNamespace(true);
 			dataType = MicrosoftDemanglerUtil.convertToDemangledDataType(mdType, mangled,
 				originalDemangled);
