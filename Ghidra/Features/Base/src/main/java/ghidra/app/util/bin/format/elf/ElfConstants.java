@@ -213,7 +213,7 @@ public interface ElfConstants {
 	public static final short EM_SH = 42;
 	/** SPARC v9 64-bit */
 	public static final short EM_SPARCV9 = 43;
-	/**Siemens Tricore */
+	/**Infineon Tricore */
 	public static final short EM_TRICORE = 44;
 	/**Argonaut RISC Core */
 	public static final short EM_ARC = 45;
