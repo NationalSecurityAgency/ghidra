@@ -36,7 +36,7 @@ cp ../pom.xml.template pom.xml
 sed -i s/__VERSION__/$CUSTOM_RELEASE_VERSION/ pom.xml
 
 # deploy to sonatype central
-mvn release
+mvn deploy
 
 echo "release is now published to sonatype central. next step: log into https://central.sonatype.com/publishing/deployments and publish it to maven central"
 echo "once it's synchronised to maven central (repo1), update the ghidra version in 'joern/joern-cli/frontends/ghidra2cpg/build.sbt'"
