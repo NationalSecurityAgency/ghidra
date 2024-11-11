@@ -39,5 +39,5 @@ sed -i s/__VERSION__/$CUSTOM_RELEASE_VERSION/ pom.xml
 mvn deploy
 
 echo "release is now published to sonatype central. next step: log into https://central.sonatype.com/publishing/deployments and publish it to maven central"
-echo "once it's synchronised to maven central (repo1), update the ghidra version in 'joern/joern-cli/frontends/ghidra2cpg/build.sbt'"
+echo "once it's synchronised to maven central (repo1), update the ghidra version in 'joern/project/Versions.scala' to $CUSTOM_RELEASE_VERSION"
 echo "don't forget to commit and push the local changes in this repo to https://github.com/joernio/ghidra"
