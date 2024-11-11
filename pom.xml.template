@@ -43,7 +43,8 @@
         <extensions>true</extensions>
         <configuration>
           <publishingServerId>sonatype-central-joern</publishingServerId>
-          <deploymentName>ghidra</deploymentName>
+          <deploymentName>ghidra-__VERSION__</deploymentName>
+          <autoPublish>true</autoPublish>
         </configuration>
       </plugin>
       <plugin>
