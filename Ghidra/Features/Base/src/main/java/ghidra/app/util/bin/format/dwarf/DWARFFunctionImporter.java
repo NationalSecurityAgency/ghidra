@@ -367,7 +367,7 @@ public class DWARFFunctionImporter {
 			// because this is a zero-length data type (ie. array[0]),
 			// don't create a variable at the location since it will prevent other elements
 			// from occupying the same offset
-			appendComment(address, CodeUnit.PRE_COMMENT,
+			appendComment(address, CommentType.PRE,
 				"Zero length variable: %s: %s".formatted(name, dataType.getDisplayName()), "\n");
 
 			return;
@@ -384,13 +384,13 @@ public class DWARFFunctionImporter {
 		}
 
 		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-			appendComment(address, CodeUnit.EOL_COMMENT,
+			appendComment(address, CommentType.EOL,
 				"Unsupported dynamic data type: " + dataType, "\n");
 			dataType = Undefined.getUndefinedDataType(1);
 		}
 		DWARFDataInstanceHelper dih = new DWARFDataInstanceHelper(currentProgram);
 		if (!dih.isDataTypeCompatibleWithAddress(dataType, address)) {
-			appendComment(address, CodeUnit.EOL_COMMENT,
+			appendComment(address, CommentType.EOL,
 				"Could not place DWARF static variable %s: %s @%s because existing data type conflicts."
 						.formatted(name, dataType.getName(), address),
 				"\n");
@@ -414,8 +414,7 @@ public class DWARFFunctionImporter {
 		}
 
 		if (globalVar.sourceInfo != null) {
-			appendComment(address, CodeUnit.EOL_COMMENT, globalVar.sourceInfo.getDescriptionStr(),
-				"\n");
+			appendComment(address, CommentType.EOL, globalVar.sourceInfo.getDescriptionStr(), "\n");
 		}
 	}
 
@@ -437,7 +436,7 @@ public class DWARFFunctionImporter {
 			if (importOptions.isOutputLexicalBlockComments()) {
 				boolean disjoint = blockRanges.getListCount() > 1;
 				DWARFName dni = prog.getName(diea);
-				appendComment(blockStart, CodeUnit.PRE_COMMENT,
+				appendComment(blockStart, CommentType.PRE,
 					"Begin: %s%s".formatted(dni.getName(), disjoint ? " - Disjoint" : ""), "\n");
 			}
 		}
@@ -471,22 +470,23 @@ public class DWARFFunctionImporter {
 			long inlineFuncLen = range.getLength();
 			boolean isShort = inlineFuncLen < INLINE_FUNC_SHORT_LEN;
 			if (isShort) {
-				appendComment(range.getMinAddress(), CodeUnit.EOL_COMMENT,
+				appendComment(range.getMinAddress(), CommentType.EOL,
 					"inline " + funcDef.getPrototypeString(), "; ");
 			}
 			else {
-				appendComment(range.getMinAddress(), CodeUnit.PRE_COMMENT,
+				appendComment(range.getMinAddress(), CommentType.PRE,
 					"Begin: inline " + funcDef.getPrototypeString(), "\n");
 			}
 		}
 	}
 
-	private void appendComment(Address address, int commentType, String comment, String sep) {
+	private void appendComment(Address address, CommentType commentType, String comment,
+			String sep) {
 		DWARFUtil.appendComment(currentProgram, address, commentType, "", comment, sep);
 	}
 
 	private void appendPlateComment(Address address, String prefix, String comment) {
-		DWARFUtil.appendComment(currentProgram, address, CodeUnit.PLATE_COMMENT, prefix, comment,
+		DWARFUtil.appendComment(currentProgram, address, CommentType.PLATE, prefix, comment,
 			"\n");
 	}
 
@@ -572,7 +572,7 @@ public class DWARFFunctionImporter {
 
 				String locationInfo = DWARFSourceInfo.getDescriptionStr(diea);
 				if (locationInfo != null) {
-					appendComment(address, CodeUnit.EOL_COMMENT, locationInfo, "; ");
+					appendComment(address, CommentType.EOL, locationInfo, "; ");
 				}
 			}
 			catch (InvalidInputException e) {

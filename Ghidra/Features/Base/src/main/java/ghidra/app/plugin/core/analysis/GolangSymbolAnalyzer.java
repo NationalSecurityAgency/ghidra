@@ -302,13 +302,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					functionSignatureFromMethod++;
 				}
 
-				GoParamStorageAllocator storageAllocator = goBinary.newStorageAllocator();
-
-				boolean regAbi = !storageAllocator.isAbi0Mode() && !goBinary.isGolangAbi0Func(func);
-				String ccName = regAbi ? abiIntCCName : null;
-
-				GoFunctionFixup ff =
-					new GoFunctionFixup(func, funcDefResult.funcDef(), ccName, storageAllocator);
+				GoFunctionFixup ff = new GoFunctionFixup(func, funcDefResult.funcDef(),
+					goBinary.getCallingConventionFor(funcdata), goBinary.newStorageAllocator());
 
 				try {
 					ff.apply();
@@ -933,7 +928,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		@Override
 		public boolean applyTo(Program program, TaskMonitor monitor) {
-			if (goBinary.newStorageAllocator().isAbi0Mode()) {
+			if (!goBinary.getRegInfo().hasAbiInternalParamRegisters()) {
 				// If abi0 mode, don't even bother because currently only handles rtti passed via
 				// register.
 				return true;

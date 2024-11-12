@@ -304,7 +304,10 @@ public abstract class GoType implements StructureMarkup<GoType>, StructureVerifi
 
 	/**
 	 * Converts a golang RTTI type structure into a Ghidra data type.
+	 * <p>
+	 * This default implementation just creates an opaque blob of the appropriate size
 	 * 
+	 * @param goTypes {@link GoTypeManager} 
 	 * @return {@link DataType} that represents the golang type
 	 * @throws IOException if error getting name of the type
 	 */

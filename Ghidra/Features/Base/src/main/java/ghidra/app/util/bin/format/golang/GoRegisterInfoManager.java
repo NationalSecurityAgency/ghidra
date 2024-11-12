@@ -17,13 +17,9 @@ package ghidra.app.util.bin.format.golang;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
@@ -143,7 +139,6 @@ public class GoRegisterInfoManager {
 		Element zeroRegElem = regInfoElem.getChild("zero_register");
 		Element duffZeroElem = regInfoElem.getChild("duffzero");
 		Element closureContextElem = regInfoElem.getChild("closurecontext");
-		Element gcWriteBarrierElem = regInfoElem.getChild("gcwritebarrier");
 		if (intRegsElem == null || floatRegsElem == null || stackElem == null ||
 			goRoutineElem == null || zeroRegElem == null || duffZeroElem == null ||
 			closureContextElem == null) {
