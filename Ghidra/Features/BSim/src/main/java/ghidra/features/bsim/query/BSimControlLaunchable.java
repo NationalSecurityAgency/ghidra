@@ -97,7 +97,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			Set.of(DN_OPTION);
 	private static final Set<String> DROPUSER_OPTIONS = Set.of();
 	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
-		AUTH_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
+		AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
 	
 	//@formatter:on
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
@@ -1435,7 +1435,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			"                stop       </datadir-path> [--force]\n" +
 			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
 			"                dropuser   </datadir-path> <username>\n" +
-			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
+			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
 			"                resetpassword   <username>\n" +
 			"                changeprivilege <username> admin|user\n" + 
 			"\n" + 
