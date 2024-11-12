@@ -98,7 +98,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private static final Set<String> DROPUSER_OPTIONS = Set.of();
 	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
 		AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
-	
+
 	//@formatter:on
 	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
 	static {
@@ -671,8 +671,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 
 	/**
 	 * Invoke an external executable/command, display the output and error streams on the console,
-	 * the exit condition of the command is returned.  If the exit condition indicates and error,
-	 * but a line of the error stream matches a provided String, the error is suppressed 
+	 * and return the exit value of the command.  
 	 * @param directory	 is the working directory for the command
 	 * @param command    is the command-line (including arguments)
 	 * @param envvar     if non-null, is an environment variable to set for the command
@@ -692,8 +691,9 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		Process process = processBuilder.start();
 
 		new IOThread(process.getInputStream(), true).start();
-		IOThread errThread = new IOThread(process.getErrorStream(), true);
+		IOThread errThread = new IOThread(process.getErrorStream(), false);
 		errThread.start();
+		errThread.join(); // Ensure all stderr output is processed to avoid mixed-up console output
 
 		int retval = process.waitFor();
 		return retval;
@@ -1521,7 +1521,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			try {
 				while ((line = shellOutput.readLine()) != null) {
 					if (!suppressOutput) {
-						System.out.println(line);
+						System.out.println(" " + line);
 					}
 				}
 			}
