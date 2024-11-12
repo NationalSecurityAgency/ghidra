@@ -1,0 +1,139 @@
+@ ["all","Types","func(error)","Params",0,"Name"]
+- "err"
++ ""
+@ ["all","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["darwin-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["darwin-arm64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["darwin-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-arm64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-386","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-386-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-arm","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-arm64","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-arm64","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-arm64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-386","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-386","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-386","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["windows-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-386-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["windows-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}

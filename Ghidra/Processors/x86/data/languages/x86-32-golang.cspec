@@ -52,6 +52,53 @@
 		</prototype>
 	</default_proto>
 	
+	<prototype name="gcwrite_batch" extrapop="4" stackshift="4">
+		<input>
+			<pentry minsize="1" maxsize="4">
+				<register name="EDI"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="4">
+				<register name="EDI"/>
+			</pentry>
+		</output>
+      
+		<unaffected>
+			<register name="EAX"/>
+			<register name="EBX"/>
+			<register name="ECX"/>
+			<register name="EDX"/>
+			<register name="ESI"/>
+			<register name="EBP"/>
+			<register name="ESP"/>
+		</unaffected>
+	</prototype>
+
+	<prototype name="gcwrite_buffered" extrapop="4" stackshift="4">
+		<input>
+			<pentry minsize="1" maxsize="4">
+				<register name="EAX"/>
+			</pentry>
+			<pentry minsize="1" maxsize="4">
+				<register name="EDI"/>
+			</pentry>
+		</input>
+      
+		<output></output>
+      
+		<unaffected>
+			<register name="EAX"/>
+			<register name="EBX"/>
+			<register name="ECX"/>
+			<register name="EDX"/>
+			<register name="ESI"/>
+			<register name="EBP"/>
+			<register name="ESP"/>
+		</unaffected>
+	</prototype>
+	
 	<prototype name="duffzero" extrapop="4" stackshift="4">
 		<input>
 			<pentry minsize="1" maxsize="4">

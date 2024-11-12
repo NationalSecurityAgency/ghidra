@@ -20,14 +20,12 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.GoConstants;
-import ghidra.app.util.bin.format.golang.rtti.types.GoMethod.GoMethodInfo;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.sourcemap.SourceFileManager;
@@ -62,6 +60,10 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	private long nameoff;	// uint32
 
 	//private long args; // size of arguments
+
+	@FieldMapping
+	@MarkupReference("getDeferreturnAddress")
+	private long deferreturn;
 
 	@FieldMapping
 	private long pcfile;	// offset in moduledata.pctab where file info starts
@@ -157,6 +159,10 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 		return programContext.getProgram().getFunctionManager().getFunctionAt(addr);
 	}
 
+	public Address getDeferreturnAddress() {
+		return deferreturn != 0 ? getFuncAddress().add(deferreturn) : null;
+	}
+
 	private long getPcDataStartOffset(int tableIndex) {
 		return context.getStructureLength() + (4 /*size(int32)*/ * tableIndex);
 	}
@@ -243,23 +249,6 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	public String recoverFunctionSignature() throws IOException {
 		RecoveredSignature sig = RecoveredSignature.read(this, programContext);
 		return sig.toString();
-	}
-
-	/**
-	 * Attempts to return a {@link GoMethodInfo} for this function, based on this
-	 * function's inclusion in a golang interface as a method.
-	 * 
-	 * @return {@link GoMethodInfo}
-	 */
-	public GoMethodInfo findMethodInfo() {
-		for (MethodInfo methodInfo : programContext.getMethodInfoForFunction(funcAddress)) {
-			if (methodInfo instanceof GoMethodInfo gmi) {
-				if (gmi.isTfn(funcAddress)) {
-					return gmi;
-				}
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -409,11 +398,8 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 							sfman.addSourceFile(sourceFile);
 							sfman.addSourceMapEntry(sourceFile, lineNum, startAddr, len);
 						}
-						catch (AddressOverflowException e) {
+						catch (AddressOverflowException | IllegalArgumentException e) {
 							Msg.error(this, "Failed to add source file mapping", e);
-						}
-						catch (IllegalArgumentException e) {
-							// overlapping entry
 						}
 					}
 				}
@@ -461,29 +447,40 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 
 	@Override
 	public String getStructureName() throws IOException {
-		return getName();
+		return getSymbolName().asString();
 	}
-
+	
 	@Override
 	public String getStructureNamespace() throws IOException {
 		return getSymbolName().packagePath();
-	}	
+	}
+
+	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s___funcdata".formatted(getStructureName());
+	}
 	
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
 		if (npcdata > 0) {
-			ArrayDataType pcdataArrayDT = new ArrayDataType(programContext.getUint32DT(), npcdata,
-				-1, programContext.getDTM());
+			ArrayDataType pcdataArrayDT = new ArrayDataType(
+				programContext.getGoTypes().getUint32DT(), npcdata, -1, programContext.getDTM());
 			Address addr = context.getStructureAddress().add(getPcDataStartOffset(0));
 			session.markupAddress(addr, pcdataArrayDT);
 			session.labelAddress(addr, getStructureLabel() + "___pcdata", getStructureNamespace());
 		}
 		if (nfuncdata > 0) {
-			ArrayDataType funcdataArrayDT = new ArrayDataType(programContext.getUint32DT(),
-				nfuncdata, -1, programContext.getDTM());
+			ArrayDataType funcdataArrayDT = new ArrayDataType(
+				programContext.getGoTypes().getUint32DT(), nfuncdata, -1, programContext.getDTM());
 			Address addr = context.getStructureAddress().add(getPcDataStartOffset(npcdata));
 			session.markupAddress(addr, funcdataArrayDT);
-			session.labelAddress(addr, getStructureLabel() + "___funcdata", getStructureNamespace());
+			session.labelAddress(addr, getStructureLabel() + "___array", getStructureNamespace());
+		}
+		Address deferreturnAddr = getDeferreturnAddress();
+		if (deferreturnAddr != null) {
+			GoSymbolName funcName = getSymbolName();
+			session.labelAddress(deferreturnAddr, funcName.asString() + "_deferreturn",
+				funcName.packagePath());
 		}
 	}
 
@@ -498,14 +495,13 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	 * Instead of data types, only the size and limited grouping of structure/array parameters
 	 * is recoverable.
 	 *   
-	 * @param returnType return type of the function (currently just undefined) 
 	 * @param name name of the function
 	 * @param args list of recovered arguments
 	 * @param partial boolean flag, if true there was an argument that was marked as partial
 	 * @param error boolean flag, if true there was an error reading the argument info
 	 *
 	 */
-	record RecoveredSignature(DataType returnType, String name, List<RecoveredArg> args,
+	record RecoveredSignature(String name, List<RecoveredArg> args,
 			boolean partial, boolean error) {
 
 		private static final int ARGINFO_ENDSEQ = 0xff;
@@ -517,8 +513,8 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 		public static RecoveredSignature read(GoFuncData funcData, GoRttiMapper goBinary)
 				throws IOException {
 			RecoveredArg args = readArgs(funcData, goBinary);
-			return new RecoveredSignature(DataType.DEFAULT, funcData.getName(), args.subArgs,
-				args.hasPartialFlag(), args.partial);
+			return new RecoveredSignature(funcData.getName(), args.subArgs, args.hasPartialFlag(),
+				args.partial);
 		}
 
 		public static RecoveredArg readArgs(GoFuncData funcData, GoRttiMapper goBinary)
@@ -580,19 +576,17 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 				sb.append("[error] ");
 			}
 
-			sb.append(returnType != null ? returnType.getName() : "???");
-			sb.append(" ").append(name).append("(");
+			sb.append("func ").append(name).append("(");
 
-			boolean first = true;
-			for (RecoveredArg arg : args) {
-				if (!first) {
+			for (int i = 0; i < args.size(); i++) {
+				RecoveredArg arg = args.get(i);
+				if (i != 0) {
 					sb.append(", ");
 				}
-				first = false;
 				arg.concatString(sb);
 			}
 
-			sb.append(")");
+			sb.append(") ???");
 
 			return sb.toString();
 		}

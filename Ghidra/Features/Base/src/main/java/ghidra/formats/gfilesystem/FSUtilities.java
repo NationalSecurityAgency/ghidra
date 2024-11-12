@@ -34,7 +34,9 @@ import docking.widgets.OptionDialog;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileType;
-import ghidra.util.*;
+import ghidra.util.HashUtilities;
+import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -586,19 +588,19 @@ public class FSUtilities {
 	}
 
 	/**
-	 * Helper method to invoke close() on a Closeable without having to catch
+	 * Helper method to invoke close() on a AutoCloseable without having to catch
 	 * an IOException.
 	 * 
-	 * @param c {@link Closeable} to close
+	 * @param c {@link AutoCloseable} to close
 	 * @param msg optional msg to log if exception is thrown, null is okay
 	 */
-	public static void uncheckedClose(Closeable c, String msg) {
+	public static void uncheckedClose(AutoCloseable c, String msg) {
 		try {
 			if (c != null) {
 				c.close();
 			}
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			Msg.warn(FSUtilities.class, Objects.requireNonNullElse(msg, "Problem closing object"),
 				e);
 		}

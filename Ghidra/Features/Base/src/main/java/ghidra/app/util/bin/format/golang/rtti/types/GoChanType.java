@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.Set;
 
+import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
@@ -46,26 +47,25 @@ public class GoChanType extends GoType {
 	 */
 	@Markup
 	public GoType getElement() throws IOException {
-		return programContext.getGoType(elem);
+		return programContext.getGoTypes().getType(elem);
 	}
 
 	@Override
-	public DataType recoverDataType() throws IOException {
-		GoType chanGoType = programContext.getChanGoType();
+	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+		GoType chanGoType = goTypes.getChanGoType();
 		if (chanGoType == null) {
 			// if we couldn't find the underlying/hidden runtime.hchan struct type, just return
 			// a void*
 			return programContext.getDTM().getPointer(null);
 		}
 
-		DataType chanDT = programContext.getRecoveredType(chanGoType);
-		Pointer ptrChanDt = programContext.getDTM().getPointer(chanDT);
+		DataType chanDT = goTypes.getGhidraDataType(chanGoType);
+		Pointer ptrChanDt = goTypes.getDTM().getPointer(chanDT);
 		if (typ.getSize() != ptrChanDt.getLength()) {
 			Msg.warn(this, "Size mismatch between chan type and recovered type");
 		}
-		TypedefDataType typedef =
-			new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
-				getUniqueTypename(), ptrChanDt, programContext.getDTM());
+		TypedefDataType typedef = new TypedefDataType(goTypes.getCP(this),
+			goTypes.getTypeName(this), ptrChanDt, goTypes.getDTM());
 		return typedef;
 
 	}
@@ -80,6 +80,11 @@ public class GoChanType extends GoType {
 			element.discoverGoTypes(discoveredTypes);
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isValid() {
+		return super.isValid() && typ.getSize() == programContext.getPtrSize();
 	}
 
 }

@@ -1,0 +1,396 @@
+@ ["all","Funcs","crypto/x509.checkSignature","Params",4]
+  {"DataType":"crypto.PublicKey","Name":"publicKey"}
++ {"DataType":"bool","Name":"allowSHA1"}
+]
+@ ["all","Funcs","encoding/gob.(*Decoder).decIgnoreOpFor","Params",3]
+  {"DataType":"map[encoding/gob.typeId]*encoding/gob.decOp","Name":"inProgress"}
++ {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","encoding/pem.decodeError"]
+- {"Flags":0,"Params":[{"DataType":"[]byte","Name":"data"},{"DataType":"[]byte","Name":"rest"}],"Results":[{"DataType":"*encoding/pem.Block","Name":""},{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","encoding/xml.(*Decoder).unmarshal","Params",3]
+  {"DataType":"*encoding/xml.StartElement","Name":"start"}
++ {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","encoding/xml.(*Decoder).unmarshalPath","Params",5]
+  {"DataType":"*encoding/xml.StartElement","Name":"start"}
++ {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","net/http/httptest.(*Server).forgetConn"]
+- {"Flags":4,"Params":[{"DataType":"*net/http/httptest.Server","Name":"s"},{"DataType":"net.Conn","Name":"c"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.isWindowsAccessDenied"]
+- {"Flags":0,"Params":[{"DataType":"error","Name":"err"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","archive/tar.readSpecialFile"]
++ {"Flags":0,"Params":[{"DataType":"io.Reader","Name":"r"}],"Results":[{"DataType":"[]byte","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","crypto/rand.batched"]
++ {"Flags":0,"Params":[{"DataType":"func([]byte) error","Name":"f"},{"DataType":"int","Name":"readMax"}],"Results":[{"DataType":"func([]byte) error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/parser.decNestLev"]
++ {"Flags":0,"Params":[{"DataType":"*go/parser.parser","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","go/parser.incNestLev"]
++ {"Flags":0,"Params":[{"DataType":"*go/parser.parser","Name":"p"}],"Results":[{"DataType":"*go/parser.parser","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/types.(*Checker).checkFieldUniqueness"]
++ {"Flags":4,"Params":[{"DataType":"*go/types.Checker","Name":"check"},{"DataType":"*go/types.Named","Name":"base"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","go/types.(*instanceLookup).add"]
++ {"Flags":4,"Params":[{"DataType":"*go/types.instanceLookup","Name":"l"},{"DataType":"*go/types.Named","Name":"inst"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","go/types.(*instanceLookup).lookup"]
++ {"Flags":4,"Params":[{"DataType":"*go/types.instanceLookup","Name":"l"},{"DataType":"*go/types.Named","Name":"inst"}],"Results":[{"DataType":"*go/types.Named","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/types.substVar"]
++ {"Flags":0,"Params":[{"DataType":"*go/types.Var","Name":"v"},{"DataType":"go/types.Type","Name":"typ"}],"Results":[{"DataType":"*go/types.Var","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","io/fs.globWithLimit"]
++ {"Flags":0,"Params":[{"DataType":"io/fs.FS","Name":"fsys"},{"DataType":"string","Name":"pattern"},{"DataType":"int","Name":"depth"}],"Results":[{"DataType":"[]string","Name":"matches"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","net/http/httputil.cleanQueryParams"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"s"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http/httputil.ishex"]
++ {"Flags":0,"Params":[{"DataType":"byte","Name":"c"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","path/filepath.globWithLimit"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"pattern"},{"DataType":"int","Name":"depth"}],"Results":[{"DataType":"[]string","Name":"matches"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","regexp/syntax.(*parser).calcSize"]
++ {"Flags":4,"Params":[{"DataType":"*regexp/syntax.parser","Name":"p"},{"DataType":"*regexp/syntax.Regexp","Name":"re"},{"DataType":"bool","Name":"force"}],"Results":[{"DataType":"int64","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","regexp/syntax.(*parser).checkLimits"]
++ {"Flags":4,"Params":[{"DataType":"*regexp/syntax.parser","Name":"p"},{"DataType":"*regexp/syntax.Regexp","Name":"re"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","regexp/syntax.(*parser).checkSize"]
++ {"Flags":4,"Params":[{"DataType":"*regexp/syntax.parser","Name":"p"},{"DataType":"*regexp/syntax.Regexp","Name":"re"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.metricsLock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.metricsUnlock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.isWindowsRetryable"]
++ {"Flags":0,"Params":[{"DataType":"error","Name":"err"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(error)","Params",0,"Name"]
+- "err"
++ ""
+@ ["all","Types","go/internal/gcimporter.ident","Fields",0,"DataType"]
+- "string"
++ "*go/types.Package"
+@ ["all","Types","go/parser.bailout","Fields",0]
+[
++ {"DataType":"go/token.Pos","Name":"pos"}
++ {"DataType":"string","Name":"msg"}
+]
+@ ["all","Types","go/parser.parser","Fields",17]
+  {"DataType":"[]*go/ast.ImportSpec","Name":"imports"}
++ {"DataType":"int","Name":"nestLev"}
+]
+@ ["all","Types","regexp/syntax.parser","Fields",7]
+  {"DataType":"int","Name":"numRegexp"}
++ {"DataType":"int","Name":"numRunes"}
++ {"DataType":"int64","Name":"repeats"}
+  {"DataType":"map[*regexp/syntax.Regexp]int","Name":"height"}
+@ ["all","Types","regexp/syntax.parser","Fields",10]
+  {"DataType":"map[*regexp/syntax.Regexp]int","Name":"height"}
++ {"DataType":"map[*regexp/syntax.Regexp]int64","Name":"size"}
+]
+@ ["all","Types","runtime.m","Fields",3]
+  {"DataType":"uint32","Name":"divmod"}
++ {"DataType":"uint32","Name":"_"}
+  {"DataType":"uint64","Name":"procid"}
+@ ["all","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","go/types.instanceLookup"]
++ {"Fields":[{"DataType":"map[*go/types.Named][]*go/types.Named","Name":"m"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","runtime.heapStatsDelta"]
++ {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uint64","Name":"tinyAllocCount"},{"DataType":"uint64","Name":"largeAlloc"},{"DataType":"uint64","Name":"largeAllocCount"},{"DataType":"[68]uint64","Name":"smallAllocCount"},{"DataType":"uint64","Name":"largeFree"},{"DataType":"uint64","Name":"largeFreeCount"},{"DataType":"[68]uint64","Name":"smallFreeCount"}],"Kind":"struct","TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallCheck"]
+- {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallPanicked"]
+- {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallV2"]
+- {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallWrap"]
+- {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallWrap1"]
+- {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallWrap2"]
+- {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["amd64","Types","runtime.debugCallWrapArgs"]
+- {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin","Funcs","crypto/rand.getEntropy","Results",0,"DataType"]
+- "bool"
++ "error"
+@ ["darwin","Funcs","crypto/rand.getEntropy","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-amd64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux","Funcs","crypto/rand.batched"]
+- {"Flags":0,"Params":[{"DataType":"func([]byte) bool","Name":"f"},{"DataType":"int","Name":"readMax"}],"Results":[{"DataType":"func([]byte) bool","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","crypto/rand.getRandomBatch","Results",0,"DataType"]
+- "bool"
++ "error"
+@ ["linux","Funcs","crypto/rand.getRandomBatch","Results",0,"Name"]
+- "ok"
++ "err"
+@ ["linux-386","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["windows","Funcs","runtime.cbsLock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows","Funcs","runtime.cbsUnlock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["arm-cgo"]
++ {"Funcs":{},"Types":{"func(context.Context, string, string) net.Conn, error":{"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}}}

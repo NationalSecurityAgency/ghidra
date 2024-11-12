@@ -15,15 +15,18 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import static ghidra.app.util.bin.format.golang.GoConstants.*;
+
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.golang.GoFunctionMultiReturn;
 import ghidra.app.util.bin.format.golang.rtti.GoSlice;
+import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * A {@link GoType} structure that defines a function type.
@@ -39,8 +42,10 @@ public class GoFuncType extends GoType {
 	 */
 	public static FunctionDefinition unwrapFunctionDefinitionPtrs(DataType dt) {
 		return dt != null && dt instanceof Pointer ptrDT &&
-			ptrDT.getDataType() instanceof Pointer ptrptrDT &&
-			ptrptrDT.getDataType() instanceof FunctionDefinition funcDef ? funcDef : null;
+			ptrDT.getDataType() instanceof Structure closureStructDT &&
+			closureStructDT.getNumComponents() > 1 &&
+			closureStructDT.getComponent(0).getDataType() instanceof Pointer funcdefPtr &&
+			funcdefPtr.getDataType() instanceof FunctionDefinition funcdef ? funcdef : null;
 	}
 
 	@FieldMapping
@@ -106,14 +111,7 @@ public class GoFuncType extends GoType {
 	@Markup
 	public List<GoType> getParamTypes() throws IOException {
 		return getParamTypeAddrs().stream()
-				.map(addr -> {
-					try {
-						return programContext.getGoType(addr);
-					}
-					catch (IOException e) {
-						return null;
-					}
-				})
+				.map(addr -> programContext.getGoTypes().getTypeUnchecked(addr))
 				.toList();
 	}
 
@@ -131,94 +129,138 @@ public class GoFuncType extends GoType {
 	 * @param funcName optional name of a function
 	 * @param receiverString optional receiver decl string
 	 * @return golang func decl string
-	 * @throws IOException if error reading parameter type info
 	 */
-	public String getFuncPrototypeString(String funcName, String receiverString)
-			throws IOException {
-		StringBuilder sb = new StringBuilder();
-		sb.append("func");
-		if (receiverString != null && !receiverString.isBlank()) {
-			sb.append(" (").append(receiverString).append(")");
-		}
+	public String getFuncPrototypeString(String funcName) {
 		if (funcName != null && !funcName.isBlank()) {
-			sb.append(" ").append(funcName);
+			funcName = " " + funcName;
+		} else {
+			funcName = "";
 		}
-		sb.append("(");
+		return "func%s%s".formatted(funcName, getParamListString());
+	}
+	
+	public String getParamListString() {
+		try {
+			StringBuilder sb = new StringBuilder();
+			sb.append("(");
 
-		List<GoType> paramTypes = getParamTypes();
-		List<GoType> inParamTypes = paramTypes.subList(0, inCount);
-		List<GoType> outParamTypes = paramTypes.subList(inCount, paramTypes.size());
-		for (int i = 0; i < inParamTypes.size(); i++) {
-			GoType paramType = inParamTypes.get(i);
-			if (i != 0) {
-				sb.append(", ");
-			}
-			sb.append(paramType.getName());
-		}
-		sb.append(")");
-		if (!outParamTypes.isEmpty()) {
-			sb.append(" (");
-			for (int i = 0; i < outParamTypes.size(); i++) {
-				GoType paramType = outParamTypes.get(i);
+			List<GoType> paramTypes = getParamTypes();
+			List<GoType> inParamTypes = paramTypes.subList(0, inCount);
+			List<GoType> outParamTypes = paramTypes.subList(inCount, paramTypes.size());
+			for (int i = 0; i < inParamTypes.size(); i++) {
+				GoType paramType = inParamTypes.get(i);
 				if (i != 0) {
 					sb.append(", ");
 				}
 				sb.append(paramType.getName());
 			}
 			sb.append(")");
+			if (!outParamTypes.isEmpty()) {
+				sb.append(" ");
+				if (outParamTypes.size() > 1) {
+					sb.append("(");
+				}
+				for (int i = 0; i < outParamTypes.size(); i++) {
+					GoType paramType = outParamTypes.get(i);
+					if (i != 0) {
+						sb.append(", ");
+					}
+					sb.append(paramType.getName());
+				}
+				if (outParamTypes.size() > 1) {
+					sb.append(")");
+				}
+			}
+			return sb.toString();
+		} catch (IOException e) {
+			return "(???)";
 		}
-		return sb.toString();
+	}
+	
+	public static String getMissingFuncPrototypeString(String funcName, String genericsString) {
+		genericsString = genericsString == null || genericsString.isEmpty() ? "" : "[" + genericsString + "]";
+		return "func %s%s(???)".formatted(funcName, genericsString);
 	}
 
 	@Override
-	public DataType recoverDataType() throws IOException {
-		String name = getUniqueTypename();
-		DataTypeManager dtm = programContext.getDTM();
+	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+		DataTypeManager dtm = goTypes.getDTM();
+		String name = goTypes.getTypeName(this);
+		CategoryPath cp = goTypes.getCP(this);
 
-		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(
-			programContext.getRecoveredTypesCp(getPackagePathString()), name, dtm);
-		Pointer funcDefPtr = dtm.getPointer(funcDef);
-		Pointer funcDefPtrPtr = dtm.getPointer(funcDefPtr);
-		// pre-push empty funcdef type into cache to prevent endless recursive loops
-		programContext.cacheRecoveredDataType(this, funcDefPtrPtr);
+		StructureDataType struct = new StructureDataType(cp, name, (int) typ.getSize(), dtm);
+
+		// pre-push an empty struct into the cache to prevent endless recursive loops
+		goTypes.cacheRecoveredDataType(this, struct);
 
 		List<GoType> paramTypes = getParamTypes();
 		List<GoType> inParamTypes = paramTypes.subList(0, inCount);
 		List<GoType> outParamTypes = paramTypes.subList(inCount, paramTypes.size());
 
 		List<ParameterDefinition> params = new ArrayList<>();
-		for (int i = 0; i < inParamTypes.size(); i++) {
-			GoType paramType = inParamTypes.get(i);
-			DataType paramDT = programContext.getRecoveredType(paramType);
+		params.add(
+			new ParameterDefinitionImpl(GOLANG_CLOSURE_CONTEXT_NAME, dtm.getPointer(struct), null));
+
+		for (GoType paramType : inParamTypes) {
+			DataType paramDT = goTypes.getGhidraDataType(paramType);
 			params.add(new ParameterDefinitionImpl(null, paramDT, null));
 		}
+
 		DataType returnDT;
 		if (outParamTypes.size() == 0) {
 			returnDT = VoidDataType.dataType;
 		}
 		else if (outParamTypes.size() == 1) {
-			returnDT = programContext.getRecoveredType(outParamTypes.get(0));
+			returnDT = goTypes.getGhidraDataType(outParamTypes.get(0));
 		}
 		else {
-			List<DataType> paramDataTypes = recoverTypes(outParamTypes);
-			GoFunctionMultiReturn multiReturn = new GoFunctionMultiReturn(
-				programContext.getRecoveredTypesCp(getPackagePathString()), name, paramDataTypes,
-				dtm, null);
-			returnDT = multiReturn.getStruct();
+			List<DataType> paramDataTypes = new ArrayList<>();
+			for (GoType typ : outParamTypes) {
+				paramDataTypes.add(goTypes.getGhidraDataType(typ));
+			}
+			returnDT = goTypes.getFuncMultiReturn(paramDataTypes);
 		}
 
+		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(cp, name + "_F", dtm);
 		funcDef.setArguments(params.toArray(ParameterDefinition[]::new));
 		funcDef.setReturnType(returnDT);
 
-		return funcDefPtrPtr;
+		struct.replace(0, dtm.getPointer(funcDef), -1, "F", null);
+		struct.add(new ArrayDataType(AbstractIntegerDataType.getUnsignedDataType(1, dtm), 0),
+			"context", null);
+		struct.setToDefaultPacking();
+
+		// TODO: typ.getSize() should be ptrsize, and struct size should also be ptrsize
+
+		return dtm.getPointer(struct);
 	}
 
-	private List<DataType> recoverTypes(List<GoType> types) throws IOException {
-		List<DataType> result = new ArrayList<>();
-		for (GoType type : types) {
-			result.add(programContext.getRecoveredType(type));
+	public FunctionDefinition getFunctionSignature(GoTypeManager goTypes) throws IOException {
+		DataType dt = goTypes.getGhidraDataType(this);
+		FunctionDefinition funcdef = dt instanceof Pointer ptrDT &&
+			ptrDT.getDataType() instanceof Structure closureStructDT &&
+			closureStructDT.getNumComponents() > 1 &&
+			closureStructDT.getComponent(0).getDataType() instanceof Pointer funcdefPtr &&
+			funcdefPtr.getDataType() instanceof FunctionDefinition fd ? fd : null;
+
+		List<ParameterDefinition> newArgs = new ArrayList<>();
+		ParameterDefinition[] oldArgs = funcdef.getArguments();
+		for (int i = 1; i < oldArgs.length; i++) {
+			newArgs.add(oldArgs[i]);
 		}
-		return result;
+
+		FunctionDefinitionDataType funcsig =
+			new FunctionDefinitionDataType(funcdef.getName(), goTypes.getDTM());
+		try {
+			funcsig.setCallingConvention(funcdef.getCallingConventionName());
+		}
+		catch (InvalidInputException e) {
+			// ignore
+		}
+		funcsig.setReturnType(funcdef.getReturnType());
+		funcsig.setArguments(newArgs.toArray(ParameterDefinition[]::new));
+
+		return funcsig;
 	}
 
 	@Override
@@ -236,7 +278,16 @@ public class GoFuncType extends GoType {
 
 	@Override
 	protected String getTypeDeclString() throws IOException {
-		return getFuncPrototypeString(null, null);
+		String baseTypeName = getSymbolName().getBaseTypeName();
+		String declStr = getFuncPrototypeString(null);
+		return baseTypeName.startsWith("func(") ? "type %s".formatted(declStr)
+				: "type %s %s".formatted(baseTypeName, declStr);
+	}
+
+	@Override
+	public boolean isValid() {
+		return super.isValid() && typ.getSize() == programContext.getPtrSize();
 	}
 
 }
+
