@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import mdemangler.datatype.MDDataType;
 import mdemangler.naming.MDQualification;
 import mdemangler.object.MDObjectCPP;
 import mdemangler.typeinfo.MDVxTable;
@@ -134,6 +135,20 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals(truth2, demangled);
 		assertEquals("b::_anon_FEDCBA98::a", qualifications.get(0).toString());
 		assertEquals("_anon_FEDCBA98::a", qualifications.get(1).toString());
+	}
+
+	@Test
+	public void testSimpleDemangleType() throws Exception {
+		String mangled = ".?AUname0@name1@@";
+		String expected = "struct name1::name0";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDDataType item = demangler.demangleType();
+
+		String demangled = item.toString();
+		assertEquals(expected, demangled);
 	}
 
 	// Need to test the demangleType() method to make sure it does the retry with LLVM mode
