@@ -43,25 +43,24 @@ public class GoPlainType extends GoType implements StructureReader<GoType> {
 	@Override
 	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
 		DataTypeManager dtm = goTypes.getDTM();
+		int ptrSize = programContext.getPtrSize();
 		DataType dt = switch (typ.getKind()) {
 			case Bool -> BooleanDataType.dataType;
 			case Float32 -> AbstractFloatDataType.getFloatDataType(32 / 8, null);
 			case Float64 -> AbstractFloatDataType.getFloatDataType(64 / 8, null);
-			case Int -> AbstractIntegerDataType.getSignedDataType(programContext.getPtrSize(), dtm);
+			case Int -> AbstractIntegerDataType.getSignedDataType(ptrSize, dtm);
 			case Int8 -> AbstractIntegerDataType.getSignedDataType(8 / 8, null);
 			case Int16 -> AbstractIntegerDataType.getSignedDataType(16 / 8, null);
 			case Int32 -> AbstractIntegerDataType.getSignedDataType(32 / 8, null);
 			case Int64 -> AbstractIntegerDataType.getSignedDataType(64 / 8, null);
-			case Uint -> AbstractIntegerDataType.getUnsignedDataType(programContext.getPtrSize(),
-					dtm);
+			case Uint -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);
 			case Uint8 -> AbstractIntegerDataType.getUnsignedDataType(8 / 8, null);
 			case Uint16 -> AbstractIntegerDataType.getUnsignedDataType(16 / 8, null);
 			case Uint32 -> AbstractIntegerDataType.getUnsignedDataType(32 / 8, null);
 			case Uint64 -> AbstractIntegerDataType.getUnsignedDataType(64 / 8, null);
-			case Uintptr -> AbstractIntegerDataType.getUnsignedDataType(programContext.getPtrSize(),
-					dtm);
+			case Uintptr -> AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);
 			case String -> programContext.getStructureDataType(GoString.class);
-			case UnsafePointer -> dtm.getPointer(null);
+			case UnsafePointer -> goTypes.getVoidPtrDT();
 			default -> null;
 		};
 		if (dt == null) {

@@ -56,7 +56,7 @@ public class GoChanType extends GoType {
 		if (chanGoType == null) {
 			// if we couldn't find the underlying/hidden runtime.hchan struct type, just return
 			// a void*
-			return programContext.getDTM().getPointer(null);
+			return goTypes.getVoidPtrDT();
 		}
 
 		DataType chanDT = goTypes.getGhidraDataType(chanGoType);

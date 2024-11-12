@@ -103,7 +103,7 @@ public class GoMapType extends GoType {
 		if (mapGoType == null) {
 			// if we couldn't find the underlying/hidden runtime.hmap struct type, just return
 			// a void*
-			return goTypes.getDTM().getPointer(null);
+			return goTypes.getVoidPtrDT();
 		}
 		DataType mapDT = goTypes.getGhidraDataType(mapGoType);
 		Pointer ptrMapDt = goTypes.getDTM().getPointer(mapDT);

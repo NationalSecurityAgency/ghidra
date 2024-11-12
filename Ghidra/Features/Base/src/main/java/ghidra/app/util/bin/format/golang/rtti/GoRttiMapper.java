@@ -153,6 +153,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * Creates a {@link GoRttiMapper} representing the specified program.
 	 * 
 	 * @param program {@link Program}
+	 * @param monitor {@link TaskMonitor}
 	 * @return new {@link GoRttiMapper}, or null if basic golang information is not found in the
 	 * binary
 	 * @throws BootstrapInfoException if it is a golang binary and has an unsupported or
@@ -359,6 +360,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	private final GoVer goVer;
 	private final int ptrSize;
 	private final GoRegisterInfo regInfo;
+	private final String defaultCCName;
 	private final List<GoModuledata> modules = new ArrayList<>();
 	private Map<Address, GoFuncData> funcdataByAddr = new HashMap<>();
 	private Map<String, GoFuncData> funcdataByName = new HashMap<>();
@@ -376,6 +378,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * @param goVer version of go
 	 * @param archiveGDT path to the matching golang bootstrap gdt data type file, or null
 	 * if not present and types recovered via DWARF should be used instead
+	 * @param apiSnapshot json func signatures and data types 
 	 * @throws IOException if error linking a structure mapped structure to its matching
 	 * ghidra structure, which is a programming error or a corrupted bootstrap gdt
 	 * @throws BootstrapInfoException if there is no matching bootstrap gdt for this specific
@@ -393,6 +396,10 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		this.buildInfo = buildInfo;
 		this.goVer = goVer;
 		this.ptrSize = ptrSize;
+		this.defaultCCName = regInfo.hasAbiInternalParamRegisters() &&
+			hasCallingConvention(GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME)
+					? GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME
+					: null;
 
 		reader = super.createProgramReader();
 
@@ -598,8 +605,11 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * @return boolean true if function uses abi0 calling convention
 	 */
 	public boolean isGolangAbi0Func(Function func) {
-		Address funcAddr = func.getEntryPoint();
-		for (Symbol symbol : func.getProgram().getSymbolTable().getSymbolsAsIterator(funcAddr)) {
+		return isAbi0Func(func.getEntryPoint(), program);
+	}
+
+	public static boolean isAbi0Func(Address funcEntry, Program program) {
+		for (Symbol symbol : program.getSymbolTable().getSymbolsAsIterator(funcEntry)) {
 			if (symbol.getSymbolType() == SymbolType.LABEL) {
 				String labelName = symbol.getName();
 				if (labelName.endsWith("abi0")) {
@@ -610,6 +620,14 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		return false;
 	}
 
+	public String getCallingConventionFor(GoFuncData func) {
+		// TODO: this logic needs work.  Currently we are not strongly declaring functions
+		// as abi0.
+		return defaultCCName != null && !isAbi0Func(func.getFuncAddress(), program)
+				? defaultCCName
+				: null;
+	}
+
 	/**
 	 * Returns true if the specified calling convention is defined for the program.
 	 * @param ccName calling convention name
@@ -617,6 +635,10 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 */
 	public boolean hasCallingConvention(String ccName) {
 		return program.getFunctionManager().getCallingConvention(ccName) != null;
+	}
+
+	public String getDefaultCallingConventionName() {
+		return defaultCCName;
 	}
 
 	@Override
@@ -869,7 +891,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		FROM_ANALYSIS,
 		CLOSURE,
 		METHOD_WRAPPER
-	};
+	}
 
 	public record FuncDefResult(FunctionDefinition funcDef, GoType recvType, Set<FuncDefFlags> flags,
 			String funcDefStr, GoSymbolName symbolName) {
@@ -878,7 +900,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	/**
 	 * Returns function definition information for a func.
 	 * 
-	 * @param funcData
+	 * @param funcData {@link GoFuncData} representing a go func
 	 * @return {@link FuncDefResult} record, or null if no information could be found or
 	 * generated
 	 * @throws IOException if error reading type info

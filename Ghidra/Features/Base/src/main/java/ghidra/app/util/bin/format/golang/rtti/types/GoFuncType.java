@@ -188,9 +188,15 @@ public class GoFuncType extends GoType {
 		CategoryPath cp = goTypes.getCP(this);
 
 		StructureDataType struct = new StructureDataType(cp, name, (int) typ.getSize(), dtm);
+		DataType structPtr = dtm.getPointer(struct);
 
-		// pre-push an empty struct into the cache to prevent endless recursive loops
-		goTypes.cacheRecoveredDataType(this, struct);
+		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(cp, name + "_F", dtm);
+		struct.replace(0, dtm.getPointer(funcDef), -1, "F", null);
+		struct.add(new ArrayDataType(goTypes.getUint8DT(), 0), "context", null);
+		struct.setToDefaultPacking();
+
+		// pre-push an partially constructed struct into the cache to prevent endless recursive loops
+		goTypes.cacheRecoveredDataType(this, structPtr);
 
 		List<GoType> paramTypes = getParamTypes();
 		List<GoType> inParamTypes = paramTypes.subList(0, inCount);
@@ -214,24 +220,19 @@ public class GoFuncType extends GoType {
 		}
 		else {
 			List<DataType> paramDataTypes = new ArrayList<>();
-			for (GoType typ : outParamTypes) {
-				paramDataTypes.add(goTypes.getGhidraDataType(typ));
+			for (GoType outParamType : outParamTypes) {
+				paramDataTypes.add(goTypes.getGhidraDataType(outParamType));
 			}
 			returnDT = goTypes.getFuncMultiReturn(paramDataTypes);
 		}
 
-		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(cp, name + "_F", dtm);
 		funcDef.setArguments(params.toArray(ParameterDefinition[]::new));
 		funcDef.setReturnType(returnDT);
 
-		struct.replace(0, dtm.getPointer(funcDef), -1, "F", null);
-		struct.add(new ArrayDataType(AbstractIntegerDataType.getUnsignedDataType(1, dtm), 0),
-			"context", null);
-		struct.setToDefaultPacking();
 
 		// TODO: typ.getSize() should be ptrsize, and struct size should also be ptrsize
 
-		return dtm.getPointer(struct);
+		return structPtr;
 	}
 
 	public FunctionDefinition getFunctionSignature(GoTypeManager goTypes) throws IOException {
@@ -241,6 +242,10 @@ public class GoFuncType extends GoType {
 			closureStructDT.getNumComponents() > 1 &&
 			closureStructDT.getComponent(0).getDataType() instanceof Pointer funcdefPtr &&
 			funcdefPtr.getDataType() instanceof FunctionDefinition fd ? fd : null;
+
+		if (funcdef == null) {
+			throw new IOException("Unable to extract function sig for " + this.toString());
+		}
 
 		List<ParameterDefinition> newArgs = new ArrayList<>();
 		ParameterDefinition[] oldArgs = funcdef.getArguments();

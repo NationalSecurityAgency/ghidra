@@ -16,10 +16,14 @@
 package ghidra.app.util.bin.format.golang.rtti.types;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import ghidra.app.util.bin.format.golang.GoConstants;
 import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.*;
 
 @StructureMapping(structureName = {"runtime.imethod", "internal/abi.Imethod"})
 public class GoIMethod implements StructureMarkup<GoIMethod> {
@@ -50,8 +54,11 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 	}
 
 	@Markup
-	public GoType getType() throws IOException {
-		return programContext.getGoTypes().resolveTypeOff(context.getStructureStart(), ityp);
+	public GoFuncType getType() throws IOException {
+		return programContext.getGoTypes()
+				.resolveTypeOff(context.getStructureStart(), ityp) instanceof GoFuncType funcType
+						? funcType
+						: null;
 	}
 
 	@Override
@@ -68,6 +75,24 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 	public String toString() {
 		return String.format("GoIMethod [getName()=%s, getStructureContext()=%s]", getName(),
 			getStructureContext());
+	}
+
+	public FunctionDefinition getFunctionDefinition(boolean isGeneric, GoTypeManager goTypes)
+			throws IOException {
+		GoFuncType methodFuncDefType = getType();
+		if (methodFuncDefType == null) {
+			return null;
+		}
+		FunctionDefinition funcdef = methodFuncDefType.getFunctionSignature(goTypes);
+		List<ParameterDefinition> params = new ArrayList<>(List.of(funcdef.getArguments()));
+		params.add(0, new ParameterDefinitionImpl(GoConstants.GOLANG_RECEIVER_PARAM_NAME,
+			goTypes.getVoidPtrDT(), null));
+		if (isGeneric) {
+			params.add(1, new ParameterDefinitionImpl(GoConstants.GOLANG_GENERICS_PARAM_NAME,
+				goTypes.getGenericDictDT(), null));
+		}
+		funcdef.setArguments(params.toArray(ParameterDefinition[]::new));
+		return funcdef;
 	}
 
 	public static class GoIMethodInfo extends MethodInfo {

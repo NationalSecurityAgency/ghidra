@@ -107,6 +107,10 @@ public class GoRegisterInfo {
 		return stackInitialOffset;
 	}
 
+	public boolean hasAbiInternalParamRegisters() {
+		return !intRegisters.isEmpty() || !floatRegisters.isEmpty();
+	}
+
 	public List<Variable> getDuffzeroParams(Program program) {
 		if (duffzeroDestParam == null) {
 			return List.of();

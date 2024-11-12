@@ -16,16 +16,11 @@
 package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.CommentType;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -324,6 +319,7 @@ public class StructureMappingInfo<T> {
 				? FieldMappingInfo.createEarlyBinding(field, dtc, signedness, length)
 				: FieldMappingInfo.createLateBinding(field, fieldNames[0], signedness, length);
 
+		@SuppressWarnings("rawtypes")
 		Class<? extends FieldReadFunction> fieldReadFuncClass =
 			fma != null ? fma.readFunc() : FieldReadFunction.class;
 		String setterNameOverride = fma != null ? fma.setter() : null;
@@ -381,7 +377,7 @@ public class StructureMappingInfo<T> {
 			T obj = context.getStructureInstance();
 			Object val = ReflectionHelper.callGetter(commentGetter, obj);
 			if (val != null) {
-				session.appendComment(context, CodeUnit.PLATE_COMMENT, null, val.toString(), "\n");
+				session.appendComment(context, CommentType.PLATE, null, val.toString(), "\n");
 			}
 		});
 	}
