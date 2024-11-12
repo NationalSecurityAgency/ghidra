@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.Set;
 
-import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
+import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.*;
@@ -27,7 +27,7 @@ import ghidra.util.Msg;
 /**
  * Golang type info about a specific map type.
  * <p>
- * See {@link GoRttiMapper#getMapGoType()} or the "runtime.hmap" type for the definition of
+ * See {@link GoTypeManager#getMapGoType()} or the "runtime.hmap" type for the definition of
  * a instance of a map variable in memory. 
  */
 @StructureMapping(structureName = {"runtime.maptype", "internal/abi.MapType"})
@@ -72,7 +72,7 @@ public class GoMapType extends GoType {
 	 */
 	@Markup
 	public GoType getKey() throws IOException {
-		return programContext.getGoType(key);
+		return programContext.getGoTypes().getType(key);
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class GoMapType extends GoType {
 	 */
 	@Markup
 	public GoType getElement() throws IOException {
-		return programContext.getGoType(elem);
+		return programContext.getGoTypes().getType(elem);
 	}
 
 	/**
@@ -94,25 +94,25 @@ public class GoMapType extends GoType {
 	 */
 	@Markup
 	public GoType getBucket() throws IOException {
-		return programContext.getGoType(bucket);
+		return programContext.getGoTypes().getType(bucket);
 	}
 
 	@Override
-	public DataType recoverDataType() throws IOException {
-		GoType mapGoType = programContext.getMapGoType();
+	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+		GoType mapGoType = goTypes.getMapGoType();
 		if (mapGoType == null) {
 			// if we couldn't find the underlying/hidden runtime.hmap struct type, just return
 			// a void*
-			return programContext.getDTM().getPointer(null);
+			return goTypes.getDTM().getPointer(null);
 		}
-		DataType mapDT = programContext.getRecoveredType(mapGoType);
-		Pointer ptrMapDt = programContext.getDTM().getPointer(mapDT);
+		DataType mapDT = goTypes.getGhidraDataType(mapGoType);
+		Pointer ptrMapDt = goTypes.getDTM().getPointer(mapDT);
 		if (typ.getSize() != ptrMapDt.getLength()) {
 			Msg.warn(this, "Size mismatch between map type and recovered type");
 		}
 		TypedefDataType typedef =
-			new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
-				getUniqueTypename(), ptrMapDt, programContext.getDTM());
+			new TypedefDataType(goTypes.getCP(this), goTypes.getTypeName(this), ptrMapDt,
+				goTypes.getDTM());
 		return typedef;
 	}
 
@@ -139,9 +139,9 @@ public class GoMapType extends GoType {
 	@Override
 	protected String getTypeDeclString() throws IOException {
 		// type CustomMaptype map[keykey]valuetype
-		String selfName = typ.getName();
-		String keyName = programContext.getGoTypeName(key);
-		String elemName = programContext.getGoTypeName(elem);
+		String selfName = getName();
+		String keyName = getKey().getName();
+		String elemName = getElement().getName();
 		String defStr = "map[%s]%s".formatted(keyName, elemName);
 		String defStrWithLinks = "map[%s]%s".formatted(
 			AddressAnnotatedStringHandler.createAddressAnnotationString(key, keyName),
@@ -149,6 +149,11 @@ public class GoMapType extends GoType {
 		boolean hasName = !defStr.equals(selfName);
 
 		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
+	}
+
+	@Override
+	public boolean isValid() {
+		return super.isValid() && typ.getSize() == programContext.getPtrSize();
 	}
 
 }

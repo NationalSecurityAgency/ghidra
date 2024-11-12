@@ -1,0 +1,352 @@
+@ ["all","Funcs","crypto/x509.checkSignature","Params",4]
+  {"DataType":"crypto.PublicKey","Name":"publicKey"}
++ {"DataType":"bool","Name":"allowSHA1"}
+]
+@ ["all","Funcs","encoding/pem.decodeError"]
+- {"Flags":0,"Params":[{"DataType":"[]byte","Name":"data"},{"DataType":"[]byte","Name":"rest"}],"Results":[{"DataType":"*encoding/pem.Block","Name":""},{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http/httptest.(*Server).forgetConn"]
+- {"Flags":4,"Params":[{"DataType":"*net/http/httptest.Server","Name":"s"},{"DataType":"net.Conn","Name":"c"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","crypto/rand.batched"]
++ {"Flags":0,"Params":[{"DataType":"func([]byte) error","Name":"f"},{"DataType":"int","Name":"readMax"}],"Results":[{"DataType":"func([]byte) error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/types.(*Checker).checkFieldUniqueness"]
++ {"Flags":4,"Params":[{"DataType":"*go/types.Checker","Name":"check"},{"DataType":"*go/types.Named","Name":"base"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","go/types.(*instanceLookup).add"]
++ {"Flags":4,"Params":[{"DataType":"*go/types.instanceLookup","Name":"l"},{"DataType":"*go/types.Named","Name":"inst"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","go/types.(*instanceLookup).lookup"]
++ {"Flags":4,"Params":[{"DataType":"*go/types.instanceLookup","Name":"l"},{"DataType":"*go/types.Named","Name":"inst"}],"Results":[{"DataType":"*go/types.Named","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/types.substVar"]
++ {"Flags":0,"Params":[{"DataType":"*go/types.Var","Name":"v"},{"DataType":"go/types.Type","Name":"typ"}],"Results":[{"DataType":"*go/types.Var","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","func(string, []interface {})"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["all","Types","go/internal/gcimporter.ident","Fields",0,"DataType"]
+- "string"
++ "*go/types.Package"
+@ ["all","Types","runtime.m","Fields",3]
+  {"DataType":"uint32","Name":"divmod"}
++ {"DataType":"uint32","Name":"_"}
+  {"DataType":"uint64","Name":"procid"}
+@ ["all","Types","go/types.instanceLookup"]
++ {"Fields":[{"DataType":"map[*go/types.Named][]*go/types.Named","Name":"m"}],"Kind":"struct","TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallCheck"]
+- {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallPanicked"]
+- {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallV2"]
+- {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallWrap"]
+- {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallWrap1"]
+- {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["amd64","Funcs","runtime.debugCallWrap2"]
+- {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["amd64","Types","runtime.debugCallWrapArgs"]
+- {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin","Funcs","crypto/rand.getEntropy","Results",0,"DataType"]
+- "bool"
++ "error"
+@ ["darwin","Funcs","crypto/rand.getEntropy","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-amd64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"format"},{"DataType":"[]interface {}","Name":"args"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux","Funcs","crypto/rand.batched"]
+- {"Flags":0,"Params":[{"DataType":"func([]byte) bool","Name":"f"},{"DataType":"int","Name":"readMax"}],"Results":[{"DataType":"func([]byte) bool","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","crypto/rand.getRandomBatch","Results",0,"DataType"]
+- "bool"
++ "error"
+@ ["linux","Funcs","crypto/rand.getRandomBatch","Results",0,"Name"]
+- "ok"
++ "err"
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.(*sigctxt).setsigpc"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"},{"DataType":"uint64","Name":"x"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"format"},{"DataType":"[]interface {}","Name":"args"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallCheck"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"pc"}],"Results":[{"DataType":"string","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallPanicked"]
++ {"Flags":0,"Params":[{"DataType":"any","Name":"val"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallV2"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallWrap"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallWrap1"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","runtime.debugCallWrap2"]
++ {"Flags":0,"Params":[{"DataType":"uintptr","Name":"dispatch"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string, []interface {})"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""},{"DataType":"[]interface {}","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","runtime.debugCallWrapArgs"]
++ {"Fields":[{"DataType":"uintptr","Name":"dispatch"},{"DataType":"*runtime.g","Name":"callingG"}],"Kind":"struct","TypeParams":[]}

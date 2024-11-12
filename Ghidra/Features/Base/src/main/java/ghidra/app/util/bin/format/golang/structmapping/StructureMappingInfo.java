@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,15 @@
 package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
@@ -157,6 +162,12 @@ public class StructureMappingInfo<T> {
 				fieldInfo.assignField(fieldReadContext, value);
 			}
 			context.reader.setPointerIndex(context.getStructureEnd());
+		}
+		if (newInstance instanceof StructureVerifier structVerifier) {
+			if (!structVerifier.isValid()) {
+				throw new IOException(
+					"Invalid data for struct @0x%x".formatted(context.structureStart));
+			}
 		}
 	}
 

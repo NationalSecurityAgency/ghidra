@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,18 @@
 package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.StringUTF8DataType;
+import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -328,8 +333,8 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
-		typeLinks.markupArray("moduledata.typeLinks", null, programContext.getInt32DT(), false,
-			session);
+		typeLinks.markupArray("moduledata.typeLinks", null,
+			programContext.getGoTypes().getInt32DT(), false, session);
 		typeLinks.markupElementReferences(4, getTypeList(), session);
 
 		itablinks.markupArray("moduledata.itablinks", null, GoItab.class, true, session);
@@ -344,7 +349,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		subSlice.markupArrayElements(GoFunctabEntry.class, session);
 
 		Structure textsectDT =
-			programContext.getGhidraDataType("runtime.textsect", Structure.class);
+			programContext.getGoTypes().getGhidraDataType("runtime.textsect", Structure.class);
 		if (textsectDT != null) {
 			textsectmap.markupArray("runtime.textsectionmap", null, textsectDT, false, session);
 		}
@@ -388,27 +393,6 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		catch (IOException e) {
 			Msg.warn(this, "Failed when marking up string table at: " + addr, e);
 		}
-	}
-
-	/**
-	 * Returns an iterator that walks all the types contained in this module
-	 * 
-	 * @return iterator that walks all the types contained in this module
-	 * @throws IOException if error reading data
-	 */
-	@Markup
-	public Iterator<GoType> iterateTypes() throws IOException {
-		return getTypeList().stream()
-				.map(addr -> {
-					try {
-						return programContext.getGoType(addr);
-					}
-					catch (IOException e) {
-						return null;
-					}
-				})
-				.filter(Objects::nonNull)
-				.iterator();
 	}
 
 	/**

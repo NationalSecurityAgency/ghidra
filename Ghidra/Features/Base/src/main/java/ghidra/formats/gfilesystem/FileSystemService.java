@@ -678,7 +678,7 @@ public class FileSystemService {
 		return probeFileForFilesystem(containerFSRL, monitor, conflictResolver,
 			FileSystemInfo.PRIORITY_LOWEST);
 	}
-
+	
 	/**
 	 * Auto-detects a filesystem in the container file pointed to by the FSRL.
 	 * <p>
@@ -759,7 +759,7 @@ public class FileSystemService {
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Mount a specific file system (by class) using a specified container file.
 	 * <p>

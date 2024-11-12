@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf.DWARFUtil;
-import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoSlice;
+import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
@@ -101,19 +100,11 @@ public class GoStructType extends GoType {
 
 	@Override
 	public String getTypeDeclString() throws IOException {
-
-		String pps = getPackagePathString();
-		if (pps == null || pps.isEmpty()) {
-			pps = "<None>";
-		}
-
 		return """
 				// size: %d
-				// package: %s
 				type %s struct {
 				%s}""".formatted(
 			typ.getSize(),
-			pps,
 			typ.getName(),
 			getFieldListString().indent(2));
 	}
@@ -133,13 +124,12 @@ public class GoStructType extends GoType {
 	}
 
 	@Override
-	public DataType recoverDataType() throws IOException {
-		StructureDataType struct =
-			new StructureDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
-				getUniqueTypename(), (int) typ.getSize(), programContext.getDTM());
+	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+		StructureDataType struct = new StructureDataType(goTypes.getCP(this),
+			goTypes.getTypeName(this), (int) typ.getSize(), goTypes.getDTM());
 
 		// pre-push an empty struct into the cache to prevent endless recursive loops
-		programContext.cacheRecoveredDataType(this, struct);
+		goTypes.cacheRecoveredDataType(this, struct);
 
 		List<GoStructField> skippedFields = new ArrayList<>();
 		List<GoStructField> fieldList = getFields();
@@ -159,7 +149,7 @@ public class GoStructType extends GoType {
 			}
 
 			try {
-				DataType fieldDT = programContext.getRecoveredType(fieldType);
+				DataType fieldDT = goTypes.getGhidraDataType(fieldType);
 				struct.replaceAtOffset((int) field.getOffset(), fieldDT, (int) fieldSize,
 					field.getName(), null);
 			}
@@ -181,7 +171,7 @@ public class GoStructType extends GoType {
 			}
 		}
 
-		DWARFUtil.packCompositeIfPossible(struct, programContext.getDTM());
+		DWARFUtil.packCompositeIfPossible(struct, goTypes.getDTM());
 		return struct;
 	}
 
@@ -196,4 +186,18 @@ public class GoStructType extends GoType {
 		return true;
 	}
 
+	@Override
+	public boolean isValid() {
+		return super.isValid() && fields.isFull();
+	}
+
+	public boolean isClosureContextType() {
+		String name = getName();
+		return name.length() > 20 && name.startsWith("struct { F uintptr; ") &&
+			name.charAt(20) != 'R';  // R == method wrapper
+	}
+
+	public boolean isMethodWrapperContextType() {
+		return getName().startsWith("struct { F uintptr; R");
+	}
 }

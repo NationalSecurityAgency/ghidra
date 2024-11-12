@@ -19,12 +19,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.util.bin.format.golang.rtti.types.*;
+import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod;
 import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod.GoIMethodInfo;
+import ghidra.app.util.bin.format.golang.rtti.types.GoInterfaceType;
+import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinition;
 import ghidra.util.Msg;
 
 /**
@@ -59,7 +60,7 @@ public class GoItab implements StructureMarkup<GoItab> {
 	 */
 	@Markup
 	public GoInterfaceType getInterfaceType() throws IOException {
-		GoType result = programContext.getGoType(inter);
+		GoType result = programContext.getGoTypes().getType(inter);
 		return result instanceof GoInterfaceType ifaceType ? ifaceType : null;
 	}
 
@@ -71,7 +72,7 @@ public class GoItab implements StructureMarkup<GoItab> {
 	 */
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.getGoType(_type);
+		return programContext.getGoTypes().getType(_type);
 	}
 
 	/**
@@ -143,25 +144,6 @@ public class GoItab implements StructureMarkup<GoItab> {
 		return results;
 	}
 
-	/**
-	 * Returns a {@link FunctionDefinition} for the specified method of this itab.
-	 * 
-	 * @param imethod info about an interface method
-	 * @return {@link FunctionDefinition} for the specified method of this itab
-	 * @throws IOException if error reading required info
-	 */
-	public FunctionDefinition getSignatureFor(GoIMethod imethod) throws IOException {
-		GoType receiverType = getType();
-		DataType receiverDT = programContext.getRecoveredType(receiverType);
-
-		GoType methodType = imethod.getType();
-		if (methodType == null) {
-			return null;
-		}
-		return programContext.getSpecializedMethodSignature(imethod.getName(), methodType,
-			receiverDT, false);
-	}
-
 	@Override
 	public String getStructureName() throws IOException {
 		return "%s__implements__%s".formatted(getType().getName(),
@@ -174,10 +156,15 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s__itab".formatted(getStructureName());
+	}
+
+	@Override
 	public String getStructureNamespace() throws IOException {
 		return getType().getStructureNamespace();
 	}
-	
+
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException {
 		GoSlice funSlice = getFunSlice();
@@ -214,14 +201,4 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 }
-/*
-struct runtime.itab  
-Length: 20  Alignment: 4
-{ 
-  runtime.interfacetype *  inter    
-  runtime._type *                _type   
-  uint32                                hash    
-  uint8[4]                             _          
-  uintptr[1]                         fun       
-} pack()
-*/
+
