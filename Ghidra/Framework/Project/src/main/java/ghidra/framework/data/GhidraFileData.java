@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,6 +89,7 @@ public class GhidraFileData {
 	private Icon disabledIcon;
 
 	private AtomicBoolean busy = new AtomicBoolean();
+	private boolean mergeInProgress = false;
 
 // TODO: Many of the old methods assumed that the state was up-to-date due to
 // refreshing ... we are relying on non-refreshed data to be dropped from cache map and no
@@ -196,6 +197,9 @@ public class GhidraFileData {
 	}
 
 	private void statusChanged(boolean fileIDset) throws IOException {
+		if (mergeInProgress) {
+			return;
+		}
 		icon = null;
 		disabledIcon = null;
 		fileIDset |= refresh();
@@ -1099,6 +1103,7 @@ public class GhidraFileData {
 		}
 
 		DomainObjectAdapterDB inUseDomainObj = null;
+		mergeInProgress = true;
 		projectData.mergeStarted();
 		try {
 			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("checkin");
@@ -1195,6 +1200,7 @@ public class GhidraFileData {
 		finally {
 			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
+			mergeInProgress = false;
 			projectData.mergeEnded();
 			parent.deleteLocalFolderIfEmpty();
 			parent.fileChanged(name);
@@ -1430,6 +1436,7 @@ public class GhidraFileData {
 		}
 
 		DomainObjectAdapterDB inUseDomainObj = null;
+		mergeInProgress = true;
 		projectData.mergeStarted();
 		try {
 			ContentHandler<?> contentHandler = getContentHandler();
@@ -1556,6 +1563,7 @@ public class GhidraFileData {
 		finally {
 			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
+			mergeInProgress = false;
 			projectData.mergeEnded();
 			parent.deleteLocalFolderIfEmpty();
 			parent.fileChanged(name);
@@ -1914,6 +1922,7 @@ public class GhidraFileData {
 
 		FolderItem tmpItem = null;
 		DomainObjectAdapterDB inUseDomainObj = null;
+		mergeInProgress = true;
 		projectData.mergeStarted();
 		try {
 			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("merge");
@@ -2011,6 +2020,7 @@ public class GhidraFileData {
 		finally {
 			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
+			mergeInProgress = false;
 			try {
 				if (tmpItem != null) {
 					try {
