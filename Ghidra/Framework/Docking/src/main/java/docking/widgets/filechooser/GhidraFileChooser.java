@@ -107,6 +107,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private static final Icon ICON_MY_COMPUTER = new GIcon("icon.filechooser.places.my.computer");
 	private static final Icon ICON_DESKTOP = new GIcon("icon.filechooser.places.desktop");
 	private static final Icon ICON_HOME = new GIcon("icon.filechooser.places.home");
+	private static final Icon ICON_DOWNLOADS = new GIcon("icon.filechooser.places.downloads");
 	private static final Icon ICON_RECENT = new GIcon("icon.filechooser.places.recent");
 
 	private final static Cursor WAIT_CURSOR = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
@@ -167,6 +168,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private FileChooserToggleButton myComputerButton;
 	private FileChooserToggleButton desktopButton;
 	private FileChooserToggleButton homeButton;
+	private FileChooserToggleButton downloadsButton;
 	private FileChooserToggleButton recentButton;
 
 	private JTextField currentPathTextField;
@@ -323,6 +325,17 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		homeButton.addActionListener(e -> updateHome());
 		homeButton.setForeground(FOREROUND_COLOR);
 
+		downloadsButton = new FileChooserToggleButton("Downloads") {
+			@Override
+			File getFile() {
+				return fileChooserModel.getDownloadsDirectory();
+			}
+		};
+		downloadsButton.setName("DOWNLOADS_BUTTON");
+		downloadsButton.setIcon(ICON_DOWNLOADS);
+		downloadsButton.addActionListener(e -> updateDownloads());
+		downloadsButton.setForeground(FOREROUND_COLOR);
+
 		recentButton = new FileChooserToggleButton("Recent") {
 			@Override
 			File getFile() {
@@ -338,6 +351,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		shortCutButtonGroup.add(myComputerButton);
 		shortCutButtonGroup.add(desktopButton);
 		shortCutButtonGroup.add(homeButton);
+		shortCutButtonGroup.add(downloadsButton);
 		shortCutButtonGroup.add(recentButton);
 
 		JPanel shortCutPanel = new JPanel(new GridLayout(0, 1));
@@ -345,6 +359,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		shortCutPanel.add(myComputerButton);
 		shortCutPanel.add(desktopButton);
 		shortCutPanel.add(homeButton);
+		shortCutPanel.add(downloadsButton);
 		shortCutPanel.add(recentButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -716,6 +731,11 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private void updateHome() {
 		File home = homeButton.getFile();
 		updateDirOnly(home, true);
+	}
+
+	private void updateDownloads() {
+		File downloads = downloadsButton.getFile();
+		updateDirOnly(downloads, true);
 	}
 
 	void removeRecentFiles(List<RecentGhidraFile> toRemove) {
@@ -1380,6 +1400,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		checkShortCutButton(homeButton, currentDirectory);
 		checkShortCutButton(recentButton, currentDirectory);
 		checkShortCutButton(desktopButton, currentDirectory);
+		checkShortCutButton(downloadsButton, currentDirectory);
 	}
 
 	private void checkShortCutButton(FileChooserToggleButton button, File currentDirectory) {
