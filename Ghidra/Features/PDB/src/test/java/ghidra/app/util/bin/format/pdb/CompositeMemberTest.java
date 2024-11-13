@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,6 +104,62 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 	}
 
 	@Test
+	public void testUnionWithStructureOfBitFieldsWithPadding() throws Exception {
+
+		/**
+		 
+		  	<datatype name="TestUnion" kind="Union" length="0x8" >
+			  <member name="field1:0x1:0xb" datatype="int" offset="0x4" kind="Member" length="0x1" />
+			  <member name="field2:0x4:0xc" datatype="int" offset="0x4" kind="Member" length="0x4" />
+			</datatype>
+			
+			union TestUnion {
+			    struct {
+			        int :32;
+			        int :11;
+			        int field1:1;
+			        int field2:4;
+			    };
+			    short fieldSHORT;
+			};
+		 
+		 */
+		UnionDataType union = new UnionDataType(CategoryPath.ROOT, "testUnion", dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("field1:0x1:0xb", "int", 4),
+				new MyPdbMember("field2:0x4:0xc", "int", 4),
+				new MyPdbMember("fieldSHORT", "short", 0)
+					);
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(union, false, 8, members, this,
+			TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/testUnion\n" + 
+			"pack()\n" + 
+			"Union testUnion {\n" + 
+			"   0   testUnion_s_0   8   _s_0   \"\"\n" + 
+			"   0   short   2   fieldSHORT   \"\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 4\n" + 
+			"/testUnion/testUnion_s_0\n" + 
+			"pack()\n" + 
+			"Structure testUnion_s_0 {\n" + 
+			"   0   int   4   _padding_   \"\"\n" + 
+			"   4   int:11(0)   2   _padding_   \"\"\n" + 
+			"   5   int:1(3)   1   field1   \"\"\n" + 
+			"   5   int:4(4)   1   field2   \"\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 4", union, true);
+		//@formatter:on
+	}
+
+	@Test
 	public void testSimpleStructureWithBitFields() throws Exception {
 
 		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
@@ -138,6 +194,72 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 	}
 
 	@Test
+	public void testSimplePack1StructureWithBitFields() throws Exception {
+
+		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("a", "uchar", 0),
+				new MyPdbMember("b:0x4:0x0", "uchar", 1),
+				new MyPdbMember("c:0x4:0x4", "uchar", 1),
+				new MyPdbMember("d:0x4:0x0", "uchar", 2),
+				new MyPdbMember("e:0x4:0x0", "uint", 3),
+				new MyPdbMember("f", "ushort", 7));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 9, members, this,
+			TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/struct\n" + 
+			"pack(1)\n" + 
+			"Structure struct {\n" + 
+			"   0   uchar   1   a   \"\"\n" + 
+			"   1   uchar:4(0)   1   b   \"\"\n" + 
+			"   1   uchar:4(4)   1   c   \"\"\n" + 
+			"   2   uchar:4(0)   1   d   \"\"\n" + 
+			"   3   uint:4(0)   1   e   \"\"\n" + 
+			"   7   ushort   2   f   \"\"\n" + 
+			"}\n" + 
+			"Length: 9 Alignment: 1", struct, true);
+		//@formatter:on
+	}
+
+	@Test
+	public void testSimpleNoPackStructureWithBitFields() throws Exception {
+
+		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("a", "uchar", 0),
+				new MyPdbMember("b:0x4:0x0", "uchar", 1),
+				new MyPdbMember("e:0x4:0x0", "uint", 3),
+				new MyPdbMember("f", "ushort", 7));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 9, members, this,
+			TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/struct\n" + 
+			"pack(disabled)\n" + 
+			"Structure struct {\n" + 
+			"   0   uchar   1   a   \"\"\n" + 
+			"   1   uchar:4(0)   1   b   \"\"\n" + 
+			"   3   uint:4(0)   1   e   \"\"\n" + 
+			"   7   ushort   2   f   \"\"\n" + 
+			"}\n" + 
+			"Length: 9 Alignment: 1", struct, true);
+		//@formatter:on
+	}
+
+	@Test
 	public void testSimpleStructureWithFillerBitFields() throws Exception {
 
 		StructureDataType struct = new StructureDataType("struct", 0, dataMgr);
@@ -162,10 +284,10 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"pack()\n" + 
 			"Structure struct {\n" + 
 			"   0   uchar   1   a   \"\"\n" + 
-			"   1   uchar:2(0)   1   padding   \"\"\n" + 
+			"   1   uchar:2(0)   1   _padding_   \"\"\n" + 
 			"   1   uchar:2(2)   1   b   \"\"\n" + 
 			"   1   uchar:1(4)   1   c1   \"\"\n" + 
-			"   1   uchar:1(5)   1   padding   \"\"\n" + 
+			"   1   uchar:1(5)   1   _padding_   \"\"\n" + 
 			"   1   uchar:1(6)   1   c2   \"\"\n" + 
 			"   2   uchar:7(0)   1   d   \"\"\n" + 
 			"   4   uint:4(0)   1   e   \"\"\n" + 
@@ -238,20 +360,20 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"pack()\n" + 
 			"Structure struct_u_0_s_0 {\n" + 
 			"   0   char:1(0)   1   a0   \"\"\n" + 
-			"   0   char:1(1)   1   padding   \"\"\n" + 
+			"   0   char:1(1)   1   _padding_   \"\"\n" + 
 			"   0   char:1(2)   1   a2   \"\"\n" + 
-			"   0   char:1(3)   1   padding   \"\"\n" + 
+			"   0   char:1(3)   1   _padding_   \"\"\n" + 
 			"   0   char:1(4)   1   a4   \"\"\n" + 
 			"}\n" + 
 			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_0/struct_u_0_s_1\n" + 
 			"pack()\n" + 
 			"Structure struct_u_0_s_1 {\n" + 
-			"   0   char:1(0)   1   padding   \"\"\n" + 
+			"   0   char:1(0)   1   _padding_   \"\"\n" + 
 			"   0   char:1(1)   1   a1   \"\"\n" + 
-			"   0   char:1(2)   1   padding   \"\"\n" + 
+			"   0   char:1(2)   1   _padding_   \"\"\n" + 
 			"   0   char:1(3)   1   a3   \"\"\n" + 
-			"   0   char:1(4)   1   padding   \"\"\n" + 
+			"   0   char:1(4)   1   _padding_   \"\"\n" + 
 			"   0   char:1(5)   1   a5   \"\"\n" + 
 			"}\n" + 
 			"Length: 1 Alignment: 1", struct, true);
