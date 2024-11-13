@@ -1503,7 +1503,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		triggerKey(destination, modifiers, keyCode, keyChar);
 	}
 
-	public static void triggerEscapeKey(Component c) {
+	public static void triggerEscape(Component c) {
 		// text components will not perform built-in actions if they are not focused
 		if (c instanceof JTextComponent) {
 			triggerFocusGained(c);
@@ -1511,7 +1511,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		triggerText(c, "\033");
 	}
 
-	public static void triggerBackspaceKey(Component c) {
+	public static void triggerBackspace(Component c) {
 		triggerText(c, "\010");
 	}
 
