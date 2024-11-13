@@ -20,3 +20,9 @@ apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Z Public Release'
+
+rootProject.assembleDistribution {
+	from ("${this.projectDir}/src/main/resources/UserAgreement.html") {
+		into "docs"
+	}
+}
