@@ -32,6 +32,8 @@ change with future releases.
 ## Change History
 __4.0.1:__
 * New Ghidra module projects now contain a default `README.md` file.
+* Fixed a bug that prevented an imported module source project from being discovered by Ghidra when
+  launched with the project's run/debug configuration.
 
 __4.0.0:__
 * GhidraDev has been upgraded to be compatible with Ghidra 11.2 and later. It is not backwards
