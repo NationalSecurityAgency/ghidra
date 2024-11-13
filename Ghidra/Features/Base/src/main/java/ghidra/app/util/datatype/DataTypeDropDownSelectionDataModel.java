@@ -39,25 +39,25 @@ import ghidra.util.exception.AssertException;
  */
 public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldDataModel<DataType> {
 
-	private final DataTypeManager dtm;	// preferred data type manager
+	private final DataTypeManager preferredDtm;	// preferred data type manager; may be null
 	private final DataTypeManagerService dataTypeService;
 
 	public DataTypeDropDownSelectionDataModel(ServiceProvider serviceProvider) {
-		this.dtm = null;
+		this.preferredDtm = null;
 		this.dataTypeService = getDataTypeService(serviceProvider);
 	}
 
 	/**
 	 * Creates a new instance.
 	 * 
-	 * @param dtm the preferred {@link DataTypeManager}.  Data types that are found in multiple 
-	 * data type managers will be pruned to just the ones already in the preferred data type 
-	 * manager.
+	 * @param preferredDtm the preferred {@link DataTypeManager}.  Data types that are found in 
+	 * multiple data type managers will be pruned to just the ones already in the preferred data 
+	 * type manager.
 	 * @param dataTypeService {@link DataTypeManagerService}
 	 */
-	public DataTypeDropDownSelectionDataModel(DataTypeManager dtm,
+	public DataTypeDropDownSelectionDataModel(DataTypeManager preferredDtm,
 			DataTypeManagerService dataTypeService) {
-		this.dtm = dtm;
+		this.preferredDtm = preferredDtm;
 		this.dataTypeService = dataTypeService;
 	}
 
@@ -98,54 +98,64 @@ public class DataTypeDropDownSelectionDataModel implements DropDownTextFieldData
 	/**
 	 * Remove any unwanted data type items, like arrays.
 	 */
-	private List<DataType> filterDataTypeList(List<DataType> dataTypeList) {
-		// build lookups for data types that are in the preferred dtm, but may have come from
-		// another DTM.  In the second step, duplicate data types will be omitted from the
+	private List<DataType> filterDataTypeList(List<DataType> dtList) {
+		// Build lookups for data types that are in the preferred dtm, but may have come from
+		// another dtm.  In the second step, duplicate data types will be omitted from the
 		// final results, in favor of the data type that is already in the preferred dtm.
-		Set<UniversalID> preferredUIDs = new HashSet<>();
+		Set<UniversalID> preferredUids = new HashSet<>();
 		Set<Class<?>> preferredBuiltins = new HashSet<>();
-		for (DataType dt : dataTypeList) {
-			DataType baseDT = DataTypeUtilities.getBaseDataType(dt);
-			if (isFromPreferredDTM(baseDT)) {
-				if (baseDT instanceof BuiltInDataType) {
-					preferredBuiltins.add(baseDT.getClass());
-				}
-				else if (baseDT.getUniversalID() != null) {
-					preferredUIDs.add(baseDT.getUniversalID());
-				}
+		for (DataType dt : dtList) {
+			DataType baseDt = DataTypeUtilities.getBaseDataType(dt);
+			if (!isFromPreferredDtm(baseDt)) {
+				continue;
+			}
+
+			if (baseDt instanceof BuiltInDataType) {
+				preferredBuiltins.add(baseDt.getClass());
+			}
+			else if (baseDt.getUniversalID() != null) {
+				preferredUids.add(baseDt.getUniversalID());
 			}
 		}
 
-		List<DataType> matchingList = new ArrayList<>(dataTypeList.size());
-		for (DataType dataType : dataTypeList) {
-			if (dataType instanceof Array) {
+		List<DataType> matchingList = new ArrayList<>(dtList.size());
+		for (DataType dt : dtList) {
+			if (dt instanceof Array) {
 				continue;
 			}
-			DataType baseDT = DataTypeUtilities.getBaseDataType(dataType);
-			if (dtm != null && !isFromPreferredDTM(baseDT)) {
-				if (baseDT instanceof BuiltInDataType &&
-					preferredBuiltins.contains(baseDT.getClass())) {
+			DataType baseDt = DataTypeUtilities.getBaseDataType(dt);
+			if (baseDt == null) {
+				continue;
+			}
+
+			if (preferredDtm != null && !isFromPreferredDtm(baseDt)) {
+				if (baseDt instanceof BuiltInDataType &&
+					preferredBuiltins.contains(baseDt.getClass())) {
 					continue;
 				}
-				if (baseDT.getUniversalID() != null &&
-					preferredUIDs.contains(baseDT.getUniversalID())) {
+				if (baseDt.getUniversalID() != null &&
+					preferredUids.contains(baseDt.getUniversalID())) {
 					continue;
 				}
 			}
 
-			matchingList.add(dataType);
+			matchingList.add(dt);
 		}
 
 		return matchingList;
 	}
 
-	private boolean isFromPreferredDTM(DataType dt) {
-		if (dtm != null) {
-			DataTypeManager altDTM = dtm instanceof CompositeViewerDataTypeManager compDTM
-					? compDTM.getOriginalDataTypeManager()
+	private boolean isFromPreferredDtm(DataType dt) {
+		if (dt == null) {
+			return false;
+		}
+
+		if (preferredDtm != null) {
+			DataTypeManager altDtm = preferredDtm instanceof CompositeViewerDataTypeManager compDtm
+					? compDtm.getOriginalDataTypeManager()
 					: null;
-			DataTypeManager dtDTM = dt.getDataTypeManager();
-			return dtDTM == dtm || dtDTM == altDTM;
+			DataTypeManager dtDtm = dt.getDataTypeManager();
+			return dtDtm == preferredDtm || dtDtm == altDtm;
 		}
 		return false;
 	}
