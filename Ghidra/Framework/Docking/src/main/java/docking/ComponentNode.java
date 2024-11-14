@@ -227,8 +227,12 @@ class ComponentNode extends Node {
 		}
 	}
 
+	@Override
 	int getComponentCount() {
-		return windowPlaceholders.size();
+		// we may be a single component or in a tabbed pane of components
+		List<ComponentPlaceholder> activeComponents = new ArrayList<>();
+		populateActiveComponents(activeComponents);
+		return activeComponents.size();
 	}
 
 	@Override
