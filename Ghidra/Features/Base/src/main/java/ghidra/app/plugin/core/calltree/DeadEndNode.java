@@ -29,6 +29,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import resources.MultiIcon;
+import resources.icons.TranslateIcon;
 
 public class DeadEndNode extends CallNode {
 
@@ -36,6 +38,7 @@ public class DeadEndNode extends CallNode {
 
 	private final Reference reference;
 	private String name;
+	private MultiIcon deadEndIcon;
 
 	private final Program program;
 
@@ -43,6 +46,12 @@ public class DeadEndNode extends CallNode {
 		super(callTreeOptions);
 		this.program = program;
 		this.reference = reference;
+		this.isCallRef = reference.getReferenceType().isCall();
+		deadEndIcon = new MultiIcon(ICON, false, 32, 16);
+		TranslateIcon translateIcon =
+			isCallRef ? new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0)
+					: new TranslateIcon(CallTreePlugin.DATA_ICON, 16, 0);
+		deadEndIcon.addIcon(translateIcon);
 	}
 
 	@Override
@@ -71,7 +80,7 @@ public class DeadEndNode extends CallNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return ICON;
+		return deadEndIcon;
 	}
 
 	@Override
@@ -88,11 +97,6 @@ public class DeadEndNode extends CallNode {
 			}
 		}
 		return name;
-	}
-
-	@Override
-	public String getToolTip() {
-		return "Called from " + reference.getFromAddress();
 	}
 
 	@Override

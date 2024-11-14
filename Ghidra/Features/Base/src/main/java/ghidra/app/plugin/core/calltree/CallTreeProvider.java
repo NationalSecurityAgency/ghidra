@@ -62,6 +62,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	private static final Icon EMPTY_ICON = Icons.EMPTY_ICON;
 	private static final Icon EXPAND_ICON = Icons.EXPAND_ALL_ICON;
 	private static final Icon COLLAPSE_ICON = Icons.COLLAPSE_ALL_ICON;
+	private static final String SHOW_CALL_TREE_MENU_PREFIX = "Show Call Tree for ";
 
 	private static Icon REFRESH_ICON = new GIcon("icon.plugin.calltree.refresh");
 	private static Icon REFRESH_NOT_NEEDED_ICON =
@@ -295,7 +296,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 				}
 			};
 		goToDestinationAction.setPopupMenuData(
-			new MenuData(new String[] { "Go To Call Destination" }, goToMenu));
+			new MenuData(new String[] { "Go To Destination" }, goToMenu));
 		goToDestinationAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Goto_Destination"));
 		tool.addLocalAction(this, goToDestinationAction);
@@ -355,7 +356,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			}
 		};
 		goToSourceAction
-				.setPopupMenuData(new MenuData(new String[] { "Go To Call Source" }, goToMenu));
+				.setPopupMenuData(new MenuData(new String[] { "Go To Source" }, goToMenu));
 		goToSourceAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Goto_Source"));
 		tool.addLocalAction(this, goToSourceAction);
@@ -512,7 +513,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			};
 		Icon icon = new GIcon("icon.plugin.calltree.filter.select.source");
 		selectSourceAction.setPopupMenuData(
-			new MenuData(new String[] { "Select Call Source" }, icon, selectionMenuGroup));
+			new MenuData(new String[] { "Select Source" }, icon, selectionMenuGroup));
 		selectSourceAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Select_Source"));
 		tool.addLocalAction(this, selectSourceAction);
@@ -567,7 +568,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 				}
 			};
 		selectDestinationAction.setPopupMenuData(
-			new MenuData(new String[] { "Select Call Destination" }, icon, selectionMenuGroup));
+			new MenuData(new String[] { "Select Destination" }, icon, selectionMenuGroup));
 		selectDestinationAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Select_Destination"));
 		tool.addLocalAction(this, selectDestinationAction);
@@ -616,22 +617,8 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 					GTree gTree = (GTree) context.getContextObject();
 					TreePath[] selectionPaths = gTree.getSelectionPaths();
 					CallNode callNode = (CallNode) selectionPaths[0].getLastPathComponent();
-
-					ProgramLocation location = null;
-					if (gTree == incomingTree) {
-						location = new ProgramLocation(currentProgram, callNode.getSourceAddress());
-
-						// in-place call tree
-						// doSetLocation(new ProgramLocation(currentProgram,
-						//	 callNode.getSourceAddress()));
-					}
-					else { // outgoing
-						location = callNode.getLocation();
-
-						// in-place call tree
-						// doSetLocation(callNode.getLocation());
-					}
-
+					ProgramLocation location = new ProgramLocation(currentProgram,
+						callNode.getRemoteFunction().getEntryPoint());
 					plugin.showOrCreateNewCallTree(location);
 				}
 
@@ -648,7 +635,19 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 
 					GTree gTree = (GTree) contextObject;
 					TreePath[] selectionPaths = gTree.getSelectionPaths();
-					return selectionPaths.length == 1;
+					if (selectionPaths.length != 1) {
+						return false;
+					}
+					CallNode node = ((CallNode) selectionPaths[0].getLastPathComponent());
+					// remoteFunction can be null for dead-end nodes
+					Function remoteFunction = node.getRemoteFunction();
+					String menuName =
+						SHOW_CALL_TREE_MENU_PREFIX +
+							(remoteFunction == null ? "" : remoteFunction.getName());
+					MenuData data = getPopupMenuData().cloneData();
+					data.setMenuPath(new String[] { menuName });
+					setPopupMenuData(data);
+					return remoteFunction != null;
 				}
 
 				@Override
@@ -675,7 +674,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			};
 		newCallTree.setHelpLocation(new HelpLocation(plugin.getName(),
 			"Call_Tree_Context_Action_Show_Call_Tree_For_Function"));
-		newCallTree.setPopupMenuData(new MenuData(new String[] { "Show Call Tree For Function" },
+		newCallTree.setPopupMenuData(new MenuData(new String[] { SHOW_CALL_TREE_MENU_PREFIX },
 			CallTreePlugin.PROVIDER_ICON, newTreeMenu));
 		newCallTree.setDescription(
 			"Show the Function Call Tree window for the function " + "selected in the call tree");
@@ -844,7 +843,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	private JPanel createTreePanel(boolean isIncoming, GTree tree) {
 		JPanel panel = new JPanel(new BorderLayout());
 
-		panel.add(new GLabel(isIncoming ? "Incoming Calls" : "Outgoing Calls"), BorderLayout.NORTH);
+		panel.add(new GLabel(isIncoming ? "Incoming" : "Outgoing"), BorderLayout.NORTH);
 		panel.add(tree, BorderLayout.CENTER);
 
 		return panel;

@@ -24,8 +24,7 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.tree.GTreeNode;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.FunctionSignatureFieldLocation;
@@ -48,22 +47,24 @@ public class OutgoingCallNode extends CallNode {
 	private final Address sourceAddress;
 
 	OutgoingCallNode(Program program, Function function, Address sourceAddress,
-			CallTreeOptions callTreeOptions) {
+			boolean isCallRef, CallTreeOptions callTreeOptions) {
 		super(callTreeOptions);
 		this.program = program;
 		this.function = function;
 		this.name = function.getName(callTreeOptions.showNamespace());
 		this.sourceAddress = sourceAddress;
+		this.isCallRef = isCallRef;
 
 		MultiIcon multiIcon = new MultiIcon(OUTGOING_ICON, false, 32, 16);
-		TranslateIcon translateIcon = new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0);
+		TranslateIcon translateIcon = new TranslateIcon(
+			isCallRef ? CallTreePlugin.FUNCTION_ICON : CallTreePlugin.DATA_ICON, 16, 0);
 		multiIcon.addIcon(translateIcon);
 		outgoingFunctionIcon = multiIcon;
 	}
 
 	@Override
 	CallNode recreate() {
-		return new OutgoingCallNode(program, function, sourceAddress, callTreeOptions);
+		return new OutgoingCallNode(program, function, sourceAddress, isCallRef, callTreeOptions);
 	}
 
 	@Override
@@ -88,33 +89,35 @@ public class OutgoingCallNode extends CallNode {
 
 		FunctionManager fm = program.getFunctionManager();
 		Function currentFunction = fm.getFunctionContaining(address);
-		AddressSetView functionBody = currentFunction.getBody();
-		Address entryPoint = currentFunction.getEntryPoint();
-		Set<Reference> references = getReferencesFrom(program, functionBody, monitor);
 		LazyMap<Function, List<GTreeNode>> nodesByFunction =
 			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		FunctionManager functionManager = program.getFunctionManager();
-		for (Reference reference : references) {
-			monitor.checkCancelled();
-			Address toAddress = reference.getToAddress();
-			if (toAddress.equals(entryPoint)) {
-				continue; // recursive
-			}
+		ReferenceManager refManager = program.getReferenceManager();
 
-			Function calledFunction = functionManager.getFunctionAt(toAddress);
-			if (calledFunction == null) {
+		AddressRangeIterator rangeIter = currentFunction.getBody().getAddressRanges();
+		while (rangeIter.hasNext()) {
+			AddressRange range = rangeIter.next();
+			ReferenceIterator refIter =refManager.getReferenceIterator(range.getMinAddress());
+			while (refIter.hasNext()) {
+				monitor.checkCancelled();
+				Reference reference = refIter.next();
+				if (!range.contains(reference.getFromAddress())) {
+					break; // go to next AddressRange
+				}
+				Address toAddress = reference.getToAddress();
+				Function calledFunction = functionManager.getFunctionAt(toAddress);
+				if (calledFunction == null) {
+					createNode(nodesByFunction, reference, calledFunction);
+					continue;
+				}
+				// If we are not showing thunks, then replace the thunk with the thunked function
+				if (calledFunction.isThunk() && !callTreeOptions.allowsThunks()) {
+					Function thunkedFunction = calledFunction.getThunkedFunction(true);
+					createNode(nodesByFunction, reference, thunkedFunction);
+					continue;
+				}
 				createNode(nodesByFunction, reference, calledFunction);
-				continue;
 			}
-
-			// If we are not showing thunks, then replace the thunk with the thunked function
-			if (calledFunction.isThunk() && !callTreeOptions.allowsThunks()) {
-				Function thunkedFunction = calledFunction.getThunkedFunction(true);
-				createNode(nodesByFunction, reference, thunkedFunction);
-				continue;
-			}
-
-			createNode(nodesByFunction, reference, calledFunction);
 		}
 
 		List<GTreeNode> children = nodesByFunction.values()
@@ -130,12 +133,14 @@ public class OutgoingCallNode extends CallNode {
 		if (calledFunction != null) {
 			if (isExternalCall(calledFunction)) {
 				CallNode node = new ExternalCallNode(calledFunction, fromAddress,
-					CallTreePlugin.FUNCTION_ICON, callTreeOptions);
+					reference.getReferenceType().isCall(), callTreeOptions);
 				addNode(nodes, node);
 			}
 			else {
 				addNode(nodes,
-					new OutgoingCallNode(program, calledFunction, fromAddress, callTreeOptions));
+					new OutgoingCallNode(program, calledFunction, fromAddress,
+						reference.getReferenceType().isCall(),
+						callTreeOptions));
 			}
 		}
 		else if (isCallReference(reference)) {
@@ -143,7 +148,7 @@ public class OutgoingCallNode extends CallNode {
 			Function externalFunction = getExternalFunctionTempHackWorkaround(reference);
 			if (externalFunction != null) {
 				CallNode node = new ExternalCallNode(externalFunction, fromAddress,
-					CallTreePlugin.FUNCTION_ICON, callTreeOptions);
+					reference.getReferenceType().isCall(), callTreeOptions);
 				addNode(nodes, node);
 			}
 			else {
@@ -231,7 +236,12 @@ public class OutgoingCallNode extends CallNode {
 		if (icon == null) {
 			icon = outgoingFunctionIcon;
 			if (functionIsInPath()) {
-				icon = CallTreePlugin.RECURSIVE_ICON;
+				MultiIcon multiIcon = new MultiIcon(CallTreePlugin.RECURSIVE_ICON, false, 32, 16);
+				TranslateIcon translateIcon =
+					isCallRef ? new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0)
+							: new TranslateIcon(CallTreePlugin.DATA_ICON, 16, 0);
+				multiIcon.addIcon(translateIcon);
+				icon = multiIcon;
 			}
 		}
 		return icon;
@@ -253,11 +263,6 @@ public class OutgoingCallNode extends CallNode {
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	@Override
-	public String getToolTip() {
-		return "Called from " + sourceAddress;
 	}
 
 	@Override

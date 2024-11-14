@@ -67,7 +67,8 @@ public class IncomingCallNodeTest extends AbstractGenericTest {
 		callTreeOptions = callTreeOptions.withRecurseDepth(5);
 		callTreeOptions = callTreeOptions.withFilterThunks(hideThunks);
 		node1 =
-			new IncomingCallNode(program, firstCalledFunction, calledFromAddress, callTreeOptions);
+			new IncomingCallNode(program, firstCalledFunction, calledFromAddress, true,
+				callTreeOptions);
 
 	}
 

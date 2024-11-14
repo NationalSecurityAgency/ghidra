@@ -23,15 +23,16 @@ import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeSlowLoadingNode;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * In general, a CallNode represents a function and its relationship (either a call reference or
+ * a data reference) to the function of its parent node 
+ */
 public abstract class CallNode extends GTreeSlowLoadingNode {
 
 	protected CallTreeOptions callTreeOptions;
@@ -39,6 +40,9 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 
 	/** Used to signal that this node has been marked for replacement */
 	protected boolean invalid = false;
+
+	/** Indicates whether the associated reference is a call reference **/
+	protected boolean isCallRef = false;
 
 	public CallNode(CallTreeOptions callTreeOptions) {
 		this.callTreeOptions = Objects.requireNonNull(callTreeOptions);
@@ -72,38 +76,53 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	 */
 	abstract CallNode recreate();
 
-	protected Set<Reference> getReferencesFrom(Program program, AddressSetView addresses,
-			TaskMonitor monitor) throws CancelledException {
-		Set<Reference> set = new HashSet<>();
-		ReferenceManager referenceManager = program.getReferenceManager();
-		AddressIterator addressIterator = addresses.getAddresses(true);
-		while (addressIterator.hasNext()) {
-			monitor.checkCancelled();
-			Address address = addressIterator.next();
-			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
-			if (referencesFrom != null) {
-				for (Reference reference : referencesFrom) {
-					set.add(reference);
+
+	@Override
+	public String getToolTip() {
+		String refString = isCallRef ? "Called from " : "Referenced from ";
+		return refString + getSourceAddress();
+	}
+
+	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction, CallNode nodeToAdd) {
+
+		Function function = nodeToAdd.getRemoteFunction();
+		List<GTreeNode> nodes = nodesByFunction.get(function);
+
+		GTreeNode nodeToRemove = null;
+		for (GTreeNode node : nodes) {
+			if (node.equals(nodeToAdd)) {
+				return; // never add equal() nodes
+			}
+			// don't allow a call reference and a non-call node to the same remote function
+			// at the same address 
+			CallNode callNode = (CallNode) node;
+			if (nodeToAdd.isCallRef != callNode.isCallRef) {
+				if (Objects.equals(nodeToAdd.getSourceAddress(), callNode.getSourceAddress())) {
+					if (Objects.equals(nodeToAdd.getRemoteFunction(),
+						callNode.getRemoteFunction())) {
+						if (nodeToAdd.isCallRef) {
+							return;  // don't replace a call node with a non-call node
+						}
+						// add the call node and remove the non-call node
+						nodeToRemove = callNode;
+						break;
+					}
 				}
 			}
 		}
-		return set;
-	}
-
-	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction, CallNode node) {
-
-		Function function = node.getRemoteFunction();
-		List<GTreeNode> nodes = nodesByFunction.get(function);
-		if (nodes.contains(node)) {
-			return; // never add equal() nodes
+		if (nodeToRemove != null) {
+			nodes.remove(nodeToRemove);
+			nodes.add(nodeToAdd);
+			return;
 		}
 
 		if (callTreeOptions.allowsDuplicates()) {
-			nodes.add(node); // ok to add multiple nodes for this function with different addresses
+			nodes.add(nodeToAdd); // ok to add multiple nodes for this function with different addresses
+			return;
 		}
 
 		if (nodes.isEmpty()) {
-			nodes.add(node); // no duplicates allowed; only add if this is the only node
+			nodes.add(nodeToAdd); // no duplicates allowed; only add if this is the only node
 			return;
 		}
 
@@ -112,7 +131,14 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	protected class CallNodeComparator implements Comparator<GTreeNode> {
 		@Override
 		public int compare(GTreeNode o1, GTreeNode o2) {
-			return ((CallNode) o1).getSourceAddress().compareTo(((CallNode) o2).getSourceAddress());
+			CallNode node1 = (CallNode) o1;
+			CallNode node2 = (CallNode) o2;
+			int addrCompare = node1.getSourceAddress().compareTo(node2.getSourceAddress());
+			if (addrCompare != 0) {
+				return addrCompare;
+			}
+			return Boolean.compare(node1.isCallRef, node2.isCallRef);
+
 		}
 	}
 
@@ -163,6 +189,9 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		if (!Objects.equals(getSourceAddress(), other.getSourceAddress())) {
 			return false;
 		}
+		if (other.isCallRef != isCallRef) {
+			return false;
+		}
 		return Objects.equals(getRemoteFunction(), other.getRemoteFunction());
 	}
 
@@ -170,6 +199,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + Boolean.hashCode(isCallRef);
 		Function function = getRemoteFunction();
 		result = prime * result + ((function == null) ? 0 : function.hashCode());
 		Address sourceAddress = getSourceAddress();

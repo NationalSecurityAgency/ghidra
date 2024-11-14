@@ -42,8 +42,11 @@ import ghidra.util.HelpLocation;
 import resources.Icons;
 
 /**
- * Assuming a function <b>foo</b>, this plugin will show all callers of <b>foo</b> and all 
- * calls to other functions made by <b>foo</b>. 
+ * Assuming a function <b>foo</b>, this plugin will show:
+ *  1) all callers of <b>foo</b> 
+ *  2) all functions which reference <b>foo</b>
+ *  3) all callees of <b>foo</b>
+ *  4) all functions referenced by <b>foo</b>. 
  */
 //@formatter:off
 @PluginInfo(
@@ -51,10 +54,10 @@ import resources.Icons;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.GRAPH,
 	shortDescription = "Call Trees Plugin",
-	description = "This plugin shows incoming and outgoing calls for a given function.  " +
-			"More specifically, one tree of the plugin will show all callers of the " +
-			"function and the other tree of the plugin will show all calls made " +
-			"by the function"
+	description = "This plugin shows incoming and outgoing calls and function references " +
+		    "for a given function foo. More specifically, one tree of the plugin will show all " +
+			"callers and function referring to foo and the other tree of the plugin will show " + 
+		    "all calls and references to functions made by foo."
 )
 //@formatter:on
 public class CallTreePlugin extends ProgramPlugin {
@@ -62,6 +65,7 @@ public class CallTreePlugin extends ProgramPlugin {
 	static final Icon PROVIDER_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
 	static final Icon FUNCTION_ICON = new GIcon("icon.plugin.calltree.function");
 	static final Icon RECURSIVE_ICON = new GIcon("icon.plugin.calltree.recursive");
+	static final Icon DATA_ICON = new GIcon("icon.plugin.calltree.data");
 
 	private List<CallTreeProvider> providers = new ArrayList<>();
 	private DockingAction showCallTreeFromMenuAction;
@@ -167,14 +171,14 @@ public class CallTreePlugin extends ProgramPlugin {
 		tool.addAction(showCallTreeFromMenuAction);
 	}
 
-	private void creatAndShowProvider() {
+	private void createAndShowProvider(ProgramLocation location) {
 		CallTreeProvider provider = new CallTreeProvider(this, false);
 
 		CallTreeOptions callTreeOptions = primaryProvider.getCallTreeOptions();
 		provider.setCallTreeOptions(callTreeOptions);
 
 		providers.add(provider);
-		provider.initialize(currentProgram, currentLocation);
+		provider.initialize(currentProgram, location);
 		tool.showComponentProvider(provider, true);
 	}
 
@@ -219,7 +223,7 @@ public class CallTreePlugin extends ProgramPlugin {
 			return;
 		}
 
-		creatAndShowProvider();
+		createAndShowProvider(location);
 	}
 
 	Function getFunction(ProgramLocation location) {

@@ -59,7 +59,8 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		CallTreeOptions callTreeOptions = new CallTreeOptions();
 		callTreeOptions = callTreeOptions.withRecurseDepth(5);
 		node1 =
-			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, callTreeOptions);
+			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, true,
+				callTreeOptions);
 	}
 
 	@After
@@ -73,7 +74,18 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		builder.createMemoryCallReference(firstCalledFunctionAddress, firstCalledFunctionAddress);
 
 		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
-		assertTrue(children.isEmpty());
+		assertEquals(1, children.size());
+
+	}
+
+	@Test
+	public void testGenerateChildren_SelfRecursiveReference() throws Exception {
+
+		builder.createMemoryReadReference(firstCalledFunctionAddress, firstCalledFunctionAddress);
+
+		List<GTreeNode> children = node1.generateChildren(TaskMonitor.DUMMY);
+		assertEquals(1, children.size());
+
 	}
 
 	@Test
@@ -456,7 +468,8 @@ public class OutgoingCallNodeTest extends AbstractGenericTest {
 		callTreeOptions = callTreeOptions.withRecurseDepth(5);
 		callTreeOptions = callTreeOptions.withFilterThunks(true);
 		node1 =
-			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, callTreeOptions);
+			new OutgoingCallNode(program, firstCalledFunction, calledFromAddress, true,
+				callTreeOptions);
 
 	}
 

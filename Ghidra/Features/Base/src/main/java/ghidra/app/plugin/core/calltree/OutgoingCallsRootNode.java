@@ -25,7 +25,7 @@ public class OutgoingCallsRootNode extends OutgoingCallNode {
 
 	OutgoingCallsRootNode(Program program, Function function, Address sourceAddress,
 			CallTreeOptions callTreeOptions) {
-		super(program, function, sourceAddress, callTreeOptions);
+		super(program, function, sourceAddress, false, callTreeOptions);
 	}
 
 	@Override
@@ -52,4 +52,5 @@ public class OutgoingCallsRootNode extends OutgoingCallNode {
 	public String getToolTip() {
 		return null;
 	}
+
 }
