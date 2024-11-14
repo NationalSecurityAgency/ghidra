@@ -1522,6 +1522,8 @@ public class GhidraFileData {
 							monitor.setMessage("Updating local checkout file...");
 						}
 						folderItem.updateCheckout(versionedFolderItem, !quickCheckin, monitor);
+						versionedFolderItem.updateCheckoutVersion(folderItem.getCheckoutId(),
+							folderItem.getCheckoutVersion(), ClientUtil.getUserName());
 						success = true;
 					}
 					finally {
@@ -1929,11 +1931,14 @@ public class GhidraFileData {
 
 			ContentHandler<?> contentHandler = getContentHandler();
 
+			long checkoutId = folderItem.getCheckoutId();
+
 			if (!modifiedSinceCheckout()) {
-				// Quick merge
+				// Quick database update of local folder item
 				folderItem.updateCheckout(versionedFolderItem, true, monitor);
 			}
 			else {
+				// Perform interactive merge
 
 				if (SystemUtilities.isInHeadlessMode()) {
 					throw new IOException("Merge failed, merge is not supported in headless mode");
@@ -1966,7 +1971,6 @@ public class GhidraFileData {
 					bufferFile.dispose();
 				}
 				int coVer = folderItem.getCheckoutVersion();
-				long checkoutId = folderItem.getCheckoutId();
 
 				tmpItem.setCheckout(checkoutId, folderItem.isCheckedOutExclusive(), mergeVer, 0);
 
@@ -2002,12 +2006,14 @@ public class GhidraFileData {
 					release(latestObj);
 				}
 
-				// Update folder item
+				// Update local folder item using temporary file content
 				folderItem.updateCheckout(tmpItem, mergeVer);
-				versionedFolderItem.updateCheckoutVersion(checkoutId, mergeVer,
-					ClientUtil.getUserName());
-				tmpItem = null;
+				tmpItem = null; // update removes temporary file if successful
 			}
+
+			// update checkout data within versioned repository
+			versionedFolderItem.updateCheckoutVersion(checkoutId,
+				folderItem.getCheckoutVersion(), ClientUtil.getUserName());
 
 			Msg.info(this, "Updated checkout completed for " + name);
 
@@ -2023,6 +2029,7 @@ public class GhidraFileData {
 			mergeInProgress = false;
 			try {
 				if (tmpItem != null) {
+					// remove temporary merge file if error occured
 					try {
 						tmpItem.delete(-1, ClientUtil.getUserName());
 					}
