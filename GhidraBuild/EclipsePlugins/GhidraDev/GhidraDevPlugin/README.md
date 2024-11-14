@@ -30,6 +30,9 @@ change with future releases.
  12. [Building](#building)
 
 ## Change History
+__4.0.1:__
+* New Ghidra module projects now contain a default `README.md` file.
+
 __4.0.0:__
 * GhidraDev has been upgraded to be compatible with Ghidra 11.2 and later. It is not backwards
   compatible with versions of Ghidra prior to 11.2. Older versions of GhidraDev will report an 

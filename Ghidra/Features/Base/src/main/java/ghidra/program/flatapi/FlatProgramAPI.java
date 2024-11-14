@@ -1331,7 +1331,7 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the defined data after the specified data or null if no data exists.
-	 * @param data preceeding data
+	 * @param data preceding data
 	 * @return the defined data after the specified data or null if no data exists
 	 */
 	public final Data getDataAfter(Data data) {

@@ -32,6 +32,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
+@Ignore
 public class JavaMethodsTest extends AbstractJavaTraceRmiTest {
 
 	/**

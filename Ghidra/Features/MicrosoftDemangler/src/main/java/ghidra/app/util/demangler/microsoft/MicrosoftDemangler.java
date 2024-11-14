@@ -66,7 +66,13 @@ public class MicrosoftDemangler implements Demangler {
 		demangler.setIsFunction(mContext.shouldInterpretAsFunction());
 		try {
 			item = demangler.demangle();
-			object = MicrosoftDemanglerUtil.convertToDemangledObject(item, mangled);
+			if (item == null) {
+				return null;
+			}
+			String originalDemangled = item.toString();
+			demangler.getOutputOptions().setUseEncodedAnonymousNamespace(true);
+			object =
+				MicrosoftDemanglerUtil.convertToDemangledObject(item, mangled, originalDemangled);
 			if (object != null) {
 				object.setMangledContext(context);
 			}
@@ -103,7 +109,13 @@ public class MicrosoftDemangler implements Demangler {
 		demangler.setIsFunction(mContext.shouldInterpretAsFunction());
 		try {
 			mdType = demangler.demangleType();
-			dataType = MicrosoftDemanglerUtil.convertToDemangledDataType(mdType, mangled);
+			if (mdType == null) {
+				return null;
+			}
+			String originalDemangled = mdType.toString();
+			demangler.getOutputOptions().setUseEncodedAnonymousNamespace(true);
+			dataType = MicrosoftDemanglerUtil.convertToDemangledDataType(mdType, mangled,
+				originalDemangled);
 			if (dataType != null) {
 				dataType.setMangledContext(context);
 			}

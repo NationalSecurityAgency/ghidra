@@ -184,6 +184,13 @@
                 "command"><STRONG>--noLocalAuth</STRONG></SPAN> causes local connections to require
                 authentication. This command does not affect the presence or absence of passwords
                 or Distinguished Names for existing users.</P>
+				
+				<P><SPAN class="command"><STRONG>--cafile&nbsp;</STRONG></SPAN><SPAN class=
+				"emphasis"><EM>&lt;/cafile-path&gt;</EM></SPAN> - specifies an absolute path to a
+				certificate authority file and is required for <SPAN class=
+				"command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This file should contain the
+				certificates the PostgreSQL server will use to authenticate in PEM format
+				concatenated together.</P>
 
                 <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
                 "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name for the admin

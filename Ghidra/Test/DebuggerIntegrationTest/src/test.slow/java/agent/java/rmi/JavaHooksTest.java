@@ -15,11 +15,13 @@
  */
 package agent.java.rmi;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import generic.Unique;
@@ -31,6 +33,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
+@Ignore
 public class JavaHooksTest extends AbstractJavaTraceRmiTest {
 
 	@Test

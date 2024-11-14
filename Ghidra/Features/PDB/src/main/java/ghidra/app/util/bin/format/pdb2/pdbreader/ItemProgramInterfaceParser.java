@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,6 @@ public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
 	@Override
 	protected int getStreamNumber() {
 		return ITEM_PROGRAM_INTERFACE_STREAM_NUMBER;
-
 	}
 
 	/**
@@ -44,7 +43,24 @@ public class ItemProgramInterfaceParser extends TypeProgramInterfaceParser {
 	@Override
 	protected RecordCategory getCategory() {
 		return RecordCategory.ITEM;
+	}
 
+	/**
+	 * Returns whether there is a reasonable error when searching for a version number.  For
+	 *  the standard TPI case, any unrecognized version number is a reasonable error.  For this
+	 *  IPI case, we have to be able to error on an unrecognized version number, so we report
+	 *  true for version numbers that would seem reasonable.  We return false if the versionNumber
+	 *  is not a reasonable number, which allows the "hack" to work for IPI where a failure to
+	 *  parse an IPI is an indication that there is no IPI (which is first screened by the
+	 *  {@link #hackCheckNoNameForStream(NameTable)} method
+	 * @param versionNumber the versionNumber being checked
+	 * @return {@code true} if the error is a reasonable error
+	 */
+	@Override
+	protected boolean isReasonableError(int versionNumber) {
+		String str = String.format("%d", versionNumber);
+		return (str.length() == 8 &&
+			(str.startsWith("199") || str.startsWith("200") || str.startsWith("201")));
 	}
 
 	/**

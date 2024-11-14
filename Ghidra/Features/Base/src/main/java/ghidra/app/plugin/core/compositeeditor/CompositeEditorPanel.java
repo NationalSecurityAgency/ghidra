@@ -1201,13 +1201,12 @@ public abstract class CompositeEditorPanel extends JPanel
 		private void init() {
 
 			Plugin plugin = provider.getPlugin();
-			final PluginTool tool = plugin.getTool();
-			editor = new DataTypeSelectionEditor(tool,
-				bitfieldAllowed ? AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD
+			PluginTool tool = plugin.getTool();
+			editor = new DataTypeSelectionEditor(model.getViewDataTypeManager(), tool,
+				bitfieldAllowed
+						? AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD
 						: AllowedDataTypes.SIZABLE_DYNAMIC);
 			editor.setTabCommitsEdit(true);
-			DataTypeManager originalDataTypeManager = model.getOriginalDataTypeManager();
-			editor.setPreferredDataTypeManager(originalDataTypeManager);
 			editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
 			textField = editor.getDropDownTextField();

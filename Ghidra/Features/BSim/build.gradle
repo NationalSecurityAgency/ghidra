@@ -44,19 +44,18 @@ dependencies {
 // into common zip to allow for a rebuild of the postgres server if needed
 
 rootProject.assembleDistribution { 
+	def p = this.project
+	def zipPath = getZipPath(p)
 	
 	String postgresqlDepsFile = "${DEPS_DIR}/BSim/${postgresql_distro}"
 	String postgresqlBinRepoFile = "${BIN_REPO}/Ghidra/Features/BSim/${postgresql_distro}"
 		
 	def postgresqlFile = file(postgresqlDepsFile).exists() ? postgresqlDepsFile : postgresqlBinRepoFile
 	
-    into (getZipPath(this.project)) {
-		from file("make-postgres.sh")	
-	}
-	into (getZipPath(this.project)) {
+	into ("${zipPath}/support") {
 		from file(postgresqlFile)	
 	}
-	into (getZipPath(this.project)  + "/src/lshvector") {
+	into ("${zipPath}/src/lshvector") {
 		from files("src/lshvector")	
 	}
 }
