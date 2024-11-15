@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,29 +15,12 @@
  */
 package sarif;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.Array;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.ByteDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.FunctionDefinition;
-import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.Pointer32DataType;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.ProgramBasedDataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.TypeDef;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.program.model.data.Union;
-import ghidra.program.model.data.UnionDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.util.ProgramDiff;
 
 public class DataTypesSarifTest extends AbstractSarifTest {
@@ -63,11 +46,11 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		cp = new CategoryPath("/A/B/C/D/E/F/G/H");
 		dataMgr.createCategory(cp);
 		assertTrue(dataMgr.containsCategory(cp));
-		
+
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -78,9 +61,9 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		assertNotNull(array);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -93,9 +76,9 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		assertNotNull(td);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -110,9 +93,9 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		assertNotNull(ptr);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -130,24 +113,24 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		p = new Pointer32DataType(null);
 		ptr = (Pointer) dataMgr.resolve(p, null);
 		assertNotNull(ptr);
-		
+
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
 	public void testCreateStructure() throws Exception {
 		ProgramBasedDataTypeManager dataMgr = program.getDataTypeManager();
-		StructureDataType sdt = new StructureDataType("test", 0);
+		Structure sdt = createComplexStructureDataType(dataMgr);
 		Structure struct = (Structure) dataMgr.addDataType(sdt, null);
 		assertNotNull(struct);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -158,9 +141,9 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		assertNotNull(union);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
 	}
 
 	@Test
@@ -172,9 +155,75 @@ public class DataTypesSarifTest extends AbstractSarifTest {
 		assertNotNull(funcDef);
 
 		ProgramDiff programDiff = readWriteCompare();
-		
+
 		AddressSetView differences = programDiff.getDifferences(monitor);
-		assert(differences.isEmpty());
+		assert (differences.isEmpty());
+	}
+
+	static Structure createComplexStructureDataType(DataTypeManager dtm) throws Exception {
+
+		/**
+		 * /structA
+		 * aligned(8) pack(disabled)
+		 * Structure structA {
+		 *    0   char   1   a0   ""
+		 *    4   int   4   a1   ""
+		 *    16   int[4]   16   a3   ""
+		 *    32   char[0]   0   az   ""
+		 *    40   short   2   a4   ""
+		 *    48   int[0]   0   aflex   ""
+		 * }
+		 * Length: 48 Alignment: 8
+		 */
+		Structure structA = new StructureDataType("structA", 0);
+		structA.insertAtOffset(0, CharDataType.dataType, -1, "a0", null);
+		structA.insertAtOffset(4, IntegerDataType.dataType, -1, "a1", null);
+		structA.insertAtOffset(0x10, new ArrayDataType(CharDataType.dataType, 0, -1), -1, "az",
+			null);
+		structA.insertAtOffset(0x10, new ArrayDataType(IntegerDataType.dataType, 4, -1), -1, "a3",
+			null);
+		structA.insertAtOffset(0x28, ShortDataType.dataType, -1, "a4", null);
+		structA.insertAtOffset(0x30, new ArrayDataType(IntegerDataType.dataType, 0, -1), -1,
+			"aflex", null);
+		structA.setExplicitMinimumAlignment(8);
+
+		/**
+		 * /structB
+		 * pack()
+		 * Structure structB {
+		 *    0   short   2   b0   ""
+		 *    2   byte[0]   0   bfs   ""
+		 *    2   int:4(0)   1   bf1   ""
+		 *    2   int:6(4)   2   bf2   ""
+		 *    3   int:2(2)   1   bf3   ""
+		 *    8   structA   48   b1   ""
+		 * }
+		 * Length: 56 Alignment: 8
+		 */
+		Structure structB = new StructureDataType("structB", 0);
+		structB.setPackingEnabled(true);
+		structB.add(ShortDataType.dataType, "b0", null);
+		structB.add(new ArrayDataType(ByteDataType.dataType, 0, -1), "bfs", null);
+		structB.addBitField(IntegerDataType.dataType, 4, "bf1", null);
+		structB.addBitField(IntegerDataType.dataType, 6, "bf2", null);
+		structB.addBitField(IntegerDataType.dataType, 2, "bf3", null);
+		structB.add(structA, "b1", null);
+
+		/**
+		 * /structC
+		 * pack()
+		 * Structure structC {
+		 *    0   char   1   c0   ""
+		 *    8   structB   56   c1   ""
+		 * }
+		 * Length: 64 Alignment: 8
+		 */
+		Structure structC = new StructureDataType("structC", 0);
+		structC.setPackingEnabled(true);
+		structC.add(CharDataType.dataType, "c0", null);
+		structC.add(structB, "c1", null);
+
+		return structC;
 	}
 
 }
