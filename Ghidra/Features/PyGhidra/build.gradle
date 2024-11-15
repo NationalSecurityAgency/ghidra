@@ -62,9 +62,23 @@ task installJPype(type: Exec) {
 	}
 }
 
+// Install ghidra-stubs into the development virtual environment
+task installGhidraStubs(type: Exec) {
+	dependsOn(":createGhidraStubsWheel")
+	
+	File depsDir = file("${DEPS_DIR}/PyGhidra")
+	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
+	def dir = depsDir.exists() ? depsDir : binRepoDir
+
+	doFirst {
+		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "--no-index", "-f", "${ROOT_PROJECT_DIR}/build/typestubs/dist", "ghidra-stubs" 
+	}
+}
+
 // Install PyGhidra in editable mode to the development virtual environment
 task installEditablePyGhidra(type: Exec) {
 	dependsOn("installJPype")
+	dependsOn("installGhidraStubs")
 	
 	File depsDir = file("${DEPS_DIR}/PyGhidra")
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")

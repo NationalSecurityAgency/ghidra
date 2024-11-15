@@ -136,6 +136,9 @@ public class VSCodeProjectScript extends GhidraScript {
 				.filter(e -> e.getValue() != null)
 				.forEach(e -> sourcesObject.addProperty(e.getKey(), e.getValue()));
 
+		json.addProperty("python.analysis.stubPath",
+			new File(installDir, "docs/ghidra_stubs/typestubs").getAbsolutePath());
+
 		// Write settings json object
 		if (!FileUtilities.mkdirs(settingsFile.getParentFile())) {
 			throw new IOException("Failed to create: " + settingsFile.getParentFile());
