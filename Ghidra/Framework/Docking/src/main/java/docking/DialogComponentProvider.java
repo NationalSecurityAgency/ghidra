@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,14 @@ import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.action.*;
-import docking.actions.KeyBindingUtils;
+import docking.action.builder.ActionBuilder;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.util.WindowUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
@@ -81,6 +82,7 @@ public class DialogComponentProvider
 	private TaskMonitorComponent taskMonitorComponent;
 
 	private static final KeyStroke ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+	private DockingAction closeAction;
 
 	private CardLayout progressCardLayout;
 	private JButton defaultButton;
@@ -181,20 +183,46 @@ public class DialogComponentProvider
 	}
 
 	private void installEscapeAction() {
-		Action escAction = new AbstractAction("ESCAPE") {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				escapeCallback();
-			}
-		};
 
-		KeyBindingUtils.registerAction(rootPanel, ESC_KEYSTROKE, escAction,
-			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		closeAction = new ActionBuilder("Close Dialog", title)
+				.sharedKeyBinding()
+				.keyBinding(ESC_KEYSTROKE)
+				.enabledWhen(this::isMyDialog)
+				.onAction(c -> escapeCallback())
+				.build();
+
+		addAction(closeAction);
+	}
+
+	private boolean isMyDialog(ActionContext c) {
+		//
+		// Each dialog registers a shared action bound to Escape.  If all dialog actions are 
+		// enabled, then the user will get prompted to pick which dialog to close when pressing
+		// Escape.  Thus, we limit the enablement of each action to be the dialog that contains the
+		// focused component.  We use the action context to find out if this dialog is the active
+		// dialog.
+		//
+		Window window = WindowUtilities.windowForComponent(c.getSourceComponent());
+		if (!(window instanceof DockingDialog dockingDialog)) {
+			return false;
+		}
+
+		return dockingDialog.containsProvider(DialogComponentProvider.this);
 	}
 
 	/** a callback mechanism for children to do work */
 	protected void doInitialize() {
 		// may be overridden by subclasses
+	}
+
+	/**
+	 * Returns true if the given keystroke is the trigger for this dialog's close action.
+	 * @param ks the keystroke
+	 * @return true if the given keystroke is the trigger for this dialog's close action
+	 */
+	public boolean isCloseKeyStroke(KeyStroke ks) {
+		KeyStroke currentCloseKs = closeAction.getKeyBinding();
+		return Objects.equals(ks, currentCloseKs);
 	}
 
 	public int getId() {

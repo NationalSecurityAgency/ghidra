@@ -462,6 +462,23 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
+	 * Returns true if the given provider is in a non-main window (a {@link DetachedWindowNode})
+	 * and is the last component provider in that window.
+	 * @param provider the provider
+	 * @return true if the last provider in a non-main window
+	 */
+	public boolean isLastProviderInDetachedWindow(ComponentProvider provider) {
+
+		Window providerWindow = getProviderWindow(provider);
+		WindowNode providerNode = root.getNodeForWindow(providerWindow);
+		if (!(providerNode instanceof DetachedWindowNode windowNode)) {
+			return false;
+		}
+
+		return windowNode.getComponentCount() == 1;
+	}
+
+	/**
 	 * Sets the visible state of the set of docking windows.
 	 *
 	 * @param state if true the main window and all sub-windows are set to be visible. If state is
@@ -944,7 +961,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (visibleState) {
 			movePlaceholderToFront(placeholder, false);
 			if (placeholder.getNode() == null) {
-				root.add(placeholder);
+				root.addToNewWindow(placeholder);
 			}
 			if (requestFocus) {
 				setNextFocusPlaceholder(placeholder);
@@ -1142,7 +1159,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	void movePlaceholder(ComponentPlaceholder source, Point p) {
 		ComponentNode sourceNode = source.getNode();
 		sourceNode.remove(source);
-		root.add(source, p);
+		root.addToNewWindow(source, p);
 		scheduleUpdate();
 	}
 
