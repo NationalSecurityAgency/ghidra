@@ -51,4 +51,11 @@ public class ContextCommit implements ContextChange {
 		decoder.closeElement(el);
 	}
 
+	public int getWordIndex() {
+		return num;
+	}
+
+	public int getMask() {
+		return mask;
+	}
 }
