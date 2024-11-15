@@ -1147,10 +1147,7 @@ public class PcodeDataTypeManager {
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);
 		coreBuiltin = new HashMap<Long, TypeMap>();
-		TypeMap type = new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false,
-			DEFAULT_DECOMPILER_ID);
-		coreBuiltin.put(type.id, type);
-		type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
+		TypeMap type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
 			builtInDataTypes);
 		coreBuiltin.put(type.id, type);
 
