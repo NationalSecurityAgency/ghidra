@@ -591,8 +591,8 @@ def putreg():
     regs = util.dbg._base.reg
     for i in range(0, len(regs)):
         name = regs._reg.GetDescription(i)[0]
-        value = regs._get_register_by_index(i)
         try:
+            value = regs._get_register_by_index(i)
             values.append(mapper.map_value(nproc, name, value))
             robj.set_value(name, hex(value))
         except Exception:
