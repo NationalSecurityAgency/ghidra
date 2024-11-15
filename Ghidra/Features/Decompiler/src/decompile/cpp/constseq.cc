@@ -19,6 +19,7 @@
 namespace ghidra {
 
 const int4 ArraySequence::MINIMUM_SEQUENCE_LENGTH = 4;
+const int4 ArraySequence::MAXIMUM_SEQUENCE_LENGTH = 0x20000;
 
 /// Initialize the sequence with the \b root operation which writes the earliest character in the memory region.
 /// \param fdata is the function containing the sequence
@@ -112,7 +113,7 @@ int4 ArraySequence::formByteArray(int4 sz,int4 slot,uint8 rootOff,bool bigEndian
   int4 elSize = charType->getSize();
   for(int4 i=0;i<moveOps.size();++i) {
     int4 bytePos = moveOps[i].offset - rootOff;
-    if (bytePos + elSize > sz) continue;
+    if (bytePos < 0 || bytePos + elSize > sz) continue;
     uint8 val = moveOps[i].op->getIn(slot)->getOffset();
     used[bytePos] = (val == 0) ? 2 : 1;		// Mark byte as used, a 2 indicates a null terminator
     if (bigEndian) {
@@ -470,7 +471,7 @@ void HeapSequence::findBasePointer(Varnode *initPtr)
     OpCode opc = op->code();
     if (opc == CPUI_PTRADD) {
       int8 sz = op->getIn(2)->getOffset();
-      if (sz != charType->getAlignSize()) break;
+      if (sz != ptrAddMult) break;
     }
     else if (opc != CPUI_COPY)
       break;
@@ -546,7 +547,6 @@ void HeapSequence::findInitialStores(vector<PcodeOp *> &stores)
   vector<Varnode *> ptradds;
   findDuplicateBases(ptradds);
   int4 pos = 0;
-  int4 alignSize = charType->getAlignSize();
   while(pos < ptradds.size()) {
     Varnode *vn = ptradds[pos];
     pos += 1;
@@ -558,7 +558,7 @@ void HeapSequence::findInitialStores(vector<PcodeOp *> &stores)
 	if (op->getIn(0) != vn) continue;
 	// We only check array element size here, if we checked the data-type, we would
 	// need to take into account different pointer styles to the same element data-type
-	if (op->getIn(2)->getOffset() != alignSize) continue;
+	if (op->getIn(2)->getOffset() != ptrAddMult) continue;
 	ptradds.push_back(op->getOut());
       }
       else if (opc == CPUI_COPY) {
@@ -594,13 +594,13 @@ uint8 HeapSequence::calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4
   return res;
 }
 
-/// \brief Calculate the offset and any non-constant additive elements between the given Varnode and the \b basePointer
+/// \brief Calculate the  byte offset and any non-constant additive elements between the given Varnode and the \b basePointer
 ///
 /// Walk backward from the given Varnode thru PTRADDs and COPYs, summing any offsets encountered.
 /// Any non-constant Varnodes encountered in the path, that are not themselves a pointer, are passed back in a list.
 /// \param vn is the given Varnode to trace back to the \b basePointer
 /// \param nonConst will hold the list of non-constant Varnodes being passed back
-/// \return the sum off constant offsets on the path
+/// \return the sum off constant offsets on the path in byte units
 uint8 HeapSequence::calcPtraddOffset(Varnode *vn,vector<Varnode *> &nonConst)
 
 {
@@ -610,7 +610,7 @@ uint8 HeapSequence::calcPtraddOffset(Varnode *vn,vector<Varnode *> &nonConst)
     OpCode opc = op->code();
     if (opc == CPUI_PTRADD) {
       uint8 mult = op->getIn(2)->getOffset();
-      if (mult != charType->getAlignSize())
+      if (mult != ptrAddMult)
 	break;
       uint8 off = calcAddElements(op->getIn(1),nonConst,3);
       off *= mult;
@@ -623,7 +623,7 @@ uint8 HeapSequence::calcPtraddOffset(Varnode *vn,vector<Varnode *> &nonConst)
     else
       break;
   }
-  return res;
+  return AddrSpace::addressToByteInt(res, storeSpace->getWordSize());
 }
 
 /// \brief Determine if two sets of Varnodes are equal
@@ -667,18 +667,21 @@ bool HeapSequence::collectStoreOps(void)
   findInitialStores(initStores);
   if (initStores.size() + 1 < MINIMUM_SEQUENCE_LENGTH)
     return false;
+  uint8 maxSize = MAXIMUM_SEQUENCE_LENGTH * charType->getAlignSize();	// Maximum bytes
+  uint8 wrapMask = calc_mask(storeSpace->getAddrSize());
   baseOffset = calcPtraddOffset(rootOp->getIn(1), nonConstAdds);
   vector<Varnode *> nonConstComp;
   for(int4 i=0;i<initStores.size();++i) {
     PcodeOp *op = initStores[i];
     nonConstComp.clear();
     uint8 curOffset = calcPtraddOffset(op->getIn(1), nonConstComp);
+    uint8 diff = (curOffset - baseOffset) & wrapMask;	// Allow wrapping relative to base pointer
     if (setsEqual(nonConstAdds, nonConstComp)) {
-      if (curOffset < baseOffset)
-	return false;			// Root is not the earliest STORE
+      if (diff >= maxSize)
+	return false;			// Root is not the earliest STORE, or offsets span range larger then maxSize
       if (!testValue(op))
 	return false;
-      moveOps.emplace_back(curOffset - baseOffset,op,-1);
+      moveOps.emplace_back(diff,op,-1);
     }
   }
   moveOps.emplace_back(0,rootOp,-1);
@@ -721,6 +724,7 @@ PcodeOp *HeapSequence::buildStringCopy(void)
     if (baseOffset != 0) {				// Add in any non-zero constant
       uint8 numEl = baseOffset / charType->getAlignSize();
       Varnode *cvn = data.newConstant(basePointer->getSize(), numEl);
+      cvn->updateType(intType, false, false);
       if (indexVn == (Varnode *)0)
 	indexVn = cvn;
       else {
@@ -875,13 +879,15 @@ HeapSequence::HeapSequence(Funcdata &fdata,Datatype *ct,PcodeOp *root)
   : ArraySequence(fdata,ct,root)
 {
   baseOffset = 0;
+  storeSpace = root->getIn(0)->getSpaceFromConst();
+  ptrAddMult = AddrSpace::byteToAddressInt(charType->getAlignSize(), storeSpace->getWordSize());
   findBasePointer(rootOp->getIn(1));
   if (!collectStoreOps())
     return;
   if (!checkInterference())
     return;
   int4 arrSize = moveOps.size() * charType->getAlignSize();
-  bool bigEndian = moveOps[0].op->getIn(0)->getSpaceFromConst()->isBigEndian();
+  bool bigEndian = storeSpace->isBigEndian();
   numElements = formByteArray(arrSize, 2, 0, bigEndian);
 }
 
