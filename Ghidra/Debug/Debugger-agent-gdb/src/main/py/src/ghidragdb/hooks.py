@@ -281,7 +281,7 @@ def on_register_changed(event):
 
 @log_errors
 def on_cont(event):
-    if event.inferior_thread is None:
+    if gdb.selected_thread() is None:
         # thread-based state computed in record_continued will
         # fail in some versions of gdb because the current_thread is None
         # and gdb fails to test for None before switching
