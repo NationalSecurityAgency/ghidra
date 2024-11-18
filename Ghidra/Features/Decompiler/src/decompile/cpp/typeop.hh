@@ -181,6 +181,7 @@ public:
   /// \brief Return the floating-point operation associated with the \e sign bit manipulation by the given PcodeOp
   static OpCode floatSignManipulation(PcodeOp *op);
   static Datatype *propagateToPointer(TypeFactory *t,Datatype *dt,int4 sz,int4 wordsz);
+  static Datatype *propagateFromPointer(TypeFactory *t,Datatype *dt,int4 sz);
 };
 
 // Major classes of operations

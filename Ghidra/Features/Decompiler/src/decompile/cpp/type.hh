@@ -27,7 +27,7 @@ extern AttributeId ATTRIB_ALIGNMENT;	///< Marshaling attribute "alignment"
 extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
 extern AttributeId ATTRIB_CHAR;		///< Marshaling attribute "char"
 extern AttributeId ATTRIB_CORE;		///< Marshaling attribute "core"
-extern AttributeId ATTRIB_ENUM;		///< Marshaling attribute "enum"
+//extern AttributeId ATTRIB_ENUM;	///< Marshaling attribute "enum" deprecated
 extern AttributeId ATTRIB_INCOMPLETE;	///< Marshaling attribute "incomplete"
 //extern AttributeId ATTRIB_ENUMSIZE;	///< Marshaling attribute "enumsize" deprecated
 //extern AttributeId ATTRIB_INTSIZE;	///< Marshaling attribute "intsize"  deprecated
@@ -77,20 +77,23 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 /// The core meta-types supported by the decompiler. These are sizeless templates
 /// for the elements making up the type algebra.  Index is important for Datatype::base2sub array.
 enum type_metatype {
-  TYPE_VOID = 14,		///< Standard "void" type, absence of type
-  TYPE_SPACEBASE = 13,		///< Placeholder for symbol/type look-up calculations
-  TYPE_UNKNOWN = 12,		///< An unknown low-level type. Treated as an unsigned integer.
-  TYPE_INT = 11,		///< Signed integer. Signed is considered less specific than unsigned in C
-  TYPE_UINT = 10,		///< Unsigned integer
-  TYPE_BOOL = 9,		///< Boolean
-  TYPE_CODE = 8,		///< Data is actual executable code
-  TYPE_FLOAT = 7,		///< Floating-point
+  TYPE_VOID = 17,		///< Standard "void" type, absence of type
+  TYPE_SPACEBASE = 16,		///< Placeholder for symbol/type look-up calculations
+  TYPE_UNKNOWN = 15,		///< An unknown low-level type. Treated as an unsigned integer.
+  TYPE_INT = 14,		///< Signed integer. Signed is considered less specific than unsigned in C
+  TYPE_UINT = 13,		///< Unsigned integer
+  TYPE_BOOL = 12,		///< Boolean
+  TYPE_CODE = 11,		///< Data is actual executable code
+  TYPE_FLOAT = 10,		///< Floating-point
 
-  TYPE_PTR = 6,			///< Pointer data-type
-  TYPE_PTRREL = 5,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
-  TYPE_ARRAY = 4,		///< Array data-type, made up of a sequence of "element" datatype
-  TYPE_STRUCT = 3,		///< Structure data-type, made up of component datatypes
-  TYPE_UNION = 2,		///< An overlapping union of multiple datatypes
+  TYPE_PTR = 9,			///< Pointer data-type
+  TYPE_PTRREL = 8,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
+  TYPE_ARRAY = 7,		///< Array data-type, made up of a sequence of "element" datatype
+  TYPE_ENUM_UINT = 6,		///< Unsigned enumeration data-type (specialization of TYPE_UINT)
+  TYPE_ENUM_INT = 5,		///< Signed enumeration data-type (specialization of TYPE_INT)
+  TYPE_STRUCT = 4,		///< Structure data-type, made up of component datatypes
+  TYPE_UNION = 3,		///< An overlapping union of multiple datatypes
+  TYPE_PARTIALENUM = 2,		///< Part of an enumerated value (specialization of TYPE_UINT)
   TYPE_PARTIALSTRUCT = 1,	///< Part of a structure, stored separately from the whole
   TYPE_PARTIALUNION = 0		///< Part of a union
 };
@@ -160,7 +163,7 @@ struct DatatypeCompare;
 /// Used for symbols, function prototypes, type propagation etc.
 class Datatype {
 protected:
-  static sub_metatype base2sub[15];
+  static sub_metatype base2sub[18];
   /// Boolean properties of datatypes
   enum {
     coretype = 1,		///< This is a basic type which will never be redefined
@@ -213,7 +216,6 @@ public:
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
   bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
   bool isEnumType(void) const { return ((flags&enumtype)!=0); }		///< Is this an enumerated type
-  bool isPowerOfTwo(void) const { return ((flags&poweroftwo)!=0); }	///< Is this a flag-based enumeration
   bool isASCII(void) const { return ((flags&chartype)!=0); }	///< Does this print as an ASCII 'char'
   bool isUTF16(void) const { return ((flags&utf16)!=0); }	///< Does this print as UTF16 'wchar'
   bool isUTF32(void) const { return ((flags&utf32)!=0); }	///< Does this print as UTF32 'wchar'
@@ -466,24 +468,33 @@ public:
 /// This supports combinations of the enumeration values (using logical OR and bit-wise complement)
 /// by defining independent \b bit-fields.
 class TypeEnum : public TypeBase {
+public:
+  /// \brief Class describing how a particular enumeration value is constructed using tokens
+  class Representation {
+  public:
+    vector<string> matchname;	///< Name tokens that are ORed together
+    bool complement;		///< If \b true, bitwise complement value after ORing
+    int4 shiftAmount;		///< Number of bits to left-shift final value
+    Representation(void) { complement = false; shiftAmount = 0; }	///< Constructor
+  };
 protected:
   friend class TypeFactory;
   map<uintb,string> namemap;	///< Map from integer to name
-  vector<uintb> masklist;	///< Masks for each bitfield within the enum
-  void setNameMap(const map<uintb,string> &nmap);	///< Establish the value -> name map
+  void setNameMap(const map<uintb,string> &nmap) { namemap = nmap; }	///< Establish the value -> name map
   string decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this enum data-type from a stream
 public:
   /// Construct from another TypeEnum
   TypeEnum(const TypeEnum &op);
   /// Construct from a size and meta-type (TYPE_INT or TYPE_UINT)
   TypeEnum(int4 s,type_metatype m) : TypeBase(s,m) {
-    flags |= enumtype; submeta = (m==TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM; }
+    flags |= enumtype; metatype = (m==TYPE_ENUM_INT) ? TYPE_INT : TYPE_UINT; }
   /// Construct from a size, meta-type, and name
   TypeEnum(int4 s,type_metatype m,const string &nm) : TypeBase(s,m,nm) {
-    flags |= enumtype; submeta = (m==TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM; }
+    flags |= enumtype; metatype = (m==TYPE_ENUM_INT) ? TYPE_INT : TYPE_UINT; }
   map<uintb,string>::const_iterator beginEnum(void) const { return namemap.begin(); }	///< Beginning of name map
   map<uintb,string>::const_iterator endEnum(void) const { return namemap.end(); }	///< End of name map
-  bool getMatches(uintb val,vector<string> &matchname) const;	///< Recover the named representation
+  virtual bool hasNamedValue(uintb val) const;			///< Does \b this have a (single) name for the given value
+  virtual void getMatches(uintb val,Representation &rep) const;	///< Recover the named representation
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeEnum(*this); }
@@ -551,6 +562,27 @@ public:
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   virtual const TypeField *resolveTruncation(int8 offset,PcodeOp *op,int4 slot,int8 &newoff);
   static void assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &newAlign,TypeUnion *tu);	///< Assign field offsets
+};
+
+/// \brief A data-type thats holds part of a TypeEnum and possible additional padding
+class TypePartialEnum : public TypeEnum {
+  friend class TypeFactory;
+  Datatype *stripped;		///< The \e undefined data-type to use if a formal data-type is required.
+  TypeEnum *parent;		///< The enumeration data-type \b this is based on
+  int4 offset;			///< Byte offset with the parent enum where \b this starts
+public:
+  TypePartialEnum(const TypePartialEnum &op);		///< Construct from another TypePartialEnum
+  TypePartialEnum(TypeEnum *par,int4 off,int4 sz,Datatype *strip);	///< Constructor
+  int4 getOffset(void) const { return offset; }		///< Get the byte offset into the containing data-type
+  Datatype *getParent(void) const { return parent; }	///< Get the enumeration containing \b this piece
+  virtual void printRaw(ostream &s) const;
+  virtual bool hasNamedValue(uintb val) const;
+  virtual void getMatches(uintb val,Representation &rep) const;
+  virtual int4 compare(const Datatype &op,int4 level) const;
+  virtual int4 compareDependency(const Datatype &op) const;
+  virtual Datatype *clone(void) const { return new TypePartialEnum(*this); }
+  virtual void encode(Encoder &encoder) const;
+  virtual Datatype *getStripped(void) const { return stripped; }
 };
 
 /// \brief A data-type that holds \e part of a TypeStruct or TypeArray
@@ -634,7 +666,12 @@ public:
   /// \brief Get offset of \b this pointer relative to start of the containing data-type
   ///
   /// \return the offset value in \e address \e units
-  int4 getPointerOffset(void) const { return AddrSpace::byteToAddressInt(offset, wordsize); }
+  int4 getAddressOffset(void) const { return AddrSpace::byteToAddressInt(offset, wordsize); }
+
+  /// \brief Get offset of \b this pointer relative to start of the containing data-type
+  ///
+  /// \return the offset value in \e byte units
+  int4 getByteOffset(void) const { return offset; }
   virtual void printRaw(ostream &s) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
@@ -803,6 +840,7 @@ public:
   TypeUnion *getTypeUnion(const string &n);			///< Create an (empty) union
   TypePartialUnion *getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz);	///< Create a partial union
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
+  TypePartialEnum *getTypePartialEnum(TypeEnum *contain,int4 off,int4 sz);	///< Create a partial enumeration
   TypeSpacebase *getTypeSpacebase(AddrSpace *id,const Address &addr);	///< Create a "spacebase" type
   TypeCode *getTypeCode(const PrototypePieces &proto);			///< Create a "function" datatype
   Datatype *getTypedef(Datatype *ct,const string &name,uint8 id,uint4 format);	///< Create a new \e typedef data-type
