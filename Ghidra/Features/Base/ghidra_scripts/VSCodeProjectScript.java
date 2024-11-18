@@ -107,6 +107,7 @@ public class VSCodeProjectScript extends GhidraScript {
 		File settingsFile = new File(vscodeDir, "settings.json");
 		String gradleVersion = Application
 				.getApplicationProperty(ApplicationProperties.APPLICATION_GRADLE_MIN_PROPERTY);
+		String pythonInterpreterPath = System.getProperty("pyghidra.sys.prefix", null);
 		
 		// Build settings json object
 		JsonObject json = new JsonObject();
@@ -138,6 +139,9 @@ public class VSCodeProjectScript extends GhidraScript {
 
 		json.addProperty("python.analysis.stubPath",
 			new File(installDir, "docs/ghidra_stubs/typestubs").getAbsolutePath());
+		if (pythonInterpreterPath != null) {
+			json.addProperty("python.defaultInterpreterPath", pythonInterpreterPath);
+		}
 
 		// Write settings json object
 		if (!FileUtilities.mkdirs(settingsFile.getParentFile())) {
@@ -183,6 +187,8 @@ public class VSCodeProjectScript extends GhidraScript {
 		json.addProperty("version", "0.2.0");
 		JsonArray configurationsArray = new JsonArray();
 		json.add("configurations", configurationsArray);
+
+		// Ghidra launcher
 		JsonObject ghidraConfigObject = new JsonObject();
 		configurationsArray.add(ghidraConfigObject);
 		ghidraConfigObject.addProperty("type", "java");
@@ -197,6 +203,33 @@ public class VSCodeProjectScript extends GhidraScript {
 		ghidraConfigObject.add("vmArgs", vmArgsArray);
 		vmArgsArray.add("-Dghidra.external.modules=${workspaceFolder}");
 		vmArgs.forEach(vmArgsArray::add);
+
+		// PyGhidra launcher
+		JsonObject pyghidraConfigObject = new JsonObject();
+		configurationsArray.add(pyghidraConfigObject);
+		pyghidraConfigObject.addProperty("type", "debugpy");
+		pyghidraConfigObject.addProperty("name", "PyGhidra");
+		pyghidraConfigObject.addProperty("request", "launch");
+		pyghidraConfigObject.addProperty("module", "pyghidra.ghidra_launch");
+		pyghidraConfigObject.addProperty("args", GhidraRun.class.getName());
+		JsonArray argsArray = new JsonArray();
+		pyghidraConfigObject.add("args", argsArray);
+		argsArray.add("--install-dir");
+		argsArray.add(installDir.getAbsolutePath());
+		argsArray.add("-g");
+		argsArray.add(GhidraRun.class.getName());
+		JsonObject envObject = new JsonObject();
+		pyghidraConfigObject.add("env", envObject);
+		envObject.addProperty("PYGHIDRA_DEBUG", "1");
+
+		// PyGhidra Java Attach
+		JsonObject pyghidraAttachObject = new JsonObject();
+		configurationsArray.add(pyghidraAttachObject);
+		pyghidraAttachObject.addProperty("type", "java");
+		pyghidraAttachObject.addProperty("name", "PyGhidra Java Attach");
+		pyghidraAttachObject.addProperty("request", "attach");
+		pyghidraAttachObject.addProperty("hostName", "localhost");
+		pyghidraAttachObject.addProperty("port", 18001);
 
 		// Write launch json object
 		if (!FileUtilities.mkdirs(launchFile.getParentFile())) {

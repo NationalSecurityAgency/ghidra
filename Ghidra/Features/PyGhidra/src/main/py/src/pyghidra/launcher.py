@@ -216,14 +216,19 @@ class PyGhidraLauncher:
         raise Exception("org.eclipse.jdt.launching.VM_ARGUMENTS not found")
 
     def _jvm_args(self) -> List[str]:
+        
+        properties = [
+            f"-Dpyghidra.sys.prefix={sys.prefix}",
+            f"-Dpyghidra.sys.executable={sys.executable}"
+        ]
+        
         if self._dev_mode and self._java_home:
-            return self._parse_dev_args()
+            return properties + self._parse_dev_args()
 
         suffix = "_" + platform.system().upper()
         if suffix == "_DARWIN":
             suffix = "_MACOS"
         option_pattern: re.Pattern = re.compile(fr"VMARGS(?:{suffix})?=(.+)")
-        properties = []
 
         root = self._install_dir
 
