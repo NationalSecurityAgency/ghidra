@@ -210,7 +210,11 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 
 			@Override
 			public void windowOpened(WindowEvent e) {
-				component.dialogShown();
+				Tool tool = null;
+				if (owningWindowManager != null) {
+					tool = owningWindowManager.getTool();
+				}
+				component.dialogShown(tool);
 			}
 
 			@Override

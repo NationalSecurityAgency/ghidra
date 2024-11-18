@@ -216,8 +216,9 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(event);
 
 			// note: this call has no effect if 'action' is null
-			SwingUtilities.notifyAction(action, keyStroke, event, event.getSource(),
-				event.getModifiersEx());
+			Object source = event.getSource();
+			int modifiersEx = event.getModifiersEx();
+			SwingUtilities.notifyAction(action, keyStroke, event, source, modifiersEx);
 
 		}
 		return wasInProgress;
