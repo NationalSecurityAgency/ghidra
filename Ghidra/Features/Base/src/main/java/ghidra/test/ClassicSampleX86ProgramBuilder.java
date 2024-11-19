@@ -476,11 +476,11 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 
 		startTransaction();
 		StringDataType string = new StringDataType();
-		DataType pointer = new Pointer32DataType(string);
-		Parameter p0 = new ParameterImpl("destStr", pointer, getProgram());
-		Parameter p3 = new ParameterImpl("parm_3", DataType.DEFAULT, getProgram());
-		Parameter p4 = new ParameterImpl("parm_4", DataType.DEFAULT, getProgram());
-		createEmptyFunction("sscanf", "0x0100415a", 78, new Undefined1DataType(), p0, p3, p4);
+		DataType stringPtr = new Pointer32DataType(string);
+		Parameter p0 = new ParameterImpl("destStr", stringPtr, getProgram());
+		Parameter p3 = new ParameterImpl("parm_3", Pointer32DataType.dataType, getProgram());
+		Parameter p4 = new ParameterImpl("parm_4", Pointer32DataType.dataType, getProgram());
+		createEmptyFunction("sscanf", "0x0100415a", 78, IntegerDataType.dataType, p0, p3, p4);
 
 		ReferenceManager referenceManager = getProgram().getReferenceManager();
 		referenceManager.addStackReference(addr("0x0100416c"), 0, 0x4, RefType.READ,

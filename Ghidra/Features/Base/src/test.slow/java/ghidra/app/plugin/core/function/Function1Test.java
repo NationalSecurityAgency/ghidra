@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.plugin.core.highlight.SetHighlightPlugin;
+import ghidra.app.plugin.core.instructionsearch.model.InstructionSearchData.UpdateType;
 import ghidra.app.plugin.core.navigation.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.AddEditDialog;
@@ -52,6 +53,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
@@ -1271,6 +1273,11 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 		Function f = createFunctionAtEntry();
+		// Test requires a size-constrained register variable edit 
+		program.withTransaction("Update Signature",
+			() -> f.updateFunction(null, null, FunctionUpdateType.CUSTOM_STORAGE, true,
+				SourceType.ANALYSIS, new ParameterImpl("test", Undefined4DataType.dataType,
+					program.getRegister("EBX"), program)));
 		setCustomParameterStorage(f, true);
 
 		waitForSwing();
@@ -1284,7 +1291,6 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		DataTypeSelectionDialog dialog = waitForDialogComponent(DataTypeSelectionDialog.class);
 
 		setEditorText(dialog, "int[0x8888888]");
-// FIXME: Dialog does not appear to register type entry until it is dismissed
 
 		// For the test to pass, the status field should show an error message containing
 		// the following text (this is only a part of the status message, but is enough
