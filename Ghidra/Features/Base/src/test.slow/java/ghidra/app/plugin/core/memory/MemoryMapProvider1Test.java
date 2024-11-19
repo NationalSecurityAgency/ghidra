@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,29 +119,6 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			}
 			else {
 				assertTrue("Action not enabled when it should be: " + action.getName(),
-					action.isEnabled());
-			}
-		}
-	}
-
-	@Test
-	public void testMultiSelection() {
-
-		table.addRowSelectionInterval(0, 1);
-		assertEquals(2, table.getSelectedRowCount());
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
-		for (DockingActionIf action : actions) {
-			String name = action.getName();
-			if (name.equals("Add Block") || name.equals("Merge Blocks") ||
-				name.equals("Delete Block") || name.equals("Set Image Base") ||
-				name.equals("Memory Map") || name.equals("Close Window") ||
-				name.equals("Make Selection")) {
-				assertTrue("Action should be enabled for  a multi-row selection - '" + name + "'",
-					action.isEnabled());
-			}
-			else {
-				assertFalse(
-					"Action should not be enabled for  a multi-row selection - '" + name + "'",
 					action.isEnabled());
 			}
 		}

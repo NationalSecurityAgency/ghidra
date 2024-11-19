@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Set;
 
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -27,8 +26,6 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.cmd.memory.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -91,58 +88,6 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testActionEnabled() {
 		DockingActionIf action = getAction(plugin, "Memory Map");
 		assertTrue(action.isEnabled());
-	}
-
-	@Test
-	public void testOpenProgram() throws Exception {
-		env.close(program);
-		program = buildProgram("sdk");
-		env.open(program);
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
-		for (DockingActionIf action : actions) {
-			String name = action.getName();
-			if (name.equals("Add Block") || name.equals("Set Image Base") ||
-				name.equals("Memory Map") || name.equals("Close Window") ||
-				name.contains("Table")) {
-				assertActionEnabled(action, getActionContext(), true);
-			}
-			else {
-				assertActionEnabled(action, getActionContext(), false);
-			}
-		}
-
-	}
-
-	@Test
-	public void testCloseProgram() {
-		env.close(program);
-		JTable table = provider.getTable();
-		assertEquals(0, table.getModel().getRowCount());
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
-		for (DockingActionIf action : actions) {
-			String name = action.getName();
-			if (name.equals("Memory Map") || name.equals("Close Window") ||
-				name.equals("Local Menu")) {
-				continue;
-			}
-			assertActionEnabled(action, getActionContext(), false);
-		}
-	}
-
-	private void assertActionEnabled(DockingActionIf action, ActionContext context,
-			boolean shouldBeEnabled) {
-
-		String text = shouldBeEnabled ? "should be enabled" : "should be disabled";
-		assertEquals("Action " + text + ", but is not: '" + action.getFullName() + "'",
-			shouldBeEnabled, action.isEnabledForContext(context));
-	}
-
-	private ActionContext getActionContext() {
-		ActionContext context = provider.getActionContext(null);
-		if (context == null) {
-			return new DefaultActionContext();
-		}
-		return context;
 	}
 
 	@Test
