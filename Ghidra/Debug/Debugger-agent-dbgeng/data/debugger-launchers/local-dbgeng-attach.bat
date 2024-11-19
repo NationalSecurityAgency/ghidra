@@ -9,9 +9,9 @@
 ::@menu-group local
 ::@icon icon.debugger
 ::@help TraceRmiLauncherServicePlugin#dbgeng_attach
-::@env OPT_PYTHON_EXE:file="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
-::@env OPT_TARGET_PID:str="" "Process id" "The target process id"
-::@env OPT_ATTACH_FLAGS:str="0" "Attach flags" "Attach flags"
+::@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
+::@env OPT_TARGET_PID:int=0 "Process id" "The target process id"
+::@env OPT_ATTACH_FLAGS:int=0 "Attach flags" "Attach flags"
 ::@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."
 ::@env WINDBG_DIR:dir="" "Path to dbgeng.dll directory" "Path containing dbgeng and associated DLLS (if not Windows Kits)."
 
