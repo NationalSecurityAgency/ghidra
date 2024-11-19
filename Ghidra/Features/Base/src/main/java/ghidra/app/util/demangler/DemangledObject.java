@@ -44,41 +44,48 @@ public abstract class DemangledObject implements Demangled {
 	/*
 	 	The following names probably need to be refactored.   Until then, this is how the following
 	 	fields are used.
-
-	 		mangled -
+	
+			mangled -
 	 			Source: The original mangled string as seen in the program
 	 		    Usage: Can be used to see if a program symbol has already been demangled
-
-	 		originalDemangled -
+	
+			rawDemangled -
 	 			Source: The raw demangled string returned from the demangler
+	 		    Usage: for debugging
+	
+			originalDemangled -
+	 			Source: The starting demangled string.  This will usually be the same as the raw
+	 			        demangled string.  This may have simplifications applied.
 	 		    Usage: for display
-
-	 		demangledName -
+	
+			demangledName -
 	 			Source: The name as created by the parser which may transform or even replace the
 	 			        string returned from the demangler
 	 		    Usage: for display
-
-	 		name -
+	
+			name -
 	 			Source: This is derived from the 'demangledName' This is updated to be suitable
 	 		            for use as a symbol name.  This may be null while building, but is
 	 		            expected to be non-null when applyTo() is called
 	 		    Usage: The name that will be applied when applyTo() is called.
-
-
-
+	
+	
+	
 	 	Future: These variables should be refactored and renamed to be clearer and more cohesive,
 	 	        something like:
-
+	
 	 	        mangled
 	 	        rawDemangled
-	 	        escapedDemangled
+	 	        simplifiedDemangled --|   These two could be combined into 'transformedDemangled'
+	 	        escapedDemangled    --|
 	 	        symbolName
-
+	
 	 */
 	protected MangledContext mangledContext; // the mangled context, which includes mangled string
 	protected final String mangled; // original mangled string
-	protected String originalDemangled; // raw demangled string
-	private String demangledName; // updated demangled string
+	protected String rawDemangled; // demangled string from the demangler without any simplifications
+	protected String originalDemangled; // starting demangled string that may have been simplified
+	private String demangledName; // updated demangled string, possibly with changes made while building
 	private String name; // version of demangled name suitable for symbols
 
 	protected String specialPrefix;
@@ -120,6 +127,7 @@ public abstract class DemangledObject implements Demangled {
 	DemangledObject(String mangled, String originalDemangled) {
 		this.mangled = mangled;
 		this.originalDemangled = originalDemangled;
+		this.rawDemangled = originalDemangled;
 	}
 
 	/**
@@ -132,6 +140,7 @@ public abstract class DemangledObject implements Demangled {
 		this.mangledContext = mangledContext;
 		this.mangled = mangledContext.getMangled();
 		this.originalDemangled = originalDemangled;
+		this.rawDemangled = originalDemangled;
 	}
 
 	@Override
@@ -278,6 +287,24 @@ public abstract class DemangledObject implements Demangled {
 	 */
 	public void setOriginalDemangled(String originalDemangled) {
 		this.originalDemangled = originalDemangled;
+	}
+
+	/**
+	 * Returns the raw demangled string.  This is the value returned from the demangler before any 
+	 * simplifications or transformations have been made.
+	 * @return the string
+	 */
+	public String getRawDemangled() {
+		return rawDemangled;
+	}
+
+	/**
+	 * Sets the raw demangled string.  This is the value returned from the demangler before any 
+	 * simplifications or transformations have been made.
+	 * @param s the string
+	 */
+	public void setRawDemangledString(String s) {
+		this.rawDemangled = s;
 	}
 
 	@Override

@@ -412,6 +412,7 @@ public class GnuDemanglerParser {
 
 		demangled = cleanupRustLegacySymbol(demangled);
 
+		String rawDemangled = demangled;
 		if (simplify) {
 			demangled = replaceStdLibraryTypes(demangled);
 		}
@@ -421,10 +422,16 @@ public class GnuDemanglerParser {
 
 		DemangledObjectBuilder builder = getSpecializedBuilder(demangled);
 		if (builder != null) {
-			return builder.build();
+			DemangledObject dobj = builder.build();
+			// note: the raw demangled is before any simplifications
+			dobj.setRawDemangledString(rawDemangled);
+			return dobj;
 		}
 
-		return parseFunctionOrVariable(demangled);
+		DemangledObject dobj = parseFunctionOrVariable(demangled);
+		// note: the raw demangled is before any simplifications
+		dobj.setRawDemangledString(rawDemangled);
+		return dobj;
 	}
 
 	private DemangledObjectBuilder getSpecializedBuilder(String demangled) {
