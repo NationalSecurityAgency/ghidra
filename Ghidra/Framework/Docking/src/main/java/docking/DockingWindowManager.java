@@ -1385,6 +1385,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private synchronized ComponentPlaceholder maybeGetPlaceholderToFocus() {
+
 		if (nextFocusedPlaceholder != null) {
 			ComponentPlaceholder temp = nextFocusedPlaceholder;
 			setNextFocusPlaceholder(null);
@@ -1392,8 +1393,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component permanentFocusOwner = kfm.getPermanentFocusOwner();
 		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner == null) {
+
+		// A null focus owner and a null permanent focus owner imply that Java did not know who  
+		// should get focus.  Make sure one of our widgets gets focus.
+		if (focusOwner == null && permanentFocusOwner == null) {
 			return findNextFocusedComponent();
 		}
 		return null;
@@ -1463,6 +1468,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private ComponentPlaceholder findNextFocusedComponent() {
+
 		Iterator<ComponentPlaceholder> iterator = lastFocusedPlaceholders.iterator();
 		while (iterator.hasNext()) {
 			ComponentPlaceholder placeholder = iterator.next();
@@ -1471,7 +1477,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			}
 			iterator.remove();
 		}
-
 		return getActivePlaceholder(defaultProvider);
 	}
 
