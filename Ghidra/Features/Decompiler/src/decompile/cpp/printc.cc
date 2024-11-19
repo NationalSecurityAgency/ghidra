@@ -1668,14 +1668,31 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,tagtype tag,
 {
   vector<string> valnames;
 
-  bool complement = ct->getMatches(val,valnames);
+  uintb valForMatches = val;
+  int enumShiftDistance = vn ? vn->getEnumShiftDistance() : 0;
+  valForMatches <<= enumShiftDistance;
+
+  int sizeInBits = (vn ? vn->getSize() : ct->getSize()) * 8;
+  if (sizeInBits + enumShiftDistance < sizeof(uintb) * 8) {
+    sizeInBits += enumShiftDistance;
+  } else {
+    sizeInBits = sizeof(uintb) * 8;
+  }
+
+  bool complement = ct->getMatches(valForMatches,valnames,sizeInBits,enumShiftDistance);
   if (valnames.size() > 0) {
+    if (enumShiftDistance > 0) {
+      pushOp(&shift_right,op);
+    }
     if (complement)
       pushOp(&bitwise_not,op);
     for(int4 i=valnames.size()-1;i>0;--i)
       pushOp(&enum_cat,op);
     for(int4 i=0;i<valnames.size();++i)
       pushAtom(Atom(valnames[i],tag,EmitMarkup::const_color,op,vn,val));
+    if (enumShiftDistance) {
+      push_integer(enumShiftDistance,4,false,tag,nullptr,nullptr);
+    }
   }
   else {
     push_integer(val,ct->getSize(),false,tag,vn,op);
