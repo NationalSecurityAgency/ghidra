@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,9 +92,13 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 			TestUtils.setInstanceField("isEnabled", analysisMgr, Boolean.FALSE);
 		}
 		else {
-			// enable stack analysis
+			// enable full stack analysis with variable/param creation
 			startTransaction();
 			p.getOptions(Program.ANALYSIS_PROPERTIES).setBoolean("Stack", true);
+			p.getOptions(Program.ANALYSIS_PROPERTIES)
+					.setBoolean("Stack.Create Local Variables", true);
+			p.getOptions(Program.ANALYSIS_PROPERTIES)
+					.setBoolean("Stack.Create Param Variables", true);
 			endTransaction();
 		}
 
