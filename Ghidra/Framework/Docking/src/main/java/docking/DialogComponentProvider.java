@@ -91,11 +91,14 @@ public class DialogComponentProvider
 	private Component focusComponent;
 	private JPanel toolbar;
 
-	private final Map<DockingActionIf, DialogToolbarButton> actionMap = new HashMap<>();
-	private final DialogComponentProviderPopupActionManager popupManager =
+	private Map<DockingActionIf, DialogToolbarButton> toolbarButtonsByAction = new HashMap<>();
+	private DialogComponentProviderPopupActionManager popupManager =
 		new DialogComponentProviderPopupActionManager(this);
-	private final PopupHandler popupHandler = new PopupHandler();
-	private final Set<DockingActionIf> dialogActions = new HashSet<>();
+	private PopupHandler popupHandler = new PopupHandler();
+	private Set<DockingActionIf> dialogActions = new HashSet<>();
+
+	// we track these separately so that we can remove them on dispose
+	private Set<DialogActionProxy> keyBindingProxyActions = new HashSet<>();
 
 	private Point initialLocation;
 	private boolean resizeable = true;
@@ -106,6 +109,7 @@ public class DialogComponentProvider
 
 	private Dimension defaultSize;
 	private String accessibleDescription;
+	private Tool tool;
 
 	/**
 	 * Constructor for a DialogComponentProvider that will be modal and will include a status line and
@@ -177,13 +181,13 @@ public class DialogComponentProvider
 			panel.add(buttonPanel);
 			rootPanel.add(panel, BorderLayout.SOUTH);
 		}
+
 		installEscapeAction();
 
 		doInitialize();
 	}
 
 	private void installEscapeAction() {
-
 		closeAction = new ActionBuilder("Close Dialog", title)
 				.sharedKeyBinding()
 				.keyBinding(ESC_KEYSTROKE)
@@ -933,11 +937,16 @@ public class DialogComponentProvider
 
 		closeDialog();
 
+		if (tool != null) {
+			keyBindingProxyActions.forEach(a -> tool.removeAction(a));
+		}
+		keyBindingProxyActions.clear();
+
 		popupManager.dispose();
 
 		dialogActions.forEach(DockingActionIf::dispose);
 
-		actionMap.clear();
+		toolbarButtonsByAction.clear();
 		dialogActions.clear();
 	}
 
@@ -1154,6 +1163,38 @@ public class DialogComponentProvider
 	}
 
 	/**
+	 * Called each time the dialog is show.  The given tool is the parent tool of the dialog.
+	 * @param t the tool
+	 */
+	void dialogShown(Tool t) {
+		setTool(t);
+		dialogShown();
+	}
+
+	private void setTool(Tool tool) {
+
+		if (this.tool != null) {
+			return;
+		}
+
+		// initialize the first time we are shown
+		this.tool = tool;
+
+		if (tool == null) {
+			// The tool can be null for dialogs shown before the framework is initialized, like 
+			// dialogs shown over the splash screen.  Without a tool, we cannot add key binding
+			// actions.
+			return;
+		}
+
+		// Any actions in this list already were added before we had a tool.  Add them now.  Any
+		// future calls to addKeyBindingAction() will get added to the tool at that time.
+		for (DockingActionIf proxy : keyBindingProxyActions) {
+			tool.addAction(proxy);
+		}
+	}
+
+	/**
 	 * Override this method if you want to do something when the dialog is made visible
 	 */
 	protected void dialogShown() {
@@ -1232,7 +1273,7 @@ public class DialogComponentProvider
 		if (context == null) {
 			context = new DefaultActionContext();
 		}
-		Set<DockingActionIf> keySet = actionMap.keySet();
+		Set<DockingActionIf> keySet = toolbarButtonsByAction.keySet();
 		for (DockingActionIf action : keySet) {
 			action.setEnabled(action.isEnabledForContext(context));
 		}
@@ -1255,7 +1296,7 @@ public class DialogComponentProvider
 
 		DialogToolbarButton button = new DialogToolbarButton(action, this);
 		toolbar.add(button);
-		actionMap.put(action, button);
+		toolbarButtonsByAction.put(action, button);
 	}
 
 	/**
@@ -1264,7 +1305,7 @@ public class DialogComponentProvider
 	 * the tool, as this dialog will do that for you.
 	 * @param action the action
 	 */
-	public void addAction(final DockingActionIf action) {
+	public void addAction(DockingActionIf action) {
 		dialogActions.add(action);
 		addToolbarAction(action);
 		popupManager.addAction(action);
@@ -1273,24 +1314,48 @@ public class DialogComponentProvider
 
 	private void addKeyBindingAction(DockingActionIf action) {
 
-		// add the action to the tool in order get key event management (key bindings
-		// options and key event processing)
-		DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
-		if (dwm == null) {
-			// This implies the client dialog has been shown outside of the plugin framework. In
-			// that case, the client will not get key event processing for dialog actions.
-			return;
-		}
+		DialogActionProxy proxy = new DialogActionProxy(action);
+		keyBindingProxyActions.add(proxy);
 
-		Tool tool = dwm.getTool();
-		tool.addAction(new DialogActionProxy(action));
+		// The tool will be null when clients add actions to this dialog before it has been shown.
+		// This is different than ComponentProviders, which require a Tool at construction.  The
+		// DialogComponentProvider did not originally require a Tool at construction.  Rather than
+		// refactor the dialog to require a Tool, it was easier to simply delay adding actions until
+		// the Tool is set when the dialog is first shown.
+		if (tool != null) {
+			tool.addAction(proxy);
+		}
 	}
 
 	public void removeAction(DockingActionIf action) {
 		dialogActions.remove(action);
-		JButton button = actionMap.remove(action);
+		JButton button = toolbarButtonsByAction.remove(action);
 		if (button != null && toolbar != null) {
 			toolbar.remove(button);
+		}
+
+		popupManager.removeAction(action);
+
+		removeKeyBindingAction(action);
+	}
+
+	private void removeKeyBindingAction(DockingActionIf action) {
+
+		DialogActionProxy proxy = null;
+		for (DialogActionProxy actionProxy : keyBindingProxyActions) {
+			if (action == actionProxy.getAction()) {
+				proxy = actionProxy;
+				break;
+			}
+		}
+
+		if (proxy == null) {
+			return;
+		}
+
+		keyBindingProxyActions.remove(proxy);
+		if (tool != null) {
+			tool.removeAction(proxy);
 		}
 	}
 

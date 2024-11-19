@@ -1814,7 +1814,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				bestCenter = centeredOnComponent;
 			}
 
-			DockingDialog dialog = DockingDialog.createDialog(bestParent, provider, bestCenter);
+			DockingDialog dialog =
+				DockingDialog.createDialog(bestParent, provider, bestCenter);
 			dialog.setVisible(true);
 		};
 

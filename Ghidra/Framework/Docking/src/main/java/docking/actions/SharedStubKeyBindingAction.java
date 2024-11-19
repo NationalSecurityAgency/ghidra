@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,14 +120,21 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	void addClientAction(DockingActionIf action) {
 
 		// 1) Validate new action keystroke against existing actions
-		ActionTrigger defaultKs = validateActionsHaveTheSameDefaultKeyStroke(action);
+		ActionTrigger defaultTrigger = validateActionsHaveTheSameDefaultKeyStroke(action);
 
 		// 2) Add the action and the validated keystroke, as this is the default keystroke
-		clientActions.put(action, defaultKs);
+		clientActions.put(action, defaultTrigger);
 
 		// 3) Update the given action with the current option value.  This allows clients to 
 		//    add and remove actions after the tool has been initialized.
-		updateActionKeyStrokeFromOptions(action, defaultKs);
+		updateActionKeyStrokeFromOptions(action, defaultTrigger);
+
+		// 4) Store the default value for this stub so later requests to Restore Defaults will have
+		//    the correct value.
+		if (defaultTrigger != null) {
+			KeyBindingData defaultKbd = new KeyBindingData(defaultTrigger);
+			setDefaultKeyBindingData(defaultKbd);
+		}
 	}
 
 	@Override

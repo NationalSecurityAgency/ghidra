@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -363,9 +363,14 @@ public class KeyBindings {
 				return;
 			}
 
+			// 1) update the options with the new value
 			ActionTrigger newTrigger = keyBinding.getActionTrigger();
 			String fullName = getFullName();
 			keyStrokeOptions.setActionTrigger(fullName, newTrigger);
+
+			// 2) update our state so the UI shows the new value
+			currentKeyStroke = newTrigger.getKeyStroke();
+			currentMouseBinding = newTrigger.getMouseBinding();
 		}
 
 		private boolean hasChanged() {
@@ -409,11 +414,11 @@ public class KeyBindings {
 			DockingActionIf action = getRepresentativeAction();
 			KeyBindingData defaultBinding = action.getDefaultKeyBindingData();
 
+			cancelChanges();
+
 			if (!matches(defaultBinding)) {
 				apply(options, defaultBinding);
 			}
-
-			cancelChanges();
 		}
 
 	}

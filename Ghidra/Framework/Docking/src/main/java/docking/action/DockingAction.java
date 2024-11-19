@@ -350,7 +350,6 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
-
 		if (!supportsKeyBinding(newKeyBindingData)) {
 			return;
 		}
@@ -363,6 +362,11 @@ public abstract class DockingAction implements DockingActionIf {
 		}
 
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+	// this allows framework classes to directly set the default value
+	protected void setDefaultKeyBindingData(KeyBindingData kbd) {
+		defaultKeyBindingData = kbd;
 	}
 
 	private boolean supportsKeyBinding(KeyBindingData kbData) {
