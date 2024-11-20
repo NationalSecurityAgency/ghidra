@@ -258,6 +258,7 @@ public class MultiSlotAssign extends AssignAction {
 			encoder.writeString(ATTRIB_STORAGE, resourceType.toString());
 		}
 		encoder.writeBool(ATTRIB_ALIGN, enforceAlignment);
+		encoder.writeBool(ATTRIB_STACKSPILL, consumeFromStack);
 		encoder.closeElement(ELEM_JOIN);
 	}
 
