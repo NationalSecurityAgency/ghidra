@@ -267,22 +267,22 @@ public class PrototypeModel {
 	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
 	 * zero-length datatype, or any subsequent parameter following such a parameter.
 	 * <br>
-	 * Warning: The use of this method is discourage since it can produce inaccurate 
-	 * results.  It is recommended that a complete function signature be used in
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
 	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
 	 * method.  Parameter storage allocation may be affected by the return datatype
-	 * used on a function (e.g., hidden return storage parameter).
+	 * specified (e.g., hidden return storage parameter).
 	 *  
 	 * @param params existing set parameters to which the next parameter will
-	 * be appended. (may be null)
+	 * be appended (may be null). Element-0 corresponds to the return datatype. 
 	 * @param dataType dataType associated with next parameter location or null
-	 * for a default undefined type.
+	 * for a default undefined type.  If null the speculative first parameter storage
+	 * is returned. 
 	 * @param program is the Program
 	 * @return next parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
-	 * @deprecated use of {@link #getStorageLocations(Program, DataType[], boolean)} is preferred.
 	 */
-	@Deprecated
 	public VariableStorage getNextArgLocation(Parameter[] params, DataType dataType,
 			Program program) {
 		return getArgLocation(params != null ? params.length : 0, params, dataType, program);
@@ -296,27 +296,26 @@ public class PrototypeModel {
 	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
 	 * zero-length datatype, or any subsequent parameter following such a parameter.
 	 * <br>
-	 * Warning: The use of this method is discourage since it can produce inaccurate 
-	 * results.  It is recommended that a complete function signature be used in
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
 	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
 	 * method.  Parameter storage allocation may be affected by the return datatype
-	 * used on a function (e.g., hidden return storage parameter).
+	 * specified (e.g., hidden return storage parameter).
 	 *  
-	 * @param argIndex is the index
+	 * @param argIndex is the index (0: return storage, 1..n: parameter storage)
 	 * @param params existing set parameters to which the parameter specified by
-	 * argIndex will be added/inserted be appended.  The preceeding parameters 
-	 * are required for an accurate storage determination to be made.  Any preceeding
-	 * parameters not specified will be assumed as a 1-byte integer type which could
-	 * cause an erroneous storage result to be returned.  A null params list will cause
-	 * all preceeding params to be assumed in a similar fashion.
+	 * argIndex will be added/inserted be appended. Element-0 corresponds to the return
+	 * datatype. Parameter elements prior to the argIndex are required for an accurate 
+	 * storage determination to be made.  Any preceeding parameters not specified will be assumed 
+	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.  
+	 * A null params list will cause all preceeding params to be assumed in a similar fashion.
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.
 	 * @param program is the Program
 	 * @return parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
-	 * @deprecated use of {@link #getStorageLocations(Program, DataType[], boolean)} is preferred.
 	 */
-	@Deprecated
 	public VariableStorage getArgLocation(int argIndex, Parameter[] params, DataType dataType,
 			Program program) {
 
