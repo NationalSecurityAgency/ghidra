@@ -281,6 +281,12 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
+		name: "JPype1-1.5.0.tar.gz",
+		url: "https://files.pythonhosted.org/packages/25/42/8ca50a0e27e3053829545829e7bcba071cbfa4d5d8fd7fc5d1d988f325b1/JPype1-1.5.0.tar.gz",
+		sha256: "425a6e1966afdd5848b60c2688bcaeb7e40ba504a686f1114589668e0631e878",
+		destination: file("${DEPS_DIR}/PyGhidra/")
+	],
+	[
 		name: "packaging-23.2-py3-none-any.whl",
 		url: "https://files.pythonhosted.org/packages/ec/1a/610693ac4ee14fcdf2d9bf3c493370e4f2ef7ae2e19217d7a237ff42367d/packaging-23.2-py3-none-any.whl",
 		sha256: "8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7",

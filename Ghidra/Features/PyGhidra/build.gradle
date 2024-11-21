@@ -45,6 +45,7 @@ distributePyDep("JPype1-1.5.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x8
 distributePyDep("JPype1-1.5.0-cp312-cp312-win_amd64.whl")
 distributePyDep("JPype1-1.5.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl")
 distributePyDep("JPype1-1.5.0-cp39-cp39-win_amd64.whl")
+distributePyDep("JPype1-1.5.0.tar.gz")
 distributePyDep("packaging-23.2-py3-none-any.whl")
 distributePyDep("setuptools-68.0.0-py3-none-any.whl")
 distributePyDep("wheel-0.37.1-py2.py3-none-any.whl")
