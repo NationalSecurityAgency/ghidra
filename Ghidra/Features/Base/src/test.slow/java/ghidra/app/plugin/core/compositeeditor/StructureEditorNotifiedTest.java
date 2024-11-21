@@ -21,6 +21,7 @@ import java.awt.Window;
 
 import org.junit.*;
 
+import docking.DialogComponentProvider;
 import ghidra.program.model.data.*;
 import ghidra.util.Swing;
 import ghidra.util.exception.DuplicateNameException;
@@ -90,6 +91,9 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		programDTM.remove(complexStructure, TaskMonitor.DUMMY);
 		programDTM.getCategory(pgmRootCat.getCategoryPath())
 				.removeCategory("Temp", TaskMonitor.DUMMY);
+
+		DialogComponentProvider dlg = waitForDialogComponent("Close Structure Editor?");
+		pressButton(dlg.getComponent(), "No");
 
 		waitForSwing();
 
