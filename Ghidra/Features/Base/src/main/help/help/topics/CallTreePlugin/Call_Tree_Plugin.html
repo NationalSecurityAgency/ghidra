@@ -67,16 +67,16 @@
       <P><A name="Incoming_Call_Tree"></A>The <B>Incoming</B> tree shows all functions calling
       and/or referencing the main function. Each node in the tree has the incoming function  
 	  icon (<IMG src="Icons.ARROW_UP_LEFT_ICON" border="0">) combined with 
-	  (<IMG src="images/FunctionScope.gif" border="0">) for calls and 
-	  (<IMG src="images/D.gif" border="0">) for other reference types. Expanding a 
+	  (<IMG src="icon.plugin.calltree.function" border="0">) for calls and 
+	  (<IMG src="images/icon_link.gif" border="0">) for other reference types. Expanding a 
 	  node in this tree shows all functions that call or reference the function corresponding
 	  to the expanded node. Nodes may be expanded recursively to any depth desired.</P>
 
       <P><A name="Outgoing_Call_Tree"></A>The <B>Outgoing</B> tree shows all functions
       called or referenced by the main function. Each node in the tree has the outgoing function 
 	  icon (<IMG src="Icons.ARROW_DOWN_RIGHT_ICON" border="0">) combined with 
-      (<IMG src="images/FunctionScope.gif" border="0">) for calls and
-	  (<IMG src="images/D.gif" border="0">) for other reference types.  Expanding a node in this 
+      (<IMG src="icon.plugin.calltree.function" border="0">) for calls and
+	  (<IMG src="images/icon_link.gif" border="0">) for other reference types.  Expanding a node in this 
 	  tree shows all functions that are called or referenced by the expanded node. Nodes may be 
 	  expanded recursively to any depth desired.</P>
       
@@ -180,14 +180,27 @@
           taken place that <b>may</b> affect the structure of the tree.
           </P>
           
-          <!-- Filter Duplicates -->
-          <P align="left"><A name="Call_Tree_Action_Filter"></A>The 
+          <!-- Unify Functions-->
+          <P align="left"><A name="Call_Tree_Action_Unify_Functions"></A>The 
           <IMG src="images/application_double.png"
-          border="1"> action, when toggled on, will filter out duplicate function calls. 
-          This setting is useful to see the set of all functions called. When
-          toggled off this action will show all function calls, including duplicate calls, in
-          address order. This setting is more useful to see the overall flow of the main
-          function.</P>
+          border="1"> action, when toggled on, will filter out duplicate function calls.  For 
+		  incoming function calls, only one entry will exist in the child nodes for a given 
+		  function, even if that function calls the parent node multiple times.  For outgoing 
+		  function calls, only one entry will exist in the child nodes for a given function, even 
+		  if the parent node calls a given function repeatedly.
+          This setting is useful to see the set of all functions called in order to see the basic
+		  function call graph.   When toggled off this action will show all function calls, 
+		  including duplicate calls, in address order. This setting is more useful to see the 
+		  overall flow of the main function and to navigate each individual call site.</P>
+		  
+		  <!-- Filter References -->
+		  <P align="left"><A name="Call_Tree_Action_Filter_Calls"></A>The 
+		  <IMG src="images/icon_link.gif"
+		  border="1"> action, when toggled on, will filter out function calls that are from 
+		  non-call reference types.  This setting is useful to see the set of all functions called
+		  specifically with a reference type that is considered a call reference.
+		  Toggling this setting off may be useful to see all ways functions are referenced, even 
+		  when they are not considered function calls by Ghidra.
           
           <!-- Recurse Depth -->
           

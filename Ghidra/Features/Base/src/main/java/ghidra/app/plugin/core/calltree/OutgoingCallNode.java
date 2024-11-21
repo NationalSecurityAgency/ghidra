@@ -32,13 +32,14 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
-import resources.MultiIcon;
-import resources.icons.TranslateIcon;
 
 public class OutgoingCallNode extends CallNode {
 
 	private static final Icon OUTGOING_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
-	private final Icon outgoingFunctionIcon;
+	private static final Icon CALL_REFERENCE_ICON = createIcon(OUTGOING_ICON, true);
+	private static final Icon NON_CALL_REFERENCE_ICON = createIcon(OUTGOING_ICON, false);
+	private static final Icon RECURSIVE_CALL_REFERENCE_ICON = createIcon(RECURSIVE_ICON, true);
+	private static final Icon RECURSIVE_NON_CALL_REFERENCE_ICON = createIcon(RECURSIVE_ICON, false);
 
 	private Icon icon = null;
 	protected final Program program;
@@ -47,24 +48,19 @@ public class OutgoingCallNode extends CallNode {
 	private final Address sourceAddress;
 
 	OutgoingCallNode(Program program, Function function, Address sourceAddress,
-			boolean isCallRef, CallTreeOptions callTreeOptions) {
+			boolean isCallReference, CallTreeOptions callTreeOptions) {
 		super(callTreeOptions);
 		this.program = program;
 		this.function = function;
 		this.name = function.getName(callTreeOptions.showNamespace());
 		this.sourceAddress = sourceAddress;
-		this.isCallRef = isCallRef;
-
-		MultiIcon multiIcon = new MultiIcon(OUTGOING_ICON, false, 32, 16);
-		TranslateIcon translateIcon = new TranslateIcon(
-			isCallRef ? CallTreePlugin.FUNCTION_ICON : CallTreePlugin.DATA_ICON, 16, 0);
-		multiIcon.addIcon(translateIcon);
-		outgoingFunctionIcon = multiIcon;
+		this.isCallReference = isCallReference;
 	}
 
 	@Override
 	CallNode recreate() {
-		return new OutgoingCallNode(program, function, sourceAddress, isCallRef, callTreeOptions);
+		return new OutgoingCallNode(program, function, sourceAddress, isCallReference,
+			callTreeOptions);
 	}
 
 	@Override
@@ -97,7 +93,7 @@ public class OutgoingCallNode extends CallNode {
 		AddressRangeIterator rangeIter = currentFunction.getBody().getAddressRanges();
 		while (rangeIter.hasNext()) {
 			AddressRange range = rangeIter.next();
-			ReferenceIterator refIter =refManager.getReferenceIterator(range.getMinAddress());
+			ReferenceIterator refIter = refManager.getReferenceIterator(range.getMinAddress());
 			while (refIter.hasNext()) {
 				monitor.checkCancelled();
 				Reference reference = refIter.next();
@@ -110,12 +106,14 @@ public class OutgoingCallNode extends CallNode {
 					createNode(nodesByFunction, reference, calledFunction);
 					continue;
 				}
+
 				// If we are not showing thunks, then replace the thunk with the thunked function
 				if (calledFunction.isThunk() && !callTreeOptions.allowsThunks()) {
 					Function thunkedFunction = calledFunction.getThunkedFunction(true);
 					createNode(nodesByFunction, reference, thunkedFunction);
 					continue;
 				}
+
 				createNode(nodesByFunction, reference, calledFunction);
 			}
 		}
@@ -143,7 +141,7 @@ public class OutgoingCallNode extends CallNode {
 						callTreeOptions));
 			}
 		}
-		else if (isCallReference(reference)) {
+		else if (isReferencingFunction(reference)) {
 
 			Function externalFunction = getExternalFunctionTempHackWorkaround(reference);
 			if (externalFunction != null) {
@@ -183,7 +181,7 @@ public class OutgoingCallNode extends CallNode {
 		return calledFunction.isExternal();
 	}
 
-	private boolean isCallReference(Reference reference) {
+	private boolean isReferencingFunction(Reference reference) {
 		RefType type = reference.getReferenceType();
 		if (type.isCall()) {
 			return true;
@@ -234,14 +232,12 @@ public class OutgoingCallNode extends CallNode {
 	@Override
 	public Icon getIcon(boolean expanded) {
 		if (icon == null) {
-			icon = outgoingFunctionIcon;
 			if (functionIsInPath()) {
-				MultiIcon multiIcon = new MultiIcon(CallTreePlugin.RECURSIVE_ICON, false, 32, 16);
-				TranslateIcon translateIcon =
-					isCallRef ? new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0)
-							: new TranslateIcon(CallTreePlugin.DATA_ICON, 16, 0);
-				multiIcon.addIcon(translateIcon);
-				icon = multiIcon;
+				icon = isCallReference ? RECURSIVE_CALL_REFERENCE_ICON
+						: RECURSIVE_NON_CALL_REFERENCE_ICON;
+			}
+			else {
+				icon = isCallReference ? CALL_REFERENCE_ICON : NON_CALL_REFERENCE_ICON;
 			}
 		}
 		return icon;

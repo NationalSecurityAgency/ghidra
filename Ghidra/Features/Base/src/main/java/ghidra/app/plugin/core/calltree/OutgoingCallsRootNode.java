@@ -35,7 +35,7 @@ public class OutgoingCallsRootNode extends OutgoingCallNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return CallTreePlugin.FUNCTION_ICON;
+		return FUNCTION_ICON;
 	}
 
 	@Override

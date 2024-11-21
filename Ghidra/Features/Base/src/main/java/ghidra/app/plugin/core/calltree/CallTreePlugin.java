@@ -15,15 +15,13 @@
  */
 package ghidra.app.plugin.core.calltree;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
-import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.FunctionSupplierContext;
 import ghidra.app.context.ListingActionContext;
@@ -39,7 +37,9 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
+import ghidra.util.StringUtilities;
 import resources.Icons;
+import util.CollectionUtils;
 
 /**
  * Assuming a function <b>foo</b>, this plugin will show:
@@ -63,9 +63,6 @@ import resources.Icons;
 public class CallTreePlugin extends ProgramPlugin {
 
 	static final Icon PROVIDER_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
-	static final Icon FUNCTION_ICON = new GIcon("icon.plugin.calltree.function");
-	static final Icon RECURSIVE_ICON = new GIcon("icon.plugin.calltree.recursive");
-	static final Icon DATA_ICON = new GIcon("icon.plugin.calltree.data");
 
 	private List<CallTreeProvider> providers = new ArrayList<>();
 	private DockingAction showCallTreeFromMenuAction;
@@ -125,6 +122,20 @@ public class CallTreePlugin extends ProgramPlugin {
 		}
 	}
 
+	private CallTreeProvider findTransientProviderForLocation(Function function) {
+		for (CallTreeProvider provider : providers) {
+			if (!provider.isTransient()) {
+				continue;
+			}
+
+			if (provider.isShowingFunction(function)) {
+				return provider;
+			}
+		}
+		return null;
+	}
+
+	// Used by tests to find providers by location
 	CallTreeProvider findTransientProviderForLocation(ProgramLocation location) {
 		for (CallTreeProvider provider : providers) {
 			if (!provider.isTransient()) {
@@ -142,28 +153,32 @@ public class CallTreePlugin extends ProgramPlugin {
 
 		// use the name of the provider so that the shared key binding data will get used
 		String actionName = "Static Function Call Trees";
+		String group = "ShowReferencesTo";
 		showCallTreeFromMenuAction = new DockingAction(actionName, getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				showOrCreateNewCallTree(currentLocation);
+				Function f = getFunction(context);
+				showNewCallTree(f);
 			}
 
 			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				if (context instanceof ListingActionContext) {
-					return true;
+			public boolean isEnabledForContext(ActionContext context) {
+				Function f = getFunction(context);
+				if (f == null) {
+					return false;
 				}
 
-				if (context instanceof FunctionSupplierContext functionContext) {
-					return functionContext.hasFunctions();
-				}
+				String menuText = "Show Call Trees for " + f.getName();
+				String trimmedMenuText = StringUtilities.trim(menuText, 50);
 
-				return false;
+				setPopupMenuData(new MenuData(
+					new String[] { "References", trimmedMenuText }, PROVIDER_ICON, group));
+				return true;
 			}
 		};
 
 		showCallTreeFromMenuAction.setPopupMenuData(new MenuData(
-			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, "ShowReferencesTo"));
+			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, group));
 		showCallTreeFromMenuAction
 				.setHelpLocation(new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
 		showCallTreeFromMenuAction.setDescription("Shows the Function Call Trees window for the " +
@@ -171,14 +186,36 @@ public class CallTreePlugin extends ProgramPlugin {
 		tool.addAction(showCallTreeFromMenuAction);
 	}
 
-	private void createAndShowProvider(ProgramLocation location) {
+	private Function getFunction(ActionContext context) {
+
+		if (context instanceof ListingActionContext) {
+			//
+			// Unusual Code: We know that the ListingActionContext is a FunctionSupplierContext. 
+			// We also know that this context does not report the current function as specifically
+			// as we would like.  So, handle this case ourselves.  The fall-through case will allow
+			// this plugin to work in other places like the Decompiler or the Functions window.
+			//
+			return getFunction(currentLocation);
+		}
+
+		if (context instanceof FunctionSupplierContext functionContext) {
+			if (functionContext.hasFunctions()) {
+				Set<Function> functions = functionContext.getFunctions();
+				return CollectionUtils.any(functions);
+			}
+		}
+
+		return getFunction(currentLocation);
+	}
+
+	private void createAndShowProvider(Function function) {
 		CallTreeProvider provider = new CallTreeProvider(this, false);
 
 		CallTreeOptions callTreeOptions = primaryProvider.getCallTreeOptions();
 		provider.setCallTreeOptions(callTreeOptions);
 
 		providers.add(provider);
-		provider.initialize(currentProgram, location);
+		provider.initialize(currentProgram, function);
 		tool.showComponentProvider(provider, true);
 	}
 
@@ -206,51 +243,34 @@ public class CallTreePlugin extends ProgramPlugin {
 		provider.dispose();
 	}
 
-	void showOrCreateNewCallTree(ProgramLocation location) {
+	void showNewCallTree(Function function) {
 		if (currentProgram == null) {
 			return; // no program; cannot show tool
 		}
 
-		CallTreeProvider provider = findTransientProviderForLocation(location);
+		CallTreeProvider provider = findTransientProviderForLocation(function);
 		if (provider != null) {
 			tool.showComponentProvider(provider, true);
 			return;
 		}
 
-		Function function = getFunction(location);
-		if (function == null) {
-			tool.setStatusInfo("No function containing address: " + location.getAddress(), true);
-			return;
-		}
-
-		createAndShowProvider(location);
+		createAndShowProvider(function);
 	}
 
-	Function getFunction(ProgramLocation location) {
+	private Function getFunction(ProgramLocation location) {
+		if (location == null) {
+			return null;
+		}
 		FunctionManager functionManager = currentProgram.getFunctionManager();
 		Address address = location.getAddress();
-		Function function = functionManager.getFunctionContaining(address);
-		function = resolveFunction(function, address);
-		return function;
+		Function destinationFunction = getReferencedFunction(address);
+		if (destinationFunction != null) {
+			return destinationFunction;
+		}
+		return functionManager.getFunctionContaining(address);
 	}
 
-	/**
-	 *  
-	 * Apparently, we create fake function markup for external functions.  Thus, there is no
-	 * real function at that address and our plugin has to do some work to find out where
-	 * we 'hang' references to the external function, which is itself a Function.  These 
-	 * fake function will usually just be a pointer to another function.
-	 * 
-	 * @param function the function to resolve; if it is not null, then it will be used
-	 * @param address the address for which to find a function
-	 * @return either the given function if non-null, or a function being referenced from the
-	 *         given address.
-	 */
-	Function resolveFunction(Function function, Address address) {
-		if (function != null) {
-			return function;
-		}
-
+	Function getReferencedFunction(Address address) {
 		// maybe we point to another function?
 		FunctionManager functionManager = currentProgram.getFunctionManager();
 		ReferenceManager referenceManager = currentProgram.getReferenceManager();
@@ -262,7 +282,6 @@ public class CallTreePlugin extends ProgramPlugin {
 				return toFunction;
 			}
 		}
-
 		return null;
 	}
 }

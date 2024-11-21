@@ -28,32 +28,24 @@ import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.MultiIcon;
-import resources.icons.TranslateIcon;
 
 public class ExternalCallNode extends CallNode {
 
 	private static final Icon EXTERNAL_ICON = new GIcon("icon.plugin.calltree.node.external");
-	private MultiIcon externalFunctionIcon;
+	private static final Icon CALL_REFERENCE_ICON = createIcon(EXTERNAL_ICON, true);
+	private static final Icon NON_CALL_REFERENCE_ICON = createIcon(EXTERNAL_ICON, false);
 
 	private final Function function;
 	private final Address sourceAddress;
 	private final String name;
 
 	ExternalCallNode(Function function, Address sourceAddress,
-			boolean isCallRef, CallTreeOptions callTreeOptions) {
+			boolean isCallReference, CallTreeOptions callTreeOptions) {
 		super(callTreeOptions);
 		this.function = function;
 		this.sourceAddress = sourceAddress;
 		this.name = function.getName();
-		this.isCallRef = isCallRef;
-
-		externalFunctionIcon = new MultiIcon(EXTERNAL_ICON, false, 32, 16);
-		TranslateIcon translateIcon =
-			isCallRef ? new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0)
-					: new TranslateIcon(CallTreePlugin.DATA_ICON, 16, 0);
-		externalFunctionIcon.addIcon(translateIcon);
-
+		this.isCallReference = isCallReference;
 	}
 
 	@Override
@@ -63,7 +55,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	CallNode recreate() {
-		return new ExternalCallNode(function, sourceAddress, isCallRef, callTreeOptions);
+		return new ExternalCallNode(function, sourceAddress, isCallReference, callTreeOptions);
 	}
 
 	@Override
@@ -88,7 +80,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return externalFunctionIcon;
+		return isCallReference ? CALL_REFERENCE_ICON : NON_CALL_REFERENCE_ICON;
 	}
 
 	@Override

@@ -29,16 +29,15 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.MultiIcon;
-import resources.icons.TranslateIcon;
 
 public class DeadEndNode extends CallNode {
 
-	private static final Icon ICON = new GIcon("icon.plugin.calltree.node.dead.end");
+	private static final Icon DEAD_END_ICON = new GIcon("icon.plugin.calltree.node.dead.end");
+	private static final Icon CALL_REFERENCE_ICON = createIcon(DEAD_END_ICON, true);
+	private static final Icon NON_CALL_REFERENCE_ICON = createIcon(DEAD_END_ICON, false);
 
 	private final Reference reference;
 	private String name;
-	private MultiIcon deadEndIcon;
 
 	private final Program program;
 
@@ -46,12 +45,7 @@ public class DeadEndNode extends CallNode {
 		super(callTreeOptions);
 		this.program = program;
 		this.reference = reference;
-		this.isCallRef = reference.getReferenceType().isCall();
-		deadEndIcon = new MultiIcon(ICON, false, 32, 16);
-		TranslateIcon translateIcon =
-			isCallRef ? new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0)
-					: new TranslateIcon(CallTreePlugin.DATA_ICON, 16, 0);
-		deadEndIcon.addIcon(translateIcon);
+		this.isCallReference = reference.getReferenceType().isCall();
 	}
 
 	@Override
@@ -80,7 +74,7 @@ public class DeadEndNode extends CallNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		return deadEndIcon;
+		return isCallReference ? CALL_REFERENCE_ICON : NON_CALL_REFERENCE_ICON;
 	}
 
 	@Override

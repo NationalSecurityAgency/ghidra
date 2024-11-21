@@ -45,8 +45,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
@@ -81,11 +80,12 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	private Program currentProgram;
 	private Function currentFunction;
 	private DockingAction recurseDepthAction;
-	private ToggleDockingAction filterDuplicates;
+	private ToggleDockingAction unifyFunctionsAction;
+	private ToggleDockingAction filterNonCallsAction;
 	private ToggleDockingAction filterThunksAction;
 	private ToggleDockingAction showNamespaceAction;
 	private ToggleDockingAction navigationOutgoingAction;
-	private ToggleDockingAction navigateIncomingToggleAction;
+	private ToggleDockingAction navigateIncomingAction;
 	private DockingAction refreshAction;
 
 	private CallTreeOptions callTreeOptions = new CallTreeOptions();
@@ -362,24 +362,48 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, goToSourceAction);
 
 		//
-		// filter duplicates action
+		// Unify Functions action
 		//
-		filterDuplicates = new ToggleDockingAction("Filter Duplicates", plugin.getName()) {
+		unifyFunctionsAction = new ToggleDockingAction("Unify Functions", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				callTreeOptions = callTreeOptions.withFilterDuplicates(isSelected());
 				doUpdate();
 			}
 		};
-		filterDuplicates.setToolBarData(new ToolBarData(
-			new GIcon("icon.plugin.calltree.filter.duplicates"), filterOptionsToolbarGroup, "1"));
-		filterDuplicates.setSelected(true);
-		filterDuplicates
-				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
-		tool.addLocalAction(this, filterDuplicates);
+		unifyFunctionsAction.setToolBarData(new ToolBarData(
+			new GIcon("icon.plugin.calltree.unify.functions"), filterOptionsToolbarGroup, "1"));
+		unifyFunctionsAction.setSelected(true);
+		unifyFunctionsAction
+				.setDescription("<html>Filters the trees to only show one node per function,<br>" +
+					"regardless of how many incoming or outgoing references exist at a given level");
+		unifyFunctionsAction
+				.setHelpLocation(
+					new HelpLocation(plugin.getName(), "Call_Tree_Action_Unify_Functions"));
+		tool.addLocalAction(this, unifyFunctionsAction);
 
 		//
-		// recurse depth
+		// Filter Non-calls action
+		//
+		filterNonCallsAction = new ToggleDockingAction("Filter Non-calls", plugin.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				callTreeOptions = callTreeOptions.withFilterReferences(isSelected());
+				doUpdate();
+			}
+		};
+		filterNonCallsAction.setToolBarData(new ToolBarData(
+			new GIcon("icon.plugin.calltree.filter.non.calls"), filterOptionsToolbarGroup, "2"));
+		filterNonCallsAction.setSelected(true);
+		filterNonCallsAction
+				.setDescription("Filters the trees to only show function call references");
+		filterNonCallsAction
+				.setHelpLocation(
+					new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter_Calls"));
+		tool.addLocalAction(this, filterNonCallsAction);
+
+		//
+		// Recurse Depth action
 		//
 		recurseDepthAction = new DockingAction("Recurse Depth", plugin.getName()) {
 			@Override
@@ -402,14 +426,14 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		int recurseDepth = callTreeOptions.getRecurseDepth();
 		recurseIcon = new NumberIcon(recurseDepth);
 		recurseDepthAction
-				.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
+				.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "3"));
 		recurseDepthAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Recurse_Depth"));
 
 		tool.addLocalAction(this, recurseDepthAction);
 
 		//
-		// navigate outgoing nodes on selection
+		// Navigate outgoing nodes on selection action
 		//
 		navigationOutgoingAction =
 			new ToggleDockingAction("Navigate Outgoing Nodes", plugin.getName()) {
@@ -429,7 +453,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		//
 		// navigate incoming nodes on selection
 		//
-		navigateIncomingToggleAction =
+		navigateIncomingAction =
 			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName()) {
 				@Override
 				public void actionPerformed(ActionContext context) {
@@ -449,16 +473,16 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		// note: the default state is to follow navigation events for the primary provider;
 		//       non-primary providers will function like snapshots of the function with
 		//       which they were activated.
-		navigateIncomingToggleAction.setSelected(isPrimary);
-		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
+		navigateIncomingAction.setSelected(isPrimary);
+		navigateIncomingAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navigationOptionsToolbarGroup, "2"));
-		navigateIncomingToggleAction.setDescription("<html>Incoming Navigation" +
+		navigateIncomingAction.setDescription("<html>Incoming Navigation" +
 			"<br><br>Toggle <b>On</b>  - change the displayed " +
 			"function on Listing navigation events" +
 			"<br>Toggled <b>Off</b> - don't change the displayed function on Listing navigation events");
-		navigateIncomingToggleAction.setHelpLocation(
+		navigateIncomingAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Incoming_Navigation"));
-		tool.addLocalAction(this, navigateIncomingToggleAction);
+		tool.addLocalAction(this, navigateIncomingAction);
 
 		//
 		// selection actions
@@ -574,7 +598,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, selectDestinationAction);
 
 		//
-		// home button
+		// Home action
 		//
 		DockingAction homeAction = new DockingAction("Home", plugin.getName()) {
 			@Override
@@ -617,9 +641,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 					GTree gTree = (GTree) context.getContextObject();
 					TreePath[] selectionPaths = gTree.getSelectionPaths();
 					CallNode callNode = (CallNode) selectionPaths[0].getLastPathComponent();
-					ProgramLocation location = new ProgramLocation(currentProgram,
-						callNode.getRemoteFunction().getEntryPoint());
-					plugin.showOrCreateNewCallTree(location);
+					plugin.showNewCallTree(callNode.getRemoteFunction());
 				}
 
 				@Override
@@ -896,9 +918,10 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 
 		recurseDepthAction.dispose();
 		refreshAction.dispose();
-		filterDuplicates.dispose();
+		unifyFunctionsAction.dispose();
+		filterNonCallsAction.dispose();
 		navigationOutgoingAction.dispose();
-		navigateIncomingToggleAction.dispose();
+		navigateIncomingAction.dispose();
 	}
 
 	void setLocation(ProgramLocation location) {
@@ -914,12 +937,23 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		doSetLocation(location);
+		if (location == null) {
+			return;
+		}
+
+		Address address = location.getAddress();
+		FunctionManager functionManager = currentProgram.getFunctionManager();
+		Function function = functionManager.getFunctionContaining(address);
+		if (function == null) {
+			function = plugin.getReferencedFunction(address);
+		}
+
+		doSetFunction(function);
 	}
 
-	private void doSetLocation(ProgramLocation location) {
-		if (location == null) {
-			setFunction(null);
+	// used by tests
+	void doSetFunction(Function function) {
+		if (function == null) {
 			return;
 		}
 
@@ -932,20 +966,16 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			currentProgram.addListener(domainObjectListener);
 		}
 
-		Function function = plugin.getFunction(location);
-		setFunction(function);
-	}
-
-	private void setFunction(Function function) {
-		if (function != null && function.equals(currentFunction)) {
+		if (function.equals(currentFunction)) {
 			return;
 		}
 
-		doSetFunction(function);
+		currentFunction = function;
+		updateUiForFunction(function);
 	}
 
-	private void doSetFunction(Function function) {
-		currentFunction = function;
+	private void updateUiForFunction(Function function) {
+
 		notifyContextChanged();
 		if (currentFunction == null) {
 			clearTrees();
@@ -1022,7 +1052,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		setSubTitle(subTitle);
 	}
 
-	void initialize(Program program, ProgramLocation location) {
+	void initialize(Program program, Function function) {
 		if (program == null) { // no program open
 			setLocation(null);
 			return;
@@ -1030,7 +1060,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 
 		currentProgram = program;
 		currentProgram.addListener(domainObjectListener);
-		doSetLocation(location);
+		doSetFunction(function);
 	}
 
 	void programActivated(Program program) {
@@ -1069,6 +1099,8 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	void setCallTreeOptions(CallTreeOptions callTreeOptions) {
 		this.callTreeOptions = callTreeOptions;
 		recurseIcon.setNumber(callTreeOptions.getRecurseDepth());
+		unifyFunctionsAction.setSelected(!callTreeOptions.allowsDuplicates());
+		filterNonCallsAction.setSelected(!callTreeOptions.allowsNonCallReferences());
 	}
 
 	void readConfigState(SaveState saveState) {
@@ -1086,6 +1118,10 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		reloadUpdateManager.update();
 	}
 
+	boolean isShowingFunction(Function function) {
+		return currentFunction == function; // yes, '=='
+	}
+
 	boolean isShowingLocation(ProgramLocation location) {
 		if (currentFunction == null) {
 			return false;
@@ -1096,7 +1132,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 	}
 
 	private boolean followLocationChanges() {
-		return navigateIncomingToggleAction.isSelected();
+		return navigateIncomingAction.isSelected();
 	}
 
 	private DomainObjectListener createDomainObjectListener() {
@@ -1105,7 +1141,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 			.ignoreWhen(() -> !isVisible() || isEmpty())
 			.any(RESTORED).terminate(() -> setStale(true))
 			.any(MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED, SYMBOL_ADDED, SYMBOL_REMOVED,
-				 REFERENCE_ADDED, REFERENCE_REMOVED)
+				 REFERENCE_ADDED, REFERENCE_REMOVED, REFERENCE_TYPE_CHANGED)
 				.call(() -> setStale(true))
 			.with(ProgramChangeRecord.class)
 				.each(SYMBOL_RENAMED).call(r -> handleSymbolRenamed(r))
@@ -1258,7 +1294,7 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public Icon getIcon(boolean expanded) {
-			return CallTreePlugin.FUNCTION_ICON;
+			return CallNode.FUNCTION_ICON;
 		}
 
 		@Override
