@@ -63,6 +63,7 @@ public:
 class PcodeOp {
   friend class BlockBasic; // Just insert_before, insert_after, setOrder
   friend class Funcdata;
+  friend class CloneBlockOps;
   friend class PcodeOpBank;
   friend class VarnodeBank;    // Only uses setInput
 public:
@@ -364,6 +365,23 @@ public:
 extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);
 extern bool functionalEquality(Varnode *vn1,Varnode *vn2);
 extern bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth);
+
+/// \brief Static methods for determining if two boolean expressions are the \b same or \b complementary
+///
+/// Traverse (upto a specific depth) the two boolean expressions consisting of BOOL_AND, BOOL_OR, and
+/// BOOL_XOR operations.  Leaf operators in the expression can be other operators with boolean output (INT_LESS,
+/// INT_SLESS, etc.).
+class BooleanMatch {
+  static bool sameOpComplement(PcodeOp *bin1op, PcodeOp *bin2op);
+  static bool varnodeSame(Varnode *a,Varnode *b);
+public:
+  enum {
+    same = 1,			///< Pair always hold the same value
+    complementary = 2,		///< Pair always hold complementary values
+    uncorrelated = 3		///< Pair values are uncorrelated
+  };
+  static int4 evaluate(Varnode *vn1,Varnode *vn2,int4 depth);
+};
 
 /// Compare PcodeOps (as pointers) first, then slot
 /// \param op2 is the other edge to compare with \b this
