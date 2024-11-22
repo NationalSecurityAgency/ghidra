@@ -727,7 +727,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return panelProgram.getDomainFile().toString();
 	}
 
-	public void setPanel(ListingPanel lp) {
+	public void setOtherPanel(ListingPanel lp) {
 		Program myProgram = listingPanel.getListingModel().getProgram();
 		Program otherProgram = lp.getListingModel().getProgram();
 		String myName = "<EMPTY>";
