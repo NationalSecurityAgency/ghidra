@@ -135,7 +135,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 						fileOffset = -1;
 					}
 					if (fileOffset < 0 || fileOffset >= origFileLength) {
-						return "File Offset must be greater than 0 and less than file length " +
+						return "File Offset must be greater than or equal to 0 and less than file length " +
 							origFileLength + " (0x" + Long.toHexString(origFileLength) + ")";
 					}
 				}
@@ -147,7 +147,7 @@ public class BinaryLoader extends AbstractProgramLoader {
 						length = -1;
 					}
 					if (length < 0 || length > origFileLength) {
-						return "Length must be greater than 0 and less than or equal to file length " +
+						return "Length must be greater than or equal to 0 and less than or equal to file length " +
 							origFileLength + " (0x" + Long.toHexString(origFileLength) + ")";
 					}
 
