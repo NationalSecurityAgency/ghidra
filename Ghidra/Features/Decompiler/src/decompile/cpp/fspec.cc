@@ -765,26 +765,22 @@ uint4 ParamListStandard::assignAddress(Datatype *dt,const PrototypePieces &proto
   return assignAddressFallback(store,dt,false,status,res);
 }
 
-void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+void ParamListStandard::assignMapRtoL(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
 
 {
   vector<int4> status(numgroup,0);
 
-  bool hiddenparam = res.size() == 2;
-  ParameterPieces* hiddenpiece = hiddenparam ? &res.back() : (ParameterPieces*)0;
-  
-  if (hiddenparam && proto.model->getRightToLeft()) {	// Check for hidden parameters defined by the output list
-//  if (res.size() == 2) {	// Check for hidden parameters defined by the output list
-    Datatype* dt = hiddenpiece->type;
+  if (res.size() == 2) {	// Check for hidden parameters defined by the output list
+    Datatype *dt = res.back().type;
     type_class store;
-    if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0)
+    if ((res.back().flags & ParameterPieces::hiddenretparm) != 0)
       store = TYPECLASS_HIDDENRET;
     else
       store = metatype2typeclass(dt->getMetatype());
     // Reserve first param for hidden return pointer
-    if (assignAddressFallback(store,dt,false,status,*hiddenpiece) == AssignAction::fail)
-      throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
-    hiddenpiece->flags |= ParameterPieces::hiddenretparm;
+    if (assignAddressFallback(store,dt,false,status,res.back()) == AssignAction::fail)
+      throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
+    res.back().flags |= ParameterPieces::hiddenretparm;
   }
   for(int4 i=0;i<proto.intypes.size();++i) {
     res.emplace_back();
@@ -793,19 +789,49 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
     if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
   }
+}
 
-  if (hiddenparam && !proto.model->getRightToLeft()) {	// Check for hidden parameters defined by the output list
-    Datatype* dt = hiddenpiece->type;
+void ParamListStandard::assignMapLtoR(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+
+{
+  ParameterPieces* hiddenpiece = (res.size() == 2) ? &res.back() : (ParameterPieces*)0;
+
+  vector<int4> status(numgroup,0);
+
+  // allocate storage backwards in temporary results
+  vector<ParameterPieces> tmpres;
+  for(int4 i=proto.intypes.size()-1;i>=0;--i) {
+    tmpres.emplace_back();
+    Datatype *dt = proto.intypes[i];
+    uint4 responseCode = assignAddress(dt,proto,proto.intypes.size()-1-i,typefactory,status,tmpres.back());
+    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
+      throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
+  }
+  // add tmpres to res in reverse leaving the hiddenpiece at the end
+  res.resize(res.size() + tmpres.size());
+  reverse_copy(tmpres.begin(),tmpres.end(),res.begin()+1);
+
+  if (hiddenpiece) {	// Check for hidden parameters defined by the output list
+    Datatype *dt = hiddenpiece->type;
     type_class store;
     if ((hiddenpiece->flags & ParameterPieces::hiddenretparm) != 0)
       store = TYPECLASS_HIDDENRET;
     else
       store = metatype2typeclass(dt->getMetatype());
-    // Reserve first param for hidden return pointer
-    if (assignAddressFallback(store, dt, false, status, *hiddenpiece) == AssignAction::fail)
+    // Reserve last param for hidden return pointer
+    if (assignAddressFallback(store,dt,false,status,*hiddenpiece) == AssignAction::fail)
       throw ParamUnassignedError("Cannot assign parameter address for " + hiddenpiece->type->getName());
     hiddenpiece->flags |= ParameterPieces::hiddenretparm;
   }
+}
+
+void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+
+{
+  if (proto.model->getRightToLeft())
+    assignMapRtoL(proto, typefactory, res);
+  else
+    assignMapLtoR(proto, typefactory, res);
 }
 
 /// From among the ParamEntrys matching the given \e group, return the one that best matches
@@ -1584,7 +1610,7 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
-    //int4 pointersize = spc->getAddrSize();
+//    int4 pointersize = spc->getAddrSize();
     int4 pointersize = proto.model->getPointerSize(spc);
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto.outtype, wordsize);
@@ -2317,6 +2343,7 @@ ProtoModel::ProtoModel(Architecture *g)
   injectUponReturn = -1;
   stackgrowsnegative = true;	// Normal stack parameter ordering
   hasThis = false;
+  isRightToLeft = true;
   isConstruct = false;
   isPrinted = true;
   defaultLocalRange();
@@ -2414,39 +2441,18 @@ void ProtoModel::assignParameterStorage(const PrototypePieces &proto,vector<Para
   else {
     output->assignMap(proto,*glb->types,res);
   }
-
-  vector<Datatype*> typelist = proto.intypes;
-
-  // Deal with left-to-right (PASCAL convention) parameter ordering
-  if (!isRightToLeft) {
-    // swap around the datatypes to map variable storage high-to-low
-    for (int i = 0; i < typelist.size() / 2; i++) {
-      std::swap(typelist[typelist.size() - 1 - i], typelist[i]);
-    }
-  }
-
   input->assignMap(proto,*glb->types,res);
 
-  // Deal with left-to-right (PASCAL convention) parameter ordering
-  if (!isRightToLeft) {
-    int inputOffset = (res.size() - typelist.size());
-    for (int i = 0; i < typelist.size() / 2; i++) {
-      // swap back the datatype order
-      std::swap(typelist[typelist.size() - 1 - i], typelist[i]);
-      // swap back the resulting storage to be ordered correctly
-      std::swap(res[res.size()-1 - i], res[inputOffset+i]);
-    }
-  }
-
+  // the following fails with mixed sized pointers (e.g. near & far) for the 'this' & 'hiddenretparm' pieces
   if (hasThis && res.size() > 1) {
     int4 thisIndex = 1;
     if ((res[1].flags & ParameterPieces::hiddenretparm) != 0 && res.size() > 2) {
       if (input->isThisBeforeRetPointer()) {
 					// pointer has been bumped by auto-return-storage
-	res[1].swapMarkup(res[2]);	// must swap markup for slots 1 and 2
+        res[1].swapMarkup(res[2]);	// must swap markup for slots 1 and 2
       }
       else {
-	thisIndex = 2;
+        thisIndex = 2;
       }
     }
     res[thisIndex].flags |= ParameterPieces::isthis;
@@ -2463,6 +2469,8 @@ inline bool ends_with(const TString& str, const TString& end) {
 /// \brief Used to return the size of a pointer for this model prototype.
 /// @param space is the default AddrSpace
 /// @return size of pointer
+/*
+*/
 int ProtoModel::getPointerSize(const AddrSpace* space) const
 
 {
@@ -4081,18 +4089,18 @@ void FuncProto::updateInputTypes(Funcdata &data,const vector<Varnode *> &trialli
       if (vn->isMark()) continue;
       ParameterPieces pieces;
       if (vn->isPersist()) {
-	int4 sz;
-	pieces.addr = data.findDisjointCover(vn, sz);
-	if (sz == vn->getSize())
-	  pieces.type = vn->getHigh()->getType();
-	else
-	  pieces.type = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
-	pieces.flags = 0;
+      	int4 sz;
+      	pieces.addr = data.findDisjointCover(vn, sz);
+      	if (sz == vn->getSize())
+      	  pieces.type = vn->getHigh()->getType();
+      	else
+      	  pieces.type = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
+        pieces.flags = 0;
       }
       else {
-	pieces.addr = trial.getAddress();
-	pieces.type = vn->getHigh()->getType();
-	pieces.flags = 0;
+      	pieces.addr = trial.getAddress();
+      	pieces.type = vn->getHigh()->getType();
+      	pieces.flags = 0;
       }
       store->setInput(count,"",pieces);
       count += 1;
