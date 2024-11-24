@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -162,10 +162,13 @@ public class FontValue extends ThemeValue<Font> {
 
 	@Override
 	protected Font getUnresolvedReferenceValue(String primaryId, String unresolvedId) {
-		Msg.warn(this,
-			"Could not resolve indirect font path for \"" + unresolvedId +
-				"\" for primary id \"" + primaryId + "\", using last resort default");
+		Msg.warn(this, "Could not resolve indirect font path for \"" + unresolvedId +
+			"\" for primary id \"" + primaryId + "\", using last resort default");
 		return LAST_RESORT_DEFAULT;
+	}
+
+	public FontModifier getModifier() {
+		return modifier;
 	}
 
 	private static String toExternalId(String internalId) {

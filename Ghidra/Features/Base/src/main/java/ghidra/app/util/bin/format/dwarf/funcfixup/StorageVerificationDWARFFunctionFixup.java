@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,8 @@
 package ghidra.app.util.bin.format.dwarf.funcfixup;
 
 import ghidra.app.util.bin.format.dwarf.DWARFFunction;
-import ghidra.app.util.bin.format.dwarf.DWARFVariable;
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
+import ghidra.app.util.bin.format.dwarf.DWARFVariable;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -32,6 +32,14 @@ public class StorageVerificationDWARFFunctionFixup implements DWARFFunctionFixup
 
 	@Override
 	public void fixupDWARFFunction(DWARFFunction dfunc) {
+		boolean ignoreStorage = dfunc.getProgram().getImportOptions().isIgnoreParamStorage() ||
+			dfunc.getProgram().getRegisterMappings().isUseFormalParameterStorage();
+		boolean isEmptySignature = dfunc.params.isEmpty() && dfunc.retval.isVoidType();
+		if (ignoreStorage || isEmptySignature) {
+			dfunc.signatureCommitMode = CommitMode.FORMAL;
+			return;
+		}
+
 		boolean storageIsGood = true;
 		for (DWARFVariable param : dfunc.params) {
 			if (param.isMissingStorage() && !param.isZeroByte()) {

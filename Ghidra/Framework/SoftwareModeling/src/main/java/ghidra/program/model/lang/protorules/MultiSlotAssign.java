@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,6 +150,7 @@ public class MultiSlotAssign extends AssignAction {
 		ArrayList<Varnode> pieces = new ArrayList<>();
 		ParameterPieces param = new ParameterPieces();
 		int sizeLeft = dt.getLength();
+		int align = dt.getAlignment();
 		int iter = firstIter;
 		int endIter = resource.getNumParamEntry();
 		if (enforceAlignment) {
@@ -161,7 +162,6 @@ public class MultiSlotAssign extends AssignAction {
 				}		// Reached end of resource list
 				if (entry.getType() == resourceType && entry.getAllGroups().length == 1) {	// Single register
 					if (tmpStatus[entry.getGroup()] == 0) {		// Not consumed
-						int align = dt.getAlignment();
 						int regSize = entry.getSize();
 						if (align <= regSize || (resourcesConsumed % align) == 0) {
 							break;
@@ -186,11 +186,12 @@ public class MultiSlotAssign extends AssignAction {
 				continue;
 			}		// Already consumed
 			int trialSize = entry.getSize();
-			entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize, 1, param);
+			entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize, align, param);
 			tmpStatus[entry.getGroup()] = -1;	// Consume the register
 			Varnode vn = new Varnode(param.address, trialSize);
 			pieces.add(vn);
 			sizeLeft -= trialSize;
+			align = 1;		// Treat remaining partial pieces as having no alignment requirement
 		}
 		boolean onePieceJoin = false;
 		if (sizeLeft > 0) {				// Have to use stack to get enough bytes
@@ -198,7 +199,7 @@ public class MultiSlotAssign extends AssignAction {
 				return FAIL;
 			}
 			int grp = stackEntry.getGroup();
-			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, 1, param);	// Consume all the space we need	
+			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param);	// Consume all the space we need	
 			if (param.address == null) {
 				return FAIL;
 			}
@@ -257,6 +258,7 @@ public class MultiSlotAssign extends AssignAction {
 			encoder.writeString(ATTRIB_STORAGE, resourceType.toString());
 		}
 		encoder.writeBool(ATTRIB_ALIGN, enforceAlignment);
+		encoder.writeBool(ATTRIB_STACKSPILL, consumeFromStack);
 		encoder.closeElement(ELEM_JOIN);
 	}
 
@@ -275,6 +277,9 @@ public class MultiSlotAssign extends AssignAction {
 			}
 			else if (name.equals(ATTRIB_ALIGN.name())) {
 				enforceAlignment = SpecXmlUtils.decodeBoolean(attrib.getValue());
+			}
+			else if (name.equals(ATTRIB_STACKSPILL.name())) {
+				consumeFromStack = SpecXmlUtils.decodeBoolean(attrib.getValue());
 			}
 		}
 		parser.end(elem);

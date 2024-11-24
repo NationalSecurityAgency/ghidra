@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.app.util.bin.BinaryReader;
  */
 public enum DWARFAttribute {
 	DW_AT_sibling(0x1, reference),
-	DW_AT_location(0x2, exprloc, loclist, block),
+	DW_AT_location(0x2, exprloc, loclist, block, constant),
 	DW_AT_name(0x3, string),
 	DW_AT_ordering(0x9, constant),
 	//DW_AT_subscr_data(0xa),
@@ -70,7 +70,7 @@ public enum DWARFAttribute {
 	DW_AT_base_types(0x35, reference),
 	DW_AT_calling_convention(0x36, constant),
 	DW_AT_count(0x37, constant, exprloc, reference),
-	DW_AT_data_member_location(0x38, constant, exprloc, loclist),
+	DW_AT_data_member_location(0x38, constant, exprloc, loclist, block),
 	DW_AT_decl_column(0x39, constant),
 	DW_AT_decl_file(0x3a, constant),
 	DW_AT_decl_line(0x3b, constant),
@@ -78,7 +78,7 @@ public enum DWARFAttribute {
 	DW_AT_discr_list(0x3d, block),
 	DW_AT_encoding(0x3e, constant),
 	DW_AT_external(0x3f, flag),
-	DW_AT_frame_base(0x40, exprloc, loclist, block),
+	DW_AT_frame_base(0x40, exprloc, loclist, block, constant),
 	DW_AT_friend(0x41, reference),
 	DW_AT_identifier_case(0x42, constant),
 	DW_AT_macro_info(0x43, macptr),
@@ -91,7 +91,7 @@ public enum DWARFAttribute {
 	DW_AT_use_location(0x4a, exprloc, loclist),
 	DW_AT_variable_parameter(0x4b, flag),
 	DW_AT_virtuality(0x4c, constant),
-	DW_AT_vtable_elem_location(0x4d, exprloc, loclist),
+	DW_AT_vtable_elem_location(0x4d, exprloc, loclist, block),
 	DW_AT_allocated(0x4e, constant, exprloc, reference),
 	DW_AT_associated(0x4f, constant, exprloc, reference),
 	DW_AT_data_location(0x50, exprloc),
@@ -99,7 +99,7 @@ public enum DWARFAttribute {
 	DW_AT_entry_pc(0x52, address, constant),
 	DW_AT_use_UTF8(0x53, flag),
 	DW_AT_extension(0x54, reference),
-	DW_AT_ranges(0x55, rnglist),
+	DW_AT_ranges(0x55, rnglist, constant),
 	DW_AT_trampoline(0x56, address, flag, reference, string),
 	DW_AT_call_column(0x57, constant),
 	DW_AT_call_file(0x58, constant),

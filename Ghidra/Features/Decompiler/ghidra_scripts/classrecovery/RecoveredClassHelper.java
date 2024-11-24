@@ -137,6 +137,7 @@ public class RecoveredClassHelper {
 	protected final boolean createBookmarks;
 	protected final boolean useShortTemplates;
 	protected final boolean nameVfunctions;
+	public HashMap<Address, Set<Function>> allVfunctions = new HashMap<>();
 
 	public RecoveredClassHelper(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
@@ -403,12 +404,15 @@ public class RecoveredClassHelper {
 	 * @param function the given function
 	 * @param getThunkedFunction if true, use the thunked function in the map, if false use the 
 	 * directly called function from the calling function even if it is a thunk
+	 * @param visited the set of function entry point addresses already processed
 	 * @return a map of the given functions calling addresses to the called functions 
 	 * @throws CancelledException if cancelled
 	 */
-	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction)
+	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction,
+			Set<Address> visited)
 			throws CancelledException {
 
+		visited.add(function.getEntryPoint());
 		Map<Address, Function> functionCallMap = new HashMap<Address, Function>();
 
 		InstructionIterator instructions =
@@ -434,9 +438,10 @@ public class RecoveredClassHelper {
 				Address functionAddress = reference.getFromAddress();
 				Function secondHalfOfFunction =
 					extendedFlatAPI.getReferencedFunction(functionAddress);
-				if (secondHalfOfFunction != null) {
+				if (secondHalfOfFunction != null &&
+					!visited.contains(secondHalfOfFunction.getEntryPoint())) {
 					Map<Address, Function> functionCallMap2 =
-						getFunctionCallMap(secondHalfOfFunction, false);
+						getFunctionCallMap(secondHalfOfFunction, false, visited);
 					for (Address addr : functionCallMap2.keySet()) {
 						monitor.checkCancelled();
 						functionCallMap.put(addr, functionCallMap2.get(addr));
@@ -446,6 +451,11 @@ public class RecoveredClassHelper {
 			}
 		}
 		return functionCallMap;
+	}
+
+	public Map<Address, Function> getFunctionCallMap(Function function, boolean getThunkedFunction)
+			throws CancelledException {
+		return getFunctionCallMap(function, getThunkedFunction, new HashSet<>());
 	}
 
 	public void updateNamespaceToClassMap(Namespace namespace, RecoveredClass recoveredClass) {
@@ -480,18 +490,24 @@ public class RecoveredClassHelper {
 
 	public Set<Function> getAllVfunctions(List<Address> vftableAddresses)
 			throws CancelledException {
-
-		Set<Function> allVfunctionsSet = new HashSet<Function>();
-
 		if (vftableAddresses.isEmpty()) {
-			return allVfunctionsSet;
+			return Collections.emptySet();
 		}
+
+		Set<Function> vfunctionSet = new HashSet<>();
 		for (Address vftableAddress : vftableAddresses) {
 			monitor.checkCancelled();
-			allVfunctionsSet.addAll(getVfunctions(vftableAddress));
+			if (!allVfunctions.containsKey(vftableAddress)) {
+				List<Function> funcList = getVfunctions(vftableAddress);
+				if (funcList == null) {
+					funcList = new ArrayList<>();
+				}
+				allVfunctions.put(vftableAddress, new HashSet<>(funcList));
+			}
+			vfunctionSet.addAll(allVfunctions.get(vftableAddress));
 		}
 
-		return allVfunctionsSet;
+		return vfunctionSet;
 	}
 
 	public Set<Function> getAllClassFunctionsWithVtableRef(List<Address> vftables)
@@ -1024,7 +1040,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issues setting return type
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void gatherClassMemberDataInfoForFunction(RecoveredClass recoveredClass,
 			Function function) throws CancelledException, DuplicateNameException,
@@ -1240,7 +1256,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issue making function thiscall
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void temporarilyReplaceEmptyStructures(Function function, Namespace classNamespace)
 			throws CancelledException, DuplicateNameException, InvalidInputException,
@@ -1807,7 +1823,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public boolean processConstructorsAndDestructorsUsingParent(RecoveredClass recoveredClass,
 			RecoveredClass parentClass) throws CancelledException, InvalidInputException,
@@ -1949,7 +1965,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if error setting return type
 	 * @throws DuplicateNameException  if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void addConstructorToClass(RecoveredClass recoveredClass, Function constructorFunction)
 			throws CancelledException, InvalidInputException, DuplicateNameException,
@@ -2074,7 +2090,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if error setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void createListedConstructorFunctions(Map<Address, RecoveredClass> referenceToClassMap,
 			List<Address> referencesToConstructors) throws CancelledException,
@@ -2108,7 +2124,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 
 	public void processInlineConstructor(RecoveredClass recoveredClass,
@@ -2526,7 +2542,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to use existing pdb names to assign class constructors and destructors
 	 * @param recoveredClasses List of classes
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 * @throws CancelledException if cancelled
@@ -3288,6 +3304,14 @@ public class RecoveredClassHelper {
 	public void addConstructorsToClassNamespace(RecoveredClass recoveredClass,
 			Structure classStruct) throws Exception {
 
+		DataType undefinedDT = null;
+		if (defaultPointerSize == 4) {
+			undefinedDT = new Undefined4DataType();
+		}
+		if (defaultPointerSize == 8) {
+			undefinedDT = new Undefined8DataType();
+		}
+
 		Namespace classNamespace = recoveredClass.getClassNamespace();
 		String className = recoveredClass.getName();
 
@@ -3304,68 +3328,51 @@ public class RecoveredClassHelper {
 					true);
 			}
 
-			// if current decompiler function return type is a pointer then set the return type
-			// to a pointer to the class structure, otherwise if it is a void, make it a void so the
-			// listing has void too, otherwise, leave it as is, probably a void
-			String returnType = getReturnTypeFromDecompiler(constructorFunction);
+			// commit what the decompiler knows first so that retyping will not
+			// completely overwrite decompiler with listing signature
+			decompilerUtils.commitFunction(constructorFunction);
 
-			// Set error bookmark, add error message, and  get the listing return type if the
-			// decompiler return type is null
-			if (returnType == null) {
+			HighFunction highFunction = decompilerUtils.getHighFunction(constructorFunction);
+			if (highFunction == null) {
+				String msg =
+					"Decompiler Error: Failed to decompile function possibly due to the addition of class structure. ";
 
-				String msg1 = "Decompiler Error: Failed to decompile function";
-				String msg2 = ", possibly due to the addition of class structure.";
-
-				Msg.debug(this, msg1 + " at " + constructorFunction.getEntryPoint() + msg2);
+				Msg.debug(this, msg + constructorFunction.getEntryPoint());
 
 				program.getBookmarkManager()
 						.setBookmark(constructorFunction.getEntryPoint(), BookmarkType.ERROR,
-							"Decompiler Error", msg1 + msg2);
-
-				// get the return type from the listing and in some cases it will
-				// indicate the correct type to help determine the below type to add
-				returnType = constructorFunction.getReturnType().getDisplayName();
+							"Decompiler Error", msg);
+				continue;
 			}
 
-			if (returnType.equals("void")) {
-				constructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
+			DataType returnType = highFunction.getFunctionPrototype().getReturnType();
+			if (returnType == null) {
+				Msg.debug(this,
+					"ERROR: Return type is null " + constructorFunction.getEntryPoint());
+				continue;
 			}
-			else if (returnType.contains("*")) {
-				DataType classPointerDataType = dataTypeManager.getPointer(classStruct);
-				constructorFunction.setReturnType(classPointerDataType, SourceType.ANALYSIS);
-			}
-			// if neither and it is a FID function change it to undefined so the decompiler will
+
+			// if a FID function and isn't void or * change it to undefined so the decompiler will
 			// recompute it
-			else if (isFidFunction(constructorFunction)) {
-				DataType undefinedDT = null;
-				if (defaultPointerSize == 4) {
-					undefinedDT = new Undefined4DataType();
-				}
-				if (defaultPointerSize == 8) {
-					undefinedDT = new Undefined8DataType();
-				}
+			String returnTypeString = returnType.getDisplayName();
+			if (isFidFunction(constructorFunction) && returnTypeString != "void" &&
+				!returnTypeString.contains("*")) {
+
 				if (undefinedDT != null) {
 					constructorFunction.setReturnType(undefinedDT, SourceType.ANALYSIS);
 				}
 			}
 
+			// if return type is a pointer then make sure it is the class structure 
+			if (returnType.getDisplayName().contains("*")) {
+				DataType classPointerDataType = dataTypeManager.getPointer(classStruct);
+				if (!returnType.isEquivalent(classPointerDataType)) {
+					constructorFunction.setReturnType(classPointerDataType,
+						SourceType.ANALYSIS);
+				}
+			}
+
 		}
-	}
-
-	/**
-	 * Get the return value from the decompiler signature for the given function
-	 * @param function the given function
-	 * @return the decompiler return value for the given function
-	 */
-	private String getReturnTypeFromDecompiler(Function function) {
-
-		DataType decompilerReturnType = decompilerUtils.getDecompilerReturnType(function);
-
-		if (decompilerReturnType == null) {
-			return null;
-		}
-
-		return decompilerReturnType.getDisplayName();
 	}
 
 	/**
@@ -3393,8 +3400,7 @@ public class RecoveredClassHelper {
 				createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, true,
 					true);
 			}
-
-			destructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
+			decompilerUtils.commitFunction(destructorFunction);
 		}
 	}
 
@@ -3420,6 +3426,7 @@ public class RecoveredClassHelper {
 
 			createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, false,
 				false);
+			decompilerUtils.commitFunction(destructorFunction);
 		}
 	}
 
@@ -3444,8 +3451,7 @@ public class RecoveredClassHelper {
 				createNewSymbolAtFunction(vbaseDestructorFunction, destructorName, classNamespace,
 					true, true);
 			}
-
-			vbaseDestructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
+			decompilerUtils.commitFunction(vbaseDestructorFunction);
 		}
 
 	}
@@ -3474,7 +3480,7 @@ public class RecoveredClassHelper {
 	 * @param address the given address
 	 * @param name the name to give the new symbol
 	 * @param namespace the namespace to put the new symbol in
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws CancelledException if cancelled
@@ -3557,7 +3563,7 @@ public class RecoveredClassHelper {
 	 * @param namespace the namespace to put the new symbol in
 	 * @param setPrimary if true, set the new symbol primary, if false do not make the new symbol primary
 	 * @param removeBadFID if true, check for and remove any incorrect FID symbols, if false leave them there
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws CancelledException if cancelled
@@ -3600,6 +3606,7 @@ public class RecoveredClassHelper {
 						function.getEntryPoint().toString());
 				}
 				return;
+
 			}
 
 			symbol = lcmd.getSymbol();
@@ -3633,7 +3640,7 @@ public class RecoveredClassHelper {
 	 * @param name the given name
 	 * @param function the given function
 	 * @throws CancelledException if cancelled
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issues setting return type
 	 */
@@ -3721,7 +3728,7 @@ public class RecoveredClassHelper {
 	* @throws CancelledException if cancelled
 	* @throws InvalidInputException if error setting return type
 	* @throws DuplicateNameException if try to create same symbol name already in namespace
-	* @throws CircularDependencyException if parent namespace is descendent of given namespace
+	* @throws CircularDependencyException if parent namespace is descendant of given namespace
 	*/
 	private void findAndRemoveBadStructuresFromFunction(Function function, Namespace namespace)
 			throws CancelledException, InvalidInputException, DuplicateNameException,
@@ -3758,7 +3765,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if invalid data input
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void fixBadSignatures(Function function, List<Structure> badStructureDataTypes)
 			throws CancelledException, InvalidInputException, DuplicateNameException,
@@ -3835,7 +3842,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if invalid data input
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void removeBadParameterDataTypes(Function function,
 			List<Structure> badStructureDataTypes) throws CancelledException,
@@ -4520,10 +4527,106 @@ public class RecoveredClassHelper {
 			// apply the structure. It has to be one or the other and the correct length
 			// because of the check at the beginning of the script that checked for either
 			// array or structure of pointers and got size from them initially
-			api.clearListing(vftableAddress);
+			api.clearListing(vftableAddress, vftableAddress.add(vftableStruct.getLength() - 1));
 			api.createData(vftableAddress, vftableStruct);
 
 		}
+	}
+
+	/**
+	 * Method to fixup the function definitions corresponding to purecalls from vftables after
+	 * all the child classes have been updated. This is because the function defintions for these
+	 * abstract function definitions are generated based on the child function signatures which
+	 * are not updated at the time the parent class structures are created.
+	 * @throws CancelledException if cancelled
+	 */
+	protected void fixupPurecallFunctionDefs() throws CancelledException {
+
+		// do nothing if no purecall 
+		if (purecall == null) {
+			return;
+		}
+
+		List<Address> processedVftables = new ArrayList<Address>();
+
+		// get references to purecall function to figure out which classes to process
+		ReferenceIterator purecallRefs =
+			program.getReferenceManager().getReferencesTo(purecall.getEntryPoint());
+
+		while (purecallRefs.hasNext()) {
+			monitor.checkCancelled();
+
+			Reference purecallRef = purecallRefs.next();
+			Address fromAddress = purecallRef.getFromAddress();
+
+			// get data containing the purecall reference to get the vftable structure
+			Data data = program.getListing().getDataContaining(fromAddress);
+
+			// skip if not a data ref
+			if (data == null) {
+				continue;
+			}
+
+			DataType dataType = data.getDataType();
+
+			// skip if not ref'd by a vftable
+			if (!dataType.getName().contains("vftable")) {
+				continue;
+			}
+
+			Address vftableAddress = data.getMinAddress();
+
+			// skip - already processed this whole table
+			if (processedVftables.contains(vftableAddress)) {
+				continue;
+			}
+
+			RecoveredClass recoveredClass = vftableToClassMap.get(vftableAddress);
+
+			// use the vftable structure fields to figure out which vfunctions in that vftable are 
+			// purecalls and to also get the vfunction function definition data type
+			Structure vftableStructure = (Structure) dataType;
+			int vfunctionNumber = 1;
+			for (DataTypeComponent component : vftableStructure.getComponents()) {
+				monitor.checkCancelled();
+				if (component.getComment().contains("pure")) {
+					// get an associated child vfunction signure to update the parent's function definition
+					Function childVirtualFunction =
+						getChildVirtualFunction(recoveredClass, vfunctionNumber);
+
+					if (childVirtualFunction == null) {
+						Msg.debug(this, "Cannot get associated vfunction " + vfunctionNumber);
+						continue;
+					}
+
+					// get the function definition from the child vfunction
+					FunctionDefinitionDataType newDef =
+						new FunctionDefinitionDataType(childVirtualFunction, false);
+
+					// update the this param to replace class struct with void so that the 
+					// definition is generic thiscall
+					ParameterDefinition[] arguments = newDef.getArguments();
+
+					PointerDataType voidPtrDt = new PointerDataType(VoidDataType.dataType);
+					arguments[0].setDataType(voidPtrDt);
+
+					// use it to reset the parent's associated abstract(pure) function definition 
+					Pointer functionDefPtr = (Pointer) component.getDataType();
+
+					FunctionDefinition functionDef =
+						(FunctionDefinition) functionDefPtr.getDataType();
+
+					functionDef.setArguments(arguments);
+					functionDef.setReturnType(newDef.getReturnType());
+
+				}
+				vfunctionNumber++;
+			}
+
+			processedVftables.add(vftableAddress);
+
+		}
+
 	}
 
 	/**
@@ -4591,7 +4694,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void nameVfunctions(RecoveredClass recoveredClass, Address vftableAddress,
 			String vftableStructureName) throws CancelledException, InvalidInputException,
@@ -4668,6 +4771,7 @@ public class RecoveredClassHelper {
 					createNewSymbolAtFunction(vfunction, vfunctionName, classNamespace, setPrimary,
 						removeBadFID);
 				}
+				decompilerUtils.commitFunction(vfunction);
 			}
 		}
 	}
@@ -5034,6 +5138,10 @@ public class RecoveredClassHelper {
 			if (nameVfunctions) {
 				createNewSymbolAtFunction(indeterminateFunction,
 					className + "_Constructor_or_Destructor", classNamespace, false, false);
+				// in this case since indeterminate, only commit if script names it
+				// if name flag is not set then it will have correct name from debug and be handled 
+				// in other methods (ie addConst, addDest)
+				decompilerUtils.commitFunction(indeterminateFunction);
 			}
 
 		}
@@ -5970,7 +6078,7 @@ public class RecoveredClassHelper {
 	 * determine, using vftable order, which class contains the constructor/destructor and which
 	 * contains the inlined constructor/destructor.
 	 * @param recoveredClasses List of classes
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 * @throws CancelledException when cancelled and others
@@ -6150,7 +6258,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void processRemainingIndeterminateConstructorsAndDestructors(
 			List<RecoveredClass> recoveredClasses) throws CancelledException, InvalidInputException,
@@ -6453,7 +6561,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void processRegularConstructorsAndDestructorsUsingCallOrder(
 			List<RecoveredClass> recoveredClasses) throws CancelledException, InvalidInputException,
@@ -6484,7 +6592,7 @@ public class RecoveredClassHelper {
 	 * indeterminate functions are constructors or destructors.
 	 * @param recoveredClasses List of class objects
 	 * @throws CancelledException if cancelled
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 */
@@ -6553,7 +6661,7 @@ public class RecoveredClassHelper {
 	 * descendant regular list.
 	 * @param recoveredClasses list of classes
 	 * @throws CancelledException if cancelled
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 */

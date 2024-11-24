@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.app.util.demangler.*;
+import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -33,8 +34,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import mdemangler.MDException;
-import mdemangler.MDMangGhidra;
 
 /**
  * Model for the TypeDescriptor data type.
@@ -446,7 +445,8 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		Object value = terminatedStringDt.getValue(nameMemBuffer, SettingsImpl.NO_SETTINGS, 1);
 		if (value instanceof String) {
 			originalTypeName = (String) value;
-			demangledDataType = getDemangledDataType(originalTypeName); // Can be null
+			// The returned demangledDataType an be null
+			demangledDataType = getDemangledDataType(originalTypeName, program, nameAddress);
 		}
 		hasProcessedName = true;
 		return originalTypeName;
@@ -597,20 +597,22 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Gets a DemangledDataType for the indicated mangled string
 	 * @param mangledString the mangled string to be demangled
+	 * @param program the program
+	 * @param address address of the mangled string
 	 * @return the DemangledDataType or null if couldn't demangle or is not a class type
 	 */
-	private static DemangledDataType getDemangledDataType(String mangledString) {
-		MDMangGhidra demangler = new MDMangGhidra();
+	private static DemangledDataType getDemangledDataType(String mangledString, Program program,
+			Address address) {
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		try {
-			// Note that we could play with the return value, but it is not needed; instead, we
-			// get the DemangledDataType by calling the appropriate method
-			demangler.demangleType(mangledString, true);
-			DemangledDataType demangledType = demangler.getDataType();
+			MangledContext mangledContext =
+				demangler.createMangledContext(mangledString, null, program, address);
+			DemangledDataType demangledType = demangler.demangleType(mangledContext);
 			if (isPermittedType(demangledType)) {
 				return demangledType;
 			}
 		}
-		catch (MDException e) {
+		catch (DemangledException e) {
 			// Couldn't demangle.
 		}
 		return null;

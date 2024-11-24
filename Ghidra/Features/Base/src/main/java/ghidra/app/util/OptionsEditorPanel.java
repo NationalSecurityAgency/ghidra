@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class OptionsEditorPanel extends JPanel {
 		super(new VerticalLayout(5));
 		this.addressFactoryService = addressFactoryService;
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		columns = options.size() > MAX_PER_COLUMN ? 2 : 1;
+		columns = options.stream().filter(o -> !o.isHidden()).count() > MAX_PER_COLUMN ? 2 : 1;
 
 		Map<String, List<Option>> optionGroupMap = organizeByGroup(options);
 		for (List<Option> optionGroup : optionGroupMap.values()) {
@@ -156,6 +156,9 @@ public class OptionsEditorPanel extends JPanel {
 			LazyMap.lazyMap(new LinkedHashMap<>(), () -> new ArrayList<>());
 
 		for (Option option : options) {
+			if (option.isHidden()) {
+				continue;
+			}
 			String group = option.getGroup();
 			List<Option> optionGroup = map.get(group);
 			optionGroup.add(option);

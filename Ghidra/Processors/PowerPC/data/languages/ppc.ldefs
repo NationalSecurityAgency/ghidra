@@ -219,7 +219,7 @@
             size="32"
             variant="PowerQUICC-III-e500mc"
             version="1.6"
-            slafile="ppc_32_be.sla"
+            slafile="ppc_32_e500mc_be.sla"
             processorspec="ppc_32.pspec"
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:BE:32:e500mc">
@@ -235,7 +235,7 @@
             size="32"
             variant="PowerQUICC-III-e500mc"
             version="1.6"
-            slafile="ppc_32_le.sla"
+            slafile="ppc_32_e500mc_le.sla"
             processorspec="ppc_32.pspec"
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:LE:32:e500mc">

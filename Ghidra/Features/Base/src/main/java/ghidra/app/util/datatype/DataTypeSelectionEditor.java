@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.data.*;
 import ghidra.util.data.DataTypeParser;
+import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -68,13 +69,33 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	// optional path to initially select in the data type chooser tree
 	private TreePath initiallySelectedTreePath;
 
-	public DataTypeSelectionEditor(ServiceProvider serviceProvider,
+	/**
+	 * Creates a new instance.
+	 * 
+	 * @param dtm the preferred {@link DataTypeManager}.  Extra copies of data types that are 
+	 * already in the preferred DTM will be suppressed.
+	 * @param serviceProvider {@link ServiceProvider} 
+	 * @param allowedDataTypes {@link AllowedDataTypes} option enum, controls what kind of
+	 * data types that will be shown  
+	 */
+	public DataTypeSelectionEditor(DataTypeManager dtm, ServiceProvider serviceProvider,
 			DataTypeParser.AllowedDataTypes allowedDataTypes) {
-		this(serviceProvider.getService(DataTypeManagerService.class), allowedDataTypes);
+		this(dtm, serviceProvider.getService(DataTypeManagerService.class), allowedDataTypes);
 	}
 
-	public DataTypeSelectionEditor(DataTypeManagerService service,
+	/**
+	 * Creates a new instance.
+	 * 
+	 * @param dtm the preferred {@link DataTypeManager}.  Extra copies of data types that are 
+	 * already in the preferred DTM will be suppressed.
+	 * @param service {@link DataTypeManagerService} 
+	 * @param allowedDataTypes {@link AllowedDataTypes} option enum, controls what kind of
+	 * data types that will be shown  
+	 */
+	public DataTypeSelectionEditor(DataTypeManager dtm, DataTypeManagerService service,
 			DataTypeParser.AllowedDataTypes allowedDataTypes) {
+
+		this.dataTypeManager = dtm;
 
 		if (service == null) {
 			throw new NullPointerException("DataTypeManagerService cannot be null");
@@ -84,19 +105,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		this.allowedDataTypes = allowedDataTypes;
 
 		init();
-	}
-
-	/**
-	 * Sets the {@link DataTypeManager} to use when the chooser is forced to parse the given
-	 * data type text to resolve the data type.  If the users chooses a type, then this value
-	 * is not used.  Note that setting this value does not restrict the parser to just the
-	 * given value, but rather the given value is the preferred manager and is thus searched
-	 * first.
-	 *
-	 * @param dataTypeManager the preferred data type manager
-	 */
-	public void setPreferredDataTypeManager(DataTypeManager dataTypeManager) {
-		this.dataTypeManager = dataTypeManager;
 	}
 
 	/**
@@ -116,7 +124,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	private void init() {
 		selectionField = createDropDownSelectionTextField(
-			new DataTypeDropDownSelectionDataModel(dataTypeManagerService));
+			new DataTypeDropDownSelectionDataModel(dataTypeManager, dataTypeManagerService));
 		selectionField.addCellEditorListener(new CellEditorListener() {
 			@Override
 			public void editingCanceled(ChangeEvent e) {

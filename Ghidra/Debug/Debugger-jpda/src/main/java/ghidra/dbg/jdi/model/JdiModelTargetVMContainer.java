@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
@@ -48,14 +49,14 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 	protected final Map<String, JdiModelTargetVM> vmsById = new WeakValueHashMap<>();
 
 	public JdiModelTargetVMContainer(JdiModelTargetRoot session) {
-		super(session, "VirtualMachines");
+		super(session, "VMs");
 		this.session = session;
 
 		impl.getManager().addEventsListener(null, this);
 	}
 
 	@Override
-	public void vmStarted(VMStartEvent event, JdiCause cause) {
+	public DebugStatus vmStarted(VMStartEvent event, JdiCause cause) {
 		VirtualMachine vm = event.virtualMachine();
 		JdiModelTargetVM target = getTargetVM(vm);
 		// TODO: Move PROCESS_CREATED here to restore proper order of event reporting
@@ -69,10 +70,11 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 		});
 
 		changeElements(List.of(), List.of(target), Map.of(), "Added");
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void vmDied(VMDeathEvent event, JdiCause cause) {
+	public DebugStatus vmDied(VMDeathEvent event, JdiCause cause) {
 		VirtualMachine vm = event.virtualMachine();
 		JdiModelTargetVM tgtVM = vmsById.get(vm.name());
 		broadcast().event(session, null, TargetEventType.PROCESS_EXITED, "VM " + vm.name(),
@@ -83,6 +85,7 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 			getManager().removeVM(vm);
 		}
 		changeElements(List.of(vm.name()), List.of(), Map.of(), "Removed");
+		return DebugStatus.NO_CHANGE;
 	}
 
 	protected void gatherThreads(List<? super JdiModelTargetThread> into, JdiModelTargetVM vm,
@@ -96,30 +99,32 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	public void threadStarted(ThreadStartEvent event, JdiCause cause) {
+	public DebugStatus threadStarted(ThreadStartEvent event, JdiCause cause) {
 		ThreadReference thread = event.thread();
 		JdiModelTargetVM vm = getTargetVM(thread.threadGroup().virtualMachine());
 		if (!vmsById.containsValue(vm)) {
 			Msg.info(this, event + " ignored as vm may have exited");
-			return;
+			return DebugStatus.NO_CHANGE;
 		}
 		JdiModelTargetThread targetThread = vm.threads.threadCreated(thread);
 		broadcast().event(session, targetThread, TargetEventType.THREAD_CREATED,
 			"Thread " + thread.name() + " started", List.of(targetThread));
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void threadExited(ThreadDeathEvent event, JdiCause cause) {
+	public DebugStatus threadExited(ThreadDeathEvent event, JdiCause cause) {
 		ThreadReference thread = event.thread();
 		JdiModelTargetVM tgtVM = vmsById.get(thread.virtualMachine().name());
 		JdiModelTargetThread targetThread = tgtVM.threads.threadsById.get(thread.name());
 		broadcast().event(session, targetThread, TargetEventType.THREAD_EXITED,
 			"Thread " + thread.name() + " exited", List.of(targetThread));
 		tgtVM.threads.threadExited(thread);
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void libraryLoaded(VirtualMachine vm, String name, JdiCause cause) {
+	public DebugStatus classLoaded(VirtualMachine vm, String name, JdiCause cause) {
 		/*
 		JdiModelTargetVM vm = getTargetInferior(inf);
 		JdiModelTargetModule module = vm.modules.libraryLoaded(name);
@@ -128,10 +133,11 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 				.event(parent, null, TargetEventType.MODULE_LOADED,
 					"Library " + name + " loaded", List.of(module));
 					*/
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	public void libraryUnloaded(VirtualMachine vm, String name, JdiCause cause) {
+	public DebugStatus classUnloaded(VirtualMachine vm, String name, JdiCause cause) {
 		/*
 		JdiModelTargetVM vm = getTargetInferior(inf);
 		JdiModelTargetModule module = vm.modules.getTargetModuleIfPresent(name);
@@ -141,6 +147,7 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 					"Library " + name + " unloaded", List.of(module));
 		vm.modules.libraryUnloaded(name);
 		*/
+		return DebugStatus.NO_CHANGE;
 	}
 
 	private void updateUsingVMs(Map<String, VirtualMachine> byName) {

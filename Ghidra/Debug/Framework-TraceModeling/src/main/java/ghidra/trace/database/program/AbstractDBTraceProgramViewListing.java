@@ -22,6 +22,7 @@ import org.apache.commons.collections4.IteratorUtils;
 
 import generic.NestedIterator;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.code.InstructionDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -41,6 +42,7 @@ import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.property.TracePropertyMapOperations;
@@ -65,8 +67,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		public int getBytes(ByteBuffer buffer, int addressOffset) {
 			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
 			if (mem == null) {
-				// TODO: 0-fill instead? Will need to check memory space bounds.
-				return 0;
+				buffer.put((byte) 0);
+				return 1;
 			}
 			return mem.getViewBytes(program.snap, address.add(addressOffset), buffer);
 		}
@@ -717,9 +719,21 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
 			MemBuffer memBuf, ProcessorContextView context, int forcedLengthOverride)
 			throws CodeUnitInsertionException {
-		// TODO: Why memBuf? Can it vary from program memory?
+		int checkLengthOverride =
+			InstructionDB.checkLengthOverride(forcedLengthOverride, prototype);
+		int length = checkLengthOverride != 0 ? checkLengthOverride : prototype.getLength();
+		AddressRange range;
+		try {
+			range = new AddressRangeImpl(addr, length);
+		}
+		catch (AddressOverflowException e) {
+			throw new CodeUnitInsertionException("Code unit would extend beyond address space");
+		}
+		var mostRecent = program.memory.memoryManager.getViewMostRecentStateEntry(program.snap,
+			range, s -> s == TraceMemoryState.KNOWN);
+		long snap = mostRecent == null ? program.snap : mostRecent.getKey().getY2();
 		return codeOperations.instructions()
-				.create(Lifespan.nowOn(program.snap), addr, platform, prototype, context,
+				.create(Lifespan.nowOn(snap), addr, platform, prototype, context,
 					forcedLengthOverride);
 	}
 

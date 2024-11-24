@@ -416,7 +416,8 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		performAction(removeView, true);
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(removeView, context, true);
 		topOfFile(fp1);
 		assertNull(cb.getCurrentAddress());
 		bottomOfFile(fp1);

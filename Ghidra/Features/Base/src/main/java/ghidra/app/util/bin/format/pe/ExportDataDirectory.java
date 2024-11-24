@@ -216,7 +216,7 @@ public class ExportDataDirectory extends DataDirectory implements StructConverte
 			}
 			PeUtils.createData(program, address, IBO32, log);
 			Data data = program.getListing().getDataAt(address);
-			if (data == null) {
+			if (data == null || !(data.getDataType() instanceof IBO32DataType)) {
 				Msg.warn(this, "Invalid or missing data at " + address);
 				break;
 			}

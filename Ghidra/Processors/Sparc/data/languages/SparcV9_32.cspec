@@ -30,41 +30,72 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
-        <pentry minsize="1" maxsize="4">
+	    <pentry minsize="4" maxsize="4" storage="hiddenret">
+	      <addr offset="64" space="stack"/>
+	    </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o0"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o1"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o2"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o3"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o4"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o5"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="0x5c" space="stack"/>
         </pentry>
+	<rule>
+	  <datatype name="struct"/>
+	  <convert_to_ptr/>
+	</rule>
+	<rule>
+	  <datatype name="any" minsize="9"/>
+	  <convert_to_ptr/>
+	</rule>
+	<rule>
+	  <datatype name="any" maxsize="8"/>
+	  <join storage="general"/>  <!-- join is NOT aligned -->
+	</rule>
       </input>
       <output>
-        <pentry minsize="4" maxsize="4" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fs0"/>
         </pentry>
-        <pentry minsize="8" maxsize="8" metatype="float">
-          <register name="fd0"/>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="fs1"/>
         </pentry>
-        <pentry minsize="16" maxsize="16" metatype="float">
-          <register name="fq0"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o0"/>
         </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="o1"/>
+        </pentry>
+	<rule>
+	  <datatype name="struct"/>
+	  <hidden_return/>
+	</rule>
+	<rule>
+	  <datatype name="any" minsize="9"/>
+	  <hidden_return/>
+	</rule>
+	<rule>
+	  <datatype name="float" maxsize="8"/>
+	  <join storage="float"/>
+	</rule>
+	<rule>
+	  <datatype name="any" maxsize="8"/>
+	  <join storage="general"/>
+	</rule>
       </output>
       <unaffected>
         <register name="g0"/>

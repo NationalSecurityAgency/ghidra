@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,25 +38,30 @@ import util.CollectionUtils;
  * 					a node 'a' dominates node 'b' if all paths from start to 'b' contain 'a';
  *		            a node always dominates itself (except in 'strict dominance', which is all
  *		            dominators except for itself)
+ *	   </LI>
  *
  *	   <LI>
  *		<B>post-dominance:</B> 
  *					 A node 'b' is said to post-dominate node 'a' if all paths from 'a'
  *		             to END contain 'b'
+ *	   </LI>
  *
  *	   <LI>
  *		<B>immediate dominator:</B> 
  *					the closest dominator of a node
+ *	   </LI>
  *
  *	   <LI>
  *		<B>dominance tree:</B>  
  *					A dominator tree is a tree where each node's children are those nodes 
  *					it *immediately* dominates (a idom b)
+ *	   </LI>
  *
  *     <LI>
  *     	<B>dominance frontier:</B> 
  *     				the immediate successors of the nodes dominated by 'a'; it is the set of 
  *     				nodes where d's dominance stops.
+ *     </LI>
  *     
  *     <LI>
  *     	<B>strongly connected components:</B> 
@@ -64,8 +69,11 @@ import util.CollectionUtils;
  *     				from every other vertex. The strongly connected components 
  *     				of an arbitrary directed graph form a partition into 
  *     				subgraphs that are themselves strongly connected.
+ *     </LI>
+ *     
  *     <LI>
  *     	<B>graph density:</B>
+ *     </LI>
  *     <PRE>
  *                        E
  *          Density =  --------

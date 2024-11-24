@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,8 +65,8 @@ import utility.function.Callback;
  *
  * <b><u>Important Usage Notes</u></b>
  * <ul>
- *     <li><b><a id="translation"></a>You must translate row values retrieved from the table using
- *     this panel.</b>
+ *     <li><a id="translation"></a><b>You must translate row values retrieved from the table using
+ *     this panel.</b></li>
  *     <p>
  *     Since this class wraps the given table with a new model, you must use this class to
  *     translate row number values.  For example, when getting the selected row, the normal Java
@@ -84,14 +84,14 @@ import utility.function.Callback;
  *         </span>
  *     </pre>
  *
- *     <li><b>This class may set a new model on the given table, which can affect how tables are sized.</b>
+ *     <li><b>This class may set a new model on the given table, which can affect how tables are sized.</b></li>
  *     <p>
  *      If {@link JTable#getAutoCreateColumnsFromModel()} returns true, then the columns will
  *      be recreated and resized when this class is constructed.
  *     <li>The {@link TableFilter} used by this class will be passed the empty string ("") when
- *     {@link TableFilter#acceptsRow(Object)} is called.
+ *     {@link TableFilter#acceptsRow(Object)} is called.</li>
  *     <li><b>You cannot rely on {@link JTable#getRowCount()} to access all of the table data,
- *     since the data may be filtered.</b>
+ *     since the data may be filtered.</b></li>
  *     <p>
  *     To get a row count that is always all of the model's data, call
  *     {@link #getUnfilteredRowCount()}.

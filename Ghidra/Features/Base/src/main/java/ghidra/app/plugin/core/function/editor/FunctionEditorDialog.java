@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -759,8 +759,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			getSelectionModel().addListSelectionListener(selectionListener);
 			// set the preferred viewport height smaller that the button panel, otherwise it is huge!
 			setPreferredScrollableViewportSize(new Dimension(600, 100));
-			setDefaultEditor(DataType.class,
-				new ParameterDataTypeCellEditor(FunctionEditorDialog.this, service));
+			setDefaultEditor(DataType.class, new ParameterDataTypeCellEditor(
+				FunctionEditorDialog.this, service, model.getProgram().getDataTypeManager()));
 			setDefaultRenderer(DataType.class, new ParameterDataTypeCellRenderer());
 			setDefaultEditor(VariableStorage.class, new StorageTableCellEditor(model));
 			setDefaultRenderer(VariableStorage.class, new VariableStorageCellRenderer());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import ghidra.framework.Platform;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.SaveState;
+import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,13 +54,14 @@ public class LibrarySearchPathManager {
 	 * Returns a {@link List} of {@link FSRL}s to search for libraries
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param program The {@link Program} being loaded
 	 * @param log The log
 	 * @param monitor A cancellable monitor
 	 * @return a {@link List} of {@link FSRL}s to search for libraries
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public static synchronized List<FSRL> getLibraryFsrlList(ByteProvider provider, MessageLog log,
-			TaskMonitor monitor) throws CancelledException {
+	public static synchronized List<FSRL> getLibraryFsrlList(ByteProvider provider, Program program,
+			MessageLog log, TaskMonitor monitor) throws CancelledException {
 		FileSystemService fsService = FileSystemService.getInstance();
 		List<FSRL> fsrlList = new ArrayList<>();
 		for (String path : pathSet) {
@@ -69,10 +71,17 @@ public class LibrarySearchPathManager {
 			try {
 				if (path.equals(".")) {
 					FSRL providerFsrl = provider.getFSRL();
+					if (providerFsrl == null) {
+						providerFsrl = FSRL.fromProgram(program);
+					}
 					if (providerFsrl != null) {
 						try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
 							GFile parentFile = fileRef.file.getParentFile();
 							fsrl = parentFile.getFSRL();
+						}
+						catch (IOException e) {
+							log.appendMsg("Skipping '.' search path: ", e.getMessage());
+							continue;
 						}
 					}
 				}
@@ -90,9 +99,6 @@ public class LibrarySearchPathManager {
 				catch (IOException e2) {
 					log.appendException(e2);
 				}
-			}
-			catch (IOException e) {
-				log.appendException(e);
 			}
 			if (fsrl != null) {
 				fsrlList.add(fsrl);

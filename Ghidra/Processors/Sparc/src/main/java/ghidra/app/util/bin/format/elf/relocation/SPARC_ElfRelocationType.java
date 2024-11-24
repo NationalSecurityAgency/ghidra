@@ -54,7 +54,7 @@ public enum SPARC_ElfRelocationType implements ElfRelocationType {
 	R_SPARC_HH22(34),		// (S + A) >> 42
 	R_SPARC_HM10(35),		// ((S + A) >> 32) & 0x3ff
 	R_SPARC_LM22(36),		// (S + A) >> 10
-	R_SPARC_PC_H22(37),		// (S + A - P) >> 42
+	R_SPARC_PC_HH22(37),		// (S + A - P) >> 42
 	R_SPARC_PC_HM10(38),		// ((S + A - P) >> 32) & 0x3ff
 	R_SPARC_PC_LM22(39),		// (S + A - P) >> 10
 	R_SPARC_WDISP16(40),		// (S + A - P) >> 2

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,8 +45,8 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	}
 
 	/**
-	 * Returns this node's remote function, where remote is the source function for 
-	 * an incoming call or a destination function for an outgoing call.   May return 
+	 * Returns this node's remote function, where remote is the source function for
+	 * an incoming call or a destination function for an outgoing call.   May return
 	 * null for nodes that do not have functions.
 	 * @return the function or null
 	 */
@@ -65,8 +65,8 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	public abstract Address getSourceAddress();
 
 	/**
-	 * Called when this node needs to be reconstructed due to external changes, such as when 
-	 * functions are renamed. 
+	 * Called when this node needs to be reconstructed due to external changes, such as when
+	 * functions are renamed.
 	 * 
 	 * @return a new node that is the same type as 'this' node.
 	 */
@@ -93,12 +93,6 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 	protected void addNode(LazyMap<Function, List<GTreeNode>> nodesByFunction, CallNode node) {
 
 		Function function = node.getRemoteFunction();
-		if (function != null && function.isThunk()) {
-			if (!callTreeOptions.allowsThunks()) {
-				return;
-			}
-		}
-
 		List<GTreeNode> nodes = nodesByFunction.get(function);
 		if (nodes.contains(node)) {
 			return; // never add equal() nodes

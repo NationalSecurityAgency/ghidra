@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import generic.stl.Pair;
 import ghidra.*;
@@ -105,8 +104,6 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 	}
 
 	private static final int EXIT_CODE_ERROR = 1;
-	private static final Set<String> ALL_ARG_NAMES =
-		Arrays.stream(Arg.values()).map(a -> a.name).collect(Collectors.toSet());
 
 	/**
 	 * The entry point of 'analyzeHeadless.bat'. Parses the command line arguments to the script
@@ -256,7 +253,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				loaderName = args[++argi];
 			}
 			else if (checkArgument(Arg.LOADER_ARGS, args, argi)) {
-				if (ALL_ARG_NAMES.contains(args[argi + 1])) {
+				if (isExistingArg(args[argi + 1])) {
 					throw new InvalidInputException(args[argi] + " expects value to follow.");
 				}
 				loaderArgs.add(new Pair<>(arg, args[++argi]));
@@ -269,13 +266,13 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 			else if (checkArgument(Arg.PRE_SCRIPT, args, argi)) {
 				String scriptName = args[++argi];
-				String[] scriptArgs = getSubArguments(args, argi, ALL_ARG_NAMES);
+				String[] scriptArgs = getSubArguments(args, argi);
 				argi += scriptArgs.length;
 				preScripts.add(new Pair<>(scriptName, scriptArgs));
 			}
 			else if (checkArgument(Arg.POST_SCRIPT, args, argi)) {
 				String scriptName = args[++argi];
-				String[] scriptArgs = getSubArguments(args, argi, ALL_ARG_NAMES);
+				String[] scriptArgs = getSubArguments(args, argi);
 				argi += scriptArgs.length;
 				postScripts.add(new Pair<>(scriptName, scriptArgs));
 			}
@@ -311,7 +308,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 					nextArg = args[++argi];
 
 					// Check if next argument is a parameter
-					if (ALL_ARG_NAMES.contains(nextArg)) {
+					if (isExistingArg(nextArg)) {
 						argi--;
 						break;
 					}
@@ -330,7 +327,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			else if (checkArgument(Arg.CONNECT, args, argi)) {
 				if ((argi + 1) < args.length) {
 					arg = args[argi + 1];
-					if (!ALL_ARG_NAMES.contains(arg)) {
+					if (!isExistingArg(arg)) {
 						// serverUID is optional argument after -connect
 						userId = arg;
 						++argi;
@@ -341,7 +338,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				String comment = null;
 				if ((argi + 1) < args.length) {
 					arg = args[argi + 1];
-					if (!ALL_ARG_NAMES.contains(arg)) {
+					if (!isExistingArg(arg)) {
 						// commit is optional argument after -commit
 						comment = arg;
 						++argi;
@@ -371,7 +368,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				String processBinary = null;
 				if ((argi + 1) < args.length) {
 					arg = args[argi + 1];
-					if (!ALL_ARG_NAMES.contains(arg)) {
+					if (!isExistingArg(arg)) {
 						// processBinary is optional argument after -process
 						processBinary = arg;
 						++argi;
@@ -383,7 +380,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				Integer depth = null;
 				if ((argi + 1) < args.length) {
 					arg = args[argi + 1];
-					if (!ALL_ARG_NAMES.contains(arg)) {
+					if (!isExistingArg(arg)) {
 						// depth is optional argument after -recursive
 						try {
 							depth = Integer.parseInt(arg);
@@ -414,7 +411,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			else if (checkArgument(Arg.LIBRARY_SEARCH_PATHS, args, argi)) {
 				LibrarySearchPathManager.setLibraryPaths(args[++argi].split(";"));
 			}
-			else if (ALL_ARG_NAMES.contains(args[argi])) {
+			else if (isExistingArg(args[argi])) {
 				throw new AssertionError("Valid option was not processed: " + args[argi]);
 			}
 			else {
@@ -559,10 +556,10 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		usage("analyzeHeadless");
 	}
 
-	private String[] getSubArguments(String[] args, int argi, Set<String> argNames) {
+	private String[] getSubArguments(String[] args, int argi) {
 		List<String> subArgs = new ArrayList<>();
 		int i = argi + 1;
-		while (i < args.length && !argNames.contains(args[i])) {
+		while (i < args.length && !isExistingArg(args[i])) {
 			subArgs.add(args[i++]);
 		}
 		return subArgs.toArray(new String[subArgs.size()]);
@@ -577,5 +574,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			throw new InvalidInputException(args[argi] + " requires an argument");
 		}
 		return true;
+	}
+
+	private boolean isExistingArg(String s) {
+		return Arrays.stream(Arg.values()).anyMatch(e -> e.matches(s));
 	}
 }

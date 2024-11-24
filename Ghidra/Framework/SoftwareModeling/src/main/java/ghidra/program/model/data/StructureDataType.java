@@ -29,7 +29,7 @@ import ghidra.util.exception.AssertException;
  * NOTES: 
  * <ul>
  * <li>Implementation is not thread safe when being modified.</li>
- * <li>For a structure to treated as having a zero-length (see {@link #isZeroLength()}) it 
+ * <li>For a structure to treated as having a zero-length (see {@link #isZeroLength()}) it </li>
  * 
  * </ul>
  * 
@@ -625,8 +625,42 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	@Override
+	public void setLength(int len) {
+		if (len < 0) {
+			throw new IllegalArgumentException("Invalid length: " + len);
+		}
+		if (len == structLength || isPackingEnabled()) {
+			return;
+		}
+		if (len < structLength) {
+			// identify index of first defined-component to be removed
+			int index = Collections.binarySearch(components, Integer.valueOf(len),
+				OffsetComparator.INSTANCE);
+			if (index < 0) {
+				index = -index - 1;
+			}
+			else {
+				index = backupToFirstComponentContainingOffset(index, len);
+			}
+			int definedComponentCount = components.size();
+			if (index >= 0 && index < definedComponentCount) {
+				components = components.subList(0, index);
+			}
+		}
+		else {
+			numComponents += len - structLength;
+		}
+		structLength = len;
+		repack(false);
+		notifySizeChanged();
+	}
+	
+	@Override
 	public void growStructure(int amount) {
-		if (isPackingEnabled()) {
+		if (amount < 0) {
+			throw new IllegalArgumentException("Invalid growth amount: " + amount);
+		}
+		if (amount == 0 || isPackingEnabled()) {
 			return;
 		}
 		doGrowStructure(amount);
@@ -1640,13 +1674,13 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	 * @param dataType the data type of the new component
 	 * @param newOffset offset of replacement component which must fall within origComponents bounds
 	 * @param length the length of the new component
-	 * @param name the field name of the new component
+	 * @param fieldName the field name of the new component
 	 * @param comment the comment for the new component
 	 * @return the new component or null if only a clear operation was performed.
 	 * @throws IllegalArgumentException if unable to identify/make sufficient space 
 	 */
 	private DataTypeComponent replaceComponents(LinkedList<DataTypeComponentImpl> origComponents,
-			DataType dataType, int newOffset, int length, String name, String comment)
+			DataType dataType, int newOffset, int length, String fieldName, String comment)
 			throws IllegalArgumentException {
 
 		boolean clearOnly = false;
@@ -1721,8 +1755,8 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		DataTypeComponentImpl newDtc = null;
 		if (!clearOnly) {
 			// insert new component
-			newDtc = new DataTypeComponentImpl(dataType, this, length, newOrdinal, newOffset, name,
-				comment);
+			newDtc = new DataTypeComponentImpl(dataType, this, length, newOrdinal, newOffset,
+				fieldName, comment);
 			components.add(index, newDtc);
 		}
 

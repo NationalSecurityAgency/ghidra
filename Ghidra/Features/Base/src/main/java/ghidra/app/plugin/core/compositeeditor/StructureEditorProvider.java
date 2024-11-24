@@ -59,6 +59,8 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 		//@formatter:off
 		return new CompositeEditorTableAction[] {
 			new ApplyAction(this),
+			new UndoChangeAction(this),
+			new RedoChangeAction(this),
 //			new ToggleLockAction(this),
 			new InsertUndefinedAction(this),
 			new MoveUpAction(this),
@@ -117,12 +119,11 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 
 		int[] selectedRows = editorModel.getSelectedRows();
 
-// TODO: Add w/ GP-4740 merge
-//		if (editorPanel.hasInvalidEntry() || editorPanel.hasUncomittedEntry() ||
-//			selectedRows.length != 1 || editorModel.viewComposite.isPackingEnabled()) {
-//			Msg.error(this, "Unsupported add bitfield editor use");
-//			return;
-//		}
+		if (editorPanel.hasInvalidEntry() || editorPanel.hasUncomittedEntry() ||
+			selectedRows.length != 1 || editorModel.viewComposite.isPackingEnabled()) {
+			Msg.error(this, "Unsupported add bitfield editor use");
+			return;
+		}
 
 		bitFieldEditor =
 			new BitFieldEditorDialog(editorModel.viewComposite, dtmService, -(selectedRows[0] + 1),
@@ -164,5 +165,4 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 		}
 		return null;
 	}
-
 }

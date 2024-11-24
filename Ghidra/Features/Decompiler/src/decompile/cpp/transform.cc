@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -294,32 +294,13 @@ void LanedRegister::LanedIterator::normalize(void)
   size = -1;		// Indicate ending iterator
 }
 
-/// Parse any vector lane sizes.
-/// \param decoder is the stream decoder
-/// \return \b true if the XML description provides lane sizes
-bool LanedRegister::decode(Decoder &decoder)
+/// Collect specific lane sizes in this object.
+/// \param registerSize is the size of the laned register in bytes
+/// \param laneSizes is a comma separated list of sizes
+ void LanedRegister::parseSizes(int4 registerSize,string laneSizes)
 
 {
-  uint4 elemId = decoder.openElement(ELEM_REGISTER);
-  string laneSizes;
-  for(;;) {
-    uint4 attribId = decoder.getNextAttributeId();
-    if (attribId == 0) break;
-    if (attribId == ATTRIB_VECTOR_LANE_SIZES) {
-      laneSizes = decoder.readString();
-      break;
-    }
-  }
-  if (laneSizes.empty()) {
-    decoder.closeElement(elemId);
-    return false;
-  }
-  decoder.rewindAttributes();
-  VarnodeData storage;
-  storage.space = (AddrSpace *)0;
-  storage.decodeFromAttributes(decoder);
-  decoder.closeElement(elemId);
-  wholeSize = storage.size;
+  wholeSize = registerSize;
   sizeBitMask = 0;
   string::size_type pos = 0;
   while(pos != string::npos) {
@@ -343,7 +324,6 @@ bool LanedRegister::decode(Decoder &decoder)
       throw LowlevelError("Bad lane size: " + value);
     addLaneSize(sz);
   }
-  return true;
 }
 
 TransformManager::~TransformManager(void)

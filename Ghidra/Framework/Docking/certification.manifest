@@ -8,6 +8,7 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/docking.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
@@ -60,6 +61,7 @@ src/main/resources/images/empty8x16.png||GHIDRA||||END|
 src/main/resources/images/expand.gif||GHIDRA||||END|
 src/main/resources/images/filter_off.png||GHIDRA||||END|
 src/main/resources/images/filter_on.png||GHIDRA||||END|
+src/main/resources/images/folder-downloads-32.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/folder_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/font.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/hourglass.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

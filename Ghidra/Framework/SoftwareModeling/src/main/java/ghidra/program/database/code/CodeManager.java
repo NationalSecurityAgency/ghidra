@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2964,8 +2964,13 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				if (flowType == null) {
 					flowType = RefType.INVALID;
 				}
+				// Only remove jump reference if the function flowtype says it has a fallthrough
+				//   Removing the branch to next address if instruction has no fallthrough causes
+				//   flow following issues, for example creating a function body.
 				boolean isFallthrough =
-					(flowType.isJump() && flowAddr.equals(inst.getMaxAddress().next()));
+					(flowType.isJump() && flowAddr.equals(inst.getMaxAddress().next())) &&
+					inst.hasFallthrough();
+				
 				if (!isFallthrough) {
 					mnemonicPrimaryRef = addDefaultMemoryReferenceIfMissing(inst,
 						Reference.MNEMONIC, flowAddr, flowType, oldRefList, mnemonicPrimaryRef);

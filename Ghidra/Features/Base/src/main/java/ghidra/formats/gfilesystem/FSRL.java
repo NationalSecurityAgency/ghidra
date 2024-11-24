@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,13 +39,13 @@ import ghidra.util.SystemUtilities;
  * <p>
  * Examples (pipes shown in red since they are hard to see):
  * <ul>
- * <li><b>file://dir/subdir</b> -- simplest example, locates a file on local computer filesystem.
- * <li><b>file://dir/subdir/example.zip<span style="color:red">|</span>zip://readme.txt</b> -- points to a file named "readme.txt" in a zip file.
- * <li><b>file://dir/subdir/example.zip<span style="color:red">|</span>zip://dir/nested.tar<span style="color:red">|</span>tar://file.txt</b> -- points to
- * a file inside a TAR archive, which is inside a ZIP archive, which is on the local filesystem.
- * <li><b>file://dir/subdir/example.zip?MD5=1234567<span style="color:red">|</span>zip://readme.txt?MD5=987654</b> --
+ * <li><b>file://dir/subdir</b> -- simplest example, locates a file on local computer filesystem.</li>
+ * <li><b>file://dir/subdir/example.zip</b><span style="color:red;font-weight:bold;">|</span><b>zip://readme.txt</b> -- points to a file named "readme.txt" in a zip file.</li>
+ * <li><b>file://dir/subdir/example.zip</b><span style="color:red;font-weight:bold;">|</span><b>zip://dir/nested.tar</b><span style="color:red;font-weight:bold;">|</span><b>tar://file.txt</b> -- points to
+ * a file inside a TAR archive, which is inside a ZIP archive, which is on the local filesystem.</li>
+ * <li><b>file://dir/subdir/example.zip?MD5=1234567</b><span style="color:red;font-weight:bold;">|</span><b>zip://readme.txt?MD5=987654</b> --
  * points to a file named "readme.txt" (with a MD5 hash) in a zip file (that has another
- * MD5 hash).
+ * MD5 hash).</li>
  * </ul>
  * <p>
  * See {@link FSRLRoot} for examples of how FSRL and FSRLRoot's are related.

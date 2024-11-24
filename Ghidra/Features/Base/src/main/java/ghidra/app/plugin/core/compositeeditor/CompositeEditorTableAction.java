@@ -30,7 +30,14 @@ import ghidra.util.HelpLocation;
  * <p>
  * Note: Any new actions must be registered in the editor manager via the actions's name.
  */
-abstract public class CompositeEditorTableAction extends DockingAction implements EditorAction {
+abstract public class CompositeEditorTableAction extends DockingAction {
+
+	static final String MAIN_ACTION_GROUP = "0_MAIN_EDITOR_ACTION";
+	static final String UNDOREDO_ACTION_GROUP = "1_UNDOREDO_EDITOR_ACTION";
+	static final String BASIC_ACTION_GROUP = "2_BASIC_EDITOR_ACTION";
+	static final String DATA_ACTION_GROUP = "3_DATA_EDITOR_ACTION";
+	static final String COMPONENT_ACTION_GROUP = "4_COMPONENT_EDITOR_ACTION";
+	static final String BITFIELD_ACTION_GROUP = "5_COMPONENT_EDITOR_ACTION";
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
@@ -71,19 +78,21 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		this.model = provider.getModel();
 		this.plugin = provider.plugin;
 		this.tool = plugin.getTool();
-		model.addCompositeEditorModelListener(this);
 		String helpAnchor = provider.getHelpName() + "_" + getHelpName();
 		setHelpLocation(new HelpLocation(provider.getHelpTopic(), helpAnchor));
 	}
 
 	@Override
 	public void dispose() {
-		model.removeCompositeEditorModelListener(this);
 		super.dispose();
 		provider = null;
 		model = null;
 		plugin = null;
 		tool = null;
+	}
+
+	protected boolean hasIncompleteFieldEntry() {
+		return provider.editorPanel.hasInvalidEntry() || provider.editorPanel.hasUncomittedEntry();
 	}
 
 	protected void requestTableFocus() {
@@ -92,50 +101,8 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		}
 	}
 
-	@Override
-	abstract public void adjustEnablement();
-
 	public String getHelpName() {
 		return getName();
-	}
-
-	@Override
-	public void selectionChanged() {
-		adjustEnablement();
-	}
-
-	public void editStateChanged(int i) {
-		adjustEnablement();
-	}
-
-	@Override
-	public void compositeEditStateChanged(int type) {
-		adjustEnablement();
-	}
-
-	@Override
-	public void endFieldEditing() {
-		adjustEnablement();
-	}
-
-	@Override
-	public void componentDataChanged() {
-		adjustEnablement();
-	}
-
-	@Override
-	public void compositeInfoChanged() {
-		adjustEnablement();
-	}
-
-	@Override
-	public void statusChanged(String message, boolean beep) {
-		// we are an action; don't care about status messages
-	}
-
-	@Override
-	public void showUndefinedStateChanged(boolean showUndefinedBytes) {
-		adjustEnablement();
 	}
 
 }

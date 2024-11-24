@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 
 /**
  * A listener for events related to objects known to the manager
@@ -30,8 +31,9 @@ public interface JdiEventsListener {
 	 * 
 	 * @param vm a handle to the selected vm
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void vmSelected(VirtualMachine vm, JdiCause cause);
+	DebugStatus vmSelected(VirtualMachine vm, JdiCause cause);
 
 	/**
 	 * A different thread has been selected (gained focus)
@@ -39,8 +41,9 @@ public interface JdiEventsListener {
 	 * @param thread a handle to the selected thread
 	 * @param frame a handle to the current frame
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void threadSelected(ThreadReference thread, StackFrame frame, JdiCause cause);
+	DebugStatus threadSelected(ThreadReference thread, StackFrame frame, JdiCause cause);
 
 	/**
 	 * A library has been loaded by an vm
@@ -48,8 +51,9 @@ public interface JdiEventsListener {
 	 * @param vm a handle to the vm which loaded the library
 	 * @param name the name of the library on the target
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void libraryLoaded(VirtualMachine vm, String name, JdiCause cause);
+	DebugStatus classLoaded(VirtualMachine vm, String name, JdiCause cause);
 
 	/**
 	 * A library has been unloaded from an vm
@@ -57,16 +61,18 @@ public interface JdiEventsListener {
 	 * @param vm a handle to the vm which unloaded the library
 	 * @param name the name of the library on the target
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void libraryUnloaded(VirtualMachine vm, String name, JdiCause cause);
+	DebugStatus classUnloaded(VirtualMachine vm, String name, JdiCause cause);
 
 	/**
 	 * A breakpoint has been created in the session
 	 * 
 	 * @param info information about the new breakpoint
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void breakpointCreated(JdiBreakpointInfo info, JdiCause cause);
+	DebugStatus breakpointCreated(JdiBreakpointInfo info, JdiCause cause);
 
 	/**
 	 * A breakpoint in the session has been modified
@@ -74,16 +80,19 @@ public interface JdiEventsListener {
 	 * @param newInfo new information about the modified breakpoint
 	 * @param oldInfo old information about the modified breakpoint
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void breakpointModified(JdiBreakpointInfo newInfo, JdiBreakpointInfo oldInfo, JdiCause cause);
+	DebugStatus breakpointModified(JdiBreakpointInfo newInfo, JdiBreakpointInfo oldInfo,
+			JdiCause cause);
 
 	/**
 	 * A breakpoint has been deleted from the session
 	 * 
 	 * @param info information about the now-deleted breakpoint
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void breakpointDeleted(JdiBreakpointInfo info, JdiCause cause);
+	DebugStatus breakpointDeleted(JdiBreakpointInfo info, JdiCause cause);
 
 	/**
 	 * TODO: This is not yet implemented
@@ -95,145 +104,165 @@ public interface JdiEventsListener {
 	 * @param addr the address of the change
 	 * @param len the length, with the address, bounding the region of change
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void memoryChanged(VirtualMachine vm, long addr, int len, JdiCause cause);
+	DebugStatus memoryChanged(VirtualMachine vm, long addr, int len, JdiCause cause);
 
-	void vmInterrupted();
+	DebugStatus vmInterrupted();
 
 	/**
 	 * A breakpoint has been hit
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void breakpointHit(BreakpointEvent evt, JdiCause cause);
+	DebugStatus breakpointHit(BreakpointEvent evt, JdiCause cause);
 
 	/**
 	 * An exception has been hit
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void exceptionHit(ExceptionEvent evt, JdiCause cause);
+	DebugStatus exceptionHit(ExceptionEvent evt, JdiCause cause);
 
 	/**
 	 * A method has been invoked
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void methodEntry(MethodEntryEvent evt, JdiCause cause);
+	DebugStatus methodEntry(MethodEntryEvent evt, JdiCause cause);
 
 	/**
 	 * A method is about to finish
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void methodExit(MethodExitEvent evt, JdiCause cause);
+	DebugStatus methodExit(MethodExitEvent evt, JdiCause cause);
 
 	/**
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void classPrepare(ClassPrepareEvent evt, JdiCause cause);
+	DebugStatus classPrepare(ClassPrepareEvent evt, JdiCause cause);
 
 	/**
 	 * A calls is being unloaded
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void classUnload(ClassUnloadEvent evt, JdiCause cause);
+	DebugStatus classUnload(ClassUnloadEvent evt, JdiCause cause);
 
 	/**
 	 * A thread has entered a monitor after release from another thread
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void monitorContendedEntered(MonitorContendedEnteredEvent evt, JdiCause cause);
+	DebugStatus monitorContendedEntered(MonitorContendedEnteredEvent evt, JdiCause cause);
 
 	/**
 	 * A thread is attempting to enter monitor acquired by another thread
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void monitorContendedEnter(MonitorContendedEnterEvent evt, JdiCause cause);
+	DebugStatus monitorContendedEnter(MonitorContendedEnterEvent evt, JdiCause cause);
 
 	/**
 	 * A vm has finished waiting on a monitor object
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void monitorWaited(MonitorWaitedEvent evt, JdiCause cause);
+	DebugStatus monitorWaited(MonitorWaitedEvent evt, JdiCause cause);
 
 	/**
 	 * A vm is about to wait on a monitor object
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void monitorWait(MonitorWaitEvent evt, JdiCause cause);
+	DebugStatus monitorWait(MonitorWaitEvent evt, JdiCause cause);
 
 	/**
 	 * A step has completed
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void stepComplete(StepEvent evt, JdiCause cause);
+	DebugStatus stepComplete(StepEvent evt, JdiCause cause);
 
 	/**
 	 * A watchpoint has been hit
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void watchpointHit(WatchpointEvent evt, JdiCause cause);
+	DebugStatus watchpointHit(WatchpointEvent evt, JdiCause cause);
 
 	/**
 	 * A field has been accessed
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void accessWatchpointHit(AccessWatchpointEvent evt, JdiCause cause);
+	DebugStatus accessWatchpointHit(AccessWatchpointEvent evt, JdiCause cause);
 
 	/**
 	 * A field has been modified
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void watchpointModified(ModificationWatchpointEvent evt, JdiCause cause);
+	DebugStatus watchpointModified(ModificationWatchpointEvent evt, JdiCause cause);
 
 	/**
 	 * A thread has exited
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void threadExited(ThreadDeathEvent evt, JdiCause cause);
+	DebugStatus threadExited(ThreadDeathEvent evt, JdiCause cause);
 
 	/**
 	 * A thread has started
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void threadStarted(ThreadStartEvent evt, JdiCause cause);
+	DebugStatus threadStarted(ThreadStartEvent evt, JdiCause cause);
 
 	/**
 	 * A thread has changed state
 	 * 
-	 * @param evt the triggering event
+	 * @param thread thread
+	 * @param state state
 	 * @param cause the cause of this event
+	 * @param reason reason
+	 * @return status
 	 */
-	void threadStateChanged(ThreadReference thread, Integer state, JdiCause cause,
+	DebugStatus threadStateChanged(ThreadReference thread, Integer state, JdiCause cause,
 			JdiReason reason);
 
 	/**
@@ -241,27 +270,30 @@ public interface JdiEventsListener {
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void vmDied(VMDeathEvent evt, JdiCause cause);
+	DebugStatus vmDied(VMDeathEvent evt, JdiCause cause);
 
 	/**
 	 * A vm has been disconnected
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void vmDisconnected(VMDisconnectEvent evt, JdiCause cause);
+	DebugStatus vmDisconnected(VMDisconnectEvent evt, JdiCause cause);
 
 	/**
 	 * A vm has started
 	 * 
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
+	 * @return status
 	 */
-	void vmStarted(VMStartEvent evt, JdiCause cause);
+	DebugStatus vmStarted(VMStartEvent evt, JdiCause cause);
 
-	void processStop(EventSet eventSet, JdiCause cause);
+	DebugStatus processStop(EventSet eventSet, JdiCause cause);
 
-	void processShutdown(Event event, JdiCause cause);
+	DebugStatus processShutdown(Event event, JdiCause cause);
 
 }

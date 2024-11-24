@@ -32,7 +32,6 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 		if (!(model instanceof CompEditorModel)) {
 			throw new AssertException("unsupported use");
 		}
-		adjustEnablement();
 	}
 
 	@Override
@@ -42,7 +41,10 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	}
 
 	@Override
-	public void adjustEnablement() {
+	public boolean isEnabledForContext(ActionContext context) {
+		if (hasIncompleteFieldEntry()) {
+			return false;
+		}
 		boolean enabled = true;
 		CompEditorModel editorModel = (CompEditorModel) model;
 		// Unions do not support non-packed manipulation of bitfields
@@ -50,7 +52,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 			editorModel.isPackingEnabled() || editorModel.getNumSelectedRows() != 1) {
 			enabled = false;
 		}
-		setEnabled(enabled);
+		return enabled;
 	}
 
 }

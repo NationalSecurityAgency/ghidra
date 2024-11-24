@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -680,7 +680,20 @@ public class Disassembler implements DisassemblerConflictHandler {
 		while ((nextBlock = disassemblerQueue.getNextBlockToBeDisassembled(fallThruAddr,
 			programMemBuffer.getMemory(), monitor)) != null) {
 
-			Address blockAddr = disassemblerQueue.getDisassemblyAddress();
+			Address blockAddr = nextBlock.getStartAddress();
+			Address flowFrom = nextBlock.getFlowFromAddress();
+
+			if (flowFrom != null) {
+				InstructionBlock containingBlock =
+					instructionSet.getInstructionBlockContaining(blockAddr);
+				if (containingBlock != null && containingBlock.getInstructionAt(flowFrom) != null) {
+					// Skip block if start address already handled as a fallthrough.
+					// NOTE: This behavior is relied upon by customized disassemblers which may
+					// create a conjoined InstructionBlock for an unconditional branch which 
+					// behaves like a fallthrough flow.
+					continue;
+				}
+			}
 
 			if (!disassemblerContext.isFlowActive()) {
 				disassemblerContext.flowStart(blockAddr);
@@ -932,6 +945,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 			while (!monitor.isCancelled() && addr != null) {
 
 				if (restrictedAddressSet != null && !restrictedAddressSet.contains(addr)) {
+					blockTerminated(block);
 					return; // no fall-through
 				}
 
@@ -941,15 +955,12 @@ public class Disassembler implements DisassemblerConflictHandler {
 					new WrappedMemBuffer(blockMemBuffer, DISASSEMBLE_MEMORY_CACHE_SIZE,
 						(int) addr.subtract(blockMemBuffer.getAddress()));
 
-				adjustPreParseContext(instrMemBuffer);
+				InstructionPrototype prototype = parseInstructionPrototype(instrMemBuffer, block);
 
 				RegisterValue contextValue = null;
 				if (baseContextRegister != null) {
 					contextValue = disassemblerContext.getRegisterValue(baseContextRegister);
 				}
-
-				InstructionPrototype prototype =
-					language.parse(instrMemBuffer, disassemblerContext, false);
 
 				// if fall-through already exists in another block - check for conflict 
 				// and terminate terminate block
@@ -960,13 +971,14 @@ public class Disassembler implements DisassemblerConflictHandler {
 						InstructionPrototype existingProto = existingBlockStartInstr.getPrototype();
 						if (!existingProto.equals(prototype)) {
 
-							PseudoInstruction badInst = getPseudoInstruction(addr, prototype,
-								instrMemBuffer, contextValue, block);
+							PseudoInstruction badInst = getPseudoInstruction(instrMemBuffer,
+								prototype, contextValue, block);
 							InstructionError.dumpInstructionDifference(badInst,
 								existingBlockStartInstr);
 
 							block.setInconsistentPrototypeConflict(addr, flowFrom);
 						}
+						blockTerminated(block);
 						return;
 					}
 					// existing block must be an empty conflicted block - just keep going 
@@ -990,16 +1002,18 @@ public class Disassembler implements DisassemblerConflictHandler {
 									disassemblerQueue
 											.queueDelaySlotFallthrough(existingBlockStartInstr);
 								}
+								blockTerminated(block);
 								return;
 							}
 						}
 						else if (existingProto.equals(prototype)) {
 							// skip block start silently if it was previously disassembled
+							blockTerminated(block);
 							return;
 						}
 
-						PseudoInstruction badInst = getPseudoInstruction(addr, prototype,
-							instrMemBuffer, contextValue, block);
+						PseudoInstruction badInst =
+							getPseudoInstruction(instrMemBuffer, prototype, contextValue, block);
 						InstructionError.dumpInstructionDifference(badInst,
 							existingBlockStartInstr);
 
@@ -1008,7 +1022,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 				}
 
 				PseudoInstruction inst =
-					getPseudoInstruction(addr, prototype, instrMemBuffer, contextValue, block);
+					getPseudoInstruction(instrMemBuffer, prototype, contextValue, block);
 
 				Address maxAddr = inst.getMaxAddress();
 				if (instructionSet != null && instructionSet.intersects(addr, maxAddr)) {
@@ -1038,15 +1052,15 @@ public class Disassembler implements DisassemblerConflictHandler {
 						}
 
 						if (!existingProto.equals(prototype)) {
-
-							PseudoInstruction badInst = getPseudoInstruction(addr, prototype,
-								instrMemBuffer, contextValue, block);
+							PseudoInstruction badInst = getPseudoInstruction(instrMemBuffer,
+								prototype, contextValue, block);
 							InstructionError.dumpInstructionDifference(badInst,
 								existingBlockStartInstr);
 
 							block.setInconsistentPrototypeConflict(addr, flowFrom);
 						}
 					}
+					blockTerminated(block);
 					return;
 				}
 
@@ -1059,6 +1073,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 				addr = processInstruction(inst, blockMemBuffer, block, instructionSet);
 
 				if (addr == null || block.hasInstructionError()) {
+					blockTerminated(block);
 					return;
 				}
 				if (endBlockEarly(inst, addr, limit, block) || endBlockOnCall(inst, addr, block)) {
@@ -1067,6 +1082,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 					// are added to facilitate future prioritization of flows
 					// block.setFallThrough(addr);
 					disassemblerContext.copyToFutureFlowState(addr);
+					blockTerminated(block);
 					return;
 				}
 
@@ -1076,15 +1092,43 @@ public class Disassembler implements DisassemblerConflictHandler {
 		catch (AddressOutOfBoundsException | AddressOverflowException e) {
 			block.setInstructionMemoryError(addr, flowFrom,
 				"Instruction does not fit within address space constraint");
+			blockTerminated(block);
 		}
 		catch (InsufficientBytesException e) {
 			block.setInstructionMemoryError(addr, flowFrom, e.getMessage());
+			blockTerminated(block);
 		}
 		catch (UnknownInstructionException e) {
 			block.setParseConflict(addr,
 				disassemblerContext.getRegisterValue(disassemblerContext.getBaseContextRegister()),
 				flowFrom, e.getMessage());
+			blockTerminated(block);
 		}
+	}
+
+	/**
+	 * Signal that block disassembly has been terminated.  An error condition may 
+	 * have been recorded within the block (see {@link InstructionBlock#hasInstructionError()}
+	 * or block terminated early due to a matching instruction within the active instruction 
+	 * set had already been disassembled.
+	 * @param block instruction block
+	 */
+	protected void blockTerminated(InstructionBlock block) {
+		// do nothing - intended for use by extension to cleanup state
+	}
+
+	/**
+	 * Perform parse of instruction bytes and context to produce an instruction prototype.
+	 * @param instrMemBuffer memory buffer
+	 * @param block fallthrough sequence of instructions preceding current instruction
+	 * required to facilitate potential crossbuilds for current instruction.
+	 * @return instruction prototype
+	 * @throws InsufficientBytesException
+	 * @throws UnknownInstructionException
+	 */
+	protected InstructionPrototype parseInstructionPrototype(MemBuffer instrMemBuffer,
+			InstructionBlock block) throws InsufficientBytesException, UnknownInstructionException {
+		return language.parse(instrMemBuffer, disassemblerContext, false);
 	}
 
 	private boolean endBlockEarly(Instruction inst, Address fallThruAddr, int limit,
@@ -1131,34 +1175,51 @@ public class Disassembler implements DisassemblerConflictHandler {
 		return true;
 	}
 
-	/**
-	 * Adjust disassembler context prior to disassembly of a new instruction.
-	 * @param instrMemBuffer buffer for bytes from memory
-	 * @throws UnknownInstructionException if instruction is invalid
-	 */
-	protected void adjustPreParseContext(MemBuffer instrMemBuffer)
-			throws UnknownInstructionException {
-		// nothing to do - method provided for disassembler extensions
-	}
-
-	protected PseudoInstruction getPseudoInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuffer, RegisterValue contextValue, InstructionBlock block)
+	private PseudoInstruction getPseudoInstruction(MemBuffer memBuffer,
+			InstructionPrototype prototype, RegisterValue contextValue, InstructionBlock block)
 			throws AddressOverflowException {
+
+		Address addr = memBuffer.getAddress();
+		ProcessorContext processorContext =
+			getProcessorContext(addr, prototype.getLength(), contextValue);
+
 		PseudoInstruction instr;
 		if (program != null) {
-			instr = new PseudoInstruction(program, addr, prototype, memBuffer,
-				disassemblerProgramContext.getInstructionContext(contextValue, addr,
-					prototype.getLength()));
+			instr = new PseudoInstruction(program, addr, prototype, memBuffer, processorContext);
 		}
 		else {
-			instr = new PseudoInstruction(addrFactory, addr, prototype, memBuffer,
-				disassemblerProgramContext.getInstructionContext(contextValue, addr,
-					prototype.getLength()));
+			instr =
+				new PseudoInstruction(addrFactory, addr, prototype, memBuffer, processorContext);
 		}
 		instr.setInstructionBlock(block);
 		return instr;
 	}
 
+	/**
+	 * Get the processor context for the current instruction being disassembled as reflected by
+	 * the {@link #disassemblerContext}. This is intended to be used in forming a 
+	 * {@link PseudoInstruction} or exercising certain methods on an {@link InstructionPrototype}.
+	 * 
+	 * @param addr current instruction address
+	 * @param instrLength instruction byte length
+	 * @param contextValue instruction context register value
+	 * @return processor context
+	 */
+	protected ProcessorContext getProcessorContext(Address addr, int instrLength,
+			RegisterValue contextValue) {
+		return disassemblerProgramContext.getInstructionContext(contextValue, addr, instrLength);
+	}
+
+	/**
+	 * Determine if {@link InstructionBlock} termination is allowed after the specified instruction
+	 * has been added.  Based upon the crossbuild requirements / parallel instruction semantics,
+	 * this method may return false to force continued fallthrough instruction accumulation within
+	 * the current block. 
+	 * 
+	 * @param instr last instruction disassembled
+	 * @return true if current block with last instruction may be terminated, false if block
+	 * must continue fallthrough instruction accumulation.
+	 */
 	protected boolean isBlockTerminationOK(Instruction instr) {
 		return parallelHelper == null || parallelHelper.isEndOfParallelInstructionGroup(instr);
 	}
@@ -1167,6 +1228,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * Process a new instruction which has just been parsed.  This method is responsible for
 	 * adding the instruction to the current block as well as any delay-slotted instructions.
 	 * This method may be overridden and the instruction re-parsed if necessary. 
+	 * 
 	 * @param inst instruction to process
 	 * @param blockMemBuffer buffer to get bytes
 	 * @param block current block of instructions
@@ -1317,7 +1379,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 				}
 
 				PseudoInstruction dsInstr =
-					getPseudoInstruction(addr, prototype, dsInstrMemBuffer, contextValue, block);
+					getPseudoInstruction(dsInstrMemBuffer, prototype, contextValue, block);
 
 				if (repeatInstructionByteTracker.exceedsRepeatBytePattern(dsInstr)) {
 					block.setParseConflict(addr, contextValue, instAddr,
@@ -1389,11 +1451,13 @@ public class Disassembler implements DisassemblerConflictHandler {
 			RegisterValue contextValue = conflict.getParseContextValue();
 			if (contextValue != null) {
 				try {
-					RegisterValue curContextValue = program.getProgramContext().getRegisterValue(contextValue.getRegister(), address);
+					RegisterValue curContextValue = program.getProgramContext()
+							.getRegisterValue(contextValue.getRegister(), address);
 
 					// only store if different than what is already there, which could be a default value
 					if (!contextValue.equals(curContextValue)) {
-						program.getProgramContext().setRegisterValue(address, address, contextValue);
+						program.getProgramContext()
+								.setRegisterValue(address, address, contextValue);
 					}
 				}
 				catch (ContextChangeException e) {
@@ -1554,7 +1618,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 		 * @param instrLength length of instruction to set context
 		 * @return instruction context with possible added value
 		 */
-		ProcessorContext getInstructionContext(RegisterValue value, Address instrAddr,
+		protected ProcessorContext getInstructionContext(RegisterValue value, Address instrAddr,
 				int instrLength) {
 
 			if (value == null) {

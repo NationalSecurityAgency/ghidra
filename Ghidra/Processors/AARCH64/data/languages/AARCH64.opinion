@@ -22,4 +22,7 @@
     <constraint loader="Portable Executable (PE)" compilerSpecID="windows">
         <constraint primary="43620"    processor="AARCH64"     endian="little" size="64" variant="v8A" />
     </constraint>
+    <constraint loader="MS Common Object File Format (COFF)" compilerSpecID="windows">
+        <constraint primary="-21916"    processor="AARCH64"     endian="little" size="64" variant="v8A" />
+    </constraint>
 </opinions>

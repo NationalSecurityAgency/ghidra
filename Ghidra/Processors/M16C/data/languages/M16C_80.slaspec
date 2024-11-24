@@ -1,0 +1,5050 @@
+#
+# Renesas M16C/80 16-Bit MicroComputer
+#
+
+#
+# Memory Architecture
+#
+define endian=little;
+
+define alignment=1;
+
+define space RAM type=ram_space size=3 default;
+define space register type=register_space size=2;
+
+#
+# General Registers
+#
+define register offset=0x0000 size=2 [
+    R0 R2 R1 R3
+];
+
+define register offset=0x0000 size=1 [
+    R0L R0H _   _   R1L R1H _   _
+];
+
+define register offset=0x0000 size=4 [
+    R2R0 R3R1
+];
+
+define register offset=0x0000 size=6 [
+    R1R2R0
+];
+
+define register offset=0x2000 size=3 [
+    A0 A1
+];
+
+define register offset=0x3000 size=3 [
+    PC # Program Counter
+    SVP # Save PC Register
+    VCT # Vector Register 
+    byteIndexOffset # Byte offset for memory (see useByteIndex)
+    bitIndex # Index offset for bit operations (see useBitIndex)
+];
+
+define register offset=0x4000 size=3 [
+    INTB
+];
+
+define register offset=0x4000 size=2 [
+    INTBL INTBH
+];
+
+define register offset=0x5000 size=3 [
+    SP # Stack Pointer (Represents active stack pointer: ISP or USP)
+    FB # Frame Base Register
+    SB # Static Base Register    
+    ISP # Interrupt Stack Pointer
+];
+
+define register offset=0x6000 size=2 [
+    FLG # Flag Register
+    SVF # Save Flag Register
+];
+
+@define CARRY       "FLG[0,1]"
+@define DEBUG       "FLG[1,1]"
+@define ZERO        "FLG[2,1]"
+@define SIGN        "FLG[3,1]"
+@define REG_BANK    "FLG[4,1]"
+@define OVERFLOW    "FLG[5,1]"
+@define INTERRUPT   "FLG[6,1]"
+@define STACK_SEL   "FLG[7,1]"
+@define IPL         "FLG[12,3]"
+
+define register offset=0x7000 size=2 [
+    # These are really 1-Byte registers
+    DMD0 # DMA mode register
+    DMD1 # DMA mode register
+];
+
+define register offset=0x8000 size=2 [
+    DCT0 # DMA transfer count register
+    DCT1 # DMA transfer count register
+    DRC0 # DMA transfer count reload register
+    DRC1 # DMA transfer count reload register
+];
+
+define register offset=0x9000 size=3 [
+    DMA0 # DMA memory address register
+    DMA1 # DMA memory address register
+    DSA0 # DMA SFR address register
+    DSA1 # DMA SFR address register
+    DRA0 # DMA memory address reload register
+    DRA1 # DMA memory address reload register
+];
+
+# Define context bits
+define register offset=0xA000 size=4   contextreg;
+
+define context contextreg
+    useBitIndex           = (0, 0) noflow # =1 use bitIndex instead of bit specified by instruction
+    useByteIndexOffset    = (1, 2) noflow 
+    useSrcByteIndexOffset = (1, 1) noflow
+    useDstByteIndexOffset = (2, 2) noflow
+
+        # transient context:
+    phase                 = (3, 4) # guard for saving off modes before starting instructions
+    indDst                = (5, 5) # =1 indirect destination
+    indSrc                = (6, 6) # =1 indirect source
+    dstFollowsSrc         = (7, 8) # =1 destination add-on data follows 5-bit encoded source add-on data
+                                   # =2 destination add-on data follows 8-bit data
+;
+
+define token b0(8)
+    b0_0007 = (0,7)
+;
+
+define token b1(8)
+    b1_s5       = (4,6)
+    b1_s5_4     = (6,6)
+    b1_d5       = (1,3)
+    b1_d5_4     = (3,3)
+    b1_d2       = (4,5)
+    b1_d1_regAx = (0,0)
+    b1_size_5   = (5,5)
+    b1_size_4   = (4,4)
+    b1_size_0   = (0,0)
+    b1_0707     = (7,7)
+    b1_0607     = (6,7)
+    b1_0507     = (5,7)
+    b1_0505     = (5,5)
+    b1_0407     = (4,7)
+    b1_0406     = (4,6)
+    b1_0405     = (4,5)
+    b1_0104     = (1,4)
+    b1_0103     = (1,3)
+    b1_0007     = (0,7)
+    b1_0000     = (0,0)
+;
+
+define token b2(8)
+    b2_d5_reg8    = (6,7)
+    b2_s5_reg8    = (4,5)
+    b2_d5_reg16   = (6,7)
+    b2_s5_reg16   = (4,5)
+    b2_d5_reg32   = (6,6) # only d0 used to select double register
+    b2_s5_reg32   = (4,4) # only s0 used to select double register
+    b2_d5_regAxSF = (6,7) # selects A0, A1, SB or FB
+    b2_s5_regAxSF = (4,5) # selects A0, A1, SB or FB
+    b2_d5_regAx   = (6,6)
+    b2_s5_regAx   = (4,4)
+    b2_d5         = (6,7)
+    b2_s5         = (4,5)
+    b2_d5_1       = (7,7)
+    b2_d5_0       = (6,6)
+    b2_s5_1       = (5,5)
+    b2_s5_0       = (4,4)
+    b2_0707       = (7,7)
+    b2_0606       = (6,6)
+    b2_0405       = (4,5)
+    b2_0307       = (3,7)
+    b2_0305       = (3,5)
+    b2_0105       = (1,5)
+    b2_0102       = (1,2)
+    b2_0101       = (1,1)
+    b2_0007       = (0,7)
+    b2_0005       = (0,5)
+    b2_0003       = (0,3)
+    b2_0002       = (0,2)
+    b2_simm4      = (0,3) signed
+    b2_shiftSign  = (3,3)
+    b2_bit        = (0,2)
+    b2_reg8       = (0,2)
+    b2_reg16      = (0,2)
+    b2_creg16     = (0,2)
+    b2_creg24     = (0,2)
+    b2_dreg24     = (0,2)
+    b2_reg32      = (0,0)
+    b2_regAx      = (0,0)
+;
+
+define token imm8(8)
+    simm8_dat = (0,7) signed
+    imm8_dat  = (0,7)
+    imm6_dat  = (2,7)
+    cnd_dat   = (0,3)
+    imm8_0001 = (0,1)
+    regBit7   = (7,7)
+    regBit6   = (6,6)
+    regBit5   = (5,5)
+    regBit4   = (4,4)
+    regBit3   = (3,3)
+    regBit2   = (2,2)
+    regBit1   = (1,1)
+    regBit0   = (0,0)
+;
+
+define token imm16(16)
+    simm16_dat = (0,15) signed
+    imm16_dat  = (0,15)
+;
+
+define token imm24(24)
+    simm24_dat = (0,23) signed
+    imm24_dat  = (0,23)
+;
+
+define token imm32(32)
+    simm32_dat = (0,31) signed
+    imm32_dat  = (0,31)
+;
+
+attach variables [ b2_s5_reg32 b2_d5_reg32 ] [ R2R0 R3R1 ];
+attach variables [ b2_s5_reg16 b2_d5_reg16 ] [ R2 R3 R0 R1 ];
+attach variables [ b2_s5_reg8 b2_d5_reg8 ] [ R0H R1H R0L R1L ];
+attach variables [ b2_s5_regAx b2_d5_regAx b1_d1_regAx b2_regAx ] [ A0 A1 ];
+attach variables [ b2_s5_regAxSF b2_d5_regAxSF ] [ A0 A1 SB FB ];
+attach variables [ b2_creg16 ] [ DCT0 DCT1 FLG SVF DRC0 DRC1 DMD0 DMD1 ];
+attach variables [ b2_creg24 ] [ INTB SP SB FB SVP VCT _ ISP ];
+attach variables [ b2_dreg24 ] [ _ _ DMA0 DMA1 DRA0 DRA1 DSA0 DSA1 ];
+attach variables [ b2_reg32 ] [ R2R0 R3R1 ];
+
+# XCHG register attach
+attach variables [ b2_reg8 ] [ R0L R1L _ _ R0H R1H _ _ ];
+attach variables [ b2_reg16 ] [ R0 R1 _ _ R2 R3 _ _ ];
+
+#
+# PCode Op
+#   
+define pcodeop Break; # BRK
+define pcodeop Break2; # BRK2
+define pcodeop DecimalAdd; # DADD
+define pcodeop DecimalAddWithCarry; # DADC
+define pcodeop DecimalSubtractWithBorrow; # DSBB
+define pcodeop DecimalSubtract; # DSUB
+define pcodeop Wait; # WAIT
+
+#
+# FLAG MACROS...
+#
+# Set zero and sign flags from result
+macro setResultFlags(result) {
+    $(SIGN) = (result s< 0x0);
+    $(ZERO) = (result == 0x0);
+}
+
+# Set carry and overflow flags for addition
+macro setAdd3Flags(v1, v2, v3) {
+    local add13 = v1 + v3;
+    $(CARRY) = carry(v1,v3) || carry(v2,add13);
+    $(OVERFLOW) = scarry(v1,v3) || scarry(v2,add13);
+}
+
+# Set carry and overflow flags for addition
+macro setAddFlags(v1, v2) {
+    $(CARRY) = carry(v1, v2);
+    $(OVERFLOW) = scarry(v1, v2);
+}
+
+# Set overflow flags for subtraction of op3,op2 from op1 (op1-op2-op3)
+macro setSubtract3Flags(v1, v2, v3) {
+    local add12 = v1 - v2;
+    $(CARRY) = (v1 >= v2) || (add12 >= v3);
+    $(OVERFLOW) = sborrow(v1, v2) || sborrow(add12, v3);
+}
+
+# Set overflow flags for subtraction of op2 from op1 (op1-op2)
+macro setSubtractFlags(v1, v2) {
+    $(CARRY) = (v1 s>= v2);
+    $(OVERFLOW) = sborrow(v1, v2);
+}
+
+macro push1(val) {
+    SP = SP - 2;
+    *:1 SP = val;
+}
+
+macro push2(val) {
+    SP = SP - 2;
+    *:2 SP = val;
+}
+
+macro push3(val) {
+    SP = SP - 4;
+    *:3 SP = val;
+}
+
+macro push4(val) {
+    SP = SP - 4;
+    *:4 SP = val;
+}
+
+macro pop1(val) {
+    val = *:1 SP;
+    SP = SP + 2;
+}
+
+macro pop2(val) {
+    val = *:2 SP;
+    SP = SP + 2;
+}
+
+macro pop3(val) {
+    val = *:3 SP;
+    SP = SP + 4;
+}
+
+macro pop4(val) {
+    val = *:4 SP;
+    SP = SP + 4;
+}
+
+:^instruction                        is phase=0 & b0_0007 & instruction        [ phase=1; ]                        {}
+:^instruction                        is phase=0 & b0_0007=0x09; instruction    [ indDst=1; phase=1; ]                {} # indirect destination prefix
+:^instruction                        is phase=0 & b0_0007=0x41; instruction    [ indSrc=1; phase=1; ]                {} # indirect source prefix 
+:^instruction                        is phase=0 & b0_0007=0x49; instruction    [ indDst=1; indSrc=1; phase=1; ]     {} # indirect source and destination prefix
+
+#
+# Source operand location data
+#
+# Obtain additional source byte offset as a result of an INDEX instruction (flagged by useSrcByteIndexOffset context bit)
+srcIndexOffset:  is useSrcByteIndexOffset=0 { export 0:3; }
+srcIndexOffset:  is useSrcByteIndexOffset=1 { export byteIndexOffset; }
+
+# Obtain base offset displacement for [AX | SB | FB] - AX and SB uses unsigned displacements, FB uses signed displacement
+src5dsp8:  imm8_dat^":8"     is b1_s5; b2_s5; imm8_dat       { export *[const]:3 imm8_dat; }
+src5dsp8:  simm8_dat^":8"    is b1_s5; b2_s5=0x3; simm8_dat  { export *[const]:3 simm8_dat; }
+
+src5dsp16: imm16_dat^":16"   is b1_s5; b2_s5; imm16_dat      { export *[const]:3 imm16_dat; }
+src5dsp16: simm16_dat^":16"  is b1_s5; b2_s5=0x3; simm16_dat { export *[const]:3 simm16_dat; }
+
+src5dsp24: imm24_dat^":24"   is b1_s5; b2_s5; imm24_dat      { export *[const]:3 imm24_dat; }
+src5dsp24: simm24_dat^":24"  is b1_s5; b2_s5=0x3; simm24_dat { export *[const]:3 simm24_dat; }
+
+# src5... Handle 5-bit encoded Source specified by b1_s(3-bits) and b2_s(2-bits)
+# Variable length pattern starting at instruction byte b1
+# associated src5 add-on data immediately follows instruction byte b2
+# abs16 and abs24 cases are broken out differently to facilitate export of constant addresses in certain cases
+# 1-Byte source value/location specified by 5-bit encoding (b1_d5/b2_d5) - supports indirect prefix and byteIndexOffset
+src5B: b2_s5_reg8                   is b1_s5=0x4; b2_s5_reg8                                                            { export b2_s5_reg8; }    # Rx
+src5B: b2_s5_regAx                  is b1_s5=0x0; b2_s5_1=1 & b2_s5_regAx                                               { tmp:1 = b2_s5_regAx:1; export tmp; }    # Ax
+src5B: [b2_s5_regAx]                is indSrc=1 & b1_s5=0x0; b2_s5_1=1 & b2_s5_regAx                                    { ptr:3 = b2_s5_regAx; export *:1 ptr; }    # [Ax] - w/ indirect prefix
+src5B: [b2_s5_regAx]                is srcIndexOffset & b1_s5=0x0; b2_s5_1=0 & b2_s5_regAx                              { ptr:3 = b2_s5_regAx + srcIndexOffset; export *:1 ptr; }    # [Ax]
+src5B: [[b2_s5_regAx]]              is indSrc=1 & srcIndexOffset & b1_s5=0x0; b2_s5_1=0 & b2_s5_regAx                   { ptr:3 = b2_s5_regAx + srcIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [[Ax]]
+src5B: src5dsp8^[b2_s5_regAxSF]     is (srcIndexOffset & b1_s5=0x1; b2_s5_regAxSF) ... & src5dsp8                       { ptr:3 = b2_s5_regAxSF + src5dsp8 + srcIndexOffset; export *:1 ptr; }    # dsp:8[Ax|SB|FB]
+src5B: [src5dsp8^[b2_s5_regAxSF]]   is (indSrc=1 & srcIndexOffset & b1_s5=0x1; b2_s5_regAxSF) ... & src5dsp8            { ptr:3 = b2_s5_regAxSF + src5dsp8 + srcIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [dsp:8[Ax|SB|FB]]
+src5B: src5dsp16^[b2_s5_regAxSF]    is (srcIndexOffset & b1_s5=0x2; b2_s5_regAxSF) ... & src5dsp16                      { ptr:3 = b2_s5_regAxSF + src5dsp16 + srcIndexOffset; export *:1 ptr; }    # dsp:16[Ax|SB|FB]
+src5B: [src5dsp16^[b2_s5_regAxSF]]  is (indSrc=1 & srcIndexOffset & b1_s5=0x2; b2_s5_regAxSF) ... & src5dsp16           { ptr:3 = b2_s5_regAxSF + src5dsp16 + srcIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [dsp:16[Ax|SB|FB]]
+src5B: src5dsp24^[b2_s5_regAx]      is (srcIndexOffset & b1_s5=0x3; b2_s5_1=0 & b2_s5_regAx) ... & src5dsp24            { ptr:3 = b2_s5_regAx + src5dsp24 + srcIndexOffset; export *:1 ptr; }    # dsp:24[Ax]
+src5B: [src5dsp24^[b2_s5_regAx]]    is (indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5_1=0 & b2_s5_regAx) ... & src5dsp24 { ptr:3 = b2_s5_regAx + src5dsp24 + srcIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [dsp:24[Ax]]
+src5B: imm16_dat                    is indSrc=0 & useSrcByteIndexOffset=1 & b1_s5=0x3; b2_s5=0x3; imm16_dat             { ptr:3 = imm16_dat + byteIndexOffset; export *:1 ptr; }    # abs16 (+byteIndexOffset)
+src5B: imm16_dat                    is indSrc=0 & b1_s5=0x3; b2_s5=0x3; imm16_dat                                       { export *:1 imm16_dat; }    # abs16 (special constant address case)
+src5B: [imm16_dat]                  is indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5=0x3; imm16_dat                      { ptr:3 = imm16_dat + srcIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [abs16]
+src5B: imm24_dat                    is indSrc=0 & useSrcByteIndexOffset=1 & b1_s5=0x3; b2_s5=0x2; imm24_dat             { ptr:3 = imm24_dat + byteIndexOffset; export *:1 ptr; }    # abs24 (+byteIndexOffset)
+src5B: imm24_dat                    is indSrc=0 & b1_s5=0x3; b2_s5=0x2; imm24_dat                                       { export *:1 imm24_dat; }    # abs24 (special constant address case)
+src5B: [imm24_dat]                  is indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5=0x2; imm24_dat                      { ptr:3 = imm24_dat + srcIndexOffset; ptr = *:3 ptr; export *:1 ptr; } # [abs24]
+
+# 2-Byte source value/location specified by 5-bit encoding (b1_d5/b2_d5) - supports indirect prefix and byteIndexOffset
+src5W: b2_s5_reg16                  is b1_s5=0x4; b2_s5_reg16                                                           { export b2_s5_reg16; }    # Rx
+src5W: b2_s5_regAx                  is b1_s5=0x0; b2_s5_1=1 & b2_s5_regAx                                               { tmp:2 = b2_s5_regAx:2; export tmp; }    # Ax
+src5W: [b2_s5_regAx]                is indSrc=1 & b1_s5=0x0; b2_s5_1=1 & b2_s5_regAx                                    { ptr:3 = b2_s5_regAx; export *:2 ptr; }    # [Ax] - w/ indirect prefix
+src5W: [b2_s5_regAx]                is srcIndexOffset & b1_s5=0x0; b2_s5_1=0 & b2_s5_regAx                              { ptr:3 = b2_s5_regAx + srcIndexOffset; export *:2 ptr; }    # [Ax]
+src5W: [[b2_s5_regAx]]              is indSrc=1 & srcIndexOffset & b1_s5=0x0; b2_s5_1=0 & b2_s5_regAx                   { ptr:3 = b2_s5_regAx + srcIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [[Ax]]
+src5W: src5dsp8^[b2_s5_regAxSF]     is (srcIndexOffset & b1_s5=0x1; b2_s5_regAxSF) ... & src5dsp8                       { ptr:3 = b2_s5_regAxSF + src5dsp8 + srcIndexOffset; export *:2 ptr; }    # dsp:8[Ax|SB|FB]
+src5W: [src5dsp8^[b2_s5_regAxSF]]   is (indSrc=1 & srcIndexOffset & b1_s5=0x1; b2_s5_regAxSF) ... & src5dsp8            { ptr:3 = b2_s5_regAxSF + src5dsp8 + srcIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [dsp:8[Ax|SB|FB]]
+src5W: src5dsp16^[b2_s5_regAxSF]    is (srcIndexOffset & b1_s5=0x2; b2_s5_regAxSF) ... & src5dsp16                      { ptr:3 = b2_s5_regAxSF + src5dsp16 + srcIndexOffset; export *:2 ptr; }    # dsp:16[Ax|SB|FB]
+src5W: [src5dsp16^[b2_s5_regAxSF]]  is (indSrc=1 & srcIndexOffset & b1_s5=0x2; b2_s5_regAxSF) ... & src5dsp16           { ptr:3 = b2_s5_regAxSF + src5dsp16 + srcIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [dsp:16[Ax|SB|FB]]
+src5W: src5dsp24^[b2_s5_regAx]      is (srcIndexOffset & b1_s5=0x3; b2_s5_1=0 & b2_s5_regAx) ... & src5dsp24            { ptr:3 = b2_s5_regAx + src5dsp24 + srcIndexOffset; export *:2 ptr; }    # dsp:24[Ax]
+src5W: [src5dsp24^[b2_s5_regAx]]    is (indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5_1=0 & b2_s5_regAx) ... & src5dsp24 { ptr:3 = b2_s5_regAx + src5dsp24 + srcIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [dsp:24[Ax]]
+src5W: imm16_dat                    is indSrc=0 & useSrcByteIndexOffset=1 & b1_s5=0x3; b2_s5=0x3; imm16_dat             { ptr:3 = imm16_dat + byteIndexOffset; export *:2 ptr; }    # abs16 (+byteIndexOffset)
+src5W: imm16_dat                    is indSrc=0 & b1_s5=0x3; b2_s5=0x3; imm16_dat                                       { export *:2 imm16_dat; }    # abs16 (special constant address case) 
+src5W: [imm16_dat]                  is indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5=0x3; imm16_dat                      { ptr:3 = imm16_dat + srcIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [abs16]
+src5W: imm24_dat                    is indSrc=0 & useSrcByteIndexOffset=1 & b1_s5=0x3; b2_s5=0x2; imm24_dat             { ptr:3 = imm24_dat + byteIndexOffset; export *:2 ptr; }    # abs24 (+byteIndexOffset)
+src5W: imm24_dat                    is indSrc=0 & b1_s5=0x3; b2_s5=0x2; imm24_dat                                       { export *:2 imm24_dat; }    # abs24 (special constant address case)
+src5W: [imm24_dat]                  is indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5=0x2; imm24_dat                      { ptr:3 = imm24_dat + srcIndexOffset; ptr = *:3 ptr; export *:2 ptr; } # [abs24]
+
+# 4-Byte source value/location specified by 5-bit encoding (b1_d5/b2_d5) - supports indirect prefix and byteIndexOffset
+src5L: b2_s5_reg32                  is b1_s5=0x4; b2_s5_1=1 & b2_s5_reg32                                               { export b2_s5_reg32; }    # Rx
+src5L: b2_s5_regAx                  is b1_s5=0x0; b2_s5_1=1 & b2_s5_regAx                                               { tmp:4 = zext(b2_s5_regAx); export tmp; }    # Ax
+src5L: [b2_s5_regAx]                is indSrc=1 & b1_s5=0x0; b2_s5_1=1 & b2_s5_regAx                                    { ptr:3 = b2_s5_regAx; export *:4 ptr; }    # [Ax] - w/ indirect prefix
+src5L: [b2_s5_regAx]                is srcIndexOffset & b1_s5=0x0; b2_s5_1=0 & b2_s5_regAx                              { ptr:3 = b2_s5_regAx + srcIndexOffset; export *:4 ptr; }    # [Ax]
+src5L: [[b2_s5_regAx]]              is indSrc=1 & srcIndexOffset & b1_s5=0x0; b2_s5_1=0 & b2_s5_regAx                   { ptr:3 = b2_s5_regAx + srcIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [[Ax]]
+src5L: src5dsp8^[b2_s5_regAxSF]     is (srcIndexOffset & b1_s5=0x1; b2_s5_regAxSF) ... & src5dsp8                       { ptr:3 = b2_s5_regAxSF + src5dsp8 + srcIndexOffset; export *:4 ptr; }    # dsp:8[Ax|SB|FB]
+src5L: [src5dsp8^[b2_s5_regAxSF]]   is (indSrc=1 & srcIndexOffset & b1_s5=0x1; b2_s5_regAxSF) ... & src5dsp8            { ptr:3 = b2_s5_regAxSF + src5dsp8 + srcIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [dsp:8[Ax|SB|FB]]
+src5L: src5dsp16^[b2_s5_regAxSF]    is (srcIndexOffset & b1_s5=0x2; b2_s5_regAxSF) ... & src5dsp16                      { ptr:3 = b2_s5_regAxSF + src5dsp16 + srcIndexOffset; export *:4 ptr; }    # dsp:16[Ax|SB|FB]
+src5L: [src5dsp16^[b2_s5_regAxSF]]  is (indSrc=1 & srcIndexOffset & b1_s5=0x2; b2_s5_regAxSF) ... & src5dsp16           { ptr:3 = b2_s5_regAxSF + src5dsp16 + srcIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [dsp:16[Ax|SB|FB]]
+src5L: src5dsp24^[b2_s5_regAx]      is (srcIndexOffset & b1_s5=0x3; b2_s5_1=0 & b2_s5_regAx) ... & src5dsp24            { ptr:3 = b2_s5_regAx + src5dsp24 + srcIndexOffset; export *:4 ptr; }    # dsp:24[Ax]
+src5L: [src5dsp24^[b2_s5_regAx]]    is (indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5_1=0 & b2_s5_regAx) ... & src5dsp24 { ptr:3 = b2_s5_regAx + src5dsp24 + srcIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [dsp:24[Ax]]
+src5L: imm16_dat                    is indSrc=0 & useSrcByteIndexOffset=1 & b1_s5=0x3; b2_s5=0x3; imm16_dat             { ptr:3 = imm16_dat + byteIndexOffset; export *:4 ptr; }    # abs16 (+byteIndexOffset)
+src5L: imm16_dat                    is indSrc=0 & b1_s5=0x3; b2_s5=0x3; imm16_dat                                       { export *:4 imm16_dat; }    # abs16 (special constant address case)
+src5L: [imm16_dat]                  is indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5=0x3; imm16_dat                      { ptr:3 = imm16_dat + srcIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [abs16]
+src5L: imm24_dat                    is indSrc=0 & useSrcByteIndexOffset=1 & b1_s5=0x3; b2_s5=0x2; imm24_dat             { ptr:3 = imm24_dat + byteIndexOffset; export *:4 ptr; }    # abs24 (+byteIndexOffset)
+src5L: imm24_dat                    is indSrc=0 & b1_s5=0x3; b2_s5=0x2; imm24_dat                                       { export *:4 imm24_dat; }    # abs24 (special constant address case)
+src5L: [imm24_dat]                  is indSrc=1 & srcIndexOffset & b1_s5=0x3; b2_s5=0x2; imm24_dat                      { ptr:3 = imm24_dat + srcIndexOffset; ptr = *:3 ptr; export *:4 ptr; } # [abs24]
+
+#
+# The following macros are used to elliminate illegal bit patterns when using src5
+# These should be used by constructor pattern matching instead of the corresponding src5 subconstructor
+#
+@define SRC5B     "((b1_s5=4 | b1_s5_4=0) ... & src5B)"
+@define SRC5W     "((b1_s5=4 | b1_s5_4=0) ... & src5W)"
+@define SRC5L     "((b1_s5=4 | b1_s5_4=0) ... & src5L)"
+
+#
+# Destination operand location data (may also be used as a source in certain cases)
+#
+# Skip instruction and source add-on bytes which occur before destination add-on bytes
+# Starting position is at b1
+skipBytesBeforeDst5:  is b1_s5; b2_s5                                 { }
+skipBytesBeforeDst5:  is dstFollowsSrc=1 & b1_s5=1; b2_s5; imm8_dat   { } # src5: dsp8
+skipBytesBeforeDst5:  is dstFollowsSrc=1 & b1_s5=2; b2_s5; imm16_dat  { } # src5: dsp16
+skipBytesBeforeDst5:  is dstFollowsSrc=1 & b1_s5=3; b2_s5; imm24_dat  { } # src5: dsp24/abs24
+skipBytesBeforeDst5:  is dstFollowsSrc=1 & b1_s5=3; b2_s5=3; imm16_dat { } # src5: abs16
+skipBytesBeforeDst5:  is dstFollowsSrc=2 & b1_d5; b2_d5; imm8_dat     { } # dsp8
+
+# Obtain additional destination byte offset as a result of an INDEX instruction (flagged by useDstByteIndexOffset context bit)
+dstIndexOffset:  is useDstByteIndexOffset=0 { export 0:3; }
+dstIndexOffset:  is useDstByteIndexOffset=1 { export byteIndexOffset; }
+
+# Obtain base offset displacement for [AX | SB | FB] - AX and SB uses unsigned displacements, FB uses signed displacement
+dst5dsp8:  imm8_dat^":8"      is (skipBytesBeforeDst5; imm8_dat)                            { export *[const]:3 imm8_dat; }
+dst5dsp8:  simm8_dat^":8"     is (b1_d5; b2_d5=0x3) ... & (skipBytesBeforeDst5; simm8_dat)  { export *[const]:3 simm8_dat; }    
+dst5dsp16: imm16_dat^":16"   is (skipBytesBeforeDst5; imm16_dat)                           { export *[const]:3 imm16_dat; }
+dst5dsp16: simm16_dat^":16"  is (b1_d5; b2_d5=0x3) ... & (skipBytesBeforeDst5; simm16_dat) { export *[const]:3 simm16_dat; }    
+dst5dsp24: imm24_dat^":24"   is (skipBytesBeforeDst5; imm24_dat)                           { export *[const]:3 imm24_dat; }
+
+# dst5... Handle 5-bit encoded Destination specified by b1_d5(3-bits) and b2_d5(2-bits)
+# Ax direct case is read-only! Instruction must use dst5Ax for write/update case
+# Variable length pattern starting at instruction byte b1
+# abs16 and abs24 cases are broken out differently to facilitate export of constant addresses in certain cases
+# 1-Byte destination value/location specified by 5-bit encoding (b1_d5/b2_d5) - supports indirect prefix and byteIndexOffset
+dst5B: b2_d5_reg8                   is b1_d5=0x4; b2_d5_reg8 { export b2_d5_reg8; }     # Rx
+dst5B: b2_d5_regAx                  is b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx { tmp:1 = b2_d5_regAx:1; export tmp; } # Ax - read-only use !
+dst5B: [b2_d5_regAx]                is indDst=1 & b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx { ptr:3 = b2_d5_regAx; export *:1 ptr; }    # [Ax] - w/ indirect prefix
+dst5B: [b2_d5_regAx]                is dstIndexOffset & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx { ptr:3 = b2_d5_regAx + dstIndexOffset; export *:1 ptr; }    # [Ax]
+dst5B: [[b2_d5_regAx]]              is indDst=1 & dstIndexOffset & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx { ptr:3 = b2_d5_regAx + dstIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [[Ax]]
+dst5B: dst5dsp8^[b2_d5_regAxSF]     is (dstIndexOffset & b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8 { ptr:3 = b2_d5_regAxSF + dst5dsp8 + dstIndexOffset; export *:1 ptr; }    # dsp:8[Ax|SB|FB]
+dst5B: [dst5dsp8^[b2_d5_regAxSF]]   is (indDst=1 & dstIndexOffset & b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8 { ptr:3 = b2_d5_regAxSF + dst5dsp8 + dstIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [dsp:8[Ax|SB|FB]]
+dst5B: dst5dsp16^[b2_d5_regAxSF]    is (dstIndexOffset & b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16 { ptr:3 = b2_d5_regAxSF + dst5dsp16 + dstIndexOffset; export *:1 ptr; }    # dsp:16[Ax|SB|FB]
+dst5B: [dst5dsp16^[b2_d5_regAxSF]]  is (indDst=1 & dstIndexOffset & b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16 { ptr:3 = b2_d5_regAxSF + dst5dsp16 + dstIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [dsp:16[Ax|SB|FB]]
+dst5B: dst5dsp24^[b2_d5_regAx]      is (dstIndexOffset & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24 { ptr:3 = b2_d5_regAx + dst5dsp24 + dstIndexOffset; export *:1 ptr; }    # dsp:24[Ax]
+dst5B: [dst5dsp24^[b2_d5_regAx]]    is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24 { ptr:3 = b2_d5_regAx + dst5dsp24 + dstIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [dsp:24[Ax]]
+dst5B: imm16_dat                    is (indDst=0 & useDstByteIndexOffset=1 & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { ptr:3 = imm16_dat + byteIndexOffset; export *:1 ptr; }    # abs16 (+byteIndexOffset)
+dst5B: imm16_dat                    is (indDst=0 & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { export *:1 imm16_dat; }    # abs16 (special constant address case)
+dst5B: [imm16_dat]                  is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { ptr:3 = imm16_dat + dstIndexOffset; ptr = *:3 ptr; export *:1 ptr; }    # [abs16]
+dst5B: imm24_dat                    is (indDst=0 & useDstByteIndexOffset=1 & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { ptr:3 = imm24_dat + byteIndexOffset; export *:1 ptr; }    # abs24
+dst5B: imm24_dat                    is (indDst=0 & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { export *:1 imm24_dat; }    # abs24 (special constant address case)
+dst5B: [imm24_dat]                  is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { ptr:3 = imm24_dat + dstIndexOffset; ptr = *:3 ptr; export *:1 ptr; } # [abs24]
+
+# 2-Byte destination value/location specified by 5-bit encoding (b1_d5/b2_d5) - supports indirect prefix and byteIndexOffset
+dst5W: b2_d5_reg16                  is b1_d5=0x4; b2_d5_reg16 { export b2_d5_reg16; }    # Rx
+dst5W: b2_d5_regAx                  is b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx { tmp:2 = b2_d5_regAx:2; export tmp; } # Ax - read-only use !
+dst5W: [b2_d5_regAx]                is indDst=1 & b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx { ptr:3 = b2_d5_regAx; export *:2 ptr; }    # [Ax] - w/ indirect prefix
+dst5W: [b2_d5_regAx]                is dstIndexOffset & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx { ptr:3 = b2_d5_regAx + dstIndexOffset; export *:2 ptr; }    # [Ax]
+dst5W: [[b2_d5_regAx]]              is indDst=1 & dstIndexOffset & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx { ptr:3 = b2_d5_regAx + dstIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [[Ax]]
+dst5W: dst5dsp8^[b2_d5_regAxSF]     is (dstIndexOffset & b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8 { ptr:3 = b2_d5_regAxSF + dst5dsp8 + dstIndexOffset; export *:2 ptr; }    # dsp:8[Ax|SB|FB]
+dst5W: [dst5dsp8^[b2_d5_regAxSF]]   is (indDst=1 & dstIndexOffset & b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8 { ptr:3 = b2_d5_regAxSF + dst5dsp8 + dstIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [dsp:8[Ax|SB|FB]]
+dst5W: dst5dsp16^[b2_d5_regAxSF]    is (dstIndexOffset & b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16 { ptr:3 = b2_d5_regAxSF + dst5dsp16 + dstIndexOffset; export *:2 ptr; }    # dsp:16[Ax|SB|FB]
+dst5W: [dst5dsp16^[b2_d5_regAxSF]]  is (indDst=1 & dstIndexOffset & b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16 { ptr:3 = b2_d5_regAxSF + dst5dsp16 + dstIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [dsp:16[Ax|SB|FB]]
+dst5W: dst5dsp24^[b2_d5_regAx]      is (dstIndexOffset & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24 { ptr:3 = b2_d5_regAx + dst5dsp24 + dstIndexOffset; export *:2 ptr; }    # dsp:24[Ax]
+dst5W: [dst5dsp24^[b2_d5_regAx]]    is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24 { ptr:3 = b2_d5_regAx + dst5dsp24 + dstIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [dsp:24[Ax]]
+dst5W: imm16_dat                    is (indDst=0 & useDstByteIndexOffset=1 & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { ptr:3 = imm16_dat + byteIndexOffset; export *:2 ptr; }    # abs16 (+byteIndexOffset)
+dst5W: imm16_dat                    is (indDst=0 & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { export *:2 imm16_dat; }    # abs16 (special constant address case)
+dst5W: [imm16_dat]                  is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { ptr:3 = imm16_dat + dstIndexOffset; ptr = *:3 ptr; export *:2 ptr; }    # [abs16]
+dst5W: imm24_dat                    is (indDst=0 & useDstByteIndexOffset=1 & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { ptr:3 = imm24_dat + byteIndexOffset; export *:2 ptr; }    # abs24
+dst5W: imm24_dat                    is (indDst=0 & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { export *:2 imm24_dat; }    # abs24 (special constant address case)
+dst5W: [imm24_dat]                  is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { ptr:3 = imm24_dat + dstIndexOffset; ptr = *:3 ptr; export *:2 ptr; } # [abs24]
+
+# 4-Byte destination value/location specified by 5-bit encoding (b1_d5/b2_d5) - supports indirect prefix and byteIndexOffset
+dst5L: b2_d5_reg32                  is b1_d5=0x4; b2_d5_1=1 & b2_d5_reg32 { export b2_d5_reg32; }    # Rx
+dst5L: b2_d5_regAx                  is b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx { tmp:4 = zext(b2_d5_regAx); export tmp; } # Ax - read-only use !
+dst5L: [b2_d5_regAx]                is indDst=1 & b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx { ptr:3 = b2_d5_regAx; export *:4 ptr; }    # [Ax] - w/ indirect prefix
+dst5L: [b2_d5_regAx]                is dstIndexOffset & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx { ptr:3 = b2_d5_regAx + dstIndexOffset; export *:4 ptr; }    # [Ax]
+dst5L: [[b2_d5_regAx]]              is indDst=1 & dstIndexOffset & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx { ptr:3 = b2_d5_regAx + dstIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [[Ax]]
+dst5L: dst5dsp8^[b2_d5_regAxSF]     is (dstIndexOffset & b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8 { ptr:3 = b2_d5_regAxSF + dst5dsp8 + dstIndexOffset; export *:4 ptr; }    # dsp:8[Ax|SB|FB]
+dst5L: [dst5dsp8^[b2_d5_regAxSF]]   is (indDst=1 & dstIndexOffset & b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8 { ptr:3 = b2_d5_regAxSF + dst5dsp8 + dstIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [dsp:8[Ax|SB|FB]]
+dst5L: dst5dsp16^[b2_d5_regAxSF]    is (dstIndexOffset & b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16 { ptr:3 = b2_d5_regAxSF + dst5dsp16 + dstIndexOffset; export *:4 ptr; }    # dsp:16[Ax|SB|FB]
+dst5L: [dst5dsp16^[b2_d5_regAxSF]]  is (indDst=1 & dstIndexOffset & b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16 { ptr:3 = b2_d5_regAxSF + dst5dsp16 + dstIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [dsp:16[Ax|SB|FB]]
+dst5L: dst5dsp24^[b2_d5_regAx]      is (dstIndexOffset & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24 { ptr:3 = b2_d5_regAx + dst5dsp24 + dstIndexOffset; export *:4 ptr; }    # dsp:24[Ax]
+dst5L: [dst5dsp24^[b2_d5_regAx]]    is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24 { ptr:3 = b2_d5_regAx + dst5dsp24 + dstIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [dsp:24[Ax]]
+dst5L: imm16_dat                    is (indDst=0 & useDstByteIndexOffset=1 & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { ptr:3 = imm16_dat + byteIndexOffset; export *:4 ptr; }    # abs16 (+byteIndexOffset)
+dst5L: imm16_dat                    is (indDst=0 & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { export *:4 imm16_dat; }    # abs16 (special constant address case)
+dst5L: [imm16_dat]                  is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { ptr:3 = imm16_dat + dstIndexOffset; ptr = *:3 ptr; export *:4 ptr; }    # [abs16]
+dst5L: imm24_dat                    is (indDst=0 & useDstByteIndexOffset=1 & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { ptr:3 = imm24_dat + byteIndexOffset; export *:4 ptr; }    # abs24
+dst5L: imm24_dat                    is (indDst=0 & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { export *:4 imm24_dat; }    # abs24 (special constant address case)
+dst5L: [imm24_dat]                  is (indDst=1 & dstIndexOffset & b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { ptr:3 = imm24_dat + dstIndexOffset; ptr = *:3 ptr; export *:4 ptr; } # [abs24]
+
+# 3-Byte destination effective address specified by 5-bit encoding (b1_d5/b2_d5)
+dst5A: dst5dsp8^[b2_d5_regAxSF]   is (b1_d5=0x1; b2_d5_regAxSF) ... & dst5dsp8                     { ptr:3 = b2_d5_regAxSF + dst5dsp8; export ptr; }    # dsp:8[Ax|SB|FB]
+dst5A: dst5dsp16^[b2_d5_regAxSF]  is (b1_d5=0x2; b2_d5_regAxSF) ... & dst5dsp16                    { ptr:3 = b2_d5_regAxSF + dst5dsp16; export ptr; }    # dsp:16[Ax|SB|FB]
+dst5A: dst5dsp24^[b2_d5_regAx]    is (b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & dst5dsp24          { ptr:3 = b2_d5_regAx + dst5dsp24; export ptr; }    # dsp:24[Ax]
+dst5A: imm16_dat                  is (b1_d5=0x3; b2_d5=0x3) ... & (skipBytesBeforeDst5; imm16_dat) { export *[const]:3 imm16_dat; }    # abs16 (special constant address case)
+dst5A: imm24_dat                  is (b1_d5=0x3; b2_d5=0x2) ... & (skipBytesBeforeDst5; imm24_dat) { export *[const]:3 imm24_dat; } # abs24 (special constant address case)
+
+# Ax destination specified by 5-bit encoding (b1_d5/b2_d5)
+# NOTE! Ax destination is special case and must be handled seperately by each instruction
+# Starting position is at instruction b1
+dst5Ax: b2_d5_regAx  is b1_d5; b2_d5_regAx { export b2_d5_regAx; }
+
+# 1/2/4-Byte destination value/location specified by 5-bit encoding (b1_d5/b2_d5)
+# This handles the case for dst5B, dst5W and dst5L where 5-bit encoded Source (src5) add-on bytes may exist before Destination add-on bytes
+# Variable length pattern starting at instruction byte b1
+dst5B_afterSrc5: dst5B  is dst5B    [ dstFollowsSrc=1; ] { export dst5B; }
+
+dst5W_afterSrc5: dst5W  is dst5W    [ dstFollowsSrc=1; ] { export dst5W; }
+
+dst5L_afterSrc5: dst5L  is dst5L    [ dstFollowsSrc=1; ] { export dst5L; }
+
+# 1/2/4-Byte destination value/location specified by 5-bit encoding (b1_d5/b2_d5)
+# This handles the case for dst5B, dst5W and dst5L where Dsp8 add-on bytes always exist before Destination add-on bytes
+# Variable length pattern starting at instruction byte b1
+dst5B_afterDsp8: dst5B  is dst5B    [ dstFollowsSrc=2; ] { export dst5B; }
+
+dst5W_afterDsp8: dst5W  is dst5W    [ dstFollowsSrc=2; ] { export dst5W; }
+
+#
+# The following macros are used to elliminate illegal bit patterns when using dst5
+# These should be used by constructor pattern matching instead of the corresponding dst5 subconstructor
+#
+@define DST5B     "((b1_d5=4 | b1_d5_4=0) ... & dst5B)"
+@define DST5W     "((b1_d5=4 | b1_d5_4=0) ... & dst5W)"
+@define DST5L     "((b1_d5=4 | b1_d5_4=0) ... & dst5L)"
+@define DST5A     "((b1_d5_4=0) ... &  dst5A)"
+@define DST5AX    "((b1_d5=0x0; b2_d5_1=1) & dst5Ax)" 
+@define DST5B_AFTER_SRC5     "((b1_d5=4 | b1_d5_4=0) ... & dst5B_afterSrc5)"
+@define DST5W_AFTER_SRC5     "((b1_d5=4 | b1_d5_4=0) ... & dst5W_afterSrc5)"
+@define DST5L_AFTER_SRC5     "((b1_d5=4 | b1_d5_4=0) ... & dst5L_afterSrc5)"
+@define DST5B_AFTER_DSP8     "((b1_d5=4 | b1_d5_4=0) ... & dst5B_afterDsp8)"
+@define DST5W_AFTER_DSP8     "((b1_d5=4 | b1_d5_4=0) ... & dst5W_afterDsp8)"
+@define DST5L_AFTER_DSP8     "((b1_d5=4 | b1_d5_4=0) ... & dst5L_afterDsp8)"
+
+# dst2... Handle 2-bit encoded Destination specified by b1_d2
+# Variable length pattern starting at instruction byte b1
+# TODO? Certain uses of dst2 should exclude the R0 case (b1_d2=0)
+# 1-Byte destination value/location specified by 2-bit encoding (b1_d2)
+dst2B: R0L                    is b1_d2=0 & R0L                      { export R0L; }
+dst2B: imm16_dat              is b1_d2=1; imm16_dat                 { export *:1 imm16_dat; }
+dst2B: [imm16_dat]            is indDst=1 & b1_d2=1; imm16_dat      { ptr:3 = imm16_dat; ptr = *:3 ptr; export *:1 ptr; }
+dst2B: imm8_dat^":8"^[SB]     is b1_d2=2 & SB; imm8_dat             { ptr:3 = SB + imm8_dat; export *:1 ptr; }
+dst2B: [imm8_dat^":8"^[SB]]   is indDst=1 & b1_d2=2 & SB; imm8_dat  { ptr:3 = SB + imm8_dat; ptr = *:3 ptr; export *:1 ptr; }
+dst2B: simm8_dat^":8"^[FB]    is b1_d2=3 & FB; simm8_dat            { ptr:3 = FB + simm8_dat; export *:1 ptr; }
+dst2B: [simm8_dat^":8"^[FB]]  is indDst=1 & b1_d2=3 & FB; simm8_dat { ptr:3 = FB + simm8_dat; ptr = *:3 ptr; export *:1 ptr; }
+
+# 2-Byte destination value/location specified by 2-bit encoding (b1_d2)
+dst2W: R0                     is b1_d2=0 & R0                       { export R0; }
+dst2W: imm16_dat              is b1_d2=1; imm16_dat                 { export *:2 imm16_dat; }
+dst2W: [imm16_dat]            is indDst=1 & b1_d2=1; imm16_dat      { ptr:3 = imm16_dat; ptr = *:3 ptr; export *:2 ptr; }
+dst2W: imm8_dat^":8"^[SB]     is b1_d2=2 & SB; imm8_dat             { ptr:3 = SB + imm8_dat; export *:2 ptr; }
+dst2W: [imm8_dat^":8"^[SB]]   is indDst=1 & b1_d2=2 & SB; imm8_dat  { ptr:3 = SB + imm8_dat; ptr = *:3 ptr; export *:2 ptr; }
+dst2W: simm8_dat^":8"^[FB]    is b1_d2=3 & FB; simm8_dat            { ptr:3 = FB + simm8_dat; export *:2 ptr; }
+dst2W: [simm8_dat^":8"^[FB]]  is indDst=1 & b1_d2=3 & FB; simm8_dat { ptr:3 = FB + simm8_dat; ptr = *:3 ptr; export *:2 ptr; }
+
+# 4-Byte destination value/location specified by 2-bit encoding (b1_d2)
+dst2L: R2R0                   is b1_d2=0 & R2R0                     { export R2R0; }
+dst2L: imm16_dat              is b1_d2=1; imm16_dat                 { export *:4 imm16_dat; }
+dst2L: [imm16_dat]            is indDst=1 & b1_d2=1; imm16_dat      { ptr:3 = imm16_dat; ptr = *:3 ptr; export *:4 ptr; }
+dst2L: imm8_dat^":8"^[SB]     is b1_d2=2 & SB; imm8_dat             { ptr:3 = SB + imm8_dat; export *:4 ptr; }
+dst2L: [imm8_dat^":8"^[SB]]   is indDst=1 & b1_d2=2 & SB; imm8_dat  { ptr:3 = SB + imm8_dat; ptr = *:3 ptr; export *:4 ptr; }
+dst2L: simm8_dat^":8"^[FB]    is b1_d2=3 & FB; simm8_dat            { ptr:3 = FB + simm8_dat; export *:4 ptr; }
+dst2L: [simm8_dat^":8"^[FB]]  is indDst=1 & b1_d2=3 & FB; simm8_dat { ptr:3 = FB + simm8_dat; ptr = *:3 ptr; export *:4 ptr; }
+
+dsp8spB: simm8_dat^":8"^[SP]  is simm8_dat & SP { ptr:3 = SP + simm8_dat; export *:1 ptr; }
+
+dsp8spW: simm8_dat^":8"^[SP]  is simm8_dat & SP { ptr:3 = SP + simm8_dat; export *:2 ptr; }
+
+#
+# Bit base - associated add-on data immediately follows instruction byte b2
+# (Ax destination case must be handled seperately)
+#
+# Obtain bitbase offset displacement for [AX | SB | FB] - AX and SB uses unsigned displacements, FB uses signed displacement
+bitbaseDsp8:  imm8_dat^":11"     is b1_d5; b2_d5; imm8_dat       { export *[const]:3 imm8_dat; }
+bitbaseDsp8:  simm8_dat^":11"    is b1_d5; b2_d5=0x3; simm8_dat  { export *[const]:3 simm8_dat; }
+
+bitbaseDsp16: imm16_dat^":19"   is b1_d5; b2_d5; imm16_dat      { export *[const]:3 imm16_dat; }
+bitbaseDsp16: simm16_dat^":19"  is b1_d5; b2_d5=0x3; simm16_dat { export *[const]:3 simm16_dat; }
+
+bitbaseDsp24: imm24_dat^":27"   is b1_d5; b2_d5; imm24_dat      { export *[const]:3 imm24_dat; }
+bitbaseDsp24: simm24_dat^":27"  is b1_d5; b2_d5=0x3; simm24_dat { export *[const]:3 simm24_dat; }
+
+bitbase: b2_d5_reg8                    is useBitIndex=0 & b1_d5=0x4; b2_d5_reg8                                   { export b2_d5_reg8; } # Rx
+bitbase: b2_d5_regAx                   is useBitIndex=0 & b1_d5=0x0; b2_d5_1=1 & b2_d5_regAx                      { tmp:1 = b2_d5_regAx:1; export tmp; } # Ax - read-only case
+bitbase: [b2_d5_regAx]                 is useBitIndex=0 & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx                      { ptr:3 = b2_d5_regAx; export *:1 ptr; } # [Ax]
+bitbase: bitbaseDsp8^[b2_d5_regAxSF]   is (useBitIndex=0 & b1_d5=0x1; b2_d5_regAxSF) ... & bitbaseDsp8            { ptr:3 = b2_d5_regAxSF + bitbaseDsp8; export *:1 ptr; } # base:11[Ax|SB|FB]
+bitbase: bitbaseDsp16^[b2_d5_regAxSF]  is (useBitIndex=0 & b1_d5=0x2; b2_d5_regAxSF) ... & bitbaseDsp16           { ptr:3 = b2_d5_regAxSF + bitbaseDsp16; export *:1 ptr; } # base:19[Ax|SB|FB]
+bitbase: bitbaseDsp24^[b2_d5_regAx]    is (useBitIndex=0 & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & bitbaseDsp24 { ptr:3 = b2_d5_regAx + bitbaseDsp24; export *:1 ptr; } # base:27[Ax]
+bitbase: imm16_dat^":19"               is useBitIndex=0 & b1_d5=0x3; b2_d5=0x3; imm16_dat                         { export *:1 imm16_dat; } # base:19
+bitbase: imm24_dat^":27"               is useBitIndex=0 & b1_d5=0x3; b2_d5=0x2; imm24_dat                         { export *:1 imm24_dat; } # base:27
+
+bitbase: [b2_d5_regAx]                 is useBitIndex=1 & b1_d5=0x0; b2_d5_1=0 & b2_d5_regAx                      { ptr:3 = b2_d5_regAx + (bitIndex / 8); export *:1 ptr; }  # [Ax] w/bitIndex
+bitbase: bitbaseDsp8^[b2_d5_regAxSF]   is (useBitIndex=1 & b1_d5=0x1; b2_d5_regAxSF) ... & bitbaseDsp8            { ptr:3 = b2_d5_regAxSF + bitbaseDsp8 + (bitIndex / 8); export *:1 ptr; } # base:11[Ax|SB|FB] w/bitIndex
+bitbase: bitbaseDsp16^[b2_d5_regAxSF]  is (useBitIndex=1 & b1_d5=0x2; b2_d5_regAxSF) ... & bitbaseDsp16           { ptr:3 = b2_d5_regAxSF + bitbaseDsp16 + (bitIndex / 8); export *:1 ptr; } # base:19[Ax|SB|FB] w/bitIndex
+bitbase: bitbaseDsp24^[b2_d5_regAx]    is (useBitIndex=1 & b1_d5=0x3; b2_d5_1=0 & b2_d5_regAx) ... & bitbaseDsp24 { ptr:3 = b2_d5_regAx + bitbaseDsp24 + (bitIndex / 8); export *:1 ptr; } # base:27[Ax] w/bitIndex
+bitbase: imm16_dat^":19"               is useBitIndex=1 & b1_d5=0x3; b2_d5=0x3; imm16_dat                         { ptr:3 = imm16_dat + (bitIndex / 8); export *:1 ptr; } # base:19 w/bitIndex
+bitbase: imm24_dat^":27"               is useBitIndex=1 & b1_d5=0x3; b2_d5=0x2; imm24_dat                         { ptr:3 = imm24_dat + (bitIndex / 8); export *:1 ptr; } # base:27 w/bitIndex
+
+# Ax bitbase destination specified by 5-bit encoding (b1_d5/b2_d5)
+# NOTE! Ax destination is special case and must be handled seperately by each instruction
+# Starting position is at instruction b1
+bitbaseAx: b2_d5_regAx  is b1_d5; b2_d5_regAx { export b2_d5_regAx; }
+
+bitbaseAbs16: imm16_dat  is imm16_dat { export *:1 imm16_dat; }
+
+#
+# The following macros are used to elliminate illegal bit patterns when using dst5
+# These should be used by constructor pattern matching instead of the corresponding dst5 subconstructor
+#
+@define BITBASE     "((b1_d5=4 | b1_d5_4=0) ... & bitbase)"
+@define BITBASE_AX    "((b1_d5=0x0; b2_d5_1=1) & bitbaseAx)"
+
+# Bit identifier (may be overriden if useBitIndex has been set by BINDEX instruction
+bit: b2_bit      is useBitIndex=0 & b2_bit   { export *[const]:1 b2_bit; }
+bit: [bitIndex]  is useBitIndex=1 & bitIndex { val:3 = bitIndex % 8; b:1 = val:1; export b; }
+
+#
+# Immediate data operand
+# Fixed length - current position is at start of immediate data
+#
+srcImm3: "#"^b2_0002     is b2_0002   { export *[const]:1 b2_0002; }
+srcImm8: "#"^imm8_dat    is imm8_dat  { export *[const]:1 imm8_dat; }
+
+srcImm8a: "#"^imm8_dat  is imm8_dat { export *[const]:1 imm8_dat; } # used when two imm8 are needed
+
+srcImm16: "#"^imm16_dat  is imm16_dat { export *[const]:2 imm16_dat; }
+
+srcImm16a: "#"^imm16_dat  is imm16_dat { export *[const]:2 imm16_dat; } # used when two imm16 are needed
+
+srcImm24: "#"^imm24_dat  is imm24_dat { export *[const]:3 imm24_dat; }
+srcImm32: "#"^imm32_dat  is imm32_dat { export *[const]:4 imm32_dat; }
+
+# Unsigned immediate data from 1-bit value:  1 <= value <= 2 (1 added to unsigned bit value)
+srcImm1p: "#"^val  is b1_0505    [ val = b1_0505 + 1; ] { export *[const]:1 val; }
+
+# Unsigned immediate data from 2-bit value:  1 <= value <= 8 (1 added to unsigned bit value)
+srcImm3p: "#"^val  is b1_0405 & b1_0000    [ val = (b1_0405 << 1) + b1_0000 + 1; ] { export *[const]:1 val; }
+
+srcSimm8: "#"^simm8_dat    is simm8_dat  { export *[const]:1 simm8_dat; }
+srcSimm16: "#"^simm16_dat  is simm16_dat { export *[const]:2 simm16_dat; }
+srcSimm32: "#"^simm32_dat  is simm32_dat { export *[const]:4 simm32_dat; }
+
+# Signed immediate data from signed 4-bit value: -8 <= value <= 7
+srcSimm4: "#"^b2_simm4     is b2_simm4   { export *[const]:1 b2_simm4; }
+
+srcSimm8a: srcSimm8  is srcSimm8 { export srcSimm8; }
+
+srcSimm16a: srcSimm16  is srcSimm16 { export srcSimm16; }
+
+# Signed immediate shift amount from 4-bit value: -8 <= value <= -1 || 1 <= value <= 8
+srcSimm4Shift: "#"^val  is b2_shiftSign=0 & b2_0002        [ val = b2_0002 + 1; ]    { export *[const]:1 val; }
+srcSimm4Shift: "#"^val  is b2_shiftSign=1 & b2_0002        [ val = -(b2_0002 + 1); ] { export *[const]:1 val; }
+
+srcZero8: "#0"   is b1_0007 { export 0:1; }
+srcZero16: "#0"  is b1_0007 { export 0:2; }
+
+# special 6-bit immediate for INT number
+srcIntNum: "#"^imm6_dat  is imm6_dat { export *[const]:1 imm6_dat; }
+
+#
+# Offset label operand
+#
+abs24offset: imm24_dat  is imm24_dat { export *:1 imm24_dat; }
+
+abs16offset: imm16_dat  is imm16_dat { export *:1 imm16_dat; }
+
+# Relative address offsets
+rel16offset1: offs  is simm16_dat            [ offs = inst_start + 1 + simm16_dat; ] { export *:1 offs; }
+
+rel8offset1: offs  is simm8_dat            [ offs = inst_start + 1 + simm8_dat; ] { export *:1 offs; }
+rel8offset2: offs  is simm8_dat            [ offs = inst_start + 2 + simm8_dat; ] { export *:1 offs; }
+
+rel3offset2: offs  is b1_0405 & b1_0000    [ offs = inst_start + 2 + ((b1_0405 << 1) + b1_0000); ] { export *:1 offs; }
+
+reloffset_dst5W: dst5W  is $(DST5W) { local reladdr = inst_start + dst5W; export *:3 reladdr; }
+
+reloffset_dst5L: dst5L  is $(DST5L) { local reladdr = inst_start + dst5L; export *:3 reladdr; }
+
+reloffset_dst5Ax: dst5Ax  is $(DST5AX) { local reladdr = inst_start + dst5Ax; export *:3 reladdr; }
+
+#
+# Conditionals (see BMcnd)
+#
+# TODO!! Need to verify conditional logic pulled from old slaspec
+# TODO: the 'cnd' subconstructor should really constrain the bits 4-7 to 0x0, however this exposes a sleigh compiler problem
+cnd: "LTU"  is cnd_dat=0x0 { tstCnd:1 = ($(CARRY) == 0); export tstCnd; }                                   # less than (>), C flag is 0
+cnd: "LEU"  is cnd_dat=0x1 { tstCnd:1 = (($(CARRY) & (!$(ZERO))) == 0); export tstCnd; }                     # Equal to or less than (>=)
+cnd: "NE"   is cnd_dat=0x2 { tstCnd:1 = ($(ZERO) == 0); export tstCnd; }                                       # Not Equal to (=), Z flag is 0 
+cnd: "PZ"   is cnd_dat=0x3 { tstCnd:1 = ($(SIGN) == 0); export tstCnd; }                                   # Positive or zero (0<=)
+cnd: "NO"   is cnd_dat=0x4 { tstCnd:1 = ($(OVERFLOW) == 0); export tstCnd; }                            # O flag is 0
+cnd: "GT"   is cnd_dat=0x5 { tstCnd:1 = ((($(SIGN) ^ $(OVERFLOW)) | $(ZERO)) == 0); export tstCnd; }     # Greater than (signed value) (<)
+cnd: "GE"   is cnd_dat=0x6 { tstCnd:1 = (($(SIGN) ^ $(OVERFLOW)) == 0); export tstCnd; }                   # Equal to or greater than (signed value) (<=)
+cnd: "GEU"  is cnd_dat=0x8 { tstCnd:1 = ($(CARRY) == 1); export tstCnd; }                                   # Equal to or greater than (<=), C flag is 1 
+cnd: "GTU"  is cnd_dat=0x9 { tstCnd:1 = (($(CARRY) & (!$(ZERO))) == 1); export tstCnd; }                     # Greater than (<)
+cnd: "EQ"   is cnd_dat=0xa { tstCnd:1 = ($(ZERO) == 1); export tstCnd; }                                       # Equal to  (=), Z flag is 1
+cnd: "N"    is cnd_dat=0xb { tstCnd:1 = ($(SIGN) == 1); export tstCnd; }                                   # Negative (0>)
+cnd: "O"    is cnd_dat=0xc { tstCnd:1 = ($(OVERFLOW) == 1); export tstCnd; }                                   # O flag is 1
+cnd: "LE"   is cnd_dat=0xd { tstCnd:1 = ((($(SIGN) ^ $(OVERFLOW)) | $(ZERO)) == 1); export tstCnd; }     # Equal to or less than (signed value) (>=)
+cnd: "LT"   is cnd_dat=0xe { tstCnd:1 = (($(SIGN) ^ $(OVERFLOW)) == 1); export tstCnd; } # less than (signed value) (<=)
+
+b2cnd: "LTU"  is b2_0606=0 & b2_0002=0 { tstCnd:1 = ($(CARRY) == 0); export tstCnd; }                                   # less than (>), C flag is 0
+b2cnd: "LEU"  is b2_0606=0 & b2_0002=1 { tstCnd:1 = (($(CARRY) & (!$(ZERO))) == 0); export tstCnd; }                 # Equal to or less than (>=)
+b2cnd: "NE"   is b2_0606=0 & b2_0002=2 { tstCnd:1 = ($(ZERO) == 0); export tstCnd; }                                       # Not Equal to (=), Z flag is 0 
+b2cnd: "PZ"   is b2_0606=0 & b2_0002=3 { tstCnd:1 = ($(SIGN) == 0); export tstCnd; }                                   # Positive or zero (0<=)
+b2cnd: "NO"   is b2_0606=0 & b2_0002=4 { tstCnd:1 = ($(OVERFLOW) == 0); export tstCnd; }                            # O flag is 0
+b2cnd: "GT"   is b2_0606=0 & b2_0002=5 { tstCnd:1 = ((($(SIGN) ^ $(OVERFLOW)) | $(ZERO)) == 0); export tstCnd; }     # Greater than (signed value) (<)
+b2cnd: "GE"   is b2_0606=0 & b2_0002=6 { tstCnd:1 = (($(SIGN) ^ $(OVERFLOW)) == 0); export tstCnd; }                   # Equal to or greater than (signed value) (<=)
+b2cnd: "GEU"  is b2_0606=1 & b2_0002=0 { tstCnd:1 = ($(CARRY) == 1); export tstCnd; }                                   # Equal to or greater than (<=), C flag is 1 
+b2cnd: "GTU"  is b2_0606=1 & b2_0002=1 { tstCnd:1 = (($(CARRY) & (!$(ZERO))) == 1); export tstCnd; }                 # Greater than (<)
+b2cnd: "EQ"   is b2_0606=1 & b2_0002=2 { tstCnd:1 = ($(ZERO) == 1); export tstCnd; }                                       # Equal to  (=), Z flag is 1
+b2cnd: "N"    is b2_0606=1 & b2_0002=3 { tstCnd:1 = ($(SIGN) == 1); export tstCnd; }                                   # Negative (0>)
+b2cnd: "O"    is b2_0606=1 & b2_0002=4 { tstCnd:1 = ($(OVERFLOW) == 1); export tstCnd; }                                   # O flag is 1
+b2cnd: "LE"   is b2_0606=1 & b2_0002=5 { tstCnd:1 = ((($(SIGN) ^ $(OVERFLOW)) | $(ZERO)) == 1); export tstCnd; }     # Equal to or less than (signed value) (>=)
+b2cnd: "LT"   is b2_0606=1 & b2_0002=6 { tstCnd:1 = (($(SIGN) ^ $(OVERFLOW)) == 1); export tstCnd; } # less than (signed value) (<=)
+
+b1cnd: "LTU"  is b1_0406=0 & b1_0000=0 { tstCnd:1 = ($(CARRY) == 0); export tstCnd; }                                   # less than (>), C flag is 0
+b1cnd: "LEU"  is b1_0406=0 & b1_0000=1 { tstCnd:1 = (($(CARRY) & (!$(ZERO))) == 0); export tstCnd; }                 # Equal to or less than (>=)
+b1cnd: "NE"   is b1_0406=1 & b1_0000=0 { tstCnd:1 = ($(ZERO) == 0); export tstCnd; }                                       # Not Equal to (=), Z flag is 0 
+b1cnd: "PZ"   is b1_0406=1 & b1_0000=1 { tstCnd:1 = ($(SIGN) == 0); export tstCnd; }                                   # Positive or zero (0<=)
+b1cnd: "NO"   is b1_0406=2 & b1_0000=0 { tstCnd:1 = ($(OVERFLOW) == 0); export tstCnd; }                            # O flag is 0
+b1cnd: "GT"   is b1_0406=2 & b1_0000=1 { tstCnd:1 = ((($(SIGN) ^ $(OVERFLOW)) | $(ZERO)) == 0); export tstCnd; }     # Greater than (signed value) (<)
+b1cnd: "GE"   is b1_0406=3 & b1_0000=0 { tstCnd:1 = (($(SIGN) ^ $(OVERFLOW)) == 0); export tstCnd; }                   # Equal to or greater than (signed value) (<=)
+b1cnd: "GEU"  is b1_0406=4 & b1_0000=0 { tstCnd:1 = ($(CARRY) == 1); export tstCnd; }                                   # Equal to or greater than (<=), C flag is 1 
+b1cnd: "GTU"  is b1_0406=4 & b1_0000=1 { tstCnd:1 = (($(CARRY) & (!$(ZERO))) == 1); export tstCnd; }                 # Greater than (<)
+b1cnd: "EQ"   is b1_0406=5 & b1_0000=0 { tstCnd:1 = ($(ZERO) == 1); export tstCnd; }                                       # Equal to  (=), Z flag is 1
+b1cnd: "N"    is b1_0406=5 & b1_0000=1 { tstCnd:1 = ($(SIGN) == 1); export tstCnd; }                                   # Negative (0>)
+b1cnd: "O"    is b1_0406=6 & b1_0000=0 { tstCnd:1 = ($(OVERFLOW) == 1); export tstCnd; }                                   # O flag is 1
+b1cnd: "LE"   is b1_0406=6 & b1_0000=1 { tstCnd:1 = ((($(SIGN) ^ $(OVERFLOW)) | $(ZERO)) == 1); export tstCnd; }     # Equal to or less than (signed value) (>=)
+b1cnd: "LT"   is b1_0406=7 & b1_0000=0 { tstCnd:1 = (($(SIGN) ^ $(OVERFLOW)) == 1); export tstCnd; } # less than (signed value) (<=)
+
+#
+# Flag bit operand
+#
+flagBit: "C"  is b2_0002=0 { export 0:2; }
+flagBit: "D"  is b2_0002=1 { export 1:2; }
+flagBit: "Z"  is b2_0002=2 { export 2:2; }
+flagBit: "S"  is b2_0002=3 { export 3:2; }
+flagBit: "B"  is b2_0002=4 { export 4:2; }
+flagBit: "O"  is b2_0002=5 { export 5:2; }
+flagBit: "I"  is b2_0002=6 { export 6:2; }
+flagBit: "U"  is b2_0002=7 { export 7:2; }
+
+with: phase=1 {
+#
+# Instruction Constructors
+#
+##### ABS #####
+# (1) ABS.B dst
+#   1010 0100 1001 1111 0011 0100 0001 0010  ABS.B 0x1234:16[SB]
+#   0000 1001 1010 0100 1001 1111 0011 0100 0001 0010  ABS.B [0x1234:16[SB]]  
+:ABS.B dst5B                         is (b1_0407=0xa & b1_size_0=0; b2_0005=0x1f) ... & $(DST5B) ... {
+    tmp:1 = dst5B;
+    $(OVERFLOW) = (tmp == 0x80);
+    if (tmp s>= 0) goto <skip>;
+    tmp = -tmp;
+    dst5B = tmp;
+    <skip>
+    setResultFlags(tmp);
+}
+
+# (1) ABS.B Ax
+:ABS.B dst5Ax                        is (b1_0407=0xa & b1_size_0=0; b2_0005=0x1f) ... & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1;
+    $(OVERFLOW) = (tmp == 0x80);
+    if (tmp s>= 0) goto <skip>;
+    tmp = -tmp;
+    dst5Ax = zext(tmp);
+    <skip>
+    setResultFlags(tmp);
+}
+
+# (1) ABS.W dst
+#   1010 0101 1001 1111 0011 0100 0001 0010  ABS.W 0x1234:16[SB]
+#   0000 1001 1010 0101 1001 1111 0011 0100 0001 0010  ABS.W [0x1234:16[SB]]  
+:ABS.W dst5W                         is (b1_0407=0xa & b1_size_0=1; b2_0005=0x1f) ... & $(DST5W) ... {
+    tmp:2 = dst5W;
+    $(OVERFLOW) = (tmp == 0x8000);
+    if (tmp s>= 0) goto <skip>;
+    tmp = -tmp;
+    dst5W = tmp;
+    <skip>
+    setResultFlags(tmp);
+}
+
+# (1) ABS.W Ax
+:ABS.W dst5Ax                        is (b1_0407=0xa & b1_size_0=1; b2_0005=0x1f) ... & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2;
+    $(OVERFLOW) = (tmp == 0x8000);
+    if (tmp s>= 0) goto <skip>;
+    tmp = -tmp;
+    dst5Ax = zext(tmp);
+    <skip>
+    setResultFlags(tmp);
+}
+
+##### ADC #####
+
+# (1) ADC.B #simm, dst
+#   0000 0001 1000 0100 1010 1110 0011 0100 0001 0010  0101 0110  ADC.B 0x56, 0x1234:16[SB]
+#   0000 1001 0000 0001 1000 0100 1010 1110 0011 0100 0001 0010 0101 0110  ABS.B 0x56, [0x1234:16[SB]]  
+:ADC.B srcSimm8, dst5B               is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B)); srcSimm8 {
+    tmp:1 = dst5B;
+    c:1 = $(CARRY);
+    setAdd3Flags(tmp, srcSimm8, c);
+    tmp = tmp + srcSimm8 + c;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADC.B #simm, Ax
+:ADC.B srcSimm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2e) & $(DST5AX)); srcSimm8 {
+    tmp:1 = dst5Ax:1;
+    c:1 = $(CARRY);
+    setAdd3Flags(tmp, srcSimm8, c);
+    tmp = tmp + srcSimm8 + c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) ADC.W #simm, dst
+:ADC.W srcSimm16, dst5W              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W)); srcSimm16 {
+    tmp:2 = dst5W;
+    c:2 = zext($(CARRY));
+    setAdd3Flags(tmp, srcSimm16, c);
+    tmp = tmp + srcSimm16 + c;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADC.B #simm, Ax
+:ADC.W srcSimm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2e) & $(DST5AX)); srcSimm16 {
+    tmp:2 = dst5Ax:2;
+    c:2 = zext($(CARRY));
+    setAdd3Flags(tmp, srcSimm16, c);
+    tmp = tmp + srcSimm16 + c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) ADC.B src5, dst5
+:ADC.B src5B, dst5B_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x4) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    tmp:1 = dst5B_afterSrc5;
+    s:1 = src5B;
+    c:1 = $(CARRY);
+    setAdd3Flags(tmp, s, c);
+    tmp = tmp + s + c;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) ADC.B src5, Ax
+:ADC.B src5B, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x4) ... & $(SRC5B) & $(DST5AX) ...) {
+    tmp:1 = dst5Ax:1;
+    s:1 = src5B;
+    c:1 = $(CARRY);
+    setAdd3Flags(tmp, s, c);
+    tmp = tmp + s + c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) ADC.W src5, dst5
+:ADC.W src5W, dst5W_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x4) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    tmp:2 = dst5W_afterSrc5;
+    s:2 = src5W;
+    c:2 = zext($(CARRY));
+    setAdd3Flags(tmp, s, c);
+    tmp = tmp + s + c;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) ADC.W src5, Ax
+:ADC.W src5W, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x4) ... & $(SRC5W) & $(DST5AX) ...) {
+    tmp:2 = dst5Ax:2;
+    s:2 = src5W;
+    c:2 = zext($(CARRY));
+    setAdd3Flags(tmp, s, c);
+    tmp = tmp + s + c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### ADCF #####
+
+# (1) ADCF.B dst
+:ADCF.B dst5B                        is (b1_0407=0xb & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B) {
+    tmp:1 = dst5B;
+    c:1 = $(CARRY);
+    setAddFlags(tmp, c);
+    tmp = tmp + c;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADCF.B Ax
+:ADCF.B dst5Ax                       is (b1_0407=0xb & b1_size_0=0; b2_0005=0x1e) & $(DST5AX) {
+    tmp:1 = dst5Ax:1;
+    c:1 = $(CARRY);
+    setAddFlags(tmp, c);
+    tmp = tmp + c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) ADCF.W dst
+:ADCF.W dst5W                        is (b1_0407=0xb & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W) {
+    tmp:2 = dst5W;
+    c:2 = zext($(CARRY));
+    setAddFlags(tmp, c);
+    tmp = tmp + c;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADCF.B Ax
+:ADCF.W dst5Ax                       is (b1_0407=0xb & b1_size_0=1; b2_0005=0x1e) & $(DST5AX) {
+    tmp:2 = dst5Ax:2;
+    c:2 = zext($(CARRY));
+    setAddFlags(tmp, c);
+    tmp = tmp + c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### ADD #####
+
+# (1) ADD.B:G #simm, dst
+:ADD^".B:G" srcSimm8, dst5B          is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B)); srcSimm8 {
+    tmp:1 = dst5B;
+    setAddFlags(tmp, srcSimm8);
+    tmp = tmp + srcSimm8;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADD.B:G #simm, Ax
+:ADD^".B:G" srcSimm8, dst5Ax         is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2e) & $(DST5AX)); srcSimm8 {
+    tmp:1 = dst5Ax:1;
+    setAddFlags(tmp, srcSimm8);
+    tmp = tmp + srcSimm8;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) ADD.W:G #simm, dst
+:ADD^".W:G" srcSimm16, dst5W         is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W)); srcSimm16 {
+    tmp:2 = dst5W;
+    setAddFlags(tmp, srcSimm16);
+    tmp = tmp + srcSimm16;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADD.W:G #simm, Ax
+:ADD^".W:G" srcSimm16, dst5Ax        is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2e) & $(DST5AX)); srcSimm16 {
+    tmp:2 = dst5Ax:2;
+    setAddFlags(tmp, srcSimm16);
+    tmp = tmp + srcSimm16;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) ADD.L:G #simm, dst
+:ADD^".L:G" srcSimm32, dst5L         is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x31) ... & $(DST5L)); srcSimm32 {
+    tmp:4 = dst5L;
+    setAddFlags(tmp, srcSimm32);
+    tmp = tmp + srcSimm32;
+    dst5L = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) ADD.L:G #simm, Ax
+:ADD^".L:G" srcSimm32, dst5Ax        is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x31) & $(DST5AX)); srcSimm32 {
+    tmp:4 = zext(dst5Ax);
+    setAddFlags(tmp, srcSimm32);
+    tmp = tmp + srcSimm32;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (3) ADD.B:G #simm4, dst
+:ADD^".B:G" srcSimm4, dst5B          is (b1_0507=0x7 & b1_size_4=0 & b1_size_0=0; b2_0405=3 & srcSimm4) ... & $(DST5B) {
+    tmp:1 = dst5B;
+    setAddFlags(tmp, srcSimm4);
+    tmp = tmp + srcSimm4;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (3) ADD.B:G #simm4, Ax
+:ADD^".B:G" srcSimm4, dst5Ax         is (b1_0507=0x7 & b1_d5=0x0 & b1_size_4=0 & b1_size_0=0; b2_0405=3 & srcSimm4) & $(DST5AX) {
+    tmp:1 = dst5Ax:1;
+    setAddFlags(tmp, srcSimm4);
+    tmp = tmp + srcSimm4;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (3) ADD.W:Q #simm4, dst
+:ADD^".W:Q" srcSimm4, dst5W          is (b1_0507=0x7 & b1_size_4=0 & b1_size_0=1; b2_0405=3 & srcSimm4) ... & $(DST5W) {
+    tmp:2 = dst5W;
+    imm:2 = sext(srcSimm4);
+    setAddFlags(tmp, imm);
+    tmp = tmp + imm;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (3) ADD.W:Q #simm4, Ax
+:ADD^".W:Q" srcSimm4, dst5Ax         is (b1_0507=0x7 & b1_d5=0x0 & b1_size_4=0 & b1_size_0=1; b2_0405=3 & srcSimm4) & $(DST5AX) {
+    tmp:2 = dst5Ax:2;
+    imm:2 = sext(srcSimm4);
+    setAddFlags(tmp, imm);
+    tmp = tmp + imm;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (3) ADD.L:Q #simm4, dst
+:ADD^".L:Q" srcSimm4, dst5L          is (b1_0507=0x7 & b1_size_4=1 & b1_size_0=0; b2_0405=3 & srcSimm4) ... & $(DST5L) {
+    tmp:4 = dst5L;
+    imm:4 = sext(srcSimm4);
+    setAddFlags(tmp, imm);
+    tmp = tmp + imm;
+    dst5L = tmp;
+    setResultFlags(tmp);
+}
+
+# (3) ADD.L:Q #simm4, Ax
+:ADD^".L:Q" srcSimm4, dst5Ax         is (b1_0507=0x7 & b1_d5=0x0 & b1_size_4=1 & b1_size_0=0; b2_0405=3 & srcSimm4) & $(DST5AX) {
+    tmp:4 = sext(dst5Ax);
+    imm:4 = sext(srcSimm4);
+    setAddFlags(tmp, imm);
+    tmp = tmp + imm;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (4) ADD.B:S #simm, dst
+:ADD^".B:S" srcSimm8, dst2B          is ((b1_0607=0 & b1_0103=3 & b1_size_0=0) ... & dst2B); srcSimm8 {
+    tmp:1 = dst2B;
+    setAddFlags(tmp, srcSimm8);
+    tmp = tmp + srcSimm8;
+    dst2B = tmp;
+    setResultFlags(tmp);
+}
+
+# (4) ADD.W:S #simm, dst
+# 0010 0111 0101 0110 0011 0100 0001 0010  ADD.W:S #0x1234, 0x56:8[SB]
+:ADD^".W:S" srcSimm16, dst2W         is ((b1_0607=0 & b1_0103=3 & b1_size_0=1) ... & dst2W); srcSimm16 {
+    tmp:2 = dst2W;
+    setAddFlags(tmp, srcSimm16);
+    tmp = tmp + srcSimm16;
+    dst2W = tmp;
+    setResultFlags(tmp);
+}
+
+# (5) ADD.L:S #imm1, Ax
+:ADD^".L:S" srcImm1p, b1_d1_regAx    is b1_0607=2 & srcImm1p & b1_0104=0x6 & b1_d1_regAx {
+    tmp:4 = sext(b1_d1_regAx);
+    imm:4 = zext(srcImm1p);
+    setAddFlags(tmp, imm);
+    tmp = tmp + imm;
+    b1_d1_regAx = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (6) ADD.B:G src, dst
+# 1011 0110 0001 1000 0101 0110 0011 0100 0001 0010 0011 0011 0010 0010 0001 0001  ADD.B:G 0x123456:24[A0], 112233[A1]
+# 1100 0101 1111 1000 0011 0100 0001 0010  ADD.W:G R1, 0x1234:16[FB]
+:ADD^".B:G"  src5B, dst5B_afterSrc5  is (b1_0707=1 & b1_size_0=0; b2_0003=0x8) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... {
+    tmp:1 = dst5B_afterSrc5;
+    src:1 = src5B;
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (6) ADD.B:G  src, Ax - Ax destination case
+:ADD^".B:G"  src5B, dst5Ax           is (b1_0707=1 & b1_size_0=0; b2_0003=0x8) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1;
+    src:1 = src5B;
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (6) ADD.W:G src, dst
+:ADD^".W:G"  src5W, dst5W_afterSrc5  is (b1_0707=1 & b1_size_0=1; b2_0003=0x8) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... {
+    tmp:2 = dst5W_afterSrc5;
+    src:2 = src5W;
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (6) ADD.W:G  src, Ax - Ax destination case
+:ADD^".W:G"  src5W, dst5Ax           is (b1_0707=1 & b1_size_0=1; b2_0003=0x8) ... & $(SRC5W) & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2;
+    src:2 = src5W;
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (7) ADD.L:G src, dst
+:ADD^".L:G" src5L, dst5L_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0x2) ... & $(SRC5L) ... & $(DST5L_AFTER_SRC5) ... {
+    tmp:4 = dst5L_afterSrc5;
+    src:4 = src5L;
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5L_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (7) ADD.L:G src, Ax - Ax destination case
+:ADD^".L:G" src5L, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0x2) ... & $(SRC5L) & $(DST5AX) ... {
+    tmp:4 = zext(dst5Ax);
+    src:4 = src5L;
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (8) ADD.l:G #simm16, SP
+:ADD^".L:G" srcSimm16, SP            is b1_0007=0xb6 & SP; b2_0007=0x13; srcSimm16 {
+    # not done as 32-bit calculation to simplify stack analysis
+    imm:3 = sext(srcSimm16);
+    setAddFlags(SP, imm);
+    SP = SP + imm;
+    setResultFlags(SP);
+}
+
+# (9) ADD.L:Q #imm3, SP
+:ADD^".L:Q" srcImm3p, SP             is b1_0607=1 & srcImm3p & b1_0103=1    & SP {
+    # not done as 32-bit calculation to simplify stack analysis
+    imm:3 = zext(srcImm3p);
+    setAddFlags(SP, imm);
+    SP = SP + imm;
+    setResultFlags(SP);
+}
+
+# (10) ADD.L:S #simm8, SP
+:ADD^".L:S" srcSimm8, SP             is b1_0007=0xb6 & SP; b2_0007=0x03; srcSimm8 {
+    # not done as 32-bit calculation to simplify stack analysis
+    imm:3 = sext(srcSimm8);
+    setAddFlags(SP, imm);
+    SP = SP + imm;
+    setResultFlags(SP);
+}
+
+##### ADDX #####
+
+# (1) ADDX #simm, dst5
+:ADDX srcSimm8, dst5L                is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x11) ... & $(DST5L)); srcSimm8 {
+    tmp:4 = dst5L;
+    src:4 = sext(srcSimm8);
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5L = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ADDX #simm, Ax
+:ADDX srcSimm8, dst5Ax               is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x11) & $(DST5AX)); srcSimm8 {
+    tmp:4 = zext(dst5Ax);
+    src:4 = sext(srcSimm8);
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (2) ADDX src5, dst5
+:ADDX src5B, dst5L_afterSrc5         is (b1_0707=1 & b1_size_0=0; b2_0003=0x2) ... & $(SRC5B) ... & $(DST5L_AFTER_SRC5) ... {
+    tmp:4 = dst5L_afterSrc5;
+    src:4 = sext(src5B);
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5L_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) ADDX src5, Ax
+:ADDX src5B, dst5Ax                  is (b1_0707=1 & b1_size_0=0; b2_0003=0x2) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:4 = zext(dst5Ax);
+    src:4 = sext(src5B);
+    setAddFlags(tmp, src);
+    tmp = tmp + src;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+##### ADJNZ #####
+
+# ADJNZ.B #simm4, dst, rel8offset2
+# 1111 1000 1001 1111 0000 0110 ADJNZ  #-0x1,R0L,<inst_start+8>
+:ADJNZ.B srcSimm4, dst5B, rel8offset2    is ((b1_0407=0xf & b1_size_0=0; b2_0405=1 & srcSimm4) ... & $(DST5B)); rel8offset2 {
+    tmp:1 = dst5B + srcSimm4;
+    dst5B = tmp;
+    if (tmp != 0) goto rel8offset2;
+}
+
+# ADJNZ.B #simm4, Ax, , rel8offset2
+:ADJNZ.B srcSimm4, dst5Ax, rel8offset2  is ((b1_0407=0xf & b1_size_0=0; b2_0405=1 & srcSimm4) & $(DST5AX)); rel8offset2 {
+    tmp:1 = dst5Ax:1 + srcSimm4;
+    dst5Ax = zext(tmp);
+    if (tmp != 0) goto rel8offset2;
+}
+
+# ADJNZ.W #simm4, dst, rel8offset2
+:ADJNZ.W srcSimm4, dst5W, rel8offset2    is ((b1_0407=0xf & b1_size_0=1; b2_0405=1 & srcSimm4) ... & $(DST5W)); rel8offset2 {
+    tmp:2 = dst5W + sext(srcSimm4);
+    dst5W = tmp;
+    if (tmp != 0) goto rel8offset2;
+}
+
+# ADJNZ.W #simm4, Ax, rel8offset2
+:ADJNZ.W srcSimm4, dst5Ax, rel8offset2  is ((b1_0407=0xf & b1_size_0=1; b2_0405=1 & srcSimm4) & $(DST5AX)); rel8offset2 {
+    tmp:2 = dst5Ax:2 + sext(srcSimm4);
+    dst5Ax = zext(tmp);
+    if (tmp != 0) goto rel8offset2;
+}
+
+##### AND #####
+
+# (1) AND.B:G #imm, dst
+:AND^".B:G" srcImm8, dst5B           is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3f) ... & $(DST5B)); srcImm8 {
+    tmp:1 = dst5B & srcImm8;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) AND.B:G #imm, Ax
+:AND^".B:G" srcImm8, dst5Ax          is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3f) & $(DST5AX)); srcImm8 {
+    tmp:1 = dst5Ax:1 & srcImm8;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) AND.W:G #imm, dst
+:AND^".W:G" srcImm16, dst5W          is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3f) ... & $(DST5W)); srcImm16 {
+    tmp:2 = dst5W & srcImm16;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) AND.W:G #imm, Ax
+:AND^".W:G" srcImm16, dst5Ax         is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3f) & $(DST5AX)); srcImm16 {
+    tmp:2 = dst5Ax:2 & srcImm16;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) AND.B:S #imm, dst
+:AND^".B:S" srcImm8, dst2B           is ((b1_0607=1 & b1_0103=6 & b1_size_0=0) ... & dst2B); srcImm8 {
+    tmp:1 = dst2B & srcImm8;
+    dst2B = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) AND.W:S #imm, dst
+:AND^".W:S" srcImm16, dst2W          is ((b1_0607=1 & b1_0103=6 & b1_size_0=1) ... & dst2W); srcImm16 {
+    tmp:2 = dst2W & srcImm16;
+    dst2W = tmp;
+    setResultFlags(tmp);
+}
+
+# (3) AND.B:G src5, dst5
+:AND^".B:G" src5B, dst5B_afterSrc5   is (b1_0707=1 & b1_size_0=0; b2_0003=0xd) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... {
+    tmp:1 = dst5B_afterSrc5 & src5B;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+} 
+
+# (3) AND.B:G src5, Ax
+:AND^".B:G" src5B, dst5Ax            is (b1_0707=1 & b1_size_0=0; b2_0003=0xd) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1 & src5B;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+} 
+
+# (3) AND.W:G src5, dst5
+:AND^".W:G" src5W, dst5W_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0xd) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... {
+    tmp:2 = dst5W_afterSrc5 & src5W;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+} 
+
+# (3) AND.W:G src5, Ax
+:AND^".W:G" src5W, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0xd) ... & $(SRC5W) & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2 & src5W;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+} 
+
+##### BAND #####
+
+# BAND bit,bitbase
+# 0000 0001 1101 0110 0000 1011 0101 0110 0011 0100 0001 0010  BAND 0x3,0x123456[A0]
+:BAND bit, bitbase                   is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x1 & bit) ... & $(BITBASE)) {
+    bitValue:1 = (bitbase >> bit) & 1;
+    $(CARRY) = $(CARRY) &  bitValue;
+}
+
+##### BCLR #####
+
+# BCLR bit,bitbase
+# 1101 0110 0011 0011 0101 0110 0011 0100 0001 0010  BCLR 0x3,0x123456[A0]
+:BCLR bit, bitbase                   is (b1_0407=0xd & b1_size_0=0; b2_0305=0x6 & bit) ... & $(BITBASE) {
+    mask:1 = ~(1 << bit);
+    bitbase = bitbase & mask;
+}
+
+# BCLR bit,Ax
+:BCLR b2_bit, bitbaseAx              is (b1_0407=0xd & b1_size_0=0; b2_0305=0x6 & b2_bit) & $(BITBASE_AX) {
+    mask:3 = ~(1 << b2_bit);
+    bitbaseAx = bitbaseAx & mask;
+}
+
+##### BITINDEX #####
+
+# BITINDEX.B src  -- dst5B used as source
+# 1100 1000 1010 1110  BINDEX.B R0L
+:BITINDEX.B dst5B                    is (b1_0407=0xc & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B) 
+    [ useBitIndex=1; globalset(inst_next,useBitIndex); useBitIndex=0; ] {
+    bitIndex = zext(dst5B);
+}
+
+# BITINDEX.W src  -- dst5W used as source
+:BITINDEX.W dst5W                    is (b1_0407=0xc & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W) 
+    [ useBitIndex=1; globalset(inst_next,useBitIndex); useBitIndex=0; ] {
+    bitIndex = zext(dst5W);
+}
+
+##### BMCnd #####
+
+# (1) BMcnd bit, bitbase
+:BM^cnd bit, bitbase                 is ((b1_0407=0xd & b1_size_0=0; b2_0305=0x2 & bit) ... & $(BITBASE)); cnd {
+    mask:1 = ~(1 << bit);
+    bitbase = ((cnd << bit) | (bitbase & mask));
+}
+
+# (1) BMcnd bit, Ax
+:BM^cnd b2_bit, bitbaseAx            is ((b1_0407=0xd & b1_size_0=0; b2_0305=0x2 & b2_bit) & $(BITBASE_AX)); cnd {
+    mask:3 = ~(1 << b2_bit);
+    bitbaseAx = ((zext(cnd) << b2_bit) | (bitbaseAx & mask));
+}
+
+# (2) BMcnd C
+:BM^b2cnd "C"                        is    b1_0007=0xd9; b2_0707=0 & b2_0305=5 & b2cnd {
+    $(CARRY) = b2cnd;
+}
+
+##### BNAND #####
+
+:BNAND bit, bitbase                  is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x3 & bit) ... & $(BITBASE)) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    $(CARRY) = $(CARRY) && (bitValue == 0);
+}
+
+:BNAND b2_bit, bitbaseAx             is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x3 & b2_bit) & $(BITBASE_AX)) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    $(CARRY) = $(CARRY) && (bitValue == 0);
+}
+
+##### BNOR #####
+
+:BNOR bit, bitbase                   is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x6 & bit) ... & $(BITBASE)) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    $(CARRY) = $(CARRY) || (bitValue == 0);
+}
+
+:BNOR b2_bit, bitbaseAx              is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x6 & b2_bit) & $(BITBASE_AX)) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    $(CARRY) = $(CARRY) || (bitValue == 0);
+}
+
+##### BNOT #####
+
+# BNOT bit,bitbase
+:BNOT bit, bitbase                   is (b1_0407=0xd & b1_size_0=0; b2_0305=0x3 & bit) ... & $(BITBASE) {
+    mask:1 = (1 << bit);
+    val:1 = bitbase;
+    bitValue:1 = (~val & mask);
+    bitbase = (val & ~mask) | bitValue;
+}
+
+# BNOT bit,Ax
+:BNOT b2_bit, bitbaseAx              is (b1_0407=0xd & b1_size_0=0; b2_0305=0x3 & b2_bit) & $(BITBASE_AX) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (~bitbaseAx & mask);
+    bitbaseAx = (bitbaseAx & ~mask) | bitValue;
+}
+
+##### BNTST #####
+
+:BNTST bit, bitbase                  is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x0 & bit) ... & $(BITBASE)) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = z;
+    $(ZERO) = z;
+}
+
+:BNTST b2_bit, bitbaseAx             is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x0 & b2_bit) & $(BITBASE_AX)) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = z;
+    $(ZERO) = z;
+}
+
+##### BNXOR #####
+
+:BNXOR bit, bitbase                  is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x7 & bit) ... & $(BITBASE)) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    $(CARRY) = $(CARRY) ^ (bitValue == 0);
+}
+
+:BNXOR b2_bit, bitbaseAx             is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x7 & b2_bit) & $(BITBASE_AX)) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    $(CARRY) = $(CARRY) ^ (bitValue == 0);
+}
+
+##### BOR #####
+
+:BOR bit, bitbase                    is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x4 & bit) ... & $(BITBASE)) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    $(CARRY) = $(CARRY) || (bitValue != 0);
+}
+
+:BOR b2_bit, bitbaseAx               is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x4 & b2_bit) & $(BITBASE_AX)) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    $(CARRY) = $(CARRY) || (bitValue != 0);
+}
+
+##### BRK #####
+
+:BRK                                 is b1_0007=0x0 {
+    # I don't think it is necessary to model break behavior
+    Break();
+}
+
+##### BRK2 #####
+
+:BRK2                                is b1_0007=0x8 {
+    # I don't think it is necessary to model break behavior
+    Break2();
+}
+
+##### BSET #####
+
+:BSET bit, bitbase                   is (b1_0407=0xd & b1_size_0=0; b2_0305=0x7 & bit) ... & $(BITBASE) {
+    mask:1 = (1 << bit);
+    bitbase = bitbase | mask;
+}
+
+:BSET b2_bit, bitbaseAx              is (b1_0407=0xd & b1_size_0=0; b2_0305=0x7 & b2_bit) & $(BITBASE_AX) {
+    mask:3 = (1 << b2_bit);
+    bitbaseAx = bitbaseAx | mask;
+}
+
+##### BTST #####
+
+# (1) BTST bit, bitbase
+:BTST bit, bitbase                   is (b1_0407=0xd & b1_size_0=0; b2_0305=0x0 & bit) ... & $(BITBASE) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+}
+
+# (1) BTST bit, Ax
+:BTST b2_bit, bitbaseAx              is (b1_0407=0xd & b1_size_0=0; b2_0305=0x0 & b2_bit) & $(BITBASE_AX) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+}
+
+# (2) BTST bit, bitbase
+:BTST b, bitbaseAbs16                is b1_0607=0 & b1_0405 & b1_0103=5 & b1_0000; bitbaseAbs16  [ b = (b1_0405 << 1) + b1_0000; ] {
+    mask:1 = (1 << b);
+    bitValue:1 = (bitbaseAbs16 & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+}
+
+##### BTSTC #####
+
+# (1) BTSTC bit, bitbase
+:BTSTC bit, bitbase                  is (b1_0407=0xd & b1_size_0=0; b2_0305=0x4 & bit) ... & $(BITBASE) {
+    mask:1 = (1 << bit);
+    val:1 = bitbase;
+    bitValue:1 = (val & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+    bitbase = val & ~mask;
+}
+
+# (1) BTSTC bit, Ax
+:BTSTC b2_bit, bitbaseAx             is (b1_0407=0xd & b1_size_0=0; b2_0305=0x4 & b2_bit) & $(BITBASE_AX) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+    bitbaseAx = bitbaseAx & ~mask;
+}
+
+##### BTSTS #####
+
+# (1) BTSTS bit, bitbase
+:BTSTS bit, bitbase                  is (b1_0407=0xd & b1_size_0=0; b2_0305=0x5 & bit) ... & $(BITBASE) {
+    mask:1 = (1 << bit);
+    val:1 = bitbase;
+    bitValue:1 = (val & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+    bitbase = val | mask;
+}
+
+# (1) BTSTS bit, Ax
+:BTSTS b2_bit, bitbaseAx             is (b1_0407=0xd & b1_size_0=0; b2_0305=0x5 & b2_bit) & $(BITBASE_AX) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    z:1 = (bitValue == 0);
+    $(CARRY) = !z;
+    $(ZERO) = z;
+    bitbaseAx = bitbaseAx | mask;
+}
+
+##### BXOR #####
+
+:BXOR bit, bitbase                   is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x5 & bit) ... & $(BITBASE)) {
+    mask:1 = (1 << bit);
+    bitValue:1 = (bitbase & mask);
+    $(CARRY) = $(CARRY) ^ (bitValue != 0);
+}
+
+:BXOR b2_bit, bitbaseAx              is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=0; b2_0305=0x5 & b2_bit) & $(BITBASE_AX)) {
+    mask:3 = (1 << b2_bit);
+    bitValue:3 = (bitbaseAx & mask);
+    $(CARRY) = $(CARRY) ^ (bitValue != 0);
+}
+
+##### CLIP #####
+
+# CLIP.B #simm, #simm, dst5
+:CLIP.B srcSimm8, srcSimm8a, dst5B   is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B)); srcSimm8; srcSimm8a {
+    val:1 = dst5B;
+    cmp1:1 = srcSimm8 s> val;
+    cmp2:1 = srcSimm8a s< val;
+    dst5B = (cmp1 * srcSimm8) + (cmp2 * srcSimm8a) + ((!cmp1 * !cmp2) * val);
+}
+
+# CLIP.B #simm, #simm, Ax
+:CLIP.B srcSimm8, srcSimm8a, dst5Ax  is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3e) & $(DST5AX)); srcSimm8; srcSimm8a {
+    val:1 = dst5Ax:1;
+    cmp1:1 = srcSimm8 s> val;
+    cmp2:1 = srcSimm8a s< val;
+    dst5Ax = zext((cmp1 * srcSimm8) + (cmp2 * srcSimm8a) + ((!cmp1 * !cmp2) * val));
+}
+
+# CLIP.W #simm, #simm, dst5
+:CLIP.W srcSimm16, srcSimm16a, dst5W is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3e) ... & $(DST5W)); srcSimm16; srcSimm16a {
+    val:2 = dst5W;
+    cmp1:1 = srcSimm16 s> val;
+    cmp2:1 = srcSimm16a s< val;
+    dst5W = (zext(cmp1) * srcSimm16) + (zext(cmp2) * srcSimm16a) + (zext(!cmp1 * !cmp2) * val);
+}
+
+# CLIP.W #simm, #simm, Ax
+:CLIP.W srcSimm16, srcSimm16a, dst5Ax    is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3e) & $(DST5AX)); srcSimm16; srcSimm16a {
+    val:2 = dst5Ax:2;
+    cmp1:1 = srcSimm16 s> val;
+    cmp2:1 = srcSimm16a s< val;
+    dst5Ax = zext((zext(cmp1) * srcSimm16) + (zext(cmp2) * srcSimm16a) + (zext(!cmp1 * !cmp2) * val));
+}
+
+##### CMP #####
+
+# (1) CMP.B:G #simm, dst5
+:CMP^".B:G" srcSimm8, dst5B          is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B)); srcSimm8 {
+    tmp:1 = dst5B;
+    setSubtractFlags(tmp, srcSimm8);
+    tmp = tmp - srcSimm8;
+    setResultFlags(tmp);
+}
+
+# (1) CMP.B:G #simm, Ax
+:CMP^".B:G" srcSimm8, dst5Ax         is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x2e) & $(DST5AX)); srcSimm8 {
+    tmp:1 = dst5Ax:1;
+    setSubtractFlags(tmp, srcSimm8);
+    tmp = tmp - srcSimm8;
+    setResultFlags(tmp);
+}
+
+# (1) CMP.W:G #simm, dst5
+:CMP^".W:G" srcSimm16, dst5W         is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W)); srcSimm16 {
+    tmp:2 = dst5W;
+    setSubtractFlags(tmp, srcSimm16);
+    tmp = tmp - srcSimm16;
+    setResultFlags(tmp);
+}
+
+# (1) CMP.W:G #simm, Ax
+:CMP^".W:G" srcSimm16, dst5Ax        is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x2e) & $(DST5AX)); srcSimm16 {
+    tmp:2 = dst5Ax:2;
+    setSubtractFlags(tmp, srcSimm16);
+    tmp = tmp - srcSimm16;
+    setResultFlags(tmp);
+}
+
+# (2) CMP.L:G #simm, dst5
+:CMP^".L:G" srcSimm32, dst5L         is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x31) ... & $(DST5L)); srcSimm32 {
+    tmp:4 = dst5L;
+    setSubtractFlags(tmp, srcSimm32);
+    tmp = tmp - srcSimm32;
+    setResultFlags(tmp);
+}
+
+# (2) CMP.L:G #simm, Ax
+:CMP^".L:G" srcSimm32, dst5Ax        is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x31) & $(DST5AX)); srcSimm32 {
+    tmp:4 = zext(dst5Ax);
+    setSubtractFlags(tmp, srcSimm32);
+    tmp = tmp - srcSimm32;
+    setResultFlags(tmp);
+}
+
+# (3) CMP.B:Q #simm4, dst5
+:CMP^".B:Q" srcSimm4, dst5B          is (b1_0407=0xe & b1_size_0=0; b2_0405=1 & srcSimm4) ... & $(DST5B) {
+    tmp:1 = dst5B;
+    setSubtractFlags(tmp, srcSimm4);
+    tmp = tmp - srcSimm4;
+    setResultFlags(tmp);
+}
+
+# (3) CMP.B:Q #simm4, Ax
+:CMP^".B:Q" srcSimm4, dst5Ax         is (b1_0407=0xe & b1_size_0=0; b2_0405=1 & srcSimm4) & $(DST5AX) {
+    tmp:1 = dst5Ax:1;
+    setSubtractFlags(tmp, srcSimm4);
+    tmp = tmp - srcSimm4;
+    setResultFlags(tmp);
+}
+
+# (3) CMP.W:Q #simm4, dst5
+:CMP^".W:Q" srcSimm4, dst5W          is (b1_0407=0xe & b1_size_0=1; b2_0405=1 & srcSimm4) ... & $(DST5W) {
+    tmp:2 = dst5W;
+    imm:2 = sext(srcSimm4);
+    setSubtractFlags(tmp, imm);
+    tmp = tmp - imm;
+    setResultFlags(tmp);
+}
+
+# (3) CMP.W:Q #simm4, Ax
+:CMP^".W:Q" srcSimm4, dst5Ax         is (b1_0407=0xe & b1_size_0=1; b2_0405=1 & srcSimm4) & $(DST5AX) {
+    tmp:2 = dst5Ax:2;
+    imm:2 = sext(srcSimm4);
+    setSubtractFlags(tmp, imm);
+    tmp = tmp - imm;
+    setResultFlags(tmp);
+}
+
+# (4) CMP.B:S #simm, dst2
+:CMP^".B:S" srcSimm8, dst2B          is ((b1_0607=1 & b1_0103=3 & b1_size_0=0) ... & dst2B); srcSimm8 {
+    tmp:1 = dst2B;
+    setSubtractFlags(tmp, srcSimm8);
+    tmp = tmp - srcSimm8;
+    setResultFlags(tmp);
+}
+
+# (4) CMP.W:S #simm, dst2
+:CMP^".W:S" srcSimm16, dst2W         is ((b1_0607=1 & b1_0103=3 & b1_size_0=1) ... & dst2W); srcSimm16 {
+    tmp:2 = dst2W;
+    setSubtractFlags(tmp, srcSimm16);
+    tmp = tmp - srcSimm16;
+    setResultFlags(tmp);
+}
+
+# (5) CMP.B:G src5, dst5
+:CMP^".B:G" src5B, dst5B_afterSrc5   is (b1_0707=1 & b1_size_0=0; b2_0003=0x6) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) {
+    tmp:1 = dst5B_afterSrc5;
+    src:1 = src5B;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    setResultFlags(tmp);
+}
+
+# (5) CMP.B:G src5, Ax
+:CMP^".B:G" src5B, dst5Ax            is (b1_0707=1 & b1_size_0=0; b2_0003=0x6) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1;
+    src:1 = src5B;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    setResultFlags(tmp);
+}
+
+# (5) CMP.W:G src5, dst5
+:CMP^".W:G" src5W, dst5W_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0x6) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) {
+    tmp:2 = dst5W_afterSrc5;
+    src:2 = src5W;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    setResultFlags(tmp);
+}
+
+# (5) CMP.W:G src5, Ax
+:CMP^".W:G" src5W, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0x6) ... & $(SRC5W) & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2;
+    src:2 = src5W;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    setResultFlags(tmp);
+}
+
+# (6) CMP.L:G src5, dst5
+:CMP^".L:G" src5L, dst5L_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=1) ... & $(SRC5L) ... & $(DST5L_AFTER_SRC5) ... {
+    tmp:4 = dst5L_afterSrc5;
+    src:4 = src5L;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    setResultFlags(tmp);
+}
+
+# (6) CMP.L:G src5, Ax
+:CMP^".L:G" src5L, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=1) ... & $(SRC5L) & $(DST5AX) ... {
+    tmp:4 = zext(dst5Ax);
+    src:4 = src5L;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    setResultFlags(tmp);
+}
+
+# (7) CMP.B:S src2, R0L
+:CMP^".B:S" dst2B, R0L               is (b1_0607=1 & b1_0103=0 & b1_size_0=0 & R0L) ... & dst2B {
+    tmp:1 = dst2B;
+    setSubtractFlags(R0L, tmp);
+    tmp = tmp - R0L;
+    setResultFlags(tmp);
+}
+
+# (7) CMP.W:S src2, R0
+:CMP^".W:S" dst2W, R0                is (b1_0607=1 & b1_0103=0 & b1_size_0=1 & R0) ... & dst2W {
+    tmp:2 = dst2W;
+    setSubtractFlags(R0, tmp);
+    tmp = tmp - R0;
+    setResultFlags(tmp);
+}
+
+##### CMPX #####
+
+# CMPX #simm, dst5
+:CMPX srcSimm8, dst5L                is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x11) ... & $(DST5L)); srcSimm8 {
+    tmp:4 = dst5L;
+    imm:4 = sext(srcSimm8);
+    setSubtractFlags(tmp, imm);
+    tmp = tmp - imm;
+    setResultFlags(tmp);
+}
+
+# CMPX #simm, Ax
+:CMPX srcSimm8, dst5Ax               is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x11) & $(DST5AX)); srcSimm8 {
+    tmp:4 = zext(dst5Ax);
+    imm:4 = sext(srcSimm8);
+    setSubtractFlags(tmp, imm);
+    tmp = tmp - imm;
+    setResultFlags(tmp);
+}
+
+##### DADC #####
+
+# (1) DADC.B #imm, dst5
+:DADC.B srcImm8, dst5B               is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5B);
+    tmp:2 = DecimalAddWithCarry(src, dst);
+    dst5B = tmp:1;
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (1) DADC.B #imm, Ax
+:DADC.B srcImm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x0e) & $(DST5AX)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5Ax:1);
+    tmp:2 = DecimalAddWithCarry(src, dst);
+    dst5Ax = zext(tmp:1);
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (1) DADC.W #imm, dst5
+:DADC.W srcImm16, dst5W              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5W);
+    tmp:4 = DecimalAddWithCarry(src, dst);
+    dst5W = tmp:2;
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+# (1) DADC.W #imm, Ax
+:DADC.W srcImm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x0e) & $(DST5AX)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5Ax:2);
+    tmp:4 = DecimalAddWithCarry(src, dst);
+    dst5Ax = zext(tmp:2);
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+# (2) DADC.B src5, dst5
+:DADC.B src5B, dst5B_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x8) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5B_afterSrc5);
+    tmp:2 = DecimalAddWithCarry(src, dst);
+    dst5B_afterSrc5 = tmp:1;
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (2) DADC.B src5, Ax
+:DADC.B src5B, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x8) ... & $(SRC5B) & $(DST5AX) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5Ax:1);
+    tmp:2 = DecimalAddWithCarry(src, dst);
+    dst5Ax = zext(tmp:1);
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (2) DADC.W src5, dst5
+:DADC.W src5W, dst5W_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x8) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5W_afterSrc5);
+    tmp:4 = DecimalAddWithCarry(src, dst);
+    dst5W_afterSrc5 = tmp:2;
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+# (2) DADC.W src5, Ax
+:DADC.W src5W, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x8) ... & $(SRC5W) & $(DST5AX) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5Ax:2);
+    tmp:4 = DecimalAddWithCarry(src, dst);
+    dst5Ax = zext(tmp:2);
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+##### DADD #####
+
+# (1) DADD.B #imm, dst5
+:DADD.B srcImm8, dst5B               is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5B);
+    tmp:2 = DecimalAdd(src, dst);
+    dst5B = tmp:1;
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (1) DADD.B #imm, Ax
+:DADD.B srcImm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x1e) & $(DST5AX)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5Ax:1);
+    tmp:2 = DecimalAdd(src, dst);
+    dst5Ax = zext(tmp:1);
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (1) DADD.W #imm, dst5
+:DADD.W srcImm16, dst5W              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5W);
+    tmp:4 = DecimalAdd(src, dst);
+    dst5W = tmp:2;
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+# (1) DADD.W #imm, Ax
+:DADD.W srcImm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x1e) & $(DST5AX)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5Ax:2);
+    tmp:4 = DecimalAdd(src, dst);
+    dst5Ax = zext(tmp:2);
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+# (2) DADD.B src5, dst5
+:DADD.B src5B, dst5B_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x0) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5B_afterSrc5);
+    tmp:2 = DecimalAdd(src, dst);
+    dst5B_afterSrc5 = tmp:1;
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (2) DADD.B src5, Ax
+:DADD.B src5B, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x0) ... & $(SRC5B) & $(DST5AX) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5Ax:1);
+    tmp:2 = DecimalAdd(src, dst);
+    dst5Ax = zext(tmp:1);
+    $(CARRY) = (tmp > 0x99);
+    setResultFlags(tmp:1);
+}
+
+# (2) DADD.W src5, dst5
+:DADD.W src5W, dst5W_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x0) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5W_afterSrc5);
+    tmp:4 = DecimalAdd(src, dst);
+    dst5W_afterSrc5 = tmp:2;
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+# (2) DADD.W src5, Ax
+:DADD.W src5W, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x0) ... & $(SRC5W) & $(DST5AX) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5Ax:2);
+    tmp:4 = DecimalAdd(src, dst);
+    dst5Ax = zext(tmp:2);
+    $(CARRY) = (tmp > 0x9999);
+    setResultFlags(tmp:2);
+}
+
+##### DEC #####
+
+# DEC.B dst5
+:DEC.B dst5B                         is (b1_0407=0xb & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B) {
+    tmp:1 = dst5B - 1;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# DEC.B Ax
+:DEC.B dst5Ax                        is (b1_0407=0xb & b1_size_0=0; b2_0005=0x0e) & $(DST5AX) {
+    tmp:1 = dst5Ax:1 - 1;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# DEC.W dst5
+:DEC.W dst5W                         is (b1_0407=0xb & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W) {
+    tmp:2 = dst5W - 1;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# DEC.W Ax
+:DEC.W dst5Ax                        is (b1_0407=0xb & b1_size_0=1; b2_0005=0x0e) & $(DST5AX) {
+    tmp:2 = dst5Ax:2 - 1;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### DIV #####
+
+# (1) DIV.B #imm
+:DIV.B srcSimm8                      is b1_0007=0xb0; b2_0007=0x43; srcSimm8 {
+    d:2 = sext(srcSimm8);
+    q:2 = R0 s/ d;
+    r:2 = R0 s% d; # remainder has same sign as R0 (dividend)
+    R0L = q:1;
+    R0H = r:1;
+    q = q s>> 8;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (1) DIV.W #imm
+:DIV.W srcSimm16                     is b1_0007=0xb0; b2_0007=0x53; srcSimm16 {
+    d:4 = sext(srcSimm16);
+    q:4 = R2R0 s/ d;
+    r:4 = R2R0 s% d; # remainder has same sign as R0 (dividend)
+    R0 = q:2;
+    R2 = r:2;
+    q = q s>> 16;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (2) DIV.B src5
+:DIV.B dst5B                         is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B) {
+    d:2 = sext(dst5B);
+    q:2 = R0 s/ d;
+    r:2 = R0 s% d; # remainder has same sign as R0 (dividend)
+    R0L = q:1;
+    R0H = r:1;
+    q = q s>> 8;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (2) DIV.W src5
+:DIV.W dst5W                         is (b1_0407=0x8 & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W) {
+    d:4 = sext(dst5W);
+    q:4 = R2R0 s/ d;
+    r:4 = R2R0 s% d; # remainder has same sign as R0 (dividend)
+    R0 = q:2;
+    R2 = r:2;
+    q = q s>> 16;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+##### DIVU #####
+
+# (1) DIVU.B #imm
+:DIVU.B srcImm8                      is b1_0007=0xb0; b2_0007=0x03; srcImm8 {
+    d:2 = zext(srcImm8);
+    q:2 = R0 / d;
+    r:2 = R0 % d;
+    R0L = q:1;
+    R0H = r:1;
+    q = q s>> 8;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (1) DIVU.W #imm
+:DIVU.W srcImm16                     is b1_0007=0xb0; b2_0007=0x13; srcImm16 {
+    d:4 = zext(srcImm16);
+    q:4 = R2R0 / d;
+    r:4 = R2R0 % d;
+    R0 = q:2;
+    R2 = r:2;
+    q = q s>> 16;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (2) DIVU.B src5
+:DIVU.B dst5B                        is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B) {
+    d:2 = zext(dst5B);
+    q:2 = R0 / d;
+    r:2 = R0 % d;
+    R0L = q:1;
+    R0H = r:1;
+    q = q s>> 8;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (2) DIVU.W src5
+:DIVU.W dst5W                        is (b1_0407=0x8 & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W) {
+    d:4 = zext(dst5W);
+    q:4 = R2R0 / d;
+    r:4 = R2R0 % d;
+    R0 = q:2;
+    R2 = r:2;
+    q = q s>> 16;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+##### DIVX #####
+
+# (1) DIVX.B #imm
+:DIVX.B srcSimm8                     is b1_0007=0xb2; b2_0007=0x43; srcSimm8 {
+    d:2 = sext(srcSimm8);
+    q:2 = R0 s/ d;
+    r:2 = R0 s% d;
+
+    #according to the manual the remainder has the same sign as the quotient
+    differ:1 = (r s< 0) != (d s< 0);
+    r = (zext(differ) * (-r)) + (zext(!differ) * r);
+    R0L = q:1;
+    R0H = r:1;
+    q = q s>> 8;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (1) DIVX.W #imm
+:DIVX.W srcSimm16                    is b1_0007=0xb2; b2_0007=0x53; srcSimm16 {
+    d:4 = sext(srcSimm16);
+    q:4 = R2R0 s/ d;
+    r:4 = R2R0 s% d;
+
+    #according to the manual the remainder has the same sign as the quotient
+    differ:1 = (r s< 0) != (d s< 0);
+    r = (zext(differ) * (-r)) + (zext(!differ) * r);
+    R0 = q:2;
+    R2 = r:2;
+    q = q s>> 16;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (2) DIVX.B src5
+:DIVX.B dst5B                        is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B) {
+    d:2 = sext(dst5B);
+    q:2 = R0 s/ d;
+    r:2 = R0 s% d;
+
+    #according to the manual the remainder has the same sign as the quotient
+    differ:1 = (r s< 0) != (d s< 0);
+    r = (zext(differ) * (-r)) + (zext(!differ) * r);
+    R0L = q:1;
+    R0H = r:1;
+    q = q s>> 8;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+# (2) DIVX.W src5
+:DIVX.W dst5W                        is (b1_0407=0x9 & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W) {
+    d:4 = sext(dst5W);
+    q:4 = R2R0 s/ d;
+    r:4 = R2R0 s% d;
+
+    #according to the manual the remainder has the same sign as the quotient
+    R0 = q:2;
+    R2 = r:2;
+    q = q s>> 16;
+    $(OVERFLOW) = (d == 0) || ((q != 0) && (q != -1));
+}
+
+##### DSBB #####
+
+# (1) DSBB.B #imm, dst5
+:DSBB.B srcImm8, dst5B               is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5B);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:2 = DecimalSubtractWithBorrow(dst, src);
+    dst5B = tmp:1;
+    setResultFlags(tmp:1);
+}
+
+# (1) DSBB.B #imm, Ax
+:DSBB.B srcImm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x0e) & $(DST5AX)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5Ax:1);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:2 = DecimalSubtractWithBorrow(dst, src);
+    dst5Ax = zext(tmp:1);
+    setResultFlags(tmp:1);
+}
+
+# (1) DSBB.W #imm, dst5
+:DSBB.W srcImm16, dst5W              is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5W);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:4 = DecimalSubtractWithBorrow(dst, src);
+    dst5W = tmp:2;
+    setResultFlags(tmp:2);
+}
+
+# (1) DSBB.W #imm, Ax
+:DSBB.W srcImm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x0e) & $(DST5AX)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5Ax:2);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:4 = DecimalSubtractWithBorrow(dst, src);
+    dst5Ax = zext(tmp:2);
+    setResultFlags(tmp:2);
+}
+
+# (2) DSBB.B src5, dst5
+:DSBB.B src5B, dst5B_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xa) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5B_afterSrc5);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:2 = DecimalSubtractWithBorrow(dst, src);
+    dst5B_afterSrc5 = tmp:1;
+    setResultFlags(tmp:1);
+}
+
+# (2) DSBB.B src5, Ax
+:DSBB.B src5B, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xa) ... & $(SRC5B) & $(DST5AX) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5Ax:1);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:2 = DecimalSubtractWithBorrow(dst, src);
+    dst5Ax = zext(tmp:1);
+    setResultFlags(tmp:1);
+}
+
+# (2) DSBB.W src5, dst5
+:DSBB.W src5W, dst5W_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0xa) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5W_afterSrc5);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:4 = DecimalSubtractWithBorrow(dst, src);
+    dst5W_afterSrc5 = tmp:2;
+    setResultFlags(tmp:2);
+}
+
+# (2) DSBB.W src5, Ax
+:DSBB.W src5W, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0xa) ... & $(SRC5W) & $(DST5AX) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5Ax:2);
+    c:1 = $(CARRY);
+    $(CARRY) = (c && (dst > src)) || (!c && (dst >= src));
+    tmp:4 = DecimalSubtractWithBorrow(dst, src);
+    dst5Ax = zext(tmp:2);
+    setResultFlags(tmp:2);
+}
+
+##### DSUB #####
+
+# (1) DSUB.B #imm, dst5
+:DSUB.B srcImm8, dst5B               is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5B);
+    $(CARRY) = (dst >= src);
+    tmp:2 = DecimalSubtract(dst, src);
+    dst5B = tmp:1;
+    setResultFlags(tmp:1);
+}
+
+# (1) DSUB.B #imm, Ax
+:DSUB.B srcImm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x1e) & $(DST5AX)); srcImm8 {
+    src:2 = zext(srcImm8);
+    dst:2 = zext(dst5Ax:1);
+    $(CARRY) = (dst >= src);
+    tmp:2 = DecimalSubtract(dst, src);
+    dst5Ax = zext(tmp:1);
+    setResultFlags(tmp:1);
+}
+
+# (1) DSUB.W #imm, dst5
+:DSUB.W srcImm16, dst5W              is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5W);
+    $(CARRY) = (dst >= src);
+    tmp:4 = DecimalSubtract(dst, src);
+    dst5W = tmp:2;
+    setResultFlags(tmp:2);
+}
+
+# (1) DSUB.W #imm, Ax
+:DSUB.W srcImm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x1e) & $(DST5AX)); srcImm16 {
+    src:4 = zext(srcImm16);
+    dst:4 = zext(dst5Ax:2);
+    $(CARRY) = (dst >= src);
+    tmp:4 = DecimalSubtract(dst, src);
+    dst5Ax = zext(tmp:2);
+    setResultFlags(tmp:2);
+}
+
+# (2) DSUB.B src5, dst5
+:DSUB.B src5B, dst5B_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x2) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5B_afterSrc5);
+    $(CARRY) = (dst >= src);
+    tmp:2 = DecimalSubtract(dst, src);
+    dst5B_afterSrc5 = tmp:1;
+    setResultFlags(tmp:1);
+}
+
+# (2) DSUB.B src5, Ax
+:DSUB.B src5B, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x2) ... & $(SRC5B) & $(DST5AX) ...) {
+    src:2 = zext(src5B);
+    dst:2 = zext(dst5Ax:1);
+    $(CARRY) = (dst >= src);
+    tmp:2 = DecimalSubtract(dst, src);
+    dst5Ax = zext(tmp:1);
+    setResultFlags(tmp:1);
+}
+
+# (2) DSUB.W src5, dst5
+:DSUB.W src5W, dst5W_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x2) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5W_afterSrc5);
+    $(CARRY) = (dst >= src);
+    tmp:4 = DecimalSubtract(dst, src);
+    dst5W_afterSrc5 = tmp:2;
+    setResultFlags(tmp:2);
+}
+
+# (2) DSUB.W src5, Ax
+:DSUB.W src5W, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x2) ... & $(SRC5W) & $(DST5AX) ...) {
+    src:4 = zext(src5W);
+    dst:4 = zext(dst5Ax:2);
+    $(CARRY) = (dst >= src);
+    tmp:4 = DecimalSubtract(dst, src);
+    dst5Ax = zext(tmp:2);
+    setResultFlags(tmp:2);
+}
+
+##### ENTER #####
+
+:ENTER    srcImm8                       is b1_0007=0xec; srcImm8 {
+    push3(FB);
+    FB = SP;
+    SP = SP - zext(srcImm8);
+}
+
+##### EXITD #####
+
+:EXITD                               is b1_0007=0xfc {
+    SP = FB;
+    pop3(FB);
+    pc:3 = 0;
+    pop3(pc);
+    return [pc];
+}
+
+##### EXTS #####
+
+# (1) EXTS.B dst5
+:EXTS.B dst5B                        is (b1_0407=0xc & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B) & $(DST5W) {
+    tmp:2 = sext(dst5B);
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) EXTS.B Ax
+:EXTS.B dst5Ax                       is (b1_0407=0xc & b1_size_0=0; b2_0005=0x1e) & $(DST5AX) {
+    tmp:2 = sext(dst5Ax:1);
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) EXTS.W dst5
+:EXTS.W dst5W                        is (b1_0407=0xc & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W) & $(DST5L) {
+    tmp:4 = sext(dst5W);
+    dst5L = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) EXTS.W Ax
+:EXTS.W dst5Ax                       is (b1_0407=0xc & b1_size_0=1; b2_0005=0x1e) & $(DST5AX) {
+    tmp:4 = sext(dst5Ax:2);
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (2) EXTS.B src5, dst5
+:EXTS.B src5B, dst5W_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x7) ... & $(SRC5B) ... & $(DST5W_AFTER_SRC5) ...) {
+    tmp:2 = sext(src5B);
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) EXTS.B src5, Ax
+:EXTS.B src5B, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x7) ... & $(SRC5B) & $(DST5AX) ...) {
+    tmp:2 = sext(src5B);
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### EXTZ #####
+
+# (1) EXTZ.B src5, dst5
+:EXTZ.B src5B, dst5W_afterSrc5       is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xb) ... & $(SRC5B) ... & $(DST5W_AFTER_SRC5) ...) {
+    tmp:2 = zext(src5B);
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) EXTZ.B src5, Ax
+:EXTZ.B src5B, dst5Ax                is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xb) ... & $(SRC5B) & $(DST5AX) ...) {
+    tmp:2 = zext(src5B);
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### FCLR #####
+
+:FCLR flagBit                        is b1_0007=0xd3; b2_0307=0x1d & flagBit {
+    mask:2 = ~(1 << flagBit);
+    FLG = FLG & mask;
+}
+
+##### FREIT #####
+
+:FREIT                               is b1_0007=0x9f {
+    FLG = SVF;
+    return [SVP];
+}
+
+##### FSET #####
+
+:FSET flagBit                        is b1_0007=0xd1; b2_0307=0x1d & flagBit {
+    mask:2 = (1 << flagBit);
+    FLG = FLG | mask;
+}
+
+##### INC #####
+
+# INC.B dst5
+:INC.B dst5B                         is (b1_0407=0xa & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B) {
+    tmp:1 = dst5B + 1;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# INC.B Ax
+:INC.B dst5Ax                        is (b1_0407=0xa & b1_size_0=0; b2_0005=0x0e) & $(DST5AX) {
+    tmp:1 = dst5Ax:1 + 1;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# INC.W dst5
+:INC.W dst5W                         is (b1_0407=0xa & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W) {
+    tmp:2 = dst5W + 1;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# INC.W Ax
+:INC.W dst5Ax                        is (b1_0407=0xa & b1_size_0=1; b2_0005=0x0e) & $(DST5AX) {
+    tmp:2 = dst5Ax:2 + 1;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### INDEXB #####
+
+# 1000 1000 0100 0011  INDEXB.B R1H
+:INDEXB.B dst5B                      is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x03) ... & $(DST5B)    
+    [ useByteIndexOffset=3; globalset(inst_next,useByteIndexOffset); useByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B);
+}
+
+:INDEXB.W dst5W                      is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x13) ... & $(DST5W)    
+    [ useByteIndexOffset=3; globalset(inst_next,useByteIndexOffset); useByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W);
+}
+
+##### INDEXBD #####
+
+:INDEXBD.B dst5B                     is (b1_0407=0xa & b1_size_0=0; b2_0005=0x03) ... & $(DST5B)    
+    [ useDstByteIndexOffset=3; globalset(inst_next,useDstByteIndexOffset); useDstByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B);
+}
+
+:INDEXBD.W dst5W                     is (b1_0407=0xa & b1_size_0=0; b2_0005=0x13) ... & $(DST5W)    
+    [ useDstByteIndexOffset=3; globalset(inst_next,useDstByteIndexOffset); useDstByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W);
+}
+
+##### INDEXBS #####
+
+:INDEXBS.B dst5B                     is (b1_0407=0xc & b1_size_0=0; b2_0005=0x03) ... & $(DST5B)    
+    [ useSrcByteIndexOffset=3; globalset(inst_next,useSrcByteIndexOffset); useSrcByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B);
+}
+
+:INDEXBS.W dst5W                     is (b1_0407=0xc & b1_size_0=0; b2_0005=0x13) ... & $(DST5W)    
+    [ useSrcByteIndexOffset=3; globalset(inst_next,useSrcByteIndexOffset); useSrcByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W);
+}
+
+##### INDEXL #####
+
+:INDEXL.B dst5B                      is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x23) ... & $(DST5B)    
+    [ useByteIndexOffset=3; globalset(inst_next,useByteIndexOffset); useByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B) * 4;
+}
+
+:INDEXL.W dst5W                      is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x33) ... & $(DST5W)    
+    [ useByteIndexOffset=3; globalset(inst_next,useByteIndexOffset); useByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W) * 4;
+}
+
+##### INDEXLD #####
+
+:INDEXLD.B dst5B                     is (b1_0407=0xb & b1_size_0=0; b2_0005=0x23) ... & $(DST5B)    
+    [ useDstByteIndexOffset=3; globalset(inst_next,useDstByteIndexOffset); useDstByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B) * 4;
+}
+
+:INDEXLD.W dst5W                     is (b1_0407=0xb & b1_size_0=0; b2_0005=0x33) ... & $(DST5W)    
+    [ useDstByteIndexOffset=3; globalset(inst_next,useDstByteIndexOffset); useDstByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W) * 4;
+}
+
+##### INDEXLS #####
+
+:INDEXLS.B dst5B                     is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x03) ... & $(DST5B)    
+    [ useSrcByteIndexOffset=3; globalset(inst_next,useSrcByteIndexOffset); useSrcByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B) * 4;
+}
+
+:INDEXLS.W dst5W                     is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x13) ... & $(DST5W)    
+    [ useSrcByteIndexOffset=3; globalset(inst_next,useSrcByteIndexOffset); useSrcByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W) * 4;
+}
+
+##### INDEXW #####
+
+:INDEXW.B dst5B                      is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x23) ... & $(DST5B)    
+    [ useByteIndexOffset=3; globalset(inst_next,useByteIndexOffset); useByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B) * 2;
+}
+
+:INDEXW.W dst5W                      is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x33) ... & $(DST5W)    
+    [ useByteIndexOffset=3; globalset(inst_next,useByteIndexOffset); useByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W) * 2;
+}
+
+##### INDEXWD #####
+
+:INDEXWD.B dst5B                     is (b1_0407=0xa & b1_size_0=0; b2_0005=0x23) ... & $(DST5B)    
+    [ useDstByteIndexOffset=3; globalset(inst_next,useDstByteIndexOffset); useDstByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B) * 2;
+}
+
+:INDEXWD.W dst5W                     is (b1_0407=0xa & b1_size_0=0; b2_0005=0x33) ... & $(DST5W)    
+    [ useDstByteIndexOffset=3; globalset(inst_next,useDstByteIndexOffset); useDstByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W) * 2;
+}
+
+##### INDEXWS #####
+
+:INDEXWS.B dst5B                     is (b1_0407=0xc & b1_size_0=0; b2_0005=0x23) ... & $(DST5B)    
+    [ useSrcByteIndexOffset=3; globalset(inst_next,useSrcByteIndexOffset); useSrcByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5B) * 2;
+}
+
+:INDEXWS.W dst5W                     is (b1_0407=0xc & b1_size_0=0; b2_0005=0x33) ... & $(DST5W)    
+    [ useSrcByteIndexOffset=3; globalset(inst_next,useSrcByteIndexOffset); useSrcByteIndexOffset=0; ] {
+    byteIndexOffset = zext(dst5W) * 2;
+}
+
+##### INT #####
+
+:INT srcIntNum                       is b1_0007=0xbe; imm8_0001=0 & srcIntNum {
+    push2(FLG);
+    next:3 = inst_next;
+    push3(next);
+    ptr3:3 = (INTB + (zext(srcIntNum) * 0x4));
+    pc:3 = *:3 ptr3;
+    $(STACK_SEL) = ((srcIntNum > 0x1f) * $(STACK_SEL));
+    $(INTERRUPT) = 0x0;
+    $(DEBUG) = 0x0;
+    call [pc];
+}
+
+##### INTO #####
+
+:INTO                                is b1_0007=0xbf {
+    if ($(OVERFLOW) == 0) goto inst_next;
+    push2(FLG);
+    next:3 = inst_next;
+    push3(next);
+    $(STACK_SEL) = 0;
+    $(INTERRUPT) = 0x0;
+    $(DEBUG) = 0x0;
+    call 0x0ffffe0;
+}
+
+##### JCnd #####
+
+:J^b1cnd rel8offset1                 is b1_0707=1 & b1_0103=5 & b1cnd; rel8offset1 {
+    if (b1cnd) goto rel8offset1;
+}
+
+##### JMP #####
+
+:JMP.S rel3offset2                   is b1_0607=1 & b1_0103=5 & rel3offset2 {
+    goto rel3offset2;
+}
+
+:JMP.B rel8offset1                   is b1_0007=0xbb; rel8offset1 {
+    goto rel8offset1;
+}
+
+:JMP.W rel16offset1                  is b1_0007=0xce; rel16offset1 {
+    goto rel16offset1;
+}
+
+:JMP.A abs24offset                   is b1_0007=0xcc; abs24offset {
+    goto abs24offset;
+}
+
+##### JMPI #####
+:JMPI.W reloffset_dst5W              is (b1_0407=0xc & b1_size_0=1; b2_0005=0x0f) ... & reloffset_dst5W {
+    goto reloffset_dst5W;
+}
+
+:JMPI.A reloffset_dst5L              is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x01) ... & reloffset_dst5L {
+    goto reloffset_dst5L;
+}
+
+:JMPI.A reloffset_dst5Ax             is (b1_0407=0x8 & b1_size_0=0; b2_0005=0x01) & reloffset_dst5Ax {
+    goto reloffset_dst5Ax;
+}
+
+##### JMPS #####
+
+:JMPS srcImm8                        is b1_0007=0xdc; srcImm8 {
+    # 18 <= srcImm8 <= 255 (range restriction not enforced by pattern match)
+    ptr:3 = 0x0fffe - (zext(srcImm8) << 1);
+    pc:3 = 0xff0000 | zext(*:2 ptr);
+    goto [pc];
+}
+
+##### JSR #####
+
+:JSR.W rel16offset1                  is b1_0007=0xcf; rel16offset1 {
+    next:3 = inst_next;
+    push3(next);
+    call rel16offset1;
+}
+
+:JSR.A abs24offset                   is b1_0007=0xcd; abs24offset {
+    next:3 = inst_next;
+    push3(next);
+    call abs24offset;
+}
+
+##### JSRI #####
+
+:JSRI.W reloffset_dst5W              is (b1_0407=0xc & b1_size_0=1; b2_0005=0x1f) ... & reloffset_dst5W {
+    next:3 = inst_next;
+    push3(next);
+    call reloffset_dst5W;
+}
+
+:JSRI.A dst5L                        is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x01) ... & $(DST5L) {
+    next:3 = inst_next;
+    push3(next);
+    pc:3 = dst5L:3;
+    call [pc];
+}
+
+:JSRI.A dst5Ax                       is (b1_0407=0x9 & b1_size_0=0; b2_0005=0x01) & $(DST5AX) {
+    next:3 = inst_next;
+    push3(next);
+    call [dst5Ax];
+}
+
+##### JSRS #####
+
+:JSRS srcImm8                        is b1_0007=0xdd; srcImm8 {
+    # 18 <= srcImm8 <= 255 (range restriction not enforced by pattern match)
+    next:3 = inst_next;
+    push3(next);
+    ptr:3 = 0x0fffe - (zext(srcImm8) << 1);
+    pc:3 = 0xff0000 | zext(*:2 ptr);
+    call [pc];
+}
+
+##### LDC #####
+
+# (1) LDC #imm16, b2_creg16
+:LDC srcImm16, b2_creg16             is b1_0007=0xd5; b2_0307=0x15 & b2_creg16; srcImm16 {
+    b2_creg16 = srcImm16;
+}
+
+# (2) LDC #imm24, b2_creg24
+:LDC srcImm24, b2_creg24             is b1_0007=0xd5; b2_0307=0x05 & b2_creg24; srcImm24 {
+    b2_creg24 = srcImm24;
+}
+
+# (3) LDC #imm24, b2_dreg24
+:LDC srcImm24, b2_dreg24             is b1_0007=0xd5; b2_0307=0x0d & b2_dreg24; srcImm24 {
+    b2_dreg24 = srcImm24;
+}
+
+# (4) LDC dst5, b2_creg16
+:LDC dst5W, b2_creg16                is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=1; b2_0305=1 & b2_creg16) ... & $(DST5W)) {
+    b2_creg16 = dst5W;
+}
+
+# (5) LDC dst5, b2_creg24
+:LDC dst5L, b2_creg24                is (b1_0407=0xd & b1_size_0=1; b2_0305=0 & b2_creg24) ... & $(DST5L) {
+    b2_creg24 = dst5L:3;
+}
+
+# (6) LDC dst5, b2_dreg24
+:LDC dst5L, b2_dreg24                is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=1; b2_0305=0 & b2_dreg24) ... & $(DST5L)) {
+    b2_dreg24 = dst5L:3;
+}
+
+##### LDCTX #####
+
+:LDCTX abs16offset, abs24offset      is b1_0007=0xb6; b2_0007=0xc3; abs16offset; imm24_dat & abs24offset {
+
+    taskNum:1 = abs16offset; # load task number stored at abs16
+    ptr:3 = imm24_dat + (zext(taskNum) * 2); # compute table entry address relative to abs24
+    regInfo:1 = *:1 ptr;
+    ptr = ptr + 1;
+    spCorrect:1 = *:1 ptr;
+
+    ptr = SP;
+
+    if ((regInfo & 1) == 0) goto <skipR0>;
+    R0 = *:2 ptr;
+    ptr = ptr + 2;
+    <skipR0>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipR1>;
+    R1 = *:2 ptr;
+    ptr = ptr + 2;
+    <skipR1>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipR2>;
+    R2 = *:2 ptr;
+    ptr = ptr + 2;
+    <skipR2>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipR3>;
+    R3 = *:2 ptr;
+    ptr = ptr + 2;
+    <skipR3>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipA0>;
+    tmp:4 = *:4 ptr;
+    A0 = tmp:3;
+    ptr = ptr + 4;
+    <skipA0>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipA1>;
+    tmp = *:4 ptr;
+    A1 = tmp:3;
+    ptr = ptr + 4;
+    <skipA1>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipSB>;
+    tmp = *:4 ptr;
+    SB = tmp:3;
+    ptr = ptr + 4;
+    <skipSB>
+    regInfo = regInfo >> 1;
+    if ((regInfo & 1) == 0) goto <skipFB>;
+    tmp = *:4 ptr;
+    FB = tmp:3;
+    ptr = ptr + 4;
+    <skipFB>
+    SP = SP + zext(spCorrect);
+}
+
+##### LDIPL #####
+
+:LDIPL srcImm3                       is b1_0007=0xd5; b2_0307=0x1d & srcImm3 {
+    $(IPL) = srcImm3;
+}
+
+##### MAX #####
+
+# (1) MAX.B #imm, dst5
+:MAX.B srcSimm8, dst5B               is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3f) ... & $(DST5B)); srcSimm8 {
+    if (srcSimm8 s<= dst5B) goto inst_next;
+    dst5B = srcSimm8;
+}
+
+# (1) MAX.B #imm, Ax
+:MAX.B srcSimm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3f) & $(DST5AX)); srcSimm8 {
+    if (srcSimm8 s<= dst5Ax:1) goto inst_next;
+    dst5Ax = zext(srcSimm8);
+}
+
+# (1) MAX.W #imm, dst5
+:MAX.W srcSimm16, dst5W              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3f) ... & $(DST5W)); srcSimm16 {
+    if (srcSimm16 s<= dst5W) goto inst_next;
+    dst5W = srcSimm16;
+}
+
+# (1) MAX.W #imm, Ax
+:MAX.W srcSimm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3f) & $(DST5AX)); srcSimm16 {
+    if (srcSimm16 s<= dst5Ax:2) goto inst_next;
+    dst5Ax = zext(srcSimm16);
+}
+
+# (2) MAX.B src5, dst5
+:MAX.B src5B, dst5B_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xd) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    val:1 = src5B;
+    if (val s<= dst5B_afterSrc5) goto inst_next;
+    dst5B_afterSrc5 = val;
+} 
+
+# (2) MAX.B src5, Ax
+:MAX.B src5B, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xd) ... & $(SRC5B) & $(DST5AX) ...) {
+    val:1 = src5B;
+    if (val s<= dst5Ax:1) goto inst_next;
+    dst5Ax = zext(val);
+} 
+
+# (2) MAX.W src5, dst5
+:MAX.W src5W, dst5W_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0xd) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    val:2 = src5W;
+    if (val s<= dst5W_afterSrc5) goto inst_next;
+    dst5W_afterSrc5 = val;
+} 
+
+# (2) MAX.W src5, Ax
+:MAX.B src5W, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0xd) ... & $(SRC5W) & $(DST5AX) ...) {
+    val:2 = src5W;
+    if (val s<= dst5Ax:2) goto inst_next;
+    dst5Ax = zext(val);
+} 
+
+##### MIN #####
+
+# (1) MIN.B #imm, dst5
+:MIN.B srcSimm8, dst5B               is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2f) ... & $(DST5B)); srcSimm8 {
+    if (srcSimm8 s>= dst5B) goto inst_next;
+    dst5B = srcSimm8;
+}
+
+# (1) MIN.B #imm, Ax
+:MIN.B srcSimm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2f) & $(DST5AX)); srcSimm8 {
+    if (srcSimm8 s>= dst5Ax:1) goto inst_next;
+    dst5Ax = zext(srcSimm8);
+}
+
+# (1) MIN.W #imm, dst5
+:MIN.W srcSimm16, dst5W              is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2f) ... & $(DST5W)); srcSimm16 {
+    if (srcSimm16 s>= dst5W) goto inst_next;
+    dst5W = srcSimm16;
+}
+
+# (1) MIN.W #imm, Ax
+:MIN.W srcSimm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2f) & $(DST5AX)); srcSimm16 {
+    if (srcSimm16 s>= dst5Ax:2) goto inst_next;
+    dst5Ax = zext(srcSimm16);
+}
+
+# (2) MIN.B src5, dst5
+:MIN.B src5B, dst5B_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xc) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    val:1 = src5B;
+    if (val s>= dst5B_afterSrc5) goto inst_next;
+    dst5B_afterSrc5 = val;
+} 
+
+# (2) MIN.B src5, Ax
+:MIN.B src5B, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0xc) ... & $(SRC5B) & $(DST5AX) ...) {
+    val:1 = src5B;
+    if (val s>= dst5Ax:1) goto inst_next;
+    dst5Ax = zext(val);
+} 
+
+# (2) MIN.W src5, dst5
+:MIN.W src5W, dst5W_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0xc) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    val:2 = src5W;
+    if (val s>= dst5W_afterSrc5) goto inst_next;
+    dst5W_afterSrc5 = val;
+} 
+
+# (2) MIN.W src5, Ax
+:MIN.B src5W, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0xc) ... & $(SRC5W) & $(DST5AX) ...) {
+    val:2 = src5W;
+    if (val s>= dst5Ax:2) goto inst_next;
+    dst5Ax = zext(val);
+} 
+
+##### MOV #####
+
+# (1) MOV.B:G #imm, dst5
+:MOV^".B:G" srcImm8, dst5B           is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x2f) ... & $(DST5B)); srcImm8 {
+    val:1 = srcImm8;
+    dst5B = val;
+    setResultFlags(val);
+}
+
+# (1) MOV.B:G #imm, Ax
+:MOV^".B:G" srcImm8, dst5Ax          is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x2f) & $(DST5AX)); srcImm8 {
+    val:1 = srcImm8;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (1) MOV.W:G #imm, dst5
+:MOV^".W:G" srcImm16, dst5W          is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x2f) ... & $(DST5W)); srcImm16 {
+    val:2 = srcImm16;
+    dst5W = val;
+    setResultFlags(val);
+}
+
+# (1) MOV.W:G #imm, Ax
+:MOV^".W:G" srcImm16, dst5Ax         is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x2f) & $(DST5AX)); srcImm16 {
+    val:2 = srcImm16;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (2) MOV.L:G #imm, dst5
+:MOV^".L:G" srcImm32, dst5L          is ((b1_0407=0xb & b1_size_0=0; b2_0005=0x31) ... & $(DST5L)); srcImm32 {
+    val:4 = srcImm32;
+    dst5L = val;
+    setResultFlags(val);
+}
+
+# (2) MOV.L:G #imm, Ax
+:MOV^".L:G" srcImm32, dst5Ax         is ((b1_0407=0xb & b1_size_0=0; b2_0005=0x31) & $(DST5AX)); srcImm32 {
+    val:4 = srcImm32;
+    dst5Ax = val:3;
+    setResultFlags(val);
+}
+
+# (3) MOV.B:Q #imm4, dst5
+:MOV^".B:Q" srcSimm4, dst5B          is (b1_0407=0xf & b1_size_0=0; b2_0405=2 & srcSimm4) ... & $(DST5B) {
+    val:1 = srcSimm4;
+    dst5B = val;
+    setResultFlags(val);
+}
+
+# (3) MOV.B:Q #imm4, Ax
+:MOV^".B:Q" srcSimm4, dst5Ax         is (b1_0407=0xf & b1_size_0=0; b2_0405=2 & srcSimm4) & $(DST5AX) {
+    val:1 = srcSimm4;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (3) MOV.W:Q #imm4, dst5
+:MOV^".W:Q" srcSimm4, dst5W          is (b1_0407=0xf & b1_size_0=1; b2_0405=2 & srcSimm4) ... & $(DST5W) {
+    val:2 = sext(srcSimm4);
+    dst5W = val;
+    setResultFlags(val);
+}
+
+# (3) MOV.W:Q #imm4, Ax
+:MOV^".W:Q" srcSimm4, dst5Ax         is (b1_0407=0xf & b1_size_0=1; b2_0405=2 & srcSimm4) & $(DST5AX) {
+    val:2 = sext(srcSimm4);
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (4) MOV.B:S #imm, dst2
+:MOV^".B:S" srcImm8, dst2B           is ((b1_0607=0 & b1_0103=2 & b1_size_0=0) ... & dst2B); srcImm8 {
+    val:1 = srcImm8;
+    dst2B = val;
+    setResultFlags(val);
+}
+
+# (4) MOV.W:S #imm, dst2
+:MOV^".W:S" srcImm16, dst2W          is ((b1_0607=0 & b1_0103=2 & b1_size_0=1) ... & dst2W); srcImm16 {
+    val:2 = srcImm16;
+    dst2W = val;
+    setResultFlags(val);
+}
+
+# (5) MOV.W:S #imm16, Ax
+:MOV^".W:S" srcImm16, b1_d1_regAx    is b1_0607=2 & b1_size_5=0 & b1_0104=0xe & b1_d1_regAx; srcImm16 {
+    val:2 = srcImm16;
+    b1_d1_regAx = zext(val);
+    setResultFlags(val);
+}
+
+# (5) MOV.L:S #imm24, Ax
+:MOV^".L:S" srcImm24, b1_d1_regAx    is b1_0607=2 & b1_size_5=1 & b1_0104=0xe & b1_d1_regAx; srcImm24 {
+    val:3 = srcImm24;
+    b1_d1_regAx = val;
+    setResultFlags(val);
+}
+
+# (6) MOV.B:Z #0, dst2
+:MOV^".B:Z" srcZero8, dst2B          is (b1_0607=0 & b1_0103=1 & b1_size_0=0 & srcZero8) ... & dst2B {
+    dst2B = 0;
+    $(SIGN) = 0;
+    $(ZERO) = 1;
+}
+
+# (6) MOV.W:Z #0, dst2
+:MOV^".W:Z" srcZero16, dst2W         is (b1_0607=0 & b1_0103=1 & b1_size_0=1 & srcZero16) ... & dst2W {
+    dst2W = 0;
+    $(SIGN) = 0;
+    $(ZERO) = 1;
+}
+
+# (7) MOV.B:G src5, dst5
+:MOV^".B:G" src5B, dst5B_afterSrc5   is (b1_0707=1 & b1_size_0=0; b2_0003=0xb) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... {
+    val:1 = src5B;
+    dst5B_afterSrc5 = val;
+    setResultFlags(val);
+}
+
+# (7) MOV.B:G src5, Ax
+:MOV^".B:G" src5B, dst5Ax            is (b1_0707=1 & b1_size_0=0; b2_0003=0xb) ... & $(SRC5B) & $(DST5AX) ... {
+    val:1 = src5B;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (7) MOV.W:G src5, dst5
+:MOV^".W:G" src5W, dst5W_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0xb) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... {
+    val:2 = src5W;
+    dst5W_afterSrc5 = val;
+    setResultFlags(val);
+}
+
+# (7) MOV.W:G src5, Ax
+:MOV^".W:G" src5W, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0xb) ... & $(SRC5W) & $(DST5AX) ... {
+    val:2 = src5W;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (8) MOV.L:G src5, dst5
+:MOV^".L:G" src5L, dst5L_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0x3) ... & $(SRC5L) ... & $(DST5L_AFTER_SRC5) ... {
+    val:4 = src5L;
+    dst5L_afterSrc5 = val;
+    setResultFlags(val);
+} 
+
+# (8) MOV.L:G src5, Ax
+:MOV^".L:G" src5L, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0x3) ... & $(SRC5L) & $(DST5AX) ... {
+    val:4 = src5L;
+    dst5Ax = val:3;
+    setResultFlags(val);
+} 
+
+# (9) MOV.B:S src2, R0L
+:MOV^".B:S" dst2B, R0L               is (R0L & b1_0607=0 & b1_0103=4 & b1_size_0=0) ... & dst2B {
+    val:1 = dst2B;
+    R0L = val;
+    setResultFlags(val);
+}
+
+# (9) MOV.W:S src2, R0
+:MOV^".W:S" dst2W, R0                is (R0 & b1_0607=0 & b1_0103=4 & b1_size_0=1) ... & dst2W {
+    val:2 = dst2W;
+    R0 = val;
+    setResultFlags(val);
+}
+
+# (10) MOV.B:S src2, R1L
+:MOV^".B:S" dst2B, R1L               is (R1L & b1_0607=1 & b1_0103=7 & b1_size_0=0) ... & dst2B {
+    val:1 = dst2B;
+    R1L = val;
+    setResultFlags(val);
+}
+
+# (10) MOV.W:S src2, R1
+:MOV^".W:S" dst2W, R1                is (R1 & b1_0607=1 & b1_0103=7 & b1_size_0=1) ... & dst2W {
+    val:2 = dst2W;
+    R1 = val;
+    setResultFlags(val);
+}
+
+# (11) MOV.B:S R0L, dst2    
+:MOV^".B:S" R0L, dst2B               is (R0L & b1_0607=0 & b1_0103=0 & b1_size_0=0) ... & dst2B {
+    val:1 = R0L;
+    dst2B = val;
+    setResultFlags(val);
+}
+
+# (11) MOV.W:S R0, dst2    
+:MOV^".W:S" R0, dst2W                is (R0 & b1_0607=0 & b1_0103=0 & b1_size_0=1) ... & dst2W {
+    val:2 = R0;
+    dst2W = val;
+    setResultFlags(val);
+}
+
+# (12) MOV.L:S src2L, Ax    
+:MOV^".L:S" dst2L, b1_d1_regAx       is (b1_0607=1 & b1_0103=4 & b1_d1_regAx) ... & dst2L {
+    val:4 = dst2L;
+    b1_d1_regAx = val:3;
+    setResultFlags(val);
+}
+
+# (13) MOV.B:G dsp:8[SP], dst5
+# 1011 0110 1000 1111 0001 0010 1110 1111 1100 1101 1010 1011  MOV.G:G 0x12(SP),0xabcdef
+:MOV^".B:G" dsp8spB, dst5B_afterDsp8 is (b1_0407=0xb & b1_size_0=0; b2_0005=0x0f; dsp8spB) ... & $(DST5B_AFTER_DSP8) {
+    val:1 = dsp8spB;
+    dst5B_afterDsp8 = val;
+    setResultFlags(val);
+}
+
+# (13) MOV.B:G dsp:8[SP], Ax
+:MOV^".B:G" dsp8spB, dst5Ax          is (b1_0407=0xb & b1_size_0=0; b2_0005=0x0f; dsp8spB) & $(DST5AX) ... {
+    val:1 = dsp8spB;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (13) MOV.W:G dsp:8[SP], dst5
+:MOV^".W:G" dsp8spW, dst5W_afterDsp8 is (b1_0407=0xb & b1_size_0=1; b2_0005=0x0f; dsp8spW) ... & $(DST5W_AFTER_DSP8) {
+    val:2 = dsp8spW;
+    dst5W_afterDsp8 = val;
+    setResultFlags(val);
+}
+
+# (13) MOV.W:G dsp:8[SP], Ax
+:MOV^".W:G" dsp8spW, dst5Ax          is (b1_0407=0xb & b1_size_0=1; b2_0005=0x0f; dsp8spW) & $(DST5AX) ... {
+    val:2 = dsp8spW;
+    dst5Ax = zext(val);
+    setResultFlags(val);
+}
+
+# (14) MOV.B:G src5, dsp:8[SP]
+:MOV^".B:G" dst5B, dsp8spB           is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x0f) ... & $(DST5B)); dsp8spB {
+    val:1 = dst5B;
+    dsp8spB = val;
+    setResultFlags(val);
+}
+
+# (14) MOV.W:G src5, dsp:8[SP]
+:MOV^".W:G" dst5W, dsp8spW           is ((b1_0407=0xa & b1_size_0=1; b2_0005=0x0f) ... & $(DST5W)); dsp8spW {
+    val:2 = dst5W;
+    dsp8spW = val;
+    setResultFlags(val);
+}
+
+##### MOVA #####
+
+# MOVA dst5A, RxRx
+:MOVA dst5A, b2_reg32                is (b1_0407=0xd & b1_size_0=1; b2_0105=0xc & b2_reg32) ... & $(DST5A) {
+    b2_reg32 = zext(dst5A);
+}
+
+# MOVA dst5A, Ax
+:MOVA dst5A, b2_regAx                is (b1_0407=0xd & b1_size_0=1; b2_0105=0xd & b2_regAx) ... & $(DST5A) {
+    b2_regAx = dst5A;
+}
+
+##### MOVDir #####
+
+# TODO: dst5B=Ax case will parse but is not valid
+
+# (1) MOVDir R0L, dst
+:MOVLL R0L, dst5B                    is R0L & b0_0007=0x1; ((b1_0407=0xb & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B)) {
+    dst5B = (R0L & 0x0f) | (dst5B & 0xf0);
+}
+:MOVHL R0L, dst5B                    is R0L & b0_0007=0x1; ((b1_0407=0xb & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B)) {
+    dst5B = ((R0L & 0xf0) >> 4) | (dst5B & 0xf0);
+}
+:MOVLH R0L, dst5B                    is R0L & b0_0007=0x1; ((b1_0407=0xb & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B)) {
+    dst5B = ((R0L & 0x0f) << 4) | (dst5B & 0x0f);
+}
+:MOVHH R0L, dst5B                    is R0L & b0_0007=0x1; ((b1_0407=0xb & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B)) {
+    dst5B = (R0L & 0xf0) | (dst5B & 0x0f);
+}
+
+# (2) MOVDir dst, R0L
+:MOVLL dst5B, R0L                    is R0L & b0_0007=0x1; ((b1_0407=0xa & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B)) {
+    R0L = (dst5B & 0x0f) | (R0L & 0xf0);
+}
+:MOVHL dst5B, R0L                    is R0L & b0_0007=0x1; ((b1_0407=0xa & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B)) {
+    R0L = ((dst5B & 0xf0) >> 4) | (R0L & 0xf0);
+}
+:MOVLH dst5B, R0L                    is R0L & b0_0007=0x1; ((b1_0407=0xa & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B)) {
+    R0L = ((dst5B & 0x0f) << 4) | (R0L & 0x0f);
+}
+:MOVHH dst5B, R0L                    is R0L & b0_0007=0x1; ((b1_0407=0xa & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B)) {
+    R0L = (dst5B & 0xf0) | (R0L & 0x0f);
+}
+
+##### MOVX #####
+
+:MOVX srcSimm8, dst5L                is ((b1_0407=0xb & b1_size_0=0; b2_0005=0x11) ... & $(DST5L)); srcSimm8 {
+    val:4 = sext(srcSimm8);
+    dst5L = val;
+    setResultFlags(val);
+}
+
+:MOVX srcSimm8, dst5Ax               is ((b1_0407=0xb & b1_size_0=0; b2_0005=0x11) & $(DST5AX)); srcSimm8 {
+    val:3 = sext(srcSimm8);
+    dst5Ax = val;
+    setResultFlags(val);
+}
+
+##### MUL #####
+
+# TODO: Illegal MUL destination cases will parse but are not valid (e.g., R0H/R2, R1H/R3)
+
+# (1) MUL.B #imm, dst5
+:MUL.B srcSimm8, dst5B               is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x1f) ... & $(DST5W) & $(DST5B)); srcSimm8 {
+    dst5W = sext(srcSimm8) * sext(dst5B);
+}
+
+# (1) MUL.B #imm, Ax
+:MUL.B srcSimm8, dst5Ax              is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x1f) & $(DST5AX)); srcSimm8 {
+    val:2 = sext(srcSimm8) * sext(dst5Ax:1);
+    dst5Ax = zext(val);
+}
+
+# (1) MUL.W #imm, dst5
+:MUL.W srcSimm16, dst5W              is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x1f) ... & $(DST5L) & $(DST5W)); srcSimm16 {
+    dst5L = sext(srcSimm16) * sext(dst5W);
+}
+
+# (1) MUL.W #imm, Ax
+:MUL.W srcSimm16, dst5Ax             is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x1f) & $(DST5AX)); srcSimm16 {
+    val:4 = sext(srcSimm16) * sext(dst5Ax:2);
+    dst5Ax = val:3;
+}
+
+# (2) MUL.B src5, dst5
+:MUL.B src5B, dst5B_afterSrc5        is (b1_0707=1 & b1_size_0=0; b2_0003=0xc) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... & $(DST5W_AFTER_SRC5) ... {
+    dst5W_afterSrc5 = sext(src5B) * sext(dst5B_afterSrc5);
+}
+
+# (2) MUL.B src5, Ax
+:MUL.B src5B, dst5Ax                 is (b1_0707=1 & b1_size_0=0; b2_0003=0xc) ... & $(SRC5B) & $(DST5AX) ... {
+    val:2 = sext(src5B) * sext(dst5Ax:1);
+    dst5Ax = zext(val);
+}
+
+# (2) MUL.W src5, dst5
+:MUL.W src5W, dst5W_afterSrc5        is (b1_0707=1 & b1_size_0=1; b2_0003=0xc) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... & $(DST5L_AFTER_SRC5) ... {
+    dst5L_afterSrc5 = sext(src5W) * sext(dst5W_afterSrc5);
+}
+
+# (2) MUL.W src5, Ax
+:MUL.W src5W, dst5Ax                 is (b1_0707=1 & b1_size_0=1; b2_0003=0xc) ... & $(SRC5W) & $(DST5AX) ... {
+    val:4 = sext(src5W) * sext(dst5Ax:2);
+    dst5Ax = val:3;
+}
+
+##### MULEX #####
+
+:MULEX dst5W                         is (b1_0407=0xc & b1_size_0=1; b2_0005=0x3e) ... & $(DST5W) {
+    R1R2R0 = sext(R2R0) * sext(dst5W);
+}
+
+##### MULU #####
+
+# TODO: Illegal MULU destination cases will parse but are not valid (e.g., R0H/R2, R1H/R3)
+
+# (1) MULU.B #imm, dst5
+:MULU.B srcImm8, dst5B               is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x0f) ... & $(DST5B) & $(DST5W)); srcImm8 {
+    dst5W = zext(srcImm8) * zext(dst5B);
+}
+
+# (1) MULU.B #imm, Ax
+:MULU.B srcImm8, dst5Ax              is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x0f) & $(DST5AX)); srcImm8 {
+    val:2 = zext(srcImm8) * zext(dst5Ax:1);
+    dst5Ax = zext(val);
+}
+
+# (1) MULU.W #imm, dst5
+:MULU.W srcImm16, dst5W              is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x0f) ... & $(DST5W) & $(DST5L)); srcImm16 {
+    dst5L = zext(srcImm16) * zext(dst5W);
+}
+
+# (1) MULU.W #imm, Ax
+:MULU.W srcImm16, dst5Ax             is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x0f) & $(DST5AX)); srcImm16 {
+    val:4 = zext(srcImm16) * zext(dst5Ax:2);
+    dst5Ax = val:3;
+}
+
+# (2) MULU.B src5, dst5
+:MULU.B src5B, dst5B_afterSrc5       is (b1_0707=1 & b1_size_0=0; b2_0003=0x4) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... & $(DST5W_AFTER_SRC5) ... {
+    dst5W_afterSrc5 = zext(src5B) * zext(dst5B_afterSrc5);
+}
+
+# (2) MULU.B src5, Ax
+:MULU.B src5B, dst5Ax                is (b1_0707=1 & b1_size_0=0; b2_0003=0x4) ... & $(SRC5B) & $(DST5AX) ... {
+    val:2 = zext(src5B) * zext(dst5Ax:1);
+    dst5Ax = zext(val);
+}
+
+# (2) MULU.W src5, dst5
+:MULU.W src5W, dst5W_afterSrc5       is (b1_0707=1 & b1_size_0=1; b2_0003=0x4) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... & $(DST5L_AFTER_SRC5) ... {
+    dst5L_afterSrc5 = zext(src5W) * zext(dst5W_afterSrc5);
+}
+
+# (2) MULU.W src5, Ax
+:MULU.W src5W, dst5Ax                is (b1_0707=1 & b1_size_0=1; b2_0003=0x4) ... & $(SRC5W) & $(DST5AX) ... {
+    val:4 = zext(src5W) * zext(dst5Ax:2);
+    dst5Ax = val:3;
+}
+
+##### NEG #####
+
+# NEG.B dst5
+:NEG.B dst5B                         is (b1_0407=0xa & b1_size_0=0; b2_0005=0x2f) ... & $(DST5B) {
+    tmp:1 = dst5B;
+    setSubtractFlags(0:1, tmp);
+    tmp = -tmp;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# NEG.B Ax
+:NEG.B dst5Ax                        is (b1_0407=0xa & b1_size_0=0; b2_0005=0x2f) & $(DST5AX) {
+    tmp:1 = dst5Ax:1;
+    setSubtractFlags(0:1, tmp);
+    tmp = -tmp;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# NEG.W dst5
+:NEG.W dst5W                         is (b1_0407=0xa & b1_size_0=1; b2_0005=0x2f) ... & $(DST5W) {
+    tmp:2 = dst5W;
+    setSubtractFlags(0:2, tmp);
+    tmp = -tmp;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# NEG.W Ax
+:NEG.W dst5Ax                        is (b1_0407=0xa & b1_size_0=1; b2_0005=0x2f) & $(DST5AX) {
+    tmp:2 = dst5Ax:2;
+    setSubtractFlags(0:2, tmp);
+    tmp = -tmp;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### NOP #####
+
+:NOP                                 is b1_0007=0xde {
+}
+
+##### NOT #####
+
+# NOT.B dst5
+:NOT.B dst5B                         is (b1_0407=0xa & b1_size_0=0; b2_0005=0x1e) ... & $(DST5B) {
+    tmp:1 = ~dst5B;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# NOT.B Ax
+:NOT.B dst5Ax                        is (b1_0407=0xa & b1_size_0=0; b2_0005=0x1e) & $(DST5AX) {
+    tmp:1 = ~dst5Ax:1;
+    tmp = tmp;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# NOT.W dst5
+:NOT.W dst5W                         is (b1_0407=0xa & b1_size_0=1; b2_0005=0x1e) ... & $(DST5W) {
+    tmp:2 = ~dst5W;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# NOT.W Ax
+:NOT.W dst5Ax                        is (b1_0407=0xa & b1_size_0=1; b2_0005=0x1e) & $(DST5AX) {
+    tmp:2 = ~dst5Ax:2;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### OR #####
+
+# (1) OR.B:G #imm, dst
+:OR^".B:G" srcImm8, dst5B            is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2f) ... & $(DST5B)); srcImm8 {
+    tmp:1 = dst5B & srcImm8;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) OR.B:G #imm, Ax
+:OR^".B:G" srcImm8, dst5Ax           is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x2f) & $(DST5AX)); srcImm8 {
+    tmp:1 = dst5Ax:1 & srcImm8;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) OR.W:G #imm, dst
+:OR^".W:G" srcImm16, dst5W           is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2f) ... & $(DST5W)); srcImm16 {
+    tmp:2 = dst5W & srcImm16;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) OR.W:G #imm, Ax
+:OR^".W:G" srcImm16, dst5Ax          is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x2f) & $(DST5AX)); srcImm16 {
+    tmp:2 = dst5Ax:2 & srcImm16;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) OR.B:S #imm, dst
+:OR^".B:S" srcImm8, dst2B            is ((b1_0607=1 & b1_0103=2 & b1_size_0=0) ... & dst2B); srcImm8 {
+    tmp:1 = dst2B & srcImm8;
+    dst2B = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) OR.W:S #imm, dst
+:OR^".W:S" srcImm16, dst2W           is ((b1_0607=1 & b1_0103=2 & b1_size_0=1) ... & dst2W); srcImm16 {
+    tmp:2 = dst2W & srcImm16;
+    dst2W = tmp;
+    setResultFlags(tmp);
+}
+
+# (3) OR.B:G src5, dst5
+:OR^".B:G" src5B, dst5B_afterSrc5    is (b1_0707=1 & b1_size_0=0; b2_0003=0x5) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... {
+    tmp:1 = dst5B_afterSrc5 & src5B;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+} 
+
+# (3) OR.B:G src5, Ax
+:OR^".B:G" src5B, dst5Ax             is (b1_0707=1 & b1_size_0=0; b2_0003=0x5) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1 & src5B;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+} 
+
+# (3) OR.W:G src5, dst5
+:OR^".W:G" src5W, dst5W_afterSrc5    is (b1_0707=1 & b1_size_0=1; b2_0003=0x5) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... {
+    tmp:2 = dst5W_afterSrc5 & src5W;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+} 
+
+# (3) OR.W:G src5, Ax
+:OR^".W:G" src5W, dst5Ax             is (b1_0707=1 & b1_size_0=1; b2_0003=0x5) ... & $(SRC5W) & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2 & src5W;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+} 
+
+##### POP #####
+
+# POP.B dst5
+:POP.B dst5B                         is (b1_0407=0xb & b1_size_0=0; b2_0005=0x2f) ... & $(DST5B) {
+    pop1(dst5B);
+}
+
+# POP.B Ax
+:POP.B dst5Ax                        is (b1_0407=0xb & b1_size_0=0; b2_0005=0x2f) & $(DST5AX) {
+    val:1 = 0;
+    pop1(val);
+    dst5Ax = zext(val);
+}
+
+# POP.W dst5
+:POP.W dst5W                         is (b1_0407=0xb & b1_size_0=1; b2_0005=0x2f) ... & $(DST5W) {
+    pop2(dst5W);
+}
+
+# POP.W Ax
+:POP.W dst5Ax                        is (b1_0407=0xb & b1_size_0=1; b2_0005=0x2f) & $(DST5AX) {
+    val:2 = 0;
+    pop2(val);
+    dst5Ax = zext(val);
+}
+
+##### POPC #####
+
+# (1) POPC reg16
+:POPC b2_creg16                      is b1_0007=0xd3; b2_0307=0x15 & b2_creg16 {
+    pop2(b2_creg16);
+}
+
+# (2) POPC reg24
+:POPC b2_creg24                      is b1_0007=0xd3; b2_0307=0x05 & b2_creg24 {
+    pop3(b2_creg24);
+}
+
+##### POPM #####
+popRegFB: FB  is regBit7=1 & FB { pop3(FB); }
+popRegFB:     is regBit7=0      { }
+
+popRegSB: SB popRegFB  is regBit6=1 & popRegFB    & SB { pop3(SB); build popRegFB; }
+popRegSB: popRegFB     is popRegFB                  { build popRegFB; }
+
+popRegA1: A1 popRegSB  is regBit5=1 & popRegSB    & A1 { pop3(A1); build popRegSB; }
+popRegA1: popRegSB     is popRegSB                  { build popRegSB; }
+popRegA0: A0 popRegA1  is regBit4=1 & popRegA1    & A0 { pop3(A0); build popRegA1; }
+popRegA0: popRegA1     is popRegA1                  { build popRegA1; }
+
+popRegR3: R3 popRegA0  is regBit3=1 & popRegA0    & R3 { pop2(R3); build popRegA0; }
+popRegR3: popRegA0     is popRegA0                  { build popRegA0; }
+popRegR2: R2 popRegR3  is regBit2=1 & popRegR3    & R2 { pop2(R2); build popRegR3; }
+popRegR2: popRegR3     is popRegR3                  { build popRegR3; }
+popRegR1: R1 popRegR2  is regBit1=1 & popRegR2    & R1 { pop2(R1); build popRegR2; }
+popRegR1: popRegR2     is popRegR2                  { build popRegR2; }
+popRegR0: R0 popRegR1  is regBit0=1 & popRegR1    & R0 { pop2(R0); build popRegR1; }
+popRegR0: popRegR1     is popRegR1                  { build popRegR1; }
+
+popRegList: "( "^popRegR0^")"  is popRegR0 { build popRegR0; }
+
+:POPM popRegList                     is b1_0007=0x8e; popRegList {
+    build popRegList;
+}
+
+##### PUSH #####
+
+# (1) PUSH.B #imm
+:PUSH.B srcImm8                      is b1_0007=0xae; srcImm8 {
+    push1(srcImm8);
+#tmp:2 = zext(srcImm8);    # This differs from what really happens - decompiler tries to resolve source of unknown byte on stack
+#push2(tmp);
+}
+
+# (1) PUSH.W #imm
+:PUSH.B srcImm16                     is b1_0007=0xaf; srcImm16 {
+    push2(srcImm16);
+}
+
+# (2) PUSH.B src5
+:PUSH.B dst5B                        is (b1_0407=0xc & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B) {
+    push1(dst5B);
+#tmp:2 = zext(dst5B);    # This differs from what really happens - decompiler tries to resolve source of unknown byte on stack
+#push2(tmp);
+}
+
+# (2) PUSH.W src5
+:PUSH.W dst5W                        is (b1_0407=0xc & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W) {
+    push2(dst5W);
+}
+
+# (3) PUSH.L #imm
+:PUSH.L srcImm32                     is b1_0007=0xb6; b2_0007=0x53; srcImm32 {
+    push4(srcImm32);
+}
+
+# (4) PUSH.L src5
+:PUSH.L dst5L                        is (b1_0407=0xa & b1_size_0=0; b2_0005=0x01) ... & $(DST5L) {
+    push4(dst5L);
+}
+
+##### PUSHA #####
+
+:PUSHA dst5A                         is (b1_0407=0xb & b1_size_0=0; b2_0005=0x01) ... & $(DST5A) {
+    push3(dst5A);
+#tmp:4 = zext(dst5A);    # This differs from what really happens - decompiler tries to resolve source of unknown byte on stack
+#push4(tmp);
+}
+
+##### PUSHC #####
+
+# (1) PUSHC reg16
+:PUSHC b2_creg16                     is b1_0007=0xd1; b2_0307=0x15 & b2_creg16 {
+    push2(b2_creg16);
+}
+
+# (2) PUSHC reg24
+:PUSHC b2_creg24                     is b1_0007=0xd1; b2_0307=0x05 & b2_creg24 {
+    push3(b2_creg24);
+#tmp:4 = zext(b2_creg24);    # This differs from what really happens - decompiler tries to resolve source of unknown byte on stack
+#push4(tmp);
+}
+
+##### PUSHM #####
+pushRegR0: R0            is regBit7=1 & R0             { push2(R0); }
+pushRegR0:               is regBit7=0                  { }
+pushRegR1: pushRegR0 R1  is regBit6=1 & pushRegR0    & R1 { push2(R1); build pushRegR0; }
+pushRegR1: pushRegR0     is pushRegR0                  { build pushRegR0; }
+pushRegR2: pushRegR1 R2  is regBit5=1 & pushRegR1 & R2 { push2(R2); build pushRegR1; }
+pushRegR2: pushRegR1     is pushRegR1                  { build pushRegR1; }
+pushRegR3: pushRegR2 R3  is regBit4=1 & pushRegR2 & R3 { push2(R3); build pushRegR2; }
+pushRegR3: pushRegR2     is pushRegR2                  { build pushRegR2; }
+
+pushRegA0: pushRegR3 A0  is regBit3=1 & pushRegR3 & A0 { push3(A0); build pushRegR3; }
+pushRegA0: pushRegR3     is pushRegR3                  { build pushRegR3; }
+pushRegA1: pushRegA0 A1  is regBit2=1 & pushRegA0 & A1 { push3(A1); build pushRegA0; }
+pushRegA1: pushRegA0     is pushRegA0                  { build pushRegA0; }
+
+pushRegSB: pushRegA1 SB  is regBit1=1 & pushRegA1 & SB { push3(SB); build pushRegA1; }
+pushRegSB: pushRegA1     is pushRegA1                  { build pushRegA1; }
+
+pushRegFB: pushRegSB FB  is regBit0=1 & pushRegSB & FB { push3(FB); build pushRegSB; }
+pushRegFB: pushRegSB     is pushRegSB                  { build pushRegSB; }
+
+pushRegList: "("^pushRegFB^" )"  is pushRegFB { build pushRegFB; }
+
+:PUSHM pushRegList                   is b1_0007=0x8f; pushRegList {
+    build pushRegList;
+}
+
+##### REIT #####
+
+:REIT                                is b1_0007=0x9e {
+    pc:3 = 0;
+    pop3(pc);
+    pop2(FLG);
+    return [pc];
+}
+
+##### RMPA #####
+
+:RMPA.B                              is b1_0007=0xb8; b2_0007=0x43 {
+    if (R3 == 0) goto inst_next;
+    a:1 = *:1 A0;
+    b:1 = *:1 A1;
+    A0 = A0 + 1;
+    A1 = A1 + 1;
+    prod:6 = sext(a) * sext(b);
+    o:1 = scarry(R1R2R0, prod);
+    $(OVERFLOW) = o | $(OVERFLOW);
+    R1R2R0 = R1R2R0 + prod;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+:RMPA.W                              is b1_0007=0xb8; b2_0007=0x53 {
+    if (R3 == 0) goto inst_next;
+    a:2 = *:2 A0;
+    b:2 = *:2 A1;
+    A0 = A0 + 2;
+    A1 = A1 + 2;
+    prod:6 = sext(a) * sext(b);
+    o:1 = scarry(R1R2R0, prod);
+    $(OVERFLOW) = o | $(OVERFLOW);
+    R1R2R0 = R1R2R0 + prod;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+##### ROLC #####
+
+:ROLC.B dst5B                        is (b1_0407=0xb & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B) {
+    c:1 = $(CARRY);
+    tmp:1 = dst5B;
+    $(CARRY) = tmp s< 0;
+    tmp = (tmp << 1) | c;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+:ROLC.B dst5Ax                       is (b1_0407=0xb & b1_size_0=0; b2_0005=0x2e) & $(DST5AX) {
+    c:1 = $(CARRY);
+    tmp:1 = dst5Ax:1;
+    $(CARRY) = tmp s< 0;
+    tmp = (tmp << 1) | c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+:ROLC.W dst5W                        is (b1_0407=0xb & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W) {
+    c:2 = zext($(CARRY));
+    tmp:2 = dst5W;
+    $(CARRY) = tmp s< 0;
+    tmp = (tmp << 1) | c;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+:ROLC.W dst5Ax                       is (b1_0407=0xb & b1_size_0=1; b2_0005=0x2e) & $(DST5AX) {
+    c:2 = zext($(CARRY));
+    tmp:2 = dst5Ax:2;
+    $(CARRY) = tmp s< 0;
+    tmp = (tmp << 1) | c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### RORC #####
+
+:RORC.B dst5B                        is (b1_0407=0xa & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B) {
+    c:1 = $(CARRY);
+    tmp:1 = dst5B;
+    $(CARRY) = (tmp & 1) == 1;
+    tmp = (tmp >> 1) | (c << 7);
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+:RORC.B dst5Ax                       is (b1_0407=0xa & b1_size_0=0; b2_0005=0x2e) & $(DST5AX) {
+    c:1 = $(CARRY);
+    tmp:1 = dst5Ax:1;
+    $(CARRY) = (tmp & 1) == 1;
+    tmp = (tmp >> 1) | (c << 7);
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+:RORC.W dst5W                        is (b1_0407=0xa & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W) {
+    c:2 = zext($(CARRY));
+    tmp:2 = dst5W;
+    $(CARRY) = (tmp & 1) == 1;
+    tmp = (tmp >> 1) | (c << 15);
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+:RORC.W dst5Ax                       is (b1_0407=0xa & b1_size_0=1; b2_0005=0x2e) & $(DST5AX) {
+    c:2 = zext($(CARRY));
+    tmp:2 = dst5Ax:2;
+    $(CARRY) = (tmp & 1) == 1;
+    tmp = (tmp >> 1) | (c << 15);
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### ROT #####
+
+# (1) ROT.B #imm4, dst5 (right)
+:ROT.B srcSimm4Shift, dst5B          is (b1_0407=0xe & b1_size_0=0; b2_0405=2 & b2_shiftSign=1 & srcSimm4Shift) ... & $(DST5B) {
+    rightShift:1 = -srcSimm4Shift;
+    tmp:1 = dst5B;
+    $(CARRY) = (tmp >> (rightShift - 1)) & 1;
+    tmp = (tmp >> rightShift) | (tmp << (8 - rightShift));
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ROT.B #imm4, Ax (right)
+:ROT.B srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=0; b2_0405=2 & b2_shiftSign=1 & srcSimm4Shift) & $(DST5AX) {
+    rightShift:1 = -srcSimm4Shift;
+    tmp:1 = dst5Ax:1;
+    $(CARRY) = (tmp >> (rightShift - 1)) & 1;
+    tmp = (tmp >> rightShift) | (tmp << (8 - rightShift));
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) ROT.W #imm4, dst5 (right)
+:ROT.W srcSimm4Shift, dst5W          is (b1_0407=0xe & b1_size_0=1; b2_0405=2 & b2_shiftSign=1 & srcSimm4Shift) ... & $(DST5W) {
+    rightShift:1 = -srcSimm4Shift;
+    tmp:2 = dst5W;
+    c:2 = (tmp >> (rightShift - 1));
+    $(CARRY) = c:1 & 1;
+    tmp = (tmp >> rightShift) | (tmp << (16 - rightShift));
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ROT.W #imm4, Ax (right)
+:ROT.W srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=1; b2_0405=2 & b2_shiftSign=1 & srcSimm4Shift) & $(DST5AX) {
+    rightShift:1 = -srcSimm4Shift;
+    tmp:2 = dst5Ax:2;
+    c:2 = (tmp >> (rightShift - 1));
+    $(CARRY) = c:1 & 1;
+    tmp = (tmp >> rightShift) | (tmp << (16 - rightShift));
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) ROT.B #imm4, dst5 (left)
+:ROT.B srcSimm4Shift, dst5B          is (b1_0407=0xe & b1_size_0=0; b2_0405=2 & b2_shiftSign=0 & srcSimm4Shift) ... & $(DST5B) {
+    leftShift:1 = srcSimm4Shift;
+    tmp:1 = dst5B;
+    $(CARRY) = (tmp >> (8 - leftShift)) & 1;
+    tmp = (tmp << leftShift) | (tmp >> (8 - leftShift));
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ROT.B #imm4, Ax (left)
+:ROT.B srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=0; b2_0405=2 & b2_shiftSign=0 & srcSimm4Shift) & $(DST5AX) {
+    leftShift:1 = srcSimm4Shift;
+    tmp:1 = dst5Ax:1;
+    $(CARRY) = (tmp >> (8 - leftShift)) & 1;
+    tmp = (tmp << leftShift) | (tmp >> (8 - leftShift));
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) ROT.W #imm4, dst5 (left)
+:ROT.W srcSimm4Shift, dst5W          is (b1_0407=0xe & b1_size_0=1; b2_0405=2 & b2_shiftSign=0 & srcSimm4Shift) ... & $(DST5W) {
+    leftShift:1 = srcSimm4Shift;
+    tmp:2 = dst5W;
+    c:2 = (tmp >> (16 - leftShift));
+    $(CARRY) = c:1 & 1;
+    tmp = (tmp << leftShift) | (tmp >> (16 - leftShift));
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) ROT.W #imm4, Ax (left)
+:ROT.W srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=1; b2_0405=2 & b2_shiftSign=0 & srcSimm4Shift) & $(DST5AX) {
+    leftShift:1 = srcSimm4Shift;
+    tmp:2 = dst5Ax:2;
+    c:2 = (tmp >> (16 - leftShift));
+    $(CARRY) = c:1 & 1;
+    tmp = (tmp << leftShift) | (tmp >> (16 - leftShift));
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) ROT.B R1H, dst5
+:ROT.B R1H, dst5B                    is (R1H & b1_0407=0xa & b1_size_0=0; b2_0005=0x3f) ... & $(DST5B) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H s% 8;
+    tmp:1 = dst5B;
+    if (shift s>= 0) goto <rotateLeft>;
+    shift = -shift;
+    $(CARRY) = (tmp >> (shift - 1)) & 1;
+    tmp = (tmp >> shift) | (tmp << (8 - shift));
+    goto <done>;
+    <rotateLeft>
+    $(CARRY) = (tmp >> (8 - shift)) & 1;
+    tmp = (tmp << shift) | (tmp >> (8 - shift));
+    <done>
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) ROT.B R1H, Ax
+:ROT.B R1H, dst5Ax                   is (R1H & b1_0407=0xa & b1_size_0=0; b2_0005=0x3f) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H s% 8;
+    tmp:1 = dst5Ax:1;
+    if (shift s>= 0) goto <rotateLeft>;
+    shift = -shift;
+    $(CARRY) = (tmp >> (shift - 1)) & 1;
+    tmp = (tmp >> shift) | (tmp << (8 - shift));
+    goto <done>;
+    <rotateLeft>
+    $(CARRY) = (tmp >> (8 - shift)) & 1;
+    tmp = (tmp << shift) | (tmp >> (8 - shift));
+    <done>
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) ROT.W R1H, dst5
+:ROT.W R1H, dst5W                    is (R1H & b1_0407=0xa & b1_size_0=1; b2_0005=0x3f) ... & $(DST5W) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H s% 16;
+    tmp:2 = dst5W;
+    if (shift s>= 0) goto <rotateLeft>;
+    shift = -shift;
+    c:2 = (tmp >> (shift - 1));
+    tmp = (tmp >> shift) | (tmp << (16 - shift));
+    goto <done>;
+    <rotateLeft>
+    c = (tmp >> (16 - shift));
+    tmp = (tmp << shift) | (tmp >> (16 - shift));
+    <done>
+    $(CARRY) = c:1 & 1;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) ROT.W R1H, Ax
+:ROT.W R1H, dst5Ax                   is (R1H & b1_0407=0xa & b1_size_0=1; b2_0005=0x3f) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H s% 16;
+    tmp:2 = dst5Ax:2;
+    if (shift s>= 0) goto <rotateLeft>;
+    shift = -shift;
+    c:2 = (tmp >> (shift - 1));
+    tmp = (tmp >> shift) | (tmp << (16 - shift));
+    goto <done>;
+    <rotateLeft>
+    c = (tmp >> (16 - shift));
+    tmp = (tmp << shift) | (tmp >> (16 - shift));
+    <done>
+    $(CARRY) = c:1 & 1;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### RTS #####
+
+:RTS                                 is b1_0007=0xdf {
+    pc:3 = 0;
+    pop3(pc);
+    return [pc];
+}
+
+##### SBB #####
+
+# (1) SBB.B #simm, dst
+:SBB.B srcSimm8, dst5B               is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x2e) ... & $(DST5B)); srcSimm8 {
+    tmp:1 = dst5B;
+    c:1 = $(CARRY);
+    setSubtract3Flags(tmp, srcSimm8, c);
+    tmp = tmp - srcSimm8 - c;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) SBB.B #simm, Ax
+:SBB.B srcSimm8, dst5Ax              is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x2e) & $(DST5AX)); srcSimm8 {
+    tmp:1 = dst5Ax:1;
+    c:1 = $(CARRY);
+    setSubtract3Flags(tmp, srcSimm8, c);
+    tmp = tmp - srcSimm8 - c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) SBB.W #simm, dst
+:SBB.W srcSimm16, dst5W              is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x2e) ... & $(DST5W)); srcSimm16 {
+    tmp:2 = dst5W;
+    c:2 = zext($(CARRY));
+    setSubtract3Flags(tmp, srcSimm16, c);
+    tmp = tmp - srcSimm16 - c;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) SBB.B #simm, Ax
+:SBB.W srcSimm16, dst5Ax             is b0_0007=0x1; ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x2e) & $(DST5AX)); srcSimm16 {
+    tmp:2 = dst5Ax:2;
+    c:2 = zext($(CARRY));
+    setSubtract3Flags(tmp, srcSimm16, c);
+    tmp = tmp - srcSimm16 - c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) SBB.B src5, dst5
+:SBB.B src5B, dst5B_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x6) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    tmp:1 = dst5B_afterSrc5;
+    s:1 = src5B;
+    c:1 = $(CARRY);
+    setSubtract3Flags(tmp, s, c);
+    tmp = tmp - s - c;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) SBB.B src5, Ax
+:SBB.B src5B, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x6) ... & $(SRC5B) & $(DST5AX) ...) {
+    tmp:1 = dst5Ax:1;
+    s:1 = src5B;
+    c:1 = $(CARRY);
+    setSubtract3Flags(tmp, s, c);
+    tmp = tmp - s - c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) SBB.W src5, dst5
+:SBB.W src5W, dst5W_afterSrc5        is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x6) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    tmp:2 = dst5W_afterSrc5;
+    s:2 = src5W;
+    c:2 = zext($(CARRY));
+    setSubtract3Flags(tmp, s, c);
+    tmp = tmp - s - c;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) SBB.W src5, Ax
+:SBB.W src5W, dst5Ax                 is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x6) ... & $(SRC5W) & $(DST5AX) ...) {
+    tmp:2 = dst5Ax:2;
+    s:2 = src5W;
+    c:2 = zext($(CARRY));
+    setSubtract3Flags(tmp, s, c);
+    tmp = tmp - s - c;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+##### SBJNZ - PSUEDO-OP! SAME AS ADJNZ #####
+
+##### SCCnd #####
+
+:SC^b2cnd dst5W                      is (b1_0407=0xd & b1_size_0=1; b2_0405=3 & b2cnd) ... & $(DST5W) {
+    dst5W = zext(b2cnd);
+}
+
+:SC^b2cnd dst5Ax                     is (b1_0407=0xd & b1_size_0=1; b2_0405=3 & b2cnd) & $(DST5AX) {
+    dst5Ax = zext(b2cnd);
+}
+
+##### SCMPU #####
+
+:SCMPU.B                             is b1_0007=0xb8; b2_0007=0xc3 {
+    tmp0:1 = *:1 A0;
+    tmp2:1 = *:1 A1;
+    setSubtractFlags(tmp0, tmp2);
+    tmp:1 = tmp0 - tmp2;
+    setResultFlags(tmp);
+    A0 = A0 + 1;
+    A1 = A1 + 1;
+    if ((tmp0 != 0) && (tmp0 == tmp2)) goto inst_start;
+}
+
+:SCMPU.W                             is b1_0007=0xb8; b2_0007=0xd3 {
+    # TODO: The symantic description looks suspicious - manual may be incorrect ??
+    tmp0:1 = *:1 A0;
+    tmp2:1 = *:1 A1;
+    setSubtractFlags(tmp0, tmp2);
+    setResultFlags(tmp0 - tmp2);
+    A0 = A0 + 1;
+    A1 = A1 + 1;
+    tmp1:1 = *:1 A0;
+    tmp3:1 = *:1 A1;
+    A0 = A0 + 1;
+    A1 = A1 + 1;
+    if (tmp0 == 0 || tmp0 != tmp2) goto <skipByte>;
+    setSubtractFlags(tmp1, tmp3);
+    setResultFlags(tmp1 - tmp3);
+    <skipByte>
+    if ((tmp0 != 0) && (tmp1 != 0) && (tmp0 == tmp2) && (tmp1 == tmp3)) goto inst_start;
+}
+
+##### SHA #####
+macro SHAsetShiftRightFlags(val,shift,result) {
+    local c = (val >> (shift - 1)) & 1;
+    $(CARRY) = c:1;
+    local mask = ~(-(1 << shift));
+    allOnes:1 = (mask & val) == mask;
+    allZeros:1 = (mask & val) == 0;
+    $(OVERFLOW) = (result s< 0 && allOnes) || (result s>= 0 && allZeros);
+    setResultFlags(result);
+} 
+
+macro SHAsetShiftLeftFlags(val,shift,result,sze) {
+    local c = (val >> (sze - shift)) & 1;
+    $(CARRY) = c:1;
+    local mask = -(1 << shift);
+    allOnes:1 = (mask & val) == mask;
+    allZeros:1 = (mask & val) == 0;
+    $(OVERFLOW) = (result s< 0 && allOnes) || (result s>= 0 && allZeros);
+    setResultFlags(result);
+}
+
+# (1) SHA.B #imm4, dst5 (right)
+:SHA.B srcSimm4Shift, dst5B          is (b1_0407=0xf & b1_size_0=0; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) ... & $(DST5B) {
+    val:1 = dst5B;
+    shift:1 = -srcSimm4Shift;
+    tmp:1 = val s>> shift;
+    dst5B = tmp;
+    SHAsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHA.B #imm4, Ax (right)
+:SHA.B srcSimm4Shift, dst5Ax         is (b1_0407=0xf & b1_size_0=0; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) & $(DST5AX) {
+    val:1 = dst5Ax:1;
+    shift:1 = -srcSimm4Shift;
+    tmp:1 = val s>> shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHA.W #imm4, dst5 (right)
+:SHA.W srcSimm4Shift, dst5W          is (b1_0407=0xf & b1_size_0=1; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) ... & $(DST5W) {
+    val:2 = dst5W;
+    shift:1 = -srcSimm4Shift;
+    tmp:2 = val s>> shift;
+    dst5W = tmp;
+    SHAsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHA.W #imm4, Ax (right)
+:SHA.W srcSimm4Shift, dst5Ax         is (b1_0407=0xf & b1_size_0=1; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) & $(DST5AX) {
+    val:2 = dst5Ax:2;
+    shift:1 = -srcSimm4Shift;
+    tmp:2 = val s>> shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHA.B #imm4, dst5 (left)
+:SHA.B srcSimm4Shift, dst5B          is (b1_0407=0xf & b1_size_0=0; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) ... & $(DST5B) {
+    val:1 = dst5B;
+    shift:1 = srcSimm4Shift;
+    tmp:1 = val << shift;
+    dst5B = tmp;
+    SHAsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (1) SHA.B #imm4, Ax (left)
+:SHA.B srcSimm4Shift, dst5Ax         is (b1_0407=0xf & b1_size_0=0; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) & $(DST5AX) {
+    val:1 = dst5Ax:1;
+    shift:1 = srcSimm4Shift;
+    tmp:1 = val << shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (1) SHA.W #imm4, dst5 (left)
+:SHA.W srcSimm4Shift, dst5W          is (b1_0407=0xf & b1_size_0=1; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) ... & $(DST5W) {
+    val:2 = dst5W;
+    shift:1 = srcSimm4Shift;
+    tmp:2 = val << shift;
+    dst5W = tmp;
+    SHAsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (1) SHA.W #imm4, Ax (left)
+:SHA.W srcSimm4Shift, dst5Ax         is (b1_0407=0xf & b1_size_0=1; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) & $(DST5AX) {
+    val:2 = dst5Ax:2;
+    shift:1 = srcSimm4Shift;
+    tmp:2 = val << shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (2) SHA.L #imm, dst5
+:SHA.L srcSimm8, dst5L               is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x21) ... & $(DST5L)); srcSimm8 {
+    # Unable to pattern match on sign bit due to interior ellipses
+    shift:1 = srcSimm8;
+    val:4 = dst5L;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val s>> shift;
+    dst5L = tmp;
+    SHAsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5L = tmp;
+    SHAsetShiftLeftFlags(val, shift, tmp, 32);
+}
+
+# (2) SHA.L #imm, Ax
+:SHA.L srcSimm8, dst5Ax              is ((b1_0407=0xa & b1_size_0=0; b2_0005=0x21) & $(DST5AX)); srcSimm8 {
+    # Unable to pattern match on sign bit due to interior ellipses
+    shift:1 = srcSimm8;
+    val:4 = zext(dst5Ax);
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val s>> shift;
+    dst5Ax = tmp:3;
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = tmp:3;
+# No flags set
+}
+
+# (3) SHA.B R1H, dst5
+:SHA.B R1H, dst5B                    is (R1H & b1_0407=0xb & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:1 = dst5B;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:1 = val s>> shift;
+    dst5B = tmp;
+    SHAsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5B = tmp;
+    SHAsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (3) SHA.B R1H, Ax
+:SHA.B R1H, dst5Ax                   is (R1H & b1_0407=0xb & b1_size_0=0; b2_0005=0x3e) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:1 = dst5Ax:1;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:1 = val s>> shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (3) SHA.W R1H, dst5
+:SHA.W R1H, dst5W                    is (R1H & b1_0407=0xb & b1_size_0=1; b2_0005=0x3e) ... & $(DST5W) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:2 = dst5W;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:2 = val s>> shift;
+    dst5W = tmp;
+    SHAsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5W = tmp;
+    SHAsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (3) SHA.W R1H, Ax
+:SHA.W R1H, dst5Ax                   is (R1H & b1_0407=0xb & b1_size_0=1; b2_0005=0x3e) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:2 = dst5Ax:2;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:2 = val s>> shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = zext(tmp);
+    SHAsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (4) SHA.L R1H, dst5
+:SHA.L R1H, dst5L                    is (R1H & b1_0407=0xc & b1_size_0=0; b2_0005=0x11) ... & $(DST5L) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:4 = dst5L;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val s>> shift;
+    dst5L = tmp;
+    SHAsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5L = tmp;
+    SHAsetShiftLeftFlags(val, shift, tmp, 32);
+}
+
+# (4) SHA.L R1H, Ax
+:SHA.L R1H, dst5Ax                   is (R1H & b1_0407=0xc & b1_size_0=0; b2_0005=0x11) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:4 = zext(dst5Ax);
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val s>> shift;
+    dst5Ax = tmp:3;
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = tmp:3;
+# No flags set
+}
+
+##### SHL #####
+macro SHLsetShiftRightFlags(val,shift,result) {
+    local c = (val >> (shift - 1)) & 1;
+    $(CARRY) = c:1;
+    setResultFlags(result);
+} 
+
+macro SHLsetShiftLeftFlags(val,shift,result,sze) {
+    local c = (val >> (sze - shift)) & 1;
+    $(CARRY) = c:1;
+    setResultFlags(result);
+}
+
+# (1) SHL.B #imm4, dst5 (right)
+:SHL.B srcSimm4Shift, dst5B          is (b1_0407=0xe & b1_size_0=0; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) ... & $(DST5B) {
+    val:1 = dst5B;
+    shift:1 = -srcSimm4Shift;
+    tmp:1 = val >> shift;
+    dst5B = tmp;
+    SHLsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHL.B #imm4, Ax (right)
+:SHL.B srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=0; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) & $(DST5AX) {
+    val:1 = dst5Ax:1;
+    shift:1 = -srcSimm4Shift;
+    tmp:1 = val >> shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHL.W #imm4, dst5 (right)
+:SHL.W srcSimm4Shift, dst5W          is (b1_0407=0xe & b1_size_0=1; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) ... & $(DST5W) {
+    val:2 = dst5W;
+    shift:1 = -srcSimm4Shift;
+    tmp:2 = val >> shift;
+    dst5W = tmp;
+    SHLsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHL.W #imm4, Ax (right)
+:SHL.W srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=1; b2_0405=0 & b2_shiftSign=1 & srcSimm4Shift) & $(DST5AX) {
+    val:2 = dst5Ax:2;
+    shift:1 = -srcSimm4Shift;
+    tmp:2 = val >> shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftRightFlags(val, shift, tmp);
+}
+
+# (1) SHL.B #imm4, dst5 (left)
+:SHL.B srcSimm4Shift, dst5B          is (b1_0407=0xe & b1_size_0=0; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) ... & $(DST5B) {
+    val:1 = dst5B;
+    shift:1 = srcSimm4Shift;
+    tmp:1 = val << shift;
+    dst5B = tmp;
+    SHLsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (1) SHL.B #imm4, Ax (left)
+:SHL.B srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=0; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) & $(DST5AX) {
+    val:1 = dst5Ax:1;
+    shift:1 = srcSimm4Shift;
+    tmp:1 = val << shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (1) SHL.W #imm4, dst5 (left)
+:SHL.W srcSimm4Shift, dst5W          is (b1_0407=0xe & b1_size_0=1; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) ... & $(DST5W) {
+    val:2 = dst5W;
+    shift:1 = srcSimm4Shift;
+    tmp:2 = val << shift;
+    dst5W = tmp;
+    SHLsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (1) SHL.W #imm4, Ax (left)
+:SHL.W srcSimm4Shift, dst5Ax         is (b1_0407=0xe & b1_size_0=1; b2_0405=0 & b2_shiftSign=0 & srcSimm4Shift) & $(DST5AX) {
+    val:2 = dst5Ax:2;
+    shift:1 = srcSimm4Shift;
+    tmp:2 = val << shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (2) SHL.L #imm, dst5
+:SHL.L srcSimm8, dst5L               is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x21) ... & $(DST5L)); srcSimm8 {
+    # Unable to pattern match on sign bit due to interior ellipses
+    shift:1 = srcSimm8;
+    val:4 = dst5L;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val >> shift;
+    dst5L = tmp;
+    SHLsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5L = tmp;
+    SHLsetShiftLeftFlags(val, shift, tmp, 32);
+}
+
+# (2) SHL.L #imm, Ax
+:SHL.L srcSimm8, dst5Ax              is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x21) & $(DST5AX)); srcSimm8 {
+    # Unable to pattern match on sign bit due to interior ellipses
+    shift:1 = srcSimm8;
+    val:4 = zext(dst5Ax);
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val >> shift;
+    dst5Ax = tmp:3;
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = tmp:3;
+# No flags set
+}
+
+# (3) SHL.B R1H, dst5
+:SHL.B R1H, dst5B                    is (R1H & b1_0407=0xa & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:1 = dst5B;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:1 = val >> shift;
+    dst5B = tmp;
+    SHLsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5B = tmp;
+    SHLsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (3) SHL.B R1H, Ax
+:SHL.B R1H, dst5Ax                   is (R1H & b1_0407=0xa & b1_size_0=0; b2_0005=0x3e) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:1 = dst5Ax:1;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:1 = val >> shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftLeftFlags(val, shift, tmp, 8);
+}
+
+# (3) SHL.W R1H, dst5
+:SHL.W R1H, dst5W                    is (R1H & b1_0407=0xa & b1_size_0=1; b2_0005=0x3e) ... & $(DST5W) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:2 = dst5W;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:2 = val >> shift;
+    dst5W = tmp;
+    SHLsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5W = tmp;
+    SHLsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (3) SHL.W R1H, Ax
+:SHL.W R1H, dst5Ax                   is (R1H & b1_0407=0xa & b1_size_0=1; b2_0005=0x3e) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:2 = dst5Ax:2;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:2 = val >> shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = zext(tmp);
+    SHLsetShiftLeftFlags(val, shift, tmp, 16);
+}
+
+# (4) SHL.L R1H, dst5
+:SHL.L R1H, dst5L                    is (R1H & b1_0407=0xc & b1_size_0=0; b2_0005=0x01) ... & $(DST5L) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:4 = dst5L;
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val >> shift;
+    dst5L = tmp;
+    SHLsetShiftRightFlags(val, shift, tmp);
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5L = tmp;
+    SHLsetShiftLeftFlags(val, shift, tmp, 32);
+}
+
+# (4) SHL.L R1H, Ax
+:SHL.L R1H, dst5Ax                   is (R1H & b1_0407=0xc & b1_size_0=0; b2_0005=0x01) & $(DST5AX) {
+    if (R1H == 0) goto inst_next;
+    shift:1 = R1H;
+    val:4 = zext(dst5Ax);
+    if (shift s> 0) goto <shiftLeft>;
+    shift = -shift;
+    tmp:4 = val >> shift;
+    dst5Ax = tmp:3;
+    goto inst_next;
+    <shiftLeft>
+    tmp = val << shift;
+    dst5Ax = tmp:3;
+# No flags set
+}
+
+##### SIN #####
+
+:SIN.B                               is b1_0007=0xb2; b2_0007=0x83 {
+    if (R3 == 0) goto inst_next;
+    *:1 A1 = *:1 A0;
+    A1 = A1 + 1;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+:SIN.W                               is b1_0007=0xb2; b2_0007=0x93 {
+    if (R3 == 0) goto inst_next;
+    *:2 A1 = *:2 A0;
+    A1 = A1 + 2;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+##### SMOVB #####
+
+:SMOVB.B                             is b1_0007=0xb6; b2_0007=0x83 {
+    if (R3 == 0) goto inst_next;
+    *:1 A1 = *:1 A0;
+    A1 = A1 - 1;
+    A0 = A0 - 1;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+:SMOVB.W                             is b1_0007=0xb6; b2_0007=0x93 {
+    if (R3 == 0) goto inst_next;
+    *:2 A1 = *:2 A0;
+    A1 = A1 - 2;
+    A0 = A0 - 2;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+##### SMOVF #####
+
+:SMOVF.B                             is b1_0007=0xb0; b2_0007=0x83 {
+    if (R3 == 0) goto inst_next;
+    *:1 A1 = *:1 A0;
+    A1 = A1 + 1;
+    A0 = A0 + 1;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+:SMOVF.W                             is b1_0007=0xb0; b2_0007=0x93 {
+    if (R3 == 0) goto inst_next;
+    *:2 A1 = *:2 A0;
+    A1 = A1 + 2;
+    A0 = A0 + 2;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+##### SMOVU #####
+
+:SMOVU.B                             is b1_0007=0xb8; b2_0007=0x83 {
+    local tmp:1 = *:1 A0;
+    *:1 A1 = tmp;
+    A0 = A0 + 1;
+    A1 = A1 + 1;
+    if (tmp != 0) goto inst_start;
+}
+
+:SMOVU.W                             is b1_0007=0xb8; b2_0007=0x93 {
+    local tmp:2 = *:2 A0;
+    *:2 A1 = tmp;
+    A0 = A0 + 2;
+    A1 = A1 + 2;
+    local tmp0:2 = tmp & 0xff;
+    local tmp1:2 = tmp & 0xff00;
+    if ((tmp0 != 0) && (tmp1 != 0)) goto inst_start;
+}
+
+##### SOUT #####
+
+:SOUT.B                              is b1_0007=0xb4; b2_0007=0x83 {
+    if (R3 == 0) goto inst_next;
+    *:1 A1 = *:1 A0;
+    A0 = A0 + 1;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+:SOUT.W                              is b1_0007=0xb4; b2_0007=0x93 {
+    if (R3 == 0) goto inst_next;
+    *:2 A1 = *:2 A0;
+    A0 = A0 + 2;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+##### SSTR #####
+
+:SSTR.B                              is b1_0007=0xb8; b2_0007=0x03 {
+    if (R3 == 0) goto inst_next;
+    *:1 A1 = R0L;
+    A1 = A1 + 1;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+:SSTR.W                              is b1_0007=0xb8; b2_0007=0x13 {
+    if (R3 == 0) goto inst_next;
+    *:2 A1 = R0;
+    A1 = A1 + 2;
+    R3 = R3 - 1;
+    goto inst_start;
+}
+
+##### STC #####
+
+# (1) STC dreg24, dst5
+:STC b2_dreg24, dst5L                is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=1; b2_0305=0x2 & b2_dreg24) ... & $(DST5L)) {
+    dst5L = zext(b2_dreg24);
+}
+
+# (1) STC dreg24, Ax
+:STC b2_dreg24, dst5Ax               is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=1; b2_0305=0x2 & b2_dreg24) & $(DST5AX)) {
+    dst5Ax = b2_dreg24;
+}
+
+# (2) STC reg16, dst5
+:STC b2_creg16, dst5W                is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=1; b2_0305=0x3 & b2_creg16) ... & $(DST5W)) {
+    dst5W = b2_creg16;
+}
+
+# (2) STC reg16, Ax
+:STC b2_creg16, dst5Ax               is b0_0007=0x1; ((b1_0407=0xd & b1_size_0=1; b2_0305=0x3 & b2_creg16) & $(DST5AX)) {
+    dst5Ax = zext(b2_creg16);
+}
+
+# (3) STC reg24, dst5L
+:STC b2_creg24, dst5L                is (b1_0407=0xd & b1_size_0=1; b2_0305=0x2 & b2_creg24) ... & $(DST5L) {
+    dst5L = zext(b2_creg24);
+}
+
+# (3) STC reg24, Ax
+:STC b2_creg24, dst5Ax               is (b1_0407=0xd & b1_size_0=1; b2_0305=0x2 & b2_creg24) & $(DST5AX) {
+    dst5Ax = b2_creg24;
+}
+
+##### STCTX #####
+
+:STCTX abs16offset, abs24offset      is b1_0007=0xb6; b2_0007=0xd3; abs16offset; imm24_dat & abs24offset {
+
+    taskNum:1 = abs16offset; # load task number stored at abs16
+    ptr:3 = imm24_dat + (zext(taskNum) * 2); # compute table entry address relative to abs24
+    regInfo:1 = *:1 ptr;
+    ptr = ptr + 1;
+    spCorrect:1 = *:1 ptr;
+
+    ptr = SP;
+
+    if ((regInfo & 0x80) == 0) goto <skipFB>;
+    ptr = ptr - 4;
+    *:4 ptr = FB;
+    <skipFB>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipSB>;
+    ptr = ptr - 4;
+    *:4 ptr = SB;
+    <skipSB>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipA1>;
+    ptr = ptr - 4;
+    *:4 ptr = A1;
+    <skipA1>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipA0>;
+    ptr = ptr - 4;
+    *:4 ptr = A0;
+    <skipA0>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipR3>;
+    ptr = ptr - 2;
+    *:2 ptr = R3;
+    <skipR3>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipR2>;
+    ptr = ptr - 2;
+    *:2 ptr = R2;
+    <skipR2>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipR1>;
+    ptr = ptr - 2;
+    *:2 ptr = R1;
+    <skipR1>
+    regInfo = regInfo << 1;
+    if ((regInfo & 0x80) == 0) goto <skipR0>;
+    ptr = ptr - 2;
+    *:2 ptr = R0;
+    <skipR0>
+    SP = SP - zext(spCorrect);
+}
+
+##### STNZ #####
+
+# (1) STNZ.B #imm, dst5
+:STNZ.B srcImm8, dst5B               is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x1f) ... & $(DST5B)); srcImm8 {
+    if ($(ZERO) != 0) goto inst_next;
+    dst5B = srcImm8;
+}
+
+# (1) STNZ.B #imm, Ax
+:STNZ.B srcImm8, dst5Ax              is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x1f) & $(DST5AX)); srcImm8 {
+    if ($(ZERO) != 0) goto inst_next;
+    dst5Ax = zext(srcImm8);
+}
+
+# (1) STNZ.W #imm, dst5
+:STNZ.W srcImm16, dst5W              is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x1f) ... & $(DST5W)); srcImm16 {
+    if ($(ZERO) != 0) goto inst_next;
+    dst5W = srcImm16;
+}
+
+# (1) STNZ.W #imm, Ax
+:STNZ.W srcImm16, dst5Ax             is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x1f) & $(DST5AX)); srcImm16 {
+    if ($(ZERO) != 0) goto inst_next;
+    dst5Ax = zext(srcImm16);
+}
+
+##### STZ #####
+
+# (1) STZ.B #imm, dst5
+:STZ.B srcImm8, dst5B                is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x0f) ... & $(DST5B)); srcImm8 {
+    if ($(ZERO) == 0) goto inst_next;
+    dst5B = srcImm8;
+}
+
+# (1) STZ.B #imm, Ax
+:STZ.B srcImm8, dst5Ax               is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x0f) & $(DST5AX)); srcImm8 {
+    if ($(ZERO) == 0) goto inst_next;
+    dst5Ax = zext(srcImm8);
+}
+
+# (1) STZ.W #imm, dst5
+:STZ.W srcImm16, dst5W               is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x0f) ... & $(DST5W)); srcImm16 {
+    if ($(ZERO) == 0) goto inst_next;
+    dst5W = srcImm16;
+}
+
+# (1) STZ.W #imm, Ax
+:STZ.W srcImm16, dst5Ax              is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x0f) & $(DST5AX)); srcImm16 {
+    if ($(ZERO) == 0) goto inst_next;
+    dst5Ax = zext(srcImm16);
+}
+
+##### STZX #####
+
+# STZX.B #imm, #imm, dst5
+:STZX.B srcImm8, srcImm8a, dst5B     is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x3f) ... & $(DST5B)); srcImm8; srcImm8a {
+    z:1 = $(ZERO);
+    dst5B = (z * srcImm8) + (!z * srcImm8a);
+}
+
+# STZX.B #imm, #imm, Ax
+:STZX.B srcImm8, srcImm8a, dst5Ax    is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x3f) & $(DST5AX)); srcImm8; srcImm8a {
+    z:1 = $(ZERO);
+    dst5Ax = zext((z * srcImm8) + (!z * srcImm8a));
+}
+
+# STZX.W #imm, #imm, dst5
+:STZX.W srcImm16, srcImm16a, dst5W   is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x3f) ... & $(DST5W)); srcImm16; srcImm16a {
+    z:1 = $(ZERO);
+    dst5W = (zext(z) * srcImm16) + (zext(!z) * srcImm16a);
+}
+
+# STZX.W #imm, #imm, Ax
+:STZX.W srcImm16, srcImm16a, dst5Ax  is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x3f) & $(DST5AX)); srcImm16; srcImm16a {
+    z:1 = $(ZERO);
+    dst5Ax = zext((zext(z) * srcImm16) + (zext(!z) * srcImm16a));
+}
+
+##### SUB #####
+
+# (1) SUB.B:G #simm, dst
+:SUB^".B:G" srcSimm8, dst5B          is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B)); srcSimm8 {
+    tmp:1 = dst5B;
+    setSubtractFlags(tmp, srcSimm8);
+    tmp = tmp - srcSimm8;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) SUB.B:G #simm, Ax
+:SUB^".B:G" srcSimm8, dst5Ax         is ((b1_0407=0x8 & b1_size_0=0; b2_0005=0x3e) & $(DST5AX)); srcSimm8 {
+    tmp:1 = dst5Ax:1;
+    setSubtractFlags(tmp, srcSimm8);
+    tmp = tmp - srcSimm8;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) SUB.W:G #simm, dst
+:SUB^".W:G" srcSimm16, dst5W         is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3e) ... & $(DST5W)); srcSimm16 {
+    tmp:2 = dst5W;
+    setSubtractFlags(tmp, srcSimm16);
+    tmp = tmp - srcSimm16;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) SUB.W:G #simm, Ax
+:SUB^".W:G" srcSimm16, dst5Ax        is ((b1_0407=0x8 & b1_size_0=1; b2_0005=0x3e) & $(DST5AX)); srcSimm16 {
+    tmp:2 = dst5Ax:2;
+    setSubtractFlags(tmp, srcSimm16);
+    tmp = tmp - srcSimm16;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) SUB.L:G #simm, dst
+:SUB^".L:G" srcSimm32, dst5L         is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x31) ... & $(DST5L)); srcSimm32 {
+    tmp:4 = dst5L;
+    setSubtractFlags(tmp, srcSimm32);
+    tmp = tmp - srcSimm32;
+    dst5L = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) SUB.L:G #simm, Ax
+:SUB^".L:G" srcSimm32, dst5Ax        is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x31) & $(DST5AX)); srcSimm32 {
+    tmp:4 = zext(dst5Ax);
+    setSubtractFlags(tmp, srcSimm32);
+    tmp = tmp - srcSimm32;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (3) SUB.B:S #simm, dst
+:SUB^".B:S" srcSimm8, dst2B          is ((b1_0607=0 & b1_0103=7 & b1_size_0=0) ... & dst2B); srcSimm8 {
+    tmp:1 = dst2B;
+    setSubtractFlags(tmp, srcSimm8);
+    tmp = tmp - srcSimm8;
+    dst2B = tmp;
+    setResultFlags(tmp);
+}
+
+# (3) SUB.W:S #simm, dst
+:SUB^".W:S" srcSimm16, dst2W         is ((b1_0607=0 & b1_0103=7 & b1_size_0=1) ... & dst2W); srcSimm16 {
+    tmp:2 = dst2W;
+    setSubtractFlags(tmp, srcSimm16);
+    tmp = tmp - srcSimm16;
+    dst2W = tmp;
+    setResultFlags(tmp);
+}
+
+# (4) SUB.B:G src, dst
+:SUB^".B:G"  src5B, dst5B_afterSrc5  is (b1_0707=1 & b1_size_0=0; b2_0003=0xa) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... {
+    tmp:1 = dst5B_afterSrc5;
+    src:1 = src5B;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (4) SUB.B:G  src, Ax - Ax destination case
+:SUB^".B:G"  src5B, dst5Ax           is (b1_0707=1 & b1_size_0=0; b2_0003=0xa) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1;
+    src:1 = src5B;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (4) SUB.W:G src, dst
+:SUB^".W:G"  src5W, dst5W_afterSrc5  is (b1_0707=1 & b1_size_0=1; b2_0003=0xa) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... {
+    tmp:2 = dst5W_afterSrc5;
+    src:2 = src5W;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (4) SUB.W:G  src, Ax - Ax destination case
+:SUB^".W:G"  src5W, dst5Ax           is (b1_0707=1 & b1_size_0=1; b2_0003=0xa) ... & $(SRC5W) & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2;
+    src:2 = src5W;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (5) SUB.L:G src, dst
+:SUB^".L:G" src5L, dst5L_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0x0) ... & $(SRC5L) ... & $(DST5L_AFTER_SRC5) ... {
+    tmp:4 = dst5L_afterSrc5;
+    src:4 = src5L;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5L_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (5) SUB.L:G src, Ax - Ax destination case
+:SUB^".L:G" src5L, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0x0) ... & $(SRC5L) & $(DST5AX) ... {
+    tmp:4 = zext(dst5Ax);
+    src:4 = src5L;
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+##### SUBX #####
+
+# (1) SUBX #simm, dst5
+:SUBX srcSimm8, dst5L                is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x11) ... & $(DST5L)); srcSimm8 {
+    tmp:4 = dst5L;
+    src:4 = sext(srcSimm8);
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5L = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) SUBX #simm, Ax
+:SUBX srcSimm8, dst5Ax               is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x11) & $(DST5AX)); srcSimm8 {
+    tmp:4 = zext(dst5Ax);
+    src:4 = sext(srcSimm8);
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+# (2) SUBX src5, dst5
+:SUBX src5B, dst5L_afterSrc5         is (b1_0707=1 & b1_size_0=0; b2_0003=0x0) ... & $(SRC5B) ... & $(DST5L_AFTER_SRC5) ... {
+    tmp:4 = dst5L_afterSrc5;
+    src:4 = sext(src5B);
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5L_afterSrc5 = tmp;
+    setResultFlags(tmp);
+}
+
+# (2) SUBX src5, Ax
+:SUBX src5B, dst5Ax                  is (b1_0707=1 & b1_size_0=0; b2_0003=0x0) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:4 = zext(dst5Ax);
+    src:4 = sext(src5B);
+    setSubtractFlags(tmp, src);
+    tmp = tmp - src;
+    dst5Ax = tmp:3;
+    setResultFlags(tmp);
+}
+
+##### TST #####
+
+# (1) TST.B:G #imm, dst
+:TST^".B:G" srcImm8, dst5B           is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x3e) ... & $(DST5B)); srcImm8 {
+    tmp:1 = dst5B & srcImm8;
+    setResultFlags(tmp);
+}
+
+# (1) TST.W:G #imm, dst
+:TST^".W:G" srcImm16, dst5W          is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x3e) ... & $(DST5W)); srcImm16 {
+    tmp:2 = dst5W & srcImm16;
+    setResultFlags(tmp);
+}
+
+# (2) TST.B:S #imm, dst
+:TST^".B:S" srcImm8, dst2B           is ((b1_0607=0 & b1_0103=6 & b1_size_0=0) ... & dst2B); srcImm8 {
+    tmp:1 = dst2B & srcImm8;
+    setResultFlags(tmp);
+}
+
+# (2) TST.W:S #imm, dst
+:TST^".W:S" srcImm16, dst2W          is ((b1_0607=0 & b1_0103=6 & b1_size_0=1) ... & dst2W); srcImm16 {
+    tmp:2 = dst2W & srcImm16;
+    setResultFlags(tmp);
+}
+
+# (3) TST.B:G src5, dst5
+:TST^".B:G" src5B, dst5B_afterSrc5   is b0_0007=0x1; ((b1_0707=1 & b1_size_0=0; b2_0003=0x9) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ...) {
+    tmp:1 = dst5B_afterSrc5 & src5B;
+    setResultFlags(tmp);
+} 
+
+# (3) TST.W:G src5, dst5
+:TST^".W:G" src5W, dst5W_afterSrc5   is b0_0007=0x1; ((b1_0707=1 & b1_size_0=1; b2_0003=0x9) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ...) {
+    tmp:2 = dst5W_afterSrc5 & src5W;
+    setResultFlags(tmp);
+} 
+
+##### UND #####
+# Don't implement this "Undefined" instruction
+# :UND    is b1_0007=0xff
+
+##### WAIT #####
+
+:WAIT                                is b1_0007=0xb2; b2_0007=0x03 {
+    Wait();
+}
+
+##### XCHG #####
+
+# XCHG.B reg8, dst5
+:XCHG.B b2_reg8, dst5B               is (b1_0407=0xd & b1_size_0=0; b2_0305=1 & b2_0101=0 & b2_reg8) ... & $(DST5B) {
+    tmp:1 = dst5B;
+    dst5B = b2_reg8;
+    b2_reg8 = tmp;
+}
+
+# XCHG.B Ax, dst5
+:XCHG.B b2_regAx, dst5B              is (b1_0407=0xd & b1_size_0=0; b2_0305=1 & b2_0102=1 & b2_regAx) ... & $(DST5B) {
+    tmp:1 = dst5B;
+    dst5B = b2_regAx:1;
+    b2_regAx = zext(tmp);
+}
+
+# XCHG.B reg8, Ax
+:XCHG.B b2_reg8, dst5Ax              is (b1_0407=0xd & b1_size_0=0; b2_0305=1 & b2_0101=0 & b2_reg8) & $(DST5AX) {
+    tmp:1 = dst5Ax:1;
+    dst5Ax = zext(b2_reg8);
+    b2_reg8 = tmp;
+}
+
+# XCHG.B Ax, Ax
+:XCHG.B b2_regAx, dst5Ax             is (b1_0407=0xd & b1_size_0=0; b2_0305=1 & b2_0102=1 & b2_regAx) & $(DST5AX) {
+    tmp:1 = dst5Ax:1;
+    dst5Ax = zext(b2_regAx:1);
+    b2_regAx = zext(tmp);
+}
+
+# XCHG.W reg16, dst5
+:XCHG.W b2_reg16, dst5W              is (b1_0407=0xd & b1_size_0=1; b2_0305=1 & b2_0101=0 & b2_reg16) ... & $(DST5W) {
+    tmp:2 = dst5W;
+    dst5W = b2_reg16;
+    b2_reg16 = tmp;
+}
+
+# XCHG.W Ax, dst5
+:XCHG.W b2_regAx, dst5W              is (b1_0407=0xd & b1_size_0=1; b2_0305=1 & b2_0102=1 & b2_regAx) ... & $(DST5W) {
+    tmp:2 = dst5W;
+    dst5W = b2_regAx:2;
+    b2_regAx = zext(tmp);
+}
+
+# XCHG.W reg16, Ax
+:XCHG.W b2_reg16, dst5Ax             is (b1_0407=0xd & b1_size_0=1; b2_0305=1 & b2_0101=0 & b2_reg16) & $(DST5AX) {
+    tmp:2 = dst5Ax:2;
+    dst5Ax = zext(b2_reg16);
+    b2_reg16 = tmp;
+}
+
+# XCHG.W Ax, Ax
+:XCHG.W b2_regAx, dst5Ax             is (b1_0407=0xd & b1_size_0=1; b2_0305=1 & b2_0102=1 & b2_regAx) & $(DST5AX) {
+    tmp:3 = dst5Ax;
+    dst5Ax = zext(b2_regAx:2); # dest Ax recieves low 16-bits of src Ax zero extended
+    b2_regAx = tmp; # src Ax recieves all 24-bits of dest Ax
+}
+
+##### XOR #####
+
+# (1) XOR.B #imm, dst
+:XOR^".B:G" srcImm8, dst5B           is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x0e) ... & $(DST5B)); srcImm8 {
+    tmp:1 = dst5B ^ srcImm8;
+    dst5B = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) XOR.B #imm, Ax
+:XOR^".B:G" srcImm8, dst5Ax          is ((b1_0407=0x9 & b1_size_0=0; b2_0005=0x0e) & $(DST5AX)); srcImm8 {
+    tmp:1 = dst5Ax:1 ^ srcImm8;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (1) XOR.W #imm, dst
+:XOR^".W:G" srcImm16, dst5W          is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x0e) ... & $(DST5W)); srcImm16 {
+    tmp:2 = dst5W ^ srcImm16;
+    dst5W = tmp;
+    setResultFlags(tmp);
+}
+
+# (1) XOR.W #imm, Ax
+:XOR^".W:G" srcImm16, dst5Ax         is ((b1_0407=0x9 & b1_size_0=1; b2_0005=0x0e) & $(DST5AX)); srcImm16 {
+    tmp:2 = dst5Ax:2 ^ srcImm16;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+# (2) XOR.B src5, dst5
+:XOR^".B:G" src5B, dst5B_afterSrc5   is (b1_0707=1 & b1_size_0=0; b2_0003=0x9) ... & $(SRC5B) ... & $(DST5B_AFTER_SRC5) ... {
+    tmp:1 = dst5B_afterSrc5 ^ src5B;
+    dst5B_afterSrc5 = tmp;
+    setResultFlags(tmp);
+} 
+
+# (2) XOR.B src5, Ax
+:XOR^".B:G" src5B, dst5Ax            is (b1_0707=1 & b1_size_0=0; b2_0003=0x9) ... & $(SRC5B) & $(DST5AX) ... {
+    tmp:1 = dst5Ax:1 ^ src5B;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+} 
+
+# (2) XOR.W src5, dst5
+:XOR^".W:G" src5W, dst5W_afterSrc5   is (b1_0707=1 & b1_size_0=1; b2_0003=0x9) ... & $(SRC5W) ... & $(DST5W_AFTER_SRC5) ... {
+    tmp:2 = dst5W_afterSrc5 ^ src5W;
+    dst5W_afterSrc5 = tmp;
+    setResultFlags(tmp);
+} 
+
+# (2) XOR.W src5, Ax
+:XOR^".W:G" src5W, dst5Ax            is (b1_0707=1 & b1_size_0=1; b2_0003=0x9) ... & $(SRC5W) & $(DST5AX) ... {
+    tmp:2 = dst5Ax:2 ^ src5W;
+    dst5Ax = zext(tmp);
+    setResultFlags(tmp);
+}
+
+} # end phase=1
+

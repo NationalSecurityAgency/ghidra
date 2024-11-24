@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.debug.api.model.DebuggerProgramLaunchOffer.*;
 import ghidra.debug.api.model.TraceRecorder;
@@ -578,10 +579,10 @@ public interface FlatDebuggerRecorderAPI extends FlatDebuggerAPI {
 		try {
 			return waitOn(offer.launchProgram(monitor, PromptMode.NEVER, new LaunchConfigurator() {
 				@Override
-				public Map<String, ?> configureLauncher(TargetLauncher launcher,
-						Map<String, ?> arguments, RelPrompt relPrompt) {
-					Map<String, Object> adjusted = new HashMap<>(arguments);
-					adjusted.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, commandLine);
+				public Map<String, ValStr<?>> configureLauncher(TargetLauncher launcher,
+						Map<String, ValStr<?>> arguments, RelPrompt relPrompt) {
+					Map<String, ValStr<?>> adjusted = new HashMap<>(arguments);
+					adjusted.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, ValStr.str(commandLine));
 					return adjusted;
 				}
 			}));

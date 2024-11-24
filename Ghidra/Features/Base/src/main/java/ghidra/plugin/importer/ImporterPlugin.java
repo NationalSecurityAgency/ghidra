@@ -35,8 +35,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.FileImporterService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.opinion.LoaderMap;
-import ghidra.app.util.opinion.LoaderService;
+import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
@@ -89,6 +88,7 @@ public class ImporterPlugin extends Plugin
 	private DockingAction importAction;
 	private DockingAction importSelectionAction;
 	private DockingAction addToProgramAction;
+	private DockingAction loadLibrariesAction;
 	private GhidraFileChooser chooser;
 	private FrontEndService frontEndService;
 	private DockingAction batchImportAction;
@@ -116,6 +116,7 @@ public class ImporterPlugin extends Plugin
 		setupImportAction();
 		setupImportSelectionAction();
 		setupAddToProgramAction();
+		setupLoadLibrariesAction();
 		setupBatchImportAction();
 	}
 
@@ -150,7 +151,27 @@ public class ImporterPlugin extends Plugin
 			Program currentProgram = pape.getActiveProgram();
 			importSelectionAction.setEnabled(currentProgram != null);
 			addToProgramAction.setEnabled(currentProgram != null);
+			loadLibrariesAction.setEnabled(shouldEnableLoadLibraries(currentProgram));
 		}
+	}
+
+	private boolean shouldEnableLoadLibraries(Program program) {
+		if (program == null) {
+			return false;
+		}
+		ByteProvider provider = ImporterUtilities.getProvider(program);
+		if (provider == null) {
+			return false;
+		}
+		LoadSpec loadSpec = ImporterUtilities.getLoadSpec(provider, program);
+		if (loadSpec == null) {
+			return false;
+		}
+		return loadSpec.getLoader()
+				.getDefaultOptions(provider, loadSpec, null, false)
+				.stream()
+				.anyMatch(e -> e.getName()
+						.equals(AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME));
 	}
 
 	@Override
@@ -398,6 +419,27 @@ public class ImporterPlugin extends Plugin
 		}
 	}
 
+	private void setupLoadLibrariesAction() {
+		String title = "Load Libraries";
+
+		loadLibrariesAction = new DockingAction(title, this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				doLoadLibraries();
+			}
+		};
+		loadLibrariesAction.setMenuBarData(new MenuData(new String[] { "&File", title + "..." },
+			null, IMPORT_MENU_GROUP, MenuData.NO_MNEMONIC, "zzz"));
+		loadLibrariesAction.setDescription(IMPORTER_PLUGIN_DESC);
+		loadLibrariesAction.setEnabled(false);
+
+		// Load libraries makes no sense in the front end tool, but we create it so that the
+		// loadLibrariesAction won't be null and we would have to check that in other places.
+		if (!(tool instanceof FrontEndTool)) {
+			tool.addAction(loadLibrariesAction);
+		}
+	}
+
 	private static DomainFolder getFolderFromContext(ActionContext context) {
 		Object contextObj = context.getContextObject();
 		if (contextObj instanceof DomainFolderNode) {
@@ -476,6 +518,15 @@ public class ImporterPlugin extends Plugin
 			ImporterUtilities.showAddToProgramDialog(fsrl, program, tool, monitor);
 		});
 
+	}
+
+	private void doLoadLibraries() {
+		ProgramManager manager = tool.getService(ProgramManager.class);
+		Program program = manager.getCurrentProgram();
+
+		TaskLauncher.launchModal("Show Load Libraries Dialog", monitor -> {
+			ImporterUtilities.showLoadLibrariesDialog(program, tool, manager, monitor);
+		});
 	}
 
 	protected void doImportSelectionAction(Program program, ProgramSelection selection) {

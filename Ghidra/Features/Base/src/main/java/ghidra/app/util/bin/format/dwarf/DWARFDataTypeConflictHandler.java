@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,16 +39,16 @@ import ghidra.util.SystemUtilities;
  * <p>
  * <ul>
  * <li>discarded and replaced by the existing data type
- * ({@link ConflictResult#USE_EXISTING})
+ * ({@link ConflictResult#USE_EXISTING})</li>
  * <li>used to overwrite the existing data type
- * ({@link ConflictResult#REPLACE_EXISTING})
+ * ({@link ConflictResult#REPLACE_EXISTING})</li>
  * </ul>
  * or the candidate data type was <b>NOT</b> matched with an existing data type,
  * and the new data type is:
  * <p>
  * <ul>
  * <li>kept, but renamed with a .conflictNNNN suffix to make it unique
- * ({@link ConflictResult#RENAME_AND_ADD})
+ * ({@link ConflictResult#RENAME_AND_ADD})</li>
  * </ul>
  * <b>NOTE:</b> structures with alignment (instead of being statically laid out)
  * are not treated specially and will not match other aligned or non-aligned

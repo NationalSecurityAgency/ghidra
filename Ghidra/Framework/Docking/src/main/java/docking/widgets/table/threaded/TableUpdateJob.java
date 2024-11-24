@@ -191,18 +191,18 @@ public class TableUpdateJob<T> {
 	 * effect depends on the running job's state:
 	 * <ul>
 	 *     <li>If the sort state hasn't happened yet, all it does is set the comparator for when
-	 *      the sort occurs.
+	 *      the sort occurs.</li>
 	 *     <li>If the sort state has already been started or completed, then this method attempts
 	 *      to stop the current process phase and cause the state machine to return to the sort
-	 *      phase.
+	 *      phase.</li>
 	 *     <li>If the current job has already entered the DONE state, then the sort cannot take
 	 *      effect in this job and a false value is returned to indicate the
-	 * sort was not handled by this job.
+	 * sort was not handled by this job.</li>
 	 * </ul>
 	 * @param newSortingContext the TableColumnComparator to use to sort the data.
 	 * @param forceSort True signals to re-sort, even if this is already sorted
 	 * @return true if the sort can be processed by this job, false if this job is essentially
-	 *         already completed and therefor cannot perform the sort job.
+	 *         already completed and therefore cannot perform the sort job.
 	 */
 	public synchronized boolean requestSort(TableSortingContext<T> newSortingContext,
 			boolean forceSort) {
@@ -225,16 +225,16 @@ public class TableUpdateJob<T> {
 	 * depends on the running job's state:
 	 * <ul>
 	 * 	  <li>If the filter state hasn't happened yet, then nothing needs to be done as this job
-	 * 			will filter later anyway.
+	 * 			will filter later anyway.</li>
 	 *    <li>If the filter state has already been started or completed, then this method
 	 *    		attempts to stop the current process phase and cause the state machine to return to
-	 *          the filter phase.
+	 *          the filter phase.</li>
 	 *    <li>If the current job has already entered the DONE state, then the filter cannot take
 	 *     		effect in this job and a false value is returned to indicate the filter was not
-	 *          handled by this job.
+	 *          handled by this job.</li>
 	 * </ul>
 	 * @return true if the filter can be processed by this job, false if this job is essentially
-	 * already completed and therefor cannot perform the filter job.
+	 * already completed and therefore cannot perform the filter job.
 	 */
 	public synchronized boolean requestFilter() {
 		if (currentState == DONE) {
@@ -718,7 +718,7 @@ public class TableUpdateJob<T> {
 	}
 
 	/**
-	 * Wraps a comparator<T> to add progress monitoring and cancel checking
+	 * Wraps a {@link Comparator} to add progress monitoring and cancel checking
 	 *
 	 * @param <T> The type of data being sorted
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.util.bin.format.pe.LoadConfigDirectory.GuardFlags;
@@ -30,7 +31,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
-import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -57,82 +57,21 @@ public class ControlFlowGuard {
 	public static void markup(LoadConfigDirectory lcd, Program program, MessageLog log,
 			NTHeader ntHeader) {
 
-		boolean is64bit = ntHeader.getOptionalHeader().is64bit();
-		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-		Memory mem = program.getMemory();
-		SymbolTable symbolTable = program.getSymbolTable();
-
 		// ControlFlowGuard
-		markupCfgCheckFunction(lcd, program, is64bit, space, mem, symbolTable);
-		markupCfgDispatchFunction(lcd, program, is64bit, space, mem, symbolTable);
+		markupCfgFunction("_guard_check_icall", "ControlFlowGuard check",
+			lcd::getCfgCheckFunctionPointer, program, ntHeader, log);
+		markupCfgFunction("_guard_dispatch_icall", "ControlFlowGuard dispatch",
+			lcd::getCfgDispatchFunctionPointer, program, ntHeader, log);
 		markupCfgFunctionTable(lcd, program, log);
 		markupCfgAddressTakenIatEntryTable(lcd, program, log);
 
 		// ReturnFlowGuard
-		markupRfgFailureRoutine(lcd, program, space, symbolTable);
-		markupRfgDefaultFailureRoutine(lcd, program, is64bit, space, mem, symbolTable);
-		markupRfgDefaultStackPointerFunction(lcd, program, is64bit, space, mem, symbolTable);
-	}
-
-	/**
-	 * Performs markup on the ControlFlowGuard check function, if it exists.
-	 * 
-	 * @param lcd The PE LoadConfigDirectory.
-	 * @param program The program.
-	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
-	 * @param space The program's address space.
-	 * @param mem The program's memory.
-	 * @param symbolTable The program's symbol table.
-	 */
-	private static void markupCfgCheckFunction(LoadConfigDirectory lcd, Program program,
-			boolean is64bit, AddressSpace space, Memory mem, SymbolTable symbolTable) {
-
-		if (lcd.getCfgCheckFunctionPointer() == 0) {
-			return;
-		}
-
-		try {
-			Address functionPointerAddr = space.getAddress(lcd.getCfgCheckFunctionPointer());
-			Address functionAddr = space.getAddress(
-				is64bit ? mem.getLong(functionPointerAddr) : mem.getInt(functionPointerAddr));
-			symbolTable.createLabel(functionAddr, "_guard_check_icall", SourceType.IMPORTED);
-
-			AbstractProgramLoader.markAsFunction(program, null, functionAddr);
-		}
-		catch (MemoryAccessException | AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard check function.", e);
-		}
-	}
-
-	/**
-	 * Performs markup on the ControlFlowGuard dispatch function, if it exists.
-	 * 
-	 * @param lcd The PE LoadConfigDirectory.
-	 * @param program The program.
-	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
-	 * @param space The program's address space.
-	 * @param mem The program's memory.
-	 * @param symbolTable The program's symbol table.
-	 */
-	private static void markupCfgDispatchFunction(LoadConfigDirectory lcd, Program program,
-			boolean is64bit, AddressSpace space, Memory mem, SymbolTable symbolTable) {
-
-		if (lcd.getCfgDispatchFunctionPointer() == 0) {
-			return;
-		}
-
-		try {
-			Address functionPointerAddr = space.getAddress(lcd.getCfgDispatchFunctionPointer());
-			Address functionAddr = space.getAddress(
-				is64bit ? mem.getLong(functionPointerAddr) : mem.getInt(functionPointerAddr));
-			symbolTable.createLabel(functionAddr, "_guard_dispatch_icall", SourceType.IMPORTED);
-
-			AbstractProgramLoader.markAsFunction(program, null, functionAddr);
-		}
-		catch (MemoryAccessException | AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard dispatch function.",
-				e);
-		}
+		markupCfgFunction("_guard_ss_verify_failure", "ReturnFlowGuard failure",
+			lcd::getRfgFailureRoutine, program, ntHeader, log);
+		markupCfgFunction("_guard_ss_verify_failure_default", "ReturnFlowGuard default failure",
+			lcd::getRfgFailureRoutineFunctionPointer, program, ntHeader, log);
+		markupCfgFunction("_guard_ss_verify_sp_default", "ReturnFlowGuard verify stack pointer",
+			lcd::getRfgVerifyStackPointerFunctionPointer, program, ntHeader, log);
 	}
 
 	/**
@@ -164,7 +103,7 @@ public class ControlFlowGuard {
 					.createLabel(tableAddr, GuardCFFunctionTableName, SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard function table.", e);
+			log.appendMsg("Unable to label ControlFlowGuard function table: " + e.getMessage());
 		}
 
 		// Each table entry is an RVA (32-bit image base offset), followed by 'n' extra bytes
@@ -201,12 +140,12 @@ public class ControlFlowGuard {
 
 	private static void createCfgFunctions(Program program, Data tableData, MessageLog log) {
 		if (tableData == null) {
-			Msg.warn(ControlFlowGuard.class, "Couldn't find Control Flow Guard tables.");
+			log.appendMsg("Couldn't find Control Flow Guard tables.");
 			return;
 		}
 
 		if (!tableData.isArray() || (tableData.getNumComponents() < 1)) {
-			Msg.warn(ControlFlowGuard.class, "Control Flow Guard table seems to be empty.");
+			log.appendMsg("Control Flow Guard table seems to be empty.");
 			return;
 		}
 
@@ -223,8 +162,8 @@ public class ControlFlowGuard {
 			Data entry = table.getComponent(i);
 			Data iboData = entry.getComponent(0);
 			Object value = iboData.getValue();
-			if (value instanceof Address) {
-				list.add((Address) value);
+			if (value instanceof Address addr) {
+				list.add(addr);
 			}
 		}
 		return list;
@@ -266,102 +205,62 @@ public class ControlFlowGuard {
 			}
 		}
 		catch (AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard IAT table.", e);
+			log.appendMsg("Unable to label ControlFlowGuard IAT table: " + e.getMessage());
 		}
 	}
 
 	/**
-	 * Performs markup on the ReturnFlowGuard failure routine, if it exists.
+	 * Performs markup on a ControlFlowGuard function, if it exists.
 	 * 
-	 * @param lcd The PE LoadConfigDirectory.
-	 * @param program The program
-	 * @param space The program's address space.
-	 * @param symbolTable The program's symbol table.
+	 * @param label The ControFlowGuard label to create.
+	 * @param description A short description of the ControlFlowGuard function type.
+	 * @param functionPointerGetter A method that returns the ControlFlowGuard function's pointer
+	 *   address.
+	 * @param program The program.
+	 * @param ntHeader The PE NTHeader.
+	 * @param log The log.
 	 */
-	private static void markupRfgFailureRoutine(LoadConfigDirectory lcd, Program program,
-			AddressSpace space, SymbolTable symbolTable) {
+	private static void markupCfgFunction(String label, String description,
+			Supplier<Long> functionPointerGetter, Program program, NTHeader ntHeader,
+			MessageLog log) {
+		
+		if (functionPointerGetter.get() == 0) {
+			return;
+		}
 
-		if (lcd.getRfgFailureRoutine() == 0) {
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		Memory mem = program.getMemory();
+		SymbolTable symbolTable = program.getSymbolTable();
+		boolean is64bit = ntHeader.getOptionalHeader().is64bit();
+		
+		Address functionPointerAddr = space.getAddress(functionPointerGetter.get());
+		PeUtils.createData(program, functionPointerAddr, PointerDataType.dataType, log);
+
+		Address functionAddr;
+		try {
+			functionAddr = space.getAddress(
+				is64bit ? mem.getLong(functionPointerAddr) : mem.getInt(functionPointerAddr));
+		}
+		catch (MemoryAccessException e) {
+			log.appendMsg("Failed to read %s function pointer address at %s".formatted(description,
+				functionPointerAddr));
 			return;
 		}
 
 		try {
-			Address routineAddr = space.getAddress(lcd.getRfgFailureRoutine());
-			symbolTable.createLabel(routineAddr, "_guard_ss_verify_failure", SourceType.IMPORTED);
-
-			AbstractProgramLoader.markAsFunction(program, null, routineAddr);
+			symbolTable.createLabel(functionAddr, label, SourceType.IMPORTED);
 		}
 		catch (AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class, "Unable to label ReturnFlowGuard failure routine.", e);
+			log.appendMsg("Unable to apply label '%s' to %s function at %s: %s".formatted(label,
+				description, functionAddr, e.getMessage()));
 		}
-	}
-
-	/**
-	 * Performs markup on the ReturnFlowGuard "default" failure routine function, if it exists.
-	 * 
-	 * @param lcd The PE LoadConfigDirectory.
-	 * @param program The program
-	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
-	 * @param space The program's address space.
-	 * @param mem The program's memory.
-	 * @param symbolTable The program's symbol table.
-	 */
-	private static void markupRfgDefaultFailureRoutine(LoadConfigDirectory lcd, Program program,
-			boolean is64bit, AddressSpace space, Memory mem, SymbolTable symbolTable) {
-
-		if (lcd.getRfgFailureRoutineFunctionPointer() == 0) {
-			return;
-		}
-
-		try {
-			Address functionPointerAddr =
-				space.getAddress(lcd.getRfgFailureRoutineFunctionPointer());
-			Address functionAddr = space.getAddress(
-				is64bit ? mem.getLong(functionPointerAddr) : mem.getInt(functionPointerAddr));
-			symbolTable.createLabel(functionAddr, "_guard_ss_verify_failure_default",
-				SourceType.IMPORTED);
-
+		
+		if (program.getListing().getDefinedDataAt(functionAddr) == null) {
 			AbstractProgramLoader.markAsFunction(program, null, functionAddr);
-
 		}
-		catch (MemoryAccessException | AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class,
-				"Unable to label ReturnFlowGuard default failure routine.", e);
-		}
-	}
-
-	/**
-	 * Performs markup on the ReturnFlowGuard verify stack pointer function, if it exists.
-	 * 
-	 * @param lcd The PE LoadConfigDirectory.
-	 * @param program The program
-	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
-	 * @param space The program's address space.
-	 * @param mem The program's memory.
-	 * @param symbolTable The program's symbol table.
-	 */
-	private static void markupRfgDefaultStackPointerFunction(LoadConfigDirectory lcd,
-			Program program, boolean is64bit, AddressSpace space, Memory mem,
-			SymbolTable symbolTable) {
-
-		if (lcd.getRfgVerifyStackPointerFunctionPointer() == 0) {
-			return;
-		}
-
-		try {
-			Address functionPointerAddr =
-				space.getAddress(lcd.getRfgVerifyStackPointerFunctionPointer());
-			Address functionAddr = space.getAddress(
-				is64bit ? mem.getLong(functionPointerAddr) : mem.getInt(functionPointerAddr));
-			symbolTable.createLabel(functionAddr, "_guard_ss_verify_sp_default",
-				SourceType.IMPORTED);
-
-			AbstractProgramLoader.markAsFunction(program, null, functionAddr);
-
-		}
-		catch (MemoryAccessException | AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class,
-				"Unable to label ReturnFlowGuard verify stack pointer function.", e);
+		else {
+			log.appendMsg("Unable to mark %s as function at %s. Data is already defined there."
+					.formatted(description, functionAddr));
 		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
+import org.junit.Ignore;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
@@ -39,6 +39,7 @@ import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 
+@Ignore("Deprecated")
 public class DebuggerRecorderLogicalBreakpointServiceTest extends
 		AbstractDebuggerLogicalBreakpointServiceTest<TraceRecorder, TestTargetMemoryRegion> {
 
@@ -130,6 +131,7 @@ public class DebuggerRecorderLogicalBreakpointServiceTest extends
 				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000,
 				false);
 		}
+		waitForDomainObject(t);
 	}
 
 	@Override
@@ -140,6 +142,7 @@ public class DebuggerRecorderLogicalBreakpointServiceTest extends
 				t.getStaticMappingManager().findContaining(addr(t, 0x55550000), r.getSnap());
 			mapping.delete();
 		}
+		waitForDomainObject(t);
 	}
 
 	@Override
@@ -168,7 +171,7 @@ public class DebuggerRecorderLogicalBreakpointServiceTest extends
 	@Override
 	protected void removeTargetSoftwareBreakpoint(TraceRecorder r) throws Throwable {
 		TargetBreakpointSpecContainer cont = getBreakpointContainer(r);
-		cont.fetchElements().thenAccept(elements -> {
+		waitOn(cont.fetchElements().thenCompose(elements -> {
 			for (TargetObject obj : elements.values()) {
 				if (!(obj instanceof TargetBreakpointSpec) ||
 					!(obj instanceof TargetDeletable)) {
@@ -179,11 +182,12 @@ public class DebuggerRecorderLogicalBreakpointServiceTest extends
 					continue;
 				}
 				TargetDeletable del = (TargetDeletable) obj;
-				del.delete();
-				return;
+				return del.delete();
 			}
 			fail("No deletable software breakpoint spec found");
-		}).get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			throw new AssertionError();
+		}));
+		waitRecorder(r);
 	}
 
 	@Override
@@ -200,14 +204,16 @@ public class DebuggerRecorderLogicalBreakpointServiceTest extends
 	}
 
 	@Override
-	protected void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
-			boolean expectedEnabled) throws Throwable {
+	protected void handleToggleBreakpointInvocation(TraceRecorder target,
+			TraceBreakpoint expectedBreakpoint, boolean expectedEnabled) throws Throwable {
 		// Logic is in the Test model
+		waitRecorder(target);
 	}
 
 	@Override
-	protected void handleDeleteBreakpointInvocation(TraceBreakpoint expectedBreakpoint)
-			throws Throwable {
+	protected void handleDeleteBreakpointInvocation(TraceRecorder target,
+			TraceBreakpoint expectedBreakpoint) throws Throwable {
 		// Logic is in the Test model
+		waitRecorder(target);
 	}
 }

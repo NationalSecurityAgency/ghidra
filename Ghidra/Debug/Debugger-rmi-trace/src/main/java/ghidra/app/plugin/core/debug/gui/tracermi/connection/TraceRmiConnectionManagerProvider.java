@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +34,9 @@ import docking.action.builder.ActionBuilder;
 import docking.widgets.tree.*;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.gui.tracermi.connection.tree.*;
 import ghidra.app.services.*;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -61,16 +59,6 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 	private static final String GROUP_SERVER = "2. Server";
 	private static final String GROUP_CONNECT = "1. Connect";
 	private static final String GROUP_MAINTENANCE = "3. Maintenance";
-
-	private static final ParameterDescription<String> PARAM_ADDRESS =
-		ParameterDescription.create(String.class, "address", true, "localhost",
-			"Host/Address", "Address or hostname for interface(s) to listen on");
-	private static final ParameterDescription<Integer> PARAM_PORT =
-		ParameterDescription.create(Integer.class, "port", true, 0,
-			"Port", "TCP port number, 0 for ephemeral");
-	private static final TargetParameterMap PARAMETERS = TargetParameterMap.ofEntries(
-		Map.entry(PARAM_ADDRESS.name, PARAM_ADDRESS),
-		Map.entry(PARAM_PORT.name, PARAM_PORT));
 
 	interface StartServerAction {
 		String NAME = "Start Server";
@@ -344,25 +332,24 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 		return traceRmiService != null && !traceRmiService.isServerStarted();
 	}
 
-	private InetSocketAddress promptSocketAddress(String title, String okText) {
-		DebuggerMethodInvocationDialog dialog = new DebuggerMethodInvocationDialog(tool,
-			title, okText, DebuggerResources.ICON_CONNECTION);
-		Map<String, ?> arguments;
-		do {
-			dialog.forgetMemorizedArguments();
-			arguments = dialog.promptArguments(PARAMETERS);
-		}
-		while (dialog.isResetRequested());
+	private InetSocketAddress promptSocketAddress(String title, String okText,
+			HelpLocation helpLocation) {
+		TraceRmiConnectDialog dialog = new TraceRmiConnectDialog(tool, title, okText);
+		dialog.setHelpLocation(helpLocation);
+		Map<String, ValStr<?>> arguments = dialog.promptArguments();
+
 		if (arguments == null) {
+			// Cancelled
 			return null;
 		}
-		String address = PARAM_ADDRESS.get(arguments);
-		int port = PARAM_PORT.get(arguments);
+		String address = TraceRmiConnectDialog.PARAM_ADDRESS.get(arguments).val();
+		int port = TraceRmiConnectDialog.PARAM_PORT.get(arguments).val();
 		return new InetSocketAddress(address, port);
 	}
 
 	private void doActionStartServerActivated(ActionContext __) {
-		InetSocketAddress sockaddr = promptSocketAddress("Start Trace RMI Server", "Start");
+		InetSocketAddress sockaddr = promptSocketAddress("Start Trace RMI Server", "Start",
+			actionStartServer.getHelpLocation());
 		if (sockaddr == null) {
 			return;
 		}
@@ -395,7 +382,8 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 	}
 
 	private void doActionConnectAcceptActivated(ActionContext __) {
-		InetSocketAddress sockaddr = promptSocketAddress("Accept Trace RMI Connection", "Listen");
+		InetSocketAddress sockaddr = promptSocketAddress("Accept Trace RMI Connection", "Listen",
+			actionConnectAccept.getHelpLocation());
 		if (sockaddr == null) {
 			return;
 		}
@@ -420,7 +408,8 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 	}
 
 	private void doActionConnectOutboundActivated(ActionContext __) {
-		InetSocketAddress sockaddr = promptSocketAddress("Connect to Trace RMI", "Connect");
+		InetSocketAddress sockaddr = promptSocketAddress("Connect to Trace RMI", "Connect",
+			actionConnectOutbound.getHelpLocation());
 		if (sockaddr == null) {
 			return;
 		}

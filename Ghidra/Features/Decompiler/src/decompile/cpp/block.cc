@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -812,6 +812,37 @@ FlowBlock *FlowBlock::findCommonBlock(const vector<FlowBlock *> &blockSet)
   for(int4 i=0;i<markedSet.size();++i)
     markedSet[i]->clearMark();
   return res;
+}
+
+/// \brief Find conditional block that decides between the given control-flow edges
+///
+/// There must be a unique path from the conditional block through the first edge, and
+/// a second unique path through the second edge. Otherwise null is returned.  The index of the
+/// output block from the conditional that flows to the first edge is passed back.
+/// \param bl1 is the destination block for the first given control-flow edge
+/// \param edge1 is the input slot for the first edge
+/// \param bl2 is the destination block for the second given control-flow edge
+/// \param edge2 is the input slot for the second edge
+/// \param slot1 will hold the output slot leading to the first control-flow edge
+/// \return the conditional FlowBlock if it exists or null
+FlowBlock *FlowBlock::findCondition(FlowBlock *bl1,int4 edge1,FlowBlock *bl2,int4 edge2,int4 &slot1)
+
+{
+  FlowBlock *cond = bl1->getIn(edge1);
+  while (cond->sizeOut() != 2) {
+    if (cond->sizeOut() != 1) return (FlowBlock *)0;
+    bl1 = cond;
+    edge1 = 0;
+    cond = bl1->getIn(0);
+  }
+
+  while (cond != bl2->getIn(edge2)) {
+    bl2 = bl2->getIn(edge2);
+    if (bl2->sizeOut() != 1) return (FlowBlock *)0;
+    edge2 = 0;
+  }
+  slot1 = bl1->getInRevIndex(edge1);
+  return cond;
 }
 
 /// Add the given FlowBlock to the list and make \b this the parent
@@ -2314,7 +2345,7 @@ int4 BlockBasic::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
   PcodeOp *lastop = op.back();
   if (lastop->code() != CPUI_CBRANCH)
     return 2;
-  return opFlipInPlaceTest(lastop,fliplist);
+  return Funcdata::opFlipInPlaceTest(lastop,fliplist);
 }
 
 void BlockBasic::flipInPlaceExecute(void)
@@ -2543,9 +2574,16 @@ bool BlockBasic::isDoNothing(void) const
   if (sizeIn() == 0) return false; // A block that does nothing but
 				// is a starting block, may need to be a
 				// placeholder for global(persistent) vars
-  if ((sizeIn()==1)&&(getIn(0)->isSwitchOut())) {
-    if (getOut(0)->sizeIn() > 1)
-      return false;		// Don't remove switch targets
+  for(int4 i=0;i<sizeIn();++i) {
+    const FlowBlock *switchbl = getIn(i);
+    if (!switchbl->isSwitchOut()) continue;
+    if (switchbl->sizeOut() > 1) {
+      // This block is a switch target
+      if (getOut(0)->sizeIn() > 1) {	// Multiple edges coming together
+					// Switch edge may still be propagating a unique value
+	return false;			// Don't remove it
+      }
+    }
   }
   PcodeOp *lastop = lastOp();
   if ((lastop != (PcodeOp *)0)&&(lastop->code()==CPUI_BRANCHIND))
@@ -2686,6 +2724,29 @@ PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
       return (PcodeOp *)0;
   }
   return op;
+}
+
+/// \brief Get the earliest use/read of a Varnode in \b this basic block
+///
+/// \param vn is the Varnode to search for
+/// \return the earliest PcodeOp reading the Varnode or NULL
+PcodeOp *BlockBasic::earliestUse(Varnode *vn)
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *res = (PcodeOp *)0;
+
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->getParent() != this) continue;
+    if (res == (PcodeOp *)0)
+      res = op;
+    else {
+      if (op->getSeqNum().getOrder() < res->getSeqNum().getOrder())
+	res = op;
+    }
+  }
+  return res;
 }
 
 /// Each Varnode must be defined by a PcodeOp with the same OpCode.  The Varnode, within the array, is replaced
@@ -2997,7 +3058,7 @@ bool BlockIf::preferComplement(Funcdata &data)
   if (0 != split->flipInPlaceTest(fliplist))
     return false;
   split->flipInPlaceExecute();
-  opFlipInPlaceExecute(data,fliplist);
+  data.opFlipInPlaceExecute(fliplist);
   swapBlocks(1,2);
   return true;
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,15 +38,19 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 import net.sf.sevenzipjbinding.*;
-import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
+/**
+ * GFilesystem that uses 7zip native libraries to open archives and extract files.
+ * <p>
+ * WARNING: care is taken to synchronize access to the underlying sevenzip library methods as
+ * some race conditions have been encountered that cause the entire jdk to core dump. 
+ */
 @FileSystemInfo(type = "7zip", description = "7Zip", factory = SevenZipFileSystemFactory.class)
 public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem> {
 	private Map<Integer, String> passwords = new HashMap<>();
 
 	private IInArchive archive;
-	private ISimpleInArchive archiveInterface;
 	private SZByteProviderStream szBPStream;
 	private ISimpleInArchiveItem[] items;
 	private ArchiveFormat archiveFormat;
@@ -73,8 +77,7 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 			szBPStream = new SZByteProviderStream(byteProvider);
 			archive = SevenZip.openInArchive(null, szBPStream);
 			archiveFormat = archive.getArchiveFormat();
-			archiveInterface = archive.getSimpleInterface();
-			items = archiveInterface.getArchiveItems();
+			items = archive.getSimpleInterface().getArchiveItems();
 
 			indexFiles(monitor);
 			ensurePasswords(monitor);
@@ -86,17 +89,18 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 
 	@Override
 	public void close() throws IOException {
-		refManager.onClose();
+		synchronized (fsIndex) {
+			refManager.onClose();
 
-		FSUtilities.uncheckedClose(archive, "Problem closing 7-Zip archive");
-		archive = null;
-		archiveInterface = null;
+			FSUtilities.uncheckedClose(archive, "Problem closing 7-Zip archive");
+			archive = null;
 
-		FSUtilities.uncheckedClose(szBPStream, null);
-		szBPStream = null;
+			FSUtilities.uncheckedClose(szBPStream, null);
+			szBPStream = null;
 
-		fsIndex.clear();
-		items = null;
+			fsIndex.clear();
+			items = null;
+		}
 	}
 
 	private void indexFiles(TaskMonitor monitor) throws CancelledException, SevenZipException {
@@ -253,37 +257,40 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 
 	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
-		FileAttributes result = new FileAttributes();
-		if (fsIndex.getRootDir().equals(file)) {
-			result.add(NAME_ATTR, "/");
-			result.add("Archive Format", archiveFormat.toString());
-		}
-		else {
-			ISimpleInArchiveItem item = fsIndex.getMetadata(file);
-			if (item == null) {
-				return result;
+		synchronized (fsIndex) {
+			FileAttributes result = new FileAttributes();
+			if (fsIndex.getRootDir().equals(file)) {
+				result.add(NAME_ATTR, "/");
+				result.add("Archive Format", archiveFormat.toString());
 			}
+			else {
+				ISimpleInArchiveItem item = fsIndex.getMetadata(file);
+				if (item == null) {
+					return result;
+				}
 
-			result.add(NAME_ATTR, FilenameUtils.getName(uncheckedGet(item::getPath, "unknown")));
-			result.add(FILE_TYPE_ATTR,
-				uncheckedGet(item::isFolder, false) ? FileType.DIRECTORY : FileType.FILE);
-			boolean encrypted = uncheckedGet(item::isEncrypted, false);
-			result.add(IS_ENCRYPTED_ATTR, encrypted);
-			if (encrypted) {
-				result.add(HAS_GOOD_PASSWORD_ATTR, passwords.get(item.getItemIndex()) != null);
+				result.add(NAME_ATTR,
+					FilenameUtils.getName(uncheckedGet(item::getPath, "unknown")));
+				result.add(FILE_TYPE_ATTR,
+					uncheckedGet(item::isFolder, false) ? FileType.DIRECTORY : FileType.FILE);
+				boolean encrypted = uncheckedGet(item::isEncrypted, false);
+				result.add(IS_ENCRYPTED_ATTR, encrypted);
+				if (encrypted) {
+					result.add(HAS_GOOD_PASSWORD_ATTR, passwords.get(item.getItemIndex()) != null);
+				}
+				String comment = uncheckedGet(item::getComment, null);
+				result.add(COMMENT_ATTR, !comment.isBlank() ? comment : null);
+				result.add(COMPRESSED_SIZE_ATTR, uncheckedGet(item::getPackedSize, null));
+				result.add(SIZE_ATTR, uncheckedGet(item::getSize, null));
+
+				Integer crc = uncheckedGet(item::getCRC, null);
+				result.add("CRC", crc != null ? "%08X".formatted(crc) : null);
+				result.add("Compression Method", uncheckedGet(item::getMethod, null));
+				result.add(CREATE_DATE_ATTR, uncheckedGet(item::getCreationTime, null));
+				result.add(MODIFIED_DATE_ATTR, uncheckedGet(item::getLastWriteTime, null));
 			}
-			String comment = uncheckedGet(item::getComment, null);
-			result.add(COMMENT_ATTR, !comment.isBlank() ? comment : null);
-			result.add(COMPRESSED_SIZE_ATTR, uncheckedGet(item::getPackedSize, null));
-			result.add(SIZE_ATTR, uncheckedGet(item::getSize, null));
-
-			Integer crc = uncheckedGet(item::getCRC, null);
-			result.add("CRC", crc != null ? "%08X".formatted(crc) : null);
-			result.add("Compression Method", uncheckedGet(item::getMethod, null));
-			result.add(CREATE_DATE_ATTR, uncheckedGet(item::getCreationTime, null));
-			result.add(MODIFIED_DATE_ATTR, uncheckedGet(item::getLastWriteTime, null));
+			return result;
 		}
-		return result;
 	}
 
 	@Override
@@ -309,7 +316,9 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 				}
 			}
 			try (SZExtractCallback szCallback = new SZExtractCallback(monitor, itemIndex, true)) {
-				archive.extract(new int[] { itemIndex }, false /* extract mode */, szCallback);
+				synchronized (fsIndex) {
+					archive.extract(new int[] { itemIndex }, false /* extract mode */, szCallback);
+				}
 				FileCacheEntry result = szCallback.getExtractResult(itemIndex);
 				if (result == null) {
 					throw new IOException("Unable to extract " + file.getFSRL());

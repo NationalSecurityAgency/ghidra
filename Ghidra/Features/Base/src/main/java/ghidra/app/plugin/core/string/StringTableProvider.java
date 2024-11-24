@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
-import docking.widgets.table.*;
-import docking.widgets.table.threaded.ThreadedTableModel;
+import docking.widgets.table.GTableCellRenderer;
+import docking.widgets.table.GTableCellRenderingData;
 import docking.widgets.textfield.IntegerTextField;
 import generic.theme.GIcon;
 import ghidra.app.util.HelpTopics;
@@ -488,27 +488,10 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		}
 	}
 
-	private class StringTable extends GhidraTable {
-		public StringTable(ThreadedTableModel<FoundString, ?> model) {
-			super(model);
-		}
-
-//		@Override
-//		protected <T> SelectionManager createSelectionManager(TableModel tableModel) {
-//			return null;
-//		}
-
-	}
-
 	private JComponent buildTablePanel() {
 		stringModel = new StringTableModel(tool, options);
 
-		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000) {
-			@Override
-			protected GTable createTable(ThreadedTableModel<FoundString, ?> model) {
-				return new StringTable(model);
-			}
-		};
+		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000);
 		table = threadedTablePanel.getTable();
 		table.setActionsEnabled(true);
 		table.setName("DataTable");

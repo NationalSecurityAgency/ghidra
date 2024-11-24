@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,12 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.actions.KeyBindingUtils;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.Gui;
+import ghidra.plugin.importer.LcsSelectionEvent.Type;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.table.*;
@@ -41,12 +43,13 @@ public class NewLanguagePanel extends JPanel {
 	private JCheckBox recommendedCheckbox;
 	private JLabel formatLabel;
 
-	private void setDescriptionLabelText(String text) {
-		if (text == null || "".equals(text)) {
-			text = " ";
-		}
-		descriptionLabel.setText(text);
-	}
+	private boolean isOnShowAll = true;
+
+	private List<LanguageCompilerSpecPair> allLcsPairsList;
+	private List<LanguageCompilerSpecPair> recommendedLcsPairsList;
+	private LanguageCompilerSpecPair recommendedLcsPair;
+
+	private final Set<LcsSelectionListener> listeners = new HashSet<>();
 
 	public NewLanguagePanel() {
 		constructEverything();
@@ -94,7 +97,6 @@ public class NewLanguagePanel extends JPanel {
 			@Override
 			public Dimension getPreferredSize() {
 				// this makes us a bit smaller in height, as the preferred height can be excessive
-
 				Dimension preferredSize = super.getPreferredSize();
 				if (preferredSize.width == 0) {
 					return preferredSize; // no size yet, don't change anything
@@ -138,16 +140,37 @@ public class NewLanguagePanel extends JPanel {
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			notifyListeners();
+			notifyLanguageSelected();
 		});
+
 		table.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.getClickCount() == 2) {
-					// do the next action thingie
+					notfiyLanguagePicked();
 				}
 			}
 		});
+
+		// Update Enter to allow the user to pick the selected language
+		KeyStroke enterKs = KeyBindingUtils.parseKeyStroke("Enter");
+		Action action = new AbstractAction("Pick Language") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				notfiyLanguagePicked();
+			}
+		};
+
+		// remove the table's enter key binding and then add our own
+		KeyBindingUtils.clearKeyBinding(table, enterKs);
+		KeyBindingUtils.registerAction(table, enterKs, action, JComponent.WHEN_FOCUSED);
+	}
+
+	private void setDescriptionLabelText(String text) {
+		if (text == null || "".equals(text)) {
+			text = " ";
+		}
+		descriptionLabel.setText(text);
 	}
 
 	public void setFormatText(String text) {
@@ -157,8 +180,6 @@ public class NewLanguagePanel extends JPanel {
 	public void setShowRecommendedCheckbox(boolean show) {
 		recommendedCheckbox.setVisible(show);
 	}
-
-	private boolean isOnShowAll = true;
 
 	private boolean isAllLcsPairsTableShowing() {
 		return isOnShowAll;
@@ -174,7 +195,7 @@ public class NewLanguagePanel extends JPanel {
 
 	private void setLanguages(List<LanguageCompilerSpecPair> lcsPairList) {
 		tableModel.setLanguages(lcsPairList);
-		notifyListeners();
+		notifyLanguageSelected();
 	}
 
 	private void switchToAllList() {
@@ -203,13 +224,20 @@ public class NewLanguagePanel extends JPanel {
 		}
 	}
 
-	private List<LanguageCompilerSpecPair> allLcsPairsList;
-	private List<LanguageCompilerSpecPair> recommendedLcsPairsList;
+	private void notifyLanguageSelected() {
+		LanguageCompilerSpecPair lcs = getSelectedLcsPair();
+		LcsSelectionEvent e = new LcsSelectionEvent(lcs, Type.SELECTED);
+		doNotify(e);
+	}
 
-	private LanguageCompilerSpecPair recommendedLcsPair;
+	private void notfiyLanguagePicked() {
+		LanguageCompilerSpecPair lcs = getSelectedLcsPair();
+		LcsSelectionEvent e = new LcsSelectionEvent(lcs, Type.PICKED);
+		doNotify(e);
+	}
 
-	private void notifyListeners() {
-		LanguageCompilerSpecPair selectedLcsPair = getSelectedLcsPair();
+	private void doNotify(LcsSelectionEvent event) {
+		LanguageCompilerSpecPair selectedLcsPair = event.getLcs();
 		if (selectedLcsPair == null) {
 			descriptionLabel.setText(DEFAULT_DESCRIPTION_TEXT);
 		}
@@ -221,12 +249,9 @@ public class NewLanguagePanel extends JPanel {
 				descriptionLabel.setText("<LanguageNotFound>");
 			}
 		}
-//		notifyListenersOfValidityChanged();
-		if (!listeners.isEmpty()) {
-			LcsSelectionEvent e = new LcsSelectionEvent(selectedLcsPair);
-			for (LcsSelectionListener listener : listeners) {
-				listener.valueChanged(e);
-			}
+
+		for (LcsSelectionListener listener : listeners) {
+			listener.valueChanged(event);
 		}
 	}
 
@@ -313,8 +338,6 @@ public class NewLanguagePanel extends JPanel {
 		scrollToViewRow(viewRow);
 		return true;
 	}
-
-	private final Set<LcsSelectionListener> listeners = new HashSet<>();
 
 	public void addSelectionListener(LcsSelectionListener listener) {
 		listeners.add(listener);

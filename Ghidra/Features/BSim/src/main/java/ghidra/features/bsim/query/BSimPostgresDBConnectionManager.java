@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.features.bsim.query;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.security.auth.callback.NameCallback;
@@ -40,11 +41,14 @@ public class BSimPostgresDBConnectionManager {
 	private static final int CONN_POOL_MAX_IDLE = 2;
 
 	private static HashMap<BSimServerInfo, BSimPostgresDataSource> dataSourceMap = new HashMap<>();
+	private static boolean shutdownHookInstalled = false;
 
-	public static BSimPostgresDataSource getDataSource(BSimServerInfo postgresServerInfo) {
+	public static synchronized BSimPostgresDataSource getDataSource(
+			BSimServerInfo postgresServerInfo) {
 		if (postgresServerInfo.getDBType() != DBType.postgres) {
 			throw new IllegalArgumentException("expected postgres server info");
 		}
+		enableShutdownHook();
 		return dataSourceMap.computeIfAbsent(postgresServerInfo,
 			info -> new BSimPostgresDataSource(info));
 	}
@@ -54,23 +58,48 @@ public class BSimPostgresDBConnectionManager {
 		return getDataSource(new BSimServerInfo(postgresUrl));
 	}
 
-	public static BSimPostgresDataSource getDataSourceIfExists(BSimServerInfo serverInfo) {
+	public static synchronized BSimPostgresDataSource getDataSourceIfExists(
+			BSimServerInfo serverInfo) {
 		return dataSourceMap.get(serverInfo);
 	}
 
-	private static synchronized void remove(BSimServerInfo serverInfo) {
+	private static synchronized void remove(BSimServerInfo serverInfo, boolean force) {
 		BSimPostgresDataSource ds = dataSourceMap.get(serverInfo);
 		if (ds == null) {
 			return;
 		}
 		int n = ds.bds.getNumActive();
-		if (n != 0) {
-			System.out
-					.println("Unable to remove data source which has " + n + " active connections");
+		if (n != 0 && !force) {
+			Msg.error(BSimPostgresDBConnectionManager.class,
+				"Unable to remove data source which has " + n + " active connections");
 			return;
 		}
 		ds.close();
 		dataSourceMap.remove(serverInfo);
+	}
+
+	private static synchronized void enableShutdownHook() {
+		if (shutdownHookInstalled) {
+			return;
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Collection<BSimPostgresDataSource> dataSources = dataSourceMap.values();
+				for (BSimPostgresDataSource ds : dataSources) {
+					int activeConnections = ds.getActiveConnections();
+					if (activeConnections != 0) {
+						Msg.error(BSimPostgresDBConnectionManager.class,
+							activeConnections +
+								" BSim active Postgres connections were not properly closed: " +
+								ds.serverInfo);
+					}
+					ds.close();
+				}
+				dataSourceMap.clear();
+			}
+		});
+		shutdownHookInstalled = true;
 	}
 
 	public static class BSimPostgresDataSource implements BSimJDBCDataSource { // NOTE: can be renamed
@@ -113,8 +142,9 @@ public class BSimPostgresDBConnectionManager {
 			bds.setUsername(userName);
 		}
 
+		@Override
 		public void dispose() {
-			remove(serverInfo);
+			remove(serverInfo, true);
 		}
 
 		private void close() {
@@ -141,6 +171,11 @@ public class BSimPostgresDBConnectionManager {
 		@Override
 		public int getActiveConnections() {
 			return bds.getNumActive();
+		}
+
+		@Override
+		public int getIdleConnections() {
+			return bds.getNumIdle();
 		}
 
 		/**

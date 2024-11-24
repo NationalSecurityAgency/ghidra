@@ -43,6 +43,7 @@ import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.GoToAction;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncLazyValue;
@@ -621,7 +622,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		List<DockingActionIf> result = new ArrayList<>();
 		String pluginName = plugin.getName();
 		for (AddressSpace space : currentTrace.getBaseAddressFactory().getAddressSpaces()) {
-			if (space.isRegisterSpace()) {
+			if (!space.isMemorySpace()) {
+				continue;
+			}
+			if (space.getType() == AddressSpace.TYPE_OTHER) {
 				continue;
 			}
 			Address address;
@@ -631,18 +635,29 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			catch (AddressOutOfBoundsException e) {
 				continue;
 			}
+
+			String name = GoToAction.NAME + " " + address.toString(true);
+
 			// Use program view, not memory manager, so that "Force Full View" is respected.
-			if (!currentTrace.getProgramView().getMemory().contains(address)) {
-				continue;
-			}
-			String name = "Goto " + address.toString(true);
-			result.add(new ActionBuilder(name, pluginName).popupMenuPath(name).onAction(ctx -> {
-				if (listingService == null) {
-					return;
-				}
-				ProgramLocation loc = new ProgramLocation(current.getView(), address);
-				listingService.goTo(loc, true);
-			}).build());
+			boolean enabled = currentTrace.getProgramView().getMemory().contains(address);
+			String extraDesc = enabled ? "" : ". Enable via Force Full View.";
+			result.add(new ActionBuilder(name, pluginName)
+					.popupMenuPath(name)
+					.popupMenuGroup("Go To")
+					.description(
+						"Navigate the dynamic listing to " + address.toString(true) + extraDesc)
+					.helpLocation(
+						new HelpLocation(pluginName, DebuggerResources.GoToAction.HELP_ANCHOR))
+					.enabledWhen(ctx -> enabled)
+					.popupWhen(ctx -> true)
+					.onAction(ctx -> {
+						if (listingService == null) {
+							return;
+						}
+						ProgramLocation loc = new ProgramLocation(current.getView(), address);
+						listingService.goTo(loc, true);
+					})
+					.build());
 		}
 		return result;
 	}

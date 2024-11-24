@@ -254,6 +254,26 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public Address findFirstAddressInCommon(AddressSetView set);
 
 	/**
+	 * Returns the number of address in this address set before the given address.
+	 * @param address the address after the last address to be counted
+	 * @return the number of address in this address set before the given address
+	 */
+	public default long getAddressCountBefore(Address address) {
+		long count = 0;
+		for (AddressRange range : getAddressRanges()) {
+			if (range.getMinAddress().compareTo(address) > 0) {
+				return count;
+			}
+			else if (range.contains(address)) {
+				count += address.subtract(range.getMinAddress());
+				return count;
+			}
+			count += range.getLength();
+		}
+		return count;
+	}
+
+	/**
 	 * Trim address set removing all addresses less-than-or-equal to specified 
 	 * address based upon {@link Address} comparison.
 	 * The address set may contain address ranges from multiple 
@@ -305,4 +325,5 @@ public interface AddressSetView extends Iterable<AddressRange> {
 		}
 		return trimmedSet;
 	}
+
 }

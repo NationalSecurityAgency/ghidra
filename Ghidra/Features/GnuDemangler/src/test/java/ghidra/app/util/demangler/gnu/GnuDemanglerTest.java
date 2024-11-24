@@ -23,8 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.app.util.demangler.DemangledException;
-import ghidra.app.util.demangler.DemangledObject;
+import ghidra.app.util.demangler.*;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.TerminatedStringDataType;
@@ -78,7 +77,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
 		try {
-			demangler.demangle(mangled, options);
+			MangledContext mangledContext =
+				demangler.createMangledContext(mangled, options, program, null);
+			demangler.demangle(mangledContext);
 			fail("Demangle should have failed attempting to demangle a non-mangled string");
 		}
 		catch (DemangledException e) {
@@ -89,7 +90,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	@Test
 	public void testUseStandardReplacements() throws Exception {
 
-		// 
+		//
 		// Mangled: _ZTv0_n24_NSt19basic_ostringstreamIcSt11char_traitsIcE14pool_allocatorIcEED0Ev
 		//
 		// Demangled: virtual thunk to std::basic_ostringstream<char, std::char_traits<char>, pool_allocator<char> >::~basic_ostringstream()
@@ -104,7 +105,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setUseStandardReplacements(true);
-		DemangledObject dobj = demangler.demangle(mangled, options);
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, null);
+		DemangledObject dobj = demangler.demangle(mangledContext);
 		assertNotNull(dobj);
 
 		String signature = dobj.getSignature();
@@ -112,11 +115,15 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 			"virtual thunk to undefined __thiscall std::ostringstream::~ostringstream(void)",
 			signature);
 
+		assertEquals(
+			"virtual thunk to std::basic_ostringstream<char, std::char_traits<char>, pool_allocator<char> >::~basic_ostringstream()",
+			dobj.getRawDemangled());
+
 		//
 		// Now disable demangled string replacement
-		// 
-		options.setUseStandardReplacements(false);
-		dobj = demangler.demangle(mangled, options);
+		//
+		options.setUseStandardReplacements(false); // options are still in context
+		dobj = demangler.demangle(mangledContext);
 		assertNotNull(dobj);
 
 		String fullSignature = dobj.getSignature();
@@ -224,7 +231,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangler.canDemangle(program);// this perform initialization
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.EDG);
-		DemangledObject result = demangler.demangle(mangled, options);
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, null);
+		DemangledObject result = demangler.demangle(mangledContext);
 		assertNull(result);
 	}
 
@@ -239,7 +248,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
 		options.setDemangleOnlyKnownPatterns(false);
-		DemangledObject result = demangler.demangle(mangled, options);
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, null);
+		DemangledObject result = demangler.demangle(mangledContext);
 		assertNotNull(result);
 		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
 	}
@@ -257,7 +268,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
 		options.setDemangleOnlyKnownPatterns(false);
-		DemangledObject result = demangler.demangle(mangled, options);
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, null);
+		DemangledObject result = demangler.demangle(mangledContext);
 		assertNotNull(result);
 		assertEquals("undefined TTextPanel::scroll(unsigned char,short,int)",
 			result.getSignature(false));

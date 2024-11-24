@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -200,13 +200,13 @@ public class BoundedBufferedReader extends Reader {
 	 * true:
 	 * <ul>
 	 * 
-	 * <li>The specified number of characters have been read,
+	 * <li>The specified number of characters have been read,</li>
 	 * 
 	 * <li>The <code>read</code> method of the underlying stream returns
-	 * <code>-1</code>, indicating end-of-file, or
+	 * <code>-1</code>, indicating end-of-file, or</li>
 	 * 
 	 * <li>The <code>ready</code> method of the underlying stream returns
-	 * <code>false</code>, indicating that further input requests would block.
+	 * <code>false</code>, indicating that further input requests would block.</li>
 	 * 
 	 * </ul>
 	 * If the first <code>read</code> on the underlying stream returns

@@ -29,6 +29,7 @@ namespace ghidra {
 class ArraySequence {
 public:
   static const int4 MINIMUM_SEQUENCE_LENGTH;	///< Minimum number of sequential characters to trigger replacement with CALLOTHER
+  static const int4 MAXIMUM_SEQUENCE_LENGTH;	///< Maximum number of characters in replacement string
   /// \brief Helper class holding a data-flow edge and optionally a memory offset being COPYed into or from
   class WriteNode {
   public:
@@ -38,8 +39,6 @@ public:
     WriteNode(uint8 off,PcodeOp *o,int4 sl) { offset = off; op = o; slot = sl; }	///< Constructor
     /// \brief Compare two nodes by their order within a basic block
     bool operator<(const WriteNode &node2) const { return op->getSeqNum().getOrder() < node2.op->getSeqNum().getOrder(); }
-    /// \brief Compare two PcodeOps based on the position of the element they copy within the sequence
-    static bool compareOffset(const WriteNode &a,const WriteNode &b) { return a.offset < b.offset; }
   };
 protected:
   Funcdata &data;		///< The function containing the sequence
@@ -87,8 +86,11 @@ public:
 class HeapSequence : public ArraySequence {
   Varnode *basePointer;			///< Pointer that sequence is stored to
   uint8 baseOffset;			///< Offset relative to pointer to root STORE
+  AddrSpace *storeSpace;		///< Address space being STOREed to
+  int4 ptrAddMult;			///< Required multiplier for PTRADD ops
   vector<Varnode *> nonConstAdds;	///< non-constant Varnodes being added into pointer calculation
   void findBasePointer(Varnode *initPtr);	///< Find the base pointer for the sequence
+  void findDuplicateBases(vector<Varnode *> &duplist);	///< Find any duplicates of \b basePointer
   void findInitialStores(vector<PcodeOp *> &stores);
   static uint8 calcAddElements(Varnode *vn,vector<Varnode *> &nonConst,int4 maxDepth);
   uint8 calcPtraddOffset(Varnode *vn,vector<Varnode *> &nonConst);

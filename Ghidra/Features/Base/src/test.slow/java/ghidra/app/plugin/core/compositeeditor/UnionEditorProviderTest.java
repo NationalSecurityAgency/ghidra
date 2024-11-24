@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,14 +160,28 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		// Apply the changes
 		invoke(applyAction);
+		waitForSwing();
+
 		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 
 		// Undo the apply
 		undo(program);
+
+		Window dialog = waitForWindow("Reload Union Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
 		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 
 		// Redo the apply
 		redo(program);
+
+		dialog = waitForWindow("Reload Union Editor?");
+		assertNotNull(dialog);
+		pressButton(dialog, "Yes");
+		waitForSwing();
+
 		assertTrue(complexUnion.isEquivalent(model.viewComposite));
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,6 +67,8 @@ import utilities.util.FileUtilities;
 //@formatter:on
 public class FileSystemBrowserPlugin extends Plugin
 		implements ApplicationLevelPlugin, ProjectListener, FileSystemBrowserService {
+
+	private static final String LAST_FS_DIR = "LastFileSystemDirectory";
 
 	/* package */ DockingAction openFilesystemAction;
 	/* package */ DockingAction showFileSystemImplsAction;
@@ -194,6 +196,7 @@ public class FileSystemBrowserPlugin extends Plugin
 		chooserOpen.setMultiSelectionEnabled(multiSelect);
 		chooserOpen.setTitle(title);
 		chooserOpen.setApproveButtonText(buttonText);
+		chooserOpen.setLastDirectoryPreference(LAST_FS_DIR);
 	}
 
 	/**

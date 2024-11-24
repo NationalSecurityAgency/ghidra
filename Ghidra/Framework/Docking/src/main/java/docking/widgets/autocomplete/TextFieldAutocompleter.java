@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ import ghidra.util.task.SwingUpdateManager;
  * The simplest use case is to create a text field, create an autocompleter with a custom model, and
  * then attach and show.
  *
- * <pre>
+ * <pre>{@code
  * JTextField field = new JTextField();
  *
  * AutocompletionModel<String> model = new AutocompletionModel<String>() {
@@ -90,7 +90,7 @@ import ghidra.util.task.SwingUpdateManager;
  * completer.attachTo(field);
  * // ... Add the field to, e.g., a dialog, and show.
  *
- * </pre>
+ * }</pre>
  *
  * @param <T> the type of suggestions presented by this autocompleter.
  */

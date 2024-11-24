@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractUserDefinedTypeMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.pdb.PdbNamespaceUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -116,6 +117,7 @@ public class TypedefSymbolApplier extends MsSymbolApplier
 		}
 
 		SymbolPath symbolPath = new SymbolPath(name);
+		symbolPath = PdbNamespaceUtils.convertToGhidraPathName(symbolPath);
 		CategoryPath categoryPath =
 			applicator.getTypedefsCategory(applicator.getCurrentModuleNumber(), symbolPath);
 		DataType typedef = new TypedefDataType(categoryPath.getParent(), categoryPath.getName(),

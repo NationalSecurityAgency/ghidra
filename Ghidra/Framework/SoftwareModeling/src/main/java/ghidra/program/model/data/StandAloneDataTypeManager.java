@@ -872,6 +872,14 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		return transaction.intValue();
 	}
 
+	/**
+	 * Get the number of active transactions
+	 * @return number of active transactions
+	 */
+	protected int getTransactionCount() {
+		return transactionCount;
+	}
+
 	@Override
 	public void endTransaction(int transactionID, boolean commit) {
 		boolean restored = false;
@@ -906,6 +914,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			}
 		}
 		if (restored) {
+			invalidateCache();
 			notifyRestored();
 		}
 	}
@@ -953,6 +962,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	protected synchronized void clearUndo() {
 		undoList.clear();
 		redoList.clear();
+
+		// Flatten all checkpoints then restore undo stack size
 		dbHandle.setMaxUndos(0);
 		dbHandle.setMaxUndos(NUM_UNDOS);
 	}

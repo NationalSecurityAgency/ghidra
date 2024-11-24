@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +29,17 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.ListenerSet;
 
-@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = {
-	@TargetAttributeType(name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, type = JdiModelTargetBreakpointContainer.class),
-	@TargetAttributeType(name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, type = JdiModelTargetBreakpointSpec.class),
-	@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "BreakpointSpec",
+	attributes = {
+		@TargetAttributeType(
+			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME,
+			type = JdiModelTargetBreakpointContainer.class),
+		@TargetAttributeType(
+			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME,
+			type = JdiModelTargetBreakpointSpec.class),
+		@TargetAttributeType(type = Void.class) },
+	canonicalContainer = true)
 public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 		implements TargetBreakpointSpec, JdiModelTargetDeletable {
 

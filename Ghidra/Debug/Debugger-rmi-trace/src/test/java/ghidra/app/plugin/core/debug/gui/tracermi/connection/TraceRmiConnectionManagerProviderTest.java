@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
-import ghidra.app.plugin.core.debug.gui.objects.components.InvocationDialogHelper;
+import ghidra.app.plugin.core.debug.gui.InvocationDialogHelper;
 import ghidra.app.plugin.core.debug.gui.tracermi.connection.tree.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiClient;
@@ -48,6 +48,11 @@ import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.util.exception.CancelledException;
 
 public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	private static final String SCHEMA_XML = """
+			<context>
+			  <schema name="Root" elementResync="NEVER" attributeResync="NEVER" />
+			</context>
+			""";
 	TraceRmiConnectionManagerProvider provider;
 	TraceRmiService traceRmiService;
 	DebuggerControlService controlService;
@@ -60,13 +65,17 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 		provider = waitForComponentProvider(TraceRmiConnectionManagerProvider.class);
 	}
 
+	InvocationDialogHelper<?, ?> waitDialog() {
+		return InvocationDialogHelper.waitFor(TraceRmiConnectDialog.class);
+	}
+
 	@Test
 	public void testActionAccept() throws Exception {
 		performEnabledAction(provider, provider.actionConnectAccept, false);
-		InvocationDialogHelper helper = InvocationDialogHelper.waitFor();
+		InvocationDialogHelper<?, ?> helper = waitDialog();
 		helper.dismissWithArguments(Map.ofEntries(
-			Map.entry("address", "localhost"),
-			Map.entry("port", 0)));
+			helper.entry("address", "localhost"),
+			helper.entry("port", 0)));
 		waitForPass(() -> Unique.assertOne(traceRmiService.getAllAcceptors()));
 	}
 
@@ -78,10 +87,10 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 				throw new AssertionError();
 			}
 			performEnabledAction(provider, provider.actionConnectOutbound, false);
-			InvocationDialogHelper helper = InvocationDialogHelper.waitFor();
+			InvocationDialogHelper<?, ?> helper = waitDialog();
 			helper.dismissWithArguments(Map.ofEntries(
-				Map.entry("address", sockaddr.getHostString()),
-				Map.entry("port", sockaddr.getPort())));
+				helper.entry("address", sockaddr.getHostString()),
+				helper.entry("port", sockaddr.getPort())));
 			try (SocketChannel channel = server.accept()) {
 				TestTraceRmiClient client = new TestTraceRmiClient(channel);
 				client.sendNegotiate("Test client");
@@ -94,10 +103,10 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	@Test
 	public void testActionStartServer() throws Exception {
 		performEnabledAction(provider, provider.actionStartServer, false);
-		InvocationDialogHelper helper = InvocationDialogHelper.waitFor();
+		InvocationDialogHelper<?, ?> helper = waitDialog();
 		helper.dismissWithArguments(Map.ofEntries(
-			Map.entry("address", "localhost"),
-			Map.entry("port", 0)));
+			helper.entry("address", "localhost"),
+			helper.entry("port", 0)));
 		waitForPass(() -> assertTrue(traceRmiService.isServerStarted()));
 		waitForPass(() -> assertFalse(provider.actionStartServer.isEnabled()));
 
@@ -175,6 +184,17 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	}
 
 	@Test
+	public void testCloseWithdrawsTargets() throws Exception {
+		Target target;
+		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
+			cx.client.createTrace(0, "bash");
+			target = waitForPass(() -> Unique.assertOne(targetService.getPublishedTargets()));
+		}
+		// Outside the try, the connection has been closed
+		waitForPass(() -> assertFalse(targetService.getPublishedTargets().contains(target)));
+	}
+
+	@Test
 	public void testServerNode() throws Exception {
 		TraceRmiServerNode node = TraceRmiConnectionTreeHelper.getServerNode(provider.rootNode);
 		assertEquals("Server: CLOSED", node.getDisplayText());
@@ -209,8 +229,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 	}
 
 	public record Cx(SocketChannel channel, TestTraceRmiClient client,
-			TraceRmiConnection connection)
-			implements AutoCloseable {
+			TraceRmiConnection connection) implements AutoCloseable {
 		public static Cx complete(TraceRmiAcceptor acceptor, String description)
 				throws IOException, CancelledException {
 			SocketChannel channel = null;
@@ -374,11 +393,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 
 	@Test
 	public void testActivateTargetNode() throws Exception {
-		SchemaContext ctx = XmlSchemaContext.deserialize("""
-				<context>
-				  <schema name="Root" elementResync="NEVER" attributeResync="NEVER" />
-				</context>
-				""");
+		SchemaContext ctx = XmlSchemaContext.deserialize(SCHEMA_XML);
 		try (Cx cx = Cx.connect(traceRmiService, "Test client")) {
 			cx.client.createTrace(1, "bash");
 			try (Tx tx = cx.client.new Tx(1, 1, "Create snapshots")) {

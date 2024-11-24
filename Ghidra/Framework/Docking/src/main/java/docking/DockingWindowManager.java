@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -459,6 +459,23 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		boolean isFocusedProvider =
 			(focusedPlaceholder != null) && (focusedPlaceholder.getProvider() == provider);
 		return isActiveWindowManager && isFocusedProvider;
+	}
+
+	/**
+	 * Returns true if the given provider is in a non-main window (a {@link DetachedWindowNode})
+	 * and is the last component provider in that window.
+	 * @param provider the provider
+	 * @return true if the last provider in a non-main window
+	 */
+	public boolean isLastProviderInDetachedWindow(ComponentProvider provider) {
+
+		Window providerWindow = getProviderWindow(provider);
+		WindowNode providerNode = root.getNodeForWindow(providerWindow);
+		if (!(providerNode instanceof DetachedWindowNode windowNode)) {
+			return false;
+		}
+
+		return windowNode.getComponentCount() == 1;
 	}
 
 	/**
@@ -944,7 +961,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (visibleState) {
 			movePlaceholderToFront(placeholder, false);
 			if (placeholder.getNode() == null) {
-				root.add(placeholder);
+				root.addToNewWindow(placeholder);
 			}
 			if (requestFocus) {
 				setNextFocusPlaceholder(placeholder);
@@ -1142,7 +1159,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	void movePlaceholder(ComponentPlaceholder source, Point p) {
 		ComponentNode sourceNode = source.getNode();
 		sourceNode.remove(source);
-		root.add(source, p);
+		root.addToNewWindow(source, p);
 		scheduleUpdate();
 	}
 
@@ -1368,6 +1385,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private synchronized ComponentPlaceholder maybeGetPlaceholderToFocus() {
+
 		if (nextFocusedPlaceholder != null) {
 			ComponentPlaceholder temp = nextFocusedPlaceholder;
 			setNextFocusPlaceholder(null);
@@ -1375,27 +1393,21 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component permanentFocusOwner = kfm.getPermanentFocusOwner();
 		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner == null) {
+
+		// A null focus owner and a null permanent focus owner imply that Java did not know who  
+		// should get focus.  Make sure one of our widgets gets focus.
+		if (focusOwner == null && permanentFocusOwner == null) {
 			return findNextFocusedComponent();
 		}
 		return null;
 	}
 
 	private void updateFocus(ComponentPlaceholder placeholder) {
-		if (placeholder == null) {
-			return;
+		if (placeholder != null) {
+			placeholder.requestFocusWhenReady();
 		}
-
-		Swing.runLater(() -> {
-			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-			Window activeWindow = kfm.getActiveWindow();
-			if (activeWindow == null) {
-				// our application isn't focused--don't do anything
-				return;
-			}
-			placeholder.requestFocus();
-		});
 	}
 
 	void restoreFocusOwner(String focusOwner, String focusName) {
@@ -1456,6 +1468,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private ComponentPlaceholder findNextFocusedComponent() {
+
 		Iterator<ComponentPlaceholder> iterator = lastFocusedPlaceholders.iterator();
 		while (iterator.hasNext()) {
 			ComponentPlaceholder placeholder = iterator.next();
@@ -1464,7 +1477,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			}
 			iterator.remove();
 		}
-
 		return getActivePlaceholder(defaultProvider);
 	}
 
@@ -1807,7 +1819,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				bestCenter = centeredOnComponent;
 			}
 
-			DockingDialog dialog = DockingDialog.createDialog(bestParent, provider, bestCenter);
+			DockingDialog dialog =
+				DockingDialog.createDialog(bestParent, provider, bestCenter);
 			dialog.setVisible(true);
 		};
 

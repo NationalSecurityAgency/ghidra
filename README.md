@@ -38,8 +38,8 @@ To install an official pre-built multi-platform Ghidra release:
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
 
 For additional information and troubleshooting tips about installing and running a Ghidra release, 
-please refer to `docs/InstallationGuide.html` which can be found in your extracted Ghidra release 
-directory. 
+please refer to the [Installation Guide][installationguide] which can be found in a Ghidra release
+at `docs/InstallationGuide.html`. 
 
 ## Build
 
@@ -126,6 +126,7 @@ source project.
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
+[installationguide]: GhidraDocs/InstallationGuide.md
 [known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
@@ -137,4 +138,4 @@ source project.
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
-[ghidradev]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/GhidraDev_README.html
+[ghidradev]: GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md

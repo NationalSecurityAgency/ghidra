@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -433,6 +433,11 @@ public class MachoProgramBuilder {
 				}
 				Address sectionStart = segmentSpace.getAddress(section.getAddress());
 				Address sectionEnd = sectionStart.add(section.getSize() - 1);
+				if (!memory.contains(sectionStart)) {
+					log.appendMsg("Warning: Section %s.%s is not contained within its segment"
+							.formatted(section.getSegmentName(), section.getSectionName()));
+					continue;
+				}
 				if (!memory.contains(sectionEnd)) {
 					sectionEnd = memory.getBlock(sectionStart).getEnd();
 				}
@@ -958,7 +963,14 @@ public class MachoProgramBuilder {
 					space.getAddress(segments.get(binding.getSegmentIndex()).getVMaddress() +
 						binding.getSegmentOffset());
 
-				fixupExternalLibrary(binding.getLibraryOrdinal(), symbol, libraryPaths);
+				try {
+					fixupExternalLibrary(program, libraryPaths, binding.getLibraryOrdinal(),
+						symbol);
+				}
+				catch (Exception e) {
+					log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
+							.formatted(symbol.getName(), e.getMessage()));
+				}
 
 				boolean success = false;
 				try {
@@ -974,20 +986,6 @@ public class MachoProgramBuilder {
 							.add(addr, success ? Status.APPLIED_OTHER : Status.FAILURE,
 								binding.getType(), null, bytes.length, binding.getSymbolName());
 				}
-			}
-		}
-	}
-
-	private void fixupExternalLibrary(int libraryOrdinal, Symbol symbol, List<String> libraryPaths)
-			throws InvalidInputException {
-		ExternalManager extManager = program.getExternalManager();
-		int libraryIndex = libraryOrdinal - 1;
-		if (libraryIndex >= 0 && libraryIndex < libraryPaths.size()) {
-			Library library = extManager.getExternalLibrary(libraryPaths.get(libraryIndex));
-			ExternalLocation loc =
-				extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
-			if (loc != null) {
-				loc.setName(library, symbol.getName(), SourceType.IMPORTED);
 			}
 		}
 	}
@@ -1889,6 +1887,42 @@ public class MachoProgramBuilder {
 			program.getSymbolTable()
 					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
 						SourceType.IMPORTED);
+		}
+	}
+
+	/**
+	 * Associates the given {@link Symbol} with the correct external {@link Library} (fixing
+	 * the {@code <EXTERNAL>} association)
+	 * 
+	 * @param program The {@link Program}
+	 * @param libraryPaths A {@link List} of library paths
+	 * @param libraryOrdinal The library ordinal
+	 * @param symbol The {@link Symbol}
+	 * @throws Exception if an unexpected problem occurs
+	 */
+	public static void fixupExternalLibrary(Program program, List<String> libraryPaths,
+			int libraryOrdinal, Symbol symbol) throws Exception {
+		ExternalManager extManager = program.getExternalManager();
+		int libraryIndex = libraryOrdinal - 1;
+		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {
+			throw new Exception(
+				"Library ordinal '%d' outside of expected range".formatted(libraryOrdinal));
+		}
+		String libraryName = libraryPaths.get(libraryIndex).replaceAll(" ", "_");
+		Library library = extManager.getExternalLibrary(libraryName);
+		if (library == null) {
+			throw new Exception(
+				"Library '%s' not found in external program list".formatted(libraryName));
+		}
+		ExternalLocation loc =
+			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
+		if (loc != null) {
+			try {
+				loc.setName(library, symbol.getName(), SourceType.IMPORTED);
+			}
+			catch (InvalidInputException e) {
+				throw new Exception("Symbol name contains illegal characters");
+			}
 		}
 	}
 }

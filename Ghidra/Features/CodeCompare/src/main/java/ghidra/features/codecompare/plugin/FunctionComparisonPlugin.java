@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,12 @@ import java.util.function.Consumer;
 import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.FunctionSupplierContext;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.services.*;
-import ghidra.features.base.codecompare.model.DefaultFunctionComparisonModel;
+import ghidra.app.services.FunctionComparisonService;
+import ghidra.features.base.codecompare.model.AnyToAnyFunctionComparisonModel;
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginInfo;
@@ -62,9 +63,8 @@ import utility.function.Callback;
 public class FunctionComparisonPlugin extends ProgramPlugin
 		implements DomainObjectListener, FunctionComparisonService {
 
-	// Keep a stack of recently added providers so that the "add to comparison" service methods
-	// can easily add to the last created provider.
-	private Deque<FunctionComparisonProvider> providers = new ArrayDeque<>();
+	private Set<FunctionComparisonProvider> providers = new HashSet<>();
+	private FunctionComparisonProvider lastActiveProvider;
 
 	public FunctionComparisonPlugin(PluginTool tool) {
 		super(tool);
@@ -116,10 +116,19 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	void providerClosed(FunctionComparisonProvider provider) {
 		providers.remove(provider);
+		if (lastActiveProvider == provider) {
+			lastActiveProvider = null;
+		}
 	}
 
 	void removeFunction(Function function) {
 		Swing.runIfSwingOrRunLater(() -> doRemoveFunction(function));
+	}
+
+	void providerActivated(FunctionComparisonProvider provider) {
+		if (provider.supportsAddingFunctions()) {
+			lastActiveProvider = provider;
+		}
 	}
 
 	private void foreEachProvider(Consumer<FunctionComparisonProvider> c) {
@@ -134,25 +143,60 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	private void createActions() {
-		new ActionBuilder("Compare Functions", getName())
-				.description("Create Function Comparison")
+
+		HelpLocation help = new HelpLocation("FunctionComparison", "Function_Comparison_Actions");
+
+		new ActionBuilder("Function Comparison", getName())
 				.popupMenuPath("Compare Function(s)")
-				.helpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"))
 				.popupMenuGroup("Functions", "Z1")
+				.description("Adds the selected function(s) to the current comparison window.")
+				.helpLocation(help)
 				.withContext(FunctionSupplierContext.class)
-				.enabledWhen(c -> c.hasFunctions())
+				.enabledWhen(c -> !isListing(c) && c.hasFunctions())
+				.onAction(c -> addToComparison(c.getFunctions()))
+				.buildAndInstall(tool);
+
+		// same action as above, but with an extra pull right when shown in the listing
+		new ActionBuilder("Function Comparison (Listing)", getName())
+				.popupMenuPath("Function", "Compare Function(s)")
+				.popupMenuGroup("Functions", "Z1")
+				.description("Adds the selected function(s) to the current comparison window.")
+				.helpLocation(help)
+				.withContext(FunctionSupplierContext.class)
+				.enabledWhen(c -> isListing(c) && c.hasFunctions())
+				.onAction(c -> addToComparison(c.getFunctions()))
+				.buildAndInstall(tool);
+
+		new ActionBuilder("New Function Comparison", getName())
+				.popupMenuPath("Compare in New Window")
+				.popupMenuGroup("Functions", "Z2")
+				.description("Compare the selected function(s) in a new comparison window.")
+				.helpLocation(help)
+				.withContext(FunctionSupplierContext.class)
+				.enabledWhen(
+					c -> !isListing(c) && c.hasFunctions() && hasExistingComparison())
 				.onAction(c -> createComparison(c.getFunctions()))
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Add To Last Function Comparison", getName())
-				.description("Add the selected function(s) to the last Function Comparison window")
-				.popupMenuPath("Add To Last Comparison")
-				.helpLocation(new HelpLocation("FunctionComparison", "Function_Comparison_Add_To"))
+		// same action as above, but with an extra pull right when shown in the listing
+		new ActionBuilder("New Function Comparison (Listing)", getName())
+				.popupMenuPath("Function", "Compare in New Window")
 				.popupMenuGroup("Functions", "Z2")
+				.description("Compare the selected function(s) in a new comparison window.")
+				.helpLocation(help)
 				.withContext(FunctionSupplierContext.class)
-				.enabledWhen(c -> c.hasFunctions())
-				.onAction(c -> addToComparison(c.getFunctions()))
+				.enabledWhen(c -> isListing(c) && c.hasFunctions() && hasExistingComparison())
+				.onAction(c -> createComparison(c.getFunctions()))
 				.buildAndInstall(tool);
+
+	}
+
+	private boolean isListing(FunctionSupplierContext context) {
+		return context instanceof ListingActionContext;
+	}
+
+	private boolean hasExistingComparison() {
+		return lastActiveProvider != null;
 	}
 
 	private void doRemoveFunction(Function function) {
@@ -168,18 +212,8 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		FunctionComparisonProvider provider =
 			new FunctionComparisonProvider(this, model, closeListener);
 
-		// insert at the top so the last created provider is first when searching for a provider
-		providers.addFirst(provider);
+		providers.add(provider);
 		return provider;
-	}
-
-	private FunctionComparisonProvider findLastDefaultProviderModel() {
-		for (FunctionComparisonProvider provider : providers) {
-			if (provider.getModel() instanceof DefaultFunctionComparisonModel) {
-				return provider;
-			}
-		}
-		return null;
 	}
 
 //==================================================================================================
@@ -190,26 +224,23 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		if (functions.isEmpty()) {
 			return;
 		}
-		DefaultFunctionComparisonModel model = new DefaultFunctionComparisonModel(functions);
+		AnyToAnyFunctionComparisonModel model = new AnyToAnyFunctionComparisonModel(functions);
 		Swing.runLater(() -> createProvider(model));
 	}
 
 	@Override
 	public void createComparison(Function left, Function right) {
-		DefaultFunctionComparisonModel model = new DefaultFunctionComparisonModel(left, right);
+		AnyToAnyFunctionComparisonModel model = new AnyToAnyFunctionComparisonModel(left, right);
 		Swing.runLater(() -> createProvider(model));
 	}
 
 	@Override
 	public void addToComparison(Collection<Function> functions) {
-		FunctionComparisonProvider lastProvider = findLastDefaultProviderModel();
-		if (lastProvider == null) {
+		if (lastActiveProvider == null) {
 			createComparison(functions);
 		}
 		else {
-			DefaultFunctionComparisonModel model =
-				(DefaultFunctionComparisonModel) lastProvider.getModel();
-			Swing.runLater(() -> model.addFunctions(functions));
+			Swing.runLater(() -> lastActiveProvider.addFunctions(functions));
 		}
 	}
 

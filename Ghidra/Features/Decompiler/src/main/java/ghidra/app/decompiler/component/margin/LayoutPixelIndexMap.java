@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public interface LayoutPixelIndexMap {
 	 * coordinate. In essence, this maps from vertical position, relative to the main panel's
 	 * viewport, to layout index. This accounts for scrolling and non-uniform height among the
 	 * layouts.
-	 * 
+	 * <p>
 	 * @implNote Clients should avoid frequent calls to this method. Even though it can be
 	 *           implemented easily in log time, an invocation for every pixel or line of pixels
 	 *           painted could still be unnecessarily expensive. It should only be necessary to call

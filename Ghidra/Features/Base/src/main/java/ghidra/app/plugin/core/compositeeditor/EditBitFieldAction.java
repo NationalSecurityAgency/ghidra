@@ -31,7 +31,6 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 		if (!(model instanceof CompEditorModel)) {
 			throw new AssertException("unsupported use");
 		}
-		adjustEnablement();
 	}
 
 	@Override
@@ -41,11 +40,9 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 	}
 
 	@Override
-	public void adjustEnablement() {
-		// Unions do not support non-packed manipulation of bitfields
-		boolean enabled = (provider instanceof StructureEditorProvider structProvider) &&
+	public boolean isEnabledForContext(ActionContext context) {
+		return !hasIncompleteFieldEntry() &&
+			(provider instanceof StructureEditorProvider structProvider) &&
 			structProvider.getSelectedNonPackedBitFieldComponent() != null;
-		setEnabled(enabled);
 	}
-
 }

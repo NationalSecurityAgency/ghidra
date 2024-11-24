@@ -73,10 +73,9 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
 
-	private GnuDemangler demangler = new GnuDemangler();
-
 	public GnuDemanglerAnalyzer() {
 		super(NAME, DESCRIPTION);
+		demangler = new GnuDemangler();
 		setDefaultEnablement(true);
 	}
 
@@ -142,9 +141,9 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	}
 
 	@Override
-	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOtions,
-			MessageLog log) throws DemangledException {
-		return demangler.demangle(mangled, demanglerOtions);
+	protected DemangledObject doDemangle(MangledContext mangledContext, MessageLog log)
+			throws DemangledException {
+		return demangler.demangle(mangledContext);
 	}
 
 //==================================================================================================

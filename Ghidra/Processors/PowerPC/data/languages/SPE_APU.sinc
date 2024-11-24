@@ -2654,8 +2654,8 @@ define pcodeop ROTL64;
 define pcodeop VectorSplatFractionalImmediate;
 :evsplatfi D,BU_SIMM is OP=4 & D & BU_SIMM & XOP_0_10=0x22B  { 
     # TODO definition
-# RT0:31 ô SI || 270
-# RT32:63 ô SI || 270
+# RT0:31 = SI || 270
+# RT32:63 = SI || 270
 # The value specified by SI is padded with trailing zeros
 # and placed in both elements of RT. The SI ends up in
 # bit positions RT0:4 and RT32:36.
@@ -2687,9 +2687,9 @@ define pcodeop VectorSplatImmediate;
 define pcodeop VectorShiftRightWordImmediateSigned;
 :evsrwis D,A,EVUIMM is OP=4 & A & D & EVUIMM & XOP_0_10=0x223 { 
    # TODO definition
-# n ô UI
-# RT0:31 ô EXTS((RA)0:31-n)
-# RT32:63 ô EXTS((RA)32:63-n)
+# n = UI
+# RT0:31 = EXTS((RA)0:31-n)
+# RT32:63 = EXTS((RA)32:63-n)
 # Both high and low elements of RA are shifted right by
 # the 5-bit UI value. Bits in the most significant positions
 # vacated by the shift are filled with a copy of the sign bit.
@@ -2703,9 +2703,9 @@ define pcodeop VectorShiftRightWordImmediateSigned;
 define pcodeop VectorShiftRightWordImmediateUnsigned;
 :evsrwiu D,A,EVUIMM is OP=4 & A & D & EVUIMM & XOP_0_10=0x222 { 
     # TODO definition
-# n ô UI
-# RT0:31 ô EXTZ((RA)0:31-n)
-# RT32:63 ô EXTZ((RA)32:63-n)
+# n = UI
+# RT0:31 = EXTZ((RA)0:31-n)
+# RT32:63 = EXTZ((RA)32:63-n)
 # Both high and low elements of RA are shifted right by
 # the 5-bit UI value; zeros are shifted into the most significant
 # position.

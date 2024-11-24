@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
 
@@ -61,6 +61,7 @@ language_map = {
     'm68k:68020': ['68000:BE:32:MC68020'],
     'm68k:68030': ['68000:BE:32:MC68030'],
     'm9s12x': ['HCS-12:BE:24:default', 'HCS-12X:BE:24:default'],
+    'mips:3000': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mips:4000': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mips:5000': ['MIPS:BE:64:64-32addr', 'MIPS:BE:64:default', 'MIPS:LE:64:64-32addr', 'MIPS:LE:64:default'],
     'mips:micromips': ['MIPS:BE:32:micro'],
@@ -163,13 +164,17 @@ def compute_ghidra_compiler(lang):
 
     # Check if the selected lang has specific compiler recommendations
     if not lang in compiler_map:
+        print(f"{lang} not found in compiler map")
         return 'default'
     comp_map = compiler_map[lang]
+    if comp_map == data64_compiler_map:
+        print(f"Using the DATA64 compiler map")
     osabi = get_osabi()
     if osabi in comp_map:
         return comp_map[osabi]
     if None in comp_map:
         return comp_map[None]
+    print(f"{osabi} not found in compiler map")
     return 'default'
 
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,21 @@
  */
 package docking.widgets.table;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.Graphics;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.jdesktop.animation.timing.Animator;
 
+import docking.util.AnimationPainter;
+import docking.util.AnimationRunner;
 import ghidra.docking.settings.Settings;
+import ghidra.util.bean.GGlassPane;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
 
@@ -31,6 +37,11 @@ import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
  * A utility class for JTables used in Ghidra.
  */
 public class TableUtils {
+
+	/**
+	 * An animation runner that emphasizes the sorted columns using the table's header.
+	 */
+	private static AnimationRunner sortEmphasizingAnimationRunner;
 
 	/**
 	 * Select the given row objects.  No selection will be made if the objects are filtered out of
@@ -56,8 +67,8 @@ public class TableUtils {
 		if (mode == ListSelectionModel.SINGLE_SELECTION) {
 			// take the last item to mimic what the selection model does internally
 			ROW_OBJECT item = items.get(items.size() - 1);
-			@SuppressWarnings({ "cast", "unchecked" })
-			int viewRow = gModel.getRowIndex((ROW_OBJECT) item);
+			@SuppressWarnings({ "unchecked" })
+			int viewRow = gModel.getRowIndex(item);
 			table.setRowSelectionInterval(viewRow, viewRow);
 			return;
 		}
@@ -68,8 +79,8 @@ public class TableUtils {
 		//
 		List<Integer> rows = new ArrayList<>();
 		for (ROW_OBJECT item : items) {
-			@SuppressWarnings({ "cast", "unchecked" })
-			int viewRow = gModel.getRowIndex((ROW_OBJECT) item);
+			@SuppressWarnings({ "unchecked" })
+			int viewRow = gModel.getRowIndex(item);
 			if (viewRow >= 0) {
 				rows.add(viewRow);
 			}
@@ -219,8 +230,21 @@ public class TableUtils {
 			editor.addSortedColumn(modelColumnIndex);
 		}
 
-		sortedModel.setTableSortState(editor.createTableSortState());
-		repaintTableHeader(table);
+		TableSortState newSortState = editor.createTableSortState();
+		sortedModel.setTableSortState(newSortState);
+
+		if (sortEmphasizingAnimationRunner != null) {
+			sortEmphasizingAnimationRunner.stop();
+		}
+
+		int n = newSortState.getSortedColumnCount();
+		if (n >= 2) { // don't emphasize a single column
+			sortEmphasizingAnimationRunner =
+				new SortEmphasisAnimationRunner(table, newSortState, columnIndex);
+			sortEmphasizingAnimationRunner.start();
+		}
+
+		repaintTableHeaderForSortChange(table);
 	}
 
 	/**
@@ -280,8 +304,21 @@ public class TableUtils {
 			editor.addSortedColumn(modelColumnIndex);
 		}
 
-		sortedModel.setTableSortState(editor.createTableSortState());
-		repaintTableHeader(table);
+		TableSortState newSortState = editor.createTableSortState();
+		sortedModel.setTableSortState(newSortState);
+
+		if (sortEmphasizingAnimationRunner != null) {
+			sortEmphasizingAnimationRunner.stop();
+		}
+
+		int n = newSortState.getSortedColumnCount();
+		if (n >= 2) { // don't emphasize a single column
+			sortEmphasizingAnimationRunner =
+				new SortEmphasisAnimationRunner(table, newSortState, columnIndex);
+			sortEmphasizingAnimationRunner.start();
+		}
+
+		repaintTableHeaderForSortChange(table);
 	}
 
 	private static SortedTableModel getSortedTableModel(JTable table) {
@@ -297,11 +334,181 @@ public class TableUtils {
 		return columnModel.getColumn(columnIndex).getModelIndex();
 	}
 
-	private static void repaintTableHeader(JTable table) {
+	private static void repaintTableHeaderForSortChange(JTable table) {
 		// force an update on the headers so they display the new sorting order
 		JTableHeader tableHeader = table.getTableHeader();
 		if (tableHeader != null) {
 			tableHeader.paintImmediately(tableHeader.getBounds());
 		}
+	}
+
+	private static void resetEmphasis(JTable table) {
+		// clear all emphasis state
+		TableColumnModel columnModel = table.getColumnModel();
+		int n = columnModel.getColumnCount();
+		for (int i = 0; i < n; i++) {
+			TableColumn column = columnModel.getColumn(i);
+			TableCellRenderer renderer = column.getHeaderRenderer();
+			if (renderer instanceof GTableHeaderRenderer gRenderer) {
+				gRenderer.setSortEmphasis(-1);
+			}
+		}
+	}
+
+	/**
+	 * An animation runner that creates the painter and the values that will be interpolated by
+	 * the animator.  Each column that is sorted will be emphasized, except for the column that was
+	 * clicked, as not to be annoying to the user.   The intent of emphasizing the columns is to 
+	 * signal to the user that other columns are part of the sort, not just the column that was 
+	 * clicked.   We hope that this will remind the user of the overall sort so they are not 
+	 * confused when the the column that was clicked produces unexpected sort results. 
+	 */
+	private static class SortEmphasisAnimationRunner extends AnimationRunner {
+
+		private JTable table;
+
+		public SortEmphasisAnimationRunner(JTable table, TableSortState tableSortState,
+				int clickedColumn) {
+			super(table);
+			this.table = table;
+
+			// Create an array of sort ordinals to use as the values. We need 1 extra value to 
+			// create a range between ordinals (e.g., 1-2, 2-3 for 2 ordinals)
+			int n = tableSortState.getSortedColumnCount();
+			int[] ordinals = new int[n];
+			for (int i = 1; i < n + 1; i++) {
+				ordinals[i - 1] = i;
+			}
+
+			// create double values to get a range for the client as the timer calls back
+			Double[] values = new Double[n];
+			for (int i = 0; i < n; i++) {
+				values[i] = Double.valueOf(ordinals[i]);
+			}
+
+			EmphasizingSortPainter painter =
+				new EmphasizingSortPainter(table, tableSortState, clickedColumn, ordinals);
+			setPainter(painter);
+			setValues(values);
+			setDuration(Duration.ofSeconds(1));
+			setDoneCallback(this::done);
+		}
+
+		@Override
+		public void start() {
+			Animator animator = createAnimator();
+
+			// acceleration / deceleration make some of the column numbers jiggle, so turn it off
+			animator.setAcceleration(0);
+			animator.setDeceleration(0);
+			super.start();
+		}
+
+		private void done() {
+			resetEmphasis(table);
+		}
+	}
+
+	/**
+	 * A painter that will emphasize each sorted column, except for the clicked column, over the 
+	 * course of an animation.  The painter is called with the current emphasis that is passed to
+	 * the column along with a repaint request.
+	 */
+	private static class EmphasizingSortPainter implements AnimationPainter {
+
+		private TableSortState tableSortState;
+		private JTable table;
+		private Map<Integer, Integer> columnsByOrdinal = new HashMap<>();
+		private int clickedColumnIndex;
+
+		public EmphasizingSortPainter(JTable table, TableSortState tableSortState,
+				int clickedColumnIndex, int[] ordinals) {
+			this.table = table;
+			this.tableSortState = tableSortState;
+			this.clickedColumnIndex = clickedColumnIndex;
+
+			mapOrdinalsToColumns(ordinals);
+		}
+
+		private void mapOrdinalsToColumns(int[] ordinals) {
+			for (int i = 0; i < ordinals.length; i++) {
+				List<ColumnSortState> sortStates = tableSortState.getAllSortStates();
+				for (ColumnSortState ss : sortStates) {
+					int columnOrdinal = ss.getSortOrder();
+					if (columnOrdinal == ordinals[i]) {
+						int sortColumnIndex = ss.getColumnModelIndex();
+						columnsByOrdinal.put(ordinals[i], sortColumnIndex);
+						break;
+					}
+				}
+			}
+		}
+
+		@Override
+		public void paint(GGlassPane glassPane, Graphics graphics, double value) {
+
+			JTableHeader tableHeader = table.getTableHeader();
+			if (tableHeader == null) {
+				return; // not sure if this can happen
+			}
+
+			resetEmphasis(table);
+
+			ColumnAndRange columnAndRange = getColumnAndRange(value);
+			if (columnAndRange == null) {
+				return;
+			}
+
+			TableColumnModel columnModel = table.getColumnModel();
+			int columnViewIndex = table.convertColumnIndexToView(columnAndRange.column());
+			TableColumn column = columnModel.getColumn(columnViewIndex);
+			TableCellRenderer renderer = column.getHeaderRenderer();
+			if (!(renderer instanceof GTableHeaderRenderer gRenderer)) {
+				return;
+			}
+
+			// 
+			// Have the emphasis transition from normal -> large -> normal over the range 0.0 to 
+			// 1.1, with an emphasis of 1.x.
+			// 
+			double range = columnAndRange.range();
+			double emphasis;
+			if (range < .5) {
+				emphasis = 1 + range;
+			}
+			else {
+				emphasis = 2 - range;
+			}
+
+			gRenderer.setSortEmphasis(emphasis);
+			tableHeader.repaint();
+		}
+
+		private ColumnAndRange getColumnAndRange(double value) {
+			//
+			// The values are the sort ordinals: 1, 2, 3, etc, in double form: 1.1, 1.5... Each
+			// value has the ordinal and a range from 0 - .99
+			//
+			BigDecimal bigDecimal = new BigDecimal(String.valueOf(value));
+			int ordinal = bigDecimal.intValue();
+			Integer columnModelIndex = columnsByOrdinal.get(ordinal);
+			if (columnModelIndex >= clickedColumnIndex) {
+				// Ignore the clicked column when emphasizing the header, as to not be distracting 
+				// for the column that they are looking at already.  Once we have gotten to or past
+				// the clicked column, then choose the next ordinal to emphasize.
+				int nextOrdinal = ordinal + 1;
+				columnModelIndex = columnsByOrdinal.get(nextOrdinal);
+			}
+
+			BigDecimal bigOrdinal = new BigDecimal(ordinal);
+			BigDecimal decimalValue = bigDecimal.subtract(bigOrdinal);
+			return new ColumnAndRange(columnModelIndex, decimalValue.doubleValue());
+		}
+
+		/**
+		 * Simple container for a column index and it's range (from 0 to .99)
+		 */
+		private record ColumnAndRange(int column, double range) {}
+
 	}
 }

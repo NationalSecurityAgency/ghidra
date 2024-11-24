@@ -14,7 +14,7 @@
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />
-     <long_double_size value="12" />
+     <long_double_size value="16" />
      <size_alignment_map>
           <entry size="1" alignment="1" />
           <entry size="2" alignment="2" />
@@ -30,6 +30,9 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
+        <pentry minsize="8" maxsize="8" storage="hiddenret">
+          <addr offset="0x7ef" space="stack"/>  <!-- hidden return storage is pointer in callers area of the stack -->
+        </pentry>
         <pentry minsize="4" maxsize="8" metatype="float">
           <register name="fd0"/>
         </pentry>
@@ -42,53 +45,72 @@
         <pentry minsize="4" maxsize="8" metatype="float">
           <register name="fd6"/>
         </pentry>
-        <pentry minsize="16" maxsize="16" metatype="float">
-          <register name="fq0"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd8"/>
         </pentry>
-        <pentry minsize="16" maxsize="16" metatype="float">
-          <register name="fq4"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd10"/>
         </pentry>
-        <pentry minsize="16" maxsize="16" metatype="float">
-          <register name="fq8"/>
-        </pentry>
-        <pentry minsize="16" maxsize="16" metatype="float">
-          <register name="fq12"/>
-        </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o0"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o1"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o3"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o4"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o5"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="8">
           <addr offset="0x8af" space="stack"/>   <!-- Big offset is due to SPARC 64-bit "stack bias" -->
         </pentry>
+		<rule>
+		  <datatype name="struct"/>
+		  <convert_to_ptr/>
+		</rule>
+		<rule>
+          <datatype name="float" minsize="4" maxsize="8"/>
+          <consume storage="float"/>
+          <consume_extra storage="general"/>  <!-- if consume a float slot, must consume an integer slot -->
+        </rule>
+		<rule>
+          <datatype name="float" minsize="16" maxsize="16"/>
+          <join storage="float"/>
+          <consume_extra storage="general"/>  <!-- if join two float slots, must skip two integer slots -->
+          <consume_extra storage="general"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join storage="general"/>
+          <consume_extra storage="float"/> <!-- if consume an integer slot, must consume a float slot -->
+        </rule>
       </input>
       <output>
-        <pentry minsize="4" maxsize="4" metatype="float">
-          <register name="fs0"/>
-        </pentry>
-        <pentry minsize="8" maxsize="8" metatype="float">
+        <pentry minsize="4" maxsize="8" metatype="float">
           <register name="fd0"/>
         </pentry>
-        <pentry minsize="16" maxsize="16" metatype="float">
-          <register name="fq0"/>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="o0"/>
         </pentry>
+        <rule>
+          <datatype name="struct"/>
+	      <hidden_return/>
+	    </rule>
+	    <rule>
+	      <datatype name="float" minsize="8" maxsize="16"/>
+	      <join storage="float"/>
+	    </rule>
       </output>
       <unaffected>
         <register name="g0"/>
@@ -127,22 +149,22 @@
   
       <prototype name="__nonwindowcall" extrapop="0" stackshift="0">
       <input>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g1"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g3"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g4"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g5"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g6"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="8">
@@ -150,7 +172,16 @@
         </pentry>
       </input>
       <output>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="4" maxsize="4" metatype="float">
+          <register name="fs0"/>
+        </pentry>
+        <pentry minsize="8" maxsize="8" metatype="float">
+          <register name="fd0"/>
+        </pentry>
+        <pentry minsize="16" maxsize="16" metatype="float">
+          <register name="fq0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="g0"/>
         </pentry>
       </output>
@@ -187,4 +218,32 @@
         <range space="stack" first="0x0" last="0x8ae"/>   <!-- Stack bias of 7FF + 0xb0 window size -->
       </localrange>
     </prototype>
+    
+  <callfixup name="sparc_get_pc_thunk.l7">
+    <target name="__sparc_get_pc_thunk.l7"/>
+    <pcode>
+      <body><![CDATA[
+      l7 = o7 + l7;
+      ]]></body>
+    </pcode>
+  </callfixup>
+  
+  <callfixup name="sparc_get_pc_thunk.g1">
+    <target name="__sparc_get_pc_thunk.g1"/>
+    <pcode>
+      <body><![CDATA[
+      g1 = o7 + g1;
+      ]]></body>
+    </pcode>
+  </callfixup>
+
+  <callfixup name="sparc_get_pc_thunk.o0">
+    <target name="__sparc_get_pc_thunk.o0"/>
+    <pcode>
+      <body><![CDATA[
+      o0 = o7 + o0;
+      ]]></body>
+    </pcode>
+  </callfixup>  
+  
 </compiler_spec>

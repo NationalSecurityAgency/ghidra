@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.exception.CancelledException;
  * the Java concurrent structures (e.g., {@link AtomicBoolean}).   In order to keep the values of
  * this class's fields update-to-date, we have chosen to synchronize the package-level client of
  * this class.  <b>If this class is ever made public, then most of the methods herein need to 
- * be synchronized to prevent race conditions and to provide visibility.
+ * be synchronized to prevent race conditions and to provide visibility.</b>
  */
 class BasicTaskMonitor implements TaskMonitor {
 

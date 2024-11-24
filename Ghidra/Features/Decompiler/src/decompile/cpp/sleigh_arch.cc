@@ -33,7 +33,7 @@ ElementId ELEM_DESCRIPTION = ElementId("description",233);
 ElementId ELEM_LANGUAGE = ElementId("language",234);
 ElementId ELEM_LANGUAGE_DEFINITIONS = ElementId("language_definitions",235);
 
-map<int4,Sleigh *> SleighArchitecture::translators;
+map<int4,Sleigh> SleighArchitecture::translators;
 vector<LanguageDescription> SleighArchitecture::description;
 
 FileManage SleighArchitecture::specpaths; // Global specfile manager
@@ -174,17 +174,16 @@ bool SleighArchitecture::isTranslateReused(void)
 Translate *SleighArchitecture::buildTranslator(DocumentStorage &store)
 
 {				// Build a sleigh translator
-  map<int4,Sleigh *>::const_iterator iter;
-  Sleigh *sleigh;
+  map<int4,Sleigh>::iterator iter;
+
   iter = translators.find(languageindex);
   if (iter != translators.end()) {
-    sleigh = (*iter).second;
-    sleigh->reset(loader,context);
-    return sleigh;
+    iter->second.reset(loader, context);
+    return &iter->second;
   }
-  sleigh = new Sleigh(loader,context);
-  translators[languageindex] = sleigh;
-  return sleigh;
+  pair<map<int4,Sleigh>::iterator,bool> res;
+  res = translators.emplace(piecewise_construct,forward_as_tuple(languageindex),forward_as_tuple(loader,context));
+  return &(*res.first).second;
 }
 
 PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
@@ -627,10 +626,6 @@ const vector<LanguageDescription> &SleighArchitecture::getDescriptions(void)
 void SleighArchitecture::shutdown(void)
 
 {
-  if (translators.empty()) return;	// Already cleared
-  for(map<int4,Sleigh *>::const_iterator iter=translators.begin();iter!=translators.end();++iter)
-    delete (*iter).second;
-  translators.clear();
   // description.clear();  // static vector is destroyed by the normal exit handler
 }
 

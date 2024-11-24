@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,6 +89,7 @@ public class GhidraFileData {
 	private Icon disabledIcon;
 
 	private AtomicBoolean busy = new AtomicBoolean();
+	private boolean mergeInProgress = false;
 
 // TODO: Many of the old methods assumed that the state was up-to-date due to
 // refreshing ... we are relying on non-refreshed data to be dropped from cache map and no
@@ -196,6 +197,9 @@ public class GhidraFileData {
 	}
 
 	private void statusChanged(boolean fileIDset) throws IOException {
+		if (mergeInProgress) {
+			return;
+		}
 		icon = null;
 		disabledIcon = null;
 		fileIDset |= refresh();
@@ -1099,6 +1103,7 @@ public class GhidraFileData {
 		}
 
 		DomainObjectAdapterDB inUseDomainObj = null;
+		mergeInProgress = true;
 		projectData.mergeStarted();
 		try {
 			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("checkin");
@@ -1195,6 +1200,7 @@ public class GhidraFileData {
 		finally {
 			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
+			mergeInProgress = false;
 			projectData.mergeEnded();
 			parent.deleteLocalFolderIfEmpty();
 			parent.fileChanged(name);
@@ -1430,6 +1436,7 @@ public class GhidraFileData {
 		}
 
 		DomainObjectAdapterDB inUseDomainObj = null;
+		mergeInProgress = true;
 		projectData.mergeStarted();
 		try {
 			ContentHandler<?> contentHandler = getContentHandler();
@@ -1515,6 +1522,8 @@ public class GhidraFileData {
 							monitor.setMessage("Updating local checkout file...");
 						}
 						folderItem.updateCheckout(versionedFolderItem, !quickCheckin, monitor);
+						versionedFolderItem.updateCheckoutVersion(folderItem.getCheckoutId(),
+							folderItem.getCheckoutVersion(), ClientUtil.getUserName());
 						success = true;
 					}
 					finally {
@@ -1556,6 +1565,7 @@ public class GhidraFileData {
 		finally {
 			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
+			mergeInProgress = false;
 			projectData.mergeEnded();
 			parent.deleteLocalFolderIfEmpty();
 			parent.fileChanged(name);
@@ -1914,17 +1924,21 @@ public class GhidraFileData {
 
 		FolderItem tmpItem = null;
 		DomainObjectAdapterDB inUseDomainObj = null;
+		mergeInProgress = true;
 		projectData.mergeStarted();
 		try {
 			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("merge");
 
 			ContentHandler<?> contentHandler = getContentHandler();
 
+			long checkoutId = folderItem.getCheckoutId();
+
 			if (!modifiedSinceCheckout()) {
-				// Quick merge
+				// Quick database update of local folder item
 				folderItem.updateCheckout(versionedFolderItem, true, monitor);
 			}
 			else {
+				// Perform interactive merge
 
 				if (SystemUtilities.isInHeadlessMode()) {
 					throw new IOException("Merge failed, merge is not supported in headless mode");
@@ -1957,7 +1971,6 @@ public class GhidraFileData {
 					bufferFile.dispose();
 				}
 				int coVer = folderItem.getCheckoutVersion();
-				long checkoutId = folderItem.getCheckoutId();
 
 				tmpItem.setCheckout(checkoutId, folderItem.isCheckedOutExclusive(), mergeVer, 0);
 
@@ -1993,12 +2006,14 @@ public class GhidraFileData {
 					release(latestObj);
 				}
 
-				// Update folder item
+				// Update local folder item using temporary file content
 				folderItem.updateCheckout(tmpItem, mergeVer);
-				versionedFolderItem.updateCheckoutVersion(checkoutId, mergeVer,
-					ClientUtil.getUserName());
-				tmpItem = null;
+				tmpItem = null; // update removes temporary file if successful
 			}
+
+			// update checkout data within versioned repository
+			versionedFolderItem.updateCheckoutVersion(checkoutId,
+				folderItem.getCheckoutVersion(), ClientUtil.getUserName());
 
 			Msg.info(this, "Updated checkout completed for " + name);
 
@@ -2011,8 +2026,10 @@ public class GhidraFileData {
 		finally {
 			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
+			mergeInProgress = false;
 			try {
 				if (tmpItem != null) {
+					// remove temporary merge file if error occured
 					try {
 						tmpItem.delete(-1, ClientUtil.getUserName());
 					}

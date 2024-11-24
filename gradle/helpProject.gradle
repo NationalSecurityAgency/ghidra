@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -235,6 +235,8 @@ tasks.register('indexHelp', JavaExec) {
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
 
+	onlyIf ("There is no help root directory") { helpRootDir.exists() }
+
 	inputs.dir helpRootDir
 	outputs.dir outputFile
 	
@@ -272,6 +274,9 @@ tasks.register('indexHelp', JavaExec) {
 		// tell the indexer where send its output	
 		args '-db', outputFile.absolutePath			
 		
+		// debug
+		// args '-verbose'		
+		
 		// for each help file that was found, add it as an argument to the indexer
 		helpFiles.each { File file ->
 			args "${file.absolutePath}"
@@ -279,11 +284,37 @@ tasks.register('indexHelp', JavaExec) {
 	}
 }
 
+// Task for building Markdown in src/global/docs to HTML
+//      - the files generated will be placed in a build directory usable during development mode
+tasks.register('buildGlobalMarkdown') {
+	group "private"	
+	dependsOn ':MarkdownSupport:classes'
+	
+	FileTree markdownFiles = this.project.fileTree('src/global/docs') {
+		include '*.md'
+	}
+	
+	onlyIf ("There are no markdown files") { !markdownFiles.isEmpty() }
+	
+	inputs.files markdownFiles  
+	
+	doFirst {
+		markdownFiles.each { f ->
+			def htmlName = f.name[0..-3] + "html"
+			javaexec {
+				classpath = project(':MarkdownSupport').sourceSets.main.runtimeClasspath
+				mainClass = 'ghidra.markdown.MarkdownToHtml'
+				args f
+				args file("build/src/global/docs/${htmlName}")
+			}
+		}
+	}
+}
 
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
 //      - validates help
-//      - the files generated will be placed in a diretory usable during development mode and will
+//      - the files generated will be placed in a directory usable during development mode and will
 //        eventually be placed in:
 //				- the <Module>.jar file in production mode, or
 //				- the <Module>-help.jar file in development mode
@@ -302,7 +333,9 @@ tasks.register('buildHelpFiles', JavaExec) {
 
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
-
+	
+	onlyIf ("There is no help root directory") { helpRootDir.exists() }
+	
 	// 
 	// Inputs (used for incremental building):
 	//  1) Java files in the Help module used to build help 
@@ -321,7 +354,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 		// configuration time.		
 		return getHelpInputs(sourceSets.main.runtimeClasspath.files)
 	})
-
+	
 	outputs.dir outputDir
 
 	mainClass = 'help.GHelpBuilder'
@@ -330,8 +363,11 @@ tasks.register('buildHelpFiles', JavaExec) {
 	
 	args '-o', "${outputDir.absolutePath}"	// set the output directory arg
 
+	// to allow remote debugging of the help build jvm
+	// jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=13001'
 	
-	// args '-debug' // print debug info
+	// print debug info
+	// args '-debug' 
 
 	doFirst {		
 	
@@ -368,7 +404,7 @@ tasks.register('buildHelpFiles', JavaExec) {
 				args "${helpJar.absolutePath}"
 			}
 		}		
-		
+
 		// The help dir to process.  This needs to be the last argument to the process, 
 		// thus, this is why it is inside of this block
 		args "${helpRootDir.absolutePath}"	
@@ -391,9 +427,10 @@ tasks.register('buildHelp', Jar) {
 	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
 
 	dependsOn tasks.named('buildHelpFiles')
+	dependsOn tasks.named('buildGlobalMarkdown')
     duplicatesStrategy 'exclude'
     
-	from "build/help/main"		// include the generated help and index files from 
+	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
 
 	destinationDirectory = file("build/libs")

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,7 +89,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			start(conn, "%s".formatted(cloneExit));
 			conn.execute("break set -n work");
 			waitForPass(() -> {
-				TraceObject proc = tb.objAny("Processes[]");
+				TraceObject proc = tb.objAny0("Processes[]");
 				assertNotNull(proc);
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -119,7 +119,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("break set -n work");
 
 			waitForPass(() -> {
-				TraceObject inf = tb.objAny("Processes[]");
+				TraceObject inf = tb.objAny0("Processes[]");
 				assertNotNull(inf);
 				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -131,7 +131,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("continue");
 			waitStopped(conn.conn);
 			waitForPass(() -> {
-				TraceObject inf = tb.objAny("Processes[]");
+				TraceObject inf = tb.objAny0("Processes[]");
 				assertNotNull(inf);
 				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -283,7 +283,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("cont");
 			waitRunning(conn.conn);
 
-			TraceObject proc = waitForValue(() -> tb.objAny("Processes[]"));
+			TraceObject proc = waitForValue(() -> tb.objAny0("Processes[]"));
 			waitForPass(() -> {
 				assertEquals("RUNNING", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -297,7 +297,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			start(conn, getSpecimenPrint());
 
-			TraceObject inf = waitForValue(() -> tb.objAny("Processes[]"));
+			TraceObject inf = waitForValue(() -> tb.objAny0("Processes[]"));
 			waitForPass(() -> {
 				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
@@ -318,7 +318,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertNotNull(snapshot);
 				assertEquals("Exited with code 72", snapshot.getDescription());
 
-				TraceObject proc = tb.objAny("Processes[]");
+				TraceObject proc = tb.objAny0("Processes[]");
 				assertNotNull(proc);
 				Object val = tb.objValue(proc, lastSnap(conn), "_exit_code");
 				assertThat(val, instanceOf(Number.class));

@@ -591,8 +591,8 @@ def putreg():
     regs = util.dbg._base.reg
     for i in range(0, len(regs)):
         name = regs._reg.GetDescription(i)[0]
-        value = regs._get_register_by_index(i)
         try:
+            value = regs._get_register_by_index(i)
             values.append(mapper.map_value(nproc, name, value))
             robj.set_value(name, hex(value))
         except Exception:
@@ -1413,14 +1413,14 @@ def update_by_container(np, keyval, obj):
     if np.endswith("Frames"):
         mo = util.get_object(obj.path)
         map = util.get_attributes(mo)
-        attr = map["Attributes"]
-        if attr is None:
-            return
-        map = util.get_attributes(attr)        
-        pc = util.get_value(map["InstructionOffset"])
-        (pc_base, pc_addr) = map_address(pc)
-        obj.set_value('Instruction Offset', pc_addr)
-        key = '#{:x} 0x{:x}'.format(index, pc)
+        if 'Attributes' in map:
+            attr = map["Attributes"]
+            if attr is not None:
+                map = util.get_attributes(attr)        
+                pc = util.get_value(map["InstructionOffset"])
+                (pc_base, pc_addr) = map_address(pc)
+                obj.set_value('Instruction Offset', pc_addr)
+                key = '#{:x} 0x{:x}'.format(index, pc)
     if np.endswith("Modules"):
         create_generic(obj.path)
         mo = util.get_object(obj.path)

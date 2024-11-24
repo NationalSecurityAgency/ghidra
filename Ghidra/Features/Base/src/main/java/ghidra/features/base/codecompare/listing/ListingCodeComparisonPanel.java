@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,7 +109,7 @@ public class ListingCodeComparisonPanel
 	 */
 	public ListingCodeComparisonPanel(String owner, PluginTool tool) {
 		super(owner, tool);
-		Help.getHelpService().registerHelp(this, new HelpLocation(HELP_TOPIC, "Dual Listing"));
+		Help.getHelpService().registerHelp(this, new HelpLocation(HELP_TOPIC, "Listing_View"));
 		initializeOptions();
 
 		listingDiff = buildListingDiff();
@@ -251,7 +251,8 @@ public class ListingCodeComparisonPanel
 	public ActionContext getActionContext(ComponentProvider provider, MouseEvent event) {
 
 		if (event == null) {
-			ListingComparisonActionContext context = new ListingComparisonActionContext(provider, this);
+			ListingComparisonActionContext context =
+				new ListingComparisonActionContext(provider, this);
 			return context;
 		}
 
@@ -433,17 +434,17 @@ public class ListingCodeComparisonPanel
 		nextPreviousAreaTypeAction =
 			new MultiStateActionBuilder<NavigateType>("Dual Listing Next/Previous Area Marker",
 				owner)
-					.description("Set Navigate Next/Previous Area Marker options")
-					.helpLocation(
-						new HelpLocation(HELP_TOPIC, "Dual Listing Next/Previous Area Marker"))
-					.toolBarIcon(DIFF_ICON)
-					.toolBarGroup(DIFF_NAVIGATE_GROUP)
-					.addState("All Area Markers", BOTH_VIEWS_ICON, NavigateType.ALL)
-					.addState("Unmatched Area Markers", UNMATCHED_ICON, NavigateType.UNMATCHED)
-					.addState("Diff AreaMarkers", DIFF_ICON, NavigateType.DIFF)
-					.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
-					.onActionStateChanged((s, t) -> adjustNextPreviousAreaType(s.getUserData()))
-					.build();
+						.description("Set Navigate Next/Previous Area Marker options")
+						.helpLocation(
+							new HelpLocation(HELP_TOPIC, "Dual Listing Next/Previous Area Marker"))
+						.toolBarIcon(DIFF_ICON)
+						.toolBarGroup(DIFF_NAVIGATE_GROUP)
+						.addState("All Area Markers", BOTH_VIEWS_ICON, NavigateType.ALL)
+						.addState("Unmatched Area Markers", UNMATCHED_ICON, NavigateType.UNMATCHED)
+						.addState("Diff AreaMarkers", DIFF_ICON, NavigateType.DIFF)
+						.enabledWhen(c -> isShowing() && listingDiff.hasCorrelation())
+						.onActionStateChanged((s, t) -> adjustNextPreviousAreaType(s.getUserData()))
+						.build();
 
 		optionsAction = new ActionBuilder("Listing Code Comparison Options", owner)
 				.description("Show the tool options for the Listing Code Comparison.")

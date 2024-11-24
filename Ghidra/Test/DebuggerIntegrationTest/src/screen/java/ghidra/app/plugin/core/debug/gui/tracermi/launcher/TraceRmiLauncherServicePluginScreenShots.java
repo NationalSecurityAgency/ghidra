@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.terminal.TerminalProvider;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.test.ToyProgramBuilder;
@@ -30,7 +31,8 @@ import help.screenshot.GhidraScreenShotGenerator;
 public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGenerator {
 	TraceRmiLauncherServicePlugin servicePlugin;
 
-	protected void captureLauncherByTitle(String title, Map<String, ?> args) throws Throwable {
+	protected void captureLauncherByTitle(String title, Map<String, ValStr<?>> args)
+			throws Throwable {
 		servicePlugin = addPlugin(tool, TraceRmiLauncherServicePlugin.class);
 
 		ToyProgramBuilder pb = new ToyProgramBuilder("demo", false);
@@ -49,10 +51,13 @@ public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGe
 		captureDialog(DebuggerMethodInvocationDialog.class);
 	}
 
+	protected ValStr<PathIsFile> fileArg(String path) {
+		return new ValStr<>(new PathIsFile(Paths.get(path)), path);
+	}
+
 	@Test
 	public void testCaptureGdbLauncher() throws Throwable {
-		captureLauncherByTitle("gdb",
-			Map.of("arg:1", new PathIsFile(Paths.get("/home/user/demo"))));
+		captureLauncherByTitle("gdb", Map.of("arg:1", fileArg("/home/user/demo")));
 	}
 
 	@Test

@@ -65,6 +65,7 @@ public class VSCodeProjectScript extends GhidraScript {
 		writeSettings(installDir, projectDir, classpathSourceMap);
 		writeLaunch(installDir, projectDir, classpathSourceMap);
 		writeSampleScriptJava(projectDir);
+		writeSampleScriptPyGhidra(projectDir);
 		writeSampleModule(installDir, projectDir);
 
 		println("Successfully created VSCode project directory at: " + projectDir);
@@ -106,6 +107,7 @@ public class VSCodeProjectScript extends GhidraScript {
 		File settingsFile = new File(vscodeDir, "settings.json");
 		String gradleVersion = Application
 				.getApplicationProperty(ApplicationProperties.APPLICATION_GRADLE_MIN_PROPERTY);
+		String pythonInterpreterPath = System.getProperty("pyghidra.sys.prefix", null);
 		
 		// Build settings json object
 		JsonObject json = new JsonObject();
@@ -113,6 +115,8 @@ public class VSCodeProjectScript extends GhidraScript {
 		json.addProperty("java.import.gradle.enabled", false);
 		json.addProperty("java.import.gradle.wrapper.enabled", false);
 		json.addProperty("java.import.gradle.version", gradleVersion);
+		json.addProperty("java.format.settings.url",
+			new File(installDir, "support/eclipse/GhidraEclipseFormatter.xml").getAbsolutePath());
 
 		JsonArray sourcePathArray = new JsonArray();
 		json.add("java.project.sourcePaths", sourcePathArray);
@@ -132,6 +136,12 @@ public class VSCodeProjectScript extends GhidraScript {
 				.stream()
 				.filter(e -> e.getValue() != null)
 				.forEach(e -> sourcesObject.addProperty(e.getKey(), e.getValue()));
+
+		json.addProperty("python.analysis.stubPath",
+			new File(installDir, "docs/ghidra_stubs/typestubs").getAbsolutePath());
+		if (pythonInterpreterPath != null) {
+			json.addProperty("python.defaultInterpreterPath", pythonInterpreterPath);
+		}
 
 		// Write settings json object
 		if (!FileUtilities.mkdirs(settingsFile.getParentFile())) {
@@ -177,6 +187,8 @@ public class VSCodeProjectScript extends GhidraScript {
 		json.addProperty("version", "0.2.0");
 		JsonArray configurationsArray = new JsonArray();
 		json.add("configurations", configurationsArray);
+
+		// Ghidra launcher
 		JsonObject ghidraConfigObject = new JsonObject();
 		configurationsArray.add(ghidraConfigObject);
 		ghidraConfigObject.addProperty("type", "java");
@@ -191,6 +203,33 @@ public class VSCodeProjectScript extends GhidraScript {
 		ghidraConfigObject.add("vmArgs", vmArgsArray);
 		vmArgsArray.add("-Dghidra.external.modules=${workspaceFolder}");
 		vmArgs.forEach(vmArgsArray::add);
+
+		// PyGhidra launcher
+		JsonObject pyghidraConfigObject = new JsonObject();
+		configurationsArray.add(pyghidraConfigObject);
+		pyghidraConfigObject.addProperty("type", "debugpy");
+		pyghidraConfigObject.addProperty("name", "PyGhidra");
+		pyghidraConfigObject.addProperty("request", "launch");
+		pyghidraConfigObject.addProperty("module", "pyghidra.ghidra_launch");
+		pyghidraConfigObject.addProperty("args", GhidraRun.class.getName());
+		JsonArray argsArray = new JsonArray();
+		pyghidraConfigObject.add("args", argsArray);
+		argsArray.add("--install-dir");
+		argsArray.add(installDir.getAbsolutePath());
+		argsArray.add("-g");
+		argsArray.add(GhidraRun.class.getName());
+		JsonObject envObject = new JsonObject();
+		pyghidraConfigObject.add("env", envObject);
+		envObject.addProperty("PYGHIDRA_DEBUG", "1");
+
+		// PyGhidra Java Attach
+		JsonObject pyghidraAttachObject = new JsonObject();
+		configurationsArray.add(pyghidraAttachObject);
+		pyghidraAttachObject.addProperty("type", "java");
+		pyghidraAttachObject.addProperty("name", "PyGhidra Java Attach");
+		pyghidraAttachObject.addProperty("request", "attach");
+		pyghidraAttachObject.addProperty("hostName", "localhost");
+		pyghidraAttachObject.addProperty("port", 18001);
 
 		// Write launch json object
 		if (!FileUtilities.mkdirs(launchFile.getParentFile())) {
@@ -226,6 +265,25 @@ public class VSCodeProjectScript extends GhidraScript {
 		}
 		FileUtils.writeStringToFile(scriptFile, sampleScript, StandardCharsets.UTF_8);
 	}
+	
+	private void writeSampleScriptPyGhidra(File projectDir) throws IOException {
+		File scriptsDir = new File(projectDir, "ghidra_scripts");
+		File scriptFile = new File(scriptsDir, "sample_script.py");
+		String sampleScript = """
+				# Sample PyGhidra GhidraScript
+				# @category Examples
+				# @runtime PyGhidra
+
+				from java.util import LinkedList
+				java_list = LinkedList([1,2,3])
+
+				block = currentProgram.memory.getBlock('.text')
+				""";
+		if (!FileUtilities.mkdirs(scriptFile.getParentFile())) {
+			throw new IOException("Failed to create: " + scriptFile.getParentFile());
+		}
+		FileUtils.writeStringToFile(scriptFile, sampleScript, StandardCharsets.UTF_8);
+	}
 
 	/**
 	 * Write a sample Java-based Ghidra module into the VSCode project directory
@@ -237,7 +295,7 @@ public class VSCodeProjectScript extends GhidraScript {
 	private void writeSampleModule(File installDir, File projectDir) throws IOException {
 		// Copy Skeleton and rename module
 		String skeleton = "Skeleton";
-		File skeletonDir = new File(installDir, "Extensions/Ghidra/skeleton");
+		File skeletonDir = new File(installDir, "Extensions/Ghidra/Skeleton");
 		FileUtils.copyDirectory(skeletonDir, projectDir);
 
 		// Rename package
@@ -268,7 +326,11 @@ public class VSCodeProjectScript extends GhidraScript {
 		}
 
 		// Fix Ghidra installation directory path in build.gradle
+		File buildTemplateGradleFile = new File(projectDir, "buildTemplate.gradle");
 		File buildGradleFile = new File(projectDir, "build.gradle");
+		if (!buildTemplateGradleFile.renameTo(buildGradleFile)) {
+			throw new IOException("Failed to rename: " + buildTemplateGradleFile);
+		}
 		String fileData = FileUtils.readFileToString(buildGradleFile, StandardCharsets.UTF_8);
 		fileData =
 			fileData.replaceAll("<REPLACE>", FilenameUtils.separatorsToUnix(installDir.getPath()));

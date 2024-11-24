@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public class SwiftDemangler implements Demangler {
 
 	/**
 	 * Creates a new {@link SwiftDemangler} that is associated with the given {@link Program}
-	 * 
+	 *
 	 * @param program The {@link Program} to demangle
 	 * @throws IOException if there was a problem parsing the Swift type metadata
 	 */
@@ -73,12 +73,6 @@ public class SwiftDemangler implements Demangler {
 		return new SwiftDemanglerOptions();
 	}
 
-	@Override
-	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
-			throws DemangledException {
-		return demangle(mangled);
-	}
-
 	public void initialize(Program program) throws IOException {
 		cache = new HashMap<>();
 		nativeDemangler = null;
@@ -95,25 +89,31 @@ public class SwiftDemangler implements Demangler {
 	}
 
 	@Override
-	public DemangledObject demangle(String mangled, DemanglerOptions op) throws DemangledException {
-		SwiftDemanglerOptions options = getSwiftDemanglerOptions(op);
+	public DemangledObject demangle(MangledContext context) throws DemangledException {
+		SwiftDemanglerOptions options = getSwiftDemanglerOptions(context.getOptions());
+		String mangled = context.getMangled();
 		Demangled demangled = getDemangled(mangled, options);
+		DemangledObject demangledObject;
 		if (demangled instanceof DemangledFunction func) {
-			return func;
+			demangledObject = func;
 		}
 		else if (demangled instanceof DemangledLabel label) {
-			return label;
+			demangledObject = label;
 		}
 		else if (demangled instanceof DemangledUnknown unknown) {
-			return new DemangledLabel(mangled, unknown.getOriginalDemangled(),
+			demangledObject = new DemangledLabel(mangled, unknown.getOriginalDemangled(),
 				options.getUnsupportedPrefix() + unknown.getOriginalDemangled());
 		}
-		return null;
+		else {
+			return null;
+		}
+		demangledObject.setMangledContext(context);
+		return demangledObject;
 	}
 
 	/**
 	 * Get a new {@link Demangled} by demangling the given mangled string
-	 * 
+	 *
 	 * @param mangled The mangled string
 	 * @param op The options (could be null)
 	 * @return A new {@link Demangled}
@@ -145,7 +145,7 @@ public class SwiftDemangler implements Demangler {
 
 	/**
 	 * Gets the {@link SwiftTypeMetadata}
-	 * 
+	 *
 	 * @return The {@link SwiftTypeMetadata}, or null if it is not available
 	 */
 	public SwiftTypeMetadata getTypeMetadata() {
@@ -154,7 +154,7 @@ public class SwiftDemangler implements Demangler {
 
 	/**
 	 * Checks to see whether the given symbol name is a mangled Swift symbol
-	 * 
+	 *
 	 * @param symbolName The symbol name to check
 	 * @return True if the given symbol name is a mangled Swift symbol; otherwise, false
 	 */
@@ -165,7 +165,7 @@ public class SwiftDemangler implements Demangler {
 
 	/**
 	 * Gets the {@link SwiftDemanglerOptions} from the given {@link DemanglerOptions}
-	 * 
+	 *
 	 * @param opt The options
 	 * @return The @link SwiftDemanglerOptions}
 	 * @throws DemangledException If the given options are not {@link SwiftDemanglerOptions}
@@ -180,7 +180,7 @@ public class SwiftDemangler implements Demangler {
 
 	/**
 	 * Ensures that this demangler has access to a {@link SwiftNativeDemangler}
-	 * 
+	 *
 	 * @param options The options
 	 * @throws DemangledException if there was a problem getting the {@link SwiftNativeDemangler}
 	 */

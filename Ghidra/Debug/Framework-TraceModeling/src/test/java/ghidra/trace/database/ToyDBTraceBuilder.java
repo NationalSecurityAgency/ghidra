@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import java.util.List;
 
 import db.DBHandle;
 import db.Transaction;
+import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -800,13 +801,19 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	/**
 	 * Get an object by its path pattern
 	 * 
-	 * @param path the path pattern
+	 * @param path the path pattern <em>at snapshot 0 only!</em>
 	 * @return the object or null
 	 */
-	public TraceObject objAny(String path) {
+	public TraceObject objAny0(String path) {
 		return objAny(path, Lifespan.at(0));
 	}
 
+	/**
+	 * Get an object by its path pattern intersecting the given lifespan
+	 * 
+	 * @param path the path pattern
+	 * @return the object or null
+	 */
 	public TraceObject objAny(String path, Lifespan span) {
 		return trace.getObjectManager()
 				.getObjectsByPath(span, TraceObjectKeyPath.parse(path))
@@ -844,6 +851,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	@Override
 	public void close() {
 		if (trace.getConsumerList().contains(this)) {
+			AbstractGenericTest.waitFor(() -> !trace.isLocked());
 			trace.release(this);
 		}
 	}

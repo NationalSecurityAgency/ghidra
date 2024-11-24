@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import ghidra.xml.XmlPullParser;
 /**
  * ByteSearch post search rule when a pattern is found. Used when a pattern must have a certain
  * alignment at an offset from the location the pattern matches. 
- * 
+ * <p>
  * The pattern can be constructed or restored from XML of the form,
  * where alignOffset=mark, alignmask=bits
- * 
- *     <align mark="0" bits="1"/>
- *   
+ * <pre>{@code
+ *   <align mark="0" bits="1"/>
+ * }</pre>
  */
 
 public class AlignRule implements PostRule {
