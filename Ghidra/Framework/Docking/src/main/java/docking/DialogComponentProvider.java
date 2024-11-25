@@ -28,13 +28,14 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.actions.SharedActionRegistry;
+import docking.actions.ToolActions;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.util.WindowUtilities;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
@@ -48,6 +49,7 @@ import utility.function.Callback;
 public class DialogComponentProvider
 		implements ActionContextProvider, StatusListener, TaskListener {
 
+	private static final String CLOSE_ACTION_NAME = "Close Dialog";
 	private static final Color FG_COLOR_ALERT = new GColor("color.fg.dialog.status.alert");
 	private static final Color FG_COLOR_ERROR = new GColor("color.fg.dialog.status.error");
 	private static final Color FG_COLOR_WARNING = new GColor("color.fg.dialog.status.warning");
@@ -82,7 +84,6 @@ public class DialogComponentProvider
 	private TaskMonitorComponent taskMonitorComponent;
 
 	private static final KeyStroke ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
-	private DockingAction closeAction;
 
 	private CardLayout progressCardLayout;
 	private JButton defaultButton;
@@ -182,36 +183,29 @@ public class DialogComponentProvider
 			rootPanel.add(panel, BorderLayout.SOUTH);
 		}
 
-		installEscapeAction();
-
 		doInitialize();
 	}
 
-	private void installEscapeAction() {
-		closeAction = new ActionBuilder("Close Dialog", title)
+	/**
+	 * Called by the framework during startup to register actions that are shared throughout the 
+	 * tool.  See {@link SharedActionRegistry}.
+	 * @param tool the tool
+	 * @param toolActions the class to which the actions should be added
+	 * @param owner the shared action owner
+	 */
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
+
+		DockingAction closeAction = new ActionBuilder(CLOSE_ACTION_NAME, owner)
 				.sharedKeyBinding()
 				.keyBinding(ESC_KEYSTROKE)
-				.enabledWhen(this::isMyDialog)
-				.onAction(c -> escapeCallback())
+				.withContext(DialogActionContext.class)
+				.enabledWhen(c -> c.getDialogComponentProvider() != null)
+				.onAction(c -> {
+					DialogComponentProvider dcp = c.getDialogComponentProvider();
+					dcp.escapeCallback();
+				})
 				.build();
-
-		addAction(closeAction);
-	}
-
-	private boolean isMyDialog(ActionContext c) {
-		//
-		// Each dialog registers a shared action bound to Escape.  If all dialog actions are 
-		// enabled, then the user will get prompted to pick which dialog to close when pressing
-		// Escape.  Thus, we limit the enablement of each action to be the dialog that contains the
-		// focused component.  We use the action context to find out if this dialog is the active
-		// dialog.
-		//
-		Window window = WindowUtilities.windowForComponent(c.getSourceComponent());
-		if (!(window instanceof DockingDialog dockingDialog)) {
-			return false;
-		}
-
-		return dockingDialog.containsProvider(DialogComponentProvider.this);
+		toolActions.addGlobalAction(closeAction);
 	}
 
 	/** a callback mechanism for children to do work */
@@ -220,13 +214,19 @@ public class DialogComponentProvider
 	}
 
 	/**
-	 * Returns true if the given keystroke is the trigger for this dialog's close action.
-	 * @param ks the keystroke
-	 * @return true if the given keystroke is the trigger for this dialog's close action
+	 * Returns true if the given action is one that has been registered by this dialog.
+	 * @param action the action 
+	 * @return true if the given action is one that has been registered by this dialog
 	 */
-	public boolean isCloseKeyStroke(KeyStroke ks) {
-		KeyStroke currentCloseKs = closeAction.getKeyBinding();
-		return Objects.equals(ks, currentCloseKs);
+	public boolean isDialogKeyBindingAction(DockingActionIf action) {
+		if (action instanceof DockingActionProxy proxy) {
+			return keyBindingProxyActions.contains(proxy);
+		}
+		String name = action.getName();
+		if (name.equals(CLOSE_ACTION_NAME)) {
+			return true;
+		}
+		return false;
 	}
 
 	public int getId() {
@@ -1254,14 +1254,14 @@ public class DialogComponentProvider
 		}
 
 		if (event == null) {
-			return new DefaultActionContext(null, c);
+			return new DialogActionContext(this, c);
 		}
 
 		Component sourceComponent = event.getComponent();
 		if (sourceComponent != null) {
 			c = sourceComponent;
 		}
-		return new DefaultActionContext(null, c).setSourceObject(event.getSource());
+		return new DialogActionContext(this, c).setSourceObject(event.getSource());
 	}
 
 	/**
