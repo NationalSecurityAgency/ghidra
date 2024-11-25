@@ -45,10 +45,12 @@ public class IngestTask extends Task {
 	private File commonSymbolsFile;
 	private FidService fidService;
 	private FidPopulateResultReporter reporter;
+	private boolean disableNamespaceStripping;
 
 	public IngestTask(String title, FidFile fidFile, LibraryRecord libraryRecord,
 			DomainFolder folder, String libraryFamilyName, String libraryVersion,
-			String libraryVariant, String languageId, File commonSymbolsFile, FidService fidService,
+			String libraryVariant, String languageId, File commonSymbolsFile,
+			boolean disableNamespaceStripping, FidService fidService,
 			FidPopulateResultReporter reporter) {
 		super(title, true, false, false, false);
 		this.fidFile = fidFile;
@@ -61,6 +63,7 @@ public class IngestTask extends Task {
 		this.fidService = fidService;
 		this.reporter = reporter;
 		this.languageId = new LanguageID(languageId);
+		this.disableNamespaceStripping = disableNamespaceStripping;
 	}
 
 	@Override
@@ -95,6 +98,7 @@ public class IngestTask extends Task {
 			FidPopulateResult result = fidService.createNewLibraryFromPrograms(fidDb,
 				libraryFamilyName, libraryVersion, libraryVariant, programs, null, languageId,
 				libraryRecord == null ? null : Arrays.asList(libraryRecord), commonSymbols,
+				disableNamespaceStripping,
 				monitor);
 			reporter.report(result);
 			fidDb.saveDatabase("Saving", monitor);
