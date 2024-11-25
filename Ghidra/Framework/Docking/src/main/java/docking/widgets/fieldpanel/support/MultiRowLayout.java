@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package docking.widgets.fieldpanel.support;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
 
@@ -28,7 +28,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.internal.*;
 
 /**
- * Handles layouts with muliple rows.
+ * Handles layouts with multiple rows.
  */
 public class MultiRowLayout implements Layout {
 	private RowLayout[] layouts;
@@ -42,6 +42,7 @@ public class MultiRowLayout implements Layout {
 	/**
 	 * Constructs a new MultiRowLayout with a single layout row.
 	 * @param layout the single layout to add to this MultiRowLayout.
+	 * @param indexSize the index size.
 	 */
 	public MultiRowLayout(RowLayout layout, int indexSize) {
 		this.indexSize = indexSize;
@@ -57,6 +58,7 @@ public class MultiRowLayout implements Layout {
 		this.indexSize = indexSize;
 		this.layouts = layouts;
 		int height = 0;
+
 		for (RowLayout layout : layouts) {
 			numFields += layout.getNumFields();
 			height += layout.getHeight();
@@ -362,83 +364,12 @@ public class MultiRowLayout implements Layout {
 		heightBelow += size;
 	}
 
-	/**
-	 * Fills in the given array with the heights of all the layouts in the MultiRowLayout
-	 * @param rowHeights the array to be filled in with heights. Each height is stored at 
-	 * its layoutRow id as the index into the array.
-	 */
-	public void fillHeights(int[] rowHeights) {
-		int lastId = -1;
-		int height = 0;
-		for (RowLayout layout : layouts) {
-			int id = layout.getRowID();
-			if (id == lastId) {
-				height += layout.getHeight();
-			}
-			else {
-				if (lastId >= 0) {
-					rowHeights[lastId] = Math.max(rowHeights[lastId], height);
-				}
-				lastId = id;
-				height = layout.getHeight();
-			}
-		}
-		if (lastId >= 0) {
-			rowHeights[lastId] = Math.max(rowHeights[lastId], height);
-		}
-	}
-
-	private class EmptyRowLayout extends RowLayout {
-
-		public EmptyRowLayout(int rowId, int height) {
-			super(getEmptyFields(height), rowId);
-		}
-
-		private static Field[] getEmptyFields(int height) {
-			return new Field[] { new EmptyTextField(height, 0, 0, 0) };
-		}
-	}
-
-	/**
-	 * Aligns the heights in this MultiRowLayout to match those in the give row heights array.
-	 * Extra is inserted to align the rows in this layout to match those specified in the given array.
-	 * @param rowHeights the aray of row height to align to.
-	 */
-	public void align(int[] rowHeights) {
-		int row = 0;
-		List<RowLayout> updatedRows = new ArrayList<>();
-		for (RowLayout layout : layouts) {
-			int id = layout.getRowID();
-			for (; row <= id; row++) {
-				if (rowHeights[row] == 0) {
-					continue;
-				}
-				if (row == id) {
-					layout.insertSpaceBelow(rowHeights[id] - layout.getHeight());
-					updatedRows.add(layout);
-				}
-				else {
-					updatedRows.add(new EmptyRowLayout(row, rowHeights[row]));
-				}
-			}
-		}
-
-		for (; row < rowHeights.length; row++) {
-			if (rowHeights[row] != 0) {
-				updatedRows.add(new EmptyRowLayout(row, rowHeights[row]));
-			}
-		}
-
-		int height = 0;
-		layouts = new RowLayout[updatedRows.size()];
-		for (int i = 0; i < layouts.length; i++) {
-			layouts[i] = updatedRows.get(i);
-			height += layouts[i].getHeight();
-		}
-
-		heightAbove = layouts[0].getHeightAbove();
-		heightBelow = height - heightAbove;
-		buildOffsets();
+	@Override
+	public String toString() {
+		return Arrays.asList(layouts)
+				.stream()
+				.map(RowLayout::toString)
+				.collect(Collectors.joining("\n"));
 	}
 
 	@Override
@@ -470,4 +401,147 @@ public class MultiRowLayout implements Layout {
 		return layouts[0].getRowID();
 	}
 
+	/**
+	 * Returns an object that contains all row heights for the row layouts in this class.
+	 * @return an object that contains all row heights for the row layouts in this class.
+	 */
+	public RowHeights getRowHeights() {
+		RowHeights rowHeights = new RowHeights();
+		for (RowLayout layout : layouts) {
+			rowHeights.addHeight(layout);
+		}
+		return rowHeights;
+	}
+
+	/**
+	 * Aligns the heights in this MultiRowLayout to match those in the given row heights array.  
+	 * This is used by the diff provider to align two sets of rows.  
+	 * 
+	 * @param sharedRowHeights the row heights
+	 */
+	public void align(RowHeights sharedRowHeights) {
+
+		// Gather and map all layouts by their assigned row number.  This map *may not* be a 
+		// complete range of rows from 0 to rowHeights.length;
+		Map<Integer, List<RowLayout>> layoutsByRow = new HashMap<>();
+		for (RowLayout layout : layouts) {
+			int row = layout.getRowID();
+			List<RowLayout> list = layoutsByRow.computeIfAbsent(row, k -> new ArrayList<>());
+			list.add(layout);
+		}
+
+		// Walk the entire range of shared rows between each diff.  If a row height is 0, then 
+		// neither side of the diff contains a RowLayout object for that row.
+		List<RowLayout> updatedRows = alignRows(sharedRowHeights, layoutsByRow);
+		layouts = new RowLayout[updatedRows.size()];
+		int height = 0;
+		for (int i = 0; i < layouts.length; i++) {
+			layouts[i] = updatedRows.get(i);
+			height += layouts[i].getHeight();
+		}
+
+		heightAbove = layouts[0].getHeightAbove();
+		heightBelow = height - heightAbove;
+		buildOffsets();
+	}
+
+	private List<RowLayout> alignRows(RowHeights sharedRowHeights,
+			Map<Integer, List<RowLayout>> layoutsByRow) {
+
+		List<RowLayout> updatedRows = new ArrayList<>();
+		int totalRows = sharedRowHeights.getRowCount(); // total rows shared between all views
+		for (int row = 0; row < totalRows; row++) {
+			int rowHeight = sharedRowHeights.getHeight(row);
+			if (rowHeight == 0) {
+				continue; // no rows on either side
+			}
+
+			List<RowLayout> rowLayouts = layoutsByRow.get(row);
+			if (rowLayouts == null) {
+				// No lines for this row.  This side of the diff that has no rows fields for the 
+				// given row.  Add empty rows to act as spacers for this side of the diff.
+				updatedRows.add(new EmptyRowLayout(row, rowHeight));
+				continue;
+			}
+
+			// At this point we have one or more lines to add for the current row.  Add each line
+			// but the last line.  The last line will consume all remaining height that has not yet
+			// been consumed.
+			int totalLines = rowLayouts.size();
+			int lastLine = totalLines - 1;
+			int allButLastLine = lastLine - 1;
+			int consumedHeight = 0; // track all height used by each row
+			for (int line = 0; line <= allButLastLine; line++) {
+				RowLayout layout = rowLayouts.get(line);
+				updatedRows.add(layout);
+				consumedHeight += layout.getHeight();
+			}
+
+			// Process the last line, adding any space to fill the remaining row height.  Having
+			// remaining height means that the other side of the diff has more RowLayouts than this
+			// side of the diff.
+			RowLayout layout = rowLayouts.get(lastLine);
+			consumedHeight += layout.getHeight();
+			int leftOverHeight = rowHeight - consumedHeight;
+			layout.insertSpaceBelow(leftOverHeight);
+			updatedRows.add(layout);
+		}
+
+		return updatedRows;
+	}
+
+	private class EmptyRowLayout extends RowLayout {
+
+		public EmptyRowLayout(int rowId, int height) {
+			super(getEmptyFields(height), rowId);
+		}
+
+		private static Field[] getEmptyFields(int height) {
+			return new Field[] { new EmptyTextField(height, 0, 0, 0) };
+		}
+	}
+
+	/**
+	 * A class to track all row heights for a given {@link MultiRowLayout}.   Multiple instances
+	 * of this class can be merged to create a total collection of row heights for more than one
+	 * {@link MultiRowLayout}, such as is done for the diff tool.  The merged row heights 
+	 * represent the total number of rows possible as well as the maximum possible height for a 
+	 * given row.
+	 */
+	public static class RowHeights {
+
+		private Map<Integer, Integer> heightsByRow = new HashMap<>();
+		private int largestRow;
+
+		void addHeight(RowLayout layout) {
+			int row = layout.getRowID();
+			int rowHeight = layout.getHeight();
+			int totalHeight = heightsByRow.computeIfAbsent(row, k -> 0);
+			heightsByRow.put(row, totalHeight + rowHeight);
+			largestRow = Math.max(row, largestRow);
+		}
+
+		int getHeight(int row) {
+			return heightsByRow.computeIfAbsent(row, k -> 0);
+		}
+
+		int getRowCount() {
+			return largestRow + 1; // +1 for index vs count
+		}
+
+		public void merge(RowHeights other) {
+
+			int myRowCount = getRowCount();
+			int otherRowCount = other.getRowCount();
+			int rowCount = Math.max(myRowCount, otherRowCount);
+
+			for (int row = 0; row < rowCount; row++) {
+				int myRowHeight = heightsByRow.computeIfAbsent(row, k -> 0);
+				int otherRowHeight = other.getHeight(row);
+				int largestRowHeight = Math.max(myRowHeight, otherRowHeight);
+				heightsByRow.put(row, largestRowHeight);
+				largestRow = Math.max(row, largestRow);
+			}
+		}
+	}
 }
