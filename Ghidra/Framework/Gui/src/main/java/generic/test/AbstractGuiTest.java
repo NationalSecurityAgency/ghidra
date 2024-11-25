@@ -392,7 +392,7 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Searches the subcomponents of the the given container and returns the
+	 * Searches the subcomponents of the given container and returns the
 	 * JButton that has the specified text.
 	 *
 	 * @param container the container to search

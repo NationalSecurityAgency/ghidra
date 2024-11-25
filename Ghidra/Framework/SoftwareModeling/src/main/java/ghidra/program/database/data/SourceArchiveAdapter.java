@@ -99,7 +99,7 @@ abstract class SourceArchiveAdapter {
 	 * @param handle handle to the database whose table is to be upgraded to a newer version.
 	 * @param oldAdapter the adapter for the existing table to be upgraded.
 	 * @return the adapter for the new upgraded version of the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
 	 * @throws CancelledException if task is cancelled

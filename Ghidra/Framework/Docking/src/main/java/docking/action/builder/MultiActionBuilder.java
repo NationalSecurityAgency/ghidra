@@ -28,7 +28,7 @@ import docking.menu.MultiActionDockingAction;
 public class MultiActionBuilder
 		extends AbstractActionBuilder<MultiActionDockingAction, ActionContext, MultiActionBuilder> {
 	/**
-	 * List of actions for the the MultActionDockingAction
+	 * List of actions for the MultiActionDockingAction
 	 */
 	private List<DockingActionIf> actionList = Collections.emptyList();
 

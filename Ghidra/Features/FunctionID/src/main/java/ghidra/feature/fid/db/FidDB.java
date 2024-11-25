@@ -183,7 +183,7 @@ public class FidDB implements Closeable {
 	}
 
 	/**
-	 * Indicates the the user of this FidDB no longer needs it open.  This will decrement the
+	 * Indicates that the user of this FidDB no longer needs it open.  This will decrement the
 	 * "open count" and if the "open count is 0, the database will be closed.
 	 */
 	@Override

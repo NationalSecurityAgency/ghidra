@@ -32,7 +32,7 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 	private boolean defaultSectionProcessed;
 
 	/**
-	 * Constructor for when the the theme.properties file is a {@link ResourceFile}
+	 * Constructor for when the theme.properties file is a {@link ResourceFile}
 	 * @param file the {@link ResourceFile} esourceFileto read
 	 * @throws IOException if an I/O error occurs reading the file
 	 */

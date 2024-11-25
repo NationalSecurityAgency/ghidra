@@ -27,15 +27,14 @@ import docking.widgets.fieldpanel.field.Field;
 public interface FieldInputListener {
 
 	/**
-	 * Called the the FieldPanel receives a KeyEvent that it doesn't handle.
+	 * Called when the FieldPanel receives a KeyEvent that it doesn't handle.
 	 * @param ev The KeyEvent generated when the user presses a key.
 	 * @param index the index of the layout the cursor was on when the key was pressed.
 	 * @param fieldNum the field index of the field the cursor was on when the key was
 	 * pressed.
 	 * @param row the row in the field the cursor was on when the key was pressed.
 	 * @param col the col in the field the cursor was on when the key was pressed.
-     * @param field current field the cursor was on when the
-     * key was pressed.
+     * @param field current field the cursor was on when the key was pressed.
 	 */
 	void keyPressed(KeyEvent ev, BigInteger index, int fieldNum, int row, int col,
                         Field field);

@@ -378,7 +378,7 @@ public interface DebugClient extends DebugClientReentrant {
 	public SBListener getListener();
 
 	/**
-	 * The the ID for the local server
+	 * The ID for the local server
 	 * 
 	 * @return the ID
 	 */

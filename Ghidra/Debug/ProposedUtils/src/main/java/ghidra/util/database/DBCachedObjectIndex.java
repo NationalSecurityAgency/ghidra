@@ -426,7 +426,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @param key the key
 	 * @see #descending()
 	 * @see #sub(Object, boolean, Object, boolean)
-	 * @return the the value of the previous key, or null
+	 * @return the value of the previous key, or null
 	 */
 	public T lowerValue(K key) {
 		return firstOf(head(key, false).descending().values());

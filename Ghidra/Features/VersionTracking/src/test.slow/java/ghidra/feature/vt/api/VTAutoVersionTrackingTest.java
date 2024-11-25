@@ -536,7 +536,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		uniqueDestAddrs.add(addr("0x415200", destinationProgram));
 
 		// The unique ones should be accepted matches
-		// The the non-matching unique ones should be blocked from each other
+		// The non-matching unique ones should be blocked from each other
 		for (int i = 0; i < uniqueSourceAddrs.size(); i++) {
 			for (int j = 0; j < uniqueDestAddrs.size(); j++) {
 				// the ones at the same index in the lists should be the accepted matches

@@ -260,7 +260,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 	}
 
 	/**
-	 * Adjusts the given value based upon the current scale applied the the view.  The more
+	 * Adjusts the given value based upon the current scale applied to the view.  The more
 	 * scaled out the view, the larger the value returned.   This allows view effects to be
 	 * discernable at scale.
 	 * 

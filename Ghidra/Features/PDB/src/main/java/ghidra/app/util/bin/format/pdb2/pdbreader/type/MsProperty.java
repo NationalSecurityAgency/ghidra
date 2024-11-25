@@ -199,8 +199,8 @@ public class MsProperty extends AbstractParsableItem {
 	}
 
 	/**
-	 * Tells whether the the definition is scoped.
-	 * @return True if there definition is scoped.
+	 * Tells whether the definition is scoped.
+	 * @return True if the definition is scoped.
 	 */
 	public boolean hasScopedDefinition() {
 		return scopedDefinition;

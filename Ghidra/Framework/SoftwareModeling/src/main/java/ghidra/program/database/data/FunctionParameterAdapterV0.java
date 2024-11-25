@@ -44,7 +44,7 @@ class FunctionParameterAdapterV0 extends FunctionParameterAdapter implements Rec
 	/**
 	 * Gets a version 0 adapter for the Function Definition Parameter database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public FunctionParameterAdapterV0(DBHandle handle) throws VersionException {

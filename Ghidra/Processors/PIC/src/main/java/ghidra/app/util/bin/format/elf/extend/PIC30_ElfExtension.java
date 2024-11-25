@@ -59,7 +59,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 	/**
 		NOTES:
 		
-			EDS/PSV Sections - section data resides with ROM space but is accessable via the
+			EDS/PSV Sections - section data resides with ROM space but is accessable via
 			the RAM data space at 0x8000 - 0xFFFF with the use of page register.  Page use
 			may vary by CPU (EDS, PSV low-word access, PSV high-word access). PSV high-word
 			access capability is only provided when EDS is supported. See page registers

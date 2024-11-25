@@ -119,7 +119,7 @@ public class ConstantPoolDex extends ConstantPool {
 		}
 		res.tag = ConstantPool.POINTER_METHOD;
 		// The FunctionDefinition is constructed on the fly, essentially as an anonymous type
-		// We use an internal naming scheme involding the the methodID to avoid name collisions
+		// We use an internal naming scheme involding the methodID to avoid name collisions
 		String defName = res.token + '_' + Integer.toHexString(methodID);
 		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(defName, dtManager);
 		res.type = new PointerDataType(funcDef);

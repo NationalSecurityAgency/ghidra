@@ -32,7 +32,7 @@ public class JarWriter {
 	private String[] excludedExtensions;
 
 	/**
-	 * @param jarOut the the jar file output stream the zip entries are
+	 * @param jarOut the jar file output stream the zip entries are
 	 * to be written to.
 	 */
 	public JarWriter(JarOutputStream jarOut) {

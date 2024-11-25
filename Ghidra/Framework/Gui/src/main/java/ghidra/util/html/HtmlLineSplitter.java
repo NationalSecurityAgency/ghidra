@@ -101,10 +101,9 @@ public class HtmlLineSplitter {
 	 * 
 	 * <P>Once the maximum provided length is passed, the algorithm attempts to split on a word
 	 * boundary by first looking backwards in the given line (since the last split value) to
-	 * find a space.  If no space is found in that direction, then the the algorithm will
-	 * keep walking forward until either a space is found or {@link #MAX_WORD_LENGTH} is
-	 * passed, at which point the line will be ended, splitting any word that surrounds 
-	 * that index.
+	 * find a space.  If no space is found in that direction, then the algorithm will keep
+	 * walking forward until either a space is found or {@link #MAX_WORD_LENGTH} is passed,
+	 * at which point the line will be ended, splitting any word that surrounds that index.
 	 * 
 	 * @param text the text to wrap
 	 * @param maxLineLength the max desired length of each output line

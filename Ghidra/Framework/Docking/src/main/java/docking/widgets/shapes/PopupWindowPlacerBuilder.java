@@ -315,7 +315,7 @@ public class PopupWindowPlacerBuilder {
 				}
 			}
 			else {
-				// Only looking from greater/lesser to the the center.
+				// Only looking from greater/lesser to the center.
 				add(new EdgePopupPlacer(major, minors[0], Location.CENTER));
 			}
 		}

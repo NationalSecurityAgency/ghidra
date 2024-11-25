@@ -33,7 +33,7 @@ public class FunctionSignatureFieldLocation extends FunctionLocation {
 	/** 
 	 * When true the <tt>charOffset</tt> is not used to represent character position, but 
 	 * rather the character position is based upon the location of the subfield within the 
-	 * signature.  For example, the start of the function name location may be the the character
+	 * signature.  For example, the start of the function name location may be the character
 	 * position when this flag is <tt>true</tt>. 
 	 */
 	private boolean isFieldBasedPoisitioning;

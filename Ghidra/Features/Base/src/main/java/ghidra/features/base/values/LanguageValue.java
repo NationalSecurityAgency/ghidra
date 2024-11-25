@@ -30,7 +30,7 @@ import ghidra.program.util.DefaultLanguageService;
 /**
  * Value class for LanguageCompilerSpecPair types. The component for this class is a 
  * TextField with a browse button for bringing up a language/compiler chooser. It supports
- * the concept of no value when the text field is empty. If it is not empty, the the contents
+ * the concept of no value when the text field is empty. If it is not empty, the contents
  * must be one of the known valid language/compiler spec pairs.
  * <P>
  * This class and other subclasses of {@link AbstractValue} are part of a subsystem for easily

@@ -294,7 +294,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	@Test
 	public void testUpdates() throws Exception {
 		// display a provider, clear the instruction, 
-		// make sure the the provider is cleared, etc. 
+		// make sure that the provider is cleared, etc. 
 
 		changeLocationToAddress("01000000");
 

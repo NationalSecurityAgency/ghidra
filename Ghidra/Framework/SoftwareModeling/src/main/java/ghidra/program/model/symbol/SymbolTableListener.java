@@ -46,7 +46,7 @@ public interface SymbolTableListener {
 	public void symbolRenamed(SourceType symbol, String oldName);
 
 	/**
-	 * Notification the the given symbol was set as the primary symbol.
+	 * Notification that the given symbol was set as the primary symbol.
 	 * @param symbol the symbol that is now primary.
 	 */
 	public void primarySymbolSet(SourceType symbol);

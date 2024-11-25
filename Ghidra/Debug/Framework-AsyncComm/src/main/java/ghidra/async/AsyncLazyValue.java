@@ -142,7 +142,7 @@ public class AsyncLazyValue<T> {
 	}
 
 	/**
-	 * Check the the value is available immediately
+	 * Check if the value is available immediately
 	 * 
 	 * @return true if {@link #request()} or {@link #provide()} has been called and completed.
 	 */

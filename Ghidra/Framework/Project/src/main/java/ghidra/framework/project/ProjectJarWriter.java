@@ -32,7 +32,7 @@ class ProjectJarWriter extends JarWriter {
 	private static final String ORIGINAL_PROPERTIES_FILE_NAME = "original"+PROPERTIES_FILE_NAME;
 
 	/**
-	 * @param jarOut the the jar file output stream the zip entries are
+	 * @param jarOut the jar file output stream the zip entries are
 	 * to be written to.
 	 */
 	ProjectJarWriter(JarOutputStream jarOut) {

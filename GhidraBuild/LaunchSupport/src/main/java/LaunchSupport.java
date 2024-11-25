@@ -196,7 +196,7 @@ public class LaunchSupport {
 
 	/**
 	 * Handles interacting with the user to choose a Java home directory to use for the launch.  
-	 * If a valid Java home directory was successfully determined, it is saved to the the user's
+	 * If a valid Java home directory was successfully determined, it is saved to the user's
 	 * Java home save file, and an exit code that indicates success is returned.
 	 * 
 	 * @param javaConfig The Java configuration that defines what we support.  

@@ -40,7 +40,7 @@ import ghidra.util.exception.AssertException;
  *      
  *      <P>The default transformer turns items to strings by, in order,:
  *      <OL>
- *      	<LI>checking the the <b>column</b> renderer's 
+ *      	<LI>checking the <b>column</b> renderer's 
  *      		{@link #getFilterString(Object, Settings)},if a column renderer is installed
  *      	</LI>
  *      	<LI>checking to see if the column value is an instance of {@link DisplayStringProvider}

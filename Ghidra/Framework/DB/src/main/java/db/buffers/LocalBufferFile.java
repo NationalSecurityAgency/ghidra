@@ -1062,7 +1062,7 @@ public class LocalBufferFile implements BufferFile {
 	 * @param in input block stream
 	 * @param out output block stream
 	 * @param monitor progress and cancel monitor
-	 * @throws CancelledException the the operation is cancelled
+	 * @throws CancelledException the operation is cancelled
 	 * @throws IOException if an I/O error occurs
 	 */
 	static void completeBlockStreamTransfer(InputBlockStream in, OutputBlockStream out,

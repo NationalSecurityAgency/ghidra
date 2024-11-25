@@ -331,7 +331,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		label.setText(escapedText);
 		Dimension labelSize = label.getPreferredSize();
 
-		// make sure the the vertexName doesn't make the icon ridiculously big
+		// make sure that the vertexName doesn't make the icon ridiculously big
 		int width = Math.min(labelSize.width, MAX_WIDTH);
 		int height = Math.min(labelSize.height, MAX_HEIGHT);
 		label.setSize(width, height);

@@ -440,7 +440,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Performs a fast in-place comparison of this field value with another
-	 * field value stored within the specified buffer at the the specified offset.
+	 * field value stored within the specified buffer at the specified offset.
 	 * NOTE: This method will treat all null primitives as 0 although is not intended
 	 * to support such use.
 	 * @param buffer data buffer

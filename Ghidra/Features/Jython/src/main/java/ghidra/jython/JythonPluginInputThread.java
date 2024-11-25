@@ -89,7 +89,7 @@ class JythonPluginInputThread extends Thread {
 	}
 
 	/**
-	 * Causes the the background thread's run() loop to exit.
+	 * Causes the background thread's run() loop to exit.
 	 * <p>
 	 * Causes background thread's exit by closing the inputstream it is looping on.
 	 */

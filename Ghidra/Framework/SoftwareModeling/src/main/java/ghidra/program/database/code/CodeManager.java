@@ -2094,7 +2094,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * for 0 or all f's.
 	 * @param data the data to add references for.
 	 * @param longSegmentAddressList used internally to make sure that, for 64 bit addresses, we
-	 * don't pollute the the addressMap segment table when creating arrays of pointers on arbitrary
+	 * don't pollute the addressMap segment table when creating arrays of pointers on arbitrary
 	 * data.
 	 */
 	private void addDataReferences(Data data, List<Address> longSegmentAddressList) {

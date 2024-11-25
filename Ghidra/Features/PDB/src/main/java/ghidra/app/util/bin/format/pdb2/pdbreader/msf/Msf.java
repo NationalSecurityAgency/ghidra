@@ -24,7 +24,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents the the Multi-Stream Format File used for Windows PDB files.
+ * This class represents the Multi-Stream Format File used for Windows PDB files.
  *  We have intended to implement to the Microsoft PDB API (source); see the API for truth.
  *  <P>
  *  Derived classes represents the real formats.  The file format represents a kind of
@@ -226,8 +226,8 @@ public interface Msf extends AutoCloseable {
 	int getLog2PageSize();
 
 	/**
-	 * Returns the the mask used for masking off the upper bits of a value use to get the
-	 *  mod-page-size of the value (pageSizes must be power of two for this to work)
+	 * Returns the mask used for masking off the upper bits of a value used to get the
+	 *  mod-page-size of the value (pageSizes must be a power of two for this to work)
 	 * @return the mask
 	 */
 	int getPageSizeModMask();

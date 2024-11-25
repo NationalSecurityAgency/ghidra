@@ -30,7 +30,7 @@ public interface ColumnConstraint<T> extends Comparable<ColumnConstraint<T>> {
 	 * otherwise
 	 *
 	 * @param value the column value to be tested.
-	 * @param context provides additional information about the the table and its data. This
+	 * @param context provides additional information about the table and its data. This
 	 * allows the filter to base its decision on information other than just the column value.
 	 * @return true if the column value passes the constraint, false otherwise
 	 */

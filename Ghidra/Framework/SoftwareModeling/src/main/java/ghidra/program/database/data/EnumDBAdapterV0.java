@@ -48,7 +48,7 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	/**
 	 * Gets a version 0 adapter for the Enumeration database table.
 	 * @param handle handle to the database containing the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 */
 	public EnumDBAdapterV0(DBHandle handle) throws VersionException {

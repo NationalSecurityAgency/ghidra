@@ -578,7 +578,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @param snap the starting snap
 	 * @param start the min address
-	 * @param platform the platform the the language to disassemble
+	 * @param platform the platform for the language to disassemble
 	 * @param buf the bytes to place, which will become the unit's bytes
 	 * @return the instruction unit
 	 * @throws CodeUnitInsertionException if the instruction cannot be created

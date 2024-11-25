@@ -671,7 +671,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	/**
 	 * Returns the user's selection or null if the user has not made a selection.
 	 * <p>
-	 * Note: the the value returned from this method may not match the text in the field in the
+	 * Note: the value returned from this method may not match the text in the field in the
 	 * case that the user has selected a value and then typed some text.
 	 *
 	 * @return the user's selection or null if the user has not made a selection.

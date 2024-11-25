@@ -51,7 +51,7 @@ public class InstructionSequence {
 	}
 
 	/**
-	 * Returns all the the stored disassembly for an instruction sequence
+	 * Returns all of the stored disassembly for an instruction sequence
 	 * @param inOrder if true, the instructions are displayed in order.  If false they are reversed.
 	 * @return the disassembly as a string
 	 */

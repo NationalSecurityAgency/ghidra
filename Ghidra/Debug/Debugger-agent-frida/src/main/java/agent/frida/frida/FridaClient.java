@@ -355,7 +355,7 @@ public interface FridaClient extends FridaClientReentrant {
 	}
 
 	/**
-	 * The the ID for the local server
+	 * The ID for the local server
 	 * 
 	 * @return the ID
 	 */

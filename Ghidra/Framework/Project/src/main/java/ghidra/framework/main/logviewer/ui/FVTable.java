@@ -527,7 +527,7 @@ public class FVTable extends GTable
 		// selected end position if the shift key is down.
 		//
 		// However, if the user is selecting a row ABOVE the currently-selected one(s), then
-		// leave the the that row as the 'end' selection and reset the start.
+		// leave that row as the 'end' selection and reset the start.
 		//
 		// Also, if the mouse is dragging, don't reset the start position as the user is selecting
 		// a range via the mouse.

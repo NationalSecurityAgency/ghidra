@@ -800,7 +800,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * The the target service
+	 * The target service
 	 * 
 	 * @return the service
 	 */

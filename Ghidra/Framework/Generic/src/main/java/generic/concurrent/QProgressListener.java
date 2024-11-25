@@ -63,7 +63,7 @@ public interface QProgressListener<I> {
 	void progressMessageChanged(long id, I item, String message);
 
 	/**
-	 * Notification the the max progress value has changed.
+	 * Notification that the max progress value has changed.
 	 * @param id the id of the item that has completed processing.
 	 * @param item the item that was being processed when the worker changed the max progress.
 	 * @param maxProgress the max value of the progress for this task.

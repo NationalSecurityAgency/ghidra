@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Reports the the number of disassembly error bookmarks currently in the program.
+// Reports the number of disassembly error bookmarks currently in the program.
 // This can be an "indicator" of bad analysis, strange instructions, or non-returning functions.
 //
 // Assumes a program is open.

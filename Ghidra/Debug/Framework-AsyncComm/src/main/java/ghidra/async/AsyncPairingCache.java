@@ -69,7 +69,7 @@ public abstract class AsyncPairingCache<K, V> {
 	protected abstract Map<K, CompletableFuture<V>> createPromiseCache(int max);
 
 	/**
-	 * Enter a promise for the the given key into the cache
+	 * Enter a promise for the given key into the cache
 	 * 
 	 * <p>
 	 * If the result for the given key is already available, the promise does not enter the cache.
@@ -83,7 +83,7 @@ public abstract class AsyncPairingCache<K, V> {
 	}
 
 	/**
-	 * Enter a promise for the the given key into the cache
+	 * Enter a promise for the given key into the cache
 	 * 
 	 * <p>
 	 * If the result for the given key is already available, the promise does not enter the cache.

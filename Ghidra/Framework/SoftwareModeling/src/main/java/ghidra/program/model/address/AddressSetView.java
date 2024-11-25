@@ -95,10 +95,10 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Returns an iterator of address ranges starting with the range that contains the given address.
-	 * If there is no range containing the start address, then the the first range will be
+	 * If there is no range containing the start address, then the first range will be
 	 * the next range greater than the start address if going forward, otherwise the range less than
 	 * the start address
-	 * @param start the address the the first range should contain.
+	 * @param start the address the first range should contain.
 	 * @param forward true iterators forward, false backwards
 	 * @return the AddressRange iterator
 	 */
@@ -120,10 +120,10 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Returns an iterator of address ranges starting with the range that contains the given address.
-	 * If there is no range containing the start address, then the the first range will be
+	 * If there is no range containing the start address, then the first range will be
 	 * the next range greater than the start address if going forward, otherwise the range less than
 	 * the start address
-	 * @param start the address the the first range should contain.
+	 * @param start the address that the first range should contain.
 	 * @param forward true iterators forward, false backwards
 	 * @return the AddressRange iterator
 	 */

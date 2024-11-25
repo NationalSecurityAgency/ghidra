@@ -739,7 +739,7 @@ public class DBCachedObjectStoreFactory {
 		void encode(ByteBuffer buffer, T value);
 
 		/**
-		 * The the class describing {@link T}
+		 * The class describing {@link T}
 		 * 
 		 * @return the class
 		 */

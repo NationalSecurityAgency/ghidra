@@ -1935,14 +1935,14 @@ public class FieldPanel extends JPanel
 		}
 
 		/**
-		 * Checks if the the "shift" modifier is on and the "control" modifier is not.
+		 * Checks if the "shift" modifier is on and the "control" modifier is not.
 		 */
 		private boolean isAddToContiguousSelectionActivator(MouseEvent e) {
 			return (e.isShiftDown() && !DockingUtils.isControlModifier(e));
 		}
 
 		/**
-		 * Checks if the the "control" modifier is on and the shift modifier is not.
+		 * Checks if the "control" modifier is on and the "shift" modifier is not.
 		 */
 		private boolean isAddRemoveDisjointSelectionActivator(MouseEvent e) {
 			return DockingUtils.isControlModifier(e) && !e.isShiftDown();

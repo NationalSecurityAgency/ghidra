@@ -712,7 +712,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted
 	 * @throws InsufficientBytesException if there aren't enough bytes in the specified range
-	 * @throws CancelledException the the work is cancelled
+	 * @throws CancelledException if the work is cancelled
 	 */
 	protected abstract boolean replaceRange(int startRowIndex, int endRowIndex, DataType datatype,
 			int length, TaskMonitor monitor)

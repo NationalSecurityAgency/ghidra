@@ -358,7 +358,7 @@ public interface DebugClient extends DebugClientReentrant {
 	DebugSystemObjects getSystemObjects();
 
 	/**
-	 * The the ID for the local server
+	 * The ID for the local server
 	 * 
 	 * @return the ID
 	 */

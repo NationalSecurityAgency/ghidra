@@ -110,7 +110,7 @@ public class UserHighlights {
 
 	void addSecondaryHighlighter(Function function, DecompilerHighlighter highlighter) {
 
-		// Note: this highlighter has likely already been added the the this class, but has not
+		// Note: this highlighter has likely already been added to this class, but has not
 		//       yet been bound to the given function.
 		secondaryHighlightersByFunction.get(function).add(highlighter);
 		secondaryHighlighters.add(highlighter);

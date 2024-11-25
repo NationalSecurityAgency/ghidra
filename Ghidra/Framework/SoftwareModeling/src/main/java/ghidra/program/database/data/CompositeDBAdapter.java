@@ -136,7 +136,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor task monitor
 	 * @return the adapter for the new upgraded version of the table.
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
 	 * @throws CancelledException user cancelled upgrade

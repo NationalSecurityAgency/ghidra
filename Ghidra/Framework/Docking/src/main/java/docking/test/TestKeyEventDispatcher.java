@@ -37,7 +37,7 @@ public class TestKeyEventDispatcher {
 	 * 
 	 * @param event the event
 	 * @return false if the event was not handled by this class and should continue to be
-	 *         processed; true if the the event was handled and no further processing is needed
+	 *         processed; true if the event was handled and no further processing is needed
 	 */
 	public static boolean dispatchKeyEvent(KeyEvent event) {
 

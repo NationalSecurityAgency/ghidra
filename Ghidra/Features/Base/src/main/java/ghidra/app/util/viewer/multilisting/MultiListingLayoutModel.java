@@ -78,7 +78,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	}
 
 	/**
-	 * Returns the the ListingLayoutModel for the i'th program.
+	 * Returns the ListingLayoutModel for the i'th program.
 	 * @param index the index of program for which to return a listing model
 	 */
 	public ListingModel getAlignedModel(int index) {

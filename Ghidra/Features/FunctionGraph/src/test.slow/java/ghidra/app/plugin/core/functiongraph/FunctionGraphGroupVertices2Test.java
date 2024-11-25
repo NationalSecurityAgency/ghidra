@@ -415,7 +415,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		// Test the case that grouping the entry node will create a group that has incoming 
 		// edges.  In this case, there is no source node in the graph.  This will cause an 
 		// exception if the code does not create a fake source node before passing the graph
-		// the the algorithm for calculating dominance.
+		// to the algorithm for calculating dominance.
 		//
 
 		create12345GraphWithTransaction();

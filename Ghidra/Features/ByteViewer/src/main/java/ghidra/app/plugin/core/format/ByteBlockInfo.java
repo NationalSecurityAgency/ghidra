@@ -53,7 +53,7 @@ public class ByteBlockInfo {
 	}
 
 	/**
-	 * The the column within the UI byte field
+	 * The column within the UI byte field
 	 * @return the column
 	 */
 	public int getColumn() {

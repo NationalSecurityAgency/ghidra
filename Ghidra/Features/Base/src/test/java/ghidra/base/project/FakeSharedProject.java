@@ -215,7 +215,7 @@ public class FakeSharedProject {
 	}
 
 	/**
-	 * Opens the the program by the given name.  The path can be a simple name or a relative or
+	 * Opens the program by the given name.  The path can be a simple name or a relative or
 	 * absolute path to the file within the project.
 	 * 
 	 * @param filePath the path to the file to open 

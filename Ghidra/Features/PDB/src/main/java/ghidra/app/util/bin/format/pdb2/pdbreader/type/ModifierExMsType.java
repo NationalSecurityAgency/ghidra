@@ -121,7 +121,7 @@ public class ModifierExMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Tells whether the the {@link Modifier} is present.
+	 * Tells whether the {@link Modifier} is present.
 	 * @param modifier the {@link Modifier} to check.
 	 * @return True if the {@link Modifier} is present.
 	 */

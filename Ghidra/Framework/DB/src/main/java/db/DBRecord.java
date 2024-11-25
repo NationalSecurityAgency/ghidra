@@ -411,7 +411,7 @@ public class DBRecord implements Comparable<DBRecord> {
 
 	/**
 	 * Set the field to a null state.  For a non-sparse fixed-length column field this will
-	 * set the the value to zero and the null state will not be persisted when stored.
+	 * set the value to zero and the null state will not be persisted when stored.
 	 * @param colIndex field index
 	 * @throws IndexOutOfBoundsException if invalid columnIndex is specified
 	 */

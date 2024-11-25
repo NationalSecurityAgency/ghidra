@@ -21,7 +21,7 @@ import ghidra.app.context.ProgramActionContext;
 import ghidra.program.model.listing.Program;
 
 /**
- * Abstract base class for program actions that change their menu name depending on the the active
+ * Abstract base class for program actions that change their menu name depending on the active
  * program. Note that actions that derived from this class only work on programs that are
  * globally managed by Ghidra and not opened and managed by individual plugins. If the action 
  * context should happen to contain a non-global managed program, the tool's concept of the 

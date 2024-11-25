@@ -127,7 +127,7 @@ public class PublicSymbolInternals32 extends AbstractSymbolInternals {
 	}
 
 	/**
-	 * Tells whether the the code is managed.
+	 * Tells whether the code is managed.
 	 * @return True if the code is managed.
 	 */
 	public boolean isManaged() {

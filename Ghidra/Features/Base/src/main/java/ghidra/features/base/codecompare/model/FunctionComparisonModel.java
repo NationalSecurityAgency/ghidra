@@ -28,14 +28,14 @@ import ghidra.util.datastruct.Duo.Side;
 
 /**
  * A model for comparing one or more functions in a side by side display. The model supports the
- * concept of a set of function that can be selected for each side of the comparison. It also 
+ * concept of a set of functions that can be selected for each side of the comparison. It also 
  * maintains the selected function for each side. The default model simply has a single set
  * of functions that can be selected for either side of the comparison. The model supports the
- * concept of different sets of functions for each and even the idea the the active function for
+ * concept of different sets of functions for each and even the idea that the active function for
  * one side can determine the set of functions for the other side. See 
  * {@link MatchedFunctionComparisonModel}.
  * <p>
- * This model is intended to be used by the the {@link FunctionComparisonService} to generate
+ * This model is intended to be used by the {@link FunctionComparisonService} to generate
  * a function comparison display window. 
  * <p>
  * Note: Subscribers may register to be informed of changes to this model via the

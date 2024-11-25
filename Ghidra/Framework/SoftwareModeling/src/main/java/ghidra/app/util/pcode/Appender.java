@@ -68,7 +68,7 @@ interface Appender<T> {
 	void appendMnemonic(int opcode);
 
 	/**
-	 * Append the the given userop
+	 * Append the given userop
 	 * 
 	 * @param id the userop id
 	 */

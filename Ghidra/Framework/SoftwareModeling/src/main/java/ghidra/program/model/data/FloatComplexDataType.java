@@ -19,7 +19,7 @@ package ghidra.program.model.data;
  * Provides a definition of a {@code complex} built-in data type consisting of two floating point
  * numbers in the IEEE 754 double precision format.
  * <P>
- * The size of the floating point numbers is determined the the program's data organization as defined
+ * The size of the floating point numbers is determined by the program's data organization as defined
  * by the language/compiler spec
  */
 public class FloatComplexDataType extends AbstractComplexDataType {

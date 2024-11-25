@@ -42,7 +42,7 @@ class ModuleDBAdapterV0 extends ModuleDBAdapter implements RecordTranslator {
 	 * @param handle handle to the database containing the table.
 	 * @param treeID associated program tree ID
 	 * @param parentChildAdapter parent/child database adapter
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if database IO error occurs
 	 */

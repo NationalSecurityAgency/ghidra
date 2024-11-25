@@ -38,7 +38,7 @@ public class GdbThreadGroupStartedEvent extends AbstractGdbThreadGroupEvent {
 	}
 
 	/**
-	 * Get the the process ID
+	 * Get the process ID
 	 * 
 	 * @return the process ID
 	 */

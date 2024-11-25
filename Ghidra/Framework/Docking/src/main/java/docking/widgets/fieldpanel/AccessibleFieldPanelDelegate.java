@@ -31,9 +31,9 @@ import docking.widgets.fieldpanel.support.*;
 /**
  * Contains all the code for implementing the AccessibleFieldPanel which is an inner class in
  * the FieldPanel class. The AccessibleFieldPanel has to be declared as an inner class because
- * it needs to extends AccessibleJComponent which is a non-static inner class of JComponent. 
+ * it needs to extend AccessibleJComponent which is a non-static inner class of JComponent. 
  * However, we did not want to put all the logic in there as FieldPanel is already an
- * extremely large and complex class. Also, by delegating the the logic, testing is much
+ * extremely large and complex class. Also, by delegating the logic, testing is much
  * easier.
  * <P>
  * The model for accessibility for the FieldPanel is a bit complex because

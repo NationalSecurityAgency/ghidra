@@ -187,7 +187,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Triggers a browser click at the current cursor location.  Thus, this method should be
-	 * called only after the browser location is set the the desired field.
+	 * called only after the browser location is set to the desired field.
 	 *
 	 * @param codeBrowser the CodeBrowserPlugin
 	 * @param clickCount the click count
