@@ -6140,7 +6140,7 @@ public class RecoveredClassHelper {
 				}
 
 				// if one or more is a constructor and none are destructors then the indeterminate
-				// inline is is an inlined constructor
+				// inline is an inlined constructor
 				if (isConstructor == true && isDestructor == false) {
 					processInlineConstructor(recoveredClass, inlineFunction, referenceToClassMap);
 				}

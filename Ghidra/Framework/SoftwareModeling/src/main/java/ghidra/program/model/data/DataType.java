@@ -398,7 +398,7 @@ public interface DataType {
 	/**
 	 * Returns the prefix to use for this datatype when an abbreviated prefix is desired.
 	 * <p>
-	 * For example, some datatypes will built a large default label, at which is is more desirable
+	 * For example, some datatypes will built a large default label, at which is more desirable
 	 * to have a shortened prefix.
 	 *
 	 * @return the prefix to use for this datatype when an abbreviated prefix is desired. May return

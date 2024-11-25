@@ -123,7 +123,7 @@ public class DataTypeEditorManager implements EditorListener {
 	}
 
 	/**
-	 * Displays a data type editor for editing the given Structure. If the structure is is already 
+	 * Displays a data type editor for editing the given Structure. If the structure is already 
 	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
 	 * displayed.
 	 * @param structure the structure.
