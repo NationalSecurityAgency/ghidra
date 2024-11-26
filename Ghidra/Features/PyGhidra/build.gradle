@@ -66,6 +66,7 @@ task installJPype(type: Exec) {
 // Install ghidra-stubs into the development virtual environment
 task installGhidraStubs(type: Exec) {
 	dependsOn(":createGhidraStubsWheel")
+	dependsOn(":createPythonVirtualEnvironment")
 	
 	File depsDir = file("${DEPS_DIR}/PyGhidra")
 	File binRepoDir = file("${BIN_REPO}/ExternalPyWheels")
