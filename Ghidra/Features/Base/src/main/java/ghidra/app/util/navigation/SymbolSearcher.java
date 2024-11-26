@@ -184,7 +184,7 @@ public class SymbolSearcher {
 			return;
 		}
 		Symbol s = program.getSymbolTable().getPrimarySymbol(address);
-		if (s.isDynamic()) { // non-dynamic symbols have already been searched (ex, FUN_12345678)
+		if (s != null && s.isDynamic()) { // non-dynamic symbols have already been searched (ex, FUN_12345678)
 			addSymbolIfMatches(s, locations);
 		}
 	}
