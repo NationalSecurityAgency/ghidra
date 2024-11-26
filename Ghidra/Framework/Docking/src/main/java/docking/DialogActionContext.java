@@ -16,25 +16,30 @@
 package docking;
 
 import java.awt.Component;
-
-import ghidra.util.Msg;
+import java.util.Objects;
 
 /**
  * Action context for {@link DialogComponentProvider}s.
  */
 public class DialogActionContext extends DefaultActionContext {
 
+	private DialogComponentProvider dialogProvider;
+
 	public DialogActionContext(DialogComponentProvider dialogProvider, Component sourceComponent) {
 		super(null, dialogProvider, sourceComponent);
+		this.dialogProvider = Objects.requireNonNull(dialogProvider);
+	}
+
+	// this constructor allows clients to set the dialog later
+	public DialogActionContext(Object contextObject, Component sourceComponent) {
+		super(null, contextObject, sourceComponent);
+	}
+
+	public void setDialogComponentProvider(DialogComponentProvider dialogProvider) {
+		this.dialogProvider = dialogProvider;
 	}
 
 	public DialogComponentProvider getDialogComponentProvider() {
-		Object contextObject = getContextObject();
-		if (contextObject instanceof DialogComponentProvider dcp) {
-			return dcp;
-		}
-
-		Msg.warn(this, "Found dialog context without a DialogComponentProvider context object");
-		return null;
+		return dialogProvider;
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,19 @@ import java.util.List;
 
 import javax.swing.tree.TreePath;
 
-import docking.DefaultActionContext;
+import docking.DialogActionContext;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.model.*;
 
 /**
  * Context specific to the DataTreeDialog.
+ * 
+ * Note: this context is used from by the {@link ProjectDataTreePanel}.  This class may or may not
+ * be in a dialog.  For convenience, this class extends a dialog action context, but may not always
+ * be associated with a dialog.
  */
-public class DialogProjectTreeContext extends DefaultActionContext implements ProjectTreeContext {
+public class DialogProjectTreeContext extends DialogActionContext implements ProjectTreeContext {
 
 	private TreePath[] selectionPaths;
 	private DataTree tree;
@@ -36,9 +40,9 @@ public class DialogProjectTreeContext extends DefaultActionContext implements Pr
 	private List<DomainFile> selectedFiles;
 
 	public DialogProjectTreeContext(ProjectData projectData,
-			TreePath[] selectionPaths,
-			List<DomainFolder> folderList, List<DomainFile> fileList, DataTree tree) {
-		super(null, getContextObject(selectionPaths), tree);
+			TreePath[] selectionPaths, List<DomainFolder> folderList, List<DomainFile> fileList,
+			DataTree tree) {
+		super(getContextObject(selectionPaths), tree);
 		this.selectionPaths = selectionPaths;
 		this.selectedFolders = folderList;
 		this.selectedFiles = fileList;
