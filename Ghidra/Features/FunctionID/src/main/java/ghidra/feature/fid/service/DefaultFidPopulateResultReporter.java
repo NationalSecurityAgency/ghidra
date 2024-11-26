@@ -42,6 +42,7 @@ public class DefaultFidPopulateResultReporter implements FidPopulateResultReport
 		buffer.append(result.getTotalExcluded() + " total functions excluded");
 		buffer.append("\n");
 		buffer.append("Breakdown of exclusions:");
+		buffer.append("\n");
 		for (Entry<Disposition, Integer> entry : result.getFailures().entrySet()) {
 			if (entry.getKey() != Disposition.INCLUDED) {
 				buffer.append("    " + entry.getKey() + ": " + entry.getValue());
