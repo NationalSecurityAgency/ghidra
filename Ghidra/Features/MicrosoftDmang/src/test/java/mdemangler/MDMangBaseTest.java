@@ -2609,7 +2609,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	//This test seems to dictate that a function pointer should be elaborated internal to CVMod, where the based5 will eliminate all of the function context.
-	//  It also seems to indicate that the "int" portion would be the referred-to type and the rest of the function spec would be part of the the function info.
+	//  It also seems to indicate that the "int" portion would be the referred-to type and the rest of the function spec would be part of the function info.
 	//  Other information at one time, led me to believe that the return type of a function is special... need to rekinkdle those thoughts, but think related to nested
 	//  functions, such as function returning a function pointer..
 	@Category(MDMangFailingTestCategory.class)

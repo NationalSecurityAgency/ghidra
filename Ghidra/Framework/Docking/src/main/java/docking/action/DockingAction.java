@@ -202,7 +202,7 @@ public abstract class DockingAction implements DockingActionIf {
 	 * If the client wants the action on all windows, then they can call {@link #shouldAddToAllWindows}
 	 * <P>
 	 * If the client wants the action to be on a window only when the window can produce
-	 * a certain context type, the the client should call
+	 * a certain context type, then the client should call
 	 * {@link #addToWindowWhen(Class)}
 	 * <P>
 	 * Otherwise, by default, the action will only be on the main window.
@@ -253,7 +253,7 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Signals the the help system that this action does not need a help entry.   Some actions
+	 * Signals the help system that this action does not need a help entry.   Some actions
 	 * are so obvious that they do not require help, such as an action that renames a file.
 	 * <p>
 	 * The method should be sparsely used, as most actions should provide help.
@@ -689,7 +689,7 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * Sets the ActionContext class for when this action should be added to a window
 	 * <P>
-	 * If this is set, the the action will only be added to windows that have providers
+	 * If this is set, then the action will only be added to windows that have providers
 	 * that can produce an ActionContext that is appropriate for this action.
 	 * <P>
 	 * @param addToWindowContextClass the ActionContext class required to be producible by a

@@ -917,7 +917,7 @@ public class Application {
 	}
 
 	/**
-	 * Return the directory relative the the name module's data directory. (i.e. "/data" will
+	 * Return the directory relative to the name module's data directory. (i.e. "/data" will
 	 * be prepended to the given path)
 	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's data directory.
@@ -932,7 +932,7 @@ public class Application {
 	}
 
 	/**
-	 * Return the directory relative the the name module's directory.
+	 * Return the directory relative to the name module's directory.
 	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's root directory.
 	 * @return the directory

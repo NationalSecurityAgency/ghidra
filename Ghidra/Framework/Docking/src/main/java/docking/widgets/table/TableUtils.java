@@ -361,7 +361,7 @@ public class TableUtils {
 	 * clicked, as not to be annoying to the user.   The intent of emphasizing the columns is to 
 	 * signal to the user that other columns are part of the sort, not just the column that was 
 	 * clicked.   We hope that this will remind the user of the overall sort so they are not 
-	 * confused when the the column that was clicked produces unexpected sort results. 
+	 * confused when the column that was clicked produces unexpected sort results. 
 	 */
 	private static class SortEmphasisAnimationRunner extends AnimationRunner {
 

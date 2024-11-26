@@ -260,7 +260,7 @@ public class JavaHelpValidator {
 
 		if (helpFile == null) {
 			if (isExcludedHREF(href)) {
-				return; // ignore calls made to the the API as being invalid
+				return; // ignore calls made to the API as being invalid
 			}
 			unresolvedLinks.add(new MissingFileInvalidLink(href));
 			return;

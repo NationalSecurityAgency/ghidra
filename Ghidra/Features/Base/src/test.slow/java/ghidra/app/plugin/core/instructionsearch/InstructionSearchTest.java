@@ -532,7 +532,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the the hex view button correctly switches the preview table to hex, and that
+	 * Tests that the hex view button correctly switches the preview table to hex, and that
 	 * the hex is formatted correctly when masking.
 	 */
 	@Test

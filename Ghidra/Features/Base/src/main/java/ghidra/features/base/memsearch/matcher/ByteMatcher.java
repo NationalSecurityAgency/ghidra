@@ -72,7 +72,7 @@ public abstract class ByteMatcher {
 
 	/**
 	 * Returns true if this byte matcher is valid and can be used to perform a search. If false,
-	 * the the description will return a an error message explaining why this byte matcher is
+	 * the description will return an error message explaining why this byte matcher is
 	 * invalid.
 	 * @return true if this byte matcher is valid and can be used to perform a search.
 	 */

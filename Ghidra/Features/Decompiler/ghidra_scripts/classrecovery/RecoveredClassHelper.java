@@ -2443,7 +2443,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to return the total number of vbase destructors in the given list of classes
 	 * @param recoveredClasses the list of classes
-	 * @return the the total number of vbase destructors in the given list of classes
+	 * @return the total number of vbase destructors in the given list of classes
 	 * @throws CancelledException if cancelled
 	 */
 	public int getNumberOfVBaseFunctions(List<RecoveredClass> recoveredClasses)

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,7 +125,7 @@ public class LabelSymbolApplier extends MsSymbolApplier
 		// how function symbols are applied.  Perhaps we need to apply all GPROC symbols before
 		// we apply their internals (frames, local vars, labels, blocks) because some labels (here)
 		// are getting applied and becoming primary (because some have addresses that are located
-		// outside of the the address range of their GPROC, and will prevent another GPROC at the
+		// outside of the address range of their GPROC, and will prevent another GPROC at the
 		// same address as the label from becoming primary (e.g., $LN7 of cn3 at a750).
 		applicator.createSymbol(symbolAddress, label, false);
 	}

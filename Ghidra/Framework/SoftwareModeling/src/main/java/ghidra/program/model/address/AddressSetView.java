@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,10 +95,10 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Returns an iterator of address ranges starting with the range that contains the given address.
-	 * If there is no range containing the start address, then the the first range will be
+	 * If there is no range containing the start address, then the first range will be
 	 * the next range greater than the start address if going forward, otherwise the range less than
 	 * the start address
-	 * @param start the address the the first range should contain.
+	 * @param start the address the first range should contain.
 	 * @param forward true iterators forward, false backwards
 	 * @return the AddressRange iterator
 	 */
@@ -120,10 +120,10 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Returns an iterator of address ranges starting with the range that contains the given address.
-	 * If there is no range containing the start address, then the the first range will be
+	 * If there is no range containing the start address, then the first range will be
 	 * the next range greater than the start address if going forward, otherwise the range less than
 	 * the start address
-	 * @param start the address the the first range should contain.
+	 * @param start the address that the first range should contain.
 	 * @param forward true iterators forward, false backwards
 	 * @return the AddressRange iterator
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -497,7 +497,7 @@ public class WindowUtilities {
 		// NOTE: we do an invokeLater here, as some of our clients are calling us in a
 		// WindowListener.windowActivated() callback.  During this callback, it is possible that
 		// the focus owner is not correct, as it will be changed to the window under activation.
-		// If we invoke later, the the call will happen when focus has been transitioned.
+		// If we invoke later, then the call will happen when focus has been transitioned.
 		Swing.runLater(() -> doBringModalestDialogToFront(activeWindow));
 	}
 
