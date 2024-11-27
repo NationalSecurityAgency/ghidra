@@ -608,6 +608,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 	}
 
 	private ColorStyleAttributes getOpAttributes(Object opObject, Instruction inst, int opIndex) {
+
 		if (opObject instanceof String) {
 			return getOpAttributes(inst, opIndex, inst.getProgram());
 		}
