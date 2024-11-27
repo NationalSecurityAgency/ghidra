@@ -1202,8 +1202,6 @@ TOKEN :
     |
     <CDECL : ( [ "_" ] )+ "cdecl"> 
     |
-    <STDCALL : ( [ "_" ] )+ "stdcall"> 
-    |
     <STDCALL : ( [ "_" ] )+ "stdcall">
     |
     <FASTCALL : ( [ "_" ] )+ "fastcall">
@@ -1851,12 +1849,10 @@ Declaration TypeQualifier(Declaration dec) : {}
       <HUGE> { dec.setHuge(true); } |
       <SEGMENT> |
       <OFFSET> |
-      <PASCAL> { dec.addQualifier(PASCAL); } |
       <STDCALL> { dec.addQualifier(STDCALL); } |
       <FASTCALL> { dec.addQualifier(FASTCALL); } |
       <VECTORCALL> { dec.addQualifier(VECTORCALL); } |
       <RUSTCALL> { dec.addQualifier(RUSTCALL); } |
-      <PASCALCALL> { dec.addQualifier(PASCALCALL); } |
       <NORETURN> { dec.addQualifier(NORETURN); } |
       <W64> |
       <PTR64> |
