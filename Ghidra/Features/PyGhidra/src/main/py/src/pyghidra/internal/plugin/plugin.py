@@ -26,11 +26,11 @@ from code import InteractiveConsole
 from ghidra.framework import Application
 from ghidra.pyghidra import PyGhidraScriptProvider, PyGhidraPlugin
 from ghidra.pyghidra.interpreter import PyGhidraConsole
-from java.io import BufferedReader, InputStreamReader
-from java.lang import String
-from java.lang import Thread as JThread
-from java.util import Collections
-from java.util.function import Consumer
+from java.io import BufferedReader, InputStreamReader # type:ignore @UnresolvedImport
+from java.lang import String # type:ignore @UnresolvedImport 
+from java.lang import Thread as JThread # type:ignore @UnresolvedImport
+from java.util import Collections # type:ignore @UnresolvedImport
+from java.util.function import Consumer # type:ignore @UnresolvedImport
 from jpype import JClass, JImplements, JOverride
 
 from pyghidra.internal.plugin.completions import PythonCodeCompleter

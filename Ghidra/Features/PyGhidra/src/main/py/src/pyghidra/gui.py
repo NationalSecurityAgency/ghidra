@@ -112,12 +112,12 @@ def _gui():
     # where tkinter can't be imported. Since there may not be an attached
     # terminal, the problem still needs to be reported somehow.
     try:
-        import tkinter.messagebox as _
+        import tkinter.messagebox as _  # @UnusedImport
     except ImportError as e:
         if platform.system() == "Windows":
             # there is no console/terminal to report the error
             import ctypes
-            MessageBox = ctypes.windll.user32.MessageBoxW
+            MessageBox = ctypes.windll.user32.MessageBoxW # @UndefinedVariable
             MessageBox(None, str(e), "Import Error", 0)
             sys.exit(1)
         # report this before detaching from the console or no

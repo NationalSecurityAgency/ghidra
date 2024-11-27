@@ -56,6 +56,16 @@ class GhidraBuiltinsBuilder {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		File pypredefDir = new File(doclet.getDestDir().getParentFile(), "pypredef");
+		File pypredefFile = new File(pypredefDir, "ghidra.ghidra_builtins.pypredef");
+		pypredefDir.mkdirs();
+		try (PrintWriter printer = new PrintWriter(new FileWriter(pypredefFile))) {
+			process(printer);
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
