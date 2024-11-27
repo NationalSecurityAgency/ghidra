@@ -3590,7 +3590,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * Method to add parents to the given class
 	 * 
 	 * @param recoveredClass  the given class
-	 * @param typeinfo the the GccTypeinfo object for this class
+	 * @param typeinfo the GccTypeinfo object for this class
 	 * @return list of parents for the given class
 	 * @throws CancelledException if cancelled
 	 */

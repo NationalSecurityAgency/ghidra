@@ -56,6 +56,8 @@ import utilities.util.reflection.ReflectionUtilities;
  * @since Tracker Id 329
  */
 public class KeyBindingUtils {
+	private static final String NO_KEYBINDING_NAME = "none";
+
 	private static final String LAST_KEY_BINDING_EXPORT_DIRECTORY = "LastKeyBindingExportDirectory";
 
 	private static final String RELEASED = "released";
@@ -338,7 +340,7 @@ public class KeyBindingUtils {
 		}
 
 		Object keyText = im.get(keyStroke);
-		if (keyText == null) {
+		if (keyText == null || keyText.equals(NO_KEYBINDING_NAME)) {
 			// no binding--just pick a name
 			keyText = action.getValue(Action.NAME);
 			if (keyText == null) {
@@ -404,7 +406,7 @@ public class KeyBindingUtils {
 			int focusCondition) {
 		InputMap inputMap = component.getInputMap(focusCondition);
 		if (inputMap != null) {
-			inputMap.put(keyStroke, "none");
+			inputMap.put(keyStroke, NO_KEYBINDING_NAME);
 		}
 	}
 

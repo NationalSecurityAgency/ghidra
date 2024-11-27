@@ -113,6 +113,24 @@ void FunctionTestCollection::clear(void)
   console->reset();
 }
 
+/// Remove any carriage return character as well.
+/// \param ref is the string to strip
+/// \return the stripped string
+string FunctionTestCollection::stripNewlines(const string &ref)
+
+{
+  string res;
+
+  for(int4 i=0;i<ref.size();++i) {
+    char c = ref[i];
+    if (c == '\r') continue;	// Remove carriage return
+    if (c == '\n')
+      c = ' ';			// Convert newline to space
+    res.push_back(c);
+  }
+  return res;
+}
+
 /// \param el is the root \<script> tag
 void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
@@ -122,7 +140,7 @@ void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
   for(iter=list.begin();iter!=list.end();++iter) {
     const Element *subel = *iter;
-    commands.push_back(subel->getContent());
+    commands.push_back(stripNewlines(subel->getContent()));
   }
 }
 

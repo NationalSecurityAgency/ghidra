@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -713,22 +713,22 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	 */
 
 	/*
-	 * No test for 'askYesNo()" because it does not use either the the last-selected value or
+	 * No test for 'askYesNo()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProjectFolder()" because it does not use either the the last-selected value
+	 * No test for 'askProjectFolder()" because it does not use either the last-selected value
 	 * or a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProgram()" because it does not use either the the last-selected value or
+	 * No test for 'askProgram()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askDomainFile()" because it does not use either the the last-selected value or
+	 * No test for 'askDomainFile()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 

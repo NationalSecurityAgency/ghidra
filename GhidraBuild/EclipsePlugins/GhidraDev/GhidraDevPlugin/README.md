@@ -9,7 +9,8 @@ change with future releases.
  2. [Minimum Requirements](#minimum-requirements)
  3. [Optional Requirements](#optional-requirements)
  4. [Installing](#installing)
-    * [Manual Installation in Eclipse](#manual-installation-in-eclipse)
+    * [Manual Installation in Eclipse (offline)](#manual-installation-in-eclipse-offline)
+    * [Manual Installation in Eclipse (online)](#manual-installation-in-eclipse-online)
     * [Automatic Installation through Ghidra](#automatic-installation-through-ghidra)
  5. [GhidraDev Features](#ghidradev-features)
     * [New Ghidra Script](#new-ghidra-script)
@@ -32,6 +33,8 @@ change with future releases.
 ## Change History
 __4.0.1:__
 * New Ghidra module projects now contain a default `README.md` file.
+* Fixed a bug that prevented an imported module source project from being discovered by Ghidra when
+  launched with the project's run/debug configuration.
 
 __4.0.0:__
 * GhidraDev has been upgraded to be compatible with Ghidra 11.2 and later. It is not backwards
@@ -135,24 +138,42 @@ __1.0.1:__
 
 ## Installing
 GhidraDev can be installed either manually into Eclipse or automatically by Ghidra, depending on
-your uses cases. The following two sections outline both procedures.
+your uses cases. The following sections outline the different procedures.
 
-### Manual Installation in Eclipse
+### Manual Installation in Eclipse (offline)
 GhidraDev can be installed into an existing installation of Eclipse the same way most Eclipse
-plugins are installed.  From Eclipse:
-1. Click `Help -> Install New Software...`
-2. Click `Add...`
-3. Click `Archive...`
-4. Select GhidraDev zip file from `<GhidraInstallDir>/Extensions/Eclipse/GhidraDev/`
-5. Click `OK` (name field can be blank)
-6. Check `Ghidra` category (or `GhidraDev` entry)
-7. Click `Next`
-8. Click `Next`
-9. Accept the terms of the license agreement
+plugins are installed. From Eclipse:
+ 1. Click `Help -> Install New Software...`
+ 2. Click `Add...`
+ 3. Click `Archive...`
+ 4. Select GhidraDev zip file from `<GhidraInstallDir>/Extensions/Eclipse/GhidraDev/`
+ 5. Click `OK` (name field can be blank)
+ 6. Check `Ghidra` category (or `GhidraDev` entry)
+ 7. Click `Next`
+ 8. Click `Next`
+ 9. Accept the terms of the license agreement
 10. Click `Finish`
 11. Check `Unsigned` table entry
 12. Click `Trust Selected`
 13. Click `Restart Now`
+
+### Manual Installation in Eclipse (online)
+If you have an Internet connection, the latest GhidraDev can be installed by adding the official
+[update site](https://github.com/NationalSecurityAgency/ghidra-data/raw/main/Eclipse/GhidraDev/latest)
+to an existing installation of Eclipse. This has the benefit of early access to new GhidraDev 
+versions before the next version of Ghidra is released, and automatic updates (if you have updates 
+enabled in Eclipse). From Eclipse:
+ 1. Click `Help -> Install New Software...`
+ 2. Work with: `https://github.com/NationalSecurityAgency/ghidra-data/raw/main/Eclipse/GhidraDev/latest`
+ 3. Press `Enter`
+ 4. Check `Ghidra` category (or `GhidraDev` entry)
+ 5. Click `Next`
+ 6. Click `Next`
+ 7. Accept the terms of the license agreement
+ 8. Click `Finish`
+ 9. Check `Unsigned` table entry
+10. Click `Trust Selected`
+11. Click `Restart Now`
 
 ### Automatic Installation through Ghidra
 Ghidra has the ability to launch an externally linked Eclipse when certain actions are performed,

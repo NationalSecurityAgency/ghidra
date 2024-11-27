@@ -1307,7 +1307,7 @@ encodings.
 SLEIGH supports the concept of <emphasis>context
 variables</emphasis>. For the most part processor instructions can be
 unambiguously decoded by examining only the bits of the instruction
-encoding. But in some cases, decoding may depend on the state of
+encoding. But in some cases, decoding may depend on the state of the
 processor. Typically, the processor will have some set of status flags
 that indicate what mode is being used to process instructions. In
 terms of SLEIGH, a context variable is a <emphasis>field</emphasis>
@@ -1386,7 +1386,7 @@ multiple constructors into a single table are addressed in <xref linkend="sleigh
 <para>
 A single complex statement in the specification file describes a
 constructor. This statement is always made up of five distinct
-sections that are listed below in the order in which the must occur.
+sections that are listed below in the order in which they must occur.
 <informalexample>
 <orderedlist spacing='compact'>
   <listitem>
@@ -3801,7 +3801,7 @@ select <emphasis>s</emphasis> registers. As is described in
 <xref linkend="sleigh_local_change"/>, these assignments by themselves
 cause only a local context change.  However, the
 subsequent <emphasis role="bold">globalset</emphasis> directives make
-the change persist outside of the the instructions
+the change persist outside of the instructions
 themselves. The <emphasis role="bold">globalset</emphasis> directive
 takes two parameters, the second being the particular context variable
 being changed. The first parameter indicates the first address where

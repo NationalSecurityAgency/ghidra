@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,6 +77,19 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		File desktop = new File(home, "Desktop");
 
 		return desktop.isDirectory() ? desktop : null;
+	}
+
+	@Override
+	public File getDownloadsDirectory() {
+		String userHomeProp = System.getProperty("user.home");
+		if (userHomeProp == null) {
+			return null;
+		}
+
+		File home = new File(userHomeProp);
+		File downloads = new File(home, "Downloads");
+
+		return downloads.isDirectory() ? downloads : null;
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -420,7 +420,7 @@ public class ExecutableScorer {
 	 * to create symmetric score contributions and accumulate the contributions in the matrix
 	 * @param pairs is the full list of pairs in the cluster
 	 * @param i is the first function pair sharing this pair of executables
-	 * @param j is the the last(+1) function pair sharing this pair of executables
+	 * @param j is the last(+1) function pair sharing this pair of executables
 	 */
 	private void scoreAcrossExecutablePair(List<FunctionPair> pairs, int i, int j) {
 		int size = j - i;

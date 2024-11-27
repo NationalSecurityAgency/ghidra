@@ -3112,7 +3112,7 @@ int grammarerror(const char *str)
 Datatype *parse_type(istream &s,string &name,Architecture *glb)
 
 {
-  CParse parser(glb,1000);
+  CParse parser(glb,4096);
 
   if (!parser.parseStream(s,CParse::doc_parameter_declaration))
     throw ParseError(parser.getError());
@@ -3131,7 +3131,7 @@ Datatype *parse_type(istream &s,string &name,Architecture *glb)
 void parse_protopieces(PrototypePieces &pieces,
 		       istream &s,Architecture *glb)
 {
-  CParse parser(glb,1000);
+  CParse parser(glb,4096);
 
   if (!parser.parseStream(s,CParse::doc_declaration))
     throw ParseError(parser.getError());
@@ -3151,7 +3151,7 @@ void parse_protopieces(PrototypePieces &pieces,
 void parse_C(Architecture *glb,istream &s)
 
 { // Load type data straight into datastructures
-  CParse parser(glb,1000);
+  CParse parser(glb,4096);
 
   if (!parser.parseStream(s,CParse::doc_declaration))
     throw ParseError(parser.getError());

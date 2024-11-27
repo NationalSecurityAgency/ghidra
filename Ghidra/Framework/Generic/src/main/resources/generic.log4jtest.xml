@@ -60,7 +60,8 @@
 		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>
 		<logger name="ghidra.program.database" level="DEBUG" />
 		<logger name="ghidra.program.model.lang.xml" level="DEBUG"/>
-		<logger name="ghidra.app.plugin.assembler" level="DEBUG" />		
+		<logger name="ghidra.app.plugin.assembler" level="DEBUG" />	
+		<logger name="ghidra.app.plugin.core.debug" level="DEBUG" />	
 		<logger name="ghidra.app.plugin.core.functiongraph" level="DEBUG" />	
 		<logger name="ghidra.app.plugin.core.string" level="DEBUG" />
 		<logger name="ghidra.app.plugin.core.libraryidentification" level="INFO"/>

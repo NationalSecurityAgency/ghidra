@@ -115,6 +115,10 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 			"virtual thunk to undefined __thiscall std::ostringstream::~ostringstream(void)",
 			signature);
 
+		assertEquals(
+			"virtual thunk to std::basic_ostringstream<char, std::char_traits<char>, pool_allocator<char> >::~basic_ostringstream()",
+			dobj.getRawDemangled());
+
 		//
 		// Now disable demangled string replacement
 		//

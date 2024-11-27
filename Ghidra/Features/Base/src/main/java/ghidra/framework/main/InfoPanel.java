@@ -188,7 +188,7 @@ class InfoPanel extends JPanel {
 	}
 
 	/**
-	 * Read the version information from the the resource file.
+	 * Read the version information from the resource file.
 	 */
 	private void getAboutInfo() {
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -594,6 +594,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("double entry(void)", function.getPrototypeString(false, false));
 
 		doCycleAction(floatCycleAction);
+		assertEquals("longdouble entry(void)", function.getPrototypeString(false, false));
+
+		doCycleAction(floatCycleAction);
 		assertEquals("float entry(void)", function.getPrototypeString(false, false));
 	}
 
@@ -630,6 +633,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -698,6 +704,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -773,6 +782,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -872,6 +884,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -1442,7 +1457,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		editComment = getAction(fp, "Edit Variable Comment");
 		deleteComment = getAction(fp, "Delete Function Variable Comment");
 		byteCycleAction = getAction(fp, "Cycle: byte,word,dword,qword");
-		floatCycleAction = getAction(fp, "Cycle: float,double");
+		floatCycleAction = getAction(fp, "Cycle: float,double,longdouble");
 		createArray = getAction(fp, "Define Array");
 		createPointer = getAction(fp, "Define pointer");
 		clearFunctionReturnTypeAction = getAction(fp, "Clear Function Return Type");

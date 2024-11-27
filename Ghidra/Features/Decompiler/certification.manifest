@@ -25,6 +25,7 @@ src/decompile/datatests/divopt.xml||GHIDRA||||END|
 src/decompile/datatests/doublemove.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
 src/decompile/datatests/elseif.xml||GHIDRA||||END|
+src/decompile/datatests/enum.xml||GHIDRA||||END|
 src/decompile/datatests/floatcast.xml||GHIDRA||||END|
 src/decompile/datatests/floatconv.xml||GHIDRA||||END|
 src/decompile/datatests/floatprint.xml||GHIDRA||||END|

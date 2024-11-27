@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -527,7 +527,7 @@ public class FVTable extends GTable
 		// selected end position if the shift key is down.
 		//
 		// However, if the user is selecting a row ABOVE the currently-selected one(s), then
-		// leave the the that row as the 'end' selection and reset the start.
+		// leave that row as the 'end' selection and reset the start.
 		//
 		// Also, if the mouse is dragging, don't reset the start position as the user is selecting
 		// a range via the mouse.

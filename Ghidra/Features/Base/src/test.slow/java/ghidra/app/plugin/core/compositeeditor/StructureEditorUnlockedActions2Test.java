@@ -138,6 +138,12 @@ public class StructureEditorUnlockedActions2Test
 		checkSelection(new int[] { 0 });
 
 		invoke(floatAction);
+		assertEquals(1, model.getNumComponents());
+		assertTrue(getDataType(0).isEquivalent(new LongDoubleDataType()));
+		assertEquals(8, getLength(0));
+		checkSelection(new int[] { 0 });
+
+		invoke(floatAction);
 		assertEquals(5, model.getNumComponents());
 		assertTrue(getDataType(0).isEquivalent(new FloatDataType()));
 		assertEquals(4, getLength(0));

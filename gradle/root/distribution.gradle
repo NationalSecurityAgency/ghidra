@@ -236,23 +236,21 @@ task createGhidraStubsWheel {
 
 	dependsOn("createPythonTypeStubs")
 
-	String ROOT_PROJECT_DIR = rootProject.projectDir.toString()
+	def typestubsDir = file("${ROOT_PROJECT_DIR}/build/typestubs").getAbsolutePath()
+	def distDir = file("${typestubsDir}/dist").getAbsolutePath()
 
-	def cwd = file(ROOT_PROJECT_DIR + "/build/typestubs")
-	def destinationDir = file(cwd.toString() + "/dist")
-
-	it.outputs.file(destinationDir.toString() + "/ghidra_stubs-${project.version}-py3-none-any.whl")
+	it.outputs.file("${distDir}/ghidra_stubs-${project.version}-py3-none-any.whl")
 
 	doFirst {
 		copy {
-			from(file(ROOT_PROJECT_DIR + "/LICENSE"))
-			into cwd
+			from(file("${ROOT_PROJECT_DIR}/LICENSE"))
+			into typestubsDir
 		}
 
-		def manifest = file(cwd.toString() + "/MANIFEST.in" )
+		def manifest = file("${typestubsDir}/MANIFEST.in")
 		manifest.write("graft src\n")
 
-		def pyproject = file(cwd.toString() + "/pyproject.toml" )
+		def pyproject = file("${typestubsDir}/pyproject.toml" )
 		pyproject.write("""\
 			[build-system]
 			requires = ["setuptools", "wheel"]
@@ -272,14 +270,14 @@ task createGhidraStubsWheel {
 	doLast {
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		
-		if (rootProject.PYTHON3 == null) {
+		if (PYTHON3 == null) {
 			throw new GradleException("A supported version of Python ${SUPPORTED_PY_VERSIONS} was not found!")
 		}
 		
 		exec {
-			workingDir { cwd.toString() }
-			commandLine rootProject.PYTHON3
-			args "-m", "pip", "wheel", "-w", destinationDir.toString(), "--no-index", "-f", setuptools, "."
+			workingDir { typestubsDir }
+			commandLine PYTHON3
+			args "-m", "pip", "wheel", "-w", distDir, "--no-index", "-f", setuptools, "."
 		}
 	}
 }
@@ -431,8 +429,11 @@ task assembleDistribution (type: Copy) {
 	////////////////////////////
 	// Ghidra Python type stubs
 	////////////////////////////
+	from ("${ROOT_PROJECT_DIR}/build/typestubs/src") {
+		into 'docs/ghidra_stubs/typestubs'
+	}
 	from (createGhidraStubsWheel) {
-		into 'docs'
+		into 'docs/ghidra_stubs'
 	}
 	
 	////////////////

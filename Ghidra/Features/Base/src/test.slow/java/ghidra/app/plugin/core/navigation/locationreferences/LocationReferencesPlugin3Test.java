@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -297,7 +297,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 	public void testDyamicData_AddressField() throws Exception {
 
 		//
-		// Dynamic data types should show all references to the the outermost data, including
+		// Dynamic data types should show all references to the outermost data, including
 		// offcut.
 		//
 
@@ -336,7 +336,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 	public void testDyamicData_MnemonicField() throws Exception {
 
 		//
-		// Dynamic data types should show all references to the the outermost data, including
+		// Dynamic data types should show all references to the outermost data, including
 		// offcut.  Also, since we are searching from the mnemonic, we find all data references.
 		//
 

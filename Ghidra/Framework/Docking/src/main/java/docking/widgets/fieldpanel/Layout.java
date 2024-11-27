@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,7 @@ public interface Layout {
 	/**
 	 * Returns a rectangle which bounds the given cursor position.
 	 * @param fieldNum the index of the field containing the cursor position.
-	 * @param row the the text row in the field containing the cursor position.
+	 * @param row the text row in the field containing the cursor position.
 	 * @param col the character position in the row containing the cursor position.
 	 */
 	Rectangle getCursorRect(int fieldNum, int row, int col);
@@ -165,7 +165,7 @@ public interface Layout {
 	int getScrollableUnitIncrement(int topOfScreen, int direction);
 
 	/**
-	 * Returns true if the the given yPos lies within this layout.
+	 * Returns true if the given yPos lies within this layout.
 	 * @param yPos the vertical coordinate to check if in this layout.
 	 */
 	boolean contains(int yPos);

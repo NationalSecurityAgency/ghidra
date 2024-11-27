@@ -402,7 +402,7 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 	/**
 	 * Only use this to escape from pop-up menus. Otherwise, use
-	 * {@link #triggerEscapeKey(Component)}.
+	 * {@link #triggerEscape(Component)}.
 	 * 
 	 * @throws AWTException
 	 */

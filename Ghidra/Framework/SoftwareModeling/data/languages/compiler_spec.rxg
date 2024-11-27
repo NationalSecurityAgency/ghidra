@@ -396,6 +396,9 @@
         <optional>
           <attribute name="storage"/>
         </optional>
+        <optional>
+          <attribute name="stackspill"/>
+        </optional>
       </element>
       <element name="hidden_return">
         <optional>

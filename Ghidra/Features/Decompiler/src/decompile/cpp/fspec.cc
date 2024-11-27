@@ -34,7 +34,7 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
-AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",150);
+AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",151);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);

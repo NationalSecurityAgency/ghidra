@@ -549,14 +549,19 @@ public class ImporterUtilities {
 		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
 			loader -> loader.getName().equalsIgnoreCase(program.getExecutableFormat()));
 
+		if (loaderMap.isEmpty()) {
+			return null;
+		}
+
 		Loader loader = loaderMap.firstKey();
 		if (loader == null) {
 			return null;
 		}
+
+		LanguageCompilerSpecPair programLcs = program.getLanguageCompilerSpecPair();
 		return loaderMap.get(loader)
 				.stream()
-				.filter(
-					e -> e.getLanguageCompilerSpec().equals(program.getLanguageCompilerSpecPair()))
+				.filter(e -> programLcs.equals(e.getLanguageCompilerSpec()))
 				.findFirst()
 				.orElse(null);
 	}

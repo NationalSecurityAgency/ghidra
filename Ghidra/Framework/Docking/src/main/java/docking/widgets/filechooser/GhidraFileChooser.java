@@ -29,15 +29,19 @@ import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.text.DefaultFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
+import docking.widgets.textfield.GFormattedTextField;
 import generic.theme.GColor;
 import generic.theme.GIcon;
 import ghidra.framework.preferences.Preferences;
@@ -107,6 +111,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private static final Icon ICON_MY_COMPUTER = new GIcon("icon.filechooser.places.my.computer");
 	private static final Icon ICON_DESKTOP = new GIcon("icon.filechooser.places.desktop");
 	private static final Icon ICON_HOME = new GIcon("icon.filechooser.places.home");
+	private static final Icon ICON_DOWNLOADS = new GIcon("icon.filechooser.places.downloads");
 	private static final Icon ICON_RECENT = new GIcon("icon.filechooser.places.recent");
 
 	private final static Cursor WAIT_CURSOR = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
@@ -167,9 +172,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private FileChooserToggleButton myComputerButton;
 	private FileChooserToggleButton desktopButton;
 	private FileChooserToggleButton homeButton;
+	private FileChooserToggleButton downloadsButton;
 	private FileChooserToggleButton recentButton;
 
-	private JTextField currentPathTextField;
+	private GFormattedTextField currentPathTextField;
 	private DropDownSelectionTextField<File> filenameTextField;
 	private DirectoryTableModel directoryTableModel;
 	private DirectoryTable directoryTable;
@@ -323,6 +329,17 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		homeButton.addActionListener(e -> updateHome());
 		homeButton.setForeground(FOREROUND_COLOR);
 
+		downloadsButton = new FileChooserToggleButton("Downloads") {
+			@Override
+			File getFile() {
+				return fileChooserModel.getDownloadsDirectory();
+			}
+		};
+		downloadsButton.setName("DOWNLOADS_BUTTON");
+		downloadsButton.setIcon(ICON_DOWNLOADS);
+		downloadsButton.addActionListener(e -> updateDownloads());
+		downloadsButton.setForeground(FOREROUND_COLOR);
+
 		recentButton = new FileChooserToggleButton("Recent") {
 			@Override
 			File getFile() {
@@ -338,6 +355,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		shortCutButtonGroup.add(myComputerButton);
 		shortCutButtonGroup.add(desktopButton);
 		shortCutButtonGroup.add(homeButton);
+		shortCutButtonGroup.add(downloadsButton);
 		shortCutButtonGroup.add(recentButton);
 
 		JPanel shortCutPanel = new JPanel(new GridLayout(0, 1));
@@ -345,6 +363,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		shortCutPanel.add(myComputerButton);
 		shortCutPanel.add(desktopButton);
 		shortCutPanel.add(homeButton);
+		shortCutPanel.add(downloadsButton);
 		shortCutPanel.add(recentButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -363,13 +382,13 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 			@Override
 			public void editingStopped(ChangeEvent e) {
-				// the user has cancelled editing in the text field (i.e., they pressed ESCAPE)
+				// the user has cancelled editing in the text field (i.e., they pressed ENTER)
 				enterCallback();
 			}
 
 			@Override
 			public void editingCanceled(ChangeEvent e) {
-				// the user has committed editing from the text field (i.e, they pressed ENTER)
+				// the user has committed editing from the text field (i.e, they pressed ESCAPE)
 				escapeCallback();
 			}
 		});
@@ -445,12 +464,104 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		gbc.gridx = afterPathLabel;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.weightx = 1.0;
-		currentPathTextField = new JTextField();
-		currentPathTextField.setName("Path");
-		currentPathTextField.setEditable(false);
+		currentPathTextField = buildPathTextField();
 		headerPanel.add(currentPathTextField, gbc);
 
 		return headerPanel;
+	}
+
+	private GFormattedTextField buildPathTextField() {
+		DefaultFormatter formatter = new DefaultFormatter();
+		formatter.setOverwriteMode(false);
+		DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
+		GFormattedTextField textField = new GFormattedTextField(factory, "") {
+			@Override
+			public void setText(String t) {
+				super.setText(t);
+				setDefaultValue(t);
+			}
+		};
+		textField.setName("Path");
+
+		textField.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				lastInputFocus = textField;
+			}
+		});
+
+		DockingUtils.installUndoRedo(textField);
+
+		// have the Escape key clear any edits to the field
+		KeyStroke escapeKs = KeyBindingUtils.parseKeyStroke("Escape");
+		Action escapeAction = new AbstractAction("Reset Path") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				if (textField.isChanged()) {
+					textField.reset();
+				}
+				else {
+					// When not edited, pass the event up to the chooser so the behavior works as
+					// it does elsewhere in the dialog.
+					escapeCallback();
+				}
+			}
+		};
+
+		// remove the table's escape key binding and then add our own
+		KeyBindingUtils.clearKeyBinding(textField, escapeKs);
+		KeyBindingUtils.registerAction(textField, escapeKs, escapeAction,
+			JComponent.WHEN_FOCUSED);
+
+		// update Enter to allow the user to pick the selected language
+		KeyStroke enterKs = KeyBindingUtils.parseKeyStroke("Enter");
+		Action enterAction = new AbstractAction("Choose File") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				if (!textField.isChanged()) {
+					// When not edited, pass the event up to the chooser so the behavior works as
+					// it does elsewhere in the dialog.
+					enterCallback();
+					return;
+				}
+
+				if (!textField.isValid()) {
+					return;
+				}
+
+				String text = textField.getText();
+				File f = new File(text);
+				if (f.isFile()) {
+					setSelectedFile(f);
+				}
+				else {
+					updateDirOnly(f, true);
+				}
+			}
+		};
+
+		// remove the table's enter key binding and then add our own
+		KeyBindingUtils.clearKeyBinding(textField, enterKs);
+		KeyBindingUtils.registerAction(textField, enterKs, enterAction,
+			JComponent.WHEN_FOCUSED);
+
+		// an input verifier that returns true if the path is an existing file or directory
+		InputVerifier inputVerifier = new InputVerifier() {
+			@Override
+			public boolean verify(JComponent input) {
+				String text = textField.getText();
+				File f = new File(text);
+				if (isSpecialDirectory(f)) {
+					return true;
+				}
+				return f.isFile() || f.isDirectory();
+			}
+		};
+		textField.setInputVerifier(inputVerifier);
+
+		return textField;
 	}
 
 	private void buildWaitPanel() {
@@ -718,6 +829,11 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		updateDirOnly(home, true);
 	}
 
+	private void updateDownloads() {
+		File downloads = downloadsButton.getFile();
+		updateDirOnly(downloads, true);
+	}
+
 	void removeRecentFiles(List<RecentGhidraFile> toRemove) {
 		recentList.removeAll(toRemove);
 		saveRecentList();
@@ -733,7 +849,8 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	}
 
 	private File currentDirectory() {
-		String path = currentPathTextField.getText();
+		// The default text should always be valid, regardless of user edits
+		String path = currentPathTextField.getDefaultText();
 		if (path.length() == 0) {
 			return null;
 		}
@@ -1380,6 +1497,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		checkShortCutButton(homeButton, currentDirectory);
 		checkShortCutButton(recentButton, currentDirectory);
 		checkShortCutButton(desktopButton, currentDirectory);
+		checkShortCutButton(downloadsButton, currentDirectory);
 	}
 
 	private void checkShortCutButton(FileChooserToggleButton button, File currentDirectory) {

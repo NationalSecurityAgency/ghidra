@@ -40,7 +40,7 @@ public abstract class PdbDebugInfo {
 	/**
 	 * These are Section Contribution Versions (SCV) 6.00 and 14.00.  We are building to the MSFT
 	 *  API.  They have chosen to mix in some magic along the way for these--perhaps to ensure that
-	 *  the the value will be a large unsigned 32-bit or a negative 32-bit.  We store the value
+	 *  the value will be a large unsigned 32-bit or a negative 32-bit.  We store the value
 	 *  in a java long, so that we can maintain the signed-ness of the values, if necessary.  MSFT
 	 *  is probably trying to prevent these values from being mimicked by data in the versions
 	 *  prior to v 6.00.

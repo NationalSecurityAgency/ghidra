@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public interface GraphDisplay {
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
 	 * the {@link GraphDisplayListener#locationFocusChanged(AttributedVertex)}. For example, if we
-	 * are updating the the location due to an event from the main application, we don't want to
+	 * are updating the location due to an event from the main application, we don't want to
 	 * notify the application the graph changed to avoid event cycles. See {@link EventTrigger} for
 	 * more information.
 	 */
@@ -73,7 +73,7 @@ public interface GraphDisplay {
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
 	 * the {@link GraphDisplayListener#selectionChanged(Set)}. For example, if we are updating
-	 * the the location due to an event from the main application, we don't want to notify the
+	 * the location due to an event from the main application, we don't want to notify the
 	 * application the graph changed to avoid event cycles. See {@link EventTrigger} for more
 	 * information.
 	 */

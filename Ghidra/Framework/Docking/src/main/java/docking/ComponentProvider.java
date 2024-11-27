@@ -1100,6 +1100,11 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
+			if (isShowing()) {
+				setVisible(false);
+				return;
+			}
+
 			DockingWindowManager myDwm = DockingWindowManager.getInstance(getComponent());
 			if (myDwm == null) {
 				// this can happen when the tool loses focus

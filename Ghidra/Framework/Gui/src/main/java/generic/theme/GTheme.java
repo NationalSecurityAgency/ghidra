@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class GTheme extends GThemeValueMap {
 	private final File file;
 
 	/**
-	 * Creates a new GTheme with the given name, the default {@link LookAndFeel} for the the 
+	 * Creates a new GTheme with the given name, the default {@link LookAndFeel} for the 
 	 * platform and not using dark defaults. This theme will be using all the standard defaults
 	 * from the theme.property files and the defaults from the default LookAndFeel.
 	 * @param name the name for this GTheme

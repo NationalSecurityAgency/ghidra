@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -423,7 +423,7 @@ static void ftoa(float f, char *buff, int len)
 		fa = f2;
 		// printf("%f = %u 2^%d 10^%d?\n", f, fa, e2, ea);
 		while (e2 > 0) {
-			// If the the high bit is set
+			// If the high bit is set
 			// then we can't multiply by 2
 			// without losing it, so divide by 10
 			// and round off

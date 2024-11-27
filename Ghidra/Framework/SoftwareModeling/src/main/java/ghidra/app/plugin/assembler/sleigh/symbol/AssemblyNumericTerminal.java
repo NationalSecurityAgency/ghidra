@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,7 +150,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	 * @param s buffer cursor where the literal is expected
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
-	 * @param neg true if the the optional {@code -} is present
+	 * @param neg true if the optional {@code -} is present
 	 * @param grammar the grammar containing this terminal
 	 * @return the parsed token, or null
 	 */
@@ -173,7 +173,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	 * @param str the string value of the token taken verbatim from the buffer
 	 * @param num portion of the token following the optional sign and prefix
 	 * @param radix the radix of {@code num}
-	 * @param neg true if the the optional {@code -} is present
+	 * @param neg true if the optional {@code -} is present
 	 * @param grammar the grammar containing this terminal
 	 * @return the parsed token, or null
 	 */
@@ -209,7 +209,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	 * @param s the buffer cursor where the hex portion starts
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
-	 * @param neg true if the the optional {@code -} is present
+	 * @param neg true if the optional {@code -} is present
 	 * @param grammar the grammar containing this terminal
 	 * @return the parsed token, or null
 	 */
@@ -233,7 +233,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	 * @param s the buffer cursor where the hex portion starts
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
-	 * @param neg true if the the optional {@code -} is present
+	 * @param neg true if the optional {@code -} is present
 	 * @param grammar the grammar containing this terminal
 	 * @return the parsed token, or null
 	 */
@@ -257,7 +257,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	 * @param s the buffer cursor where the hex portion starts
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
-	 * @param neg true if the the optional {@code -} is present
+	 * @param neg true if the optional {@code -} is present
 	 * @param grammar the grammar containing this terminal
 	 * @return the parsed token, or null
 	 */

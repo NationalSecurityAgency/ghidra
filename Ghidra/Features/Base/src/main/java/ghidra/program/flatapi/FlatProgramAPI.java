@@ -358,7 +358,7 @@ public class FlatProgramAPI {
 	 * NOTE: if more than block exists with the same name, the first
 	 * block with that name will be returned.
 	 * @param name the name of the requested block
-	 * @return the the memory block with the specified name
+	 * @return the memory block with the specified name
 	 */
 	public final MemoryBlock getMemoryBlock(String name) {
 		return currentProgram.getMemory().getBlock(name);

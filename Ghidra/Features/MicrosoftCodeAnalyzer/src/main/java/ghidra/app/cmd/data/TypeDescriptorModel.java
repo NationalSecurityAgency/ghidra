@@ -544,7 +544,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Whether or not the memory at the the model's address appears to be a valid location for a
+	 * Whether or not the memory at the model's address appears to be a valid location for a
 	 * Type Descriptor data type and that its virtual function table address matches the specified
 	 * address.
 	 * @param expectedVFTableAddress the virtual function table address that the model is expected

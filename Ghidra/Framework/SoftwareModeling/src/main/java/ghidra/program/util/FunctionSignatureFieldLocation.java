@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class FunctionSignatureFieldLocation extends FunctionLocation {
 	/** 
 	 * When true the <tt>charOffset</tt> is not used to represent character position, but 
 	 * rather the character position is based upon the location of the subfield within the 
-	 * signature.  For example, the start of the function name location may be the the character
+	 * signature.  For example, the start of the function name location may be the character
 	 * position when this flag is <tt>true</tt>. 
 	 */
 	private boolean isFieldBasedPoisitioning;

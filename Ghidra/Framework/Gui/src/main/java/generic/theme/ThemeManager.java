@@ -222,7 +222,7 @@ public abstract class ThemeManager {
 	/**
 	 * Sets the current {@link LookAndFeel}. This is used by theme editors to allow users to
 	 * see the effects of changing LookAndFeels when configuring a theme. Setting this different
-	 * from the activeTheme's LookAndFeel setting means the the current theme is in an unsaved
+	 * from the activeTheme's LookAndFeel setting means that the current theme is in an unsaved
 	 * state and causes the {@link #hasThemeChanges()} method to return true.
 	 * @param lafType the {@link LafType} to set the LookAndFeel to
 	 * @param useDarkDefaults true if the application should used dark defaults with this
