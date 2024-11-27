@@ -76,7 +76,7 @@ public class DualProgramTest extends DiffTestAdapter {
 	}
 
 	@Test
-	public void testEscapeOpenSecondProgram() throws Exception {
+	public void testOpenSecondProgram_Escape() throws Exception {
 
 		restoreProgram(diffTestP2);
 		loadProgram(diffTestP1);
