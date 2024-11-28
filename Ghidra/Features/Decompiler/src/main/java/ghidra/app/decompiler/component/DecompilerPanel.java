@@ -55,10 +55,14 @@ import ghidra.util.*;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 
+
+import javax.swing.KeyStroke;
+import java.awt.event.KeyEvent;
+
 /**
  * Class to handle the display of a decompiled function
  */
-public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
+public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener, FieldInputListener,
 		FieldSelectionListener, ClangHighlightListener, LayoutListener {
 
 	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new GColor("color.bg.undefined");
@@ -766,7 +770,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (!decompileData.hasDecompileResults()) {
 			return;
 		}
-
 		int clickCount = ev.getClickCount();
 		int buttonState = ev.getButton();
 		if (buttonState == MouseEvent.BUTTON1) {
@@ -783,6 +786,66 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		if (buttonState == middleMouseHighlightButton && clickCount == 1) {
 			toggleMiddleMouseHighlight(location, field);
+		}
+	}
+
+	public static final KeyStroke SELECT = KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0);
+	public static final KeyStroke HIDE = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0);
+	public static final KeyStroke SHOW = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
+
+	@Override
+	public void keyPressed(KeyEvent ev, BigInteger index, int fieldNum, int row, int col, Field field) {
+		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(ev);
+		FieldLocation location = getCursorPosition();
+		ClangTextField textField = (ClangTextField) field;
+		ClangToken token = textField.getToken(location);
+
+		if (SHOW.equals(keyStroke)) {
+			if (token instanceof ClangSyntaxToken) {
+				toggleCollapseToken((ClangSyntaxToken) token, false);
+			}
+		}
+		else if (HIDE.equals(keyStroke)) {
+			if (token instanceof ClangSyntaxToken) {
+				toggleCollapseToken((ClangSyntaxToken) token, true);
+			}
+		}
+	}
+
+	private void toggleCollapseToken(ClangSyntaxToken firstToken, boolean isCollapsed) {
+		if (DecompilerUtils.isBrace(firstToken)) {
+			ClangSyntaxToken closingBrace = DecompilerUtils.getMatchingBrace(firstToken);
+			if (closingBrace == null) {
+				return;
+			}
+			ClangSyntaxToken openingBrace = firstToken;
+			if ("}".equals(firstToken.getText())) {
+				openingBrace = closingBrace;
+				closingBrace = firstToken;
+			}
+
+			ClangNode parent = firstToken.Parent();
+			List<ClangNode> list = new ArrayList<>();
+			parent.flatten(list);
+
+			boolean inSection = false;
+			for (ClangNode element : list) {
+				ClangToken token = (ClangToken) element;
+				if (inSection) {
+					if ((token instanceof ClangSyntaxToken)) {
+						inSection = (!token.equals(closingBrace));
+					}
+					if (inSection) {
+						token.setCollapsedToken(isCollapsed);
+					}
+				}
+				else if ((token instanceof ClangSyntaxToken)) {
+					inSection |= (token.equals(openingBrace));
+				}
+			}
+
+			// IMPORTANT: to trigger redisplay
+			setDecompileData(decompileData);
 		}
 	}
 

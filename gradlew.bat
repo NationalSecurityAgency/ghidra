@@ -16,6 +16,8 @@
 @rem See the License for the specific language governing permissions and
 @rem limitations under the License.
 @rem
+@rem SPDX-License-Identifier: Apache-2.0
+@rem
 
 @if "%DEBUG%"=="" @echo off
 @rem ##########################################################################
@@ -71,38 +73,8 @@ goto fail
 :execute
 @rem Setup the command line
 
-@rem ------------Ghidra Additions ------------------------------------------------------------------
+set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
 
-@rem Set variables based on Production vs Dev environment
-if exist "%APP_HOME%\gradle-wrapper.jar" (
-    @rem Production Environment
-    set "CLASSPATH=%APP_HOME%gradle-wrapper.jar"
-    set "GHIDRA_HOME=%APP_HOME%..\..\"
-) else (
-    @rem Development Environment (Eclipse classes or "gradle jar")
-    set "CLASSPATH=%APP_HOME%Ghidra\RuntimeScripts\Common\support\gradle\gradle-wrapper.jar"
-    set "GHIDRA_HOME=%APP_HOME%"
-)
-
-@rem Read application properties
-for /f "tokens=1,2 delims==" %%g in (%GHIDRA_HOME%Ghidra\application.properties) DO (set %%g=%%h)
-
-@rem Only proceed with wrapper if we are in single-repo PUBLIC/DEV mode
-set PROCEED=1
-if exist "%GHIDRA_HOME%..\ghidra.bin" (
-    set PROCEED=0
-)
-if not "%application.release.name%" == "PUBLIC" (
-    if not "%application.release.name%" == "DEV" (
-        set PROCEED=0
-    )
-)
-
-if %PROCEED% == 0 (
-    echo Please install Gradle %application.gradle.min% or later and put it on your PATH.
-    goto fail
-)
-@rem -----------------------------------------------------------------------------------------------
 
 @rem Execute Gradle
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
