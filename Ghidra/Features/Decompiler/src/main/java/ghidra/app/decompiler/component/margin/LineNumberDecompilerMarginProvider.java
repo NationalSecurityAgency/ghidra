@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -36,8 +37,10 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 
 	private LayoutPixelIndexMap pixmap;
 	private LayoutModel model;
+	private final DecompilerPanel decompilerPanel;
 
-	public LineNumberDecompilerMarginProvider() {
+	public LineNumberDecompilerMarginProvider(DecompilerPanel decompilerPanel) {
+		this.decompilerPanel = decompilerPanel;
 		setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
 	}
 
@@ -90,10 +93,11 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 			return;
 		}
 		int lastLine = model.getNumIndexes().intValueExact();
-		int width = getFontMetrics(getFont()).stringWidth(Integer.toString(lastLine));
+		int width = getFontMetrics(getFont()).stringWidth(Integer.toString(lastLine)) +
+				getFontMetrics(getFont()).stringWidth(" ∇");
 		Insets insets = getInsets();
 		width += insets.left + insets.right;
-		setPreferredSize(new Dimension(Math.max(16, width), 0));
+		setPreferredSize(new Dimension(Math.max(32, width), 0));
 		invalidate();
 	}
 
@@ -102,15 +106,17 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		super.paint(g);
 
 		Insets insets = getInsets();
-		int rightEdge = getWidth() - insets.right;
+		int leftEdge = insets.left;
 		Rectangle visible = getVisibleRect();
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = i.add(BigInteger.ONE).toString();
-			int width = g.getFontMetrics().stringWidth(text);
-			GraphicsUtils.drawString(this, g, text, rightEdge - width, pixmap.getPixel(i) + ascent);
+			if (decompilerPanel.containsOpeningBrace(i.intValue())) {
+				text += " ∇";
+			}
+			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
 		}
 	}
 }
