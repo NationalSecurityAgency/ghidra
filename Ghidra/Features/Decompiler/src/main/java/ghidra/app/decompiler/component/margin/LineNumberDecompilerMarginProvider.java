@@ -16,7 +16,10 @@
 package ghidra.app.decompiler.component.margin;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.math.BigInteger;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -42,6 +45,12 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 	public LineNumberDecompilerMarginProvider(DecompilerPanel decompilerPanel) {
 		this.decompilerPanel = decompilerPanel;
 		setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				handleMouseClick(e);
+			}
+		});
 	}
 
 	@Override
@@ -101,22 +110,34 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		invalidate();
 	}
 
+	private void handleMouseClick(MouseEvent e) {
+		Insets insets = getInsets();
+		int y = e.getY() - insets.top;
+		int x = e.getX() - insets.left;
+
+		if (x >= getWidth() - getFontMetrics(getFont()).stringWidth("∇") - insets.right) {
+			decompilerPanel.onClickAction(y);
+		}
+	}
+
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
 
+		List<BigInteger> linesIndex = decompilerPanel.linesWithOpeningBraces();
 		Insets insets = getInsets();
 		int leftEdge = insets.left;
+		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth("∇");
 		Rectangle visible = getVisibleRect();
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = i.add(BigInteger.ONE).toString();
-			if (decompilerPanel.containsOpeningBrace(i.intValue())) {
-				text += " ∇";
-			}
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
+			if (linesIndex.contains(i)) {
+				GraphicsUtils.drawString(this, g, "∇", rightEdge, pixmap.getPixel(i) + ascent);
+			}
 		}
 	}
 }

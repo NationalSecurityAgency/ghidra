@@ -800,29 +800,40 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		ClangToken token = textField.getToken(location);
 		if (SHOW.equals(keyStroke)) {
 			if (token instanceof ClangSyntaxToken) {
-				toggleCollapseToken((ClangSyntaxToken) token, false);
+				toggleCollapseToken((ClangSyntaxToken) token);
 			}
 		}
 		else if (HIDE.equals(keyStroke)) {
 			if (token instanceof ClangSyntaxToken) {
-				toggleCollapseToken((ClangSyntaxToken) token, true);
+				toggleCollapseToken((ClangSyntaxToken) token);
 			}
 		}
 	}
 
-	private void toggleCollapseToken(ClangSyntaxToken firstToken, boolean isCollapsed) {
-		if (DecompilerUtils.isBrace(firstToken)) {
-			ClangSyntaxToken closingBrace = DecompilerUtils.getMatchingBrace(firstToken);
+	public void onClickAction(int y) {
+		int lineNumber = getLineNumber(y);
+		ClangToken openingBraceToken = null;
+		ClangLine line = getLines().get(lineNumber - 1);
+		for (ClangToken lineToken : line.getAllTokens()) {
+			if ("{".equals(lineToken.getText())) {
+				openingBraceToken = lineToken;
+				break;
+			}
+		}
+
+		if (openingBraceToken instanceof ClangSyntaxToken) {
+			toggleCollapseToken((ClangSyntaxToken) openingBraceToken);
+		}
+	}
+
+	private void toggleCollapseToken(ClangSyntaxToken openingBrace) {
+		if (DecompilerUtils.isBrace(openingBrace)) {
+			ClangSyntaxToken closingBrace = DecompilerUtils.getMatchingBrace(openingBrace);
 			if (closingBrace == null) {
 				return;
 			}
-			ClangSyntaxToken openingBrace = firstToken;
-			if ("}".equals(firstToken.getText())) {
-				openingBrace = closingBrace;
-				closingBrace = firstToken;
-			}
 
-			ClangNode parent = firstToken.Parent();
+			ClangNode parent = openingBrace.Parent();
 			List<ClangNode> list = new ArrayList<>();
 			parent.flatten(list);
 
@@ -834,11 +845,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 						inSection = (!token.equals(closingBrace));
 					}
 					if (inSection) {
-						token.setCollapsedToken(isCollapsed);
+						token.setCollapsedToken(!token.getCollapsedToken());
 					}
 				}
 				else if ((token instanceof ClangSyntaxToken)) {
-					inSection |= (token.equals(openingBrace));
+					inSection = (token.equals(openingBrace));
 				}
 			}
 
@@ -847,20 +858,20 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
-	public boolean containsOpeningBrace(int lineNumber) {
-		List<ClangLine> lines = layoutController.getLines();
-		if (lineNumber < 0 || lineNumber > lines.size()) {
-			Msg.showError(this, this, "Invalid Line Number",
-				"Line number " + lineNumber + " is out of range");
-			return false; // Line number out of range
-		}
-		ClangLine line = lines.get(lineNumber);
-		for (ClangToken token : line.getAllTokens()) {
-			if (token.getText().contains("{")) {
-				return true;
-			}
-		}
-		return false;
+	public List<BigInteger> linesWithOpeningBraces() {
+		List<BigInteger> lineNumbers = new ArrayList<>();
+		List<ClangLine> lines = getLines();
+
+        for (int i = 0; i < lines.size(); i++) {
+            List<ClangToken> lineTokens = lines.get(i).getAllTokens();
+            for (ClangToken token : lineTokens) {
+                if (token.getText().contains("{") && token instanceof ClangSyntaxToken) {
+                    lineNumbers.add(BigInteger.valueOf(i));
+                    break;
+                }
+            }
+        }
+		return lineNumbers;
 	}
 
 	private void tryToGoto(FieldLocation location, Field field, MouseEvent event,
