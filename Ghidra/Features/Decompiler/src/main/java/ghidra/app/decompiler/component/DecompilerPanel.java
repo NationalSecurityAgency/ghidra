@@ -125,6 +125,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
+		fieldPanel.addFieldInputListener(this);
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -788,8 +789,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			toggleMiddleMouseHighlight(location, field);
 		}
 	}
-
-	public static final KeyStroke SELECT = KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0);
 	public static final KeyStroke HIDE = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0);
 	public static final KeyStroke SHOW = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
 
@@ -799,7 +798,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		FieldLocation location = getCursorPosition();
 		ClangTextField textField = (ClangTextField) field;
 		ClangToken token = textField.getToken(location);
-
 		if (SHOW.equals(keyStroke)) {
 			if (token instanceof ClangSyntaxToken) {
 				toggleCollapseToken((ClangSyntaxToken) token, false);
@@ -849,7 +847,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
-	private void tryToGoto(FieldLocation location, Field field, MouseEvent event,
+	private void tryToGoto(FieldLocation location, Field field, InputEvent event,
 			boolean newWindow) {
 		if (!navigationEnabled) {
 			return;
@@ -874,7 +872,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
-	private void tryGoToComment(FieldLocation location, MouseEvent event, ClangTextField textField,
+	private void tryGoToComment(FieldLocation location, InputEvent event, ClangTextField textField,
 			boolean newWindow) {
 
 		// comments may use annotations; tell the annotation it was clicked
