@@ -829,7 +829,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		if (!placeholder.isShowing()) {
+		if (!placeholder.isActive()) {
 			showComponent(placeholder, true, false);
 		}
 
@@ -946,7 +946,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		if (visibleState == placeholder.isShowing()) {
+		if (visibleState == placeholder.isActive()) {
 			if (visibleState) {
 				movePlaceholderToFront(placeholder, shouldEmphasize);
 				setNextFocusPlaceholder(placeholder);
