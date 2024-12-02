@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -190,15 +190,24 @@ public:
   virtual void decode(Decoder &decoder) {}
 };
 
-/// \brief A filter that selects function parameters that are considered optional
+/// \brief A filter that selects a range of function parameters that are considered optional.
 ///
 /// If the underlying function prototype is considered to take variable arguments, the first
-/// \e n parameters (as determined by PrototypePieces.firstVarArgSlot) are considered non-optional.
-/// If additional data-types are provided beyond the initial \e n, these are considered optional.
-/// This filter returns \b true for these optional parameters
+/// n parameters (as determined by PrototypePieces.firstVarArgSlot) are considered non-optional.
+///\e  If additional data-types are provided beyond the initial \e n, these are considered optional.
+/// By default this filter matches on any parameter in a prototype with variable arguments.
+/// Optionally, it can filter on a range of parameters that are specified relative to the
+/// first variable argument.
+///   - \<varargs first="0"/>   - matches optional arguments but not non-optional ones.
+///   - \<varargs first="0" last="0"/>  -  matches the first optional argument.
+///   - \<varargs first="-1"/> - matches the last non-optional argument and all optional ones.
 class VarargsFilter : public QualifierFilter {
+  int4 firstPos;			///< Start of range to match (offset relative to first variable arg)
+  int4 lastPos;				///< End of range to match
 public:
-  virtual QualifierFilter *clone(void) const { return new VarargsFilter(); }
+  VarargsFilter(void) { firstPos = 0x80000000; lastPos = 0x7fffffff; }
+  VarargsFilter(int4 first,int4 last) { firstPos = first; lastPos = last; }
+  virtual QualifierFilter *clone(void) const { return new VarargsFilter(firstPos,lastPos); }
   virtual bool filter(const PrototypePieces &proto,int4 pos) const;
   virtual void decode(Decoder &decoder);
 };

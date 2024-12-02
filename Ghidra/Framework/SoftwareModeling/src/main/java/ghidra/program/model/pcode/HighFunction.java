@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -454,7 +454,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			AddressXML.encode(encoder, entryPoint);		// Address is forced on XML
 		}
 		localSymbols.encodeLocalDb(encoder, namespace, getDataTypeManager().getNameTransformer());
-		proto.encodePrototype(encoder, getDataTypeManager());
+		proto.encodePrototype(encoder, getDataTypeManager(), -1);
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
 			encoder.openElement(ELEM_JUMPTABLELIST);
 			for (JumpTable jumpTable : jumpTables) {
@@ -466,13 +466,15 @@ public class HighFunction extends PcodeSyntaxTree {
 		if (hasOverrideTag) {
 			encoder.openElement(ELEM_OVERRIDE);
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
+			Program prog = func.getProgram();
 			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
+				int firstVarArg = HighFunctionDBUtil.getFirstVarArg(prog, addr);
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
 				encoder.openElement(ELEM_PROTOOVERRIDE);
 				AddressXML.encode(encoder, addr);
-				fproto.encodePrototype(encoder, dtmanage);
+				fproto.encodePrototype(encoder, dtmanage, firstVarArg);
 				encoder.closeElement(ELEM_PROTOOVERRIDE);
 			}
 			encoder.closeElement(ELEM_OVERRIDE);

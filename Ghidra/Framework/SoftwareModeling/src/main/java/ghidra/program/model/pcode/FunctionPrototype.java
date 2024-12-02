@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -311,9 +311,11 @@ public class FunctionPrototype {
 	 * Encode this function prototype to a stream.
 	 * @param encoder is the stream encoder
 	 * @param dtmanage is the DataTypeManager for building type reference tags
+	 * @param firstVarArg is index of first variable argument or -1
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encodePrototype(Encoder encoder, PcodeDataTypeManager dtmanage) throws IOException {
+	public void encodePrototype(Encoder encoder, PcodeDataTypeManager dtmanage, int firstVarArg)
+			throws IOException {
 		encoder.openElement(ELEM_PROTOTYPE);
 		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
 			encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
@@ -378,6 +380,10 @@ public class FunctionPrototype {
 		}
 		if (params != null) {
 			encoder.openElement(ELEM_INTERNALLIST);
+			if (firstVarArg >= 0) {
+				// Encoding detail because we are not sending the storage address
+				encoder.writeSignedInteger(ATTRIB_FIRST, firstVarArg);
+			}
 			for (ParameterDefinition param : params) {
 				encoder.openElement(ELEM_PARAM);
 				String name = param.getName();
