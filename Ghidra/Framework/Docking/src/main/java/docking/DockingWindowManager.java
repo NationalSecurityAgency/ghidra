@@ -84,7 +84,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private PlaceholderManager placeholderManager;
 	private LRUSet<ComponentPlaceholder> lastFocusedPlaceholders = new LRUSet<>(20);
 
-	private ActivatedInfo activatedInfo = new ActivatedInfo();
 	private ComponentPlaceholder focusedPlaceholder;
 	private ComponentPlaceholder nextFocusedPlaceholder;
 	private ComponentProvider defaultProvider;
@@ -959,7 +958,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		placeholder.show(visibleState);
 
 		if (visibleState) {
-			movePlaceholderToFront(placeholder, false);
+			movePlaceholderToFront(placeholder, shouldEmphasize);
 			if (placeholder.getNode() == null) {
 				root.addToNewWindow(placeholder);
 			}
@@ -978,12 +977,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private void movePlaceholderToFront(ComponentPlaceholder placeholder, boolean emphasisze) {
 		placeholder.toFront();
-
-		if (emphasisze) {
-			activatedInfo.activated(placeholder);
-		}
-
 		toFront(root.getWindow(placeholder));
+		if (emphasisze) {
+			placeholder.emphasize();
+		}
 	}
 
 	/**
@@ -1447,10 +1444,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 			focusedPlaceholder.setSelected(false);
 		}
-
-		// Activating placeholders is done to help users find widgets hiding in plain sight.
-		// Assume that the user is no longer seeking a provider if they are clicking around.
-		activatedInfo.clear();
 
 		focusedPlaceholder = placeholder;
 
@@ -2518,39 +2511,4 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		});
 
 	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	/**
-	 * A class that tracks placeholders that are activated (brought to the front). If a placeholder
-	 * is activated too frequently, this class will emphasize that window, under the assumption that
-	 * the user doesn't see the window.
-	 */
-	private class ActivatedInfo {
-
-		private long lastCalledTimestamp;
-		private ComponentPlaceholder lastActivatedPlaceholder;
-
-		void activated(ComponentPlaceholder placeholder) {
-			if (lastActivatedPlaceholder == placeholder) {
-				// repeat call--see if it was quickly called again (a sign of confusion/frustration)
-				long elapsedTime = System.currentTimeMillis() - lastCalledTimestamp;
-				if (elapsedTime < 3000) { // somewhat arbitrary time window
-					placeholder.emphasize();
-				}
-			}
-			else {
-				this.lastActivatedPlaceholder = placeholder;
-			}
-			lastCalledTimestamp = System.currentTimeMillis();
-		}
-
-		void clear() {
-			lastActivatedPlaceholder = null;
-			lastCalledTimestamp = 0;
-		}
-	}
-
 }
