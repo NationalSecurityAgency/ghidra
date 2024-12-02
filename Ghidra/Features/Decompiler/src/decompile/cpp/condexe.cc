@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,172 +19,13 @@ namespace ghidra {
 
 const int4 BooleanExpressionMatch::maxDepth = 1;
 
-/// \brief Test if two operations with same opcode produce complementary boolean values
-///
-/// This only tests for cases where the opcode is INT_LESS or INT_SLESS and one of the
-/// inputs is constant.
-/// \param bin1op is the first p-code op to compare
-/// \param bin2op is the second p-code op to compare
-/// \return \b true if the two operations always produce complementary values
-bool BooleanExpressionMatch::sameOpComplement(PcodeOp *bin1op,PcodeOp *bin2op)
-
-{
-  OpCode opcode = bin1op->code();
-  if ((opcode == CPUI_INT_SLESS)||(opcode==CPUI_INT_LESS)) {
-    // Basically we test for the scenario like:  x < 9   8 < x
-    int4 constslot = 0;
-    if (bin1op->getIn(1)->isConstant())
-      constslot = 1;
-    if (!bin1op->getIn(constslot)->isConstant()) return false;
-    if (!bin2op->getIn(1-constslot)->isConstant()) return false;
-    if (!varnodeSame(bin1op->getIn(1-constslot),bin2op->getIn(constslot))) return false;
-    uintb val1 = bin1op->getIn(constslot)->getOffset();
-    uintb val2 = bin2op->getIn(1-constslot)->getOffset();
-    if (constslot!=0) {
-      uintb tmp = val2;
-      val2 = val1;
-      val1 = tmp;
-    }
-    if (val1 + 1 != val2) return false;
-    if ((val2 == 0)&&(opcode==CPUI_INT_LESS)) return false; // Corner case for unsigned
-    if (opcode==CPUI_INT_SLESS) { // Corner case for signed
-      int4 sz = bin1op->getIn(constslot)->getSize();
-      if (signbit_negative(val2,sz) && (!signbit_negative(val1,sz)))
-	return false;
-    }
-    return true;
-  }
-  return false;
-}
-
-/// \brief Do the given Varnodes hold the same value, possibly as constants
-///
-/// \param a is the first Varnode to compare
-/// \param b is the second Varnode
-/// \return \b true if the Varnodes (always) hold the same value
-bool BooleanExpressionMatch::varnodeSame(Varnode *a,Varnode *b)
-
-{
-  if (a == b) return true;
-  if (a->isConstant() && b->isConstant())
-    return (a->getOffset() == b->getOffset());
-  return false;
-}
-
-/// \brief Determine if two boolean Varnodes hold related values
-///
-/// The values may be the \e same, or opposite of each other (\e complementary).
-/// Otherwise the values are \e uncorrelated.  The trees constructing each Varnode
-/// are examined up to a maximum \b depth.  If this is exceeded \e uncorrelated is returned.
-/// \param vn1 is the first boolean Varnode
-/// \param vn2 is the second boolean Varnode
-/// \param depth is the maximum depth to traverse in the evaluation
-/// \return the correlation class
-int4 BooleanExpressionMatch::evaluate(Varnode *vn1,Varnode *vn2,int4 depth)
-
-{
-  if (vn1 == vn2) return same;
-  PcodeOp *op1,*op2;
-  OpCode opc1,opc2;
-  if (vn1->isWritten()) {
-    op1 = vn1->getDef();
-    opc1 = op1->code();
-    if (opc1 == CPUI_BOOL_NEGATE) {
-      int res = evaluate(op1->getIn(0),vn2,depth);
-      if (res == same)		// Flip same <-> complementary result
-	res = complementary;
-      else if (res == complementary)
-	res = same;
-      return res;
-    }
-  }
-  else {
-    op1 = (PcodeOp *)0;			// Don't give up before checking if op2 is BOOL_NEGATE
-    opc1 = CPUI_MAX;
-  }
-  if (vn2->isWritten()) {
-    op2 = vn2->getDef();
-    opc2 = op2->code();
-    if (opc2 == CPUI_BOOL_NEGATE) {
-      int4 res = evaluate(vn1,op2->getIn(0),depth);
-      if (res == same)		// Flip same <-> complementary result
-	res = complementary;
-      else if (res == complementary)
-	res = same;
-      return res;
-    }
-  }
-  else
-    return uncorrelated;
-  if (op1 == (PcodeOp *)0)
-    return uncorrelated;
-  if (!op1->isBoolOutput() || !op2->isBoolOutput())
-    return uncorrelated;
-  if (depth != 0 && (opc1 == CPUI_BOOL_AND || opc1 == CPUI_BOOL_OR || opc1 == CPUI_BOOL_XOR)) {
-    if (opc2 == CPUI_BOOL_AND || opc2 == CPUI_BOOL_OR || opc2 == CPUI_BOOL_XOR) {
-      if (opc1 == opc2 || (opc1 == CPUI_BOOL_AND && opc2 == CPUI_BOOL_OR) || (opc1 == CPUI_BOOL_OR && opc2 == CPUI_BOOL_AND)) {
-	int4 pair1 = evaluate(op1->getIn(0),op2->getIn(0),depth-1);
-	int4 pair2;
-	if (pair1 == uncorrelated) {
-	  pair1 = evaluate(op1->getIn(0),op2->getIn(1),depth-1);	// Try other possible pairing (commutative op)
-	  if (pair1 == uncorrelated)
-	    return uncorrelated;
-	  pair2 = evaluate(op1->getIn(1),op2->getIn(0),depth-1);
-	}
-	else {
-	  pair2 = evaluate(op1->getIn(1),op2->getIn(1),depth-1);
-	}
-	if (pair2 == uncorrelated)
-	  return uncorrelated;
-	if (opc1 == opc2) {
-	  if (pair1 == same && pair2 == same)
-	    return same;
-	  else if (opc1 == CPUI_BOOL_XOR) {
-	    if (pair1 == complementary && pair2 == complementary)
-	      return same;
-	    return complementary;
-	  }
-	}
-	else {		// Must be CPUI_BOOL_AND and CPUI_BOOL_OR
-	  if (pair1 == complementary && pair2 == complementary)
-	    return complementary;		// De Morgan's Law
-	}
-      }
-    }
-  }
-  else {
-    // Two boolean output ops, compare them directly
-    if (opc1 == opc2) {
-      if (varnodeSame(op1->getIn(0),op2->getIn(0)) && varnodeSame(op1->getIn(1),op2->getIn(1)))
-        return same;
-      if (sameOpComplement(op1,op2)) {
-	return complementary;
-      }
-      return uncorrelated;
-    }
-    // Check if the binary ops are complements of one another
-    int4 slot1 = 0;
-    int4 slot2 = 0;
-    bool reorder;
-    if (opc1 != get_booleanflip(opc2,reorder))
-      return uncorrelated;
-    if (reorder) slot2 = 1;
-    if (!varnodeSame(op1->getIn(slot1),op2->getIn(slot2)))
-      return uncorrelated;
-    if (!varnodeSame(op1->getIn(1-slot1),op2->getIn(1-slot2)))
-      return uncorrelated;
-    return complementary;
-  }
-  return uncorrelated;
-}
-
 bool BooleanExpressionMatch::verifyCondition(PcodeOp *op, PcodeOp *iop)
 
 {
-  int4 res = evaluate(op->getIn(1), iop->getIn(1), maxDepth);
-  if (res == uncorrelated)
+  int4 res = BooleanMatch::evaluate(op->getIn(1), iop->getIn(1), maxDepth);
+  if (res == BooleanMatch::uncorrelated)
     return false;
-  matchflip = (res == complementary);
+  matchflip = (res == BooleanMatch::complementary);
   if (op->isBooleanFlip())
     matchflip = !matchflip;
   if (iop->isBooleanFlip())

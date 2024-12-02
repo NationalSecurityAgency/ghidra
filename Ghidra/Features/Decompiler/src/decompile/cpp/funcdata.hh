@@ -123,10 +123,6 @@ class Funcdata {
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
   BlockBasic *nodeSplitBlockEdge(BlockBasic *b,int4 inedge);
-  PcodeOp *nodeSplitCloneOp(PcodeOp *op);
-  void nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop);
-  void nodeSplitRawDuplicate(BlockBasic *b,BlockBasic *bprime);
-  void nodeSplitInputPatch(BlockBasic *b,BlockBasic *bprime,int4 inedge);
 
   void sortCallSpecs(void);			///< Sort calls using a dominance based order
   void deleteCallSpecs(PcodeOp *op);		///< Remove the specification for a particular call
@@ -487,6 +483,7 @@ public:
   Varnode *createStackRef(AddrSpace *spc,uintb off,PcodeOp *op,Varnode *stackptr,bool insertafter);
   Varnode *opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Varnode *stackptr,bool insertafter);
   PcodeOp *opStackStore(AddrSpace *spc,uintb off,PcodeOp *op,bool insertafter);
+  Varnode *opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter);
   void opUndoPtradd(PcodeOp *op,bool finalize);	///< Convert a CPUI_PTRADD back into a CPUI_INT_ADD
   static int4 opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist);
   void opFlipInPlaceExecute(vector<PcodeOp *> &fliplist);
@@ -616,6 +613,29 @@ class PcodeEmitFd : public PcodeEmit {
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize);
 public:
   void setFuncdata(Funcdata *f) { fd = f; }	///< Establish the container for \b this emitter
+};
+
+/// \brief Control the cloning of PcodeOps from within a basic block into another block
+///
+/// Used for splitting control-flow at a merge point.  Can duplicate either a whole basic block, or an expression
+/// subset within a basic block.
+class CloneBlockOps {
+  /// \brief Helper class for pairing a p-code op with its clone
+  struct ClonePair {
+    PcodeOp *cloneOp;		///< New cloned op
+    PcodeOp *origOp;		///< Original op that was cloned
+    ClonePair(PcodeOp *c,PcodeOp *o) { cloneOp = c; origOp = o; }	///< Constructor
+  };
+  Funcdata &data;
+  vector<ClonePair> cloneList;	///< List of cloned ops
+  map<PcodeOp *,PcodeOp *> origToClone;	///< Map from original p-code op to its clone
+  PcodeOp *buildOpClone(PcodeOp *op);	///< Produce a skeleton copy of the given PcodeOp
+  void buildVarnodeOutput(PcodeOp *origOp,PcodeOp *cloneOp);	///< Clone the output Varnode of the given op onto its clone
+  void patchInputs(int4 inedge);				///< Set the input Varnodes of all cloned ops
+public:
+  CloneBlockOps(Funcdata &fd) : data(fd) {}	///< Constructor
+  void cloneBlock(BlockBasic *b,BlockBasic *bprime,int4 inedge);	///< Clone all p-code ops from a block into its copy
+  Varnode *cloneExpression(vector<PcodeOp *> &ops,PcodeOp *followOp);	///< Clone p-code ops in an expression
 };
 
 /// \brief Helper class for determining if Varnodes can trace their value from a legitimate source

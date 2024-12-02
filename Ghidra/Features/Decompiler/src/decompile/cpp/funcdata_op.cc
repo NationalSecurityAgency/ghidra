@@ -526,6 +526,25 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
     return res;
 }
 
+/// \brief Construct the boolean negation of a given boolean Varnode into a temporary register
+///
+/// \param vn is the given Varnode
+/// \param op is the point at which to insert the BOOL_NEGATE op
+/// \return the result Varnode
+Varnode *Funcdata::opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter)
+
+{
+  PcodeOp *negateop = newOp(1,op->getAddr());
+  opSetOpcode(negateop,CPUI_BOOL_NEGATE);
+  Varnode *resvn = newUniqueOut(1,negateop);
+  opSetInput(negateop,vn,0);
+  if (insertafter)
+    opInsertAfter(negateop,op);
+  else
+    opInsertBefore(negateop,op);
+  return resvn;
+}
+
 /// Convert the given CPUI_PTRADD into the equivalent CPUI_INT_ADD.  This may involve inserting a
 /// CPUI_INT_MULT PcodeOp. If finalization is requested and a new PcodeOp is needed, the output
 /// Varnode is marked as \e implicit and has its data-type set
