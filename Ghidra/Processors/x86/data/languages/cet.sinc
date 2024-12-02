@@ -12,7 +12,7 @@ define pcodeop ShadowStackPush4B;
 define pcodeop ShadowStackLoad8B;
 define pcodeop ShadowStackLoad4B;
 
-:INCSSPD r32 is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0xae; reg_opcode=5 & r32 {
+:INCSSPD r32 is vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=5 & r32 {
     SSP = SSP + zext(4 * r32:1);
 }
 @ifdef IA64
@@ -21,7 +21,7 @@ define pcodeop ShadowStackLoad4B;
 }
 @endif
 
-:RDSSPD r32 is vexMode=0 & $(PRE_F3) & (opsize=0 | opsize=1 | opsize=2 | opsize=3) & byte=0x0f; byte=0x1e; mod=3 & reg_opcode=1 & r32 {
+:RDSSPD r32 is vexMode=0 & $(PRE_F3) & byte=0x0f; byte=0x1e; mod=3 & reg_opcode=1 & r32 {
     r32 = SSP:4;
 }
 @ifdef IA64
