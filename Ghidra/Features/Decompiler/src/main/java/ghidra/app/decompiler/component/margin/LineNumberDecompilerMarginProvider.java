@@ -102,8 +102,9 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 			return;
 		}
 		int lastLine = model.getNumIndexes().intValueExact();
-		int width = getFontMetrics(getFont()).stringWidth(Integer.toString(lastLine)) +
-				getFontMetrics(getFont()).stringWidth(" ∇");
+		int width = getFontMetrics(getFont()).stringWidth(Integer.toString(lastLine));
+		int widthForArrows = getFontMetrics(getFont()).stringWidth(" ") * 2;
+		width += widthForArrows;
 		Insets insets = getInsets();
 		width += insets.left + insets.right;
 		setPreferredSize(new Dimension(Math.max(32, width), 0));
@@ -115,7 +116,7 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		int y = e.getY() - insets.top;
 		int x = e.getX() - insets.left;
 
-		if (x >= getWidth() - getFontMetrics(getFont()).stringWidth("∇") - insets.right) {
+		if (x >= getWidth() - getFontMetrics(getFont()).stringWidth(" ") * 2 - insets.right) {
 			decompilerPanel.onClickAction(y);
 		}
 	}
@@ -127,16 +128,24 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		List<BigInteger> linesIndex = decompilerPanel.linesWithOpeningBraces();
 		Insets insets = getInsets();
 		int leftEdge = insets.left;
-		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth("∇");
+		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth(" ");
 		Rectangle visible = getVisibleRect();
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
+		int arrowSize = ascent / 2; // Size of the arrow
+
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = i.add(BigInteger.ONE).toString();
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
 			if (linesIndex.contains(i)) {
-				GraphicsUtils.drawString(this, g, "∇", rightEdge, pixmap.getPixel(i) + ascent);
+				int y = pixmap.getPixel(i) + ascent;
+                int arrowY = y - arrowSize;
+				g.setColor(Color.DARK_GRAY);
+				g.drawLine(rightEdge, arrowY, rightEdge - arrowSize / 2, arrowY + arrowSize / 2);
+
+				g.drawLine(rightEdge, arrowY, rightEdge + arrowSize / 2, arrowY + arrowSize / 2);
+				g.setColor(Color.BLACK);
 			}
 		}
 	}
