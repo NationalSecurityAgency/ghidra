@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,28 +17,18 @@ package sarif;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import com.contrastsecurity.sarif.Location;
-import com.contrastsecurity.sarif.Result;
-import com.contrastsecurity.sarif.SarifSchema210;
+import com.contrastsecurity.sarif.*;
 
 import docking.widgets.table.ObjectSelectedListener;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.BookmarkManager;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
-import ghidra.service.graph.AttributedGraph;
-import ghidra.service.graph.EmptyGraphType;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayOptions;
+import ghidra.program.model.listing.*;
+import ghidra.service.graph.*;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
@@ -83,7 +73,7 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 		this.program = program;
 		this.plugin = plugin;
 		this.coloringService = plugin.getTool().getService(ColorizingService.class);
-		this.programManager = new ProgramSarifMgr(program);
+		this.programManager = new ProgramSarifMgr(program, new MessageLog());
 	}
 
 	public SarifController(ProgramSarifMgr manager) {
