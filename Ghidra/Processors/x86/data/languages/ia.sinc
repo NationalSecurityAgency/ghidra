@@ -3663,7 +3663,7 @@ define pcodeop swap_bytes;
 :NEG Rmr64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf7; mod=3 & Rmr64 & reg_opcode=3 { negflags(Rmr64); Rmr64 = -Rmr64; resultflags(Rmr64); }
 @endif
 
-:NOP            is vexMode=0 & byte=0x90 & (mandover=0 | mandover=4 | mandover=1) & (rexprefix=0 | rexWRXBprefix=8)  { }
+:NOP            is vexMode=0 & byte=0x90 & (mandover=0 | mandover=4 | mandover=1) & (rexprefix=0 | rexBprefix=0)  { }
 :NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; high5=3; rm16  ...    { }
 :NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; high5=3; rm32  ...    { }
 :NOP^"/reserved" rm16 is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x18; rm16 & reg_opcode_hb=1 ...    { }
