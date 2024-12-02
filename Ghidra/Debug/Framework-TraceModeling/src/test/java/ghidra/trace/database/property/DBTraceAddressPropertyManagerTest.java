@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,13 +50,9 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj == this) {
-				return true;
-			}
-			if (!(obj instanceof MySaveable)) {
+			if (!(obj instanceof MySaveable that)) {
 				return false;
 			}
-			MySaveable that = (MySaveable) obj;
 			return this.i == that.i && Objects.equals(this.str, that.str);
 		}
 
@@ -117,13 +113,9 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj == this) {
-				return true;
-			}
-			if (!(obj instanceof ExtMySaveable)) {
+			if (!(obj instanceof ExtMySaveable that)) {
 				return false;
 			}
-			ExtMySaveable that = (ExtMySaveable) obj;
 			return super.equals(that) && this.f == that.f;
 		}
 
@@ -335,7 +327,12 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 	}
 
 	@Test
-	public void testStringMapAtNoAdress() throws Exception {
+	public void testExtSaveableMap() throws Exception {
+		doTestMap(ExtMySaveable.class, new ExtMySaveable(6, "MyString", 0.5f));
+	}
+
+	@Test
+	public void testStringMapAtNoAddress() throws Exception {
 		TracePropertyMap<String> map;
 		try (Transaction tx = tb.startTransaction()) {
 			map = propertyManager.createPropertyMap("MyProp", String.class);
