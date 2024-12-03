@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,18 +16,14 @@
 package ghidra.app.plugin.core.cparser;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-
-import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
-import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -40,7 +36,8 @@ import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.database.data.ProgramDataTypeManager;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.BuiltInDataTypeManager;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
@@ -168,9 +165,9 @@ public class CParserPlugin extends ProgramPlugin {
 	/*
 	 * Parse C-source into a data type manager
 	 */
-	protected void parse(String[] filenames, String includePaths[], String options, 
-			String languageIDString, String compilerSpecID, DataTypeManager dtMgr,
-			TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+	protected CParseResults parse(String[] filenames, String includePaths[], String options,
+			DataTypeManager dtMgr, TaskMonitor monitor)
+			throws ghidra.app.util.cparser.C.ParseException,
 			ghidra.app.util.cparser.CPP.ParseException {
 
 		results = null;
@@ -181,43 +178,26 @@ public class CParserPlugin extends ProgramPlugin {
 		try {
 			openDTmanagers = getOpenDTMgrs();
 		} catch (CancelledException exc) {
-			return; // parse canceled
+			return null; // parse canceled
 		}
 
-		try {
-			results = CParserUtils.parseHeaderFiles(openDTmanagers, filenames, includePaths,
-					args, dtMgr, languageIDString, compilerSpecID, monitor);
-			
-			final boolean isProgramDtMgr = (dtMgr instanceof ProgramDataTypeManager);
-	
-			SwingUtilities.invokeLater(() -> {
-				// CParserTask will show any errors
-				if (!results.successful()) {
-					return;
-				}
-				if (isProgramDtMgr) {
-					MultiLineMessageDialog.showModalMessageDialog(parseDialog.getComponent(),
-						"C-Parse of Header Files Complete",
-						"Successfully parsed header file(s) to Program.",
-						getFormattedParseMessage("Check the Manage Data Types window for added data types."),
-						MultiLineMessageDialog.INFORMATION_MESSAGE);
-				}
-				else {
-					String archiveName = dtMgr.getName();
-					if (dtMgr instanceof FileDataTypeManager) {
-						archiveName = ((FileDataTypeManager) dtMgr).getFilename();
-					}
-					MultiLineMessageDialog.showModalMessageDialog(parseDialog.getComponent(),
-						"C-Parse of Header Files Complete",
-						"Successfully parsed header file(s) to Archive File:  " + archiveName,
-						getFormattedParseMessage(null),
-						MultiLineMessageDialog.INFORMATION_MESSAGE);
-				}
-			});
+		results = CParserUtils.parseHeaderFiles(openDTmanagers, filenames, includePaths,
+			args, dtMgr, monitor);
+		
+		return results;
+	}
+
+	boolean isOpenInTool(DataTypeManager dtm) {
+		DataTypeManagerService dtService = tool.getService(DataTypeManagerService.class);
+		if (dtService == null) {
+			return false;
 		}
-		catch (IOException e) {
-			// ignore
+		for (DataTypeManager openDtm : dtService.getDataTypeManagers()) {
+			if (dtm == openDtm) {
+				return true;
+			}
 		}
+		return false;
 	}
 
 	/**
@@ -327,11 +307,9 @@ public class CParserPlugin extends ProgramPlugin {
 
 		CParserTask parseTask =
 			new CParserTask(this, currentProgram.getDataTypeManager())
-			.setFileNames(filenames)
-			.setIncludePaths(includePaths)
-			.setOptions(options)
-			.setLanguageID(procID)
-			.setCompilerID(compilerID);
+					.setFileNames(filenames)
+					.setIncludePaths(includePaths)
+					.setOptions(options);
 
 		tool.execute(parseTask);
 	}
