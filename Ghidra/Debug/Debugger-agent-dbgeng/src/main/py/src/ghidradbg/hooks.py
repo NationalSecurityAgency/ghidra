@@ -77,8 +77,8 @@ class ProcessState(object):
                 commands.putreg()
                 commands.putmem('0x{:x}'.format(util.get_pc()),
                                 "1", display_result=False)
-                commands.putmem('0x{:x}'.format(util.get_sp()),
-                                "1", display_result=False)
+                commands.putmem('0x{:x}'.format(util.get_sp()-1),
+                                "2", display_result=False)
                 commands.put_frames()
                 self.visited.add(thread)
             frame = util.selected_frame()
