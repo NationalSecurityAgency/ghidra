@@ -64,7 +64,7 @@ class PlaceholderManager {
 		}
 
 		if (defaultPlaceholder.isActive() != restoredPlaceholder.isActive()) {
-			if (restoredPlaceholder.isShowing()) {
+			if (restoredPlaceholder.isActive()) {
 				provider.componentShown();
 			}
 			else {
