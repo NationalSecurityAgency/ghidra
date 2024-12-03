@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,6 +69,43 @@ import ghidra.util.table.GhidraTable;
 @Category(NightlyCategory.class)
 public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Processes' schema='ProcessContainer' />
+			    </schema>
+			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element index='1' schema='Process' />
+			    </schema>
+			    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Modules' schema='ModuleContainer' />
+			        <attribute name='Memory' schema='RegionContainer' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			    </schema>
+			    <schema name='ModuleContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Module' />
+			    </schema>
+			    <schema name='Module' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Module' />
+			        <attribute name='Sections' schema='SectionContainer' />
+			    </schema>
+			    <schema name='SectionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Section' />
+			    </schema>
+			    <schema name='Section' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Section' />
+			    </schema>
+			</context>""";
+
 	DebuggerModulesProvider provider;
 
 	protected TraceObjectModule modExe;
@@ -94,42 +131,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	public void activateObjectsMode() throws Exception {
 		// NOTE the use of index='1' allowing object-based managers to ID unique path
-		ctx = XmlSchemaContext.deserialize("""
-				<context>
-				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Processes' schema='ProcessContainer' />
-				    </schema>
-				    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element index='1' schema='Process' />
-				    </schema>
-				    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Modules' schema='ModuleContainer' />
-				        <attribute name='Memory' schema='RegionContainer' />
-				    </schema>
-				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Region' />
-				    </schema>
-				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='MemoryRegion' />
-				    </schema>
-				    <schema name='ModuleContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Module' />
-				    </schema>
-				    <schema name='Module' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Module' />
-				        <attribute name='Sections' schema='SectionContainer' />
-				    </schema>
-				    <schema name='SectionContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Section' />
-				    </schema>
-				    <schema name='Section' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Section' />
-				    </schema>
-				</context>""");
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
