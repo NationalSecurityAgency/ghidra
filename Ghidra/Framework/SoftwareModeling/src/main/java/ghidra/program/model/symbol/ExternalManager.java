@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public interface ExternalManager {
 	 * @return array of external names
 	 */
 	public String[] getExternalLibraryNames();
-	
+
 	/**
 	 * Get the Library which corresponds to the specified name
 	 * @param libraryName name of library
@@ -64,7 +64,7 @@ public interface ExternalManager {
 	 * @param libraryName the name of the library to associate with a file.
 	 * @param pathname the path to the program to be associated with the library name.
 	 * @param userDefined true if the external path is being specified by the user
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException on invalid input
 	 */
 	public void setExternalPath(String libraryName, String pathname, boolean userDefined)
 			throws InvalidInputException;
@@ -75,7 +75,7 @@ public interface ExternalManager {
 	 * @param newName the new name of the external library name.
 	 * @param source the source of this external library
 	 * @throws DuplicateNameException if another namespace has the same name
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException on invalid input
 	 */
 	public void updateExternalLibraryName(String oldName, String newName, SourceType source)
 			throws DuplicateNameException, InvalidInputException;

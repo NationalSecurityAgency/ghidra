@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,23 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
-import docking.widgets.table.DiscoverableTableUtils;
-import docking.widgets.table.TableColumnDescriptor;
+import java.awt.Color;
+import java.awt.Component;
+
+import docking.widgets.table.*;
+import ghidra.app.util.SymbolInspector;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.LongIterator;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
+import ghidra.util.table.column.AbstractGhidraColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -180,6 +186,9 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 	private class NameTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<FunctionRowObject, String> {
 
+		private GColumnRenderer<String> renderer = new FunctionNameRenderer();
+		private SymbolInspector inspector = new SymbolInspector(serviceProvider, null);
+
 		@Override
 		public String getColumnName() {
 			return "Name";
@@ -196,5 +205,35 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 			return function.getName();
 		}
 
+		@Override
+		public GColumnRenderer<String> getColumnRenderer() {
+			return renderer;
+		}
+
+		// A renderer to paint function name colors using the SymbolInspector
+		private class FunctionNameRenderer extends AbstractGhidraColumnRenderer<String> {
+
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+				Component cellRenderer = super.getTableCellRendererComponent(data);
+				setBold();
+				if (data.isSelected()) {
+					return cellRenderer; // just let the default foreground color through
+				}
+
+				FunctionRowObject rowObject = (FunctionRowObject) data.getRowObject();
+				Function function = rowObject.getFunction();
+				Symbol symbol = function.getSymbol();
+				Color color = inspector.getColor(symbol);
+				cellRenderer.setForeground(color);
+				return cellRenderer;
+			}
+
+			@Override
+			public String getFilterString(String t, Settings settings) {
+				return t;
+			}
+
+		}
 	}
 }
