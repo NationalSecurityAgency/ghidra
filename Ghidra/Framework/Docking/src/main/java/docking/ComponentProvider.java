@@ -146,7 +146,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *        {@link #getContextType()}
 	 */
 	public ComponentProvider(Tool tool, String name, String owner, Class<?> contextType) {
-		this.dockingTool = tool;
+		this.dockingTool = Objects.requireNonNull(tool);
 		this.name = name;
 		this.owner = owner;
 		this.title = name;

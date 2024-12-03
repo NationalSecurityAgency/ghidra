@@ -503,7 +503,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns true if the specified provider's component is visible
+	 * Returns true if the specified provider's component is or soon will be visible.
 	 *
 	 * @param provider component provider
 	 * @return true if the specified provider's component is visible
@@ -511,7 +511,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	public boolean isVisible(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
-			return placeholder.isShowing();
+			return placeholder.isActive();
 		}
 		return false;
 	}
