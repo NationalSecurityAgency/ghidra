@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,4 +30,12 @@ public interface GhidraScriptService {
 	 * @return True if the file opened in Eclipse; otherwise, false.
 	 */
 	public boolean tryToEditFileInEclipse(ResourceFile file);
+
+	/**
+	 * Attempts to edit the provided file in Visual Studio Code.
+	 * 
+	 * @param file The file to edit in Visual Studio Code.
+	 * @return True if the file opened in Visual Studio Code; otherwise, false.
+	 */
+	public boolean tryToEditFileInVSCode(ResourceFile file);
 }

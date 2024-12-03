@@ -607,6 +607,7 @@ src/main/help/help/topics/Trees/images/FilterOptions.png||GHIDRA||||END|
 src/main/help/help/topics/Trees/images/TableColumnFilter.png||GHIDRA||||END|
 src/main/help/help/topics/Trees/images/TableColumnFilterAfterFilterApplied.png||GHIDRA||||END|
 src/main/help/help/topics/Trees/images/TableColumnFilterDialog.png||GHIDRA||||END|
+src/main/help/help/topics/VSCodeIntegration/VSCodeIntegration.htm||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/ValidateProgram.html||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/images/ValidateProgram.png||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/images/ValidateProgramDone.png||GHIDRA||||END|
@@ -934,6 +935,7 @@ src/main/resources/images/view_left_right.png||Nuvola Icons - LGPL 2.1|||Nuvola 
 src/main/resources/images/view_top_bottom.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/viewmag+.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/viewmag.png||GHIDRA||||END|
+src/main/resources/images/vscode.png||MIT||||END|
 src/main/resources/images/window.png||GHIDRA||||END|
 src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/x-office-document-template.png||Tango Icons - Public Domain|||tango icon set|END|
