@@ -317,4 +317,14 @@ public class StubDataType implements DataType {
 	public DataOrganization getDataOrganization() {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public AddressModel getAddressModel() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setAddressModel(AddressModel addressModel) {
+		throw new UnsupportedOperationException();
+	}
 }

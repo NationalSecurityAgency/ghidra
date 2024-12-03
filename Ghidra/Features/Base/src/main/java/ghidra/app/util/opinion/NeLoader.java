@@ -433,6 +433,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		ExternalManager externalManager = program.getExternalManager();
 		FunctionManager functionManager = program.getFunctionManager();
 		Namespace globalNamespace = program.getGlobalNamespace();
+		ReferenceManager refManager = program.getReferenceManager();
 
 		LengthStringSet[] names = mrt.getNames();
 		String[][] mod2proclist = new String[names.length][];
@@ -482,8 +483,14 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				try {
 					functionManager.createThunkFunction(null, globalNamespace, addr, body,
 						refFunction, SourceType.IMPORTED);
-				}
+					refManager.addExternalReference(addr, moduleName,
+							callname, null, SourceType.IMPORTED, 0, RefType.DATA);
+					}
 				catch (OverlappingFunctionException e) {
+					log.appendMsg(e.getMessage() + '\n');
+				} catch (InvalidInputException e) {
+					log.appendMsg(e.getMessage() + '\n');
+				} catch (DuplicateNameException e) {
 					log.appendMsg(e.getMessage() + '\n');
 				}
 				addr = addr.addWrap(thunkBodySize);
