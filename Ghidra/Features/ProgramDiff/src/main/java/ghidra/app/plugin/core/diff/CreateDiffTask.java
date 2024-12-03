@@ -44,16 +44,10 @@ class CreateDiffTask extends Task {
 	private DiffApplySettingsProvider diffApplySettingsProvider;
 	private boolean isLimitedToSelection;
 
-	/**
-	 * Construct new LoadDiffTask that loads the dialog with the two 
-	 * programs and indicates their differences. The differences should be 
-	 * restricted to the limitedAddressSet. 
-	 * 
-	 */
 	CreateDiffTask(ProgramDiffPlugin plugin, Program program1, Program program2,
 			AddressSetView limitedAddressSet, boolean isLimitedToSelection,
 			ProgramDiffFilter diffFilter, ProgramMergeFilter applyFilter) {
-		super("Checking Program Differences", true, false, false);
+		super("Checking Program Differences", true, false, true);
 		this.plugin = plugin;
 		this.program1 = program1;
 		this.program2 = program2;
@@ -82,11 +76,11 @@ class CreateDiffTask extends Task {
 			monitor.setMessage("Checking Program Differences");
 			try {
 				dc = new DiffController(program1, program2, limitedAddressSet, this.diffFilter,
-					this.applyFilter, monitor);
+					this.applyFilter);
 				AddressSetView filteredDifferences = dc.getFilteredDifferences(monitor);
 				boolean noFilteredDifferencesFound = filteredDifferences.isEmpty();
 				plugin.setDiffController(dc);
-				dc.differencesChanged(monitor);
+				dc.differencesChanged();
 				dc.setLocation(plugin.getCurrentAddress());
 				monitor.setMessage("Done");
 				Runnable r = () -> displayDifferencesMessageIfNecessary(noFilteredDifferencesFound);
