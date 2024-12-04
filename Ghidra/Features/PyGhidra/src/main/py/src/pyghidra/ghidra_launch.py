@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 import threading
 
-from .launcher import PyGhidraLauncher, _run_mac_app
+from pyghidra.launcher import PyGhidraLauncher, _run_mac_app
 
 
 class GhidraLauncher(PyGhidraLauncher):
@@ -31,12 +31,12 @@ class GhidraLauncher(PyGhidraLauncher):
     
     def _launch(self):
         from ghidra import Ghidra
-        from java.lang import Runtime, Thread
+        from java.lang import Runtime, Thread # type:ignore @UnresolvedImport
 
         if self._gui:
             if sys.platform == "win32":
                 appid = ctypes.c_wchar_p(self.app_info.name)
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)  # @UndefinedVariable
             Thread(lambda: Ghidra.main([self._class_name, *self.args])).start()
             is_exiting = threading.Event()
             Runtime.getRuntime().addShutdownHook(Thread(is_exiting.set))

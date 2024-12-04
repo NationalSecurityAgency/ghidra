@@ -14,7 +14,6 @@
 # limitations under the License.
 ##
 import functools
-import importlib
 import importlib.util
 import inspect
 import logging
@@ -157,7 +156,7 @@ class PyGhidraScript(dict):
         global _headless_interpreter
 
         from ghidra.util import SystemUtilities
-        from .ghidradoc import _Helper
+        from pyghidra.ghidradoc import _Helper
 
         if SystemUtilities.isInHeadlessMode() and _headless_interpreter is None:
             _headless_interpreter = jobj

@@ -16,27 +16,12 @@
 package ghidra.doclets.typestubs;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.*;
+import javax.lang.model.type.*;
 
 import com.sun.source.doctree.DocTree;
 
@@ -278,12 +263,11 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 		for (PythonTypeStubNestedType nested : getNestedTypes()) {
 			nested.process(printer, indent);
 		}
+		printClassLiteralField(printer, indent);
 		for (VariableElement field : getFields()) {
 			printField(field, printer, indent, isStatic(field));
 		}
-		if (!getFields().isEmpty()) {
-			printer.println();
-		}
+		printer.println();
 		ListIterator<PythonTypeStubMethod> methodIterator = getMethods().listIterator();
 		while (methodIterator.hasNext()) {
 			PythonTypeStubMethod method = methodIterator.next();
@@ -340,6 +324,17 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 		if (writeJavaDoc(field, printer, indent, "")) {
 			printer.println();
 		}
+	}
+
+	/**
+	 * Prints the class literal field to the provided printer
+	 *
+	 * @param printer the printer
+	 * @param indent the indentation
+	 */
+	void printClassLiteralField(PrintWriter printer, String indent) {
+		printer.print(indent);
+		printer.println("class_: " + applyClassVar(Class.class.getName()));
 	}
 
 	/**

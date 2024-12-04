@@ -14,7 +14,6 @@
 # limitations under the License.
 ##
 import contextlib
-from pathlib import Path
 from typing import Union, TYPE_CHECKING, Tuple, ContextManager, List, Optional
 
 from pyghidra.converters import *  # pylint: disable=wildcard-import, unused-wildcard-import
@@ -51,29 +50,29 @@ def started() -> bool:
     return PyGhidraLauncher.has_launched()
 
 
-def _get_language(id: str) -> "Language":
+def _get_language(lang_id: str) -> "Language":
     from ghidra.program.util import DefaultLanguageService
     from ghidra.program.model.lang import LanguageID, LanguageNotFoundException
     try:
         service: "LanguageService" = DefaultLanguageService.getLanguageService()
-        return service.getLanguage(LanguageID(id))
+        return service.getLanguage(LanguageID(lang_id))
     except LanguageNotFoundException:
         # suppress the java exception
         pass
-    raise ValueError("Invalid Language ID: "+id)
+    raise ValueError("Invalid Language ID: " + lang_id)
 
 
-def _get_compiler_spec(lang: "Language", id: str = None) -> "CompilerSpec":
-    if id is None:
+def _get_compiler_spec(lang: "Language", compiler: str = None) -> "CompilerSpec":
+    if compiler is None:
         return lang.getDefaultCompilerSpec()
     from ghidra.program.model.lang import CompilerSpecID, CompilerSpecNotFoundException
     try:
-        return lang.getCompilerSpecByID(CompilerSpecID(id))
+        return lang.getCompilerSpecByID(CompilerSpecID(compiler))
     except CompilerSpecNotFoundException:
         # suppress the java exception
         pass
     lang_id = lang.getLanguageID()
-    raise ValueError(f"Invalid CompilerSpecID: {id} for Language: {lang_id.toString()}")
+    raise ValueError(f"Invalid CompilerSpecID: {compiler} for Language: {lang_id.toString()}")
 
 
 def _setup_project(
@@ -85,8 +84,8 @@ def _setup_project(
         loader: Union[str, JClass] = None
 ) -> Tuple["GhidraProject", "Program"]:
     from ghidra.base.project import GhidraProject
-    from java.lang import ClassLoader
-    from java.io import IOException
+    from java.lang import ClassLoader  # type:ignore @UnresolvedImport
+    from java.io import IOException # type:ignore @UnresolvedImport
     if binary_path is not None:
         binary_path = Path(binary_path)
     if project_location:
@@ -99,7 +98,7 @@ def _setup_project(
     project_location.mkdir(exist_ok=True, parents=True)
 
     if isinstance(loader, str):
-        from java.lang import ClassNotFoundException
+        from java.lang import ClassNotFoundException # type:ignore @UnresolvedImport
         try:
             gcl = ClassLoader.getSystemClassLoader()
             loader = JClass(loader, gcl)
@@ -108,7 +107,8 @@ def _setup_project(
 
     if isinstance(loader, JClass):
         from ghidra.app.util.opinion import Loader
-        if not Loader.class_.isAssignableFrom(loader):
+        loader_cls = Loader.class_
+        if not loader_cls.isAssignableFrom(loader):
             raise TypeError(f"{loader} does not implement ghidra.app.util.opinion.Loader")
 
     # Open/Create project
@@ -157,8 +157,8 @@ def _setup_script(project: "GhidraProject", program: "Program"):
     from ghidra.program.util import ProgramLocation
     from ghidra.util.task import TaskMonitor
 
-    from java.io import PrintWriter
-    from java.lang import System
+    from java.io import PrintWriter # type:ignore @UnresolvedImport
+    from java.lang import System # type:ignore @UnresolvedImport
 
     if project is not None:
         project = project.getProject()
@@ -185,7 +185,7 @@ def _analyze_program(flat_api, program):
             if hasattr(GhidraProgramUtilities, "markProgramAnalyzed"):
                 GhidraProgramUtilities.markProgramAnalyzed(program)
             else:
-                GhidraProgramUtilities.setAnalyzedFlag(program, True)
+                GhidraProgramUtilities.setAnalyzedFlag(program, True)  # @UndefinedVariable
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
 

@@ -20,7 +20,6 @@ import logging
 import sys
 from pathlib import Path
 
-import pyghidra
 import pyghidra.core
 import pyghidra.gui
 

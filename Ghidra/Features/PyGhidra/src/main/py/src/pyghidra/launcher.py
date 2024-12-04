@@ -14,7 +14,6 @@
 # limitations under the License.
 ##
 import contextlib
-import ctypes
 import ctypes.util
 import html
 import importlib.metadata
@@ -36,17 +35,17 @@ import jpype
 from jpype import imports, _jpype
 from packaging.version import Version
 
-from .javac import java_compile
-from .script import PyGhidraScript
-from .version import ApplicationInfo, ExtensionDetails, MINIMUM_GHIDRA_VERSION
+from pyghidra.javac import java_compile
+from pyghidra.script import PyGhidraScript
+from pyghidra.version import ApplicationInfo, ExtensionDetails, MINIMUM_GHIDRA_VERSION
 
 logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
 def _silence_java_output(stdout=True, stderr=True):
-    from java.io import OutputStream, PrintStream
-    from java.lang import System
+    from java.io import OutputStream, PrintStream # type:ignore @UnresolvedImport
+    from java.lang import System # type:ignore @UnresolvedImport
     out = System.out
     err = System.err
     null = PrintStream(OutputStream.nullOutputStream())
@@ -116,7 +115,7 @@ def _plugin_lock():
     """
     File lock for processing plugins
     """
-    from java.io import RandomAccessFile
+    from java.io import RandomAccessFile # type:ignore @UnresolvedImport
     path = Path(tempfile.gettempdir()) / "pyghidra_plugin_lock"
     try:
         # Python doesn't have a file lock except for unix systems
@@ -431,7 +430,7 @@ class PyGhidraLauncher:
         # Add extra class paths
         # Do this before installing plugins incase dependencies are needed
         if self.class_files:
-            from java.lang import ClassLoader
+            from java.lang import ClassLoader # type:ignore @UnresolvedImport
             gcl = ClassLoader.getSystemClassLoader()
             for path in self.class_files:
                 gcl.addPath(path)
@@ -451,7 +450,7 @@ class PyGhidraLauncher:
             self._layout = GhidraLauncher.initializeGhidraEnvironment()
 
         # import properties to register the property customizer
-        from . import properties as _
+        from pyghidra import properties as _  # @UnusedImport
 
         _load_entry_points("pyghidra.pre_launch")
 
@@ -654,7 +653,7 @@ class GuiPyGhidraLauncher(PyGhidraLauncher):
 
     @staticmethod
     def _get_thread(name: str):
-        from java.lang import Thread
+        from java.lang import Thread # type:ignore @UnresolvedImport
         for t in Thread.getAllStackTraces().keySet():
             if t.getName() == name:
                 return t
@@ -662,11 +661,11 @@ class GuiPyGhidraLauncher(PyGhidraLauncher):
 
     def _launch(self):
         from ghidra import Ghidra
-        from java.lang import Runtime, Thread
+        from java.lang import Runtime, Thread # type:ignore @UnresolvedImport
 
         if sys.platform == "win32":
             appid = ctypes.c_wchar_p(self.app_info.name)
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid) # @UndefinedVariable
 
         stdout = _PyGhidraStdOut(sys.stdout)
         stderr = _PyGhidraStdOut(sys.stderr)

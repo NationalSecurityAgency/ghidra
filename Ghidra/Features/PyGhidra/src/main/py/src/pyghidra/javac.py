@@ -29,8 +29,8 @@ COMPILER_OPTIONS = ["-target", "21", "-source", "21"]
 
 
 def _to_jar_(jar_path: Path, root: Path):
-    from java.io import ByteArrayOutputStream
-    from java.util.jar import JarEntry, JarOutputStream
+    from java.io import ByteArrayOutputStream # type:ignore @UnresolvedImport
+    from java.util.jar import JarEntry, JarOutputStream # type:ignore @UnresolvedImport
 
     out = ByteArrayOutputStream()
     with JarOutputStream(out) as jar:
@@ -46,12 +46,12 @@ def _to_jar_(jar_path: Path, root: Path):
 class _CompilerDiagnosticListener:
 
     def __init__(self):
-        from javax.tools import Diagnostic
+        from javax.tools import Diagnostic # type:ignore @UnresolvedImport
         self.errors: List[Diagnostic] = []
 
     @JOverride
     def report(self, diagnostic):
-        from javax.tools import Diagnostic
+        from javax.tools import Diagnostic # type:ignore @UnresolvedImport
         diagnostic: Diagnostic = diagnostic
 
         kind = diagnostic.getKind()
@@ -71,10 +71,10 @@ def java_compile(src_path: Path, jar_path: Path):
     :raises ValueError: If an error occurs when compiling the Java source
     """
 
-    from java.lang import System
-    from java.io import Writer
-    from java.nio.file import Path as JPath
-    from javax.tools import StandardLocation, ToolProvider
+    from java.lang import System # type:ignore @UnresolvedImport
+    from java.io import Writer # type:ignore @UnresolvedImport
+    from java.nio.file import Path as JPath # type:ignore @UnresolvedImport
+    from javax.tools import StandardLocation, ToolProvider # type:ignore @UnresolvedImport
 
     with tempfile.TemporaryDirectory() as out:
         outdir = Path(out).resolve()
