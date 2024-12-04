@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -838,13 +838,11 @@ public interface DebuggerResources {
 
 		String NAME_VIS_RO_ONCE = "Read Visible Memory, RO Once";
 		String NAME_VISIBLE = "Read Visible Memory";
-		String NAME_LOAD_EMU = "Load Emulator from Programs";
 		String NAME_NONE = "Do Not Read Memory";
 
 		// TODO: Separate icon for each
 		Icon ICON_VIS_RO_ONCE = ICON_AUTOREAD;
 		Icon ICON_VISIBLE = ICON_AUTOREAD;
-		Icon ICON_LOAD_EMU = ICON_EMULATE;
 		Icon ICON_NONE = ICON_DELETE;
 
 		static <T> MultiStateActionBuilder<T> builder(Plugin owner) {

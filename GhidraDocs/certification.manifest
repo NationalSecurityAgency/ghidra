@@ -83,7 +83,7 @@ GhidraClass/Debugger/images/Breakpoints_MissingModuleNote.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_PopAfterSRandRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_SeedValueAfterBreakSRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_SyncedAfterImportLibC.png||GHIDRA||||END|
-GhidraClass/Debugger/images/Emulation_LazyStaleListing.png||GHIDRA||||END|
+GhidraClass/Debugger/images/Emulation_InitialListing.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_ListingAfterResume.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_ListingForCmdlineSet.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_PcodeStepper.png||GHIDRA||||END|
