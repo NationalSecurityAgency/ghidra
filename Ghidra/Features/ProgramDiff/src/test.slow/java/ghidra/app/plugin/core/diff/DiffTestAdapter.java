@@ -501,12 +501,14 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws Exception {
 
 		Window win = getWindow("Select Other Program");
 		if (win != null) {
 			pressButton(win, "Cancel");
 		}
+
+		closeDiff();
 
 		env.dispose();
 	}
@@ -516,7 +518,15 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		performAction(setView, context, true);
 	}
 
+	protected boolean isDiffActive() {
+		return runSwing(() -> diffPlugin.isDiffActive());
+	}
+
 	void closeDiff() throws Exception {
+
+		if (!isDiffActive()) {
+			return;
+		}
 
 		closeDiffByAction();
 		DialogComponentProvider dialogProvider = waitForDialogComponent("Close Diff Session");
