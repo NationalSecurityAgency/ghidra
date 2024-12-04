@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -335,8 +335,9 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 		setGraphScale(graphInfo.getZoom());
 
 		Point layoutPoint = graphInfo.getLayoutTranslateCoordinates();
-		multiLayerTransformer.getTransformer(Layer.LAYOUT).setTranslate(layoutPoint.x,
-			layoutPoint.y);
+		multiLayerTransformer.getTransformer(Layer.LAYOUT)
+				.setTranslate(layoutPoint.x,
+					layoutPoint.y);
 
 		Point viewPoint = graphInfo.getViewTranslateCoordinates();
 		multiLayerTransformer.getTransformer(Layer.VIEW).setTranslate(viewPoint.x, viewPoint.y);
@@ -441,6 +442,10 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 	protected void stopAllNonMutativeAnimation() {
 		stopEdgeHoverAnimation();
 		stopVertexTwinkleAnimation();
+	}
+
+	public void relayoutGraph() {
+		scheduleViewChangeJob(new RelayoutFunctionGraphJob<>(primaryViewer, isAnimationEnabled()));
 	}
 
 }
