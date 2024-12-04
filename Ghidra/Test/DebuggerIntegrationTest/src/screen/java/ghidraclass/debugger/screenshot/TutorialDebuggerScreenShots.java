@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.analysis.AutoAnalysisPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyActionsPlugin;
@@ -818,7 +818,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	}
 
 	@Test
-	public void testEmulation_LazyStaleListing() throws Throwable {
+	public void testEmulation_InitialListing() throws Throwable {
 		emulateCommandLineParser();
 
 		runSwing(() -> tool.setSize(1920, 1080));
@@ -829,9 +829,6 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	public void testEmulation_ListingAfterResume() throws Throwable {
 		emulateCommandLineParser();
 
-		DebuggerListingProvider listing = getProvider(DebuggerListingProvider.class);
-		listing.setAutoReadMemorySpec(
-			AutoReadMemorySpec.fromConfigName(LoadEmulatorAutoReadMemorySpec.CONFIG_NAME));
 		EmulationResult result = flatDbg.getEmulationService()
 				.run(flatDbg.getCurrentPlatform(), flatDbg.getCurrentEmulationSchedule(), monitor,
 					Scheduler.oneThread(flatDbg.getCurrentThread()));
