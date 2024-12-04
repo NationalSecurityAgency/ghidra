@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.awt.Font;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,18 +27,21 @@ import docking.ReusableDialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
 import docking.widgets.model.GSpanField;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
+import ghidra.dbg.target.TargetMemoryRegion;
+import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceOverlappedRegionException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 	private Trace trace;
 
-	private final JTextField fieldName = new JTextField();
+	private final JTextField fieldPath = new JTextField();
 	private final GAddressRangeField fieldRange = new GAddressRangeField();
 	private final JTextField fieldLength = new JTextField();
 	private final GSpanField fieldLifespan = new GSpanField();
@@ -53,8 +58,8 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 
 		panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-		panel.add(new JLabel("Name: "));
-		panel.add(fieldName);
+		panel.add(new JLabel("Path: "));
+		panel.add(fieldPath);
 
 		panel.add(new JLabel("Range: "));
 		panel.add(fieldRange);
@@ -81,8 +86,8 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 		return new AddressRangeImpl(min, min.addWrap(lengthMinus1));
 	}
 
-	public void setName(String name) {
-		fieldName.setText(name);
+	public void setPath(String path) {
+		fieldPath.setText(path);
 	}
 
 	protected void setFieldLength(long length) {
@@ -149,17 +154,33 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 		addRegionAndClose();
 	}
 
-	protected void setValues(Trace trace, Lifespan lifespan) {
-		this.trace = trace;
+	protected String computeDefaultPath(DebuggerCoordinates current) {
+		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		if (rootSchema == null) {
+			return "";
+		}
+		List<String> suitable = rootSchema.searchForSuitableContainer(TargetMemoryRegion.class,
+			current.getPath().getKeyList());
+		if (suitable == null) {
+			return "";
+		}
+
+		return TraceObjectKeyPath.of(suitable).index("New").toString();
+	}
+
+	protected void setValues(DebuggerCoordinates current) {
+		this.trace = current.getTrace();
 		AddressFactory af = trace.getBaseAddressFactory();
 		this.fieldRange.setAddressFactory(af);
 		this.fieldRange.setRange(range(af.getDefaultAddressSpace().getAddress(0), 0));
 		this.fieldLength.setText("0x1");
+		Lifespan lifespan = Lifespan.nowOn(current.getSnap());
 		this.fieldLifespan.setLifespan(lifespan);
+		this.fieldPath.setText(computeDefaultPath(current));
 	}
 
-	public void show(PluginTool tool, Trace trace, long snap) {
-		setValues(trace, Lifespan.nowOn(snap));
+	public void show(PluginTool tool, DebuggerCoordinates current) {
+		setValues(current);
 		tool.showDialog(this);
 	}
 
@@ -171,13 +192,16 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 	}
 
 	protected void addRegionAndClose() {
-		try (Transaction tx = trace.openTransaction("Add region: " + fieldName)) {
+		try (Transaction tx = trace.openTransaction("Add region: " + fieldPath)) {
 			trace.getMemoryManager()
-					.addRegion(fieldName.getText(), fieldLifespan.getLifespan(),
-						fieldRange.getRange());
+					.addRegion(
+						fieldPath.getText(),
+						fieldLifespan.getLifespan(), fieldRange.getRange(),
+						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE,
+							TraceMemoryFlag.EXECUTE));
 			close();
 		}
-		catch (TraceOverlappedRegionException | DuplicateNameException e) {
+		catch (Exception e) {
 			setStatusText(e.getMessage());
 		}
 	}
