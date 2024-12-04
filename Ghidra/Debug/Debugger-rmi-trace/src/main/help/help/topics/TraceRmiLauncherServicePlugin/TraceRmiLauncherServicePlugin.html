@@ -112,6 +112,12 @@
     properly-configured build of GDB for your target. If you are working with an embedded system,
     it is probably safest to install the "multiarch" build of GDB from your package manager.</P>
 
+    <P>The plain "<TT>gdb</TT>" launch script defaults to launching the current program as a
+    user-mode process on the local system. If there is no current program, or if you clear the
+    <B>Image</B> option, this launcher will only start <TT>gdb</TT> and get it connected to a
+    Ghidra trace. You may then manually start or connect to your target. Note that this may also
+    require manual mapping of your program database(s) to the target memory.</P>
+
     <H4><A name="gdb_setup"></A>Setup</H4>
 
     <P>You must have GDB installed on the local system, and it must embed the Python 3 interpreter.
@@ -156,6 +162,13 @@ python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-a
     <P>Note the version and ensure that you are invoking Pip with that version. Supposing
     <TT>sys.version</TT> indicates 3.10, you should invoke Pip using <TT>python3.10 -m
     pip</TT>.</P>
+
+    <P><B>Warning</B>: Modern Linux distributions are beginning to adopt PEP 668, which prevents
+    installation of Python packages outside of a virtual environment (venv) <EM>even for non-root
+    user accounts</EM>. Unfortunately, <TT>gdb</TT> does not seem to honor the currently activated
+    venv, and so such configurations are not officially supported. You may be able to work around
+    this by modifying the <TT>PYTHONPATH</TT> lines of the launcher script, but your mileage may
+    vary. For now, we recommend using the <TT>--break-system-packages</TT> argument with Pip.</P>
 
     <H4>Options</H4>
 
@@ -339,15 +352,21 @@ target remote | ssh user@host gdbserver - /path/to/image
 
     <H3><A name="gdb_qemu"></A>QEMU + GDB</H3>
 
-    <P>This launcher orchestrates a QEMU user-mode target and connects to it using our Python
-    plugin for GDB. Ghidra will inspect the current program and attempt to map its language to the
-    appropriate QEMU command, but this may fail, or be subtly incorrect.</P>
+    <P>These launchers orchestrate a QEMU user- or system-mode target and connect to it using our
+    Python plugin for GDB. Ghidra will inspect the current program and attempt to map its language
+    to the appropriate QEMU command, but due to subtle errors and/or outright failure, the default
+    value for the <B>QEMU command</B> option often requires careful inspection.</P>
+
+    <P>There are two separate scripts for QEMU, one for user mode and one for system mode. Note
+    that QEMU does not support user-mode emulation on Windows, so that script is not available on
+    Windows hosts.</P>
 
     <H4>Setup</H4>
 
-    <P>You must acquire a version of QEMU and GDB that support the target architecture. On many
-    distributions of Linux, you can install <TT>gdb-multiarch</TT>. Follow the steps given in <A
-    href="#gdb_setup">GDB Setup</A>.</P>
+    <P>You must acquire versions of QEMU and GDB that support the target architecture. Aside from
+    the copy of QEMU required, setup is the same whether for user or system mode. As for GDB, on
+    many distributions of Linux, you can install <TT>gdb-multiarch</TT>. Follow the steps given in
+    <A href="#gdb_setup">GDB Setup</A>.</P>
 
     <H4>Options</H4>
 
@@ -356,17 +375,18 @@ target remote | ssh user@host gdbserver - /path/to/image
       in GDB, but is passed to QEMU. This will also provide the name to GDB using its "<TT>file
       ...</TT>" command.</LI>
 
-      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
-      These are passed as is on QEMU's command line.</LI>
+      <LI><B>Arguments</B> (User-mode only): These are the command-line arguments to pass into the
+      target process. These are passed as is on QEMU's command line.</LI>
 
       <LI><B>QEMU command</B>: The command or path to QEMU.</LI>
 
       <LI><B>QEMU Port</B>: An available TCP port for QEMU to listen on for GDB.</LI>
 
-      <LI><B>Extra <TT>qemu</TT> arguments</B>: Extra arguments to pass to <TT>qemu</TT>. These are
-      inserted immediately after the <TT>qemu</TT> command but before the target program and
-      arguments. Beware that syntax errors may cause strange behavior, and that not all features
-      may be compatible with this launcher.</LI>
+      <LI><B>Extra <TT>qemu</TT> arguments</B>: Extra arguments to pass to <TT>qemu</TT> or
+      <TT>qemu-system</TT>. These are inserted immediately after the <TT>qemu</TT> command but
+      before the target image. Run <TT>qemu<EM>[-system]-arch</EM> --help</TT> to see the options
+      supported. Beware that syntax errors may cause strange behavior, and that not all QEMU
+      features may be compatible with Ghidra.</LI>
 
       <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB, but defaults to
       "gdb-multiarch."</LI>
@@ -374,12 +394,14 @@ target remote | ssh user@host gdbserver - /path/to/image
       <LI><B>QEMU TTY</B>: This works similarly as in GDB, but just runs QEMU in the second
       Terminal window.</LI>
 
-      <LI><B>Pull all section mappings</B>: For some targets the memory mappings for the target
-      are not correctly relayed to Ghidra. This setting forces gdb to send the mappings to Ghidra.
-      This option is disabled by default because for large targets the action could be expensive,
-      so it should only be enabled if required (e.g. unable to correctly place breakpoints).
-      <I>Auto-Map by Section</I> must be enabled in the Modules debugger window for this to work.
-      </LI>
+      <LI><B>Pull all section mappings</B>: For some targets the memory mappings cannot be
+      correctly conveyed to Ghidra module by module. This setting forces GDB to send the
+      <EM>section</EM> mappings to Ghidra. <B>Warning</B>: This operation is expensive for large
+      targets, so it should only be enabled if required (e.g. unable to correctly place
+      breakpoints). <A href=
+      "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html#auto_map">Auto-Map</A> by
+      Section is required when this option is enabled, or else address translation may
+      <EM>still</EM> be incorrect.</LI>
     </UL>
 
     <H3><A name="gdb_wine"></A>Wine + GDB</H3>
@@ -486,30 +508,6 @@ target remote [host]:[port]
 
       <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB, though you may want to use
       <TT>gdb-multiarch</TT>.</LI>
-    </UL>
-
-    <H3><A name="gdb_raw"></A>Raw GDB</H3>
-
-    <P>This is hardly a launcher at all. It simply starts <TT>gdb</TT>, gets it connected to
-    Ghidra, and starts a trace. This allows you to create or connect to whatever target your copy
-    of GDB supports. While perhaps the most flexible, it is also the least convenient. It requires
-    no image, so it can be used without a current program. That also means it will make no effort
-    to ensure your target maps to the current program, if you happen to have one. You may have to
-    do it manually.</P>
-
-    <H4>Setup</H4>
-
-    <P>Follow the steps given in <A href="#gdb_setup">GDB Setup</A>.</P>
-
-    <H4>Options</H4>
-
-    <UL>
-      <LI><B><TT>gdb</TT> command</B>: This works the same as in GDB.</LI>
-
-      <LI><B>Architecture</B>: Because the trace is created before the target, you must specify the
-      target's architecture. This is passed as is to "<TT>set arch ...</TT>" immediately before the
-      "<TT>target ...</TT>" command. Enter "<TT>set arch</TT>" into a GDB session outside of Ghidra
-      to see the list of available options in your configuration.</LI>
     </UL>
 
     <H2>Stock LLDB Launchers</H2>

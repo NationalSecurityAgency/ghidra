@@ -17,6 +17,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -50,6 +51,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64"/>
   </language>
   <language processor="PowerPC"
             endian="big"
@@ -67,6 +69,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64abi32"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -100,6 +103,7 @@
     <external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64le"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64le"/>
   </language>
   <language processor="PowerPC"
             endian="big"
@@ -116,6 +120,7 @@
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -148,6 +153,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc"/>
   </language>
    <language processor="PowerPC"
             endian="big"
@@ -164,6 +170,7 @@
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -197,6 +204,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -229,6 +237,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -261,6 +270,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64abi32"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -295,6 +305,7 @@
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64abi32"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -328,6 +339,7 @@
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64"/>
   </language>
   <language processor="PowerPC"
             endian="little"
@@ -344,6 +356,7 @@
 	<external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
     <external_name tool="qemu" name="qemu-ppc64le"/>
+    <external_name tool="qemu_system" name="qemu-system-ppc64le"/>
   </language>
   <language processor="PowerPC"
             endian="big"
