@@ -110,7 +110,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * @param languageId valid language ID (see appropriate *.ldefs file for defined IDs)
 	 * @param compilerSpecId valid compiler spec ID which corresponds to the language ID.
 	 * @return data-type manager backed by the specified packedDbFile
-	 * @returns DuplicateFileException if {@code packedDbFile} already exists
+	 * @throws DuplicateFileException if {@code packedDbFile} already exists
 	 * @throws LanguageNotFoundException if specified {@code languageId} not defined. 
 	 * @throws CompilerSpecNotFoundException if specified {@code compilerSpecId} is not defined 
 	 * for the specified language. 
@@ -338,9 +338,8 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		try {
 			root.setName(newName);
 		}
-		catch (DuplicateNameException e) {
-		}
-		catch (InvalidNameException e) {
+		catch (InvalidNameException | DuplicateNameException e) {
+			// do nothing
 		}
 	}
 
