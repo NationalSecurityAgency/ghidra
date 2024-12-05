@@ -37,6 +37,7 @@ import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import generic.stl.Pair;
 import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
@@ -62,7 +63,7 @@ import java.awt.event.KeyEvent;
 /**
  * Class to handle the display of a decompiled function
  */
-public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener, FieldInputListener,
+public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
 		FieldSelectionListener, ClangHighlightListener, LayoutListener {
 
 	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new GColor("color.bg.undefined");
@@ -125,7 +126,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
-		fieldPanel.addFieldInputListener(this);
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -789,28 +789,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			toggleMiddleMouseHighlight(location, field);
 		}
 	}
-	public static final KeyStroke HIDE = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0);
-	public static final KeyStroke SHOW = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
 
-	@Override
-	public void keyPressed(KeyEvent ev, BigInteger index, int fieldNum, int row, int col, Field field) {
-		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(ev);
-		FieldLocation location = getCursorPosition();
-		ClangTextField textField = (ClangTextField) field;
-		ClangToken token = textField.getToken(location);
-		if (SHOW.equals(keyStroke)) {
-			if (token instanceof ClangSyntaxToken) {
-				toggleCollapseToken((ClangSyntaxToken) token);
-			}
-		}
-		else if (HIDE.equals(keyStroke)) {
-			if (token instanceof ClangSyntaxToken) {
-				toggleCollapseToken((ClangSyntaxToken) token);
-			}
-		}
-	}
-
-	public void onClickAction(int y) {
+	public void arrowClickAction(int y) {
 		int lineNumber = getLineNumber(y);
 		ClangToken openingBraceToken = null;
 		ClangLine line = getLines().get(lineNumber - 1);
@@ -833,9 +813,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				return;
 			}
 
-			ClangNode parent = openingBrace.Parent();
 			List<ClangNode> list = new ArrayList<>();
-			parent.flatten(list);
+			openingBrace.Parent().flatten(list);
 
 			boolean inSection = false;
 			for (ClangNode element : list) {
@@ -853,21 +832,45 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				}
 			}
 
-			// IMPORTANT: to trigger redisplay
 			setDecompileData(decompileData);
 		}
 	}
 
-	public List<BigInteger> linesWithOpeningBraces() {
-		List<BigInteger> lineNumbers = new ArrayList<>();
+	private boolean isBlockCollapsed(ClangSyntaxToken openingBrace) {
+		ClangSyntaxToken closingBrace = DecompilerUtils.getMatchingBrace(openingBrace);
+		if (closingBrace == null) {
+			return false;
+		}
+
+		List<ClangNode> list = new ArrayList<>();
+		openingBrace.Parent().flatten(list);
+
+		boolean inSection = false;
+		for (ClangNode element : list) {
+			ClangToken token = (ClangToken) element;
+			if (inSection) {
+				if (token.equals(closingBrace)) {
+					break;
+				}
+				return token.getCollapsedToken();
+			} else if (token.equals(openingBrace)) {
+				inSection = true;
+			}
+		}
+		return false;
+	}
+
+	public List<Pair<BigInteger, Boolean>> getLinesIndexesWithOpeningBraces() {
+		List<Pair<BigInteger, Boolean>> lineNumbers = new ArrayList<>();
 		List<ClangLine> lines = getLines();
 
         for (int i = 0; i < lines.size(); i++) {
             List<ClangToken> lineTokens = lines.get(i).getAllTokens();
             for (ClangToken token : lineTokens) {
                 if (token.getText().contains("{") && token instanceof ClangSyntaxToken) {
-                    lineNumbers.add(BigInteger.valueOf(i));
-                    break;
+					List<ClangNode> list = new ArrayList<>();
+					token.Parent().flatten(list);
+					lineNumbers.add(new Pair<>(BigInteger.valueOf(i), isBlockCollapsed((ClangSyntaxToken) token)));
                 }
             }
         }

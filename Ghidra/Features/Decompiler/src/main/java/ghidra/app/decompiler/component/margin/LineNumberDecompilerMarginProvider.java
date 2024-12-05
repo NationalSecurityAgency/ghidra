@@ -19,7 +19,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
-import java.util.List;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -44,7 +44,7 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 
 	public LineNumberDecompilerMarginProvider(DecompilerPanel decompilerPanel) {
 		this.decompilerPanel = decompilerPanel;
-		setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -116,8 +116,9 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		int y = e.getY() - insets.top;
 		int x = e.getX() - insets.left;
 
-		if (x >= getWidth() - getFontMetrics(getFont()).stringWidth(" ") * 2 - insets.right) {
-			decompilerPanel.onClickAction(y);
+        if (x >= getWidth() - getFontMetrics(getFont()).stringWidth(" ") * 2 - insets.right) {
+			decompilerPanel.arrowClickAction(y);
+			repaint();
 		}
 	}
 
@@ -125,7 +126,6 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 	public void paint(Graphics g) {
 		super.paint(g);
 
-		List<BigInteger> linesIndex = decompilerPanel.linesWithOpeningBraces();
 		Insets insets = getInsets();
 		int leftEdge = insets.left;
 		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth(" ");
@@ -133,19 +133,29 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
-		int arrowSize = ascent / 2; // Size of the arrow
+		int arrowSize = ascent / 2;
+		var linesIndexes = decompilerPanel.getLinesIndexesWithOpeningBraces();
+		int ind = 0;
 
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = i.add(BigInteger.ONE).toString();
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
-			if (linesIndex.contains(i)) {
+			if (linesIndexes.size() <= ind) {
+				continue;
+			}
+			if (Objects.equals(linesIndexes.get(ind).first, i)) {
 				int y = pixmap.getPixel(i) + ascent;
-                int arrowY = y - arrowSize;
-				g.setColor(Color.DARK_GRAY);
-				g.drawLine(rightEdge, arrowY, rightEdge - arrowSize / 2, arrowY + arrowSize / 2);
-
-				g.drawLine(rightEdge, arrowY, rightEdge + arrowSize / 2, arrowY + arrowSize / 2);
+				g.setColor(Color.GRAY);
+				if (linesIndexes.get(ind).second) {
+					y -= arrowSize / 2;
+					g.drawLine(rightEdge, y, rightEdge - arrowSize / 2, y - arrowSize / 2);
+					g.drawLine(rightEdge, y, rightEdge - arrowSize / 2, y + arrowSize / 2);
+				} else {
+					g.drawLine(rightEdge, y, rightEdge - arrowSize / 2, y - arrowSize / 2);
+					g.drawLine(rightEdge, y, rightEdge + arrowSize / 2, y - arrowSize / 2);
+				}
 				g.setColor(Color.BLACK);
+				++ind;
 			}
 		}
 	}
