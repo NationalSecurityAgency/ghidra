@@ -73,6 +73,7 @@ import ghidra.util.datastruct.ListenerSet;
 	servicesProvided = {
 		DebuggerModelService.class
 	})
+@Deprecated(forRemoval = true, since = "11.2")
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 

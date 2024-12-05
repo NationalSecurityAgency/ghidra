@@ -87,6 +87,7 @@ import ghidra.util.task.TaskMonitor;
 		DebuggerTargetService.class,
 		DebuggerTraceManagerService.class, },
 	servicesProvided = { DebuggerModelService.class, })
+@Deprecated(forRemoval = true, since = "11.2")
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
 

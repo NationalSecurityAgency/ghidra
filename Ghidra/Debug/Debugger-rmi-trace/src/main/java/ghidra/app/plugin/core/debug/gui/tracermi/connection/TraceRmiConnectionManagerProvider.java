@@ -52,6 +52,7 @@ import ghidra.util.exception.CancelledException;
 
 public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter {
 	public static final String TITLE = "Connections";
+	public static final Icon ICON = DebuggerResources.ICON_CONNECTION;
 	public static final HelpLocation HELP =
 		new HelpLocation(PluginUtils.getPluginNameFromClass(TraceRmiConnectionManagerPlugin.class),
 			DebuggerResources.HELP_ANCHOR_PLUGIN);
@@ -208,7 +209,7 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 		setTitle(TITLE);
-		setIcon(DebuggerResources.ICON_PROVIDER_TARGETS);
+		setIcon(ICON);
 		setHelpLocation(HELP);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
 

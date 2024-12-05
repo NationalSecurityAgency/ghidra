@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import javax.swing.Icon;
 import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
-import ghidra.app.plugin.core.debug.service.model.record.RecorderUtils;
 import ghidra.app.plugin.core.debug.utils.AbstractMappedMemoryBytesVisitor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -58,6 +57,22 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 		return AutoReadMemoryAction.ICON_LOAD_EMU;
 	}
 
+	protected AddressSetView quantize(int blockBits, AddressSetView set) {
+		if (blockBits == 1) {
+			return set;
+		}
+		long blockMask = -1L << blockBits;
+		AddressSet result = new AddressSet();
+		// Not terribly efficient, but this is one range most of the time
+		for (AddressRange range : set) {
+			AddressSpace space = range.getAddressSpace();
+			Address min = space.getAddress(range.getMinAddress().getOffset() & blockMask);
+			Address max = space.getAddress(range.getMaxAddress().getOffset() | ~blockMask);
+			result.add(new AddressRangeImpl(min, max));
+		}
+		return result;
+	}
+
 	@Override
 	public CompletableFuture<Boolean> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible) {
@@ -73,7 +88,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 			return CompletableFuture.completedFuture(false);
 		}
 		TraceMemoryManager mm = trace.getMemoryManager();
-		AddressSet toRead = new AddressSet(RecorderUtils.INSTANCE.quantize(12, visible));
+		AddressSet toRead = new AddressSet(quantize(12, visible));
 		for (Lifespan span : coordinates.getView().getViewport().getOrderedSpans()) {
 			AddressSetView alreadyKnown =
 				mm.getAddressesWithState(span.lmin(), visible, s -> s == TraceMemoryState.KNOWN);

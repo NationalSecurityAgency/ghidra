@@ -35,6 +35,7 @@ import ghidra.util.task.TaskMonitor;
  * specific connector and platform to obtain a target executing the program's image. The mechanisms
  * may vary wildly from platform to platform.
  */
+@Deprecated(forRemoval = true, since = "11.3")
 public interface DebuggerProgramLaunchOffer {
 
 	/**

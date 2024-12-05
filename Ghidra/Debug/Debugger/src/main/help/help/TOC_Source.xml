@@ -66,15 +66,6 @@
 			        sortgroup="m"
 			        target="help/topics/Debugger/Troubleshooting.html" />
 
-			<tocdef id="DebuggerTargetsPlugin" text="Targets" 
-			        sortgroup="m"
-			        target="help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html" >
-
-				<tocdef id="DebuggerModelServicePlugin" text="Tool Actions" 
-				        sortgroup="a" 
-				        target="help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html" />
-			</tocdef>
-
 			<tocdef id="DebuggerConsolePlugin" text="Debug Console"
 			        sortgroup="m"
 			        target="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html" />
@@ -83,17 +74,9 @@
 			        sortgroup="m"
 			        target="help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.html" />
 
-			<tocdef id="DebuggerObjectsPlugin" text="Commands and Objects" 
-			        sortgroup="m"
-			        target="help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html" />
-
 			<tocdef id="DebuggerModelPlugin" text="Model"
 			        sortgroup="m"
 			        target="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html" />
-
-			<tocdef id="DebuggerInterpreterPlugin" text="Interpreters" 
-			        sortgroup="m"
-			        target="help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html" />
 
 			<tocdef id="DebuggerThreadsPlugin" text="Threads" 
 			        sortgroup="m"

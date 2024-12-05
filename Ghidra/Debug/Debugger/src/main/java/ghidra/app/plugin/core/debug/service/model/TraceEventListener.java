@@ -38,6 +38,7 @@ import ghidra.util.Msg;
 import ghidra.util.TimedMsg;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 
 	private final DefaultTraceRecorder recorder;
