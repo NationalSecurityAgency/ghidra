@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,8 @@ import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
 import ghidra.program.database.properties.UnsupportedMapDB;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.ProgramBasedDataTypeManager;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -484,10 +482,8 @@ public class ProgramDiff {
 	synchronized public AddressSetView getDifferences(ProgramDiffFilter filter, TaskMonitor monitor)
 			throws CancelledException {
 		cancelled = false;
-		if (monitor == null) {
-			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitor.DUMMY;
-		}
+
+		monitor = TaskMonitor.dummyIfNull(monitor);
 
 		if (!filterChanged && ((filter != null) && (filter.equals(this.pdf)))) {
 			return diffsToReturn;
@@ -500,6 +496,7 @@ public class ProgramDiff {
 		// Create any required address sets.
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
+
 			// Are we interested in this difference type?
 			if (pdf.getFilter(element)) {
 				Integer key = element;

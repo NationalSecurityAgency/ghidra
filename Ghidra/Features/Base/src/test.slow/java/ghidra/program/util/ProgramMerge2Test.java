@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,7 +138,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x10058f6"), addr(p1, "0x10058fa"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -207,7 +207,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x10058f6"), addr(p1, "0x10058fa"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -276,7 +276,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x10058f6"), addr(p1, "0x10058fa"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -348,7 +348,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x10058f6"), addr(p1, "0x10058fa"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(new ProgramMergeFilter(
@@ -413,7 +413,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -475,7 +475,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -547,7 +547,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -613,7 +613,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x1002998"), addr(p1, "0x1002a0c"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -686,7 +686,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x1002998"), addr(p1, "0x1002a0c"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -763,7 +763,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.FUNCTION_DIFFS | ProgramDiffFilter.SYMBOL_DIFFS));
@@ -844,7 +844,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.FUNCTION_DIFFS | ProgramDiffFilter.SYMBOL_DIFFS));
@@ -933,7 +933,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.FUNCTION_DIFFS | ProgramDiffFilter.SYMBOL_DIFFS));
@@ -1021,7 +1021,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			ProgramMergeFilter filter = new ProgramMergeFilter();
@@ -1102,7 +1102,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			ProgramMergeFilter filter = new ProgramMergeFilter();
@@ -1190,7 +1190,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			ProgramMergeFilter filter = new ProgramMergeFilter();
@@ -1278,7 +1278,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1354,7 +1354,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1427,7 +1427,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1501,7 +1501,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1578,7 +1578,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1654,7 +1654,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1730,7 +1730,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1825,7 +1825,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		int txId = p1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -1944,7 +1944,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		int txId = p1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -2040,7 +2040,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2112,7 +2112,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2188,7 +2188,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2260,7 +2260,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01004132"), addr(p1, "0x01004132"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2335,7 +2335,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01004132"), addr(p1, "0x01004132"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2407,7 +2407,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2480,7 +2480,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.FUNCTION_TAG_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2553,7 +2553,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.FUNCTION_TAG_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2636,7 +2636,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2758,7 +2758,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2880,7 +2880,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -2979,7 +2979,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "TextOverlay::01001630"),
 				addr(p1, "TextOverlay::0100182f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -3062,7 +3062,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "TextOverlay::01001630"),
 				addr(p1, "TextOverlay::0100182f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -3145,7 +3145,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "TextOverlay::01001630"),
 				addr(p1, "TextOverlay::0100182f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -3237,7 +3237,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		int txId = p1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, null, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 
@@ -3330,7 +3330,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		int txId = p1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, null, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -3454,7 +3454,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		int txId = p1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, null, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(
 				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
@@ -3585,7 +3585,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		int txId = p1.startTransaction("Merge into Program 1");
 		boolean commit = false;
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, null, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.REFERENCE_DIFFS));
 			programMerge.setMergeFilter(
@@ -3675,7 +3675,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -3760,7 +3760,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -3852,7 +3852,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x01001a00"), addr(p1, "0x01006500"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -3920,7 +3920,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x8080"), addr(p1, "0x80d0"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			//programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			programMerge.setMergeFilter(
@@ -4035,7 +4035,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x1000"), addr(p1, "0x1000"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -4120,7 +4120,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x1000"), addr(p1, "0x1000"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -4219,7 +4219,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x1002249"), addr(p1, "0x1002249"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -4316,7 +4316,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			AddressSet setToDiff = new AddressSet();
 			setToDiff.addRange(addr(p1, "0x1002249"), addr(p1, "0x1002249"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 			programMerge.setMergeFilter(
@@ -4406,7 +4406,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 				addr(p2, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			AddressSet expectedDiffs = new AddressSet();
@@ -4515,7 +4515,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 				addr(p2, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			AddressSet expectedDiffs = new AddressSet();
@@ -4621,7 +4621,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 				addr(p2, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			AddressSet expectedDiffs = new AddressSet();
@@ -4725,7 +4725,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 				addr(p2, "SomeOverlay::0100192f"));
 			setToDiff.addRange(addr(p1, "OtherOverlay::01001630"),
 				addr(p1, "OtherOverlay::0100192f"));
-			programMerge = new ProgramMergeManager(p1, p2, setToDiff, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2, setToDiff);
 
 			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 			AddressSet expectedDiffs = new AddressSet();

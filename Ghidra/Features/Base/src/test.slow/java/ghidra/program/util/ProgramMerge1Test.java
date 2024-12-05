@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCompareSameAddressSpaces() throws Exception {
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 		}
 		catch (ProgramConflictException e) {
 			Assert.fail("Address spaces in program 1 and program 2 should have been the same.");
@@ -109,7 +109,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 			ProgramBuilder programBuilder3 = new ProgramBuilder("program3", ProgramBuilder._8051);
 			p3 = programBuilder3.getProgram();
 
-			programMerge = new ProgramMergeManager(p1, p3, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p3);
 			assertNull(programMerge);
 		}
 		catch (ProgramConflictException e) {
@@ -124,7 +124,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCompareSameMemory() throws Exception {
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 			assertTrue("Memory in program 1 and program 2 should have been the same.",
 				programMerge.memoryMatches());
 		}
@@ -146,7 +146,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 
 		try {
-			programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+			programMerge = new ProgramMergeManager(p1, p2);
 			assertTrue("Memory in program 1 and program 2 should have been different.",
 				!programMerge.memoryMatches());
 		}
@@ -160,7 +160,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Test
 	public void testDiffFilter() throws Exception {
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		// Check that default filter has all difference types set.
 		assertEquals(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS),
 			programMerge.getDiffFilter());
@@ -183,7 +183,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Test
 	public void testMergeFilter() throws Exception {
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		// Check that default filter has all difference types set.
 		assertEquals(new ProgramMergeFilter(), programMerge.getMergeFilter());
 
@@ -213,7 +213,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@Test
 	public void testGetPrograms() throws Exception {
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		assertEquals(p1, programMerge.getProgramOne());
 		assertEquals(p2, programMerge.getProgramTwo());
 	}
@@ -231,7 +231,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createMemory("d1", "0x100", 0x100, null, (byte) 0xAF);
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSetView as = programMerge.getAddressesOnlyInOne();
 		AddressSet as1 = new AddressSet();
 		as1.add(new AddressRangeImpl(addr(0x200), addr(0x2ff)));
@@ -251,7 +251,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createMemory("d1", "0x100", 0x100, null, (byte) 0xAF);
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSetView as = programMerge.getAddressesOnlyInTwo();
 		AddressSet as2 = new AddressSet();
 		as2.add(new AddressRangeImpl(addr(0x400), addr(0x4ff)));
@@ -271,7 +271,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createMemory("d1", "0x100", 0x100, null, (byte) 0xAF);
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet as1 = new AddressSet();
 		as1.add(new AddressRangeImpl(addr(0x100), addr(0x1ff)));
 		as1.add(new AddressRangeImpl(addr(0x200), addr(0x2ff)));
@@ -298,7 +298,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createMemory("d1", "0x100", 0x100, null, (byte) 0xAF);
 		programBuilder2.createMemory("d4", "0x400", 0x100);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet as1 = new AddressSet();
 		as1.add(new AddressRangeImpl(addr(0x100), addr(0x1ff)));
 		as1.add(new AddressRangeImpl(addr(p1, 0x01001000), addr(p1, 0x010075ff)));
@@ -325,7 +325,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createLabel("0x01006420", "Function2");
 		programBuilder2.createComment("0x010059a3", "There you have it.", CodeUnit.EOL_COMMENT);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
 		AddressSetView diffs;
 
@@ -336,7 +336,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// Program Diff only determines differences within the limited set.
 		programMerge = new ProgramMergeManager(p1, p2,
-			new AddressSet(addr(0x01002239), addr(0x0100248c)), TaskMonitor.DUMMY);
+			new AddressSet(addr(0x01002239), addr(0x0100248c)));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
 		AddressSet as = new AddressSet();
 		as.addRange(addr(0x01002239), addr(0x0100248c));
@@ -362,7 +362,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createLabel("0x01006420", "Function2");
 		programBuilder2.createComment("0x010059a3", "There you have it.", CodeUnit.EOL_COMMENT);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
 		AddressSetView diffs;
 
@@ -403,7 +403,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createLabel("0x01006420", "Function2");
 		programBuilder2.createComment("0x010059a3", "There you have it.", CodeUnit.EOL_COMMENT);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS));
 		AddressSetView diffs;
 
@@ -518,7 +518,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createComment("0x100415a", "Plate Comment", CodeUnit.PLATE_COMMENT);
 		programBuilder2.createComment("0x100415a", "Plate Comment", CodeUnit.PLATE_COMMENT);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.REPLACE));
@@ -552,7 +552,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		// 0x100248f: p1 has function comment.
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.REPLACE));
@@ -569,7 +569,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		// 0x100248f: p2 has function comment.
 		programBuilder2.createFunctionComment("0x100248f", "Other function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.REPLACE));
@@ -587,7 +587,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 		programBuilder2.createFunctionComment("0x100248f", "Sample function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.REPLACE));
@@ -605,7 +605,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 		programBuilder2.createFunctionComment("0x100248f", "Other function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.REPLACE));
@@ -713,7 +713,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createComment("0x100415a", "Plate Comment", CodeUnit.PLATE_COMMENT);
 		programBuilder2.createComment("0x100415a", "Plate Comment", CodeUnit.PLATE_COMMENT);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.MERGE));
@@ -764,7 +764,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		// 0x100248f: p1 has function comment.
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.MERGE));
@@ -782,7 +782,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		// 0x100248f: p2 has function comment.
 		programBuilder2.createFunctionComment("0x100248f", "Other function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.MERGE));
@@ -800,7 +800,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 		programBuilder2.createFunctionComment("0x100248f", "Sample function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.MERGE));
@@ -818,7 +818,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 		programBuilder2.createFunctionComment("0x100248f", "Other function comment.");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.COMMENT_DIFFS));
 		programMerge.setMergeFilter(
 			new ProgramMergeFilter(ProgramMergeFilter.COMMENTS, ProgramMergeFilter.MERGE));
@@ -843,7 +843,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createExternalReference("0x0100102c", "ADVAPI32.dll", "IsTextUnicode", 0);
 
 		programMerge = new ProgramMergeManager(p1, p2,
-			new AddressSet(addr(0x01001000), addr(0x010017ff)), TaskMonitor.DUMMY);
+			new AddressSet(addr(0x01001000), addr(0x010017ff)));
 		AddressSet as = new AddressSet(addr(0x0100102c), addr(0x0100102f));
 
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.REFERENCE_DIFFS));
@@ -865,7 +865,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createExternalReference("0x01001034", "myGDI32.dll", "SomePlace", 0);
 
 		programMerge = new ProgramMergeManager(p1, p2,
-			new AddressSet(addr(0x01001000), addr(0x010017ff)), TaskMonitor.DUMMY);
+			new AddressSet(addr(0x01001000), addr(0x010017ff)));
 		AddressSet as = new AddressSet(addr(0x01001034), addr(0x01001037));
 
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.REFERENCE_DIFFS));
@@ -887,7 +887,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createExternalReference("0x01001038", "GDI32.dll", "ABC12345", 0);
 
 		programMerge = new ProgramMergeManager(p1, p2,
-			new AddressSet(addr(0x01001000), addr(0x010017ff)), TaskMonitor.DUMMY);
+			new AddressSet(addr(0x01001000), addr(0x010017ff)));
 		AddressSet as = new AddressSet(addr(0x01001038), addr(0x0100103b));
 
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.REFERENCE_DIFFS));
@@ -909,7 +909,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createExternalReference("0x0100103c", "GDI32.dll", "XYZ", "0x77f4abcd", 0);
 
 		programMerge = new ProgramMergeManager(p1, p2,
-			new AddressSet(addr(0x01001000), addr(0x010017ff)), TaskMonitor.DUMMY);
+			new AddressSet(addr(0x01001000), addr(0x010017ff)));
 		AddressSet as = new AddressSet(addr(0x0100103c), addr(0x0100103f));
 
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.REFERENCE_DIFFS));
@@ -930,7 +930,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createExternalReference("0x01001044", "GDI32.dll", "MNM", 0);
 
 		programMerge = new ProgramMergeManager(p1, p2,
-			new AddressSet(addr(0x01001000), addr(0x010017ff)), TaskMonitor.DUMMY);
+			new AddressSet(addr(0x01001000), addr(0x010017ff)));
 		AddressSet as = new AddressSet(addr(0x01001044), addr(0x01001047));
 
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.REFERENCE_DIFFS));
@@ -968,7 +968,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createStackReference("0x1006480", RefType.READ, -0x6c,
 			SourceType.USER_DEFINED, 0);
 
-		programMerge = new ProgramMergeManager(p1, p2, null, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet as = new AddressSet();
 		as.addRange(addr(0x1006443), addr(0x1006445));
 		as.addRange(addr(0x1006446), addr(0x100644c));
@@ -1032,7 +1032,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		as.addRange(addr(0x01002cf5), addr(0x01002d0c));
 		as.addRange(addr(0x01002950), addr(0x0100295c));
 		as.addRange(addr(0x010033f6), addr(0x010033fe));
-		programMerge = new ProgramMergeManager(p1, p2, as, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2, as);
 		AddressSet expectedDiffs = new AddressSet();
 		expectedDiffs.addRange(addr(0x010018a6), addr(0x010018a6));
 		expectedDiffs.addRange(addr(0x0100295a), addr(0x0100295a));
@@ -1080,7 +1080,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.setStringProperty("0x10039f1", "testColor", "BLACK");
 		programBuilder2.setStringProperty("0x10039f8", "testColor", "BLACK");
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet as = new AddressSet();
 		as.addRange(addr(0x10018ae), addr(0x10018ae));
 		as.addRange(addr(0x10018ce), addr(0x10018ce));
@@ -1147,7 +1147,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createLabel("1002d25", "junk", p2.getGlobalNamespace().getName());
 		p2.endTransaction(transactionID, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet expectedDiffs = new AddressSet();
 		expectedDiffs.addRange(addr(0x1002d16), addr(0x1002d16));
 		expectedDiffs.addRange(addr(0x1002d18), addr(0x1002d18));
@@ -1187,7 +1187,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder2.createLabel("1002d1d", "Foo", namespaceStr);
 		p2.endTransaction(transactionID, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet as = new AddressSet(addr(0x1002d1d), addr(0x1002d1d));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
 		programMerge.setMergeFilter(
@@ -1209,7 +1209,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function1.insertParameter(0, var1, SourceType.USER_DEFINED);
 		p1.endTransaction(transactionID1, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1243,7 +1243,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.insertParameter(0, var2, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x1002cf5), addr(0x1002cf5));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1266,7 +1266,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.insertParameter(0, var2, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1308,7 +1308,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.addParameter(var2C, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1351,7 +1351,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.addParameter(var2C, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1394,7 +1394,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.addParameter(var2C, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1436,7 +1436,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(3, function2.getParameterCount());
 		p2.endTransaction(transactionID, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1459,7 +1459,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function1.addParameter(var1, SourceType.USER_DEFINED);
 		p1.endTransaction(transactionID1, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1482,7 +1482,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.addParameter(var2, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1516,7 +1516,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.insertParameter(0, var2, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x1002cf5), addr(0x1002cf5));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1532,7 +1532,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// no params in program 1 or 2
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x10048a3), addr(0x10048a3));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1556,7 +1556,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function2.insertParameter(0, var2, SourceType.USER_DEFINED);
 		p2.endTransaction(transactionID2, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x1002cf5), addr(0x1002cf5));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1580,7 +1580,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		function1.insertParameter(0, var1, SourceType.USER_DEFINED);
 		p1.endTransaction(transactionID1, true);
 
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 		AddressSet diffAs = new AddressSet();
 		diffAs.addRange(addr(0x1002cf5), addr(0x1002cf5));
 		programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
@@ -1653,7 +1653,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		programBuilder1.setRegisterValue(DR0_REGISTER, "0x1005e7b", "0x1005e83", 0x85678);
 
 		AddressSet as;
-		programMerge = new ProgramMergeManager(p1, p2, TaskMonitor.DUMMY);
+		programMerge = new ProgramMergeManager(p1, p2);
 
 		as = new AddressSet();
 		as.addRange(addr(0x010022d4), addr(0x010022e5));
@@ -1700,7 +1700,7 @@ public class ProgramMerge1Test extends AbstractGhidraHeadedIntegrationTest {
 		symtab2.createLabel(addr(0x1002969), "ONE", SourceType.USER_DEFINED);
 		AddressSet limitedAddrSet = new AddressSet(addr(0x1002950), addr(0x100299b));
 		programMerge =
-			new ProgramMergeManager(p1, p2, limitedAddrSet, TaskMonitor.DUMMY);
+			new ProgramMergeManager(p1, p2, limitedAddrSet);
 
 		AddressSet as = new AddressSet(addr(0x100295d));
 		AddressSet as2 = new AddressSet(addr(0x1002969));
