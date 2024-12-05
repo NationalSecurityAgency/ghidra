@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -178,12 +178,19 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 		if (reference != null) {
 			sb.append(italic(reference)).append("&nbsp;");
 		}
-		sb.append(formatOffset(offset));
+		sb.append(formatHexOffset(offset));
+		sb.append("</td>");
+		sb.append("<td style=\"text-align: right;\">");
+		sb.append(formatDecimalOffset(offset));
 		sb.append("</td></tr>");
 	}
 
-	private static String formatOffset(long offset) {
+	private static String formatHexOffset(long offset) {
 		return String.format("+%xh", offset);
+	}
+
+	private static String formatDecimalOffset(long offset) {
+		return String.format("(+%d)", offset);
 	}
 
 }
