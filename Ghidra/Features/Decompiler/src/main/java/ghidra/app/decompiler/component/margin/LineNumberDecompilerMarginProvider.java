@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
@@ -28,6 +29,7 @@ import docking.util.GraphicsUtils;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
+import generic.stl.Pair;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.listing.Program;
@@ -134,7 +136,7 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
 		int arrowSize = ascent / 2;
-		var linesIndexes = decompilerPanel.getLinesIndexesWithOpeningBraces();
+		List<Pair<BigInteger, Boolean>> linesIndexes = decompilerPanel.getLinesIndexesWithOpeningBraces();
 		int ind = 0;
 
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {

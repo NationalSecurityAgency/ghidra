@@ -813,6 +813,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				return;
 			}
 
+			boolean isCollapsed = isBlockCollapsed(openingBrace);
 			List<ClangNode> list = new ArrayList<>();
 			openingBrace.Parent().flatten(list);
 
@@ -824,7 +825,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 						inSection = (!token.equals(closingBrace));
 					}
 					if (inSection) {
-						token.setCollapsedToken(!token.getCollapsedToken());
+						token.setCollapsedToken(!isCollapsed);
 					}
 				}
 				else if ((token instanceof ClangSyntaxToken)) {
