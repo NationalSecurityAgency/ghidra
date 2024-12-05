@@ -168,8 +168,23 @@ def checkPythonVersion(List<String> pyCmd) {
 			standardOutput = stdout
 			errorOutput = OutputStream.nullOutputStream()
 		}
-		def version = "$stdout".strip()
-		return version
+		return "$stdout".strip()
+	}
+	catch (Exception e) {
+		return "ABSENT"
+	}
+}
+
+def getPythonExecutable(List<String> pyCmd) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd
+			args "-c", "import sys; print(sys.executable)"
+			standardOutput = stdout
+			errorOutput = OutputStream.nullOutputStream()
+		}
+		return "$stdout".strip()
 	}
 	catch (Exception e) {
 		return "ABSENT"
@@ -204,13 +219,14 @@ def checkPip(List<String> pyCmd, boolean shouldPrint) {
 }
 
 def findPython3(boolean shouldPrint) {
-	def pyCmds = [['py'], ['python3'], ['python']]
-	pyCmds += SUPPORTED_PY_VERSIONS.collectMany { [["python$it"], ["py", "-$it"]] }
+	def pyCmds = SUPPORTED_PY_VERSIONS.collectMany { [["python$it"], ["py", "-$it"]] }
+	pyCmds += [['py'], ['python3'], ['python']]
 	for (pyCmd in pyCmds) {	
 		def pyVer = checkPythonVersion(pyCmd)
+		def pyExe = getPythonExecutable(pyCmd)
 		if (pyVer in SUPPORTED_PY_VERSIONS) {
 			if (shouldPrint) {
-				println("Python3 command: ${pyCmd} (version ${pyVer})")
+				println("Python3 command: ${pyCmd} (${pyVer}, ${pyExe})")
 			}
 			checkPip(pyCmd, shouldPrint)
 			return pyCmd
