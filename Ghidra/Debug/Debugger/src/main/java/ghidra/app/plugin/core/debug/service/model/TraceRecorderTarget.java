@@ -16,12 +16,10 @@
 package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import docking.ActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
@@ -58,6 +56,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class TraceRecorderTarget extends AbstractTarget {
 	private final TraceRecorder recorder;
 

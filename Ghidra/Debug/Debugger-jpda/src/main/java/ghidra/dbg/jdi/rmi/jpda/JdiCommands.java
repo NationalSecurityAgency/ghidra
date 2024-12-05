@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.jdi.rmi.jpda;
 
-import static ghidra.dbg.jdi.rmi.jpda.JdiManager.*;
+import static ghidra.dbg.jdi.rmi.jpda.JdiConnector.*;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -118,16 +118,16 @@ class State {
 
 public class JdiCommands {
 
-	private JdiManager manager;
+	private JdiConnector connector;
 	private JdiManagerImpl jdi;
 
 	public State state;
 	private String[] regNames = { "PC", "return_address" };
 	public long MAX_REFS = 100;
 
-	public JdiCommands(JdiManager manager) {
-		this.manager = manager;
-		this.jdi = manager.getJdi();
+	public JdiCommands(JdiConnector connector) {
+		this.connector = connector;
+		this.jdi = connector.getJdi();
 		state = new State();
 	}
 
@@ -141,7 +141,7 @@ public class JdiCommands {
 			SocketChannel channel =
 				SocketChannel.open(new InetSocketAddress(addr[0], Integer.parseInt(addr[1])));
 			state.client = new RmiClient(channel, "jdi");
-			state.client.setRegistry(manager.remoteMethodRegistry);
+			state.client.setRegistry(connector.remoteMethodRegistry);
 			state.client.negotiate("Connect");
 			Msg.out("Connected to " + state.client.getDescription());
 		}
@@ -183,7 +183,7 @@ public class JdiCommands {
 					if (key.isAcceptable()) {
 						SocketChannel client = channel.accept();
 						state.client = new RmiClient(client, "jdi");
-						state.client.setRegistry(manager.remoteMethodRegistry);
+						state.client.setRegistry(connector.remoteMethodRegistry);
 						client.configureBlocking(false);
 						Msg.out("Connected from " + state.client.getDescription());
 					}
@@ -205,7 +205,7 @@ public class JdiCommands {
 	}
 
 	private String computeName() {
-		VirtualMachine currentVM = manager.getJdi().getCurrentVM();
+		VirtualMachine currentVM = connector.getJdi().getCurrentVM();
 		if (currentVM != null) {
 			Optional<String> command = currentVM.process().info().command();
 			if (command.isPresent()) {
@@ -216,7 +216,7 @@ public class JdiCommands {
 	}
 
 	public void startTrace(String name) {
-		JdiArch arch = manager.getArch();
+		JdiArch arch = connector.getArch();
 		LanguageID language = arch.computeGhidraLanguage();
 		CompilerSpecID compiler = arch.computeGhidraCompiler(language);
 		state.trace = state.client.createTrace(name, language, compiler);
@@ -225,12 +225,12 @@ public class JdiCommands {
 		state.trace.registerMapper = arch.computeRegisterMapper();
 
 		try (RmiTransaction tx = state.trace.startTx("Create snapshots", false)) {
-			state.trace.createRootObject(manager.rootSchema.getContext(),
-				manager.rootSchema.getName().toString());
+			state.trace.createRootObject(connector.rootSchema.getContext(),
+				connector.rootSchema.getName().toString());
 			//activate(null);
 
 			// add the DEFAULT_SECTION
-			AddressRange range = manager.defaultRange;
+			AddressRange range = connector.defaultRange;
 			byte[] bytes = new byte[(int) range.getLength()];
 			Arrays.fill(bytes, (byte) 0xFF);
 			state.trace.putBytes(range.getMinAddress(), bytes, state.trace.getSnap());
@@ -267,7 +267,7 @@ public class JdiCommands {
 	}
 
 	public VirtualMachine ghidraTraceCreate(Map<String, String> env) {
-		return manager.getJdi().createVM(env);
+		return connector.getJdi().createVM(env);
 	}
 
 	public void ghidraTraceInfo() {
@@ -285,7 +285,7 @@ public class JdiCommands {
 	}
 
 	public void ghidraTraceInfoLcsp() {
-		JdiArch arch = manager.getArch();
+		JdiArch arch = connector.getArch();
 		LanguageID language = arch.computeGhidraLanguage();
 		CompilerSpecID compiler = arch.computeGhidraCompiler(language);
 		Msg.info(this, "Selected Ghidra language: " + language);
@@ -521,14 +521,14 @@ public class JdiCommands {
 	public void activate(String path) {
 		state.requireTrace();
 		if (path == null) {
-			VirtualMachine currentVM = manager.getJdi().getCurrentVM();
+			VirtualMachine currentVM = connector.getJdi().getCurrentVM();
 			path = getPath(currentVM);
 			try {
-				ThreadReference currentThread = manager.getJdi().getCurrentThread();
+				ThreadReference currentThread = connector.getJdi().getCurrentThread();
 				if (currentThread != null) {
 					path = getPath(currentThread);
 				}
-				StackFrame currentFrame = manager.getJdi().getCurrentFrame();
+				StackFrame currentFrame = connector.getJdi().getCurrentFrame();
 				if (currentFrame != null) {
 					path = getPath(currentFrame);
 				}
@@ -580,7 +580,7 @@ public class JdiCommands {
 	}
 
 	public RegisterValue[] putRegisters(StackFrame frame, String ppath) {
-		JdiArch arch = manager.getArch();
+		JdiArch arch = connector.getArch();
 		Language lang = arch.getLanguage();
 		Set<String> keys = new HashSet<>();
 		RegisterValue[] rvs = new RegisterValue[regNames.length];
@@ -591,7 +591,7 @@ public class JdiCommands {
 		if (register == null) {
 			register = fabricatePcRegister(lang, r);
 		}
-		keys.add(manager.key(r));
+		keys.add(connector.key(r));
 		Location loc = frame.location();
 		Address addr = putRegister(ppath, r, loc);
 		RegisterValue rv = new RegisterValue(register, BigInteger.valueOf(addr.getOffset()));
@@ -602,7 +602,7 @@ public class JdiCommands {
 		if (register == null) {
 			register = fabricatePcRegister(lang, r);
 		}
-		keys.add(manager.key(r));
+		keys.add(connector.key(r));
 		ThreadReference thread = frame.thread();
 		Location ploc = null;
 		int frameCount;
@@ -633,13 +633,13 @@ public class JdiCommands {
 	}
 
 	public void putCurrentLocation() {
-		Location loc = manager.getJdi().getCurrentLocation();
+		Location loc = connector.getJdi().getCurrentLocation();
 		if (loc == null) {
 			return;
 		}
 		Method m = loc.method();
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		if (manager.getAddressRange(m.declaringType()) == null) {
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
+		if (connector.getAddressRange(m.declaringType()) == null) {
 			putReferenceType(getPath(vm) + ".Classes", m.declaringType(), true);
 		}
 		else {
@@ -648,10 +648,10 @@ public class JdiCommands {
 	}
 
 	public Address putRegister(String ppath, String name, Location loc) {
-		Address addr = manager.getAddressFromLocation(loc);
+		Address addr = connector.getAddressFromLocation(loc);
 		RegisterMapper mapper = state.trace.registerMapper;
 		String regName = mapper.mapName(name);
-		JdiArch arch = manager.getArch();
+		JdiArch arch = connector.getArch();
 		Language lang = arch.getLanguage();
 		Register register = lang.getRegister(name);
 		if (register == null) {
@@ -660,7 +660,7 @@ public class JdiCommands {
 		RegisterValue rv = new RegisterValue(register, addr.getOffsetAsBigInteger());
 		RegisterValue mapped = mapper.mapValue(name, rv);
 		Address regAddr = addr.getNewAddress(mapped.getUnsignedValue().longValue());
-		setValue(ppath, manager.key(regName), Long.toHexString(regAddr.getOffset()));
+		setValue(ppath, connector.key(regName), Long.toHexString(regAddr.getOffset()));
 
 		int codeIndex = (int) loc.codeIndex();
 		regAddr = regAddr.subtract(codeIndex);
@@ -688,7 +688,7 @@ public class JdiCommands {
 		byte[] bytes = new byte[ilen];
 		Arrays.fill(bytes, (byte) 0xFF);
 		if (addressSpace.getName().equals("ram")) {
-			Method method = manager.getMethodForAddress(address);
+			Method method = connector.getMethodForAddress(address);
 			if (method != null) {
 				byte[] bytecodes = method.bytecodes();
 				if (bytecodes != null) {
@@ -704,7 +704,7 @@ public class JdiCommands {
 			return;
 		}
 		if (addressSpace.getName().equals("constantPool")) {
-			ReferenceType reftype = manager.getReferenceTypeForPoolAddress(address);
+			ReferenceType reftype = connector.getReferenceTypeForPoolAddress(address);
 			if (reftype != null) {
 				byte[] bytecodes = reftype.constantPool();
 				if (bytecodes != null) {
@@ -733,7 +733,7 @@ public class JdiCommands {
 	public void putReferenceTypeContainer(String ppath, List<ReferenceType> reftypes) {
 		Set<String> keys = new HashSet<>();
 		for (ReferenceType ref : reftypes) {
-			keys.add(manager.key(ref.name()));
+			keys.add(connector.key(ref.name()));
 			putReferenceType(ppath, ref, false);
 		}
 		retainKeys(ppath, keys);
@@ -741,8 +741,8 @@ public class JdiCommands {
 
 	public void putReferenceType(String ppath, ReferenceType reftype, boolean load) {
 		String path = createObject(reftype, reftype.name(), ppath);
-		if (manager.getAddressRange(reftype) == null) {
-			manager.bumpRamIndex();
+		if (connector.getAddressRange(reftype) == null) {
+			connector.bumpRamIndex();
 		}
 		if (load) {
 			registerMemory(path, reftype);
@@ -824,28 +824,28 @@ public class JdiCommands {
 	}
 
 	private void registerMemory(String path, ReferenceType reftype) {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		String mempath = getPath(vm) + ".Memory";
 		AddressSet bounds = new AddressSet();
 		for (Method m : reftype.methods()) {
 			if (m.location() != null) {
-				AddressRange range = manager.registerAddressesForMethod(m);
+				AddressRange range = connector.registerAddressesForMethod(m);
 				if (range != null && range.getMinAddress().getOffset() != 0) {
 					putMem(range.getMinAddress(), range.getLength(), true);
 					bounds.add(range);
 
-					String mpath = createObject(mempath + manager.key(m.toString()));
+					String mpath = createObject(mempath + connector.key(m.toString()));
 					setValue(mpath, ATTR_RANGE, range);
 					insertObject(mpath);
 				}
 			}
 		}
-		AddressRange range = manager.putAddressRange(reftype, bounds);
+		AddressRange range = connector.putAddressRange(reftype, bounds);
 		setValue(path, ATTR_RANGE, range);
 
 		try {
 			setValue(path, ATTR_COUNT, reftype.constantPoolCount());
-			range = manager.getPoolAddressRange(reftype, getSize(reftype) - 1);
+			range = connector.getPoolAddressRange(reftype, getSize(reftype) - 1);
 			setValue(path, ATTR_RANGE_CP, range);
 		}
 		catch (UnsupportedOperationException e) {
@@ -861,7 +861,7 @@ public class JdiCommands {
 
 	private void updateMemoryForMethod(Method m) {
 		if (m.location() != null) {
-			AddressRange range = manager.registerAddressesForMethod(m);
+			AddressRange range = connector.registerAddressesForMethod(m);
 			if (range != null && range.getMinAddress().getOffset() != 0) {
 				putMem(range.getMinAddress(), range.getLength(), true);
 			}
@@ -891,7 +891,7 @@ public class JdiCommands {
 	public void putClassTypes(String ppath, List<ClassType> reftypes) {
 		Set<String> keys = new HashSet<>();
 		for (ClassType ref : reftypes) {
-			keys.add(manager.key(ref.name()));
+			keys.add(connector.key(ref.name()));
 			putReferenceType(ppath, ref, true);
 		}
 		retainKeys(ppath, keys);
@@ -912,7 +912,7 @@ public class JdiCommands {
 	public void putInterfaceTypes(String ppath, List<InterfaceType> reftypes) {
 		Set<String> keys = new HashSet<>();
 		for (ReferenceType ref : reftypes) {
-			keys.add(manager.key(ref.name()));
+			keys.add(connector.key(ref.name()));
 			putReferenceType(ppath, ref, true);
 		}
 		retainKeys(ppath, keys);
@@ -1007,7 +1007,7 @@ public class JdiCommands {
 	}
 
 	private Value getPrimitiveValue(Value value, String newVal) {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		if (value instanceof BooleanValue) {
 			return vm.mirrorOf(Boolean.valueOf(newVal));
 		}
@@ -1041,7 +1041,7 @@ public class JdiCommands {
 	public void modifyValue(LocalVariable lvar, String valstr) {
 		String path = getPath(lvar);
 		String ppath = getParentPath(path);
-		Object parent = manager.objForPath(ppath);
+		Object parent = connector.objForPath(ppath);
 		if (parent instanceof StackFrame frame) {
 			Value orig = frame.getValue(lvar);
 			Value repl = getPrimitiveValue(orig, valstr);
@@ -1065,7 +1065,7 @@ public class JdiCommands {
 	public void modifyValue(Field field, String valstr) {
 		String path = getPath(field);
 		String ppath = getParentPath(path);
-		Object parent = manager.objForPath(ppath);
+		Object parent = connector.objForPath(ppath);
 		if (parent instanceof ObjectReference ref) {
 			Value orig = ref.getValue(field);
 			Value repl = getPrimitiveValue(orig, valstr);
@@ -1179,13 +1179,13 @@ public class JdiCommands {
 	}
 
 	public void putModuleReferenceContainer() {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		String ppath = getPath(vm) + ".ModuleRefs";
 		Set<String> keys = new HashSet<>();
 		try {
 			List<ModuleReference> modules = vm.allModules();
 			for (ModuleReference ref : modules) {
-				keys.add(manager.key(ref.name()));
+				keys.add(connector.key(ref.name()));
 				String mpath = createObject(ref, ref.name(), ppath);
 				insertObject(mpath);
 			}
@@ -1223,7 +1223,7 @@ public class JdiCommands {
 		String ppath = refpath + ".ThreadGroups";
 		Set<String> keys = new HashSet<>();
 		for (ThreadGroupReference subref : refs) {
-			keys.add(manager.key(subref.name()));
+			keys.add(connector.key(subref.name()));
 			putThreadGroupReference(ppath, subref);
 		}
 		retainKeys(ppath, keys);
@@ -1251,7 +1251,7 @@ public class JdiCommands {
 		String ppath = refpath + ".Threads";
 		Set<String> keys = new HashSet<>();
 		for (ThreadReference subref : refs) {
-			keys.add(manager.key(subref.name()));
+			keys.add(connector.key(subref.name()));
 			if (asLink) {
 				createLink(ppath, subref.name(), subref);
 			}
@@ -1325,7 +1325,7 @@ public class JdiCommands {
 	// TYPE COMPONENTS
 
 	public void putFieldContainer(String path, ReferenceType reftype) {
-		boolean scope = manager.getScope(reftype);
+		boolean scope = connector.getScope(reftype);
 		List<Field> fields = scope ? reftype.allFields() : reftype.fields();
 		Set<String> keys = new HashSet<>();
 		for (Field f : fields) {
@@ -1333,32 +1333,32 @@ public class JdiCommands {
 			try {
 				value = reftype.getValue(f);
 				if (value != null) {
-					keys.add(manager.key(value.toString()));
+					keys.add(connector.key(value.toString()));
 				}
 			}
 			catch (IllegalArgumentException iae) {
 				// IGNORE
 			}
-			keys.add(manager.key(f.name()));
+			keys.add(connector.key(f.name()));
 			putField(path, f, value);
 		}
 		retainKeys(path, keys);
 	}
 
 	public void putVariableContainer(String path, ObjectReference ref) {
-		boolean scope = manager.getScope(ref);
+		boolean scope = connector.getScope(ref);
 		List<Field> fields = scope ? ref.referenceType().allFields() : ref.referenceType().fields();
 		Set<String> keys = new HashSet<>();
 		for (Field f : fields) {
 			Value value = null;
 			try {
 				value = ref.getValue(f);
-				keys.add(manager.key(value.toString()));
+				keys.add(connector.key(value.toString()));
 			}
 			catch (IllegalArgumentException iae) {
 				// IGNORE
 			}
-			keys.add(manager.key(f.name()));
+			keys.add(connector.key(f.name()));
 			putField(path, f, value);
 		}
 		retainKeys(path, keys);
@@ -1409,12 +1409,12 @@ public class JdiCommands {
 	}
 
 	public void putMethodContainer(String path, ReferenceType reftype) {
-		boolean scope = manager.getScope(reftype);
+		boolean scope = connector.getScope(reftype);
 		Set<String> keys = new HashSet<>();
 		try {
 			List<Method> methods = scope ? reftype.allMethods() : reftype.methods();
 			for (Method m : methods) {
-				keys.add(manager.key(m.name()));
+				keys.add(connector.key(m.name()));
 				putMethod(path, m);
 			}
 		}
@@ -1450,8 +1450,8 @@ public class JdiCommands {
 			insertObject(vpath);
 		}
 		if (m.location() != null) {
-			AddressRange range = manager.getAddressRange(m);
-			if (!range.equals(manager.defaultRange)) {
+			AddressRange range = connector.getAddressRange(m);
+			if (!range.equals(connector.defaultRange)) {
 				setValue(path, ATTR_RANGE, range);
 			}
 		}
@@ -1490,7 +1490,7 @@ public class JdiCommands {
 			Set<String> keys = new HashSet<>();
 			for (Entry<String, VirtualMachine> entry : jdi.listVMs().get().entrySet()) {
 				VirtualMachine vm = entry.getValue();
-				keys.add(manager.key(vm.name()));
+				keys.add(connector.key(vm.name()));
 				putVM("VMs", vm);
 			}
 			retainKeys("VMs", keys);
@@ -1545,7 +1545,7 @@ public class JdiCommands {
 				Process proc = vm.process();
 				if (proc != null) {
 					String key = Long.toString(proc.pid());
-					keys.add(manager.key(key));
+					keys.add(connector.key(key));
 					putProcess(ppath, proc);
 				}
 				retainKeys(ppath, keys);
@@ -1573,7 +1573,7 @@ public class JdiCommands {
 	}
 
 	public void putFrames() {
-		ThreadReference thread = manager.getJdi().getCurrentThread();
+		ThreadReference thread = connector.getJdi().getCurrentThread();
 		String ppath = createObject(getPath(thread) + ".Stack");
 		Set<String> keys = new HashSet<>();
 		try {
@@ -1581,7 +1581,7 @@ public class JdiCommands {
 			for (int i = 0; i < frameCount; i++) {
 				StackFrame frame = thread.frame(i);
 				String key = Integer.toString(i);
-				keys.add(manager.key(key));
+				keys.add(connector.key(key));
 				putFrame(ppath, frame, key);
 			}
 		}
@@ -1603,7 +1603,7 @@ public class JdiCommands {
 		setValue(path, ATTR_DISPLAY, "[" + key + "] " + location + ":" + location.method().name() +
 			":" + location.codeIndex());
 		putLocation(path, ATTR_LOCATION, location);
-		Address addr = manager.getAddressFromLocation(location);
+		Address addr = connector.getAddressFromLocation(location);
 		setValue(path, ATTR_PC, addr);
 
 		String rpath = createObject(path + ".Registers");
@@ -1651,9 +1651,9 @@ public class JdiCommands {
 	}
 
 	public void putLocationDetails(String path, Location location) {
-		Address addr = manager.getAddressFromLocation(location);
+		Address addr = connector.getAddressFromLocation(location);
 		if (isLoaded(location)) {
-			setValue(path, ATTR_DISPLAY, manager.key(location.toString()) + ": " + addr);
+			setValue(path, ATTR_DISPLAY, connector.key(location.toString()) + ": " + addr);
 			setValue(path, ATTR_ADDRESS, addr);
 		}
 		setValue(path, ATTR_INDEX, location.codeIndex());
@@ -1687,8 +1687,8 @@ public class JdiCommands {
 	}
 
 	private boolean isLoaded(Location location) {
-		AddressRange range = manager.getAddressRange(location.method());
-		return !range.equals(manager.defaultRange);
+		AddressRange range = connector.getAddressRange(location.method());
+		return !range.equals(connector.defaultRange);
 	}
 
 	public void putLocalVariableContainer(String path, Map<LocalVariable, Value> variables) {
@@ -1747,7 +1747,7 @@ public class JdiCommands {
 	}
 
 	public void putBreakpoints() {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		EventRequestManager requestManager = vm.eventRequestManager();
 		String ppath = getPath(vm) + ".Breakpoints";
 		String path = createObject(ppath);
@@ -1755,14 +1755,14 @@ public class JdiCommands {
 
 		List<BreakpointRequest> brkReqs = requestManager.breakpointRequests();
 		for (BreakpointRequest req : brkReqs) {
-			String key = manager.key(req.toString());
+			String key = connector.key(req.toString());
 			keys.add(key);
 			putReqBreakpoint(ppath, req, key);
 		}
 
 		List<AccessWatchpointRequest> watchReqs = requestManager.accessWatchpointRequests();
 		for (AccessWatchpointRequest req : watchReqs) {
-			String key = manager.key(req.toString());
+			String key = connector.key(req.toString());
 			keys.add(key);
 			putReqAccessWatchpoint(ppath, req, key);
 		}
@@ -1770,7 +1770,7 @@ public class JdiCommands {
 		List<ModificationWatchpointRequest> modReqs =
 			requestManager.modificationWatchpointRequests();
 		for (ModificationWatchpointRequest req : modReqs) {
-			String key = manager.key(req.toString());
+			String key = connector.key(req.toString());
 			keys.add(key);
 			putReqModificationWatchpoint(ppath, req, key);
 		}
@@ -1780,7 +1780,7 @@ public class JdiCommands {
 	}
 
 	public void putEvents() {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		EventRequestManager requestManager = vm.eventRequestManager();
 		String ppath = getPath(vm) + ".Events";
 		String path = createObject(ppath);
@@ -1788,81 +1788,81 @@ public class JdiCommands {
 
 		List<VMDeathRequest> deathReqs = requestManager.vmDeathRequests();
 		for (VMDeathRequest req : deathReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqVMDeath(ppath, req, req.toString());
 		}
 
 		List<ThreadStartRequest> threadStartReqs = requestManager.threadStartRequests();
 		for (ThreadStartRequest req : threadStartReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqThreadStarted(ppath, req, req.toString());
 		}
 
 		List<ThreadDeathRequest> threadDeathReqs = requestManager.threadDeathRequests();
 		for (ThreadDeathRequest req : threadDeathReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqThreadExited(ppath, req, req.toString());
 		}
 
 		List<ExceptionRequest> excReqs = requestManager.exceptionRequests();
 		for (ExceptionRequest req : excReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqException(ppath, req, req.toString());
 		}
 
 		List<ClassPrepareRequest> loadReqs = requestManager.classPrepareRequests();
 		for (ClassPrepareRequest req : loadReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqClassLoad(ppath, req, req.toString());
 		}
 
 		List<ClassUnloadRequest> unloadReqs = requestManager.classUnloadRequests();
 		for (ClassUnloadRequest req : unloadReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqClassUnload(ppath, req, req.toString());
 		}
 
 		List<MethodEntryRequest> entryReqs = requestManager.methodEntryRequests();
 		for (MethodEntryRequest req : entryReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqMethodEntry(ppath, req, req.toString());
 		}
 
 		List<MethodExitRequest> exitReqs = requestManager.methodExitRequests();
 		for (MethodExitRequest req : exitReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqMethodExit(ppath, req, req.toString());
 		}
 
 		List<StepRequest> stepReqs = requestManager.stepRequests();
 		for (StepRequest req : stepReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqStep(ppath, req, req.toString());
 		}
 
 		List<MonitorContendedEnterRequest> monEnterReqs =
 			requestManager.monitorContendedEnterRequests();
 		for (MonitorContendedEnterRequest req : monEnterReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqMonContendedEnter(ppath, req, req.toString());
 		}
 
 		List<MonitorContendedEnteredRequest> monEnteredReqs =
 			requestManager.monitorContendedEnteredRequests();
 		for (MonitorContendedEnteredRequest req : monEnteredReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqMonContendedEntered(ppath, req, req.toString());
 		}
 
 		List<MonitorWaitRequest> monWaitReqs = requestManager.monitorWaitRequests();
 		for (MonitorWaitRequest req : monWaitReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqMonWait(ppath, req, req.toString());
 		}
 
 		List<MonitorWaitedRequest> monWaitedReqs = requestManager.monitorWaitedRequests();
 		for (MonitorWaitedRequest req : monWaitedReqs) {
-			keys.add(manager.key(req.toString()));
+			keys.add(connector.key(req.toString()));
 			putReqMonWaited(ppath, req, req.toString());
 		}
 
@@ -1912,7 +1912,7 @@ public class JdiCommands {
 		Location location = req.location();
 		setValue(path, ATTR_DISPLAY, "[" + key + "] " + location + ":" + location.method().name() +
 			":" + location.codeIndex());
-		Address addr = manager.getAddressFromLocation(location);
+		Address addr = connector.getAddressFromLocation(location);
 		AddressRangeImpl range = new AddressRangeImpl(addr, addr);
 		setValue(path, ATTR_RANGE, range);
 		String lpath = createObject(location, location.toString(), path + ".Location");
@@ -1933,7 +1933,7 @@ public class JdiCommands {
 		setValue(path, ATTR_DISPLAY, "[" + key + "] " + field + ":" + field.declaringType());
 		// NB: This isn't correct, but we need a range (any range)
 		AddressRange range =
-			manager.getPoolAddressRange(field.declaringType(), getSize(field.declaringType()));
+			connector.getPoolAddressRange(field.declaringType(), getSize(field.declaringType()));
 		setValue(path, ATTR_RANGE, range);
 		String fpath = createObject(field, field.toString(), path + ".Field");
 		insertObject(fpath);
@@ -1954,7 +1954,7 @@ public class JdiCommands {
 		setValue(path, ATTR_DISPLAY, "[" + key + "] " + field + ":" + field.declaringType());
 		// NB: This isn't correct, but we need a range (any range)
 		AddressRange range =
-			manager.getPoolAddressRange(field.declaringType(), getSize(field.declaringType()));
+			connector.getPoolAddressRange(field.declaringType(), getSize(field.declaringType()));
 		setValue(path, ATTR_RANGE, range);
 		String fpath = createObject(field, field.toString(), path + ".Field");
 		insertObject(fpath);
@@ -2102,7 +2102,7 @@ public class JdiCommands {
 	public void ghidraTracePutClasses() {
 		state.requireTrace();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTracePutClasses", false)) {
-			VirtualMachine vm = manager.getJdi().getCurrentVM();
+			VirtualMachine vm = connector.getJdi().getCurrentVM();
 			putReferenceTypeContainer(getPath(vm) + ".Classes", vm.allClasses());
 		}
 	}
@@ -2110,7 +2110,7 @@ public class JdiCommands {
 	public void ghidraTracePutThreads() {
 		state.requireTrace();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTracePutThreads", false)) {
-			VirtualMachine vm = manager.getJdi().getCurrentVM();
+			VirtualMachine vm = connector.getJdi().getCurrentVM();
 			putThreadContainer(getPath(vm), vm.allThreads(), false); // Do this first
 			putThreadGroupContainer(getPath(vm), vm.topLevelThreadGroups());
 		}
@@ -2127,7 +2127,7 @@ public class JdiCommands {
 		state.requireTrace();
 		try (RmiTransaction tx = state.trace.startTx("ghidraTracePutAll", false)) {
 			putVMs();
-			VirtualMachine vm = manager.getJdi().getCurrentVM();
+			VirtualMachine vm = connector.getJdi().getCurrentVM();
 			putProcesses();
 			putThreadContainer(getPath(vm), vm.allThreads(), false);
 			putThreadGroupContainer(getPath(vm), vm.topLevelThreadGroups());
@@ -2139,37 +2139,37 @@ public class JdiCommands {
 	}
 
 	public void ghidraTraceInstallHooks() {
-		manager.getHooks().installHooks();
+		connector.getHooks().installHooks();
 	}
 
 	public void ghidraTraceRemoveHooks() {
-		manager.getHooks().removeHooks();
+		connector.getHooks().removeHooks();
 	}
 
 	public void ghidraTraceSyncEnable() {
 		try (RmiTransaction tx = state.trace.startTx("ghidraTraceSyncEnable", false)) {
-			JdiHooks hooks = manager.getHooks();
+			JdiHooks hooks = connector.getHooks();
 			hooks.installHooks();
 			hooks.enableCurrentVM();
 		}
 	}
 
 	public void ghidraTraceSyncDisable() {
-		manager.getHooks().disableCurrentVM();
+		connector.getHooks().disableCurrentVM();
 	}
 
 	public void ghidraTraceSyncSynthStopped() {
-		manager.getHooks().onStop(null, state.trace);
+		connector.getHooks().onStop(null, state.trace);
 	}
 
 	public void ghidraTraceWaitStopped(int timeout) {
-		ThreadReference currentThread = manager.getJdi().getCurrentThread();
+		ThreadReference currentThread = connector.getJdi().getCurrentThread();
 		if (currentThread == null) {
 			return;
 		}
 		long start = System.currentTimeMillis();
 		while (!currentThread.isSuspended()) {
-			currentThread = manager.getJdi().getCurrentThread();
+			currentThread = connector.getJdi().getCurrentThread();
 			try {
 				Thread.sleep(100);
 				long elapsed = System.currentTimeMillis() - start;
@@ -2219,7 +2219,7 @@ public class JdiCommands {
 	}
 
 	String getPath(Object obj) {
-		return manager.pathForObj(obj);
+		return connector.pathForObj(obj);
 	}
 
 	public RmiTraceObject proxyObject(Object obj) {
@@ -2236,7 +2236,7 @@ public class JdiCommands {
 		if (obj == null) {
 			return null;
 		}
-		String path = manager.recordPath(obj, ppath, key);
+		String path = connector.recordPath(obj, ppath, key);
 		state.trace.createObject(path);
 		return path;
 	}
@@ -2268,7 +2268,7 @@ public class JdiCommands {
 	}
 
 	public String getVmPath(VirtualMachine vm) {
-		return manager.recordPath(vm, "VMs", vm.name());
+		return connector.recordPath(vm, "VMs", vm.name());
 	}
 
 	public String getParentPath(String path) {

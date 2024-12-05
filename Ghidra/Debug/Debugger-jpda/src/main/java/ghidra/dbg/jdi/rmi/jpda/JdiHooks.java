@@ -15,7 +15,7 @@
  */
 package ghidra.dbg.jdi.rmi.jpda;
 
-import static ghidra.dbg.jdi.rmi.jpda.JdiManager.*;
+import static ghidra.dbg.jdi.rmi.jpda.JdiConnector.*;
 
 import java.util.*;
 
@@ -42,7 +42,7 @@ class HookState {
 
 class VmState {
 
-	private JdiManager manager;
+	private JdiConnector connector;
 	private JdiCommands cmds;
 	private boolean firstPass;
 	boolean classes;
@@ -53,9 +53,9 @@ class VmState {
 	boolean events;
 	Set<Object> visited;
 
-	public VmState(JdiManager manager) {
-		this.manager = manager;
-		this.cmds = manager.getCommands();
+	public VmState(JdiConnector connector) {
+		this.connector = connector;
+		this.cmds = connector.getCommands();
 		this.firstPass = true;
 		this.classes = false;
 		this.modules = false;
@@ -76,7 +76,7 @@ class VmState {
 			cmds.putProcesses();
 		}
 
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		cmds.putVM("VMs", vm);
 		setState(vm);
 
@@ -88,14 +88,14 @@ class VmState {
 		}
 
 		cmds.putCurrentLocation();
-		ThreadReference thread = manager.getJdi().getCurrentThread();
+		ThreadReference thread = connector.getJdi().getCurrentThread();
 		if (thread != null) {
 			cmds.createLink(vm, "_event_thread", thread);
 			if (first || !visited.contains(thread)) {
 				cmds.putFrames();
 				visited.add(thread);
 			}
-			StackFrame frame = manager.getJdi().getCurrentFrame();
+			StackFrame frame = connector.getJdi().getCurrentFrame();
 			if (frame != null) {
 				try {
 					if (first || !visited.contains(frame)) {
@@ -104,7 +104,7 @@ class VmState {
 					}
 				}
 				catch (InvalidStackFrameException e) {
-					manager.getJdi().setCurrentFrame(null);
+					connector.getJdi().setCurrentFrame(null);
 				}
 			}
 		}
@@ -153,7 +153,7 @@ class VmState {
 	}
 
 	public void recordStateExited(VirtualMachine eventVM, String description) {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		String path = cmds.getPath(vm);
 		int exitCode = -1;
 		try {
@@ -179,13 +179,13 @@ class VmState {
 
 public class JdiHooks implements JdiEventsListenerAdapter {
 
-	private JdiManager manager;
+	private JdiConnector connector;
 	private JdiCommands cmds;
 	private HookState hookState;
 	private Map<VirtualMachine, VmState> vmStates = new HashMap<>();
 
-	public JdiHooks(JdiManager manager, JdiCommands cmds) {
-		this.manager = manager;
+	public JdiHooks(JdiConnector connector, JdiCommands cmds) {
+		this.connector = connector;
 		this.cmds = cmds;
 	}
 
@@ -196,8 +196,8 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 
 	@Override
 	public DebugStatus vmStarted(VMStartEvent event, JdiCause cause) {
-		setCommands(manager.getCommands());
-		JdiManagerImpl jdi = manager.getJdi();
+		setCommands(connector.getCommands());
+		JdiManagerImpl jdi = connector.getJdi();
 		VirtualMachine vm = event == null ? jdi.getCurrentVM() : event.virtualMachine();
 		jdi.setCurrentVM(vm);
 		jdi.addVM(vm);
@@ -220,7 +220,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("VMDeathEvent");
+		return connector.getReturnStatus("VMDeathEvent");
 	}
 
 	@Override
@@ -245,7 +245,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("ThreadStartEvent");
+		return connector.getReturnStatus("ThreadStartEvent");
 	}
 
 	@Override
@@ -255,7 +255,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("ThreadDeathEvent");
+		return connector.getReturnStatus("ThreadDeathEvent");
 	}
 
 	@Override
@@ -315,7 +315,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("ExceptionEvent");
+		return connector.getReturnStatus("ExceptionEvent");
 	}
 
 	@Override
@@ -325,7 +325,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("MethodEntryEvent");
+		return connector.getReturnStatus("MethodEntryEvent");
 	}
 
 	@Override
@@ -335,7 +335,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("MethodExitEvent");
+		return connector.getReturnStatus("MethodExitEvent");
 	}
 
 	@Override
@@ -345,7 +345,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("ClassPrepareEvent");
+		return connector.getReturnStatus("ClassPrepareEvent");
 	}
 
 	@Override
@@ -355,7 +355,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("ClassUnloadEvent");
+		return connector.getReturnStatus("ClassUnloadEvent");
 	}
 
 	@Override
@@ -365,7 +365,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("MonitorContendedEnterEvent");
+		return connector.getReturnStatus("MonitorContendedEnterEvent");
 	}
 
 	@Override
@@ -375,7 +375,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("MonitorContendedEnteredEvent");
+		return connector.getReturnStatus("MonitorContendedEnteredEvent");
 	}
 
 	@Override
@@ -385,7 +385,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("MonitorWaitEvent");
+		return connector.getReturnStatus("MonitorWaitEvent");
 	}
 
 	@Override
@@ -395,7 +395,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 			return DebugStatus.NO_CHANGE;
 		}
 		onStop(evt, trace);
-		return manager.getReturnStatus("MonitorWaitedEvent");
+		return connector.getReturnStatus("MonitorWaitedEvent");
 	}
 
 	@Override
@@ -405,7 +405,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 	}
 
 	void onStop(Event evt, RmiTrace trace) {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		if (evt != null) {
 			setCurrent(evt);
 			vm = evt.virtualMachine();
@@ -421,7 +421,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 
 	private void setCurrent(Event event) {
 		VirtualMachine eventVM = event.virtualMachine();
-		JdiManagerImpl jdi = manager.getJdi();
+		JdiManagerImpl jdi = connector.getJdi();
 		jdi.setCurrentEvent(event);
 		jdi.setCurrentVM(eventVM);
 		if (event instanceof LocatableEvent locEvt) {
@@ -438,7 +438,7 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 	}
 
 	void onContinue() {
-		VirtualMachine currentVM = manager.getJdi().getCurrentVM();
+		VirtualMachine currentVM = connector.getJdi().getCurrentVM();
 		VmState state = vmStates.get(currentVM);
 		try (RmiBatch batch = hookState.batch();
 				RmiTransaction tx = cmds.state.trace.openTx("Continue")) {
@@ -448,23 +448,23 @@ public class JdiHooks implements JdiEventsListenerAdapter {
 	}
 
 	public void installHooks() {
-		manager.getJdi().addEventsListener(null, this);
+		connector.getJdi().addEventsListener(null, this);
 	}
 
 	public void removeHooks() {
-		manager.getJdi().removeEventsListener(null, this);
+		connector.getJdi().removeEventsListener(null, this);
 	}
 
 	public void enableCurrentVM() {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
-		VmState state = new VmState(manager);
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
+		VmState state = new VmState(connector);
 		vmStates.put(vm, state);
 		state.recordState("VM started");
 		cmds.activate(null);
 	}
 
 	public void disableCurrentVM() {
-		VirtualMachine vm = manager.getJdi().getCurrentVM();
+		VirtualMachine vm = connector.getJdi().getCurrentVM();
 		VmState state = vmStates.get(vm);
 		state.visited.clear();
 		vmStates.remove(vm);

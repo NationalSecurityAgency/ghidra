@@ -20,7 +20,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.terminal.TerminalProvider;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
@@ -48,7 +47,7 @@ public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGe
 
 		runSwingLater(() -> servicePlugin.configureAndLaunch(offer));
 
-		captureDialog(DebuggerMethodInvocationDialog.class);
+		captureDialog(TraceRmiLaunchDialog.class);
 	}
 
 	protected ValStr<PathIsFile> fileArg(String path) {

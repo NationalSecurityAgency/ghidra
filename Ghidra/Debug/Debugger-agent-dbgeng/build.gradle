@@ -24,17 +24,6 @@ apply from: "$rootProject.projectDir/gradle/debugger/hasNodepJar.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgeng'
 
-dependencies {
-	api project(":Framework-AsyncComm")
-	api project(":Framework-Debugging")
-	api project(":Debugger-gadp")
-
-	//testImplementation project(":Base")
-	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
-	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
-}
-
 ext.tlb = file("build/os/win_x86_64/dbgmodel.tlb")
 
 if ("win_x86_64".equals(getCurrentPlatformName())) {
@@ -98,15 +87,3 @@ distributePyDep("capstone-5.0.1-py3-none-win_amd64.whl")
 distributePyDep("comtypes-1.4.1-py3-none-any.whl")
 distributePyDep("pywin32-306-cp312-cp312-win_amd64.whl")
 
-tasks.nodepJar {
-	manifest {
-		attributes['Main-Class'] = 'agent.dbgeng.gadp.DbgEngGadpServer'
-	}
-}
-
-test {
-	jvmArgs('-Xrs') // TODO: Is this needed, or left over from trial-and-error
-	if ("win_x86_64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenWin_x86_64")
-	}
-}

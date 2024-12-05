@@ -51,7 +51,6 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerMemoryBytesProvider;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingProvider;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider;
@@ -60,7 +59,9 @@ import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueHoverPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
+import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectDialog;
 import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectionManagerPlugin;
+import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLaunchDialog;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin.EmulateProgramAction;
@@ -262,7 +263,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 			}
 		}));
 
-		captureDialog(DebuggerMethodInvocationDialog.class);
+		captureDialog(TraceRmiLaunchDialog.class);
 	}
 
 	@Test
@@ -775,7 +776,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		performAction("Connect by Accept",
 			PluginUtils.getPluginNameFromClass(TraceRmiConnectionManagerPlugin.class),
 			false);
-		captureDialog(DebuggerMethodInvocationDialog.class);
+		captureDialog(TraceRmiConnectDialog.class);
 	}
 
 	protected Function findCommandLineParser() throws Throwable {

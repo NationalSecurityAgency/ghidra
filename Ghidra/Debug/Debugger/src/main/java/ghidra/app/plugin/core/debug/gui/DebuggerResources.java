@@ -41,11 +41,9 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPlugin;
 import ghidra.app.plugin.core.debug.gui.model.DebuggerModelPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingPlugin;
-import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperPlugin;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersPlugin;
 import ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPlugin;
-import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
@@ -228,11 +226,6 @@ public interface DebuggerResources {
 	HelpLocation HELP_PROVIDER_REGISTERS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerRegistersPlugin.class), HELP_ANCHOR_PLUGIN);
 
-	String TITLE_PROVIDER_TARGETS = "Debugger Targets";
-	Icon ICON_PROVIDER_TARGETS = ICON_CONNECTION; // TODO: Same icon as action
-	HelpLocation HELP_PROVIDER_TARGETS = new HelpLocation(
-		PluginUtils.getPluginNameFromClass(DebuggerTargetsPlugin.class), HELP_ANCHOR_PLUGIN);
-
 	String TITLE_PROVIDER_STACK = "Stack";
 	Icon ICON_PROVIDER_STACK = ICON_STACK;
 	HelpLocation HELP_PROVIDER_STACK = new HelpLocation(
@@ -248,11 +241,6 @@ public interface DebuggerResources {
 	HelpLocation HELP_PROVIDER_TIME = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerTimePlugin.class), HELP_ANCHOR_PLUGIN);
 
-	String TITLE_PROVIDER_OBJECTS = "Objects";
-	Icon ICON_PROVIDER_OBJECTS = new GIcon("icon.debugger.provider.objects");
-	HelpLocation HELP_PROVIDER_OBJECTS = new HelpLocation(
-		PluginUtils.getPluginNameFromClass(DebuggerObjectsPlugin.class), HELP_ANCHOR_PLUGIN);
-
 	String TITLE_PROVIDER_MODEL = "Model"; // TODO: An icon
 	Icon ICON_PROVIDER_MODEL = new GIcon("icon.debugger.provider.model");
 	HelpLocation HELP_PROVIDER_MODEL = new HelpLocation(
@@ -262,8 +250,6 @@ public interface DebuggerResources {
 	Icon ICON_PROVIDER_WATCHES = ICON_AUTOREAD; // TODO: Another icon?
 	HelpLocation HELP_PROVIDER_WATCHES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerWatchesPlugin.class), HELP_ANCHOR_PLUGIN);
-
-	String TITLE_PROVIDER_INTERPRETER = "Interpreter";
 
 	String BOOKMARK_CATEGORY_MEMORY_READ_ERROR = "Debugger Memory Read Error";
 
