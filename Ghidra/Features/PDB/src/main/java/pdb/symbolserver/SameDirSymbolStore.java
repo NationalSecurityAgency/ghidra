@@ -18,6 +18,8 @@ package pdb.symbolserver;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.task.TaskMonitor;
 import pdb.symbolserver.SymbolServer.StatusRequiresContext;
@@ -77,10 +79,12 @@ public class SameDirSymbolStore implements SymbolStore, StatusRequiresContext {
 		if (programFSRL != null && programFSRL.getNestingDepth() != 1) {
 			return new ContainerFileSymbolServer(programFSRL);
 		}
-		return new SameDirSymbolStore(context.getRootDir());
+		String programFilename = programFSRL != null ? programFSRL.getName() : null;
+		return new SameDirSymbolStore(context.getRootDir(), programFilename);
 	}
 
 	private final File rootDir;
+	private final String programFilename;
 
 	/**
 	 * Create a new instance, based on the directory where the program was originally imported from.
@@ -90,6 +94,12 @@ public class SameDirSymbolStore implements SymbolStore, StatusRequiresContext {
 	 */
 	public SameDirSymbolStore(File rootDir) {
 		this.rootDir = rootDir;
+		this.programFilename = null;
+	}
+
+	public SameDirSymbolStore(File rootDir, String programFilename) {
+		this.rootDir = rootDir;
+		this.programFilename = programFilename;
 	}
 
 	@Override
@@ -147,6 +157,21 @@ public class SameDirSymbolStore implements SymbolStore, StatusRequiresContext {
 
 		if (isValid()) {
 			LocalSymbolStore.searchLevel0(rootDir, this, fileInfo, findOptions, results, monitor);
+			if (results.isEmpty() && programFilename != null) {
+				// Search for renamed versions of the pdb file, using the current program's
+				// name.  Note: if this shouldn't be automatic, add FindOption enum to control this
+				List<String> altPdbfilenames = List.of(programFilename + ".pdb",
+					FilenameUtils.getBaseName(programFilename) + ".pdb");
+				for (String altPdbfilename : altPdbfilenames) {
+					SymbolFileInfo altFileInfo = SymbolFileInfo.fromPdbIdentifiers(altPdbfilename,
+						fileInfo.getIdentifiers());
+					LocalSymbolStore.searchLevel0(rootDir, this, altFileInfo, findOptions, results,
+						monitor);
+					if (!results.isEmpty()) {
+						break;
+					}
+				}
+			}
 		}
 
 		return results;
