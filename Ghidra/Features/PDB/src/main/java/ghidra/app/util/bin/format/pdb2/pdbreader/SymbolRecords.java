@@ -135,7 +135,7 @@ public class SymbolRecords {
 		if (debugInfo == null) {
 			return;
 		}
-		if (debugInfo.getModuleInformationList().size() == 0) {
+		if (debugInfo.getModuleInformationList().isEmpty()) {
 			return;
 		}
 		// We are assuming that first in the list is the one to look at for cases 1 and 2.
