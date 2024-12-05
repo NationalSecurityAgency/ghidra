@@ -3455,7 +3455,7 @@ void BlockSwitch::addCase(FlowBlock *switchbl,FlowBlock *bl,uint4 gt)
   const FlowBlock *basicbl = bl->getFrontLeaf()->subBlock(0);
   curcase.block = bl;
   curcase.basicblock = basicbl;
-  curcase.label = 0;
+  curcase.addr = Address(Address::m_minimal);
   curcase.depth = 0;
   curcase.chain = -1;
   int4 inindex = basicbl->getInIndex(switchbl);
@@ -3512,8 +3512,8 @@ void BlockSwitch::finalizePrinting(Funcdata &data) const
 
 {
   BlockGraph::finalizePrinting(data);	// Make sure to still recurse
-  // We need to order the cases based on the label
-  // First populate the label and depth fields of the CaseOrder objects
+  // We need to order the cases based on the address
+  // First populate the address and depth fields of the CaseOrder objects
   for(int4 i=0;i<caseblocks.size();++i) { // Construct the depth parameter, to sort fall-thru cases
     CaseOrder &curcase( caseblocks[i] );
     int4 j = curcase.chain;
@@ -3528,21 +3528,21 @@ void BlockSwitch::finalizePrinting(Funcdata &data) const
     if (jump->numIndicesByBlock(curcase.basicblock) > 0) {
       if (curcase.depth == 0) {	// Only set label on chain roots
 	int4 ind = jump->getIndexByBlock(curcase.basicblock,0);
-	curcase.label = jump->getLabelByIndex(ind);
+	curcase.addr = jump->getAddressByIndex(ind);
 	int4 j = curcase.chain;
 	int4 depthcount = 1;
 	while(j != -1) {
 	  if (caseblocks[j].depth > 0) break; // Has this node had its depth set. Break any possible loops.
 	  caseblocks[j].depth = depthcount++;
-	  caseblocks[j].label = curcase.label;
+	  caseblocks[j].addr = curcase.addr;
 	  j = caseblocks[j].chain;
 	}
       }
     }
     else
-      curcase.label = 0;	// Should never happen
+      curcase.addr = Address(Address::m_minimal);	// Should never happen
   }
-  // Do actual sort of the cases based on label
+  // Do actual sort of the cases based on address
   stable_sort(caseblocks.begin(),caseblocks.end(),CaseOrder::compare);
 }
 
