@@ -23,6 +23,8 @@ import ghidra.app.cmd.data.TypeDescriptorModel;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
+import ghidra.app.util.demangler.DemangledObject;
+import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -73,29 +75,71 @@ public class RttiUtil {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 
-		// See if the symbol already exists for the RTTI data.
+		// See if the symbol already exists for the RTTI data
 		Symbol matchingSymbol = symbolTable.getSymbol(rttiSuffix, rttiAddress, classNamespace);
 		if (matchingSymbol != null) {
 			return false;
 		}
 
-		// NOTE: This code was originally put here to skip applying labels the pdb put down if the
-		// above check failed but symbols were similar. This check has been removed because of
-		// cases where this check stopped the full namespace path  from being created. The code is 
-		// here commented out because we might want to use this to do extra checking and possibly 
-		// remove the similar symbol instead of leaving it as a secondary symbol. 
-		// Don't create it if a similar symbol already exists at the address of the data.
-//		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
-//		for (Symbol symbol : symbols) {
-//			String name = symbol.getName();
-//			if (name.contains(rttiSuffix)) {
-//				return false; // Similar symbol already exists.
-//			}
-//		}
+		// check for similar symbol
+		DemangledObject matchingDemangledObject = null;
+		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
+		for (Symbol symbol : symbols) {
+			String name = symbol.getName();
+
+			// if mangled get the matching demangled object if there is one and save for after loop
+			// in case symbols are not demangled yet
+			DemangledObject demangledObject = DemanglerUtil.demangle(name);
+			if (demangledObject != null && demangledObject.getName().contains(rttiSuffix)) {
+				matchingDemangledObject = demangledObject;
+				continue;
+			}
+
+			// Similar symbol already exists - more checking/fixing needed
+			if (name.contains(rttiSuffix)) {
+
+				// check for differing namespace to correct pdb in rare cases
+				Namespace currentNamespace = symbol.getParentNamespace();
+				if (!currentNamespace.equals(classNamespace)) {
+					Msg.warn(program, "Removed incorrect pdb symbol: " + symbol.getName(true));
+					symbol.delete();
+					continue;
+				}
+				// if symbol contains the matching string and ticks, remove the ticks
+				if (replaceSymbolWithNoTicks(symbol)) {
+					return true;
+				}
+			}
+		}
+
+		// if it gets here then there were no demangled symbols that contained the rttisuffix
+		// indicating that the mangled matching symbol has not been demangled yet and needs to be
+		// demangled
+		if (matchingDemangledObject != null) {
+
+			String name = matchingDemangledObject.getName();
+			if (name.contains(rttiSuffix)) {
+
+				try {
+					Symbol symbol = symbolTable.createLabel(rttiAddress, name, classNamespace,
+						SourceType.IMPORTED);
+					// Set the symbol to be primary so that the demangler 
+					// won't demangle again
+					symbol.setPrimary();
+					if (replaceSymbolWithNoTicks(symbol)) {
+						return true;
+					}
+
+				}
+				catch (InvalidInputException e) {
+					//fall through and make a symbol using the rttiSuffix string even though
+					// it might really be one with extra information
+				}
+
+			}
+		}
+		// if code gets here then no pdb info so have to make the symbol here
 		try {
-			// Ignore imported mangled symbol because demangling would add tick marks into the name.  
-			// The name created here is better. Set the symbol to be primary so that the demangler 
-			// won't demangle.
 			Symbol symbol = symbolTable.createLabel(rttiAddress, rttiSuffix, classNamespace,
 				SourceType.IMPORTED);
 			symbol.setPrimary();
@@ -106,6 +150,30 @@ public class RttiUtil {
 				"Unable to create label for " + rttiSuffix + " at " + rttiAddress + ".", e);
 			return false;
 		}
+	}
+
+	/**
+	 * Method to remove all ' and ` from symbol if it starts with `
+	 * @param symbol the symbol
+	 * @return true if the symbol has been replaced, false otherwise
+	 */
+	private static boolean replaceSymbolWithNoTicks(Symbol symbol) {
+
+		String name = symbol.getName();
+		if (name.startsWith("`")) {
+			name = name.replace("'", "").replace("`", "");
+			try {
+				symbol.setName(name, symbol.getSource());
+				return true;
+			}
+			catch (DuplicateNameException e) {
+				return false;
+			}
+			catch (InvalidInputException e) {
+				return false;
+			}
+		}
+		return false;
 	}
 
 	/**
