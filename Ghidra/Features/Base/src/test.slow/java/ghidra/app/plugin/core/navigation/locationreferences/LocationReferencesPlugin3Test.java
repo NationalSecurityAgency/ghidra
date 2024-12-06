@@ -106,7 +106,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 
 		// 0100415a - sscanf
 		Address address = addr(0x0100415a);
-		int parameterColumn = 28; // param 0's name
+		int parameterColumn = 24; // param 0's name
 		goTo(address, "Function Signature", parameterColumn);
 
 		search();
@@ -142,7 +142,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 
 		// 0100415a - sscanf
 		Address address = addr(0x0100415a);
-		int parameterColumn = 11;
+		int parameterColumn = 7;
 		goTo(address, "Function Signature", parameterColumn);
 
 		search();

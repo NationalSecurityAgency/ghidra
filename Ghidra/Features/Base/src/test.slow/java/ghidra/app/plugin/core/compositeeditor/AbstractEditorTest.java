@@ -358,7 +358,9 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected DataTypeComponent getComponent(int index) {
-		return runSwing(() -> model.getComponent(index));
+		return runSwing(() -> 
+		model.getComponent(index));
+		
 	}
 
 	protected int getOffset(int index) {

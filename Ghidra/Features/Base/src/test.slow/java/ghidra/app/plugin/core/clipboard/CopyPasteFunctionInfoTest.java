@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,6 +45,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined4DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
@@ -73,7 +74,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		ToyProgramBuilder builder = new ToyProgramBuilder(name, true, ProgramBuilder._TOY);
 		builder.createMemory("test1", "0x01001000", 0x8000);
 		builder.createEntryPoint("0x1006420", "entry");
-		DataType dt = DataType.DEFAULT;
+		DataType dt = Undefined4DataType.dataType;
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		builder.createEmptyFunction("ghidra", "0x1004600", 1, dt, p, p, p, p, p, p, p, p, p, p, p,
 			p, p);
@@ -87,7 +88,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		builder.createEntryPoint("0x1006420", "entry");
 		builder.createFunction("0x1004700");
 		builder.createComment("0x1006420", "FUNCTION", CodeUnit.PLATE_COMMENT);
-		DataType dt = DataType.DEFAULT;
+		DataType dt = Undefined4DataType.dataType;
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		builder.createEmptyFunction("BOB", "0x1004260", 1, dt, p, p, p, p, p, p, p, p, p, p, p, p,
 			p);
@@ -481,8 +482,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 
 	private void resetOptions() {
 		List<String> names = fieldOptions2.getOptionNames();
-		for (int i = 0; i < names.size(); i++) {
-			String name = names.get(i);
+		for (String name : names) {
 			if (!name.startsWith("Format Code")) {
 				continue;
 			}

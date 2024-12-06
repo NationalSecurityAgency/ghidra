@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 	private static final String DESCRIPTION = "Creates stack variables for a function.";
 
 	private boolean doNewStackAnalysis = true;
-	private boolean doLocalAnalysis = true;
-	private boolean doParameterAnalysis = true;
+	private boolean doCreateLocalStackVars = true;
+	private boolean doCreateStackParams = false;
 
 	public StackVariableAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
@@ -43,13 +43,15 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
-		BackgroundCommand cmd;
+		BackgroundCommand<Program> cmd;
 
 		if (doNewStackAnalysis) {
-			cmd = new NewFunctionStackAnalysisCmd(set, doParameterAnalysis, doLocalAnalysis, false);
+			cmd = new NewFunctionStackAnalysisCmd(set, doCreateStackParams, doCreateLocalStackVars,
+				false);
 		}
 		else {
-			cmd = new FunctionStackAnalysisCmd(set, doParameterAnalysis, doLocalAnalysis, false);
+			cmd = new FunctionStackAnalysisCmd(set, doCreateStackParams, doCreateLocalStackVars,
+				false);
 		}
 
 		cmd.applyTo(program, monitor);
@@ -73,10 +75,10 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 			!useOldStackAnalysisByDefault(program), null,
 			"Use General Stack Reference Propogator (This works best on most processors)");
 
-		options.registerOption("Create Local Variables", doLocalAnalysis, null,
+		options.registerOption("Create Local Variables", doCreateLocalStackVars, null,
 			"Create Function Local stack variables and references");
 
-		options.registerOption("Create Param Variables", doParameterAnalysis, null,
+		options.registerOption("Create Param Variables", doCreateStackParams, null,
 			"Create Function Parameter stack variables and references");
 	}
 
@@ -86,9 +88,10 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 			options.getBoolean(GhidraLanguagePropertyKeys.USE_NEW_FUNCTION_STACK_ANALYSIS,
 				!useOldStackAnalysisByDefault(program));
 
-		doLocalAnalysis = options.getBoolean("Create Local Variables", doLocalAnalysis);
+		doCreateLocalStackVars =
+			options.getBoolean("Create Local Variables", doCreateLocalStackVars);
 
-		doParameterAnalysis = options.getBoolean("Create Param Variables", doParameterAnalysis);
+		doCreateStackParams = options.getBoolean("Create Param Variables", doCreateStackParams);
 	}
 
 }

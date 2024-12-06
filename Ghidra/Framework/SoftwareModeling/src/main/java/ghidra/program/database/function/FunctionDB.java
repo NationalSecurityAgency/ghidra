@@ -2470,16 +2470,6 @@ public class FunctionDB extends DatabaseObject implements Function {
 				return thunkedFunction.getSignatureSource();
 			}
 
-			// Force DEFAULT source if any param has unassigned storage
-			if (!getReturn().isValid()) {
-				return SourceType.DEFAULT;
-			}
-			for (Parameter param : getParameters()) {
-				if (!param.isValid()) {
-					return SourceType.DEFAULT;
-				}
-			}
-
 			return getStoredSignatureSource();
 		}
 		finally {

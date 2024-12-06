@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,46 +43,59 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 	private static final int MAX_PARAM_OFFSET = 2048;        // max size of param reference space
 	private static final int MAX_LOCAL_OFFSET = -(64 * 1024);  // max size of local reference space
 
+	private boolean dontCreateNewVariables = false;
+
+	private final boolean forceProcessing;
+	private final boolean createStackParams;
+	private final boolean createLocalStackVars;
+
 	private AddressSet entryPoints = new AddressSet();
 	private Program program;
-	private boolean forceProcessing = false;
-	private boolean dontCreateNewVariables = false;
-	private boolean doParams = false;
-	private boolean doLocals = false;
 	private Register stackReg;
 	private int purge = 0;
 
 	static String DEFAULT_FUNCTION_COMMENT = " FUNCTION";
 
 	/**
-	 * Constructs a new command for analyzing the Stack.
+	 * Constructs a new command for analyzing the Stack.  All stack references will be
+	 * marked-up and local stack variables created.  Stack parameters are not created 
+	 * by default to avoid setting an incomplete function signature.
 	 * @param entries and address set indicating the entry points of functions that have 
 	 * stacks to be analyzed.
 	 * @param forceProcessing flag to force processing of stack references even if the stack
 	 *           has already been defined.
 	 */
 	public NewFunctionStackAnalysisCmd(AddressSetView entries, boolean forceProcessing) {
-		this(entries, true, true, forceProcessing);
+		this(entries, false, true, forceProcessing);
 	}
 
 	/**
-	 * Constructs a new command for analyzing the Stack.
+	 * Constructs a new command for analyzing the Stack.  All stack references will be
+	 * marked-up and local stack variables created.  Stack parameters are not created 
+	 * by default to avoid setting an incomplete function signature.
 	 * @param entry the entry point of the function that contains the stack to
 	 *           be analyzed.
 	 * @param forceProcessing flag to force processing of stack references even if the stack
 	 *           has already been defined.
 	 */
 	public NewFunctionStackAnalysisCmd(Address entry, boolean forceProcessing) {
-		this(new AddressSet(entry, entry), true, true, forceProcessing);
+		this(new AddressSet(entry, entry), false, true, forceProcessing);
 	}
 
-	public NewFunctionStackAnalysisCmd(AddressSetView entries, boolean doParameterAnalysis,
-			boolean doLocalAnalysis, boolean forceProcessing) {
+	/**
+	 * 
+	 * @param entries
+	 * @param createStackParams
+	 * @param createLocalStackVars
+	 * @param forceProcessing
+	 */
+	public NewFunctionStackAnalysisCmd(AddressSetView entries, boolean createStackParams,
+			boolean createLocalStackVars, boolean forceProcessing) {
 		super("Create Function Stack Variables", true, true, false);
 		entryPoints.add(entries);
 		this.forceProcessing = forceProcessing;
-		doParams = doParameterAnalysis;
-		doLocals = doLocalAnalysis;
+		this.createStackParams = createStackParams;
+		this.createLocalStackVars = createLocalStackVars;
 	}
 
 	@Override
@@ -479,8 +492,6 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 
 	}
 
-	private static final int MAX_PARAM_FILLIN_COUNT = 10;
-
 	private int addMissingParameters(Variable stackVar, int nextCopyParamIndex,
 			Parameter[] oldParamList, List<Variable> newParamList, PrototypeModel callingConvention,
 			boolean hasStackParams) {
@@ -514,37 +525,6 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 				}
 			}
 			++nextCopyParamIndex;
-		}
-
-		// fill-in missing params - don't bother if we already have 
-		// too many or no stack param block defined
-		int nextOrdinal = newParamList.size();
-		if ((!hasStackParams) || nextOrdinal >= MAX_PARAM_FILLIN_COUNT) {
-			return nextCopyParamIndex;
-		}
-
-		VariableStorage argLocation;
-		try {
-			Parameter[] params = new Parameter[nextOrdinal];
-			argLocation = callingConvention.getArgLocation(nextOrdinal,
-				newParamList.toArray(params), DataType.DEFAULT, program);
-			while (!argLocation.intersects(stackVar.getVariableStorage()) &&
-				nextOrdinal < MAX_PARAM_FILLIN_COUNT) {
-				// TODO: it feels bad to add a bunch of register variables
-				Parameter p = new ParameterImpl(null, DataType.DEFAULT, argLocation, program);
-				newParamList.add(p);
-				++nextOrdinal;
-				params = new Parameter[nextOrdinal];
-				argLocation = callingConvention.getArgLocation(nextOrdinal,
-					newParamList.toArray(params), DataType.DEFAULT, program);
-			}
-		}
-		catch (InvalidInputException e) {
-			throw new RuntimeException(e); // unexpected
-		}
-
-		if (!argLocation.isStackStorage()) {
-			return nextCopyParamIndex;
 		}
 
 		return nextCopyParamIndex;
@@ -792,10 +772,10 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 			(growsNegative && offset >= paramOffset) || (!growsNegative && offset <= paramOffset);
 
 		// Check exclusion options
-		if (!doLocals && !isParam) {
+		if (!createLocalStackVars && !isParam) {
 			return;
 		}
-		if (!doParams && isParam) {
+		if (!createStackParams && isParam) {
 			return;
 		}
 
