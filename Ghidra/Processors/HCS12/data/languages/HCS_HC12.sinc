@@ -557,7 +557,7 @@ IDX_m: [D, rr4_3]		is  xb7_5=0b111 & rr4_3 & xb2_0=0b111 & D
 	{ address:2 = rr4_3 + D; Load2(address,address); export address; }	
 
 IDX_m: [D, PC]		is  xb7_5=0b111 & rr4_3=3 & xb2_0=0b111 & D & PC
-	{ address:2 = inst_next + D; Load2(address,address); export address; }	
+	{ address:3 = inst_next + zext(D); export *:2 address; }
 
 ######################################################################
 ######################################################################
