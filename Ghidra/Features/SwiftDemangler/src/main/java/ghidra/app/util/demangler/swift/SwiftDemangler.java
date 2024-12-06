@@ -36,6 +36,7 @@ public class SwiftDemangler implements Demangler {
 	private Map<String, SwiftNode> cache;
 	private SwiftTypeMetadata typeMetadata;
 	private SwiftNativeDemangler nativeDemangler;
+	private boolean is64bit = true;
 
 	/**
 	 * Creates a new {@link SwiftDemangler} that is not associated with any {@link Program}.
@@ -81,6 +82,7 @@ public class SwiftDemangler implements Demangler {
 				program.setPreferredRootNamespaceCategoryPath(
 					SwiftDataTypeUtils.SWIFT_CATEGORY.getPath());
 				typeMetadata = new SwiftTypeMetadata(program, TaskMonitor.DUMMY, new MessageLog());
+				is64bit = program.getDefaultPointerSize() == 8;
 			}
 		}
 		catch (CancelledException e) {
@@ -129,7 +131,7 @@ public class SwiftDemangler implements Demangler {
 		setSwiftNativeDemangler(options);
 
 		SwiftNode root = cache.containsKey(mangled) ? cache.get(mangled)
-				: new SwiftDemangledTree(nativeDemangler, mangled).getRoot();
+				: new SwiftDemangledTree(nativeDemangler, mangled, is64bit).getRoot();
 		cache.put(mangled, root);
 		if (root == null) {
 			return null;
