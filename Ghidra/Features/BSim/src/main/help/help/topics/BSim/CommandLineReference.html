@@ -41,6 +41,7 @@
 <CODE class="computeroutput">
     bsim_ctl start           &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
     bsim_ctl stop            &lt;/datadir-path&gt; [--force]
+    bsim_ctl status          &lt;/datadir-path&gt;
     bsim_ctl adduser         &lt;/datadir-path&gt; &lt;username&gt; [--dn&nbsp;"&lt;distinguished-name&gt;"]
     bsim_ctl dropuser        &lt;/datadir-path&gt; &lt;username&gt;
     bsim_ctl resetpassword   &lt;username&gt;
@@ -134,6 +135,13 @@
                 <P><SPAN class="command"><STRONG>--force</STRONG></SPAN> - causes existing
                 connections to be forcibly closed and the PostgreSQL server to shut down
                 immediately.</P>
+              </DD>
+
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>status</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Retrieves the status of a PostgreSQL server (running/down). The path to the
+                actively used data directory must be provided.</P>
               </DD>
 
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>adduser</STRONG></SPAN></SPAN></DT>
