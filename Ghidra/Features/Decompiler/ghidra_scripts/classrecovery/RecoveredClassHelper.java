@@ -2562,7 +2562,11 @@ public class RecoveredClassHelper {
 				Function function = functionIterator.next();
 				Namespace namespace = function.getParentNamespace();
 				if (!namespace.equals(recoveredClass.getClassNamespace())) {
-					continue;
+					Symbol functionSymbol = function.getSymbol();
+					if (functionSymbol.getSource().equals(SourceType.IMPORTED)) {
+						functionIterator.remove(); // remove named functions belonging to other class
+					}
+					continue; // continue in either case to skip functions in other namespaces
 				}
 				String name = function.getName();
 				if (name.equals(recoveredClass.getName())) {
@@ -8465,7 +8469,8 @@ public class RecoveredClassHelper {
 			Symbol symbol = symbols.next();
 			if (symbol.getName().equals("vftable") ||
 				symbol.getName().substring(1).startsWith("vftable") ||
-				symbol.getName().contains("vftable_for_")) {
+				symbol.getName().contains("vftable_for_") ||
+				symbol.getName().contains("vftable{for")) {
 				vftableSymbols.add(symbol);
 			}
 
