@@ -4439,28 +4439,23 @@ bool RuleSubCommute::cancelExtensions(PcodeOp *longform,PcodeOp *subOp,Varnode *
 int4 RuleSubCommute::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  Varnode *base,*vn,*newvn,*outvn;
-  PcodeOp *longform,*newsub,*prevop;
-  int4 i,j,offset,insize;
-
-  base = op->getIn(0);
+  Varnode *base = op->getIn(0);
   if (!base->isWritten()) return 0;
-  offset = op->getIn(1)->getOffset();
-  outvn = op->getOut();
+  int4 offset = op->getIn(1)->getOffset();
+  Varnode *outvn = op->getOut();
   if (outvn->isPrecisLo()||outvn->isPrecisHi()) return 0;
-  insize = base->getSize();
-  longform = base->getDef();
-  j = -1;
+  int4 insize = base->getSize();
+  PcodeOp *longform = base->getDef();
+  int4 j = -1;
   switch( longform->code() ) {	// Determine if this op commutes with SUBPIECE
     //  case CPUI_COPY:
   case CPUI_INT_LEFT:
     j = 1;			// Special processing for shift amount param
     if (offset != 0) return 0;
-    if (!longform->getIn(0)->isWritten()) return 0;
-    prevop = longform->getIn(0)->getDef();
-    if (prevop->code()==CPUI_INT_ZEXT) {
-    }
-    else if (prevop->code()==CPUI_PIECE) {
+    if (longform->getIn(0)->isWritten()) {
+      OpCode opc = longform->getIn(0)->getDef()->code();
+      if (opc != CPUI_INT_ZEXT && opc != CPUI_PIECE)
+	return 0;
     }
     else
       return 0;
@@ -4558,17 +4553,24 @@ int4 RuleSubCommute::applyOp(PcodeOp *op,Funcdata &data)
     }
   }
 
-  for(i=0;i<longform->numInput();++i) {
-    vn = longform->getIn(i);
+  Varnode *lastIn = (Varnode *)0;
+  Varnode *newVn = (Varnode *)0;
+  for(int4 i=0;i<longform->numInput();++i) {
+    Varnode *vn = longform->getIn(i);
     if (i!=j) {
-      newsub = data.newOp(2,op->getAddr()); // Commuted SUBPIECE op
-      data.opSetOpcode(newsub,CPUI_SUBPIECE);
-      newvn = data.newUniqueOut(outvn->getSize(),newsub);  // New varnode is subpiece
-      data.opSetInput(longform,newvn,i);
-      data.opSetInput(newsub,vn,0); // of old varnode
-      data.opSetInput(newsub,data.newConstant(4,offset),1);
-      data.opInsertBefore(newsub,longform);
+      if (lastIn != vn || newVn == (Varnode *)0) {	// Don't duplicate the SUBPIECE if inputs are the same
+	PcodeOp *newsub = data.newOp(2,op->getAddr()); // Commuted SUBPIECE op
+	data.opSetOpcode(newsub,CPUI_SUBPIECE);
+	newVn = data.newUniqueOut(outvn->getSize(),newsub); 	// New varnode is SUBPIECE of old varnode
+	data.opSetInput(longform,newVn,i);
+	data.opSetInput(newsub,vn,0);		// vn may be free, so set as input after setting newVn
+	data.opSetInput(newsub,data.newConstant(4,offset),1);
+	data.opInsertBefore(newsub,longform);
+      }
+      else
+	data.opSetInput(longform,newVn,i);
     }
+    lastIn = vn;
   }
   data.opSetOutput(longform,outvn);
   data.opDestroy(op);		// Get rid of old SUBPIECE
