@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -417,10 +417,7 @@ public class DecompileOptions {
 
 	private final static String HIGHLIGHT_KEYWORD_MSG = "Display.Color for Keywords";
 	private final static GColor HIGHLIGHT_KEYWORD_COLOR = new GColor("color.fg.decompiler.keyword");
-
-	private final static String HIGHLIGHT_FUNCTION_MSG = "Display.Color for Function names";
-	private final static GColor HIGHLIGHT_FUNCTION_COLOR = new GColor("color.fg.decompiler.function.name");
-
+	
 	private final static String HIGHLIGHT_COMMENT_MSG = "Display.Color for Comments";
 	private final static GColor HIGHLIGHT_COMMENT_COLOR = new GColor( "color.fg.decompiler.comment");
 
@@ -751,9 +748,6 @@ public class DecompileOptions {
 		opt.registerThemeColorBinding(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting types.");
-		opt.registerThemeColorBinding(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_COLOR.getId(),
-			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
-			"Color used for highlighting function names.");
 		opt.registerThemeColorBinding(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting comments.");
@@ -1052,13 +1046,6 @@ public class DecompileOptions {
 	 */
 	public Color getTypeColor() {
 		return HIGHLIGHT_TYPE_COLOR;
-	}
-
-	/**
-	 * @return color associated with a function name token
-	 */
-	public Color getFunctionColor() {
-		return HIGHLIGHT_FUNCTION_COLOR;
 	}
 
 	/**
