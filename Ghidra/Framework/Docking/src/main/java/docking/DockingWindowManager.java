@@ -29,8 +29,8 @@ import javax.swing.*;
 import org.apache.commons.collections4.map.LazyMap;
 import org.jdom.Element;
 
-import docking.action.ActionContextProvider;
-import docking.action.DockingActionIf;
+import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.*;
 import docking.widgets.PasswordDialog;
 import generic.util.WindowUtilities;
@@ -2324,6 +2324,51 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		int y = (int) bounds.getCenterY();
 		PopupMenuContext popupContext = new PopupMenuContext(dockableComponent, new Point(x, y));
 		dockableComponent.showContextMenu(popupContext);
+	}
+
+	/**
+	 * Called by the framework during startup to register actions that are shared throughout the 
+	 * tool.  See {@link SharedActionRegistry}.
+	 * @param tool the tool
+	 * @param toolActions the class to which the actions should be added
+	 * @param owner the shared action owner
+	 */
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
+
+		// An action to close the provider on Escape if the provider is the last in the window. This 
+		// allows users to close transient providers (like search results) easily. 
+		DockingAction closeAction = new ActionBuilder("Close Window for Last Provider", owner)
+				.sharedKeyBinding()
+				.keyBinding("ESCAPE")
+				.enabledWhen(c -> {
+					ComponentProvider provider = getComponentProviderForContext(c);
+					if (provider == null) {
+						return false;
+					}
+					Tool t = provider.getTool();
+					DockingWindowManager dwm = t.getWindowManager();
+					return dwm.isLastProviderInDetachedWindow(provider);
+				})
+				.onAction(c -> {
+					ComponentProvider provider = getComponentProviderForContext(c);
+					provider.closeComponent();
+				})
+				.build();
+		toolActions.addGlobalAction(closeAction);
+	}
+
+	private static ComponentProvider getComponentProviderForContext(ActionContext context) {
+		ComponentProvider provider = context.getComponentProvider();
+		if (provider != null) {
+			return provider;
+		}
+
+		// Some context providers do not specify the provider when creating a contexts	
+		DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
+		if (dwm == null) {
+			return null; // this can happen sometimes in test environments
+		}
+		return dwm.getActiveComponentProvider();
 	}
 
 	public void contextChanged(ComponentProvider provider) {

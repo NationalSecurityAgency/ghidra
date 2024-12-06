@@ -75,15 +75,12 @@ class DockableToolBarManager {
 		ToolBarCloseAction closeAction = new ToolBarCloseAction(owner);
 		closeButtonManager = new ToolBarItemManager(closeAction, winMgr);
 
-		CloseLastProviderAction closeLastProviderAction = new CloseLastProviderAction(owner);
-
 		ToolBarMenuAction dropDownAction = new ToolBarMenuAction(owner);
 		menuButtonManager = new ToolBarItemManager(dropDownAction, winMgr);
 
 		// we need to add this action to the tool in order to use key bindings
 		Tool tool = winMgr.getTool();
 		tool.addLocalAction(provider, closeAction);
-		tool.addLocalAction(provider, closeLastProviderAction);
 		tool.addLocalAction(provider, dropDownAction);
 	}
 
@@ -216,45 +213,6 @@ class DockableToolBarManager {
 				provider = dwm.getActiveComponentProvider();
 			}
 			return provider == dockableComponent.getComponentProvider();
-		}
-	}
-
-	/**
-	 * An action to close the provider on Escape if the provider is the last in the window.  This 
-	 * allows users to close transient providers (like search results) easily. 
-	 */
-	private class CloseLastProviderAction extends DockingAction {
-
-		CloseLastProviderAction(String owner) {
-			super("Close Window for Last Provider", owner, KeyBindingType.SHARED);
-			setKeyBindingData(new KeyBindingData("ESCAPE"));
-			setDescription("Close the window if this provider is the last provider in the window");
-			markHelpUnnecessary();
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			ComponentPlaceholder placeholder = dockableComponent.getComponentWindowingPlaceholder();
-			if (placeholder != null) {
-				placeholder.close();
-			}
-		}
-
-		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
-			if (dwm == null) {
-				return false; // this can happen sometimes in test environments
-			}
-			ComponentProvider provider = context.getComponentProvider();
-			if (provider == null) {
-				// Some context providers do not specify the provider when creating a contexts				
-				provider = dwm.getActiveComponentProvider();
-			}
-			if (provider != dockableComponent.getComponentProvider()) {
-				return false; // not my provider
-			}
-			return dwm.isLastProviderInDetachedWindow(provider);
 		}
 	}
 
