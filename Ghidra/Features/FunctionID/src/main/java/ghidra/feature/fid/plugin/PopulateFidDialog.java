@@ -63,6 +63,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	private FidService fidService;
 	private JTextField languageIdField;
 	private JTextField symbolsFileTextField;
+	private JCheckBox namespaceStrippingCheckBox;
 
 	protected PopulateFidDialog(PluginTool tool, FidService fidService) {
 		super("Populate Fid Database");
@@ -87,12 +88,17 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		DomainFolder folder = getDomainFolder();
 		String languageFilter = languageIdField.getText().trim();
 		File commonSymbolsFile = getCommonSymbolsFile();
+		boolean disableNamespaceStripping = getNamespaceOption();
 
 		Task task = new IngestTask("Populate Library Task", fidFile, libraryRecord, folder,
 			libraryFamilyName, libraryVersion, libraryVariant, languageFilter, commonSymbolsFile,
-			fidService, new DefaultFidPopulateResultReporter());
+			disableNamespaceStripping, fidService, new DefaultFidPopulateResultReporter());
 		close();
 		tool.execute(task);
+	}
+
+	private boolean getNamespaceOption() {
+		return namespaceStrippingCheckBox.isSelected();
 	}
 
 	private File getCommonSymbolsFile() {
@@ -143,6 +149,11 @@ public class PopulateFidDialog extends DialogComponentProvider {
 
 		panel.add(new GLabel("Common Symbols File: ", SwingConstants.RIGHT));
 		panel.add(buildSymbolsFileField(), jLabel);
+
+		panel.add(new GLabel("Disable namespace stripping (experimental)", SwingConstants.RIGHT));
+		namespaceStrippingCheckBox = new JCheckBox();
+		namespaceStrippingCheckBox.addActionListener(e -> updateOkEnablement());
+		panel.add(namespaceStrippingCheckBox);
 
 		return panel;
 	}
