@@ -81,6 +81,7 @@ public class SimilarityVectorResult {
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id",
 			basefunc.getExecutableRecord().getXrefIndex());
 		SpecXmlUtils.xmlEscapeAttribute(buf, "name", basefunc.getFunctionName());
+		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "spaceid", basefunc.getSpaceID());
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "addr", basefunc.getAddress());
 		buf.append(">\n");
 		write.append(buf.toString());
@@ -97,8 +98,9 @@ public class SimilarityVectorResult {
 		XmlElement el = parser.start("simvecres");
 		int id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
 		ExecutableRecord exe = exeMap.get(id);
+		int spaceid = SpecXmlUtils.decodeInt(el.getAttribute("spaceid"));
 		long address = SpecXmlUtils.decodeLong(el.getAttribute("addr"));
-		basefunc = qmanage.findFunction(el.getAttribute("name"), address, exe);
+		basefunc = qmanage.findFunction(el.getAttribute("name"), spaceid, address, exe);
 		totalcount = 0;
 		while (parser.peek().isStart()) {
 			VectorResult newnote = new VectorResult();
