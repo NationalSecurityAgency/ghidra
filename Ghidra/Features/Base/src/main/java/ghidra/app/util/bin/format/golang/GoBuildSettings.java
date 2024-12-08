@@ -19,8 +19,19 @@ import java.io.IOException;
 
 /**
  * Key=value element of Golang Build settings
+ * 
+ * @param key string name of property
+ * @param value string value of property
  */
 public record GoBuildSettings(String key, String value) {
+
+	/**
+	 * Parses a "key=value" string and returns the parts as a {@link GoBuildSettings}.
+	 * 
+	 * @param s "key=value" string
+	 * @return new {@link GoBuildSettings} instance
+	 * @throws IOException if error splitting the string into key and value
+	 */
 	public static GoBuildSettings fromString(String s) throws IOException {
 		String[] parts = s.split("=", 2);
 		if (parts.length != 2) {

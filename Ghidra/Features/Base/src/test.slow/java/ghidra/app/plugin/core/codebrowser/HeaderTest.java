@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
@@ -275,13 +275,13 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testInsertDeleteRow() {
 		FieldFormatModel model = header.getHeaderTab().getModel();
 		InsertRowAction act = new InsertRowAction("Test", header);
-		act.isEnabledForContext(new ActionContext(cb.getProvider()).setContextObject(
+		act.isEnabledForContext(new DefaultActionContext(cb.getProvider()).setContextObject(
 			new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act, true);
 		assertEquals(8, model.getNumRows());
 		assertEquals(0, model.getNumFactorys(0));
 		RemoveRowAction act2 = new RemoveRowAction("Test", header);
-		act2.isEnabledForContext(new ActionContext(cb.getProvider()).setContextObject(
+		act2.isEnabledForContext(new DefaultActionContext(cb.getProvider()).setContextObject(
 			new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act2, true);
 		assertEquals(7, model.getNumRows());
@@ -294,7 +294,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		ListingField bf = cb.getCurrentField();
 		int startX = bf.getStartX();
 		InsertRowAction act = new InsertRowAction("Test", header);
-		act.isEnabledForContext(new ActionContext(cb.getProvider()).setContextObject(
+		act.isEnabledForContext(new DefaultActionContext(cb.getProvider()).setContextObject(
 			new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act, true);
 		int width = bf.getWidth();

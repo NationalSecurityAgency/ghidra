@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +16,11 @@
 package ghidra.app.plugin.processors.sleigh;
 
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 public interface ContextChange {
 	void apply(ParserWalker walker, SleighDebugLogger debug) throws MemoryAccessException;
-	void restoreXml(XmlPullParser parser,SleighLanguage lang);
+
+	void decode(Decoder decoder, SleighLanguage lang) throws DecoderException;
 }

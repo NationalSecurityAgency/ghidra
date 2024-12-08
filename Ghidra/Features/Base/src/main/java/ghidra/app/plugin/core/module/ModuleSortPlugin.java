@@ -54,7 +54,7 @@ import ghidra.util.task.*;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Sort Fragments within Module",
 	description = "Plugin to sort Modules and Fragments within a selected Module. " +
 			"Child Module folders are always name-sorted and placed " +
@@ -112,7 +112,7 @@ public class ModuleSortPlugin extends ProgramPlugin {
 		monitor.initialize(kids.length);
 
 		for (Group kid : kids) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			list.add(kid);
 			if (kid instanceof ProgramModule) {
 				doSort((ProgramModule) kid, comparator, monitor);
@@ -124,7 +124,7 @@ public class ModuleSortPlugin extends ProgramPlugin {
 
 		monitor.initialize(list.size());
 		for (int i = 0; i < list.size(); i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Group group = list.get(i);
 			monitor.setMessage("processing " + group.getName());

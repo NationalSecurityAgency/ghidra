@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.debug.gui.register;
 
 import java.util.Collection;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 
-public class DebuggerAvailableRegistersActionContext extends ActionContext {
+public class DebuggerAvailableRegistersActionContext extends DefaultActionContext {
 	private final Collection<AvailableRegisterRow> selection;
 
 	public DebuggerAvailableRegistersActionContext(Collection<AvailableRegisterRow> selection) {

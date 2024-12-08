@@ -20,28 +20,23 @@ import java.util.Set;
 public class DummyGraphDisplayListener implements GraphDisplayListener {
 
 	@Override
-	public void graphClosed() {
-		// I'm a dummy
-	}
-
-	@Override
 	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
 		return new DummyGraphDisplayListener();
 	}
 
 	@Override
 	public void selectionChanged(Set<AttributedVertex> vertices) {
-		// I'm a dummy
+		// stub
 	}
 
 	@Override
 	public void locationFocusChanged(AttributedVertex vertex) {
-		// I'm a dummy
+		// stub
 	}
 
 	@Override
 	public void dispose() {
-		// I'm a dummy
+		// stub
 	}
 
 }

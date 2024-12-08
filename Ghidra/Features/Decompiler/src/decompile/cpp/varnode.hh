@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,6 +157,7 @@ private:
   friend class VarnodeBank;
   friend class Merge;
   friend class Funcdata;
+  friend class CloneBlockOps;
   void updateCover(void) const;	///< Internal function for update coverage information
   void calcCover(void) const;	///< Turn on the Cover object for this Varnode
   void clearCover(void) const; ///< Turn off any coverage information
@@ -290,7 +291,9 @@ public:
     return (loc.getOffset() == val);
   }
 
-  int4 isConstantExtended(uintb &val) const; ///< Is \b this an (extended) constant
+  bool isConstantExtended(uint8 *val) const; ///< Is \b this an (extended) constant
+  bool isEventualConstant(int4 maxBinary,int4 maxLoad) const;	///< Will \b this Varnode ultimately collapse to a constant
+
   /// Return \b true if this Varnode is linked into the SSA tree
   bool isHeritageKnown(void) const { return ((flags&(Varnode::insert|Varnode::constant|Varnode::annotation))!=0); }
   bool isTypeLock(void) const { return ((flags&Varnode::typelock)!=0); } ///< Does \b this have a locked Datatype?

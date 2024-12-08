@@ -33,7 +33,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.LongLongHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramMerge</CODE> is a class for merging the differences between two
@@ -249,7 +248,7 @@ public class ProgramMerge {
 				if (!originReg.isBaseRegister() || originReg.isProcessorContext()) {
 					continue;
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				try {
 					mergeProgramContext(resultContext, originContext, originReg, originRange,
 						resultRange, monitor);
@@ -286,7 +285,7 @@ public class ProgramMerge {
 			originRange.getMinAddress(), originRange.getMaxAddress());
 		resultContext.remove(resultRange.getMinAddress(), resultRange.getMaxAddress(), resultReg);
 		while (origValueIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange origValueRange = origValueIter.next();
 			AddressRange resultValueRange =
 				originToResultTranslator.getAddressRange(origValueRange);
@@ -320,7 +319,7 @@ public class ProgramMerge {
 		// Copy each range.
 		AddressRangeIterator iter = originAddressSet.getAddressRanges();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange fromRange = iter.next();
 			copyByteRange(toMem, fromMem, fromRange);
 		}
@@ -396,7 +395,7 @@ public class ProgramMerge {
 			AddressRangeIterator resultRangeIter = resultInstructionSet.getAddressRanges();
 			int count = 0;
 			while (resultRangeIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange resultRange = resultRangeIter.next();
 				Address resultMin = resultRange.getMinAddress();
 				Address resultMax = resultRange.getMaxAddress();
@@ -437,7 +436,7 @@ public class ProgramMerge {
 			AddressRangeIterator rangeIter = resultInstructionSet.getAddressRanges();
 			int count = 0;
 			while (rangeIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = rangeIter.next();
 				Address min = range.getMinAddress();
 				Address max = range.getMaxAddress();
@@ -583,7 +582,7 @@ public class ProgramMerge {
 		// Get each code unit out of the iterator and set it in the merged
 		// program if it is an instruction.
 		for (long count = 0; originSourceCodeUnits.hasNext() && !monitor.isCancelled(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit originCodeUnit = originSourceCodeUnits.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage(
@@ -629,7 +628,9 @@ public class ProgramMerge {
 			return true;
 		}
 		try {
-			if (!Arrays.equals(instruction.getBytes(), resultInstruction.getBytes())) {
+			byte[] bytes = instruction.getParsedBytes();
+			byte[] resultBytes = resultInstruction.getParsedBytes();
+			if (!Arrays.equals(bytes, resultBytes)) {
 				return true; // bytes differ
 			}
 		}
@@ -683,8 +684,8 @@ public class ProgramMerge {
 			bytesLength = (int) originMax.subtract(originMin);
 		}
 		else {
-			originMax = originInstruction.getMaxAddress();
-			bytesLength = originInstruction.getLength();
+			bytesLength = originInstruction.getParsedLength();
+			originMax = originMin.add(bytesLength - 1);
 		}
 
 		Address resultMax = originToResultTranslator.getAddress(originMax);
@@ -700,7 +701,7 @@ public class ProgramMerge {
 
 		// If there are byte differences for this instruction then the
 		// bytes need to get copied even though the user did not indicate to.
-		if (bytesAreDifferent(originByteDiffs, originMin, resultMin, bytesLength)) { // FIXME
+		if (bytesMayDiffer(originByteDiffs, originMin, resultMin, bytesLength)) {
 			// Copy all the bytes for the instruction if any bytes differ.
 			ProgramMemoryUtil.copyBytesInRanges(resultProgram, originProgram, resultMin, resultMax);
 		}
@@ -710,7 +711,8 @@ public class ProgramMerge {
 			newInst = disassembleDelaySlottedInstruction(resultProgram, resultMin);
 		}
 		else {
-			newInst = disassembleNonDelaySlotInstruction(resultProgram, resultMin);
+			newInst = disassembleNonDelaySlotInstruction(resultProgram, resultMin,
+				originInstruction.isLengthOverridden() ? originInstruction.getLength() : 0);
 		}
 		if (newInst == null) {
 			return;
@@ -741,24 +743,29 @@ public class ProgramMerge {
 	}
 
 	private Instruction disassembleDelaySlottedInstruction(Program program, Address addr) {
+		// WARNING: does not support instruction length override use
 		// Use heavyweight disassembler for delay slotted instruction
 		AddressSet restrictedSet = new AddressSet(addr);
-		Disassembler disassembler =
-			Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
+		Disassembler disassembler = Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
 		disassembler.disassemble(addr, restrictedSet, false);
 		return program.getListing().getInstructionAt(addr);
 	}
 
-	private Instruction disassembleNonDelaySlotInstruction(Program program, Address addr) {
+	private Instruction disassembleNonDelaySlotInstruction(Program program, Address addr,
+			int lengthOverride) {
 		// Use lightweight disassembler for simple case
 		DisassemblerContextImpl context = new DisassemblerContextImpl(program.getProgramContext());
 		context.flowStart(addr);
 		try {
 			InstructionPrototype proto = program.getLanguage()
 					.parse(new DumbMemBufferImpl(program.getMemory(), addr), context, false);
+			if (lengthOverride > proto.getLength()) {
+				lengthOverride = 0;
+			}
 			return resultListing.createInstruction(addr, proto,
 				new DumbMemBufferImpl(program.getMemory(), addr),
-				new ProgramProcessorContext(program.getProgramContext(), addr));
+				new ProgramProcessorContext(program.getProgramContext(), addr),
+				Math.min(lengthOverride, proto.getLength()));
 		}
 		catch (Exception e) {
 			program.getBookmarkManager()
@@ -768,17 +775,13 @@ public class ProgramMerge {
 		return null;
 	}
 
-	private boolean bytesAreDifferent(AddressSetView originByteDiffs, Address originMin,
+	private boolean bytesMayDiffer(AddressSetView originByteDiffs, Address originMin,
 			Address resultMin, int byteCnt) throws MemoryAccessException {
 		if (originByteDiffs != null) {
 			AddressSet resultByteDiffs = originToResultTranslator.getAddressSet(originByteDiffs);
 			return resultByteDiffs.intersects(new AddressSet(resultMin, resultMin.add(byteCnt)));
 		}
-		byte[] originBytes = new byte[byteCnt];
-		originProgram.getMemory().getBytes(originMin, originBytes);
-		byte[] resultBytes = new byte[byteCnt];
-		resultProgram.getMemory().getBytes(resultMin, resultBytes);
-		return !Arrays.equals(originBytes, resultBytes);
+		return true;
 	}
 
 	/**
@@ -809,7 +812,7 @@ public class ProgramMerge {
 		// If there are byte differences for this instruction then the
 		// bytes need to get copied even though the user did not indicate to.
 		if (copyBytes &&
-			bytesAreDifferent(originByteDiffs, originMin, resultMin, originData.getLength())) {
+			bytesMayDiffer(originByteDiffs, originMin, resultMin, originData.getLength())) {
 			// Copy all the bytes for the instruction if any bytes differ.
 			ProgramMemoryUtil.copyBytesInRanges(resultProgram, originProgram, resultMin, resultMax);
 		}
@@ -861,7 +864,7 @@ public class ProgramMerge {
 		AddressIterator addresses = originAddressSet.getAddresses(true);
 		// Get each equate out of the equate address iterator and set it in the merged program.
 		for (long count = 0; addresses.hasNext() && !monitor.isCancelled(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = addresses.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage("Applying Equates...   " + address.toString(true, false));
@@ -1105,7 +1108,7 @@ public class ProgramMerge {
 		MultiAddressIterator originRefAddrIter =
 			new MultiAddressIterator(new AddressIterator[] { convertedResultIter, originIter });
 		for (long count = 0; originRefAddrIter.hasNext() && !monitor.isCancelled(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address originAddress = originRefAddrIter.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage("Replacing References...   " + originAddress.toString(true));
@@ -1205,7 +1208,7 @@ public class ProgramMerge {
 		MultiAddressIterator originRefAddrIter =
 			new MultiAddressIterator(new AddressIterator[] { convertedResultIter, originIter });
 		for (long count = 0; originRefAddrIter.hasNext() && !monitor.isCancelled(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address originAddress = originRefAddrIter.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage("Merging References...   " + originAddress.toString(true));
@@ -1295,14 +1298,15 @@ public class ProgramMerge {
 	 */
 	public Reference replaceReference(Reference resultRef, Reference originRef) {
 		ReferenceManager rm = resultProgram.getReferenceManager();
+		if (resultRef != null) {
+			rm.delete(resultRef); // remove old reference
+		}
 		if (originRef != null) {
 			if (originRef.isExternalReference()) {
 				updateExternalLocation(resultProgram, (ExternalReference) originRef);
 			}
 			return addReference(originRef, -1, true);
 		}
-
-		rm.delete(resultRef);
 		return null;
 	}
 
@@ -1467,7 +1471,7 @@ public class ProgramMerge {
 
 		CodeUnitIterator cuIterator2 = originListing.getCodeUnits(originAddressSet, true);
 		for (long count = 0; cuIterator2.hasNext(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit cu2 = cuIterator2.next();
 			Address originMinAddress = cu2.getMinAddress();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
@@ -1578,13 +1582,13 @@ public class ProgramMerge {
 			return;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		boolean both = (setting == ProgramMergeFilter.MERGE) ? true : false;
 		String prefix = both ? "Merging" : "Replacing";
 		AddressIterator addrIter = originAddressSet.getAddresses(true);
 		for (long count = 0; addrIter.hasNext(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address originAddress = addrIter.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage(
@@ -1656,11 +1660,11 @@ public class ProgramMerge {
 		if (originAddressSet.isEmpty()) {
 			return;
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		AddressIterator addrIter = originAddressSet.getAddresses(true);
 		for (long count = 0; addrIter.hasNext(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address originAddress = addrIter.next();
 
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
@@ -1717,9 +1721,7 @@ public class ProgramMerge {
 		// Now discard any tags we've been told to remove.
 		if (discardTags != null) {
 			Set<String> tagNames = getTagNames(discardTags);
-			Iterator<FunctionTag> iter = resultTags.iterator();
-			while (iter.hasNext()) {
-				FunctionTag tag = iter.next();
+			for (FunctionTag tag : resultTags) {
 				if (tagNames.contains(tag.getName())) {
 					resultFunction.removeTag(tag.getName());
 
@@ -2115,13 +2117,13 @@ public class ProgramMerge {
 
 		HashSet<Address> resultsToKeep = new HashSet<>();
 		while (iter2.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr2 = iter2.next();
 			Address addr1 = originToResultTranslator.getAddress(addr2);
 			resultsToKeep.add(addr1);
 		}
 		while (iter1.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address resultAddress = iter1.next();
 			if (!resultsToKeep.contains(resultAddress)) {
 				monitor.setMessage("Removing Functions...   " + resultAddress.toString(true));
@@ -2153,7 +2155,7 @@ public class ProgramMerge {
 			new MultiAddressIterator(new AddressIterator[] { iter1, convertedIter2 });
 		AddressSet resultEntrySet = new AddressSet();
 		while (functionIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = functionIter.next();
 			resultEntrySet.addRange(address, address);
 		}
@@ -2164,7 +2166,7 @@ public class ProgramMerge {
 		AddressSet thunkSet = new AddressSet();
 		AddressIterator it = resultEntrySet.getAddresses(true);
 		for (int count = 0; it.hasNext(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = it.next();
 			if (count % granularity == 0) {
 				monitor.setProgress(count);
@@ -2191,7 +2193,7 @@ public class ProgramMerge {
 		monitor.initialize(totalThunks);
 		AddressIterator thunkIter = thunkSet.getAddresses(true);
 		for (int count = 0; thunkIter.hasNext(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = thunkIter.next();
 			if (count % granularity == 0) {
 				monitor.setProgress(count);
@@ -2258,7 +2260,7 @@ public class ProgramMerge {
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
 	public Function mergeFunction(Address entry, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 //        monitor.setMessage("Replacing Function...   " + address.toString(true));
 		return replaceFunction(entry, monitor);
 	}
@@ -2334,7 +2336,7 @@ public class ProgramMerge {
 	// FIXME
 //	public void replaceExternalDataType(Address originAddress, TaskMonitor monitor)
 //			throws CancelledException {
-//		monitor.checkCanceled();
+//		monitor.checkCancelled();
 //		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 //		Symbol originSymbol = originProgram.getSymbolTable().getPrimarySymbol(originAddress);
 //		Symbol resultSymbol = resultProgram.getSymbolTable().getPrimarySymbol(resultAddress);
@@ -3119,14 +3121,14 @@ public class ProgramMerge {
 		}
 		// Remove all locals in the toFunc that don't have a comparable local in the fromFunc.
 		for (Variable local : oldLocals) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Variable fromVar = DiffUtility.getVariable(local, fromFunc);
 			if (fromVar == null) {
 				toFunc.removeVariable(local);
 			}
 		}
 		for (Variable fromLocal : fromLocals) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			replaceVariable(fromFunc, fromLocal, toFunc);
 		}
 	}
@@ -3483,7 +3485,7 @@ public class ProgramMerge {
 		}
 		boolean replaceParams = false;
 		for (Variable var : varList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (var instanceof Parameter) {
 				replaceParams = true;
 				break;
@@ -3493,7 +3495,7 @@ public class ProgramMerge {
 			replaceFunctionParameters(originEntryPoint, monitor);
 		}
 		for (Variable var : varList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!(var instanceof Parameter)) {
 				replaceVariable(f2, var, f1);
 			}
@@ -3702,7 +3704,7 @@ public class ProgramMerge {
 		AddressIterator originIter = originAddressSet.getAddresses(true);
 		// Get each address in the address set and change the bookmark.
 		for (long count = 0; originIter.hasNext() && !monitor.isCancelled(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address originAddress = originIter.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage("Applying Bookmarks...   " + originAddress.toString(true));
@@ -3813,7 +3815,7 @@ public class ProgramMerge {
 		AddressIterator originIter = originAddressSet.getAddresses(true);
 		// Get each address in the address set and change the property.
 		for (long count = 0; originIter.hasNext() && !monitor.isCancelled(); count++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address originAddress = originIter.next();
 			if (count == PROGRESS_COUNTER_GRANULARITY) {
 				monitor.setMessage("Applying Properties...   " + originAddress.toString(true));
@@ -3934,8 +3936,7 @@ public class ProgramMerge {
 			if (originObject != null) {
 				try {
 					if (resultOpm == null) {
-						resultOpm =
-							createPropertyMap(userPropertyName, resultProgram, originOpm);
+						resultOpm = createPropertyMap(userPropertyName, resultProgram, originOpm);
 					}
 					resultOpm.add(resultAddress, originObject);
 				}

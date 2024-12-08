@@ -91,7 +91,7 @@ public class SystemUtilities {
 		if (url.getPath().contains("/build/libs")) {
 			return true; // Source repository Gradle JavaExec task mode
 		}
-		return switch(url.getProtocol()) {
+		return switch (url.getProtocol()) {
 			case "file" -> true; // Eclipse run config mode (class files)
 			case "jar" -> false; // Release mode (jar files)
 			case "bundleresource" -> false; // GhidraDev Utility.jar access mode
@@ -100,31 +100,47 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Get the user that is running the ghidra application
+	 * Clean the specified user name to eliminate any spaces or leading domain name
+	 * which may be present (e.g., "MyDomain\John Doe" becomes "JohnDoe").
+	 * @param name user name string to be cleaned-up
+	 * @return the clean user name
+	 */
+	public static String getCleanUserName(String name) {
+		String uname = name;
+		// Remove the spaces since some operating systems allow
+		// spaces and some do not, Java's File class doesn't
+		StringBuilder nameBuf = new StringBuilder();
+		if (uname.indexOf(" ") >= 0) {
+			StringTokenizer tokens = new StringTokenizer(uname, " ", false);
+			while (tokens.hasMoreTokens()) {
+				nameBuf.append(tokens.nextToken());
+			}
+			uname = nameBuf.toString();
+		}
+
+		// Remove leading Domain Name if present
+		int slashIndex = uname.lastIndexOf('\\');
+		if (slashIndex >= 0) {
+			uname = uname.substring(slashIndex + 1);
+		}
+		return uname;
+	}
+
+	/**
+	 * Get the user that is running the application.  This name may be modified to
+	 * eliminate any spaces or leading domain name which may be present in Java's
+	 * {@code user.name} system property (see {@link #getCleanUserName(String)}).
 	 * @return the user name
 	 */
 	public static String getUserName() {
 		if (userName == null) {
-			String uname = System.getProperty("user.name");
-
-			// remove the spaces since some operating systems allow
-			// spaces and some do not, Java's File class doesn't
-			if (uname.indexOf(" ") >= 0) {
-				userName = "";
-				StringTokenizer tokens = new StringTokenizer(uname, " ", false);
-				while (tokens.hasMoreTokens()) {
-					userName += tokens.nextToken();
-				}
-			}
-			else {
-				userName = uname;
-			}
+			userName = getCleanUserName(System.getProperty("user.name"));
 		}
 		return userName;
 	}
 
 	/**
-	 * Gets the boolean value of the  system property by the given name.  If the property is
+	 * Gets the boolean value of the system property by the given name.  If the property is
 	 * not set, the defaultValue is returned.   If the value is set, then it will be passed
 	 * into {@link Boolean#parseBoolean(String)}.
 	 *
@@ -157,20 +173,15 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Checks to see if the font size override setting is enabled and adjusts
-	 * the given font as necessary to match the override setting. If the setting
-	 * is not enabled, then <code>font</code> is returned.
+	 * No longer supported.  Use the theming system for fonts
 	 *
-	 * @param font
-	 *            The current font to adjust, if necessary.
-	 * @return a font object with the proper size.
+	 * @param font the font
+	 * @return the same font passed in
+	 * @deprecated Use the theming system for fonts
 	 */
+	@Deprecated(since = "11.1", forRemoval = true)
 	public static Font adjustForFontSizeOverride(Font font) {
-		if (FONT_SIZE_OVERRIDE_VALUE == null) {
-			return font;
-		}
-
-		return font.deriveFont((float) FONT_SIZE_OVERRIDE_VALUE.intValue());
+		return font;
 	}
 
 	/**
@@ -334,10 +345,10 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Returns a file that contains the given class. If the class is in a jar file, then 
-	 * the jar file will be returned. If the file is in a .class file, then the directory 
+	 * Returns a file that contains the given class. If the class is in a jar file, then
+	 * the jar file will be returned. If the file is in a .class file, then the directory
 	 * containing the package root will be returned (i.e. the "bin" directory).
-	 * 
+	 *
 	 * @param classObject the class for which to get the location
 	 * @return the containing location
 	 */

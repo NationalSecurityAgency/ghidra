@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,12 +34,11 @@ import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.TimedMsg;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
-import ghidra.util.exception.DuplicateNameException;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 
 	private final DefaultTraceRecorder recorder;
@@ -68,7 +67,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 	public CompletableFuture<Void> init() {
 		DebuggerObjectModel model = target.getModel();
 		model.addModelListener(queue.in, true);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private boolean successor(TargetObject ref) {
@@ -143,28 +142,6 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		ManagedThreadRecorder rec = recorder.getThreadRecorder(eventThread);
 		recorder.createSnapshot(description, rec == null ? null : rec.getTraceThread(), null);
 		ignoreInvalidation = false;
-
-		if (type == TargetEventType.MODULE_LOADED) {
-			long snap = recorder.getSnap();
-			Object p0 = parameters.get(0);
-			if (!(p0 instanceof TargetModule)) {
-				return;
-			}
-			TargetModule mod = (TargetModule) p0;
-			String modPath = mod.getJoinedPath(".");
-			recorder.parTx.execute("Adjust module load: " + modPath, () -> {
-				TraceModule traceModule = recorder.getTraceModule(mod);
-				if (traceModule == null) {
-					return;
-				}
-				try {
-					traceModule.setLoadedSnap(snap);
-				}
-				catch (DuplicateNameException e) {
-					Msg.error(this, "Could not set module loaded snap", e);
-				}
-			}, modPath);
-		}
 	}
 
 	@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
@@ -208,7 +185,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 			long snap = recorder.getSnap();
 			String path = object.getJoinedPath(".");
 			recorder.parTx.execute("Memory invalidated: " + path, () -> {
-				AddressSet set = trace.getBaseLanguage().getAddressFactory().getAddressSet();
+				AddressSet set = trace.getBaseAddressFactory().getAddressSet();
 				memoryManager.setState(snap, set, TraceMemoryState.UNKNOWN);
 			}, path);
 		}

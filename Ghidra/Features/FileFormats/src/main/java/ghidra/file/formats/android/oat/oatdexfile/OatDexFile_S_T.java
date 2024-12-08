@@ -125,7 +125,7 @@ public class OatDexFile_S_T extends OatDexFile {
 		Data data = program.getListing().createData(dataAddress, toDataType());
 
 		for (int i = 0; i < data.getNumComponents(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data componentI = data.getComponent(i);
 			if (componentI.getFieldName().startsWith("lookup_table_data_") ||
 				componentI.getFieldName().startsWith("oat_class_offsets_pointer_") ||

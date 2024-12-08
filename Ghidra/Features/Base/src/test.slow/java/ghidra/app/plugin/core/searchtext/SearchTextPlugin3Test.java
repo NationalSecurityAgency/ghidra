@@ -27,6 +27,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -34,7 +35,7 @@ import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -63,10 +64,6 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	private CodeBrowserPlugin cbPlugin;
 	private CodeViewerProvider provider;
 	private GoToService goToService;
-
-	public SearchTextPlugin3Test() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -509,18 +506,20 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		String signature = ((FunctionSignatureFieldLocation) loc).getSignature();
 
-		Function function = listing.getFunctionAt(loc.getAddress());
-		HighlightProvider highlightProvider =
+		ListingHighlightProvider highlightProvider =
 			cbPlugin.getFormatManager().getFormatHighlightProvider();
-		Highlight[] h = highlightProvider.getHighlights(signature, function,
-			FunctionSignatureFieldFactory.class, signature.indexOf(searchText));
+
+		FieldPanel fieldPanel = cbPlugin.getFieldPanel();
+		ListingField field = (ListingField) fieldPanel.getCurrentField();
+		int offset = signature.indexOf(searchText);
+		Highlight[] h = highlightProvider.createHighlights(signature, field, offset);
+
 		assertEquals(1, h.length);
 
 		runSwing(() -> dialog.close());
 
 		// highlights should be gone
-		h = highlightProvider.getHighlights(signature, function,
-			FunctionSignatureFieldFactory.class, -1);
+		h = highlightProvider.createHighlights(signature, field, offset);
 		assertEquals(0, h.length);
 
 	}
@@ -564,10 +563,14 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		String signature = ((FunctionSignatureFieldLocation) loc).getSignature();
 		Function function = listing.getFunctionAt(loc.getAddress());
-		HighlightProvider highlightProvider =
+		ListingHighlightProvider highlightProvider =
 			cbPlugin.getFormatManager().getFormatHighlightProvider();
-		Highlight[] h = highlightProvider.getHighlights(signature, function,
-			FunctionSignatureFieldFactory.class, -1);
+
+		FieldPanel fieldPanel = cbPlugin.getFieldPanel();
+		ListingField field = (ListingField) fieldPanel.getCurrentField();
+		FieldFactory factory = field.getFieldFactory();
+		Highlight[] h = highlightProvider.createHighlights(signature, field, -1);
+
 		int numberOfHighlights = h.length;
 		assertTrue("Did not find highlights at expected field.", (numberOfHighlights > 0));
 
@@ -590,13 +593,12 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		cbPlugin.goToField(addr, "Operands", 0, 2);
 		waitForSwing();
 		loc = plugin.getNavigatable().getLocation();
-
 		assertTrue(loc instanceof OperandFieldLocation);
-		OperandFieldLocation operandLocation = (OperandFieldLocation) loc;
-		Instruction instruction = listing.getInstructionAt(addr);
 
-		h = highlightProvider.getHighlights(operandLocation.getOperandRepresentation(), instruction,
-			OperandFieldFactory.class, 0);
+		field = (ListingField) fieldPanel.getCurrentField();
+		factory = field.getFieldFactory();
+		h = highlightProvider.createHighlights(signature, field, -1);
+
 		assertTrue("Did not update highlights for new search.", (numberOfHighlights != h.length));
 	}
 
@@ -699,7 +701,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	private class CancellingStubTaskMonitorComponent extends TaskMonitorComponent {
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			if (calledFromSearchTask()) {
 				throw new CancelledException();
 			}

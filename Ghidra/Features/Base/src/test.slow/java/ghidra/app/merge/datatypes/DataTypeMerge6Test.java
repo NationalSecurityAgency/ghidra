@@ -34,79 +34,55 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.setToDefaultPacking();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.setToDefaultPacking();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setToMachineAligned();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.setToMachineAligned();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(8, s.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(8, s.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setExplicitMinimumAlignment(4);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.setExplicitMinimumAlignment(4);
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 		});
 	}
@@ -190,82 +166,55 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.setToDefaultPacking();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.setToDefaultPacking();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.pack(1);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.pack(1);
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(1, s.getComponent(1).getOffset());
-					assertEquals(3, s.getComponent(2).getOffset());
-					assertEquals(7, s.getComponent(3).getOffset());
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(1, s.getComponent(1).getOffset());
+				assertEquals(3, s.getComponent(2).getOffset());
+				assertEquals(7, s.getComponent(3).getOffset());
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.pack(2);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.pack(2);
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(2, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(2, s.getAlignment());
 			}
 		});
 	}
@@ -352,80 +301,54 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.setToDefaultPacking();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.setToDefaultPacking();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setToMachineAligned();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.setToMachineAligned();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(8, s.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(8, s.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.pack(1);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.pack(1);
 
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(1, s.getComponent(1).getOffset());
-					assertEquals(3, s.getComponent(2).getOffset());
-					assertEquals(7, s.getComponent(3).getOffset());
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(1, s.getComponent(1).getOffset());
+				assertEquals(3, s.getComponent(2).getOffset());
+				assertEquals(7, s.getComponent(3).getOffset());
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
 			}
 		});
 	}
@@ -487,59 +410,42 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.add(new IntegerDataType());
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.add(new IntegerDataType());
 
-					// Offsets change to 0,2,4,8.
-					assertFalse(s.isPackingEnabled());
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(1, s.getComponent(1).getOffset());
-					assertEquals(3, s.getComponent(2).getOffset());
-					assertEquals(7, s.getComponent(3).getOffset());
-					assertEquals(15, s.getComponent(4).getOffset());
-					assertEquals(19, s.getLength());
-					assertEquals(1, s.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertFalse(s.isPackingEnabled());
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(1, s.getComponent(1).getOffset());
+				assertEquals(3, s.getComponent(2).getOffset());
+				assertEquals(7, s.getComponent(3).getOffset());
+				assertEquals(15, s.getComponent(4).getOffset());
+				assertEquals(19, s.getLength());
+				assertEquals(1, s.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.setToDefaultPacking();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.setToDefaultPacking();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 		});
 	}
@@ -601,87 +507,61 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.setToDefaultPacking();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.setToDefaultPacking();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-					s.getComponent(1).setFieldName("MyComponentOne");
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
+				s.getComponent(1).setFieldName("MyComponentOne");
 
-					assertTrue(s.hasDefaultPacking());
-					assertTrue(s.isDefaultAligned());
+				assertTrue(s.hasDefaultPacking());
+				assertTrue(s.isDefaultAligned());
 
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals("MyComponentOne", s.getComponent(1).getFieldName());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals("MyComponentOne", s.getComponent(1).getFieldName());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-					s.pack(1);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
+				s.pack(1);
 
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(1, s.getComponent(1).getOffset());
-					assertEquals(3, s.getComponent(2).getOffset());
-					assertEquals(7, s.getComponent(3).getOffset());
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(1, s.getComponent(1).getOffset());
+				assertEquals(3, s.getComponent(2).getOffset());
+				assertEquals(7, s.getComponent(3).getOffset());
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
 			}
 		});
 	}
@@ -743,77 +623,51 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-					s.setToDefaultPacking();
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
+				s.setToDefaultPacking();
 
-					// Offsets change to 0,2,4,8.
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(2, s.getComponent(1).getOffset());
-					assertEquals(4, s.getComponent(2).getOffset());
-					assertEquals(8, s.getComponent(3).getOffset());
-					assertEquals(16, s.getLength());
-					assertEquals(4, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(2, s.getComponent(1).getOffset());
+				assertEquals(4, s.getComponent(2).getOffset());
+				assertEquals(8, s.getComponent(3).getOffset());
+				assertEquals(16, s.getLength());
+				assertEquals(4, s.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					dtm.remove(s, TaskMonitor.DUMMY);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				dtm.remove(s, TaskMonitor.DUMMY);
 
-					// Offsets change to 0,2,4,8.
-					Structure intStruct = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertNull(intStruct);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Offsets change to 0,2,4,8.
+				Structure intStruct = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertNull(intStruct);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.pack(1);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.pack(1);
 
-					assertEquals(0, s.getComponent(0).getOffset());
-					assertEquals(1, s.getComponent(1).getOffset());
-					assertEquals(3, s.getComponent(2).getOffset());
-					assertEquals(7, s.getComponent(3).getOffset());
-					assertEquals(15, s.getLength());
-					assertEquals(1, s.getAlignment());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(0, s.getComponent(0).getOffset());
+				assertEquals(1, s.getComponent(1).getOffset());
+				assertEquals(3, s.getComponent(2).getOffset());
+				assertEquals(7, s.getComponent(3).getOffset());
+				assertEquals(15, s.getLength());
+				assertEquals(1, s.getAlignment());
 			}
 		});
 	}
@@ -867,74 +721,49 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure s = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					s.setPackingEnabled(true);
+				Structure s = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				s.setPackingEnabled(true);
 
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					union.setPackingEnabled(true);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				union.setPackingEnabled(true);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
+				
+				Structure structure = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(16, structure.getLength());
+				assertEquals(4, structure.getAlignment());
 
-				try {
-					Structure structure = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(16, structure.getLength());
-					assertEquals(4, structure.getAlignment());
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				assertEquals(96, union.getLength());
+				assertEquals(4, union.getAlignment());
 
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					assertEquals(96, union.getLength());
-					assertEquals(4, union.getAlignment());
-
-					structure.add(union);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				structure.add(union);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Structure structure = (Structure) dtm.getDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
-					assertEquals(16, structure.getLength());
-					assertEquals(4, structure.getAlignment());
+				Structure structure = (Structure) dtm.getDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
+				assertEquals(16, structure.getLength());
+				assertEquals(4, structure.getAlignment());
 
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					assertEquals(96, union.getLength());
-					assertEquals(4, union.getAlignment());
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				assertEquals(96, union.getLength());
+				assertEquals(4, union.getAlignment());
 
-					union.add(structure);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				union.add(structure);
 			}
 		});
 	}
@@ -994,79 +823,55 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					assertEquals(96, union.getLength());
-					assertEquals(1, union.getAlignment());
-					union.setPackingEnabled(true);
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				assertEquals(96, union.getLength());
+				assertEquals(1, union.getAlignment());
+				union.setPackingEnabled(true);
 
-					assertEquals(8, union.getComponent(0).getLength());
-					assertEquals(2, union.getComponent(1).getLength());
-					assertEquals(4, union.getComponent(2).getLength());
-					assertEquals(96, union.getComponent(3).getLength());
-					assertEquals(4, union.getComponent(4).getLength());
-					assertEquals(96, union.getLength());
-					assertEquals(4, union.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(8, union.getComponent(0).getLength());
+				assertEquals(2, union.getComponent(1).getLength());
+				assertEquals(4, union.getComponent(2).getLength());
+				assertEquals(96, union.getComponent(3).getLength());
+				assertEquals(4, union.getComponent(4).getLength());
+				assertEquals(96, union.getLength());
+				assertEquals(4, union.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					union.setToMachineAligned();
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				union.setToMachineAligned();
 
-					assertEquals(8, union.getComponent(0).getLength());
-					assertEquals(2, union.getComponent(1).getLength());
-					assertEquals(4, union.getComponent(2).getLength());
-					assertEquals(96, union.getComponent(3).getLength());
-					assertEquals(4, union.getComponent(4).getLength());
-					assertEquals(96, union.getLength());
-					assertEquals(8, union.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(8, union.getComponent(0).getLength());
+				assertEquals(2, union.getComponent(1).getLength());
+				assertEquals(4, union.getComponent(2).getLength());
+				assertEquals(96, union.getComponent(3).getLength());
+				assertEquals(4, union.getComponent(4).getLength());
+				assertEquals(96, union.getLength());
+				assertEquals(8, union.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					union.setExplicitMinimumAlignment(4);
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				union.setExplicitMinimumAlignment(4);
 
-					assertEquals(8, union.getComponent(0).getLength());
-					assertEquals(2, union.getComponent(1).getLength());
-					assertEquals(4, union.getComponent(2).getLength());
-					assertEquals(96, union.getComponent(3).getLength());
-					assertEquals(4, union.getComponent(4).getLength());
-					assertEquals(96, union.getLength());
-					assertEquals(4, union.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(8, union.getComponent(0).getLength());
+				assertEquals(2, union.getComponent(1).getLength());
+				assertEquals(4, union.getComponent(2).getLength());
+				assertEquals(96, union.getComponent(3).getLength());
+				assertEquals(4, union.getComponent(4).getLength());
+				assertEquals(96, union.getLength());
+				assertEquals(4, union.getAlignment());
 			}
 		});
 	}
@@ -1153,79 +958,55 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					assertEquals(96, union.getLength());
-					assertEquals(1, union.getAlignment());
-					union.setPackingEnabled(true);
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				assertEquals(96, union.getLength());
+				assertEquals(1, union.getAlignment());
+				union.setPackingEnabled(true);
 
-					assertEquals(8, union.getComponent(0).getLength());
-					assertEquals(2, union.getComponent(1).getLength());
-					assertEquals(4, union.getComponent(2).getLength());
-					assertEquals(96, union.getComponent(3).getLength());
-					assertEquals(4, union.getComponent(4).getLength());
-					assertEquals(96, union.getLength());
-					assertEquals(4, union.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(8, union.getComponent(0).getLength());
+				assertEquals(2, union.getComponent(1).getLength());
+				assertEquals(4, union.getComponent(2).getLength());
+				assertEquals(96, union.getComponent(3).getLength());
+				assertEquals(4, union.getComponent(4).getLength());
+				assertEquals(96, union.getLength());
+				assertEquals(4, union.getAlignment());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					union.pack(1);
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				union.pack(1);
 
-					assertEquals(8, union.getComponent(0).getLength());
-					assertEquals(2, union.getComponent(1).getLength());
-					assertEquals(4, union.getComponent(2).getLength());
-					assertEquals(96, union.getComponent(3).getLength());
-					assertEquals(4, union.getComponent(4).getLength());
-					assertEquals(96, union.getLength());
-					assertEquals(1, union.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(8, union.getComponent(0).getLength());
+				assertEquals(2, union.getComponent(1).getLength());
+				assertEquals(4, union.getComponent(2).getLength());
+				assertEquals(96, union.getComponent(3).getLength());
+				assertEquals(4, union.getComponent(4).getLength());
+				assertEquals(96, union.getLength());
+				assertEquals(1, union.getAlignment());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
-				try {
-					Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"CoolUnion");
-					union.pack(2);
+				Union union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"CoolUnion");
+				union.pack(2);
 
-					assertEquals(8, union.getComponent(0).getLength());
-					assertEquals(2, union.getComponent(1).getLength());
-					assertEquals(4, union.getComponent(2).getLength());
-					assertEquals(96, union.getComponent(3).getLength());
-					assertEquals(4, union.getComponent(4).getLength());
-					assertEquals(96, union.getLength());
-					assertEquals(2, union.getAlignment());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertEquals(8, union.getComponent(0).getLength());
+				assertEquals(2, union.getComponent(1).getLength());
+				assertEquals(4, union.getComponent(2).getLength());
+				assertEquals(96, union.getComponent(3).getLength());
+				assertEquals(4, union.getComponent(4).getLength());
+				assertEquals(96, union.getLength());
+				assertEquals(2, union.getAlignment());
 			}
 		});
 	}
@@ -1324,17 +1105,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
-
-				try {
-					dtm.addDataType(struct1, null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.addDataType(struct1, null);
 
 				Structure s =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1"), "ABCStructure");
@@ -1352,17 +1124,8 @@ public class DataTypeMerge6Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
-
-				try {
-					dtm.addDataType(struct2, null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.addDataType(struct2, null);
 
 				Structure s =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1"), "ABCStructure");

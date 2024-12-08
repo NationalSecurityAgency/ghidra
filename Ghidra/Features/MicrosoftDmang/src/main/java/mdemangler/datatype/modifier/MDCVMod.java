@@ -18,19 +18,13 @@ package mdemangler.datatype.modifier;
 import java.util.*;
 
 import mdemangler.*;
-import mdemangler.naming.MDQualification;
+import mdemangler.naming.MDQualifiedName;
 
 /**
  * This class represents a Const/Volatile modifier (and extra stuff) of a modifier
  * type within a Microsoft mangled symbol.
  */
 public class MDCVMod extends MDParsableItem {
-	public static final char SPACE = ' ';
-
-	public static final char POINTER_CHAR = '*';
-	public static final char REFERENCE_CHAR = '&';
-	public static final char CARROT_CHAR = '^';
-	public static final char PERCENT_CHAR = '%';
 	// private static final String FUNCTIONPOINTER = "*"; // TODO: eliminate
 	// with
 	// // old code
@@ -38,10 +32,10 @@ public class MDCVMod extends MDParsableItem {
 	// with
 	// // old code
 	private static final String POINTER = "*";
-	private static final String REFERENCE = "&";
-	private static final String CARROT = "^";
+	private static final String AMPERSAND = "&";
+	private static final String CARET = "^";
 	private static final String PERCENT = "%";
-	private static final String REFREF = "&&";
+	private static final String DOUBLE_AMPERSAND = "&&";
 
 	private final static String PTR64 = " __ptr64";
 	private static final String UNALIGNED = "__unaligned ";
@@ -95,7 +89,10 @@ public class MDCVMod extends MDParsableItem {
 	// TODO: Name this better once understood. For now, special pointer.
 	String special;
 
-	private MDQualification qual;
+	// Changed from MDQualification to support an empty name ("@@"), for which parsing
+	// gets challenging for a number of symbols, even with our trying to change the looping
+	// and end-of-list strategy of MDQualification
+	private MDQualifiedName qual;
 	private MDCVMod thisPointerCVMod; // TODO: check if EFI or CV portion
 	// private String basedName;
 	private MDBasedAttribute basedType;
@@ -132,8 +129,8 @@ public class MDCVMod extends MDParsableItem {
 		plain,
 		pointer,
 		reference,
-		refref,
-		carrot, // TODO: eliminate with old code
+		rightreference,
+		caret, // TODO: eliminate with old code
 		percent, // TODO: eliminate with old code
 		functionpointer, // TODO: eliminate with old code
 		functionreference, // TODO: eliminate with old code
@@ -156,12 +153,12 @@ public class MDCVMod extends MDParsableItem {
 		modType = CvModifierType.reference;
 	}
 
-	public void setRefRefTemplateParameter() {
-		modType = CvModifierType.refref;
+	public void setRightReferenceTemplateParameter() {
+		modType = CvModifierType.rightreference;
 	}
 
-	// public void setCarrotType() {
-	// modType = cvModifierType.carrot;
+	// public void setCaretType() {
+	// modType = cvModifierType.caret;
 	// }
 	//
 	// public void setPercentType() {
@@ -466,7 +463,7 @@ public class MDCVMod extends MDParsableItem {
 				dmang.increment();
 				setGC();
 				// if (isPointerType()) {
-				// setCarrotType();
+				// setCaretType();
 				// }
 				// else if (isReferenceType()) {
 				// setPercentType();
@@ -476,7 +473,7 @@ public class MDCVMod extends MDParsableItem {
 				dmang.increment();
 				// if ((modType == cvModifierType.pointer) ||
 				// (modType == cvModifierType.functionpointer) ||
-				// (modType == cvModifierType.carrot) ||
+				// (modType == cvModifierType.caret) ||
 				// (modType == cvModifierType.percent) ||
 				// (modType == cvModifierType.reference) ||
 				// (modType == cvModifierType.functionreference)) {
@@ -695,7 +692,7 @@ public class MDCVMod extends MDParsableItem {
 				throw new MDException("CV code not expected: " + code);
 		}
 		if (isMember) {
-			qual = new MDQualification(dmang);
+			qual = new MDQualifiedName(dmang);
 			qual.parse();
 			if (isFunction) {
 				// TODO: check if EFI or CV portion-->I think might be any all
@@ -814,7 +811,7 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else if (isGC()) {
-					annotation = CARROT;
+					annotation = CARET;
 				}
 				else {
 					annotation = POINTER;
@@ -828,10 +825,10 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else {
-					annotation = REFERENCE;
+					annotation = AMPERSAND;
 				}
 				break;
-			case refref:
+			case rightreference:
 				if (isCLIProperty()) { // highest precedence, even if isGC is set.
 					annotation = PERCENT;
 				}
@@ -839,7 +836,7 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else {
-					annotation = REFREF;
+					annotation = DOUBLE_AMPERSAND;
 				}
 				break;
 			case array:
@@ -875,7 +872,7 @@ public class MDCVMod extends MDParsableItem {
 		// annotation = PERCENT;
 		// }
 		// else if (isGC()) {
-		// annotation = CARROT;
+		// annotation = CARET;
 		// }
 		// else {
 		// annotation = POINTER;
@@ -953,7 +950,7 @@ public class MDCVMod extends MDParsableItem {
 	// annotation = PERCENT;
 	// }
 	// else if (isGC()) {
-	// annotation = CARROT;
+	// annotation = CARET;
 	// }
 	// else {
 	// annotation = POINTER;
@@ -1072,9 +1069,11 @@ public class MDCVMod extends MDParsableItem {
 				// if ((modType != cvModifierType.plain) && (modType !=
 				// cvModifierType.question)) {
 				if (modType != CvModifierType.plain) {
-					if (qual.hasContent()) {
-						dmang.insertString(builder, "::");
-						qual.insert(builder);
+					StringBuilder qualBuilder = new StringBuilder();
+					qual.insert(qualBuilder);
+					if (!qualBuilder.isEmpty()) {
+						qualBuilder.append("::");
+						dmang.insertString(builder, qualBuilder.toString());
 					}
 				}
 			}

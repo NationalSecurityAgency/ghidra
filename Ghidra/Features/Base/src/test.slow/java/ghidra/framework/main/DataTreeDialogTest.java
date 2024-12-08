@@ -15,6 +15,7 @@
  */
 package ghidra.framework.main;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -110,7 +111,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonDisabled_Type_SAVE() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.SAVE);
+		show(SAVE);
 		assertOK(false);
 
 		// select a file--enabled; name field populated
@@ -141,7 +142,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonDisabled_Type_CREATE() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.CREATE);
+		show(CREATE);
 		assertOK(false);
 
 		// select a file--enabled; name field populated
@@ -172,7 +173,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonAlwaysEnabled_Type_CHOOSE_FOLDER() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.CHOOSE_FOLDER);
+		show(CHOOSE_FOLDER);
 		assertOK(true);
 
 		// select a file--enabled; name field populated
@@ -199,7 +200,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonDisabled_Type_OPEN() {
 		// no initial selection--button disabled
-		show(DataTreeDialog.OPEN);
+		show(OPEN);
 		assertOK(false);
 
 		// select a file--enabled; name field populated
@@ -224,7 +225,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOKButtonEnabledWithInitialSelection_Type_OPEN() {
 		//  initial selection--button enabled
-		show(DataTreeDialog.OPEN, "x07");
+		show(OPEN, "x07");
 		assertOK(true);
 
 		// select a file--enabled; name field populated
@@ -250,7 +251,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSelectFiles() throws Exception {
 		List<DomainFile> createdFiles = createBlankProgramsInProject(
 			List.of("/dir1/dir2/file1", "/dir1/dir2a/dir3a/file2", "/file3"));
-		show(DataTreeDialog.OPEN);
+		show(OPEN);
 
 		Set<DomainFile> selectedProjectElements = new HashSet<>();
 		ProjectDataTreePanel projectDataTreePanel = getProjectDataTreePanel();
@@ -280,7 +281,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSelectFolder() throws Exception {
 		List<DomainFile> createdFiles = createBlankProgramsInProject(
 			List.of("/dir1/dir2/file1", "/dir1/dir2a/dir3a/file2", "/file3"));
-		show(DataTreeDialog.OPEN);
+		show(OPEN);
 
 		Set<DomainFolder> selectedProjectElements = new HashSet<>();
 		ProjectDataTreePanel projectDataTreePanel = getProjectDataTreePanel();
@@ -398,7 +399,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTree(gTree);
 	}
 
-	private void show(final int type) {
+	private void show(DataTreeDialogType type) {
 		SwingUtilities.invokeLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog", type);
 
@@ -408,7 +409,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(dialog);
 	}
 
-	private void show(final int type, final String name) {
+	private void show(DataTreeDialogType type, final String name) {
 		SwingUtilities.invokeLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog", type);
 
@@ -424,7 +425,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	private void showFiltered(final String startsWith) {
 		SwingUtilities.invokeLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog",
-				DataTreeDialog.OPEN, f -> f.getName().startsWith(startsWith));
+				OPEN, f -> f.getName().startsWith(startsWith));
 			dialog.showComponent();
 		});
 		waitForSwing();

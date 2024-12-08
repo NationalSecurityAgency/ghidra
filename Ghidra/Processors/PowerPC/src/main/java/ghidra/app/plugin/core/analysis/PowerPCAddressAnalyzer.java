@@ -154,7 +154,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ConstantPropagationContextEvaluator eval =
-			new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+			new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 
 				@Override
 				public boolean evaluateContextBefore(VarnodeContext context, Instruction instr) {
@@ -224,9 +224,11 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				@Override
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
-						int pcodeop, Address address, int size, RefType refType) {
+						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 
-					if (instr.getFlowType().isJump()) {
+					if (refType.isJump() && refType.isComputed() &&
+							program.getMemory().contains(address) && address.getOffset() != 0) {
+						super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 						// for branching instructions, if we have a good target, mark it
 						// if this isn't straight code (thunk computation), let someone else lay down the reference
 						return !symEval.encounteredBranch();
@@ -254,12 +256,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 						}
 					}
 
-					// markup the data flow for this instruction
-					if (refType.isData()) {
-						return true;
-					}
-
-					return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+					return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 				}
 
 				@Override
@@ -288,11 +285,11 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 						Register reg = program.getRegister(node.getAddress());
 						if (reg != null) {
 							if (reg.getName().equals("xer_so")) {
-								return new Long(0);
+								return Long.valueOf(0);
 							}
 							if (propagateR2value && reg.getName().equals("r2") &&
 								startingR2Value != null && startingR2Value.hasValue()) {
-								return new Long(startingR2Value.getUnsignedValue().longValue());
+								return Long.valueOf(startingR2Value.getUnsignedValue().longValue());
 							}
 						}
 					}
@@ -315,6 +312,12 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 					return trustWriteMemOption;
 				}
 			};
+
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinSpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
@@ -389,7 +392,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			long tableIndexOffset;
 			Address targetSwitchAddr = null;
 			boolean hitTheGuard = false;
-			Long assumeValue = new Long(0);
+			Long assumeValue = Long.valueOf(0);
 			int tableSizeMax = STARTING_MAX_TABLE_SIZE;
 
 			public void setGuard(boolean hitGuard) {
@@ -454,13 +457,13 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop,
-					Address constant, int size, RefType refType) {
+					Address constant, int size, DataType dataType, RefType refType) {
 				return null;
 			}
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType,RefType refType) {
 
 				// TODO: if ever loading from instructions in memory, must EXIT!
 				if (!((refType.isComputed() || refType.isConditional()) &&
@@ -497,7 +500,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 					if (reg != null) {
 						// never assume for flags, or control registers
 						if (reg.getName().equals("xer_so") || reg.getName().startsWith("cr")) {
-							return new Long(0);
+							return Long.valueOf(0);
 						}
 					}
 					if (hitTheGuard) {
@@ -572,7 +575,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			}
 
 			for (long assume = 0; assume < switchEvaluator.getMaxTableSize(); assume++) {
-				switchEvaluator.setAssume(new Long(assume));
+				switchEvaluator.setAssume(Long.valueOf(assume));
 				switchEvaluator.setGuard(false);
 				switchEvaluator.setTargetSwitchAddr(loc);
 

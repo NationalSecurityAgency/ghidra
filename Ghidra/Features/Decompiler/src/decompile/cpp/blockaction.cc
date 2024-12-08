@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,12 +84,14 @@ void LoopBody::extendToContainer(const LoopBody &container,vector<FlowBlock *> &
   }
 }
 
-/// This updates the \b head and \b tail nodes to FlowBlock in the current collapsed graph.
-/// This returns the first \b tail and passes back the head.
-/// \param top is where \b head is passed back
+/// This updates the \b head node to the FlowBlock in the current collapsed graph.
+/// The \b tail nodes are also updated until one is found that has not collapsed into \b head.
+/// This first updated \b tail is returned.  The loop may still exist as a \b head node with an
+/// out edge back into itself, in which case \b head is returned as the active \b tail.
+/// If the loop has been completely collapsed, null is returned.
 /// \param graph is the containing control-flow structure
-/// \return the current loop \b head
-FlowBlock *LoopBody::getCurrentBounds(FlowBlock **top,FlowBlock *graph)
+/// \return the current loop \b tail or null
+FlowBlock *LoopBody::update(FlowBlock *graph)
 
 {
   while(head->getParent() != graph)
@@ -101,9 +103,12 @@ FlowBlock *LoopBody::getCurrentBounds(FlowBlock **top,FlowBlock *graph)
       bottom = bottom->getParent();
     tails[i] = bottom;
     if (bottom != head) {	// If the loop hasn't been fully collapsed yet
-      *top = head;
       return bottom;
     }
+  }
+  for(int4 i=head->sizeOut()-1;i>=0;--i) {
+    if (head->getOut(i) == head)		// Check for head looping with itself
+      return head;
   }
   return (FlowBlock *)0;
 }
@@ -391,17 +396,17 @@ void LoopBody::emitLikelyEdges(list<FloatingEdge> &likely,FlowBlock *graph)
 	break;
       }
     }
-    likely.push_back(FloatingEdge(inbl,outbl));
+    likely.emplace_back(inbl,outbl);
   }
   for(int4 i=tails.size()-1;i>=0;--i) {	// Go in reverse order, to put out less preferred back-edges first
     if ((holdin!=(FlowBlock *)0)&&(i==0))
-      likely.push_back(FloatingEdge(holdin,holdout)); // Put in delayed exit, right before final backedge
+      likely.emplace_back(holdin,holdout); // Put in delayed exit, right before final backedge
     FlowBlock *tail = tails[i];
     int4 sizeout = tail->sizeOut();
     for(int4 j=0;j<sizeout;++j) {
       FlowBlock *bl = tail->getOut(j);
       if (bl == head)		// If out edge to head (back-edge for this loop)
-	likely.push_back(FloatingEdge(tail,head)); // emit it
+	likely.emplace_back(tail,head); // emit it
     }
   }
 }
@@ -652,7 +657,7 @@ void TraceDAG::removeTrace(BlockTrace *trace)
 
 {
   // Record that we should now treat this edge like goto
-  likelygoto.push_back(FloatingEdge(trace->bottom,trace->destnode)); // Create goto record
+  likelygoto.emplace_back(trace->bottom,trace->destnode); // Create goto record
   trace->destnode->setVisitCount( trace->destnode->getVisitCount() + trace->edgelump ); // Ignore edge(s)
 
   BranchPoint *parentbp = trace->top;
@@ -1188,26 +1193,36 @@ void CollapseStructure::orderLoopBodies(void)
 bool CollapseStructure::updateLoopBody(void)
 
 {
+  if (finaltrace) {		// If we've already performed trace on DAG with no likely goto edges
+    return false;		// don't repeat the trace
+  }
   FlowBlock *loopbottom = (FlowBlock *)0;
   FlowBlock *looptop = (FlowBlock *)0;
-  if (finaltrace) {		// If we've already performed the final trace
-    if (likelyiter == likelygoto.end())
-      return false;		// We have nothing more to give
-    return true;
-  }
   while (loopbodyiter != loopbody.end()) {	// Last innermost loop
-    loopbottom = (*loopbodyiter).getCurrentBounds(&looptop,&graph);
+    LoopBody &curBody( *loopbodyiter );
+    loopbottom = curBody.update(&graph);
     if (loopbottom != (FlowBlock *)0) {
-      if ((!likelylistfull) ||
-	  (likelyiter != likelygoto.end())) // Reaching here means, we removed edges but loop still didn't collapse
+      looptop = curBody.getHead();
+      if (loopbottom == looptop) {	// Check for single node looping back to itself
+	// If sizeout is 1 or 2, the loop would have collapsed, so the node is likely a switch.
+	likelygoto.clear();
+	likelygoto.emplace_back(looptop,looptop);	// Mark the loop edge as a goto
+	likelyiter = likelygoto.begin();
+	likelylistfull = true;
+	return true;
+      }
+      if (!likelylistfull || likelyiter != likelygoto.end()) {
 	break; // Loop still exists
+      }
     }
     ++loopbodyiter;
     likelylistfull = false;	// Need to generate likely list for new loopbody (or no loopbody)
     loopbottom = (FlowBlock *)0;
   }
-  if (likelylistfull) return true;
-  // If we reach here, need to generate likely gotos for a new inner loop
+  if (likelylistfull && likelyiter != likelygoto.end())
+      return true;
+
+  // If we reach here, need to generate likely gotos for a new inner loop or DAG
   likelygoto.clear();		// Clear out any old likely gotos from last inner loop
   TraceDAG tracer(likelygoto);
   if (loopbottom != (FlowBlock *)0) {
@@ -1216,7 +1231,6 @@ bool CollapseStructure::updateLoopBody(void)
     (*loopbodyiter).setExitMarks(&graph); // Set the bounds of the TraceDAG
   }
   else {
-    finaltrace = true;
     for(uint4 i=0;i<graph.getSize();++i) {
       FlowBlock *bl = graph.getBlock(i);
       if (bl->sizeIn() == 0)
@@ -1225,11 +1239,15 @@ bool CollapseStructure::updateLoopBody(void)
   }
   tracer.initialize();
   tracer.pushBranches();
+  likelylistfull = true;		// Mark likelygoto generation complete for current loop or DAG
   if (loopbottom != (FlowBlock *)0) {
     (*loopbodyiter).emitLikelyEdges(likelygoto,&graph);
     (*loopbodyiter).clearExitMarks(&graph);
   }
-  likelylistfull = true;
+  else if (likelygoto.empty()) {
+    finaltrace = true;		// No loops left and trace didn't find gotos
+    return false;
+  }
   likelyiter = likelygoto.begin();
   return true;
 }
@@ -2117,9 +2135,9 @@ int4 ActionNormalizeBranches::apply(Funcdata &data)
     if (cbranch == (PcodeOp *)0) continue;
     if (cbranch->code() != CPUI_CBRANCH) continue;
     fliplist.clear();
-    if (opFlipInPlaceTest(cbranch,fliplist) != 0)
+    if (Funcdata::opFlipInPlaceTest(cbranch,fliplist) != 0)
       continue;
-    opFlipInPlaceExecute(data,fliplist);
+    data.opFlipInPlaceExecute(fliplist);
     bb->flipInPlaceExecute();
     count += 1;			// Indicate a change was made
   }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +36,7 @@ public class PriorityQueue<T> {
 	 * @param priority the priority assigned to the object.
 	 */
 	public void add(T obj, int priority) {
-		Integer key = new Integer(priority);
+		Integer key = Integer.valueOf(priority);
 		LinkedList<T> list = tree.get(key);
 		if (list == null) {
 			list = new LinkedList<T>();

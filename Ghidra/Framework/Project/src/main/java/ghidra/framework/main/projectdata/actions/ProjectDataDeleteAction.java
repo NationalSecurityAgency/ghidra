@@ -89,17 +89,17 @@ public class ProjectDataDeleteAction extends FrontendProjectTreeAction {
 		if (fileCount == 1) {
 			if (!selectedFiles.isEmpty()) {
 				DomainFile file = CollectionUtils.any(selectedFiles);
-				return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete \"" +
+				return "<html>Are you sure you want to <B><U>permanently</U></B> delete \"" +
 					HTMLUtilities.escapeHTML(file.getName()) + "\"?";
 			}
 
 			// only folders are selected, but they contain files
-			return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete the " +
+			return "<html>Are you sure you want to <B><U>permanently</U></B> delete the " +
 				" selected files and folders?";
 		}
 
 		// multiple files selected
-		return "<HTML>Are you sure you want to <B><U>permanently</U></B> delete the " + fileCount +
+		return "<html>Are you sure you want to <B><U>permanently</U></B> delete the " + fileCount +
 			" selected files?";
 	}
 

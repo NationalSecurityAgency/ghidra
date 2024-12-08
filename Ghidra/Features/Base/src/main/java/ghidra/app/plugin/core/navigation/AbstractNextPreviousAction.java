@@ -53,8 +53,6 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 	public AbstractNextPreviousAction(PluginTool tool, String name, String owner, String subGroup) {
 		super(name, owner);
 		this.tool = tool;
-		setSupportsDefaultToolContext(true);
-
 		ToolBarData toolBarData =
 			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);

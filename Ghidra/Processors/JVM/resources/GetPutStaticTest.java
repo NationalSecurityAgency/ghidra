@@ -23,7 +23,7 @@ class GetPutStaticTest{
     public static float testFloat = 1.1f;
     public static double testDouble = 2.2;
     public static long testLong = 5l;
-    public static Integer testRef = new Integer(0);
+    public static Integer testRef = Integer.valueOf(0);
     public static int[] test1dArray;
     public static int[][] test2dArray;
 

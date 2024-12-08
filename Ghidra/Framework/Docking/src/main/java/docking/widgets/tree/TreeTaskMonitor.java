@@ -132,7 +132,7 @@ public class TreeTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void checkCanceled() throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	@Override
@@ -173,6 +173,6 @@ public class TreeTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void clearCanceled() {
-		monitor.clearCanceled();
+		monitor.clearCancelled();
 	}
 }

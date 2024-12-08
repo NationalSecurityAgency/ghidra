@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
+import ghidra.framework.generic.auth.Password;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.address.Address;
@@ -74,7 +75,16 @@ public class AskScript extends GhidraScript {
 			}
 
 			Program prog = askProgram("Please choose a program to open.");
-			println("Program picked: " + prog.getName());
+			if (prog != null) {
+				// NOTE: if prog is not null script must release it when done using.
+				// This may also be accomplished via an overridden cleanup(boolean) method.
+				try {
+					println("Program picked: " + prog.getName());
+				}
+				finally {
+					prog.release(this); // will remain open in tool if applicable
+				}
+			}
 
 			DomainFile domFile = askDomainFile("Which domain file would you like?");
 			println("Domain file: " + domFile.getName());
@@ -117,6 +127,10 @@ public class AskScript extends GhidraScript {
 			boolean yesOrNo = askYesNo("yes or no", "is this a yes/no question?");
 			println("Yes or No? " + yesOrNo);
 
+			try (Password password = askPassword("Password", null)) {
+				println("Password has %d characters".formatted(password.getPasswordChars().length));
+				// try-with-resources ensures buffer is zeroed out before garbage collected
+			}
 		}
 		catch (IllegalArgumentException iae) {
 			Msg.warn(this, "Error during headless processing: " + iae.toString());

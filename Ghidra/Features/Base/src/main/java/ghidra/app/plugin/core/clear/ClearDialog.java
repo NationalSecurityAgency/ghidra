@@ -124,7 +124,7 @@ public class ClearDialog extends DialogComponentProvider {
 
 		symbolsCb = new GCheckBox("Symbols");
 		commentsCb = new GHtmlCheckBox(
-			"<HTML>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>");
+			"<html>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>");
 		commentsCb.setVerticalTextPosition(SwingConstants.TOP);
 		propertiesCb = new GCheckBox("Properties");
 		codeCb = new GCheckBox("Code");

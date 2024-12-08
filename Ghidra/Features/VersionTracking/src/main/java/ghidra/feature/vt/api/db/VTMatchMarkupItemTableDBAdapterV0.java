@@ -15,27 +15,21 @@
  */
 package ghidra.feature.vt.api.db;
 
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.ADDRESS_SOURCE_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.ASSOCIATION_KEY_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.DESTINATION_ADDRESS_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.MARKUP_TYPE_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.ORIGINAL_DESTINATION_VALUE_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.SOURCE_ADDRESS_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.SOURCE_VALUE_COL;
-import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.STATUS_COL;
+import static ghidra.feature.vt.api.db.VTMatchMarkupItemTableDBAdapter.MarkupTableDescriptor.*;
+
+import java.io.IOException;
+
+import db.*;
 import ghidra.feature.vt.api.impl.MarkupItemStorage;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.markuptype.VTMarkupTypeFactory;
 import ghidra.feature.vt.api.util.Stringable;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 public class VTMatchMarkupItemTableDBAdapterV0 extends VTMatchMarkupItemTableDBAdapter {
 
@@ -70,20 +64,20 @@ public class VTMatchMarkupItemTableDBAdapterV0 extends VTMatchMarkupItemTableDBA
 
 		record.setLongValue(ASSOCIATION_KEY_COL.column(), association.getKey());
 		record.setString(ADDRESS_SOURCE_COL.column(), markupItem.getDestinationAddressSource());
-		record.setLongValue(SOURCE_ADDRESS_COL.column(), getAddressID(sourceProgram,
-			markupItem.getSourceAddress()));
+		record.setLongValue(SOURCE_ADDRESS_COL.column(),
+			getAddressID(sourceProgram, markupItem.getSourceAddress()));
 
 		Address destinationAddress = markupItem.getDestinationAddress();
 		if (destinationAddress != null) {
-			record.setLongValue(DESTINATION_ADDRESS_COL.column(), getAddressID(destinationProgram,
-				markupItem.getDestinationAddress()));
+			record.setLongValue(DESTINATION_ADDRESS_COL.column(),
+				getAddressID(destinationProgram, markupItem.getDestinationAddress()));
 		}
 		record.setShortValue(MARKUP_TYPE_COL.column(),
 			(short) VTMarkupTypeFactory.getID(markupItem.getMarkupType()));
-		record.setString(SOURCE_VALUE_COL.column(), Stringable.getString(
-			markupItem.getSourceValue(), sourceProgram));
-		record.setString(ORIGINAL_DESTINATION_VALUE_COL.column(), Stringable.getString(
-			markupItem.getDestinationValue(), destinationProgram));
+		record.setString(SOURCE_VALUE_COL.column(),
+			Stringable.getString(markupItem.getSourceValue(), sourceProgram));
+		record.setString(ORIGINAL_DESTINATION_VALUE_COL.column(),
+			Stringable.getString(markupItem.getDestinationValue(), destinationProgram));
 		record.setByteValue(STATUS_COL.column(), (byte) markupItem.getStatus().ordinal());
 
 		table.putRecord(record);
@@ -96,7 +90,7 @@ public class VTMatchMarkupItemTableDBAdapterV0 extends VTMatchMarkupItemTableDBA
 	}
 
 	@Override
-	public void removeMatchMarkupItemRecord(long key) throws IOException {
+	public void removeMarkupItemRecord(long key) throws IOException {
 		table.deleteRecord(key);
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,6 +75,14 @@ public interface FileSystem {
 	public String[] getItemNames(String folderPath) throws IOException;
 
 	/**
+	 * Returns a list of the folder items contained in the given folder.
+	 * @param folderPath the path of the folder.
+	 * @return a list of folder items.
+	 * @throws IOException
+	 */
+	public FolderItem[] getItems(String folderPath) throws IOException;
+
+	/**
 	 * Returns the FolderItem in the given folder with the given name
 	 * @param folderPath the folder path containing the item.
 	 * @param name the name of the item.
@@ -108,8 +116,8 @@ public interface FileSystem {
 	 * all alphanumerics
 	 * @throws IOException thrown if an IO error occurs.
 	 */
-	public void createFolder(String parentPath, String folderName) throws InvalidNameException,
-			IOException;
+	public void createFolder(String parentPath, String folderName)
+			throws InvalidNameException, IOException;
 
 	/**
 	 * Create a new database item within the specified parent folder using the contents
@@ -133,8 +141,8 @@ public interface FileSystem {
 	 */
 	public DatabaseItem createDatabase(String parentPath, String name, String fileID,
 			BufferFile bufferFile, String comment, String contentType, boolean resetDatabaseId,
-			TaskMonitor monitor, String user) throws InvalidNameException, IOException,
-			CancelledException;
+			TaskMonitor monitor, String user)
+			throws InvalidNameException, IOException, CancelledException;
 
 	/**
 	 * Create a new empty database item within the specified parent folder. 
@@ -176,8 +184,8 @@ public interface FileSystem {
 	 * @throws CancelledException if cancelled by monitor
 	 */
 	public DataFileItem createDataFile(String parentPath, String name, InputStream istream,
-			String comment, String contentType, TaskMonitor monitor) throws InvalidNameException,
-			IOException, CancelledException;
+			String comment, String contentType, TaskMonitor monitor)
+			throws InvalidNameException, IOException, CancelledException;
 
 	/**
 	 * Creates a new file item from a packed file.
@@ -195,8 +203,8 @@ public interface FileSystem {
 	 * @throws CancelledException if cancelled by monitor
 	 */
 	public FolderItem createFile(String parentPath, String name, File packedFile,
-			TaskMonitor monitor, String user) throws InvalidNameException, IOException,
-			CancelledException;
+			TaskMonitor monitor, String user)
+			throws InvalidNameException, IOException, CancelledException;
 
 	/**
 	 * Delete the specified folder.
@@ -215,7 +223,7 @@ public interface FileSystem {
 	 * @param newParentPath path to where the folder is to be moved.
 	 * @throws FileNotFoundException if the moved folder does not exist.
 	 * @throws DuplicateFileException if folder with the same name exists within the new parent folder
-	 * @throws FileInUseException if any file within this folder or its decendents are in-use or checked-out
+	 * @throws FileInUseException if any file within this folder or its descendants are in-use or checked-out
 	 * @throws IOException if an IO error occurs.
 	 * @throws InvalidNameException if the new FolderPath contains an illegal file name.
 	 * @throws IllegalArgumentException if new Parent is invalid.
@@ -230,7 +238,7 @@ public interface FileSystem {
 	 * @param newFolderName the name the folder to be renamed to.
 	 * @throws FileNotFoundException if the folder to be renamed does not exist.
 	 * @throws DuplicateFileException if folder with the new name already exists.
-	 * @throws FileInUseException if any file within this folder or its decendents are in-use or checked-out
+	 * @throws FileInUseException if any file within this folder or its descendants are in-use or checked-out
 	 * @throws IOException if an IO error occurs.
 	 * @throws InvalidNameException if the new FolderName contains an illegal file name.
 	 */

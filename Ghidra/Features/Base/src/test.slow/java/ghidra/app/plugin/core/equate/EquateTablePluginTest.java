@@ -223,7 +223,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("1", value);
 		int rowCount = equatesModel.getRowCount();
 
-		tool.execute(new RemoveEquateCmd(eq.getName(), tool), program);
+		tool.execute(new RemoveEquateCmd(eq.getName()), program);
 		waitForProgram(program);
 		waitForSwing();
 

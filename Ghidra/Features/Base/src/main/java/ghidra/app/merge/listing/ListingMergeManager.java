@@ -570,7 +570,6 @@ public class ListingMergeManager implements MergeResolver, ListingMergeConstants
 	 * determine the conflicts.
 	 * @param mergers the listing mergers whose conflicts are to be merged.
 	 * @param monitor indicates progress to user and allows cancel.
-	 * @throws ProgramConflictException if programs can't be compared using Diff.
 	 * @throws MemoryAccessException if bytes can't be merged.
 	 * @throws CancelledException if the user cancels the merge.
 	 */

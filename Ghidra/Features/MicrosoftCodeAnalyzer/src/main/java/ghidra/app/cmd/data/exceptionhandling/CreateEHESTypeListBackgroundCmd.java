@@ -100,7 +100,7 @@ public class CreateEHESTypeListBackgroundCmd
 			return true; // No catch handler info to create.
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		EHCatchHandlerModel catchHandlerModel;
 		try {
@@ -118,7 +118,7 @@ public class CreateEHESTypeListBackgroundCmd
 			return false;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		CreateEHCatchHandlerMapBackgroundCmd cmd =
 			new CreateEHCatchHandlerMapBackgroundCmd(catchHandlerModel, applyOptions);

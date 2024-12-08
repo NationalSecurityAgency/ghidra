@@ -264,9 +264,13 @@ abstract class VariableImpl implements Variable {
 
 	@Override
 	public final boolean isValid() {
-		DataType dt = getDataType();
-		return variableStorage.isValid() &&
-			((dt instanceof AbstractFloatDataType) || variableStorage.size() == dt.getLength());
+		if (VoidDataType.isVoidDataType(dataType)) {
+			return isVoidAllowed() && variableStorage.isVoidStorage();
+		}
+		if (dataType.getLength() <= 0 || !variableStorage.isValid()) {
+			return false;
+		}
+		return variableStorage.size() >= dataType.getLength();
 	}
 
 	@Override
@@ -302,11 +306,7 @@ abstract class VariableImpl implements Variable {
 	public void setDataType(DataType type, SourceType source) throws InvalidInputException {
 		type =
 			VariableUtilities.checkDataType(type, isVoidAllowed(), dataType.getLength(), program);
-		DataType baseType = type;
-		if (baseType instanceof TypeDef) {
-			baseType = ((TypeDef) baseType).getBaseDataType();
-		}
-		variableStorage = (baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
+		variableStorage = VoidDataType.isVoidDataType(type) ? VariableStorage.VOID_STORAGE
 				: resizeStorage(variableStorage, type);
 		dataType = type;
 	}

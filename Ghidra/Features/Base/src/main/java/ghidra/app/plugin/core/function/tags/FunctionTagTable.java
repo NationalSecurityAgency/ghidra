@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
@@ -36,8 +35,8 @@ import ghidra.util.table.GhidraTableCellRenderer;
  */
 public class FunctionTagTable extends GhidraTable {
 
-	/** 
-	 * If true, disable any rows that have already been assigned 
+	/**
+	 * If true, disable any rows that have already been assigned
 	 * to a function (and thus cannot be added again)
 	 */
 	private boolean disable = false;
@@ -49,7 +48,7 @@ public class FunctionTagTable extends GhidraTable {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param model the table model
 	 */
 	public FunctionTagTable(FunctionTagTableModel model) {
@@ -80,8 +79,10 @@ public class FunctionTagTable extends GhidraTable {
 
 	/**
 	 * We need to override the renderer for the following cases:
-	 * <li>italicize tags that cannot be edited</li>
-	 * <li>disable rows in the source table that have already been added to the selected function </li>
+	 * <ul>
+	 *   <li>italicize tags that cannot be edited</li>
+	 *   <li>disable rows in the source table that have already been added to the selected function </li>
+	 * </ul>
 	 */
 	@Override
 	public TableCellRenderer getCellRenderer(int row, int col) {
@@ -109,12 +110,10 @@ public class FunctionTagTable extends GhidraTable {
 			}
 			c.setEnabled(enableRow);
 
-			c.setFont(getFont().deriveFont(Font.PLAIN));
-
 			int column = data.getColumnViewIndex();
 			if (column == nameColumn) {
 				if (rowObject.isImmutable()) {
-					c.setFont(getFont().deriveFont(Font.ITALIC));
+					setItalic();
 				}
 			}
 

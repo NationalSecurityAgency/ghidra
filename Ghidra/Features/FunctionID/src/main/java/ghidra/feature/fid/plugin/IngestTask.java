@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public class IngestTask extends Task {
 			DomainFolder folder, String libraryFamilyName, String libraryVersion,
 			String libraryVariant, String languageId, File commonSymbolsFile, FidService fidService,
 			FidPopulateResultReporter reporter) {
-		super(title);
+		super(title, true, false, false, false);
 		this.fidFile = fidFile;
 		this.libraryRecord = libraryRecord;
 		this.folder = folder;
@@ -127,7 +127,7 @@ public class IngestTask extends Task {
 		LinkedList<String> res = new LinkedList<String>();
 		String line = reader.readLine();
 		while (line != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (line.length() != 0) {
 				res.add(line);
 			}
@@ -151,7 +151,7 @@ public class IngestTask extends Task {
 		}
 		DomainFile[] files = myFolder.getFiles();
 		for (DomainFile domainFile : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			// Do not follow folder-links or consider program links.  Using content type
 			// to filter is best way to control this.  If program links should be considered
@@ -163,7 +163,7 @@ public class IngestTask extends Task {
 		}
 		DomainFolder[] folders = myFolder.getFolders();
 		for (DomainFolder domainFolder : folders) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			findPrograms(programs, domainFolder, monitor);
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.program.database.function;
+
+import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -30,7 +32,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.StringPropertyMap;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -342,7 +344,17 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public AddressSetView getBody() {
-		return program.getNamespaceManager().getAddressSet(this);
+		manager.lock.acquire();
+		try {
+			if (!checkIsValid()) {
+				// Function or its symbol has been deleted
+				return new AddressSet(entryPoint, entryPoint);
+			}
+			return program.getNamespaceManager().getAddressSet(this);
+		}
+		finally {
+			manager.lock.release();
+		}
 	}
 
 	@Override
@@ -392,7 +404,10 @@ public class FunctionDB extends DatabaseObject implements Function {
 				return;
 			}
 			type = type.clone(program.getDataTypeManager());
-			if (storage.isValid() && (storage.size() != type.getLength())) {
+			if (VoidDataType.isVoidDataType(type)) {
+				storage = VariableStorage.VOID_STORAGE;
+			}
+			else if (storage.isValid() && (storage.size() != type.getLength())) {
 				try {
 					storage = VariableUtilities.resizeStorage(storage, type, true, this);
 				}
@@ -663,7 +678,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			try {
 				rec.setIntValue(FunctionAdapter.STACK_PURGE_COL, change);
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PURGE);
+				manager.functionChanged(this, PURGE_CHANGED);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -811,13 +826,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		}
 
 		dataTypes[0] = returnParam.getFormalDataType();
-		DataType baseType = dataTypes[0];
-		if (baseType instanceof TypeDef) {
-			baseType = ((TypeDef) baseType).getBaseDataType();
-		}
-		returnParam
-				.setDynamicStorage((baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
-						: VariableStorage.UNASSIGNED_STORAGE);
+		returnParam.setDynamicStorage(
+			VoidDataType.isVoidDataType(dataTypes[0]) ? VariableStorage.VOID_STORAGE
+					: VariableStorage.UNASSIGNED_STORAGE);
 
 		PrototypeModel callingConvention = getCallingConvention();
 		if (callingConvention == null) {
@@ -913,12 +924,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 			ReturnParameterDB rtnParam = getReturn();
 			if (rtnParam.getVariableStorage().isBadStorage()) {
 				DataType dt = rtnParam.getDataType();
-				DataType baseType = dt;
-				if (baseType instanceof TypeDef) {
-					baseType = ((TypeDef) baseType).getBaseDataType();
-				}
 				VariableStorage storage =
-					(baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
+					VoidDataType.isVoidDataType(dt) ? VariableStorage.VOID_STORAGE
 							: VariableStorage.UNASSIGNED_STORAGE;
 				rtnParam.setStorageAndDataType(storage, dt);
 			}
@@ -1000,7 +1007,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				if (var.getComment() != null) {
 					v.symbol.setSymbolStringData(var.getComment());
 				}
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 				return v;
 			}
 			finally {
@@ -1305,7 +1312,6 @@ public class FunctionDB extends DatabaseObject implements Function {
 			source);
 	}
 
-
 	/**
 	 * Increment updateInProgressCount indicating that an update operation is in progress and 
 	 * that any attempted refresh should be deferred.  The updateRefreshReqd flag will be set
@@ -1368,8 +1374,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 				newParams = new ArrayList<Variable>(newParams); // copy for edit
 				boolean thisParamRemoved =
 					removeExplicitThisParameter(newParams, callingConvention);
-				if (removeExplicitReturnStorageParameter(newParams)) {
-					returnVar = revertIndirectParameter(returnVar, true);
+				DataType dt = removeExplicitReturnStoragePtrParameter(newParams);
+				if (dt != null) {
+					returnVar = revertIndirectParameter(returnVar, dt, true);
 				}
 				if (returnVar instanceof Parameter) {
 					returnType = ((Parameter) returnVar).getFormalDataType();
@@ -1484,7 +1491,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			// assign dynamic storage
 			updateParametersAndReturn();
 
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+			manager.functionChanged(this, PARAMETERS_CHANGED);
 		}
 		finally {
 			frame.setInvalid();
@@ -1658,7 +1665,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 						params.add(ordinal, p);
 						updateParametersAndReturn();
-						manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+						manager.functionChanged(this, PARAMETERS_CHANGED);
 					}
 					if (!DEFAULT_PARAM_PREFIX.equals(name)) {
 						p.setName(name, paramSource);
@@ -1688,7 +1695,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					params.add(ordinal, p);
 					updateParametersAndReturn();
 					symbolMap.put(p.symbol, p);
-					manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+					manager.functionChanged(this, PARAMETERS_CHANGED);
 				}
 				if (var.getComment() != null) {
 					p.symbol.setSymbolStringData(var.getComment());
@@ -1835,8 +1842,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				}
 			}
 
-			manager.functionChanged(this,
-				(var instanceof Parameter) ? ChangeManager.FUNCTION_CHANGED_PARAMETERS : 0);
+			manager.functionChanged(this, (var instanceof Parameter) ? PARAMETERS_CHANGED : null);
 			frame.setInvalid();
 		}
 		finally {
@@ -1959,7 +1965,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				params.add(toOrdinal, param);
 			}
 			updateParametersAndReturn();
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+			manager.functionChanged(this, PARAMETERS_CHANGED);
 			return param;
 		}
 		finally {
@@ -2001,7 +2007,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			rec.setIntValue(FunctionAdapter.STACK_LOCAL_SIZE_COL, size);
 			try {
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -2055,7 +2061,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			rec.setIntValue(FunctionAdapter.STACK_RETURN_OFFSET_COL, offset);
 			try {
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -2137,7 +2143,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 			else if (hasVarArgs != hasVarArgs()) {
 				setFunctionFlag(FunctionAdapter.FUNCTION_VARARG_FLAG, hasVarArgs);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+				manager.functionChanged(this, PARAMETERS_CHANGED);
 			}
 		}
 		finally {
@@ -2163,7 +2169,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			else if (!isExternal() && isInline != isInline()) {
 				// only non-external functions may be inline
 				setFunctionFlag(FunctionAdapter.FUNCTION_INLINE_FLAG, isInline);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_INLINE);
+				manager.functionChanged(this, INLINE_CHANGED);
 			}
 		}
 		finally {
@@ -2188,7 +2194,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 			else if (hasNoReturn != hasNoReturn()) {
 				setFunctionFlag(FunctionAdapter.FUNCTION_NO_RETURN_FLAG, hasNoReturn);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_NORETURN);
+				manager.functionChanged(this, NO_RETURN_CHANGED);
 			}
 		}
 		finally {
@@ -2260,7 +2266,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		return false;
 	}
 
-	private static int findExplicitReturnStorageParameter(List<? extends Variable> params) {
+	private static int findExplicitReturnStoragePtrParameter(List<? extends Variable> params) {
 		for (int i = 0; i < params.size(); i++) {
 			Variable p = params.get(i);
 			if (RETURN_PTR_PARAM_NAME.equals(p.getName()) && (p.getDataType() instanceof Pointer)) {
@@ -2270,49 +2276,53 @@ public class FunctionDB extends DatabaseObject implements Function {
 		return -1;
 	}
 
-	private static boolean removeExplicitReturnStorageParameter(List<? extends Variable> params) {
-		int paramIndex = findExplicitReturnStorageParameter(params);
+	private static DataType removeExplicitReturnStoragePtrParameter(
+			List<? extends Variable> params) {
+		int paramIndex = findExplicitReturnStoragePtrParameter(params);
 		if (paramIndex >= 0) {
-			params.remove(paramIndex); // remove return storage parameter
-			return true;
+			Variable returnStoragePtrParameter = params.remove(paramIndex); // remove return storage parameter
+			DataType dt = returnStoragePtrParameter.getDataType();
+			if (dt instanceof Pointer ptr) {
+				return ptr.getDataType();
+			}
 		}
-		return false;
+		return null;
 	}
 
-	private boolean removeExplicitReturnStorageParameter() {
-		int paramIndex = findExplicitReturnStorageParameter(params);
+	private DataType removeExplicitReturnStoragePtrParameter() {
+		int paramIndex = findExplicitReturnStoragePtrParameter(params);
 		if (paramIndex >= 0) {
+			ParameterDB returnStoragePtrParameter = params.get(paramIndex);
+			DataType dt = returnStoragePtrParameter.getDataType();
 			removeParameter(paramIndex); // remove return storage parameter
-			return true;
+			if (dt instanceof Pointer ptr) {
+				return ptr.getDataType();
+			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
 	 * Strip indirect pointer data type from a parameter.
 	 * @param param parameter to be examined and optionally modified
+	 * @param dt return datatype to be applied
 	 * @param create if true the specified param will not be affected and a new parameter
 	 * instance will be returned if strip performed, otherwise orginal param will be changed
 	 * if possible and returned.
 	 * @return parameter with pointer stripped or original param if pointer not used.
 	 * Returned parameter will have unassigned storage if affected.
 	 */
-	private static Variable revertIndirectParameter(Variable param, boolean create) {
-		DataType dt = param.getDataType();
-		if (dt instanceof Pointer) {
-			try {
-				dt = ((Pointer) dt).getDataType();
-				if (create) {
-					param = new ParameterImpl(param.getName(), dt, param.getProgram());
-				}
-				else {
-					param.setDataType(dt, VariableStorage.UNASSIGNED_STORAGE, false,
-						param.getSource());
-				}
+	private static Variable revertIndirectParameter(Variable param, DataType dt, boolean create) {
+		try {
+			if (create) {
+				param = new ParameterImpl(param.getName(), dt, param.getProgram());
 			}
-			catch (InvalidInputException e) {
-				throw new AssertException(e); // unexpected
+			else {
+				param.setDataType(dt, VariableStorage.UNASSIGNED_STORAGE, false, param.getSource());
 			}
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException(e); // unexpected
 		}
 		return param;
 	}
@@ -2335,8 +2345,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 			if (!hasCustomVariableStorage) {
 				// remove explicit 'this' param and return storage use if switching to dynamic storage
 				removeExplicitThisParameter();
-				if (removeExplicitReturnStorageParameter()) {
-					revertIndirectParameter(returnParam, false);
+				DataType returnDt = removeExplicitReturnStoragePtrParameter();
+				if (returnDt != null) {
+					revertIndirectParameter(returnParam, returnDt, false);
 				}
 			}
 
@@ -2384,7 +2395,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				updateParametersAndReturn(); // assign dynamic storage
 			}
 
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+			manager.functionChanged(this, PARAMETERS_CHANGED);
 		}
 		catch (InvalidInputException e) {
 			throw new AssertException(e); // should not occur
@@ -2501,7 +2512,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			rec.setByteValue(FunctionAdapter.FUNCTION_FLAGS_COL, flags);
 			try {
 				manager.getFunctionAdapter().updateFunctionRecord(rec);
-				manager.functionChanged(this, 0);
+				manager.functionChanged(this, null);
 			}
 			catch (IOException e) {
 				manager.dbError(e);
@@ -2602,11 +2613,11 @@ public class FunctionDB extends DatabaseObject implements Function {
 				loadVariables();
 				removeExplicitThisParameter();
 				updateParametersAndReturn(); // assign dynamic storage
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_PARAMETERS);
-				manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_RETURN);
+				manager.functionChanged(this, PARAMETERS_CHANGED);
+				manager.functionChanged(this, RETURN_TYPE_CHANGED);
 			}
 			else {
-				manager.functionChanged(this, 0); // change did not affect parameters
+				manager.functionChanged(this, null); // change did not affect parameters
 			}
 		}
 		catch (IOException e) {
@@ -2645,8 +2656,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	}
 
 	void dataTypeChanged(VariableDB var) {
-		manager.functionChanged(this,
-			(var instanceof Parameter) ? ChangeManager.FUNCTION_CHANGED_PARAMETERS : 0);
+		manager.functionChanged(this, (var instanceof Parameter) ? PARAMETERS_CHANGED : null);
 	}
 
 	@Override
@@ -2696,7 +2706,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				}
 				callFixupMap.add(entryPoint, name);
 			}
-			manager.functionChanged(this, ChangeManager.FUNCTION_CHANGED_CALL_FIXUP);
+			manager.functionChanged(this, CALL_FIXUP_CHANGED);
 		}
 		finally {
 			endUpdate();
@@ -2707,58 +2717,54 @@ public class FunctionDB extends DatabaseObject implements Function {
 	@Override
 	public Set<Function> getCallingFunctions(TaskMonitor monitor) {
 		monitor = TaskMonitor.dummyIfNull(monitor);
-		Set<Function> set = new HashSet<>();
+		Set<Function> callers = new HashSet<>();
 		ReferenceIterator iter = program.getReferenceManager().getReferencesTo(getEntryPoint());
+
 		while (iter.hasNext()) {
 			if (monitor.isCancelled()) {
-				return set;
+				break;
 			}
 			Reference reference = iter.next();
+			if (!reference.getReferenceType().isCall()) {
+				continue;
+			}
 			Address fromAddress = reference.getFromAddress();
 			Function callerFunction = manager.getFunctionContaining(fromAddress);
 			if (callerFunction != null) {
-				set.add(callerFunction);
+				callers.add(callerFunction);
 			}
 		}
-		return set;
+		return callers;
 	}
 
 	@Override
 	public Set<Function> getCalledFunctions(TaskMonitor monitor) {
 		monitor = TaskMonitor.dummyIfNull(monitor);
-		Set<Function> set = new HashSet<>();
-		Set<Reference> references = getReferencesFromBody(monitor);
-		for (Reference reference : references) {
-			if (monitor.isCancelled()) {
-				return set;
-			}
-			Address toAddress = reference.getToAddress();
-			Function calledFunction = manager.getFunctionAt(toAddress);
-			if (calledFunction != null) {
-				set.add(calledFunction);
-			}
-		}
-		return set;
-	}
+		Set<Function> callees = new HashSet<>();
+		ReferenceManager refManager = program.getReferenceManager();
+		AddressRangeIterator rangeIter = getBody().getAddressRanges();
 
-	private Set<Reference> getReferencesFromBody(TaskMonitor monitor) {
-		Set<Reference> set = new HashSet<>();
-		ReferenceManager referenceManager = program.getReferenceManager();
-		AddressSetView addresses = getBody();
-		AddressIterator addressIterator = addresses.getAddresses(true);
-		while (addressIterator.hasNext()) {
-			if (monitor.isCancelled()) {
-				return set;
-			}
-			Address address = addressIterator.next();
-			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
-			if (referencesFrom != null) {
-				for (Reference reference : referencesFrom) {
-					set.add(reference);
+		while (rangeIter.hasNext()) {
+			AddressRange range = rangeIter.next();
+			ReferenceIterator refIter = refManager.getReferenceIterator(range.getMinAddress());
+			while (refIter.hasNext()) {
+				if (monitor.isCancelled()) {
+					return callees;
+				}
+				Reference ref = refIter.next();
+				if (!range.contains(ref.getFromAddress())) {
+					break; // exhausted all addresses in the AddressRange, check next AddressRange
+				}
+				if (!ref.getReferenceType().isCall()) {
+					continue; // reference is not a call, check next reference
+				}
+				Function callee = manager.getFunctionAt(ref.getToAddress());
+				if (callee != null) {  // sanity check
+					callees.add(callee);
 				}
 			}
 		}
-		return set;
+		return callees;
 	}
 
 	@Override
@@ -2808,7 +2814,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				tagManager.applyFunctionTag(getID(), tag.getId());
 
 				Address addr = getEntryPoint();
-				program.setChanged(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION, addr, addr, tag, tag);
+				program.setChanged(ProgramEvent.FUNCTION_TAG_APPLIED, addr, addr, tag, tag);
 			}
 
 			// Add to local cache
@@ -2841,8 +2847,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 			if (removed) {
 				Address addr = getEntryPoint();
-				program.setChanged(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION, addr, addr, tag,
-					tag);
+				program.setChanged(ProgramEvent.FUNCTION_TAG_UNAPPLIED, addr, addr, tag, tag);
 
 				// Remove from the local cache.
 				if (tags != null) {

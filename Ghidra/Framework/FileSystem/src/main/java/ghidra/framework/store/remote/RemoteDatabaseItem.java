@@ -18,6 +18,7 @@ package ghidra.framework.store.remote;
 import java.io.*;
 
 import db.buffers.*;
+import ghidra.framework.Application;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.remote.RepositoryItem;
 import ghidra.framework.store.DatabaseItem;
@@ -57,13 +58,13 @@ public class RemoteDatabaseItem extends RemoteFolderItem implements DatabaseItem
 	}
 
 	@Override
-	public ManagedBufferFileAdapter open(int version, int minChangeDataVer) throws IOException {
-		return repository.openDatabase(parentPath, itemName, version, minChangeDataVer);
+	public ManagedBufferFileAdapter open(int fileVersion, int minChangeDataVer) throws IOException {
+		return repository.openDatabase(parentPath, itemName, fileVersion, minChangeDataVer);
 	}
 
 	@Override
-	public ManagedBufferFileAdapter open(int version) throws IOException {
-		return repository.openDatabase(parentPath, itemName, version, -1);
+	public ManagedBufferFileAdapter open(int fileVersion) throws IOException {
+		return repository.openDatabase(parentPath, itemName, fileVersion, -1);
 	}
 
 	@Override
@@ -82,9 +83,6 @@ public class RemoteDatabaseItem extends RemoteFolderItem implements DatabaseItem
 		repository.updateCheckoutVersion(parentPath, itemName, checkoutId, checkoutVersion);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FolderItem#hasCheckouts()
-	 */
 	@Override
 	public boolean hasCheckouts() throws IOException {
 		return repository.hasCheckouts(parentPath, itemName);
@@ -96,29 +94,21 @@ public class RemoteDatabaseItem extends RemoteFolderItem implements DatabaseItem
 	}
 
 	@Override
-	public void output(File outputFile, int version, TaskMonitor monitor)
+	public void output(File outputFile, int fileVersion, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		BufferFile bf = repository.openDatabase(parentPath, itemName, version, -1);
+		BufferFile bf = repository.openDatabase(parentPath, itemName, fileVersion, -1);
 		try {
-			File tmpFile = File.createTempFile("ghidra", LocalBufferFile.TEMP_FILE_EXT);
+			File tmpFile = Application.createTempFile("ghidra", LocalBufferFile.TEMP_FILE_EXT);
 			tmpFile.delete();
 			BufferFile tmpBf = new LocalBufferFile(tmpFile, bf.getBufferSize());
 			try {
 				LocalBufferFile.copyFile(bf, tmpBf, null, monitor);
 				tmpBf.close();
 
-				InputStream itemIn = new FileInputStream(tmpFile);
-				try {
+				try (InputStream itemIn = new FileInputStream(tmpFile)) {
 					ItemSerializer.outputItem(getName(), getContentType(), DATABASE_FILE_TYPE,
 						tmpFile.length(), itemIn, outputFile, monitor);
-				}
-				finally {
-					try {
-						itemIn.close();
-					}
-					catch (IOException e) {
-					}
 				}
 			}
 			finally {

@@ -101,4 +101,25 @@ public interface AddressRange extends Comparable<AddressRange>, Iterable<Address
 	 */
 	public AddressSpace getAddressSpace();
 
+	/**
+	 * Change the specified start and end addresses to see if they form a valid
+	 * range within the same {@link AddressSpace}.
+	 * @param start range start address
+	 * @param end range end address
+	 */
+	public static void checkValidRange(Address start, Address end) {
+		if (start == null || end == null) {
+			throw new IllegalArgumentException("Null start or end address was specified");
+		}
+		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
+			throw new IllegalArgumentException(
+				"Start and end addresses must be in same address space!  Start " + start +
+					"   end = " + end);
+		}
+		if (start.compareTo(end) > 0) {
+			throw new IllegalArgumentException("Start address must be less than or equal to " +
+				"end address:  Start " + start + "   end = " + end);
+		}
+	}
+
 }

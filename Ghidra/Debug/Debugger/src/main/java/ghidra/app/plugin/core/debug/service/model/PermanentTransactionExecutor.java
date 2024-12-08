@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,26 +24,27 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import ghidra.app.plugin.core.debug.utils.DefaultTransactionCoalescer;
 import ghidra.app.plugin.core.debug.utils.TransactionCoalescer;
 import ghidra.app.plugin.core.debug.utils.TransactionCoalescer.CoalescedTx;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectException;
-import ghidra.framework.model.UndoableDomainObject;
 import ghidra.util.Msg;
 import ghidra.util.exception.ClosedException;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class PermanentTransactionExecutor {
 
 	private final TransactionCoalescer txc;
 	private final ExecutorService[] threads;
-	private final UndoableDomainObject obj;
+	private final DomainObject obj;
 
-	public PermanentTransactionExecutor(UndoableDomainObject obj, String name, int threadCount,
+	public PermanentTransactionExecutor(DomainObject obj, String name, int threadCount,
 			int delayMs) {
 		this.obj = obj;
 		txc = new DefaultTransactionCoalescer<>(obj, RecorderPermanentTransaction::start, delayMs);
 		this.threads = new ExecutorService[threadCount];
 		for (int i = 0; i < threadCount; i++) {
-			ThreadFactory factory = new BasicThreadFactory.Builder()
-					.namingPattern(name + "thread-" + i + "-%d")
-					.build();
+			ThreadFactory factory =
+				new BasicThreadFactory.Builder().namingPattern(name + "thread-" + i + "-%d")
+						.build();
 			threads[i] = Executors.newSingleThreadExecutor(factory);
 		}
 	}

@@ -159,9 +159,6 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 		 */
 		initializeApplication(applicationLayout, logFile, useLog4j);
 
-		// Allows handling of old content which did not have a content type property
-		DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 		initializeScriptPaths();
 	}
 

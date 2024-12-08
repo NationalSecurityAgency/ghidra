@@ -31,7 +31,7 @@ import ghidra.util.exception.CancelledException;
 
 public class PdbDeveloperDumpSetScript extends GhidraScript {
 
-	private record IOEntry(String input, String output) {};
+	private record IOEntry(String input, String output) {}
 
 	@Override
 	protected void run() throws Exception {
@@ -82,10 +82,10 @@ public class PdbDeveloperDumpSetScript extends GhidraScript {
 
 	private void dumpFiles(List<IOEntry> entries) throws CancelledException, PdbException {
 		for (IOEntry entry : entries) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			println("Processing PDB Dump of: " + entry.input());
-			try (AbstractPdb pdb =
-				PdbParser.parse(entry.input(), new PdbReaderOptions(), monitor)) {
+			File pdbFile = new File(entry.input());
+			try (AbstractPdb pdb = PdbParser.parse(pdbFile, new PdbReaderOptions(), monitor)) {
 				pdb.deserialize();
 				try (BufferedWriter bufferedWriter =
 					new BufferedWriter(new FileWriter(new File(entry.output())))) {

@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.data;
 
+import java.util.ArrayList;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.DataTypeProviderContext;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-
-import java.util.ArrayList;
 
 public class ProgramStructureProviderContext implements DataTypeProviderContext {
 	Program program;

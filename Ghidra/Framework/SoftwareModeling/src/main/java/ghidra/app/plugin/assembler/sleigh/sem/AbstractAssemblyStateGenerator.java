@@ -29,7 +29,7 @@ import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
  * @param <N> the type of parse tree node to process
  */
 public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTreeNode> {
-	protected static final DbgTimer DBG = AssemblyTreeResolver.DBG;
+	protected static final DbgTimer DBG = AbstractAssemblyTreeResolver.DBG;
 
 	/**
 	 * Context to pass along as states are generated
@@ -47,8 +47,8 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 				path.stream().map(sem -> sem.getLocation()).collect(Collectors.joining(",")) + "]";
 		}
 
-		final List<AssemblyConstructorSemantic> path;
-		final int shift;
+		public final List<AssemblyConstructorSemantic> path;
+		public final int shift;
 
 		/**
 		 * Construct a context
@@ -84,7 +84,7 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 		}
 	}
 
-	protected final AssemblyTreeResolver resolver;
+	protected final AbstractAssemblyTreeResolver<?> resolver;
 	protected final N node;
 	protected final AssemblyResolvedPatterns fromLeft;
 
@@ -95,7 +95,7 @@ public abstract class AbstractAssemblyStateGenerator<N extends AssemblyParseTree
 	 * @param node the node from which to generate states
 	 * @param fromLeft the accumulated patterns from the left sibling or the parent
 	 */
-	public AbstractAssemblyStateGenerator(AssemblyTreeResolver resolver, N node,
+	public AbstractAssemblyStateGenerator(AbstractAssemblyTreeResolver<?> resolver, N node,
 			AssemblyResolvedPatterns fromLeft) {
 		this.resolver = resolver;
 		this.node = node;

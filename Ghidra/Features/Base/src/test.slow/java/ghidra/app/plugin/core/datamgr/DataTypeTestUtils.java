@@ -126,7 +126,7 @@ public class DataTypeTestUtils {
 				// who cares?
 			}
 		}
-		AbstractGuiTest.waitForPostedSwingRunnables();
+		AbstractGuiTest.waitForSwing();
 	}
 
 	public static ArchiveNode openArchive(String archiveName, boolean checkout,

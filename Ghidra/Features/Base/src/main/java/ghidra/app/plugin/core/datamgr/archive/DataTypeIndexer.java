@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.util.*;
 
 import javax.swing.SwingUtilities;
 
-import ghidra.app.plugin.core.datamgr.util.DataTypeComparator;
 import ghidra.program.model.data.*;
 import ghidra.util.task.*;
 
@@ -32,7 +31,6 @@ import ghidra.util.task.*;
 public class DataTypeIndexer {
 	private List<DataTypeManager> dataTypeManagers = new ArrayList<>();
 	private List<DataType> dataTypeList = Collections.emptyList();
-	private Comparator<DataType> dataTypeComparator = new DataTypeComparator();
 	private DataTypeIndexUpdateListener listener = new DataTypeIndexUpdateListener();
 
 	private volatile boolean isStale = true;
@@ -59,7 +57,8 @@ public class DataTypeIndexer {
 
 	/**
 	 * Returns a sorted list of the data types open in the current tool.  The sorting of the list
-	 * is done using the {@link DataTypeComparator}.
+	 * is done using the {@link DataTypeComparator} whose primary sort is based upon the 
+	 * {@link DataTypeNameComparator}.
 	 *
 	 * @return a sorted list of the data types open in the current tool.
 	 */
@@ -114,6 +113,46 @@ public class DataTypeIndexer {
 // Inner Classes
 //==================================================================================================
 
+	// We use a case-insensitive sort on the data since clients may perform case-insensitive 
+	// searches.  This class was using the DataTypeComparator.INSTANCE for sorting, which is 
+	// case-sensitive.  This produced cases where not all matching data were found during queries, 
+	// which depended on how the binary search traversed the list.  If there is a reason to use that
+	// comparator over this one, then we need to re-think how this list is sorted.
+	private class CaseInsensitiveDataTypeComparator implements Comparator<DataType> {
+
+		@Override
+		public int compare(DataType dt1, DataType dt2) {
+			String name1 = dt1.getName();
+			String name2 = dt2.getName();
+
+			int result = name1.compareToIgnoreCase(name2);
+			if (result != 0) {
+				return result;
+			}
+
+			result = name1.compareTo(name2);
+			if (result != 0) {
+				// let equivalent names be sorted by case ('-' for lower-case first)
+				return -result;
+			}
+
+			// if the names are the same, then sort by data type manager
+			String dtmName1 = dt1.getDataTypeManager().getName();
+			String dtmName2 = dt2.getDataTypeManager().getName();
+			result = dtmName1.compareToIgnoreCase(dtmName2);
+			if (result != 0) {
+				return result;
+			}
+
+			// if they have the same name, and are in the same DTM, then compare paths
+			CategoryPath cp1 = dt1.getCategoryPath();
+			CategoryPath cp2 = dt2.getCategoryPath();
+			String p1 = cp1.getPath();
+			String p2 = cp2.getPath();
+			return p1.compareToIgnoreCase(p2);
+		}
+	}
+
 	private class IndexerTask extends Task {
 
 		private List<DataType> list = new ArrayList<>();
@@ -128,16 +167,13 @@ public class DataTypeIndexer {
 			monitor.initialize(dataTypeManagers.size());
 			monitor.setMessage("Preparing to index data types...");
 
-			Iterator<DataTypeManager> iterator = dataTypeManagers.iterator();
-			while (iterator.hasNext()) {
-				DataTypeManager dataTypeManager = iterator.next();
-
+			for (DataTypeManager dataTypeManager : dataTypeManagers) {
 				monitor.setMessage("Searching " + dataTypeManager.getName());
 				dataTypeManager.getAllDataTypes(list);
 				monitor.incrementProgress(1);
 			}
 
-			Collections.sort(list, dataTypeComparator);
+			Collections.sort(list, new CaseInsensitiveDataTypeComparator());
 		}
 
 		List<DataType> getList() {
@@ -222,6 +258,11 @@ public class DataTypeIndexer {
 
 		@Override
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			markStale();
+		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
 			markStale();
 		}
 	}

@@ -3,6 +3,10 @@
         <constraint primary="496"   processor="PowerPC" endian="little" size="32" />
         <constraint primary="497"   processor="PowerPC" endian="little" size="32" />
     </constraint>
+    <constraint loader="Common Object File Format (COFF)" compilerSpecID="default">
+        <constraint primary="496"   processor="PowerPC" endian="little" size="32" />
+        <constraint primary="497"   processor="PowerPC" endian="little" size="32" />
+    </constraint>
     <constraint loader="Debug Symbols (DBG)" compilerSpecID="default">
         <constraint primary="496"   processor="PowerPC" endian="little" size="32" />
         <constraint primary="497"   processor="PowerPC" endian="little" size="32" />

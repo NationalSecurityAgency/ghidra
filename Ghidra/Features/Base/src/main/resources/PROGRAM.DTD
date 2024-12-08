@@ -66,6 +66,7 @@
   <!ATTLIST MEMORY_SECTION LENGTH       CDATA                             #REQUIRED>
   <!ATTLIST MEMORY_SECTION PERMISSIONS  (r | w | x | rw | rx | wx | rwx)  #IMPLIED>
   <!ATTLIST MEMORY_SECTION VOLATILE     (y | n)                           #IMPLIED>
+  <!ATTLIST MEMORY_SECTION ARTIFICIAL   (y | n)                           #IMPLIED>
   <!ATTLIST MEMORY_SECTION COMMENT      CDATA                             #IMPLIED>
 
 <!ELEMENT MEMORY_CONTENTS EMPTY>

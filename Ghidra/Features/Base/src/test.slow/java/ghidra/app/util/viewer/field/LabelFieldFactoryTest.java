@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -318,7 +318,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testOffcutStringWhenOffcutIsOnTheNullTerminatingCharacter() throws Exception {
 		//
 		// We can have a scenario where there is an offcut into a string where the offcut index
-		// is the the last byte, which is the null terminator, which we do not render
+		// is the last byte, which is the null terminator, which we do not render
 		//
 		env.close(program);
 		program = buildSegmentedProgram();
@@ -420,7 +420,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void createOffcutFunctionReference(Function function, Address fromAddress) {
@@ -443,7 +443,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void createDataReference(String from, String to) {
@@ -454,7 +454,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 				new AddMemRefCmd(addr(from), addr(to), RefType.DATA, SourceType.USER_DEFINED, 0);
 			cmd.applyTo(program);
 			program.flushEvents();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 		finally {
 			program.endTransaction(transaction, true);
@@ -469,7 +469,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 				new AddMemRefCmd(addr(from), addr(to), RefType.READ, SourceType.USER_DEFINED, 0);
 			cmd.applyTo(program);
 			program.flushEvents();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 		finally {
 			program.endTransaction(transaction, true);
@@ -483,7 +483,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 			AddLabelCmd cmd = new AddLabelCmd(addr(addr), name, SourceType.USER_DEFINED);
 			cmd.applyTo(program);
 			program.flushEvents();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 		finally {
 			program.endTransaction(transaction, true);

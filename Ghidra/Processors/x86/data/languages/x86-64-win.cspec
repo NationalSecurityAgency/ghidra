@@ -35,6 +35,7 @@
   
   <global>
     <range space="ram"/>
+    <register name="MXCSR"/>
   </global>
   <stackpointer register="RSP" space="ram"/>
   <returnaddress>
@@ -201,6 +202,7 @@
     </localrange>
   </prototype>
   <modelalias name="__cdecl" parent="__fastcall"/>
+  <modelalias name="__stdcall" parent="__fastcall"/>
   <callfixup name="alloca_probe">
     <target name="_alloca_probe"/>
     <target name="_alloca_probe2"/>
@@ -209,7 +211,7 @@
     <target name="___chkstk_ms"/>
     <pcode>
      <body><![CDATA[
-       RSP = RSP + 0;
+       RSP = RSP + 8;
      ]]></body>
     </pcode>
   </callfixup>

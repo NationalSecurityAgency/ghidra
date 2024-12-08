@@ -15,14 +15,16 @@
  */
 package ghidra.trace.model.symbol;
 
-import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.trace.model.listing.TraceCodeUnit;
 
 /**
- * TODO: Document me
- * 
- * See {@link CodeSymbol}
+ * A trace label symbol.
  */
 public interface TraceLabelSymbol extends TraceSymbolWithLifespan {
+	/**
+	 * Get the code unit at this label
+	 * 
+	 * @return the code unit
+	 */
 	TraceCodeUnit getCodeUnit();
 }

@@ -75,7 +75,7 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 	@Override
 	public JComponent getComponent() {
 		if (comp == null) {
-			comp = new DbViewerComponent();
+			comp = new DbViewerComponent(tool);
 			if (dbh != null) {
 				comp.openDatabase(dbName, dbh);
 			}

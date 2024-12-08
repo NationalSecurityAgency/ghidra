@@ -24,7 +24,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Interpreter panel service",
 	description = "Provides a generic interpreter connection and mates it to a panel"
 			+ " which takes input from the user and displays output from the interpreter.",

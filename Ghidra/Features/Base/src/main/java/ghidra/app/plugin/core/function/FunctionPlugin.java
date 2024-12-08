@@ -26,7 +26,6 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
-import ghidra.app.util.AddEditDialog;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.*;
@@ -118,8 +117,6 @@ public class FunctionPlugin extends Plugin implements DataService {
 	private List<DataAction> favoriteActions = new ArrayList<>();
 	private List<CycleGroupAction> cgActions = new ArrayList<>();
 
-	private AddEditDialog functionNameDialog;
-	private AddEditDialog variableNameDialog;
 	private VariableCommentDialog variableCommentDialog;
 	private DataTypeManagerChangeListenerAdapter adapter;
 	private EditFunctionAction editFunctionAction;
@@ -148,14 +145,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 			dtmService.removeDataTypeManagerChangeListener(adapter);
 		}
 		super.dispose();
-		if (functionNameDialog != null) {
-			functionNameDialog.close();
-			functionNameDialog = null;
-		}
-		if (variableNameDialog != null) {
-			variableNameDialog.close();
-			variableNameDialog = null;
-		}
+
 		if (variableCommentDialog != null) {
 			variableCommentDialog.close();
 			variableCommentDialog = null;
@@ -338,13 +328,13 @@ public class FunctionPlugin extends Plugin implements DataService {
 		return maxSize;
 	}
 
-	protected void execute(Program program, Command cmd) {
+	protected void execute(Program program, Command<Program> cmd) {
 		if (!tool.execute(cmd, program)) {
 			Msg.showError(this, tool.getToolFrame(), cmd.getName(), cmd.getStatusMsg());
 		}
 	}
 
-	protected void execute(Program program, BackgroundCommand cmd) {
+	protected void execute(Program program, BackgroundCommand<Program> cmd) {
 		tool.executeBackgroundCommand(cmd, program);
 	}
 
@@ -432,7 +422,10 @@ public class FunctionPlugin extends Plugin implements DataService {
 
 	public boolean isCreateFunctionAllowed(ListingActionContext context, boolean allowExisting,
 			boolean createThunk) {
-
+		// Debugger traces do not support functions
+		if (context.getNavigatable().isDynamic()) {
+			return false;
+		}
 		// A program and location is needed for any create function action.
 		Program program = context.getProgram();
 		if (program == null) {

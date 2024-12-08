@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,15 @@
  */
 package help;
 
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+
 import ghidra.util.exception.AssertException;
 import help.validator.LinkDatabase;
 import help.validator.location.HelpModuleCollection;
 import help.validator.model.AnchorDefinition;
 import help.validator.model.GhidraTOCFile;
-
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
 
 /**
  * This class:
@@ -129,7 +129,8 @@ public class JavaHelpFilesBuilder {
 		PrintWriter out = new LogFileWriter(mapFile);
 		try {
 			out.println("<?xml version='1.0' encoding='ISO-8859-1' ?>");
-			out.println("<!doctype MAP public \"-//Sun Microsystems Inc.//DTD JavaHelp Map Version 1.0//EN\">");
+			out.println(
+				"<!doctype MAP public \"-//Sun Microsystems Inc.//DTD JavaHelp Map Version 1.0//EN\">");
 			out.println("<!-- Auto-generated on " + (new Date()).toString() + " : Do Not Edit -->");
 			out.println("<map version=\"1.0\">");
 
@@ -166,8 +167,8 @@ public class JavaHelpFilesBuilder {
 		}
 
 		if (!parent.endsWith("help")) {
-			throw new AssertException("Map file expected in a directory name 'help'.  "
-				+ "Update the map file generation code.");
+			throw new AssertException("Map file expected in a directory name 'help'.  " +
+				"Update the map file generation code.");
 		}
 
 		if (!anchorTarget.startsWith("help")) {
@@ -219,6 +220,7 @@ public class JavaHelpFilesBuilder {
 				Files.delete(file);
 			}
 			catch (IOException e) {
+				// ignore
 			}
 		}
 	}

@@ -44,13 +44,27 @@ public interface TraceObjectValue {
 	String getEntryKey();
 
 	/**
+	 * Check if the given key (or alias) matches this entry's key
+	 * 
+	 * @param keyOrAlias the key or alias
+	 * @return true if the key matches this entry's key, or it is an alias for it
+	 */
+	default boolean hasEntryKey(String keyOrAlias) {
+		TraceObject parent = getParent();
+		if (parent == null) {
+			return getEntryKey().equals(keyOrAlias);
+		}
+		return getEntryKey().equals(parent.getTargetSchema().checkAliasedAttribute(keyOrAlias));
+	}
+
+	/**
 	 * Get the "canonical path" of this value
 	 * 
 	 * <p>
 	 * This is the parent's canonical path extended by this value's entry key. Note, in the case
 	 * this value has a child object, this is not necessarily its canonical path.
 	 * 
-	 * @return
+	 * @return the canonical path
 	 */
 	TraceObjectKeyPath getCanonicalPath();
 
@@ -60,6 +74,17 @@ public interface TraceObjectValue {
 	 * @return the value
 	 */
 	Object getValue();
+
+	/**
+	 * A convenience to get and cast the value, without checking
+	 * 
+	 * @param <T> the desired type
+	 * @return the value
+	 */
+	@SuppressWarnings("unchecked")
+	default <T> T castValue() {
+		return (T) getValue();
+	}
 
 	/**
 	 * Get the value as an object
@@ -116,7 +141,7 @@ public interface TraceObjectValue {
 	 * uniquely determined at a given snap. Thus, when lifespans are being adjusted, such conflicts
 	 * must be resolved.
 	 * 
-	 * @param lifespan the new lifespan
+	 * @param span the new lifespan
 	 * @param resolution specifies how to resolve duplicate keys with intersecting lifespans
 	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */

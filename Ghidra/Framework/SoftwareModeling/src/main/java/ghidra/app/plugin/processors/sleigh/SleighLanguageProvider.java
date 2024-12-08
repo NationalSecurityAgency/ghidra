@@ -27,6 +27,7 @@ import org.xml.sax.*;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
@@ -137,17 +138,16 @@ public class SleighLanguageProvider implements LanguageProvider {
 					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw e;
 			}
+			catch (DecoderException e) {
+				Msg.showError(this, null, "Error",
+					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
+				throw new SleighException("Format violation in the .sla file", e);
+			}
 			catch (FileNotFoundException e) {
 				Msg.showError(this, null, "Error",
 					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
 				throw new SleighException(
 					"File not found - language probably did not compile properly", e);
-			}
-			catch (UnknownInstructionException e) {
-				Msg.showError(this, null, "Error",
-					"Can't read language spec " + description.getSlaFile().getAbsolutePath(), e);
-				throw new SleighException(
-					"Unknown instruction - language probably did not compile properly", e);
 			}
 			catch (SAXException e) {
 				Msg.showError(this, null, "Error",

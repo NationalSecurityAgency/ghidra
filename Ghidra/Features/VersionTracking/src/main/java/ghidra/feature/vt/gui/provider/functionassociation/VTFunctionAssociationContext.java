@@ -15,12 +15,13 @@
  */
 package ghidra.feature.vt.gui.provider.functionassociation;
 
+import docking.DefaultActionContext;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
-import docking.ActionContext;
 
-public class VTFunctionAssociationContext extends ActionContext implements FunctionAssociationContext {
+public class VTFunctionAssociationContext extends DefaultActionContext
+		implements FunctionAssociationContext {
 
 	private final PluginTool tool;
 	private final Function selectedSourceFunction;

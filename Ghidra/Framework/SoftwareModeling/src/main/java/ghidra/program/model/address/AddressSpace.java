@@ -103,6 +103,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Returns the name of this address space.
+	 * With the exception of {@link OverlayAddressSpace}, the name of an address space may not change.
 	 */
 	String getName();
 
@@ -159,7 +160,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	int getUnique();
 
 	/**
-	 * Parses the String into an address.
+	 * Parses the String into an address within this address space.
 	 * @param addrString the string to parse as an address.
 	 * @return an address if the string parsed successfully or null if the
 	 * AddressSpace specified in the addrString is not this space.
@@ -169,7 +170,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	Address getAddress(String addrString) throws AddressFormatException;
 
 	/**
-	 * Parses the String into an address.
+	 * Parses the String into an address within this address space.
 	 * @param addrString the string to parse as an address.
 	 * @param caseSensitive specifies if addressSpace names must match case.
 	 * @return an address if the string parsed successfully or null if the
@@ -385,12 +386,25 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public boolean isSuccessor(Address addr1, Address addr2);
 
 	/**
-	 * Get the max address allowed for this AddressSpace.
+	 * Get the maximum address allowed for this AddressSpace.
+	 * 
+	 * NOTE: Use of this method to identify the region associated with an overlay memory block
+	 * within its overlay address space is no longer supported.  Defined regions of an overlay space
+	 * may now be determined using {@link OverlayAddressSpace#getOverlayAddressSet()}.
+	 * 
+	 * @return maximum address of this address space.
 	 */
 	public Address getMaxAddress();
 
 	/** 
-	 * Get the min address allowed for this AddressSpace
+	 * Get the minimum address allowed for this AddressSpace.
+	 * For a memory space the returned address will have an offset of 0 within this address space.
+	 * 
+	 * NOTE: Use of this method to identify the region associated with an overlay memory block
+	 * within its overlay address space is no longer supported.  Defined regions of an overlay space
+	 * may now be determined using {@link OverlayAddressSpace#getOverlayAddressSet()}.
+	 * 
+	 * @return minimum address of this address space.
 	 */
 	public Address getMinAddress();
 
@@ -492,5 +506,25 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * Returns true if space uses signed offset
 	 */
 	boolean hasSignedOffset();
+
+	/**
+	 * Determine if the specific name is a valid address space name (e.g., allowed
+	 * overlay space name).  NOTE: This does not perform any duplicate name checks.
+	 * @param name name
+	 * @return true if name is a valid space name.
+	 */
+	public static boolean isValidName(String name) {
+		int len = name.length();
+		if (len == 0) {
+			return false;
+		}
+		for (int i = 0; i < len; i++) {
+			char c = name.charAt(i);
+			if (c == ':' || c <= 0x20) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 }

@@ -169,12 +169,6 @@ public interface Project {
 	public ProjectData getProjectData(ProjectLocator projectLocator);
 
 	/**
-	 * Returns the Project Data for the given Project URL.  The Project URL must
-	 * correspond to the current active project or an currently open project view.
-	 */
-	public ProjectData getProjectData(URL url);
-
-	/**
 	 * Get the project data for visible viewed projects that are
 	 * managed by this project.
 	 * @return zero length array if there are no visible viewed projects open

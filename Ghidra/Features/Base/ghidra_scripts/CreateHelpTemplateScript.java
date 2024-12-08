@@ -83,7 +83,7 @@ public class CreateHelpTemplateScript extends GhidraScript {
 			printWriter.println("<blockquote>");
 			List<DockingActionIf> actions = getActions(tool, plugin);
 			for (DockingActionIf action : actions) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				printWriter.println("\t" + "<h3><A name=\"" + action.getName().replace(' ', '_') +
 					"\"></A>" + action.getName() + "</h3>");
 				printWriter.println("\t\t" + "<blockquote>");

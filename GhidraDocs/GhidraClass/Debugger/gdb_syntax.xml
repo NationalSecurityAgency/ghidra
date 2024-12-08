@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language
+[
+]>
+<language name="GDB" section="Scripts"
+          version="1" kateversion="5.79"
+          extensions="*.gdb"
+          priority="5">
+  <highlighting>
+    <list name="controlflow">
+    </list>
+
+    <list name="keywords">
+      <item>target</item>
+      <item>remote</item>
+      <item>break</item>
+      <item>new-ui</item>
+    </list>
+
+    <contexts>
+      <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+        <DetectSpaces />
+
+        <IncludeRules context="match keywords" />
+        <DetectIdentifier />
+      </context>
+
+      <context name="match keywords" attribute="Normal Text" lineEndContext="#pop">
+        <keyword attribute="Control Flow" context="#stay" String="controlflow"/>
+        <keyword attribute="Keyword" context="#stay" String="keywords"/>
+      </context>
+    </contexts>
+    <itemDatas>
+      <itemData name="Normal Text"  defStyleNum="dsNormal" spellChecking="false"/>
+      <itemData name="Control Flow" defStyleNum="dsControlFlow" spellChecking="false"/>
+      <itemData name="Keyword"      defStyleNum="dsKeyword" spellChecking="false"/>
+    </itemDatas>
+  </highlighting>
+  <general>
+    <keywords casesensitive="1" additionalDeliminator="#'&quot;" weakDeliminator="-" />
+  </general>
+</language>
+<!-- kate: replace-tabs on; tab-width 2; indent-width 2; -->

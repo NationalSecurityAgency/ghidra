@@ -55,12 +55,10 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 	 * 
 	 * @param args sleigh compiler command line arguments
 	 * @return exit code (TODO: exit codes are not well defined)
-	 * @throws JDOMException for XML errors
 	 * @throws IOException for file access errors
 	 * @throws RecognitionException for parse errors
 	 */
-	public static int runMain(String[] args)
-			throws JDOMException, IOException, RecognitionException {
+	public static int runMain(String[] args) throws IOException, RecognitionException {
 		int retval;
 		String filein = null;
 		String fileout = null;
@@ -80,6 +78,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			Msg.info(SleighCompile.class, "       <directory-path>   directory to have all slaspec files compiled");
 			Msg.info(SleighCompile.class, "  options:");
 			Msg.info(SleighCompile.class, "   -x                turns on parser debugging");
+			Msg.info(SleighCompile.class, "   -y                write .sla using XML debug format");
 			Msg.info(SleighCompile.class, "   -u                print warnings for unnecessary pcode instructions");
 			Msg.info(SleighCompile.class, "   -l                report pattern conflicts");
 			Msg.info(SleighCompile.class, "   -n                print warnings for all NOP constructors");
@@ -105,6 +104,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		boolean unusedFieldWarning = false;
 		boolean largeTemporaryWarning = false;
 		boolean caseSensitiveRegisterNames = false;
+		boolean debugOutput = false;
 
 		int i;
 		for (i = 0; i < args.length; ++i) {
@@ -171,6 +171,9 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			else if (args[i].charAt(1) == 's') {
 				caseSensitiveRegisterNames = true;
 			}
+			else if (args[i].charAt(1) == 'y') {
+				debugOutput = true;
+			}
 			else if (args[i].charAt(1) == 'x') {
 				SleighCompile.yydebug = true; // Debug option
 			}
@@ -205,7 +208,8 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 				SleighCompile compiler = new SleighCompile();
 				compiler.setAllOptions(preprocs, unnecessaryPcodeWarning, lenientConflict,
 					allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
-					enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames);
+					enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames,
+					debugOutput);
 
 				String outname = input.getName().replace(".slaspec", ".sla");
 				File output = new File(input.getParent(), outname);
@@ -234,7 +238,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 		SleighCompile compiler = new SleighCompile();
 		compiler.setAllOptions(preprocs, unnecessaryPcodeWarning, lenientConflict,
 			allCollisionWarning, allNopWarning, deadTempWarning, unusedFieldWarning,
-			enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames);
+			enforceLocalKeyWord, largeTemporaryWarning, caseSensitiveRegisterNames, debugOutput);
 		if (i == args.length) {
 			Msg.error(SleighCompile.class, "Missing input file name");
 			return 1;

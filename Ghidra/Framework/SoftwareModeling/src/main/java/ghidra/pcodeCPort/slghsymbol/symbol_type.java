@@ -35,5 +35,7 @@ public enum symbol_type {
 	context_symbol,
 	epsilon_symbol,
 	label_symbol,
+	flowdest_symbol,
+	flowref_symbol,
 	dummy_symbol
 }

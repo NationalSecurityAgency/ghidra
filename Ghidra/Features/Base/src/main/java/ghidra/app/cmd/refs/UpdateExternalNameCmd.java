@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.DuplicateNameException;
@@ -27,14 +25,14 @@ import ghidra.util.exception.InvalidInputException;
  * Command to update the name for an external program.
  * 
  */
-public class UpdateExternalNameCmd implements Command {
-	
+public class UpdateExternalNameCmd implements Command<Program> {
+
 	private String oldName;
 	private String newName;
 	private SourceType source;
-	
+
 	private String status;
-	
+
 	/**
 	 * Constructs a new command for updating the name of an external program.
 	 * @param oldName the current name of the external program link.
@@ -50,33 +48,27 @@ public class UpdateExternalNameCmd implements Command {
 		}
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
 		try {
 			program.getExternalManager().updateExternalLibraryName(oldName, newName, source);
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			status = newName + " already exists";
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			status = e.getMessage();
 		}
 		return false;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return status;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Update External Program Name";
 	}

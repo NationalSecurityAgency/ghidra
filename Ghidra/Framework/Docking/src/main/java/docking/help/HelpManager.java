@@ -528,7 +528,7 @@ public class HelpManager implements HelpService {
 		monitor.initialize(helpLocationsCopy.size());
 		Set<Entry<Object, HelpLocation>> entries = helpLocationsCopy.entrySet();
 		for (Entry<Object, HelpLocation> entry : entries) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Object helpee = entry.getKey();
 			HelpLocation location = entry.getValue();

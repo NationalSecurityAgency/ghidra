@@ -110,7 +110,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		if (goToService != null) {
 			navigatable = navigatable == null ? goToService.getDefaultNavigatable() : navigatable;
 			navigatable.addNavigatableListener(this);
-			table.installNavigation(goToService, navigatable);
+			table.installNavigation(tool, navigatable);
 		}
 		table.getSelectionModel()
 				.addListSelectionListener(e -> setOkEnabled(table.getSelectedRowCount() > 0));

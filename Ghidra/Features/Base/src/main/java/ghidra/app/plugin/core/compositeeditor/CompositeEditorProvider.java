@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.GTable;
 import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
@@ -31,9 +31,13 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import help.Help;
+import help.HelpService;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Editor provider for a Composite Data Type.
@@ -53,7 +57,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	protected CompositeEditorActionManager actionMgr;
 
 	/**
-	 * Construct a new stack editor provider. 
+	 * Construct a new stack editor provider.
 	 * @param plugin owner of this provider
 	 */
 	protected CompositeEditorProvider(Plugin plugin) {
@@ -92,6 +96,20 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 
 	public JTable getTable() {
 		return editorPanel.getTable();
+	}
+
+	public int getFirstEditableColumn(int row) {
+		if (editorPanel == null) {
+			return -1;
+		}
+		JTable table = editorPanel.getTable();
+		int n = table.getColumnCount();
+		for (int col = 0; col < n; col++) {
+			if (table.isCellEditable(row, col)) {
+				return col;
+			}
+		}
+		return -1;
 	}
 
 	protected void initializeActions() {
@@ -146,10 +164,14 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		closeComponent(false);
+	}
+
+	void closeComponent(boolean force) {
 		if (editorModel != null && editorModel.editingField) {
 			editorModel.endFieldEditing();
 		}
-		if (saveChanges(true) != 0) {
+		if (force || saveChanges(true) != 0) {
 			super.closeComponent();
 			dispose();
 		}
@@ -189,7 +211,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		else if (componentAt != null && (originalDTM instanceof StandAloneDataTypeManager)) {
 			return new ComponentStandAloneActionContext(this, componentAt);
 		}
-		return new ActionContext(this, null);
+		return new DefaultActionContext(this, null);
 	}
 
 	@Override
@@ -247,11 +269,6 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		editorPanel.domainObjectRestored(domainObject);
-	}
-
-	@Override
 	public void show() {
 		tool.showComponentProvider(this, true);
 	}
@@ -281,7 +298,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
 	 * @param allowCancel true if allowed to cancel
-	 * @return 0 if the user canceled; 1 if the user saved changes; 
+	 * @return 0 if the user canceled; 1 if the user saved changes;
 	 * 2 if the user did not to save changes; 3 if there was an error when
 	 * the changes were applied.
 	 */
@@ -319,4 +336,42 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return true;
 	}
 
+	protected void registerHelp(Object object, String anchor) {
+		String inception = recordHelpInception();
+		HelpService help = Help.getHelpService();
+		String fullAnchor = getHelpName() + "_" + anchor;
+		help.registerHelp(object, new HelpLocation(getHelpTopic(), fullAnchor, inception));
+	}
+
+	private String recordHelpInception() {
+		if (!SystemUtilities.isInDevelopmentMode()) {
+			return "";
+		}
+		return getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
+	}
+
+	protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
+		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan("registerHelp");
+		return t.getStackTrace()[0].toString();
+	}
+
+	protected void requestTableFocus() {
+
+		JTable table = editorPanel.getTable();
+		if (!table.isEditing()) {
+			table.requestFocus();
+			return;
+		}
+
+		if (table instanceof GTable gTable) {
+			gTable.requestTableEditorFocus();
+		}
+		else {
+			table.getEditorComponent().requestFocus();
+		}
+	}
+
+	protected void closeDependentEditors() {
+		// do nothing by default
+	}
 }

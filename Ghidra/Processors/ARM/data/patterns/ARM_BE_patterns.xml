@@ -16,6 +16,8 @@
       <data> 0xe8bd 101..... ........   </data> <!-- pop { rlist, pc !lr !sp } -->
       <data> 0xf746                     </data> <!-- mov pc,lr -->
       <data> 0xf8 0x5d 0xfb 0.......    </data> <!-- ldr.w pc,[sp],#0x.. -->
+      <data> 0xf8 0x5d 0xfb 0x04        </data> <!-- pop.w pc -->
+      <data> 0xe8 0xbd 100..... ........ </data> <!-- pop.w  { pc, !lr, !sp ...} -->
     </prepatterns>
     
     <postpatterns>
@@ -32,6 +34,7 @@
       <data> 01.01...0x..     0xb5 ....0000                </data> <!-- push, ldr -->
       <data> 0x68 0x..        0xb5 ....0000                </data> <!-- push, ldr -->
       <data> 0xe92d  0100.... ........                     </data> <!-- push { rlist, lr !sp !pc !r12 } -->
+      <data> 0xf8 0x4d  11101101 0x04                      </data>  <!-- push.w lr -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
       <funcstart validcode="3"/>
@@ -202,16 +205,36 @@
     <!-- Loosened patterns, but MUST come after a function -->
   <patternpairs totalbits="16" postbits="8"> <!-- 16 bit Thumb -->
     <prepatterns>
-      <data> 0xbd .......0               </data> <!-- pop -->
-      <data> 0xbd .......0  0xbf00      </data> <!-- pop, nop -->
-      <data>0x4770                      </data> <!-- bxlr -->
-      <data>0x4770  0xbf00              </data> <!-- bxlr , nop-->
-    </prepatterns>   
+      <data> 0xbd .......0                         </data> <!-- pop -->
+      <data> 0xbd .......0  0xbf00                 </data> <!-- pop, nop -->
+      <data> 0xe8 0xbd  100..... ........          </data> <!-- pop.w  { pc, !lr, !sp ...} -->
+      <data> 0x4770                                </data> <!-- bxlr -->
+      <data> 0x4770  0xbf00                        </data> <!-- bxlr , nop-->
+      <data> 11110... ........  10.1.... ........  </data> <!-- b.w long -->
+      <data> 111001.. ........             </data> <!-- short branch up -->
+    </prepatterns>
+    
     <postpatterns>
-      <data> 0xb5 .......0                </data> <!-- push-->
+      <data> 0xb5 ........    0xb0 100.....                </data> <!-- push, sub-->
+      <data> 0xb5 ........    0x1c 00......                </data> <!-- push, mov -->
+      <data> 0xb5 ........    0x46 0x..                    </data> <!-- push, mov -->
+      <data> 0xb5 ........    01.01... 0x..                </data> <!-- push, ldr -->
+      <data> 0xb5 ........    0x68 0x..                    </data> <!-- push, ldr -->
+      <data> 0xb5 ........    01.01... 0x..  0xb0 10...... </data> <!-- push, ldr, sub -->
+      <data> 0xb5 1.......    0xaf..                       </data> <!-- pop pushr7 addr7sp -->
+      <data> 0xb0 100.....    0xb5 ....0000                </data> <!-- push, sub-->
+      <data> 0x1c 00......    0xb5 ....0000                </data> <!-- push, mov -->
+      <data> 0x46 0x..        0xb5 ....0000                </data> <!-- push, mov -->
+      <data> 01.01...0x..     0xb5 ....0000                </data> <!-- push, ldr -->
+      <data> 0x68 0x..        0xb5 ....0000                </data> <!-- push, ldr -->
+      <data> 0xe92d  0100.... ........                     </data> <!-- push { rlist, lr !sp !pc !r12 } -->
+      <data> 0xf8 0x4d  11101101 0x04                      </data>  <!-- push.w lr -->
+      <data> 0xb5 ...1....                                 </data> <!-- push lr, r4 -->
+      <data> 0xb4 ...1....                                 </data> <!-- push !lr r4 ... -->
+      <data> 0xb5 .......0                                 </data> <!-- push-->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart after="function" validcode="4" contiguous="true" />
+      <possiblefuncstart after="function" validcode="4" contiguous="true" />
     </postpatterns>
   </patternpairs>
  

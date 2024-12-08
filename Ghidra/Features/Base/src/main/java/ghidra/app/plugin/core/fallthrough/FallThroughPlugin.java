@@ -91,8 +91,8 @@ public class FallThroughPlugin extends Plugin {
 				return instruction != null && !instruction.isFallThroughOverridden();
 			}
 		};
-		autoFallthroughAction.setPopupMenuData(new MenuData(new String[] { "Fallthrough",
-			"Auto Override" }, null, "Fallthrough"));
+		autoFallthroughAction.setPopupMenuData(
+			new MenuData(new String[] { "Fallthrough", "Auto Override" }, null, "Fallthrough"));
 
 		tool.addAction(autoFallthroughAction);
 
@@ -111,8 +111,8 @@ public class FallThroughPlugin extends Plugin {
 				return instruction != null && instruction.isFallThroughOverridden();
 			}
 		};
-		clearFallthroughAction.setPopupMenuData(new MenuData(new String[] { "Fallthrough",
-			"Clear Overrides" }, null, "Fallthrough"));
+		clearFallthroughAction.setPopupMenuData(
+			new MenuData(new String[] { "Fallthrough", "Clear Overrides" }, null, "Fallthrough"));
 
 		tool.addAction(clearFallthroughAction);
 
@@ -128,8 +128,8 @@ public class FallThroughPlugin extends Plugin {
 				return instruction != null;
 			}
 		};
-		setFallthroughAction.setPopupMenuData(new MenuData(
-			new String[] { "Fallthrough", "Set..." }, null, "Fallthrough"));
+		setFallthroughAction.setPopupMenuData(
+			new MenuData(new String[] { "Fallthrough", "Set..." }, null, "Fallthrough"));
 
 		tool.addAction(setFallthroughAction);
 	}

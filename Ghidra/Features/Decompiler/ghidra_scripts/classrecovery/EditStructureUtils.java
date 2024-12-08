@@ -49,12 +49,16 @@ class EditStructureUtils {
 
 		for (DataTypeComponent newStructComponent : newStructComponents) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			int structOffset = newStructComponent.getOffset();
 
 			DataTypeComponent currentComponentAtOffset =
 				containingStruct.getComponentAt(offset + structOffset);
+			
+			if(currentComponentAtOffset == null) {
+				continue;
+			}
 
 			DataType newStructCompDt = newStructComponent.getDataType();
 			DataType containingComDt = currentComponentAtOffset.getDataType();
@@ -104,7 +108,7 @@ class EditStructureUtils {
 		}
 
 		for (int i = offset; i < offset + length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataTypeComponent component = structure.getComponentAt(i);
 			if (component == null) {
 				return false;
@@ -142,7 +146,7 @@ class EditStructureUtils {
 
 		while (offset < endOfClear) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			DataTypeComponent component = structure.getComponentContaining(offset);
 
@@ -209,7 +213,7 @@ class EditStructureUtils {
 
 		while (offset < endOfRange) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			DataTypeComponent component = structure.getComponentContaining(offset);
 
@@ -357,7 +361,7 @@ class EditStructureUtils {
 		int index = offset - 1;
 
 		while (index >= 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataTypeComponent component = structure.getComponentAt(index);
 			if (component != null && component.getDataType() == DataType.DEFAULT) {
 				index--;
@@ -385,7 +389,7 @@ class EditStructureUtils {
 		int index = offset;
 
 		while (index < structure.getLength()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataTypeComponent component = structure.getComponentAt(index);
 			if (component.getDataType() == DataType.DEFAULT) {
 				index++;

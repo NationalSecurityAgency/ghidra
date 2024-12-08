@@ -18,8 +18,10 @@ package ghidra.app.plugin.core.decompile.actions;
 import static ghidra.app.plugin.core.decompile.actions.PCodeDfgGraphType.*;
 import static ghidra.service.graph.VertexShape.*;
 
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
+import ghidra.util.HelpLocation;
 
 /** 
  * {@link GraphDisplayOptions} for {@link PCodeDfgGraphType}
@@ -48,7 +50,8 @@ public class PCodeDfgDisplayOptions extends GraphDisplayOptions {
 	 * @param tool if non-null, will load values from tool options
 	 */
 	public PCodeDfgDisplayOptions(PluginTool tool) {
-		super(new PCodeDfgGraphType(), tool);
+		super(new PCodeDfgGraphType(), tool,
+			new HelpLocation(HelpTopics.DECOMPILER, "DataFlowGraph"));
 	}
 
 	@Override

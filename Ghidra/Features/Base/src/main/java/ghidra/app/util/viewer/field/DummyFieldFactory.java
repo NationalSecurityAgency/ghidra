@@ -19,7 +19,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -79,7 +79,7 @@ public class DummyFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hlProvdier,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hlProvdier,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return this;
 	}

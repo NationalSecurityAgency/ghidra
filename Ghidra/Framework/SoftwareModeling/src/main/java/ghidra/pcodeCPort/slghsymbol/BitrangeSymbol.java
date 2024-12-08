@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +25,11 @@ public class BitrangeSymbol extends SleighSymbol {
 	int numbits; // number of bits in the range
 
 	public BitrangeSymbol(Location location) {
-	    super(location);
-	} // For use with restoreXml
+		super(location);
+	}
 
-	public BitrangeSymbol( Location location, String nm, VarnodeSymbol sym, int bitoff, int num ) {
-		super( location, nm );
+	public BitrangeSymbol(Location location, String nm, VarnodeSymbol sym, int bitoff, int num) {
+		super(location, nm);
 		varsym = sym;
 		bitoffset = bitoff;
 		numbits = num;
@@ -49,7 +48,7 @@ public class BitrangeSymbol extends SleighSymbol {
 	}
 
 	@Override
-    public symbol_type getType() {
+	public symbol_type getType() {
 		return symbol_type.bitrange_symbol;
 	}
 

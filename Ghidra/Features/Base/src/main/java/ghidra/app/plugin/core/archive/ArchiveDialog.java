@@ -25,6 +25,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.plugintool.PluginTool;
@@ -91,8 +92,8 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 				archiveField.setText(archivePathName);
 			}
 		});
-		Font font = archiveBrowse.getFont();
-		archiveBrowse.setFont(font.deriveFont(Font.BOLD));
+
+		Gui.registerFont(archiveBrowse, Font.BOLD);
 		archiveBrowse.setName("archiveBrowse");
 
 		// Layout the components.
@@ -179,7 +180,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	 * @param pArchivePathName the archive file name to display when the dialog pops up.
 	 * @param tool the tool
 	 *
-	 * @return true if the user submitted valid values for the project and 
+	 * @return true if the user submitted valid values for the project and
 	 * archive file, false if user cancelled.
 	 */
 	public boolean showDialog(ProjectLocator pProjectLocator, String pArchivePathName,
@@ -222,7 +223,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	/////////////////////////////////////////////
 
 	/**
-	 * Check the entry to determine if the user input is valid for archiving 
+	 * Check the entry to determine if the user input is valid for archiving
 	 * a project.
 	 *
 	 * @return boolean true if input is OK
@@ -269,8 +270,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 
 				return file.getAbsolutePath()
 						.toLowerCase()
-						.endsWith(
-							ArchivePlugin.ARCHIVE_EXTENSION);
+						.endsWith(ArchivePlugin.ARCHIVE_EXTENSION);
 			}
 
 			@Override
@@ -302,7 +302,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	}
 
 	/**
-	 * Brings up a file chooser for the user to specify a directory and 
+	 * Brings up a file chooser for the user to specify a directory and
 	 * filename of the archive file.
 	 * @param approveButtonText The label for the "Open" button on the file chooser
 	 * @param approveToolTip The tool tip for the "Open" button on the file chooser
@@ -311,8 +311,7 @@ public class ArchiveDialog extends ReusableDialogComponentProvider {
 	private String chooseArchiveFile(String approveButtonText, String approveToolTip) {
 
 		GhidraFileChooser jarFileChooser =
-			createFileChooser(ArchivePlugin.ARCHIVE_EXTENSION, "Ghidra Archives",
-				archivePathName);
+			createFileChooser(ArchivePlugin.ARCHIVE_EXTENSION, "Ghidra Archives", archivePathName);
 		jarFileChooser.setTitle("Archive a Ghidra Project");
 		File jarFile = null;
 		if (archivePathName != null && archivePathName.length() != 0) {

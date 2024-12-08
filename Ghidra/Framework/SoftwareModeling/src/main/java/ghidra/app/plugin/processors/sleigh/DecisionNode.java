@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,11 +19,9 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 import ghidra.app.plugin.processors.sleigh.pattern.PatternBlock;
@@ -31,13 +29,10 @@ import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A node in the decision tree for resolving a Constructor in 
  * a SubtableSymbol based on the InstructionContext
  */
@@ -112,7 +107,7 @@ public class DecisionNode {
 			(startbit + bitsize - 1) + "), value=0x" + Integer.toHexString(val) + ", context=");
 		debug.append(walker.getParserContext().getContextBytes(), startbit, bitsize);
 		debug.append("\n");
-		debugDumpDecendentConstructors(debug, children[val]);
+		debugDumpDescendantConstructors(debug, children[val]);
 	}
 
 	private void debugInstructionBitsDecision(SleighDebugLogger debug, ParserWalker walker,
@@ -140,15 +135,15 @@ public class DecisionNode {
 				(startbit + bitsize - 1) + "), value=0x" + Integer.toHexString(val) + ", bytes=");
 		debug.append(bytes, (offset * 8) + startbit, bitsize);
 		debug.append("\n");
-		debugDumpDecendentConstructors(debug, children[val]);
+		debugDumpDescendantConstructors(debug, children[val]);
 	}
 
-	private void debugDumpDecendentConstructors(SleighDebugLogger debug, DecisionNode child) {
+	private void debugDumpDescendantConstructors(SleighDebugLogger debug, DecisionNode child) {
 		debug.indent();
 		debug.append(
-			"decendent constructors for decision node (complete tree dump ordered by line number):\n");
+			"descendant constructors for decision node (complete tree dump ordered by line number):\n");
 		List<Constructor> clist = new ArrayList<>();
-		child.dumpDecendentConstructors(clist);
+		child.dumpDescendantConstructors(clist);
 		for (Constructor c : clist) {
 			debug.dumpConstructor(null, c);
 		}
@@ -163,7 +158,7 @@ public class DecisionNode {
 			}
 		};
 
-	private void dumpDecendentConstructors(List<Constructor> clist) {
+	private void dumpDescendantConstructors(List<Constructor> clist) {
 		if (bitsize == 0) { // The node is terminal
 			for (Constructor c : constructlist) {
 				int index = Collections.binarySearch(clist, c, debugInstructionComparator);
@@ -176,7 +171,7 @@ public class DecisionNode {
 		}
 		else {
 			for (DecisionNode child : children) {
-				child.dumpDecendentConstructors(clist);
+				child.dumpDescendantConstructors(clist);
 			}
 		}
 	}
@@ -224,33 +219,33 @@ public class DecisionNode {
 //		}
 //	}
 
-	public void restoreXml(XmlPullParser parser, DecisionNode par, SubtableSymbol sub) {
-		XmlElement el = parser.start("decision");
-//		parent = par;
-//		num = SpecXmlUtils.decodeInt(el.getAttributeValue("number"));
-		contextdecision = SpecXmlUtils.decodeBoolean(el.getAttribute("context"));
-		startbit = SpecXmlUtils.decodeInt(el.getAttribute("start"));
-		bitsize = SpecXmlUtils.decodeInt(el.getAttribute("size"));
+	public void decode(Decoder decoder, DecisionNode par, SubtableSymbol sub)
+			throws DecoderException {
+		int el = decoder.openElement(ELEM_DECISION);
+
+		contextdecision = decoder.readBool(ATTRIB_CONTEXT);
+		startbit = (int) decoder.readSignedInteger(ATTRIB_STARTBIT);
+		bitsize = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 
 		ArrayList<Object> patlist = new ArrayList<>();
 		ArrayList<Object> conlist = new ArrayList<>();
 		ArrayList<Object> childlist = new ArrayList<>();
 //		num = 0;
-		XmlElement subel = parser.peek();
-		while (!subel.isEnd()) {
-			if (subel.getName().equals("pair")) {
-				XmlElement start = parser.start();
-				int id = SpecXmlUtils.decodeInt(subel.getAttribute("id"));
+		int subel = decoder.peekElement();
+		while (subel != 0) {
+			if (subel == ELEM_PAIR.id()) {
+				decoder.openElement();
+				int id = (int) decoder.readSignedInteger(ATTRIB_ID);
 				conlist.add(sub.getConstructor(id));
-				patlist.add(DisjointPattern.restoreDisjoint(parser));
-				parser.end(start);
+				patlist.add(DisjointPattern.decodeDisjoint(decoder));
+				decoder.closeElement(subel);
 			}
-			else if (subel.getName().equals("decision")) {
+			else if (subel == ELEM_DECISION.id()) {
 				DecisionNode subnode = new DecisionNode();
-				subnode.restoreXml(parser, this, sub);
+				subnode.decode(decoder, this, sub);
 				childlist.add(subnode);
 			}
-			subel = parser.peek();
+			subel = decoder.peekElement();
 		}
 		patternlist = new DisjointPattern[patlist.size()];
 		patlist.toArray(patternlist);
@@ -258,7 +253,7 @@ public class DecisionNode {
 		conlist.toArray(constructlist);
 		children = new DecisionNode[childlist.size()];
 		childlist.toArray(children);
-		parser.end(el);
+		decoder.closeElement(el);
 
 		unmodifiablePatternList = Collections.unmodifiableList(Arrays.asList(patternlist));
 		unmodifiableConstructorList = Collections.unmodifiableList(Arrays.asList(constructlist));

@@ -42,7 +42,7 @@ public class CallotherCensusScript extends GhidraScript {
 
 		InstructionIterator instIter = currentProgram.getListing().getInstructions(true);
 		while (instIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction inst = instIter.next();
 			for (PcodeOp op : inst.getPcode()) {
 				if (op.getOpcode() == PcodeOp.CALLOTHER) {

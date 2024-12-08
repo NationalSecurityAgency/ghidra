@@ -188,11 +188,11 @@ public class VariableAccessDR extends DecompilerReference {
 		// the thing that contains it.  So, if you have:
 		// 		foo.bar
 		// then the 'bar' field will have a data type of Foo.   Unfortunately, this is not always
-		// the case.  For now, when the variable is global, we need to check the field. Sad face
+		// the case.  For now, if there is a high variable, we need to check the field. Sad face
 		// emoji.
 		//
 		HighVariable highVariable = var.variable.getHighVariable();
-		if (highVariable instanceof HighGlobal) {
+		if (highVariable != null) {
 			if (matchesParentType(potentialField, dt)) {
 				DtrfDbg.println(this, indent + "MATCHED on parent type: " + dt);
 				return potentialField;

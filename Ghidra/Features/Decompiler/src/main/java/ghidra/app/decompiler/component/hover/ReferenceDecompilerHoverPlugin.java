@@ -29,7 +29,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.DECOMPILER,
+	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Reference Hover",
 	description = "Pop-up display of \"referred to\" code and data",
 	servicesProvided = { DecompilerHoverService.class }

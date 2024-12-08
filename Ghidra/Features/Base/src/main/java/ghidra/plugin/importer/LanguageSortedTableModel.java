@@ -121,7 +121,7 @@ public class LanguageSortedTableModel extends AbstractSortedTableModel<LanguageC
 	}
 
 	public int getFirstLcsPairIndex(LanguageCompilerSpecPair toFind) {
-		if (languageList != null) {
+		if (toFind != null && languageList != null) {
 			int index = 0;
 			for (LanguageCompilerSpecPair pair : languageList) {
 				if (pair.equals(toFind)) {

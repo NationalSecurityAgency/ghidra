@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,15 +172,19 @@ public:
   int4 max_term_duplication;	///< Max terms duplicated without a new variable
   int4 max_basetype_size;	///< Maximum size of an "integer" type before creating an array type
   int4 min_funcsymbol_size;	///< Minimum size of a function symbol
+  uint4 max_jumptable_size;	///< Maximum number of entries in a single JumpTable
   bool aggressive_ext_trim;	///< Aggressively trim inputs that look like they are sign extended
   bool readonlypropagate;	///< true if readonly values should be treated as constants
   bool infer_pointers;		///< True if we should infer pointers from constants that are likely addresses
   bool analyze_for_loops;	///< True if we should attempt conversion of \e whiledo loops to \e for loops
+  bool nan_ignore_all;		///< True if we should ignore NaN operations, i.e. nan() always returns false
+  bool nan_ignore_compare;	///< True if we should ignore NaN operations protecting floating-point comparisons
   vector<AddrSpace *> inferPtrSpaces;	///< Set of address spaces in which a pointer constant is inferable
   int4 funcptr_align;		///< How many bits of alignment a function ptr has
   uint4 flowoptions;            ///< options passed to flow following engine
   uint4 max_instructions;	///< Maximum instructions that can be processed in one function
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
+  uint4 split_datatype_config;	///< Toggle for data-types splitting: Bit 0=structs, 1=arrays, 2=pointers
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
   Database *symboltab;		///< Memory map of global variables and functions
@@ -232,10 +236,12 @@ public:
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
   void setPrintLanguage(const string &nm);		///< Establish a particular output language
   void globalify(void);					///< Mark \e all spaces as global
-  void decodeFlowOverride(Decoder &decoder);		///< Set flow overrides from XML
+  void decodeFlowOverride(Decoder &decoder);		///< Decode flow overrides from a stream
   virtual ~Architecture(void);				///< Destructor
 
-  virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
+  /// \brief Get a string describing \b this architecture
+  /// \return the description
+  virtual string getDescription(void) const { return archid; }
 
   /// \brief Print an error message to console
   ///
@@ -279,10 +285,15 @@ protected:
   /// \brief Build the data-type factory/container
   ///
   /// Build the TypeFactory object specific to \b this Architecture and
-  /// prepopulate it with the \e core types. Core types may be pulled
-  /// from the configuration information, or default core types are used.
+  /// prepopulate it with the \e core types.
   /// \param store contains possible configuration information
   virtual void buildTypegrp(DocumentStorage &store)=0;
+
+  /// \brief Add core primitive data-types
+  ///
+  /// Core types may be pulled from the configuration information, or default core types are used.
+  /// \param store contains possible configuration information
+  virtual void buildCoreTypes(DocumentStorage &store)=0;
 
   /// \brief Build the comment database
   ///
@@ -357,7 +368,7 @@ protected:
   void decodeVolatile(Decoder &decoder);		///< Apply volatile region configuration
   void decodeReturnAddress(Decoder &decoder);		///< Apply return address configuration
   void decodeIncidentalCopy(Decoder &decoder);		///< Apply incidental copy configuration
-  void decodeLaneSizes(Decoder &decoder);		///< Apply lane size configuration
+  void decodeRegisterData(Decoder &decoder);		///< Read specific register properties
   void decodeStackPointer(Decoder &decoder);		///< Apply stack pointer configuration
   void decodeDeadcodeDelay(Decoder &decoder);		///< Apply dead-code delay configuration
   void decodeInferPtrBounds(Decoder &decoder);		///< Apply pointer inference bounds

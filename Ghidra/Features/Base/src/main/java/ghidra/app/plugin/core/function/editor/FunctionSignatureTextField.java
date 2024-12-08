@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,12 +27,16 @@ import javax.swing.text.*;
 
 import docking.actions.KeyBindingUtils;
 import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.util.Swing;
 
 class FunctionSignatureTextField extends JTextPane {
 	private static final String ENTER_ACTION_NAME = "ENTER";
 	private static final String ESCAPE_ACTION_NAME = "ESCAPE";
 	private static final String TAB_ACTION_NAME = "TAB";
+
+	private static final String FONT_ID = "font.plugin.function.text.editor";
+
 	public static Color DEFAULT_COLOR =
 		new GColor("color.fg.plugin.function.editor.dialog.textfield.default");
 	public static Color PARAMETER_NAME_COLOR =
@@ -52,8 +57,7 @@ class FunctionSignatureTextField extends JTextPane {
 	private SimpleAttributeSet errorAttributes;
 
 	FunctionSignatureTextField() {
-		Font myFont = getFont();
-		setFont(myFont.deriveFont(24.0f));
+		Gui.registerFont(this, FONT_ID);
 		doc = getStyledDocument();
 		AttributeSet inputAttributes = getInputAttributes();
 

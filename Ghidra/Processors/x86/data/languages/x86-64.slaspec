@@ -1,20 +1,6 @@
 @define IA64 "IA64"
-@include "ia.sinc"
-@include "avx.sinc"
-@include "avx_manual.sinc"
-@include "avx2.sinc"
-@include "avx2_manual.sinc"
-@include "rdrand.sinc"
+@include "x86.slaspec"
+with : lockprefx=0 {
 @include "sgx.sinc"
-@include "adx.sinc"
-@include "clwb.sinc"
-@include "pclmulqdq.sinc"
-@include "mpx.sinc"
-@include "lzcnt.sinc"
-@include "bmi1.sinc"
-@include "bmi2.sinc"
-@include "sha.sinc"
-@include "smx.sinc"
-@include "cet.sinc"
 @include "fma.sinc"
-
+}

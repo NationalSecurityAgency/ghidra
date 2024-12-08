@@ -1,0 +1,9 @@
+
+# FLIX (Flexible Length Instruction eXtension) is a Xtensa processor extension
+# that allows for variable-length, multi-op instructions with support from 4
+# 16 bytes. Customizable, if found they should be flagged.
+
+define pcodeop flix;
+:FLIX u_4_23 is op0=0xe & u_4_23 {
+	flix();
+}

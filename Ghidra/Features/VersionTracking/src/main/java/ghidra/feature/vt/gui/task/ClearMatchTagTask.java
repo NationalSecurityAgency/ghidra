@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +59,7 @@ public class ClearMatchTagTask extends Task {
 	protected void doWork(TaskMonitor monitor) throws CancelledException {
 		monitor.initialize(matches.size());
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			VTMatchTag tag = match.getTag();
 			if (tag == VTMatchTag.UNTAGGED) {

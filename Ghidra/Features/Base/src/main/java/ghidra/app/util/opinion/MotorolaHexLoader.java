@@ -227,7 +227,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 			new BufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
 			while ((line = in.readLine()) != null) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				int index = 0;
 				int checkSum = 0;

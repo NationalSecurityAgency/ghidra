@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,42 +26,13 @@ namespace ghidra {
 ///
 /// This class determines if two CBRANCHs share the same condition.  It also determines if the conditions
 /// are complements of each other, and/or they are shared along only one path.
-///
-/// The expression computing the root boolean value for one CBRANCH is marked out
-/// by setupInitOp(). For the other CBRANCH, findMatch() tries to find common Varnode
-/// in its boolean expression and then maps a critical path from the Varnode to the final boolean.
-/// Assuming the common Varnode exists, the method finalJudgement() decides if the two boolean values
-/// are the same, uncorrelated, or complements of one another.
-class ConditionMarker {
-  PcodeOp *initop;		///< The root CBRANCH operation to compare against
-  Varnode *basevn;		///< The boolean Varnode on which the root CBRANCH keys
-  Varnode *boolvn;		///< If \b basevn is defined by BOOL_NEGATE, this is the unnegated Varnode
-  Varnode *bool2vn;		///< If the first param to \b binaryop is defined by BOOL_NEGATE, this is the unnegated Varnode
-  Varnode *bool3vn;		///< If the second param to \b binaryop is defined by BOOL_NEGATE, this is the unnegated Varnode
-  PcodeOp *binaryop;		///< The binary operator producing the root boolean (if non-null)
-
+class BooleanExpressionMatch {
+  static const int4 maxDepth;	///< Maximum depth to trace a boolean expression
   bool matchflip;		///< True if the compared CBRANCH keys on the opposite boolean value of the root
-  int4 state;			///< Depth of critical path
-  PcodeOp *opstate[2];		///< p-code operations along the critical path
-  bool flipstate[2];		///< Boolean negation along the critical path
-  int4 slotstate[2];		///< Input Varnode to follow to stay on critical path
-  bool multion;			///< True if MULTIEQUAL used in condition
-  bool binon;			///< True if a binary operator is used in condition
-  int4 multislot;		///< Input slot of MULTIEQUAL on critical path, -1 if no MULTIEQUAL
-
-  void setupInitOp(PcodeOp *op);	///< Map out the root boolean expression
-  Varnode *findMatch(PcodeOp *op);	///< Find a matching Varnode in the root expression producing the given CBRANCH boolean
-  bool sameOpComplement(PcodeOp *bin1op, PcodeOp *bin2op);
-  bool andOrComplement(PcodeOp *bin1op, PcodeOp *bin2op);
-  bool finalJudgement(Varnode *vn);
 public:
-  ConditionMarker(void);				///< Constructor
-  ~ConditionMarker(void);				///< Destructor
   bool verifyCondition(PcodeOp *op, PcodeOp *iop);	///< Perform the correlation test on two CBRANCH operations
-  int4 getMultiSlot(void) const { return multislot; }	///< Get the MULTIEQUAL slot in the critical path
-  bool getFlip(void) const { return matchflip; }	///< Return \b true is the expressions are anti-correlated
-  static bool varnodeSame(Varnode *a,Varnode *b);
-  static bool varnodeComplement(Varnode *a,Varnode *b);
+  int4 getMultiSlot(void) const { return -1; }	///< Get the MULTIEQUAL slot in the critical path
+  bool getFlip(void) const { return matchflip; }	///< Return \b true if the expressions are anti-correlated
 };
 
 /// \brief A class for simplifying a series of conditionally executed statements.

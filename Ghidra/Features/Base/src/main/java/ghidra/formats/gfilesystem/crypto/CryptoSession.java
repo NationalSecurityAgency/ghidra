@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.util.Iterator;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * Provides the caller with the ability to perform crypto querying operations
@@ -27,7 +28,7 @@ import ghidra.formats.gfilesystem.FSRL;
  * Typically used to query passwords and to add known good passwords
  * to caches for later re-retrieval.
  * <p>
- * Closing a CryptoSession instance does not invalidate the instance, instead is is a suggestion
+ * Closing a CryptoSession instance does not invalidate the instance, instead it is a suggestion
  * that the instance should not be used for any further nested sessions.
  * <p>
  * See {@link CryptoProviders#newSession()}.
@@ -42,7 +43,7 @@ public interface CryptoSession extends Closeable {
 	 * @param prompt optional prompt that may be displayed to a user
 	 * @return {@link Iterator} of possible passwords
 	 */
-	Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt);
+	Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt);
 
 	/**
 	 * Pushes a known good password into a cache for later re-retrieval.
@@ -50,7 +51,7 @@ public interface CryptoSession extends Closeable {
 	 * @param fsrl {@link FSRL} path to the file that was unlocked by the password
 	 * @param password the good password
 	 */
-	void addSuccessfulPassword(FSRL fsrl, PasswordValue password);
+	void addSuccessfulPassword(FSRL fsrl, Password password);
 
 	/**
 	 * Returns true if this session has been closed.

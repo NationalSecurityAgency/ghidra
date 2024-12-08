@@ -60,9 +60,12 @@ extern ElementId ELEM_PARAM3;			///< Marshaling element \<param3>
 extern ElementId ELEM_PROTOEVAL;		///< Marshaling element \<protoeval>
 extern ElementId ELEM_SETACTION;		///< Marshaling element \<setaction>
 extern ElementId ELEM_SETLANGUAGE;		///< Marshaling element \<setlanguage>
+extern ElementId ELEM_SPLITDATATYPE;		///< Marshaling element \<splitdatatype>
 extern ElementId ELEM_STRUCTALIGN;		///< Marshaling element \<structalign>
 extern ElementId ELEM_TOGGLERULE;		///< Marshaling element \<togglerule>
 extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
+extern ElementId ELEM_JUMPTABLEMAX;		///< Marshaling element \<jumptablemax>
+extern ElementId ELEM_NANIGNORE;		///< Marshaling element \<nanignore>
 
 /// \brief Base class for options classes that affect the configuration of the Architecture object
 ///
@@ -154,12 +157,6 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
-class OptionStructAlign : public ArchOption {
-public:
-  OptionStructAlign(void) { name = "structalign"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
-};
-
 class OptionWarning : public ArchOption {
 public:
   OptionWarning(void) { name = "warning"; }	///< Constructor
@@ -238,6 +235,12 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionBraceFormat : public ArchOption {
+public:
+  OptionBraceFormat(void) { name = "braceformat"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 class OptionSetAction : public ArchOption {
 public:
   OptionSetAction(void) { name = "setaction"; }	///< Constructor
@@ -292,6 +295,12 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionJumpTableMax : public ArchOption {
+public:
+  OptionJumpTableMax(void) { name = "jumptablemax"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 class OptionJumpLoad : public ArchOption {
 public:
   OptionJumpLoad(void) { name = "jumpload"; }	///< Constructor
@@ -319,6 +328,25 @@ public:
 class OptionNamespaceStrategy : public ArchOption {
 public:
   OptionNamespaceStrategy(void) { name = "namespacestrategy"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionSplitDatatypes : public ArchOption {
+public:
+  enum {
+    option_struct = 1,		///< Split combined structure fields
+    option_array = 2,		///< Split combined array elements
+    option_pointer = 4		///< Split combined LOAD and STORE operations
+  };
+  static uint4 getOptionBit(const string &val);		///< Translate option string to a configuration bit
+public:
+  OptionSplitDatatypes(void) { name = "splitdatatype"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionNanIgnore : public ArchOption {
+public:
+  OptionNanIgnore(void) { name = "nanignore"; }		///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 

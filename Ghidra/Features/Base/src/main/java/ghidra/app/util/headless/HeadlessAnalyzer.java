@@ -20,6 +20,8 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+
 import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import generic.util.Path;
@@ -32,10 +34,12 @@ import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.formats.gfilesystem.*;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProject;
 import ghidra.framework.project.DefaultProjectManager;
@@ -44,7 +48,6 @@ import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
@@ -55,16 +58,16 @@ import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
- * The class used kick-off and interact with headless processing.  All headless options have been 
- * broken out into their own class: {@link HeadlessOptions}.  This class is intended to be used 
+ * The class used kick-off and interact with headless processing.  All headless options have been
+ * broken out into their own class: {@link HeadlessOptions}.  This class is intended to be used
  * one of two ways:
  * <ul>
- *   <li>Used by {@link AnalyzeHeadless} to perform headless analysis based on arguments specified 
+ *   <li>Used by {@link AnalyzeHeadless} to perform headless analysis based on arguments specified
  *   on the command line.</li>
  *   <li>Used by another tool as a library to perform headless analysis.</li>
  * </ul>
  * <p>
- * Note: This class is not thread safe.  
+ * Note: This class is not thread safe.
  */
 public class HeadlessAnalyzer {
 
@@ -77,18 +80,19 @@ public class HeadlessAnalyzer {
 	private DomainFolder saveDomainFolder;
 	private Map<String, Object> storage;
 	private URLClassLoader classLoaderForDotClassScripts;
+	private FileSystemService fsService;
 
 	/**
-	 * Gets a headless analyzer, initializing the application if necessary with the specified 
-	 * logging parameters.  An {@link IllegalStateException} will be thrown if the application has 
+	 * Gets a headless analyzer, initializing the application if necessary with the specified
+	 * logging parameters.  An {@link IllegalStateException} will be thrown if the application has
 	 * already been initialized or a headless analyzer has already been retrieved.  In these cases,
 	 * the headless analyzer should be gotten with {@link HeadlessAnalyzer#getInstance()}.
 	 * 
-	 * @param logFile The desired application log file.  If null, the default application log file 
+	 * @param logFile The desired application log file.  If null, the default application log file
 	 *   will be used (see {@link Application#initializeLogging}).
 	 * @param scriptLogFile The desired scripting log file.  If null, the default scripting log file
 	 *   will be used (see {@link Application#initializeLogging}).
-	 * @param useLog4j true if log4j is to be used; otherwise, false.  If this class is being used by 
+	 * @param useLog4j true if log4j is to be used; otherwise, false.  If this class is being used by
 	 *     another tool as a library, using log4j might interfere with that tool.
 	 * @return An instance of a new headless analyzer.
 	 * @throws IllegalStateException if an application or headless analyzer instance has already been initialized.
@@ -98,7 +102,7 @@ public class HeadlessAnalyzer {
 			boolean useLog4j) throws IllegalStateException, IOException {
 
 		// Prevent more than one headless analyzer from being instantiated.  Too much about it
-		// messes with global system settings, so under the current design of Ghidra, allowing 
+		// messes with global system settings, so under the current design of Ghidra, allowing
 		// more than one to exist could result in unpredictable behavior.
 		if (instance != null) {
 			throw new IllegalStateException(
@@ -136,7 +140,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Gets a headless analyzer instance, with the assumption that the application has already been
-	 * initialized.  If this is called before the application has been initialized, it will 
+	 * initialized.  If this is called before the application has been initialized, it will
 	 * initialize the application with no logging.
 	 * 
 	 * @return An instance of a new headless analyzer.
@@ -146,7 +150,7 @@ public class HeadlessAnalyzer {
 	public static HeadlessAnalyzer getInstance() throws IOException {
 
 		// Prevent more than one headless analyzer from being instantiated.  Too much about it
-		// messes with global system settings, so under the current design of Ghidra, allowing 
+		// messes with global system settings, so under the current design of Ghidra, allowing
 		// more than one to exist could result in unpredictable behavior.
 		if (instance != null) {
 			return instance;
@@ -180,8 +184,10 @@ public class HeadlessAnalyzer {
 			layout = new GhidraApplicationLayout();
 		}
 		catch (IOException e) {
+			Msg.debug(HeadlessAnalyzer.class,
+				"Unable to load the standard Ghidra application layout. " + e.getMessage() +
+					".  Attempting to load the Ghidra Jar application layout.");
 			layout = new GhidraJarApplicationLayout();
-
 		}
 		return layout;
 	}
@@ -196,16 +202,16 @@ public class HeadlessAnalyzer {
 		// Ghidra URL handler registration.  There's no harm in doing this more than once.
 		Handler.registerHandler();
 
-		// Ensure that we are running in "headless mode",  preventing Swing-based methods from 
+		// Ensure that we are running in "headless mode",  preventing Swing-based methods from
 		// running (causing headless operation to lose focus).
 		System.setProperty("java.awt.headless", "true");
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.TRUE.toString());
 
-		// Allows handling of old content which did not have a content type property
-		DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 		// Put analyzer in its default state
 		reset();
+
+		// Initialize FileSytemService
+		fsService = FileSystemService.getInstance();
 	}
 
 	/**
@@ -236,12 +242,12 @@ public class HeadlessAnalyzer {
 	 * <li>perform auto-analysis if not disabled</li>
 	 * <li>execute ordered list of post-scripts</li>
 	 * </ol>
-	 * If no import files or directories have been specified the ordered list 
+	 * If no import files or directories have been specified the ordered list
 	 * of pre/post scripts will be executed once.
 	 * 
 	 * @param ghidraURL ghidra URL for existing server repository and optional
 	 *                  folder path
-	 * @param filesToImport directories and files to be imported (null or empty 
+	 * @param filesToImport directories and files to be imported (null or empty
 	 *                      is acceptable if we are in -process mode)
 	 * @throws IOException if there was an IO-related problem
 	 * @throws MalformedURLException specified URL is invalid
@@ -303,52 +309,55 @@ public class HeadlessAnalyzer {
 
 			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
 
-			GhidraURLConnection c = (GhidraURLConnection) ghidraURL.openConnection();
-			c.setReadOnly(options.readOnly); // writable repository connection
+			// force explicit folder access since file may have same name as folder
+			ghidraURL = GhidraURL.getFolderURL(ghidraURL);
 
-			if (c.getRepositoryName() == null) {
-				throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
-			}
+			Msg.info(this, "Opening ghidra repository folder: " + ghidraURL);
 
-			Msg.info(this, "Opening ghidra repository project: " + ghidraURL);
-			Object obj = c.getContent();
-			if (!(obj instanceof GhidraURLWrappedContent)) {
-				throw new IOException(
-					"Connect to repository folder failed. Response code: " + c.getStatusCode());
-			}
-			GhidraURLWrappedContent wrappedContent = (GhidraURLWrappedContent) obj;
-			Object content = null;
-			try {
-				content = wrappedContent.getContent(this);
-				if (!(content instanceof DomainFolder)) {
-					throw new IOException("Connect to repository folder failed");
-				}
+			GhidraURLQuery.queryRepositoryUrl(ghidraURL, options.readOnly,
+				new GhidraURLResultHandlerAdapter() {
 
-				DomainFolder folder = (DomainFolder) content;
-				project = new HeadlessProject(getProjectManager(), c);
+					@Override
+					public void processResult(DomainFolder domainFolder, URL url,
+							TaskMonitor monitor) throws IOException, CancelledException {
+						try {
+							project = new HeadlessProject(getProjectManager(),
+								domainFolder.getProjectData());
 
-				if (!checkUpdateOptions()) {
-					return; // TODO: Should an exception be thrown?
-				}
+							if (!checkUpdateOptions()) {
+								return; // TODO: Should an exception be thrown?
+							}
 
-				if (options.runScriptsNoImport) {
-					processNoImport(folder.getPathname());
-				}
-				else {
-					processWithImport(folder.getPathname(), filesToImport);
-				}
-			}
-			catch (FileNotFoundException e) {
-				throw new IOException("Connect to repository folder failed");
-			}
-			finally {
-				if (content != null) {
-					wrappedContent.release(content, this);
-				}
-				if (project != null) {
-					project.close();
-				}
-			}
+							if (options.runScriptsNoImport) {
+								processNoImport(domainFolder.getPathname());
+							}
+							else {
+								processWithImport(domainFolder.getPathname(), filesToImport);
+							}
+						}
+						finally {
+							if (project != null) {
+								project.close();
+							}
+						}
+					}
+
+					@Override
+					public void handleError(String title, String message, URL url,
+							IOException cause) throws IOException {
+						if (cause instanceof FileNotFoundException) {
+							throw new IOException("Connect to repository folder failed");
+						}
+						if (cause != null) {
+							throw cause;
+						}
+						throw new IOException(title + ": " + message);
+					}
+				}, TaskMonitor.DUMMY);
+
+		}
+		catch (CancelledException e) {
+			throw new IOException(e); // unexpected
 		}
 		finally {
 			GhidraScriptUtil.dispose();
@@ -362,16 +371,16 @@ public class HeadlessAnalyzer {
 	 * <li>perform auto-analysis if not disabled</li>
 	 * <li>execute ordered list of post-scripts</li>
 	 * </ol>
-	 * If no import files or directories have been specified the ordered list 
+	 * If no import files or directories have been specified the ordered list
 	 * of pre/post scripts will be executed once.
 	 * 
-	 * @param projectLocation directory path of project 
+	 * @param projectLocation directory path of project
 	 * 						  If project exists it will be opened, otherwise it will be created.
 	 * @param projectName project name
 	 * @param rootFolderPath root folder for imports
 	 * @param filesToImport directories and files to be imported (null or empty is acceptable if
 	 *        				we are in -process mode)
-	 * @throws IOException if there was an IO-related problem.  If caused by a failure to obtain a 
+	 * @throws IOException if there was an IO-related problem.  If caused by a failure to obtain a
 	 * write-lock on the project the exception cause will a {@code LockException}.
 	 */
 	public void processLocal(String projectLocation, String projectName, String rootFolderPath,
@@ -464,7 +473,7 @@ public class HeadlessAnalyzer {
 	/**
 	 * Checks to see if the most recent analysis timed out.
 	 * 
-	 * @return true if the most recent analysis timed out; otherwise, false. 
+	 * @return true if the most recent analysis timed out; otherwise, false.
 	 */
 	public boolean checkAnalysisTimedOut() {
 		return analysisTimedOut;
@@ -580,10 +589,7 @@ public class HeadlessAnalyzer {
 			writer.flush();
 		}
 		catch (Exception exc) {
-			Program prog = scriptState.getCurrentProgram();
-			String path = (prog != null ? " ( " + prog.getExecutablePath() + " ) " : "");
-			String logErrorMsg =
-				"REPORT SCRIPT ERROR: " + path + " " + scriptName + " : " + exc.getMessage();
+			String logErrorMsg = "REPORT SCRIPT ERROR: ";
 			Msg.error(this, logErrorMsg, exc);
 			return false;
 		}
@@ -596,9 +602,6 @@ public class HeadlessAnalyzer {
 	 * @return true if OK to continue
 	 */
 	private boolean checkUpdateOptions() {
-
-		boolean isImport = !options.runScriptsNoImport;
-		boolean commitAllowed = isCommitAllowed();
 
 		if (options.readOnly) {
 			String readOnlyError =
@@ -615,7 +618,13 @@ public class HeadlessAnalyzer {
 				return false;
 			}
 		}
+		else if (!isInWritableProject()) {
+			Msg.error(this, "Processing files within read-only project/repository " +
+				"- the -readOnly option is required.");
+			return false;
+		}
 
+		boolean commitAllowed = isCommitAllowed();
 		if (options.commit && !commitAllowed) {
 			Msg.error(this,
 				"Commit to repository not possible (due to permission or connection issue)");
@@ -634,6 +643,7 @@ public class HeadlessAnalyzer {
 		}
 
 		if (options.overwrite) {
+			boolean isImport = !options.runScriptsNoImport;
 			if (!isImport) {
 				Msg.info(this,
 					"Ignoring -overwrite because it is not applicable to -process mode.");
@@ -648,6 +658,10 @@ public class HeadlessAnalyzer {
 		return true;
 	}
 
+	private boolean isInWritableProject() {
+		return project.getProjectData().getRootFolder().isInWritableProject();
+	}
+
 	private boolean isCommitAllowed() {
 		RepositoryAdapter repository = project.getRepository();
 		if (repository == null) {
@@ -660,7 +674,7 @@ public class HeadlessAnalyzer {
 			}
 			User user = repository.getUser();
 			if (!user.hasWritePermission()) {
-				Msg.warn(this, "User '" + user.getName() +
+				Msg.error(this, "User '" + user.getName() +
 					"' does not have write permission to repository - commit not allowed");
 				return false;
 			}
@@ -758,7 +772,7 @@ public class HeadlessAnalyzer {
 				Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
 
 				if (GhidraScript.class.isAssignableFrom(c)) {
-					// No issues, but return null, which signifies we don't actually have a 
+					// No issues, but return null, which signifies we don't actually have a
 					// ResourceFile to associate with the script name
 					return null;
 				}
@@ -878,7 +892,7 @@ public class HeadlessAnalyzer {
 
 					// Get parent folder to pass to GhidraScript
 					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
-						.getParentFile();
+							.getParentFile();
 
 					currScript = (GhidraScript) c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
@@ -954,9 +968,9 @@ public class HeadlessAnalyzer {
 	 * @param fileAbsolutePath Path of the file to analyze.
 	 * @param program The program to analyze.
 	 * @return true if the program file should be kept.  If analysis or scripts have marked
-	 * 			the program as temporary changes should not be saved.  Returns false in 
+	 * 			the program as temporary changes should not be saved.  Returns false in
 	 * 			these cases:
-	 * 		- One of the scripts sets the Headless Continuation Option to "ABORT_AND_DELETE" or 
+	 * 		- One of the scripts sets the Headless Continuation Option to "ABORT_AND_DELETE" or
 	 * 			"CONTINUE_THEN_DELETE".
 	 */
 	private boolean analyzeProgram(String fileAbsolutePath, Program program) {
@@ -1120,33 +1134,40 @@ public class HeadlessAnalyzer {
 		boolean keepFile = true; // if false file should be deleted after release
 		boolean terminateCheckoutWhenDone = false;
 
-		boolean readOnlyFile = options.readOnly || domFile.isReadOnly();
+		boolean readOnlyFile =
+			options.readOnly || domFile.isReadOnly() || !domFile.isInWritableProject();
 
 		try {
 			// Exclusive checkout required when commit option specified
-			if (!readOnlyFile) {
-				if (domFile.isVersioned()) {
-					if (!domFile.isCheckedOut()) {
-						if (!domFile.checkout(options.commit, TaskMonitor.DUMMY)) {
-							Msg.warn(this, "Skipped processing for " + domFile.getPathname() +
-								" -- failed to get exclusive file checkout required for commit");
-							return;
-						}
-					}
-					else if (options.commit && !domFile.isCheckedOutExclusive()) {
-						Msg.error(this, "Skipped processing for " + domFile.getPathname() +
-							" -- file is checked-out non-exclusive (commit requires exclusive checkout)");
+			if (!readOnlyFile && domFile.isVersioned()) {
+				if (!domFile.isCheckedOut()) {
+					if (!domFile.canCheckout()) {
+						Msg.warn(this, "Skipped processing for " + domFile.getPathname() +
+							" within read-only repository");
 						return;
 					}
+					if (!domFile.checkout(options.commit, TaskMonitor.DUMMY)) {
+						Msg.warn(this, "Skipped processing for " + domFile.getPathname() +
+							" -- failed to get exclusive file checkout required for commit");
+						return;
+					}
+					// Only terminate checkout when done if we did the checkout
+					terminateCheckoutWhenDone = true;
 				}
-				terminateCheckoutWhenDone = true;
+				else if (options.commit && !domFile.isCheckedOutExclusive()) {
+					Msg.error(this, "Skipped processing for " + domFile.getPathname() +
+						" -- file is checked-out non-exclusive (commit requires exclusive checkout)");
+					return;
+				}
 			}
 
 			program = (Program) domFile.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 
-			Msg.info(this, "REPORT: Processing project file: " + domFile.getPathname());
+			String readOnlyText = readOnlyFile ? "read-only " : "";
+			Msg.info(this,
+				"REPORT: Processing " + readOnlyText + "project file: " + domFile.getPathname());
 
-			// This method already takes into account whether the user has set the "noanalysis" 
+			// This method already takes into account whether the user has set the "noanalysis"
 			// flag or not
 			keepFile = analyzeProgram(domFile.getPathname(), program) || readOnlyFile;
 
@@ -1229,7 +1250,7 @@ public class HeadlessAnalyzer {
 
 			if (!readOnlyFile) { // can't change anything if read-only file
 
-				// Undo checkout of it is still checked-out and either the file is to be 
+				// Undo checkout of it is still checked-out and either the file is to be
 				// deleted, or we just checked it out and file changes have been committed
 				if (domFile.isCheckedOut()) {
 					if (!keepFile ||
@@ -1484,7 +1505,7 @@ public class HeadlessAnalyzer {
 					public boolean createKeepFile() throws CancelledException {
 						return false;
 					}
-				}, true, TaskMonitor.DUMMY);
+				}, TaskMonitor.DUMMY);
 				Msg.info(this, "REPORT: Committed file changes to repository: " + df.getPathname());
 			}
 			catch (IOException e) {
@@ -1504,23 +1525,23 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private boolean processFileWithImport(File file, String folderPath) {
+	private boolean processFileWithImport(FSRL fsrl, String folderPath) {
 
-		Msg.info(this, "IMPORTING: " + file.getAbsolutePath());
+		Msg.info(this, "IMPORTING: " + fsrl);
 
 		LoadResults<Program> loadResults = null;
 		Loaded<Program> primary = null;
 		try {
 
 			// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
-			// loaded. 
-			loadResults = loadPrograms(file, folderPath);
+			// loaded.
+			loadResults = loadPrograms(fsrl, folderPath);
 			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
 
 			primary = loadResults.getPrimary();
 			Program primaryProgram = primary.getDomainObject();
 
-			// Make sure we are allowed to save ALL programs to the project.  If not, save none and 
+			// Make sure we are allowed to save ALL programs to the project.  If not, save none and
 			// fail.
 			if (!options.readOnly) {
 				for (Loaded<Program> loaded : loadResults) {
@@ -1533,17 +1554,15 @@ public class HeadlessAnalyzer {
 			// Check if there are defined memory blocks in the primary program.
 			// Abort if not (there is nothing to work with!).
 			if (primaryProgram.getMemory().getAllInitializedAddressSet().isEmpty()) {
-				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " +
-					file.getAbsolutePath());
+				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " + fsrl);
 				return false;
 			}
 
 			// Analyze the primary program, and determine if we should save.
 			// TODO: Analyze non-primary programs (GP-2965).
-			boolean doSave =
-				analyzeProgram(file.getAbsolutePath(), primaryProgram) && !options.readOnly;
+			boolean doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
 
-			// The act of marking the program as temporary by a script will signal 
+			// The act of marking the program as temporary by a script will signal
 			// us to discard any changes
 			if (!doSave) {
 				loadResults.forEach(e -> e.getDomainObject().setTemporary(true));
@@ -1575,13 +1594,12 @@ public class HeadlessAnalyzer {
 				}
 				else {
 					if (options.readOnly) {
-						Msg.info(this, "REPORT: Discarded file import due to readOnly option: " +
-							loaded);
+						Msg.info(this,
+							"REPORT: Discarded file import due to readOnly option: " + loaded);
 					}
 					else {
-						Msg.info(this,
-							"REPORT: Discarded file import as a result of script " +
-								"activity or analysis timeout: " + loaded);
+						Msg.info(this, "REPORT: Discarded file import as a result of script " +
+							"activity or analysis timeout: " + loaded);
 					}
 				}
 			}
@@ -1603,8 +1621,7 @@ public class HeadlessAnalyzer {
 			return true;
 		}
 		catch (LoadException e) {
-			Msg.error(this, "The AutoImporter could not successfully load " +
-				file.getAbsolutePath() +
+			Msg.error(this, "The AutoImporter could not successfully load " + fsrl +
 				" with the provided import parameters. Please ensure that any specified" +
 				" processor/cspec arguments are compatible with the loader that is used during" +
 				" import and try again.");
@@ -1627,93 +1644,118 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private LoadResults<Program> loadPrograms(File file, String folderPath) throws VersionException,
-			InvalidNameException, DuplicateNameException, CancelledException, IOException,
-			LoadException {
+	private LoadResults<Program> loadPrograms(FSRL fsrl, String folderPath)
+			throws VersionException, InvalidNameException, DuplicateNameException,
+			CancelledException, IOException, LoadException {
 		MessageLog messageLog = new MessageLog();
 
 		if (options.loaderClass == null) {
 			// User did not specify a loader
 			if (options.language == null) {
-				return AutoImporter.importByUsingBestGuess(file, project, folderPath, this,
+				return AutoImporter.importByUsingBestGuess(fsrl, project, folderPath, this,
 					messageLog, TaskMonitor.DUMMY);
 			}
-			return AutoImporter.importByLookingForLcs(file, project, folderPath, options.language,
+			return AutoImporter.importByLookingForLcs(fsrl, project, folderPath, options.language,
 				options.compilerSpec, this, messageLog, TaskMonitor.DUMMY);
 		}
 
 		// User specified a loader
 		if (options.language == null) {
-			return AutoImporter.importByUsingSpecificLoaderClass(file, project, folderPath,
+			return AutoImporter.importByUsingSpecificLoaderClass(fsrl, project, folderPath,
 				options.loaderClass, options.loaderArgs, this, messageLog, TaskMonitor.DUMMY);
 		}
-		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(file, project, folderPath,
+		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(fsrl, project, folderPath,
 			options.loaderClass, options.loaderArgs, options.language, options.compilerSpec, this,
 			messageLog, TaskMonitor.DUMMY);
 	}
 
-	private void processWithImport(File file, String folderPath, boolean isFirstTime)
+	private void processWithImport(FSRL fsrl, String folderPath, Integer depth, boolean isFirstTime)
 			throws IOException {
-
-		boolean importSucceeded;
-
-		if (file.isFile()) {
-
-			importSucceeded = processFileWithImport(file, folderPath);
-
-			// Check to see if there are transient programs lying around due
-			// to programs not being released during Importing
-			List<DomainFile> domainFileContainer = new ArrayList<>();
-			TransientDataManager.getTransients(domainFileContainer);
-			if (domainFileContainer.size() > 0) {
-				TransientDataManager.releaseFiles(this);
+		try (RefdFile refdFile = fsService.getRefdFile(fsrl, TaskMonitor.DUMMY)) {
+			GFile file = refdFile.file;
+			if (depth == null && isFirstTime) {
+				depth = file.isDirectory() ? 0 : 1; // set default depth
 			}
-
-			if (!importSucceeded) {
-				Msg.error(this, "REPORT: Import failed for file: " + file.getAbsolutePath());
+			if ((options.recursive || isFirstTime) && file.isDirectory()) {
+				processFS(file.getFilesystem(), file, folderPath, depth);
+				return;
 			}
-
-			return;
+			if (options.recursive && depth > 0 && processAsFS(fsrl, folderPath, depth)) {
+				return;
+			}
+			if (!file.isDirectory() && processWithLoader(fsrl, folderPath)) {
+				return;
+			}
 		}
+		catch (CancelledException e) {
+			Msg.info(this, "REPORT: Importing cancelled");
+		}
+	}
 
-		// Looks inside the folder if one of two situations is applicable:
-		//  - If user supplied a directory to import, and it is currently being
-		//    processed (if so, this will be the first time that this method is called)
-		//	- If -recursive is specified
-		if ((isFirstTime) || (!isFirstTime && options.recursive)) {
-			// Otherwise, is a directory
-			Msg.info(this, "REPORT: Importing all files from " + file.getName());
+	private void processFS(GFileSystem fs, GFile startDir, String folderPath, int depth)
+			throws CancelledException, IOException {
+		if (!folderPath.endsWith(DomainFolder.SEPARATOR)) {
+			folderPath += DomainFolder.SEPARATOR;
+		}
+		folderPath += startDir.getName();
 
-			File dirFile = file;
+		for (GFile file : fs.getListing(startDir)) {
+			String name = file.getName();
+			if (name.startsWith(".")) {
+				Msg.warn(this, "Ignoring file '" + name + "'.");
+				continue;
+			}
+			FSRL fqFSRL;
+			try {
+				fqFSRL = fsService.getFullyQualifiedFSRL(file.getFSRL(), TaskMonitor.DUMMY);
+			}
+			catch (IOException e) {
+				Msg.warn(this, "Error getting info for " + file.getFSRL());
+				continue;
+			}
+			try {
+				checkValidFilename(fqFSRL.getName());
+				processWithImport(fqFSRL, folderPath, depth, false);
+			}
+			catch (InvalidInputException e) {
+				// Just move on if not valid
+			}
+		}
+	}
 
+	private boolean processAsFS(FSRL fsrl, String folderPath, int depth) throws CancelledException {
+		try (FileSystemRef fsRef = fsService.probeFileForFilesystem(fsrl, TaskMonitor.DUMMY,
+			FileSystemProbeConflictResolver.CHOOSEFIRST)) {
+			if (fsRef == null) {
+				return false;
+			}
 			if (!folderPath.endsWith(DomainFolder.SEPARATOR)) {
 				folderPath += DomainFolder.SEPARATOR;
 			}
-
-			String subfolderPath = folderPath + file.getName();
-
-			String[] names = dirFile.list();
-			if (names != null) {
-				Collections.sort(Arrays.asList(names));
-				for (String name : names) {
-					if (name.charAt(0) == '.') {
-						Msg.warn(this, "Ignoring file '" + name + "'.");
-						continue;
-					}
-					file = new File(dirFile, name);
-
-					// Even a directory name has to have valid characters --
-					// can't create a folder if it's not valid
-					try {
-						checkValidFilename(file);
-						processWithImport(file, subfolderPath, false);
-					}
-					catch (InvalidInputException e) {
-						// Just move on if not valid
-					}
-				}
-			}
+			folderPath += fsrl.getName();
+			processWithImport(fsRef.getFilesystem().getFSRL(), folderPath, depth - 1, false);
+			return true;
 		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	private boolean processWithLoader(FSRL fsrl, String folderPath) {
+		boolean importSucceeded = processFileWithImport(fsrl, folderPath);
+
+		// Check to see if there are transient programs lying around due
+		// to programs not being released during Importing
+		List<DomainFile> domainFileContainer = new ArrayList<>();
+		TransientDataManager.getTransients(domainFileContainer);
+		if (domainFileContainer.size() > 0) {
+			TransientDataManager.releaseFiles(this);
+		}
+
+		if (!importSucceeded) {
+			Msg.error(this, "REPORT: Import failed for file: " + fsrl);
+		}
+		return importSucceeded;
 	}
 
 	private void processWithImport(String folderPath, List<File> inputDirFiles) throws IOException {
@@ -1723,8 +1765,9 @@ public class HeadlessAnalyzer {
 		if (inputDirFiles != null && !inputDirFiles.isEmpty()) {
 			Msg.info(this, "REPORT: Processing input files: ");
 			Msg.info(this, "     project: " + project.getProjectLocator());
-			for (File f : inputDirFiles) {
-				processWithImport(f, folderPath, true);
+			List<FSRL> fsrls = inputDirFiles.stream().map(f -> fsService.getLocalFSRL(f)).toList();
+			for (FSRL fsrl : fsrls) {
+				processWithImport(fsrl, folderPath, options.recursiveDepth, true);
 			}
 		}
 		else {
@@ -1746,7 +1789,7 @@ public class HeadlessAnalyzer {
 					return;
 
 				default:
-					// Just continue					
+					// Just continue
 			}
 
 			runScriptsList(options.postScripts, options.postScriptFileMap, scriptState,
@@ -1780,27 +1823,18 @@ public class HeadlessAnalyzer {
 	/**
 	 * Checks to make sure the given file contains only valid characters in its name.
 	 * 
-	 * @param currFile The file to check.
-	 * @throws InvalidInputException if the given file contains invalid characters in it.
+	 * @param path The path of the file to check.
+	 * @throws InvalidInputException if the given file path contains invalid characters in it.
 	 */
-	static void checkValidFilename(File currFile) throws InvalidInputException {
-		boolean isDir = currFile.isDirectory();
-		String filename = currFile.getName();
+	static void checkValidFilename(String path) throws InvalidInputException {
+		String filename = FilenameUtils.getName(path);
 
 		for (int i = 0; i < filename.length(); i++) {
 			char c = filename.charAt(i);
 			if (!LocalFileSystem.isValidNameCharacter(c)) {
-				if (isDir) {
-					throw new InvalidInputException("The directory '" + filename +
-						"' contains the invalid characgter: \'" + c +
-						"\' and can not be created in the project (full path: " +
-						currFile.getAbsolutePath() +
-						"). To allow successful import of the directory and its contents, please rename the directory.");
-				}
 				throw new InvalidInputException(
-					"The file '" + filename + "' contains the invalid character: \'" + c +
-						"\' and can not be imported (full path: " + currFile.getAbsolutePath() +
-						"). Please rename the file.");
+					"'" + filename + "' contains the invalid character: \'" + c +
+						"\' and can not be imported (full path: " + path + "). Please rename.");
 			}
 		}
 	}
@@ -1813,19 +1847,20 @@ public class HeadlessAnalyzer {
 	}
 
 	/**
-	 * Ghidra project class required to gain access to specialized project constructor 
+	 * Ghidra project class required to gain access to specialized project constructor
 	 * for URL connection.
 	 */
 	private static class HeadlessProject extends DefaultProject {
 
-		HeadlessProject(HeadlessGhidraProjectManager projectManager, GhidraURLConnection connection)
-				throws IOException {
-			super(projectManager, connection);
-		}
-
 		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectLocator projectLocator)
 				throws NotOwnerException, LockException, IOException {
 			super(projectManager, projectLocator, false);
+			AppInfo.setActiveProject(this);
+		}
+
+		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectData projectData) {
+			super(projectManager, (DefaultProjectData) projectData);
+			AppInfo.setActiveProject(this);
 		}
 	}
 

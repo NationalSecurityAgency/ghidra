@@ -1,0 +1,233 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<!-- Keep pre text from wrapping so that it is formatted exactly as we have it -->
+<style>
+pre {
+    white-space: no-wrap;
+    font-family: 'Courier New', 'Courier';
+}
+
+typewriter {
+	font-family: 'Courier New', 'Courier';
+}
+
+/* Make the general text a bit more readable */
+body { 
+	font-size: 20px;
+}
+</style>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>GhidraGo README</title>
+<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+</head>
+
+<body>
+<h1 align="center"><a name="top">GhidraGo README</a></h1>
+
+<h2>Table of Contents</h2>
+<UL>
+  <LI><a href="#general">Introduction</a></LI>
+  <ul><li><a href="#example">Example</a></li></ul>
+  <LI><a href="#plugin">Configure GhidraGo Plugin</a></LI>
+  <li>
+	<a href="#configure">Configure Protocol Handler (Platform Specific)</a>
+	<ul>
+	  <LI><a href="#windows">Windows</a></LI>
+	  <LI><a href="#linux">Linux</a></LI>
+	  <LI><a href="#mac">Mac</a></LI>
+  	</ul>
+  </li>
+</UL>
+
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="general">GhidraGo Introduction</a></h2>
+<div>
+	<p>
+		GhidraGo is a mechanism to cause Ghidra to display a previously imported program within a 
+		local or multi-user project using a ghidraURL hyperlink similar to an http reference. In
+		practice ghidraURL's work very similarly to selecting a URL reference which displays a PDF.
+		Once setup correctly, GhidraURL links can be placed in web pages, external project 
+		documentation files, or any other place a URL hyperlink can be placed.
+	</p>
+	<p>
+		When a GhidraURL is selected, GhidraGo will startup Ghidra if it isn't already running as 
+		well as prompt to login to the multi-user project if necessary. The program is displayed in 
+		the default tool, usually the codebrowser, and can be configured to re-use an open default 
+		tool or to use a new default tool. The GhidraURL must currently be locating a DomainFile 
+		that is either in a Remote, Shared project, or a local project.
+	</p>
+	<p>
+		GhidraGo is a combination of a command line program to send a link, a plugin running within 
+		the Ghidra project manager, and the configuration of the default handling for the ghidraURL 
+		within the user environment. The ghidraURL is sent as the first and only parameter to the 
+		ghidraGo command line interface.
+	</p>
+	<p>
+		GhidraGo passes information through a simple filesystem mechanism vice an open port for 
+		security and simplicity. GhidraGo works on Windows, Linux, and MacOS.
+	</p>
+	<p>
+		<p>GhidraURL's have the format:</p>
+		<div style="margin-left: 25px">
+			<p>
+				Remote Ghidra Server File: 
+				ghidra://&lt;host&gt;[:&lt;port&gt;]/&lt;repository-name&gt;/&lt;program-path&gt;
+				[#&lt;address-or-symbol-ref&gt;]
+			</p>
+			<p style="margin-left: 25px">Example: ghidra://hostname/Repo/notepad.exe#main</p>
+			
+			<p>
+				Local Ghidra Project File: 
+				ghidra:/[&lt;project-path&gt;/]&lt;project-name&gt;?/&lt;program-path&gt;
+				[#&lt;address-or-symbol-ref&gt;]
+			</p>
+			<p style="margin-left: 25px">Example: ghidra:/share/MyProject?/notepad.exe#main</p>
+		</div>
+	</p>
+</div>
+
+<h3><a name="example">Example of Using ghidraGo CLI</a></h3>
+<div>
+	<p><code>ghidraGo ghidra://ghidra-server/project/myProgram#symbol</code></p>
+	<p>Executing this command will result in the program called <code>myProgram</code> being 
+	opened in Ghidra's default tool with the cursor at <code>symbol</code>.</p>
+</div>
+
+<h2><a name="plugin">Configure GhidraGo Plugin</a></h2>
+<div>
+	<ol>
+		<li>Start Ghidra</li>
+		<li>Choose File &gt; Configuration in the Project Window (not the Codebrowser Window)</li>
+		<li>Click the Plug Icon in the upper right to display all plugins</li>
+		<li>Search for GhidraGoPlugin and select it</li>
+		<li>Press OK</li>
+	</ol>
+	<p>Ghidra is now configured to listen to GhidraGo Requests. You can execute a GhidraGo request 
+		using the "ghidraGo" shell/batch script in 
+		<code>/path/to/ghidra/support/GhidraGo/ghidraGo</code></p>
+</div>
+
+<div>
+	<h2><a name="configure">Configure Protocol Handler (Platform Specific)</a></h2>
+	<div>
+		<p>
+			Configuring your platform to handle the <script>ghidra</script> protocol is what 
+			enables the ghidraGo command line interface to be associated with a ghidraURL. Once 
+			configured, clicking hyperlinks that start with the <script>ghidra</script> protocol 
+			will execute the ghidraGo CLI with that hyperlink as the first argument. The 
+			configuration is platform specific.
+		</p>
+		<p>
+			*NOTE: changes to your path to ghidra, such as upgrading ghidra to a new version, 
+			will require the path you set in this configuration to be updated.
+		</p>
+	</div>
+	
+	<h3><a name="windows">Windows Protocol Handler Configuration</a></h3>
+	<div>
+		<ol>
+			<li>Go to Start &gt; Find and Type <code>regedit</code></li>
+			<li>Right click HKEY_CLASSES_ROOT then New &gt; Key</li>
+			<li>Name the key "ghidra"</li>
+			<li>Right Click ghidra &gt; New &gt; String Value and add "URL Protocol" without a value</li>
+			<li>Right Click ghidra &gt; New &gt; Key and create the heiarchy ghidra/shell/open/command</li>
+			<li>Inside command change (Default) to the path where ghidraGo is located followed by 
+				a "%1". For Example:</li>
+			<br />
+			<code>C:\Path\To\Ghidra\support\GhidraGo\ghidraGo "%1"</code>
+		</ol>
+	</div>
+	
+	<h3><a name="linux">Linux Protocol Handler Configuration</a></h3>
+	<div>
+		<p>In Linux, when you click a browser link with an <code>href</code> value to a GhidraURL, 
+		you'll be prompted to use xdg-open.</p>
+		<ol>
+			<li>Edit the file <code>ghidra.desktop</code> in <code>~/.local/share/applications</code></li>
+			<br />
+			<code>
+	[Desktop Entry]<br />
+	Name=ghidra Client<br />
+	Exec=/path/to/ghidra/support/GhidraGo/ghidraGo "%u"<br />
+	Type=Application<br />
+	Terminal=false<br />
+	MimeType=x-scheme-handler/ghidra;<br />
+			</code>
+			<br />
+			<li>Edit the file mimeapps.list in <code>~/.local/share/applications</code></li>
+			<br />
+			<code>
+				[Default Applications]<br />
+				x-scheme-handler/ghidra=ghidra.desktop<br />
+				...<br />
+			</code>
+		</ol>
+		<p>After the steps above, you should be able to click a GhidraURL href, get the same 
+			xdg-open prompt, and upon clicking "Open xdg-open" GhidraGo should execute and open 
+			Ghidra to the given GhidraURL.</p>
+	</div>
+	
+	<h3><a name="mac">Mac Protocol Handler Configuration</a></h3>
+	<div>
+		<ol>
+			<li>Open <code>Script Editor</code> and past the following into the editor.</li>
+				<br />
+				<code>
+					on open location schemeUrl<br />
+					&emsp;set ghidraUrl to quoted form of schemeUrl<br />
+					&emsp;do shell script "/path/to/ghidraGo " &amp; ghidraUrl<br />
+					end open location<br />
+				</code>
+				<br />
+			<li>Save the script as an Application named GhidraGo in either 
+				<code>/Applications</code> or <code>~/Applications</code></li>
+			<li>Right click on the saved Application and click Show Package Contents</li>
+			<li>Open Contents &gt; Info.plist and under 
+				<code>&lt;string&gt;com.apple.ScriptEditor.id.GhidraGo&lt;/string&gt;</code> 
+				paste the following:</li>
+				<br />
+				<code>
+	&lt;key&gt;CFBundleURLTypes&lt;/key&gt;<br />
+	&lt;array&gt;<br />
+		&emsp;&lt;dict&gt;<br />
+			&emsp;&emsp;&lt;key&gt;CFBundleURLName&lt;/key&gt;<br />
+			&emsp;&emsp;&lt;string&gt;Ghidra Scheme&lt;/string&gt;<br />
+			&emsp;&emsp;&lt;key&gt;CFBundleURLSchemes&lt;/key&gt;<br />
+			&emsp;&emsp;&lt;array&gt;<br />
+				&emsp;&emsp;&emsp;&lt;string&gt;ghidra&lt;/string&gt;<br />
+			&emsp;&emsp;&lt;/array&gt;<br />
+		&emsp;&lt;/dict&gt;<br />
+	&lt;/array&gt;
+				</code>
+				<br />
+			<li>Go to the Applications folder where you saved the GhidraGo, and Open 
+				GhidraGo (run it once).</li>
+		</ol>
+	</div>
+</div>
+
+(<a href="#top">Back to Top</a>)
+  
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+<address></address>
+Last modified: Oct 26 2023
+</body> </html>
+
+<style>
+
+table, td {
+border: 1px solid black;
+}
+
+td {
+padding: 15px;
+text-align: center;
+}
+
+</style>

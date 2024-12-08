@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,8 @@ import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -48,6 +49,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	protected static final String X_OFFSET = "X Offset";
 	protected static final String Y_OFFSET = "Y Offset";
 	private static final String VIEW_NAMES = "View Names";
+	private static final String VIEW_WIDTHS = "View_Widths";
 	private static final String HEX_VIEW_GROUPSIZE = "Hex view groupsize";
 	private static final String BYTES_PER_LINE_NAME = "Bytes Per Line";
 	private static final String OFFSET_NAME = "Offset";
@@ -59,17 +61,17 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	//@formatter:off
 	static final String FG = "byteviewer.color.fg";
 	static final String CURSOR = "byteviewer.color.cursor";
-	
-	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator"); 
+
+	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator");
 	static final GColor CHANGED_VALUE_COLOR = new GColor("color.fg.byteviewer.changed");
 	static final GColor CURSOR_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.active");
 	static final GColor CURSOR_NON_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.not.active");
 	static final GColor CURSOR_NOT_FOCUSED_COLOR = new GColor("color.cursor.byteviewer.unfocused");
-	
+
 	static final GColor CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	//@formatter:on
 
-	static final String DEFAULT_INDEX_NAME = "Addresses";
+	static final String INDEX_COLUMN_NAME = "Addresses";
 
 	static final String SEPARATOR_COLOR_OPTION_NAME = "Block Separator Color";
 	static final String CHANGED_VALUE_COLOR_OPTION_NAME = "Changed Values Color";
@@ -161,7 +163,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Notification that an option changed.
-	 * 
+	 *
 	 * @param options options object containing the property that changed
 	 * @param optionName name of option that changed
 	 * @param oldValue old value of the option
@@ -172,7 +174,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			Object newValue) {
 		if (options.getName().equals("ByteViewer")) {
 			if (optionName.equals(OPTION_FONT)) {
-				setFont(SystemUtilities.adjustForFontSizeOverride((Font) newValue));
+				setFont((Font) newValue);
 			}
 		}
 		else if (options.getName().equals(CATEGORY_BROWSER_FIELDS)) {
@@ -209,19 +211,17 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			help, "Color of cursor in the active view.");
 
 		opt.registerThemeColorBinding(CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
-			CURSOR_NON_ACTIVE_COLOR.getId(),
-			help, "Color of cursor in the non-active views.");
+			CURSOR_NON_ACTIVE_COLOR.getId(), help, "Color of cursor in the non-active views.");
 
 		opt.registerThemeColorBinding(CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
-			CURSOR_NOT_FOCUSED_COLOR.getId(),
-			help, "Color of cursor when the byteview does not have focus.");
+			CURSOR_NOT_FOCUSED_COLOR.getId(), help,
+			"Color of cursor when the byteview does not have focus.");
 
 		opt.registerThemeColorBinding(CURRENT_LINE_COLOR_OPTION_NAME,
 			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR.getId(), help,
 			"Color of the line containing the cursor");
 
-		opt.registerThemeFontBinding(OPTION_FONT, DEFAULT_FONT_ID, help,
-			"Font used in the views.");
+		opt.registerThemeFontBinding(OPTION_FONT, DEFAULT_FONT_ID, help, "Font used in the views.");
 		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
 			"Toggles highlighting background color of line containing the cursor");
 
@@ -332,11 +332,19 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	protected void writeConfigState(SaveState saveState) {
-		DataModelInfo info = panel.getDataModelInfo();
-		saveState.putStrings(VIEW_NAMES, info.getNames());
+		List<String> viewNames = panel.getViewNamesInDisplayOrder();
+		saveState.putStrings(VIEW_NAMES, viewNames.toArray(new String[viewNames.size()]));
 		saveState.putInt(HEX_VIEW_GROUPSIZE, hexGroupSize);
 		saveState.putInt(BYTES_PER_LINE_NAME, bytesPerLine);
 		saveState.putInt(OFFSET_NAME, offset);
+		SaveState columnState = new SaveState(VIEW_WIDTHS);
+		int indexWidth = panel.getViewWidth(INDEX_COLUMN_NAME);
+		columnState.putInt(INDEX_COLUMN_NAME, indexWidth);
+		for (String viewName : viewNames) {
+			int width = panel.getViewWidth(viewName);
+			columnState.putInt(viewName, width);
+		}
+		saveState.putSaveState(VIEW_WIDTHS, columnState);
 	}
 
 	protected void readConfigState(SaveState saveState) {
@@ -346,6 +354,17 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		bytesPerLine = saveState.getInt(BYTES_PER_LINE_NAME, DEFAULT_BYTES_PER_LINE);
 		offset = saveState.getInt(OFFSET_NAME, 0);
 		panel.restoreConfigState(bytesPerLine, offset);
+		SaveState viewWidths = saveState.getSaveState(VIEW_WIDTHS);
+		if (viewWidths != null) {
+			String[] viewNames = viewWidths.getNames();
+			for (String viewName : viewNames) {
+				int width = viewWidths.getInt(viewName, 0);
+				if (width > 0) {
+					panel.setViewWidth(viewName, width);
+				}
+
+			}
+		}
 	}
 
 	/**
@@ -410,6 +429,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	protected abstract void updateSelection(ByteBlockSelection selection);
 
+	protected abstract void updateLiveSelection(ByteBlockSelection selection);
+
 	void dispose() {
 		updateManager.dispose();
 		updateManager = null;
@@ -422,9 +443,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	public Set<String> getCurrentViews() {
-		DataModelInfo info = panel.getDataModelInfo();
-		HashSet<String> currentViewNames = new HashSet<>(Arrays.asList(info.getNames()));
-		return currentViewNames;
+		return new HashSet<String>(panel.getViewNamesInDisplayOrder());
 	}
 
 	private void refreshView() {
@@ -444,7 +463,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Set the status info on the tool.
-	 * 
+	 *
 	 * @param message non-html text to display
 	 */
 	void setStatusMessage(String message) {
@@ -489,7 +508,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Add the {@link AddressSetDisplayListener} to the byte viewer panel
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	public void addDisplayListener(AddressSetDisplayListener listener) {
@@ -498,7 +517,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Remove the {@link AddressSetDisplayListener} from the byte viewer panel
-	 * 
+	 *
 	 * @param listener the listener to remove
 	 */
 	public void removeDisplayListener(AddressSetDisplayListener listener) {

@@ -4,11 +4,13 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||reviewed||END|
 data/version.tracking.theme.properties||GHIDRA||||END|
 src/main/docs/VTClasses.png||GHIDRA||reviewed||END|
 src/main/docs/VTGuiImpl.png||GHIDRA||reviewed||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_AutoVT.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Correlators.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Preconditions.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Tool.html||GHIDRA||||END|
@@ -55,6 +57,7 @@ src/main/help/help/topics/VersionTrackingPlugin/images/VersionTrackingTool.png||
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_fully_applied.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_fully_considered.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_warning.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/images/start-here.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/help/help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/providers/VT_Functions_Table.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/providers/VT_Implied_Matches_Table.html||GHIDRA||||END|

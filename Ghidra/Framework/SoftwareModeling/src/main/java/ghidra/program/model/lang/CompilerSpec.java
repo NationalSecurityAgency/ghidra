@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.program.model.lang;
 
 import java.io.IOException;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -48,6 +50,7 @@ public interface CompilerSpec {
 	public final static String CALLING_CONVENTION_stdcall = "__stdcall";
 	public final static String CALLING_CONVENTION_fastcall = "__fastcall";
 	public final static String CALLING_CONVENTION_vectorcall = "__vectorcall";
+	public final static String CALLING_CONVENTION_rustcall = "__rustcall";
 
 	/**
 	 * Labels for PrototypeModels that are used by default for various analysis/evaluation
@@ -57,6 +60,19 @@ public interface CompilerSpec {
 	public enum EvaluationModelType {
 		EVAL_CURRENT,			// A PrototypeModel used to evaluate the "current" function
 		EVAL_CALLED				// A PrototypeModel used to evaluate a "called" function
+	}
+
+	/**
+	 * Determine if the specified calling convention name is treated as the unknown calling
+	 * convention (blank or {code "unknown"}).  Other unrecognized names will return false.
+	 * This static method does not assume any specific compiler specification.
+	 * 
+	 * @param callingConventionName calling convention name or null
+	 * @return true if specified name is blank or {code "unknown"}
+	 */
+	public static boolean isUnknownCallingConvention(String callingConventionName) {
+		return StringUtils.isBlank(callingConventionName) ||
+			CompilerSpec.CALLING_CONVENTION_unknown.equals(callingConventionName);
 	}
 
 	/**
@@ -245,7 +261,7 @@ public interface CompilerSpec {
 
 	/**
 	 * Encode this entire specification to a stream.  A document is written with
-	 * root element \<compiler_spec>.
+	 * root element {@code <compiler_spec>}.
 	 * @param encoder is the stream encoder
 	 * @throws IOException for errors writing to the underlying stream
 	 */

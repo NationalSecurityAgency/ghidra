@@ -239,6 +239,12 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Hello", block1.getComment());
 		assertEquals(block1, mem.getBlock(addr(5)));
 
+		block1.setArtificial(false);
+		assertTrue(!block1.isArtificial());
+
+		block1.setArtificial(true);
+		assertTrue(block1.isArtificial());
+
 		block1.setVolatile(false);
 		assertTrue(!block1.isVolatile());
 
@@ -314,29 +320,29 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock block = mem.getBlock(addr(95));
 		assertEquals(newBlock, block);
 	}
-	
+
 	@Test
 	public void testGetBlockByName() throws Exception {
-		
+
 		MemoryBlock block1 = createBlock("Test1", addr(100), 100);
 		MemoryBlock block2 = createBlock("Test2", addr(300), 100);
-		
+
 		MemoryBlock block = mem.getBlock("Test1");
 		assertEquals("Test1", block.getName());
 		assertEquals("get same block", block, block1);
 
 		mem.split(block, addr(150));
 		block = mem.getBlock("Test1");
-		assertEquals("Test1",  block.getName());
+		assertEquals("Test1", block.getName());
 		assertEquals(50, block.getSize());
-		
+
 		// non-existent block
 		block = mem.getBlock("NoExist");
 		assertNull(block);
-		
+
 		program.endTransaction(transactionID, true);
-		transactionID = program.startTransaction("Test");	
-		
+		transactionID = program.startTransaction("Test");
+
 		// now exists
 		mem.getBlock("Test1").setName("NoExist");
 		// Test1 no longer exists
@@ -347,28 +353,28 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		mem.removeBlock(block, new TaskMonitorAdapter());
 		block = mem.getBlock("NoExist");
 		assertNull("block should be deleted", block);
-		
+
 		// Test1 still doesn't exist
 		block = mem.getBlock("Test1");
 		assertNull("block deleted", block);
-		
+
 		block = mem.getBlock("Test2");
 		assertEquals("Test2", block.getName());
-		
+
 		program.endTransaction(transactionID, true);
-		
+
 		program.undo();
-		
+
 		// Test1 still doesn't exist
 		block = mem.getBlock("Test1");
 		assertNotNull("Undo, Test1 exists again", block);
-		
+
 		transactionID = program.startTransaction("Test");
 	}
 
 	@Test
 	public void testMemoryMapExecuteSet() throws Exception {
-		
+
 		AddressSetView executeSet = mem.getExecuteSet();
 		assertTrue(executeSet.isEmpty());
 		MemoryBlock block1 = createBlock("Test1", addr(100), 100);
@@ -381,7 +387,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock block = mem.getBlock("Test1");
 		executeSet = mem.getExecuteSet();
 		assertTrue(executeSet.isEmpty());
-		
+
 		block.setExecute(false);
 		executeSet = mem.getExecuteSet();
 		assertTrue(executeSet.isEmpty());
@@ -391,15 +397,15 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(executeSet.isEmpty() != true);
 		Address start = block.getStart();
 		Address end = block.getEnd();
-		assertTrue(executeSet.contains(start,end));
+		assertTrue(executeSet.contains(start, end));
 
 		// non-existent block
 		block = mem.getBlock("NoExist");
 		assertNull(block);
-		
+
 		program.endTransaction(transactionID, true);
-		transactionID = program.startTransaction("Test");	
-		
+		transactionID = program.startTransaction("Test");
+
 		// now exists
 		mem.getBlock("Test1").setName("NoExist");
 		// Test1 no longer exists
@@ -408,39 +414,39 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		start = block.getStart();
 		end = block.getEnd();
 		// should be same block
-		assertTrue(executeSet.contains(start,end));
+		assertTrue(executeSet.contains(start, end));
 		block.setExecute(false);
 		executeSet = mem.getExecuteSet();
-		assertTrue(executeSet.contains(start,end) == false);
-		
+		assertTrue(executeSet.contains(start, end) == false);
+
 		block2.setExecute(true);
 		Address start2 = block2.getStart();
 		Address end2 = block2.getEnd();
 		mem.removeBlock(block2, new TaskMonitorAdapter());
-		
+
 		program.endTransaction(transactionID, true);
-		
+
 		program.undo();
-		
+
 		transactionID = program.startTransaction("Test");
 
 		// should be execute set on block2, deleted, then undone
 		executeSet = mem.getExecuteSet();
-		assertTrue(executeSet.contains(start2,end2) == false);
-	
+		assertTrue(executeSet.contains(start2, end2) == false);
+
 		// undid set execute block should now be contained
 		block = mem.getBlock("Test1");
 		start = block.getStart();
 		end = block.getEnd();
 		executeSet = mem.getExecuteSet();
-		assertTrue(executeSet.contains(start,end));
-		
+		assertTrue(executeSet.contains(start, end));
+
 		mem.split(block, addr(150));
 		block = mem.getBlock("Test1");
 		executeSet = mem.getExecuteSet();
 		assertTrue(executeSet.isEmpty() != true);
 		assertTrue(executeSet.contains(block.getStart(), block.getEnd()));
-		
+
 		// remove block that was split, should still be executable memory
 		start = block.getStart();
 		end = block.getEnd();
@@ -449,7 +455,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(executeSet.isEmpty() != true);
 		assertTrue(executeSet.contains(start, end) == false);
 	}
-	
+
 	@Test
 	public void testSave() throws Exception {
 		MemoryBlock block1 = createBlock("Test1", addr(0), 100);
@@ -473,6 +479,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(newBlock);
 		assertEquals(block.getName() + ".copy", newBlock.getName());
 		assertEquals(addr(500), newBlock.getStart());
+		assertEquals(block.isArtificial(), newBlock.isArtificial());
 		assertEquals(block.isVolatile(), newBlock.isVolatile());
 		assertEquals(block.isExecute(), newBlock.isExecute());
 		assertEquals(block.isRead(), newBlock.isRead());
@@ -667,7 +674,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		data = program.getListing().getDataAt(addr(1001));
 		assertEquals("byte", data.getDataType().getName());
 
-		UninitializedBlockCmd cmd = new UninitializedBlockCmd(program, block);
+		UninitializedBlockCmd cmd = new UninitializedBlockCmd(block);
 		cmd.applyTo(program);
 
 		assertNotNull(block);
@@ -1062,11 +1069,23 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			(byte) 0xa, TaskMonitor.DUMMY, true);
 
 		try {
-			mem.join(blockOne, blockTwo);
+			mem.join(blockOne, blockTwo); // two different overlay spaces
 			Assert.fail("Join should have caused and Exception!");
 		}
-		catch (IllegalArgumentException e) {
+		catch (MemoryBlockException e) {
+			// expected
 		}
+
+		AddressSpace overlaySpace = blockOne.getStart().getAddressSpace();
+
+		MemoryBlock blockThree =
+			mem.createInitializedBlock(".overlay3", overlaySpace.getAddressInThisSpaceOnly(0x1000),
+				0x100, (byte) 0xa, TaskMonitor.DUMMY, true);
+
+		MemoryBlock joinedBlock = mem.join(blockOne, blockThree); // same overlay space
+		assertEquals(".overlay", joinedBlock.getName()); // use name of min block
+		assertEquals(0x1100, joinedBlock.getSize());
+
 	}
 
 	@Test

@@ -17,13 +17,12 @@ package ghidra.framework.plugintool;
 
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.Project;
-import ghidra.framework.plugintool.util.PluginClassManager;
 
 /**
  * PluginTool that is used by the Merge process to resolve conflicts
  * when a file is being checked into a server repository. This tool
  * is modal while it is visible.
- * 
+ *
  */
 public class ModalPluginTool extends PluginTool {
 
@@ -44,7 +43,7 @@ public class ModalPluginTool extends PluginTool {
 	}
 
 	@Override
-	public PluginClassManager getPluginClassManager() {
-		return null;
+	public PluginsConfiguration createPluginsConfigurations() {
+		return null; // no need to load plugins
 	}
 }

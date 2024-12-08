@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,49 +16,39 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.Variable;
-
 
 /**
  * Command to set the comment on a function varible.
  */
-public class SetVariableCommentCmd implements Command {
+public class SetVariableCommentCmd implements Command<Program> {
 	private Variable var;
-    private String  comment;
-    private String msg;
-    
-    /**
-     * Constructs a new command for setting the comment on a function variable.
-     * @param var the variable on which to set the comment.
-     * @param newComment the comment string to set on the specified variable.
-     */
-    public SetVariableCommentCmd(Variable var, String newComment) {
-    	this.var = var;
-    	this.comment = newComment;
-    }
-    
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
-    public String getName() {
-        return "Set Variable Comment";
-    }
-    
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		var.setComment(comment);
-		return true;
-    }
-    
+	private String comment;
+	private String msg;
 
 	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
+	 * Constructs a new command for setting the comment on a function variable.
+	 * @param var the variable on which to set the comment.
+	 * @param newComment the comment string to set on the specified variable.
 	 */
+	public SetVariableCommentCmd(Variable var, String newComment) {
+		this.var = var;
+		this.comment = newComment;
+	}
+
+	@Override
+	public String getName() {
+		return "Set Variable Comment";
+	}
+
+	@Override
+	public boolean applyTo(Program program) {
+		var.setComment(comment);
+		return true;
+	}
+
+	@Override
 	public String getStatusMsg() {
 		return msg;
 	}

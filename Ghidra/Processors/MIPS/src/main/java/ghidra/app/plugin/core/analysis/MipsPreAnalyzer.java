@@ -82,7 +82,7 @@ public class MipsPreAnalyzer extends AbstractAnalyzer {
 
 		AddressSet pairSet = new AddressSet();
 		while (addresses.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = addresses.next();
 
@@ -347,7 +347,7 @@ public class MipsPreAnalyzer extends AbstractAnalyzer {
 
 		Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
 		for (AddressRange addressRange : pairSet) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (locationCount > NOTIFICATION_INTERVAL) {
 
 				if ((count % NOTIFICATION_INTERVAL) == 0) {

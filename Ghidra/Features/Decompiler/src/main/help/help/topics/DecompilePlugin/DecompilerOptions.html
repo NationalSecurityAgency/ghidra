@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Decompiler Options</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
@@ -38,14 +38,14 @@
 	  </span><span class="emphasis"><em>Decompiler</em></span> - lists <a class="xref" href="DecompilerOptions.html#GeneralOptions" title="General Options">General Options</a> that affect the engine behavior.
 	</li>
 <li class="listitem" style="list-style-type: none">
-	  &#8195;<span class="guiicon">
+	   <span class="guiicon">
 	    <span class="inlinemediaobject"><img src="images/document-properties.png" width="16" height="16"></span>
-	  </span>�<span class="emphasis"><em>Analysis</em></span> - lists <a class="xref" href="DecompilerOptions.html#AnalysisOptions" title="Analysis Options">Analysis Options</a> that affect the Decompiler's transformation process.
+	  </span> <span class="emphasis"><em>Analysis</em></span> - lists <a class="xref" href="DecompilerOptions.html#AnalysisOptions" title="Analysis Options">Analysis Options</a> that affect the Decompiler's transformation process.
 	</li>
 <li class="listitem" style="list-style-type: none">
-	  &#8195;<span class="guiicon">
+	   <span class="guiicon">
 	    <span class="inlinemediaobject"><img src="images/document-properties.png" width="16" height="16"></span>
-	  </span>�<span class="emphasis"><em>Display</em></span> - lists <a class="xref" href="DecompilerOptions.html#DisplayOptions" title="Display Options">Display Options</a> that affect the final presentation of Decompiler output.
+	  </span> <span class="emphasis"><em>Display</em></span> - lists <a class="xref" href="DecompilerOptions.html#DisplayOptions" title="Display Options">Display Options</a> that affect the final presentation of Decompiler output.
 	</li>
 </ul></div>
     </div>
@@ -124,6 +124,17 @@
       of zeroes or other constant data. The Decompiler will quickly throw an exception if it
       traces control flow into more than the indicated number of instructions.
     </p>
+      </dd>
+<dt>
+<a name="GeneralMaxJumptable"></a><span class="term"><span class="bold"><strong>Max Entries per Jumptable</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  This option sets the maximum number of entries (addresses) that the Decompiler can
+	  recover from analyzing a single jumptable. This serves as a sanity check that the recovered
+	  dimensions of a jumptable are reasonable and places an upper limit on the sheer number
+	  of addresses the Decompiler is willing to trace from a single indirect jump.
+	</p>
       </dd>
 </dl></div>
     </div>
@@ -230,6 +241,40 @@
 	</p>
       </dd>
 <dt>
+<a name="AnalysisNanIgnore"></a><span class="term"><span class="bold"><strong>NaN operations</strong></span></span>
+</dt>
+<dd>
+        <p>
+          This option determines how the Decompiler treats floating-point <span class="bold"><strong>NaN</strong></span>
+          (Not a Number) operations.  Many processors automatically perform NaN checks on the operands of
+          floating-point instructions, and unless specifically configured, these show up in Decompiler output
+          as <code class="code">NAN()</code> functional tokens.  Common floating-point source code operations, like
+          <code class="code">&lt;</code>, <code class="code">&gt;</code>, and <code class="code">==</code> can generate <code class="code">NAN</code> tokens as a
+          side effect, even if the original source code was not designed to handle NaN values, and the
+          tokens can clutter the output.
+        </p>
+        <p>
+          The user can optionally configure some or all of the NaN operations to be ignored, meaning that
+          inputs to the NaN operation are <span class="emphasis"><em>assumed</em></span> to be valid floating-point values and the
+          <code class="code">NAN</code> function is removed, replacing it with the value: <span class="bold"><strong>false</strong></span>.
+          The possible settings are:
+          </p>
+<div class="informalexample">
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Ignore none</strong></span> - No NaN operations are removed</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Ignore with comparisons</strong></span> - NaN operations associated with comparisons are removed</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Ignore all</strong></span> - All NaN operations are removed</li>
+</ul></div>
+	  </div>
+<p>
+          The Decompiler considers a NaN operation to be associated with a floating-point comparison if they both
+          can be considered boolean clauses of the same <span class="bold"><strong>if</strong></span> condition.
+        </p>
+      </dd>
+<dt>
 <a name="AnalysisForLoops"></a><span class="term"><span class="bold"><strong>Recover -for- loops</strong></span></span>
 </dt>
 <dd>
@@ -297,6 +342,66 @@
 	</p>
       </dd>
 <dt>
+<a name="AnalysisSplitStruct"></a><span class="term"><span class="bold"><strong>Split combined structure fields</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  fields of a structure data-type are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so that the logical fields can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined fields being written to or read from.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      struct1._20_4_ = 0xff00ff00;  // Auto-generated name for assigning multiple fields at once
+	        ...
+	      struct1.a = 0xff00;           // The same assignment, after splitting
+	      struct1.b = 0xff00;
+	    </pre>
+          </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitArray"></a><span class="term"><span class="bold"><strong>Split combined array elements</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  elements of an array are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so each element of the array can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined elements being written to or read from.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      text._20_2_ = 0x4241;        // Auto-generated name for assigning multiple elements at once
+	        ...
+	      text[20] = 'A';              // The same assignment, after splitting
+	      test[21] = 'B';
+	    </pre>
+          </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitPointers"></a><span class="term"><span class="bold"><strong>Split pointers to combined elements</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  This options affects when the Decompiler's splitting actions are applied. See
+	  the discussion above about 
+	  <a class="link" href="DecompilerOptions.html#AnalysisSplitStruct">Splitting Structure Accesses</a> and
+	  <a class="link" href="DecompilerOptions.html#AnalysisSplitArray">Splitting Array Accesses</a>.
+	  If this option is on, a split is performed whenever combined elements or combined
+	  fields are copied.  In particular, either the read access, or the write access, or both,
+	  can be through a pointer.
+	  If this option is off, splitting is limited to copies between structures or arrays at fixed
+	  locations, either at a global address, or on the local stack.
+	</p>
+      </dd>
+<dt>
 <a name="AnalysisInPlace"></a><span class="term"><span class="bold"><strong>Use in-place assignment operators</strong></span></span>
 </dt>
 <dd>
@@ -329,6 +434,47 @@
 	<p>
 	  Assign the background color for the Decompiler window.
 	</p>
+      </dd>
+<dt>
+<a name="DisplayBraceFormatting"></a><span class="term"><span class="bold"><strong>Brace Format for &lt;kind-of&gt; blocks</strong></span></span>
+</dt>
+<dd>
+	<p>
+          Choose how braces are placed after function declarations, or other kinds of code blocks in Decompiler output.
+          Formatting can be controlled for:
+          </p>
+<div class="informalexample">
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>function blocks</strong></span> - the main function bodies</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>if/else blocks</strong></span> - blocks delineated by the <code class="code">if</code> and <code class="code">else</code> keywords</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>loop blocks</strong></span> - blocks delineated by the <code class="code">for</code>, <code class="code">do</code>, and <code class="code">while</code> keywords</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>switch blocks</strong></span> - blocks delineated by the <code class="code">switch</code> keyword</li>
+</ul></div>
+          </div>
+<p>
+          The different formatting options primarily control how the opening brace is displayed relative to the line containing
+          the declaration or keyword starting the block.  The formatting options are:
+          </p>
+<div class="informalexample">
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Same line</strong></span> - opening brace placed on same line</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Next line</strong></span> - opening brace placed on the next line</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Skip one line</strong></span> - opening brace placed on line after a blank line</li>
+</ul></div>
+          </div>
+<p>
+	</p>
+        <p>
+          The "Same line" option is consistent with K &amp; R code formatting style.  The "Next line" option is consistent with
+          the Allman formatting style.
+        </p>
       </dd>
 <dt>
 <a name="DisplayColorDefault"></a><span class="term"><span class="bold"><strong>Color Default</strong></span></span>

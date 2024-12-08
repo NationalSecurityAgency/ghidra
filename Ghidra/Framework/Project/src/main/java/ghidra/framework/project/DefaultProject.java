@@ -25,8 +25,9 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
 import ghidra.framework.client.RepositoryAdapter;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.project.tool.GhidraToolTemplate;
@@ -58,7 +59,7 @@ public class DefaultProject implements Project {
 	private DefaultProjectManager projectManager;
 
 	private ProjectLocator projectLocator;
-	private ProjectFileManager fileMgr;
+	private DefaultProjectData projectData;
 	private ToolManagerImpl toolManager;
 
 	private boolean changed; // flag for whether the project configuration has changed
@@ -66,7 +67,7 @@ public class DefaultProject implements Project {
 
 	private Map<String, SaveState> dataMap = new HashMap<>();
 	private Map<String, ToolTemplate> projectConfigMap = new HashMap<>();
-	private Map<URL, ProjectFileManager> otherViews = new HashMap<>();
+	private Map<URL, DefaultProjectData> otherViewsMap = new HashMap<>();
 	private Set<URL> visibleViews = new HashSet<>();
 	private WeakSet<ProjectViewListener> viewListeners =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
@@ -76,8 +77,8 @@ public class DefaultProject implements Project {
 	 * 
 	 * @param projectManager the manager of this project
 	 * @param projectLocator location and name of project
-	 * @param repository shared repository associated with the new project. Can
-	 *            be null for non-shared projects
+	 * @param repository shared repository associated with the new project. Can be null for
+	 *            non-shared projects
 	 * @throws IOException if I/O error occurs.
 	 * @throws LockException if unable to establish project lock
 	 */
@@ -86,21 +87,10 @@ public class DefaultProject implements Project {
 		this.projectManager = projectManager;
 		this.projectLocator = projectLocator;
 
-		boolean success = false;
-		try {
-			Msg.info(this, "Creating project: " + projectLocator.toString());
-			fileMgr = new ProjectFileManager(projectLocator, repository, true);
-			if (!SystemUtilities.isInHeadlessMode()) {
-				toolManager = new ToolManagerImpl(this);
-			}
-			success = true;
-		}
-		finally {
-			if (!success) {
-				if (fileMgr != null) {
-					fileMgr.dispose();
-				}
-			}
+		Msg.info(this, "Creating project: " + projectLocator.toString());
+		projectData = new DefaultProjectData(projectLocator, repository, true);
+		if (!SystemUtilities.isInHeadlessMode()) {
+			toolManager = new ToolManagerImpl(this);
 		}
 		initializeNewProject();
 	}
@@ -122,56 +112,29 @@ public class DefaultProject implements Project {
 		this.projectManager = projectManager;
 		this.projectLocator = projectLocator;
 
-		boolean success = false;
-		try {
-			Msg.info(this, "Opening project: " + projectLocator.toString());
-			fileMgr = new ProjectFileManager(projectLocator, true, resetOwner);
-			if (!SystemUtilities.isInHeadlessMode()) {
-				toolManager = new ToolManagerImpl(this);
-			}
-			success = true;
-		}
-		finally {
-			if (!success) {
-				if (fileMgr != null) {
-					fileMgr.dispose();
-				}
-			}
+		Msg.info(this, "Opening project: " + projectLocator.toString());
+		projectData = new DefaultProjectData(projectLocator, true, resetOwner);
+		if (!SystemUtilities.isInHeadlessMode()) {
+			toolManager = new ToolManagerImpl(this);
 		}
 	}
 
 	/**
-	 * Constructor for opening a URL-based project
+	 * Construct a project with specific project manager and data
 	 * 
-	 * @param connection project connection
-	 * @throws IOException if I/O error occurs.
+	 * @param projectManager the manager of this project
+	 * @param projectData the project data
 	 */
-	protected DefaultProject(DefaultProjectManager projectManager, GhidraURLConnection connection)
-			throws IOException {
+	protected DefaultProject(DefaultProjectManager projectManager, DefaultProjectData projectData) {
 
 		this.projectManager = projectManager;
+		this.projectData = projectData;
 
-		boolean success = false;
-		try {
-			Msg.info(this, "Opening project/repository: " + connection.getURL());
-			fileMgr = (ProjectFileManager) connection.getProjectData();
-			if (fileMgr == null) {
-				throw new IOException("Failed to open project/repository: " + connection.getURL());
-			}
+		projectLocator = projectData.getProjectLocator();
+		if (!SystemUtilities.isInHeadlessMode()) {
+			toolManager = new ToolManagerImpl(this);
+		}
 
-			projectLocator = fileMgr.getProjectLocator();
-			if (!SystemUtilities.isInHeadlessMode()) {
-				toolManager = new ToolManagerImpl(this);
-			}
-			success = true;
-		}
-		finally {
-			if (!success) {
-				if (fileMgr != null) {
-					fileMgr.dispose();
-				}
-			}
-		}
 		initializeNewProject();
 	}
 
@@ -300,21 +263,20 @@ public class DefaultProject implements Project {
 			return null;
 		}
 
-		ProjectFileManager projectData = (ProjectFileManager) c.getProjectData();
-		if (projectData == null) {
+		DefaultProjectData veiwedProjectData = (DefaultProjectData) c.getProjectData();
+		if (veiwedProjectData == null) {
 			throw new IOException(
-				"Failed to view specified project/repository: " +
-					GhidraURL.getDisplayString(url));
+				"Failed to view specified project/repository: " + GhidraURL.getDisplayString(url));
 		}
-		url = projectData.getProjectLocator().getURL(); // transform to repository root URL
+		url = veiwedProjectData.getProjectLocator().getURL(); // transform to repository root URL
 
-		otherViews.put(url, projectData);
-		return projectData;
+		otherViewsMap.put(url, veiwedProjectData);
+		return veiwedProjectData;
 	}
 
 	@Override
 	public ProjectData addProjectView(URL url, boolean visible) throws IOException {
-		synchronized (otherViews) {
+		synchronized (otherViewsMap) {
 			if (isClosed) {
 				throw new IOException("project is closed");
 			}
@@ -323,16 +285,16 @@ public class DefaultProject implements Project {
 				throw new IOException("Invalid Ghidra URL specified: " + url);
 			}
 
-			ProjectData projectData = otherViews.get(url);
-			if (projectData == null) {
-				projectData = openProjectView(url);
+			ProjectData viewedProjectData = otherViewsMap.get(url);
+			if (viewedProjectData == null) {
+				viewedProjectData = openProjectView(url);
 			}
 
-			if (projectData != null && visible && visibleViews.add(url)) {
+			if (viewedProjectData != null && visible && visibleViews.add(url)) {
 				notifyVisibleViewAdded(url);
 			}
 
-			return projectData;
+			return viewedProjectData;
 		}
 	}
 
@@ -341,13 +303,13 @@ public class DefaultProject implements Project {
 	 */
 	@Override
 	public void removeProjectView(URL url) {
-		synchronized (otherViews) {
-			ProjectFileManager dataMgr = otherViews.remove(url);
+		synchronized (otherViewsMap) {
+			DefaultProjectData dataMgr = otherViewsMap.remove(url);
 			if (dataMgr != null) {
 				if (visibleViews.remove(url)) {
 					notifyVisibleViewRemoved(url);
 				}
-				dataMgr.dispose();
+				dataMgr.close();
 				Msg.info(this, "Closed project view: " + GhidraURL.getDisplayString(url));
 				changed = true;
 			}
@@ -402,28 +364,30 @@ public class DefaultProject implements Project {
 
 	@Override
 	public RepositoryAdapter getRepository() {
-		return fileMgr.getRepository();
+		return projectData.getRepository();
 	}
 
 	@Override
 	public void close() {
-		synchronized (otherViews) {
+		synchronized (otherViewsMap) {
 			isClosed = true;
 
-			Iterator<ProjectFileManager> iter = otherViews.values().iterator();
-			while (iter.hasNext()) {
-				ProjectFileManager dataMgr = iter.next();
+			// Clear active project if this is the current active project.
+			if (AppInfo.getActiveProject() == this) {
+				AppInfo.setActiveProject(null);
+			}
+
+			for (DefaultProjectData dataMgr : otherViewsMap.values()) {
 				if (dataMgr != null) {
-					dataMgr.dispose();
+					dataMgr.close();
 				}
 			}
-			otherViews.clear();
+			otherViewsMap.clear();
 		}
 
 		try {
 
 			if (toolManager != null) {
-				toolManager.close();
 				toolManager.dispose();
 			}
 			if (projectManager != null) {
@@ -431,7 +395,7 @@ public class DefaultProject implements Project {
 			}
 		}
 		finally {
-			fileMgr.dispose();
+			projectData.close();
 		}
 	}
 
@@ -451,7 +415,7 @@ public class DefaultProject implements Project {
 	@Override
 	public void restore() {
 		// if there is a saved project, restore it
-		File saveFile = new File(fileMgr.getProjectDir(), PROJECT_STATE);
+		File saveFile = new File(projectData.getProjectDir(), PROJECT_STATE);
 		String errorMsg = null;
 		Throwable error = null;
 		try {
@@ -595,7 +559,7 @@ public class DefaultProject implements Project {
 		try {
 			// save tool state
 			root.addContent(toolManager.saveToXml()); // the tool manager will save the open tools' state
-			File saveFile = new File(fileMgr.getProjectDir(), PROJECT_STATE);
+			File saveFile = new File(projectData.getProjectDir(), PROJECT_STATE);
 			OutputStream os = new FileOutputStream(saveFile);
 			Document doc = new Document(root);
 			XMLOutputter xmlOut = new GenericXMLOutputter();
@@ -631,15 +595,14 @@ public class DefaultProject implements Project {
 	@Override
 	public List<DomainFile> getOpenData() {
 		ArrayList<DomainFile> openFiles = new ArrayList<>();
-		fileMgr.findOpenFiles(openFiles);
+		projectData.findOpenFiles(openFiles);
 		ProjectData[] viewedProjs = getViewedProjectData();
 		for (ProjectData viewedProj : viewedProjs) {
-			((ProjectFileManager) viewedProj).findOpenFiles(openFiles);
+			((DefaultProjectData) viewedProj).findOpenFiles(openFiles);
 		}
 		List<DomainFile> list = new ArrayList<>();
 		TransientDataManager.getTransients(list);
-		for (int i = 0; i < list.size(); i++) {
-			DomainFile df = list.get(i);
+		for (DomainFile df : list) {
 			if (df != null && df.isOpen()) {
 				openFiles.add(df);
 			}
@@ -648,8 +611,8 @@ public class DefaultProject implements Project {
 	}
 
 	@Override
-	public ProjectFileManager getProjectData() {
-		return fileMgr;
+	public DefaultProjectData getProjectData() {
+		return projectData;
 	}
 
 	@Override
@@ -664,12 +627,12 @@ public class DefaultProject implements Project {
 
 	@Override
 	public ProjectData getProjectData(ProjectLocator locator) {
-		if (locator.equals(fileMgr.getProjectLocator())) {
-			return fileMgr;
+		if (locator.equals(projectData.getProjectLocator())) {
+			return projectData;
 		}
 
-		synchronized (otherViews) {
-			for (ProjectData data : otherViews.values()) {
+		synchronized (otherViewsMap) {
+			for (ProjectData data : otherViewsMap.values()) {
 				if (locator.equals(data.getProjectLocator())) {
 					return data;
 				}
@@ -680,38 +643,28 @@ public class DefaultProject implements Project {
 	}
 
 	@Override
-	public ProjectData getProjectData(URL url) {
-		if (projectLocator.getURL().equals(url)) {
-			return fileMgr;
-		}
-		return otherViews.get(url);
-	}
-
-	@Override
 	public ProjectData[] getViewedProjectData() {
-		synchronized (otherViews) {
+		synchronized (otherViewsMap) {
 
 			// only return visible viewed project
 			List<ProjectData> list = new ArrayList<>();
-			for (URL url : otherViews.keySet()) {
+			for (URL url : otherViewsMap.keySet()) {
 				if (visibleViews.contains(url)) {
-					list.add(otherViews.get(url));
+					list.add(otherViewsMap.get(url));
 				}
 			}
 
-			ProjectData[] projectData = new ProjectData[list.size()];
-			list.toArray(projectData);
-			return projectData;
+			ProjectData[] veiwedProjectData = new ProjectData[list.size()];
+			list.toArray(veiwedProjectData);
+			return veiwedProjectData;
 		}
 	}
 
 	@Override
 	public void releaseFiles(Object consumer) {
-		fileMgr.releaseDomainFiles(consumer);
-		synchronized (otherViews) {
-			Iterator<ProjectFileManager> it = otherViews.values().iterator();
-			while (it.hasNext()) {
-				ProjectFileManager mgr = it.next();
+		projectData.releaseDomainFiles(consumer);
+		synchronized (otherViewsMap) {
+			for (DefaultProjectData mgr : otherViewsMap.values()) {
 				mgr.releaseDomainFiles(consumer);
 			}
 		}

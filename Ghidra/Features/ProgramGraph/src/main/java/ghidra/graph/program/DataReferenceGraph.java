@@ -149,7 +149,7 @@ public class DataReferenceGraph extends AttributedGraph {
 					.getReferenceIteratorTo()) {
 				if (!ref.getReferenceType().isFlow()) {
 					Address nextAddress = processReference(Directions.TO_ONLY, startVertex, ref);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (nextAddress != null) {
 						/*
 						 * maxDepth > 1 -> subtract 1 to count this level, and keep going
@@ -173,7 +173,7 @@ public class DataReferenceGraph extends AttributedGraph {
 					.getReferencesFrom()) {
 				if (!ref.getReferenceType().isFlow()) {
 					Address nextAddress = processReference(Directions.FROM_ONLY, startVertex, ref);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (nextAddress != null) {
 						/*
 						 * maxDepth > 1 -> subtract 1 to count this level, and keep going

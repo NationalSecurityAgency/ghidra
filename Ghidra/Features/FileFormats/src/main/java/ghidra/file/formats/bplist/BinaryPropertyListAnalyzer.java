@@ -75,7 +75,7 @@ public class BinaryPropertyListAnalyzer extends FileFormatAnalyzer {
 			throws Exception {
 		Memory memory = program.getMemory();
 		for (MemoryBlock block : memory.getBlocks()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (BinaryPropertyListUtil.isBinaryPropertyList(memory, block.getStart())) {
 				ByteProvider provider =
 					new ImmutableMemoryRangeByteProvider(memory, block.getStart(), block.getEnd());
@@ -135,7 +135,7 @@ public class BinaryPropertyListAnalyzer extends FileFormatAnalyzer {
 			throws Exception {
 		Map<NSObject, Data> objectMap = new HashMap<NSObject, Data>();
 		for (int i = 0; i < trailer.getOffsetTable().length; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int objectOffset = trailer.getOffsetTable()[i];
 			NSObject object = NSObjectParser.parseObject(reader, objectOffset, trailer);
 			Address objectAddress = baseAddress.add(objectOffset);
@@ -152,12 +152,12 @@ public class BinaryPropertyListAnalyzer extends FileFormatAnalyzer {
 		// markup the NSObjects as a second pass
 		// because all need to be created first
 		for (NSObject object : objectMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			object.markup(objectMap.get(object), program, monitor);
 		}
 		// markup the nested PLists
 		for (NSObject object : objectMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			handleNestedBinaryPlist(object, program, objectMap.get(object), monitor);
 		}
 	}

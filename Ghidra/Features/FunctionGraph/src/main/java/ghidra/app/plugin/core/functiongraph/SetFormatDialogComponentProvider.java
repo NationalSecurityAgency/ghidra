@@ -24,8 +24,7 @@ import javax.swing.JPanel;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.viewer.format.*;
@@ -122,7 +121,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		FieldHeader headerPanel = listingPanel.getFieldHeader();
 		if (headerPanel != null && headerPanel.isAncestorOf(event.getComponent())) {
 			FieldHeaderLocation fhLoc = headerPanel.getFieldHeaderLocation(event.getPoint());
-			return new ActionContext().setContextObject(fhLoc);
+			return new DefaultActionContext().setContextObject(fhLoc);
 		}
 		return null;
 	}

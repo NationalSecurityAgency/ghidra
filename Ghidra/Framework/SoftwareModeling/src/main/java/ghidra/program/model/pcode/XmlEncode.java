@@ -29,14 +29,42 @@ import ghidra.util.xml.SpecXmlUtils;
  * The encoder is initialized with a StringBuilder which will receive the XML document as calls
  * are made on the encoder.
  */
-public class XmlEncode implements Encoder {
+public class XmlEncode implements CachedEncoder {
 
-	private StringBuilder buffer;
-	private boolean elementTagIsOpen;
+	private static final int TAG_START = 0;		// Tag has been opened, attributes can be written
+	private static final int TAG_CONTENT = 1;	// Opening tag and content have been written
+	private static final int TAG_STOP = 2;		// No tag is currently being written
+
+	private static final char[] spaces = { '\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+		' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+	private StringBuilder buffer;				// Buffer accumulating the document characters
+	private int tagStatus;						// Stage of writing an element tag
+	private int depth;							// Depth of open elements
+	private boolean doFormatting;				// true if encoder should indent and emit newlines
 
 	public XmlEncode() {
 		buffer = new StringBuilder();
-		elementTagIsOpen = false;
+		tagStatus = TAG_STOP;
+		depth = 0;
+		doFormatting = true;
+	}
+
+	public XmlEncode(boolean doFormat) {
+		buffer = new StringBuilder();
+		tagStatus = TAG_STOP;
+		depth = 0;
+		doFormatting = doFormat;
+	}
+
+	private void newLine() {
+		if (!doFormatting) {
+			return;
+		}
+		int numSpaces = depth * 2 + 1;
+		if (numSpaces > spaces.length) {
+			numSpaces = spaces.length;
+		}
+		buffer.append(spaces, 0, numSpaces);
 	}
 
 	@Override
@@ -47,42 +75,51 @@ public class XmlEncode implements Encoder {
 	@Override
 	public void clear() {
 		buffer = new StringBuilder();
-		elementTagIsOpen = false;
+		tagStatus = TAG_STOP;
+		depth = 0;
 	}
 
 	@Override
 	public void openElement(ElementId elemId) throws IOException {
-		if (elementTagIsOpen) {
+		if (tagStatus == TAG_START) {
 			buffer.append('>');
 		}
 		else {
-			elementTagIsOpen = true;
+			tagStatus = TAG_START;
 		}
+		newLine();
 		buffer.append('<');
 		buffer.append(elemId.name());
+		depth += 1;
 	}
 
 	@Override
 	public void closeElement(ElementId elemId) throws IOException {
-		if (elementTagIsOpen) {
+		depth -= 1;
+		if (tagStatus == TAG_START) {
 			buffer.append("/>");
-			elementTagIsOpen = false;
+			tagStatus = TAG_STOP;
+			return;
+		}
+		if (tagStatus != TAG_CONTENT) {
+			newLine();
 		}
 		else {
-			buffer.append("</");
-			buffer.append(elemId.name());
-			buffer.append('>');
+			tagStatus = TAG_STOP;
 		}
+		buffer.append("</");
+		buffer.append(elemId.name());
+		buffer.append('>');
 	}
 
 	@Override
 	public void writeBool(AttributeId attribId, boolean val) throws IOException {
 		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
-			if (elementTagIsOpen) {
+			if (tagStatus == TAG_START) {
 				buffer.append('>');
-				elementTagIsOpen = false;
 			}
 			buffer.append(val ? "true" : "false");
+			tagStatus = TAG_CONTENT;
 			return;
 		}
 		buffer.append(' ');
@@ -95,11 +132,11 @@ public class XmlEncode implements Encoder {
 	@Override
 	public void writeSignedInteger(AttributeId attribId, long val) throws IOException {
 		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
-			if (elementTagIsOpen) {
+			if (tagStatus == TAG_START) {
 				buffer.append('>');
-				elementTagIsOpen = false;
 			}
 			buffer.append(Long.toString(val, 10));
+			tagStatus = TAG_CONTENT;
 			return;
 		}
 		buffer.append(' ');
@@ -112,12 +149,12 @@ public class XmlEncode implements Encoder {
 	@Override
 	public void writeUnsignedInteger(AttributeId attribId, long val) throws IOException {
 		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
-			if (elementTagIsOpen) {
+			if (tagStatus == TAG_START) {
 				buffer.append('>');
-				elementTagIsOpen = false;
 			}
 			buffer.append("0x");
 			buffer.append(Long.toHexString(val));
+			tagStatus = TAG_CONTENT;
 			return;
 		}
 		buffer.append(' ');
@@ -130,11 +167,11 @@ public class XmlEncode implements Encoder {
 	@Override
 	public void writeString(AttributeId attribId, String val) throws IOException {
 		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
-			if (elementTagIsOpen) {
+			if (tagStatus == TAG_START) {
 				buffer.append('>');
-				elementTagIsOpen = false;
 			}
 			SpecXmlUtils.xmlEscape(buffer, val);
+			tagStatus = TAG_CONTENT;
 			return;
 		}
 		buffer.append(' ');
@@ -164,17 +201,52 @@ public class XmlEncode implements Encoder {
 			spcName = spc.getName();
 		}
 		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
-			if (elementTagIsOpen) {
+			if (tagStatus == TAG_START) {
 				buffer.append('>');
-				elementTagIsOpen = false;
 			}
 			SpecXmlUtils.xmlEscape(buffer, spcName);
+			tagStatus = TAG_CONTENT;
 			return;
 		}
 		buffer.append(' ');
 		buffer.append(attribId.name());
 		buffer.append("=\"");
 		SpecXmlUtils.xmlEscape(buffer, spcName);
+		buffer.append("\"");
+	}
+
+	@Override
+	public void writeSpace(AttributeId attribId, int index, String name) throws IOException {
+		if (attribId == ATTRIB_CONTENT) {
+			if (tagStatus == TAG_START) {
+				buffer.append('>');
+			}
+			SpecXmlUtils.xmlEscape(buffer, name);
+			tagStatus = TAG_CONTENT;
+			return;
+		}
+		buffer.append(' ');
+		buffer.append(attribId.name());
+		buffer.append("=\"");
+		SpecXmlUtils.xmlEscape(buffer, name);
+		buffer.append("\"");
+	}
+
+	@Override
+	public void writeOpcode(AttributeId attribId, int opcode) throws IOException {
+		String name = PcodeOp.getMnemonic(opcode);
+		if (attribId == ATTRIB_CONTENT) {
+			if (tagStatus == TAG_START) {
+				buffer.append('>');
+			}
+			buffer.append(name);
+			tagStatus = TAG_CONTENT;
+			return;
+		}
+		buffer.append(' ');
+		buffer.append(attribId.name());
+		buffer.append("=\"");
+		buffer.append(name);
 		buffer.append("\"");
 	}
 

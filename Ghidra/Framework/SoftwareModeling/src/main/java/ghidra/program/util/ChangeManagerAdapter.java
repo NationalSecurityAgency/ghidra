@@ -16,52 +16,12 @@
 package ghidra.program.util;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Register;
 
 /**
  * Empty implementation for a ChangeManager.
  */
 public class ChangeManagerAdapter implements ChangeManager {
-
-	@Override
-	public void setChanged(int type, Address start, Address end, Object oldValue, Object newValue) {
-		// Default implementation does nothing.
-	}
-
-	@Override
-	public void setChanged(int type, Object oldValue, Object newValue) {
-		// Default implementation does nothing.
-	}
-
-	@Override
-	public void setObjChanged(int type, Address addr, Object affectedObj, Object oldValue,
-			Object newValue) {
-		// Default implementation does nothing.
-	}
-
-	@Override
-	public void setObjChanged(int type, int subType, Address addr, Object affectedObj,
-			Object oldValue, Object newValue) {
-		// Default implementation does nothing.
-	}
-
-	@Override
-	public void setObjChanged(int type, AddressSetView addrSet, Object affectedObj, Object oldValue,
-			Object newValue) {
-		// Default implementation does nothing.
-	}
-
-	@Override
-	public void setObjChanged(int type, Object affectedObj, Object oldValue, Object newValue) {
-		// Default implementation does nothing.
-	}
-
-	@Override
-	public void setObjChanged(int type, int subType, Object affectedObj, Object oldValue,
-			Object newValue) {
-		// Default implementation does nothing.
-	}
 
 	@Override
 	public void setPropertyChanged(String propertyName, Address codeUnitAddr, Object oldValue,
@@ -76,6 +36,29 @@ public class ChangeManagerAdapter implements ChangeManager {
 
 	@Override
 	public void setRegisterValuesChanged(Register register, Address start, Address end) {
+		// Default implementation does nothing.
+	}
+
+	@Override
+	public void setChanged(ProgramEvent event, Object oldValue, Object newValue) {
+		// Default implementation does nothing.
+	}
+
+	@Override
+	public void setChanged(ProgramEvent event, Address start, Address end, Object oldValue,
+			Object newValue) {
+		// Default implementation does nothing.
+	}
+
+	@Override
+	public void setObjChanged(ProgramEvent event, Object affected, Object oldValue,
+			Object newValue) {
+		// Default implementation does nothing.
+	}
+
+	@Override
+	public void setObjChanged(ProgramEvent eventType, Address addr, Object affected,
+			Object oldValue, Object newValue) {
 		// Default implementation does nothing.
 	}
 

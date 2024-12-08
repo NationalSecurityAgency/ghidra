@@ -13,13 +13,38 @@ from pcodetest import *
 # set default properties first, then update values from the command
 # line before they are instantiated.
 
+
+def test_action(action_class, deprecate=False):
+    class pcodeTestAction(action_class):
+        def __call__(self, parser, namespace, values, option_string=None):
+            c = getattr(namespace, 'command_count', 0)
+            setattr(namespace, 'command_count', c+1)
+            
+            if deprecate:
+                print('Deprecated pcodetest command\n\tuse --%s' % (self.dest))
+            action_class.__call__(self, parser, namespace, values, option_string)
+    return pcodeTestAction
+
 exec(compile(open('defaults.py', "rb").read(), 'defaults.py', 'exec'))
 
 parser = argparse.ArgumentParser(description='''Build pcodetests.
 One and only one of the following options must be given:
-[--pcodetest, --pcodetest-all, --pcodetest-list]''',
+[--test, --all, --list]''',
     epilog='(*) default properties for pcodetest instances',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+# required alternates
+required_group = parser.add_argument_group('Pcodetest Commands')
+
+required_group.add_argument('-t', '--test', dest='test', action=test_action(argparse._StoreAction), help='the pcode test to build')
+required_group.add_argument('-a', '--all', dest='all', action=test_action(argparse._StoreTrueAction), help='build all pcode tests')
+required_group.add_argument('-l', '--list', dest='list', action=test_action(argparse._StoreTrueAction), help='list available pcode tests')
+
+#Deprecated
+required_group.add_argument('--pcodetest', dest='test', action=test_action(argparse._StoreAction, True), help=argparse.SUPPRESS)
+required_group.add_argument('--pcodetest-all',dest='all', action=test_action(argparse._StoreTrueAction, True), help=argparse.SUPPRESS)
+required_group.add_argument('--pcodetest-list', dest='list', action=test_action(argparse._StoreTrueAction, True), help=argparse.SUPPRESS)
+
 
 # all-applicable arguments
 
@@ -29,16 +54,10 @@ parser.add_argument('--toolchain-root', default=PCodeTest.defaults.toolchain_roo
 parser.add_argument('--build-root', default=PCodeTest.defaults.build_root, help='temporary directory to hold build files (*)')
 parser.add_argument('--gcc-version', default=PCodeTest.defaults.gcc_version, help='default version of gcc (*)')
 
-# required alternates
-
-required_group = parser.add_mutually_exclusive_group(required=True)
-required_group.add_argument('--pcodetest', help='the pcode test to build')
-required_group.add_argument('--pcodetest-all', action='store_true', help='build all pcode tests')
-required_group.add_argument('--pcodetest-list', action='store_true', help='list available pcode tests')
 
 # pcodetest arguments
 
-pcodetest_group = parser.add_argument_group('pcodetest', 'pcodetest options')
+pcodetest_group = parser.add_argument_group('Pcodetest Options')
 pcodetest_group.add_argument('--no-publish', action='store_true', help='do not publish pcode test binaries to pcode test root')
 pcodetest_group.add_argument('--pcodetest-root', default=PCodeTest.defaults.pcodetest_root, help='location to publish pcode tests binaries (*)')
 pcodetest_group.add_argument('--pcodetest-src', default=PCodeTest.defaults.pcodetest_src, help='location of pcode test .c and .h source files (*)')
@@ -48,6 +67,7 @@ pcodetest_group.add_argument('--add-ccflags', default='', help='additional flags
 pcodetest_group.add_argument('--add-info', action='store_true', help='add data to binary with information about types and symbols')
 pcodetest_group.add_argument('--build-exe', action='store_true', help='build a guest executable binary (exe)')
 pcodetest_group.add_argument('--variants', default=json.dumps(PCodeTest.defaults.variants, sort_keys=True, separators=(',',':')), type=json.loads, help='build the (optimization) variants, encoded as a json dict')
+
 
 sys.argv.pop(0)
 args = parser.parse_args(sys.argv)
@@ -73,9 +93,21 @@ exec(compile(open('pcode_defs.py', "rb").read(), 'pcode_defs.py', 'exec'))
 
 cwd = os.getcwd()
 
-if args.pcodetest_list:
+if not hasattr(args, 'command_count'):
+    print('ERROR: One of [--test, --all, --list] must be given\n')
+    parser.print_help()
+    exit()
+
+if args.command_count > 1:
+    print('ERROR: Two many commands given. Only one of [--test, --all, --list] must be given\n')
+    parser.print_help()
+    exit()
+
+
+if args.list:
     PCodeTest.print_all()
-elif args.pcodetest_all:
+    
+elif args.all:
     for n,pct in sorted(PCodeTest.list.items(), key=lambda x: x[0].lower()):
         if pct.config.build_all:
             try: PCodeTestBuild.factory(pct).main()
@@ -83,12 +115,13 @@ elif args.pcodetest_all:
                 print('unhandled exception while building %s' % n)
                 traceback.print_exc(file=sys.stdout)
                 os.chdir(cwd)
-elif args.pcodetest:
-    if args.pcodetest in PCodeTest.list:
-        PCodeTest = PCodeTest.list[args.pcodetest]
+                
+elif args.test:
+    if args.test in PCodeTest.list:
+        PCodeTest = PCodeTest.list[args.test]
         PCodeTestBuild.factory(PCodeTest).main()
     else:
-        print('the pcode test %s is not in the list' % args.pcodetest)
+        print('the pcode test %s is not in the list' % args.test)
 else:
     parser.print_help()
 

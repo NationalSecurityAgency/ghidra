@@ -29,15 +29,17 @@ import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.codebrowser.AbstractCodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -76,11 +78,9 @@ import utilities.util.SuppressableCallback.Suppression;
 		TraceSelectionPluginEvent.class
 	},
 	servicesRequired = {
-		DebuggerModelService.class, // For memory capture
 		DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
 		DebuggerEmulationService.class, // TODO: Optional?
 		ProgramManager.class, // For static listing sync
-		//GoToService.class, // For static listing sync
 		ClipboardService.class,
 		MarkerService.class // TODO: Make optional?
 	},
@@ -119,8 +119,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	protected NewListingAction actionNewListing;
 
-	//@AutoServiceConsumed
-	//private GoToService goToService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
 	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
@@ -138,6 +136,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 
 		createActions();
+
+		tool.registerDefaultContextProvider(DebuggerProgramLocationActionContext.class,
+			connectedProvider);
+	}
+
+	@Override
+	protected void dispose() {
+		tool.unregisterDefaultContextProvider(DebuggerProgramLocationActionContext.class,
+			connectedProvider);
+		super.dispose();
 	}
 
 	@Override
@@ -251,48 +259,40 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramLocationPluginEvent) {
+		if (event instanceof ProgramLocationPluginEvent ev) {
 			cbProgramLocationEvents.invoke(() -> {
-				ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
 				if (heedLocationEvent(ev)) {
 					connectedProvider.staticProgramLocationChanged(ev.getLocation());
 				}
 			});
 		}
-		if (event instanceof ProgramSelectionPluginEvent) {
+		if (event instanceof ProgramSelectionPluginEvent ev) {
 			cbProgramSelectionEvents.invoke(() -> {
-				ProgramSelectionPluginEvent ev = (ProgramSelectionPluginEvent) event;
 				if (heedSelectionEvent(ev)) {
 					connectedProvider.staticProgramSelectionChanged(ev.getProgram(),
 						ev.getSelection());
 				}
 			});
 		}
-		if (event instanceof ProgramOpenedPluginEvent) {
-			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+		if (event instanceof ProgramOpenedPluginEvent ev) {
 			allProviders(p -> p.programOpened(ev.getProgram()));
 		}
-		if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
+		if (event instanceof ProgramClosedPluginEvent ev) {
 			allProviders(p -> p.programClosed(ev.getProgram()));
 		}
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramActivatedPluginEvent ev) {
 			allProviders(p -> p.staticProgramActivated(ev.getActiveProgram()));
 		}
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			current = ev.getActiveCoordinates();
 			allProviders(p -> p.coordinatesActivated(current));
 		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		if (event instanceof TraceClosedPluginEvent ev) {
 			if (current.getTrace() == ev.getTrace()) {
 				current = DebuggerCoordinates.NOWHERE;
 			}
 			allProviders(p -> p.traceClosed(ev.getTrace()));
 		}
-		// TODO: Sync selection and highlights?
 	}
 
 	void fireStaticLocationEvent(ProgramLocation staticLoc) {

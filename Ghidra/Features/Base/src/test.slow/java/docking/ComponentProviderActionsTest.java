@@ -30,6 +30,7 @@ import docking.actions.KeyEntryDialog;
 import docking.actions.ToolActions;
 import docking.tool.util.DockingToolConstants;
 import generic.theme.GIcon;
+import ghidra.framework.options.ActionTrigger;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -443,7 +444,8 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		ToolOptions keyOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		// shared option name/format: "Provider Name (Shared)" - the shared action's owner is the Tool
-		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Shared)", newKs));
+		runSwing(() -> keyOptions.setActionTrigger(provider.getName() + " (Shared)",
+			new ActionTrigger(newKs)));
 		waitForSwing();
 	}
 
@@ -491,7 +493,11 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		// Option name: the action name with the 'Shared' owner
 		String fullName = provider.getName() + " (Shared)";
-		KeyStroke optionsKs = runSwing(() -> options.getKeyStroke(fullName, null));
+		ActionTrigger actionTrigger = runSwing(() -> options.getActionTrigger(fullName, null));
+		KeyStroke optionsKs = null;
+		if (actionTrigger != null) {
+			optionsKs = actionTrigger.getKeyStroke();
+		}
 		assertEquals("Key stroke in options does not match expected key stroke", expectedKs,
 			optionsKs);
 	}

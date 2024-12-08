@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,9 @@ import ghidra.util.Msg;
  * @see AbstractTargetObject
  * @param <E> the type of child elements
  * @param <P> the type of the parent
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
  */
+@Deprecated(forRemoval = true, since = "11.2")
 public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		extends AbstractTargetObject<P> {
 
@@ -133,7 +135,8 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	}
 
 	@Override
-	public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes, RefreshBehavior refreshElements) {
+	public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+			RefreshBehavior refreshElements) {
 		return CompletableFuture.allOf(fetchAttributes(refreshAttributes),
 			fetchElements(refreshElements));
 	}
@@ -159,7 +162,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * @return a future which completes when the cache has been updated
 	 */
 	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private boolean shouldRequestElements(RefreshBehavior refresh) {
@@ -180,13 +183,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 *           response, then complete with {@link #elementsView}.
 	 */
 	@Override
-	public CompletableFuture<? extends Map<String, ? extends E>> fetchElements(RefreshBehavior refresh) {
+	public CompletableFuture<? extends Map<String, ? extends E>> fetchElements(
+			RefreshBehavior refresh) {
 		CompletableFuture<Void> req;
 		synchronized (elements) {
 			if (shouldRequestElements(refresh)) {
 				curElemsRequest = model.gateFuture(requestElements(refresh));
 			}
-			req = curElemsRequest == null ? AsyncUtils.NIL : curElemsRequest;
+			req = curElemsRequest == null ? AsyncUtils.nil() : curElemsRequest;
 		}
 		return req.thenApply(__ -> getCachedElements());
 	}
@@ -347,7 +351,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * @return a future which completes when the cache has been updated
 	 */
 	protected CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private boolean shouldRequestAttributes(RefreshBehavior refresh) {
@@ -375,7 +379,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			if (shouldRequestAttributes(refresh)) {
 				curAttrsRequest = model.gateFuture(requestAttributes(refresh));
 			}
-			req = curAttrsRequest == null ? AsyncUtils.NIL : curAttrsRequest;
+			req = curAttrsRequest == null ? AsyncUtils.nil() : curAttrsRequest;
 		}
 		return req.thenApply(__ -> {
 			synchronized (model.lock) {

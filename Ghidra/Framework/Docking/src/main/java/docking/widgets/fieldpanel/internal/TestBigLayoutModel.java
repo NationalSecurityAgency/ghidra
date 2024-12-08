@@ -32,7 +32,7 @@ import generic.theme.GThemeDefaults.Colors;
 
 public class TestBigLayoutModel implements LayoutModel {
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private static final HighlightFactory hlFactory =
+	private static final FieldHighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 	ArrayList<LayoutModelListener> listeners = new ArrayList<>();
 

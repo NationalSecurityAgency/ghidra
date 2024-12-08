@@ -21,14 +21,16 @@ import java.awt.event.KeyEvent;
 import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.component.DecompilerController;
+import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.app.decompiler.util.FillOutStructureCmd;
+import ghidra.app.decompiler.util.FillOutStructureHelper;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.pcode.HighParam;
-import ghidra.program.model.pcode.HighVariable;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -47,46 +49,6 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_OPEN_BRACKET, InputEvent.SHIFT_DOWN_MASK));
 	}
 
-	static boolean testForAutoParameterThis(HighVariable var, Function f) {
-		if (var instanceof HighParam) {
-			int slot = ((HighParam) var).getSlot();
-			Parameter parameter = f.getParameter(slot);
-			if ((parameter != null) &&
-				(parameter.getAutoParameterType() == AutoParameterType.THIS)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Check if a variable has a data-type that is suitable for being extended.
-	 * If so return the structure data-type, otherwise return null.
-	 * Modulo typedefs, the data-type of the variable must be exactly a
-	 * "pointer to a structure".  Not a "structure" itself, or a
-	 * "pointer to a pointer to ... a structure".
-	 * @param dt is the data-type of the variable to test
-	 * @return the extendable structure data-type or null
-	 */
-	public static Structure getStructureForExtending(DataType dt) {
-		if (dt instanceof TypeDef) {
-			dt = ((TypeDef) dt).getBaseDataType();
-		}
-		if (dt instanceof Pointer) {
-			dt = ((Pointer) dt).getDataType();
-		}
-		else {
-			return null;
-		}
-		if (dt instanceof TypeDef) {
-			dt = ((TypeDef) dt).getBaseDataType();
-		}
-		if (dt instanceof Structure) {
-			return (Structure) dt;
-		}
-		return null;
-	}
-
 	@Override
 	public abstract boolean isEnabledForContext(ActionContext context);
 
@@ -98,7 +60,7 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 	 */
 	protected void adjustCreateStructureMenuText(DataType dt, boolean isThisParam) {
 
-		dt = getStructureForExtending(dt);
+		dt = FillOutStructureHelper.getStructureForExtending(dt);
 		String menuString = "Auto Create Structure";
 		if (dt != null) {
 			if (isThisParam) {
@@ -145,7 +107,8 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 			return;
 		}
 
-		FillOutStructureCmd task = new FillOutStructureCmd(program, location, tool);
-		task.applyTo(program);
+		DecompileOptions decompileOptions = DecompilerUtils.getDecompileOptions(tool, program);
+		FillOutStructureCmd cmd = new FillOutStructureCmd(location, decompileOptions);
+		tool.executeBackgroundCommand(cmd, program);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,12 @@
  */
 package ghidra.program.model.data;
 
-import java.util.Collection;
-
 import java.net.URL;
+import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.InvalidNameException;
@@ -51,6 +51,12 @@ public interface DataType {
 	@Deprecated
 	public static final DataType VOID = VoidDataType.dataType;
 
+	/**
+	 * Datatype name conflict suffix.
+	 * 
+	 * See {@link DataTypeUtilities} for various methods related to conflict name handling.
+	 * Direct use of this string in application/user-level code is discouraged.
+	 */
 	public final static String CONFLICT_SUFFIX = ".conflict";
 
 	public final static String TYPEDEF_ATTRIBUTE_PREFIX = "__((";
@@ -227,16 +233,47 @@ public interface DataType {
 	public String getMnemonic(Settings settings);
 
 	/**
-	 * Get the length (number of 8-bit bytes) of this DataType.
+	 * Get the length of this DataType as a number of 8-bit bytes. 
 	 * <p>
-	 * NOTE: No datatype should ever return 0, even if {@link #isZeroLength()}, and only
-	 * {@link Dynamic} datatypes should return -1. If {@link #isZeroLength()} is true a length of 1
-	 * should be returned. Where a zero-length datatype can be handled (e.g., {@link Composite}) the
+	 * For primitive datatypes this reflects the smallest varnode which can be used to
+	 * contain its value (i.e., raw data length).  
+	 * <p>
+	 * Example: For x86 32-bit gcc an 80-bit {@code long double} {@link #getLength() raw data length} 
+	 * of 10-bytes will fit within a floating point register while its {@link #getAlignedLength() aligned-length} 
+	 * of 12-bytes is used by the gcc compiler for data/array/component allocations to maintain alignment 
+	 * (i.e., {@code sizeof(long double)} ).
+	 * <p>
+	 * NOTE: Other than the {@link VoidDataType}, no datatype should ever return 0, even if 
+	 * {@link #isZeroLength()}, and only {@link Dynamic}/{@link FactoryDataType} datatypes 
+	 * should return -1.  If {@link #isZeroLength()} is true a length of 1 should be returned. 
+	 * Where a zero-length datatype can be handled (e.g., {@link Composite}) the 
 	 * {@link #isZeroLength()} method should be used.
 	 *
 	 * @return the length of this DataType
 	 */
 	public int getLength();
+
+	/**
+	 * Get the aligned-length of this datatype as a number of 8-bit bytes. 
+	 * <p>
+	 * For primitive datatypes this is equivalent to the C/C++ "sizeof" operation within source code and
+	 * should be used when determining {@link Array} element length or component sizing for  a 
+	 * {@link Composite}.   For {@link Pointer}, {@link Composite} and {@link Array} types this will 
+	 * return the same value as {@link #getLength()}. 
+	 * <p>
+	 * Example: For x86 32-bit gcc an 80-bit {@code long double} {@link #getLength() raw data length} 
+	 * of 10-bytes will fit within a floating point register while its {@link #getAlignedLength() aligned-length}  
+	 * of 12-bytes is used by the gcc compiler for data/array/component allocations to maintain alignment 
+	 * (i.e., {@code sizeof(long double)} ).
+	 * <p>
+	 * NOTE: Other than the {@link VoidDataType}, no datatype should ever return 0, even if 
+	 * {@link #isZeroLength()}, and only {@link Dynamic} / {@link FactoryDataType} /
+	 * {@link FunctionDefinition} datatypes should return -1.  If {@link #isZeroLength()} is true 
+	 * a length of 1 should be returned. 
+	 * 
+	 * @return byte length of binary encoding.
+	 */
+	public int getAlignedLength();
 
 	/**
 	 * Indicates this datatype is defined with a zero length.
@@ -361,7 +398,7 @@ public interface DataType {
 	/**
 	 * Returns the prefix to use for this datatype when an abbreviated prefix is desired.
 	 * <p>
-	 * For example, some datatypes will built a large default label, at which is is more desirable
+	 * For example, some datatypes will build a large default label, at which it is more desirable
 	 * to have a shortened prefix.
 	 *
 	 * @return the prefix to use for this datatype when an abbreviated prefix is desired. May return

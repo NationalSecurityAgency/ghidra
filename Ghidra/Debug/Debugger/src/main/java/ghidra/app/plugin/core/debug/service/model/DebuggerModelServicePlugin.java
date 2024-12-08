@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -36,15 +36,16 @@ import docking.action.DockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
-import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerModelService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.options.SaveState;
@@ -62,7 +63,6 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger models manager service",
 	description = "Manage debug sessions, connections, and trace recording",
@@ -73,7 +73,7 @@ import ghidra.util.datastruct.ListenerSet;
 	servicesProvided = {
 		DebuggerModelService.class
 	})
-//@formatter:on
+@Deprecated(forRemoval = true, since = "11.2")
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
@@ -97,7 +97,7 @@ public class DebuggerModelServicePlugin extends Plugin
 				models.remove(model);
 			}
 			model.removeModelListener(this);
-			modelListeners.fire.elementRemoved(model);
+			modelListeners.invoke().elementRemoved(model);
 			if (currentModel == model) {
 				activateModel(null);
 			}
@@ -157,11 +157,11 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected final Map<TargetObject, TraceRecorder> recordersByTarget = new WeakHashMap<>();
 
 	protected final ListenerSet<CollectionChangeListener<DebuggerModelFactory>> factoryListeners =
-		new ListenerSet<>(CollectionChangeListener.of(DebuggerModelFactory.class));
+		new ListenerSet<>(CollectionChangeListener.of(DebuggerModelFactory.class), true);
 	protected final ListenerSet<CollectionChangeListener<DebuggerObjectModel>> modelListeners =
-		new ListenerSet<>(CollectionChangeListener.of(DebuggerObjectModel.class));
+		new ListenerSet<>(CollectionChangeListener.of(DebuggerObjectModel.class), true);
 	protected final ListenerSet<CollectionChangeListener<TraceRecorder>> recorderListeners =
-		new ListenerSet<>(CollectionChangeListener.of(TraceRecorder.class));
+		new ListenerSet<>(CollectionChangeListener.of(TraceRecorder.class), true);
 	protected final ChangeListener classChangeListener = new ChangeListenerForFactoryInstances();
 	protected final ListenerOnRecorders listenerOnRecorders = new ListenerOnRecorders();
 
@@ -266,7 +266,7 @@ public class DebuggerModelServicePlugin extends Plugin
 					"Invalidated before or during add to service");
 			}
 		}
-		modelListeners.fire.elementAdded(model);
+		modelListeners.invoke().elementAdded(model);
 		return true;
 	}
 
@@ -278,8 +278,18 @@ public class DebuggerModelServicePlugin extends Plugin
 				return false;
 			}
 		}
-		modelListeners.fire.elementRemoved(model);
+		modelListeners.invoke().elementRemoved(model);
 		return true;
+	}
+
+	@Override
+	public void fireFocusEvent(TargetObject focused) {
+		// Nothing to do
+	}
+
+	@Override
+	public void fireSnapEvent(TraceRecorder recorder, long snap) {
+		// Nothing to do
 	}
 
 	@Override
@@ -307,7 +317,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			});
 			recordersByTarget.put(target, recorder);
 		}
-		recorderListeners.fire.elementAdded(recorder);
+		recorderListeners.invoke().elementAdded(recorder);
 		// NOTE: It's possible the recorder stopped recording before we installed the listener
 		if (!recorder.isRecording()) {
 			doRemoveRecorder(recorder);
@@ -372,12 +382,19 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected void removeRecorder(TraceRecorder recorder) {
 		synchronized (recordersByTarget) {
 			TraceRecorder old = recordersByTarget.remove(recorder.getTarget());
-			if (old != recorder) {
-				throw new AssertionError("Container-recorder mix up");
+			/**
+			 * Possible race condition when quickly launching and stopping a recording. If it's
+			 * already removed, that's actually fine. If we get something non-null that doesn't
+			 * match, then yeah, something's truly gone wrong.
+			 */
+			if (old != null) {
+				if (old != recorder) {
+					throw new AssertionError("Container-recorder mix up");
+				}
+				old.removeListener(listenerOnRecorders);
 			}
-			old.removeListener(listenerOnRecorders);
 		}
-		recorderListeners.fire.elementRemoved(recorder);
+		recorderListeners.invoke().elementRemoved(recorder);
 	}
 
 	@Override
@@ -415,7 +432,7 @@ public class DebuggerModelServicePlugin extends Plugin
 		diff.removeAll(newFactories);
 		for (DebuggerModelFactory factory : diff) {
 			factories.remove(factory);
-			factoryListeners.fire.elementRemoved(factory);
+			factoryListeners.invoke().elementRemoved(factory);
 		}
 
 		diff.clear();
@@ -423,7 +440,7 @@ public class DebuggerModelServicePlugin extends Plugin
 		diff.removeAll(factories);
 		for (DebuggerModelFactory factory : diff) {
 			factories.add(factory);
-			factoryListeners.fire.elementAdded(factory);
+			factoryListeners.invoke().elementAdded(factory);
 		}
 	}
 
@@ -487,7 +504,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			throws IOException {
 		String traceName = nameTrace(target);
 		Trace trace = new DBTrace(traceName, mapper.getTraceCompilerSpec(), this);
-		TraceRecorder recorder = mapper.startRecording(this, trace);
+		TraceRecorder recorder = mapper.startRecording(tool, trace);
 		trace.release(this); // The recorder now owns it (on behalf of the service)
 		return recorder;
 	}
@@ -517,7 +534,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			removed = recordersByTarget.remove(recorder.getTarget()) != null;
 		}
 		if (removed) {
-			recorderListeners.fire.elementRemoved(recorder);
+			recorderListeners.invoke().elementRemoved(recorder);
 		}
 	}
 
@@ -672,4 +689,5 @@ public class DebuggerModelServicePlugin extends Plugin
 	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
 		return doShowConnectDialog(tool, factory, null);
 	}
+
 }

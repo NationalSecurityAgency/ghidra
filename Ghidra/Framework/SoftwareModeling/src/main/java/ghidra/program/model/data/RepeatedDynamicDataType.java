@@ -96,7 +96,8 @@ public abstract class RepeatedDynamicDataType extends DynamicDataType {
 		try {
 			newBuf.advance(countSize);
 			while (moreComponents(memory, newBuf.getAddress())) {
-				DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(baseStruct, newBuf);
+				DataTypeInstance dti =
+					DataTypeInstance.getDataTypeInstance(baseStruct, newBuf, false);
 				if (dti == null) {
 					Msg.error(this, "ERROR: problem with data at " + newBuf.getAddress());
 					return null;

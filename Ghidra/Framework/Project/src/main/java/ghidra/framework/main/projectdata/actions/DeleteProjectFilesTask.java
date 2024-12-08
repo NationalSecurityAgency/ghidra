@@ -81,7 +81,7 @@ public class DeleteProjectFilesTask extends Task {
 	private void deleteFiles(Set<DomainFile> files, TaskMonitor monitor) {
 		try {
 			for (DomainFile file : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				deleteFile(file);
 				monitor.incrementProgress(1);
 			}
@@ -106,14 +106,14 @@ public class DeleteProjectFilesTask extends Task {
 	private void deleteFolder(DomainFolder folder, TaskMonitor monitor) throws CancelledException {
 
 		for (DomainFolder subFolder : folder.getFolders()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!selectedFolders.contains(subFolder)) {
 				deleteFolder(subFolder, monitor);
 			}
 		}
 
 		for (DomainFile file : folder.getFiles()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!selectedFiles.contains(file)) {
 				deleteFile(file);
 				monitor.incrementProgress(1);

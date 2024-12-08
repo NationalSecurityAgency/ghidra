@@ -69,6 +69,7 @@ public class CompareGDTs extends GhidraScript {
 			popup(
 				"An architecture language error occured while opening archive (see log for details)\n" +
 					secondFile.getPath());
+			firstArchive.close();
 			return;
 		}
 
@@ -83,6 +84,8 @@ public class CompareGDTs extends GhidraScript {
 		}
 		finally {
 			printWriter.close();
+			firstArchive.close();
+			secondArchive.close();
 		}
 	}
 

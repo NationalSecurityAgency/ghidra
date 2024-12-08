@@ -194,7 +194,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 		monitor.initialize(totalConflicts);
 		for (long id : tagConflicts.keySet()) {
 			if ((conflictChoice == ASK_USER) && askUser && mergeManager != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				currentlyMergingTagID = id;
 				showMergePanel(id, monitor);
 			}

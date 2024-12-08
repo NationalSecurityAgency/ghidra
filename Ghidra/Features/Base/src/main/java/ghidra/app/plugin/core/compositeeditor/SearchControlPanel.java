@@ -107,4 +107,7 @@ public class SearchControlPanel extends JPanel {
 		}
 	}
 
+	public JTextField getTextField() {
+		return textField;
+	}
 }

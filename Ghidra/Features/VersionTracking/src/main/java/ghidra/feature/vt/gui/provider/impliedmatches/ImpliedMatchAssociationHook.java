@@ -15,15 +15,11 @@
  */
 package ghidra.feature.vt.gui.provider.impliedmatches;
 
-import java.util.List;
-import java.util.Set;
-
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.util.*;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -40,6 +36,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 		Options options = controller.getOptions();
 		autoCreateImpliedMatches =
 			options.getBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
+
 		setSession(controller.getSession());
 		controller.addListener(this);
 	}
@@ -74,37 +71,12 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 
 		try {
 			TaskMonitor monitor = VTTaskMonitor.getTaskMonitor();
-			Set<VTImpliedMatchInfo> impliedMatches = ImpliedMatchUtils.findImpliedMatches(
-				controller, source, destination, session, correlator, monitor);
-			processAssociationAccepted(impliedMatches);
+			ImpliedMatchUtils.updateImpliedMatchForAcceptedAssocation(source, destination, session,
+				correlator, monitor);
 		}
 		catch (CancelledException e) {
 			Msg.info(this, "User cancelled finding implied matches when accepting an assocation");
 		}
-	}
-
-	/**
-	 * When a match is accepted either create associated implied matches or if a match already
-	 * exists, increase the vote count
-	 * @param impliedMatches The implied matches set to either create or increase vote count
-	 */
-	private void processAssociationAccepted(Set<VTImpliedMatchInfo> impliedMatches) {
-		for (VTImpliedMatchInfo impliedMatch : impliedMatches) {
-			Address sourceAddress = impliedMatch.getSourceAddress();
-			Address destinationAddress = impliedMatch.getDestinationAddress();
-			VTAssociation existingAssociation =
-				session.getAssociationManager().getAssociation(sourceAddress, destinationAddress);
-
-			if (existingAssociation == null) {
-				VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
-				VTMatch match = impliedMatchSet.addMatch(impliedMatch);
-				existingAssociation = match.getAssociation();
-			}
-			if (existingAssociation != null) {
-				existingAssociation.setVoteCount(existingAssociation.getVoteCount() + 1);
-			}
-		}
-
 	}
 
 	@Override
@@ -122,42 +94,12 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 		AddressCorrelatorManager correlator = controller.getCorrelator();
 		try {
 			TaskMonitor monitor = VTTaskMonitor.getTaskMonitor();
-			Set<VTImpliedMatchInfo> impliedMatches = ImpliedMatchUtils.findImpliedMatches(
-				controller, source, destination, session, correlator, monitor);
-			processAssociationCleared(impliedMatches);
+			ImpliedMatchUtils.updateImpliedMatchForClearedAssocation(source, destination, session,
+				correlator, monitor);
 		}
 		catch (CancelledException e) {
 			Msg.info(this, "User cancelled finding implied matches when clearing an assocation");
 		}
-	}
-
-	private void processAssociationCleared(Set<VTImpliedMatchInfo> impliedMatches) {
-		for (VTImpliedMatchInfo impliedMatch : impliedMatches) {
-			Address sourceAddress = impliedMatch.getSourceAddress();
-			Address destinationAddress = impliedMatch.getDestinationAddress();
-			VTAssociation existingAssociation =
-				session.getAssociationManager().getAssociation(sourceAddress, destinationAddress);
-
-			if (existingAssociation != null) {
-				int newVoteCount = Math.max(0, existingAssociation.getVoteCount() - 1);
-				existingAssociation.setVoteCount(newVoteCount);
-				if (autoCreateImpliedMatches && newVoteCount == 0) {
-					removeImpliedMatch(existingAssociation);
-				}
-			}
-		}
-
-	}
-
-	private void removeImpliedMatch(VTAssociation existingAssociation) {
-		List<VTMatch> matches = session.getMatches(existingAssociation);
-		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
-		for (VTMatch vtMatch : matches) {
-			if (vtMatch.getMatchSet() == impliedMatchSet) {
-				impliedMatchSet.removeMatch(vtMatch);
-			}
-		}
-
 	}
 
 	@Override

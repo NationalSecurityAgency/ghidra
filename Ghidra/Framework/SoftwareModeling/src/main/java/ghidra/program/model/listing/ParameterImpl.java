@@ -79,7 +79,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param name variable name or null for default name
 	 * @param dataType a fixed-length datatype. (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
-	 * @param stackOffset
+	 * @param stackOffset parameter stack offset
 	 * @param program target program
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
 	 * address is specified, or unable to resolve storage element for specified datatype
@@ -97,7 +97,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param name variable name or null for default name
 	 * @param dataType a fixed-length datatype. (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
-	 * @param stackOffset
+	 * @param stackOffset parameter stack offset
 	 * @param program target program
 	 * @param sourceType name source type
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
@@ -116,7 +116,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param name variable name or null for default name
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
-	 * @param register
+	 * @param register parameter register storage
 	 * @param program target program
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
 	 * address is specified, or unable to resolve storage element for specified datatype
@@ -132,7 +132,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param name variable name or null for default name
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
-	 * @param register
+	 * @param register parameter register storage
 	 * @param program target program
 	 * @param sourceType name source type
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
@@ -233,7 +233,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
-	protected ParameterImpl(String name, int ordinal, DataType dataType, VariableStorage storage,
+	public ParameterImpl(String name, int ordinal, DataType dataType, VariableStorage storage,
 			boolean force, Program program, SourceType sourceType) throws InvalidInputException {
 		this(name, ordinal, dataType, storage, null, null, null, force, program, sourceType);
 	}

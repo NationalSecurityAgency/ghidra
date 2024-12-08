@@ -29,23 +29,23 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class ElfSymbolTable implements ElfFileSection {
 
-	private ElfStringTable stringTable;
-	private ElfSectionHeader symbolTableSection; // may be null
-	private int[] symbolSectionIndexTable;
-	private long fileOffset;
-	private long addrOffset;
-	private long length;
-	private long entrySize;
-	private int symbolCount;
+	private final ElfStringTable stringTable;
+	private final ElfSectionHeader symbolTableSection; // may be null
+	private final int[] symbolSectionIndexTable;
+	private final long fileOffset;
+	private final long addrOffset;
+	private final long length;
+	private final long entrySize;
+	private final int symbolCount;
 
-	private boolean is32bit;
-	private boolean isDynamic;
+	private final boolean is32bit;
+	private final boolean isDynamic;
 
-	private ElfSymbol[] symbols;
+	private final ElfSymbol[] symbols;
 
 	/**
 	 * Construct and parse an Elf symbol table
-	 * @param reader byte reader
+	 * @param reader byte reader (reader is not retained and position is unaffected)
 	 * @param header elf header
 	 * @param symbolTableSection string table section header or null if associated with a dynamic table entry
 	 * @param fileOffset symbol table file offset
@@ -74,35 +74,32 @@ public class ElfSymbolTable implements ElfFileSection {
 		this.symbolSectionIndexTable = symbolSectionIndexTable;
 		this.isDynamic = isDynamic;
 
-		long ptr = reader.getPointerIndex();
-		reader.setPointerIndex(fileOffset);
+		BinaryReader symTableReader = reader.clone(fileOffset);
 
 		List<ElfSymbol> symbolList = new ArrayList<>();
 		symbolCount = (int) (length / entrySize);
 
-		long entryPos = reader.getPointerIndex();
-
 		// load the all the symbol entries first, don't initialize the string name
 		// that will be done later to help localize memory access
+		long entryPos = fileOffset;
 		for (int i = 0; i < symbolCount; i++) {
 			// Reposition reader to start of symbol element since ElfSymbol object 
 			// may not consume all symbol element data
-			reader.setPointerIndex(entryPos);
-			ElfSymbol sym = new ElfSymbol(reader, i, this, header);
+			symTableReader.setPointerIndex(entryPos);
+			ElfSymbol sym = new ElfSymbol(symTableReader, i, this, header);
 			symbolList.add(sym);
 			entryPos += entrySize;
 		}
 
 		// sort the entries by the index in the string table, so don't jump around reading
-		List<ElfSymbol> sortedList = symbolList.stream().sorted(
-			(o1, o2) -> Integer.compare(o1.getName(), o2.getName())).collect(Collectors.toList());
+		List<ElfSymbol> sortedList = symbolList.stream()
+				.sorted((o1, o2) -> Integer.compare(o1.getName(), o2.getName()))
+				.collect(Collectors.toList());
 
 		// initialize the Symbol string names from string table
 		for (ElfSymbol sym : sortedList) {
-			sym.initSymbolName(reader, stringTable);
+			sym.initSymbolName(symTableReader, stringTable);
 		}
-
-		reader.setPointerIndex(ptr);
 
 		symbols = new ElfSymbol[symbolList.size()];
 		symbolList.toArray(symbols);

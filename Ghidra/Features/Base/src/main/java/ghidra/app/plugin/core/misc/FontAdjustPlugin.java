@@ -29,10 +29,10 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo( //@formatter:off
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.FRAMEWORK,
 	shortDescription = "Provides generic actions for increasing/decreasing fonts.",
 	description = "This plugin provides actions for increasing fonts used by component providers. "+
-	"ComponentProviders can either override the \"changeFontSize()\" method or register a" +
+	"ComponentProviders can either override the \"adjustFontSize()\" method or register a" +
 	"theme font id that can be automatically adjusted."
 ) //@formatter:on
 
@@ -51,6 +51,10 @@ public class FontAdjustPlugin extends Plugin {
 				.onAction(this::decrementFont)
 				.buildAndInstall(tool);
 
+		new ActionBuilder("Reset Font", "tool")
+				.keyBinding("ctrl 0")
+				.onAction(this::resetFontSize)
+				.buildAndInstall(tool);
 	}
 
 	private void incrementFont(ActionContext context) {
@@ -67,4 +71,10 @@ public class FontAdjustPlugin extends Plugin {
 		}
 	}
 
+	private void resetFontSize(ActionContext context) {
+		ComponentProvider provider = context.getComponentProvider();
+		if (provider != null) {
+			provider.resetFontSize();
+		}
+	}
 }

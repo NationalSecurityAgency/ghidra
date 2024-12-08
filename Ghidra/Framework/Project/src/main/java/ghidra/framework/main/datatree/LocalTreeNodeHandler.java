@@ -63,7 +63,7 @@ public final class LocalTreeNodeHandler
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void handle(PluginTool tool, DataTree tree, GTreeNode destinationNode,
+	public boolean handle(PluginTool tool, DataTree tree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 
 		this.dataTree = tree;
@@ -71,7 +71,7 @@ public final class LocalTreeNodeHandler
 
 		List<GTreeNode> list = (List<GTreeNode>) transferData;
 		if (list.size() == 0) {
-			return;
+			return false;
 		}
 
 		CopyAllTask task = new CopyAllTask(list, destinationNode, dropAction);
@@ -83,6 +83,8 @@ public final class LocalTreeNodeHandler
 				dataTree.restoreTreeState(treeState);
 			});
 		}
+
+		return true;
 	}
 
 	private void add(GTreeNode destNode, GTreeNode draggedNode, int dropAction,

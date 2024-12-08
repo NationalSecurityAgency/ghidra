@@ -19,8 +19,7 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.dialogs.NumberRangeInputDialog;
-import docking.widgets.tree.*;
-import docking.widgets.tree.support.CombinedGTreeFilter;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeFilter;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
@@ -64,30 +63,12 @@ public class FindDataTypesBySizeAction extends DockingAction {
 		newProvider.setTitle(getName());
 		DataTypeArchiveGTree tree = newProvider.getGTree();
 		GTreeFilter filter = createFilter(values);
-		tree.setFilterProvider(new MyTreeFilterProvider(tree, filter));
+		tree.setFilterProvider(new SecondaryTreeFilterProvider(tree, filter));
 		newProvider.setVisible(true);
 	}
 
 	protected GTreeFilter createFilter(SortedRangeList values) {
 		return new SizeGTreeFilter(values);
-	}
-
-	private class MyTreeFilterProvider extends DefaultGTreeFilterProvider {
-		private GTreeFilter secondaryFilter;
-
-		MyTreeFilterProvider(GTree tree, GTreeFilter secondaryFilter) {
-			super(tree);
-			this.secondaryFilter = secondaryFilter;
-		}
-
-		@Override
-		public GTreeFilter getFilter() {
-			GTreeFilter filter = super.getFilter();
-			if (filter == null) {
-				return secondaryFilter;
-			}
-			return new CombinedGTreeFilter(filter, secondaryFilter);
-		}
 	}
 
 	private class SizeGTreeFilter implements GTreeFilter {

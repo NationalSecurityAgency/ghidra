@@ -63,7 +63,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 		wasCancelled = true;
 	}
 
-	boolean wasCancelled() {
+	public boolean wasCancelled() {
 		return wasCancelled;
 	}
 
@@ -71,7 +71,7 @@ public class SelectLanguageDialog extends DialogComponentProvider {
 		return languagePanel.getSelectedLcsPair() != null;
 	}
 
-	void setSelectedLanguage(LanguageCompilerSpecPair language) {
+	public void setSelectedLanguage(LanguageCompilerSpecPair language) {
 		Swing.runNow(() -> languagePanel.setSelectedLcsPair(language));
 	}
 

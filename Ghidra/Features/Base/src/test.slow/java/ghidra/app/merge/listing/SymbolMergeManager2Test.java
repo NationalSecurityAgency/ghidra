@@ -74,43 +74,25 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddFunctionSymbolNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createScopedSymbol(program, "0x1001b97", "FOO");
 					createScopedSymbol(program, "0x10032a7", "FRED");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					createScopedSymbol(program, "0x10028eb", "BAR");
 					createScopedSymbol(program, "0x10032a7", "FRED");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -142,45 +124,27 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 			// non-primary global "EEE" @ "0x1004bdc"
 			// primary global "AAA" @ "0x100e483"
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x1001b97"), "FOO", SourceType.USER_DEFINED);
 					symtab.createLabel(addr(program, "0x10032a7"), "FRED", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10028eb"), "BAR", SourceType.USER_DEFINED);
 					symtab.createLabel(addr(program, "0x10032a7"), "FRED", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -212,40 +176,18 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 			// non-primary global "EEE" @ "0x1004bdc"
 			// primary global "AAA" @ "0x100e483"
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x10044d0", "DDD"));
-					getGlobalSymbol(program, "0x1003075", "ZZZ").setPrimary();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x10044d0", "DDD"));
+				getGlobalSymbol(program, "0x1003075", "ZZZ").setPrimary();
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					getScopedSymbol(program, "0x10044d0", "DDD6").setPrimary();
-					symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1003075", "QQQ"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				getScopedSymbol(program, "0x10044d0", "DDD6").setPrimary();
+				symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1003075", "QQQ"));
 			}
 		});
 
@@ -272,40 +214,18 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 			// non-primary global "EEE" @ "0x1004bdc"
 			// primary global "AAA" @ "0x100e483"
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1004bdc", "EEE"));
-					getGlobalSymbol(program, "0x1003075", "QQQ").setPrimary();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1004bdc", "EEE"));
+				getGlobalSymbol(program, "0x1003075", "QQQ").setPrimary();
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					getGlobalSymbol(program, "0x1004bdc", "EEE").setPrimary();
-					symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1003075", "QQQ"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				getGlobalSymbol(program, "0x1004bdc", "EEE").setPrimary();
+				symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1003075", "QQQ"));
 			}
 		});
 
@@ -335,40 +255,18 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 			// non-primary global "EEE" @ "0x1004bdc"
 			// primary global "AAA" @ "0x100e483"
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1004bdc", "EEE"));
-					getGlobalSymbol(program, "0x1003075", "QQQ").setPrimary();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1004bdc", "EEE"));
+				getGlobalSymbol(program, "0x1003075", "QQQ").setPrimary();
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					getGlobalSymbol(program, "0x1004bdc", "EEE").setPrimary();
-					symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1003075", "QQQ"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				getGlobalSymbol(program, "0x1004bdc", "EEE").setPrimary();
+				symtab.removeSymbolSpecial(getGlobalSymbol(program, "0x1003075", "QQQ"));
 			}
 		});
 
@@ -391,47 +289,29 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddSameNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10032a7"), "Foo", SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1004bf4", "Foo");
 					symtab.createLabel(addr(program, "0x1005c2f"), "Fred", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10032a7"), "Foo", SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1004bf4", "Foo");
 					symtab.createLabel(addr(program, "0x1005c2f"), "Fred", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -461,47 +341,29 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x1001bde"), "Prime",
 						SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1001bde", "Foo");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x1001bde"), "Prime",
 						SourceType.USER_DEFINED);
 					symtab.createLabel(addr(program, "0x1001bde"), "Bar", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -523,47 +385,29 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPrimaryConflictsChooseMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10032a7"), "Foo", SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1004bf4", "Bud");
 					symtab.createLabel(addr(program, "0x1005c2f"), "Fred", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10032a7"), "Bar", SourceType.USER_DEFINED);
 					symtab.createLabel(addr(program, "0x1004bf4"), "Bud", SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1005c2f", "Fred");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -598,47 +442,29 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPrimaryConflictsChooseLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10032a7"), "Foo", SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1004bf4", "Bud");
 					symtab.createLabel(addr(program, "0x1005c2f"), "Fred", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x10032a7"), "Bar", SourceType.USER_DEFINED);
 					symtab.createLabel(addr(program, "0x1004bf4"), "Bud", SourceType.USER_DEFINED);
 					createScopedSymbol(program, "0x1005c2f", "Fred");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -677,14 +503,8 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPrimarySymbolsWithoutConflict() throws Exception {
 		mtf.initialize("notepad3", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address addr01002f01 = addr(program, "0x01002f01");
 					AddressSet addressSet =
@@ -699,24 +519,14 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 					createFunction(program, "0x01002f01",
 						SymbolUtilities.getDefaultFunctionName(addr01002f01), addressSet);
 					assertNotNull(functionManager.getFunctionAt(addr01002f01));
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createLabel(addr(program, "0x01002f01"), "Bar", SourceType.USER_DEFINED);
@@ -724,14 +534,9 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 					Address addr01002f01 = addr(program, "0x01002f01");
 					FunctionManager functionManager = program.getFunctionManager();
 					assertNull(functionManager.getFunctionAt(addr01002f01));
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -860,41 +665,23 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testGlobalScopeConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001b97", "FOO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001ba5", "FOO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -915,41 +702,23 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testSameNameNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001b97", "FOO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					createScopedSymbol(program, "0x1001b9d", "FOO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -970,43 +739,25 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testOppositesConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001b97", "FOO");
 					createScopedSymbol(program, "0x1001b9d", "BAR");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001b97", "BAR");
 					createScopedSymbol(program, "0x1001b9d", "FOO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1032,43 +783,25 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 		// YOU is conflict in function namespace
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001000", "ME");
 					createScopedSymbol(program, "0x1001b97", "YOU");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "0x1001b9d", "ME");
 					createScopedSymbol(program, "0x1001b9d", "YOU");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1106,13 +839,8 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol s;
 					s = createScopedSymbol(program, "0x1002691", "Jack");
@@ -1122,24 +850,14 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 					s = createGlobalSymbol(program, "0x10032a7", "Lucy");
 					s.setPrimary();
 					assertTrue(s.isPrimary());
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol s;
 					s = createScopedSymbol(program, "0x1002691", "Jill");
@@ -1149,14 +867,9 @@ public class SymbolMergeManager2Test extends AbstractListingMergeManagerTest {
 					s = createGlobalSymbol(program, "0x10032a7", "Linus");
 					s.setPrimary();
 					assertTrue(s.isPrimary());
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

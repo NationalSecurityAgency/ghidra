@@ -30,7 +30,6 @@ import docking.action.builder.ActionBuilder;
 import docking.widgets.label.GLabel;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.data.DataTypeManager;
@@ -139,7 +138,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		equatesModel = new EquateTableModel(plugin);
 
 		equatesTable = new GhidraTable(equatesModel);
-
 		equatesTable.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -172,7 +170,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		equatesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		equatesFilterPanel = new GhidraTableFilterPanel<>(equatesTable, equatesModel);
-
 		JScrollPane equatesTablePane = new JScrollPane(equatesTable);
 
 		JPanel equatesPanel = new JPanel(new BorderLayout());
@@ -182,17 +179,18 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		referencesModel = new EquateReferenceTableModel(plugin);
 
-		referencesTable = new GhidraTable(referencesModel);
+		String namePrefix = "Equates";
+		equatesTable.setAccessibleNamePrefix(namePrefix);
+		equatesFilterPanel.setAccessibleNamePrefix(namePrefix);
 
+		referencesTable = new GhidraTable(referencesModel);
+		referencesTable.installNavigation(tool);
 		referencesTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		referencesTable.setPreferredScrollableViewportSize(new Dimension(250, 150));
 		referencesTable.setRowSelectionAllowed(true);
 		referencesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		GoToService goToService = tool.getService(GoToService.class);
-		if (goToService != null) {
-			referencesTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		referencesTable.setAccessibleNamePrefix("Equates References");
 
 		JScrollPane referencesTablePane = new JScrollPane(referencesTable);
 
@@ -329,15 +327,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		List<Equate> equates = equatesFilterPanel.getSelectedItems();
 		plugin.deleteEquates(equates);
-	}
-
-	void setGoToService(GoToService service) {
-		if (service != null) {
-			referencesTable.installNavigation(service, service.getDefaultNavigatable());
-		}
-		else {
-			referencesTable.removeNavigation();
-		}
 	}
 
 	EquateTableModel getEquatesModel() {

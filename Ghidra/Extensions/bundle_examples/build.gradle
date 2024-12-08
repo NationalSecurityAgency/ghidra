@@ -123,7 +123,7 @@ task zipExtensions(type: Zip, dependsOn:jarTasks) {
 	include "scripts_*.jar"
 
 	for(jarTask in jarTasks) {
-		from relativePath(jarTask.archivePath)
+		from relativePath(jarTask.archiveFile.getAsFile())
 		exclude jarTask.dirName
 	}
 

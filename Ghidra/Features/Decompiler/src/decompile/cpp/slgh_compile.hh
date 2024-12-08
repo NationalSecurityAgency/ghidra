@@ -300,6 +300,7 @@ private:
   bool warnalllocalcollisions;		///< \b true if local export collisions generate individual warnings
   bool warnallnops;			///< \b true if pcode NOPs generate individual warnings
   bool failinsensitivedups;		///< \b true if case insensitive register duplicates cause error
+  bool debugoutput;			///< \b true if output .sla is written in XML debug format
   vector<string> noplist;		///< List of individual NOP warnings
   mutable Location currentLocCache;	///< Location for (last) request of current location
   int4 errors;				///< Number of fatal errors encountered
@@ -382,6 +383,11 @@ public:
   /// \param val is \b true is duplicates cause an error.
   void setInsensitiveDuplicateError(bool val) { failinsensitivedups = val; }
 
+  /// \brief Set whether the output .sla file should be written in XML debug format
+  ///
+  /// \param val is \b true if the XML debug format should be used
+  void setDebugOutput(bool val) { debugoutput = val; }
+
   // Lexer functions
   void calcContextLayout(void);				///< Calculate the internal context field layout
   string grabCurrentFilePath(void) const;		///< Get the path to the current source file
@@ -448,7 +454,7 @@ public:
   void setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 		     bool lenientConflict, bool allCollisionWarning,
 		     bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
-		     bool largeTemporaryWarning, bool caseSensitiveRegisterNames);
+		     bool largeTemporaryWarning, bool caseSensitiveRegisterNames,bool debugOutput);
   int4 run_compilation(const string &filein,const string &fileout);
 };
 

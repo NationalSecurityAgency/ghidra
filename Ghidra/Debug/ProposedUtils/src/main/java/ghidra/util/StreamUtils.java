@@ -15,13 +15,29 @@
  */
 package ghidra.util;
 
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public enum StreamUtils {
-	;
+import ghidra.util.database.DBSynchronizedSpliterator;
+import ghidra.util.database.SynchronizedSpliterator;
+
+/**
+ * Some utilities for streams
+ */
+public class StreamUtils {
+	private StreamUtils() {
+	}
+
+	/**
+	 * Union two sorted streams into a single sorted stream
+	 * 
+	 * @param <T> the type of elements
+	 * @param streams the streams to be merged
+	 * @param comparator the comparator that orders each stream and that will order the resulting
+	 *            stream
+	 * @return the sorted stream
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> merge(Collection<? extends Stream<? extends T>> streams,
 			Comparator<? super T> comparator) {
@@ -30,5 +46,55 @@ public enum StreamUtils {
 		}
 		return StreamSupport.stream(new MergeSortingSpliterator<>(
 			streams.stream().map(s -> s.spliterator()).toList(), comparator), false);
+	}
+
+	/**
+	 * Adapt a stream into an iterable
+	 * 
+	 * @param <T> the type of elements
+	 * @param stream the stream
+	 * @return an iterable over the same elements in the stream in the same order
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Iterable<T> iter(Stream<? extends T> stream) {
+		return () -> (Iterator<T>) stream.iterator();
+	}
+
+	/**
+	 * Wrap the given stream into a synchronized stream on the given object's intrinsic lock
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This makes no guarantees regarding the consistency or visit order if the
+	 * underlying resource is modified between elements being visited. It merely prevents the stream
+	 * client from accessing the underlying resource concurrently. For such guarantees, the client
+	 * may need to acquire the lock for its whole use of the stream.
+	 * 
+	 * @param <T> the type of elements
+	 * @param lock the object on which to synchronize
+	 * @param stream the (un)synchronized stream
+	 * @return the synchronized stream
+	 */
+	public static <T> Stream<T> sync(Object lock, Stream<T> stream) {
+		var wrapped = new SynchronizedSpliterator<T>(stream.spliterator(), lock);
+		return StreamSupport.stream(wrapped, stream.isParallel());
+	}
+
+	/**
+	 * Wrap the given stream into a synchronized stream on the given lock
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This makes no guarantees regarding the consistency or visit order if the
+	 * underlying resource is modified between elements being visited. It merely prevents the stream
+	 * client from accessing the underlying resource concurrently. For such guarantees, the client
+	 * may need to acquire the lock for its whole use of the stream.
+	 * 
+	 * @param <T> the type of elements
+	 * @param lock the lock
+	 * @param stream the (un)synchronized stream
+	 * @return the synchronized stream
+	 */
+	public static <T> Stream<T> lock(java.util.concurrent.locks.Lock lock, Stream<T> stream) {
+		var wrapped = new DBSynchronizedSpliterator<T>(stream.spliterator(), lock);
+		return StreamSupport.stream(wrapped, stream.isParallel());
 	}
 }

@@ -88,6 +88,7 @@ public class DisassemblerPlugin extends Plugin {
 	private DockingAction x86_64DisassembleAction;
 	private DockingAction x86_32DisassembleAction;
 	private DockingAction setFlowOverrideAction;
+	private DockingAction setLengthOverrideAction;
 
 	/** Dialog for obtaining the processor state to be used for disassembling. */
 //	private ProcessorStateDialog processorStateDialog;
@@ -177,6 +178,7 @@ public class DisassemblerPlugin extends Plugin {
 		x86_64DisassembleAction = new X86_64DisassembleAction(this, GROUP_NAME, false);
 		x86_32DisassembleAction = new X86_64DisassembleAction(this, GROUP_NAME, true);
 		setFlowOverrideAction = new SetFlowOverrideAction(this, GROUP_NAME);
+		setLengthOverrideAction = new SetLengthOverrideAction(this, GROUP_NAME);
 
 		tool.addAction(disassembleAction);
 		tool.addAction(disassembleRestrictedAction);
@@ -193,6 +195,7 @@ public class DisassemblerPlugin extends Plugin {
 		tool.addAction(x86_32DisassembleAction);
 		tool.addAction(contextAction);
 		tool.addAction(setFlowOverrideAction);
+		tool.addAction(setLengthOverrideAction);
 	}
 
 	void disassembleRestrictedCallback(ListingActionContext context) {

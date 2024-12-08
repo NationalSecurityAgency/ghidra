@@ -545,6 +545,11 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 	}
 
 	@Override
+	public boolean isWritable() {
+		return false;
+	}
+
+	@Override
 	public boolean isVolatile() {
 		return false;
 	}

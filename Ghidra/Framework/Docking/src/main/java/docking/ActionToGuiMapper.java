@@ -47,13 +47,14 @@ public class ActionToGuiMapper {
 		popupActionManager = new PopupActionManager(winMgr, menuGroupMap);
 
 		DockingWindowsContextSensitiveHelpListener.install();
+		MouseBindingMouseEventDispatcher.install();
 	}
 
 	/**
 	 * Register a specific Help content location for a component.
 	 * The DocWinListener will be notified with the help location if the specified
 	 * component 'c' has focus and the help key is pressed.
-	 *  
+	 *
 	 * @param c component
 	 * @param helpLocation the help location
 	 */

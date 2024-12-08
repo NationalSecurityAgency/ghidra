@@ -390,6 +390,41 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testDefaultSettingsOnCharArrayComponent() throws Exception {
+
+		DataType charDT = dataMgr.resolve(new CharDataType(), null);
+		SettingsDefinition[] settingsDefinitions = charDT.getSettingsDefinitions();
+
+		assertTrue("Expect multiple settings on char type", settingsDefinitions.length > 2); // make sure we get more than two settings
+
+		Array array = new ArrayDataType(charDT, 5, -1);
+		assertArrayEquals(settingsDefinitions, array.getSettingsDefinitions());
+
+		array = (Array) dataMgr.resolve(array, null);
+		assertArrayEquals(settingsDefinitions, array.getSettingsDefinitions());
+
+		Structure s = new StructureDataType("struct", 0);
+		s.setPackingEnabled(true);
+		s.add(array);
+		s = (Structure) dataMgr.resolve(s, null);
+		DataTypeComponent dtc = s.getComponent(0);
+
+		Settings defaultSettings = dtc.getDefaultSettings();
+
+		assertEquals(FormatSettingsDefinition.CHAR,
+			FormatSettingsDefinition.DEF_CHAR.getChoice(defaultSettings));
+
+		assertEquals(MutabilitySettingsDefinition.NORMAL,
+			MutabilitySettingsDefinition.DEF.getChoice(defaultSettings));
+
+		assertEquals(String.class, array.getValueClass(defaultSettings));
+
+		FormatSettingsDefinition.DEF_CHAR.setChoice(defaultSettings, FormatSettingsDefinition.HEX);
+
+		assertEquals(Array.class, array.getValueClass(defaultSettings));
+	}
+
+	@Test
 	public void testDefaultSettingsOnTypedef() throws Exception {
 		DataType byteDT = dataMgr.resolve(ByteDataType.dataType, null);
 		SettingsDefinition[] settingsDefinitions = byteDT.getSettingsDefinitions();
@@ -516,7 +551,6 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private void addBlock() throws Exception {
 
 		Memory memory = program.getMemory();
-		memory.createInitializedBlock("test", addr(0), 100, (byte) 0,
-			TaskMonitor.DUMMY, false);
+		memory.createInitializedBlock("test", addr(0), 100, (byte) 0, TaskMonitor.DUMMY, false);
 	}
 }

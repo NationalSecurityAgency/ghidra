@@ -24,6 +24,7 @@ import java.util.Random;
 import org.junit.Assert;
 
 import db.buffers.*;
+import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -815,7 +816,7 @@ public class DBTestUtils {
 	public static DBHandle cloneDbHandle(DBHandle dbh) throws IOException {
 
 		try {
-			File tmpFile = File.createTempFile("tmp", ".db");
+			File tmpFile = Application.createTempFile("tmp", ".db");
 			tmpFile.delete();
 
 			LocalBufferFile bf = new LocalBufferFile(tmpFile, dbh.getBufferSize());

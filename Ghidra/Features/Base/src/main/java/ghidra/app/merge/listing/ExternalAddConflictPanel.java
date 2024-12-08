@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import javax.swing.*;
 
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.TitledPanel;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
@@ -38,7 +39,6 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.multilisting.AddressTranslator;
 import ghidra.app.util.viewer.multilisting.MultiListingLayoutModel;
-import ghidra.app.util.viewer.util.TitledPanel;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.ToolOptions;

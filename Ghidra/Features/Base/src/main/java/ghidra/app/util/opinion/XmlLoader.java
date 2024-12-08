@@ -134,7 +134,7 @@ public class XmlLoader extends AbstractProgramLoader {
 		}
 
 		if (loadSpecs.isEmpty()) {
-			// just put 'em all in (give endianess preference)
+			// just put 'em all in (give endianness preference)
 			Endian endian = Endian.toEndian(info.endian);
 			List<LanguageDescription> languageDescriptions =
 				getLanguageService().getLanguageDescriptions(false);

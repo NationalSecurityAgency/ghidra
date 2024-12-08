@@ -17,23 +17,22 @@ package ghidra.graph.export;
 
 import java.util.*;
 
-import org.jgrapht.Graph;
-
 import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * {@link GraphDisplay} implementation for exporting graphs.  In this case, there is no
- * associated visual display, instead the graph output gets sent to a file.  The 
+ * associated visual display, instead the graph output gets sent to a file.  The
  * {@link GraphDisplay} is mostly just a placeholder for executing the export function.  By
  * hijacking the {@link GraphDisplayProvider} and {@link GraphDisplay} interfaces for exporting,
  * all graph generating operations can be exported instead of being displayed without changing
- * the graph generation code.    
+ * the graph generation code.
  */
 class ExportAttributedGraphDisplay implements GraphDisplay {
 
@@ -66,7 +65,8 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	 */
 	private void doSetGraphData(AttributedGraph attributedGraph) {
 		List<AttributedGraphExporter> exporters = findGraphExporters();
-		GraphExporterDialog dialog = new GraphExporterDialog(attributedGraph, exporters);
+		GraphExporterDialog dialog =
+			Swing.runNow(() -> new GraphExporterDialog(attributedGraph, exporters));
 		tool.showDialog(dialog);
 	}
 
@@ -79,8 +79,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setGraph(AttributedGraph graph, String title, boolean append,
-			TaskMonitor monitor) {
+	public void setGraph(AttributedGraph graph, String title, boolean append, TaskMonitor monitor) {
 		this.title = title;
 		this.graph = graph;
 		doSetGraphData(graph);
@@ -92,9 +91,6 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 		this.setGraph(graph, title, append, monitor);
 	}
 
-	/**
-	 * remove all vertices and edges from the {@link Graph}
-	 */
 	@Override
 	public void clear() {
 		// not interactive, so N/A
@@ -113,6 +109,11 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	@Override
 	public void addAction(DockingActionIf action) {
 		// do nothing, actions are not supported by this display
+	}
+
+	@Override
+	public Collection<DockingActionIf> getActions() {
+		return Collections.emptyList();
 	}
 
 	@Override

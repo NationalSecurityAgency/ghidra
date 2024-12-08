@@ -19,6 +19,7 @@ import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A category path is the full path to a particular data type
@@ -228,18 +229,35 @@ public class CategoryPath implements Comparable<CategoryPath> {
 
 	/**
 	 * Return the {@link String} representation of this category path including the category name,
-	 * where components are delimited with a forward slash.  Any component that contains a forward
-	 * slash will be have the forward slash characters escaped.
+	 * where components are delimited with a forward slash.  Any occurrence of a forward slash
+	 * within individual path components will be escaped (e.g., {@code "\/"}).
 	 * @return the full category path
 	 */
 	public String getPath() {
 		if (isRoot()) {
 			return DELIMITER_STRING;
 		}
-		if (parent.isRoot()) {
-			return DELIMITER_CHAR + escapeString(name);
+		return parent.getPath(name);
+	}
+
+	/**
+	 * Return the {@link String} representation of the specified {@code childName} within this
+	 * category path where all path components are delimited with a forward slash.  Any occurrence
+	 * of a forward slash within individual path components, including the {@code childName}, will
+	 * be escaped (e.g., {@code "\/"}).
+	 * @param childName child name
+	 * @return full path for a child within this category
+	 */
+	public String getPath(String childName) {
+		if (StringUtils.isBlank(childName)) {
+			throw new IllegalArgumentException("blank child name");
 		}
-		return parent.getPath() + DELIMITER_CHAR + escapeString(name);
+		String path = getPath();
+		if (!isRoot()) {
+			path += DELIMITER_STRING;
+		}
+		path += escapeString(childName);
+		return path;
 	}
 
 	@Override
@@ -289,7 +307,7 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	public boolean isAncestorOrSelf(CategoryPath candidateAncestorPath) {
 
-		// Result categoryPath          This
+		// Result candidateAncestor     This
 		// ------ --------------------- ------------------------
 		// True   /                     /
 		// True   /                     /apple
@@ -326,12 +344,12 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	@Override
 	public int compareTo(CategoryPath other) {
-		if (isRoot() && other.isRoot()) {
-			return 0;
+		if (isRoot()) {
+			return other.isRoot() ? 0 : -1;
 		}
 
-		if (isRoot() || other.isRoot()) {
-			return isRoot() ? -1 : 1;
+		if (other.isRoot()) {
+			return 1;
 		}
 
 		int result = parent.compareTo(other.getParent());

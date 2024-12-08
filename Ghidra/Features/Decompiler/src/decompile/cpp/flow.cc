@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -330,8 +330,7 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
       break;
     case CPUI_CALLOTHER:
     {
-      InjectedUserOp *userop = dynamic_cast<InjectedUserOp *>(glb->userops.getOp(op->getIn(0)->getOffset()));
-      if (userop != (InjectedUserOp *)0)
+      if (glb->userops.getOp(op->getIn(0)->getOffset())->getType() == UserPcodeOp::injected)
 	injectlist.push_back(op);
       break;
     }
@@ -711,20 +710,49 @@ bool FlowInfo::setupCallindSpecs(PcodeOp *op,FuncCallSpecs *fc)
 }
 
 /// \param op is the BRANCHIND operation to convert
-/// \param failuremode is a code indicating the type of failure when trying to recover the jump table
-void FlowInfo::truncateIndirectJump(PcodeOp *op,int4 failuremode)
+/// \param mode indicates the type of failure when trying to recover the jump table
+void FlowInfo::truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode)
 
 {
-  data.opSetOpcode(op,CPUI_CALLIND); // Turn jump into call
-  setupCallindSpecs(op,(FuncCallSpecs *)0);
-  if (failuremode != 2)					// Unless the switch was a thunk mechanism
-    data.getCallSpecs(op)->setBadJumpTable(true);	// Consider using special name for switch variable
+  if (mode == JumpTable::fail_return) {
+    data.opSetOpcode(op,CPUI_RETURN);	// Turn jump into return
+    data.warning("Treating indirect jump as return",op->getAddr());
+  }
+  else {
+    data.opSetOpcode(op,CPUI_CALLIND); // Turn jump into call
+    setupCallindSpecs(op,(FuncCallSpecs *)0);
+    FuncCallSpecs *fc = data.getCallSpecs(op);
+    uint4 returnType;
+    bool noParams;
 
-  // Create an artificial return
-  PcodeOp *truncop = artificialHalt(op->getAddr(),0);
-  data.opDeadInsertAfter(truncop,op);
+    if (mode == JumpTable::fail_thunk) {
+      returnType = 0;
+      noParams = false;
+    }
+    else if (mode == JumpTable::fail_callother) {
+      returnType = PcodeOp::noreturn;
+      fc->setNoReturn(true);
+      data.warning("Does not return", op->getAddr());
+      noParams = true;
+    }
+    else {
+      returnType = 0;
+      noParams = false;
+      fc->setBadJumpTable(true);		// Consider using special name for switch variable
+      data.warning("Treating indirect jump as call",op->getAddr());
+    }
+    if (noParams) {
+      if (!fc->hasModel()) {
+	fc->setInternal(glb->defaultfp, glb->types->getTypeVoid());
+	fc->setInputLock(true);
+	fc->setOutputLock(true);
+      }
+    }
 
-  data.warning("Treating indirect jump as call",op->getAddr());
+    // Create an artificial return
+    PcodeOp *truncop = artificialHalt(op->getAddr(),returnType);
+    data.opDeadInsertAfter(truncop,op);
+  }
 }
 
 /// \brief Test if the given p-code op is a member of an array
@@ -753,7 +781,6 @@ void FlowInfo::generateOps(void)
   if (hasInject())
     injectPcode();
   do {
-    bool collapsed_jumptable = false;
     while(!tablelist.empty()) {	// For each jumptable found
       vector<JumpTable *> newTables;
       recoverJumpTables(newTables, notreached);
@@ -765,16 +792,13 @@ void FlowInfo::generateOps(void)
 	int4 num = jt->numEntries();
 	for(int4 i=0;i<num;++i)
 	  newAddress(jt->getIndirectOp(),jt->getAddressByIndex(i));
-	if (jt->isPossibleMultistage())
-	  collapsed_jumptable = true;
 	while(!addrlist.empty())	// Try to fill in as much more as possible
 	  fallthru();
       }
     }
     
     checkContainedCall();	// Check for PIC constructions
-    if (collapsed_jumptable)
-      checkMultistageJumptables();
+    checkMultistageJumptables();
     while(notreachcnt < notreached.size()) {
       tablelist.push_back(notreached[notreachcnt]);
       notreachcnt += 1;
@@ -1096,12 +1120,6 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
 bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address &retaddr)
 
 {
-  if (inline_recursion->find( inlinefd->getAddress() ) != inline_recursion->end()) {
-    // This function has already been included with current inlining
-    inline_head->warning("Could not inline here",op->getAddr());
-    return false;
-  }
-  
   if (!inlinefd->getFuncProto().isNoReturn()) {
     list<PcodeOp *>::iterator iter = op->getInsertIter();
     ++iter;
@@ -1118,8 +1136,6 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     // If the inlining "jumps back" this starts a new basic block
     data.opMarkStartBasic(nextop);
   }
-
-  inline_recursion->insert(inlinefd->getAddress());
   return true;
 }
 
@@ -1219,11 +1235,31 @@ bool FlowInfo::inlineSubFunction(FuncCallSpecs *fc)
 {
   Funcdata *fd = fc->getFuncdata();
   if (fd == (Funcdata *)0) return false;
-  PcodeOp *op = fc->getOp();
-  Address retaddr;
 
-  if (!data.inlineFlow( fd, *this, op))
+  if (inline_head == (Funcdata *)0) {
+    // This is the top level of inlining
+    inline_head = &data;	// Set up head of inlining
+    inline_recursion = &inline_base;
+  }
+  inline_recursion->insert(data.getAddress()); // Insert current function
+  if (inline_recursion->find( fd->getAddress() ) != inline_recursion->end()) {
+    // This function has already been included with current inlining
+    inline_head->warning("Could not inline here",fc->getOp()->getAddr());
     return false;
+  }
+
+  int4 res = data.inlineFlow( fd, *this, fc->getOp());
+  if (res < 0)
+    return false;
+  else if (res == 0) {	// easy model
+    // Remove inlined function from list so it can be inlined again, even if it also inlines
+    inline_recursion->erase(fd->getAddress());
+  }
+  else if (res == 1) {	// hard model
+    // Add inlined function to recursion list, even if it contains no inlined calls,
+    // to prevent parent from inlining it twice
+    inline_recursion->insert(fd->getAddress());
+  }
 
   // Changing CALL to JUMP may make some original code unreachable
   setPossibleUnreachable();
@@ -1282,17 +1318,6 @@ void FlowInfo::deleteCallSpec(FuncCallSpecs *fc)
 void FlowInfo::injectPcode(void)
 
 {
-  if (inline_head == (Funcdata *)0) {
-    // This is the top level of inlining
-    inline_head = &data;	// Set up head of inlining
-    inline_recursion = &inline_base;
-    inline_recursion->insert(data.getAddress()); // Insert ourselves
-    //    inline_head = (Funcdata *)0;
-  }
-  else {
-    inline_recursion->insert(data.getAddress()); // Insert ourselves
-  }
-
   for(int4 i=0;i<injectlist.size();++i) {
     PcodeOp *op = injectlist[i];
     if (op == (PcodeOp *)0) continue;
@@ -1398,21 +1423,26 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
   s1 << data.getName() << "@@jump@";
   op->getAddr().printRaw(s1);
 
+  string nm = s1.str();
   // Prepare partial Funcdata object for analysis if necessary
-  Funcdata partial(s1.str(),data.getScopeLocal()->getParent(),data.getAddress(),(FunctionSymbol *)0);
+  Funcdata partial(nm,nm,data.getScopeLocal()->getParent(),data.getAddress(),(FunctionSymbol *)0);
 
   for(int4 i=0;i<tablelist.size();++i) {
     op = tablelist[i];
-    int4 failuremode;
-    JumpTable *jt = data.recoverJumpTable(partial,op,this,failuremode); // Recover it
+    JumpTable::RecoveryMode mode;
+    JumpTable *jt = data.recoverJumpTable(partial,op,this,mode); // Recover it
     if (jt == (JumpTable *)0) { // Could not recover jumptable
-      if ((failuremode == 3) && (tablelist.size() > 1) && (!isInArray(notreached,op))) {
-	// If the indirect op was not reachable with current flow AND there is more flow to generate,
+      if (!isFlowForInline())	// Unless this flow is being inlined for something else
+	truncateIndirectJump(op,mode); // Treat the indirect jump as a call
+    }
+    else if (jt->isPartial()) {
+      if (tablelist.size() > 1 && !isInArray(notreached,op)) {
+	// If the recovery is incomplete with current flow AND there is more flow to generate,
 	//     AND we haven't tried to recover this table before
-	notreached.push_back(op); // Save this op so we can try to recovery table again later
+	notreached.push_back(op); // Save this op so we can try to recover the table again later
       }
-      else if (!isFlowForInline())	// Unless this flow is being inlined for something else
-	truncateIndirectJump(op,failuremode); // Treat the indirect jump as a call
+      else
+	jt->markComplete();	// If we aren't revisiting, mark the table as complete
     }
     newTables.push_back(jt);
   }

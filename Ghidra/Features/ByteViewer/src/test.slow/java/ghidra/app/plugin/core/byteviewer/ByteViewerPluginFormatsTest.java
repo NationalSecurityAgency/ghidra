@@ -27,7 +27,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -238,12 +238,71 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
+	public void testHexShortView() throws Exception {
+
+		env.showTool();
+		addViews();
+
+		final ByteViewerComponent c = findComponent(panel, "Hex Short");
+		panel.setCurrentView(c);
+		assertEquals(8, c.getNumberOfFields());
+		assertEquals(2, c.getDataModel().getUnitByteSize());
+
+		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		runSwing(() -> {
+			ByteViewerComponent currentComponent = panel.getCurrentComponent();
+			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
+		});
+		// verify that the 2 bytes are represented as an 4 digit hex number
+		assertEquals(4, c.getCurrentField().getNumCols(loc.getRow()));
+	}
+
+	@Test
+	public void testOtherEditsHexShort() throws Exception {
+		// verify that the 4 byte string is rendered in red when a byte
+		// is changed from another view, e.g. Ascii or Hex
+		env.showTool();
+		addViews();
+
+		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		panel.setCurrentView(c);
+
+		final ToggleDockingAction action =
+			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
+		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		runSwing(() -> {
+			ByteViewerComponent currentComponent = panel.getCurrentComponent();
+			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
+			action.setSelected(true);
+			action.actionPerformed(new DefaultActionContext());
+			KeyEvent ev =
+				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
+			currentComponent.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(),
+				loc.getCol(), currentComponent.getCurrentField());
+		});
+		program.flushEvents();
+
+		final ByteViewerComponent hexComp = findComponent(panel, "Hex Short");
+
+		runSwing(() -> {
+			ProgramByteBlockSet blockset =
+				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
+			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
+		});
+
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+			((ByteField) hexComp.getCurrentField()).getForeground());
+	}
+
+	@Test
 	public void testHexIntegerView() throws Exception {
 
 		env.showTool();
 		addViews();
 
-		final ByteViewerComponent c = findComponent(panel, "HexInteger");
+		final ByteViewerComponent c = findComponent(panel, "Hex Integer");
 		panel.setCurrentView(c);
 		assertEquals(4, c.getNumberOfFields());
 		assertEquals(4, c.getDataModel().getUnitByteSize());
@@ -274,7 +333,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
 			currentComponent.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(),
@@ -282,7 +341,125 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		});
 		program.flushEvents();
 
-		final ByteViewerComponent hexComp = findComponent(panel, "HexInteger");
+		final ByteViewerComponent hexComp = findComponent(panel, "Hex Integer");
+
+		runSwing(() -> {
+			ProgramByteBlockSet blockset =
+				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
+			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
+		});
+
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+			((ByteField) hexComp.getCurrentField()).getForeground());
+	}
+
+	@Test
+	public void testHexLongView() throws Exception {
+
+		env.showTool();
+		addViews();
+
+		final ByteViewerComponent c = findComponent(panel, "Hex Long");
+		panel.setCurrentView(c);
+		assertEquals(2, c.getNumberOfFields());
+		assertEquals(8, c.getDataModel().getUnitByteSize());
+
+		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		runSwing(() -> {
+			ByteViewerComponent currentComponent = panel.getCurrentComponent();
+			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
+		});
+		// verify that the 8 bytes are represented as an 8 digit hex number
+		assertEquals(16, c.getCurrentField().getNumCols(loc.getRow()));
+	}
+
+	@Test
+	public void testOtherEditsHexLong() throws Exception {
+		// verify that the 4 byte string is rendered in red when a byte
+		// is changed from another view, e.g. Ascii or Hex
+		env.showTool();
+		addViews();
+
+		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		panel.setCurrentView(c);
+
+		final ToggleDockingAction action =
+			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
+		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		runSwing(() -> {
+			ByteViewerComponent currentComponent = panel.getCurrentComponent();
+			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
+			action.setSelected(true);
+			action.actionPerformed(new DefaultActionContext());
+			KeyEvent ev =
+				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
+			currentComponent.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(),
+				loc.getCol(), currentComponent.getCurrentField());
+		});
+		program.flushEvents();
+
+		final ByteViewerComponent hexComp = findComponent(panel, "Hex Long");
+
+		runSwing(() -> {
+			ProgramByteBlockSet blockset =
+				(ProgramByteBlockSet) plugin.getProvider().getByteBlockSet();
+			ByteBlockInfo bbInfo = blockset.getByteBlockInfo(getAddr(0x01001000));
+			FieldLocation l = hexComp.getFieldLocation(bbInfo.getBlock(), bbInfo.getOffset());
+			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
+		});
+
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
+			((ByteField) hexComp.getCurrentField()).getForeground());
+	}
+
+	@Test
+	public void testHexLongLongView() throws Exception {
+
+		env.showTool();
+		addViews();
+
+		final ByteViewerComponent c = findComponent(panel, "Hex Long Long");
+		panel.setCurrentView(c);
+		assertEquals(1, c.getNumberOfFields());
+		assertEquals(16, c.getDataModel().getUnitByteSize());
+
+		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		runSwing(() -> {
+			ByteViewerComponent currentComponent = panel.getCurrentComponent();
+			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
+		});
+		// verify that the 16 bytes are represented as an 32 digit hex number
+		assertEquals(32, c.getCurrentField().getNumCols(loc.getRow()));
+	}
+
+	@Test
+	public void testOtherEditsHexLongLong() throws Exception {
+		// verify that the 4 byte string is rendered in red when a byte
+		// is changed from another view, e.g. Ascii or Hex
+		env.showTool();
+		addViews();
+
+		final ByteViewerComponent c = findComponent(panel, "Ascii");
+		panel.setCurrentView(c);
+
+		final ToggleDockingAction action =
+			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
+		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
+		runSwing(() -> {
+			ByteViewerComponent currentComponent = panel.getCurrentComponent();
+			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
+			action.setSelected(true);
+			action.actionPerformed(new DefaultActionContext());
+			KeyEvent ev =
+				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
+			currentComponent.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(),
+				loc.getCol(), currentComponent.getCurrentField());
+		});
+		program.flushEvents();
+
+		final ByteViewerComponent hexComp = findComponent(panel, "Hex Long Long");
 
 		runSwing(() -> {
 			ProgramByteBlockSet blockset =
@@ -402,7 +579,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
 		setViewSelected(dialog, "Ascii", true);
 		setViewSelected(dialog, "Octal", true);
-		setViewSelected(dialog, "HexInteger", true);
+		setViewSelected(dialog, "Hex Integer", true);
 		setViewSelected(dialog, "Integer", true);
 		pressButtonByText(dialog.getComponent(), "OK");
 		waitForSwing();
@@ -417,7 +594,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -463,7 +640,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -805,7 +982,10 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		ByteViewerOptionsDialog dialog = launchByteViewerOptions();
 		setViewSelected(dialog, "Ascii", true);
 		setViewSelected(dialog, "Octal", true);
-		setViewSelected(dialog, "HexInteger", true);
+		setViewSelected(dialog, "Hex Short", true);
+		setViewSelected(dialog, "Hex Integer", true);
+		setViewSelected(dialog, "Hex Long", true);
+		setViewSelected(dialog, "Hex Long Long", true);
 		pressButtonByText(dialog.getComponent(), "OK");
 		waitForSwing();
 	}
@@ -821,7 +1001,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
 		assertTrue(action.isEnabled());
 
-		runSwing(() -> action.actionPerformed(new ActionContext()), false);
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()), false);
 		waitForSwing();
 		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
 		return d;

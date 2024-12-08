@@ -156,7 +156,7 @@ public class NextPreviousInstructionAction extends AbstractNextPreviousAction {
 
 		CodeUnitIterator codeUnits = program.getListing().getCodeUnits(address, forward);
 		while (codeUnits.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit codeUnit = codeUnits.next();
 			if (codeUnit instanceof Data) {
 				return codeUnit.getAddress();

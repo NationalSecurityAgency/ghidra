@@ -28,7 +28,7 @@ define pcodeop custom3.rd;
 define pcodeop custom3.rd.rs1;
 define pcodeop custom3.rd.rs1.rs2;
 
-:custom0 is op0001=0x3 & op0204=0x2 & op0506=0x0 & op1214=0x0
+:custom0 is op0001=0x3 & op0204=0x2 & op0506=0x0 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
 {
 	custom0();
 }
@@ -59,7 +59,7 @@ define pcodeop custom3.rd.rs1.rs2;
 }
 
 
-:custom1 is op0001=0x3 & op0204=0x2 & op0506=0x1 & op1214=0x0
+:custom1 is op0001=0x3 & op0204=0x2 & op0506=0x1 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
 {
 	custom1();
 }
@@ -92,7 +92,7 @@ define pcodeop custom3.rd.rs1.rs2;
 
 #TODO handle RV128 for custom-2/custom-3
 
-:custom2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & op1214=0x0
+:custom2 is op0001=0x3 & op0204=0x6 & op0506=0x2 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
 {
 	custom2();
 }
@@ -123,7 +123,7 @@ define pcodeop custom3.rd.rs1.rs2;
 }
 
 
-:custom3 is op0001=0x3 & op0204=0x6 & op0506=0x3 & op1214=0x0
+:custom3 is op0001=0x3 & op0204=0x6 & op0506=0x3 & (op1214=0x0 | op1214=0x1 | op1214=0x5)
 {
 	custom3();
 }

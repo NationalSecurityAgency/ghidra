@@ -490,7 +490,6 @@ define pcodeop cache_index_ivld;
 define pcodeop cache_index_wb;
 define pcodeop cache_index_wi;
 define pcodeop round16;
-define pcodeop leading_signs;
 define pcodeop crc32;
 
 # float
@@ -1844,8 +1843,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # CLO.H D[c], D[a] (RR)
 :clo.h Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xf & op1215=0x0 ; Rd2831 & op1627=0x7d0
 {
-	local tmp1:4 = zext(Rd0811[16,16]);
-	local tmp0:4 = zext(Rd0811[0,16]);
+	local tmp1:2 = Rd0811[16,16];
+	local tmp0:2 = Rd0811[0,16];
 	Rd2831[16,16] = lzcount(~tmp1);
 	Rd2831[0,16] = lzcount(~tmp0);
 }
@@ -1853,16 +1852,18 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # CLS D[c], D[a] (RR)
 :cls Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xf & op1215=0x0 ; Rd2831 & op1627=0x1d0
 {
-	Rd2831 = leading_signs(Rd0811) - 1;
+	local tmp:4 = (Rd0811 ^ (Rd0811<<1))|0x1;
+
+	Rd2831 = lzcount(tmp);
 }
 
 # CLS.H D[c], D[a] (RR)
 :cls.h Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xf & op1215=0x0 ; Rd2831 & op1627=0x7e0
 {
-	local tmp1:4 = zext(Rd0811[16,16]);
-	local tmp0:4 = zext(Rd0811[0,16]);
-	Rd2831[16,16] = leading_signs(tmp1) - 1;
-	Rd2831[0,16] = leading_signs(tmp0) - 1;
+	local tmp1:2 = (Rd0811[16,16] ^ (Rd0811[16,16]<<1))|0x1;
+	local tmp0:2 = (Rd0811[0,16] ^ (Rd0811[0,16]<<1))|0x1;
+	Rd2831[16,16] = lzcount(tmp1);
+	Rd2831[0,16] = lzcount(tmp0);
 }
 
 # CLZ D[c], D[a] (RR)
@@ -2011,15 +2012,15 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # DEXTR D[c], D[a], D[b], pos (RRPW)
 :dextr Rd2831,Rd0811,Rd1215,const2327Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x77 ; Rd2831 & const2327Z & op1622=0x0
 {
-	local tmp:8 = (zext(Rd0811) << 32) | (zext(Rd1215) << const2327Z);
-	Rd2831 = tmp[32,32];
+	local shift = const2327Z;
+	Rd2831 = (Rd0811 << shift) | (Rd1215 >> (32 - shift));
 }
 
 # DEXTR D[c], D[a], D[b], D[d] (RRRR)
 :dextr Rd2831,Rd0811,Rd1215,Rd2427 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x17 ; Rd2427 & Rd2831 & op1623=0x80
 {
-	local tmp:8 = (zext(Rd0811) << 32) | (zext(Rd1215) << Rd2427[0,5]);
-	Rd2831 = tmp[32,32];
+	local shift = Rd2427[0,5];
+	Rd2831 = (Rd0811 << shift) | (Rd1215 >> (32 - shift));
 }
 
 # DISABLE (SYS)
@@ -7823,8 +7824,8 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	local EA0:4;
 	local EA4:4;
 	CircularAddressingMode2(Rpe1215, Rpo1215, EA0, EA4, off10, 4);
-	*[ram]:2 EA0 = Rp0811[0,32];
-	*[ram]:2 EA4 = Rp0811[32,32];
+	*[ram]:4 EA0 = Rp0811[0,32];
+	*[ram]:4 EA4 = Rp0811[32,32];
 }
 
 # ST.DA off18, P[a] (ABS)(Absolute Addressing Mode)

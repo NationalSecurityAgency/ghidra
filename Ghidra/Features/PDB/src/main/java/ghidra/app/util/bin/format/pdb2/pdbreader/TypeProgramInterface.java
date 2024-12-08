@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -59,6 +60,10 @@ public abstract class TypeProgramInterface implements TPI {
 
 	protected int versionNumber = 0;
 
+	private record OffLen(int offset, int length) {} // record type for quick random access
+
+	private List<OffLen> offLenRecords;
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
@@ -68,8 +73,7 @@ public abstract class TypeProgramInterface implements TPI {
 	 * @param recordCategory the RecordCategory of these records
 	 * @param streamNumber the stream number that contains the {@link TypeProgramInterface} data
 	 */
-	public TypeProgramInterface(AbstractPdb pdb, RecordCategory recordCategory,
-			int streamNumber) {
+	public TypeProgramInterface(AbstractPdb pdb, RecordCategory recordCategory, int streamNumber) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.recordCategory = recordCategory;
@@ -116,44 +120,66 @@ public abstract class TypeProgramInterface implements TPI {
 	}
 
 	/**
-	 * Retrieves the {@link AbstractMsType} record indicated by the recordNumber.  The record must
-	 * already have been parsed and inserted into the list
+	 * Retrieves the {@link AbstractMsType} record indicated by the recordNumber
 	 * @param recordNumber record number to look up
 	 * @return {@link AbstractMsType} pertaining to the record number
 	 */
 	@Override
-	public AbstractMsType getRecord(int recordNumber) {
-		if (recordNumber < 0 || recordNumber - typeIndexMin > typeList.size()) {
+	public AbstractMsType getRandomAccessRecord(int recordNumber) {
+		if (recordNumber < 0 || recordNumber - typeIndexMin > offLenRecords.size()) {
 			// This should not happen, but we have seen it and cannot yet explain it.
 			// So, for now, we are creating and returning a new BadMsType.
 			PdbLog.logBadTypeRecordIndex(this, recordNumber);
-			BadMsType type = new BadMsType(pdb, 0);
-			type.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
-			return type;
+			BadMsType badType = new BadMsType(pdb, 0);
+			badType.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
+			return badType;
 		}
-		if (recordNumber < typeIndexMin) {
-			PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
-			if (primitive == null) {
-				primitive = new PrimitiveMsType(pdb, recordNumber);
-				primitiveTypesByRecordNumber.put(recordNumber, primitive);
-			}
+		PrimitiveMsType primitive = getPrimitiveRecord(recordNumber);
+		if (primitive != null) {
 			return primitive;
 		}
-		return typeList.get(recordNumber - typeIndexMin);
+
+		RecordNumber rn = RecordNumber.make(recordCategory, recordNumber);
+		OffLen offLen = offLenRecords.get(recordNumber - typeIndexMin);
+
+		try {
+			PdbByteReader recordReader =
+				pdb.getReaderForStreamNumber(streamNumber, offLen.offset(), offLen.length());
+			recordReader.markAlign(2);
+			return TypeParser.parseRecord(pdb, recordReader, rn);
+		}
+		catch (PdbException | IOException | CancelledException e) {
+			BadMsType badType = new BadMsType(pdb, 0);
+			badType.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
+			return badType;
+		}
+	}
+
+	protected PrimitiveMsType getPrimitiveRecord(int recordNumber) {
+		if (recordNumber >= typeIndexMin) {
+			return null;
+		}
+		PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
+		if (primitive == null) {
+			primitive = new PrimitiveMsType(pdb, recordNumber);
+			primitiveTypesByRecordNumber.put(recordNumber, primitive);
+		}
+		return primitive;
 	}
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserializes this {@link TypeProgramInterface}
+	 * Deserializes and initializes {@link TypeProgramInterface} basic information so that later
+	 * queries can be made
 	 * @return version number of the {@link TypeProgramInterface}
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	int deserialize() throws IOException, PdbException, CancelledException {
+	int initialize() throws IOException, PdbException, CancelledException {
 		if (pdb.getMsf() == null) {
 			// Should only be null dummy PDBs used for testing.
 			throw new PdbException("Unexpected null MSF.");
@@ -165,9 +191,11 @@ public abstract class TypeProgramInterface implements TPI {
 		// Commented out, but this is currently where we might put this method.  See the note
 		//  placed within the method (deserializeHashStreams()) for more information about why
 		//  we have this commented out.
-		//hash.deserializeHashStreams(monitor);
+		//hash.deserializeHashStreams(pdb.getMonitor());
 
-		deserializeTypeRecords(reader);
+		// TODO: consider other mechanisms than offset/length values for use by an iterator.
+		//  Need to be able to access by record number, so might not have much choice.
+		createOffLenRecords(reader);
 
 		return versionNumber;
 	}
@@ -176,8 +204,9 @@ public abstract class TypeProgramInterface implements TPI {
 	 * Dumps this class.  This package-protected method is for debugging only
 	 * @param writer {@link Writer} to which to write the debug dump
 	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer) throws IOException, CancelledException {
 		writer.write("TypeProgramInterfaceHeader----------------------------------\n");
 		dumpHeader(writer);
 		writer.write("\nEnd TypeProgramInterfaceHeader------------------------------\n");
@@ -204,36 +233,6 @@ public abstract class TypeProgramInterface implements TPI {
 		this.typeIndexMaxExclusive = typeIndexMaxExclusive;
 	}
 
-	/**
-	 * IMPORTANT: This method is for testing only.  It allows us to set a record for a particular
-	 * record number
-	 * @param recordNumber record number for the {@link AbstractMsType} to be inserted
-	 * @param type {@link AbstractMsType} to be inserted
-	 * @return {@code true} if successful
-	 */
-	boolean setRecord(int recordNumber, AbstractMsType type) {
-		if (recordNumber < typeIndexMin) {
-			return false;
-		}
-		for (int i = typeList.size() + typeIndexMin; i <= recordNumber; i++) {
-			// Add the same record for each index up to the one needed.
-			typeList.add(type);
-		}
-		return true;
-	}
-
-	/**
-	 * IMPORTANT: This method is for testing only.  It allows us to add a record that gets its
-	 * record number automatically assigned
-	 * @param type {@link AbstractMsType} to be inserted
-	 * @return record number assigned
-	 */
-	int addRecord(AbstractMsType type) {
-		int newRecordNum = typeList.size() + typeIndexMin;
-		typeList.add(type);
-		return newRecordNum;
-	}
-
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================
@@ -254,38 +253,18 @@ public abstract class TypeProgramInterface implements TPI {
 	//==============================================================================================
 	// Internal Data Methods
 	//==============================================================================================
-	/**
-	 * Deserializes the Type Records of this class
-	 * @param reader {@link PdbByteReader} from which to deserialize the data
-	 * @throws PdbException upon not enough data left to parse
-	 * @throws CancelledException upon user cancellation
-	 */
-	protected void deserializeTypeRecords(PdbByteReader reader)
-			throws PdbException, CancelledException {
-		int recordLength;
-		int recordNumber = typeIndexMin;
-
+	private void createOffLenRecords(PdbByteReader reader) throws PdbException, CancelledException {
+		int savedIndex = reader.getIndex();
+		offLenRecords = new ArrayList<>();
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
-
-			recordLength = reader.parseUnsignedShortVal();
-			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
-			recordReader.markAlign(2);
-
-			// No need to call either of these, because we do not expect the record number
-			//  to have a high bit set here.  If we did, we would have to check 'category' to
-			//  know which of the two to call, and we'd have to create an AbstractTypeIndex:
-			//    	parseTypeRecordNumber(recordReader, recordNumber);
-			//    	parseItemRecordNumber(recordReader, recordNumber);
-			AbstractMsType type = TypeParser.parseRecord(pdb, recordReader,
-				RecordNumber.make(recordCategory, recordNumber));
-			typeList.add(type);
-			recordNumber++;
+			pdb.checkCancelled();
+			int recordLength = reader.parseUnsignedShortVal();
+			// reading offset after parsing length so we have correct offset to read from later
+			int offset = reader.getIndex();
+			reader.skip(recordLength);
+			offLenRecords.add(new OffLen(offset, recordLength));
 		}
-		if (recordNumber != typeIndexMaxExclusive) {
-			PdbLog.message(this.getClass().getSimpleName() + ": Header max records: " +
-				typeIndexMaxExclusive + "; parsed records: " + recordNumber);
-		}
+		reader.setIndex(savedIndex); // restore reader to original state
 	}
 
 	//TODO: more to do for outputting individual records (might want a toString or dump method
@@ -294,10 +273,12 @@ public abstract class TypeProgramInterface implements TPI {
 	 * Dumps the Type Records.  This method is for debugging only
 	 * @param writer {@link Writer} to which to dump the records
 	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpTypeRecords(Writer writer) throws IOException {
-		int recordNum = typeIndexMin;
-		for (AbstractMsType type : typeList) {
+	protected void dumpTypeRecords(Writer writer) throws IOException, CancelledException {
+		for (int recordNum = typeIndexMin; recordNum < typeIndexMaxExclusive; recordNum++) {
+			pdb.checkCancelled();
+			AbstractMsType type = getRandomAccessRecord(recordNum);
 			StringBuilder builder = new StringBuilder();
 			builder.append("------------------------------------------------------------\n");
 			builder.append("Record: ");
@@ -313,7 +294,6 @@ public abstract class TypeProgramInterface implements TPI {
 				builder.append("(null)\n"); //Temporary output value.
 			}
 			writer.write(builder.toString());
-			recordNum++;
 		}
 	}
 
@@ -364,7 +344,7 @@ public abstract class TypeProgramInterface implements TPI {
 		protected void initHeader200500(int hashStreamNumberParam, int typeIndexMinParam,
 				int typeIndexMaxExclusiveParam) throws PdbException {
 			hashStreamNumber = hashStreamNumberParam;
-			hashStreamNumberAuxiliary = 0xffff;
+			hashStreamNumberAuxiliary = MsfStream.NIL_STREAM_NUMBER;
 			hashKeySize = 2;
 			numHashBins = 0x1000;
 			offsetHashVals = 0;
@@ -396,7 +376,7 @@ public abstract class TypeProgramInterface implements TPI {
 			//  contents might need to get concatenated with the contents of the primary
 			//  stream before the processing takes place, but the API does not show it being
 			//  used at all.
-			if (hashStreamNumber == 0xffff) {
+			if (hashStreamNumber == MsfStream.NIL_STREAM_NUMBER) {
 				return;
 			}
 			PdbByteReader reader = pdb.getReaderForStreamNumber(hashStreamNumber);
@@ -415,11 +395,10 @@ public abstract class TypeProgramInterface implements TPI {
 			deserializeTypeIndexOffsetPairs(typeInfoOffsetPairsReader, monitor);
 			deserializeHashVals(hashValsReader, monitor);
 
-			if (hashStreamNumberAuxiliary == 0xffff) {
+			if (hashStreamNumberAuxiliary == MsfStream.NIL_STREAM_NUMBER) {
 				return;
 			}
-			PdbByteReader readerAuxiliary =
-				pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary);
+			PdbByteReader readerAuxiliary = pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary);
 			//readerAuxiliary.dump();
 		}
 
@@ -430,7 +409,7 @@ public abstract class TypeProgramInterface implements TPI {
 				throws PdbException, CancelledException {
 			if (hashKeySize == 2) {
 				for (int index = typeIndexMin; index < typeIndexMaxExclusive; index++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long hashVal = reader.parseUnsignedShortVal();
 					if (hashVal < 0 || hashVal >= numHashBins) {
 						throw new PdbException("Bad hashVal: " + hashVal);
@@ -439,7 +418,7 @@ public abstract class TypeProgramInterface implements TPI {
 			}
 			else if (hashKeySize == 4) {
 				for (int index = typeIndexMin; index < typeIndexMaxExclusive; index++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long hashVal = reader.parseUnsignedIntVal();
 					if (hashVal < 0 || hashVal >= numHashBins) {
 						throw new PdbException("Bad hashVal: " + hashVal);
@@ -465,7 +444,7 @@ public abstract class TypeProgramInterface implements TPI {
 			}
 			long previousTypeIndex = -1;
 			for (int i = 0; i < numPairs; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				TiOff tiOff = new TiOff32(reader);
 				if (tiOff.getTypeIndex() <= previousTypeIndex) {
 					throw new PdbException("Corruption in TypeIndex/Offset pairs: out of order");
@@ -501,32 +480,23 @@ public abstract class TypeProgramInterface implements TPI {
 
 		/**
 		 * Dumps the this {@link TypeProgramInterfaceHash}.  This method is for debugging only
-		 * @return {@link String} of pretty output
+		 * @param writer the writer
+		 * @throws IOException upon issue with writing to the writer
 		 */
-		protected String dump() {
-			StringBuilder builder = new StringBuilder();
-			builder.append("Hash--------------------------------------------------------");
-			builder.append("\nhashStreamNumber: ");
-			builder.append(hashStreamNumber);
-			builder.append("\nhashStreamNumberAuxiliary: ");
-			builder.append(hashStreamNumberAuxiliary);
-			builder.append("\nhashKeySize: ");
-			builder.append(hashKeySize);
-			builder.append("\nnumHashBins: ");
-			builder.append(numHashBins);
-			builder.append("\noffsetHashVals: ");
-			builder.append(offsetHashVals);
-			builder.append("\nlengthHashVals: ");
-			builder.append(lengthHashVals);
-			builder.append("\noffsetTypeIndexOffsetPairs: ");
-			builder.append(offsetTypeIndexOffsetPairs);
-			builder.append("\nlengthTypeIndexOffsetPairs: ");
-			builder.append(lengthTypeIndexOffsetPairs);
-			builder.append("\noffsetHashAdjustment: ");
-			builder.append(offsetHashAdjustment);
-			builder.append("\nlengthHashAdjustment: ");
-			builder.append(lengthHashAdjustment);
-			return builder.toString();
+		void dump(Writer writer) throws IOException {
+			PdbReaderUtils.dumpHead(writer, this);
+			writer.write("\nhashStreamNumber: " + hashStreamNumber);
+			writer.write("\nhashStreamNumberAuxiliary: " + hashStreamNumberAuxiliary);
+			writer.write("\nhashKeySize: " + hashKeySize);
+			writer.write("\nnumHashBins: " + numHashBins);
+			writer.write("\noffsetHashVals: " + offsetHashVals);
+			writer.write("\nlengthHashVals: " + lengthHashVals);
+			writer.write("\noffsetTypeIndexOffsetPairs: " + offsetTypeIndexOffsetPairs);
+			writer.write("\nlengthTypeIndexOffsetPairs: " + lengthTypeIndexOffsetPairs);
+			writer.write("\noffsetHashAdjustment: " + offsetHashAdjustment);
+			writer.write("\nlengthHashAdjustment: " + lengthHashAdjustment);
+			writer.write("\n");
+			PdbReaderUtils.dumpTail(writer, this);
 		}
 	}
 

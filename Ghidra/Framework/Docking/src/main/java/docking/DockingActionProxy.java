@@ -229,12 +229,18 @@ public class DockingActionProxy
 	}
 
 	@Override
-	public void setSupportsDefaultToolContext(boolean newValue) {
-		dockingAction.setSupportsDefaultToolContext(newValue);
+	public Class<? extends ActionContext> getContextClass() {
+		return dockingAction.getContextClass();
 	}
 
 	@Override
-	public boolean supportsDefaultToolContext() {
-		return dockingAction.supportsDefaultToolContext();
+	public boolean supportsDefaultContext() {
+		return dockingAction.supportsDefaultContext();
+	}
+
+	@Override
+	public void setContextClass(Class<? extends ActionContext> type,
+			boolean supportsDefaultContext) {
+		dockingAction.setContextClass(type, supportsDefaultContext);
 	}
 }

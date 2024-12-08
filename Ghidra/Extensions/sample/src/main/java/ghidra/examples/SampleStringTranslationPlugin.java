@@ -63,12 +63,13 @@ public class SampleStringTranslationPlugin extends Plugin implements StringTrans
 	}
 
 	@Override
-	public void translate(Program program, List<ProgramLocation> dataLocations) {
+	public void translate(Program program, List<ProgramLocation> stringLocations,
+			TranslateOptions options) {
 		TaskLauncher.launchModal("Yeehaw-ify strings", monitor -> {
 
 			int id = program.startTransaction("Yeehaw-ify strings");
 			try {
-				for (ProgramLocation progLoc : dataLocations) {
+				for (ProgramLocation progLoc : stringLocations) {
 					Data data = DataUtilities.getDataAtLocation(progLoc);
 					StringDataInstance str = StringDataInstance.getStringDataInstance(data);
 					String s = str.getStringValue();

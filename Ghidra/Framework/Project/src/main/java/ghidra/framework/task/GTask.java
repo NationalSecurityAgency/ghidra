@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +15,7 @@
  */
 package ghidra.framework.task;
 
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -39,7 +38,6 @@ public interface GTask {
 	 * @param monitor the taskMonitor to be used to cancel and report progress.
 	 * @throws CancelledException if the user cancelled the task.
 	 */
-	public void run(UndoableDomainObject domainObject, TaskMonitor monitor)
-			throws CancelledException;
+	public void run(DomainObject domainObject, TaskMonitor monitor) throws CancelledException;
 
 }

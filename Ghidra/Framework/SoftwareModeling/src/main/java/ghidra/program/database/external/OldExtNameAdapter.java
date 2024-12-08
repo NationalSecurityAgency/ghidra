@@ -18,6 +18,7 @@ package ghidra.program.database.external;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -77,7 +78,7 @@ class OldExtNameAdapter {
 
 		RecordIterator iter = nameTable.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			newRefTable.putRecord(iter.next());
 			monitor.setProgress(++count);
 		}
@@ -85,11 +86,11 @@ class OldExtNameAdapter {
 		nameTable = newRefTable;
 	}
 
-	static OldExtNameAdapter getAdapter(DBHandle dbHandle, int openMode, TaskMonitor monitor)
+	static OldExtNameAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 
 		OldExtNameAdapter adapter = new OldExtNameAdapter(dbHandle);
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			adapter.moveTable(dbHandle, monitor);
 		}
 		return adapter;

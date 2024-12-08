@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.services.DataTypeManagerService;
@@ -24,7 +24,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.util.FunctionLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import docking.action.MenuData;
 
 /**
  * <CODE>EditStackAction</CODE> allows the user to edit a function's stack frame.
@@ -45,16 +44,12 @@ public class EditStackAction extends ListingContextAction {
 		super("Edit Stack Frame", plugin.getName());
 		this.plugin = plugin;
 		this.dtmService = dtmService;
-		setPopupMenuData(new MenuData(new String[] { "Function", "Edit Stack Frame..." }, null,
+		setPopupMenuData(new MenuData(new String[] { "Function", "Edit Stack Frame" }, null,
 			"Stack"));
 
 		setHelpLocation(new HelpLocation("StackEditor", "Stack_Editor"));
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 		Function function = getFunction(context);

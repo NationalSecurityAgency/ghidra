@@ -15,15 +15,33 @@
  */
 package ghidra.util.datastruct;
 
+import org.apache.commons.lang3.mutable.MutableInt;
+
 /**
  * Simple class used to avoid immutable objects and autoboxing when storing changing integer 
  * primitives in a collection.
  */
-public class Counter {
-	public int count;
+public class Counter extends MutableInt {
+	/**
+	 * Construct a new counter with an initial value of 0.
+	 */
+	public Counter() {
+		super(0);
+	}
 
-	@Override
-	public String toString() {
-		return Integer.toString(count);
+	/**
+	 * Construct a new Counter with the given initial value.
+	 * @param value the initial value
+	 */
+	public Counter(int value) {
+		super(value);
+	}
+
+	/**
+	 * Returns the value of this counter.
+	 * @return the value of this counter
+	 */
+	public int count() {
+		return intValue();
 	}
 }

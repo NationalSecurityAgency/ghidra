@@ -103,17 +103,17 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 				toolTipText = toolTipText.replace("Unsized", Integer.toString(dataLen));
 			}
 			if (dataInstance != null) {
-				toolTipText = toolTipText.replace("</HTML>",
-					getLocationSupplimentalToolTipText(dt, dataInstance) + "</HTML>");
+				toolTipText = toolTipText.replace("</html>",
+					getLocationSupplimentalToolTipText(dt, dataInstance) + "</html>");
 			}
 			String warningMsg = "";
 			if (hasInvalidStorage) {
 				warningMsg += "WARNING! Invalid Storage";
 			}
 			if (warningMsg.length() != 0) {
-				String errorText = "<HTML><center><font color=\"" + Messages.ERROR.toHexString() +
+				String errorText = "<html><center><font color=\"" + Messages.ERROR.toHexString() +
 					"\">" + warningMsg + "!</font></center><BR>";
-				toolTipText = toolTipText.replace("<HTML>", errorText);
+				toolTipText = toolTipText.replace("<html>", errorText);
 			}
 			return createTooltipComponent(toolTipText);
 		}

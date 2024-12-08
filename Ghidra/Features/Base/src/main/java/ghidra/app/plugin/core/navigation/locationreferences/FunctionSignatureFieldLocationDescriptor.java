@@ -20,8 +20,7 @@ import java.awt.Color;
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.plugin.core.navigation.FunctionUtils;
 import ghidra.app.util.viewer.field.*;
-import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
@@ -76,18 +75,18 @@ class FunctionSignatureFieldLocationDescriptor extends LocationDescriptor {
 
 		for (int i = 0; i < changeEvent.numRecords(); i++) {
 			DomainObjectChangeRecord domainObjectRecord = changeEvent.getChangeRecord(i);
-			int eventType = domainObjectRecord.getEventType();
+			EventType eventType = domainObjectRecord.getEventType();
 
 			if (domainObjectRecord instanceof ProgramChangeRecord) {
 				ProgramChangeRecord programChangeRecord = (ProgramChangeRecord) domainObjectRecord;
-				if (eventType == ChangeManager.DOCR_FUNCTION_REMOVED) {
+				if (eventType == ProgramEvent.FUNCTION_REMOVED) {
 					Address effectedEntryPoint = programChangeRecord.getStart();
 					if (effectedEntryPoint.equals(function.getEntryPoint())) {
 						checkForAddressChange(domainObjectRecord);
 						return true;
 					}
 				}
-				else if (eventType == ChangeManager.DOCR_MEM_REFERENCE_REMOVED) {
+				else if (eventType == ProgramEvent.REFERENCE_REMOVED) {
 					Address addr = programChangeRecord.getStart();
 					Function functionContaining =
 						program.getFunctionManager().getFunctionContaining(addr);

@@ -315,9 +315,63 @@
 	
 	      <P align="left"><A name="Clear_Match"></A>The <b>Clear Match</b> <IMG src="images/undo-apply.png" border="0">
 	      action will reset the match to unaccepted and undo any applied markup.</P>
-	      
+
+
 	      <P align="left"><A name="Remove_Match"></A>The <b>Remove Match</b> <IMG src="images/edit-delete.png" border="0">
-	      action will remove a manually created match from the matches table.</P>
+	      action will remove the selected match(es).</P>
+	      
+	      <BLOCKQUOTE>
+	      	<P><IMG src="help/shared/warning.png" alt="Note" border="0"> 
+	      	
+	      	As of Ghidra 11.2, Version Tracking supports deleting matches.  Any match that has
+	      	not been accepted can be deleted without confirmation.   However, if you attempt to 
+	      	delete an <B>accepted match</B> that is the <B>last match for an association</B>, then 
+	      	you will be prompted to confirm your decision.
+	      	</P>
+	      	<P>
+	      	Generally, we suggest users should not delete accepted matches for the following reasons:
+	      	<ul>
+	      	<li>Accepted matches are used by some of the other correlators to find more matches. If
+	      	completely deleted, those other correlators will not have as much information to work 
+	      	from. </li>
+	      	<li>The number of implied match votes and conflicts will be altered when accepted 
+	      	matches are completely removed.</li>
+	      	<li>If deleting an accepted match causes the number of votes to reach
+	      	zero for a particular implied match, the implied match will be deleted as well. </li>
+	      	<li>Selecting an accepted match in the match table allows users to see what markup was
+	      	applied when the match was accepted. Deleting accepted matches while keeping applied 
+ 			markup will remove this supporting evidence regarding how the markup was generated.</li>
+ 			</ul>
+	      	</P>
+	      		<BLOCKQUOTE>
+	      		<P><IMG src="help/shared/tip.png">An alternative to deleting matches is to 
+	      		simply filter them out of the table once they have been applied. You can also tag
+	      		any matches you wish to ignore and then use the <A HREF="#VT_Advanced_Filters">
+	      		advanced filters</a> to hide any matches with those tags.
+	      		</P>
+	      		</BLOCKQUOTE>
+	      	<P>
+	      	It is important to understand what happens in Version Tracking when deleting a match.
+	      	You will have to make a decision before deleting whether you want to keep any changes
+	      	made to the destination program when you accepted a given match or whether you wish to
+	      	remove that markup.  When deleting an accepted match: 
+	      	</P>
+	      	<BLOCKQUOTE>
+	      	<P>
+	      	<U>To keep all applied markup</U>, simply delete the match and, when
+	      	prompted, choose <B>Delete Accepted Matches</B>.  This choice will delete the match and
+	      	its markup items, but <B>any applied markup item content will remain in the destination 
+	      	program.</B>  Alternatively, when prompted, you can choose <B>Finish</B> which will 
+	      	close the prompt dialog and will not delete the remaining accepted matches or markup.
+	      	<P>
+	      	<U>To remove all applied markup</U>, then you must first 
+	      	<A HREF="#Clear_Match">clear</A> the match before executing the remove action.  The clear
+	      	action will remove applied markup.  After clearing the match, then you can remove 
+	      	the match and no markup will remain in the destination program.
+	      	</P>     	
+			</BLOCKQUOTE>	      	
+	      	
+	      </BLOCKQUOTE>
 	      
 	      <P align="left"><A name="Make_Selections"></A>The <b>Make Selections</b> <IMG src="Icons.MAKE_SELECTION_ICON" border="0">
 	      action will create selections in the source and destination tools for all matches selected in the table.</P>
@@ -383,88 +437,118 @@
 			<BR>
 			<BR>
 			
-
-
 	      <P align="left"><A name="Match_Table_Settings"></A>The <b>Settings</b> <IMG src="images/settings16.gif" border="0">
 	      action will bring up the version tracking accept and apply options.</P>
-	
+	      
+	      <P align="left"><A name="Match_Table_Compare_Functions"></A>The <b>Compare Functions</b> 
+	      action allows users to visually compare selected matched functions. To initiate this action, 
+	      select one or more matches from the Version Tracking Matches Table, then choose 
+	      <b>Compare Functions</b> from the pop up menu. This will open a new 
+          <A href="help/topics/FunctionComparison/FunctionComparison.htm">Function Comparison</A> 
+          table containing a list of source functions and a list of destination functions. 
+          The user can choose one from each list at a time to visually compare to each other. 
+          Note: You cannot compare Data matches or External Functions using this action, so 
+		  if you select either of these as matches they will not be populated in the table.</P>
+
 	    </BLOCKQUOTE>
 	
 	    <H2><A name="Match_Filters"></A>Match Filters</H2>
 	
-	    <BLOCKQUOTE>
-	      <P align="left">The match table has an extensive assortment of filters. There
-	      are several commonly used filter controls at the bottom of the table:
-	      <ol>
-	      	<li><b>Text Filter</b> - allows you to filter based on any text in the table
-	      	</li>
-	      	<li><b>Score Filter</b> - allows you to filter on a range of scores.  All scores
-	      		are between 0 and 1
-	      	</li>
-	      	<li><b>Confidence Filter</b> - allows you to filter a range of confidence values.
-	      	All confidence values will be greater than -9.999 and smaller than 9.999. 
-	      	</li>
-	      	<li><b>Length Filter</b> - is used to filter out
-	      						functions that are smaller than some number
-	      	</li>
-	      </ol>
-	      
-	      </P>
-	
-	      <P>Finally, the <IMG src="images/view-filter.png" border="0"> will show the ancillary filters
-	      available. The table below lists and describes the available filters. When an ancillary
-	      filter is applied, the icon will change to <IMG src="images/lightbulb.png" border="0"> .
-	      Further, the icon may occasionally flash as a reminder that there is a filter applied.</P>
-		<BR>
-	      <TABLE border="1" width="90%">
-	        <TR>
-	          <TH nowrap>Filter Name</TH>
-	
-	          <TH>Description</TH>
-	        </TR>
-	
-	        <TR>
-	          <TD valign="top">Match Type</TD>
-	
-	          <TD valign="top">This filter allows the user to show only function or data matches.</TD>
-	        </TR>
-	
-	        <TR>
-	          <TD valign="top" nowrap>Association Status</TD>
-	
-	          <TD valign="top">This filter allows the user to show only matches whose assocation
-	          	has one of the included status types.  A useful setting
-	          	for this filter is to turn off all but the <B>Available</B> status.  This will cause the
-	          	table to act like a "To Do" list.</TD>
-	        </TR>
-	        <TR>
-	          <TD valign="top">Symbol Type</TD>
-	
-	          <TD valign="top">This filter allows the user to show only matches whose source or 
-	          destination labels are of one of the included symbol types.</TD>
-	        </TR>
-	
-	        <TR>
-	          <TD valign="top">Algorithms</TD>
-	
-	          <TD valign="top">This filter allows the user to show only matches that were generated
-	          by one of the included types of correlating algorithms</TD>
-	        </TR>
-	        <TR>
-	          <TD valign="top">Address Range</TD>
-	
-	          <TD valign="top">This filter allows the user to show only matches whose source or
-	          destination address is within the specified range.</TD>
-	        </TR>
-	        <TR>
-	          <TD valign="top">Tags</TD>
-	
-	          <TD valign="top">This filter allows the user to show only matches whose tag is an
-	          included tag.</TD>
-	        </TR>
+		<BLOCKQUOTE>
+			
+			<H3>Table Filters</H3>
 	
 	
-	      </TABLE>
+		    <BLOCKQUOTE>
+		      <P align="left">The match table has an extensive assortment of filters. There
+		      are several commonly used filter controls at the bottom of the table:
+		      <ol>
+		      	<li><b>Text Filter</b> - allows you to filter based on any text in the table
+		      	</li>
+		      	<li><b>Score Filter</b> - allows you to filter on a range of scores.  All scores
+		      		are between 0 and 1
+		      	</li>
+		      	<li><b>Confidence Filter</b> - allows you to filter a range of confidence values.
+		      	All confidence values will be greater than -9.999 and smaller than 9.999. 
+		      	</li>
+		      	<li><b>Length Filter</b> - is used to filter out
+		      						functions that are smaller than some number
+		      	</li>
+		      </ol>
+		      
+		      </P>
+		    </BLOCKQUOTE>
+	
+	
+			<A NAME="VT_Advanced_Filters"></A>
+			<H3>Advanced Filters</H3>
+	
+			 <BLOCKQUOTE>
+	
+		      <P>Finally, the <IMG src="icon.version.tracking.unfiltered" border="0"> will show the ancillary filters
+		      available. The table below lists and describes the available filters. When an ancillary
+		      filter is applied, the icon will change to <IMG src="icon.version.tracking.filtered" border="0"> .
+		      Further, the icon may occasionally flash as a reminder that there is a filter applied.</P>
+			<BR>
+		      <TABLE border="1" width="90%">
+		        <TR>
+		          <TH nowrap>Filter Name</TH>
+		
+		          <TH>Description</TH>
+		        </TR>
+		
+		        <TR>
+		          <TD valign="top">Match Type</TD>
+		
+		          <TD valign="top">This filter allows the user to show only function or data matches.</TD>
+		        </TR>
+		
+		        <TR>
+		          <TD valign="top" nowrap>Association Status</TD>
+		
+		          <TD valign="top">This filter allows the user to show only matches whose assocation
+		          	has one of the included status types.  A useful setting
+		          	for this filter is to turn off all but the <B>Available</B> status.  This will cause the
+		          	table to act like a "To Do" list.</TD>
+		        </TR>
+		        <TR>
+		          <TD valign="top">Symbol Type</TD>
+		
+		          <TD valign="top">This filter allows the user to show only matches whose source or 
+		          destination labels are of one of the included symbol types.</TD>
+		        </TR>
+		
+		        <TR>
+		          <TD valign="top">Algorithms</TD>
+		
+		          <TD valign="top">This filter allows the user to show only matches that were generated
+		          by one of the included types of correlating algorithms</TD>
+		        </TR>
+		        <TR>
+		          <TD valign="top">Address Range</TD>
+		
+		          <TD valign="top">This filter allows the user to show only matches whose source or
+		          destination address is within the specified range.</TD>
+		        </TR>
+		        <TR>
+		          <TD valign="top">Tags</TD>
+		
+		          <TD valign="top">This filter allows the user to show only matches whose tag is an
+		          included tag.</TD>
+		        </TR>
+		
+		
+		      </TABLE>
+		    </BLOCKQUOTE>
+		    
+		    <H3>Table Column Filters</H3>
+	
+			 <BLOCKQUOTE>
+			 The matches table also supports 
+			 <A HREF="help/topics/Trees/GhidraTreeFilter.html#Column_Filters">
+			 Table Column Filters</A> for creating complex filters for individual table columns.
+			 </BLOCKQUOTE>
+	    
 	    </BLOCKQUOTE>
 
 	</BLOCKQUOTE> <!-- end of top-level blockquote -->

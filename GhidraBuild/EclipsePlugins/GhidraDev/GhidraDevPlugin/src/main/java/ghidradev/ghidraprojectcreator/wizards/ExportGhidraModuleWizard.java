@@ -41,9 +41,11 @@ import org.eclipse.ui.IWorkbench;
 
 import ghidra.GhidraApplicationLayout;
 import ghidra.launch.JavaConfig;
+import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraProjectUtils;
 import ghidradev.ghidraprojectcreator.wizards.pages.ChooseGhidraModuleProjectWizardPage;
 import ghidradev.ghidraprojectcreator.wizards.pages.ConfigureGradleWizardPage;
+import utilities.util.FileUtilities;
 
 /**
  * Wizard for exporting a Ghidra module project to a releasable extension zip bundle.  
@@ -76,6 +78,10 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 
 	@Override
 	public boolean performFinish() {
+		if (!validate()) {
+			return false;
+		}
+
 		IJavaProject javaProject = projectPage.getGhidraModuleProject();
 		GradleDistribution gradleDist = gradlePage.getGradleDistribution();
 		try {
@@ -151,6 +157,11 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 
 			monitor.worked(1);
 
+			// Delete the build directory...we don't want Ghidra finding/using it in the module
+			File buildDir = new File(workingDir, "build");
+			FileUtilities.deleteDir(buildDir);
+
+			// Refresh the project to make the new items visible
 			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			monitor.worked(1);
 
@@ -162,5 +173,27 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 		finally {
 			monitor.done();
 		}
+	}
+
+	/**
+	 * Validates the wizard pages.  If they are invalid, an error popup will be displayed which
+	 * will indicate the problem.
+	 * 
+	 * @return True if the data returned from the wizard pages are valid; otherwise, false
+	 */
+	private boolean validate() {
+		String title = "Invalid Ghidra Module Extension";
+		IJavaProject javaProject = projectPage.getGhidraModuleProject();
+		if (!javaProject.getProject().getFile("extension.properties").exists()) {
+			EclipseMessageUtils.showErrorDialog(title,
+				"Cannot export extension because 'extension.properties' file does not exist.");
+			return false;
+		}
+		if (!javaProject.getProject().getFile("Module.manifest").exists()) {
+			EclipseMessageUtils.showErrorDialog(title,
+				"Cannot export extension because 'Module.manifest' file does not exist.");
+			return false;
+		}
+		return true;
 	}
 }

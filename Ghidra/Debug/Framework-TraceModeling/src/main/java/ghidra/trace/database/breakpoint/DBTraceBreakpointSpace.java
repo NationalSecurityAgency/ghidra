@@ -31,11 +31,11 @@ import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectIndex;
 import ghidra.util.database.DBCachedObjectStoreFactory;
@@ -102,7 +102,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 				breakpointMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 			breakpoint.set(path, path, threads, kinds, enabled, true, comment);
 			trace.setChanged(
-				new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, this, breakpoint));
+				new TraceChangeRecord<>(TraceEvents.BREAKPOINT_ADDED, this, breakpoint));
 			return breakpoint;
 		}
 	}
@@ -128,8 +128,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 
 	public void deleteBreakpoint(DBTraceBreakpoint breakpoint) {
 		breakpointMapSpace.deleteData(breakpoint);
-		trace.setChanged(
-			new TraceChangeRecord<>(TraceBreakpointChangeType.DELETED, this, breakpoint));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_DELETED, this, breakpoint));
 	}
 
 	@Override

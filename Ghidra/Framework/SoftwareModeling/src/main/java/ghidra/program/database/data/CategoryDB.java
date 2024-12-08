@@ -218,18 +218,6 @@ class CategoryDB extends DatabaseObject implements Category {
 		return map;
 	}
 
-	private String getBaseName(String dataTypeName) {
-		int indexOf = dataTypeName.indexOf(DataType.CONFLICT_SUFFIX);
-		if (indexOf <= 0) {
-			return dataTypeName;
-		}
-		return dataTypeName.substring(0, indexOf);
-	}
-
-	private boolean isConflictName(String dataTypeName) {
-		return dataTypeName.contains(DataType.CONFLICT_SUFFIX);
-	}
-
 	/**
 	 * @see ghidra.program.model.data.Category#getCategories()
 	 */
@@ -549,7 +537,7 @@ class CategoryDB extends DatabaseObject implements Category {
 				}
 				else { // both dataTypes remain
 					movedDataType.setNameAndCategory(path,
-						mgr.getUnusedConflictName(path, movedDataType.getName()));
+						mgr.getUnusedConflictName(path, movedDataType));
 				}
 			}
 			else {
@@ -621,14 +609,14 @@ class CategoryDB extends DatabaseObject implements Category {
 	void dataTypeAdded(DataType dataType) {
 		String dtName = dataType.getName();
 		dataTypeMap.put(dtName, dataType);
-		if (isConflictName(dtName)) {
+		if (DataTypeUtilities.isConflictDataType(dataType)) {
 			conflictMap.addDataType(dataType);
 		}
 	}
 
 	void dataTypeRemoved(String dataTypeName) {
 		dataTypeMap.remove(dataTypeName);
-		if (isConflictName(dataTypeName)) {
+		if (DataTypeUtilities.isConflictDataTypeName(dataTypeName)) {
 			conflictMap.removeDataTypeName(dataTypeName);
 		}
 	}
@@ -639,8 +627,9 @@ class CategoryDB extends DatabaseObject implements Category {
 
 	@Override
 	public List<DataType> getDataTypesByBaseName(String dataTypeName) {
+
 		List<DataType> list = new ArrayList<>();
-		String baseName = getBaseName(dataTypeName);
+		String baseName = DataTypeUtilities.getNameWithoutConflict(dataTypeName);
 
 		DataType baseType = dataTypeMap.get(baseName);
 		if (baseType != null) {
@@ -681,8 +670,8 @@ class CategoryDB extends DatabaseObject implements Category {
 			Collection<DataType> values = dataTypeMap.values();
 			for (DataType dataType : values) {
 				String dataTypeName = dataType.getName();
-				if (isConflictName(dataTypeName)) {
-					String baseName = getBaseName(dataTypeName);
+				if (DataTypeUtilities.isConflictDataType(dataType)) {
+					String baseName = DataTypeUtilities.getNameWithoutConflict(dataType);
 					Map<String, DataType> innerMap =
 						map.computeIfAbsent(baseName, b -> new HashMap<>());
 					innerMap.put(dataTypeName, dataType);
@@ -705,7 +694,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			}
 
 			String dataTypeName = dataType.getName();
-			String baseName = getBaseName(dataTypeName);
+			String baseName = DataTypeUtilities.getNameWithoutConflict(dataType);
 			Map<String, DataType> innerMap = map.computeIfAbsent(baseName, b -> new HashMap<>());
 			innerMap.put(dataTypeName, dataType);
 		}
@@ -721,7 +710,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			if (map == null) {
 				return;
 			}
-			String baseName = getBaseName(dataTypeName);
+			String baseName = DataTypeUtilities.getNameWithoutConflict(dataTypeName);
 			Map<String, DataType> innerMap = map.get(baseName);
 			if (innerMap == null) {
 				return;

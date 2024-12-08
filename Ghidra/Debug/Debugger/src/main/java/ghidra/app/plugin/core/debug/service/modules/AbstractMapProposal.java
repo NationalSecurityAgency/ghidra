@@ -19,8 +19,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import ghidra.app.services.MapEntry;
-import ghidra.app.services.MapProposal;
+import ghidra.debug.api.modules.MapEntry;
+import ghidra.debug.api.modules.MapProposal;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;

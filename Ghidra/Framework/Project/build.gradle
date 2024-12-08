@@ -27,7 +27,6 @@ dependencies {
 	api project(':FileSystem')
 	
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
-	api "org.apache.commons:commons-compress:1.21"
 	api "org.tukaani:xz:1.9"
 }
 

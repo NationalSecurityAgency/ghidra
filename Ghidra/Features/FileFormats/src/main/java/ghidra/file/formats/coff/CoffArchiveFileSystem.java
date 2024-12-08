@@ -19,7 +19,6 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
@@ -32,18 +31,13 @@ import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "coff", description = "COFF Archive", factory = CoffArchiveFileSystemFactory.class)
-public class CoffArchiveFileSystem implements GFileSystem {
-
-	private final FSRLRoot fsFSRL;
-	private FileSystemIndexHelper<CoffArchiveMemberHeader> fsih;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
+public class CoffArchiveFileSystem extends AbstractFileSystem<CoffArchiveMemberHeader> {
 
 	private ByteProvider provider;
 
 	public CoffArchiveFileSystem(FSRLRoot fsFSRL, ByteProvider provider) {
-		this.fsFSRL = fsFSRL;
+		super(fsFSRL, FileSystemService.getInstance());
 		this.provider = provider;
-		this.fsih = new FileSystemIndexHelper<>(this, fsFSRL);
 	}
 
 	public void mount(TaskMonitor monitor) throws IOException {
@@ -56,7 +50,7 @@ public class CoffArchiveFileSystem implements GFileSystem {
 					String name = camh.getName().replace('\\', '/');//replace stupid windows backslashes.
 					monitor.setMessage(name);
 
-					fsih.storeFile(name, fsih.getFileCount(), false, camh.getSize(), camh);
+					fsIndex.storeFile(name, fsIndex.getFileCount(), false, camh.getSize(), camh);
 				}
 			}
 		}
@@ -66,18 +60,8 @@ public class CoffArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
-	}
-
-	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
-		CoffArchiveMemberHeader entry = fsih.getMetadata(file);
+		CoffArchiveMemberHeader entry = fsIndex.getMetadata(file);
 		return (entry != null && entry.isCOFF())
 				? new ByteProviderWrapper(provider, entry.getPayloadOffset(), entry.getSize(),
 					file.getFSRL())
@@ -91,7 +75,7 @@ public class CoffArchiveFileSystem implements GFileSystem {
 			provider.close();
 			provider = null;
 		}
-		fsih.clear();
+		fsIndex.clear();
 	}
 
 	@Override
@@ -100,13 +84,8 @@ public class CoffArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public int getFileCount() {
-		return fsih.getFileCount();
-	}
-
-	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
-		CoffArchiveMemberHeader entry = fsih.getMetadata(file);
+		CoffArchiveMemberHeader entry = fsIndex.getMetadata(file);
 		FileAttributes result = new FileAttributes();
 		if (entry != null) {
 			result.add(NAME_ATTR, entry.getName());
@@ -117,20 +96,5 @@ public class CoffArchiveFileSystem implements GFileSystem {
 			result.add("Mode", entry.getMode());
 		}
 		return result;
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsih.lookup(path);
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsih.getListing(directory);
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
 	}
 }

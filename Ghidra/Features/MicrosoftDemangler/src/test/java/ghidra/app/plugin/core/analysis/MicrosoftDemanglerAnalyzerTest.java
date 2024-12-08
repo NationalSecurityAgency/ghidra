@@ -26,6 +26,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -95,6 +96,29 @@ public class MicrosoftDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrat
 		Function function = fm.getFunctionAt(addr);
 		assertNotNull(function);
 		assertEquals("undefined InvokeHelperV(void)", function.getSignature().toString());
+	}
+
+	@Test
+	public void testApplyComplicatedFunctionSignatureHavingReference() throws Exception {
+
+		String mangled = "?f2@@YAP6AP6AHH@ZP6ADD@Z@ZAAP6AP6AHH@Z0@Z@Z";
+
+		Address addr = addr("0x110");
+		createSymbol(addr, mangled);
+
+		analyze();
+
+		FunctionManager fm = program.getFunctionManager();
+		Function function = fm.getFunctionAt(addr);
+		assertNotNull(function);
+		ParameterDefinition[] params = function.getSignature().getArguments();
+		assertEquals(1, params.length);
+		ParameterDefinition param = params[0];
+		assertEquals("_func__func_int_int_ptr__func_char_char_ptr * * param_1",
+			param.toString());
+		assertEquals(
+			"_func__func_int_int_ptr__func_char_char_ptr * f2(_func__func_int_int_ptr__func_char_char_ptr * * param_1)",
+			function.getSignature().toString());
 	}
 
 //==================================================================================================

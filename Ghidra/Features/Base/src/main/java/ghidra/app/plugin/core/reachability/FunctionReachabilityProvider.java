@@ -24,7 +24,6 @@ import javax.swing.*;
 import docking.ComponentProvider;
 import docking.WindowPosition;
 import docking.widgets.label.GDLabel;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
@@ -167,10 +166,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 
 		resultsTable = tablePanel.getTable();
 
-		GoToService goToService = plugin.getTool().getService(GoToService.class);
-		if (goToService != null) {
-			resultsTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		resultsTable.installNavigation(plugin.getTool());
 
 		resultsTable.getSelectionModel().addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
@@ -193,9 +189,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		pathsModel = new FRPathsModel(plugin.getTool(), program);
 		pathsTable = new GhidraTable(pathsModel);
 
-		if (goToService != null) {
-			pathsTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		pathsTable.installNavigation(plugin.getTool());
 
 		outputPanel.add(new JScrollPane(pathsTable));
 

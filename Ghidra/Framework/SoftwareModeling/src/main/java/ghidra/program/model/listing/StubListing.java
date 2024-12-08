@@ -282,13 +282,14 @@ public class StubListing implements Listing {
 	}
 
 	@Override
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
+			MemBuffer memBuf, ProcessorContextView context, int forcedLengthOverride)
+			throws CodeUnitInsertionException {
 		throw new UnsupportedOperationException();
 	}
 

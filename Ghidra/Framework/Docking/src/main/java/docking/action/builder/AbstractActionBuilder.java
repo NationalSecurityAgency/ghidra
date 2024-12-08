@@ -176,14 +176,15 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	private Predicate<C> validContextPredicate = ALWAYS_TRUE;
 
 	/**
-	 * Set to true if the action supports using the default tool context if the local context is invalid
-	 */
-	private boolean supportsDefaultToolContext;
-	
-	/**
 	 * Specifies when the action should appear in a window.
 	 */
 	private When windowWhen;
+
+	/**
+	 * If true, the action will be allowed to operate using a default context for its declared
+	 * context type when the current active context is invalid for this action
+	 */
+	private boolean supportsDefaultContext = false;
 
 	/**
 	 * For use with the {@link AbstractActionBuilder#inWindow(When)} method to specify which windows (main window
@@ -195,7 +196,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		ALWAYS, 	    // action should appear in all windows
 		CONTEXT_MATCHES // action should appear if and only if the window has
 	}					// has a provider that generates the appropriate context.
-	
+
 	/**
 	 * Builder constructor
 	 * @param name the name of the action to be built
@@ -596,22 +597,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets whether the action will support using the default tool context if the focused provider's
-	 * context is invalid.
-	 * <P>
-	 * By default, actions only work on the current focused provider's context.  Setting this
-	 * to true will cause the action to be evaluated against the default tool context if the
-	 * focused context is not valid for this action.
-	 * 
-	 * @param b the new value
-	 * @return this builder (for chaining)
-	 */
-	public B supportsDefaultToolContext(boolean b) {
-		supportsDefaultToolContext = b;
-		return self();
-	}
-	
-	/**
 	 * Specifies when a global action should appear in a window (main or secondary).
 	 * <P>
 	 * Global menu or toolbar actions can be configured to appear in 1) only the main 
@@ -635,22 +620,17 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets the specific ActionContext type to use for the various predicate calls 
-	 * ({@link #validContextWhen(Predicate)}, {@link #enabledWhen(Predicate)}, and 
+	 * Sets the action context for this action. If this context is set, then this action is only
+	 * valid when the current context is that type or extends that type.
+	 * <P>
+	 * After this method has been called, any the following methods will use this new context type 
+	 * in the method signature: ({@link #validContextWhen(Predicate)}, 
+	 * {@link #enabledWhen(Predicate)}, and 
 	 * {@link #popupWhen(Predicate)}).
 	 * <P>
-	 * In other words, this allows the client to specify the type of ActionContext that is valid for
-	 * the action being built.
-	 * <P>
-	 * To be effective, this method must be called  <b>before</b> setting any of the predicates 
-	 * such as the {@link #enabledWhen(Predicate)}.  Once this method is called you can define your
-	 * predicates using the more specific ActionContext and be assured your predicates will only
-	 * be called when the current action context is the type (or sub-type) of the context you have
-	 * specified here.
-	 * <P>
 	 * For example, assume you have an action that is only enabled when the context is of type
-	 * FooActionContext.  If you don't call this method to set the ActionContext type,  you would have
-	 * to write your predicate something like this:
+	 * FooContext.  If you don't call this method to set the action context type,  you would
+	 * have to write your predicate something like this:
 	 * <pre>
 	 * {@literal builder.enabledWhen(context -> }{
 	 *     if (!(context instanceof FooContext)) {
@@ -659,17 +639,19 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 *     return ((FooContext) context).isAwesome();
 	 * });
 	 * </pre>
-	 * But by first calling the builder method <CODE>withContext(FooContext.class)</CODE>, you can 
-	 * simply write:
+	 * But by first calling the builder method <CODE>withContext(FooContext.class)</CODE>, then the
+	 * context will be the new type and you can simply write:
 	 *
 	 * <pre>
-	 * {@literal builder.enabledWhen(context -> return context.isAwesome() }}
+	 * {@literal builder.enabledWhen(context -> context.isAwesome()) }
 	 * </pre>
 	 *
-	 * <p>Note: this triggers automatic action enablement so you should not later call 
-	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
-	 *  
-	
+	 * <p>Note: this triggers automatic action enablement based on context for the action, so you 
+	 * should not later manually manage action enablement using the action's 
+	 * {@link DockingAction#setEnabled(boolean)} method.
+	 * <P>
+	 * For more details on how the action context system works, see {@link ActionContext}.
+	 * <P>
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.
@@ -677,13 +659,62 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * @return an ActionBuilder whose generic types have been modified to match the new ActionContext.
 	 * It still contains all the configuration that has been applied so far.
 	 */
-	@SuppressWarnings("unchecked")
 	public <AC2 extends ActionContext, B2 extends AbstractActionBuilder<T, AC2, B2>> B2 withContext(
 			Class<AC2> newActionContextClass) {
+		return this.withContext(newActionContextClass, false);
+	}
+
+	/**
+	 * Sets the action context for this action and whether or not this action supports default
+	 * context as explained in {@link ActionContext}. If this context is set, then this 
+	 * action is only valid when the current context is that type or extends that type.
+	 * <P>
+	 * After this method has been called, any the following methods will use this new context type 
+	 * in the method signature: ({@link #validContextWhen(Predicate)}, 
+	 * {@link #enabledWhen(Predicate)}, and 
+	 * {@link #popupWhen(Predicate)}).
+	 * <P>
+	 * For example, assume you have an action that is only enabled when the context is of type
+	 * FooContext.  If you don't call this method to set the action context type,  you would
+	 * have to write your predicate something like this:
+	 * <pre>
+	 * {@literal builder.enabledWhen(context -> }{
+	 *     if (!(context instanceof FooContext)) {
+	 *         return false;
+	 *     }
+	 *     return ((FooContext) context).isAwesome();
+	 * });
+	 * </pre>
+	 * But by first calling the builder method <CODE>withContext(FooContext.class)</CODE>, then the
+	 * context will be the new type and you can simply write:
+	 *
+	 * <pre>
+	 * {@literal builder.enabledWhen(context -> context.isAwesome()) }
+	 * </pre>
+	 *
+	 * <p>Note: this triggers automatic action enablement based on context for the action, so you 
+	 * should not later manually manage action enablement using the action's 
+	 * {@link DockingAction#setEnabled(boolean)} method.
+	 * <P>
+	 * For more details on how the action context system works, see {@link ActionContext}.
+	 * <P>
+	 * @param newActionContextClass the more specific ActionContext type.
+	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
+	 * the returned builder will have.
+	 * @param <B2> the new builder type.
+	 * @param useDefaultContext if true, then this action also supports operating on a default
+	 * context other than the active (focused) provider's context
+	 * @return an ActionBuilder whose generic types have been modified to match the new ActionContext.
+	 * It still contains all the configuration that has been applied so far
+	 */
+	@SuppressWarnings("unchecked")
+	public <AC2 extends ActionContext, B2 extends AbstractActionBuilder<T, AC2, B2>> B2 withContext(
+			Class<AC2> newActionContextClass, boolean useDefaultContext) {
 
 		if (actionContextClass != ActionContext.class) {
 			throw new IllegalStateException("Can't set the ActionContext type more than once");
 		}
+		this.supportsDefaultContext = useDefaultContext;
 
 		// automatic enablement management triggered, make sure there is a existing enablement 
 		// predicate. The default behavior of manual management interferes with automatic management.
@@ -711,16 +742,15 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 				"Can't build a DockingAction without an action callback");
 		}
 		if (windowWhen == When.CONTEXT_MATCHES && actionContextClass == null) {
-			throw new IllegalStateException("The InWindow state was set to "
-					+ "\"CONTEXT_MATCHES\", but no context class was set. Use"
-					+ " the \"withContext\" method"); 
+			throw new IllegalStateException("The InWindow state was set to " +
+				"\"CONTEXT_MATCHES\", but no context class was set. Use" +
+				" the \"withContext\" method");
 		}
 	}
 
 	protected void decorateAction(DockingAction action) {
 		action.setEnabled(isEnabled);
 		action.setDescription(description);
-		action.setSupportsDefaultToolContext(supportsDefaultToolContext);
 
 		setMenuData(action);
 		setToolbarData(action);
@@ -735,11 +765,15 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			action.enabledWhen(adaptPredicate(enabledPredicate));
 		}
 
+		// Note: must set contextClass fore setting "validContextWhen" predicate as this method
+		// also sets a predicate for valid context
+		action.setContextClass(actionContextClass, supportsDefaultContext);
 		action.validContextWhen(adaptPredicate(validContextPredicate));
+
 		if (popupPredicate != null) {
 			action.popupWhen(adaptPredicate(popupPredicate));
 		}
-		
+
 		if (windowWhen == When.ALWAYS) {
 			action.setAddToAllWindows(true);
 		}

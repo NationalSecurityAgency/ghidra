@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.data;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.tree.TreePath;
 
@@ -153,8 +154,7 @@ public class DataPlugin extends Plugin implements DataService {
 		tool.addAction(pointerAction);
 
 		// Data instance settings action based upon data selection in listing
-		new ActionBuilder("Data Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Data Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATA_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ListingActionContext.class)
@@ -163,8 +163,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action based upon data selection in listing
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DEFAULT_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ListingActionContext.class)
@@ -173,8 +172,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for selected datatypes from datatype manager
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(DataTypesActionContext.class)
@@ -183,8 +181,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for composite editor components (Program-based)
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ComponentProgramActionContext.class)
@@ -193,8 +190,7 @@ public class DataPlugin extends Plugin implements DataService {
 				.buildAndInstall(tool);
 
 		// Default settings action for composite editor components (stand-alone archive)
-		new ActionBuilder("Default Settings", getName())
-				.sharedKeyBinding()
+		new ActionBuilder("Default Settings", getName()).sharedKeyBinding()
 				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
 				.popupMenuGroup("Settings")
 				.withContext(ComponentStandAloneActionContext.class)
@@ -202,31 +198,31 @@ public class DataPlugin extends Plugin implements DataService {
 				.onAction(context -> editDefaultComponentSettings(context))
 				.buildAndInstall(tool);
 
-		editDataTypeAction = new ActionBuilder("Edit Data Type", getName())
-				.popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
-				.popupMenuGroup("BasicData")
-				.withContext(ListingActionContext.class)
-				.enabledWhen(c -> {
-					DataType editableDt = getEditableDataTypeFromContext(c);
-					if (editableDt != null) {
-						editDataTypeAction.setHelpLocation(
-							dtmService.getEditorHelpLocation(editableDt));
-						return true;
-					}
-					return false;
-				})
-				.onAction(c -> editDataTypeCallback(c))
-				.helpLocation(new HelpLocation("DataTypeEditors", "Structure_Editor"))
-				.buildAndInstall(tool);
+		editDataTypeAction =
+			new ActionBuilder("Edit Data Type", getName()).popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
+					.popupMenuGroup("BasicData")
+					.withContext(ListingActionContext.class)
+					.enabledWhen(c -> {
+						DataType editableDt = getEditableDataTypeFromContext(c);
+						if (editableDt != null) {
+							editDataTypeAction
+									.setHelpLocation(dtmService.getEditorHelpLocation(editableDt));
+							return true;
+						}
+						return false;
+					})
+					.onAction(c -> editDataTypeCallback(c))
+					.helpLocation(new HelpLocation("DataTypeEditors", "Structure_Editor"))
+					.buildAndInstall(tool);
 
 		chooseDataTypeAction = new ChooseDataTypeAction(this);
 		chooseDataTypeAction.setEnabled(false);
 
-		chooseDataTypeAction.setPopupMenuData(
-			new MenuData(CHOOSE_DATA_TYPE_POPUP_PATH, BASIC_DATA_GROUP));
+		chooseDataTypeAction
+				.setPopupMenuData(new MenuData(CHOOSE_DATA_TYPE_POPUP_PATH, BASIC_DATA_GROUP));
 		chooseDataTypeAction.setEnabled(true);
-		chooseDataTypeAction.setHelpLocation(
-			new HelpLocation("DataTypeEditors", "DataTypeSelectionDialog"));
+		chooseDataTypeAction
+				.setHelpLocation(new HelpLocation("DataTypeEditors", "DataTypeSelectionDialog"));
 		tool.addAction(chooseDataTypeAction);
 	}
 
@@ -290,8 +286,8 @@ public class DataPlugin extends Plugin implements DataService {
 	}
 
 	@Override
-	public boolean createData(DataType dt, ListingActionContext context,
-			boolean stackPointers, boolean enableConflictHandling) {
+	public boolean createData(DataType dt, ListingActionContext context, boolean stackPointers,
+			boolean enableConflictHandling) {
 // TODO: conflict handler (i.e., removal of other conflicting data not yet supported)
 		ProgramLocation location = context.getLocation();
 		if (!(location instanceof CodeUnitLocation)) {
@@ -352,7 +348,7 @@ public class DataPlugin extends Plugin implements DataService {
 				new CreateDataInStructureBackgroundCmd(start, startPath, length, dt, stackPointers);
 		}
 		else {
-			cmd = new CreateDataBackgroundCmd(selection, dt, true);
+			cmd = new CreateDataBackgroundCmd(selection, dt, stackPointers);
 		}
 
 		boolean didCreateData = false;
@@ -382,6 +378,12 @@ public class DataPlugin extends Plugin implements DataService {
 		int newSize = getDataTypeSize(program, dataType, start);
 		if (newSize == 1) {
 			return true;
+		}
+
+		if (newSize <= 0) {
+			tool.setStatusInfo("Invalid data location.  Unable to resolve data length at " + start +
+				" for " + dataType.getName());
+			return false;
 		}
 
 		Address end = null;
@@ -491,17 +493,8 @@ public class DataPlugin extends Plugin implements DataService {
 			return newSize;
 		}
 
-		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-			MemoryBlock block = program.getMemory().getBlock(start);
-			if (block == null || !block.isInitialized()) {
-				tool.setStatusInfo(
-					dataType.getName() + " may only be applied on initialized memory");
-				return -1;
-			}
-		}
-
 		DataTypeInstance dataTypeInstance = DataTypeInstance.getDataTypeInstance(dataType,
-			new DumbMemBufferImpl(program.getMemory(), start));
+			new DumbMemBufferImpl(program.getMemory(), start), false);
 		if (dataTypeInstance == null) {
 			tool.setStatusInfo("Unallowed data type at " + start + ": " + dataType.getName());
 			return -1;
@@ -518,9 +511,7 @@ public class DataPlugin extends Plugin implements DataService {
 	 * Get rid of the dynamically created list of data types
 	 */
 	private void clearActions(List<DataAction> actions) {
-		Iterator<DataAction> iter = actions.iterator();
-		while (iter.hasNext()) {
-			DockingAction action = iter.next();
+		for (DockingAction action : actions) {
 			tool.removeAction(action);
 			action.dispose();
 		}

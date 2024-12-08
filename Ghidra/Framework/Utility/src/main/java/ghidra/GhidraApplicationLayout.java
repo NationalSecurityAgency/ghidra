@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,8 @@
  */
 package ghidra;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
@@ -36,12 +37,10 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	/**
 	 * Constructs a new Ghidra application layout object.
 	 *
-	 * @throws FileNotFoundException if there was a problem getting a user
-	 *             directory.
-	 * @throws IOException if there was a problem getting the application
-	 *             properties or modules.
+	 * @throws IOException if there was a problem getting a user directory or the application 
+	 *   properties or modules.
 	 */
-	public GhidraApplicationLayout() throws FileNotFoundException, IOException {
+	public GhidraApplicationLayout() throws IOException {
 
 		// Application root directories
 		applicationRootDirs = findGhidraApplicationRootDirs();
@@ -53,7 +52,8 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		applicationInstallationDir = findGhidraApplicationInstallationDir();
 
 		// User directories
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(getApplicationProperties());
+		userTempDir = ApplicationUtilities
+				.getDefaultUserTempDir(getApplicationProperties().getApplicationName());
 		userCacheDir = ApplicationUtilities.getDefaultUserCacheDir(getApplicationProperties());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(getApplicationProperties(),
 			getApplicationInstallationDir());
@@ -77,13 +77,10 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * (like the Eclipse GhidraDevPlugin).
 	 *
 	 * @param applicationInstallationDir The application installation directory.
-	 * @throws FileNotFoundException if there was a problem getting a user
-	 *             directory.
-	 * @throws IOException if there was a problem getting the application
-	 *             properties.
+	 * @throws IOException if there was a problem getting a user directory or the application
+	 *   properties.
 	 */
-	public GhidraApplicationLayout(File applicationInstallationDir)
-			throws FileNotFoundException, IOException {
+	public GhidraApplicationLayout(File applicationInstallationDir) throws IOException {
 
 		// Application installation directory
 		this.applicationInstallationDir = new ResourceFile(applicationInstallationDir);
@@ -96,7 +93,8 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		applicationProperties = new ApplicationProperties(applicationRootDirs);
 
 		// User directories
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(getApplicationProperties());
+		userTempDir = ApplicationUtilities
+				.getDefaultUserTempDir(getApplicationProperties().getApplicationName());
 		userCacheDir = ApplicationUtilities.getDefaultUserCacheDir(getApplicationProperties());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(getApplicationProperties(),
 			getApplicationInstallationDir());
@@ -155,54 +153,31 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 		// Find installed extension modules
 		for (ResourceFile extensionInstallDir : extensionInstallationDirs) {
-			File[] extensionModuleDirs =
-				extensionInstallDir.getFile(false).listFiles(d -> d.isDirectory());
-			if (extensionModuleDirs != null) {
-				for (File extensionModuleDir : extensionModuleDirs) {
 
-					// Skip extensions that live in an application root directory...we've already
-					// found those.
-					if (applicationRootDirs.stream()
-							.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir.getFile(false),
-								extensionModuleDir))) {
-						continue;
-					}
-					// Skip extensions slated for cleanup
-					if (new File(extensionModuleDir, ModuleUtilities.MANIFEST_FILE_NAME_UNINSTALLED)
-							.exists()) {
-						continue;
-					}
-
-					moduleRootDirectories.add(new ResourceFile(extensionModuleDir));
+			FileUtilities.forEachFile(extensionInstallDir, extensionDir -> {
+				// Skip extensions in an application root directory... already found those.
+				if (FileUtilities.isPathContainedWithin(applicationRootDirs, extensionDir)) {
+					return;
 				}
-			}
+
+				// Skip extensions slated for cleanup
+				if (ModuleUtilities.isUninstalled(extensionDir)) {
+					return;
+				}
+
+				moduleRootDirectories.add(extensionDir);
+			});
 		}
 
-		// Examine the classpath to look for modules outside of the application root directories.
-		// These might exist if Ghidra was launched from an Eclipse project that resides
-		// external to the Ghidra installation.
-		for (String entry : System.getProperty("java.class.path", "").split(File.pathSeparator)) {
-			ResourceFile classpathEntry = new ResourceFile(entry);
-
-			// We only care about directories (skip jars)
-			if (!classpathEntry.isDirectory()) {
-				continue;
-			}
-
-			// Skip classpath entries that live in an application root directory...we've already
-			// found those.
-			if (applicationRootDirs.stream()
-					.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir.getFile(false),
-						classpathEntry.getFile(false)))) {
-				continue;
-			}
-
-			// We are going to assume that the classpath entry is in a subdirectory of the module
-			// directory (i.e., bin/), so only check parent directory for the module.
-			ResourceFile classpathEntryParent = classpathEntry.getParentFile();
-			if (classpathEntryParent != null &&
-				ModuleUtilities.isModuleDirectory(classpathEntryParent)) {
-				moduleRootDirectories.add(classpathEntryParent);
+		// Add external modules defined via a system property. This will typically be used by
+		// user's developing 3rd party modules from something like Eclipse.
+		String externalModules = System.getProperty("ghidra.external.modules", "");
+		if (!externalModules.isBlank()) {
+			for (String path : externalModules.split(File.pathSeparator)) {
+				ResourceFile eclipseProjectDir = new ResourceFile(path);
+				if (ModuleUtilities.isModuleDirectory(eclipseProjectDir)) {
+					moduleRootDirectories.add(eclipseProjectDir);
+				}
 			}
 		}
 
@@ -231,7 +206,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * Returns the directory where all Ghidra extension archives are stored.
 	 * This should be at the following location:<br>
 	 * <ul>
-	 * <li><code>[application root]/Extensions/Ghidra</code></li>
+	 * <li><code>{install dir}/Extensions/Ghidra</code></li>
 	 * </ul>
 	 *
 	 * @return the archive folder, or null if can't be determined
@@ -253,8 +228,8 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * should be at the following locations:<br>
 	 * <ul>
 	 * <li><code>[user settings dir]/Extensions</code></li>
-	 * <li><code>[application install dir]/Ghidra/Extensions</code></li>
-	 * <li><code>ghidra/Ghidra/Extensions</code> (development mode)</li>
+	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
+	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
 	 * </ul>
 	 *
 	 * @return the install folder, or null if can't be determined
@@ -262,21 +237,16 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	protected List<ResourceFile> findExtensionInstallationDirectories() {
 
 		List<ResourceFile> dirs = new ArrayList<>();
+		dirs.add(new ResourceFile(new File(userSettingsDir, "Extensions")));
 
-		// Would like to find a better way to do this, but for the moment this seems the
-		// only solution. We want to get the 'Extensions' directory in ghidra, but there's
-		// no way to retrieve that directory directly. We can only get the full set of
-		// application root dirs and search for it, hoping we don't encounter one with the
-		// name 'Extensions' in one of the other root dirs.
 		if (SystemUtilities.isInDevelopmentMode()) {
 			ResourceFile rootDir = getApplicationRootDirs().iterator().next();
 			File temp = new File(rootDir.getFile(false), "Extensions");
 			if (temp.exists()) {
-				dirs.add(new ResourceFile(temp));
+				dirs.add(new ResourceFile(temp)); // ghidra/Ghidra/Extensions
 			}
 		}
 		else {
-			dirs.add(new ResourceFile(new File(userSettingsDir, "Extensions")));
 			dirs.add(new ResourceFile(applicationInstallationDir, "Ghidra/Extensions"));
 		}
 

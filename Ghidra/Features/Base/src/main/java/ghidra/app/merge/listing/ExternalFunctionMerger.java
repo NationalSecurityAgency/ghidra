@@ -473,7 +473,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		initializeAutoMerge("Auto-merging External Labels and Functions and determining conflicts.",
 			progressMin, progressMax, monitor);
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		clearResolveInfo();
 
 		setupSymbolChanges(monitor); // Creates ID arrays used by processing methods.
@@ -591,7 +591,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			throws CancelledException {
 		AddressIterator latestModifiedAddressIterator = latestExternalSet.getAddresses(true);
 		while (latestModifiedAddressIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address externalAddress = latestModifiedAddressIterator.next();
 			Symbol latestSymbol = symbolTables[LATEST].getPrimarySymbol(externalAddress);
 			if (latestSymbol == null) {
@@ -624,7 +624,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	private void getNonSymbolChangesForMyExternals(TaskMonitor monitor) throws CancelledException {
 		AddressIterator myModifiedAddressIterator = myExternalSet.getAddresses(true);
 		while (myModifiedAddressIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address externalAddress = myModifiedAddressIterator.next();
 			Symbol mySymbol = symbolTables[MY].getPrimarySymbol(externalAddress);
 			if (mySymbol == null) {
@@ -711,7 +711,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	private void mergeExternalDetail(int type, ExternalLocation resultExternalLocation,
 			ExternalLocation fromExternalLocation, TaskMonitor monitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// See if both changed to same value.
 		switch (type) {
@@ -1106,7 +1106,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	}
 
 	private void determineExternalRemoveConflicts(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		if (totalChanges <= 0) {
 			return;
 		}
@@ -1157,7 +1157,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	}
 
 	private void determineExternalChangeConflicts(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		if (totalChanges <= 0) {
 			return;
 		}
@@ -1174,7 +1174,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	private void processExternalsChangedInLatest(TaskMonitor monitor) throws CancelledException {
 		Iterator<Long> latestIterator = latestModifiedIDs.iterator();
 		while (latestIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long latestID = latestIterator.next();
 			long originalID = resolveOriginalIDFromLatestID(latestID);
 			long myID = resolveMyIDFromOriginalID(originalID);
@@ -1211,7 +1211,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	private void processExternalsChangedInMy(TaskMonitor monitor) throws CancelledException {
 		Iterator<Long> myIterator = myModifiedIDs.iterator();
 		while (myIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long myID = myIterator.next();
 			long originalID = resolveOriginalIDFromMyID(myID);
 			long latestID = resolveLatestIDFromOriginalID(originalID);
@@ -1426,7 +1426,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	 */
 	public void replaceExternalDataType(ExternalLocation resultExternalLocation,
 			ExternalLocation fromExternalLocation, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		if (fromExternalLocation != null && resultExternalLocation != null) {
 			DataType fromDataTypeForResult = getResultDataType(fromExternalLocation);
 			DataType resultDataType = resultExternalLocation.getDataType();
@@ -1526,7 +1526,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	}
 
 	private void determineExternalAddConflicts(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		if (totalChanges <= 0) {
 			return;
 		}
@@ -1540,7 +1540,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		// MY adds may conflict with LATEST adds that are already in RESULT.
 		Iterator<Long> myIterator = myAddIDs.iterator();
 		while (myIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long myID = myIterator.next();
 			Symbol mySymbol = symbolTables[MY].getSymbol(myID);
 			// Non-primary symbols are "original" symbols and we don't need to match these.
@@ -2016,7 +2016,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			choicesPanel.setConflictType("External Function Removal");
 
 			setupConflictPanel(listingMergePanel, choicesPanel, externalLocations, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a external function removal choice then a "Use For All" has already occurred.
@@ -2069,7 +2069,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 					choicesPanel.setConflictType("Function Detail");
 
 					setupConflictPanel(listingPanel, choicesPanel, externalLocations, monitor);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				else {
 					mergeFunctionDetails(functions, currentConflictOption, monitor);
@@ -2128,7 +2128,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 					choicesPanel.setConflictType("Function Return");
 
 					setupConflictPanel(listingPanel, choicesPanel, externalLocations, monitor);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				else {
 					mergeFunctionReturn(functions, currentConflictOption, monitor);
@@ -2145,14 +2145,14 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				if (variableStorageChoice != ASK_USER) {
 					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
 							.getOverlappingVariables()) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						mergeVariableStorage(functions, pair, variableStorageChoice, monitor);
 					}
 				}
 				else if (askUser && mergeManager != null) {
 					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
 							.getOverlappingVariables()) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						boolean useForAll = (variableStorageChoice != ASK_USER);
 						if (useForAll) {
 							mergeVariableStorage(functions, pair, variableStorageChoice, monitor);
@@ -2170,7 +2170,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				else {
 					for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
 							.getOverlappingVariables()) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						mergeVariableStorage(functions, pair, currentConflictOption, monitor);
 					}
 				}
@@ -2192,7 +2192,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 					choicesPanel.setConflictType("Function Parameter Signature");
 
 					setupConflictPanel(listingPanel, choicesPanel, externalLocations, monitor);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				else {
 					mergeParameters(functions, currentConflictOption, monitor);
@@ -2212,7 +2212,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				else if (askUser && mergeManager != null) {
 					Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
 					while (iter.hasNext()) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						ParamInfoConflict pc = iter.next();
 						boolean useForAll = (parameterInfoChoice != ASK_USER);
 						if (useForAll) {
@@ -2226,7 +2226,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 						choicesPanel.setConflictType("Function Parameter Info");
 
 						setupConflictPanel(listingPanel, choicesPanel, externalLocations, monitor);
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 					}
 
 				}
@@ -2244,7 +2244,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				}
 				if (askUser && mergeManager != null) {
 					for (LocalVariableConflict localVariableConflict : localVarConflicts) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						ConflictPanel choicesPanel;
 						if ((localVariableConflict.varConflicts & VAR_REMOVED) != 0) {
 							currentExternalConflictType =
@@ -2411,26 +2411,26 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 		// Handle External Detail Conflicts
 		if (externalDetailConflicts.contains(myAddress)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			handleExternalDetailsConflict(externalLocations, chosenConflictOption, monitor);
 		}
 
 		// Handle External Data Type Conflicts
 		if (externalDataTypeConflicts.contains(myAddress)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			handleExternalDataTypeConflict(externalLocations, chosenConflictOption, monitor);
 		}
 
 		// Handle External Function versus Data Type Conflicts
 		if (externalFunctionVersusDataTypeConflicts.contains(myAddress)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			handleExternalFunctionVersusDataTypeConflict(externalLocations, chosenConflictOption,
 				monitor);
 		}
 
 		// Handle Detailed Function Conflicts
 		if (funcSet.contains(myAddress)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address myEntryPoint = myAddress;
 			Function[] functions = getFunctions(externalLocations);
 			updateExternalNameInfo(externalLocations, MY);
@@ -2572,7 +2572,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			choicesPanel.setConflictType("External Details");
 
 			setupConflictPanel(listingMergePanel, choicesPanel, externalLocations, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a external details choice then a "Use For All" has already occurred.
@@ -2613,7 +2613,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			choicesPanel.setConflictType("External Data Type");
 
 			setupConflictPanel(listingMergePanel, choicesPanel, externalLocations, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a external data type choice then a "Use For All" has already occurred.
@@ -2641,7 +2641,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			choicesPanel.setConflictType("External Function Versus Data Type");
 
 			setupConflictPanel(listingMergePanel, choicesPanel, externalLocations, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a external function vs. data type choice then a "Use For All" has already occurred.
@@ -2683,7 +2683,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 
 			setupAddConflictPanel(addConflictPanel, choicesPanel, externalLocations[LATEST],
 				externalLocations[MY], monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a external add choice then a "Use For All" has already occurred.
@@ -2733,7 +2733,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			choicesPanel.setConflictType("External Removal");
 
 			setupConflictPanel(listingMergePanel, choicesPanel, externalLocations, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a function remove choice then a "Use For All" has already occurred.

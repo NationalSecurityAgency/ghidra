@@ -2,7 +2,7 @@
 <feature
       id="ghidra.xtext.sleigh.feature"
       label="Ghidra Sleigh Editor"
-      version="1.0.1.qualifier"
+      version="1.0.2.qualifier"
       provider-name="Ghidra">
 
    <copyright>

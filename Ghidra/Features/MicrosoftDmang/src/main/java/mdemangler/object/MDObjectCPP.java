@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package mdemangler.object;
 
 import ghidra.util.Msg;
 import mdemangler.*;
-import mdemangler.MDMang.ProcessingMode;
 import mdemangler.functiontype.MDFunctionType;
 import mdemangler.naming.*;
 import mdemangler.typeinfo.MDTypeInfo;
@@ -58,12 +57,20 @@ public class MDObjectCPP extends MDObject {
 	}
 
 	/**
+	 * Returns whether the object was a hashed object
+	 * @return {@code true} if was a hashed object
+	 */
+	public boolean isHashObject() {
+		return hashedObjectFlag;
+	}
+
+	/**
 	 * Returns the name of the symbol, minus any namespace component.
 	 * @return the name.
 	 */
 	public String getName() {
 		if (hashedObjectFlag) {
-			return hashedObject.toString();
+			return hashedObject.getName();
 		}
 		return getQualifiedName().getBasicName().toString();
 	}
@@ -72,7 +79,7 @@ public class MDObjectCPP extends MDObject {
 	 * Returns the {@link MDQualification} component that represents the namespace.
 	 * @return the namespace information.
 	 */
-	public MDQualification getQualfication() {
+	public MDQualification getQualification() {
 		if (hashedObjectFlag) {
 			return hashedObject.getQualification();
 		}
@@ -120,17 +127,10 @@ public class MDObjectCPP extends MDObject {
 		if (dmang.peek() != '?') {
 			throw new MDException("Invalid ObjectCPP");
 		}
-		if (!dmang.isProcessingModeActive(ProcessingMode.LLVM)) {
-			// If not LLVM mode, then the '?' seen above is valid as being part of this MDObjectCPP
-			// parsing, so we should consume it.  If, on the other hand, we are in LLVM mode, then
-			// this '?' is currently part of the possible nonstandard mangling forms that are
-			// output by LLVM mangling and they are consumed there.
-			dmang.increment();
-		}
+		dmang.increment();
 		if ((dmang.peek(0) == '?') && (dmang.peek(1) == '?')) { //??? prefix
 			embeddedObjectFlag = true;
 		}
-
 		if ((dmang.peek(0) == '?') && (dmang.peek(1) == '@')) { //??@ prefix
 			// MDMANG SPECIALIZATION USED.
 			dmang.processHashedObject(this);
@@ -148,9 +148,7 @@ public class MDObjectCPP extends MDObject {
 					typeInfo.setTypeCast();
 				}
 				typeInfo.parse();
-				if (!typeInfo.getNameModifier().isEmpty()) {
-					qualifiedName.setNameModifier(typeInfo.getNameModifier());
-				}
+				qualifiedName.setNameModifier(typeInfo);
 				if (qualifiedName.isTypeCast()) {
 					applyFunctionReturnTypeToTypeCastOperatorName();
 				}
@@ -241,7 +239,7 @@ public class MDObjectCPP extends MDObject {
 		@Override
 		protected void parseInternal() throws MDException {
 
-			if ((dmang.peek() != '?') && (dmang.peek(1) != '@')) {
+			if ((dmang.peek() != '?') || (dmang.peek(1) != '@')) {
 				throw new MDException("Invalid HashedObject");
 			}
 			dmang.increment(2);
@@ -267,10 +265,19 @@ public class MDObjectCPP extends MDObject {
 			hashString = builder.toString();
 		}
 
+		/**
+		 * Returns the name representation
+		 * @return the name
+		 */
+		public String getName() {
+			// We have made up the name representation with the encompassing tick marks (similar
+			//  to other types).  Nothing is sacrosanct about this output.
+			return "`" + hashString + "'";
+		}
+
 		@Override
 		public void insert(StringBuilder builder) {
-			// We have made up the output format.  Nothing is sacrosanct about this output.
-			builder.append("`" + hashString + "'");
+			builder.append(getName());
 		}
 	}
 

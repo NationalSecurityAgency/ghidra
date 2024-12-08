@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,9 +34,7 @@ import ghidra.util.exception.AssertException;
  * A utility class to easily show dialogs that require input from the user.
  *
  *
- * <h2>Option Dialogs</h2><br>
- * <blockquote>
- * <p>
+ * <h2>Option Dialogs</h2>
  * The primary type of
  * dialog provided herein is the basic option dialog that allows the user to specify the buttons
  * that appear on the dialog.  By default, the given option text will appear as a button(s),
@@ -44,55 +42,37 @@ import ghidra.util.exception.AssertException;
  * {@link #showOptionNoCancelDialog(Component, String, String, String, String, int)} methods if
  * you do not want a <code>Cancel</code> button.  To use this type of dialog you can use the
  * various <b><code>showOptionDialog*</code></b> methods.
- * </p>
  * <p>
  * Each of the option dialog methods will return a result, which is a number indicating the
  * choice made by the user.  See each method for more details.
- * </p>
- * </blockquote>
  *
  *
- * <h3>Data Input and Choice Dialogs</h3><br>
- * <blockquote>
- * 		<p>
- * 		The methods listed here allow the user to either enter data from the keyboard or to choose
- * 		from a pre-populated list of data.
- * 		</p>
- * 		<blockquote>
- * 		{@link #showInputChoiceDialog(Component, String, String, String[], String, int)}<br>
- * 		{@link #showInputMultilineDialog(Component, String, String, String)}<br>
- * 		{@link #showInputSingleLineDialog(Component, String, String, String)}
- * 	</blockquote>
- * </blockquote>
+ * <h3>Data Input and Choice Dialogs</h3>
+ * The methods listed here allow the user to either enter data from the keyboard or to choose
+ * from a pre-populated list of data.
+ * <ul>
+ *   <li>{@link #showInputChoiceDialog(Component, String, String, String[], String, int)}</li>
+ *   <li>{@link #showInputMultilineDialog(Component, String, String, String)}</li>
+ *   <li>{@link #showInputSingleLineDialog(Component, String, String, String)}</li>
+ * </ul>
  *
  *
- * <h3>Yes/No Dialogs</h3><br>
- * <blockquote>
- * <p>
+ * <h3>Yes/No Dialogs</h3>
  * Finally, there are a series of methods that present <code>Yes</code> and <code>No</code> buttons in
  * a dialog.  There are versions that do and do not have a <code>Cancel</code> button.
- * </p>
- * </blockquote>
  *
  *
- * <h3>Basic Message / Warning / Error Dialogs</h3><br>
- * <blockquote>
- * <p>
+ * <h3>Basic Message / Warning / Error Dialogs</h3>
  * If you would like to display a simple message to the user, but do not require input from the
  * user, then you should use the various methods of {@link Msg}, such as
  * {@link Msg#showInfo(Object, Component, String, Object)}.
- * </p>
  * <p>
  * Note, the user will be unable to select any text shown in the message area of the dialog.
- * </p>
- * </blockquote>
  * 
- * <h3>"Apply to All" / "Don't Show Again"</h3><br>
- * <blockquote>
- * <p>For more advanced input dialog usage, to include allowing the user to tell the dialog
+ * <h3>"Apply to All" / "Don't Show Again"</h3>
+ * For more advanced input dialog usage, to include allowing the user to tell the dialog
  * to remember a particular decision, or to apply a given choice to all future request, see
  * {@link OptionDialogBuilder}.
- * </blockquote>
  *
  * @see Msg
  * @see OptionDialogBuilder
@@ -270,7 +250,7 @@ public class OptionDialog extends DialogComponentProvider {
 		if (savedDialogChoicePanel != null) {
 			panel.add(savedDialogChoicePanel, BorderLayout.SOUTH);
 		}
-
+		setAccessibleDescription(message);
 		addWorkPanel(panel);
 		setRememberLocation(false);
 		setRememberSize(false);

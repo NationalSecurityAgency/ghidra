@@ -120,7 +120,7 @@ public final class OatDexFileUtilities {
 
 		if (oatClassHeader.getType() == OatClassType.kOatClassAllCompiled) {
 			for (int j = 0; j < oatClassHeader.getMethodOffsets().size(); ++j) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				OatMethodOffsets methodOffset = oatClassHeader.getMethodOffsets().get(j);
 				if (methodOffset.getCodeOffset() == 0) {
@@ -141,7 +141,7 @@ public final class OatDexFileUtilities {
 		else if (oatClassHeader.getType() == OatClassType.kOatClassSomeCompiled) {
 			int offset = 0;
 			for (int j = 0; j < allMethods.size(); ++j) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (oatClassHeader.isMethodNative(j)) {
 					OatMethodOffsets methodOffset = oatClassHeader.getMethodOffsets().get(offset++);
 					if (methodOffset.getCodeOffset() == 0) {
@@ -181,7 +181,7 @@ public final class OatDexFileUtilities {
 		Data oatClassHeaderData = listing.createData(address, oatClassHeader.toDataType());
 
 		for (int j = 0; j < oatClassHeaderData.getNumComponents(); ++j) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data component = oatClassHeaderData.getComponent(j);
 			if (component.getFieldName().startsWith("methods_pointer_")) {
 				Data methodOffsetData = component.getComponent(0);

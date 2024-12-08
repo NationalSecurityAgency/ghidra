@@ -19,10 +19,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -80,6 +81,10 @@ public class BreakpointLocationRow {
 
 	public Address getAddress() {
 		return loc.getMinAddress();
+	}
+
+	public ProgramLocation getProgramLocation() {
+		return new ProgramLocation(loc.getTrace().getProgramView(), getAddress());
 	}
 
 	public String getTraceName() {

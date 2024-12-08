@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@
 #ifndef __FLOAT_HH__
 #define __FLOAT_HH__
 
-#include "xml.hh"
+#include "error.hh"
 
 namespace ghidra {
 
@@ -48,7 +48,8 @@ private:
   int4 exp_size;		///< Number of bits in exponent
   int4 bias;			///< What to add to real exponent to get encoding
   int4 maxexponent;		///< Maximum possible exponent
-  int4 decimal_precision;	///< Number of decimal digits of precision
+  int4 decimalMinPrecision;	///< Minimum decimal digits of precision guaranteed by the format
+  int4 decimalMaxPrecision;	///< Maximum decimal digits of precision needed to uniquely represent value
   bool jbitimplied;		///< Set to \b true if integer bit of 1 is assumed
   static double createFloat(bool sign,uintb signif,int4 exp);	 ///< Create a double given sign, fractional, and exponent
   static floatclass extractExpSig(double x,bool *sgn,uintb *signif,int4 *exp);
@@ -61,17 +62,17 @@ private:
   uintb getNaNEncoding(bool sgn) const;				///< Get an encoded NaN value
   void calcPrecision(void);					///< Calculate the decimal precision of this format
 public:
-  FloatFormat(void) {}	///< Construct for use with restoreXml()
   FloatFormat(int4 sz);	///< Construct default IEEE 754 standard settings
   int4 getSize(void) const { return size; }			///< Get the size of the encoding in bytes
   double getHostFloat(uintb encoding,floatclass *type) const;	///< Convert an encoding into host's double
   uintb getEncoding(double host) const;				///< Convert host's double into \b this encoding
-  int4 getDecimalPrecision(void) const { return decimal_precision; }	///< Get number of digits of precision
   uintb convertEncoding(uintb encoding,const FloatFormat *formin) const;	///< Convert between two different formats
 
   uintb extractFractionalCode(uintb x) const;			///< Extract the fractional part of the encoding
   bool extractSign(uintb x) const;				///< Extract the sign bit from the encoding
   int4 extractExponentCode(uintb x) const;			///< Extract the exponent from the encoding
+
+  string printDecimal(double host,bool forcesci) const;		///< Print given value as a decimal string
 
   // Operations on floating point values
 
@@ -93,9 +94,6 @@ public:
   uintb opRound(uintb a) const;				///< Round
   uintb opInt2Float(uintb a,int4 sizein) const;		///< Convert integer to floating-point
   uintb opFloat2Float(uintb a,const FloatFormat &outformat) const;	///< Convert between floating-point precisions
-
-  void saveXml(ostream &s) const;			///< Save the format to an XML stream
-  void restoreXml(const Element *el);			///< Restore the format from XML
 };
 
 } // End namespace ghidra

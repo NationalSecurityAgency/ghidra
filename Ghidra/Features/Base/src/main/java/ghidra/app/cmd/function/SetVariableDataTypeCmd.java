@@ -16,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -27,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command to set the datatype on a stack variable.
  */
-public class SetVariableDataTypeCmd implements Command {
+public class SetVariableDataTypeCmd implements Command<Program> {
 
 	private final Address fnEntry;
 	private final String varName;
@@ -86,10 +85,6 @@ public class SetVariableDataTypeCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Set " + (isParm ? "Parameter" : "Variable") + " Data Type";
@@ -100,21 +95,16 @@ public class SetVariableDataTypeCmd implements Command {
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		if (!(obj instanceof Program)) {
-			return false;
-		}
-		Program p = (Program) obj;
-
-		Function f = p.getFunctionManager().getFunctionAt(fnEntry);
+	public boolean applyTo(Program program) {
+		Function f = program.getFunctionManager().getFunctionAt(fnEntry);
 		if (f == null) {
 			status = "Function not found";
 			return false;
 		}
 
-		Symbol s = p.getSymbolTable().getParameterSymbol(varName, f);
+		Symbol s = program.getSymbolTable().getParameterSymbol(varName, f);
 		if (s == null) {
-			s = p.getSymbolTable().getLocalVariableSymbol(varName, f);
+			s = program.getSymbolTable().getLocalVariableSymbol(varName, f);
 		}
 		if (s == null) {
 			status = "Variable not found";

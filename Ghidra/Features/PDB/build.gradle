@@ -33,8 +33,7 @@ dependencies {
     	
     // Demangler Analyzer needs to find MicrosoftDemangler
     api project(":MicrosoftDemangler")
-	helpPath project(path: ':Base', configuration: 'helpPath')  // this module's help has links to Base help files
-
+ 
     testImplementation project(path: ':Base', configuration: 'testArtifacts')
     testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }

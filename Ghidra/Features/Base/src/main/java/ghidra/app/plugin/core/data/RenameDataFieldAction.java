@@ -21,7 +21,6 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
-import ghidra.app.util.PluginConstants;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
@@ -78,7 +77,7 @@ class RenameDataFieldAction extends ListingContextAction {
 			DataTypeComponent subComp = comp.getComponent(compPath[compPath.length - 1]);
 			RenameDataFieldDialog dialog = new RenameDataFieldDialog(plugin);
 			dialog.setDataComponent(program, subComp, instance.getFieldName());
-			tool.showDialog(dialog, tool.getComponentProvider(PluginConstants.CODE_BROWSER));
+			tool.showDialog(dialog);
 		}
 	}
 

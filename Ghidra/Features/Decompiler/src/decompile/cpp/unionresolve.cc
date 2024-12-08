@@ -18,7 +18,8 @@
 
 namespace ghidra {
 
-/// The original parent must either be a union, a pointer to a union, or a partial union.
+/// The original parent must either be a union, a partial union, a structure with a single field,
+/// an array with a single element, or a pointer to one of these data-types.
 /// The object is set up initially to resolve to the parent.
 /// \param parent is the original parent data-type
 ResolvedUnion::ResolvedUnion(Datatype *parent)
@@ -27,8 +28,6 @@ ResolvedUnion::ResolvedUnion(Datatype *parent)
   baseType = parent;
   if (baseType->getMetatype() == TYPE_PTR)
     baseType = ((TypePointer *)baseType)->getPtrTo();
-  if (baseType->getMetatype() != TYPE_UNION && baseType->getMetatype() != TYPE_STRUCT)
-    throw LowlevelError("Unsupported data-type for ResolveUnion");
   resolve = parent;
   fieldNum = -1;
   lock = false;
@@ -233,7 +232,7 @@ Datatype *ScoreUnionFields::derefPointer(Datatype *ct,Varnode *vn,int4 &score)
   if (ct->getMetatype() == TYPE_PTR) {
     Datatype *ptrto = ((TypePointer *)ct)->getPtrTo();
     while(ptrto != (Datatype *)0 && ptrto->getSize() > vn->getSize()) {
-      uintb newoff;
+      int8 newoff;
       ptrto = ptrto->getSubType(0, &newoff);
     }
     if (ptrto != (Datatype *)0 && ptrto->getSize() == vn->getSize()) {
@@ -430,8 +429,8 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 	  Varnode *vn = trial.op->getIn(1-trial.inslot);
 	  if (vn->isConstant()) {
 	    TypePointer *baseType = (TypePointer *)trial.fitType;
-	    uintb off = vn->getOffset();
-	    uintb parOff;
+	    int8 off = vn->getOffset();
+	    int8 parOff;
 	    TypePointer *par;
 	    resType = baseType->downChain(off,par,parOff,trial.array,typegrp);
 	    if (resType != (Datatype*)0)
@@ -450,7 +449,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 		}
 	      }
 	      TypePointer *baseType = (TypePointer *)trial.fitType;
-	      if (baseType->getPtrTo()->getSize() == elSize) {
+	      if (baseType->getPtrTo()->getAlignSize() == elSize) {
 		score = 5;
 		resType = trial.fitType;
 	      }
@@ -602,7 +601,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
       if (meta == TYPE_PTR) {
 	if (trial.inslot == 0) {
 	  Datatype *ptrto = ((TypePointer *)trial.fitType)->getPtrTo();
-	  if (ptrto->getSize() == trial.op->getIn(2)->getOffset()) {
+	  if (ptrto->getAlignSize() == trial.op->getIn(2)->getOffset()) {
 	    score = 10;
 	    resType = trial.fitType;
 	  }
@@ -813,7 +812,7 @@ void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
     case CPUI_PTRADD:
       if (meta == TYPE_PTR) {
 	Datatype *ptrto = ((TypePointer *)trial.fitType)->getPtrTo();
-	if (ptrto->getSize() == def->getIn(2)->getOffset())
+	if (ptrto->getAlignSize() == def->getIn(2)->getOffset())
 	  score = 10;
 	else
 	  score = 2;
@@ -861,16 +860,16 @@ Datatype *ScoreUnionFields::scoreTruncation(Datatype *ct,Varnode *vn,int4 offset
     }
   }
   else {
-    uintb off = offset;
     score = 10;		// If we can find a size match for the truncation
-    while(ct != (Datatype*)0 && (off != 0 || ct->getSize() != vn->getSize())) {
+    int8 curOff = offset;
+    while(ct != (Datatype*)0 && (curOff != 0 || ct->getSize() != vn->getSize())) {
       if (ct->getMetatype() == TYPE_INT || ct->getMetatype() == TYPE_UINT) {
-	if (ct->getSize() >= vn->getSize() + off) {
+	if (ct->getSize() >= vn->getSize() + curOff) {
 	  score = 1;	// Size doesn't match, but still possibly a reasonable operation
 	  break;
 	}
       }
-      ct = ct->getSubType(off,&off);
+      ct = ct->getSubType(curOff,&curOff);
     }
     if (ct == (Datatype *)0)
       score = -10;

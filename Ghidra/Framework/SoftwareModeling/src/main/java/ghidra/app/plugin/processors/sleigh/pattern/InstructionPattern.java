@@ -19,26 +19,23 @@
  */
 package ghidra.app.plugin.processors.sleigh.pattern;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.StringUtilities;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
- * 
- *
  * Matches against the actual instruction bit stream
  */
 public class InstructionPattern extends DisjointPattern {
 
 	private PatternBlock maskvalue;
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.DisjointPattern#getBlock(boolean)
-	 */
 	@Override
 	public PatternBlock getBlock(boolean context) {
 		return context ? null : maskvalue;
@@ -60,56 +57,51 @@ public class InstructionPattern extends DisjointPattern {
 		return maskvalue;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#simplifyClone()
-	 */
 	@Override
 	public Pattern simplifyClone() {
 		return new InstructionPattern((PatternBlock) maskvalue.clone());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#shiftInstruction()
-	 */
 	@Override
 	public void shiftInstruction(int sa) {
 		maskvalue.shift(sa);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#doOr(ghidra.app.plugin.processors.sleigh.Pattern, int)
-	 */
 	@Override
 	public Pattern doOr(Pattern b, int sa) {
-		if (b.numDisjoint() > 0)
+		if (b.numDisjoint() > 0) {
 			return b.doOr(this, -sa);
+		}
 
-		if (b instanceof CombinePattern)
+		if (b instanceof CombinePattern) {
 			return b.doOr(this, -sa);
+		}
 
 		DisjointPattern res1, res2;
 		res1 = (DisjointPattern) simplifyClone();
 		res2 = (DisjointPattern) b.simplifyClone();
-		if (sa < 0)
+		if (sa < 0) {
 			res1.shiftInstruction(-sa);
-		else
+		}
+		else {
 			res2.shiftInstruction(sa);
+		}
 		return new OrPattern(res1, res2);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#doAnd(ghidra.app.plugin.processors.sleigh.Pattern, int)
-	 */
 	@Override
 	public Pattern doAnd(Pattern b, int sa) {
-		if (b.numDisjoint() > 0)
+		if (b.numDisjoint() > 0) {
 			return b.doAnd(this, -sa);
-		if (b instanceof CombinePattern)
+		}
+		if (b instanceof CombinePattern) {
 			return b.doAnd(this, -sa);
+		}
 		if (b instanceof ContextPattern) {
 			InstructionPattern newpat = (InstructionPattern) simplifyClone();
-			if (sa < 0)
+			if (sa < 0) {
 				newpat.shiftInstruction(-sa);
+			}
 			return new CombinePattern((ContextPattern) b.simplifyClone(), newpat);
 		}
 		// b must be an InstructionPattern if it reaches here
@@ -127,9 +119,6 @@ public class InstructionPattern extends DisjointPattern {
 		return new InstructionPattern(respattern);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.pattern.Pattern#isMatch(ghidra.app.plugin.processors.sleigh.ParserWalker, ghidra.app.plugin.processors.sleigh.SleighDebugLogger)
-	 */
 	@Override
 	public boolean isMatch(ParserWalker walker, SleighDebugLogger debug)
 			throws MemoryAccessException {
@@ -176,39 +165,27 @@ public class InstructionPattern extends DisjointPattern {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysTrue()
-	 */
 	@Override
 	public boolean alwaysTrue() {
 		return maskvalue.alwaysTrue();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysFalse()
-	 */
 	@Override
 	public boolean alwaysFalse() {
 		return maskvalue.alwaysFalse();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysInstructionTrue()
-	 */
 	@Override
 	public boolean alwaysInstructionTrue() {
 		return maskvalue.alwaysTrue();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser) {
-		XmlElement el = parser.start("instruct_pat");
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_INSTRUCT_PAT);
 		maskvalue = new PatternBlock(true);
-		maskvalue.restoreXml(parser);
-		parser.end(el);
+		maskvalue.decode(decoder);
+		decoder.closeElement(el);
 	}
 
 	@Override

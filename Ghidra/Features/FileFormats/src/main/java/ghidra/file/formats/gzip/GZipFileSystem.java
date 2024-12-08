@@ -136,7 +136,7 @@ public class GZipFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public GFile lookup(String path) throws IOException {
+	public GFile lookup(String path) {
 		return fsIndex.lookup(path);
 	}
 

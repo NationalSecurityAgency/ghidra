@@ -20,7 +20,7 @@ import java.util.*;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -52,7 +52,7 @@ public class RegisterFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	private RegisterFieldFactory(FieldFormatModel model, HighlightProvider highlightProvider,
+	private RegisterFieldFactory(FieldFormatModel model, ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, highlightProvider, displayOptions, fieldOptions);
 		regComp = new RegComparator();
@@ -73,7 +73,7 @@ public class RegisterFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions toolOptions,
+			ListingHighlightProvider highlightProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
 		return new RegisterFieldFactory(formatModel, highlightProvider, toolOptions, fieldOptions);
 	}
@@ -199,14 +199,14 @@ public class RegisterFieldFactory extends FieldFactory {
 		return setRegisters;
 	}
 
-	private FieldElement[] getFieldElements(String[] registerStrings) {
-		FieldElement[] fieldElements = new FieldElement[registerStrings.length];
+	private List<FieldElement> getFieldElements(String[] registerStrings) {
+		List<FieldElement> elements = new ArrayList<>(registerStrings.length);
 		for (int i = 0; i < registerStrings.length; i++) {
 			AttributedString str =
 				new AttributedString(registerStrings[i], ListingColors.REGISTER, getMetrics());
-			fieldElements[i] = new TextFieldElement(str, i, 0);
+			elements.add(new TextFieldElement(str, i, 0));
 		}
-		return fieldElements;
+		return elements;
 	}
 
 	private ListingTextField getTextField(String[] registerStrings, ProxyObj<?> proxy, int xStart) {
@@ -214,9 +214,9 @@ public class RegisterFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		FieldElement[] fieldElements = getFieldElements(registerStrings);
-		return ListingTextField.createMultilineTextField(this, proxy, fieldElements, xStart, width,
-			Integer.MAX_VALUE, hlProvider);
+		List<FieldElement> elements = getFieldElements(registerStrings);
+		return ListingTextField.createMultilineTextField(this, proxy, elements, xStart, width,
+			hlProvider);
 	}
 
 	private class RegComparator implements Comparator<Register> {

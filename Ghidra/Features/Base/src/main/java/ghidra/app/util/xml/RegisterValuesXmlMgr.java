@@ -133,7 +133,7 @@ class RegisterValuesXmlMgr {
 			for (Register reg : regs) {
 				AddressRangeIterator it = context.getRegisterValueAddressRanges(reg, range.getMinAddress(), range.getMaxAddress());
 				while(it.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					AddressRange valueRange = it.next();
 					BigInteger value = context.getValue(reg, valueRange.getMinAddress(),false);
 					if (value == null) {

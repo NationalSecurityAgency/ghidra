@@ -21,19 +21,23 @@ import org.junit.*;
 import org.junit.rules.TestName;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.service.progress.ProgressServicePlugin;
+import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.util.Msg;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator {
 
-	public static class ScreenShotActionContext extends ActionContext {
+	public static class ScreenShotActionContext extends DefaultActionContext {
 	}
 
 	DebuggerConsolePlugin consolePlugin;
 	DebuggerConsoleProvider consoleProvider;
+	ProgressServicePlugin progressService;
 
 	@Rule
 	public TestName name = new TestName();
@@ -42,6 +46,7 @@ public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator 
 	public void setUpMine() throws Throwable {
 		consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 		consoleProvider = waitForComponentProvider(DebuggerConsoleProvider.class);
+		progressService = addPlugin(tool, ProgressServicePlugin.class);
 
 		consolePlugin.addResolutionAction(new ActionBuilder("Import", name.getMethodName())
 				.toolBarIcon(DebuggerResources.ICON_IMPORT)
@@ -63,15 +68,22 @@ public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testCaptureDebuggerConsolePlugin() throws Throwable {
-		Msg.warn(this, "This is a warning message");
-		Msg.error(this, "This is an error message");
+		consolePlugin.log(DebuggerResources.ICON_LOG_WARN, "This is a warning message");
+		consolePlugin.log(DebuggerResources.ICON_LOG_ERROR, "This is an error message",
+			new AssertionError());
 		consolePlugin.log(DebuggerResources.ICON_DEBUGGER,
 			"<html>You can take <b>action</b> to resolve this message</html>",
 			new ScreenShotActionContext());
 
-		AbstractGhidraHeadedDebuggerGUITest
-				.waitForPass(() -> assertEquals(3, consolePlugin.getRowCount(ActionContext.class)));
+		try (CloseableTaskMonitor monitor = progressService.publishTask()) {
+			monitor.initialize(10, "Busy....");
+			monitor.setProgress(6);
 
-		captureIsolatedProvider(consoleProvider, 600, 300);
+			AbstractGhidraHeadedDebuggerTest
+					.waitForPass(
+						() -> assertEquals(4, consolePlugin.getRowCount(ActionContext.class)));
+
+			captureIsolatedProvider(consoleProvider, 600, 300);
+		}
 	}
 }

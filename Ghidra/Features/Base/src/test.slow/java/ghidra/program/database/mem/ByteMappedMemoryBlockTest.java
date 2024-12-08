@@ -48,8 +48,8 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		transactionID = program.startTransaction("Test");
 
-		block = memory.createInitializedBlock("BYTE_BLOCK", space.getAddress(0),
-			bytes.length, (byte) 0, TaskMonitor.DUMMY, false);
+		block = memory.createInitializedBlock("BYTE_BLOCK", space.getAddress(0), bytes.length,
+			(byte) 0, TaskMonitor.DUMMY, false);
 		memory.setBytes(block.getStart(), bytes);
 	}
 
@@ -101,8 +101,7 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 		}
 
 		MemoryBlock block2 = memory.createInitializedBlock("BYTE_BLOCK2", space.getAddress(0x100),
-			bytes.length,
-			(byte) 0, TaskMonitor.DUMMY, false);
+			bytes.length, (byte) 0, TaskMonitor.DUMMY, false);
 
 		set.add(addr(0x100), addr(0x1FF));
 		set.add(addr(0x1080), addr(0x10FF));
@@ -279,11 +278,15 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 		MemoryBlock byteMappedBlock = memory.createByteMappedBlock("test", addr(0x1000), addr(0x80),
 			0x100, new ByteMappingScheme(2, 4), true);
 		assertTrue(byteMappedBlock.isOverlay());
-		AddressSpace testSpace = program.getAddressFactory().getAddressSpace("test");
+		OverlayAddressSpace testSpace =
+			(OverlayAddressSpace) program.getAddressFactory().getAddressSpace("test");
 		assertNotNull(testSpace);
 		assertEquals(space, testSpace.getPhysicalSpace());
-		assertEquals(testSpace.getAddress(0x1000), testSpace.getMinAddress());
-		assertEquals(testSpace.getAddress(0x10FF), testSpace.getMaxAddress());
+		AddressSetView testSet = testSpace.getOverlayAddressSet();
+		assertEquals(1, testSet.getNumAddressRanges());
+		AddressRange r = testSet.getFirstRange();
+		assertEquals(testSpace.getAddress(0x1000), r.getMinAddress());
+		assertEquals(testSpace.getAddress(0x10FF), r.getMaxAddress());
 		assertEquals(0x100, byteMappedBlock.getSize());
 		assertEquals(testSpace.getAddress(0x1000), byteMappedBlock.getStart());
 		assertEquals(testSpace.getAddress(0x10FF), byteMappedBlock.getEnd());

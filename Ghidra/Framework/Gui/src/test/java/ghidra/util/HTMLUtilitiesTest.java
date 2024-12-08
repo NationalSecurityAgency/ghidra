@@ -43,12 +43,12 @@ public class HTMLUtilitiesTest {
 	public void testToHTML_WithNewlinesOnly() {
 		String s = "This text has\na newline character";
 		String html = HTMLUtilities.toHTML(s);
-		assertEquals(HTML + "This text has<BR>\na newline character", html);
+		assertEquals(HTML + "This text has<br>\na newline character", html);
 	}
 
 	@Test
 	public void testToHTML_WithBrTagsOnly() {
-		String s = "This text has<BR>an existing BR tag";
+		String s = "This text has<br>an existing BR tag";
 		String html = HTMLUtilities.toHTML(s);
 		assertEquals(HTML + s, html);
 		spyLogger.assertLogMessage("cannot", "wrap");
@@ -56,7 +56,7 @@ public class HTMLUtilitiesTest {
 
 	@Test
 	public void testToHTML_WithNewlinesAndBrTags() {
-		String s = "This text has<BR>\nan existing BR tag and a newline";
+		String s = "This text has<br>\nan existing BR tag and a newline";
 		String html = HTMLUtilities.toHTML(s);
 		assertEquals(HTML + s, html);
 		spyLogger.assertLogMessage("cannot", "wrap");
@@ -68,7 +68,7 @@ public class HTMLUtilitiesTest {
 			"This is a line that is longer than the default line limit of seventy-five characters";
 		String html = HTMLUtilities.toWrappedHTML(s);
 		assertEquals(HTML +
-			"This is a line that is longer than the default line limit of seventy-five<BR>\n" +
+			"This is a line that is longer than the default line limit of seventy-five<br>\n" +
 			"characters", html);
 	}
 
@@ -77,14 +77,14 @@ public class HTMLUtilitiesTest {
 		// note: toWrappedHTML preserves whitespace
 		String s = "Wrap\n\nhere\n\n\n";
 		String html = HTMLUtilities.toWrappedHTML(s, 0);
-		assertEquals(HTML + "Wrap<BR>\n<BR>\nhere<BR>\n<BR>\n<BR>\n", html);
+		assertEquals(HTML + "Wrap<br>\n<br>\nhere<br>\n<br>\n<br>\n", html);
 	}
 
 	@Test
 	public void testToWrappedHTML_SpecifiedWrapLimit() {
 		String s = "Wrap here";
 		String html = HTMLUtilities.toWrappedHTML(s, 4);
-		assertEquals(HTML + "Wrap<BR>\nhere", html);
+		assertEquals(HTML + "Wrap<br>\nhere", html);
 	}
 
 	@Test
@@ -107,21 +107,21 @@ public class HTMLUtilitiesTest {
 
 	@Test
 	public void testToLiteralHTML_AlreadyStartingWithHTML() {
-		String s = "<HTML>Wrap<BR>here";
+		String s = "<html>Wrap<br>here";
 		String html = HTMLUtilities.toLiteralHTML(s, 4);
-		assertEquals(HTML + "&lt;HTM<BR>\nL&gt;Wr<BR>\nap&lt;B<BR>\nR&gt;he<BR>\nre", html);
+		assertEquals(HTML + "&lt;htm<br>\nl&gt;Wr<br>\nap&lt;b<br>\nr&gt;he<br>\nre", html);
 	}
 
 	@Test
 	public void testToLiteralHTML_NoExisingHTML_SpecifiedLimit() {
 		String s = "Wrap here";
 		String html = HTMLUtilities.toLiteralHTML(s, 4);
-		assertEquals(HTML + "Wrap<BR>\n&nbsp;<BR>\nhere", html);
+		assertEquals(HTML + "Wrap<br>\n&nbsp;<br>\nhere", html);
 	}
 
 	@Test
 	public void testFromHTML() {
-		String s = "<HTML><b>Bold</b>, <i>italics</i>, <font size='3'>sized font!</font>";
+		String s = "<html><b>Bold</b>, <i>italics</i>, <font size='3'>sized font!</font>";
 		String text = Swing.runNow(() -> HTMLUtilities.fromHTML(s));
 		assertEquals("Bold, italics, sized font!", text);
 	}
@@ -143,7 +143,7 @@ public class HTMLUtilitiesTest {
 		String placeholderStr =
 			HTMLUtilities.wrapWithLinkPlaceholder("Stuff inside link tag", "targetstr");
 		String htmlStr = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(placeholderStr);
-		assertEquals("<A HREF=\"targetstr\">Stuff inside link tag</A>", htmlStr);
+		assertEquals("<a href=\"targetstr\">Stuff inside link tag</a>", htmlStr);
 	}
 
 	@Test
@@ -151,7 +151,7 @@ public class HTMLUtilitiesTest {
 		String placeholderStr =
 			HTMLUtilities.wrapWithLinkPlaceholder("Stuff inside link tag", "test$1");
 		String htmlStr = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(placeholderStr);
-		assertEquals("<A HREF=\"test$1\">Stuff inside link tag</A>", htmlStr);
+		assertEquals("<a href=\"test$1\">Stuff inside link tag</a>", htmlStr);
 	}
 
 	@Test
@@ -159,7 +159,7 @@ public class HTMLUtilitiesTest {
 		String placeholderStr =
 			HTMLUtilities.wrapWithLinkPlaceholder("Stuff inside <b>link</b> tag", "test");
 		String htmlStr = HTMLUtilities.convertLinkPlaceholdersToHyperlinks(placeholderStr);
-		assertEquals("<A HREF=\"test\">Stuff inside <b>link</b> tag</A>", htmlStr);
+		assertEquals("<a href=\"test\">Stuff inside <b>link</b> tag</a>", htmlStr);
 	}
 
 	@Test

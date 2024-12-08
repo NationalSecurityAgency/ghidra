@@ -17,6 +17,7 @@ package ghidra.app.merge;
 
 import java.awt.Color;
 
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
 
 public interface MergeConstants {
@@ -29,13 +30,13 @@ public interface MergeConstants {
 	public static final String LATEST_TITLE = "Latest";
 	public static final String MY_TITLE = "Checked Out";
 
-	public Color CONFLICT_COLOR = Palette.MAROON;
+	public GColor CONFLICT_COLOR = Palette.MAROON;
 	public static final Color HIGHLIGHT_COLOR = Palette.LIGHT_GRAY;
 
-	// The following are standardized names for use in passing resolve 
+	// The following are standardized names for use in passing resolve
 	// information between individual merge managers.
 	// For example:
-	// the data type merger knows what data type in the result is equivalent 
+	// the data type merger knows what data type in the result is equivalent
 	// to a given data type from my checked out program. The code unit and
 	// function mergers need to be able to get this information so they
 	// don't unknowingly re-introduce a data type that was already eliminated

@@ -204,8 +204,8 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	 * @param ctxstr a string describing the input context pattern
 	 * @see AssemblyPatternBlock#fromString(String)
 	 */
-	protected void checkAllExact(AssemblyResolutionResults rr, Collection<String> disassembly,
-			long addr, String ctxstr) {
+	protected void checkAllExact(AssemblyResolutionResults rr,
+			Collection<String> disassembly, long addr, String ctxstr) {
 		Address address = lang.getDefaultSpace().getAddress(addr);
 		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
@@ -221,10 +221,10 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 				errs.add((AssemblyResolvedError) ar);
 				continue;
 			}
-			AssemblyResolvedPatterns rcon = (AssemblyResolvedPatterns) ar;
+			AssemblyResolvedPatterns rp = (AssemblyResolvedPatterns) ar;
 			try {
-				dbg.println("  " + rcon.lineToString());
-				for (byte[] ins : rcon.possibleInsVals(ctx)) {
+				dbg.println("  " + rp.lineToString());
+				for (byte[] ins : rp.possibleInsVals(ctx)) {
 					dbg.println("    " + NumericUtilities.convertBytesToString(ins));
 					PseudoInstruction pi = disassemble(addr, ins, ctx.getVals());
 					String cons = dumpConstructorTree(pi);
@@ -233,7 +233,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 					if (!disassembly.contains(dis.trim())) {
 						failedOne = true;
 						misTxtToCons.put(dis, cons);
-						misTxtConsToRes.put(dis + cons, rcon);
+						misTxtConsToRes.put(dis + cons, rp);
 					}
 					gotOne = true;
 				}
@@ -364,8 +364,8 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			}
 
 			@Override
-			public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-					AssemblyPatternBlock ctx) throws AssemblySemanticException {
+			public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+					throws AssemblySemanticException {
 				if (checkOneCompat) {
 					checkOneCompat(instr, rr);
 				}

@@ -87,8 +87,14 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
-		return "The data type for a complex number: a + bi";
+		return "The data type for a complex number: a + bi; consisting of two " +
+			floatType.getName() + " values";
 	}
 
 	private static double toDouble(Object obj) {

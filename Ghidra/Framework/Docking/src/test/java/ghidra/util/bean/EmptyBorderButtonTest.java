@@ -15,8 +15,7 @@
  */
 package ghidra.util.bean;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.swing.ButtonModel;
 
@@ -24,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.*;
 import docking.menu.DialogToolbarButton;
 import docking.test.AbstractDockingTest;
@@ -142,7 +142,7 @@ public class EmptyBorderButtonTest extends AbstractDockingTest {
 			}
 		};
 		ActionContextProvider contextProvider =
-			e -> new ActionContext(null, e.getSource(), e.getComponent());
+			e -> new DefaultActionContext(null, e.getSource(), e.getComponent());
 		action.setToolBarData(new ToolBarData(ResourceManager.getDefaultIcon()));
 		action.setEnabled(false);
 
@@ -162,6 +162,6 @@ public class EmptyBorderButtonTest extends AbstractDockingTest {
 	// testBorderDragging() // is this possible?
 
 //	private void closeDialogs() {
-//		closeAllWindowsAndFrames();
+//		closeAllWindows();
 //	}
 }

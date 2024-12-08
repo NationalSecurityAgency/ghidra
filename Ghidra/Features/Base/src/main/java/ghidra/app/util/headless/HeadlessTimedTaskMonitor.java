@@ -91,7 +91,7 @@ public class HeadlessTimedTaskMonitor implements TaskMonitor {
 	public boolean isIndeterminate() {
 		return false;
 	}
-
+	
 	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled()) {

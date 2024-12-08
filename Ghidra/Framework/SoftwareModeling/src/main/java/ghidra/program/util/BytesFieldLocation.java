@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
 /**
- * The <CODE>BytesFieldLocation</CODE> class provides specific information
- *  about the BYTES field within a program location.
+ * Provides specific information about the bytes field within a program location.
 */
-
 public class BytesFieldLocation extends CodeUnitLocation {
 
 	/**
@@ -34,7 +32,7 @@ public class BytesFieldLocation extends CodeUnitLocation {
 	 * @param componentPath the data component path which is specified as an array of indexes
 	 * where each index indicates the index into nested structures. For instructions or
 	 * simple data, this should be null.
-	 * @param columnInByte the character position in the the bytes
+	 * @param columnInByte the character position in the bytes
 	 */
 	public BytesFieldLocation(Program program, Address addr, Address byteAddress,
 			int[] componentPath, int columnInByte) {
@@ -42,10 +40,9 @@ public class BytesFieldLocation extends CodeUnitLocation {
 	}
 
 	/**
-	 * Creates a new BytesFieldLocation for the given address.
-	 * The address will be adjusted to the beginning of the code unit containing
-	 * that address(if it exists).  The original address can be retrieved using
-	 * the "getByteAddress()" method.
+	 * Creates a new BytesFieldLocation for the given address. The address will be adjusted to the 
+	 * beginning of the code unit containing that address(if it exists).  The original address can 
+	 * be retrieved using the "getByteAddress()" method.
 	 * @param program the program that this location is related.
 	 * @param addr the address of the byte for this location.
 	 */
@@ -56,7 +53,7 @@ public class BytesFieldLocation extends CodeUnitLocation {
 	private static int[] getComponentPath(Program program, Address addr) {
 		CodeUnit cu = program.getListing().getCodeUnitContaining(addr);
 
-		// if the codeunit is a data, try and dig down to the lowest subdata containing the address
+		// if the code unit is a data, get the lowest sub-data containing the address
 		if (cu instanceof Data) {
 			Data data = (Data) cu;
 			Data subData = data.getPrimitiveAt((int) addr.subtract(data.getAddress()));
@@ -73,8 +70,9 @@ public class BytesFieldLocation extends CodeUnitLocation {
 	}
 
 	/**
-	 * Returns the index of byte that represents the current program location.
-	 * Sources that do not get this specific should simply return 0.
+	 * Returns the index of byte that represents the current program location. Sources that do not 
+	 * get this specific should simply return 0.
+	 * @return the index
 	 */
 	public int getByteIndex() {
 		return (int) getByteAddress().subtract(getAddress());
@@ -92,9 +90,10 @@ public class BytesFieldLocation extends CodeUnitLocation {
 
 	/**
 	 * Returns the character position within the byte specified by getByteIndex().  Normally,
-	 * this is 1,2, or 3 corresponding to before the byte, between the nibbles of the byte or
+	 * this is 1, 2, or 3 corresponding to before the byte, between the nibbles of the byte or
 	 * past the byte.  Sometimes, extra delimiters may exist allowing the position to be
 	 * greater than 3.
+	 * @return the column
 	 */
 	public int getColumnInByte() {
 		return getCharOffset();

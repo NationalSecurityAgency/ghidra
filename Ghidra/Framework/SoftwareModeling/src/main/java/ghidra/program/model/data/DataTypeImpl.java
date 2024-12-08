@@ -36,6 +36,8 @@ public abstract class DataTypeImpl extends AbstractDataType {
 	// defaultSettings implementation established by its DataTypeManager.
 	protected Settings defaultSettings;
 
+	private Integer alignedLength;
+
 	private List<WeakReference<DataType>> parentList;
 	private UniversalID universalID;
 	private SourceArchive sourceArchive;
@@ -89,6 +91,43 @@ public abstract class DataTypeImpl extends AbstractDataType {
 	@Override
 	public String getPathName() {
 		return getDataTypePath().getPath();
+	}
+
+	/**
+	 * Return the aligned-length for a fixed length datatype.  This is intended to produce a
+	 * result consistent with the C/C++ {@code sizeof(type)} operation.  Use of this method
+	 * with {@link TypeDef} is not allowed.
+	 * Whereas {@link #getLength()} corresponds to the raw type size which may be moved into
+	 * a smaller register/varnode.  Example: this frequently occurs with encoded floating-point
+	 * data such as a 10-byte/80-bit encoding which is stored in memory as 12 or 16-bytes in order
+	 * to maintain memory alignment constraints.
+	 * @param dataType datatype
+	 * @return aligned-length or -1 if not a fixed-length datatype
+	 */
+	private static int computeAlignedLength(DataType dataType) {
+		if ((dataType instanceof TypeDef) || (dataType instanceof Composite) ||
+			(dataType instanceof Array)) {
+			// Typedefs must defer to base datatype for aligned-length determination
+			throw new UnsupportedOperationException();
+		}
+		int len = dataType.getLength();
+		if (len <= 0 || (dataType instanceof Pointer)) {
+			return len;
+		}
+		int align = dataType.getDataOrganization().getSizeAlignment(len);
+		int mod = len % align;
+		if (mod != 0) {
+			len += (align - mod);
+		}
+		return len;
+	}
+
+	@Override
+	public int getAlignedLength() {
+		if (alignedLength == null) {
+			alignedLength = computeAlignedLength(this);
+		}
+		return alignedLength;
 	}
 
 	@Override

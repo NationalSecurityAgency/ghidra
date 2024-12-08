@@ -66,7 +66,7 @@ public class KernelFileSystem extends GFileSystemBase {
 		monitor.setMaximum(provider.length());
 
 		while (index < provider.length() - message.length() + 1) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(index);
 
 			String actualMessage = new String(provider.readBytes(index, message.length()));

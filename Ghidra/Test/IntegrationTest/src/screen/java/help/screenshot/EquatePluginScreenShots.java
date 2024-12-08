@@ -283,7 +283,7 @@ public class EquatePluginScreenShots extends GhidraScreenShotGenerator {
 			new OperandFieldLocation(program, addr, null, null, str, opIndex, 0);
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test", loc, program));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private AddressSet selectRange(Address start, Address end) {

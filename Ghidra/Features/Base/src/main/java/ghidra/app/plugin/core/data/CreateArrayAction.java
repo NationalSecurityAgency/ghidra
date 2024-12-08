@@ -141,7 +141,8 @@ class CreateArrayAction extends ListingContextAction {
 		}
 
 		int length = sel.getByteLength();
-		int numElements = length / dt.getLength();
+		// Arrays currently use aligned-length only
+		int numElements = length / dt.getAlignedLength();
 
 		Command cmd = new CreateArrayInStructureCmd(from.getAddress(), numElements, dt,
 			from.getComponentPath());
@@ -161,7 +162,8 @@ class CreateArrayAction extends ListingContextAction {
 			}
 			length += dtc.getLength();
 		}
-		return length / dt.getLength();
+		// Arrays currently use aligned-length only
+		return length / dt.getAlignedLength();
 	}
 
 	private int getMaxElements(Structure struct, int index, DataType dt) {
@@ -171,7 +173,8 @@ class CreateArrayAction extends ListingContextAction {
 			DataTypeComponent dtc = struct.getComponent(index++);
 			length += dtc.getLength();
 		}
-		return length / dt.getLength();
+		// Arrays currently use aligned-length only
+		return length / dt.getAlignedLength();
 	}
 
 	private void createArrayAtAddress(Program program, Address addr) {
@@ -210,10 +213,13 @@ class CreateArrayAction extends ListingContextAction {
 			return;
 		}
 		DataType dt = data.getDataType();
-		int dtLength = data.getLength();
+		int elementLength = data.getLength();
+		if (!(dt instanceof Dynamic)) {
+			elementLength = dt.getAlignedLength();
+		}
 		int length = (int) range.getLength();
-		int numElements = length / dtLength;
-		CreateArrayCmd cmd = new CreateArrayCmd(addr, numElements, dt, dtLength);
+		int numElements = length / elementLength;
+		CreateArrayCmd cmd = new CreateArrayCmd(addr, numElements, dt, elementLength);
 		if (!tool.execute(cmd, program)) {
 			tool.setStatusInfo(cmd.getStatusMsg());
 		}

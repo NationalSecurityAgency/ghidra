@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,119 +15,63 @@
  */
 package ghidra.app.plugin.core.comments;
 
-import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
-import docking.ActionContext;
 import docking.DialogComponentProvider;
+import ghidra.app.util.HelpTopics;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.util.HelpLocation;
 
 /**
  * Dialog to show comment history; has a tab for each comment type to show
  * history of changes to the comment.
  */
-public class CommentHistoryDialog extends DialogComponentProvider implements ChangeListener {
-	
-	private Program program;
-	private CodeUnit codeUnit;
-		
+public class CommentHistoryDialog extends DialogComponentProvider {
+
 	private JTabbedPane tabbedPane;
 	private CommentHistoryPanel eolPanel;
 	private CommentHistoryPanel prePanel;
 	private CommentHistoryPanel postPanel;
 	private CommentHistoryPanel platePanel;
 	private CommentHistoryPanel repeatablePanel;
-	
-	private final static int[] COMMENT_INDEXES = 
-		{CodeUnit.EOL_COMMENT,
-		 CodeUnit.PRE_COMMENT,
-		 CodeUnit.POST_COMMENT,
-		 CodeUnit.PLATE_COMMENT,
-		 CodeUnit.REPEATABLE_COMMENT}; 
-		 
-	/**
-	 * Construct a new CommentHistoryDialog
-	 * @param parent parent of this dialog
-	 */
-	CommentHistoryDialog() {
+
+	CommentHistoryDialog(CodeUnit cu, int initialCommentType) {
 		super("Show Comment History");
-		setHelpLocation(new HelpLocation(HelpTopics.COMMENTS, "Show_Comment_History")); 
-		addWorkPanel(buildMainPanel());
+		setHelpLocation(new HelpLocation(HelpTopics.COMMENTS, "Show_Comment_History"));
+		addWorkPanel(buildMainPanel(cu, initialCommentType));
 		addDismissButton();
+		setPreferredSize(500, 300);
 	}
 
-	/* (non Javadoc)
-	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-	 */
-	public void stateChanged(ChangeEvent e) {
-		int index = tabbedPane.getSelectedIndex();
-		CommentHistoryPanel panel = getHistoryPanel(COMMENT_INDEXES[index]);
-		panel.showCommentHistory(program, codeUnit.getMinAddress());
-	}
-	void showDialog(CodeUnit cu, int commentType, PluginTool tool, ActionContext context) {
-		codeUnit = cu;
-		program = cu.getProgram();
-		CommentHistoryPanel panel = getHistoryPanel(commentType);
-		panel.showCommentHistory(program, cu.getMinAddress());
-		tabbedPane.removeChangeListener(this);
-		
-		for (int i=0;i<COMMENT_INDEXES.length; i++) {
-			if (COMMENT_INDEXES[i] == commentType) {
-				tabbedPane.setSelectedIndex(i);
-				break;
-			}
-		}
-		tabbedPane.addChangeListener(this);
-        tool.showDialog( this, context.getComponentProvider() );
-	}
-	 
-	private JPanel buildMainPanel() {
+	private JPanel buildMainPanel(CodeUnit cu, int initialCommentType) {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		tabbedPane = new JTabbedPane();
 		mainPanel.add(tabbedPane);
-		
-		eolPanel = new CommentHistoryPanel(CodeUnit.EOL_COMMENT);
-		prePanel = new CommentHistoryPanel(CodeUnit.PRE_COMMENT);
-		postPanel = new CommentHistoryPanel(CodeUnit.POST_COMMENT);
-		platePanel = new CommentHistoryPanel(CodeUnit.PLATE_COMMENT);
-		repeatablePanel = new CommentHistoryPanel(CodeUnit.REPEATABLE_COMMENT);
+		// Note that we don't add a keylistener here as in some other tab panes. This is because
+		// the tab components are not focusable so there is no need to try and process a "space" 
+		// key. Instead, the history for each comment type is also added as a tooltip on its
+		// corresponding tab. This will cause a screen reader to read the history for a tab
+		// when it is selected.
 
-		JScrollPane sp = new JScrollPane(eolPanel);
-		JViewport vp = sp.getViewport();
-		Dimension d = vp.getPreferredSize();
-		sp.getViewport().setPreferredSize(new Dimension(500, d.height*7));
-		tabbedPane.addTab("  EOL Comment    ",sp);
-		tabbedPane.addTab("  Pre Comment    ",new JScrollPane(prePanel));
-		tabbedPane.addTab("  Post Comment   ",new JScrollPane(postPanel));
-		tabbedPane.addTab("  Plate Comment  ",new JScrollPane(platePanel));
-		tabbedPane.addTab("  Repeatable Comment  ", new JScrollPane(repeatablePanel));
-		
-		tabbedPane.addChangeListener(this);
+		eolPanel = new CommentHistoryPanel(CodeUnit.EOL_COMMENT, cu);
+		prePanel = new CommentHistoryPanel(CodeUnit.PRE_COMMENT, cu);
+		postPanel = new CommentHistoryPanel(CodeUnit.POST_COMMENT, cu);
+		platePanel = new CommentHistoryPanel(CodeUnit.PLATE_COMMENT, cu);
+		repeatablePanel = new CommentHistoryPanel(CodeUnit.REPEATABLE_COMMENT, cu);
+
+		addTab("  EOL Comment    ", eolPanel);
+		addTab("  Pre Comment    ", prePanel);
+		addTab("  Post Comment   ", postPanel);
+		addTab("  Plate Comment  ", platePanel);
+		addTab("  Repeatable Comment  ", repeatablePanel);
+
 		return mainPanel;
 	}
-	
-	private CommentHistoryPanel getHistoryPanel(int commentType) {
-		switch(commentType) {
-			case CodeUnit.EOL_COMMENT:
-				return eolPanel;
-			case CodeUnit.PRE_COMMENT:
-				return prePanel;
-			case CodeUnit.POST_COMMENT:
-				return postPanel;
-			case CodeUnit.PLATE_COMMENT:
-				return platePanel;
-			case CodeUnit.REPEATABLE_COMMENT:
-				return repeatablePanel;
-		}
-		return null;	
+
+	private void addTab(String title, CommentHistoryPanel panel) {
+		JScrollPane sp = new JScrollPane(panel);
+		tabbedPane.addTab(title, null, sp, panel.getHistory());
 	}
 }

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string.translate;
 
-import java.util.*;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -63,13 +63,11 @@ public abstract class AbstractTranslateAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (context instanceof DataLocationListContext) {
-			DataLocationListContext dataContext = (DataLocationListContext) context;
-			actionPerformed(dataContext.getProgram(), getStringLocations(dataContext));
+		if (context instanceof DataLocationListContext dllc) {
+			actionPerformed(dllc.getProgram(), getStringLocations(dllc));
 		}
-		else if (context instanceof CodeViewerActionContext) {
-			CodeViewerActionContext codeContext = (CodeViewerActionContext) context;
-			actionPerformed(codeContext.getProgram(), getStringLocations(codeContext));
+		else if (context instanceof CodeViewerActionContext cvac) {
+			actionPerformed(cvac.getProgram(), getStringLocations(cvac));
 		}
 		else {
 			throw new AssertException("This can't happen!");
@@ -91,9 +89,9 @@ public abstract class AbstractTranslateAction extends DockingAction {
 	protected List<ProgramLocation> getStringLocations(CodeViewerActionContext context) {
 		Data data = DataUtilities.getDataAtLocation(context.getLocation());
 		if (data == null || !StringDataInstance.isString(data)) {
-			return Collections.emptyList();
+			return List.of();
 		}
-		return Arrays.asList(context.getLocation());
+		return List.of(context.getLocation());
 	}
 
 	protected List<ProgramLocation> getStringLocations(DataLocationListContext context) {

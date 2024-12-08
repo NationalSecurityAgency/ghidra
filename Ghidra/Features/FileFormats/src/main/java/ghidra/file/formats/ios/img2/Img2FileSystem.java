@@ -33,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
 //@formatter:on
 public class Img2FileSystem implements GFileSystem {
 
-	private FSRLRoot fsFSRL;
+	private final FSRLRoot fsFSRL;
 	private SingleFileSystemIndexHelper fsIndexHelper;
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private ByteProvider provider;
@@ -102,7 +102,7 @@ public class Img2FileSystem implements GFileSystem {
 	}
 
 	@Override
-	public GFile lookup(String path) throws IOException {
+	public GFile lookup(String path) {
 		return fsIndexHelper.lookup(path);
 	}
 

@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.debug.gui.modules;
 import java.util.Collection;
 import java.util.Collections;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.table.GTable;
 
-public class DebuggerStaticMappingActionContext extends ActionContext {
+public class DebuggerStaticMappingActionContext extends DefaultActionContext {
 	private final Collection<StaticMappingRow> selected;
 
 	public DebuggerStaticMappingActionContext(DebuggerStaticMappingProvider provider,

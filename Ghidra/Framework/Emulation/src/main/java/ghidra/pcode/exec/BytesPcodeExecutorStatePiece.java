@@ -29,7 +29,7 @@ public class BytesPcodeExecutorStatePiece
 	/**
 	 * Construct a state for the given language
 	 * 
-	 * @param langauge the language (used for its memory model)
+	 * @param language the language (used for its memory model)
 	 */
 	public BytesPcodeExecutorStatePiece(Language language) {
 		super(language);

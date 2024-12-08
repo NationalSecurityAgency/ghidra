@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.util.Msg;
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A threadsafe helper class that manages creating and releasing {@link FileSystemRef} instances
@@ -30,8 +29,8 @@ import ghidra.util.datastruct.WeakSet;
 public class FileSystemRefManager {
 	private GFileSystem fs;
 	private List<FileSystemRef> refs = new ArrayList<>();
-	private WeakSet<FileSystemEventListener> listeners =
-		WeakDataStructureFactory.createCopyOnReadWeakSet();
+	private ListenerSet<FileSystemEventListener> listeners =
+		new ListenerSet<>(FileSystemEventListener.class, false);
 	private long lastUsedTS;
 
 	/**
@@ -87,9 +86,7 @@ public class FileSystemRefManager {
 			refs.add(ref);
 			touch();
 		}
-		for (FileSystemEventListener listener : listeners) {
-			listener.onFilesystemRefChange(fs, this);
-		}
+		listeners.invoke().onFilesystemRefChange(fs, this);
 
 		return ref;
 	}
@@ -118,9 +115,7 @@ public class FileSystemRefManager {
 		if (ref != null) {
 			throw new IllegalArgumentException("Tried to remove unknown reference to " + fs);
 		}
-		for (FileSystemEventListener listener : listeners) {
-			listener.onFilesystemRefChange(fs, this);
-		}
+		listeners.invoke().onFilesystemRefChange(fs, this);
 	}
 
 	/**
@@ -155,9 +150,7 @@ public class FileSystemRefManager {
 			refs.clear();
 			refs = null;
 		}
-		for (FileSystemEventListener listener : listeners) {
-			listener.onFilesystemClose(fsCopy);
-		}
+		listeners.invoke().onFilesystemClose(fsCopy);
 	}
 
 	@Override

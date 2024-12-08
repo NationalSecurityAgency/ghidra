@@ -80,7 +80,7 @@ public class VTRelatedMatchTableModel extends AddressBasedTableModel<VTRelatedMa
 		monitor.initialize(relatedMatches.size());
 
 		for (VTRelatedMatch vtRelatedMatch : relatedMatches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			accumulator.add(vtRelatedMatch);
 			monitor.incrementProgress(1);
 		}

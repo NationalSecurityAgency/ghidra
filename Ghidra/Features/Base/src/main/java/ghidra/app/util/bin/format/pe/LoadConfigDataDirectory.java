@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,12 +50,11 @@ public class LoadConfigDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader)
-			throws DuplicateNameException, CodeUnitInsertionException, IOException {
+			NTHeader nt) throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
 
 		monitor.setMessage(program.getName()+": load config directory...");
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -63,14 +62,14 @@ public class LoadConfigDataDirectory extends DataDirectory {
 		
 		PeUtils.createData(program, addr, lcd.toDataType(), log);
 
-		markupSeHandler(program, isBinary, monitor, log, ntHeader);
-		ControlFlowGuard.markup(lcd, program, log, ntHeader);
+		markupSeHandler(program, isBinary, monitor, log, nt);
+		ControlFlowGuard.markup(lcd, program, log, nt);
 	}
 
 	private void markupSeHandler(Program program, boolean isBinary, TaskMonitor monitor,
-			MessageLog log, NTHeader ntHeader) {
+			MessageLog log, NTHeader nt) {
 		long exceptionCount = lcd.getSeHandlerCount();
-		long exceptionTable = lcd.getSeHandlerTable() - ntHeader.getOptionalHeader().getImageBase();
+		long exceptionTable = lcd.getSeHandlerTable() - nt.getOptionalHeader().getImageBase();
 		if (exceptionCount > NTHeader.MAX_SANE_COUNT) {
 			// a heuristic but...
 			return;
@@ -85,8 +84,8 @@ public class LoadConfigDataDirectory extends DataDirectory {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			DataType dt = ntHeader.getOptionalHeader().is64bit() ? IBO64DataType.dataType
-					: IBO32DataType.dataType;
+			DataType dt =
+				nt.getOptionalHeader().is64bit() ? IBO64DataType.dataType : IBO32DataType.dataType;
 
 			PeUtils.createData(program, addr, dt, log);
 
@@ -103,14 +102,6 @@ public class LoadConfigDataDirectory extends DataDirectory {
 
 		lcd = new LoadConfigDirectory(reader, ptr, ntHeader.getOptionalHeader());
         return true;
-    }
-
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
-    @Override
-    public DataType toDataType() throws DuplicateNameException {
-    	return lcd.toDataType();
     }
 }
 

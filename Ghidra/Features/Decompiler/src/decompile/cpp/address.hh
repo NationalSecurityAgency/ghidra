@@ -84,8 +84,8 @@ public:
   bool operator!=(const Address &op2) const; ///< Compare two addresses for inequality
   bool operator<(const Address &op2) const; ///< Compare two addresses via their natural ordering
   bool operator<=(const Address &op2) const; ///< Compare two addresses via their natural ordering
-  Address operator+(int4 off) const; ///< Increment address by a number of bytes
-  Address operator-(int4 off) const; ///< Decrement address by a number of bytes
+  Address operator+(int8 off) const; ///< Increment address by a number of bytes
+  Address operator-(int8 off) const; ///< Decrement address by a number of bytes
   friend ostream &operator<<(ostream &s,const Address &addr);  ///< Write out an address to stream
   bool containedBy(int4 sz,const Address &op2,int4 sz2) const;	///< Determine if \e op2 range contains \b this range
   int4 justifiedContain(int4 sz,const Address &op2,int4 sz2,bool forceleft) const; ///< Determine if \e op2 is the least significant part of \e this.
@@ -98,10 +98,10 @@ public:
   void encode(Encoder &encoder) const; ///< Encode \b this to a stream
   void encode(Encoder &encoder,int4 size) const; ///< Encode \b this and a size to a stream
 
-  /// Restore an address from parsed XML
+  /// Decode an address from a stream
   static Address decode(Decoder &decoder);
 
-  /// Restore an address and size from parsed XML
+  /// Decode an address and size from a stream
   static Address decode(Decoder &decoder,int4 &size);
 };
 
@@ -221,7 +221,7 @@ class RangeProperties {
   bool seenLast;		///< End of the range is actively specified
 public:
   RangeProperties(void) { first = 0; last = 0; isRegister = false; seenLast = false; }
-  void decode(Decoder &decoder);	///< Restore \b this from an XML stream
+  void decode(Decoder &decoder);	///< Decode \b this from a stream
 };
 
 /// \brief A disjoint set of Ranges, possibly across multiple address spaces
@@ -420,7 +420,7 @@ inline bool Address::operator<=(const Address &op2) const {
 /// space, and the Address will wrap around if necessary.
 /// \param off is the number to add to the offset
 /// \return the new incremented address
-inline Address Address::operator+(int4 off) const {
+inline Address Address::operator+(int8 off) const {
   return Address(base,base->wrapOffset(offset+off));
 }
 
@@ -430,7 +430,7 @@ inline Address Address::operator+(int4 off) const {
 /// necessary.
 /// \param off is the number to subtract from the offset
 /// \return the new decremented address
-inline Address Address::operator-(int4 off) const {
+inline Address Address::operator-(int8 off) const {
   return Address(base,base->wrapOffset(offset-off));
 }
 
@@ -534,13 +534,38 @@ inline uintb minimalmask(uintb val)
   return 0xff;
 }
 
+/// \brief Sign extend above given bit
+///
+/// Sign extend \b val starting at \b bit
+/// \param val is the value to be sign-extended
+/// \param bit is the index of the bit to extend from (0=least significant bit)
+/// \return the sign extended value
+inline intb sign_extend(intb val,int4 bit)
+
+{
+  int4 sa = 8*sizeof(intb) - (bit+1);
+  val = (val << sa) >> sa;
+  return val;
+}
+
+/// \brief Clear all bits above given bit
+///
+/// Zero extend \b val starting at \b bit
+/// \param val is the value to be zero extended
+/// \param bit is the index of the bit to extend from (0=least significant bit)
+/// \return the extended value
+inline intb zero_extend(intb val,int4 bit)
+
+{
+  int4 sa = sizeof(intb)*8 - (bit+1);
+  return (intb)((uintb)(val << sa) >> sa);
+}
+
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set
 extern uintb calc_mask(int4 size);			///< Calculate a mask for a given byte size
 extern uintb uintb_negate(uintb in,int4 size);		///< Negate the \e sized value
 extern uintb sign_extend(uintb in,int4 sizein,int4 sizeout);	///< Sign-extend a value between two byte sizes
 
-extern void sign_extend(intb &val,int4 bit); 		///< Sign extend above given bit
-extern void zero_extend(intb &val,int4 bit);		///< Clear all bits above given bit
 extern void byte_swap(intb &val,int4 size);		///< Swap bytes in the given value
 
 extern uintb byte_swap(uintb val,int4 size);		///< Return the given value with bytes swapped
@@ -551,11 +576,6 @@ extern int4 count_leading_zeros(uintb val);		///< Return the number of leading z
 
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
 extern int4 bit_transitions(uintb val,int4 sz);		///< Calculate the number of bit transitions in the sized value
-
-extern void mult64to128(uint8 *res,uint8 x,uint8 y);
-extern void unsignedSubtract128(uint8 *a,uint8 *b);
-extern int4 unsignedCompare128(uint8 *a,uint8 *b);
-extern int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r);
 
 } // End namespace ghidra
 #endif

@@ -17,6 +17,7 @@ package ghidra.program.model.symbol;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Variable;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.DuplicateNameException;
@@ -69,7 +70,8 @@ public interface ReferenceManager {
 	/**
 	 * Adds a memory reference.  The first memory reference placed on
 	 * an operand will be made primary by default.  All non-memory references 
-	 * will be removed from the specified operand.
+	 * will be removed from the specified operand.  Certain reference {@link RefType types}
+	 * may not be specified (e.g., {@link RefType#FALL_THROUGH}).
 	 * @param fromAddr address of the codeunit where the reference occurs
 	 * @param toAddr address of the location being referenced.  
 	 * Memory, stack, and register addresses are all permitted.
@@ -78,6 +80,7 @@ public interface ReferenceManager {
 	 * @param opIndex the operand index 
 	 * display of the operand making this reference
 	 * @return new memory reference
+	 * @throws IllegalArgumentException if unsupported {@link RefType type} is specified
 	 */
 	public Reference addMemoryReference(Address fromAddr, Address toAddr, RefType type,
 			SourceType source, int opIndex);
@@ -109,10 +112,14 @@ public interface ReferenceManager {
 	 * shiftValue parameter.  The first memory reference placed on
 	 * an operand will be made primary by default.  All non-memory references 
 	 * will be removed from the specified operand.
-	 * @param fromAddr address for the "from"
-	 * @param toAddr computed as the value of the operand at opIndex shifted
-	 * by the number of bits specified by shiftValue 
-	 * @param shiftValue shifted value
+	 * 
+	 * @param fromAddr source/from memory address
+	 * @param toAddr destination/to memory address computed as some 
+	 * {@link ShiftedReference#getValue() base offset value} shifted left
+	 * by the number of bits specified by shiftValue.  The least-significant bits of toAddr
+	 * offset should be 0's based upon the specified shiftValue since this value is shifted
+	 * right to calculate the base offset value.
+	 * @param shiftValue number of bits to shift
 	 * @param type reference type - how the location is being referenced
 	 * @param source the source of this reference
 	 * @param opIndex the operand index
@@ -122,19 +129,27 @@ public interface ReferenceManager {
 			RefType type, SourceType source, int opIndex);
 
 	/**
-	 * Adds an external reference.  If a reference already
-	 * exists for the fromAddr and opIndex, the existing reference is replaced
-	 * with the new reference.
-	 * @param fromAddr from address (source of the reference)
+	 * Adds an external reference to an external symbol.  If a reference already
+	 * exists at {@code fromAddr} and {@code opIndex} the existing reference is replaced
+	 * with a new reference.  If the external symbol cannot be found, a new {@link Library} 
+	 * and/or {@link ExternalLocation} symbol will be created which corresponds to the specified
+	 * library/file named {@code libraryName}
+	 * and the location within that file identified by {@code extLabel} and/or its memory address
+	 * {@code extAddr}.  Either or both {@code extLabel} or {@code extAddr} must be specified.
+	 * 
+	 * @param fromAddr from memory address (source of the reference)
 	 * @param libraryName name of external program
 	 * @param extLabel label within the external program, may be null if extAddr is not null
-	 * @param extAddr address within the external program, may be null
+	 * @param extAddr memory address within the external program, may be null
 	 * @param source the source of this reference
 	 * @param opIndex operand index
 	 * @param type reference type - how the location is being referenced
 	 * @return new external space reference
-	 * @throws InvalidInputException
-	 * @throws DuplicateNameException 
+	 * @throws InvalidInputException if {@code libraryName} is invalid or null, or an invalid 
+	 * {@code extlabel} is specified.  Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws DuplicateNameException if another non-Library namespace has the same name
+	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
 	public Reference addExternalReference(Address fromAddr, String libraryName, String extLabel,
 			Address extAddr, SourceType source, int opIndex, RefType type)
@@ -144,7 +159,8 @@ public interface ReferenceManager {
 	 * Adds an external reference.  If a reference already
 	 * exists for the fromAddr and opIndex, the existing reference is replaced
 	 * with the new reference.
-	 * @param fromAddr from address (source of the reference)
+	 * 
+	 * @param fromAddr from memory address (source of the reference)
 	 * @param extNamespace external namespace containing the named external label.
 	 * @param extLabel label within the external program, may be null if extAddr is not null
 	 * @param extAddr address within the external program, may be null
@@ -152,8 +168,11 @@ public interface ReferenceManager {
 	 * @param opIndex operand index
 	 * @param type reference type - how the location is being referenced
 	 * @return new external space reference
-	 * @throws InvalidInputException
-	 * @throws DuplicateNameException 
+	 * @throws InvalidInputException if an invalid {@code extlabel} is specified.  
+	 * Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws DuplicateNameException if another non-Library namespace has the same name
+	 * @throws IllegalArgumentException if an invalid {@code extAddr} was specified.
 	 */
 	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
 			Address extAddr, SourceType source, int opIndex, RefType type)
@@ -163,7 +182,8 @@ public interface ReferenceManager {
 	 * Adds an external reference.  If a reference already
 	 * exists for the fromAddr and opIndex, the existing reference is replaced
 	 * with the new reference.
-	 * @param fromAddr from address (source of the reference)
+	 * 
+	 * @param fromAddr from memory address (source of the reference)
 	 * @param opIndex operand index
 	 * @param location external location
 	 * @param source the source of this reference

@@ -52,7 +52,7 @@ public class ApplyMarkupAtDestinationAddressTask extends VtTask {
 		monitor.initialize(markupItems.size());
 
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			try {
 				if (!SystemUtilities.isEqual(markupItem.getDestinationAddress(),

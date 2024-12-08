@@ -21,7 +21,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
@@ -52,7 +52,7 @@ public class EntropyFieldFactory extends FieldFactory {
 	  * @param displayOptions the Options for display properties.
 	  * @param fieldOptions the Options for field specific properties.
 	  */
-	private EntropyFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private EntropyFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
@@ -154,7 +154,7 @@ public class EntropyFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel myModel, HighlightProvider myHlProvider,
+	public FieldFactory newInstance(FieldFormatModel myModel, ListingHighlightProvider myHlProvider,
 			ToolOptions displayOptions1, ToolOptions fieldOptions) {
 		return new EntropyFieldFactory(myModel, myHlProvider, displayOptions1, fieldOptions);
 	}

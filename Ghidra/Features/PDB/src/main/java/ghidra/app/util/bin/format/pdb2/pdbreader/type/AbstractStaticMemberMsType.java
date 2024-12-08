@@ -25,7 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  */
 public abstract class AbstractStaticMemberMsType extends AbstractMsType implements MsTypeField {
 
-	protected ClassFieldMsAttributes attribute;
+	protected ClassFieldMsAttributes attributes;
 	protected RecordNumber fieldTypeRecordNumber;
 	protected String name;
 
@@ -43,13 +43,29 @@ public abstract class AbstractStaticMemberMsType extends AbstractMsType implemen
 		return name;
 	}
 
+	/**
+	 * Returns the record number of the data type for this member
+	 * @return the record number
+	 */
+	public RecordNumber getFieldTypeRecordNumber() {
+		return fieldTypeRecordNumber;
+	}
+
+	/**
+	 * Returns the attributes of this procedure
+	 * @return the attributes
+	 */
+	public ClassFieldMsAttributes getAttributes() {
+		return attributes;
+	}
+
 	@Override
 	public void emit(StringBuilder builder, Bind bind) {
 		// No API for this.
 		builder.append(name);
 		pdb.getTypeRecord(fieldTypeRecordNumber).emit(builder, Bind.NONE);
 		StringBuilder myBuilder = new StringBuilder();
-		myBuilder.append(attribute);
+		myBuilder.append(attributes);
 		myBuilder.append(": ");
 		builder.insert(0, myBuilder);
 	}

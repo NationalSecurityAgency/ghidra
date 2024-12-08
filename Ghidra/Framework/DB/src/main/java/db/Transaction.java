@@ -50,8 +50,8 @@ public abstract class Transaction implements AutoCloseable {
 
 	/**
 	 * End this transaction if currently active.  
-	 * @param commit true if changes shuold be commited, false if all changes in this transaction
-	 * shuold be discarded (i.e., rollback).  If this is a "sub-transaction" and commit is false,
+	 * @param commit true if changes should be commited, false if all changes in this transaction
+	 * should be discarded (i.e., rollback).  If this is a "sub-transaction" and commit is false,
 	 * the larger transaction will rollback upon completion.  
 	 * @return true if changes have been commited or false if nothing to commit or commit parameter 
 	 * was specified as false.
@@ -115,5 +115,5 @@ public abstract class Transaction implements AutoCloseable {
 			endTransaction(commit);
 		}
 	}
-	
+
 }

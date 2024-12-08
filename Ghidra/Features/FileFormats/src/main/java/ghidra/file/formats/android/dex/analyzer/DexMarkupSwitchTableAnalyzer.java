@@ -50,7 +50,7 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 		while (instructionIterator.hasNext()) {
 			Instruction instruction = instructionIterator.next();
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			monitor.setMessage("DEX: Instruction markup ... " + instruction.getMinAddress());
 
@@ -163,7 +163,7 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 
 		int key = payload.getFirstKey();
 		for (int target : payload.getTargets()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String caseName = "case_0x" + Integer.toHexString(key);
 			Address caseAddress = instruction.getMinAddress().add(target * 2);
@@ -184,7 +184,7 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 		Namespace nameSpace = DexUtil.getOrCreateNameSpace(program, namespaceName);
 
 		for (int i = 0; i < payload.getSize(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String caseName = "case_0x" + Integer.toHexString(payload.getKeys()[i]);
 			Address caseAddress = instruction.getMinAddress().add(payload.getTargets()[i] * 2);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,16 +40,6 @@ public class AddressSet implements AddressSetView {
 	}
 
 	/**
-	 * Create a new empty Address Set.
-	 * @param factory NOT USED.
-	 * @deprecated use {@link #AddressSet()}  (will be kept until at least Ghidra 6.2)
-	 */
-	@Deprecated
-	public AddressSet(AddressFactory factory) {
-		this();
-	}
-
-	/**
 	 * Create a new Address Set from an address range.
 	 * @param range the range of addresses to include in this set.
 	 */
@@ -58,18 +48,10 @@ public class AddressSet implements AddressSetView {
 	}
 
 	/**
-	 * Create a new Address Set from an address range.
-	 * @param factory NOT USED.
-	 * @param range the range of addresses to include in this set.
-	 * @deprecated use {@link #AddressSet(AddressRange)}  (will be kept until at least Ghidra 6.2)
-	 */
-	@Deprecated
-	public AddressSet(AddressFactory factory, AddressRange range) {
-		add(range);
-	}
-
-	/**
 	 * Creates a new Address set containing a single range
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
+	 * 
 	 * @param start the start address of the range
 	 * @param end the end address of the range
 	 * @throws IllegalArgumentException if the start and end addresses are in different spaces.  To
@@ -80,19 +62,11 @@ public class AddressSet implements AddressSetView {
 	}
 
 	/**
-	 * Creates a new Address set containing a single range
-	 * @param start the start address of the range
-	 * @param end the end address of the range
-	 * @param factory NOT USED.
-	 * @deprecated use {@link #AddressSet(Address, Address)}  (will be kept until at least Ghidra 6.2)
-	 */
-	@Deprecated
-	public AddressSet(AddressFactory factory, Address start, Address end) {
-		addRange(start, end);
-	}
-
-	/**
-	 * Creates a new Address set containing a single range
+	 * Creates a new Address set containing a single range.
+	 * Use of this method is generally discouraged since the set of addresses between a start and
+	 * end address not contained within the same {@link AddressSpace} may be contain unexpected 
+	 * memory regions.
+	 * 
 	 * @param start the start address of the range
 	 * @param end the end address of the range
 	 * @param program the program whose AddressFactory is used to resolve address ranges where the
@@ -107,31 +81,9 @@ public class AddressSet implements AddressSetView {
 	/**
 	 * Create a new Address Set from an existing Address Set.
 	 * @param set Existing Address Set to clone.
-	 * @param factory NOT USED.
-	 * @deprecated use {@link #AddressSet(AddressSetView)}  (will be kept until at least Ghidra 6.2)
-	 */
-	@Deprecated
-	public AddressSet(AddressFactory factory, AddressSetView set) {
-		add(set);
-	}
-
-	/**
-	 * Create a new Address Set from an existing Address Set.
-	 * @param set Existing Address Set to clone.
 	 */
 	public AddressSet(AddressSetView set) {
 		add(set);
-	}
-
-	/**
-	 * Create a new Address containing a single address.
-	 * @param addr the address to be included in this address set.
-	 * @param factory NOT USED.
-	 * @deprecated use {@link #AddressSet(Address)}  (will be kept until at least Ghidra 6.2)
-	 */
-	@Deprecated
-	public AddressSet(AddressFactory factory, Address addr) {
-		this(addr, addr);
 	}
 
 	/**
@@ -167,7 +119,7 @@ public class AddressSet implements AddressSetView {
 	 * @param end the end address of the range to add
 	 */
 	public void add(Address start, Address end) {
-		checkValidRange(start, end);
+		AddressRange.checkValidRange(start, end);
 
 		if (lastNode != null && !lastNode.isDisposed()) {
 			Address value = lastNode.getValue();
@@ -394,6 +346,13 @@ public class AddressSet implements AddressSetView {
 			buffy.append(range);
 			buffy.append(" ");
 		}
+
+		// remove the last space maintain symmetry
+		char lastChar = buffy.charAt(buffy.length() - 1);
+		if (lastChar == ' ') {
+			buffy.deleteCharAt(buffy.length() - 1);
+		}
+
 		buffy.append("]");
 		return buffy.toString();
 	}
@@ -422,6 +381,8 @@ public class AddressSet implements AddressSetView {
 
 	@Override
 	public final boolean contains(Address start, Address end) {
+		AddressRange.checkValidRange(start, end);
+
 		// See if there is a tree node whose range encapsulates the given range.
 		RedBlackEntry<Address, Address> entry = rbTree.getEntryLessThanEqual(start);
 		if (entry == null) {
@@ -724,9 +685,7 @@ public class AddressSet implements AddressSetView {
 			entry = rbTree.getFirst();
 		}
 
-		Iterator<AddressRange> iterator = addrSet.iterator();
-		while (iterator.hasNext()) {
-			AddressRange range = iterator.next();
+		for (AddressRange range : addrSet) {
 			while (range.compareTo(entry.getValue()) > 0) {
 				entry = entry.getSuccessor();
 				if (entry == null) {
@@ -746,9 +705,7 @@ public class AddressSet implements AddressSetView {
 		if (entry == null) {
 			return false;
 		}
-		Iterator<AddressRange> iterator = addrSet.iterator();
-		while (iterator.hasNext()) {
-			AddressRange range = iterator.next();
+		for (AddressRange range : addrSet) {
 			while (range.compareTo(entry.getValue()) > 0) {
 				entry = entry.getSuccessor();
 				if (entry == null) {
@@ -1140,10 +1097,6 @@ public class AddressSet implements AddressSetView {
 		return newSet;
 	}
 
-	private AddressRange getRange(RedBlackEntry<Address, Address> entry) {
-		return new AddressRangeImpl(entry.getKey(), entry.getValue());
-	}
-
 	private boolean contains(RedBlackEntry<Address, Address> entry, Address start) {
 		return entry.getKey().compareTo(start) <= 0 && entry.getValue().compareTo(start) >= 0;
 	}
@@ -1197,23 +1150,6 @@ public class AddressSet implements AddressSetView {
 
 	}
 
-	private void checkValidRange(Address start, Address end) {
-		if (start == null || end == null) {
-			throw new IllegalArgumentException("Attempted to add a null address to this set.");
-		}
-
-		if (start.compareTo(end) > 0) {
-			throw new IllegalArgumentException("Start address must be less than or equal to " +
-				"end address:  Start " + start + "   end = " + end);
-		}
-
-		if (!start.getAddressSpace().equals(end.getAddressSpace())) {
-			throw new IllegalArgumentException(
-				"Start and end addresses must be in same address space!  Start " + start +
-					"   end = " + end);
-		}
-	}
-
 	private RedBlackEntry<Address, Address> createRangeNode(Address start, Address end) {
 		RedBlackEntry<Address, Address> newEntry = rbTree.getOrCreateEntry(start);
 		newEntry.setValue(end);
@@ -1236,6 +1172,7 @@ public class AddressSet implements AddressSetView {
 	private class AddressRangeIteratorAdapter implements AddressRangeIterator {
 
 		private Iterator<RedBlackEntry<Address, Address>> iterator;
+		private AddressRange lastReturnedRange;
 
 		public AddressRangeIteratorAdapter(Iterator<RedBlackEntry<Address, Address>> iterator) {
 			this.iterator = iterator;
@@ -1252,12 +1189,14 @@ public class AddressSet implements AddressSetView {
 			if (next == null) {
 				throw new NoSuchElementException();
 			}
-			return new AddressRangeImpl(next.getKey(), next.getValue());
+			lastReturnedRange = new AddressRangeImpl(next.getKey(), next.getValue());
+			return lastReturnedRange;
 		}
 
 		@Override
 		public void remove() {
 			iterator.remove();
+			addressCount -= lastReturnedRange.getLength();
 		}
 
 		@Override

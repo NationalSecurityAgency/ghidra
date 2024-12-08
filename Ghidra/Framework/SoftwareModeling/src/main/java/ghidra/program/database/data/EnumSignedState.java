@@ -18,13 +18,14 @@ package ghidra.program.database.data;
 /**
  * Keeps track of the signed state of an enum datatype. Enum are fundamentally either signed or
  * unsigned, but sometimes you can't tell based on the values they contain. Once a negative value
- * is added, then the enum becomes locked as signed, preventing high unsigned values from being 
- * added. Once a high value unsigned value is added, then it becomes locked as unsigned value. If
- * neither a negative value or high unsigned value has been added, then the enum is not locked as
- * either signed or unsigned.
+ * is added, then the enum becomes locked as signed, preventing high unsigned values (those values
+ * that are too big for signed value of the enum size) from being added. Once a high value unsigned 
+ * value is added, then it becomes locked as unsigned value. If neither a negative value or high 
+ * unsigned value has been added, then the enum is not locked as either signed or unsigned.
  */
 public enum EnumSignedState {
 	SIGNED, 	// Enum contains at least 1 negative value, preventing high unsigned values
 	UNSIGNED,   // Enum contains at least 1 high unsigned value, preventing negative values
-	NONE	    // Enum contains neither a negative or a high unsigned value, so can go either way
+	NONE,	    // Enum contains neither a negative or a high unsigned value, so can go either way
+	INVALID     // Enum contains both negative and high unsigned values; can happen with old types
 }

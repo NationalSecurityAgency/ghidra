@@ -22,14 +22,15 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -44,7 +45,7 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	protected final DBCachedObjectStore<DBTraceSnapshot> snapshotStore;
 	protected final DBCachedObjectIndex<String, DBTraceSnapshot> snapshotsBySchedule;
 
-	public DBTraceTimeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceTimeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceThreadManager threadManager)
 			throws VersionException, IOException {
 		this.trace = trace;
@@ -70,17 +71,17 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 
 	protected void notifySnapshotAdded(DBTraceSnapshot snapshot) {
 		trace.updateViewportsSnapshotAdded(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.ADDED, null, snapshot));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_ADDED, null, snapshot));
 	}
 
 	protected void notifySnapshotChanged(DBTraceSnapshot snapshot) {
 		trace.updateViewportsSnapshotChanged(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, snapshot));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_CHANGED, null, snapshot));
 	}
 
 	protected void notifySnapshotDeleted(DBTraceSnapshot snapshot) {
 		trace.updateViewportsSnapshotDeleted(snapshot);
-		trace.setChanged(new TraceChangeRecord<>(TraceSnapshotChangeType.DELETED, null, snapshot));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SNAPSHOT_DELETED, null, snapshot));
 	}
 
 	@Override

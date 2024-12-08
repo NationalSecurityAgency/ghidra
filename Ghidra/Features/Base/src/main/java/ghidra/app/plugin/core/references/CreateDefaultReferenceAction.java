@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -233,27 +233,42 @@ public class CreateDefaultReferenceAction extends ListingContextAction {
 		updatePopupMenuPath(actionOK);
 		return actionOK;
 	}
+	
+	private Address buildDestinationAddress(AddressSpace addrSpace, Address sourceAddress,
+			long offset) {
+		try {
+			if ((addrSpace instanceof SegmentedAddressSpace segmentedSpace) &&
+				(sourceAddress instanceof SegmentedAddress segmentedAddr)) {
+				return segmentedSpace.getAddress(segmentedAddr.getSegment(),
+					(int) (offset & 0xFFFF));
+			}
+			return addrSpace.getAddress(offset, true);
+		}
+		catch (AddressOutOfBoundsException e) {
+			return null;
+		}
+	}
 
 	private boolean initMemoryAddress(AddressFactory addrFactory, long offset) {
+
+		// First try the context's address space
 		AddressSpace contextAddrSpace = context.getAddress().getAddressSpace();
-		try {
-			memAddr = contextAddrSpace.getAddress(offset, true);
+		Address address = buildDestinationAddress(contextAddrSpace, context.getAddress(), offset);
+		if (address != null) {
+			memAddr = address;
 			return true;
 		}
-		catch (AddressOutOfBoundsException ei) {
-			// try the default space!
-		}
-		AddressSpace defaultSpace = addrFactory.getDefaultAddressSpace();
 
+		// Now try the default space
+		AddressSpace defaultSpace = addrFactory.getDefaultAddressSpace();
 		if (contextAddrSpace != defaultSpace) {
-			try {
-				memAddr = defaultSpace.getAddress(offset, true);
-				return true;
-			}
-			catch (AddressOutOfBoundsException ei) {
-				// ignore
-			}
+			address = buildDestinationAddress(defaultSpace, context.getAddress(), offset);
 		}
+		if (address != null) {
+			memAddr = address;
+			return true;
+		}
+
 		return false;
 	}
 

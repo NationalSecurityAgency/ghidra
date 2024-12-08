@@ -22,6 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -38,7 +39,6 @@ import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceReferenceManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.UnionAddressSetView;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -48,7 +48,7 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 
 	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 
-	public DBTraceReferenceManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceReferenceManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws VersionException, IOException {
@@ -65,8 +65,8 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	}
 
 	@Override
-	protected DBTraceReferenceSpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceReferenceSpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceReferenceSpace(this, dbh, space, ent, thread);
 	}
 

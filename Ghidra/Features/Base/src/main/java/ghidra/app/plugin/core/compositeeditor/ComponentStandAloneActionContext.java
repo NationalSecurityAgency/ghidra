@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.program.model.data.*;
 
 /**
@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
  * composite with a single selected component, and the composite is associated with a
  * stand-alone archive. 
  */
-public class ComponentStandAloneActionContext extends ActionContext
+public class ComponentStandAloneActionContext extends DefaultActionContext
 		implements ComponentContext {
 
 	private DataTypeComponent component;

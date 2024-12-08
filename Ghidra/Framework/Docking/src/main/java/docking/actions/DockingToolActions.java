@@ -44,6 +44,13 @@ public interface DockingToolActions {
 	public DockingActionIf getLocalAction(ComponentProvider provider, String actionName);
 
 	/**
+	 * Gets all the local actions registered for the given ComponentProvider.
+	 * @param provider the ComponentProvider for which to get its local actions
+	 * @return all the local actions registered for the given ComponentProvider
+	 */
+	public Set<DockingActionIf> getLocalActions(ComponentProvider provider);
+
+	/**
 	 * Removes the given provider's local action
 	 * 
 	 * @param provider the provider
@@ -87,10 +94,16 @@ public interface DockingToolActions {
 	public Set<DockingActionIf> getActions(String owner);
 
 	/**
-	 * Returns all actions known to the tool
+	 * Returns all actions known to the tool. 
 	 * @return the actions
 	 */
 	public Set<DockingActionIf> getAllActions();
+
+	/**
+	 * Returns all global actions known to the tool
+	 * @return the global actions known to the tool
+	 */
+	public Set<DockingActionIf> getGlobalActions();
 
 	/**
 	 * Allows clients to register an action by using a placeholder.  This is useful when 
@@ -103,4 +116,5 @@ public interface DockingToolActions {
 	 * @param placeholder the placeholder containing information related to the action it represents
 	 */
 	public void registerSharedActionPlaceholder(SharedDockingActionPlaceholder placeholder);
+
 }

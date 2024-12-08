@@ -24,7 +24,7 @@ import java.util.Set;
 import org.junit.*;
 
 import generic.test.AbstractGTest;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -57,8 +57,8 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		projectLocator = new ProjectLocator(TEMP, "Test");
 		project = TestProjectManager.get().createProject(projectLocator, null, true);
 		dataDir =
-			new File(projectLocator.getProjectDir(), ProjectFileManager.INDEXED_DATA_FOLDER_NAME);
-		userDir = new File(projectLocator.getProjectDir(), ProjectFileManager.USER_FOLDER_NAME);
+			new File(projectLocator.getProjectDir(), DefaultProjectData.INDEXED_DATA_FOLDER_NAME);
+		userDir = new File(projectLocator.getProjectDir(), DefaultProjectData.USER_FOLDER_NAME);
 
 		ProgramBuilder builder = new ProgramBuilder("Test", ProgramBuilder._TOY);
 		df = project.getProjectData()

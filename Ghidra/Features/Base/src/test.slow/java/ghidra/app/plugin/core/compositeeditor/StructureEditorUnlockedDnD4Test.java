@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class StructureEditorUnlockedDnD4Test extends AbstractStructureEditorTest
 		addAtPoint(dt, 0, 3);
 		assertEquals(num, model.getNumComponents());
 		assertTrue(getDataType(0).isEquivalent(DataType.DEFAULT));
-		assertEquals("word doesn't fit.", model.getStatus());
+		assertTrue(model.getStatus().contains("requires 1 additional"));
 
 		dt = programDTM.getDataType("/char");
 		assertNotNull(dt);
@@ -114,7 +114,7 @@ public class StructureEditorUnlockedDnD4Test extends AbstractStructureEditorTest
 
 		addAtPoint(dt, 5, 3);
 
-		assertEquals("qword doesn't fit.", model.getStatus());
+		assertTrue(model.getStatus().contains("requires 4 additional"));
 		assertEquals(num, model.getNumComponents());
 		assertEquals("float", getDataType(5).getDisplayName());
 		assertEquals(29, model.getLength());

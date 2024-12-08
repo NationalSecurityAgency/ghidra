@@ -22,10 +22,10 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.async.AsyncFence;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.eval.AbstractVarnodeEvaluator;
 import ghidra.pcode.eval.ArithmeticVarnodeEvaluator;
@@ -78,7 +78,10 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 		protected Address translateMemory(Program program, Address address) {
 			TraceLocation location = mappingService.getOpenMappedLocation(trace,
 				new ProgramLocation(program, address), snap);
-			return location == null ? null : location.getAddress();
+			if (location == null) {
+				throw new DynamicMappingException(program, address);
+			}
+			return location.getAddress();
 		}
 	}
 
@@ -97,7 +100,10 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 		protected Address translateMemory(Program program, Address address) {
 			TraceLocation location = mappingService.getOpenMappedLocation(trace,
 				new ProgramLocation(program, address), snap);
-			return location == null ? null : location.getAddress();
+			if (location == null) {
+				throw new DynamicMappingException(program, address);
+			}
+			return location.getAddress();
 		}
 	}
 
@@ -131,6 +137,9 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 
 		@Override
 		protected boolean isLeaf(Varnode vn) {
+			if (vn.getDef() == null && (vn.isRegister() || vn.isAddress())) {
+				return true;
+			}
 			return vn.isConstant() ||
 				symbolStorage.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
 		}

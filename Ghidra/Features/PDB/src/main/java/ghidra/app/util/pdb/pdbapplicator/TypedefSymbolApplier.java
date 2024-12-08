@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,11 +16,12 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.SymbolPath;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractUserDefinedTypeMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.pdb.PdbNamespaceUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -28,42 +29,45 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractUserDefinedTypeMsSymbol} symbols.
  */
-public class TypedefSymbolApplier extends MsSymbolApplier {
+public class TypedefSymbolApplier extends MsSymbolApplier
+		implements DirectSymbolApplier /* , NestableSymbolApplier*/ {
 
 	private DataType resolvedDataType = null;
-	private AbstractUserDefinedTypeMsSymbol udtSymbol;
+	private AbstractUserDefinedTypeMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public TypedefSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractUserDefinedTypeMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		udtSymbol = (AbstractUserDefinedTypeMsSymbol) abstractSymbol;
+	public TypedefSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractUserDefinedTypeMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		resolvedDataType = applyUserDefinedTypeMsSymbol();
 	}
 
-	@Override
-	void apply() throws PdbException, CancelledException {
-		resolvedDataType = applyUserDefinedTypeMsSymbol(udtSymbol);
-	}
+	// TODO: employ something like this for when adding "Implements NestableSymbolApplier" to class
+//	@Override
+//	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+//			throws PdbException, CancelledException {
+//		getValidatedSymbol(iter, true);
+//		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
+//			// TODO: some work: probably typedef in namespace of fn
+//		}
+//	}
 
 	/**
 	 * Returns the name.
 	 * @return Name.
 	 */
 	String getName() {
-		return udtSymbol.getName();
+		return symbol.getName();
 	}
 
 	/**
@@ -71,7 +75,7 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 	 * @return Type record number.
 	 */
 	RecordNumber getTypeRecordNumber() {
-		return udtSymbol.getTypeRecordNumber();
+		return symbol.getTypeRecordNumber();
 	}
 
 	DataType getResolvedDataType() throws PdbException {
@@ -82,16 +86,19 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 	}
 
 	// Typedefs
-	private DataType applyUserDefinedTypeMsSymbol(AbstractUserDefinedTypeMsSymbol symbol) {
+	private DataType applyUserDefinedTypeMsSymbol()
+			throws CancelledException, PdbException {
 
 		String name = symbol.getName();
 
-		MsTypeApplier applier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
+		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		AbstractMsType mType = applicator.getTypeRecord(typeRecordNumber);
+		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		// TODO:... NOT SURE IF WILL ALWAYS BE A DATATYPE OR WILL BE A VARIABLE OR ????
 		if (applier == null) {
 			return null;
 		}
-		DataType dataType = applier.getDataType();
+		DataType dataType = applicator.getCompletedDataType(typeRecordNumber);
 		if (dataType == null) {
 			return null;
 		}
@@ -103,28 +110,30 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 		//  create a TypeDefDataType which uses an existing underlying DataType.
 		// Note, too, that we do not compare name with dataType.getName() as the latter does not
 		//  contain namespace information.
-		if (applier instanceof CompositeTypeApplier) {
-			CompositeTypeApplier compositeApplier = (CompositeTypeApplier) applier;
-			String compositeName = compositeApplier.getName();
-			if (name.equals(compositeName)) {
-				return dataType;
-			}
-		}
-		else if (applier instanceof EnumTypeApplier) {
-			EnumTypeApplier enumApplier = (EnumTypeApplier) applier;
-			String enumName = enumApplier.getMsType().getName();
-			if (name.equals(enumName)) {
+		if (mType instanceof AbstractComplexMsType) {
+			if (name.equals(mType.getName())) {
 				return dataType;
 			}
 		}
 
 		SymbolPath symbolPath = new SymbolPath(name);
+		symbolPath = PdbNamespaceUtils.convertToGhidraPathName(symbolPath);
 		CategoryPath categoryPath =
-			applicator.getTypedefsCategory(iter.getModuleNumber(), symbolPath);
+			applicator.getTypedefsCategory(applicator.getCurrentModuleNumber(), symbolPath);
 		DataType typedef = new TypedefDataType(categoryPath.getParent(), categoryPath.getName(),
 			dataType, applicator.getDataTypeManager());
 
 		return applicator.resolve(typedef);
+	}
+
+	private AbstractUserDefinedTypeMsSymbol getValidatedSymbol(MsSymbolIterator iter,
+			boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractUserDefinedTypeMsSymbol udtSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return udtSymbol;
 	}
 
 }

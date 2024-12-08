@@ -15,20 +15,19 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
 import org.antlr.runtime.RecognitionException;
-import org.jdom.JDOMException;
 import org.xml.sax.SAXException;
 
 import generic.jar.ResourceFile;
 import ghidra.pcodeCPort.slgh_compile.SleighCompileLauncher;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
@@ -42,7 +41,7 @@ public class SleighLanguageHelper {
 	}
 
 	public static SleighLanguage getMockBE64Language()
-			throws UnknownInstructionException, SAXException, IOException {
+			throws DecoderException, UnknownInstructionException, SAXException, IOException {
 
 		ResourceFile cSpecFile = getResourceFile("mock.cpsec");
 		CompilerSpecDescription cSpecDesc =
@@ -59,7 +58,7 @@ public class SleighLanguageHelper {
 				assertEquals("Failed to compile mock.slaspec", 0,
 					SleighCompileLauncher.runMain(new String[] { slaSpecFile.getAbsolutePath() }));
 			}
-			catch (JDOMException | IOException | RecognitionException e) {
+			catch (IOException | RecognitionException e) {
 				throw new AssertionError(e);
 			}
 			slaFile = getResourceFile("mock.sla");
@@ -67,19 +66,15 @@ public class SleighLanguageHelper {
 		}
 
 		SleighLanguageDescription langDesc = new SleighLanguageDescription(
-			new LanguageID("Mock:BE:64:default"),
-			"Mock language (64-bit BE)",
-			Processor.findOrPossiblyCreateProcessor("Mock"),
-			Endian.BIG, // endian
+			new LanguageID("Mock:BE:64:default"), "Mock language (64-bit BE)",
+			Processor.findOrPossiblyCreateProcessor("Mock"), Endian.BIG, // endian
 			Endian.BIG, // instructionEndian
-			64,
-			"default", // variant
+			64, "default", // variant
 			0, // major version
 			0, // minor version
 			false, // deprecated
 			new HashMap<>(), // truncatedSpaceMap
-			new ArrayList<>(List.of(cSpecDesc)),
-			new HashMap<>() // externalNames
+			new ArrayList<>(List.of(cSpecDesc)), new HashMap<>() // externalNames
 		);
 		langDesc.setDefsFile(lDefsFile);
 		langDesc.setSpecFile(pSpecFile);

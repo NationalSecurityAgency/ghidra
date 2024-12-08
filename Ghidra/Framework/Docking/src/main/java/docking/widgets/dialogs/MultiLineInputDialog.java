@@ -15,7 +15,8 @@
  */
 package docking.widgets.dialogs;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -26,6 +27,7 @@ import docking.DockingUtils;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 
@@ -33,6 +35,8 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 
 	private static final KeyStroke SUBMIT_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+
+	private static final String FONT_ID = "font.input.hint";
 
 	private boolean isCanceled;
 	private JTextArea inputTextArea;
@@ -84,10 +88,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		}
 		JLabel hintLabel = new GLabel("(" + metaKeyText + "-Enter to accept)");
 		hintLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		Font font = hintLabel.getFont();
-		Font smallerFont = font.deriveFont(12F);
-		Font smallItalicFont = smallerFont.deriveFont(Font.ITALIC);
-		hintLabel.setFont(smallItalicFont);
+		Gui.registerFont(hintLabel, FONT_ID);
 		hintLabel.setForeground(Messages.HINT);
 
 		dataPanel.add(messageLabel, BorderLayout.NORTH);

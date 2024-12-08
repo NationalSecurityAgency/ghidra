@@ -17,8 +17,8 @@ package ghidra.program.database;
 
 import java.io.IOException;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.framework.data.OpenMode;
+import ghidra.program.model.address.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -44,8 +44,8 @@ public interface ManagerDB {
 	 * @throws IOException if a database io error occurs.
 	 * @throws CancelledException if the user cancelled the operation via the task monitor.
 	 */
-	void programReady(int openMode, int currentRevision, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Clears all data caches. 
@@ -59,6 +59,9 @@ public interface ManagerDB {
 	/**
 	 * Delete all objects which have been applied to the address range startAddr to endAddr
 	 * and update the database accordingly.
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
+	 * 
 	 * @param startAddr the first address in the range.
 	 * @param endAddr the last address in the range.
 	 * @param monitor the task monitor to use in any upgrade operations.
@@ -69,6 +72,7 @@ public interface ManagerDB {
 
 	/**
 	 * Move all objects within an address range to a new location.
+	 * 
 	 * @param fromAddr the first address of the range to be moved.
 	 * @param toAddr the address where to the range is to be moved.
 	 * @param length the number of addresses to move.

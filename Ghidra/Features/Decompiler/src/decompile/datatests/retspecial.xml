@@ -1,0 +1,37 @@
+<decompilertest>
+<binaryimage arch="AARCH64:LE:64:v8A:default">
+<!--
+   Example of a special input register holding pointer to return value
+-->
+<bytechunk space="ram" offset="0x455c14" readonly="true">
+        ff4300d1e10308aae00f00b9
+400180d2200000f9800c80d2200400f9
+e00f80b9200800f91f2003d5ff430091
+c0035fd6
+</bytechunk>
+<bytechunk space="ram" offset="0x455c50" readonly="true">
+fd7bbda9fd030091e8630091eeffff97
+e01740f9fd7bc3a8c0035fd6
+</bytechunk>
+<symbol space="ram" offset="0x455c14" name="returnbig"/>
+<symbol space="ram" offset="0x455c50" name="read_returnbig"/>
+</binaryimage>
+<script>
+  <com>parse line struct mystruct { int8 a; int8 b; int8 c; };</com>
+  <com>parse line extern mystruct returnbig(int4 num);</com>
+  <com>lo fu returnbig</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu read_returnbig</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Return Value Input Register #1" min="1" max="1">rethidden-&gt;a = 10;</stringmatch>
+<stringmatch name="Return Value Input Register #2" min="1" max="1">rethidden-&gt;b = 100;</stringmatch>
+<stringmatch name="Return Value Input Register #3" min="1" max="1">rethidden-&gt;c = \(int8\)num;</stringmatch>
+<stringmatch name="Return Value Input Register #4" min="1" max="1">return;</stringmatch>
+<stringmatch name="Return Value Input Register #5" min="1" max="1">mystruct mStack_18;</stringmatch>
+<stringmatch name="Return Value Input Register #6" min="1" max="1">returnbig\(&amp;mStack_18,param_1\);</stringmatch>
+<stringmatch name="Return Value Input Register #7" min="1" max="1">return mStack_18\.c;</stringmatch>
+</decompilertest>

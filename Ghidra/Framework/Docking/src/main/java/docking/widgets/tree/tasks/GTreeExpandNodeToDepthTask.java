@@ -75,7 +75,7 @@ public class GTreeExpandNodeToDepthTask extends GTreeTask {
 
 		if (childCount > 0) {
 			for (int i = 0; i < childCount; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				GTreeNode n = (GTreeNode) treeModel.getChild(treeNode, i);
 				TreePath path = treePath.pathByAddingChild(n);

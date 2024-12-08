@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 
-public class DebuggerBreakpointLocationsActionContext extends ActionContext {
+public class DebuggerBreakpointLocationsActionContext extends DefaultActionContext {
 	private final Collection<BreakpointLocationRow> selection;
 
 	public DebuggerBreakpointLocationsActionContext(Collection<BreakpointLocationRow> selection) {

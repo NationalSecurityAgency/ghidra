@@ -82,13 +82,13 @@ public class VTMatchSourceTableModel extends VTMatchOneToManyTableModel {
 			associationManager.getRelatedAssociationsBySourceAddress(address);
 		monitor.initialize(associations.size());
 		for (VTAssociation vtAssociation : associations) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			for (VTMatchSet matchSet : matchSets) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Collection<VTMatch> matches = matchSet.getMatches(vtAssociation);
 				for (VTMatch match : matches) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					accumulator.add(match);
 				}
 			}

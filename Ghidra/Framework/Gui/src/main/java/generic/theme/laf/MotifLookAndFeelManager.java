@@ -30,12 +30,15 @@ public class MotifLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+	protected UiDefaultsMapper createUiDefaultsMapper(UIDefaults defaults) {
 		return new MotifUiDefaultsMapper(defaults);
 	}
 
 	@Override
 	protected void fixupLookAndFeelIssues() {
+
+		super.fixupLookAndFeelIssues();
+
 		//
 		// The Motif LaF does not bind copy/paste/cut to Control-C/V/X by default.  Rather, they
 		// only use the COPY/PASTE/CUT keys.  The other LaFs bind both shortcuts.

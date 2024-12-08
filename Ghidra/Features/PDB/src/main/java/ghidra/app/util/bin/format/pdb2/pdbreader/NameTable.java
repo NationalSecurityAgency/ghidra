@@ -16,9 +16,11 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents Name Table component of a PDB file.  This class is only
@@ -161,7 +163,7 @@ public class NameTable {
 		// of domainSize) and do not need to store the domain and range items
 		// in a list indexed by i.
 		for (int i = 0; i < numPairs; i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int bufOffset = reader.parseInt();
 			int streamNumber = reader.parseInt();
 			nameBufferReader.setIndex(bufOffset);
@@ -189,7 +191,7 @@ public class NameTable {
 	void deserializeNameTableStreams()
 			throws IOException, PdbException, CancelledException {
 		for (int streamNumber : streamNumbers) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			Map<Integer, String> stringsByOffset = new HashMap<>();
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 			if (reader.getLimit() >= 12) {
@@ -202,7 +204,7 @@ public class NameTable {
 							int length = reader.parseInt();
 							PdbByteReader stringReader = reader.getSubPdbByteReader(length);
 							while (stringReader.hasMore()) {
-								pdb.checkCanceled();
+								pdb.checkCancelled();
 								int offset = stringReader.getIndex();
 								String string = stringReader.parseNullTerminatedUtf8String();
 								stringsByOffset.put(offset, string);
@@ -231,66 +233,73 @@ public class NameTable {
 
 	/**
 	 * Dumps the Name Table.  This method is for debugging only.
-	 * @return {@link String} of pretty output.
+	 * @param writer the writer to which to write the dump
+	 * @param monitor the task monitor
+	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon issue writing to writer
 	 */
-	protected String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("NameTable---------------------------------------------------");
-		builder.append("\nnameBufferSize: ");
-		builder.append(nameBufferSize);
-		builder.append("\nnumPairs: ");
-		builder.append(numPairs);
-		builder.append("\ndomainSize: ");
-		builder.append(domainSize);
-		builder.append("\nmaxPossiblePresent: ");
-		builder.append(presentList.getMaxPossible());
-		builder.append("\nPresent: {");
+	void dump(Writer writer, TaskMonitor monitor) throws CancelledException, IOException {
+		PdbReaderUtils.dumpHead(writer, this);
+		writer.write("\nnameBufferSize: " + nameBufferSize);
+		writer.write("\nnumPairs: " + numPairs);
+		writer.write("\ndomainSize: " + domainSize);
+		writer.write("\nmaxPossiblePresent: " + presentList.getMaxPossible());
+		writer.write("\nPresent: {");
 		boolean firstSeen = false;
 		for (int i = 0; i < presentList.getMaxPossible(); i++) {
 			if (presentList.contains(i)) {
 				if (firstSeen) {
-					builder.append(", ");
+					writer.write(", ");
 				}
 				else {
 					firstSeen = true;
 				}
-				builder.append(i);
+				writer.write("" + i);
 			}
 		}
-		builder.append("}");
-		builder.append("\nmaxPossibleDeleted: ");
-		builder.append(deletedList.getMaxPossible());
-		builder.append("\nDeleted: {");
+		writer.write("}");
+		writer.write("\nmaxPossibleDeleted: " + deletedList.getMaxPossible());
+		writer.write("\nDeleted: {");
 		firstSeen = false;
 		for (int i = 0; i < deletedList.getMaxPossible(); i++) {
 			if (deletedList.contains(i)) {
 				if (firstSeen) {
-					builder.append(", ");
+					writer.write(", ");
 				}
 				else {
 					firstSeen = true;
 				}
-				builder.append(i);
+				writer.write("" + i);
 			}
 		}
-		builder.append("}\n");
-		builder.append("------------------------------------------------------------\n");
+		writer.write("}\n");
+		writer.write("------------------------------------------------------------\n");
 		for (String name : streamNumbersByName.keySet()) {
-			builder.append(name);
-			builder.append(" : ");
-			builder.append(streamNumbersByName.get(name));
-			builder.append("\n");
+			writer.write(name + " : " + streamNumbersByName.get(name) + "\n");
 		}
-		builder.append("------------------------------------------------------------\n");
+		writer.write("------------------------------------------------------------\n");
 		for (int streamNumber : namesByStreamNumber.keySet()) {
-			builder.append(streamNumber);
-			builder.append(" : ");
-			builder.append(namesByStreamNumber.get(streamNumber));
-			builder.append("\n");
+			writer.write(streamNumber + " : " + namesByStreamNumber.get(streamNumber) + "\n");
 		}
-		// TODO: output map entries for each table.
-		builder.append("End NameTable-----------------------------------------------\n");
-		return builder.toString();
+		dumpMapTables(writer, monitor);
+		PdbReaderUtils.dumpTail(writer, this);
+	}
+
+	private void dumpMapTables(Writer writer, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		for (int streamNumber : streamNumbers) {
+			pdb.checkCancelled();
+			writer.write("StreamNameTable---------------------------------------------\n");
+			writer.write("streamNumber: " + streamNumber + "\n");
+			Map<Integer, String> stringsByOffset = stringTablesByStreamNumber.get(streamNumber);
+			ArrayList<Integer> sortedKeys = new ArrayList<>(stringsByOffset.keySet());
+			Collections.sort(sortedKeys);
+			for (int offset : sortedKeys) {
+				String str = stringsByOffset.get(offset);
+				writer.write(offset + ": " + str + "\n");
+			}
+			writer.write("End StreamNameTable-----------------------------------------\n");
+		}
 	}
 
 }

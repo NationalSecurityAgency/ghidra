@@ -150,6 +150,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	DiffApplySettingsOptionManager applySettingsMgr;
 	private boolean isHighlightCursorLine;
 	private Program activeProgram;
+
+	// this is used for test injection only. In actual use, the dialog is not reused
 	private OpenVersionedFileDialog<Program> openVersionedFileDialog;
 
 	/**
@@ -300,9 +302,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				DiffUtility.getCompatibleAddressSet(p1AddressSet, secondaryDiffProgram);
 			AddressIndexMap p2IndexMap = new AddressIndexMap(p1AddressSetAsP2);
 			markerManager.getOverviewProvider().setProgram(secondaryDiffProgram, p2IndexMap);
-			fp.setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManager, secondaryDiffProgram,
-					p2IndexMap));
+			fp.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManager,
+				secondaryDiffProgram, p2IndexMap));
 
 			currentSelection = previousP1Selection;
 			p2DiffHighlight = previousP2DiffHighlight;
@@ -1062,9 +1063,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		setProgram2Selection(p2Selection);
 		clearDiff();
 		if (secondaryDiffProgram != null) {
-			Iterator<BookmarkNavigator> iter = bookmarkMap.values().iterator();
-			while (iter.hasNext()) {
-				BookmarkNavigator nav = iter.next();
+			for (BookmarkNavigator nav : bookmarkMap.values()) {
 				nav.dispose();
 			}
 			bookmarkMap.clear();
@@ -1140,10 +1139,13 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	}
 
 	private void selectAndOpenProgram2() {
-		final OpenVersionedFileDialog<Program> dialog = getOpenVersionedFileDialog();
+		if (checkStaleOverlays(currentProgram)) {
+			return;
+		}
 
 		List<Program> openProgramList = getOpenProgramList();
-		dialog.setOpenObjectChoices(openProgramList.isEmpty() ? null : openProgramList);
+
+		OpenVersionedFileDialog<Program> dialog = getOpenVersionedFileDialog(openProgramList);
 
 		dialog.addOkActionListener(e -> {
 			tool.clearStatusInfo();
@@ -1161,14 +1163,41 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		dialog.showComponent();
 	}
 
-	private OpenVersionedFileDialog<Program> getOpenVersionedFileDialog() {
+	private boolean hasStaleOverlays(Program p) {
+		return p.getAddressFactory().hasStaleOverlayCondition();
+	}
 
+	/**
+	 * Check program's address factory for stale overlay condition.
+	 * @param p program to check
+	 * @return true if user chose to cancel operation due to stale overlays
+	 */
+	private boolean checkStaleOverlays(Program p) {
+		if (!hasStaleOverlays(p)) {
+			return false;
+		}
+
+		String usage = (p == currentProgram) ? "current" : "selected";
+
+		int rc = OptionDialog.showOptionDialogWithCancelAsDefaultButton(null, "Diff Warning",
+			"The " + usage +
+				" program has recently had an overlay space renamed which may prevent an accurate Diff.\n" +
+				"It is recommended that the program be closed and re-opened before performing Diff.",
+			"Continue");
+		return (rc != OptionDialog.OPTION_ONE);
+	}
+
+	private OpenVersionedFileDialog<Program> getOpenVersionedFileDialog(
+			List<Program> openPrograms) {
+
+		// This will always be null except during testing.
 		if (openVersionedFileDialog != null) {
 			return openVersionedFileDialog;
 		}
 
 		OpenVersionedFileDialog<Program> dialog =
-			new OpenVersionedFileDialog<>(tool, "Select Other Program", Program.class);
+			new OpenVersionedFileDialog<>(tool, "Select Other Program", Program.class,
+				openPrograms);
 		dialog.setTreeSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		dialog.setHelpLocation(new HelpLocation("Diff", "Open_Close_Program_View"));
 		return dialog;
@@ -1567,6 +1596,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			newProgram.release(this);
 			return false;
 		}
+
+		if (!hasStaleOverlays(currentProgram) && checkStaleOverlays(newProgram)) {
+			return false;
+		}
+
 		ProgramMemoryComparator programMemoryComparator = null;
 		try {
 			programMemoryComparator = new ProgramMemoryComparator(currentProgram, newProgram);
@@ -1629,14 +1663,19 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			secondaryDiffProgram);
 		actionManager.secondProgramOpened();
 		actionManager.addActions();
-		diffListingPanel.goTo(currentLocation);
 
 		MarkerSet cursorMarkers = getCursorMarkers();
 		Address currentP2Address = currentLocation.getAddress();
+		ProgramLocation current2PLocation = currentLocation;
 		if (currentLocation.getProgram() != secondaryDiffProgram) { // Make sure address is from P2.
 			currentP2Address = SimpleDiffUtility.getCompatibleAddress(currentLocation.getProgram(),
 				currentLocation.getAddress(), secondaryDiffProgram);
+			if (currentP2Address != null) {
+				current2PLocation = ProgramLocation.getTranslatedCopy(currentLocation,
+					secondaryDiffProgram, currentP2Address);
+			}
 		}
+		diffListingPanel.goTo(current2PLocation);
 		if (currentP2Address != null) {
 			cursorMarkers.setAddressSet(new AddressSet(currentP2Address));
 		}
@@ -1812,10 +1851,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				return;
 			}
 
-			ListingField lf = (ListingField) field;
-			FieldFactory factory = lf.getFieldFactory();
-			ProgramLocation pLoc =
-				factory.getProgramLocation(location.getRow(), location.getCol(), lf);
+			ProgramLocation pLoc = null;
+			if (field instanceof ListingField lf) {
+				FieldFactory factory = lf.getFieldFactory();
+				pLoc = factory.getProgramLocation(location.getRow(), location.getCol(), lf);
+			}
 
 			// if clicked in dummy field, try and find the address for the white space.
 			if (pLoc == null) {

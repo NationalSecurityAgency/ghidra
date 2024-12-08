@@ -1,0 +1,223 @@
+@if defined(CDE)
+# ARMv8-M Custom Datapath Extension
+
+acc: "a" is thc1212=1 { local tmp:1 = 1; export *[const]:1 tmp; }
+acc: ""  is thc1212=0 { local tmp:1 = 0; export *[const]:1 tmp; }
+vacc: "a" is thv_c2828=1 { local tmp:1 = 1; export *[const]:1 tmp; }
+vacc: ""  is thv_c2828=0 { local tmp:1 = 0; export *[const]:1 tmp; }
+
+cx1_imm: val is thc0005; thop2 & thopcode3 [val=(thc0005 << 7) | (thop2 << 6) | thopcode3;] {export *[const]:4 val; }
+cx2_imm: val is thc0405; thop2 & thopcode3 [val=(thc0405 << 7) | (thop2 << 6) | thopcode3;] {export *[const]:4 val; }
+cx3_imm: val is thop1; thop2 & thop3 [val=(thop1 << 3) | (thop2 << 2) | thop3;] {export *[const]:4 val; }
+
+vcx1_imm: val is thv_c2424 & thv_c1619 & thv_c0707 & thv_c0005  [val = (thv_c2424 << 11) |(thv_c1619 << 7) | (thv_c0707 << 6) | thv_c0005;] {export *[const]:4 val; }
+vcx2_imm: val is thv_c2424 & thv_c1619 & thv_c0707 & thv_c0404  [val = (thv_c2424 << 6 ) |(thv_c1619 << 2) | (thv_c0707 << 1) | thv_c0404;] {export *[const]:4 val; }
+vcx3_imm: val is thv_c2424 & thv_c2021 & thv_c0404              [val = (thv_c2424 << 3 ) |(thv_c2021 << 1) | thv_c0404;]                    {export *[const]:4 val; }
+
+fvcx1_imm: val is thv_c1619 & thv_c0707 & thv_c0005             [val = (thv_c1619 << 7) | (thv_c0707 << 6) | thv_c0005;] {export *[const]:4 val; }
+fvcx2_imm: val is thv_c1619 & thv_c0707 & thv_c0404             [val = (thv_c1619 << 2) | (thv_c0707 << 1) | thv_c0404;] {export *[const]:4 val; }
+fvcx3_imm: val is thv_c2021 & thv_c0404                         [val = (thv_c2021 << 1) | thv_c0404;]                    {export *[const]:4 val; }
+
+
+cx_coRd: Ra1215 is Ra1215 { export Ra1215; }
+cx_coRd:"APSR_nzcv" is Ra1215=15 { tmp:4 = 0; readAPSR_nzcv(tmp); export  tmp; }
+cx_coRn: Rn0003 is Rn0003 { export Rn0003; }
+cx_coRn:"APSR_nzcv" is Rn0003=15 { tmp:4 = 0; readAPSR_nzcv(tmp); export tmp; }
+cx_coRm: Ra1215 is Ra1215 { export Ra1215; }
+cx_coRm:"APSR_nzcv" is Ra1215=15 { tmp:4 = 0; readAPSR_nzcv(tmp); export tmp; }
+cx_coRd0: Rd0003 is Rd0003 { export Rd0003; }
+cx_coRd0:"APSR_nzcv" is Rd0003=15 { tmp:4 = 0; readAPSR_nzcv(tmp); export tmp; }
+
+# Pseudo-ops
+define pcodeop cx1;  # Rd =  cx1(Coprocessor #, operation, Rd, accumulator, size)
+define pcodeop cx2;  # Rd =  cx2(Coprocessor #, operation, Rd, Rn, accumulator, size)
+define pcodeop cx3;  # Rd =  cx3(Coprocessor #, operation, Rd, Rn, Rm, accumulator, size)
+define pcodeop vcx1; # Rd = vcx1(Coprocessor #, operation, Rd, accumulator, size, vectored)
+define pcodeop vcx2; # Rd = vcx2(Coprocessor #, operation, Rd, Rn, accumulator, size, vectored)
+define pcodeop vcx3; # Rd = vcx3(Coprocessor #, operation, Rd, Rn, Rm, accumulator, size, vectored)
+
+:cx1^acc^ItCond thcop, cx_coRd, cx1_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0607=0; cx_coRd & thc1111=0 & thcop & thc0606=0) & cx1_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx1_imm;
+	t_acc:1 = acc;
+	cx_coRd = cx1(t_cpn, t_op1, cx_coRd, t_acc, 32:1);
+}
+
+:cx1^acc^ItCond thcop, cx_coRd, cx1_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0607=0; (cx_coRd & Ra1215=15) & thc1111=0 & thcop & thc0606=0) & cx1_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx1_imm;
+	t_acc:1 = acc;
+	cx_coRd = cx1(t_cpn, t_op1, cx_coRd, t_acc, 32:1);
+	writeAPSR_nzcv(cx_coRd);
+}
+
+:cx1d^acc^ItCond thcop, Ra1215, Rd1215hi, cx1_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0607=0; Ra1215 & Rd1215hi & thc1111=0 & thcop & thc0606=1) & cx1_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx1_imm;
+	t_acc:1 = acc;
+	result:8 = cx1(t_cpn, t_op1, Ra1215, Rd1215hi, t_acc, 64:1);
+	Ra1215 = result(0);
+	Rd1215hi = result(4);
+}
+
+:cx2^acc^ItCond thcop, cx_coRd, cx_coRn, cx2_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0607=1 & cx_coRn; cx_coRd & thc1111=0 & thcop & thc0606=0) & cx2_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx2_imm;
+	t_acc:1 = acc;
+	cx_coRd = cx2(t_cpn, t_op1, cx_coRd, cx_coRn, t_acc, 32:1);
+}
+:cx2^acc^ItCond thcop, cx_coRd, cx_coRn, cx2_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0607=1 & cx_coRn; (cx_coRd & Ra1215=15) & thc1111=0 & thcop & thc0606=0) & cx2_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx2_imm;
+	t_acc:1 = acc;
+	cx_coRd = cx2(t_cpn, t_op1, cx_coRd, cx_coRn, t_acc, 32:1);
+	writeAPSR_nzcv(cx_coRd);
+}
+
+:cx2d^acc^ItCond thcop, Ra1215, Rd1215hi, cx_coRn, cx2_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0607=1 & cx_coRn; Ra1215 & Rd1215hi & thc1111=0 & thcop & thc0606=1) & cx2_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx2_imm;
+	t_acc:1 = acc;
+	result:8 = cx2(t_cpn, t_op1, Ra1215, Rd1215hi, cx_coRn, t_acc, 64:1);
+	Ra1215 = result(0);
+	Rd1215hi = result(4);
+}
+
+:cx3^acc^ItCond thcop, cx_coRd0, cx_coRn, cx_coRm, cx3_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0707=1 & cx_coRn; cx_coRm & thc1111=0 & thcop & thc0606=0 & cx_coRd0) & cx3_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx3_imm;
+	t_acc:1 = acc;
+	cx_coRd0 = cx3(t_cpn, t_op1, cx_coRd0, cx_coRn, cx_coRm, t_acc, 32:1);
+}
+:cx3^acc^ItCond thcop, cx_coRd0, cx_coRn, cx_coRm, cx3_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0707=1 & cx_coRn; cx_coRm & thc1111=0 & thcop & thc0606=0 & (cx_coRd0 & Rd0003=15)) & cx3_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx3_imm;
+	t_acc:1 = acc;
+	cx_coRd0 = cx3(t_cpn, t_op1, cx_coRd0, cx_coRn, cx_coRm, t_acc, 32:1);
+	writeAPSR_nzcv(cx_coRd0);
+}
+
+:cx3d^acc^ItCond thcop, Rd0003, Rd0003hi, cx_coRn, cx_coRm, cx3_imm is TMode=1 & ItCond & (op13=7 & acc & thc0811=0xe & thc0707=1 & cx_coRn; cx_coRm & thc1111=0 & thcop & thc0606=1 & Rd0003 & Rd0003hi) & cx3_imm
+{
+	build ItCond;
+	t_cpn:4 = thcop;
+	t_op1:4 = cx3_imm;
+	t_acc:1 = acc;
+	result:8 = cx3(t_cpn, t_op1, Rd0003, Rd0003hi, cx_coRn, cx_coRm, t_acc, 64:1);
+	Rd0003 = result(0);
+	Rd0003hi = result(4);
+}
+
+# Vector CDE instructions - Requires Armv8.1-M MVE
+:vcx1^vacc^ItCond thv_cpn, Qd, vcx1_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2323=0 & thv_c2021=2 & thv_c1111=0 & thv_cpn & thv_c0606=1 & Qd & vcx1_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = vcx1_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 1;
+	Qd = vcx1(t_cpn, t_op1, Qd, t_acc, 32:1, t_vec);
+}
+
+:vcx2^vacc^ItCond thv_cpn, Qd, Qm, vcx2_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2323=0 & thv_c2021=3 & thv_c1111=0 & thv_cpn & thv_c0606=1 & Qm & Qd & vcx2_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = vcx2_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 1;
+	Qd = vcx2(t_cpn, t_op1, Qd, Qm, t_acc, 32:1, t_vec);
+}
+
+
+:vcx3^vacc^ItCond thv_cpn, Qd, Qn, Qm, vcx3_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2323=1 & thv_c1111=0 & thv_cpn & thv_c0606=1 & Qm & Qn & Qd & vcx3_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = vcx3_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 1;
+	Qd =  vcx3(t_cpn, t_op1, Qd, Qn, Qm, t_acc, 32:1, t_vec);
+}
+
+
+# Floating-point CDE instructions - Requires Armv8.1-M MVE
+:vcx1^vacc^ItCond thv_cpn, Sd, fvcx1_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2424=0 & thv_c2323=0 & thv_c2021=2 & thv_c1111=0 & thv_cpn & thv_c0606=0 & Sd & fvcx1_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = fvcx1_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 0;
+	Sd = vcx1(t_cpn, t_op1, Sd, t_acc, 32:1, t_vec);
+}
+
+:vcx1^vacc^ItCond thv_cpn, Dd, fvcx1_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2424=1 & thv_c2323=0 & thv_c2021=2 & thv_c1111=0 & thv_cpn & thv_c0606=0 & Dd & fvcx1_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = fvcx1_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 0;
+	Dd = vcx1(t_cpn, t_op1, Dd, t_acc, 64:1, t_vec);
+}
+
+
+
+:vcx2^vacc^ItCond thv_cpn, Sd, Sm, fvcx2_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2424=0 & thv_c2323=0 & thv_c2021=3 & thv_c1111=0 & thv_cpn & thv_c0606=0 & Sm & Sd & fvcx2_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = fvcx2_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 0;
+	Sd = vcx2(t_cpn, t_op1, Sd, Sm, t_acc, 32:1, t_vec);
+}
+
+:vcx2^vacc^ItCond thv_cpn, Dd, Dm, fvcx2_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2424=1 & thv_c2323=0 & thv_c2021=3 & thv_c1111=0 & thv_cpn & thv_c0606=0 & Dm & Dd & fvcx2_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = fvcx2_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 0;
+	Dd = vcx2(t_cpn, t_op1, Dd, Dm, t_acc, 64:1, t_vec);
+}
+
+
+:vcx3^vacc^ItCond thv_cpn, Sd, Sn, Sm, fvcx3_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2424=0 & thv_c2323=1 & thv_c1111=0 & thv_cpn & thv_c0606=0 & Sm & Sn & Sd & fvcx3_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = fvcx3_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 0;
+	Sd = vcx3(t_cpn, t_op1, Sd, Sn, Sm, t_acc, 32:1, t_vec);
+}
+
+:vcx3^vacc^ItCond thv_cpn, Dd, Dn, Dm, fvcx3_imm is TMode=1 & ItCond & thv_c2931=7 & vacc & thv_c2527=6 & thv_c2424=1 & thv_c2323=1 & thv_c1111=0 & thv_cpn & thv_c0606=0 & Dm & Dn & Dd & fvcx3_imm
+{
+	build ItCond;
+	t_cpn:4 = thv_cpn;
+	t_op1:4 = fvcx3_imm;
+	t_acc:1 = vacc;
+	t_vec:1 = 0;
+	Dd = vcx3(t_cpn, t_op1, Dd, Dn, Dm, t_acc, 64:1, t_vec);
+}
+@endif # CDE

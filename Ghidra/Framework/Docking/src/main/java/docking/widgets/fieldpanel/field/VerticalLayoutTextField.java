@@ -42,7 +42,7 @@ public class VerticalLayoutTextField implements TextField {
 	protected int startX;
 	protected int width;
 	protected int preferredWidth;
-	protected HighlightFactory hlFactory;
+	protected FieldHighlightFactory hlFactory;
 
 	private int height;
 	private int heightAbove;
@@ -71,7 +71,7 @@ public class VerticalLayoutTextField implements TextField {
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
 	public VerticalLayoutTextField(FieldElement[] textElements, int startX, int width, int maxLines,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 		this(Arrays.asList(textElements), startX, width, maxLines, hlFactory, " ");
 	}
 
@@ -87,7 +87,7 @@ public class VerticalLayoutTextField implements TextField {
 	 */
 	public VerticalLayoutTextField(List<FieldElement> textElements, int startX, int width,
 			int maxLines,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 		this(textElements, startX, width, maxLines, hlFactory, " ");
 	}
 
@@ -104,7 +104,7 @@ public class VerticalLayoutTextField implements TextField {
 	 *        getText() method.
 	 */
 	protected VerticalLayoutTextField(List<FieldElement> textElements, int startX, int width,
-			int maxLines, HighlightFactory hlFactory, String rowSeparator) {
+			int maxLines, FieldHighlightFactory hlFactory, String rowSeparator) {
 
 		this.startX = startX;
 		this.width = width;
@@ -134,7 +134,11 @@ public class VerticalLayoutTextField implements TextField {
 		StringBuilder buf = new StringBuilder();
 		int n = elements.size() - 1;
 		for (int i = 0; i < n; i++) {
-			buf.append(elements.get(i).getText()).append(delimiter);
+			String text = elements.get(i).getText();
+			buf.append(text);
+			if (!text.endsWith(delimiter)) { // prevent 2 spaces between merged lines
+				buf.append(delimiter);
+			}
 		}
 		buf.append(elements.get(n).getText());
 		return buf.toString();
@@ -280,7 +284,7 @@ public class VerticalLayoutTextField implements TextField {
 			cursorRow = cursorLoc.row();
 		}
 
-		Highlight[] highlights = hlFactory.getHighlights(this, getText(), cursorTextOffset);
+		Highlight[] highlights = hlFactory.createHighlights(this, getText(), cursorTextOffset);
 		int columns = 0;
 		int n = subFields.size();
 
@@ -488,11 +492,19 @@ public class VerticalLayoutTextField implements TextField {
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 
-		FieldRow fieldRow = getFieldRowFromDataRow(dataRow);
-		TextField field = fieldRow.field;
-		RowColLocation location = field.dataToScreenLocation(dataRow, dataColumn);
-		int screenRow = fieldRow.screenRow;
-		return location.withRow(screenRow);
+		// search each line looking for a match for the given row and column
+		for (int i = 0; i < subFields.size(); i++) {
+			FieldRow row = subFields.get(i);
+			RowColLocation loc = row.field.dataToScreenLocation(dataRow, dataColumn);
+
+			// A DefaultRowColLocation means that the line did not have an exact match for
+			// the dataRow and dataColumn, so need to keep looking at each line.
+			if (!(loc instanceof DefaultRowColLocation)) {
+				return new RowColLocation(i, loc.col());
+			}
+		}
+
+		return new DefaultRowColLocation();
 	}
 
 	@Override
@@ -546,18 +558,6 @@ public class VerticalLayoutTextField implements TextField {
 			return null;
 		}
 		return subFields.get(screenRow).field;
-	}
-
-	private FieldRow getFieldRowFromDataRow(int dataRow) {
-		int currentRow = 0;
-		for (FieldRow row : subFields) {
-			int length = row.field.getNumDataRows();
-			if (currentRow + length > dataRow) {
-				return row;
-			}
-			currentRow += length;
-		}
-		return subFields.get(subFields.size() - 1);
 	}
 
 	private int getDataRow(TextField field) {

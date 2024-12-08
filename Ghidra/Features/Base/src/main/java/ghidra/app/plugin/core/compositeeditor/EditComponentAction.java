@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import docking.ActionContext;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
 
 /**
  * Action for use in the composite data type editor.
@@ -35,31 +34,31 @@ public class EditComponentAction extends CompositeEditorTableAction {
 	private DataTypeManagerService dtmService;
 
 	public EditComponentAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
 		this.dtmService = provider.dtmService;
 		setDescription(DESCRIPTION);
-		adjustEnablement();
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		int row = model.getRow();
 		if (row >= model.getNumComponents()) {
 			requestTableFocus();
 			return;
 		}
 
+		if (!model.isEditComponentAllowed()) {
+			model.setStatus("Can only edit a structure, union, enum or function-definition.");
+			return;
+		}
+
 		DataTypeComponent comp = model.getComponent(row);
 		DataType clickedType = comp.getDataType();
 		DataType dt = DataTypeUtils.getBaseDataType(clickedType);
-		boolean isEditableType =
-			(dt instanceof Structure) || (dt instanceof Union) || (dt instanceof Enum);
-		if (isEditableType) {
-			edit(dt, clickedType.getName());
-		}
-		else {
-			model.setStatus("Can only edit a structure, union or enum.");
-		}
+		edit(dt, clickedType.getName());
 		requestTableFocus();
 	}
 
@@ -82,8 +81,8 @@ public class EditComponentAction extends CompositeEditorTableAction {
 	}
 
 	@Override
-	public void adjustEnablement() {
-		setEnabled(model.isEditComponentAllowed());
+	public boolean isEnabledForContext(ActionContext context) {
+		return !hasIncompleteFieldEntry() && model.isEditComponentAllowed();
 	}
 
 }

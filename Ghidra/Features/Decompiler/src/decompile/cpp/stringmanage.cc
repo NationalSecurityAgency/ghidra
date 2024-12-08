@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 #include "stringmanage.hh"
 #include "architecture.hh"
+#include "crc32.hh"
 
 namespace ghidra {
 
@@ -23,6 +24,85 @@ AttributeId ATTRIB_TRUNC = AttributeId("trunc",69);
 ElementId ELEM_BYTES = ElementId("bytes",83);
 ElementId ELEM_STRING = ElementId("string",84);
 ElementId ELEM_STRINGMANAGE = ElementId("stringmanage",85);
+
+/// Assume the buffer contains a null terminated unicode encoded string.
+/// Write the characters out (as UTF8) to the stream.
+/// \param s is the output stream
+/// \param buffer is the given byte buffer
+/// \param size is the number of bytes in the buffer
+/// \param charsize specifies the encoding (1=UTF8 2=UTF16 4=UTF32)
+/// \param bigend is \b true if (UTF16 and UTF32) are big endian encoded
+/// \return \b true if the byte array contains valid unicode
+bool StringManager::writeUnicode(ostream &s,const uint1 *buffer,int4 size,int4 charsize,bool bigend)
+
+{
+  int4 i=0;
+  int4 count=0;
+  int4 skip = charsize;
+  while(i<size) {
+    int4 codepoint = getCodepoint(buffer+i,charsize,bigend,skip);
+    if (codepoint < 0) return false;
+    if (codepoint == 0) break;		// Terminator
+    writeUtf8(s, codepoint);
+    i += skip;
+    count += 1;
+    if (count >= maximumChars)
+      break;
+  }
+  return true;
+}
+
+/// \brief Translate and assign raw string data to a StringData object
+///
+/// The string data is provided as raw bytes.  The data is translated to UTF-8 and truncated
+/// to the \b maximumChars allowed by the manager.  The encoding must be legal unicode as performed
+/// by checkCharacters().
+/// \param data is the StringData object to populate
+/// \param buf is the raw byte array
+/// \param size is the number of bytes in the array
+/// \param charsize is the size of unicode encoding
+/// \param numChars is the number of characters in the encoding as returned by checkCharacters()
+/// \param bigend is \b true if UTF-16 and UTF-32 elements are big endian encoded
+void StringManager::assignStringData(StringData &data,const uint1 *buf,int4 size,int4 charsize,int4 numChars,bool bigend)
+
+{
+  if (charsize == 1 && numChars < maximumChars) {
+    data.byteData.reserve(size);
+    data.byteData.assign(buf,buf+size);
+  }
+  else {
+    // We need to translate to UTF8 and/or truncate
+    ostringstream s;
+    if (!writeUnicode(s, buf, size, charsize, bigend))
+      return;
+    string resString = s.str();
+    int4 newSize = resString.size();
+    data.byteData.reserve(newSize + 1);
+    const uint1 *ptr = (const uint1 *)resString.c_str();
+    data.byteData.assign(ptr,ptr+newSize);
+    data.byteData[newSize] = 0;		// Make sure there is a null terminator
+  }
+  data.isTruncated = (numChars >= maximumChars);
+}
+
+/// \brief Calculate hash of a specific Address and contents of a byte array
+///
+/// Calculate a 32-bit CRC of the bytes and XOR into the upper part of the Address offset.
+/// \param addr is the specific Address
+/// \param buf is a pointer to the array of bytes
+/// \param size is the number of bytes in the array
+/// \return the 64-bit hash
+uint8 StringManager::calcInternalHash(const Address &addr,const uint1 *buf,int4 size)
+
+{
+  uint4 reg = 0x7b7c66a9;
+  for(int4 i=0;i<size;++i) {
+    reg = crc_update(reg, buf[i]);
+  }
+  uint8 res = addr.getOffset();
+  res ^= ((uint8)reg) << 32;
+  return res;
+}
 
 /// \param max is the maximum number of characters to allow before truncating string
 StringManager::StringManager(int4 max)
@@ -89,6 +169,33 @@ bool StringManager::isString(const Address &addr,Datatype *charType)
   bool isTrunc;		// unused here
   const vector<uint1> &buffer(getStringData(addr,charType,isTrunc));
   return !buffer.empty();
+}
+
+/// \brief Associate string data at a code address or other location that doesn't hold string data normally
+///
+/// The given byte buffer is decoded, and if it represents a legal string, a non-zero hash is returned,
+/// constructed from an Address associated with the string and the string data itself. The registered string
+/// can be retrieved via the getStringData() method using this hash as a constant Address.  If the string is not
+/// legal, 0 is returned.
+/// \param addr is the address to associate with the string data
+/// \param buf is a pointer to the array of raw bytes encoding the string
+/// \param size is the number of bytes in the array
+/// \param charType is a character data-type indicating the encoding
+/// \return a hash associated with the string or 0
+uint8 StringManager::registerInternalStringData(const Address &addr,const uint1 *buf,int4 size,Datatype *charType)
+
+{
+  int4 charsize = charType->getSize();
+  int4 numChars = checkCharacters(buf, size, charsize, addr.isBigEndian());
+  if (numChars < 0)
+    return 0;	// Not a legal encoding
+  uint8 hash = calcInternalHash(addr, buf, size);
+  Address constAddr = addr.getSpace()->getManager()->getConstant(hash);
+  StringData &stringData( stringMap[constAddr] );
+  stringData.byteData.clear();
+  stringData.isTruncated = false;
+  assignStringData(stringData, buf, size, charsize, numChars, addr.isBigEndian());
+  return hash;
 }
 
 /// Encode \<stringmanage> element, with \<string> children.
@@ -204,6 +311,33 @@ inline int4 StringManager::readUtf16(const uint1 *buf,bool bigend)
   return codepoint;
 }
 
+/// \brief Make sure buffer has valid bounded set of unicode
+///
+/// Check that the given buffer contains valid unicode.
+/// If the string is encoded in UTF8 or ASCII, we get (on average) a bit of check
+/// per character.  For UTF16, the surrogate reserved area gives at least some check.
+/// \param buf is the byte array to check
+/// \param size is the size of the buffer in bytes
+/// \param charsize is the UTF encoding (1=UTF8, 2=UTF16, 4=UTF32)
+/// \param bigend is \b true if the (UTF16 and UTF32) characters are big endian encoded
+/// \return the number of characters or -1 if there is an invalid encoding
+int4 StringManager::checkCharacters(const uint1 *buf,int4 size,int4 charsize,bool bigend)
+
+{
+  if (buf == (const uint1 *)0) return -1;
+  int4 i=0;
+  int4 count=0;
+  int4 skip = charsize;
+  while(i<size) {
+    int4 codepoint = getCodepoint(buf+i,charsize,bigend,skip);
+    if (codepoint < 0) return -1;
+    if (codepoint == 0) break;
+    count += 1;
+    i += skip;
+  }
+  return count;
+}
+
 /// One or more bytes is consumed from the array, and the number of bytes used is passed back.
 /// \param buf is a pointer to the bytes in the character array
 /// \param charsize is 1 for UTF8, 2 for UTF16, or 4 for UTF32
@@ -265,8 +399,12 @@ int4 StringManager::getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4
   }
   else
     return -1;
-  if (codepoint >= 0xd800 && codepoint <= 0xdfff)
-    return -1;		// Reserved for surrogates, invalid codepoints
+  if (codepoint >= 0xd800) {
+    if (codepoint > 0x10ffff)	// Bigger than maximum codepoint
+      return -1;
+    if (codepoint <= 0xdfff)
+      return -1;		// Reserved for surrogates, invalid codepoints
+  }
   skip = sk;
   return codepoint;
 }
@@ -328,80 +466,12 @@ const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Dat
     return stringData.byteData;			// Return the empty buffer
   }
 
-  int4 numChars = checkCharacters(testBuffer, curBufferSize, charsize);
+  int4 numChars = checkCharacters(testBuffer, curBufferSize, charsize, addr.isBigEndian());
   if (numChars < 0)
     return stringData.byteData;		// Return the empty buffer (invalid encoding)
-  if (charsize == 1 && numChars < maximumChars) {
-    stringData.byteData.reserve(curBufferSize);
-    stringData.byteData.assign(testBuffer,testBuffer+curBufferSize);
-  }
-  else {
-    // We need to translate to UTF8 and/or truncate
-    ostringstream s;
-    if (!writeUnicode(s, testBuffer, curBufferSize, charsize))
-      return stringData.byteData;		// Return the empty buffer
-    string resString = s.str();
-    int4 newSize = resString.size();
-    stringData.byteData.reserve(newSize + 1);
-    const uint1 *ptr = (const uint1 *)resString.c_str();
-    stringData.byteData.assign(ptr,ptr+newSize);
-    stringData.byteData[newSize] = 0;		// Make sure there is a null terminator
-  }
-  stringData.isTruncated = (numChars >= maximumChars);
+  assignStringData(stringData, testBuffer, curBufferSize, charsize, numChars, addr.isBigEndian());
   isTrunc = stringData.isTruncated;
   return stringData.byteData;
-}
-
-/// Check that the given buffer contains valid unicode.
-/// If the string is encoded in UTF8 or ASCII, we get (on average) a bit of check
-/// per character.  For UTF16, the surrogate reserved area gives at least some check.
-/// \param buf is the byte array to check
-/// \param size is the size of the buffer in bytes
-/// \param charsize is the UTF encoding (1=UTF8, 2=UTF16, 4=UTF32)
-/// \return the number of characters or -1 if there is an invalid encoding
-int4 StringManagerUnicode::checkCharacters(const uint1 *buf,int4 size,int4 charsize) const
-
-{
-  if (buf == (const uint1 *)0) return -1;
-  bool bigend = glb->translate->isBigEndian();
-  int4 i=0;
-  int4 count=0;
-  int4 skip = charsize;
-  while(i<size) {
-    int4 codepoint = getCodepoint(buf+i,charsize,bigend,skip);
-    if (codepoint < 0) return -1;
-    if (codepoint == 0) break;
-    count += 1;
-    i += skip;
-  }
-  return count;
-}
-
-/// Assume the buffer contains a null terminated unicode encoded string.
-/// Write the characters out (as UTF8) to the stream.
-/// \param s is the output stream
-/// \param buffer is the given byte buffer
-/// \param size is the number of bytes in the buffer
-/// \param charsize specifies the encoding (1=UTF8 2=UTF16 4=UTF32)
-/// \return \b true if the byte array contains valid unicode
-bool StringManagerUnicode::writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize)
-
-{
-  bool bigend = glb->translate->isBigEndian();
-  int4 i=0;
-  int4 count=0;
-  int4 skip = charsize;
-  while(i<size) {
-    int4 codepoint = getCodepoint(buffer+i,charsize,bigend,skip);
-    if (codepoint < 0) return false;
-    if (codepoint == 0) break;		// Terminator
-    writeUtf8(s, codepoint);
-    i += skip;
-    count += 1;
-    if (count >= maximumChars)
-      break;
-  }
-  return true;
 }
 
 } // End namespace ghidra

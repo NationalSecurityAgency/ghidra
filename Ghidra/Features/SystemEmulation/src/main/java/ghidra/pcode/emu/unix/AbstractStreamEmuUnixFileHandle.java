@@ -35,7 +35,7 @@ public abstract class AbstractStreamEmuUnixFileHandle<T> implements EmuUnixFileD
 	/**
 	 * Construct a new handle
 	 * 
-	 * @see AbstractEmuUnixSyscallUseropLibrary#createHandle(int, EmuUnixFile, int)
+	 * @see AbstractEmuUnixSyscallUseropLibrary#createHandle(EmuUnixFile, int)
 	 * @param machine the machine emulating the hardware
 	 * @param cSpec the ABI of the target platform
 	 */

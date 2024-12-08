@@ -18,8 +18,6 @@ package ghidra.app.util.parser;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import javax.help.UnsupportedOperationException;
-
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.services.DataTypeQueryService;
@@ -346,11 +344,6 @@ public class FunctionSignatureParser {
 
 		void clearCache() {
 			dtCache.clear();
-		}
-
-		@Override
-		public DataTypeManager[] getDataTypeManagers() {
-			throw new UnsupportedOperationException();
 		}
 
 		@Override

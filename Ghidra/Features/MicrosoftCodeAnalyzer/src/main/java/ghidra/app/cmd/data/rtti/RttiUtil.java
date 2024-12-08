@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,22 +73,26 @@ public class RttiUtil {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 
-
 		// See if the symbol already exists for the RTTI data.
 		Symbol matchingSymbol = symbolTable.getSymbol(rttiSuffix, rttiAddress, classNamespace);
 		if (matchingSymbol != null) {
 			return false;
 		}
-		// Don't create it if a similar symbol already exists at the address of the data.
-		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
-		for (Symbol symbol : symbols) {
-			String name = symbol.getName();
-			if (name.contains(rttiSuffix)) {
-				return false; // Similar symbol already exists.
-			}
-		}
-		try {
 
+		// NOTE: This code was originally put here to skip applying labels the pdb put down if the
+		// above check failed but symbols were similar. This check has been removed because of
+		// cases where this check stopped the full namespace path  from being created. The code is 
+		// here commented out because we might want to use this to do extra checking and possibly 
+		// remove the similar symbol instead of leaving it as a secondary symbol. 
+		// Don't create it if a similar symbol already exists at the address of the data.
+//		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
+//		for (Symbol symbol : symbols) {
+//			String name = symbol.getName();
+//			if (name.contains(rttiSuffix)) {
+//				return false; // Similar symbol already exists.
+//			}
+//		}
+		try {
 			// Ignore imported mangled symbol because demangling would add tick marks into the name.  
 			// The name created here is better. Set the symbol to be primary so that the demangler 
 			// won't demangle.
@@ -170,8 +174,9 @@ public class RttiUtil {
 				}
 			}
 
-			// any references after the first one ends the table
-			if (tableSize > 0 && referenceManager.hasReferencesTo(currentVfPointerAddress)) {
+			// any non-computed source type references after the first one ends the table
+			if (tableSize > 0 &&
+				referenceIndicatesEndOfTable(referenceManager, currentVfPointerAddress)) {
 				break;
 			}
 
@@ -188,6 +193,43 @@ public class RttiUtil {
 			currentVfPointerAddress = currentVfPointerAddress.add(defaultPointerSize);
 		}
 		return tableSize;
+	}
+
+	/**
+	 * Method to determine if there certain types of references to the given address that would
+	 * indicate the end of a vftable
+	 * @param address the address of a possible pointer in a vftable
+	 * @return true if there are references to the given address and any of the references are
+	 * types that would indicate the given pointer should not be in the vftable preceding it. In 
+	 * general most references would fall into this category such as ones created by user, importer,
+	 * disassembler. Returns false if no references or if the only references are ones not 
+	 * indicative of the end of a vftable. 
+	 */
+	private static boolean referenceIndicatesEndOfTable(ReferenceManager referenceManager,
+			Address address) {
+
+		boolean hasReferencesTo = referenceManager.hasReferencesTo(address);
+		if (!hasReferencesTo) {
+			return false;
+		}
+		ReferenceIterator referenceIter = referenceManager.getReferencesTo(address);
+		while (referenceIter.hasNext()) {
+			Reference ref = referenceIter.next();
+
+			// if source type is any besides analysis then it is the kind of reference to stop
+			// the vftable
+			if (ref.getSource() != SourceType.ANALYSIS) {
+				return true;
+			}
+			// if it is analysis source type but reference is data that is not read this indicates
+			// it is not the kind of reference that should end a vftable
+			// For example something could be getting this address to figure out the address pointed
+			// to so that that address can be referenced. 
+			if (ref.getReferenceType().isData() && !ref.getReferenceType().isRead()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

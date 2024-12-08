@@ -15,7 +15,7 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -44,27 +44,13 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
-						"Test bookmark @ 0x10028b1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
+					"Test bookmark @ 0x10028b1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
 			}
 		});
@@ -79,28 +65,14 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
-						"Test bookmark @ 0x10028b1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
+					"Test bookmark @ 0x10028b1");
 			}
 		});
 
@@ -114,40 +86,18 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddSame() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
-						"Test bookmark @ 0x10028b1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
+					"Test bookmark @ 0x10028b1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
-						"Test bookmark @ 0x10028b1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
+					"Test bookmark @ 0x10028b1");
 			}
 		});
 
@@ -161,39 +111,17 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddDiffPickLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
-						"Test bookmark @ 0x10028b1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
+					"Test bookmark @ 0x10028b1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1", "My Cat1 bookmark.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1", "My Cat1 bookmark.");
 			}
 		});
 
@@ -208,39 +136,17 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testAddDiffPickMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
-						"Test bookmark @ 0x10028b1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1",
+					"Test bookmark @ 0x10028b1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x10028b1");
-					bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1", "My Cat1 bookmark.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x10028b1");
+				bookMgr.setBookmark(addr, BookmarkType.INFO, "Cat1", "My Cat1 bookmark.");
 			}
 		});
 
@@ -254,43 +160,28 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr;
-					Bookmark[] bookmarks;
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr;
+				Bookmark[] bookmarks;
 
-					// new category
-					addr = addr(program, "0x1001978");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set("NewCat", bookmarks[0].getComment());
+				// new category
+				addr = addr(program, "0x1001978");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set("NewCat", bookmarks[0].getComment());
 
-					// new comment
-					addr = addr(program, "0x100248f");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set(bookmarks[0].getCategory(), "This is a new analysis comment.");
+				// new comment
+				addr = addr(program, "0x100248f");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set(bookmarks[0].getCategory(), "This is a new analysis comment.");
 
-					// new category and comment
-					addr = addr(program, "0x1002f01");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set("NewCat", "This is a new analysis comment.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// new category and comment
+				addr = addr(program, "0x1002f01");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set("NewCat", "This is a new analysis comment.");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
 			}
 		});
@@ -309,20 +200,11 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
 					BookmarkManager bookMgr = program.getBookmarkManager();
 					Address addr;
 					Bookmark[] bookmarks;
@@ -341,12 +223,6 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 					addr = addr(program, "0x1002f01");
 					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
 					bookmarks[0].set("NewCat", "This is a new analysis comment.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 		});
 
@@ -365,70 +241,46 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testChangeSame() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr;
-					Bookmark[] bookmarks;
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr;
+				Bookmark[] bookmarks;
 
-					// new category
-					addr = addr(program, "0x1001978");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set("NewCat", bookmarks[0].getComment());
+				// new category
+				addr = addr(program, "0x1001978");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set("NewCat", bookmarks[0].getComment());
 
-					// new comment
-					addr = addr(program, "0x100248f");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set(bookmarks[0].getCategory(), "This is a new analysis comment.");
+				// new comment
+				addr = addr(program, "0x100248f");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set(bookmarks[0].getCategory(), "This is a new analysis comment.");
 
-					// new category and comment
-					addr = addr(program, "0x1002f01");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set("NewCat", "This is a new analysis comment.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// new category and comment
+				addr = addr(program, "0x1002f01");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set("NewCat", "This is a new analysis comment.");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr;
-					Bookmark[] bookmarks;
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr;
+				Bookmark[] bookmarks;
 
-					// new category
-					addr = addr(program, "0x1001978");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set("NewCat", bookmarks[0].getComment());
+				// new category
+				addr = addr(program, "0x1001978");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set("NewCat", bookmarks[0].getComment());
 
-					// new comment
-					addr = addr(program, "0x100248f");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set(bookmarks[0].getCategory(), "This is a new analysis comment.");
+				// new comment
+				addr = addr(program, "0x100248f");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set(bookmarks[0].getCategory(), "This is a new analysis comment.");
 
-					// new category and comment
-					addr = addr(program, "0x1002f01");
-					bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
-					bookmarks[0].set("NewCat", "This is a new analysis comment.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// new category and comment
+				addr = addr(program, "0x1002f01");
+				bookmarks = bookMgr.getBookmarks(addr, BookmarkType.ANALYSIS);
+				bookmarks[0].set("NewCat", "This is a new analysis comment.");
 			}
 		});
 
@@ -446,43 +298,21 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
-						"Found Code", "Latest bookmark @ 0x1001978");
-					bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
-						"Found Code", "Latest bookmark @ 0x100248f");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
+					"Found Code", "Latest bookmark @ 0x1001978");
+				bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
+					"Found Code", "Latest bookmark @ 0x100248f");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
-						"Found Code", "My bookmark @ 0x1001978");
-					bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
-						"Found Code", "My bookmark @ 0x100248f");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
+					"Found Code", "My bookmark @ 0x1001978");
+				bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
+					"Found Code", "My bookmark @ 0x100248f");
 			}
 		});
 
@@ -500,29 +330,14 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testRemoveLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
-			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+			public void modifyLatest(ProgramDB program) {		
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
 			}
 		});
@@ -540,30 +355,15 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testRemoveMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
 		});
 
@@ -580,43 +380,20 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
     public void testRemoveSame() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
 		});
 
@@ -632,46 +409,24 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeLatestRemoveMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
-						"Found Code", "Latest bookmark @ 0x1001978");
-					bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
-						"Found Code", "Latest bookmark @ 0x100248f");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
+					"Found Code", "Latest bookmark @ 0x1001978");
+				bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
+					"Found Code", "Latest bookmark @ 0x100248f");
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
-			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x100248f"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+			
+			public void modifyPrivate(ProgramDB program) {			
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x100248f"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
 		});
 
@@ -688,46 +443,24 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeMyRemoveLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x100248f"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x100248f"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
-						"Found Code", "My bookmark @ 0x1001978");
-					bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
-						"Found Code", "My bookmark @ 0x100248f");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
+					"Found Code", "My bookmark @ 0x1001978");
+				bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
+					"Found Code", "My bookmark @ 0x100248f");
 			}
 		});
 
@@ -743,45 +476,23 @@ public class BookmarkMergeManagerTest extends AbstractListingMergeManagerTest {
 	private void setupUseForAll() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Bookmark[] bookmarks;
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					bookmarks =
-						bookMgr.getBookmarks(addr(program, "0x100248f"), BookmarkType.ANALYSIS);
-					bookMgr.removeBookmark(bookmarks[0]);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Bookmark[] bookmarks;
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x1001978"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
+				bookmarks =
+					bookMgr.getBookmarks(addr(program, "0x100248f"), BookmarkType.ANALYSIS);
+				bookMgr.removeBookmark(bookmarks[0]);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
-						"Found Code", "My bookmark @ 0x1001978");
-					bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
-						"Found Code", "My bookmark @ 0x100248f");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				bookMgr.setBookmark(addr(program, "0x1001978"), BookmarkType.ANALYSIS,
+					"Found Code", "My bookmark @ 0x1001978");
+				bookMgr.setBookmark(addr(program, "0x100248f"), BookmarkType.ANALYSIS,
+					"Found Code", "My bookmark @ 0x100248f");
 			}
 		});
 	}

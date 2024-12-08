@@ -38,6 +38,7 @@ class WrappedKeyStroke implements WrappedOption {
 
 	/**
 	 * Construct a wrapper object using the given KeyStroke.
+	 * @param ks the keystroke
 	 */
 	WrappedKeyStroke(KeyStroke ks) {
 		this.keyStroke = ks;
@@ -48,31 +49,15 @@ class WrappedKeyStroke implements WrappedOption {
 		return keyStroke;
 	}
 
-	/**
-	 * Read the components for a Key Stroke from the given
-	 * SaveState object to restore this WrappedKeyStroke.
-	 */
 	@Override
 	public void readState(SaveState saveState) {
 		if (saveState.hasValue(KEY_CODE)) {
 			int keyCode = saveState.getInt(KEY_CODE, 0);
 			int modifiers = saveState.getInt(MODIFIERS, 0);
-			String version = System.getProperty("java.version");
-			if (version.startsWith("1.4")) {
-				modifiers &= 0x0f;
-				modifiers |= modifiers << 6;
-			}
-			else if (version.startsWith("1.3")) {
-				modifiers &= 0x0f;
-			}
 			keyStroke = KeyStroke.getKeyStroke(keyCode, modifiers);
 		}
 	}
 
-	/**
-	 * Write the components for the wrapped Key Stroke to the given 
-	 * SaveState object.
-	 */
 	@Override
 	public void writeState(SaveState saveState) {
 		if (keyStroke == null) {
@@ -90,5 +75,18 @@ class WrappedKeyStroke implements WrappedOption {
 	@Override
 	public String toString() {
 		return Objects.toString(keyStroke);
+	}
+
+	/**
+	 * A method to allow for converting the deprecated options key stroke usage to the new action
+	 * trigger usage
+	 * @return a WrappedActionTrigger 
+	 */
+	public WrappedActionTrigger toWrappedActionTrigger() {
+		ActionTrigger trigger = null;
+		if (keyStroke != null) {
+			trigger = new ActionTrigger(keyStroke);
+		}
+		return new WrappedActionTrigger(trigger);
 	}
 }

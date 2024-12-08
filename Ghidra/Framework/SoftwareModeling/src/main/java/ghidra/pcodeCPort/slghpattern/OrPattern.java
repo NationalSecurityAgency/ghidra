@@ -15,21 +15,20 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
+import ghidra.program.model.pcode.Encoder;
 
 public class OrPattern extends Pattern {
 
 	private VectorSTL<DisjointPattern> orlist = new VectorSTL<DisjointPattern>();
 
 	public OrPattern() {
-	} // For use with restoreXml
+	}
 
 	@Override
 	public int numDisjoint() {
@@ -210,23 +209,11 @@ public class OrPattern extends Pattern {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<or_pat>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_OR_PAT);
 		for (int i = 0; i < orlist.size(); ++i) {
-			orlist.get(i).saveXml(s);
+			orlist.get(i).encode(encoder);
 		}
-		s.append("</or_pat>\n");
+		encoder.closeElement(ELEM_OR_PAT);
 	}
-
-	@Override
-	public void restoreXml(Element el) {
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		while (iter.hasNext()) {
-			Element element = (Element) iter.next();
-			DisjointPattern pat = DisjointPattern.restoreDisjoint(element);
-			orlist.push_back(pat);
-		}
-	}
-
 }

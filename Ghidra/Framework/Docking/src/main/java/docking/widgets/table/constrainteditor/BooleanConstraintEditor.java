@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.combobox.GComboBox;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import docking.widgets.table.constraint.BooleanMatchColumnConstraint;
 import docking.widgets.table.constraint.ColumnConstraint;
 
@@ -48,8 +48,8 @@ public class BooleanConstraintEditor extends AbstractColumnConstraintEditor<Bool
 
 		JPanel panel = new JPanel(new BorderLayout());
 		comboBox = new GComboBox<>(new Boolean[] { Boolean.TRUE, Boolean.FALSE });
-		comboBox.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
-			b -> StringUtils.capitalize(b.toString())));
+		comboBox.setRenderer(GComboBoxCellRenderer
+				.createDefaultTextRenderer(b -> StringUtils.capitalize(b.toString())));
 		comboBox.addItemListener(e -> valueChanged());
 
 		panel.add(comboBox, BorderLayout.CENTER);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +43,7 @@ public class MarkupItemFactory {
 
 		VTAssociationType associationType = association.getType();
 		for (VTMarkupType type : values) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (type.supportsAssociationType(associationType)) {
 				list.addAll(createMarkupItems(type, association));
 			}

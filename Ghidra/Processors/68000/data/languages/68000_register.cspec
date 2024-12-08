@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+	<absolute_max_alignment value="0" />
+	<machine_alignment value="8" />
+	<default_alignment value="1" />
+	<default_pointer_alignment value="4" />
+	<pointer_size value="4" />
+	<wchar_size value="4" />
+	<short_size value="2" />
+	<integer_size value="4" />
+	<long_size value="4" />
+	<long_long_size value="8" />
+	<float_size value="4" />
+	<double_size value="8" />
+	<long_double_size value="10" /> <!-- aligned-length=12 -->
+	<size_alignment_map>
+		<entry size="1" alignment="1" />
+		<entry size="2" alignment="2" />
+		<entry size="4" alignment="4" />
+		<entry size="8" alignment="4" />
+	</size_alignment_map>
+  </data_organization>
+  
+  <global>
+    <range space="ram"/>
+  </global>
+  
+  <stackpointer register="SP" space="ram"/>
+  
+  <default_proto>
+    <prototype name="register" extrapop="4" stackshift="4" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="A0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="A1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="FP0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="FP1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="D0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="D1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="4" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="A0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="D0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="D2"/>
+        <register name="D3"/>
+        <register name="D4"/>
+        <register name="D5"/>
+        <register name="D6"/>
+        <register name="D7"/>
+        <register name="A2"/>
+        <register name="A3"/>
+        <register name="A4"/>
+        <register name="A5"/>
+        <register name="A6"/>
+        <register name="SP"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+  
+  <prototype name="standard" extrapop="4" stackshift="4">
+      <input>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="4" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="A0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="D0"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <register name="D2"/>
+        <register name="D3"/>
+        <register name="D4"/>
+        <register name="D5"/>
+        <register name="D6"/>
+        <register name="D7"/>
+        <register name="A2"/>
+        <register name="A3"/>
+        <register name="A4"/>
+        <register name="A5"/>
+        <register name="A6"/>
+        <register name="SP"/>
+      </unaffected>
+      <killedbycall>
+        <register name="D0"/>
+        <register name="D1"/>
+        <register name="A0"/>
+        <register name="A1"/>
+      </killedbycall>
+  </prototype>
+
+</compiler_spec>

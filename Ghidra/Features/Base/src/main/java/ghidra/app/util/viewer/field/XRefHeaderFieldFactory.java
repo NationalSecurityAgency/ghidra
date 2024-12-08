@@ -20,7 +20,7 @@ import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.field.ListingColors.XrefColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -50,7 +50,7 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	public XRefHeaderFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	public XRefHeaderFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, ToolOptions fieldOptions) {
 		super(XREF_FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
@@ -116,7 +116,7 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new XRefHeaderFieldFactory(formatModel, provider, options, fieldOptions);
 	}

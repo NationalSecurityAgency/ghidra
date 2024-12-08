@@ -34,12 +34,4 @@ public class MDDataReferenceType extends MDModifierType {
 		super.parseInternal();
 	}
 
-	@Override
-	// Override because Array is not allowed.
-	protected void parseArrayProperty() throws MDException {
-		return;
-	}
 }
-
-/******************************************************************************/
-/******************************************************************************/

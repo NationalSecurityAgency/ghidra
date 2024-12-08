@@ -192,7 +192,7 @@ class LockingTaskMonitor implements TaskMonitor {
 	public void clearCanceled() {
 		this.isCanceled = false;
 		if (taskDialog != null) {
-			taskDialog.clearCanceled();
+			taskDialog.clearCancelled();
 		}
 	}
 

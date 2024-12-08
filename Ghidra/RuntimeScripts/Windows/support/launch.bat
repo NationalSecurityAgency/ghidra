@@ -55,19 +55,24 @@ setlocal enabledelayedexpansion
 ::
 set VMARG_LIST=
 set ARGS=
-set INDEX=0
-for %%A in (%*) do (
-	set /A INDEX=!INDEX!+1
-	if "!INDEX!"=="1" ( set MODE=%%A
-	) else if "!INDEX!"=="2" ( if %%~A == jre (set JAVA_TYPE_ARG=-java_home) else (set JAVA_TYPE_ARG=-jdk_home)
-	) else if "!INDEX!"=="3" ( set APPNAME=%%A
-	) else if "!INDEX!"=="4" ( set MAXMEM=%%~A
-	) else if "!INDEX!"=="5" ( if not "%%~A"=="" set VMARG_LIST=%%~A
-	) else if "!INDEX!"=="6" ( set CLASSNAME=%%~A
-	) else set ARGS=!ARGS! %%A
+set /A INDEX=0
+:shift_loop
+SET ARG=%1
+IF DEFINED ARG (
+    set /A INDEX+=1
+    if "!INDEX!"=="1" ( set MODE=%~1
+    ) else if "!INDEX!"=="2" ( if "%~1" == "jre" (set JAVA_TYPE_ARG=-java_home) else (set JAVA_TYPE_ARG=-jdk_home)
+    ) else if "!INDEX!"=="3" ( set APPNAME=%~1
+    ) else if "!INDEX!"=="4" ( set MAXMEM=%~1
+    ) else if "!INDEX!"=="5" ( if not "%~1"=="" set VMARG_LIST=%~1
+    ) else if "!INDEX!"=="6" ( set CLASSNAME=%~1
+    ) else set ARGS=!ARGS! "%~1"
+    
+    SHIFT
+    GOTO shift_loop
 )
 
-if %INDEX% geq 6 goto continue1
+if not "%CLASSNAME%" == "" (goto continue1)
 echo Incorrect launch usage - missing argument^(s^)
 goto showUsage
 

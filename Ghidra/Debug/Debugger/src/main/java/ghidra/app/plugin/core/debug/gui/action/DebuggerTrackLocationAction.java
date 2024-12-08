@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import docking.action.builder.MultiStateActionBuilder;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
+import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.framework.plugintool.Plugin;
 
 public interface DebuggerTrackLocationAction extends TrackLocationAction {

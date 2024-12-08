@@ -496,12 +496,10 @@ uintb OpBehaviorIntSdiv::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
 {
   if (in2 == 0)
     throw EvaluationError("Divide by 0");
-  intb num = in1;		// Convert to signed
-  intb denom = in2;
-  sign_extend(num,8*sizein-1);
-  sign_extend(denom,8*sizein-1);
+  intb num = sign_extend(in1,8*sizein-1);		// Convert to signed
+  intb denom = sign_extend(in2,8*sizein-1);
   intb sres = num/denom;	// Do the signed division
-  zero_extend(sres,8*sizeout-1); // Cut to appropriate size
+  sres = zero_extend(sres,8*sizeout-1); // Cut to appropriate size
   return (uintb)sres;		// Recast as unsigned
 }
 
@@ -520,12 +518,10 @@ uintb OpBehaviorIntSrem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
 {
   if (in2 == 0)
     throw EvaluationError("Remainder by 0");
-  intb val = in1;
-  intb mod = in2;
-  sign_extend(val,8*sizein-1);	// Convert inputs to signed values
-  sign_extend(mod,8*sizein-1);
+  intb val = sign_extend(in1,8*sizein-1);	// Convert inputs to signed values
+  intb mod = sign_extend(in2,8*sizein-1);
   intb sres = val % mod;	// Do the remainder
-  zero_extend(sres,8*sizeout-1); // Convert back to unsigned
+  sres = zero_extend(sres,8*sizeout-1); // Convert back to unsigned
   return (uintb)sres;
 }
 

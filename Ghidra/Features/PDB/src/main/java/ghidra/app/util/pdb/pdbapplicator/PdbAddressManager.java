@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,22 +70,28 @@ public class PdbAddressManager {
 
 	private PdbAddressCalculator addressCalculator;
 
+	private boolean isInitialized;
 	//==============================================================================================
 	// API
 	//==============================================================================================
+
+	public PdbAddressManager() {
+		isInitialized = false;
+	}
+
 	/**
 	 * Manager
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param imageBase Address from which all other addresses are based.
+	 * @param applicatorArg {@link DefaultPdbApplicator} for which this class is working.
+	 * @param imageBaseArg Address from which all other addresses are based.
 	 * @throws PdbException If Program is null;
 	 * @throws CancelledException upon user cancellation
 	 */
-	PdbAddressManager(DefaultPdbApplicator applicator, Address imageBase)
+	void initialize(DefaultPdbApplicator applicatorArg, Address imageBaseArg)
 			throws PdbException, CancelledException {
-		Objects.requireNonNull(applicator, "applicator may not be null");
-		Objects.requireNonNull(imageBase, "imageBase may not be null");
-		this.applicator = applicator;
-		this.imageBase = imageBase;
+		Objects.requireNonNull(applicatorArg, "applicator may not be null");
+		Objects.requireNonNull(imageBaseArg, "imageBase may not be null");
+		this.applicator = applicatorArg;
+		this.imageBase = imageBaseArg;
 		memoryGroupRefinement = new ArrayList<>();
 		memorySectionRefinement = new ArrayList<>();
 
@@ -100,6 +106,15 @@ public class PdbAddressManager {
 //		determineMemoryBlocks_orig();
 		mapPreExistingSymbols();
 		createAddressRemap();
+		isInitialized = true;
+	}
+
+	/**
+	 * Returns {@code true} if already initialized
+	 * @return {@code true}" if initialized
+	 */
+	boolean isInitialized() {
+		return isInitialized;
 	}
 
 	/**
@@ -336,9 +351,16 @@ public class PdbAddressManager {
 //		}
 //	}
 
-	private void determineMemoryBlocks() {
+	/**
+	 * Determines memory blocks
+	 * @throws CancelledException upon user cancellation
+	 */
+	private void determineMemoryBlocks() throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
 		segmentMapList = debugInfo.getSegmentMapList();
 		if (debugInfo instanceof PdbNewDebugInfo) {
 			DebugData debugData = ((PdbNewDebugInfo) debugInfo).getDebugData();
@@ -450,7 +472,7 @@ public class PdbAddressManager {
 		// TODO: should we perform refinement of program memory blocks?
 		PdbLog.message("\nMemorySectionRefinement");
 		for (PeCoffSectionMsSymbol sym : memorySectionRefinement) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			String name = sym.getName();
 			int section = sym.getSectionNumber();
 			int relativeVirtualAddress = sym.getRva();
@@ -481,7 +503,7 @@ public class PdbAddressManager {
 		// TODO: should we perform refinement of program memory blocks?
 		PdbLog.message("\nMemoryGroupRefinement");
 		for (PeCoffGroupMsSymbol sym : memoryGroupRefinement) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			String name = sym.getName();
 			int segment = sym.getSegment();
 			long offset = sym.getOffset();

@@ -571,7 +571,7 @@ class ReferenceMerger extends AbstractListingMerger {
 			opIndexes = new ArrayList<>();
 			typeConflicts.put(address, opIndexes);
 		}
-		opIndexes.add(new Integer(opIndex));
+		opIndexes.add(Integer.valueOf(opIndex));
 		conflictSet.addRange(address, address);
 	}
 
@@ -599,7 +599,7 @@ class ReferenceMerger extends AbstractListingMerger {
 			opIndexes = new ArrayList<>();
 			primaryConflicts.put(address, opIndexes);
 		}
-		opIndexes.add(new Integer(opIndex));
+		opIndexes.add(Integer.valueOf(opIndex));
 		conflictSet.addRange(address, address);
 	}
 
@@ -735,7 +735,7 @@ class ReferenceMerger extends AbstractListingMerger {
 		if (opIndexList == null || opIndexList.size() == 0) {
 			return;
 		}
-		if (opIndexList.contains(new Integer(opIndex))) {
+		if (opIndexList.contains(Integer.valueOf(opIndex))) {
 			currentReference = null;
 			currentAddress = addr;
 			currentOpIndex = opIndex;
@@ -748,7 +748,7 @@ class ReferenceMerger extends AbstractListingMerger {
 			else {
 				if (askUser && mergeManager != null) {
 					showConflictPanel(listingPanel, TYPE_CONFLICT);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				else {
 					resolveTypeConflict(addr, opIndex, chosenConflictOption);
@@ -779,7 +779,7 @@ class ReferenceMerger extends AbstractListingMerger {
 				else {
 					if (askUser && mergeManager != null) {
 						showConflictPanel(listingPanel, REMOVE_CONFLICT);
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 					}
 					else {
 						resolveRemoveVsChange(currentReference, chosenConflictOption);
@@ -811,7 +811,7 @@ class ReferenceMerger extends AbstractListingMerger {
 				else {
 					if (askUser && mergeManager != null) {
 						showConflictPanel(listingPanel, CHANGE_CONFLICT);
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 					}
 					else {
 						resolveChangeConflict(currentReference, chosenConflictOption);
@@ -846,7 +846,7 @@ class ReferenceMerger extends AbstractListingMerger {
 				else {
 					if (askUser && mergeManager != null) {
 						showConflictPanel(listingPanel, ADD_CONFLICT);
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 					}
 					else {
 						resolveAddConflict(currentReference, chosenConflictOption);
@@ -863,7 +863,7 @@ class ReferenceMerger extends AbstractListingMerger {
 		if (opIndexList == null || opIndexList.size() == 0) {
 			return;
 		}
-		if (opIndexList.contains(new Integer(opIndex))) {
+		if (opIndexList.contains(Integer.valueOf(opIndex))) {
 			// Check that the conflict still exists. It may have gotten resolved via another conflict.
 			if (!hasPrimaryConflict(addr, opIndex)) {
 				return;
@@ -880,7 +880,7 @@ class ReferenceMerger extends AbstractListingMerger {
 			else {
 				if (askUser && mergeManager != null) {
 					showConflictPanel(listingPanel, PRIMARY_CONFLICT);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				else {
 					resolvePrimaryConflict(addr, opIndex, chosenConflictOption);

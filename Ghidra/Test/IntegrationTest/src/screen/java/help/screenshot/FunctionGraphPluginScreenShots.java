@@ -858,14 +858,14 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 							  new Object[] { minCrossState });
 		//@formatter:on
 
-		runSwing(() -> action.actionPerformed(new ActionContext()));
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()));
 
 		// wait for the threaded graph layout code
 		FGController controller = getFunctionGraphController();
 		waitForBusyRunManager(controller);
 		waitForAnimation();
 		getPrimaryGraphViewer().repaint();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		long end = System.currentTimeMillis();
 		Msg.debug(this, "relayout time: " + ((end - start) / 1000.0) + "s");

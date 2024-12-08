@@ -24,7 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.label.GDLabel;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 
@@ -111,7 +111,7 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 		// match the spacing of non-editing cells
 		editor.setBorder(
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0),
-				BorderFactory.createLineBorder(Java.BORDER)));
+				BorderFactory.createLineBorder(Colors.BORDER)));
 	}
 
 	private void handleDoubleClick(Point p) {

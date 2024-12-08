@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import javax.swing.table.TableCellEditor;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.*;
 import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
@@ -55,6 +54,10 @@ import util.CollectionUtils;
  */
 public class EnumEditorProvider extends ComponentProviderAdapter
 		implements ChangeListener, EditorProvider {
+
+	public static final String ACTION_NAME_ADD = "Add Enum Value";
+	public static final String ACTION_NAME_APPLY = "Apply Enum Changes";
+	public static final String ACTION_NAME_DELETE = "Delete Enum Value";
 
 	static final Icon EDITOR_ICON = new GIcon("icon.plugin.enum.editor.provider");
 	private final static Icon APPLY_ICON = new GIcon("icon.plugin.enum.editor.apply");
@@ -104,6 +107,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		}
 		originalCategoryPath = categoryPath;
 		originalEnum = enumDT;
+
 		originalEnumName = enumDT.getDisplayName();
 		dataTypeManager = enumDTM;
 
@@ -152,7 +156,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, editorPanel.getTable());
+		return new DefaultActionContext(this, editorPanel.getTable());
 	}
 
 	@Override
@@ -211,25 +215,6 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-
-		if (originalEnumID == -1) {
-			return;
-		}
-
-		Enum enuum = (Enum) dataTypeManager.getDataType(originalEnumID);
-		if (enuum != null) {
-			EnumDataType dt = (EnumDataType) enuum.copy(dataTypeManager);
-			originalEnumName = dt.getDisplayName();
-			updateTitle(dt);
-			Category category = dataTypeManager.getCategory(enuum.getCategoryPath());
-			originalCategoryPath = category.getCategoryPath();
-			editorPanel.domainObjectRestored(domainObject, dt);
-		}
-		tool.setStatusInfo("");
-	}
-
-	@Override
 	public boolean isTransient() {
 		return true;
 	}
@@ -243,13 +228,21 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		tool.setStatusInfo(msg);
 	}
 
+	@Override
+	public DataTypeManager getDataTypeManager() {
+		return dataTypeManager;
+	}
+
 	String getCategoryText() {
 		return dataTypeManager.getName() + originalCategoryPath;
 	}
 
-	@Override
-	public DataTypeManager getDataTypeManager() {
-		return dataTypeManager;
+	Enum getEnum() {
+		return originalEnum;
+	}
+
+	String getSelectedFieldName() {
+		return editorPanel.getSelectedFieldName();
 	}
 
 //==================================================================================================
@@ -279,14 +272,15 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	private void createActions() {
 		hexDisplayAction = new ToggleActionBuilder("Toggle Hex Mode", plugin.getName())
-			.menuPath("Show Enum Values in Hex")
-			.description("Toggles Enum value column to show values in hex or decimal")
-			.keyBinding("Shift-H")
-			.selected(true)
-			.onAction(c -> editorPanel.setHexDisplayMode(hexDisplayAction.isSelected()))
-			.buildAndInstallLocal(this);
+				.helpLocation(new HelpLocation(HELP_TOPIC, "Toggle_Hex_Mode"))
+				.menuPath("Show Enum Values in Hex")
+				.description("Toggles Enum value column to show values in hex or decimal")
+				.keyBinding("Shift-H")
+				.selected(true)
+				.onAction(c -> editorPanel.setHexDisplayMode(hexDisplayAction.isSelected()))
+				.buildAndInstallLocal(this);
 
-		addAction = new EnumPluginAction("Add Enum Value", e -> editorPanel.addEntry());
+		addAction = new EnumPluginAction(ACTION_NAME_ADD, e -> editorPanel.addEntry());
 		addAction.setEnabled(true);
 		String editGroup = "Edit";
 		addAction.setPopupMenuData(new MenuData(new String[] { "Add" }, ADD_ICON, editGroup));
@@ -294,14 +288,14 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		addAction.setDescription("Add a new enum entry");
 
 		deleteAction =
-			new EnumPluginAction("Delete Enum Value", e -> editorPanel.deleteSelectedEntries());
+			new EnumPluginAction(ACTION_NAME_DELETE, e -> editorPanel.deleteSelectedEntries());
 		deleteAction.setEnabled(false);
 		deleteAction
-			.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
+				.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
 		deleteAction.setToolBarData(new ToolBarData(DELETE_ICON, editGroup));
 		deleteAction.setDescription("Delete the selected enum entries");
 
-		applyAction = new EnumPluginAction("Apply Enum Changes", e -> applyChanges());
+		applyAction = new EnumPluginAction(ACTION_NAME_APPLY, e -> applyChanges());
 		applyAction.setEnabled(false);
 		String firstGroup = "ApplyChanges";
 		applyAction.setToolBarData(new ToolBarData(APPLY_ICON, firstGroup));
@@ -314,10 +308,14 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		showEnumAction.setToolBarData(
 			new ToolBarData(new GIcon("icon.plugin.enum.editor.home"), thirdGroup));
 
+		FindReferencesToEnumFieldAction findReferencesAction =
+			new FindReferencesToEnumFieldAction(plugin);
+
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);
 		tool.addLocalAction(this, deleteAction);
 		tool.addLocalAction(this, showEnumAction);
+		tool.addLocalAction(this, findReferencesAction);
 	}
 
 	private boolean applyChanges() {
@@ -333,11 +331,21 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			setStatusMessage("Empty enum is not allowed");
 			return false;
 		}
-		int txID = startTransaction();
 
+		boolean originalDtExists = dataTypeManager.contains(originalEnum);
+		boolean renamed = false;
+		if (originalDtExists) {
+			String editorName = editorPanel.getEnumName().trim();
+			renamed = !originalEnumName.equals(editorName);
+		}
+		String action = originalDtExists ? "Edit" : "Create";
+		if (renamed) {
+			action += "/Rename";
+		}
+		int txID = dataTypeManager.startTransaction(action + " Enum " + editedEnum.getName());
 		try {
-			DataTypeManager dtm = editedEnum.getDataTypeManager();
-			boolean userSaved = resolveEquateConflicts(editedEnum, dtm);
+
+			boolean userSaved = resolveEquateConflicts(editedEnum);
 			if (!userSaved) {
 				return false;
 			}
@@ -349,11 +357,12 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			newEnuum.replaceWith(editedEnum);
 
 			originalEnum = newEnuum;
+			originalEnumID = dataTypeManager.getID(newEnuum);
 			editorPanel.setEnum((EnumDataType) newEnuum.copy(dataTypeManager));
 			applyAction.setEnabled(hasChanges());
 		}
 		finally {
-			endTransaction(txID);
+			dataTypeManager.endTransaction(txID, true);
 		}
 		return true;
 	}
@@ -366,10 +375,9 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Checks to see if the new changes to the enum will affect equates based off of it.
 	 * @param editedEnum the enum to check for conflicts with
-	 * @param dtm the data type manager that this enum lies within
 	 * @return true if the enum should save its changes; otherwise, false
 	 */
-	private boolean resolveEquateConflicts(Enum editedEnum, DataTypeManager dtm) {
+	private boolean resolveEquateConflicts(Enum editedEnum) {
 
 		Program program = plugin.getProgram();
 		if (program == null) {
@@ -454,7 +462,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private void applyName(Enum newEnuum) {
-		String editorName = editorPanel.getEnumName();
+		String editorName = editorPanel.getEnumName().trim();
 		if (originalEnumName.equals(editorName)) {
 			return; // nothing to do
 		}
@@ -483,14 +491,6 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		if (rows.length > 0) {
 			deleteAction.setEnabled(true);
 		}
-	}
-
-	private int startTransaction() {
-		return dataTypeManager.startTransaction("Edit Enum");
-	}
-
-	private void endTransaction(int transID) {
-		dataTypeManager.endTransaction(transID, true);
 	}
 
 	/**
@@ -677,6 +677,36 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			dispose();
 		}
 
+		@Override
+		public void restored(DataTypeManager dtm) {
+			if (originalEnumID <= 0) {
+				return;
+			}
+
+			DataTypeManager originalDTM = originalEnum.getDataTypeManager();
+			DataType dt = originalDTM.getDataType(originalEnumID);
+
+			boolean exists = false;
+			if (dt instanceof Enum) {
+				originalEnum = (Enum) dt;
+				exists = true;
+			}
+			else {
+				// original enum no longer exists
+				originalEnumID = -1;
+				EnumDataType enuum = editorPanel.getEnum();
+				originalEnum = new EnumDataType(enuum.getCategoryPath(), enuum.getName(),
+					enuum.getLength(), originalDTM);
+			}
+
+			originalEnumName = originalEnum.getDisplayName();
+			updateTitle(originalEnum);
+			originalCategoryPath = originalEnum.getCategoryPath();
+
+			editorPanel.domainObjectRestored((EnumDataType) originalEnum.copy(originalDTM), exists);
+			tool.setStatusInfo("");
+		}
+
 		private boolean isMyCategory(DataTypePath path) {
 			CategoryPath parentPath = path.getCategoryPath();
 			return parentPath.equals(originalCategoryPath);
@@ -709,10 +739,10 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private class EnumPluginAction extends DockingAction {
-		private final ActionListener listener;
+		private ActionListener listener;
 
 		EnumPluginAction(String name, ActionListener listener) {
-			super(name, plugin.getName());
+			super(name, plugin.getName(), KeyBindingType.SHARED);
 			this.listener = listener;
 			setHelpLocation(new HelpLocation(HELP_TOPIC, name));
 		}

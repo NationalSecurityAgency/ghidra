@@ -1,0 +1,738 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+
+    <TITLE>Ingesting Executables</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/languages.css">
+    <META name="generator" content="DocBook XSL Stylesheets V1.79.1">
+    <LINK rel="home" href="index.html" title="BSim Database">
+    <LINK rel="up" href="index.html" title="BSim Database">
+    <LINK rel="prev" href="DatabaseConfiguration.html" title="Database Configuration">
+    <LINK rel="next" href="DatabaseQuery.html" title="Querying a BSim Database">
+  </HEAD>
+
+  <BODY>
+    <DIV class="chapter">
+      <DIV class="titlepage">
+        <DIV>
+          <DIV>
+            <H1 class="title"><A name="IngestProcess"></A>Ingesting Executables</H1>
+          </DIV>
+        </DIV>
+      </DIV>
+
+      <DIV class="section">
+        <DIV class="titlepage">
+          <DIV>
+            <DIV>
+              <H2 class="title" style="clear: both"><A name="IngestOverview"></A>Ingest
+              Process</H2>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <P>The process of ingesting binaries into a BSim Database server, in order to exploit
+        Ghidra's data-flow indexing capabilities, can be subdivided into 4 major aspects.</P>
+
+        <DIV class="informalexample">
+          <DIV class="orderedlist">
+            <OL class="orderedlist" type="1">
+              <LI class="listitem">Importing Executables to a Ghidra Server</LI>
+
+              <LI class="listitem">Analysis</LI>
+
+              <LI class="listitem">Generating Features and Function Metadata</LI>
+
+              <LI class="listitem">Importing Features to a BSim Database</LI>
+            </OL>
+          </DIV>
+        </DIV>
+
+        <P>Its possible to populate and use the signature capabilities without putting the binaries
+        in a Ghidra Server, but it is much easier to generate signatures if step 1 is performed at
+        some point. Steps 1 and 2 can be performed in either order, or they can be performed
+        simultaneously. If a Ghidra Server is used, steps 3 and 4 are easily accomplished with the
+        <CODE class="filename">bsim</CODE> command-line script.</P>
+
+        <P>In the following examples, we assume that a machine <CODE class=
+        "filename">localhost</CODE> is running both a Ghidra Server and a BSim PostgreSQL database
+        server. On the Ghidra Server, a repository named <CODE class="filename">repo</CODE> has
+        been created. On the BSim server, a database named <CODE class="filename">repo</CODE> has
+        also been created. See See <A class="xref" href=
+        "CommandLineReference.html#BSimCommand">Command-Line Utility Reference</A> for more
+        details on use of <STRONG>bsim</STRONG> command and other supported BSim databases.</P>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="Analysis"></A>Analysis</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>Performing Ghidra's normal auto-analysis and ingesting to a Ghidra Server is
+          accomplished with the <CODE class="filename">analyzeHeadless</CODE> script, designed
+          explicitly for this purpose.</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/analyzeHeadless
+                ghidra://localhost/repo -import /path/to/rawexes -preScript
+                TailoredAnalysis.java</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>This imports all executables in the directory <CODE class=
+          "filename">/path/to/rawexes</CODE> to the repository, running the <CODE class=
+          "filename">TailoredAnalysis</CODE> script first and then performing Ghidra's
+          auto-analysis. Using these pre and post scripts, there is a great deal of flexibility in
+          how the executables can be analyzed. For a more complete discussion of the available
+          options, look at the <CODE class="filename">analyzeHeadlessREADME.txt</CODE>.</P>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="GenerateSigs"></A>Generating Features and Function
+                Metadata</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>To generate features and metadata on an existing repository, use the <SPAN class=
+          "command"><STRONG>bsim generatesigs</STRONG></SPAN> command. Signatures may be written as
+          XML files to a local directory and/or committed directly to a specified BSim database. If
+          not immediately committing to a database and only storing the XML files an appropriate
+          database configuration may be specified using the <EM>--config</EM> option in lieu of a BSim database URL
+          (--bsim <EM>&lt;bsimURL&gt;</EM>) if database specific executable categories and function tags are not
+          utilized. Use of the <EM>--config</EM> option does not require a running BSim server.</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim generatesigs
+                &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --config&nbsp;&lt;config_template&gt;
+                [--overwrite]<BR>
+                 $(ROOT)/support/bsim generatesigs &lt;ghidraURL&gt; &lt;/xmldirectory&gt;
+                --bsim&nbsp;&lt;bsimURL&gt; [--commit] [--overwrite]<BR>
+                 $(ROOT)/support/bsim generatesigs &lt;ghidraURL&gt;
+                --bsim&nbsp;&lt;bsimURL&gt;</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>Example (generate signature XML files without BSim database commit):</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim generatesigs
+                ghidra://localhost/repo/folder /xmldirectory
+                --bsim&nbsp;postgresql://localhost/repo</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>Example (generate signature XML files and commit to the BSim database):</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim generatesigs
+                ghidra://localhost/repo/folder /xmldirectory --bsim&nbsp;postgresql://localhost/repo
+                --commit</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>Special XML files encoding the metadata are written out to the directory <CODE class=
+          "filename">/xmldirectory</CODE>. Every executable indicated by the repository folder
+          specified by the <EM>ghidraURL</EM> will have metadata generated, one file per
+          executable, with a file name derived from the MD5 hash of the original executable.
+          Repository folders will be traversed recursively. The URL can include a specific path
+          under the repository, in order to select just a portion of the entire repository for
+          extraction. Output is primarily per function, indicating the functions name, various
+          attributes, its feature vector, and the list of other functions it calls.</P>
+
+          <P>A partially completed <SPAN class="command"><STRONG>bsim generatesigs</STRONG></SPAN>
+          command can be safely restarted by giving it the same XML directory containing the
+          partial set of metadata files. Currently it will emit non-fatal warnings for programs in
+          the repository that were previously processed. You can force it to overwrite the
+          generated XML files by adding the explicit keyword <SPAN class=
+          "bold"><STRONG>--overwrite</STRONG></SPAN> as another parameter.</P>
+
+          <P>In general, both the Ghidra Server and the BSim server must be running in order for
+            <SPAN class="command"><STRONG>bsim generatesigs</STRONG></SPAN> command to succeed,
+            as the BSim server provides configuration information that may be relevant to
+            the signature generation process, such as database specific executable categories or
+            function tags.  As in the example above, configuration information
+            is pulled from the BSim server and signatures are generated from the Ghidra Server
+            executables. If the <SPAN class="bold"><STRONG>--config</STRONG></SPAN>
+            option is used, assuming the template it specifies is the same one used to create the
+            database and there are no executable categories or function tags, the BSim server
+            does not need to be running.</P>
+        </DIV>
+
+        <DIV class="sect2">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H3 class="title"><A name="Importing"></A>Importing Features to a BSim
+                Database</H3>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>Importing XML signature files into a BSim database which were previously generated is
+          done using the <SPAN class="command"><STRONG>bsim commitsigs</STRONG></SPAN> command.</P>
+
+          <DIV class="informalexample">
+            <TABLE border="0" summary="Simple list" class="simplelist">
+              <TR>
+                <TD><CODE class="computeroutput">$(ROOT)/support/bsim commitsigs
+                postgresql://localhost/repo /xmldirectory [--override&nbsp;<EM>&lt;ghidraURL&gt;</EM>]</CODE></TD>
+              </TR>
+            </TABLE>
+          </DIV>
+
+          <P>This command takes XML signature files in <CODE class="filename">/xmldirectory</CODE>
+            and writes the metadata in them to a BSim database, specified by URL. All the executable,
+            function, and feature vector records are committed to their appropriate tables and all
+            the indexing is updated if supported. The URL refers to a BSim database rather than a
+            Ghidra Server and cannot be extended with a path. Any executable paths are already
+            encoded within the XML file data.</P>
+
+          <P>Every executable described within the XML files has a <SPAN class=
+          "emphasis"><EM>repository</EM></SPAN> and <SPAN class="emphasis"><EM>path</EM></SPAN>
+          associated with it in the form of a <SPAN class="emphasis"><EM>ghidra://</EM></SPAN> URL
+          that was recorded when the XML files were generated. This path can be overridden with the
+          optional <SPAN class="bold"><STRONG>--override</STRONG></SPAN> option where a revised
+          Ghidra URL may be specified.</P>
+
+          <P>The <SPAN class="command"><STRONG>bsim commitsigs</STRONG></SPAN> command can be
+          safely restarted if an initial run is terminated prematurely. Currently, a restart will
+          emit a non-fatal warning for each executable that was previously committed.</P>
+
+          <DIV class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+            <P><STRONG>NOTE:</STRONG> The Ghidra Server used to generate the XML metadata files
+            does not need to be running for this command to succeed. But, the BSim server must be
+            running.</P>
+          </DIV>
+        </DIV>
+
+        <DIV class="section">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H2 class="title" style="clear: both"><A name="TailorAnalysis"></A>Tailoring
+                Analysis</H2>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>It may be necessary as part of the ingest process to alter the way that Ghidra
+          performs its basic analysis or to add additional steps that gather extra metadata. This
+          is accomplished by passing a pre-script to the <CODE class=
+          "filename">analyzeHeadless</CODE> command. The script is run once for each executable
+          analyzed, prior to normal analysis. BSim comes with a sample script <CODE class=
+          "filename">TailoredAnalysis.java</CODE>, such as:</P>
+
+          <DIV class="informalexample">
+<PRE class="programlisting">
+import ghidra.app.script.GhidraScript;
+import ghidra.framework.options.Options;
+import ghidra.program.model.listing.Program;
+
+public class TailoredAnalysis extends GhidraScript {
+
+        @Override
+        public void run() throws Exception {
+                Options pl = currentProgram.getOptions(Program.ANALYSIS_PROPERTIES);
+                pl.setBoolean("Decompiler Parameter ID", false);
+                pl.setBoolean("Stack", false);
+        }
+}
+   
+</PRE>
+          </DIV>
+
+          <P>The relevant option group is <SPAN class=
+          "emphasis"><EM>Program.ANALYSIS_PROPERTIES</EM></SPAN>, which contains program specific
+          properties for all of Ghidra's analysis passes. The example sets the specific options,
+          "Decompiler Parameter ID" and "Stack", to false, which causes Ghidra to skip those
+          passes. Other passes can be toggled or have their parameters altered in this way, see <A
+          class="xref" href="IngestProcess.html#AnalysisEffects" title=
+          "Analysis Effects on Feature Extraction">&ldquo;Analysis Effects on Feature
+          Extraction&rdquo;</A> for some of analysis passes that can effect BSim.</P>
+
+          <DIV class="sect2">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H3 class="title"><A name="IngestExeCat"></A>Ingesting Executable Categories</H3>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>If the BSim database has been tailored to ingest special <SPAN class=
+            "emphasis"><EM>executable categories</EM></SPAN>, the extra metadata associated with an
+            executable must be explicitly calculated and stored on the formal Ghidra program in
+            order for BSim to see it. This is also accomplished with a Ghidra script passed to
+            <SPAN class="emphasis"><EM>analyzeHeadless</EM></SPAN>. BSim expects to find specific
+            category values stored as Ghidra program options under <SPAN class=
+            "emphasis"><EM>Program.PROGRAM_INFO</EM></SPAN>. A value can be set by passing the
+            category name and the value itself as strings to the <SPAN class=
+            "emphasis"><EM>setString</EM></SPAN> method on the <SPAN class=
+            "emphasis"><EM>Options</EM></SPAN> object. The following example sets values for the
+            category "WebResource".</P>
+
+            <DIV class="informalexample">
+<PRE class="programlisting">
+@Override
+public void run() throws Exception {
+        Options pl = currentProgram.getOptions(Program.PROGRAM_INFO);
+            String value = discoverWebResource();
+            String value1 = discoverAnotherWebResource();
+            Date compiledate = lookupCompileDate();
+            pl.setString("WebResource",value);
+            pl.setString("WebResource_1",value1);
+            pl.setDate("Compile Date",compiledate);
+}
+</PRE>
+            </DIV>
+
+            <P>The script has all the responsibility for constructing any actual value, and it can
+            be run either as a pre-script or a post-script. Thus it can use the results of Ghidra's
+            basic analysis to calculate the value or retrieve it from some external source like a
+            CSV file. Once the script sets the value, assuming the executable category has already
+            been added to the BSim database instance, there are no additional steps to take, and
+            the rest of the BSim ingest process will make sure the value is incorporated into the
+            database.</P>
+
+            <P>If more than one value needs to be assigned to the same category, the script must
+            assign the first value to the option matching the category name and then assign
+            additional options with names obtained by appending '_1', '_2', and so on to the
+            category name. For the executable time-stamp, BSim reads the option matching the name
+            of the specific <SPAN class="emphasis"><EM>Date</EM></SPAN> executable category. This
+            can be set within a script by using the <SPAN class="emphasis"><EM>setDate</EM></SPAN>
+            method instead of <SPAN class="emphasis"><EM>setString</EM></SPAN>. If no <SPAN class=
+            "emphasis"><EM>Date</EM></SPAN> category has been created, BSim will read the 'Date
+            Created' option, which is normally filled in with the time at which Ghidra was created
+            and analysis started. For additional discussion see <A class="xref" href=
+            "DatabaseConfiguration.html#ExeCat" title="Executable Categories">&ldquo;Executable
+            Categories&rdquo;</A>.</P>
+          </DIV>
+
+          <DIV class="sect2">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H3 class="title"><A name="IngestTags"></A>Ingesting Function Tags</H3>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>If a set of <SPAN class="emphasis"><EM>function tags</EM></SPAN> have been
+            registered with the BSim database, some form of analysis must still place the tags on
+            individual functions in a Ghidra program. As with executable categories, this can be
+            accomplished with a Ghidra script passed to <SPAN class=
+            "emphasis"><EM>analyzeHeadless</EM></SPAN>. Once a set of functions is identified, the
+            tag(s) can be added using methods on the standard <SPAN class=
+            "emphasis"><EM>Function</EM></SPAN> object. This script snippet looks up the function
+            object by address and then sets the <SPAN class="emphasis"><EM>LOGGING</EM></SPAN> tag
+            on it and removes the <SPAN class="emphasis"><EM>SERIALPORT</EM></SPAN> tag.</P>
+
+            <DIV class="informalexample">
+<PRE class="programlisting">
+public void adjustTags(Address myaddress) throws Exception {
+        Function func = program.getFunctionManager().getFunctionAt(myaddress);
+        func.addTag("LOGGING");
+        func.removeTag("SERIALPORT");
+}
+</PRE>
+            </DIV>
+
+            <P>If the tag did not exist before the first call to <SPAN class=
+            "emphasis"><EM>addTag</EM></SPAN>, it will be created. Assuming the tag has been
+            registered with BSim, it will now automatically be included as part of the metadata of
+            any functions it was added to. For additional discussion see <A class="xref" href=
+            "DatabaseConfiguration.html#FunctionTags" title="Function Tags">&ldquo;Function
+            Tags&rdquo;</A>.</P>
+          </DIV>
+        </DIV>
+
+        <DIV class="section">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H2 class="title" style="clear: both"><A name="AnalysisEffects"></A>Analysis
+                Effects on Feature Extraction</H2>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>Auto-analysis <SPAN class="emphasis"><EM>must</EM></SPAN> be performed in some form,
+          in order to perform disassembly and identify functions, before features can be generated.
+          Only code that has been formally identified as a function by Ghidra will have its
+          features extracted and ingested by the successive steps. The single most important driver
+          of success for future queries finding an executable is the amount of functions that have
+          been formally identified by analysis. For most common file formats and architectures,
+          Ghidra's default settings will provide good coverage, but depending on the type of
+          executable data, it may be necessary to provide additional scripts to the analysis
+          process.</P>
+
+          <P>Ghidra has numerous <SPAN class="bold"><STRONG>Analyzers</STRONG></SPAN>, that can be
+          turned on or off during ingest. Many of these can affect code coverage and should be left
+          <SPAN class="emphasis"><EM>on</EM></SPAN> be default. A small number of settings, on
+          Analyzers or elsewhere, can actually change which features are extracted for a function,
+          even though code coverage is unaffected. The rule of thumb is that, among those settings
+          that can affect features, the settings used during ingest should also be the same
+          settings used by the end-user when they are analyzing an unknown binary and querying
+          against the database. In most cases, the best approach is to use the default settings for
+          both ingest and query, but if you make a change, be sure to make it on both sides. A
+          difference in settings may not completely prevent successful queries, but is likely to
+          introduce some amount of noise.</P>
+
+          <P>Analyzers which can affect features include:</P>
+
+          <DIV class="informalexample">
+            <DIV class="variablelist">
+              <DL class="variablelist">
+                <DT><SPAN class="term"><SPAN class="bold"><STRONG>Call-Fixup
+                Installer</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>This controls how the decompiler works with prologue, epilogue, and other
+                  special compiler bookkeeping functions. There is little reason to turn this
+                  off.</P>
+                </DD>
+
+                <DT><SPAN class="term"><SPAN class="bold"><STRONG>Decompiler Parameter
+                ID</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>This does a global analysis of how individual functions are passing parameters
+                  which may affect the features for some functions, although in most cases the
+                  effect will be small. Currently it's safest to turn this off.</P>
+                </DD>
+
+                <DT><SPAN class="term"><SPAN class="bold"><STRONG>Known Functions That Do No
+                Return</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>This identifies certain common functions that do not return to the caller.
+                  This can have a limited effect on features of functions that call these routines.
+                  There is little reason to turn this off.</P>
+                </DD>
+
+                <DT><SPAN class="term"><SPAN class="bold"><STRONG>Shared Return
+                Calls</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>This identifies common compiler optimizations where a subfunction is accessed
+                  via a <SPAN class="bold"><STRONG>jump</STRONG></SPAN> instruction rather than a
+                  <SPAN class="bold"><STRONG>call</STRONG></SPAN>. Misidentifying these
+                  instructions can have a big effect on extracted features. There are only a
+                  limited set of circumstances where it makes sense to turn this Analyzer off.</P>
+                </DD>
+              </DL>
+            </DIV>
+          </DIV>
+
+          <P>Scripts can be used to alter settings on any number of objects during the analysis
+          process. A few of these can have significant impact on extracted features. With the
+          exception of symbol names and data-types, which <SPAN class="emphasis"><EM>do
+          not</EM></SPAN> have an effect on features, anything that changes decompilation will
+          likely change the extracted features. These settings include:</P>
+
+          <DIV class="informalexample">
+            <DIV class="variablelist">
+              <DL class="variablelist">
+                <DT><SPAN class="term"><SPAN class=
+                "bold"><STRONG>Call-Fixup</STRONG></SPAN>,</SPAN> <SPAN class="term"><SPAN class=
+                "bold"><STRONG>Inline</STRONG></SPAN>,</SPAN> <SPAN class="term"><SPAN class=
+                "bold"><STRONG>No Return</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>Toggling these settings in a function prototype will affect the features of
+                  any calling function.</P>
+                </DD>
+
+                <DT><SPAN class="term"><SPAN class="bold"><STRONG>Read-only
+                Settings</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>Memory blocks or individual data items can be marked as <SPAN class=
+                  "emphasis"><EM>read-only</EM></SPAN>, causing the decompiler to propagate the
+                  underlying value as a constant.</P>
+                </DD>
+
+                <DT><SPAN class="term"><SPAN class="bold"><STRONG>Register
+                Settings</STRONG></SPAN></SPAN></DT>
+
+                <DD>
+                  <P>Its possible to mark registers as holding specific values for specific
+                  functions. The decompiler will respect this and likely propagate the
+                  constant.</P>
+                </DD>
+              </DL>
+            </DIV>
+          </DIV>
+        </DIV>
+
+        <DIV class="section">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H2 class="title" style="clear: both"><A name="Maintenance"></A>Maintenance</H2>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>The <SPAN class="command"><STRONG>bsim</STRONG></SPAN> script provides a minimal number
+            of maintenance commands for a BSim server, described below. For a PostgreSQL server, it
+            is possible to use the bundled SQL command line tool
+            <SPAN class="command"><STRONG>psql</STRONG></SPAN> in order to make changes directly to
+            the tables. But for very large modifications to the database, the best option may be to
+            recreate the database, which is slightly less onerous than it sounds. The most CPU
+            intensive part of the ingest process, Ghidra's auto-analysis, typically does not need to
+            be rerun across everything. Regenerating the metadata files and reimporting takes much
+            less time. Additional efficiency may be gained by dropping and then regenerating the main
+            index after (re)ingesting. (See below)</P>
+
+          <DIV class="sect2">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H3 class="title"><A name="Deleting"></A>Deleting Executables</H3>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>The database currently cannot remove individual function records. The records for an
+            entire executable, and all the functions associated with it, can be removed. To remove
+            an executable, use one of the following forms of the delete command:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim delete <SPAN class=
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN> --md5&nbsp;<SPAN class=
+                  "emphasis"><EM>7abf...</EM></SPAN></CODE></TD>
+                </TR>
+
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim delete <SPAN class=
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN> --name&nbsp;<SPAN class=
+                  "emphasis"><EM>...</EM></SPAN></CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>In the <SPAN class="emphasis"><EM>--md5</EM></SPAN> form, you specify the 32 character
+            hex representation of the md5 hash of the executable, which should identify it
+            uniquely. Using the <SPAN class="emphasis"><EM>--name</EM></SPAN> form, there is the
+            possibility that the name is not unique, in which case the command will fail.</P>
+
+            <P>If a unique executable is identified, its metadata record will be removed, and the
+            records for all functions which that executable formally contains will also be removed.
+            For deployments which also maintain a loosely coupled Ghidra Server, keep in mind that
+            removing executables from the BSim database with these commands does not remove the
+            corresponding program from the Ghidra Server, this requires an additional step.</P>
+          </DIV>
+
+          <DIV class="sect2">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H3 class="title"><A name="Updating"></A>Updating Names and Other Metadata</H3>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>It is feasible to delete an executable from the database and then reingest it in
+            order to populate updated information into the database, but this is fairly inefficient
+            because you need to reperform all the function decompilation. Additionally this causes
+            a large rearrangement of the database tables in order to perform what may amount to a
+            very small change. The BSim database supports an <SPAN class=
+            "emphasis"><EM>update</EM></SPAN> operation designed to make in-place changes to the
+            metadata describing executables and functions. This is primarily useful for
+            synchronizing function names with the BSim database as analysts rename them and commit
+            their changes to a Ghidra Server, however other metadata, like executable architecture
+            or category properties, can also be changed.</P>
+
+            <P>Very similar to the two ingest commands, <SPAN class=
+            "bold"><STRONG>generatesigs</STRONG></SPAN> and <SPAN class=
+            "bold"><STRONG>commitsigs</STRONG></SPAN>, there are also two update commands <SPAN
+            class="bold"><STRONG>generateupdates</STRONG></SPAN> and <SPAN class=
+            "bold"><STRONG>commitupdates</STRONG></SPAN> which are invoked as follows:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim generateupdates
+                  &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --config&nbsp;&lt;config_template&gt;
+                  [--overwrite]<BR>
+                   $(ROOT)/support/bsim generateupdates &lt;ghidraURL&gt; &lt;/xmldirectory&gt;
+                  --bsim&nbsp;&lt;bsimURL&gt; [--commit] [--overwrite]<BR>
+                   $(ROOT)/support/bsim generateupdates &lt;ghidraURL&gt; --bsim&nbsp;&lt;bsimURL&gt;<BR>
+                  <BR>
+                   $(ROOT)/support/bsim commitupdates &lt;bsimURL&gt;
+                  &lt;/xmldirectory&gt;</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>The <SPAN class="bold"><STRONG>generateupdates</STRONG></SPAN> command produces
+            stripped down metadata XML files for every executable contained within the repository
+            folder specified by the <EM>ghidraURL</EM>. Just like the <SPAN class=
+            "bold"><STRONG>generatesigs</STRONG></SPAN> command, it can take an optional <SPAN
+            class="bold"><STRONG>--config&nbsp;<EM>&lt;config_template&gt;</EM></STRONG></SPAN> parameter, which
+            allows the command to execute without the BSim server running, otherwise a <SPAN
+            class="bold"><STRONG>--bsim&nbsp;<EM>&lt;bsimURL&gt;</EM></STRONG></SPAN> 
+            parameter is required. It can also take an
+            optional <SPAN class="bold"><STRONG>--overwrite</STRONG></SPAN> parameter, causing it
+            to overwrite any previously generated XML files. If the
+            <STRONG>--bsim</STRONG> option is specified with the <STRONG>--commit</STRONG>
+            option updates will be committed directly to the database. A BSim database commit is
+            always performed using the specified <EM>bsimURL</EM> if an <EM>xmldirectory</EM> is
+            not specified.</P>
+
+            <P>The <SPAN class="bold"><STRONG>commitupdates</STRONG></SPAN> command commits the
+            generated metadata to the BSim server. Only the smallest required change is issued as a
+            formal transaction to the database, and the number of changes that are actually made
+            are reported per executable. Functions and executables cannot be added or deleted to
+            the BSim database using this command. If the update file describes new functions in a
+            preexisting executable, this command will issue warnings about the existence of the new
+            functions but will not create function records. Other functions will still get
+            updated.</P>
+          </DIV>
+
+          <DIV class="sect2">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H3 class="title"><A name="Dropping"></A>Dropping the Feature Vector Index</H3>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P><STRONG>NOTE:</STRONG> Applies to PostgreSQL or Elasticsearch databases only</P>
+
+            <P>For those users performing large ingests or who find themselves rebuilding the
+            database frequently, it is possible to drop the main index, ingest data, then recreate
+            the main index. This is likely to be faster overall than the default behavior of
+            updating the index as data is ingested. To drop the index, use the command:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim dropindex <SPAN class=
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN></CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Once the data has been ingested, rebuild the index with the command:</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim rebuildindex <SPAN class=
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN></CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>The time it takes to rebuild depends directly on the number of functions that have
+            been ingested. For very large collections, rebuilding can take hours or days. The
+            database can still be accessed while the index is dropped, but queries may take
+            much longer to complete.</P>
+          </DIV>
+
+          <DIV class="sect2">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H3 class="title"><A name="Prewarming"></A>Prewarming the Database</H3>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P><STRONG>NOTE:</STRONG> Applies to PostgreSQL databases only</P>
+
+            <P>A maintainer can issue the <SPAN class="command"><STRONG>bsim
+            prewarm</STRONG></SPAN> command to prepopulate RAM with commonly accessed portions of a
+            BSim database.</P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim prewarm
+                  ghidra://localhost/repo</CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Without this command, initial queries to a <SPAN class=
+            "emphasis"><EM>cold</EM></SPAN> database (one that has just been restarted) can run
+            slowly, giving poor response times until the cache is fully populated. A query
+            typically needs to access an effectively random subset of pages making it a bad method
+            for refreshing the cache.</P>
+
+            <P>The command is intended to be run once, immediately after restarting a server and
+            before any queries have been made. It attempts to quickly preload the main vector
+            index, and possibly portions of other tables, into RAM, by reading from disk
+            sequentially. Queries may continue to improve as the database optimizes its cache
+            across all tables, but the command effectively eliminates slow initial queries.</P>
+          </DIV>
+        </DIV>
+
+        <DIV class="section">
+          <DIV class="titlepage">
+            <DIV>
+              <DIV>
+                <H2 class="title" style="clear: both"><A name="Migration"></A>Migration</H2>
+              </DIV>
+            </DIV>
+          </DIV>
+
+          <P>BSim is a prototype capability, and the database layout may be subject to change. We
+          intend to minimize the impact of this to the extent possible, and in particular, major
+          changes should be limited to major Ghidra releases. But its possible in general that an
+          existing BSim database will be incompatible with both the client and server from a new
+          release.</P>
+
+          <P>Unfortunately, the only option to upgrade in these cases is to reingest the executables
+          into a new BSim database. Frequently the first two stages of ingest (See <A class="xref"
+          href="IngestProcess.html" title="Ingesting Executables"><I>Ingesting
+          Executables</I></A>), importing executables to a Ghidra Server and running auto-analysis,
+          do not need to be repeated. Only the final two stages need to be performed, generating
+          and importing features to the BSim server, usually accomplished with the <SPAN class=
+          "emphasis"><EM>generatesigs</EM></SPAN> and <SPAN class=
+          "emphasis"><EM>commitsigs</EM></SPAN> commands.</P>
+
+          <P>BSim fundamentally depends on the Ghidra decompiler, which steadily adds new analysis
+          features that can affect compatibility over time. Many additions have no effect on BSim,
+          have a small effect, or affect only a tiny percentage of functions. To minimize the
+          impact to existing databases, the decompiler, independent of the Ghidra release, is
+          assigned a <SPAN class="emphasis"><EM>major</EM></SPAN> and <SPAN class=
+          "emphasis"><EM>minor</EM></SPAN> version number. A change in the minor number of 1 or 2
+          should have little to no impact for most queries, but users will have to tolerate this
+          rare degradation of results if they place queries using a client that doesn't match the
+          BSim server's version. If the client and server differ by a major version, queries will
+          return an error message.</P>
+        </DIV>
+      </DIV>
+    </DIV>
+  </BODY>
+</HTML>

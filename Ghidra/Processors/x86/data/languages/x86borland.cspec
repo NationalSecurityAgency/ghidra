@@ -14,7 +14,7 @@
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />
-     <long_double_size value="12" />
+     <long_double_size value="10" /> <!-- aligned-length=12 -->
      <size_alignment_map>
           <entry size="1" alignment="1" />
           <entry size="2" alignment="2" />

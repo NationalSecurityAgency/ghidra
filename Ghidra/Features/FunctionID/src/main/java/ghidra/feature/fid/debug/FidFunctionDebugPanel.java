@@ -21,7 +21,7 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
-import generic.theme.GThemeDefaults;
+import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.service.FidService;
@@ -38,6 +38,7 @@ public class FidFunctionDebugPanel extends JPanel {
 	/**
 	 * Creates the panel.
 	 * @param service the FID database service
+	 * @param fidQueryService the query service
 	 * @param functionRecord the function record to debug
 	 */
 	public FidFunctionDebugPanel(FidService service, FidQueryService fidQueryService,
@@ -57,7 +58,7 @@ public class FidFunctionDebugPanel extends JPanel {
 		JButton button = new JButton(text);
 		button.addActionListener(listener);
 		button.setHorizontalAlignment(SwingConstants.LEFT);
-		Gui.registerFont(button, GThemeDefaults.Ids.Fonts.MONOSPACED);
+		Gui.registerFont(button, Fonts.MONOSPACED);
 		add(button);
 	}
 
@@ -68,7 +69,7 @@ public class FidFunctionDebugPanel extends JPanel {
 	private void addLabel(String text) {
 		JLabel label = new GDLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
-		label.setFont(Gui.getFont("font.monospaced"));
+		Gui.registerFont(label, Fonts.MONOSPACED);
 		add(label);
 	}
 
@@ -85,16 +86,14 @@ public class FidFunctionDebugPanel extends JPanel {
 			libraryRecord.getLibraryVersion(), libraryRecord.getLibraryVariant(),
 			languageID.getIdAsString()));
 
-		addButton(String.format("0x%016x", functionRecord.getID()),
-			e -> FidDebugUtils.searchByFunctionID(functionRecord.getID(), service,
-				fidQueryService));
+		addButton(String.format("0x%016x", functionRecord.getID()), e -> FidDebugUtils
+				.searchByFunctionID(functionRecord.getID(), service, fidQueryService));
 
 		addButton(functionRecord.getName(),
 			e -> FidDebugUtils.searchByName(functionRecord.getName(), service, fidQueryService));
 
-		addButton(shorten(functionRecord.getDomainPath()),
-			e -> FidDebugUtils.searchByDomainPath(functionRecord.getDomainPath(), service,
-				fidQueryService));
+		addButton(shorten(functionRecord.getDomainPath()), e -> FidDebugUtils
+				.searchByDomainPath(functionRecord.getDomainPath(), service, fidQueryService));
 
 		addLabel(String.format("Entry Point: 0x%x", functionRecord.getEntryPoint()));
 

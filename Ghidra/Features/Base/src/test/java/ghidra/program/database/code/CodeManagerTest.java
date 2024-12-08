@@ -470,7 +470,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		Instruction inst = listing.getInstructionAt(addr(0x1100));
 		inst.setProperty("Numbers", 12);
 
-		PropertyMap map = listing.getPropertyMap("Numbers");
+		PropertyMap<?> map = listing.getPropertyMap("Numbers");
 		assertNotNull(map);
 
 		inst.setProperty("FavoriteColor", new SaveableColor(Palette.RED));
@@ -1063,7 +1063,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		MemBuffer buf = new DumbMemBufferImpl(mem, atAddr);
 		ProcessorContext context = new ProgramProcessorContext(program.getProgramContext(), atAddr);
 		InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
-		listing.createInstruction(atAddr, proto, buf, context);
+		listing.createInstruction(atAddr, proto, buf, context, 0);
 
 	}
 }

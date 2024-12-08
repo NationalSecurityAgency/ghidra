@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compiler_spec>
+  <data_organization>
+  	<integer_size value="4" />
+	<long_size value="8" />
+	<pointer_size value="8"/>
+	<float_size value="4" />
+    <double_size value="8" />
+    <long_double_size value="16" /> 
+    <size_alignment_map>
+		<entry size="1" alignment="1" />
+		<entry size="2" alignment="2" />
+		<entry size="4" alignment="4" />
+		<entry size="8" alignment="8" />
+		<entry size="16" alignment="16" />
+	</size_alignment_map>
+  </data_organization>
+  <stackpointer register="sp" space="ram"/>
+  <funcptr align="2"/>
+  <returnaddress>
+  <register name="ra"/>
+  </returnaddress>
+  <global>
+    <range space="ram"/>
+    <range space="register" first="0x2000" last="0x2fff"/>
+  </global>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
+      <input killedbycall="true">
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a7"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="a0" piece2="a1"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="a2" piece2="a3"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="a4" piece2="a5"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="a6" piece2="a7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="8">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8" metatype="float">
+          <register name="fa0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="a0"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16">
+          <addr space="join" piece1="a0" piece2="a1"/>
+        </pentry>
+      </output>
+      <killedbycall>
+        <register name="t0"/>
+        <register name="t1"/>
+        <register name="t2"/>
+        <register name="t3"/>
+        <register name="t4"/>
+        <register name="t5"/>
+        <register name="t6"/>
+        <register name="t7"/>
+        <register name="t8"/>
+        <register name="ft0"/>
+        <register name="ft1"/>
+        <register name="ft2"/>
+        <register name="ft3"/>
+        <register name="ft4"/>
+        <register name="ft5"/>
+        <register name="ft6"/>
+        <register name="ft7"/>
+        <register name="ft8"/>
+        <register name="ft9"/>
+        <register name="ft10"/>
+        <register name="ft11"/>
+        <register name="ft12"/>
+        <register name="ft13"/>
+        <register name="ft14"/>
+        <register name="ft15"/>
+      </killedbycall>
+      <unaffected>
+        <register name="s0"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+        <register name="sp"/>
+        <register name="fp"/>
+        <register name="fs0"/>
+        <register name="fs1"/>
+        <register name="fs2"/>
+        <register name="fs3"/>
+        <register name="fs4"/>
+        <register name="fs5"/>
+        <register name="fs6"/>
+        <register name="fs7"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

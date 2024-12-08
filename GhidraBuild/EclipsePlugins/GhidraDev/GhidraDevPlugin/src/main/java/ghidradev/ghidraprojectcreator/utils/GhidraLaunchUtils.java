@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,19 +19,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.core.*;
 import org.eclipse.debug.internal.ui.DebugUIPlugin;
 import org.eclipse.debug.internal.ui.launchConfigurations.LaunchConfigurationManager;
 import org.eclipse.debug.internal.ui.launchConfigurations.LaunchHistory;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jdt.launching.*;
 
-import ghidra.GhidraLauncher;
+import ghidra.Ghidra;
 
 /**
  * Utility methods for working with Ghidra launchers in Eclipse.
  */
+@SuppressWarnings("restriction")
 public class GhidraLaunchUtils {
 
 	/**
@@ -82,6 +85,8 @@ public class GhidraLaunchUtils {
 			javaProject.getProject().getName());
 		setMainTypeName(wc);
 		setMemory(wc, runConfigMemory);
+		setClasspath(wc);
+		setSource(wc);
 		setFavorites(wc);
 		return wc;
 	}
@@ -129,10 +134,7 @@ public class GhidraLaunchUtils {
 
 	/**
 	 * Sets the main type name attribute in the provided working copy.  For Ghidra projects, this 
-	 * should be {@link GhidraLauncher}.
-	 * <p>
-	 * TODO: {@link GhidraLauncher#main(String[])} is deprecated.  Fix in future version of
-	 * GhidraDev when we are ready to break backwards compatibility with Ghidra.
+	 * should be {@link Ghidra}.
 	 * 
 	 * @param wc The launch configuration working copy to modify.
 	 * @return The modified working copy.
@@ -140,7 +142,7 @@ public class GhidraLaunchUtils {
 	public static ILaunchConfigurationWorkingCopy setMainTypeName(
 			ILaunchConfigurationWorkingCopy wc) {
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME,
-			GhidraLauncher.class.getName());
+			Ghidra.class.getName());
 		return wc;
 	}
 
@@ -164,6 +166,75 @@ public class GhidraLaunchUtils {
 			}
 			wc.setAttribute(ATTR_VM_ARGUMENTS, vmArgs + "-Xmx" + memory);
 		}
+		return wc;
+	}
+
+	/**
+	 * Removes all project jars from the classpath except Utility.jar.
+	 * 
+	 * @param wc The launch configuration working copy to modify.
+	 * @return The modified working copy.
+	 * @throws CoreException if there was an Eclipse-related issue modifying the classpath.
+	 */
+	public static ILaunchConfigurationWorkingCopy setClasspath(ILaunchConfigurationWorkingCopy wc)
+			throws CoreException {
+		List<String> newList = new ArrayList<>();
+		for (IRuntimeClasspathEntry entry : JavaRuntime.computeUnresolvedRuntimeClasspath(wc)) {
+			switch (entry.getClasspathEntry().getEntryKind()) {
+				case IClasspathEntry.CPE_LIBRARY:
+					if (entry.getPath().toOSString().endsWith("Utility.jar")) {
+						newList.add(entry.getMemento());
+					}
+					break;
+				case IClasspathEntry.CPE_CONTAINER:
+					newList.add(entry.getMemento());
+					break;
+				case IClasspathEntry.CPE_PROJECT:
+				case IClasspathEntry.CPE_SOURCE:
+				case IClasspathEntry.CPE_VARIABLE:
+				default:
+					break;
+			}
+		}
+		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_CLASSPATH, newList);
+		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_DEFAULT_CLASSPATH, false);
+		return wc;
+	}
+
+	/**
+	 * Adds all project jars that have associated source to the source path
+	 * 
+	 * @param wc The launch configuration working copy to modify.
+	 * @return The modified working copy.
+	 * @throws CoreException if there was an Eclipse-related issue modifying the source path.
+	 */
+	public static ILaunchConfigurationWorkingCopy setSource(ILaunchConfigurationWorkingCopy wc)
+			throws CoreException {
+		List<String> newList = new ArrayList<>();
+		IJavaProject javaProject = JavaRuntime.getJavaProject(wc);
+		if (javaProject != null) {
+
+			// Add current project (might need to add dependent projects later)
+			newList.add(JavaRuntime.newProjectRuntimeClasspathEntry(javaProject).getMemento());
+
+			// Add JDK
+			newList.add(JavaRuntime
+					.newRuntimeContainerClasspathEntry(
+						JavaRuntime.newJREContainerPath(JavaRuntime.getVMInstall(javaProject)),
+						IRuntimeClasspathEntry.STANDARD_CLASSES)
+					.getMemento());
+
+			// Add Ghidra jar source
+			for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+				IPath sourcePath = entry.getSourceAttachmentPath();
+				if (sourcePath != null) {
+					newList.add(
+						JavaRuntime.newArchiveRuntimeClasspathEntry(sourcePath).getMemento());
+				}
+			}
+		}
+		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_SOURCE_PATH, newList);
+		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_DEFAULT_SOURCE_PATH, false);
 		return wc;
 	}
 

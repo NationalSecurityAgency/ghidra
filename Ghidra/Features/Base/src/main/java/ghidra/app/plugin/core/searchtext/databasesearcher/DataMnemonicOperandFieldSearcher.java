@@ -15,14 +15,15 @@
  */
 package ghidra.app.plugin.core.searchtext.databasesearcher;
 
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
-
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DataMnemonicOperandFieldSearcher extends ProgramDatabaseFieldSearcher {
 	private DataIterator iterator;
@@ -75,7 +76,7 @@ public class DataMnemonicOperandFieldSearcher extends ProgramDatabaseFieldSearch
 	}
 
 	@Override
-	protected Address advance(List<ProgramLocation> currentMatches) {
+	protected Address advance(List<TextSearchResult> currentMatches) {
 		Data data = iterator.next();
 		Address nextAddress = null;
 		if (data != null) {
@@ -85,7 +86,7 @@ public class DataMnemonicOperandFieldSearcher extends ProgramDatabaseFieldSearch
 		return nextAddress;
 	}
 
-	private void findMatchesForCurrentAddress(Data data, List<ProgramLocation> currentMatches) {
+	private void findMatchesForCurrentAddress(Data data, List<TextSearchResult> currentMatches) {
 		StringBuffer searchStrBuf = new StringBuffer();
 		String mnemonicString = "";
 		String operandString = "";
@@ -122,16 +123,17 @@ public class DataMnemonicOperandFieldSearcher extends ProgramDatabaseFieldSearch
 		}
 	}
 
-	private void addOperandMatch(Data data, List<ProgramLocation> currentMatches,
+	private void addOperandMatch(Data data, List<TextSearchResult> currentMatches,
 			String mnemonicString, String operandString, Address address, int index) {
 		if (!doOperands) {
 			return;
 		}
-		currentMatches.add(new OperandFieldLocation(program, address, data.getComponentPath(),
-			null, operandString, 0, index - mnemonicString.length() - 1));
+		currentMatches.add(
+			new TextSearchResult(new OperandFieldLocation(program, address, data.getComponentPath(),
+				null, operandString, 0, index - mnemonicString.length() - 1), index));
 	}
 
-	private void addMnemonicMatch(List<ProgramLocation> currentMatches, String mnemonicString,
+	private void addMnemonicMatch(List<TextSearchResult> currentMatches, String mnemonicString,
 			Address address, int index, int endIndex) {
 		if (!doMnemonics) {
 			return;
@@ -140,7 +142,7 @@ public class DataMnemonicOperandFieldSearcher extends ProgramDatabaseFieldSearch
 		if (endIndex > mnemonicString.length()) {
 			return;
 		}
-		currentMatches.add(new MnemonicFieldLocation(program, address, null, null, mnemonicString,
-			index));
+		currentMatches.add(new TextSearchResult(
+			new MnemonicFieldLocation(program, address, null, null, mnemonicString, index), index));
 	}
 }

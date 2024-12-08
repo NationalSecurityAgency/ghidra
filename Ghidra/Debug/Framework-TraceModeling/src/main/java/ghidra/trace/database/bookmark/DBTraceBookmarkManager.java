@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.Icon;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -31,15 +32,14 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -167,7 +167,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	protected final Collection<DBTraceBookmarkType> typesView =
 		Collections.unmodifiableCollection(typesByName.values());
 
-	public DBTraceBookmarkManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceBookmarkManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws VersionException, IOException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
@@ -182,8 +182,8 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	}
 
 	@Override
-	protected DBTraceBookmarkSpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceBookmarkSpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceBookmarkSpace(this, space, thread, ent.getFrameLevel());
 	}
 
@@ -231,7 +231,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			type = new DBTraceBookmarkType(this, typeName);
 			typesByName.put(typeName, type);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceBookmarkChangeType.TYPE_ADDED, null, type));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_TYPE_ADDED, null, type));
 		return type;
 	}
 
@@ -250,7 +250,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			type = new DBTraceBookmarkType(this, typeName, icon, color, priority);
 			typesByName.put(typeName, type);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceBookmarkChangeType.TYPE_ADDED, null, type));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_TYPE_ADDED, null, type));
 		return type;
 	}
 
@@ -292,8 +292,8 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	}
 
 	@Override
-	public DBTraceBookmark addBookmark(Lifespan lifespan, Address address,
-			TraceBookmarkType type, String category, String comment) {
+	public DBTraceBookmark addBookmark(Lifespan lifespan, Address address, TraceBookmarkType type,
+			String category, String comment) {
 		return delegateWrite(address.getAddressSpace(),
 			m -> m.addBookmark(lifespan, address, type, category, comment));
 	}

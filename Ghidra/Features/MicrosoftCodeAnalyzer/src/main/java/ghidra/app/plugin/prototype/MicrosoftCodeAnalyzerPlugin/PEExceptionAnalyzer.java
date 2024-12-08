@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,20 +19,26 @@ import java.util.List;
 
 import ghidra.app.cmd.data.exceptionhandling.CreateEHFuncInfoBackgroundCmd;
 import ghidra.app.cmd.data.exceptionhandling.EHFunctionInfoModel;
-import ghidra.app.plugin.core.searchmem.RegExSearchData;
 import ghidra.app.services.*;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
+import ghidra.features.base.memsearch.bytesource.ProgramByteSource;
+import ghidra.features.base.memsearch.gui.SearchSettings;
+import ghidra.features.base.memsearch.matcher.ByteMatcher;
+import ghidra.features.base.memsearch.matcher.RegExByteMatcher;
+import ghidra.features.base.memsearch.searcher.MemoryMatch;
+import ghidra.features.base.memsearch.searcher.MemorySearcher;
 import ghidra.framework.cmd.Command;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.search.memory.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -81,24 +87,26 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 			"[\\x20,\\x21,\\x22]\\x05\\x93[\\x19,\\x39,\\x59,\\x79,\\x99,\\xb9,\\xd9,\\xf9]";
 		String bePattern =
 			"[\\x19,\\x39,\\x59,\\x79,\\x99,\\xb9,\\xd9,\\xf9]\\x93\\x05[\\x20,\\x21,\\x22]";
-		RegExSearchData regExSearchData = RegExSearchData.createRegExSearchData(
-			program.getLanguage().isBigEndian() ? bePattern : lePattern);
+
+		String pattern = program.getLanguage().isBigEndian() ? bePattern : lePattern;
 		int alignment = 4;
-		SearchInfo searchInfo = new SearchInfo(regExSearchData, MATCH_LIMIT, false, true, alignment,
-			false, new CodeUnitSearchInfo(false, true, true), null);
 
-		// Only want to search loaded and initialized addresses.
-		AddressSet intersection =
-			program.getMemory().getLoadedAndInitializedAddressSet().intersect(set);
+		SearchSettings settings = new SearchSettings().withAlignment(alignment);
+		settings = settings.withIncludeInstructions(false); 	// only search data
+
+		ByteMatcher matcher = new RegExByteMatcher(pattern, settings);
+		AddressableByteSource byteSource = new ProgramByteSource(program);
+		Memory memory = program.getMemory();
+		AddressSet addresses = memory.getLoadedAndInitializedAddressSet().intersect(set);
+
 		// Only want to search exception handling memory blocks.
-		intersection = getAddressSet(ehBlocks).intersect(intersection);
+		addresses = getAddressSet(ehBlocks).intersect(addresses);
 
-		RegExMemSearcherAlgorithm searcher =
-			new RegExMemSearcherAlgorithm(searchInfo, intersection, program, true);
+		MemorySearcher searcher = new MemorySearcher(byteSource, matcher, addresses, MATCH_LIMIT);
 
-		ListAccumulator<MemSearchResult> accumulator = new ListAccumulator<>();
-		searcher.search(accumulator, monitor);
-		List<MemSearchResult> results = accumulator.asList();
+		ListAccumulator<MemoryMatch> accumulator = new ListAccumulator<>();
+		searcher.findAll(accumulator, monitor);
+		List<MemoryMatch> results = accumulator.asList();
 
 		// Establish the options to use when creating the exception handling data.
 		// For now these are fixed. Later these may need to come from analysis options.
@@ -109,14 +117,14 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 
 		// Attempt to create data at each address if it appears to be valid for the data type.
 		int count = 0;
-		for (MemSearchResult result : results) {
+		for (MemoryMatch match : results) {
 
 			monitor.setProgress(count++);
 			if (monitor.isCancelled()) {
 				return false;
 			}
 
-			Address address = result.getAddress();
+			Address address = match.getAddress();
 			if (address.getOffset() % alignment != 0) {
 				continue; // Skip non-aligned addresses.
 			}
@@ -130,7 +138,7 @@ public class PEExceptionAnalyzer extends AbstractAnalyzer {
 
 				// Create FuncInfo data at the address of the magic number, if the data appears valid.
 				// This can also create associated exception handling data based on the options.
-				Command cmd =
+				Command<Program> cmd =
 					new CreateEHFuncInfoBackgroundCmd(address, validationOptions, applyOptions);
 				cmd.applyTo(program);
 			}

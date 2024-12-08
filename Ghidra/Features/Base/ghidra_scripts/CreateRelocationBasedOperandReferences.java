@@ -56,7 +56,7 @@ public class CreateRelocationBasedOperandReferences extends GhidraScript {
 		int refCount = 0;
 
 		while (relocations.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Relocation r = relocations.next();
 			monitor.incrementProgress(1);
 

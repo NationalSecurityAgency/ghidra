@@ -25,6 +25,7 @@ import docking.action.MenuData;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -66,8 +67,7 @@ public class FindPossibleReferencesPlugin extends Plugin {
 	final static String RESTORE_SELECTION_ACTION_NAME = "Restore Direct Refs Search Selection";
 	final static String SEARCH_DIRECT_REFS_ACTION_NAME = "Search for Direct References";
 	final static String SEARCH_DIRECT_REFS_ACTION_HELP = "Direct_Refs_Search_Alignment";
-	private DockingAction action;
-	private ArrayList<TableComponentProvider<ReferenceAddressPair>> providerList;
+	private List<TableComponentProvider<ReferenceAddressPair>> providerList;
 
 	public FindPossibleReferencesPlugin(PluginTool tool) {
 		super(tool);
@@ -97,13 +97,12 @@ public class FindPossibleReferencesPlugin extends Plugin {
 	}
 
 	private void createActions() {
-		action = new ActionBuilder(SEARCH_DIRECT_REFS_ACTION_NAME, getName())
+		new ActionBuilder(SEARCH_DIRECT_REFS_ACTION_NAME, getName())
 				.menuPath(ToolConstants.MENU_SEARCH, "For Direct References")
-				.menuGroup("search for")
-				.supportsDefaultToolContext(true)
+				.menuGroup("search for", "DirectReferences")
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_DIRECT_REFS_ACTION_NAME))
 				.description(getPluginDescription().getDescription())
-				.withContext(NavigatableActionContext.class)
+				.withContext(ListingActionContext.class, true)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(this::findReferences)
 				.enabledWhen(this::hasCorrectAddressSize)
@@ -112,8 +111,7 @@ public class FindPossibleReferencesPlugin extends Plugin {
 	}
 
 	private boolean hasCorrectAddressSize(NavigatableActionContext context) {
-		int size =
-			context.getProgram().getAddressFactory().getDefaultAddressSpace().getSize();
+		int size = context.getProgram().getAddressFactory().getDefaultAddressSpace().getSize();
 		if ((size == 64) || (size == 32) || (size == 24) || (size == 16) || (size == 20) ||
 			(size == 21)) {
 			return true;
@@ -142,10 +140,10 @@ public class FindPossibleReferencesPlugin extends Plugin {
 		localAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, RESTORE_SELECTION_ACTION_NAME));
 		String group = "selection";
-		localAction.setMenuBarData(
-			new MenuData(new String[] { "Restore Search Selection" }, group));
-		localAction.setPopupMenuData(
-			new MenuData(new String[] { "Restore Search Selection" }, group));
+		localAction
+				.setMenuBarData(new MenuData(new String[] { "Restore Search Selection" }, group));
+		localAction
+				.setPopupMenuData(new MenuData(new String[] { "Restore Search Selection" }, group));
 
 		localAction.setDescription(
 			"Sets the program selection back to the selection this search was based upon.");
@@ -194,8 +192,7 @@ public class FindPossibleReferencesPlugin extends Plugin {
 				return;
 			}
 			if (currentProgram.getMemory()
-					.getBlock(
-						fromAddr)
+					.getBlock(fromAddr)
 					.getType() == MemoryBlockType.BIT_MAPPED) {
 				Msg.showWarn(getClass(), null, "Search For Direct References",
 					"Cannot search for direct references on bit memory!");

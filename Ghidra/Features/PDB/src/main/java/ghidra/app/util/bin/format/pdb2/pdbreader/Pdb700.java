@@ -53,8 +53,7 @@ public class Pdb700 extends AbstractPdb {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	void deserializeDirectory()
-			throws IOException, PdbException, CancelledException {
+	void deserializeDirectory() throws IOException, PdbException, CancelledException {
 		PdbByteReader reader = getDirectoryReader();
 		deserializeVersionSignatureAge(reader);
 		guid = reader.parseGUID();
@@ -62,31 +61,14 @@ public class Pdb700 extends AbstractPdb {
 	}
 
 	@Override
-	public void dumpDirectory(Writer writer) throws IOException {
-		StringBuilder builder = new StringBuilder();
-		builder.append(dumpVersionSignatureAge());
-		builder.append("\n");
-		builder.append(dumpGUID());
-		builder.append("\n");
-		builder.append(dumpParameters());
-		writer.write(builder.toString());
-	}
-
-	//==============================================================================================
-	// Internal Data Methods
-	//==============================================================================================
-	/**
-	 * Dumps the GUID.  This method is for debugging only
-	 * @return {@link String} of pretty output
-	 */
-	protected String dumpGUID() {
-		if (guid == null) {
-			return "";
+	public void dumpDirectory(Writer writer) throws IOException, CancelledException {
+		dumpVersionSignatureAge(writer);
+		writer.write("\n");
+		if (guid != null) {
+			writer.write("GUID: " + guid);
+			writer.write("\n");
 		}
-		StringBuilder builder = new StringBuilder();
-		builder.append("GUID: ");
-		builder.append(guid);
-		return builder.toString();
+		dumpParameters(writer, getMonitor());
 	}
 
 }

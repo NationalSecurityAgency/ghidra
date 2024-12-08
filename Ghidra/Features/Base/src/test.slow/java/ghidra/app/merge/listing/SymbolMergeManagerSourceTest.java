@@ -73,45 +73,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
 								SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
 								SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -345,13 +327,8 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Charlie",
@@ -362,23 +339,14 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Linus", null,
 								SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Charlie",
@@ -389,13 +357,9 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Linus", null,
 								SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -426,13 +390,8 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Lucy", null,
@@ -443,19 +402,12 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Sally", null,
 								SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes for My program.
@@ -488,21 +440,13 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes for Latest program.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Charlie",
@@ -513,13 +457,9 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 					program.getSymbolTable()
 							.createLabel(addr(program, "0x10032a7"), "Linus", null,
 								SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -549,45 +489,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -608,45 +530,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setSource(SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -667,30 +571,18 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes for My program.
@@ -713,32 +605,20 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes for Latest program.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setSource(SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -759,45 +639,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("Five", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("Five", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -818,13 +680,8 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
@@ -833,24 +690,14 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 					symbol = getUniqueSymbol(program, "YYY");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("ein", SourceType.ANALYSIS);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
@@ -859,14 +706,9 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 					symbol = getUniqueSymbol(program, "YYY");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("zwei", SourceType.IMPORTED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -896,30 +738,18 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("NewName", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes for My program.
@@ -944,32 +774,20 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes for Latest program.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("NewName", SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -995,47 +813,29 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable st = program.getSymbolTable();
 					Symbol symbol = st.getGlobalSymbol("ZZZ", addr(program, "0x01003075"));
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("horse", SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable st = program.getSymbolTable();
 					Symbol symbol = st.getGlobalSymbol("QQQ", addr(program, "0x01003075"));
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("mule", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1067,45 +867,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("apple", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("apple", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1128,45 +910,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("apple", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("orange", SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1192,45 +956,27 @@ public class SymbolMergeManagerSourceTest extends AbstractListingMergeManagerTes
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("apple", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Symbol symbol = getUniqueSymbol(program, "XXX");
 					assertEquals(SourceType.USER_DEFINED, symbol.getSource());
 					symbol.setName("orange", SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

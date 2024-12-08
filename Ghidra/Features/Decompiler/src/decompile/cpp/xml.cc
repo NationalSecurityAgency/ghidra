@@ -570,14 +570,14 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   138,   138,   139,   140,   141,   142,   143,   144,   145,
-     147,   148,   149,   150,   151,   152,   153,   154,   155,   156,
-     157,   158,   159,   160,   161,   163,   164,   165,   166,   167,
-     168,   169,   171,   172,   173,   174,   175,   176,   177,   179,
-     180,   181,   182,   183,   184,   185,   187,   188,   190,   191,
-     192,   193,   195,   196,   197,   198,   199,   200,   202,   203,
-     204,   205,   206,   207,   208,   210,   211,   213,   214,   215,
-     216
+       0,   141,   141,   142,   143,   144,   145,   146,   147,   148,
+     150,   151,   152,   153,   154,   155,   156,   157,   158,   159,
+     160,   161,   162,   163,   164,   166,   167,   168,   169,   170,
+     171,   172,   174,   175,   176,   177,   178,   179,   180,   182,
+     183,   184,   185,   186,   187,   188,   190,   191,   193,   194,
+     195,   196,   198,   199,   200,   201,   202,   203,   205,   206,
+     207,   208,   209,   210,   211,   213,   214,   216,   217,   218,
+     219
 };
 #endif
 
@@ -1207,7 +1207,138 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  switch (yytype)
+    {
+          case 3: /* CHARDATA  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 4: /* CDATA  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 5: /* ATTVALUE  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 6: /* COMMENT  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 7: /* CHARREF  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 8: /* NAME  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 9: /* SNAME  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 10: /* ELEMBRACE  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 11: /* COMMBRACE  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 54: /* attsinglemid  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 55: /* attdoublemid  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 56: /* AttValue  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 61: /* CDSect  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 75: /* STag  */
+
+      { delete ((*yyvaluep).attr); }
+
+        break;
+
+    case 76: /* EmptyElemTag  */
+
+      { delete ((*yyvaluep).attr); }
+
+        break;
+
+    case 77: /* stagstart  */
+
+      { delete ((*yyvaluep).attr); }
+
+        break;
+
+    case 78: /* SAttribute  */
+
+      { delete ((*yyvaluep).pair); }
+
+        break;
+
+    case 80: /* ETag  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 82: /* Reference  */
+
+      { }
+
+        break;
+
+    case 85: /* CharRef  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+    case 86: /* EntityRef  */
+
+      { delete ((*yyvaluep).str); }
+
+        break;
+
+
+      default:
+        break;
+    }
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 

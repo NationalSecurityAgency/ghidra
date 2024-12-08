@@ -16,7 +16,7 @@
 package ghidra.util.classfinder;
 
 import java.io.File;
-import java.util.Set;
+import java.util.List;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -33,8 +33,8 @@ class ClassDir {
 		classPackage = new ClassPackage(dir, "", monitor);
 	}
 
-	void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
-		classPackage.getClasses(set, monitor);
+	void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) throws CancelledException {
+		classPackage.getClasses(list, monitor);
 	}
 
 	String getDirPath() {

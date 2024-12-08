@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,7 +90,19 @@ public class TypeProgramInterfaceParser {
 					new TypeProgramInterface800(pdb, getCategory(), streamNumber);
 				break;
 			default:
-				throw new PdbException("Unknown TPI Version: " + versionNumber);
+				// See MSFT "doc" pdb.cpp OpenIpi() note regarding hack.
+				// For IPI, if normal stream number exists and it is unnamed, then try to
+				//  parse it, and accept it if no errors.  However, at this point, this would
+				//  be considered an error here.  But we want to be careful about killing
+				//  PDB parsing here for this case.  So we have added the isReasonableError()
+				//  check here, which always returns true for TPI, but does special checking
+				//  for IPI.  If IPI says it is not a reasonable error (version number looks like
+				//  a non-version number and it is an API), then we must presume that the stream
+				//  is not really an IPI stream and just return null.
+				if (isReasonableError(versionNumber)) {
+					throw new PdbException("Unknown TPI Version: " + versionNumber);
+				}
+				typeProgramInterface = null;
 		}
 
 		return typeProgramInterface;
@@ -115,6 +127,18 @@ public class TypeProgramInterfaceParser {
 	protected RecordCategory getCategory() {
 		return RecordCategory.TYPE;
 
+	}
+
+	/**
+	 * Returns whether there is a reasonable error when searching for a version number.  For
+	 *  the standard TPI case, any unrecognized version number is a reasonable error.  This
+	 *  method gets overridden in IPI for the hack situation described earlier in the default
+	 *  case above
+	 * @param versionNumber the versionNumber being checked
+	 * @return {@code true} if the error is a reasonable error
+	 */
+	protected boolean isReasonableError(int versionNumber) {
+		return true;
 	}
 
 }

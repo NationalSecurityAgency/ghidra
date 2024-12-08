@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.util.exception.CancelledException;
 
 /**
- * This class represents the the Stream Table used by the Multi-Stream Format File within
+ * This class represents the Stream Table used by the Multi-Stream Format File within
  *  Windows PDB files.
  *  We have intended to implement to the Microsoft PDB API (source); see the API for truth.
  */
@@ -89,7 +89,7 @@ abstract class MsfStreamTable {
 
 		// Get stream lengths and create streams.
 		for (int streamNum = 0; streamNum < numStreams; streamNum++) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			int streamLength = reader.parseInt();
 			parseExtraField(reader);
 			MsfStream stream = new MsfStream(msf, streamLength);
@@ -98,7 +98,7 @@ abstract class MsfStreamTable {
 
 		// Populate the streams with their page information.
 		for (int streamNum = 0; streamNum < numStreams; streamNum++) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			MsfStream stream = mapStreamNumberToStream.get(streamNum);
 			if (stream != null) {
 				stream.deserializePageNumbers(reader);
@@ -125,7 +125,7 @@ abstract class MsfStreamTable {
 		}
 		else {
 			for (int i = mapStreamNumberToStream.size(); i < index; i++) {
-				msf.checkCanceled();
+				msf.checkCancelled();
 				mapStreamNumberToStream.add(null);
 			}
 			mapStreamNumberToStream.add(stream);

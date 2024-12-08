@@ -20,6 +20,7 @@ import java.util.List;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.map.AddressMap;
@@ -60,7 +61,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	 * @throws IOException if an IO error occurs
 	 * @throws CancelledException if the user cancels the upgrade.
 	 */
-	public VariableStorageManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
+	public VariableStorageManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode,
 			ErrorHandler errorHandler, Lock lock, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		this.errorHandler = errorHandler;
@@ -119,7 +120,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	/**
 	 * Get the list of varnodes associated with the specified variable storage address.
 	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture, ErrorHandler)}.
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
 	 * @param variableAddr variable storage address
 	 * @return storage varnode list or null if address unknown
 	 * @throws IOException if a database IO error occurs
@@ -145,7 +146,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	/**
 	 * Get the variable storage object associated with the specified variable storage address.
 	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture, ErrorHandler)}.
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
 	 * @param variableAddr variable storage address
 	 * @return variable storage object or null if address unknown
 	 * @throws IOException if a database IO error occurs
@@ -161,7 +162,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	/**
 	 * Get a variable address for the given storage specification.
 	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture, ErrorHandler)}.
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
 	 * @param storage variable storage specification
 	 * @param create if true a new variable address will be allocated if needed
 	 * @return variable address which corresponds to the storage specification or null if not found
@@ -330,7 +331,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 		try {
 			RecordIterator recIter = adapter.getRecords();
 			while (recIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				DBRecord rec = recIter.next();
 				// NOTE: addrMap has already been switched-over to new language and its address spaces

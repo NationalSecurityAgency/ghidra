@@ -17,6 +17,8 @@ package ghidra.framework.data;
 
 import java.io.IOException;
 
+import javax.help.UnsupportedOperationException;
+
 import db.DBHandle;
 import db.buffers.ManagedBufferFile;
 import ghidra.framework.store.*;
@@ -55,9 +57,8 @@ public abstract class DBContentHandler<T extends DomainObjectAdapterDB>
 			FileSystem fs, String path, String name, TaskMonitor monitor)
 			throws InvalidNameException, CancelledException, IOException {
 		DBHandle dbh = domainObj.getDBHandle();
-		ManagedBufferFile bf =
-			fs.createDatabase(path, name, FileIDFactory.createFileID(), contentType,
-				dbh.getBufferSize(), SystemUtilities.getUserName(), null);
+		ManagedBufferFile bf = fs.createDatabase(path, name, FileIDFactory.createFileID(),
+			contentType, dbh.getBufferSize(), SystemUtilities.getUserName(), null);
 		long checkoutId = bf.getCheckinID();  // item remains checked-out after saveAs
 		boolean success = false;
 		try {

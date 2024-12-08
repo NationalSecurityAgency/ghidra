@@ -20,10 +20,11 @@ import java.util.*;
 
 import docking.widgets.fieldpanel.support.Highlight;
 import generic.theme.GColor;
-import ghidra.app.plugin.core.codebrowser.ListingHighlightProvider;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.plugin.core.codebrowser.ListingMiddleMouseHighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.*;
 import ghidra.feature.vt.api.stringable.*;
@@ -37,7 +38,7 @@ import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
-public class VTDualListingHighlightProvider implements HighlightProvider {
+public class VTDualListingHighlightProvider implements ListingHighlightProvider {
 
 	private static Color APPLIED_MARKUP_COLOR =
 		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.applied");
@@ -60,7 +61,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		new HashMap<>();
 	private final VTController controller;
 	private ListingPanel listingPanel;
-	private ListingHighlightProvider listingHighlighter;
+	private ListingMiddleMouseHighlightProvider listingHighlighter;
 
 	private VTMarkupItem currentMarkupItem;
 	private boolean isSource;
@@ -80,7 +81,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 
 		if (listingPanel != null) {
 			this.listingHighlighter =
-				new ListingHighlightProvider(controller.getTool(), listingPanel);
+				new ListingMiddleMouseHighlightProvider(controller.getTool(), listingPanel);
 			listingPanel.removeButtonPressedListener(listingHighlighter);
 			listingPanel.addButtonPressedListener(listingHighlighter);
 		}
@@ -128,8 +129,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 	}
 
 	@Override
-	public Highlight[] getHighlights(String text, Object obj,
-			Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+	public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
 		VTSession session = controller.getSession();
 		if (session == null) {
@@ -141,8 +141,11 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		if (matchInfo == null) {
 			return new Highlight[0];
 		}
-		Highlight[] highlights = new Highlight[0];
 
+		ProxyObj<?> proxy = field.getProxy();
+		Object obj = proxy.getObject();
+		Highlight[] highlights = new Highlight[0];
+		Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory().getClass();
 		if (fieldFactoryClass == FunctionSignatureFieldFactory.class) {
 			highlights = getFunctionSignatureHighlights(text, obj, cursorTextOffset);
 		}
@@ -217,19 +220,21 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 			highlightList.add(highlight);
 		}
 
-		highlightList.addAll(getListingHighlights(text, obj, fieldFactoryClass, cursorTextOffset));
+		highlightList.addAll(
+			getListingHighlights(text, obj, fieldFactoryClass, field, cursorTextOffset));
 
 		return highlightList.toArray(new Highlight[highlightList.size()]);
 	}
 
 	private Collection<? extends Highlight> getListingHighlights(String text, Object obj,
-			Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+			Class<? extends FieldFactory> fieldFactoryClass, ListingField field,
+			int cursorTextOffset) {
 		if (listingHighlighter == null) {
 			return Collections.emptyList();
 		}
 
-		return Arrays.asList(listingHighlighter.getHighlights(text, obj, fieldFactoryClass,
-			cursorTextOffset));
+		return Arrays.asList(
+			listingHighlighter.createHighlights(text, field, cursorTextOffset));
 	}
 
 	private Color getMarkupBackgroundColor(int cursorTextOffset, VTMarkupItem vtMarkupItem,

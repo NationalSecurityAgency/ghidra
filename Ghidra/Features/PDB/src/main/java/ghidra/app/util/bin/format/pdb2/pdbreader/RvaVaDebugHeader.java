@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.math.BigInteger;
 
 /**
@@ -75,23 +77,14 @@ public class RvaVaDebugHeader extends DebugHeader {
 	}
 
 	@Override
-	String dump() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("RvaVaDebugHeader--------------------------------------------\n");
-		dumpInternal(builder);
-		builder.append("End RvaVaDebugHeader----------------------------------------\n");
-		return builder.toString();
-	}
-
-	@Override
-	protected void dumpInternal(StringBuilder builder) {
-		super.dumpInternal(builder);
-		builder.append(String.format("relativeVirtualAddressDataBase: 0X%08X\n",
+	protected void dumpInternal(Writer writer) throws IOException {
+		super.dumpInternal(writer);
+		writer.write(String.format("relativeVirtualAddressDataBase: 0X%08X\n",
 			relativeVirtualAddressDataBase));
-		builder.append(
+		writer.write(
 			String.format("virtualAddressImageBase: 0X%016X\n", virtualAddressImageBase));
-		builder.append(String.format("unsignedIntReserved1: 0X%08X\n", unsignedIntReserved1));
-		builder.append(String.format("unsignedIntReserved2: 0X%08X\n", unsignedIntReserved2));
+		writer.write(String.format("unsignedIntReserved1: 0X%08X\n", unsignedIntReserved1));
+		writer.write(String.format("unsignedIntReserved2: 0X%08X\n", unsignedIntReserved2));
 	}
 
 }

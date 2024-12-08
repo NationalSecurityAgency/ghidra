@@ -34,10 +34,9 @@ public class SourceTagsPanel extends TagListPanel {
 	 * 
 	 * @param provider the component provider
 	 * @param tool the plugin tool
-	 * @param title the title of the panel
 	 */
-	public SourceTagsPanel(FunctionTagProvider provider, PluginTool tool, String title) {
-		super(provider, tool, title);
+	public SourceTagsPanel(FunctionTagProvider provider, PluginTool tool) {
+		super(provider, tool, "Function Tags");
 
 		table.setDisabled(true);
 	}

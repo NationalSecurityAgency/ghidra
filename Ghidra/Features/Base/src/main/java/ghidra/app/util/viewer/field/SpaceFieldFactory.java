@@ -16,11 +16,13 @@
 package ghidra.app.util.viewer.field;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -51,7 +53,7 @@ public class SpaceFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private SpaceFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private SpaceFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
@@ -78,14 +80,15 @@ public class SpaceFieldFactory extends FieldFactory {
 			else if (n < 0) {
 				n = -n;
 			}
-			FieldElement[] fes = new FieldElement[n];
+
+			List<FieldElement> elements = new ArrayList<>(n);
 			AttributedString as = new AttributedString("", Colors.FOREGROUND, getMetrics());
 			for (int i = 0; i < n; i++) {
-				fes[i] = new TextFieldElement(as, 0, 0);
+				elements.add(new TextFieldElement(as, 0, 0));
 			}
 
-			return ListingTextField.createMultilineTextField(this, proxy, fes, startX + varWidth,
-				width, n + 1, hlProvider);
+			return ListingTextField.createMultilineTextField(this, proxy, elements,
+				startX + varWidth, width, hlProvider);
 
 		}
 		return null;
@@ -146,10 +149,10 @@ public class SpaceFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#newInstance(ghidra.app.util.viewer.format.FieldFormatModel, ghidra.app.util.HighlightProvider, ghidra.framework.options.ToolOptions, ghidra.framework.options.ToolOptions)
+	 * @see ghidra.app.util.viewer.field.FieldFactory#newInstance(ghidra.app.util.viewer.format.FieldFormatModel, ghidra.app.util.ListingHighlightProvider, ghidra.framework.options.ToolOptions, ghidra.framework.options.ToolOptions)
 	 */
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new SpaceFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}

@@ -89,7 +89,7 @@ public class CreateEHTryBlockMapBackgroundCmd
 		Program program = model.getProgram();
 
 		for (int tryBlockEntryOrdinal = 0; tryBlockEntryOrdinal < count; tryBlockEntryOrdinal++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address compAddress;
 			Address catchHandlerMapAddress;
 			int catchHandlerCount;
@@ -124,7 +124,7 @@ public class CreateEHTryBlockMapBackgroundCmd
 				continue;
 			}
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			CreateEHCatchHandlerMapBackgroundCmd cmd =
 				new CreateEHCatchHandlerMapBackgroundCmd(catchHandlerModel, applyOptions);

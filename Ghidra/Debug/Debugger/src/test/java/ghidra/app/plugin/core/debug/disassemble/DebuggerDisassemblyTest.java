@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,37 +17,37 @@ package ghidra.app.plugin.core.debug.disassemble;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import db.Transaction;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
-import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServiceProxyPlugin;
-import ghidra.app.plugin.core.debug.workflow.DisassembleAtPcDebuggerBot;
 import ghidra.app.services.*;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.debug.api.control.ControlMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -55,21 +55,24 @@ import ghidra.trace.database.listing.DBTraceInstruction;
 import ghidra.trace.database.listing.DBTraceInstructionsMemoryView;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
+import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerDisassemblerPlugin disassemblerPlugin;
 	protected DebuggerPlatformService platformService;
 	protected DebuggerListingProvider listingProvider;
@@ -77,76 +80,94 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 	@Before
 	public void setUpDisassemblyTest() throws Exception {
-		ctx = XmlSchemaContext.deserialize("" + //
-			"<context>" + //
-			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='Targets' schema='TargetContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='TargetContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element schema='Target' />" + //
-			"    </schema>" + //
-			"    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Process' />" + //
-			"        <interface name='Aggregate' />" + //
-			"        <attribute name='Environment' schema='Environment' />" + //
-			"        <attribute name='Memory' schema='Memory' />" + //
-			"        <attribute name='Threads' schema='ThreadContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='Environment' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <interface name='Environment' />" + //
-			"    </schema>" + //
-			"    <schema name='Memory' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <element schema='MemoryRegion' />" + //
-			"    </schema>" + //
-			"    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='MemoryRegion' />" + //
-			"    </schema>" + //
-			"    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <element schema='Thread' />" + //
-			"    </schema>" + //
-			"    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Thread' />" + //
-			"        <interface name='Aggregate' />" + //
-			"        <attribute name='Stack' schema='Stack' />" + //
-			"    </schema>" + //
-			"    <schema name='Stack' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <interface name='Stack' />" + //
-			"        <element schema='Frame' />" + //
-			"    </schema>" + //
-			"    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='StackFrame' />" + //
-			"    </schema>" + //
-			"</context>");
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Targets' schema='TargetContainer' />
+				    </schema>
+				    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Target' />
+				    </schema>
+				    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Process' />
+				        <interface name='Aggregate' />
+				        <attribute name='Environment' schema='Environment' />
+				        <attribute name='Memory' schema='Memory' />
+				        <attribute name='Threads' schema='ThreadContainer' />
+				    </schema>
+				    <schema name='Environment' elementResync='NEVER'
+				            attributeResync='NEVER'>"
+				        <interface name='Environment' />
+				    </schema>
+				    <schema name='Memory' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <element schema='MemoryRegion' />"
+				    </schema>
+				    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='MemoryRegion' />
+				    </schema>"
+				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <element schema='Thread' />
+				    </schema>
+				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Thread' />
+				        <interface name='Aggregate' />
+				        <attribute name='Stack' schema='Stack' />
+				    </schema>
+				    <schema name='Stack' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <interface name='Stack' />
+				        <interface name='Aggregate' />
+				        <element schema='Frame' />
+				    </schema>
+				    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='StackFrame' />
+				        <interface name='Aggregate' />
+				        <attribute name='Registers' schema='RegisterContainer' />
+				    </schema>
+				    <schema name='RegisterContainer' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='RegisterContainer' />
+				        <element schema='Register' />
+				    </schema>
+				    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+				       <interface name='Register' />
+				    </schema>
+				</context>""");
 
 		addPlugin(tool, DebuggerListingPlugin.class);
 		platformService = addPlugin(tool, DebuggerPlatformServicePlugin.class);
 		disassemblerPlugin = addPlugin(tool, DebuggerDisassemblerPlugin.class);
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
+
+		// TODO: Maybe this shouldn't be the default for these tests?
+		listingProvider.setAutoDisassemble(false);
 	}
 
-	protected void assertX86Nop(Instruction instruction) {
+	protected void assertMnemonic(String expected, Instruction instruction) {
 		assertNotNull(instruction);
-		assertEquals("NOP", instruction.getMnemonicString());
+		assertEquals(expected, instruction.getMnemonicString());
 	}
 
 	protected void enableAutoDisassembly() throws Throwable {
-		DebuggerWorkflowService workflowService =
-			addPlugin(tool, DebuggerWorkflowServiceProxyPlugin.class);
-		Set<DebuggerBot> disBot = workflowService.getAllBots()
-				.stream()
-				.filter(b -> b instanceof DisassembleAtPcDebuggerBot)
-				.collect(Collectors.toSet());
-		assertEquals(1, disBot.size());
-		workflowService.enableBots(disBot);
+		listingProvider.setAutoDisassemble(true);
+	}
+
+	protected DebuggerListingActionContext createActionContext(Address start, int len) {
+		TraceProgramView view = tb.trace.getProgramView();
+		ProgramSelection sel = new ProgramSelection(start, start.addWrap(len - 1));
+		return new DebuggerListingActionContext(listingProvider, new ProgramLocation(view, start),
+			sel, null);
 	}
 
 	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
-			Supplier<ByteBuffer> byteSupplier) throws IOException {
+			Supplier<ByteBuffer> byteSupplier) throws Exception {
+		return createPolyglotTrace(arch, offset, byteSupplier, true);
+	}
+
+	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
+			Supplier<ByteBuffer> byteSupplier, boolean pcInStack) throws Exception {
 		createAndOpenTrace("DATA:BE:64:default");
 
 		DBTraceObjectManager objects = tb.trace.getObjectManager();
@@ -169,13 +190,30 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			// TODO: Why doesn't setRange work after insert?
 			objBinText.insert(zeroOn, ConflictResolution.DENY);
 
-			DBTraceObject objFrame =
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
-			objFrame.insert(zeroOn, ConflictResolution.DENY);
-			TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
-			frame.setProgramCounter(zeroOn, tb.addr(offset));
-
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
+			if (pcInStack) {
+				DBTraceObject objFrame = objects
+						.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
+				objFrame.insert(zeroOn, ConflictResolution.DENY);
+				TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
+				frame.setProgramCounter(zeroOn, tb.addr(offset));
+			}
+			else {
+				objects.createObject(
+					TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+						.insert(zeroOn, ConflictResolution.DENY);
+				TraceObjectThread thread = objects
+						.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Targets[0].Threads[0]"))
+						.queryInterface(TraceObjectThread.class);
+				traceManager.activateThread(thread);
+				DBTraceMemorySpace regs =
+					Objects.requireNonNull(memory.getMemoryRegisterSpace(thread, true));
+				TraceGuestPlatform platform =
+					Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
+				Register regPc = platform.getLanguage().getProgramCounter();
+				regs.setValue(platform, 0, new RegisterValue(regPc, BigInteger.valueOf(offset)));
+			}
+
 			ByteBuffer bytes = byteSupplier.get();
 			assertEquals(bytes.remaining(), memory.putBytes(0, tb.addr(offset), bytes));
 		}
@@ -186,14 +224,32 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		return thread;
 	}
 
-	protected void createLegacyTrace(String langID, long offset,
-			Supplier<ByteBuffer> byteSupplier) throws Throwable {
+	protected void setLegacyProgramCounterInStack(long offset, TraceThread thread, long snap) {
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceStackManager manager = tb.trace.getStackManager();
+			TraceStack stack = manager.getStack(thread, snap, true);
+			TraceStackFrame frame = stack.getFrame(0, true);
+			frame.setProgramCounter(Lifespan.nowOn(snap), tb.addr(offset));
+		}
+	}
+
+	protected void setLegacyProgramCounterInRegs(long offset, TraceThread thread, long snap) {
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
+			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
+			Register pc = tb.language.getProgramCounter();
+			regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(offset)));
+		}
+	}
+
+	protected void createLegacyTrace(String langID, long offset, Supplier<ByteBuffer> byteSupplier)
+			throws Throwable {
 		createAndOpenTrace(langID);
 
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion("Memory[bin:.text]", 0, tb.range(offset, offset + 0xffff),
-				Set.of(TraceMemoryFlag.EXECUTE));
+				Set.of(TraceMemoryFlag.EXECUTE, TraceMemoryFlag.READ));
 			ByteBuffer bytes = byteSupplier.get();
 			assertEquals(bytes.remaining(), memory.putBytes(0, tb.addr(offset), bytes));
 		}
@@ -208,9 +264,144 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		getSLEIGH_X86_64_LANGUAGE(); // So that the load isn't charged against the time-out
 		waitForPass(() -> {
 			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
-			assertX86Nop(instructions.getAt(0, tb.addr(0x00400000)));
-			assertX86Nop(instructions.getAt(0, tb.addr(0x00400001)));
-			assertX86Nop(instructions.getAt(0, tb.addr(0x00400002)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400000)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400001)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400002)));
+			assertNull(instructions.getAt(0, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisasembleReDisasembleX8664Offcut() throws Throwable {
+		enableAutoDisassembly();
+		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
+
+		TraceThread thread;
+		try (Transaction tx = tb.startTransaction()) {
+			thread = tb.getOrAddThread("Thread 1", 0);
+		}
+
+		setLegacyProgramCounterInStack(0x00400000, thread, 0);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
+			/**
+			 * Depending on preference for branch or fall-through, the disassembler may or may not
+			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * JMP gets deleted after the update to PC.
+			 */
+		});
+
+		// The jump will advance one byte. Just simulate that by updating the stack and/or regs
+		setLegacyProgramCounterInStack(0x00400001, thread, 1);
+		traceManager.activateSnap(1);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertNull(instructions.getAt(1, tb.addr(0x00400000)));
+			assertMnemonic("INC", instructions.getAt(1, tb.addr(0x00400001)));
+			assertNull(instructions.getAt(1, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisassembleReDisassembleX8664OffcutByEmulation() throws Throwable {
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		enableAutoDisassembly();
+		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
+
+		TraceThread thread;
+		try (Transaction tx = tb.startTransaction()) {
+			thread = tb.getOrAddThread("Thread 1", 0);
+		}
+
+		setLegacyProgramCounterInRegs(0x00400000, thread, 0);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
+			/**
+			 * Depending on preference for branch or fall-through, the disassembler may or may not
+			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * JMP gets deleted after the update to PC.
+			 */
+		});
+
+		TraceSchedule schedule = TraceSchedule.snap(0).steppedForward(thread, 1);
+		// Pre-load the cache, so I don't have to wait for background async emulation
+		long viewSnap = emuService.emulate(tb.trace, schedule, monitor);
+		traceManager.activateTime(schedule);
+		waitForSwing();
+		assertEquals(viewSnap, traceManager.getCurrentView().getSnap());
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400000)));
+			assertMnemonic("INC", instructions.getAt(viewSnap, tb.addr(0x00400001)));
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisassembleReDisassembleX8664OffcutByProgEmu() throws Throwable {
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+
+		createProgram(getSLEIGH_X86_64_LANGUAGE());
+		Address start;
+		try (Transaction tx = program.openTransaction("Load")) {
+			start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", start, new ByteArrayInputStream(arr("ebffc0")),
+						3, monitor, false);
+		}
+		intoProject(program);
+
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, start, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+
+		enableAutoDisassembly();
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
+			/**
+			 * Depending on preference for branch or fall-through, the disassembler may or may not
+			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * JMP gets deleted after the update to PC.
+			 */
+		});
+
+		TraceSchedule schedule = TraceSchedule.snap(0).steppedForward(thread, 1);
+		// Pre-load the cache, so I don't have to wait for background async emulation
+		long viewSnap = emuService.emulate(tb.trace, schedule, monitor);
+		traceManager.activateTime(schedule);
+		waitForSwing();
+		assertEquals(viewSnap, traceManager.getCurrentView().getSnap());
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400000)));
+			assertMnemonic("INC", instructions.getAt(viewSnap, tb.addr(0x00400001)));
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisassembleGuestX8664WithPcInRegs() throws Throwable {
+		enableAutoDisassembly();
+		getSLEIGH_X86_64_LANGUAGE(); // So that the platform is mapped promptly
+		createPolyglotTrace("x86-64", 0x00400000, () -> tb.buf(0x90, 0x90, 0x90), false);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400000)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400001)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400002)));
 			assertNull(instructions.getAt(0, tb.addr(0x00400003)));
 		});
 	}
@@ -236,10 +427,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -271,10 +459,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -288,19 +473,29 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	public void testCurrentDisassembleActionGuestArm() throws Throwable {
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
-
-		// Set up registers so injects will select ARM
-		// TODO
-
-		Address start = tb.addr(0x00400000);
+		traceManager.activateThread(thread);
+		waitForSwing();
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		TracePlatform arm = Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
+		// If cpsr is UNKNOWN, inject will assume, e.g., Cortex-M, and set THUMB mode.
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager()
+					.createObject(
+						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			DBTraceMemorySpace regs = Objects.requireNonNull(
+				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true));
+			Register cpsr = arm.getLanguage().getRegister("cpsr");
+			regs.setValue(arm, 0, new RegisterValue(cpsr, BigInteger.ZERO));
+		}
+		waitForDomainObject(tb.trace);
+
+		Address start = tb.addr(0x00400000);
+
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -311,23 +506,31 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	@Test
-	@Ignore("TODO")
 	public void testCurrentDisassembleActionGuestThumb() throws Throwable {
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x70, 0x47));
-
-		// Set up registers to injects will select THUMB
-		// TODO
-
-		Address start = tb.addr(0x00400000);
+		traceManager.activateThread(thread);
+		waitForSwing();
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		TracePlatform arm = Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager()
+					.createObject(
+						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			DBTraceMemorySpace regs = Objects.requireNonNull(
+				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true));
+			Register cpsr = arm.getLanguage().getRegister("cpsr");
+			regs.setValue(arm, 0, new RegisterValue(cpsr, BigInteger.ONE.shiftLeft(5)));
+		}
+		waitForDomainObject(tb.trace);
+
+		Address start = tb.addr(0x00400000);
+
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -339,10 +542,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 	protected void performFixedDisassembleAction(Address start,
 			Predicate<DockingActionIf> actionPred) {
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		DockingActionIf action =
 			runSwing(() -> Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
 					.stream()
@@ -419,11 +619,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -451,15 +647,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 				new AddressSet(start, start.addWrap(1)));
 			dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(
 				tb.language, new LanguageID("ARM:LE:32:v8T"), start));
-			dis.applyToTyped(tb.trace.getProgramView(), TaskMonitor.DUMMY);
+			dis.applyTo(tb.trace.getProgramView(), TaskMonitor.DUMMY);
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -489,11 +681,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -520,19 +708,15 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		TraceGuestPlatform guest =
 			Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
 		try (Transaction tx = tb.startTransaction()) {
-			TraceDisassembleCommand dis = new TraceDisassembleCommand(guest, start,
-				new AddressSet(start, start.addWrap(1)));
+			TraceDisassembleCommand dis =
+				new TraceDisassembleCommand(guest, start, new AddressSet(start, start.addWrap(1)));
 			dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(
 				guest.getLanguage(), new LanguageID("ARM:LE:32:v8T"), start));
-			dis.applyToTyped(tb.trace.getProgramView(), TaskMonitor.DUMMY);
+			dis.applyTo(tb.trace.getProgramView(), TaskMonitor.DUMMY);
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -544,10 +728,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 	protected Instruction performFixedAssembleAction(Address start,
 			Predicate<FixedPlatformTracePatchInstructionAction> actionPred, String assembly) {
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
+		ListingActionContext actionContext = createActionContext(start, 2);
 		FixedPlatformTracePatchInstructionAction action =
 			runSwing(() -> Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
 					.stream()

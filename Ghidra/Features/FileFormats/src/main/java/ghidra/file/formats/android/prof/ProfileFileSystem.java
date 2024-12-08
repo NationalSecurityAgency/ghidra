@@ -74,7 +74,7 @@ public class ProfileFileSystem extends GFileSystemBase {
 		if (file == dataFile) {
 			return FileAttributes.of(FileAttribute.create("Magic", header.getMagic()));
 		}
-		return null;
+		return FileAttributes.EMPTY;
 	}
 
 	@Override

@@ -149,7 +149,7 @@ class DefinedDataXmlMgr {
 
 	private void clearExistingData(Address addr, int size, DataType dt, Listing listing) {
 		DumbMemBufferImpl buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dt, buf, size);
+		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dt, buf, size, false);
 		if (dti != null) {
 			boolean doClear = false;
 			Address maxAddr = addr.add(dti.getLength() - 1);

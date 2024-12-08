@@ -70,11 +70,15 @@ public class DataTypeManagerChangeListenerAdapter implements DataTypeManagerChan
 	}
 
 	@Override
-	public void sourceArchiveChanged(DataTypeManager dataTypeManager, SourceArchive dataTypeSource) {
+	public void sourceArchiveChanged(DataTypeManager dataTypeManager,
+			SourceArchive dataTypeSource) {
 	}
 
 	@Override
 	public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 	}
 
+	@Override
+	public void restored(DataTypeManager dataTypeManager) {
+	}
 }

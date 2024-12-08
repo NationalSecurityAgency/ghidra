@@ -32,6 +32,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -97,7 +98,7 @@ public class RetypeReturnAction extends AbstractDecompilerAction {
 			if (commitRequired) {
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(highFunction, true,
-						SourceType.USER_DEFINED);
+						ReturnCommitOption.NO_COMMIT, SourceType.USER_DEFINED);
 				}
 				catch (DuplicateNameException e) {
 					throw new AssertException("Unexpected exception", e);

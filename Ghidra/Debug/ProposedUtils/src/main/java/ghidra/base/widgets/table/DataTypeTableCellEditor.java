@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,8 +128,8 @@ public class DataTypeTableCellEditor extends AbstractCellEditor
 
 	protected void init(int row, int column) {
 		updateService();
-		editor = new DataTypeSelectionEditor(service, getAllowed(row, column));
-		editor.setPreferredDataTypeManager(getPreferredDataTypeManager(row, column));
+		editor = new DataTypeSelectionEditor(getPreferredDataTypeManager(row, column), service,
+			getAllowed(row, column));
 		editor.setTabCommitsEdit(true);
 		editor.setConsumeEnterKeyPress(false);
 

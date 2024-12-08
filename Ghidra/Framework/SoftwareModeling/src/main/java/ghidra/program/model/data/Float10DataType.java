@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +24,7 @@ public class Float10DataType extends AbstractFloatDataType {
 	}
 
 	public Float10DataType(DataTypeManager dtm) {
-		super("float10", dtm);
+		super("float10", 10, dtm);
 	}
 
 	@Override
@@ -34,11 +33,6 @@ public class Float10DataType extends AbstractFloatDataType {
 			return this;
 		}
 		return new Float10DataType(dtm);
-	}
-
-	@Override
-	public int getLength() {
-		return 10;
 	}
 
 }

@@ -15,7 +15,9 @@
  */
 package ghidra.pcodeCPort.sleighbase;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import generic.stl.*;
@@ -26,20 +28,15 @@ import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.SourceFileIndexer;
 
 public abstract class SleighBase extends Translate implements NamedSymbolProvider {
 
-	// NOTE: restoreXml method removed as it is only used by the decompiler's
-	// implementation
-
 	/**
-	 * Note: The values of {@link #SLA_FORMAT_VERSION} and {@link #MAX_UNIQUE_SIZE} 
-	 * must match the corresponding values defined by sleighbase.cc
+	 * Note: The value of {@link #MAX_UNIQUE_SIZE}  must match the corresponding value
+	 * defined by sleighbase.cc
 	 */
-	public static final int SLA_FORMAT_VERSION = 3;
-
 	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.  
 													//Should match value in sleighbase.cc
 
@@ -181,37 +178,35 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 		}
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<sleigh");
-		XmlUtils.a_v_i(s, "version", SLA_FORMAT_VERSION);
-		XmlUtils.a_v_b(s, "bigendian", isBigEndian());
-		XmlUtils.a_v_i(s, "align", alignment);
-		XmlUtils.a_v_u(s, "uniqbase", getUniqueBase());
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SLEIGH);
+		encoder.writeSignedInteger(ATTRIB_VERSION, FORMAT_VERSION);
+		encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());
+		encoder.writeSignedInteger(ATTRIB_ALIGN, alignment);
+		encoder.writeUnsignedInteger(ATTRIB_UNIQBASE, getUniqueBase());
 		if (maxdelayslotbytes > 0) {
-			XmlUtils.a_v_u(s, "maxdelay", maxdelayslotbytes);
+			encoder.writeUnsignedInteger(ATTRIB_MAXDELAY, maxdelayslotbytes);
 		}
 		if (unique_allocatemask != 0) {
-			XmlUtils.a_v_u(s, "uniqmask", unique_allocatemask);
+			encoder.writeUnsignedInteger(ATTRIB_UNIQMASK, unique_allocatemask);
 		}
 		if (numSections != 0) {
-			XmlUtils.a_v_u(s, "numsections", numSections);
+			encoder.writeUnsignedInteger(ATTRIB_NUMSECTIONS, numSections);
 		}
-		s.append(">\n");
-		indexer.saveXml(s);
-		s.append("<spaces");
-		XmlUtils.a_v(s, "defaultspace", getDefaultSpace().getName());
-		s.append(">\n");
+		indexer.encode(encoder);
+		encoder.openElement(ELEM_SPACES);
+		encoder.writeString(ATTRIB_DEFAULTSPACE, getDefaultSpace().getName());
 		for (int i = 0; i < numSpaces(); ++i) {
 			AddrSpace spc = getSpace(i);
 			if ((spc.getType() == spacetype.IPTR_CONSTANT) ||
 				(spc.getType() == spacetype.IPTR_FSPEC) || (spc.getType() == spacetype.IPTR_IOP)) {
 				continue;
 			}
-			spc.saveXml(s);
+			spc.encode(encoder);
 		}
-		s.append("</spaces>\n");
-		symtab.saveXml(s);
-		s.append("</sleigh>\n");
+		encoder.closeElement(ELEM_SPACES);
+		symtab.encode(encoder);
+		encoder.closeElement(ELEM_SLEIGH);
 	}
 
 }

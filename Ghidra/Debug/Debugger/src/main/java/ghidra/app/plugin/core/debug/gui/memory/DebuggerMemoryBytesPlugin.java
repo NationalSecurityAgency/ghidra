@@ -26,13 +26,13 @@ import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.byteviewer.*;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
+import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -59,7 +59,6 @@ import ghidra.program.util.ProgramSelection;
 		TraceSelectionPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class, // For memory capture
 		ClipboardService.class,
 	})
 public class DebuggerMemoryBytesPlugin
@@ -93,7 +92,7 @@ public class DebuggerMemoryBytesPlugin
 	private void createActions() {
 		actionNewMemory = NewMemoryAction.builder(this)
 				.enabled(true)
-				.onAction(c -> createNewDisconnectedProvider())
+				.onAction(c -> connectedProvider.cloneWindow())
 				.buildAndInstall(tool);
 	}
 
@@ -151,13 +150,11 @@ public class DebuggerMemoryBytesPlugin
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			current = ev.getActiveCoordinates();
 			allProviders(p -> p.coordinatesActivated(current));
 		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		if (event instanceof TraceClosedPluginEvent ev) {
 			if (current.getTrace() == ev.getTrace()) {
 				current = DebuggerCoordinates.NOWHERE;
 			}

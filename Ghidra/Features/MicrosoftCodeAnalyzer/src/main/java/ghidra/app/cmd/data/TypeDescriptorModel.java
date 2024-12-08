@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.app.cmd.data;
 import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
-import ghidra.app.util.demangler.DemangledObject;
-import ghidra.app.util.demangler.DemangledType;
+import ghidra.app.util.demangler.*;
+import ghidra.app.util.demangler.microsoft.MicrosoftDemangler;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -30,14 +30,10 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import mdemangler.*;
-import mdemangler.datatype.MDDataType;
-import mdemangler.datatype.complex.MDComplexType;
-import mdemangler.datatype.modifier.MDModifierType;
-import mdemangler.naming.MDQualifiedName;
 
 /**
  * Model for the TypeDescriptor data type.
@@ -57,7 +53,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	private boolean hasVFPointer;
 
 	private String originalTypeName;
-	private MDComplexType mdComplexType;
+	private DemangledDataType demangledDataType;
 	private boolean hasProcessedName = false;
 	private Namespace namespace;
 
@@ -65,6 +61,8 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * Creates the model for the exception handling TypeDescriptor data type.
 	 * @param program the program
 	 * @param address the address in the program for the TypeDescriptor data type.
+	 * @param validationOptions options indicating how to validate the data type at the indicated
+	 * address
 	 */
 	public TypeDescriptorModel(Program program, Address address,
 			DataValidationOptions validationOptions) {
@@ -204,8 +202,9 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the TypeDescriptor structure for the indicated program.
-	 * @return the TypeDescriptor structure.
+	 * Gets the TypeDescriptor structure for the indicated program
+	 * @param program the program which will contain this model's data type
+	 * @return the TypeDescriptor structure
 	 */
 	public static DataType getDataType(Program program) {
 
@@ -247,15 +246,17 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Determine if this model's data type has a vf table pointer.
-	 * @param program the program which will contain this model's data type.
-	 * @return true if the data type has a vf table pointer. Otherwise, it has a hash value.
+	 * Determines if this model's data type program-wide TypeInfo Vftable pointer.  This is used
+	 * as an indication as to whether the particular data type has a Vftable pointer
+	 * @param program the program which will contain this model's data type
+	 * @return true if the data type has a vf table pointer. Otherwise, it has a hash value
 	 */
 	private static boolean hasVFPointer(Program program) {
 
 		Address typeInfoVftableAddress = null;
 		try {
-			typeInfoVftableAddress = RttiUtil.findTypeInfoVftableAddress(program, TaskMonitor.DUMMY);
+			typeInfoVftableAddress =
+				RttiUtil.findTypeInfoVftableAddress(program, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e);
@@ -356,10 +357,11 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 			throw new UndefinedValueException(
 				"No vf table pointer is defined for this TypeDescriptor model.");
 		}
-		
+
 		Address vfTableAddress;
 		// component 0 is either vf table pointer or hash value.
-		vfTableAddress = EHDataTypeUtilities.getAddress(getDataType(), VF_TABLE_OR_HASH_ORDINAL, getMemBuffer());
+		vfTableAddress =
+			EHDataTypeUtilities.getAddress(getDataType(), VF_TABLE_OR_HASH_ORDINAL, getMemBuffer());
 		return (vfTableAddress != null && vfTableAddress.getOffset() != 0) ? vfTableAddress : null;
 	}
 
@@ -372,7 +374,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 */
 	public Scalar getHashValue() throws InvalidDataTypeException, UndefinedValueException {
 		checkValidity();
-		if (hasVFPointer) {
+		if (!hasVFPointer) {
 			throw new UndefinedValueException(
 				"No hash value is defined for this TypeDescriptor model.");
 		}
@@ -427,6 +429,9 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * model's address.
 	 */
 	private String doGetTypeName() throws InvalidDataTypeException {
+		if (hasProcessedName) {
+			return originalTypeName;
+		}
 		// last component is the type descriptor name.
 		Address nameAddress = getComponentAddressOfTypeName(); // Could be null.
 		if (nameAddress == null) {
@@ -440,9 +445,8 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		Object value = terminatedStringDt.getValue(nameMemBuffer, SettingsImpl.NO_SETTINGS, 1);
 		if (value instanceof String) {
 			originalTypeName = (String) value;
-			if (originalTypeName != null) {
-				mdComplexType = getMDComplexType(program, originalTypeName); // Can be null.
-			}
+			// The returned demangledDataType an be null
+			demangledDataType = getDemangledDataType(originalTypeName, program, nameAddress);
 		}
 		hasProcessedName = true;
 		return originalTypeName;
@@ -451,13 +455,13 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	private boolean hasComplexType() {
 		if (!hasProcessedName) {
 			try {
-				getTypeName(); // Initialize originalTypeName & mdComplexType if possible.
+				getTypeName(); // Initialize originalTypeName & demangledDataType if possible.
 			}
 			catch (InvalidDataTypeException e) {
 				return false;
 			}
 		}
-		return (mdComplexType != null);
+		return (demangledDataType != null);
 	}
 
 	/**
@@ -466,16 +470,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * @return the full demangled type name or null.
 	 */
 	public String getDemangledTypeDescriptor() {
-		return hasComplexType() ? mdComplexType.toString() : null;
-	}
-
-	/**
-	 * Gets the reference type of the type descriptor. (i.e. class, struct, union, enum)
-	 * @return the type of thing referred to by this descriptor, or null if it couldn't be
-	 * determined.
-	 */
-	public String getRefType() {
-		return hasComplexType() ? mdComplexType.getTypeName() : null;
+		return hasComplexType() ? demangledDataType.getOriginalDemangled() : null;
 	}
 
 	/**
@@ -484,24 +479,15 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * be determined.
 	 */
 	public String getDescriptorName() {
-		if (!hasComplexType()) {
-			return null;
-		}
-		MDQualifiedName qualifiedName = mdComplexType.getNamespace();
-		return qualifiedName.getName();
+		return hasComplexType() ? demangledDataType.getName() : null;
 	}
 
 	/**
 	 * Gets the parent namespace of the type descriptor.
 	 * @return the parent namespace as a DemangledType or null.
 	 */
-	public DemangledType getParentNamespace() {
-		if (!hasComplexType()) {
-			return null;
-		}
-		MDQualifiedName qualifiedName = mdComplexType.getNamespace();
-		MDMangGhidra demangler = new MDMangGhidra();
-		return demangler.processNamespace(qualifiedName);
+	public Demangled getParentNamespace() {
+		return hasComplexType() ? demangledDataType.getNamespace() : null;
 	}
 
 	/**
@@ -510,7 +496,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	 * @return the full pathname or null.
 	 */
 	public String getDescriptorTypeNamespace() {
-		return hasComplexType() ? mdComplexType.getTypeNamespace() : null;
+		return hasComplexType() ? demangledDataType.getNamespaceString() : null;
 	}
 
 	/**
@@ -558,7 +544,7 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Whether or not the memory at the the model's address appears to be a valid location for a
+	 * Whether or not the memory at the model's address appears to be a valid location for a
 	 * Type Descriptor data type and that its virtual function table address matches the specified
 	 * address.
 	 * @param expectedVFTableAddress the virtual function table address that the model is expected
@@ -583,27 +569,20 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the namespace for this descriptor. It will create the namespace if it doesn't already exist.
-	 * @return the descriptor's namespace, or null if it couldn't be determined.
+	 * Gets the namespace for this descriptor. It will create the namespace if it doesn't already
+	 * exist
+	 * @return the descriptor's namespace or null if it couldn't be determined
 	 */
 	public Namespace getDescriptorAsNamespace() {
-		if (namespace == null || isNamespaceDeleted(namespace)) {
-			String descriptorName = getDescriptorName(); // Can be null.
-			if (descriptorName == null) {
-				return null;
-			}
-
-			String demangledSource = mdComplexType.toString();
-			DemangledType typeNamespace =
-				new DemangledType(originalTypeName, demangledSource, descriptorName);
-			DemangledType parentNamespace = getParentNamespace(); // Can be null;
-			if (parentNamespace != null) {
-				typeNamespace.setNamespace(parentNamespace);
-			}
-			Program program = getProgram();
-			namespace = DemangledObject.createNamespace(program, typeNamespace,
-				program.getGlobalNamespace(), false);
+		if (namespace != null && !isNamespaceDeleted(namespace)) {
+			return namespace;
 		}
+		if (hasComplexType() && demangledDataType == null) {
+			return null;
+		}
+		Program program = getProgram();
+		namespace = DemangledObject.createNamespace(program, demangledDataType,
+			program.getGlobalNamespace(), false);
 		return namespace;
 	}
 
@@ -616,33 +595,39 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets a demangler complex type for the indicated mangled string.
-	 * @param program the program containing the mangled string
-	 * @param mangledString the mangled string to be decoded
-	 * @return the associated complex type or null if the string couldn't be demangled.
+	 * Gets a DemangledDataType for the indicated mangled string
+	 * @param mangledString the mangled string to be demangled
+	 * @param program the program
+	 * @param address address of the mangled string
+	 * @return the DemangledDataType or null if couldn't demangle or is not a class type
 	 */
-	private static MDComplexType getMDComplexType(Program program, String mangledString) {
-		MDMangGhidra demangler = new MDMangGhidra();
+	private static DemangledDataType getDemangledDataType(String mangledString, Program program,
+			Address address) {
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
 		try {
-			MDParsableItem parsableItem = demangler.demangle(mangledString, true);
-			if (!(parsableItem instanceof MDDataType)) {
-				// Not an MDDataType as expected.
-				return null;
+			MangledContext mangledContext =
+				demangler.createMangledContext(mangledString, null, program, address);
+			DemangledDataType demangledType = demangler.demangleType(mangledContext);
+			if (isPermittedType(demangledType)) {
+				return demangledType;
 			}
-			MDDataType mangledDt = (MDDataType) parsableItem;
-			if (mangledDt instanceof MDModifierType) {
-				MDModifierType modifierType = (MDModifierType) mangledDt;
-				MDType refType = modifierType.getReferencedType();
-				if (refType instanceof MDComplexType) {
-					return (MDComplexType) refType;
-				}
-			}
-			return null; // Not an MDComplexType
 		}
-		catch (MDException e) {
+		catch (DemangledException e) {
 			// Couldn't demangle.
-			return null;
 		}
+		return null;
+	}
+
+	private static boolean isPermittedType(DemangledDataType demangledDataType) {
+		if (demangledDataType == null) {
+			return false;
+		}
+		if (demangledDataType.isClass() || demangledDataType.isStruct()) {
+			return true;
+		}
+		Msg.info(TypeDescriptorModel.class,
+			"Unprocessed TypeDescriptor: " + demangledDataType.getSignature());
+		return false;
 	}
 
 }

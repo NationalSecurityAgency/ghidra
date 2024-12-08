@@ -33,7 +33,7 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	 * @param hlFactory the highlight factory
 	 */
 	public WrappingVerticalLayoutTextField(FieldElement textElement, int startX, int width,
-			int maxLines, HighlightFactory hlFactory) {
+			int maxLines, FieldHighlightFactory hlFactory) {
 		super(FieldUtils.wrap(textElement, width), startX, width, maxLines, hlFactory, " ");
 	}
 
@@ -49,7 +49,7 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	 * @param breakOnWhiteSpace is true if wrapping should break on word boundaries
 	 */
 	public WrappingVerticalLayoutTextField(FieldElement textElement, int startX, int width,
-			int maxLines, HighlightFactory hlFactory, boolean breakOnWhiteSpace) {
+			int maxLines, FieldHighlightFactory hlFactory, boolean breakOnWhiteSpace) {
 		super(FieldUtils.wrap(textElement, width, breakOnWhiteSpace), startX, width, maxLines,
 			hlFactory, " ");
 	}

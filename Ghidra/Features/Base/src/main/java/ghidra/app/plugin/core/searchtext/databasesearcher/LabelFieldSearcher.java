@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -29,13 +30,11 @@ import ghidra.program.util.ProgramLocation;
 public class LabelFieldSearcher extends ProgramDatabaseFieldSearcher {
 	private AddressIterator iterator;
 	private SymbolTable symbolTable;
-	private Program program;
 
 	public LabelFieldSearcher(Program program, ProgramLocation startLoc, AddressSetView set,
 			boolean forward, Pattern pattern) {
 		super(pattern, forward, startLoc, set);
 
-		this.program = program;
 		this.symbolTable = program.getSymbolTable();
 
 		SymbolIterator symbolIterator;
@@ -48,15 +47,15 @@ public class LabelFieldSearcher extends ProgramDatabaseFieldSearcher {
 		else {
 			symbolIterator =
 				program.getSymbolTable().getPrimarySymbolIterator(startLoc.getAddress(), forward);
-			refIterator = program.getReferenceManager().getReferenceDestinationIterator(
-				startLoc.getAddress(), forward);
+			refIterator = program.getReferenceManager()
+					.getReferenceDestinationIterator(
+						startLoc.getAddress(), forward);
 		}
 		iterator = new SymbolAddressIterator(symbolIterator, refIterator, forward);
-
 	}
 
 	@Override
-	protected Address advance(List<ProgramLocation> currentMatches) {
+	protected Address advance(List<TextSearchResult> currentMatches) {
 		Address nextAddress = iterator.next();
 		if (nextAddress == null) {
 			return null;
@@ -66,14 +65,15 @@ public class LabelFieldSearcher extends ProgramDatabaseFieldSearcher {
 	}
 
 	private void findMatchesForCurrentAddress(Address address,
-			List<ProgramLocation> currentMatches) {
+			List<TextSearchResult> currentMatches) {
 		Symbol[] symbols = symbolTable.getSymbols(address);
 		makePrimaryLastItem(symbols);
 		for (Symbol symbol : symbols) {
 			Matcher matcher = pattern.matcher(symbol.getName());
 			while (matcher.find()) {
 				int charOffset = matcher.start();
-				currentMatches.add(new LabelFieldLocation(symbol, 0, charOffset));
+				currentMatches.add(new TextSearchResult(
+					new LabelFieldLocation(symbol, 0, charOffset), charOffset));
 			}
 		}
 	}
@@ -110,9 +110,6 @@ public class LabelFieldSearcher extends ProgramDatabaseFieldSearcher {
 			nextRefAddress = getNextRefAddress();
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();

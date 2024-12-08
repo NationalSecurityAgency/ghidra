@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
@@ -30,9 +28,8 @@ import ghidra.util.exception.InvalidInputException;
  * Command to add a register variable to a function. 
  *
  */
-public class AddRegisterVarCmd implements Command {
+public class AddRegisterVarCmd implements Command<Program> {
 
-	private Program program;
 	private Address addr;
 	private Register reg;
 	private String name;
@@ -71,13 +68,8 @@ public class AddRegisterVarCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		program = (Program) obj;
+	public boolean applyTo(Program program) {
 
 		Function f = program.getListing().getFunctionContaining(addr);
 		if (f == null) {

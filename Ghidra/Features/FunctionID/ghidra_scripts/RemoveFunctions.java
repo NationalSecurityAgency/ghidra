@@ -208,24 +208,24 @@ public class RemoveFunctions extends GhidraScript {
 
 		// Distinguishing _memcpy from _memmove
 		SPECIAL_PARENT
-				.add(new Pair<>("_memcpy", new Pair<>(0x33d1cb7adc1726dbL, 0xcb909d559274fa07L)));
+				.add(new Pair<>("_memcpy", new Pair<>(0xf0651853ecffcd13L, 0xcb909d559274fa07L)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memcpy", new Pair<>(0x33d1cb7adc1726dbL, 0xe70c71e845db7694L)));
+				.add(new Pair<>("_memcpy", new Pair<>(0xf0651853ecffcd13L, 0xe70c71e845db7694L)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memcpy", new Pair<>(0xcf7c351b23b36e10L, 0xd835fe2e6794b2d0L)));
+				.add(new Pair<>("_memcpy", new Pair<>(0xbba5179e27f82924L, 0xd835fe2e6794b2d0L)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memcpy", new Pair<>(0xcf7c351b23b36e10L, 0x36c7a2db4d83f940L)));
+				.add(new Pair<>("_memcpy", new Pair<>(0xbba5179e27f82924L, 0x36c7a2db4d83f940L)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memcpy", new Pair<>(0xcf7c351b23b36e10L, 0x29a308132dd5ffa6L)));
+				.add(new Pair<>("_memcpy", new Pair<>(0xbba5179e27f82924L, 0x29a308132dd5ffa6L)));
 
 		SPECIAL_PARENT
-				.add(new Pair<>("_memmove", new Pair<>(0x33d1cb7adc1726dbL, 0xdbf9702ed06fc8faL)));
+				.add(new Pair<>("_memmove", new Pair<>(0xf0651853ecffcd13L, 0xdbf9702ed06fc8faL)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memmove", new Pair<>(0x33d1cb7adc1726dbL, 0xc75b9390823f17b8L)));
+				.add(new Pair<>("_memmove", new Pair<>(0xf0651853ecffcd13L, 0xc75b9390823f17b8L)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memmove", new Pair<>(0xcf7c351b23b36e10L, 0x0cc0176381fd7eebL)));
+				.add(new Pair<>("_memmove", new Pair<>(0xbba5179e27f82924L, 0x0cc0176381fd7eebL)));
 		SPECIAL_PARENT
-				.add(new Pair<>("_memmove", new Pair<>(0xcf7c351b23b36e10L, 0xb821796c54461d3dL)));
+				.add(new Pair<>("_memmove", new Pair<>(0xbba5179e27f82924L, 0xb821796c54461d3dL)));
 		AUTO_FAIL_REGEX.add("^\\$L.*");
 	}
 
@@ -318,7 +318,7 @@ public class RemoveFunctions extends GhidraScript {
 
 		FORCE_RELATION.add(fh(6, 0x508d431b82512d5bL));		// Generic wrapper, one obvious child
 		FORCE_RELATION.add(fh(19, 0x1e68c4d4d83e7585L));	// A little too generic stream thing, force parent
-		FORCE_RELATION.add(fh(26, 0xca6253ab6d6a32beL));	// Count decrement dispatcher, distinguish via parent
+		FORCE_RELATION.add(fh(26, 0x12449040c1a0d37eL));	// Count decrement dispatcher, distinguish via parent
 		FORCE_RELATION.add(fh(18, 0x9c1597a636ea13b3L));	// scalar_deleting_destructor with a child
 		FORCE_RELATION.add(fh(15, 0x85b697ef56707979L));	// Generic form with one child
 		FORCE_RELATION.add(fh(15, 0xe27b2550f3b616bcL));	// Generic form, force parent match
@@ -326,7 +326,7 @@ public class RemoveFunctions extends GhidraScript {
 		FORCE_RELATION.add(fh(21, 0x5eae3016f3cc4caaL));	// Common destructor form (only child is free)
 		FORCE_RELATION.add(fh(12, 0xe77f57508779c258L));	// Generic assign
 		FORCE_RELATION.add(fh(18, 0x61950fc199f518fL));		// Generic destructor with children
-		FORCE_RELATION.add(fh(25, 0x6a5c4f8adc931359L));	// scalar_deleting_destructor force parent
+		FORCE_RELATION.add(fh(25, 0xd08dc36210405cfdL));	// scalar_deleting_destructor force parent
 		FORCE_RELATION.add(fh(13, 0xf1e4167aedf569aL));		// Generic form, with many children
 		FORCE_RELATION.add(fh(20, 0x678b611a60783c98L));	// Generic form with children
 		FORCE_RELATION.add(fh(15, 0x51980975b49f9f73L));	// ??1SchedulingNode@details@Concurrency@@QEAA@XZ
@@ -353,7 +353,7 @@ public class RemoveFunctions extends GhidraScript {
 		FORCE_SPECIFIC.add(fh(17, 0xf468f6c40495d8caL));	// Dispatcher form with lots of specific constants
 		FORCE_SPECIFIC.add(fh(13, 0x8779436db6c1d90L));		// ??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@V_STL70@@@std@@QEAA@XZ
 		FORCE_SPECIFIC.add(fh(75, 0x48156d182763009dL));	// _write confused with _read
-		FORCE_SPECIFIC.add(fh(51, 0x5c02a83d7b53cabbL));	// ??1CCommandLineInfo@@UEAA@XZ
+		FORCE_SPECIFIC.add(fh(51, 0x2d35582d216d91bbL));	// ??1CCommandLineInfo@@UEAA@XZ
 		FORCE_SPECIFIC.add(fh(15, 0x4389c3585fa0606aL));	// has_flag
 		FORCE_SPECIFIC.add(fh(15, 0xcc72f3219032eacfL));	// ?__acrt_stdio_parse_mode_D@@YA_NAEAU__acrt_stdio_stream_mode@@@Z
 		FORCE_SPECIFIC.add(fh(36, 0xa07803de9bbbebbbL));	// vector deleting destructor
@@ -561,7 +561,7 @@ public class RemoveFunctions extends GhidraScript {
 			monitor.setMaximum(AUTO_FAIL_REGEX.size());
 			monitor.setProgress(0);
 			for (String regex : AUTO_FAIL_REGEX) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				List<FunctionRecord> recordList = modifiableFidDB.findFunctionsByNameRegex(regex);
 				for (FunctionRecord record : recordList) {
@@ -571,7 +571,7 @@ public class RemoveFunctions extends GhidraScript {
 			monitor.setMaximum(SPECIAL_PARENT.size());
 			monitor.setProgress(0);
 			for (Pair<String, Pair<Long, Long>> pair : SPECIAL_PARENT) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				List<FunctionRecord> childFunctions =
 					modifiableFidDB.findFunctionsByFullHash(pair.second.first);
@@ -592,28 +592,28 @@ public class RemoveFunctions extends GhidraScript {
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : REMOVE_HASHES) {
 				modifiableFidDB.setAutoFailByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			monitor.setMaximum(FORCE_RELATION.size());
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : FORCE_RELATION) {
 				modifiableFidDB.setForceRelationByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			monitor.setMaximum(FORCE_SPECIFIC.size());
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : FORCE_SPECIFIC) {
 				modifiableFidDB.setForceSpecificByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			monitor.setMaximum(AUTO_PASS.size());
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : AUTO_PASS) {
 				modifiableFidDB.setAutoPassByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 
@@ -625,7 +625,7 @@ public class RemoveFunctions extends GhidraScript {
 				for (FunctionRecord funcRec : listSpecHash) {
 					modifiableFidDB.setAutoFailOnFunction(funcRec, true);
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			modifiableFidDB.saveDatabase("", monitor);

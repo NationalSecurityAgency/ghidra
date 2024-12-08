@@ -36,8 +36,8 @@ import ghidra.program.util.ProgramMergeFilter;
 import ghidra.util.HelpLocation;
 
 /**
- * The DiffSettingsDialog is used to change the types of differences currently 
- * highlighted. It also allows the user to change the types of differences being 
+ * The DiffSettingsDialog is used to change the types of differences currently
+ * highlighted. It also allows the user to change the types of differences being
  * applied and whether labels and/or comments are being merged or replaced.
  */
 public class DiffApplySettingsProvider extends ComponentProviderAdapter {
@@ -262,7 +262,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		createChoices();
 		VariableHeightPanel panel = new VariableHeightPanel(false, 10, 3);
 
-		panel.setToolTipText("<HTML>" +
+		panel.setToolTipText("<html>" +
 			"For each difference type, select whether to ignore, replace, or merge." +
 			"<BR>&nbsp&nbsp<B>Ignore</B> - don't apply this type of difference." +
 			"<BR>&nbsp&nbsp<B>Replace</B> - replace the difference type with the one from program 2." +

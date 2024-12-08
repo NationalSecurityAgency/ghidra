@@ -17,8 +17,20 @@ package ghidra.trace.model.symbol;
 
 import ghidra.util.LockHold;
 
+/**
+ * A symbol view where names cannot be duplicated within the same parent namespace
+ *
+ * @param <T> the type of symbols in the view
+ */
 public interface TraceSymbolNoDuplicatesView<T extends TraceSymbol> extends TraceSymbolView<T> {
 
+	/**
+	 * Get the child of the given parent having the given name.
+	 * 
+	 * @param name the name of the symbol
+	 * @param parent the parent namespace
+	 * @return the symbol, or null
+	 */
 	default T getChildNamed(String name, TraceNamespaceSymbol parent) {
 		try (LockHold hold = getManager().getTrace().lockRead()) {
 			for (T symbol : getChildrenNamed(name, parent)) {
@@ -28,6 +40,13 @@ public interface TraceSymbolNoDuplicatesView<T extends TraceSymbol> extends Trac
 		}
 	}
 
+	/**
+	 * A shorthand for {@link #getChildNamed(String, TraceNamespaceSymbol)} where parent is the
+	 * global namespace.
+	 * 
+	 * @param name the name of the symbol
+	 * @return the symbol, or null
+	 */
 	default T getGlobalNamed(String name) {
 		return getChildNamed(name, getManager().getGlobalNamespace());
 	}

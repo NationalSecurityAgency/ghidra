@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.app.util.viewer.proxy;
 
+import java.util.ConcurrentModificationException;
+
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-
-import java.util.ConcurrentModificationException;
 
 /**
  * Stores information about a data item in a program such that the data item can 
@@ -35,6 +34,7 @@ public class DataProxy extends ProxyObj<Data> {
 
 	/**
 	 * Construct a proxy for the given Data object.
+	 * @param model the model
 	 * @param program the program containing the data object.
 	 * @param data the Data object to proxy.
 	 */
@@ -46,9 +46,6 @@ public class DataProxy extends ProxyObj<Data> {
 		this.path = data.getComponentPath();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.proxy.ProxyObj#getObject()
-	 */
 	@Override
 	public Data getObject() {
 		if (data != null) {
@@ -66,4 +63,12 @@ public class DataProxy extends ProxyObj<Data> {
 		return data;
 	}
 
+	@Override
+	public boolean contains(Address a) {
+		Data d = getObject();
+		if (d == null) {
+			return false;
+		}
+		return d.contains(a);
+	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,11 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import java.io.IOException;
+
+import docking.wizard.WizardState;
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
@@ -27,11 +27,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
-
-import java.awt.EventQueue;
-import java.io.IOException;
-
-import docking.wizard.WizardState;
 
 public class CreateNewSessionTask extends Task {
 	private final WizardState<VTWizardStateKey> state;
@@ -45,57 +40,41 @@ public class CreateNewSessionTask extends Task {
 
 	@Override
 	public void run(TaskMonitor monitor) {
-		VTSession session = null;
+		VTSessionDB session = null;
 		String name = null;
 		try {
 			Program sourceProgram = (Program) state.get(VTWizardStateKey.SOURCE_PROGRAM);
 			Program destinationProgram = (Program) state.get(VTWizardStateKey.DESTINATION_PROGRAM);
 
-			session =
-				VTSessionDB.createVTSession("New Session", sourceProgram, destinationProgram, this);
+			session = new VTSessionDB("New Session", sourceProgram, destinationProgram, this);
 
-			DomainObjectAdapterDB dobj = null;
-			if (session instanceof DomainObjectAdapterDB) {
-				dobj = (DomainObjectAdapterDB) session;
-			}
 			sourceProgram.release(controller.getTool());
 			destinationProgram.release(controller.getTool());
-			if (dobj != null) {
-				name = (String) state.get(VTWizardStateKey.SESSION_NAME);
-				DomainFolder folder = (DomainFolder) state.get(VTWizardStateKey.NEW_SESSION_FOLDER);
-				try {
-					folder.createFile(name, dobj, monitor);
-				}
-				catch (InvalidNameException e) {
-					Msg.showError(this, null, "Invalid Domain Object Name",
-						"Please report this error; the name should have been checked already");
-				}
+
+			name = (String) state.get(VTWizardStateKey.SESSION_NAME);
+			DomainFolder folder = (DomainFolder) state.get(VTWizardStateKey.NEW_SESSION_FOLDER);
+			try {
+				folder.createFile(name, session, monitor);
+			}
+			catch (InvalidNameException e) {
+				Msg.showError(this, null, "Invalid Domain Object Name",
+					"Please report this error; the name should have been checked already");
 			}
 
-			final VTSession finalSession = session;
-			EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					controller.openVersionTrackingSession(finalSession);
-					releaseDomainObject(finalSession);
-				}
-			});
+			controller.openVersionTrackingSession(session);
 		}
 		catch (CancelledException e) {
-			// the user cancelled; just cleanup
-			releaseDomainObject(session);
+			// ignore
 		}
 		catch (IOException e) {
-			releaseDomainObject(session);
-			Msg.showError(this, null, "Failed to Create Session", "Failed to create db file: " +
-				name, e);
+			Msg.showError(this, null, "Failed to Create Session",
+				"Failed to create db file: " + name, e);
+		}
+		finally {
+			if (session != null) {
+				session.release(this);
+			}
 		}
 	}
 
-	private void releaseDomainObject(VTSession session) {
-		if (session == null) {
-			return;
-		}
-
-		((VTSessionDB) session).release(this);
-	}
 }

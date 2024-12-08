@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,9 @@ public class PdbPrimitiveTypeApplicator {
 	private DataType voidGhidraPrimitive = null;
 	private DataType charGhidraPrimitive = null;
 	private DataType signedCharGhidraPrimitive = null;
+	// Note that std::is_same_v<unsigned char, char8_t> is suppose to return false
 	private DataType unsignedCharGhidraPrimitive = null;
+	private DataType char8GhidraPrimitive = null;
 
 	//private Map<Integer, DataType> booleanGhidraPrimitives = new HashMap<>();
 	private Map<Integer, DataType> integralGhidraPrimitives = new HashMap<>();
@@ -79,8 +81,7 @@ public class PdbPrimitiveTypeApplicator {
 
 	DataType getVoidType() {
 		if (voidGhidraPrimitive == null) {
-			DataType dataType = new VoidDataType(getDataTypeManager());
-			voidGhidraPrimitive = resolve(dataType);
+			voidGhidraPrimitive = resolve(VoidDataType.dataType);
 		}
 		return voidGhidraPrimitive;
 	}
@@ -107,6 +108,19 @@ public class PdbPrimitiveTypeApplicator {
 			unsignedCharGhidraPrimitive = resolve(dataType);
 		}
 		return unsignedCharGhidraPrimitive;
+	}
+
+	// 8-bit char8_t type from C++20 standard
+	// Note that std::is_same_v<unsigned char, char8_t> is suppose to return false
+	// So we are creating and storing off a separate type here.  Whether ghidra thinks they are
+	// the same or not is up to the type system or up to our changing what we do in these two
+	// methods (the one above and this one).  If we care to make them different, then do it here.
+	DataType getChar8Type() {
+		if (char8GhidraPrimitive == null) {
+			DataType dataType = new UnsignedCharDataType(getDataTypeManager());
+			char8GhidraPrimitive = resolve(dataType);
+		}
+		return char8GhidraPrimitive;
 	}
 
 	DataType getUnicode16Type() {
@@ -517,21 +531,24 @@ public class PdbPrimitiveTypeApplicator {
 		return getRealType(16, "float128");
 	}
 
-	/*
+	/**
 	 * First get type from "other" list, which are typedefs to underlying primitives. If it does
 	 * not exist, then find the proper underlying primitive, create the typedef, and cache this
 	 * newly minted (typedef) unique primitive type.
+	 * @param rawSize "raw" encoding size in bytes
+	 * @param name assigned type name
 	 */
-	private DataType getRealType(int size, String name) {
+	private DataType getRealType(int rawSize, String name) {
 		DataType dataType = otherPrimitives.get(name);
 		if (dataType != null) {
 			return dataType;
 		}
-		dataType = floatGhidraPrimitives.get(size);
+		dataType = floatGhidraPrimitives.get(rawSize);
 		DataType resolved;
 		if (dataType == null) {
-			resolved = resolve(AbstractFloatDataType.getFloatDataType(size, getDataTypeManager()));
-			floatGhidraPrimitives.put(size, resolved);
+			resolved =
+				resolve(AbstractFloatDataType.getFloatDataType(rawSize, getDataTypeManager()));
+			floatGhidraPrimitives.put(rawSize, resolved);
 			if (resolved instanceof Undefined) { // Not a real type implemented in Ghidra.
 				DataType type = createTypedef(name, resolved);
 				resolved = resolve(type);

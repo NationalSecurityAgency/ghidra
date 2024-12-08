@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Supplier;
@@ -32,8 +35,9 @@ import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
@@ -129,8 +133,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			new SwingUpdateManager(250, 750, () -> setPendingLocationFromUpdateManager());
 
 		clipboardProvider = new FGClipboardProvider(tool, controller);
-		ClipboardService service = tool.getService(ClipboardService.class);
-		setClipboardService(service);
+		setDefaultFocusComponent(controller.getViewComponent());
+
 	}
 
 	@Override
@@ -139,7 +143,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		return !isConnected();
 	}
 
-	public void setClipboardService(ClipboardService service) {
+	void setClipboardService(ClipboardService service) {
 		clipboardService = service;
 		if (clipboardService != null) {
 			clipboardService.registerClipboardContentProvider(clipboardProvider);
@@ -606,30 +610,26 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		// Note: since we are not looping and we are using 'else if's, order is important!
 		//
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_BODY_CHANGED)) {
+		if (ev.contains(RESTORED, FUNCTION_BODY_CHANGED)) {
 			if (graphDataMissing()) {
 				controller.clear();
 				return; // something really destructive has happened--give up!
 			}
-
 			graphChangedButNotRebuilt = !handleObjectRestored(ev, rebuildGraphOnChanges);
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED)) {
+		else if (ev.contains(SYMBOL_ADDED, SYMBOL_REMOVED)) {
 
 			if (currentGraphContainsEventAddress(ev)) {
 				graphChangedButNotRebuilt = !handleSymbolAddedRemoved(ev, rebuildGraphOnChanges);
 			}
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_REMOVED)) {
+		else if (ev.contains(REFERENCE_ADDED, REFERENCE_REMOVED)) {
 
 			if (currentGraphContainsReferenceChangedEvent(ev)) {
 				graphChangedButNotRebuilt = !handleReferenceAddedRemoved(ev, rebuildGraphOnChanges);
 			}
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+		else if (ev.contains(SYMBOL_RENAMED)) {
 			handleSymbolRenamed(ev);
 		}
 
@@ -665,7 +665,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	private void updateGraphForAffectedAddresses(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			controller.invalidateAllCacheForProgram(currentProgram);
 			return;
 		}
@@ -710,11 +710,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		// Do we need to modify the affected vertex?
 		//
 		for (DomainObjectChangeRecord record : ev) {
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_MEM_REFERENCE_ADDED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.REFERENCE_ADDED) {
 				handleReferenceAdded(record);
 			}
-			else if (eventType == ChangeManager.DOCR_MEM_REFERENCE_REMOVED) {
+			else if (eventType == ProgramEvent.REFERENCE_REMOVED) {
 				handleReferenceRemoved(record);
 			}
 		}
@@ -818,11 +818,11 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		// Do we need to modify the affected vertex?
 		//
 		for (DomainObjectChangeRecord record : ev) {
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_SYMBOL_ADDED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.SYMBOL_ADDED) {
 				handleSymbolAdded(record);
 			}
-			else if (eventType == ChangeManager.DOCR_SYMBOL_REMOVED) {
+			else if (eventType == ProgramEvent.SYMBOL_REMOVED) {
 				handleSymbolRemoved(record);
 			}
 		}
@@ -931,8 +931,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	private void handleSymbolRenamed(DomainObjectChangedEvent ev) {
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord record = ev.getChangeRecord(i);
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_SYMBOL_RENAMED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.SYMBOL_RENAMED) {
 				Address address = getChangedAddress(record);
 				if (address != null) {
 					controller.refreshDisplayForAddress(address);
@@ -983,15 +983,15 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		FunctionGraph graph = functionGraphData.getFunctionGraph();
 
 		for (DomainObjectChangeRecord record : ev) {
-			int eventType = record.getEventType();
-			if (eventType == ChangeManager.DOCR_MEM_REFERENCE_ADDED) {
+			EventType eventType = record.getEventType();
+			if (eventType == ProgramEvent.REFERENCE_ADDED) {
 				Reference reference = (Reference) record.getNewValue();
 				Address toAddress = reference.getToAddress();
 				if (graph.getVertexForAddress(toAddress) != null) {
 					return true;
 				}
 			}
-			else if (eventType == ChangeManager.DOCR_MEM_REFERENCE_REMOVED) {
+			else if (eventType == ProgramEvent.REFERENCE_REMOVED) {
 				Reference reference = (Reference) record.getOldValue();
 				Address toAddress = reference.getToAddress();
 				if (graph.getVertexForAddress(toAddress) != null) {
@@ -1134,6 +1134,16 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		GraphPerspectiveInfo<FGVertex, FGEdge> info =
 			GraphPerspectiveInfo.createInvalidGraphPerspectiveInfo();
 		controller.setGraphPerspective(info);
+	}
+
+	void addMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		controller.addMarkerProviderSupplier(supplier);
+		refreshAndKeepPerspective();
+	}
+
+	void removeMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		controller.removeMarkerProviderSupplier(supplier);
+		refreshAndKeepPerspective();
 	}
 
 //==================================================================================================
@@ -1279,16 +1289,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
-	public void requestFocus() {
-		if (!isVisible()) {
-			return; // we will popup incorrectly without this check
-		}
-
-		controller.requestFocus();
-		tool.toFront(this);
-	}
-
-	@Override
 	public boolean isFocusedProvider() {
 		return focusStatusDelegate.get();
 	}
@@ -1298,12 +1298,13 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 	}
 

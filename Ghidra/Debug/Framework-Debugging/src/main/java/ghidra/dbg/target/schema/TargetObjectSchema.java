@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
@@ -42,7 +43,16 @@ import ghidra.util.Msg;
  * by matching on the keys (indices and names), the result being a subordinate
  * {@link TargetObjectSchema}. Keys must match exactly, unless the "pattern" is the empty string,
  * which matches any key. Similarly, the wild-card index is {@code []}.
+ * 
+ * <p>
+ * The schema can specify attribute aliases, which implies that a particular key ("from") will
+ * always have the same value as another ("to"). As a result, the schemas of aliased keys will also
+ * implicitly match.
+ *
+ * @deprecated This will be moved/refactored into trace database. In general, it will still exist,
+ *             but things depending on it are now back on shifting sand.
  */
+@Deprecated(since = "11.2")
 public interface TargetObjectSchema {
 	public static final ResyncMode DEFAULT_ELEMENT_RESYNC = ResyncMode.NEVER;
 	public static final ResyncMode DEFAULT_ATTRIBUTE_RESYNC = ResyncMode.NEVER;
@@ -107,9 +117,9 @@ public interface TargetObjectSchema {
 	 * 
 	 * <p>
 	 * Each object specifies a element sync mode, and an attribute sync mode. These describe when
-	 * the client must call {@link TargetObject#resync(boolean, boolean)} to refresh/resync to
-	 * ensure it has a fresh cache of elements and/or attributes. Note that any client requesting a
-	 * resync will cause all clients to receive the updates.
+	 * the client must call {@link TargetObject#resync(RefreshBehavior, RefreshBehavior)} to
+	 * refresh/resync to ensure it has a fresh cache of elements and/or attributes. Note that any
+	 * client requesting a resync will cause all clients to receive the updates.
 	 */
 	enum ResyncMode {
 		/**
@@ -332,9 +342,41 @@ public interface TargetObjectSchema {
 	/**
 	 * Get the map of attribute names to named schemas
 	 * 
+	 * <p>
+	 * The returned map will include aliases. To determine whether or not an attribute key is an
+	 * alias, check whether the entry's key matches the name of the attribute (see
+	 * {@link AttributeSchema#getName()}). It is possible the schema's name is empty, i.e., the
+	 * default schema. This indicates an alias to a key that was not named in the schema. Use
+	 * {@link #getAttributeAliases()} to determine the name of that key.
+	 * 
 	 * @return the map
 	 */
 	Map<String, AttributeSchema> getAttributeSchemas();
+
+	/**
+	 * Get the map of attribute name aliases
+	 * 
+	 * <p>
+	 * The returned map must provide the <em>direct</em> alias names. For any given key, the client
+	 * need only query the map once to determine the name of the attribute to which the alias
+	 * refers. Consequently, the map also cannot indicate a cycle.
+	 * 
+	 * <p>
+	 * An aliased attribute takes the value of its target implicitly.
+	 * 
+	 * @return the map
+	 */
+	Map<String, String> getAttributeAliases();
+
+	/**
+	 * Check if the given name is an alias and get the target attribute name
+	 * 
+	 * @param name the name
+	 * @return the alias' target, or the given name if not an alias
+	 */
+	default String checkAliasedAttribute(String name) {
+		return getAttributeAliases().getOrDefault(name, name);
+	}
 
 	/**
 	 * Get the default schema for attributes
@@ -355,8 +397,8 @@ public interface TargetObjectSchema {
 	 * Get the attribute schema for a given attribute name
 	 * 
 	 * <p>
-	 * If there's a schema specified for the given name, that schema is taken. Otherwise, the
-	 * default attribute schema is taken.
+	 * If there's a schema specified for the given name, that schema is taken. If the name refers to
+	 * an alias, its schema is taken. Otherwise, the default attribute schema is taken.
 	 * 
 	 * @param name the name
 	 * @return the attribute schema
@@ -677,6 +719,11 @@ public interface TargetObjectSchema {
 			return searchForInAggregate(seed, ent -> ent.schema.getInterfaces().contains(type));
 		}
 
+		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
+				TargetObjectSchema schema) {
+			return searchForInAggregate(seed, ent -> ent.schema == schema);
+		}
+
 		static List<String> searchForSuitableContainerInAggregate(TargetObjectSchema seed,
 				Class<? extends TargetObject> type) {
 			return searchForInAggregate(seed, ent -> {
@@ -784,6 +831,28 @@ public interface TargetObjectSchema {
 	}
 
 	/**
+	 * Search for a suitable object with this schema at the given path
+	 * 
+	 * @param schema the schema of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable object, or null
+	 */
+	default List<String> searchForSuitable(TargetObjectSchema schema, List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema check = schemas.get(path.size());
+			if (check == schema) {
+				return path;
+			}
+			List<String> inAgg = Private.searchForSuitableInAggregate(check, schema);
+			if (inAgg != null) {
+				return PathUtils.extend(path, inAgg);
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Search for all suitable objects with this schema at the given path
 	 * 
 	 * <p>
@@ -797,7 +866,7 @@ public interface TargetObjectSchema {
 	 * 
 	 * @param type
 	 * @param path
-	 * @return
+	 * @return the predicates for finding objects
 	 */
 	default PathPredicates matcherForSuitable(Class<? extends TargetObject> type,
 			List<String> path) {
@@ -824,12 +893,9 @@ public interface TargetObjectSchema {
 		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = schemas.get(path.size());
-			if (!schema.isCanonicalContainer()) {
-				continue;
-			}
 			TargetObjectSchema deSchema =
 				schema.getContext().getSchema(schema.getDefaultElementSchema());
-			if (deSchema.getInterfaces().contains(type)) {
+			if (deSchema.getInterfaces().contains(type) && schema.isCanonicalContainer()) {
 				return path;
 			}
 			List<String> inAgg = Private.searchForSuitableContainerInAggregate(schema, type);
@@ -907,7 +973,9 @@ public interface TargetObjectSchema {
 			return false;
 		}
 		AttributeSchema schema = getAttributeSchema(key);
-		if (schema == AttributeSchema.DEFAULT_ANY || schema == AttributeSchema.DEFAULT_OBJECT) {
+		if (schema == AttributeSchema.DEFAULT_ANY ||
+			schema == AttributeSchema.DEFAULT_OBJECT ||
+			schema == AttributeSchema.DEFAULT_VOID) {
 			// FIXME: Remove this hack once we stop depending on this prefix
 			return key.startsWith(TargetObject.PREFIX_INVISIBLE);
 		}
@@ -918,7 +986,10 @@ public interface TargetObjectSchema {
 	 * Verify that the given value is of this schema's required type and, if applicable, implements
 	 * the required interfaces
 	 * 
-	 * @param value the value
+	 * @param value the value being assigned to the key
+	 * @param parentPath the path of the object whose key is being assigned, for diagnostics
+	 * @param key the key that is being assigned
+	 * @param strict true to throw an exception upon violation; false to just log and continue
 	 */
 	default void validateTypeAndInterfaces(Object value, List<String> parentPath, String key,
 			boolean strict) {
@@ -1094,7 +1165,7 @@ public interface TargetObjectSchema {
 	 * {@link TargetStackFrame}, and the frame level (index) must precede it.
 	 * 
 	 * @param frameLevel the frame level. May be ignored if not applicable
-	 * @path the path of the seed object relative to the root
+	 * @param path the path of the seed object relative to the root
 	 * @return the predicates where the register container should be found, possibly empty
 	 */
 	default PathPredicates searchForRegisterContainer(int frameLevel, List<String> path) {
@@ -1162,5 +1233,21 @@ public interface TargetObjectSchema {
 			}
 		}
 		throw new IllegalArgumentException("No index between stack and frame");
+	}
+
+	/**
+	 * Check if this schema can accept a value of the given other schema
+	 * 
+	 * <p>
+	 * This works analogously to {@link Class#isAssignableFrom(Class)}, except that schemas are
+	 * quite a bit less flexible. Only {@link EnumerableTargetObjectSchema#ANY} and
+	 * {@link EnumerableTargetObjectSchema#OBJECT} can accept anything other than exactly
+	 * themselves.
+	 * 
+	 * @param that
+	 * @return true if an object of that schema can be assigned to this schema.
+	 */
+	default boolean isAssignableFrom(TargetObjectSchema that) {
+		return this.equals(that);
 	}
 }

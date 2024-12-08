@@ -20,8 +20,8 @@ import java.awt.Color;
 
 import javax.swing.*;
 
+import docking.widgets.TitledPanel;
 import generic.theme.GColor;
-import ghidra.app.util.viewer.util.TitledPanel;
 
 public class ListingPanelContainer extends JPanel {
 
@@ -99,5 +99,9 @@ public class ListingPanelContainer extends JPanel {
 		if (northComponent != null) {
 			add(northComponent, BorderLayout.NORTH);
 		}
+	}
+
+	public JComponent getNorthPanel() {
+		return northComponent;
 	}
 }

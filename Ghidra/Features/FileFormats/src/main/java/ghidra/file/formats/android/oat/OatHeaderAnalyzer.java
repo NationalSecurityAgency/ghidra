@@ -108,7 +108,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 			monitor.initialize(oatHeader.getOatDexFileList().size());
 
 			for (int i = 0; i < oatHeader.getOatDexFileList().size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Applying OAT DEX class offsets [ Pass " + i + " of " +
 					oatHeader.getOatDexFileList().size() + " ]...");
 				monitor.incrementProgress(1);
@@ -192,7 +192,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 			long numberOfElements = oatBlock.getSize() / dataType.getLength();
 			monitor.setMaximum(numberOfElements);
 			for (int i = 0; i < numberOfElements; ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				try {
 					Address address = oatBlock.getStart().add(i * dataType.getLength());
@@ -275,7 +275,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 		EquateTable equateTable = program.getEquateTable();
 
 		for (int i = 0; i < headerData.getNumComponents(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!headerData.getComponent(i).getFieldName().equals("executable_offset_") &&
 				headerData.getComponent(i).getFieldName().endsWith("_offset_")) {
 				Scalar scalar = headerData.getComponent(i).getScalar(0);

@@ -468,9 +468,6 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			d4008 = b.addData(0, b.addr(0x4008), LongDataType.dataType, b.buf(1, 2, 3, 4));
 		}
 
-		assertTrue(i4004.isSuccessor(i4006));
-		assertFalse(i4004.isSuccessor(d4008));
-
 		assertFalse(i4004.contains(b.addr(0x4003)));
 		assertTrue(i4004.contains(b.addr(0x4004)));
 		assertTrue(i4004.contains(b.addr(0x4005)));

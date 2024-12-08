@@ -39,12 +39,14 @@ public class EndInstructionValueSolver extends AbstractExpressionSolver<EndInstr
 	}
 
 	@Override
-	public AssemblyResolution solve(EndInstructionValue iv, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
-		throw new AssertionError(
-			"INTERNAL: Should never be asked to solve for " + AssemblyTreeResolver.INST_NEXT);
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			EndInstructionValue exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException {
+		throw new AssertionError("INTERNAL: Should never be asked to solve for " +
+			AbstractAssemblyTreeResolver.INST_NEXT);
 		/**
-		 * I suppose we could instead throw NeedsBackfillExcpeiton(INST_NEXT) here, too, but this
+		 * I suppose we could instead throw NeedsBackfillException(INST_NEXT) here, too, but this
 		 * serves as a sanity check on the SLEIGH spec. I can't think of a good reason to try to
 		 * solve INST_NEXT == const.
 		 */
@@ -53,9 +55,9 @@ public class EndInstructionValueSolver extends AbstractExpressionSolver<EndInstr
 	@Override
 	public MaskedLong getValue(EndInstructionValue iv, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
-		Long instNext = vals.get(AssemblyTreeResolver.INST_NEXT);
+		Long instNext = vals.get(AbstractAssemblyTreeResolver.INST_NEXT);
 		if (instNext == null) {
-			throw new NeedsBackfillException(AssemblyTreeResolver.INST_NEXT);
+			throw new NeedsBackfillException(AbstractAssemblyTreeResolver.INST_NEXT);
 		}
 		return MaskedLong.fromLong(instNext);
 	}
@@ -68,7 +70,7 @@ public class EndInstructionValueSolver extends AbstractExpressionSolver<EndInstr
 	@Override
 	public MaskedLong valueForResolution(EndInstructionValue exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns rc) {
-		Long instNext = vals.get(AssemblyTreeResolver.INST_NEXT);
+		Long instNext = vals.get(AbstractAssemblyTreeResolver.INST_NEXT);
 		if (instNext == null) {
 			/**
 			 * This method is used in forward state construction, so just leave unknown. This may

@@ -18,6 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
@@ -57,10 +58,10 @@ abstract class FunctionAdapter {
 
 	protected AddressMap addrMap;
 
-	static FunctionAdapter getAdapter(DBHandle handle, int openMode, AddressMap map,
+	static FunctionAdapter getAdapter(DBHandle handle, OpenMode openMode, AddressMap map,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new FunctionAdapterV3(handle, map, true);
 		}
 		try {
@@ -71,11 +72,11 @@ abstract class FunctionAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			FunctionAdapter adapter = findReadOnlyAdapter(handle, map);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, map, monitor);
 			}
 			return adapter;
@@ -93,7 +94,8 @@ abstract class FunctionAdapter {
 	}
 
 	static byte getSignatureSourceFlagBits(SourceType signatureSource) {
-		return (byte) (signatureSource.ordinal() << FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT);
+		return (byte) (signatureSource
+				.ordinal() << FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT);
 	}
 
 	static FunctionAdapter findReadOnlyAdapter(DBHandle handle, AddressMap map)
@@ -133,7 +135,7 @@ abstract class FunctionAdapter {
 			FunctionAdapter tmpAdapter = new FunctionAdapterV3(tmpHandle, map, true);
 			RecordIterator it = oldAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);
@@ -142,7 +144,7 @@ abstract class FunctionAdapter {
 			FunctionAdapter newAdapter = new FunctionAdapterV3(handle, map, true);
 			it = tmpAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);

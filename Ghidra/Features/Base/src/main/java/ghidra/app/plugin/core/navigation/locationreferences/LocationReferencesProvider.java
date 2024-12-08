@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.*;
 import docking.widgets.table.GTable;
 import generic.theme.GIcon;
@@ -402,7 +403,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, referencesPanel.getTable());
+		return new DefaultActionContext(this, referencesPanel.getTable());
 	}
 
 //==================================================================================================

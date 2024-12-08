@@ -116,7 +116,7 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	}
 
 	@Override
-	public int getPermissions() {
+	public int getFlags() {
 		return MemoryBlock.READ | MemoryBlock.WRITE;
 	}
 
@@ -128,6 +128,11 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	@Override
 	public boolean contains(Address addr) {
 		return range.contains(addr);
+	}
+
+	@Override
+	public AddressRange getAddressRange() {
+		return range;
 	}
 
 	@Override
@@ -212,6 +217,16 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 
 	@Override
 	public void setVolatile(boolean v) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isArtificial() {
+		return false;
+	}
+
+	@Override
+	public void setArtificial(boolean a) {
 		throw new UnsupportedOperationException();
 	}
 

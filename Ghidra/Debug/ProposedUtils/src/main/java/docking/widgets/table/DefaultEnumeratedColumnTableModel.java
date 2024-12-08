@@ -21,8 +21,10 @@ import java.util.function.Predicate;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.table.column.GColumnRenderer;
 
 /**
  * A table model whose columns are described using an {@link Enum}.
@@ -99,12 +101,41 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		}
 
 		/**
+		 * Check if this column should be visible by default
+		 * 
+		 * @return true if visible
+		 */
+		default public boolean isVisible() {
+			return true;
+		}
+
+		/**
 		 * Get the default sort direction for this column
 		 * 
 		 * @return the sort direction
 		 */
 		default public SortDirection defaultSortDirection() {
 			return SortDirection.ASCENDING;
+		}
+
+		default public int getPreferredWidth() {
+			return -1;
+		}
+
+		/**
+		 * Because of limitations with Java generics and Enumerations, type checking cannot be
+		 * guaranteed here. The user must ensure that any returned by {@link #getValueOf(Object)}
+		 * can be accepted by the renderer returned here. The framework will perform an unchecked
+		 * cast of the renderer.
+		 * 
+		 * @return the renderer
+		 */
+		default public GColumnRenderer<?> getRenderer() {
+			return null;
+		}
+
+		default public SettingsDefinition[] getSettingsDefinitions() {
+			return null;
 		}
 	}
 
@@ -167,6 +198,26 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 				ServiceProvider serviceProvider) {
 			col.setValueOf(row, value);
 		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public GColumnRenderer<Object> getColumnRenderer() {
+			return (GColumnRenderer<Object>) col.getRenderer();
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return col.getPreferredWidth();
+		}
+
+		@Override
+		public SettingsDefinition[] getSettingsDefinitions() {
+			SettingsDefinition[] defs = col.getSettingsDefinitions();
+			if (defs != null) {
+				return defs;
+			}
+			return super.getSettingsDefinitions();
+		}
 	}
 
 	@Override
@@ -175,10 +226,15 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		if (cols != null) { // Smells
 			List<C> defaultOrder = defaultSortOrder();
 			for (C col : cols) {
-				descriptor.addVisibleColumn(
-					new EnumeratedDynamicTableColumn<R>(col),
-					defaultOrder.indexOf(col), // -1 means not found, not sorted
-					col.defaultSortDirection().isAscending());
+				EnumeratedDynamicTableColumn<R> ecol = new EnumeratedDynamicTableColumn<R>(col);
+				if (col.isVisible()) {
+					descriptor.addVisibleColumn(ecol,
+						defaultOrder.indexOf(col), // -1 means not found, not sorted
+						col.defaultSortDirection().isAscending());
+				}
+				else {
+					descriptor.addHiddenColumn(ecol);
+				}
 			}
 		}
 		return descriptor;

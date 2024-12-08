@@ -35,7 +35,7 @@ public class ValidateProgramScreenShots extends GhidraScreenShotGenerator {
 		loadPlugin(ValidateProgramPlugin.class);
 
 		performAction("Validate Program", "ValidateProgramPlugin", false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		captureDialog();
 	}
@@ -46,7 +46,7 @@ public class ValidateProgramScreenShots extends GhidraScreenShotGenerator {
 		loadPlugin(ValidateProgramPlugin.class);
 
 		performAction("Validate Program", "ValidateProgramPlugin", false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DialogComponentProvider dialog = getDialog();
 		pressButtonByText(dialog, "Run Validators");

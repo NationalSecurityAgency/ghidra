@@ -41,7 +41,7 @@ public class FlowDestSymbol extends SpecificSymbol {
 
 	@Override
 	public symbol_type getType() {
-		return symbol_type.start_symbol;
+		return symbol_type.flowdest_symbol;
 	}
 
 	@Override

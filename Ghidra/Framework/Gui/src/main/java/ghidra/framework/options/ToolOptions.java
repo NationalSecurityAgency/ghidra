@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,6 +128,15 @@ public class ToolOptions extends AbstractOptions {
 			Class<?> c = Class.forName(element.getAttributeValue(CLASS_ATTRIBUTE));
 			Constructor<?> constructor = c.getDeclaredConstructor();
 			WrappedOption wo = (WrappedOption) constructor.newInstance();
+			wo.readState(new SaveState(element));
+
+			if (wo instanceof WrappedCustomOption wrappedCustom && !wrappedCustom.isValid()) {
+				continue;
+			}
+			if (wo instanceof WrappedKeyStroke wrappedKs) {
+				wo = wrappedKs.toWrappedActionTrigger();
+			}
+
 			Option option = createUnregisteredOption(optionName, wo.getOptionType(), null);
 			valueMap.put(optionName, option);
 
@@ -138,7 +147,6 @@ public class ToolOptions extends AbstractOptions {
 				option.doSetCurrentValue(null); // use doSet so that it is not registered
 			}
 			else {
-				wo.readState(new SaveState(element));
 				option.doSetCurrentValue(wo.getObject()); // use doSet so that it is not registered
 			}
 		}
@@ -255,6 +263,9 @@ public class ToolOptions extends AbstractOptions {
 		}
 		if (value instanceof KeyStroke) {
 			return new WrappedKeyStroke((KeyStroke) value);
+		}
+		if (value instanceof ActionTrigger) {
+			return new WrappedActionTrigger((ActionTrigger) value);
 		}
 		if (value instanceof File) {
 			return new WrappedFile((File) value);
@@ -415,6 +426,15 @@ public class ToolOptions extends AbstractOptions {
 	@Override
 	protected Option createUnregisteredOption(String optionName, OptionType type,
 			Object defaultValue) {
+
+		if (type == OptionType.KEYSTROKE_TYPE) {
+			// convert key strokes to action triggers
+			type = OptionType.ACTION_TRIGGER;
+			if (defaultValue instanceof KeyStroke keyStroke) {
+				defaultValue = new ActionTrigger(keyStroke);
+			}
+		}
+
 		return new ToolOption(optionName, type, null, null, defaultValue, false, null);
 	}
 

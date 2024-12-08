@@ -19,12 +19,12 @@
     <symbol name="SPCR"  address="A"/>
     <symbol name="SPSR"  address="B"/>
     <symbol name="SPDR"  address="C"/>
-    <symbol name="COP_Register"            address="1FF0" entry="true" type="code_ptr"/>
-    <symbol name="MaskOption"              address="1FF1" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_On-Chip_Timer"           address="1FF8" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_IRQ"                     address="1FFA" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_SWI"                     address="1FFC" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_Reset"                   address="1FFE" entry="true" type="code_ptr"/>
+    <symbol name="COP_Register"            address="7F0" entry="true" type="code_ptr"/>
+    <symbol name="MaskOption"              address="7F1" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_On-Chip_Timer"           address="7F8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                     address="7FA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                     address="7FC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                   address="7FE" entry="true" type="code_ptr"/>
   </default_symbols>
   <default_memory_blocks>
     <memory_block name="IO"      start_address="0"    length="0x20" initialized="false"/>

@@ -68,7 +68,7 @@ public class DebuggerCopyPlan {
 				byte[] buf = new byte[4096];
 				AddressRangeChunker chunker = new AddressRangeChunker(fromRange, buf.length);
 				for (AddressRange chunk : chunker) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Address addr = chunk.getMinAddress();
 					int len = (int) chunk.getLength();
 					from.getMemory().getBytes(addr, buf, 0, len);
@@ -124,14 +124,15 @@ public class DebuggerCopyPlan {
 				Listing intoListing = into.getListing();
 				for (Instruction ins : from.getListing()
 						.getInstructions(new AddressSet(fromRange), true)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (!ins.getPrototype().getLanguage().equals(into.getLanguage())) {
 						// Filter out "guest" instructions
 						continue;
 					}
 					long off = ins.getMinAddress().subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
-					intoListing.createInstruction(dest, ins.getPrototype(), ins, ins);
+					intoListing.createInstruction(dest, ins.getPrototype(), ins, ins,
+						ins.getLength());
 				}
 			}
 		},
@@ -143,12 +144,11 @@ public class DebuggerCopyPlan {
 
 			@Override
 			public void copy(TraceProgramView from, AddressRange fromRange, Program into,
-					Address intoAddress, TaskMonitor monitor)
-					throws Exception {
+					Address intoAddress, TaskMonitor monitor) throws Exception {
 				Listing intoListing = into.getListing();
 				for (Data data : from.getListing()
 						.getDefinedData(new AddressSet(fromRange), true)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long off = data.getMinAddress().subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					DataType dt = data.getDataType();
@@ -170,7 +170,7 @@ public class DebuggerCopyPlan {
 				Listing intoListing = into.getListing();
 				for (Data data : from.getListing()
 						.getDefinedData(new AddressSet(fromRange), true)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long off = data.getMinAddress().subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					DataType dt = data.getDataType();
@@ -187,7 +187,7 @@ public class DebuggerCopyPlan {
 				SymbolTable intoTable = into.getSymbolTable();
 				for (Symbol label : from.getSymbolTable()
 						.getSymbols(new AddressSet(fromRange), SymbolType.LABEL, true)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (label.getSource() == SourceType.DEFAULT) {
 						continue;
 					}
@@ -204,8 +204,8 @@ public class DebuggerCopyPlan {
 				}
 			}
 
-			private Namespace findOrCopyNamespace(Namespace ns, SymbolTable intoTable,
-					Program into) throws Exception {
+			private Namespace findOrCopyNamespace(Namespace ns, SymbolTable intoTable, Program into)
+					throws Exception {
 				if (ns.isGlobal()) {
 					return into.getGlobalNamespace();
 				}
@@ -222,7 +222,7 @@ public class DebuggerCopyPlan {
 				for (TraceBreakpoint bpt : from.getTrace()
 						.getBreakpointManager()
 						.getBreakpointsIntersecting(Lifespan.at(from.getSnap()), fromRange)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long off = bpt.getMinAddress().subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					ProgramBreakpoint pb =
@@ -245,7 +245,7 @@ public class DebuggerCopyPlan {
 				Iterator<Bookmark> bit =
 					from.getBookmarkManager().getBookmarksIterator(fromRange.getMinAddress(), true);
 				while (bit.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Bookmark bm = bit.next();
 					if (bm.getAddress().compareTo(fromRange.getMaxAddress()) > 0) {
 						break;
@@ -270,7 +270,7 @@ public class DebuggerCopyPlan {
 				ReferenceManager intoRefs = into.getReferenceManager();
 				for (Reference ref : from.getReferenceManager()
 						.getReferenceIterator(fromRange.getMinAddress())) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (ref.getFromAddress().compareTo(fromRange.getMaxAddress()) > 0) {
 						break;
 					}
@@ -304,7 +304,7 @@ public class DebuggerCopyPlan {
 				Listing intoListing = into.getListing();
 				for (Address addr : fromListing.getCommentAddressIterator(new AddressSet(fromRange),
 					true)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long off = addr.subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
 					// Ugly, but there's not MAX/MIN_COMMENT_TYPE
@@ -442,8 +442,8 @@ public class DebuggerCopyPlan {
 	public boolean isRequiresInitializedMemory(TraceProgramView from, Program dest) {
 		return checkBoxes.entrySet().stream().anyMatch(ent -> {
 			Copier copier = ent.getKey();
-			return copier.isRequiresInitializedMemory() &&
-				copier.isAvailable(from, dest) && ent.getValue().isSelected();
+			return copier.isRequiresInitializedMemory() && copier.isAvailable(from, dest) &&
+				ent.getValue().isSelected();
 		});
 	}
 }

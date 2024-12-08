@@ -48,7 +48,7 @@ public class DexMarkupDataAnalyzer extends FileFormatAnalyzer {
 
 		DataIterator dataIterator = listing.getDefinedData(set, true);
 		while (dataIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			Data data = dataIterator.next();
@@ -105,7 +105,7 @@ public class DexMarkupDataAnalyzer extends FileFormatAnalyzer {
 
 	private void processData(Data data, int headerLength, TaskMonitor monitor) throws Exception {
 		for (int i = 0; i < data.getNumComponents(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data component = data.getComponent(i);
 			if (component.getNumComponents() > 0) {
 				processData(component, headerLength, monitor);

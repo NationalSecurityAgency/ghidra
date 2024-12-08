@@ -15,7 +15,7 @@
  */
 /*
  * EntryPointAnalyzer.java
- * 
+ *
  * Created on Aug 27, 2003
  */
 package ghidra.app.plugin.core.disassembler;
@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class EntryPointAnalyzer extends AbstractAnalyzer {
 
-	private final static String NAME = "Disassemble Entry Points";
+	public final static String NAME = "Disassemble Entry Points";
 	private static final String DESCRIPTION = "Disassembles entry points in newly added memory.";
 
 	private final static String OPTION_NAME_RESPECT_EXECUTE_FLAG = "Respect Execute Flag";
@@ -138,7 +138,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Process the items on the do later set.  If doing block analysis, then this is the initial
 	 * analysis of the program, so schedule the do later set after some analysis has occurred.
-	 * 
+	 *
 	 * @param program - this program
 	 * @param monitor - monitor
 	 * @param doLaterSet - set of functions that were put off until later
@@ -164,11 +164,11 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Check for a single external entry point.
-	 * 
+	 *
 	 * @param program - program to check
 	 * @param externalCount - count of external entry points found
 	 * @param doNowSet - set of functions that are to be done now
-	 * 
+	 *
 	 * @return true if this program has only one external entry point
 	 */
 	private boolean isSingleExternalEntryPoint(Program program, int externalCount,
@@ -267,7 +267,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		for (Iterator<Address> laterIter = doLaterSet.iterator(); laterIter.hasNext();) {
 			Address entry = laterIter.next();
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (!listing.isUndefined(entry, entry)) {
 				laterIter.remove();
@@ -305,7 +305,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 			monitor.setProgress(count++);
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// already disassembled
 			if (!listing.isUndefined(entry, entry)) {
@@ -352,7 +352,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			if (value instanceof Address) {
 				Address codeLoc = (Address) value;
 				if (codeLoc.getOffset() != 0) {
-					PseudoDisassembler.setTargeContextForDisassembly(program, codeLoc);
+					PseudoDisassembler.setTargetContextForDisassembly(program, codeLoc);
 					// align if necessary
 					int instructionAlignment = program.getLanguage().getInstructionAlignment();
 					if (codeLoc.getOffset() % instructionAlignment != 0) {
@@ -376,7 +376,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		AddressIterator aiter = program.getSymbolTable().getExternalEntryPointIterator();
 		while (aiter.hasNext()) {
 			externalCount++;
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address entryAddr = aiter.next();
 			Symbol entry = symbolTable.getPrimarySymbol(entryAddr);
 			// make sure to put on things that are external entry points, but not defined symbols.
@@ -394,7 +394,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		SymbolIterator symbolIter = symbolTable.getSymbols(addressSet, SymbolType.LABEL, true);
 
 		while (symbolIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol entry = symbolIter.next();
 			Address entryAddr = entry.getAddress();
 			if (addressSet.contains(entryAddr)) {

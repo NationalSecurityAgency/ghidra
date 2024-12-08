@@ -104,7 +104,7 @@ public class CodeBrowserNavigationSegmentedAddressTest extends AbstractGhidraHea
 	public void testOperandNavigationInSegmented() throws Exception {
 		loadProgram("login");
 		env.showTool();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.goTo(new OperandFieldLocation(program, addr("1000:03ea"), null, null, null, 0, 0));
 		assertEquals(addr("1000:03ea"), cb.getCurrentAddress());
 

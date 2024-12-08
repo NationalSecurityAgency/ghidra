@@ -46,7 +46,7 @@ import ghidra.util.task.TaskLauncher;
 
 /**
  * AutoAnalysisPlugin
- * 
+ *
  * Provides support for auto analysis tasks. Manages a pipeline or priority of
  * tasks to run given some event has occurred.
  */
@@ -101,32 +101,32 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	 */
 	private void createActions() {
 
-		// use this index to make sure that the following actions are ordered in the way that 
+		// use this index to make sure that the following actions are ordered in the way that
 		// they are inserted
 		int subGroupIndex = 0;
 
-		//@formatter:off
 		autoAnalyzeAction =
-			new ActionBuilder("Auto Analyze", getName())
-					.supportsDefaultToolContext(true)
-					.menuPath("&Analysis", "&Auto Analyze...")
+			new ActionBuilder("Auto Analyze", getName()).menuPath("&Analysis", "&Auto Analyze...")
 					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
 					.keyBinding("A")
-					.validContextWhen(ac -> {
-						updateActionName(ac);
-						return ac instanceof ListingActionContext;
-					})
+					.withContext(ListingActionContext.class, true)
 					.onAction(this::analyzeCallback)
 					.buildAndInstall(tool);
 
+		// we need to specially override the validContextWhen so that as a side effect, we
+		// can change the action name to not include a program name when the action is
+		// actually invalid.
+		autoAnalyzeAction.validContextWhen(ac -> {
+			updateActionName(ac);
+			return ac instanceof ListingActionContext;
+		});
+
 		new ActionBuilder("Analyze All Open", getName())
-					.supportsDefaultToolContext(true)
-					.menuPath("&Analysis", "Analyze All &Open...")
-					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
-					.onAction(c -> analyzeAllCallback())
-					.validContextWhen(ac -> ac instanceof ListingActionContext)
-					.buildAndInstall(tool);
-		//@formatter:on
+				.menuPath("&Analysis", "Analyze All &Open...")
+				.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
+				.withContext(ListingActionContext.class, true)
+				.onAction(c -> analyzeAllCallback())
+				.buildAndInstall(tool);
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
@@ -256,7 +256,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		analysisMgr.addListener(this);
 
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		options.registerOptionsEditor(new AnalysisOptionsEditor(program));
+		options.registerOptionsEditor(() -> new AnalysisOptionsEditor(program));
 		options.setOptionsHelpLocation(
 			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option"));
 	}
@@ -264,7 +264,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	private void programActivated(Program program) {
 		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
 				.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+					"Cumulative analysis task times",
+					() -> new StoredAnalyzerTimesPropertyEditor());
 
 	}
 
@@ -276,7 +277,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	}
 
 	/**
-	 * Show the options panel for the auto analysis options. 
+	 * Show the options panel for the auto analysis options.
 	 */
 	private boolean showOptionsDialog(Program program) {
 		tool.clearStatusInfo();
@@ -298,7 +299,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	}
 
 	@Override
-	public void analysisEnded(AutoAnalysisManager manager) {
+	public void analysisEnded(AutoAnalysisManager manager, boolean isCancelled) {
 		MessageLog log = manager.getMessageLog();
 		if (log.hasMessages()) {
 
@@ -326,7 +327,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 				null, ANALYZE_GROUP_NAME));
 			setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "Auto_Analyzers"));
 
-			setSupportsDefaultToolContext(true);
+			setContextClass(ListingActionContext.class, true);
 		}
 
 		@Override
@@ -370,10 +371,13 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	private class FirstTimeAnalyzedCallback implements AutoAnalysisManagerListener {
 		@Override
-		public void analysisEnded(AutoAnalysisManager manager) {
+		public void analysisEnded(AutoAnalysisManager manager, boolean isCancelled) {
 			manager.removeListener(this);
-			tool.firePluginEvent(new FirstTimeAnalyzedPluginEvent(AutoAnalysisPlugin.this.getName(),
-				manager.getProgram()));
+
+			if (!isCancelled) {
+				tool.firePluginEvent(new FirstTimeAnalyzedPluginEvent(
+					AutoAnalysisPlugin.this.getName(), manager.getProgram()));
+			}
 		}
 	}
 }

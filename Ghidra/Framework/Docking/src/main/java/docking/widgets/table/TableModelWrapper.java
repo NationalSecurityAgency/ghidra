@@ -20,8 +20,11 @@ import java.util.List;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -32,8 +35,10 @@ import ghidra.util.datastruct.WeakSet;
  * @param <ROW_OBJECT> the row object type
  */
 public class TableModelWrapper<ROW_OBJECT>
-		implements RowObjectFilterModel<ROW_OBJECT>, SelectionStorage<ROW_OBJECT> {
+		implements RowObjectFilterModel<ROW_OBJECT>, SelectionStorage<ROW_OBJECT>,
+		WrappingTableModel {
 
+	// The index in the list is the view index; the Integer value at that index is the model index
 	protected List<Integer> filteredIndexList;
 	private TableFilter<ROW_OBJECT> tableFilter;
 
@@ -45,7 +50,12 @@ public class TableModelWrapper<ROW_OBJECT>
 
 	public TableModelWrapper(RowObjectTableModel<ROW_OBJECT> wrappedModel) {
 		this.wrappedModel = wrappedModel;
+
+		SystemUtilities.assertTrue(!(wrappedModel instanceof WrappingTableModel),
+			"Attempted to wrap a table model that has already been wrapped");
+
 		filteredIndexList = getMatchingFilteredIndices();
+		copyListeners();
 	}
 
 	@Override
@@ -96,13 +106,23 @@ public class TableModelWrapper<ROW_OBJECT>
 		return -1; // asking for a row that has been filtered out
 	}
 
+	@Override
 	public void wrappedModelChangedFromTableChangedEvent() {
 		// note: don't call notifyTableModelChanged(), as we get this callback during a
 		// tableChanged() event and we do not want to trigger another event.
 		updateFilterIndices();
 	}
 
-	public void fireTableDataChanged(TableModelEvent event) {
+	@Override
+	public void fireTableChanged(TableModelEvent event) {
+		for (TableModelListener listener : listeners) {
+			listener.tableChanged(event);
+		}
+	}
+
+	@Override
+	public void fireTableDataChanged() {
+		TableModelEvent event = new TableModelEvent(this);
 		for (TableModelListener listener : listeners) {
 			listener.tableChanged(event);
 		}
@@ -113,6 +133,21 @@ public class TableModelWrapper<ROW_OBJECT>
 
 		// kickoff an update
 		fireTableDataChanged();
+	}
+
+	private void copyListeners() {
+		if (!(wrappedModel instanceof AbstractTableModel)) {
+			Msg.warn(this, "Wrapping a table model that does not give access to listeners.  You " +
+				"should change your base table model implement a known class");
+			return;
+		}
+
+		AbstractTableModel abstractModel = (AbstractTableModel) wrappedModel;
+		TableModelListener[] wrappedListeners =
+			abstractModel.getListeners(TableModelListener.class);
+		for (TableModelListener listener : wrappedListeners) {
+			addTableModelListener(listener);
+		}
 	}
 
 	private void updateFilterIndices() {
@@ -139,11 +174,6 @@ public class TableModelWrapper<ROW_OBJECT>
 		ROW_OBJECT rowObject = wrappedModel.getRowObject(modelRow);
 		boolean accepts = tableFilter.acceptsRow(rowObject);
 		return accepts;
-	}
-
-	@Override
-	public void fireTableDataChanged() {
-		wrappedModel.fireTableDataChanged();
 	}
 
 	@Override
@@ -276,6 +306,7 @@ public class TableModelWrapper<ROW_OBJECT>
 		wrappedModel.setValueAt(value, modelRowIndex, columnIndex);
 	}
 
+	@Override
 	public TableModel getWrappedModel() {
 		return wrappedModel;
 	}

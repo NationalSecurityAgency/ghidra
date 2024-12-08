@@ -37,12 +37,13 @@ import ghidra.program.model.symbol.*;
  *
  * <p>
  * A system call library is a collection of p-code executable routines, invoked by a system call
- * dispatcher. That dispatcher is represented by {@link #syscall(PcodeExecutor)}, and is exported as
- * a sleigh userop. If this interface is "mixed in" with {@link AnnotatedPcodeUseropLibrary}, that
- * userop is automatically included in the userop library. The simplest means of implementing a
- * syscall library is probably via {@link AnnotatedEmuSyscallUseropLibrary}. It implements this
- * interface and extends {@link AnnotatedPcodeUseropLibrary}. In addition, it provides its own
- * annotation system for exporting userops as system calls.
+ * dispatcher. That dispatcher is represented by
+ * {@link #syscall(PcodeExecutor, PcodeUseropLibrary)}, and is exported as a sleigh userop. If this
+ * interface is "mixed in" with {@link AnnotatedPcodeUseropLibrary}, that userop is automatically
+ * included in the userop library. The simplest means of implementing a syscall library is probably
+ * via {@link AnnotatedEmuSyscallUseropLibrary}. It implements this interface and extends
+ * {@link AnnotatedPcodeUseropLibrary}. In addition, it provides its own annotation system for
+ * exporting userops as system calls.
  *
  * @param <T> the type of data processed by the system calls, typically {@code byte[]}
  */
@@ -141,7 +142,8 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	}
 
 	/**
-	 * The {@link EmuSyscallLibrary#syscall(PcodeExecutor)} method wrapped as a userop definition
+	 * The {@link EmuSyscallLibrary#syscall(PcodeExecutor, PcodeUseropLibrary)} method wrapped as a
+	 * userop definition
 	 * 
 	 * @param <T> the type of data processed by the userop, typically {@code byte[]}
 	 */
@@ -207,8 +209,8 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	 * database. Until then, we require system-specific implementations.
 	 * 
 	 * @param state the executor's state
-	 * @param the reason for reading state, probably {@link Reason#EXECUTE}, but should be taken
-	 *            from the executor
+	 * @param reason the reason for reading state, probably {@link Reason#EXECUTE_READ}, but should
+	 *            be taken from the executor
 	 * @return the system call number
 	 */
 	long readSyscallNumber(PcodeExecutorState<T> state, Reason reason);
@@ -233,7 +235,7 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	 * <p>
 	 * The executor's state must already be prepared according to the relevant system calling
 	 * conventions. This will determine the system call number, according to
-	 * {@link #readSyscallNumber(PcodeExecutorStatePiece)}, retrieve the relevant system call
+	 * {@link #readSyscallNumber(PcodeExecutorState, Reason)}, retrieve the relevant system call
 	 * definition, and invoke it.
 	 * 
 	 * @param executor the executor

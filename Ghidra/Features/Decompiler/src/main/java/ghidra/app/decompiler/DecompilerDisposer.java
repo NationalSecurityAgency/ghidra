@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.app.decompiler;
 
+import java.io.*;
+
 import generic.concurrent.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.*;
 
 public class DecompilerDisposer {
 	private static String THREAD_POOL_NAME = "Decompiler Disposer";
@@ -38,7 +37,7 @@ public class DecompilerDisposer {
 	/**
 	 * Disposes the given Process and related streams from a background thread.  This is necessary
 	 * due to a low-probability deadlock that occurs in the JVM.
-	 * 
+	 *
 	 * @param process The process to destroy.
 	 * @param ouputStream The output stream to close
 	 * @param inputStream The input stream to close
@@ -54,23 +53,24 @@ public class DecompilerDisposer {
 	 * <p>
 	 * Note:<br>
 	 * A class to handle the rare case where the {@link DecompInterface}'s
-	 * synchronized methods are blocking 
+	 * synchronized methods are blocking
 	 * while a decompile operation has died and maintained the lock.  In that scenario, calling
-	 * dispose on this class will eventually try to enter a synchronized method that will 
+	 * dispose on this class will eventually try to enter a synchronized method that will
 	 * remain blocked forever.
 	 * <p>
-	 * I examined the uses of dispose() on the {@link DecompInterface} and 
+	 * I examined the uses of dispose() on the {@link DecompInterface} and
 	 * determined that calling dispose() is a
 	 * final operation, which means that you don't have to wait.  Further, after calling
 	 * dispose() on this class, you should no longer use it.
+	 * @param decompiler the decompiler
 	 */
 	public static void dispose(DecompInterface decompiler) {
 		DecompInterfaceDisposable disposable = new DecompInterfaceDisposable(decompiler);
 		queue.add(disposable);
 	}
 
-	private static class DisposeCallback implements
-			QCallback<AbstractDisposable, AbstractDisposable> {
+	private static class DisposeCallback
+			implements QCallback<AbstractDisposable, AbstractDisposable> {
 		@Override
 		public AbstractDisposable process(AbstractDisposable disposable, TaskMonitor monitor) {
 			disposable.dispose();
@@ -87,7 +87,8 @@ public class DecompilerDisposer {
 		private OutputStream ouputStream;
 		private InputStream inputStream;
 
-		RuntimeProcessDisposable(Process process, OutputStream ouputStream, InputStream inputStream) {
+		RuntimeProcessDisposable(Process process, OutputStream ouputStream,
+				InputStream inputStream) {
 			this.process = process;
 			this.ouputStream = ouputStream;
 			this.inputStream = inputStream;

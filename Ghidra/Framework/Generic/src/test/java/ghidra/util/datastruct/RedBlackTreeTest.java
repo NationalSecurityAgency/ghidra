@@ -17,6 +17,8 @@ package ghidra.util.datastruct;
 
 import static org.junit.Assert.*;
 
+import java.util.ListIterator;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,8 +31,8 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 		super();
 	}
 
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		tree = new RedBlackTree<Integer, String>();
 
 		tree.put(5, "five");
@@ -45,13 +47,13 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 
 	}
 
-@Test
-    public void testSize() {
+	@Test
+	public void testSize() {
 		assertEquals(9, tree.size());
 	}
 
-@Test
-    public void testContains() {
+	@Test
+	public void testContains() {
 		assertTrue(tree.containsKey(1));
 		assertTrue(tree.containsKey(2));
 		assertTrue(tree.containsKey(3));
@@ -68,8 +70,8 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 
 	}
 
-@Test
-    public void testGetFirstLast() {
+	@Test
+	public void testGetFirstLast() {
 		RedBlackEntry<Integer, String> node = tree.getFirst();
 		assertEquals(1, (int) node.getKey());
 
@@ -112,8 +114,8 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 //
 //	}
 
-@Test
-    public void testGetNextNode() {
+	@Test
+	public void testGetNextNode() {
 		RedBlackEntry<Integer, String> node = tree.getFirst();
 		assertEquals("one", node.value);
 		node = node.getSuccessor();
@@ -137,16 +139,77 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 
 	}
 
-@Test
-    public void testRemove() {
+	@Test
+	public void testRemove() {
 		assertEquals(9, tree.size());
 		tree.remove(5);
 		assertEquals(8, tree.size());
 
 	}
 
-@Test
-    public void testDepth() {
+	@Test
+	public void testIterator() {
+		ListIterator<RedBlackEntry<Integer, String>> it = tree.iterator();
+
+		RedBlackEntry<Integer, String> node = it.next();
+		assertTrue(it.hasNext());
+		assertEquals("one", node.value);
+		node = it.next();
+		assertEquals("two", node.value);
+		node = it.next();
+		assertEquals("three", node.value);
+		node = it.next();
+		assertEquals("four", node.value);
+		node = it.next();
+		assertTrue(it.hasNext());
+		assertEquals("five", node.value);
+		node = it.next();
+		assertEquals("six", node.value);
+		node = it.next();
+		assertEquals("seven", node.value);
+		node = it.next();
+		assertEquals("nine", node.value);
+		node = it.next();
+		assertEquals("ten", node.value);
+		assertFalse(it.hasNext());
+		node = it.next();
+		assertNull(node);
+
+		assertEquals(9, tree.size());
+		tree.remove(5);
+		assertEquals(8, tree.size());
+
+	}
+
+	@Test
+	public void testIteratorRemove() {
+		assertEquals(9, tree.size());
+		assertTrue(tree.containsKey(3));
+
+		ListIterator<RedBlackEntry<Integer, String>> it = tree.iterator();
+		while (it.hasNext()) {
+			RedBlackEntry<Integer, String> next = it.next();
+			if ("three".equals(next.value)) {
+				it.remove();
+			}
+		}
+		assertEquals(8, tree.size());
+		assertFalse(tree.containsKey(3));
+
+		it = tree.iterator();
+
+		RedBlackEntry<Integer, String> node = it.next();
+		assertTrue(it.hasNext());
+		assertEquals("one", node.value);
+		node = it.next();
+		assertEquals("two", node.value);
+		node = it.next();
+		assertEquals("four", node.value);
+
+	}
+
+	@Test
+	public void testDepth() {
 		tree = new RedBlackTree<Integer, String>();
 		tree.put(1, "one");
 		tree.put(2, "two");

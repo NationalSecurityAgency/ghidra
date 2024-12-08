@@ -22,8 +22,10 @@ import java.util.Random;
 
 import org.junit.*;
 
-import db.*;
+import db.DBHandle;
+import db.Table;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -35,7 +37,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  *
  */
-public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest implements ErrorHandler {
+public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
+		implements ErrorHandler {
 
 	private DBHandle db;
 	private ProgramDB program;
@@ -86,7 +89,7 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private void createPropertyMap(String name) throws Exception {
-		propertyMap = new ObjectPropertyMapDB<>(db, DBConstants.CREATE, this, null, addrMap, name,
+		propertyMap = new ObjectPropertyMapDB<>(db, OpenMode.CREATE, this, null, addrMap, name,
 			TestSaveable.class, TaskMonitor.DUMMY, true);
 		propertyMap.setCacheSize(2);
 	}

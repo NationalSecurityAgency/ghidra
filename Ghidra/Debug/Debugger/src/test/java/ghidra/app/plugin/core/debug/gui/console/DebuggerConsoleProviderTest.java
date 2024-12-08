@@ -20,13 +20,19 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.service.progress.ProgressServicePlugin;
+import ghidra.app.services.ProgressService;
+import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskMonitor;
 
-public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	DebuggerConsolePlugin consolePlugin;
 	DebuggerConsoleProvider consoleProvider;
 
@@ -36,7 +42,7 @@ public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		consoleProvider = waitForComponentProvider(DebuggerConsoleProvider.class);
 	}
 
-	public static class TestConsoleActionContext extends ActionContext {
+	public static class TestConsoleActionContext extends DefaultActionContext {
 
 	}
 
@@ -74,5 +80,41 @@ public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			new TestConsoleActionContext());
 
 		waitForPass(() -> assertEquals(2, consoleProvider.logTable.getRowCount()));
+	}
+
+	@Test
+	public void testProgress() throws Exception {
+		ProgressService progressService = addPlugin(tool, ProgressServicePlugin.class);
+		try (CloseableTaskMonitor monitor1 = progressService.publishTask();
+				CloseableTaskMonitor monitor2 = progressService.publishTask()) {
+			monitor1.initialize(10, "Testing 1");
+			monitor2.initialize(10, "Testing 2");
+			for (int i = 0; i < 10; i++) {
+				Thread.sleep(100);
+				monitor1.increment();
+				Thread.sleep(100);
+				monitor2.increment();
+			}
+		}
+	}
+
+	@Test
+	public void testRefTaskMonitor() throws Exception {
+		tool.execute(new Task("Test") {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				monitor.initialize(10, "Testing");
+				for (int i = 0; i < 10; i++) {
+					try {
+						Thread.sleep(100);
+					}
+					catch (InterruptedException e) {
+						throw new AssertionError(e);
+					}
+					monitor.increment();
+				}
+			}
+		});
+		Thread.sleep(100);
 	}
 }

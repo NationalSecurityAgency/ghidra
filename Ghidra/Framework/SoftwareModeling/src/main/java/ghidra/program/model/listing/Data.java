@@ -54,14 +54,26 @@ public interface Data extends CodeUnit, Settings {
 	public boolean hasStringValue();
 
 	/**
-	 * @return true if data is constant.
-	 * If true, isConstant will always be false
+	 * Determine if this data has explicitly been marked as constant.
+	 * NOTE: This is based upon explicit {@link Data} and {@link DataType} mutability settings
+	 * and does not reflect independent memory block or processor specification settings.
+	 * @return true if data is constant, else false.
 	 */
 	public boolean isConstant();
 
 	/**
-	 * @return true if data is volatile.
-	 * If true, isVolatile will always be false
+	 * Determine if this data has explicitly been marked as writable.
+	 * NOTE: This is based upon explicit {@link Data} and {@link DataType} mutability settings
+	 * and does not reflect independent memory block or processor specification settings.
+	 * @return true if data is writable, else false.
+	 */
+	public boolean isWritable();
+
+	/**
+	 * Determine if this data has explicitly been marked as volatile.
+	 * NOTE: This is based upon explicit {@link Data} and {@link DataType} mutability settings
+	 * and does not reflect independent memory block or processor specification settings.
+	 * @return true if data is volatile, else false.
 	 */
 	public boolean isVolatile();
 
@@ -285,4 +297,5 @@ public interface Data extends CodeUnit, Settings {
 	 * @return the prefix
 	 */
 	public String getDefaultLabelPrefix(DataTypeDisplayOptions options);
+
 }

@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.functiongraph.action;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.app.plugin.core.functiongraph.FGProvider;
 import ghidra.graph.viewer.actions.VisualGraphSatelliteActionContext;
 
-public class FunctionGraphSatelliteViewerActionContext extends ActionContext
+public class FunctionGraphSatelliteViewerActionContext extends DefaultActionContext
 		implements VisualGraphSatelliteActionContext {
 
 	public FunctionGraphSatelliteViewerActionContext(FGProvider functionGraphProvider) {

@@ -253,7 +253,7 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 		try {
 			testTransactionID = db.startTransaction("Test Match Set Setup");
 			VTMatchSet matchSet = db.createMatchSet(
-				createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			for (VTAssociationPair associationPair : list) {
 				VTMatchInfo info = createRandomMatch(associationPair.getSource(),
 					associationPair.getDestination(), db);

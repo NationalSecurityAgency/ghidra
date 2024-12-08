@@ -328,7 +328,8 @@ public class EHDataTypeUtilities {
 			PseudoDisassembler.getNormalizedDisassemblyAddress(program, functionAddress);
 		Instruction inst = listing.getInstructionAt(normalizedFunctionAddress);
 		if (inst == null) {
-			functionAddress = PseudoDisassembler.setTargeContextForDisassembly(program, functionAddress);
+			functionAddress =
+				PseudoDisassembler.setTargetContextForDisassembly(program, functionAddress);
 			DisassembleCommand cmd = new DisassembleCommand(functionAddress, null, true);
 			if (!cmd.applyTo(program) || cmd.getDisassembledAddressSet().isEmpty()) {
 				Msg.error(EHDataTypeUtilities.class, "Failed to disassemble at " + functionAddress);

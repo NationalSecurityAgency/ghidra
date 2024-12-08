@@ -26,6 +26,7 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -33,7 +34,7 @@ public class CmdLinePasswordProviderTest extends AbstractGenericTest {
 
 	private CryptoProviders cryptoProviders = CryptoProviders.getInstance();
 
-	private List<PasswordValue> getPasswords(CryptoSession cryptoSession, String fsrlStr)
+	private List<Password> getPasswords(CryptoSession cryptoSession, String fsrlStr)
 			throws MalformedURLException {
 		return CollectionUtils
 				.asList(cryptoSession.getPasswordsFor(FSRL.fromString(fsrlStr), "badbeef"));
@@ -76,7 +77,7 @@ public class CmdLinePasswordProviderTest extends AbstractGenericTest {
 		System.setProperty(CmdLinePasswordProvider.CMDLINE_PASSWORD_PROVIDER_PROPERTY_NAME,
 			pwdFile.getPath());
 		try (CryptoSession cryptoSession = cryptoProviders.newSession()) {
-			List<PasswordValue> pwdList =
+			List<Password> pwdList =
 				getPasswords(cryptoSession, "file:///fake/path/file1.txt");
 
 			assertEquals(2, pwdList.size());
@@ -93,12 +94,12 @@ public class CmdLinePasswordProviderTest extends AbstractGenericTest {
 		System.setProperty(CmdLinePasswordProvider.CMDLINE_PASSWORD_PROVIDER_PROPERTY_NAME,
 			pwdFile.getPath());
 		try (CryptoSession cryptoSession = cryptoProviders.newSession()) {
-			List<PasswordValue> pwdList =
+			List<Password> pwdList =
 				getPasswords(cryptoSession, "file:///not_matching/path/file1.txt");
 
 			assertEquals(0, pwdList.size());
 
-			List<PasswordValue> list2 = getPasswords(cryptoSession, "file:///path/to/a/file1.txt");
+			List<Password> list2 = getPasswords(cryptoSession, "file:///path/to/a/file1.txt");
 			assertEquals(1, list2.size());
 		}
 	}

@@ -134,7 +134,8 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 	}
 
 	@Override
-	public FolderItem getItem(String fileID) throws IOException, UnsupportedOperationException {
+	public LocalFolderItem getItem(String fileID)
+			throws IOException, UnsupportedOperationException {
 		checkDisposed();
 		if (fileIdMap == null) {
 			return null;

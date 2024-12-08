@@ -83,15 +83,16 @@ public class CommentFieldLocation extends CodeUnitLocation {
 
 	/**
 	 * Returns the array of strings that make up the comment.
+	 * @return the comment
 	 */
 	public String[] getComment() {
 		return comment;
 	}
 
 	/**
-	 * Returns the comment type.  The type is either CodeUnit.EOL_COMMENT,
-	 *   CodeUnit.POST_COMMENT, CodeUnit.PLATE_COMMENT, CodeUnit.PRE_COMMENT,
-	 *   or CodeUnit.REPEATABLE_COMMENT.
+	 * Returns the comment type.  The type is either CodeUnit.EOL_COMMENT, CodeUnit.POST_COMMENT, 
+	 * CodeUnit.PLATE_COMMENT, CodeUnit.PRE_COMMENT, or CodeUnit.REPEATABLE_COMMENT.
+	 * @return the comment type
 	 */
 	public int getCommentType() {
 		return type;
@@ -149,5 +150,4 @@ public class CommentFieldLocation extends CodeUnitLocation {
 		comment = obj.getStrings("_COMMENT", new String[0]);
 		type = obj.getInt("_TYPE", 0);
 	}
-
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,15 +86,15 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 		provider = new DebuggerConsoleProvider(this);
 
 		rootLogger = (Logger) LogManager.getRootLogger();
-		appender.start();
-		rootLogger.addAppender(appender);
+		//appender.start();
+		//rootLogger.addAppender(appender);
 	}
 
 	@Override
 	protected void dispose() {
 		if (rootLogger != null) {
-			rootLogger.removeAppender(appender);
-			appender.stop();
+			//rootLogger.removeAppender(appender);
+			//appender.stop();
 
 			provider.dispose();
 			tool.removeComponentProvider(provider);
@@ -108,8 +108,18 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	}
 
 	@Override
+	public void log(Icon icon, String message, Throwable error) {
+		provider.log(icon, message, error);
+	}
+
+	@Override
 	public void log(Icon icon, String message, ActionContext context) {
 		provider.log(icon, message, context);
+	}
+
+	@Override
+	public void log(Icon icon, String message, Throwable error, ActionContext context) {
+		provider.log(icon, message, error, context);
 	}
 
 	@Override
@@ -141,6 +151,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * For testing: get the number of rows having a given class of action context
 	 * 
 	 * @param ctxCls the context class
+	 * @return the number of rows
 	 */
 	public long getRowCount(Class<? extends ActionContext> ctxCls) {
 		return provider.getRowCount(ctxCls);
@@ -150,9 +161,9 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * For testing: to verify the contents of a message delivered to the console log
 	 * 
 	 * @param ctx the context
-	 * @return the the log entry
+	 * @return the log entry
 	 */
-	public LogRow getLogRow(ActionContext ctx) {
+	public LogRow<?> getLogRow(ActionContext ctx) {
 		return provider.getLogRow(ctx);
 	}
 }

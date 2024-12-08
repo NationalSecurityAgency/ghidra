@@ -20,6 +20,7 @@ import java.util.concurrent.locks.*;
 
 import db.DBHandle;
 import ghidra.framework.data.DBDomainObjectSupport;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
@@ -163,7 +164,7 @@ public abstract class DBCachedDomainObjectAdapter extends DBDomainObjectSupport 
 	/**
 	 * @see {@link DBDomainObjectSupport}
 	 */
-	protected DBCachedDomainObjectAdapter(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor,
+	protected DBCachedDomainObjectAdapter(DBHandle dbh, OpenMode openMode, TaskMonitor monitor,
 			String name, int timeInterval, int bufSize, Object consumer) {
 		super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
 		this.rwLock = new GhidraLockWrappingRWLock(lock);

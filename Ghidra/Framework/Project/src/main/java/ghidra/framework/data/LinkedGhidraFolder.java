@@ -34,8 +34,7 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 
 	public static Icon FOLDER_LINK_CLOSED_ICON =
 		new GIcon("icon.content.handler.linked.folder.closed");
-	public static Icon FOLDER_LINK_OPEN_ICON =
-		new GIcon("icon.content.handler.linked.folder.open");
+	public static Icon FOLDER_LINK_OPEN_ICON = new GIcon("icon.content.handler.linked.folder.open");
 
 	private final Project activeProject;
 	private final DomainFolder localParent;
@@ -73,8 +72,8 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 	}
 
 	/**
-	 * Get the Ghidra URL associated with this linked folder's project or repository
-	 * @return Ghidra URL associated with this linked folder's project or repository
+	 * Get the Ghidra URL of the project/repository folder referenced by this object
+	 * @return Ghidra URL of the project/repository folder referenced by this object
 	 */
 	public URL getProjectURL() {
 		if (projectUrl == null) {
@@ -83,6 +82,7 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 		return projectUrl;
 	}
 
+	@Override
 	LinkedGhidraFolder getLinkedRootFolder() {
 		return this;
 	}
@@ -108,12 +108,12 @@ public class LinkedGhidraFolder extends LinkedGhidraSubFolder {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
-		return activeProject.getProjectLocator();
+		return localParent.getProjectLocator();
 	}
 
 	@Override
 	public ProjectData getProjectData() {
-		return activeProject.getProjectData();
+		return localParent.getProjectData();
 	}
 
 	@Override

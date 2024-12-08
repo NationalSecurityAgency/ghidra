@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.Color;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -28,7 +30,6 @@ import ghidra.framework.model.DomainObjectListener;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.ColorUtils;
 
 /**
@@ -113,10 +114,8 @@ public class PropertyBasedBackgroundColorModel
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_REMOVED)) {
+		if (ev.contains(INT_PROPERTY_MAP_ADDED, INT_PROPERTY_MAP_REMOVED)) {
 			colorMap = program.getIntRangeMap(COLOR_PROPERTY_NAME);
-
 		}
 
 	}

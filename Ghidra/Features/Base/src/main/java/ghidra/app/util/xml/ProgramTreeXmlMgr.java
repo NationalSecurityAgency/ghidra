@@ -15,7 +15,9 @@
  */
 package ghidra.app.util.xml;
 
-import ghidra.app.util.PluginConstants;
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -28,9 +30,6 @@ import ghidra.util.xml.XmlWriter;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
 /**
  * XML manager for program trees.
  */
@@ -39,7 +38,7 @@ class ProgramTreeXmlMgr {
 	private MessageLog log;
 	private AddressFactory factory;
 
-	private ArrayList<String> fragmentNameList;
+	private List<String> fragmentNameList;
 	private Stack<ProgramModule> moduleStack;
 	private String treeName;
 	private TaskMonitor monitor;
@@ -53,28 +52,29 @@ class ProgramTreeXmlMgr {
 		this.log = log;
 		listing = program.getListing();
 		factory = program.getAddressFactory();
-		moduleStack = new Stack<ProgramModule>();
+		moduleStack = new Stack<>();
 	}
 
 	/**
 	 * Read the Program tree section from an XML file.
 	 * @param parser parser for the XML
-	 * @param monitor monitor that can be canceled
+	 * @param m monitor that can be canceled
 	 * @param addToProgram true if we are adding trees to an existing
 	 * program
+	 * @throws CancelledException if cancelled
 	 */
-	void read(XmlPullParser parser, TaskMonitor m, boolean addToProgram) throws CancelledException {
+	void read(XmlPullParser parser, TaskMonitor m, boolean addToProgram)
+			throws CancelledException {
 		this.monitor = m;
 
-		//remove the default tree that is created when a program
-		//is instantiated...
+		// remove the default tree that is created when a program is instantiated
 		if (!addToProgram) {
-			listing.removeTree(PluginConstants.DEFAULT_TREE_NAME);
+			listing.removeTree(Listing.DEFAULT_TREE_NAME);
 		}
 
 		XmlElement trees = parser.start("PROGRAM_TREES");
 		while (parser.peek().isStart()) {
-			if (monitor.isCancelled()) {
+			if (m.isCancelled()) {
 				throw new CancelledException();
 			}
 			XmlElement element = null;
@@ -93,29 +93,30 @@ class ProgramTreeXmlMgr {
 	/**
 	 * Write out the XML for the program trees.
 	 * @param writer writer for XML
-	 * @param monitor monitor that can be canceled
-	 * should be written
-	 * @throws IOException
+	 * @param addrs the addresses
+	 * @param m monitor that can be canceled should be written
+	 * @throws CancelledException if cancelled
 	 */
-	void write(XmlWriter writer, AddressSetView addrs, TaskMonitor m) throws CancelledException {
+	void write(XmlWriter writer, AddressSetView addrs, TaskMonitor m)
+			throws CancelledException {
 		this.monitor = m;
-		monitor.setMessage("Writing PROGRAM TREES ...");
+		m.setMessage("Writing PROGRAM TREES ...");
 
 		writer.startElement("PROGRAM_TREES");
 		String[] treeNames = listing.getTreeNames();
 
-		for (int i = 0; i < treeNames.length; i++) {
-			if (monitor.isCancelled()) {
+		for (String treeName2 : treeNames) {
+			if (m.isCancelled()) {
 				throw new CancelledException();
 			}
 			XmlAttributes attrs = new XmlAttributes();
-			attrs.addAttribute("NAME", treeNames[i]);
+			attrs.addAttribute("NAME", treeName2);
 			writer.startElement("TREE", attrs);
 
-			ProgramModule root = listing.getRootModule(treeNames[i]);
+			ProgramModule root = listing.getRootModule(treeName2);
 
-			ArrayList<ProgramModule> writtenModules = new ArrayList<ProgramModule>();
-			ArrayList<ProgramFragment> writtenFragments = new ArrayList<ProgramFragment>();
+			ArrayList<ProgramModule> writtenModules = new ArrayList<>();
+			ArrayList<ProgramFragment> writtenFragments = new ArrayList<>();
 
 			writeModule(writer, addrs, root, writtenModules, writtenFragments);
 
@@ -126,7 +127,7 @@ class ProgramTreeXmlMgr {
 
 	private void processTree(XmlElement treeElement, XmlPullParser parser) {
 		treeName = treeElement.getAttribute("NAME");
-		fragmentNameList = new ArrayList<String>();
+		fragmentNameList = new ArrayList<>();
 
 		ProgramModule root = null;
 		try {
@@ -275,9 +276,9 @@ class ProgramTreeXmlMgr {
 	 */
 	private void removeEmptyFragments(ProgramModule module) {
 		Group[] groups = module.getChildren();
-		for (int i = 0; i < groups.length; i++) {
-			if (groups[i] instanceof ProgramFragment) {
-				String name = groups[i].getName();
+		for (Group group : groups) {
+			if (group instanceof ProgramFragment) {
+				String name = group.getName();
 				if (!fragmentNameList.contains(name)) {
 					try {
 						module.removeChild(name);
@@ -289,7 +290,7 @@ class ProgramTreeXmlMgr {
 				}
 			}
 			else {
-				removeEmptyFragments((ProgramModule) groups[i]);
+				removeEmptyFragments((ProgramModule) group);
 			}
 		}
 	}
@@ -308,12 +309,13 @@ class ProgramTreeXmlMgr {
 		if (!writtenModules.contains(parent)) {
 			writtenModules.add(parent);
 			Group[] kids = parent.getChildren();
-			for (int i = 0; i < kids.length; i++) {
-				if (kids[i] instanceof ProgramModule) {
-					writeModule(writer, addrs, (ProgramModule) kids[i], writtenModules, writtenFragments);
+			for (Group kid : kids) {
+				if (kid instanceof ProgramModule) {
+					writeModule(writer, addrs, (ProgramModule) kid, writtenModules,
+						writtenFragments);
 				}
 				else {
-					writeFragment(writer, addrs, (ProgramFragment) kids[i], writtenFragments);
+					writeFragment(writer, addrs, (ProgramFragment) kid, writtenFragments);
 				}
 			}
 		}
@@ -342,7 +344,8 @@ class ProgramTreeXmlMgr {
 		writer.endElement("FRAGMENT");
 	}
 
-	private void writeFragmentRange(XmlWriter writer, ProgramFragment fragment, AddressSetView fragmentSet) {
+	private void writeFragmentRange(XmlWriter writer, ProgramFragment fragment,
+			AddressSetView fragmentSet) {
 
 		AddressRangeIterator iter = fragmentSet.getAddressRanges();
 		while (iter.hasNext()) {

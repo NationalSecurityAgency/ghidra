@@ -33,7 +33,6 @@ import resources.ResourceManager;
 public class RepositoryCustomScreenShots extends GhidraScreenShotGenerator {
 
 	public RepositoryCustomScreenShots() {
-		super();
 	}
 
 	@Test
@@ -127,8 +126,6 @@ public class RepositoryCustomScreenShots extends GhidraScreenShotGenerator {
 		int y = p.y - radius;
 		g.fillOval(x, y, radius * 2, 2 * radius);
 
-		Font f = g.getFont().deriveFont(12f);
-		g.setFont(f);
 		FontMetrics metrics = g.getFontMetrics();
 		int height = metrics.getHeight();
 		g.setColor(Palette.BLACK);
@@ -154,8 +151,6 @@ public class RepositoryCustomScreenShots extends GhidraScreenShotGenerator {
 		BasicStroke stroke = new BasicStroke(1);
 		g.setStroke(stroke);
 
-		Font f = g.getFont().deriveFont(12f);
-		g.setFont(f);
 		FontMetrics metrics = g.getFontMetrics();
 		int margin = 5;
 		int height = metrics.getHeight() * text.length + 2 * margin;
@@ -189,8 +184,6 @@ public class RepositoryCustomScreenShots extends GhidraScreenShotGenerator {
 		Graphics2D g = ((BufferedImage) image).createGraphics();
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		Font f = g.getFont().deriveFont(12f);
-		g.setFont(f);
 		FontMetrics metrics = g.getFontMetrics();
 //		int margin = 5;
 		int height = metrics.getHeight() * text.length;

@@ -17,14 +17,13 @@ package ghidra.app.cmd.comments;
 
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
 /**
  * Command for editing and removing comments at an address.
  */
-public class SetCommentsCmd implements Command {
+public class SetCommentsCmd implements Command<Program> {
 
 	private Address address;
 	private String preComment;
@@ -79,13 +78,8 @@ public class SetCommentsCmd implements Command {
 		return !oldValue.equals(newValue);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		CodeUnit cu = getCodeUnit(program);
 
 		if (cu != null) {
@@ -138,9 +132,6 @@ public class SetCommentsCmd implements Command {
 		return cu;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;

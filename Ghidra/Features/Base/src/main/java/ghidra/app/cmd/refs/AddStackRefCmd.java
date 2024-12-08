@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.listing.*;
@@ -28,97 +26,84 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command class for adding stack references to a program.
  */
-public class AddStackRefCmd implements Command {
-	
+public class AddStackRefCmd implements Command<Program> {
+
 	private Address fromAddr;
 	private int opIndex;
 	private int stackOffset;
 	private RefType refType;
 	private SourceType source;
-	
+
 	private String status;
-	
-    /**
-     * Constructs a new command for adding a stack reference.
+
+	/**
+	 * Constructs a new command for adding a stack reference.
 	 * @param fromAddr "from" address within a function
 	 * @param opIndex operand index
 	 * @param stackOffset stack offset of the reference
 	 * @param source the source of this reference
-     */
-    public AddStackRefCmd(Address fromAddr, int opIndex, int stackOffset, SourceType source) {
-     	this.fromAddr = fromAddr;
-     	this.opIndex = opIndex;
-     	this.stackOffset = stackOffset;
-     	this.source = source;
-    }
-    
-    /**
-     * Constructs a new command for adding a stack reference.
+	 */
+	public AddStackRefCmd(Address fromAddr, int opIndex, int stackOffset, SourceType source) {
+		this.fromAddr = fromAddr;
+		this.opIndex = opIndex;
+		this.stackOffset = stackOffset;
+		this.source = source;
+	}
+
+	/**
+	 * Constructs a new command for adding a stack reference.
 	 * @param fromAddr "from" address within a function
 	 * @param opIndex operand index
 	 * @param stackOffset stack offset of the reference
 	 * @param refType reference type (e.g., STACK_READ or STACK_WRITE)
 	 * @param source the source of this reference
-     */
-    public AddStackRefCmd(Address fromAddr, int opIndex, int stackOffset, RefType refType, SourceType source) {
-     	this.fromAddr = fromAddr;
-     	this.opIndex = opIndex;
-     	this.stackOffset = stackOffset;
-     	this.refType = refType;
-     	this.source = source;
-    }
-
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
-    public boolean applyTo(DomainObject obj) {
-		Program p = (Program)obj;
-		
-		Function f = p.getFunctionManager().getFunctionContaining(fromAddr);
+	public AddStackRefCmd(Address fromAddr, int opIndex, int stackOffset, RefType refType,
+			SourceType source) {
+		this.fromAddr = fromAddr;
+		this.opIndex = opIndex;
+		this.stackOffset = stackOffset;
+		this.refType = refType;
+		this.source = source;
+	}
+
+	@Override
+	public boolean applyTo(Program program) {
+
+		Function f = program.getFunctionManager().getFunctionContaining(fromAddr);
 		if (f == null) {
 			status = "Stack reference may only be created within a function";
 			return false;
 		}
-		
+
 		if (refType == null) {
-			refType = RefTypeFactory.getDefaultStackRefType(p.getListing().getCodeUnitAt(fromAddr), opIndex);
+			refType = RefTypeFactory
+					.getDefaultStackRefType(program.getListing().getCodeUnitAt(fromAddr), opIndex);
 		}
-		
-//		if (refType.isWrite()) {
-			Variable var = f.getStackFrame().getVariableContaining(stackOffset);
-			if (var == null) {
-				try {
-					f.getStackFrame().createVariable(null, stackOffset, null, SourceType.DEFAULT);
-				}
-				catch (DuplicateNameException e) {
-				}
-				catch (InvalidInputException e) {
-					status = e.getMessage();
-					return false;
-				}
-				catch (AddressOutOfBoundsException e) {
-					status = e.getMessage();
-					return false;
-				}
-//			}
+
+		Variable var = f.getStackFrame().getVariableContaining(stackOffset);
+		if (var == null) {
+			try {
+				f.getStackFrame().createVariable(null, stackOffset, null, SourceType.DEFAULT);
+			}
+			catch (DuplicateNameException | InvalidInputException | AddressOutOfBoundsException e) {
+				status = e.getMessage();
+				return false;
+			}
 		}
-		p.getReferenceManager().addStackReference(fromAddr, opIndex, stackOffset, refType, source);
+		program.getReferenceManager()
+				.addStackReference(fromAddr, opIndex, stackOffset, refType, source);
 		return true;
-    }
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return status;
-    }
+	@Override
+	public String getStatusMsg() {
+		return status;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Add Stack Reference";
-    }
+	@Override
+	public String getName() {
+		return "Add Stack Reference";
+	}
 
 }

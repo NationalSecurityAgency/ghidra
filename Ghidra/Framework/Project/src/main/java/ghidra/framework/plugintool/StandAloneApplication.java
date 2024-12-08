@@ -225,21 +225,37 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	}
 
 	private Element getSavedToolElement() {
-		File savedToolFile = new File(Application.getUserSettingsDirectory(), SAVED_TOOL_FILE);
-		if (!savedToolFile.exists()) {
-			return null;
+		File userSettingsDir = Application.getUserSettingsDirectory();
+		File savedToolFile = new File(userSettingsDir, SAVED_TOOL_FILE);
+		if (savedToolFile.exists()) {
+			return loadToolXml(savedToolFile);
 		}
 
+		Msg.debug(this, "No saved tool found in " + userSettingsDir);
+		List<File> dirs = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
+		for (File dir : dirs) {
+			savedToolFile = new File(dir, SAVED_TOOL_FILE);
+			Msg.debug(this, "Checking for previous tool in " + dir);
+			if (savedToolFile.exists()) {
+				Msg.debug(this, "Using previous tool " + savedToolFile);
+				return loadToolXml(savedToolFile);
+			}
+		}
+
+		return null;
+	}
+
+	private Element loadToolXml(File file) {
 		FileInputStream fileInputStream = null;
 		try {
-			fileInputStream = new FileInputStream(savedToolFile.getAbsolutePath());
+			fileInputStream = new FileInputStream(file.getAbsolutePath());
 			SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);
 			Element root = sax.build(fileInputStream).getRootElement();
 			return root;
 		}
 		catch (Exception e) {
-			Msg.showError(getClass(), null, "Error Reading Tool",
-				"Could not read tool: " + savedToolFile, e);
+			Msg.showError(getClass(), null, "Error Reading Tool", "Could not read tool: " + file,
+				e);
 		}
 		finally {
 			if (fileInputStream != null) {
@@ -251,7 +267,6 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 				}
 			}
 		}
-
 		return null;
 	}
 

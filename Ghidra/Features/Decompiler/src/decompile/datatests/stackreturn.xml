@@ -1,0 +1,42 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Examples of functions returning values in callee relative stack locations
+-->
+<bytechunk space="ram" offset="0x100020" readonly="true">
+4883ec18bf6400000066e8f300488b44
+24086748a340011000bf01000000be14
+00000066e8da008b4424089067a35001
+100090bf02000000be1e00000066e8c1
+00488b4424086748a358011000c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100120" readonly="true">
+c3c3c3
+</bytechunk>
+<symbol space="ram" offset="0x100020" name="stackreturn"/>
+<symbol space="ram" offset="0x100120" name="perfect"/>
+<symbol space="ram" offset="0x100121" name="small"/>
+<symbol space="ram" offset="0x100122" name="big"/>
+</binaryimage>
+<script>
+  <com>map addr r0x100140 int8 perf_ret</com>
+  <com>map addr r0x100150 int4 small_ret</com>
+  <com>map addr r0x100158 int8 big_ret</com>
+  <com>lo fu perfect</com>
+  <com>map return s0x10 int8</com>
+  <com>lo fu small</com>
+  <com>map return s0x10 int8</com>
+  <com>lo fu big</com>
+  <com>map return s0x12 int2</com>
+  <com>lo fu stackreturn</com>
+  <com>map addr s0xfffffffffffffff0 int8 local</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Stack Return #1" min="1" max="1">local = perfect\(100\);</stringmatch>
+<stringmatch name="Stack Return #2" min="1" max="1">perf_ret = local;</stringmatch>
+<stringmatch name="Stack Return #3" min="1" max="1">local = small\(1,0x14\);</stringmatch>
+<stringmatch name="Stack Return #4" min="1" max="1">small_ret = \(int4\)local;</stringmatch>
+<stringmatch name="Stack Return #5" min="1" max="1">local\._2_2_ = big\(2,0x1e\);</stringmatch>
+</decompilertest>

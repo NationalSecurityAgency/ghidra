@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.Gui;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -42,6 +43,8 @@ import resources.Icons;
  * By default the progress bar and progress icon (spinning globe) are visible.
  */
 public class TaskMonitorComponent extends JPanel implements TaskMonitor {
+
+	private static final String MESSAGE_FONT_ID = "font.task.monitor.label.message";
 
 	private WeakSet<CancelledListener> listeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
@@ -458,7 +461,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 				// don't care
 			}
 		};
-		messageLabel.setFont(messageLabel.getFont().deriveFont((float) 10.0));
+		Gui.registerFont(messageLabel, MESSAGE_FONT_ID);
 		Dimension d = messageLabel.getPreferredSize();
 		d.width = 180;
 		messageLabel.setPreferredSize(d);

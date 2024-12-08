@@ -16,4 +16,4 @@ SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra
-"${SCRIPT_DIR}"/launch.sh fg jdk GdbAgent "${MAXMEM}" "" agent.gdb.gadp.GdbGadpServerLaunchShim --gadp-args -H localhost -p 0 -g /usr/bin/gdb
+"${SCRIPT_DIR}"/launch.sh fg jdk GdbAgent "${MAXMEM}" "" agent.gdb.gadp.GdbGadpServerLaunchShim $@

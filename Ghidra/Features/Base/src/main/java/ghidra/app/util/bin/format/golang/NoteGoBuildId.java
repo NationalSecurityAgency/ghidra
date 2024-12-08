@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
 import ghidra.app.util.bin.format.elf.info.ElfNote;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -29,10 +28,11 @@ import ghidra.program.model.listing.Program;
  */
 public class NoteGoBuildId extends ElfNote {
 	public static final String SECTION_NAME = ".note.go.buildid";
+	public static final String PROGRAM_INFO_KEY = "Golang BuildId";
 
 	/**
 	 * Reads a NoteGoBuildId from the specified BinaryReader, matching the signature of 
-	 * {@link ElfInfoItem.ReaderFunc}.
+	 * ElfInfoItem.ReaderFunc.
 	 * 
 	 * @param br BinaryReader
 	 * @param unusedProgram context (unused but needed to match signature)
@@ -68,7 +68,7 @@ public class NoteGoBuildId extends ElfNote {
 
 	@Override
 	public String getProgramInfoKey() {
-		return "Golang BuildId";
+		return PROGRAM_INFO_KEY;
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class NoteGoBuildId extends ElfNote {
 	@Override
 	public StructureDataType toStructure(DataTypeManager dtm) {
 		StructureDataType struct =
-			ElfNote.createNoteStructure(GolangElfInfoProducer.GO_CATEGORYPATH,
+			ElfNote.createNoteStructure(GoConstants.GOLANG_CATEGORYPATH,
 				"NoteGoBuildId_%d".formatted(description.length), false, nameLen, 0, dtm);
 		struct.add(StringUTF8DataType.dataType, description.length, "BuildId", null);
 		return struct;

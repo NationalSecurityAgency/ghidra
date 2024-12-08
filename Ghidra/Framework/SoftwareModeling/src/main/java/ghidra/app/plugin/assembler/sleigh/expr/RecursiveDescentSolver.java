@@ -17,8 +17,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 
 import java.util.*;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
@@ -115,11 +114,13 @@ public class RecursiveDescentSolver {
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
 	 */
-	protected AssemblyResolution solve(PatternExpression exp, MaskedLong goal,
-			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException {
+	protected AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException {
 		try {
-			return getRegistered(exp.getClass()).solve(exp, goal, vals, cur, hints, description);
+			return getRegistered(exp.getClass()).solve(factory, exp, goal, vals, cur, hints,
+				description);
 		}
 		catch (UnsupportedOperationException e) {
 			DBG.println("Error solving " + exp + " = " + goal);
@@ -152,10 +153,10 @@ public class RecursiveDescentSolver {
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
 	 */
-	public AssemblyResolution solve(PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, String description)
-			throws NeedsBackfillException {
-		return solve(exp, goal, vals, cur, Set.of(), description);
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, String description) throws NeedsBackfillException {
+		return solve(factory, exp, goal, vals, cur, Set.of(), description);
 	}
 
 	/**

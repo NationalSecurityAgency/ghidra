@@ -209,7 +209,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		try (BufferedReader in =
 			new BufferedReader(new InputStreamReader(provider.getInputStream(0)))) {
 			while ((line = in.readLine()) != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				lineNum++;
 				if (lineNum % 1000 == 1) {

@@ -1,0 +1,5696 @@
+define pcodeop vfmadd.s;
+
+#lsx.txt vfmadd.s mask=0x09100000	
+#0x09100000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfmadd.s vrD, vrJ, vrK, vrA          is op20_31=0x91 & vrD & vrJ & vrK & vrA {
+	vrD = vfmadd.s(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfmadd.d;
+
+#lsx.txt vfmadd.d mask=0x09200000	
+#0x09200000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfmadd.d vrD, vrJ, vrK, vrA          is op20_31=0x92 & vrD & vrJ & vrK & vrA {
+	vrD = vfmadd.d(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfmsub.s;
+
+#lsx.txt vfmsub.s mask=0x09500000	
+#0x09500000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfmsub.s vrD, vrJ, vrK, vrA          is op20_31=0x95 & vrD & vrJ & vrK & vrA {
+	vrD = vfmsub.s(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfmsub.d;
+
+#lsx.txt vfmsub.d mask=0x09600000	
+#0x09600000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfmsub.d vrD, vrJ, vrK, vrA          is op20_31=0x96 & vrD & vrJ & vrK & vrA {
+	vrD = vfmsub.d(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfnmadd.s;
+
+#lsx.txt vfnmadd.s mask=0x09900000	
+#0x09900000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfnmadd.s vrD, vrJ, vrK, vrA         is op20_31=0x99 & vrD & vrJ & vrK & vrA {
+	vrD = vfnmadd.s(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfnmadd.d;
+
+#lsx.txt vfnmadd.d mask=0x09a00000	
+#0x09a00000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfnmadd.d vrD, vrJ, vrK, vrA         is op20_31=0x9a & vrD & vrJ & vrK & vrA {
+	vrD = vfnmadd.d(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfnmsub.s;
+
+#lsx.txt vfnmsub.s mask=0x09d00000	
+#0x09d00000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfnmsub.s vrD, vrJ, vrK, vrA         is op20_31=0x9d & vrD & vrJ & vrK & vrA {
+	vrD = vfnmsub.s(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfnmsub.d;
+
+#lsx.txt vfnmsub.d mask=0x09e00000	
+#0x09e00000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vfnmsub.d vrD, vrJ, vrK, vrA         is op20_31=0x9e & vrD & vrJ & vrK & vrA {
+	vrD = vfnmsub.d(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vfcmp.caf.s;
+
+#lsx.txt vfcmp.caf.s mask=0x0c500000	
+#0x0c500000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.caf.s vrD, vrJ, vrK            is op15_31=0x18a0 & vrD & vrJ & vrK {
+	vrD = vfcmp.caf.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.saf.s;
+
+#lsx.txt vfcmp.saf.s mask=0x0c508000	
+#0x0c508000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.saf.s vrD, vrJ, vrK            is op15_31=0x18a1 & vrD & vrJ & vrK {
+	vrD = vfcmp.saf.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.clt.s;
+
+#lsx.txt vfcmp.clt.s mask=0x0c510000	
+#0x0c510000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.clt.s vrD, vrJ, vrK            is op15_31=0x18a2 & vrD & vrJ & vrK {
+	vrD = vfcmp.clt.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.slt.s;
+
+#lsx.txt vfcmp.slt.s mask=0x0c518000	
+#0x0c518000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.slt.s vrD, vrJ, vrK            is op15_31=0x18a3 & vrD & vrJ & vrK {
+	vrD = vfcmp.slt.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.ceq.s;
+
+#lsx.txt vfcmp.ceq.s mask=0x0c520000	
+#0x0c520000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.ceq.s vrD, vrJ, vrK            is op15_31=0x18a4 & vrD & vrJ & vrK {
+	vrD = vfcmp.ceq.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.seq.s;
+
+#lsx.txt vfcmp.seq.s mask=0x0c528000	
+#0x0c528000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.seq.s vrD, vrJ, vrK            is op15_31=0x18a5 & vrD & vrJ & vrK {
+	vrD = vfcmp.seq.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cle.s;
+
+#lsx.txt vfcmp.cle.s mask=0x0c530000	
+#0x0c530000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cle.s vrD, vrJ, vrK            is op15_31=0x18a6 & vrD & vrJ & vrK {
+	vrD = vfcmp.cle.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sle.s;
+
+#lsx.txt vfcmp.sle.s mask=0x0c538000	
+#0x0c538000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sle.s vrD, vrJ, vrK            is op15_31=0x18a7 & vrD & vrJ & vrK {
+	vrD = vfcmp.sle.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cun.s;
+
+#lsx.txt vfcmp.cun.s mask=0x0c540000	
+#0x0c540000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cun.s vrD, vrJ, vrK            is op15_31=0x18a8 & vrD & vrJ & vrK {
+	vrD = vfcmp.cun.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sun.s;
+
+#lsx.txt vfcmp.sun.s mask=0x0c548000	
+#0x0c548000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sun.s vrD, vrJ, vrK            is op15_31=0x18a9 & vrD & vrJ & vrK {
+	vrD = vfcmp.sun.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cult.s;
+
+#lsx.txt vfcmp.cult.s mask=0x0c550000	
+#0x0c550000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cult.s vrD, vrJ, vrK           is op15_31=0x18aa & vrD & vrJ & vrK {
+	vrD = vfcmp.cult.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sult.s;
+
+#lsx.txt vfcmp.sult.s mask=0x0c558000	
+#0x0c558000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sult.s vrD, vrJ, vrK           is op15_31=0x18ab & vrD & vrJ & vrK {
+	vrD = vfcmp.sult.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cueq.s;
+
+#lsx.txt vfcmp.cueq.s mask=0x0c560000	
+#0x0c560000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cueq.s vrD, vrJ, vrK           is op15_31=0x18ac & vrD & vrJ & vrK {
+	vrD = vfcmp.cueq.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sueq.s;
+
+#lsx.txt vfcmp.sueq.s mask=0x0c568000	
+#0x0c568000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sueq.s vrD, vrJ, vrK           is op15_31=0x18ad & vrD & vrJ & vrK {
+	vrD = vfcmp.sueq.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cule.s;
+
+#lsx.txt vfcmp.cule.s mask=0x0c570000	
+#0x0c570000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cule.s vrD, vrJ, vrK           is op15_31=0x18ae & vrD & vrJ & vrK {
+	vrD = vfcmp.cule.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sule.s;
+
+#lsx.txt vfcmp.sule.s mask=0x0c578000	
+#0x0c578000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sule.s vrD, vrJ, vrK           is op15_31=0x18af & vrD & vrJ & vrK {
+	vrD = vfcmp.sule.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cne.s;
+
+#lsx.txt vfcmp.cne.s mask=0x0c580000	
+#0x0c580000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cne.s vrD, vrJ, vrK            is op15_31=0x18b0 & vrD & vrJ & vrK {
+	vrD = vfcmp.cne.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sne.s;
+
+#lsx.txt vfcmp.sne.s mask=0x0c588000	
+#0x0c588000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sne.s vrD, vrJ, vrK            is op15_31=0x18b1 & vrD & vrJ & vrK {
+	vrD = vfcmp.sne.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cor.s;
+
+#lsx.txt vfcmp.cor.s mask=0x0c5a0000	
+#0x0c5a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cor.s vrD, vrJ, vrK            is op15_31=0x18b4 & vrD & vrJ & vrK {
+	vrD = vfcmp.cor.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sor.s;
+
+#lsx.txt vfcmp.sor.s mask=0x0c5a8000	
+#0x0c5a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sor.s vrD, vrJ, vrK            is op15_31=0x18b5 & vrD & vrJ & vrK {
+	vrD = vfcmp.sor.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cune.s;
+
+#lsx.txt vfcmp.cune.s mask=0x0c5c0000	
+#0x0c5c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cune.s vrD, vrJ, vrK           is op15_31=0x18b8 & vrD & vrJ & vrK {
+	vrD = vfcmp.cune.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sune.s;
+
+#lsx.txt vfcmp.sune.s mask=0x0c5c8000	
+#0x0c5c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sune.s vrD, vrJ, vrK           is op15_31=0x18b9 & vrD & vrJ & vrK {
+	vrD = vfcmp.sune.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.caf.d;
+
+#lsx.txt vfcmp.caf.d mask=0x0c600000	
+#0x0c600000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.caf.d vrD, vrJ, vrK            is op15_31=0x18c0 & vrD & vrJ & vrK {
+	vrD = vfcmp.caf.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.saf.d;
+
+#lsx.txt vfcmp.saf.d mask=0x0c608000	
+#0x0c608000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.saf.d vrD, vrJ, vrK            is op15_31=0x18c1 & vrD & vrJ & vrK {
+	vrD = vfcmp.saf.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.clt.d;
+
+#lsx.txt vfcmp.clt.d mask=0x0c610000	
+#0x0c610000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.clt.d vrD, vrJ, vrK            is op15_31=0x18c2 & vrD & vrJ & vrK {
+	vrD = vfcmp.clt.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.slt.d;
+
+#lsx.txt vfcmp.slt.d mask=0x0c618000	
+#0x0c618000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.slt.d vrD, vrJ, vrK            is op15_31=0x18c3 & vrD & vrJ & vrK {
+	vrD = vfcmp.slt.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.ceq.d;
+
+#lsx.txt vfcmp.ceq.d mask=0x0c620000	
+#0x0c620000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.ceq.d vrD, vrJ, vrK            is op15_31=0x18c4 & vrD & vrJ & vrK {
+	vrD = vfcmp.ceq.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.seq.d;
+
+#lsx.txt vfcmp.seq.d mask=0x0c628000	
+#0x0c628000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.seq.d vrD, vrJ, vrK            is op15_31=0x18c5 & vrD & vrJ & vrK {
+	vrD = vfcmp.seq.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cle.d;
+
+#lsx.txt vfcmp.cle.d mask=0x0c630000	
+#0x0c630000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cle.d vrD, vrJ, vrK            is op15_31=0x18c6 & vrD & vrJ & vrK {
+	vrD = vfcmp.cle.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sle.d;
+
+#lsx.txt vfcmp.sle.d mask=0x0c638000	
+#0x0c638000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sle.d vrD, vrJ, vrK            is op15_31=0x18c7 & vrD & vrJ & vrK {
+	vrD = vfcmp.sle.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cun.d;
+
+#lsx.txt vfcmp.cun.d mask=0x0c640000	
+#0x0c640000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cun.d vrD, vrJ, vrK            is op15_31=0x18c8 & vrD & vrJ & vrK {
+	vrD = vfcmp.cun.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sun.d;
+
+#lsx.txt vfcmp.sun.d mask=0x0c648000	
+#0x0c648000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sun.d vrD, vrJ, vrK            is op15_31=0x18c9 & vrD & vrJ & vrK {
+	vrD = vfcmp.sun.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cult.d;
+
+#lsx.txt vfcmp.cult.d mask=0x0c650000	
+#0x0c650000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cult.d vrD, vrJ, vrK           is op15_31=0x18ca & vrD & vrJ & vrK {
+	vrD = vfcmp.cult.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sult.d;
+
+#lsx.txt vfcmp.sult.d mask=0x0c658000	
+#0x0c658000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sult.d vrD, vrJ, vrK           is op15_31=0x18cb & vrD & vrJ & vrK {
+	vrD = vfcmp.sult.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cueq.d;
+
+#lsx.txt vfcmp.cueq.d mask=0x0c660000	
+#0x0c660000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cueq.d vrD, vrJ, vrK           is op15_31=0x18cc & vrD & vrJ & vrK {
+	vrD = vfcmp.cueq.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sueq.d;
+
+#lsx.txt vfcmp.sueq.d mask=0x0c668000	
+#0x0c668000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sueq.d vrD, vrJ, vrK           is op15_31=0x18cd & vrD & vrJ & vrK {
+	vrD = vfcmp.sueq.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cule.d;
+
+#lsx.txt vfcmp.cule.d mask=0x0c670000	
+#0x0c670000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cule.d vrD, vrJ, vrK           is op15_31=0x18ce & vrD & vrJ & vrK {
+	vrD = vfcmp.cule.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sule.d;
+
+#lsx.txt vfcmp.sule.d mask=0x0c678000	
+#0x0c678000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sule.d vrD, vrJ, vrK           is op15_31=0x18cf & vrD & vrJ & vrK {
+	vrD = vfcmp.sule.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cne.d;
+
+#lsx.txt vfcmp.cne.d mask=0x0c680000	
+#0x0c680000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cne.d vrD, vrJ, vrK            is op15_31=0x18d0 & vrD & vrJ & vrK {
+	vrD = vfcmp.cne.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sne.d;
+
+#lsx.txt vfcmp.sne.d mask=0x0c688000	
+#0x0c688000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sne.d vrD, vrJ, vrK            is op15_31=0x18d1 & vrD & vrJ & vrK {
+	vrD = vfcmp.sne.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cor.d;
+
+#lsx.txt vfcmp.cor.d mask=0x0c6a0000	
+#0x0c6a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cor.d vrD, vrJ, vrK            is op15_31=0x18d4 & vrD & vrJ & vrK {
+	vrD = vfcmp.cor.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sor.d;
+
+#lsx.txt vfcmp.sor.d mask=0x0c6a8000	
+#0x0c6a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sor.d vrD, vrJ, vrK            is op15_31=0x18d5 & vrD & vrJ & vrK {
+	vrD = vfcmp.sor.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.cune.d;
+
+#lsx.txt vfcmp.cune.d mask=0x0c6c0000	
+#0x0c6c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.cune.d vrD, vrJ, vrK           is op15_31=0x18d8 & vrD & vrJ & vrK {
+	vrD = vfcmp.cune.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcmp.sune.d;
+
+#lsx.txt vfcmp.sune.d mask=0x0c6c8000	
+#0x0c6c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcmp.sune.d vrD, vrJ, vrK           is op15_31=0x18d9 & vrD & vrJ & vrK {
+	vrD = vfcmp.sune.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitsel.v;
+
+#lsx.txt vbitsel.v mask=0x0d100000	
+#0x0d100000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vbitsel.v vrD, vrJ, vrK, vrA         is op20_31=0xd1 & vrD & vrJ & vrK & vrA {
+	vrD = vbitsel.v(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vshuf.b;
+
+#lsx.txt vshuf.b mask=0x0d500000	
+#0x0d500000	0xfff00000	v0:5,v5:5,v10:5,v15:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0', 'vreg15_5_s0']
+:vshuf.b vrD, vrJ, vrK, vrA           is op20_31=0xd5 & vrD & vrJ & vrK & vrA {
+	vrD = vshuf.b(vrD, vrJ, vrK, vrA);
+}
+
+define pcodeop vld;
+
+#lsx.txt vld mask=0x2c000000	
+#0x2c000000	0xffc00000	v0:5, r5:5, so10:12	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:vld vrD, RJsrc, simm10_12            is op22_31=0xb0 & vrD & RJsrc & simm10_12 {
+	vrD = vld(vrD, RJsrc, simm10_12:$(REGSIZE));
+}
+
+define pcodeop vst;
+
+#lsx.txt vst mask=0x2c400000	
+#0x2c400000	0xffc00000	v0:5, r5:5, so10:12	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:vst vrD, RJsrc, simm10_12            is op22_31=0xb1 & vrD & RJsrc & simm10_12 {
+	vrD = vst(vrD, RJsrc, simm10_12:$(REGSIZE));
+}
+
+define pcodeop vldrepl.d;
+
+#lsx.txt vldrepl.d mask=0x30100000	[@orig_fmt=VdJSk9ps3]
+#0x30100000	0xfff80000	v0:5, r5:5, so10:9<<3	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_9_s0']
+:vldrepl.d vrD, RJsrc, simm10_9       is op19_31=0x602 & vrD & RJsrc & simm10_9 {
+	vrD = vldrepl.d(vrD, RJsrc, simm10_9:$(REGSIZE));
+}
+
+define pcodeop vldrepl.w;
+
+#lsx.txt vldrepl.w mask=0x30200000	[@orig_fmt=VdJSk10ps2]
+#0x30200000	0xfff00000	v0:5, r5:5, so10:10<<2	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_10_s0']
+:vldrepl.w vrD, RJsrc, simm10_10      is op20_31=0x302 & vrD & RJsrc & simm10_10 {
+	vrD = vldrepl.w(vrD, RJsrc, simm10_10:$(REGSIZE));
+}
+
+define pcodeop vldrepl.h;
+
+#lsx.txt vldrepl.h mask=0x30400000	[@orig_fmt=VdJSk11ps1]
+#0x30400000	0xffe00000	v0:5, r5:5, so10:11<<1	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_11_s0']
+:vldrepl.h vrD, RJsrc, simm10_11      is op21_31=0x182 & vrD & RJsrc & simm10_11 {
+	vrD = vldrepl.h(vrD, RJsrc, simm10_11:$(REGSIZE));
+}
+
+define pcodeop vldrepl.b;
+
+#lsx.txt vldrepl.b mask=0x30800000	
+#0x30800000	0xffc00000	v0:5, r5:5, so10:12	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:vldrepl.b vrD, RJsrc, simm10_12      is op22_31=0xc2 & vrD & RJsrc & simm10_12 {
+	vrD = vldrepl.b(vrD, RJsrc, simm10_12:$(REGSIZE));
+}
+
+define pcodeop vstelm.d;
+
+#lsx.txt vstelm.d mask=0x31100000	[@orig_fmt=VdJSk8ps3Un1]
+#0x31100000	0xfff80000	v0:5, r5:5, so10:8<<3,u18:1	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_1_s0']
+:vstelm.d vrD, RJsrc, simm10_8, imm18_1  is op19_31=0x622 & vrD & RJsrc & simm10_8 & imm18_1 {
+	vrD = vstelm.d(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_1:$(REGSIZE));
+}
+
+define pcodeop vstelm.w;
+
+#lsx.txt vstelm.w mask=0x31200000	[@orig_fmt=VdJSk8ps2Un2]
+#0x31200000	0xfff00000	v0:5, r5:5, so10:8<<2,u18:2	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_2_s0']
+:vstelm.w vrD, RJsrc, simm10_8, imm18_2  is op20_31=0x312 & vrD & RJsrc & simm10_8 & imm18_2 {
+	vrD = vstelm.w(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_2:$(REGSIZE));
+}
+
+define pcodeop vstelm.h;
+
+#lsx.txt vstelm.h mask=0x31400000	[@orig_fmt=VdJSk8ps1Un3]
+#0x31400000	0xffe00000	v0:5, r5:5, so10:8<<1,u18:3	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_3_s0']
+:vstelm.h vrD, RJsrc, simm10_8, imm18_3  is op21_31=0x18a & vrD & RJsrc & simm10_8 & imm18_3 {
+	vrD = vstelm.h(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_3:$(REGSIZE));
+}
+
+define pcodeop vstelm.b;
+
+#lsx.txt vstelm.b mask=0x31800000	
+#0x31800000	0xffc00000	v0:5, r5:5, so10:8,u18:4	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_4_s0']
+:vstelm.b vrD, RJsrc, simm10_8, imm18_4  is op22_31=0xc6 & vrD & RJsrc & simm10_8 & imm18_4 {
+	vrD = vstelm.b(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_4:$(REGSIZE));
+}
+
+define pcodeop vldx;
+
+#lsx.txt vldx mask=0x38400000	
+#0x38400000	0xffff8000	v0:5, r5:5, r10:5	['vreg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:vldx vrD, RJsrc, RKsrc               is op15_31=0x7080 & vrD & RJsrc & RKsrc {
+	vrD = vldx(vrD, RJsrc, RKsrc);
+}
+
+define pcodeop vstx;
+
+#lsx.txt vstx mask=0x38440000	
+#0x38440000	0xffff8000	v0:5, r5:5, r10:5	['vreg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:vstx vrD, RJsrc, RKsrc               is op15_31=0x7088 & vrD & RJsrc & RKsrc {
+	vrD = vstx(vrD, RJsrc, RKsrc);
+}
+
+define pcodeop vseq.b;
+
+#lsx.txt vseq.b mask=0x70000000	
+#0x70000000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vseq.b vrD, vrJ, vrK                 is op15_31=0xe000 & vrD & vrJ & vrK {
+	vrD = vseq.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vseq.h;
+
+#lsx.txt vseq.h mask=0x70008000	
+#0x70008000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vseq.h vrD, vrJ, vrK                 is op15_31=0xe001 & vrD & vrJ & vrK {
+	vrD = vseq.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vseq.w;
+
+#lsx.txt vseq.w mask=0x70010000	
+#0x70010000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vseq.w vrD, vrJ, vrK                 is op15_31=0xe002 & vrD & vrJ & vrK {
+	vrD = vseq.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vseq.d;
+
+#lsx.txt vseq.d mask=0x70018000	
+#0x70018000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vseq.d vrD, vrJ, vrK                 is op15_31=0xe003 & vrD & vrJ & vrK {
+	vrD = vseq.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.b;
+
+#lsx.txt vsle.b mask=0x70020000	
+#0x70020000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.b vrD, vrJ, vrK                 is op15_31=0xe004 & vrD & vrJ & vrK {
+	vrD = vsle.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.h;
+
+#lsx.txt vsle.h mask=0x70028000	
+#0x70028000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.h vrD, vrJ, vrK                 is op15_31=0xe005 & vrD & vrJ & vrK {
+	vrD = vsle.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.w;
+
+#lsx.txt vsle.w mask=0x70030000	
+#0x70030000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.w vrD, vrJ, vrK                 is op15_31=0xe006 & vrD & vrJ & vrK {
+	vrD = vsle.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.d;
+
+#lsx.txt vsle.d mask=0x70038000	
+#0x70038000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.d vrD, vrJ, vrK                 is op15_31=0xe007 & vrD & vrJ & vrK {
+	vrD = vsle.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.bu;
+
+#lsx.txt vsle.bu mask=0x70040000	
+#0x70040000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.bu vrD, vrJ, vrK                is op15_31=0xe008 & vrD & vrJ & vrK {
+	vrD = vsle.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.hu;
+
+#lsx.txt vsle.hu mask=0x70048000	
+#0x70048000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.hu vrD, vrJ, vrK                is op15_31=0xe009 & vrD & vrJ & vrK {
+	vrD = vsle.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.wu;
+
+#lsx.txt vsle.wu mask=0x70050000	
+#0x70050000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.wu vrD, vrJ, vrK                is op15_31=0xe00a & vrD & vrJ & vrK {
+	vrD = vsle.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsle.du;
+
+#lsx.txt vsle.du mask=0x70058000	
+#0x70058000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsle.du vrD, vrJ, vrK                is op15_31=0xe00b & vrD & vrJ & vrK {
+	vrD = vsle.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.b;
+
+#lsx.txt vslt.b mask=0x70060000	
+#0x70060000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.b vrD, vrJ, vrK                 is op15_31=0xe00c & vrD & vrJ & vrK {
+	vrD = vslt.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.h;
+
+#lsx.txt vslt.h mask=0x70068000	
+#0x70068000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.h vrD, vrJ, vrK                 is op15_31=0xe00d & vrD & vrJ & vrK {
+	vrD = vslt.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.w;
+
+#lsx.txt vslt.w mask=0x70070000	
+#0x70070000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.w vrD, vrJ, vrK                 is op15_31=0xe00e & vrD & vrJ & vrK {
+	vrD = vslt.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.d;
+
+#lsx.txt vslt.d mask=0x70078000	
+#0x70078000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.d vrD, vrJ, vrK                 is op15_31=0xe00f & vrD & vrJ & vrK {
+	vrD = vslt.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.bu;
+
+#lsx.txt vslt.bu mask=0x70080000	
+#0x70080000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.bu vrD, vrJ, vrK                is op15_31=0xe010 & vrD & vrJ & vrK {
+	vrD = vslt.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.hu;
+
+#lsx.txt vslt.hu mask=0x70088000	
+#0x70088000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.hu vrD, vrJ, vrK                is op15_31=0xe011 & vrD & vrJ & vrK {
+	vrD = vslt.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.wu;
+
+#lsx.txt vslt.wu mask=0x70090000	
+#0x70090000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.wu vrD, vrJ, vrK                is op15_31=0xe012 & vrD & vrJ & vrK {
+	vrD = vslt.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vslt.du;
+
+#lsx.txt vslt.du mask=0x70098000	
+#0x70098000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vslt.du vrD, vrJ, vrK                is op15_31=0xe013 & vrD & vrJ & vrK {
+	vrD = vslt.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vadd.b;
+
+#lsx.txt vadd.b mask=0x700a0000	
+#0x700a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadd.b vrD, vrJ, vrK                 is op15_31=0xe014 & vrD & vrJ & vrK {
+	vrD = vadd.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vadd.h;
+
+#lsx.txt vadd.h mask=0x700a8000	
+#0x700a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadd.h vrD, vrJ, vrK                 is op15_31=0xe015 & vrD & vrJ & vrK {
+	vrD = vadd.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vadd.w;
+
+#lsx.txt vadd.w mask=0x700b0000	
+#0x700b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadd.w vrD, vrJ, vrK                 is op15_31=0xe016 & vrD & vrJ & vrK {
+	vrD = vadd.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vadd.d;
+
+#lsx.txt vadd.d mask=0x700b8000	
+#0x700b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadd.d vrD, vrJ, vrK                 is op15_31=0xe017 & vrD & vrJ & vrK {
+	vrD = vadd.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsub.b;
+
+#lsx.txt vsub.b mask=0x700c0000	
+#0x700c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsub.b vrD, vrJ, vrK                 is op15_31=0xe018 & vrD & vrJ & vrK {
+	vrD = vsub.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsub.h;
+
+#lsx.txt vsub.h mask=0x700c8000	
+#0x700c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsub.h vrD, vrJ, vrK                 is op15_31=0xe019 & vrD & vrJ & vrK {
+	vrD = vsub.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsub.w;
+
+#lsx.txt vsub.w mask=0x700d0000	
+#0x700d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsub.w vrD, vrJ, vrK                 is op15_31=0xe01a & vrD & vrJ & vrK {
+	vrD = vsub.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsub.d;
+
+#lsx.txt vsub.d mask=0x700d8000	
+#0x700d8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsub.d vrD, vrJ, vrK                 is op15_31=0xe01b & vrD & vrJ & vrK {
+	vrD = vsub.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.h.b;
+
+#lsx.txt vaddwev.h.b mask=0x701e0000	
+#0x701e0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.h.b vrD, vrJ, vrK            is op15_31=0xe03c & vrD & vrJ & vrK {
+	vrD = vaddwev.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.w.h;
+
+#lsx.txt vaddwev.w.h mask=0x701e8000	
+#0x701e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.w.h vrD, vrJ, vrK            is op15_31=0xe03d & vrD & vrJ & vrK {
+	vrD = vaddwev.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.d.w;
+
+#lsx.txt vaddwev.d.w mask=0x701f0000	
+#0x701f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.d.w vrD, vrJ, vrK            is op15_31=0xe03e & vrD & vrJ & vrK {
+	vrD = vaddwev.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.q.d;
+
+#lsx.txt vaddwev.q.d mask=0x701f8000	
+#0x701f8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.q.d vrD, vrJ, vrK            is op15_31=0xe03f & vrD & vrJ & vrK {
+	vrD = vaddwev.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.h.b;
+
+#lsx.txt vsubwev.h.b mask=0x70200000	
+#0x70200000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.h.b vrD, vrJ, vrK            is op15_31=0xe040 & vrD & vrJ & vrK {
+	vrD = vsubwev.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.w.h;
+
+#lsx.txt vsubwev.w.h mask=0x70208000	
+#0x70208000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.w.h vrD, vrJ, vrK            is op15_31=0xe041 & vrD & vrJ & vrK {
+	vrD = vsubwev.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.d.w;
+
+#lsx.txt vsubwev.d.w mask=0x70210000	
+#0x70210000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.d.w vrD, vrJ, vrK            is op15_31=0xe042 & vrD & vrJ & vrK {
+	vrD = vsubwev.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.q.d;
+
+#lsx.txt vsubwev.q.d mask=0x70218000	
+#0x70218000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.q.d vrD, vrJ, vrK            is op15_31=0xe043 & vrD & vrJ & vrK {
+	vrD = vsubwev.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.h.b;
+
+#lsx.txt vaddwod.h.b mask=0x70220000	
+#0x70220000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.h.b vrD, vrJ, vrK            is op15_31=0xe044 & vrD & vrJ & vrK {
+	vrD = vaddwod.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.w.h;
+
+#lsx.txt vaddwod.w.h mask=0x70228000	
+#0x70228000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.w.h vrD, vrJ, vrK            is op15_31=0xe045 & vrD & vrJ & vrK {
+	vrD = vaddwod.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.d.w;
+
+#lsx.txt vaddwod.d.w mask=0x70230000	
+#0x70230000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.d.w vrD, vrJ, vrK            is op15_31=0xe046 & vrD & vrJ & vrK {
+	vrD = vaddwod.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.q.d;
+
+#lsx.txt vaddwod.q.d mask=0x70238000	
+#0x70238000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.q.d vrD, vrJ, vrK            is op15_31=0xe047 & vrD & vrJ & vrK {
+	vrD = vaddwod.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.h.b;
+
+#lsx.txt vsubwod.h.b mask=0x70240000	
+#0x70240000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.h.b vrD, vrJ, vrK            is op15_31=0xe048 & vrD & vrJ & vrK {
+	vrD = vsubwod.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.w.h;
+
+#lsx.txt vsubwod.w.h mask=0x70248000	
+#0x70248000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.w.h vrD, vrJ, vrK            is op15_31=0xe049 & vrD & vrJ & vrK {
+	vrD = vsubwod.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.d.w;
+
+#lsx.txt vsubwod.d.w mask=0x70250000	
+#0x70250000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.d.w vrD, vrJ, vrK            is op15_31=0xe04a & vrD & vrJ & vrK {
+	vrD = vsubwod.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.q.d;
+
+#lsx.txt vsubwod.q.d mask=0x70258000	
+#0x70258000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.q.d vrD, vrJ, vrK            is op15_31=0xe04b & vrD & vrJ & vrK {
+	vrD = vsubwod.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.h.bu;
+
+#lsx.txt vaddwev.h.bu mask=0x702e0000	
+#0x702e0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.h.bu vrD, vrJ, vrK           is op15_31=0xe05c & vrD & vrJ & vrK {
+	vrD = vaddwev.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.w.hu;
+
+#lsx.txt vaddwev.w.hu mask=0x702e8000	
+#0x702e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.w.hu vrD, vrJ, vrK           is op15_31=0xe05d & vrD & vrJ & vrK {
+	vrD = vaddwev.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.d.wu;
+
+#lsx.txt vaddwev.d.wu mask=0x702f0000	
+#0x702f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.d.wu vrD, vrJ, vrK           is op15_31=0xe05e & vrD & vrJ & vrK {
+	vrD = vaddwev.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.q.du;
+
+#lsx.txt vaddwev.q.du mask=0x702f8000	
+#0x702f8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.q.du vrD, vrJ, vrK           is op15_31=0xe05f & vrD & vrJ & vrK {
+	vrD = vaddwev.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.h.bu;
+
+#lsx.txt vsubwev.h.bu mask=0x70300000	
+#0x70300000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.h.bu vrD, vrJ, vrK           is op15_31=0xe060 & vrD & vrJ & vrK {
+	vrD = vsubwev.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.w.hu;
+
+#lsx.txt vsubwev.w.hu mask=0x70308000	
+#0x70308000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.w.hu vrD, vrJ, vrK           is op15_31=0xe061 & vrD & vrJ & vrK {
+	vrD = vsubwev.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.d.wu;
+
+#lsx.txt vsubwev.d.wu mask=0x70310000	
+#0x70310000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.d.wu vrD, vrJ, vrK           is op15_31=0xe062 & vrD & vrJ & vrK {
+	vrD = vsubwev.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwev.q.du;
+
+#lsx.txt vsubwev.q.du mask=0x70318000	
+#0x70318000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwev.q.du vrD, vrJ, vrK           is op15_31=0xe063 & vrD & vrJ & vrK {
+	vrD = vsubwev.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.h.bu;
+
+#lsx.txt vaddwod.h.bu mask=0x70320000	
+#0x70320000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.h.bu vrD, vrJ, vrK           is op15_31=0xe064 & vrD & vrJ & vrK {
+	vrD = vaddwod.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.w.hu;
+
+#lsx.txt vaddwod.w.hu mask=0x70328000	
+#0x70328000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.w.hu vrD, vrJ, vrK           is op15_31=0xe065 & vrD & vrJ & vrK {
+	vrD = vaddwod.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.d.wu;
+
+#lsx.txt vaddwod.d.wu mask=0x70330000	
+#0x70330000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.d.wu vrD, vrJ, vrK           is op15_31=0xe066 & vrD & vrJ & vrK {
+	vrD = vaddwod.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.q.du;
+
+#lsx.txt vaddwod.q.du mask=0x70338000	
+#0x70338000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.q.du vrD, vrJ, vrK           is op15_31=0xe067 & vrD & vrJ & vrK {
+	vrD = vaddwod.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.h.bu;
+
+#lsx.txt vsubwod.h.bu mask=0x70340000	
+#0x70340000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.h.bu vrD, vrJ, vrK           is op15_31=0xe068 & vrD & vrJ & vrK {
+	vrD = vsubwod.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.w.hu;
+
+#lsx.txt vsubwod.w.hu mask=0x70348000	
+#0x70348000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.w.hu vrD, vrJ, vrK           is op15_31=0xe069 & vrD & vrJ & vrK {
+	vrD = vsubwod.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.d.wu;
+
+#lsx.txt vsubwod.d.wu mask=0x70350000	
+#0x70350000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.d.wu vrD, vrJ, vrK           is op15_31=0xe06a & vrD & vrJ & vrK {
+	vrD = vsubwod.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsubwod.q.du;
+
+#lsx.txt vsubwod.q.du mask=0x70358000	
+#0x70358000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsubwod.q.du vrD, vrJ, vrK           is op15_31=0xe06b & vrD & vrJ & vrK {
+	vrD = vsubwod.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.h.bu.b;
+
+#lsx.txt vaddwev.h.bu.b mask=0x703e0000	
+#0x703e0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.h.bu.b vrD, vrJ, vrK         is op15_31=0xe07c & vrD & vrJ & vrK {
+	vrD = vaddwev.h.bu.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.w.hu.h;
+
+#lsx.txt vaddwev.w.hu.h mask=0x703e8000	
+#0x703e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.w.hu.h vrD, vrJ, vrK         is op15_31=0xe07d & vrD & vrJ & vrK {
+	vrD = vaddwev.w.hu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.d.wu.w;
+
+#lsx.txt vaddwev.d.wu.w mask=0x703f0000	
+#0x703f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.d.wu.w vrD, vrJ, vrK         is op15_31=0xe07e & vrD & vrJ & vrK {
+	vrD = vaddwev.d.wu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwev.q.du.d;
+
+#lsx.txt vaddwev.q.du.d mask=0x703f8000	
+#0x703f8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwev.q.du.d vrD, vrJ, vrK         is op15_31=0xe07f & vrD & vrJ & vrK {
+	vrD = vaddwev.q.du.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.h.bu.b;
+
+#lsx.txt vaddwod.h.bu.b mask=0x70400000	
+#0x70400000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.h.bu.b vrD, vrJ, vrK         is op15_31=0xe080 & vrD & vrJ & vrK {
+	vrD = vaddwod.h.bu.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.w.hu.h;
+
+#lsx.txt vaddwod.w.hu.h mask=0x70408000	
+#0x70408000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.w.hu.h vrD, vrJ, vrK         is op15_31=0xe081 & vrD & vrJ & vrK {
+	vrD = vaddwod.w.hu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.d.wu.w;
+
+#lsx.txt vaddwod.d.wu.w mask=0x70410000	
+#0x70410000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.d.wu.w vrD, vrJ, vrK         is op15_31=0xe082 & vrD & vrJ & vrK {
+	vrD = vaddwod.d.wu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vaddwod.q.du.d;
+
+#lsx.txt vaddwod.q.du.d mask=0x70418000	
+#0x70418000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vaddwod.q.du.d vrD, vrJ, vrK         is op15_31=0xe083 & vrD & vrJ & vrK {
+	vrD = vaddwod.q.du.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.b;
+
+#lsx.txt vsadd.b mask=0x70460000	
+#0x70460000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.b vrD, vrJ, vrK                is op15_31=0xe08c & vrD & vrJ & vrK {
+	vrD = vsadd.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.h;
+
+#lsx.txt vsadd.h mask=0x70468000	
+#0x70468000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.h vrD, vrJ, vrK                is op15_31=0xe08d & vrD & vrJ & vrK {
+	vrD = vsadd.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.w;
+
+#lsx.txt vsadd.w mask=0x70470000	
+#0x70470000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.w vrD, vrJ, vrK                is op15_31=0xe08e & vrD & vrJ & vrK {
+	vrD = vsadd.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.d;
+
+#lsx.txt vsadd.d mask=0x70478000	
+#0x70478000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.d vrD, vrJ, vrK                is op15_31=0xe08f & vrD & vrJ & vrK {
+	vrD = vsadd.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.b;
+
+#lsx.txt vssub.b mask=0x70480000	
+#0x70480000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.b vrD, vrJ, vrK                is op15_31=0xe090 & vrD & vrJ & vrK {
+	vrD = vssub.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.h;
+
+#lsx.txt vssub.h mask=0x70488000	
+#0x70488000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.h vrD, vrJ, vrK                is op15_31=0xe091 & vrD & vrJ & vrK {
+	vrD = vssub.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.w;
+
+#lsx.txt vssub.w mask=0x70490000	
+#0x70490000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.w vrD, vrJ, vrK                is op15_31=0xe092 & vrD & vrJ & vrK {
+	vrD = vssub.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.d;
+
+#lsx.txt vssub.d mask=0x70498000	
+#0x70498000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.d vrD, vrJ, vrK                is op15_31=0xe093 & vrD & vrJ & vrK {
+	vrD = vssub.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.bu;
+
+#lsx.txt vsadd.bu mask=0x704a0000	
+#0x704a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.bu vrD, vrJ, vrK               is op15_31=0xe094 & vrD & vrJ & vrK {
+	vrD = vsadd.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.hu;
+
+#lsx.txt vsadd.hu mask=0x704a8000	
+#0x704a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.hu vrD, vrJ, vrK               is op15_31=0xe095 & vrD & vrJ & vrK {
+	vrD = vsadd.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.wu;
+
+#lsx.txt vsadd.wu mask=0x704b0000	
+#0x704b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.wu vrD, vrJ, vrK               is op15_31=0xe096 & vrD & vrJ & vrK {
+	vrD = vsadd.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vsadd.du;
+
+#lsx.txt vsadd.du mask=0x704b8000	
+#0x704b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsadd.du vrD, vrJ, vrK               is op15_31=0xe097 & vrD & vrJ & vrK {
+	vrD = vsadd.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.bu;
+
+#lsx.txt vssub.bu mask=0x704c0000	
+#0x704c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.bu vrD, vrJ, vrK               is op15_31=0xe098 & vrD & vrJ & vrK {
+	vrD = vssub.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.hu;
+
+#lsx.txt vssub.hu mask=0x704c8000	
+#0x704c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.hu vrD, vrJ, vrK               is op15_31=0xe099 & vrD & vrJ & vrK {
+	vrD = vssub.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.wu;
+
+#lsx.txt vssub.wu mask=0x704d0000	
+#0x704d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.wu vrD, vrJ, vrK               is op15_31=0xe09a & vrD & vrJ & vrK {
+	vrD = vssub.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vssub.du;
+
+#lsx.txt vssub.du mask=0x704d8000	
+#0x704d8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssub.du vrD, vrJ, vrK               is op15_31=0xe09b & vrD & vrJ & vrK {
+	vrD = vssub.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.h.b;
+
+#lsx.txt vhaddw.h.b mask=0x70540000	
+#0x70540000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.h.b vrD, vrJ, vrK             is op15_31=0xe0a8 & vrD & vrJ & vrK {
+	vrD = vhaddw.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.w.h;
+
+#lsx.txt vhaddw.w.h mask=0x70548000	
+#0x70548000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.w.h vrD, vrJ, vrK             is op15_31=0xe0a9 & vrD & vrJ & vrK {
+	vrD = vhaddw.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.d.w;
+
+#lsx.txt vhaddw.d.w mask=0x70550000	
+#0x70550000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.d.w vrD, vrJ, vrK             is op15_31=0xe0aa & vrD & vrJ & vrK {
+	vrD = vhaddw.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.q.d;
+
+#lsx.txt vhaddw.q.d mask=0x70558000	
+#0x70558000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.q.d vrD, vrJ, vrK             is op15_31=0xe0ab & vrD & vrJ & vrK {
+	vrD = vhaddw.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.h.b;
+
+#lsx.txt vhsubw.h.b mask=0x70560000	
+#0x70560000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.h.b vrD, vrJ, vrK             is op15_31=0xe0ac & vrD & vrJ & vrK {
+	vrD = vhsubw.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.w.h;
+
+#lsx.txt vhsubw.w.h mask=0x70568000	
+#0x70568000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.w.h vrD, vrJ, vrK             is op15_31=0xe0ad & vrD & vrJ & vrK {
+	vrD = vhsubw.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.d.w;
+
+#lsx.txt vhsubw.d.w mask=0x70570000	
+#0x70570000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.d.w vrD, vrJ, vrK             is op15_31=0xe0ae & vrD & vrJ & vrK {
+	vrD = vhsubw.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.q.d;
+
+#lsx.txt vhsubw.q.d mask=0x70578000	
+#0x70578000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.q.d vrD, vrJ, vrK             is op15_31=0xe0af & vrD & vrJ & vrK {
+	vrD = vhsubw.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.hu.bu;
+
+#lsx.txt vhaddw.hu.bu mask=0x70580000	
+#0x70580000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.hu.bu vrD, vrJ, vrK           is op15_31=0xe0b0 & vrD & vrJ & vrK {
+	vrD = vhaddw.hu.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.wu.hu;
+
+#lsx.txt vhaddw.wu.hu mask=0x70588000	
+#0x70588000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.wu.hu vrD, vrJ, vrK           is op15_31=0xe0b1 & vrD & vrJ & vrK {
+	vrD = vhaddw.wu.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.du.wu;
+
+#lsx.txt vhaddw.du.wu mask=0x70590000	
+#0x70590000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.du.wu vrD, vrJ, vrK           is op15_31=0xe0b2 & vrD & vrJ & vrK {
+	vrD = vhaddw.du.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vhaddw.qu.du;
+
+#lsx.txt vhaddw.qu.du mask=0x70598000	
+#0x70598000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhaddw.qu.du vrD, vrJ, vrK           is op15_31=0xe0b3 & vrD & vrJ & vrK {
+	vrD = vhaddw.qu.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.hu.bu;
+
+#lsx.txt vhsubw.hu.bu mask=0x705a0000	
+#0x705a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.hu.bu vrD, vrJ, vrK           is op15_31=0xe0b4 & vrD & vrJ & vrK {
+	vrD = vhsubw.hu.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.wu.hu;
+
+#lsx.txt vhsubw.wu.hu mask=0x705a8000	
+#0x705a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.wu.hu vrD, vrJ, vrK           is op15_31=0xe0b5 & vrD & vrJ & vrK {
+	vrD = vhsubw.wu.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.du.wu;
+
+#lsx.txt vhsubw.du.wu mask=0x705b0000	
+#0x705b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.du.wu vrD, vrJ, vrK           is op15_31=0xe0b6 & vrD & vrJ & vrK {
+	vrD = vhsubw.du.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vhsubw.qu.du;
+
+#lsx.txt vhsubw.qu.du mask=0x705b8000	
+#0x705b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vhsubw.qu.du vrD, vrJ, vrK           is op15_31=0xe0b7 & vrD & vrJ & vrK {
+	vrD = vhsubw.qu.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vadda.b;
+
+#lsx.txt vadda.b mask=0x705c0000	
+#0x705c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadda.b vrD, vrJ, vrK                is op15_31=0xe0b8 & vrD & vrJ & vrK {
+	vrD = vadda.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vadda.h;
+
+#lsx.txt vadda.h mask=0x705c8000	
+#0x705c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadda.h vrD, vrJ, vrK                is op15_31=0xe0b9 & vrD & vrJ & vrK {
+	vrD = vadda.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vadda.w;
+
+#lsx.txt vadda.w mask=0x705d0000	
+#0x705d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadda.w vrD, vrJ, vrK                is op15_31=0xe0ba & vrD & vrJ & vrK {
+	vrD = vadda.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vadda.d;
+
+#lsx.txt vadda.d mask=0x705d8000	
+#0x705d8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadda.d vrD, vrJ, vrK                is op15_31=0xe0bb & vrD & vrJ & vrK {
+	vrD = vadda.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.b;
+
+#lsx.txt vabsd.b mask=0x70600000	
+#0x70600000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.b vrD, vrJ, vrK                is op15_31=0xe0c0 & vrD & vrJ & vrK {
+	vrD = vabsd.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.h;
+
+#lsx.txt vabsd.h mask=0x70608000	
+#0x70608000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.h vrD, vrJ, vrK                is op15_31=0xe0c1 & vrD & vrJ & vrK {
+	vrD = vabsd.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.w;
+
+#lsx.txt vabsd.w mask=0x70610000	
+#0x70610000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.w vrD, vrJ, vrK                is op15_31=0xe0c2 & vrD & vrJ & vrK {
+	vrD = vabsd.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.d;
+
+#lsx.txt vabsd.d mask=0x70618000	
+#0x70618000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.d vrD, vrJ, vrK                is op15_31=0xe0c3 & vrD & vrJ & vrK {
+	vrD = vabsd.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.bu;
+
+#lsx.txt vabsd.bu mask=0x70620000	
+#0x70620000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.bu vrD, vrJ, vrK               is op15_31=0xe0c4 & vrD & vrJ & vrK {
+	vrD = vabsd.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.hu;
+
+#lsx.txt vabsd.hu mask=0x70628000	
+#0x70628000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.hu vrD, vrJ, vrK               is op15_31=0xe0c5 & vrD & vrJ & vrK {
+	vrD = vabsd.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.wu;
+
+#lsx.txt vabsd.wu mask=0x70630000	
+#0x70630000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.wu vrD, vrJ, vrK               is op15_31=0xe0c6 & vrD & vrJ & vrK {
+	vrD = vabsd.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vabsd.du;
+
+#lsx.txt vabsd.du mask=0x70638000	
+#0x70638000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vabsd.du vrD, vrJ, vrK               is op15_31=0xe0c7 & vrD & vrJ & vrK {
+	vrD = vabsd.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.b;
+
+#lsx.txt vavg.b mask=0x70640000	
+#0x70640000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.b vrD, vrJ, vrK                 is op15_31=0xe0c8 & vrD & vrJ & vrK {
+	vrD = vavg.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.h;
+
+#lsx.txt vavg.h mask=0x70648000	
+#0x70648000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.h vrD, vrJ, vrK                 is op15_31=0xe0c9 & vrD & vrJ & vrK {
+	vrD = vavg.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.w;
+
+#lsx.txt vavg.w mask=0x70650000	
+#0x70650000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.w vrD, vrJ, vrK                 is op15_31=0xe0ca & vrD & vrJ & vrK {
+	vrD = vavg.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.d;
+
+#lsx.txt vavg.d mask=0x70658000	
+#0x70658000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.d vrD, vrJ, vrK                 is op15_31=0xe0cb & vrD & vrJ & vrK {
+	vrD = vavg.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.bu;
+
+#lsx.txt vavg.bu mask=0x70660000	
+#0x70660000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.bu vrD, vrJ, vrK                is op15_31=0xe0cc & vrD & vrJ & vrK {
+	vrD = vavg.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.hu;
+
+#lsx.txt vavg.hu mask=0x70668000	
+#0x70668000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.hu vrD, vrJ, vrK                is op15_31=0xe0cd & vrD & vrJ & vrK {
+	vrD = vavg.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.wu;
+
+#lsx.txt vavg.wu mask=0x70670000	
+#0x70670000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.wu vrD, vrJ, vrK                is op15_31=0xe0ce & vrD & vrJ & vrK {
+	vrD = vavg.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vavg.du;
+
+#lsx.txt vavg.du mask=0x70678000	
+#0x70678000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavg.du vrD, vrJ, vrK                is op15_31=0xe0cf & vrD & vrJ & vrK {
+	vrD = vavg.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.b;
+
+#lsx.txt vavgr.b mask=0x70680000	
+#0x70680000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.b vrD, vrJ, vrK                is op15_31=0xe0d0 & vrD & vrJ & vrK {
+	vrD = vavgr.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.h;
+
+#lsx.txt vavgr.h mask=0x70688000	
+#0x70688000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.h vrD, vrJ, vrK                is op15_31=0xe0d1 & vrD & vrJ & vrK {
+	vrD = vavgr.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.w;
+
+#lsx.txt vavgr.w mask=0x70690000	
+#0x70690000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.w vrD, vrJ, vrK                is op15_31=0xe0d2 & vrD & vrJ & vrK {
+	vrD = vavgr.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.d;
+
+#lsx.txt vavgr.d mask=0x70698000	
+#0x70698000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.d vrD, vrJ, vrK                is op15_31=0xe0d3 & vrD & vrJ & vrK {
+	vrD = vavgr.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.bu;
+
+#lsx.txt vavgr.bu mask=0x706a0000	
+#0x706a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.bu vrD, vrJ, vrK               is op15_31=0xe0d4 & vrD & vrJ & vrK {
+	vrD = vavgr.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.hu;
+
+#lsx.txt vavgr.hu mask=0x706a8000	
+#0x706a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.hu vrD, vrJ, vrK               is op15_31=0xe0d5 & vrD & vrJ & vrK {
+	vrD = vavgr.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.wu;
+
+#lsx.txt vavgr.wu mask=0x706b0000	
+#0x706b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.wu vrD, vrJ, vrK               is op15_31=0xe0d6 & vrD & vrJ & vrK {
+	vrD = vavgr.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vavgr.du;
+
+#lsx.txt vavgr.du mask=0x706b8000	
+#0x706b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vavgr.du vrD, vrJ, vrK               is op15_31=0xe0d7 & vrD & vrJ & vrK {
+	vrD = vavgr.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.b;
+
+#lsx.txt vmax.b mask=0x70700000	
+#0x70700000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.b vrD, vrJ, vrK                 is op15_31=0xe0e0 & vrD & vrJ & vrK {
+	vrD = vmax.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.h;
+
+#lsx.txt vmax.h mask=0x70708000	
+#0x70708000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.h vrD, vrJ, vrK                 is op15_31=0xe0e1 & vrD & vrJ & vrK {
+	vrD = vmax.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.w;
+
+#lsx.txt vmax.w mask=0x70710000	
+#0x70710000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.w vrD, vrJ, vrK                 is op15_31=0xe0e2 & vrD & vrJ & vrK {
+	vrD = vmax.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.d;
+
+#lsx.txt vmax.d mask=0x70718000	
+#0x70718000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.d vrD, vrJ, vrK                 is op15_31=0xe0e3 & vrD & vrJ & vrK {
+	vrD = vmax.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.b;
+
+#lsx.txt vmin.b mask=0x70720000	
+#0x70720000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.b vrD, vrJ, vrK                 is op15_31=0xe0e4 & vrD & vrJ & vrK {
+	vrD = vmin.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.h;
+
+#lsx.txt vmin.h mask=0x70728000	
+#0x70728000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.h vrD, vrJ, vrK                 is op15_31=0xe0e5 & vrD & vrJ & vrK {
+	vrD = vmin.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.w;
+
+#lsx.txt vmin.w mask=0x70730000	
+#0x70730000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.w vrD, vrJ, vrK                 is op15_31=0xe0e6 & vrD & vrJ & vrK {
+	vrD = vmin.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.d;
+
+#lsx.txt vmin.d mask=0x70738000	
+#0x70738000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.d vrD, vrJ, vrK                 is op15_31=0xe0e7 & vrD & vrJ & vrK {
+	vrD = vmin.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.bu;
+
+#lsx.txt vmax.bu mask=0x70740000	
+#0x70740000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.bu vrD, vrJ, vrK                is op15_31=0xe0e8 & vrD & vrJ & vrK {
+	vrD = vmax.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.hu;
+
+#lsx.txt vmax.hu mask=0x70748000	
+#0x70748000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.hu vrD, vrJ, vrK                is op15_31=0xe0e9 & vrD & vrJ & vrK {
+	vrD = vmax.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.wu;
+
+#lsx.txt vmax.wu mask=0x70750000	
+#0x70750000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.wu vrD, vrJ, vrK                is op15_31=0xe0ea & vrD & vrJ & vrK {
+	vrD = vmax.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmax.du;
+
+#lsx.txt vmax.du mask=0x70758000	
+#0x70758000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmax.du vrD, vrJ, vrK                is op15_31=0xe0eb & vrD & vrJ & vrK {
+	vrD = vmax.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.bu;
+
+#lsx.txt vmin.bu mask=0x70760000	
+#0x70760000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.bu vrD, vrJ, vrK                is op15_31=0xe0ec & vrD & vrJ & vrK {
+	vrD = vmin.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.hu;
+
+#lsx.txt vmin.hu mask=0x70768000	
+#0x70768000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.hu vrD, vrJ, vrK                is op15_31=0xe0ed & vrD & vrJ & vrK {
+	vrD = vmin.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.wu;
+
+#lsx.txt vmin.wu mask=0x70770000	
+#0x70770000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.wu vrD, vrJ, vrK                is op15_31=0xe0ee & vrD & vrJ & vrK {
+	vrD = vmin.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmin.du;
+
+#lsx.txt vmin.du mask=0x70778000	
+#0x70778000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmin.du vrD, vrJ, vrK                is op15_31=0xe0ef & vrD & vrJ & vrK {
+	vrD = vmin.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmul.b;
+
+#lsx.txt vmul.b mask=0x70840000	
+#0x70840000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmul.b vrD, vrJ, vrK                 is op15_31=0xe108 & vrD & vrJ & vrK {
+	vrD = vmul.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmul.h;
+
+#lsx.txt vmul.h mask=0x70848000	
+#0x70848000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmul.h vrD, vrJ, vrK                 is op15_31=0xe109 & vrD & vrJ & vrK {
+	vrD = vmul.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmul.w;
+
+#lsx.txt vmul.w mask=0x70850000	
+#0x70850000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmul.w vrD, vrJ, vrK                 is op15_31=0xe10a & vrD & vrJ & vrK {
+	vrD = vmul.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmul.d;
+
+#lsx.txt vmul.d mask=0x70858000	
+#0x70858000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmul.d vrD, vrJ, vrK                 is op15_31=0xe10b & vrD & vrJ & vrK {
+	vrD = vmul.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.b;
+
+#lsx.txt vmuh.b mask=0x70860000	
+#0x70860000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.b vrD, vrJ, vrK                 is op15_31=0xe10c & vrD & vrJ & vrK {
+	vrD = vmuh.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.h;
+
+#lsx.txt vmuh.h mask=0x70868000	
+#0x70868000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.h vrD, vrJ, vrK                 is op15_31=0xe10d & vrD & vrJ & vrK {
+	vrD = vmuh.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.w;
+
+#lsx.txt vmuh.w mask=0x70870000	
+#0x70870000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.w vrD, vrJ, vrK                 is op15_31=0xe10e & vrD & vrJ & vrK {
+	vrD = vmuh.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.d;
+
+#lsx.txt vmuh.d mask=0x70878000	
+#0x70878000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.d vrD, vrJ, vrK                 is op15_31=0xe10f & vrD & vrJ & vrK {
+	vrD = vmuh.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.bu;
+
+#lsx.txt vmuh.bu mask=0x70880000	
+#0x70880000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.bu vrD, vrJ, vrK                is op15_31=0xe110 & vrD & vrJ & vrK {
+	vrD = vmuh.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.hu;
+
+#lsx.txt vmuh.hu mask=0x70888000	
+#0x70888000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.hu vrD, vrJ, vrK                is op15_31=0xe111 & vrD & vrJ & vrK {
+	vrD = vmuh.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.wu;
+
+#lsx.txt vmuh.wu mask=0x70890000	
+#0x70890000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.wu vrD, vrJ, vrK                is op15_31=0xe112 & vrD & vrJ & vrK {
+	vrD = vmuh.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmuh.du;
+
+#lsx.txt vmuh.du mask=0x70898000	
+#0x70898000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmuh.du vrD, vrJ, vrK                is op15_31=0xe113 & vrD & vrJ & vrK {
+	vrD = vmuh.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.h.b;
+
+#lsx.txt vmulwev.h.b mask=0x70900000	
+#0x70900000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.h.b vrD, vrJ, vrK            is op15_31=0xe120 & vrD & vrJ & vrK {
+	vrD = vmulwev.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.w.h;
+
+#lsx.txt vmulwev.w.h mask=0x70908000	
+#0x70908000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.w.h vrD, vrJ, vrK            is op15_31=0xe121 & vrD & vrJ & vrK {
+	vrD = vmulwev.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.d.w;
+
+#lsx.txt vmulwev.d.w mask=0x70910000	
+#0x70910000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.d.w vrD, vrJ, vrK            is op15_31=0xe122 & vrD & vrJ & vrK {
+	vrD = vmulwev.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.q.d;
+
+#lsx.txt vmulwev.q.d mask=0x70918000	
+#0x70918000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.q.d vrD, vrJ, vrK            is op15_31=0xe123 & vrD & vrJ & vrK {
+	vrD = vmulwev.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.h.b;
+
+#lsx.txt vmulwod.h.b mask=0x70920000	
+#0x70920000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.h.b vrD, vrJ, vrK            is op15_31=0xe124 & vrD & vrJ & vrK {
+	vrD = vmulwod.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.w.h;
+
+#lsx.txt vmulwod.w.h mask=0x70928000	
+#0x70928000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.w.h vrD, vrJ, vrK            is op15_31=0xe125 & vrD & vrJ & vrK {
+	vrD = vmulwod.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.d.w;
+
+#lsx.txt vmulwod.d.w mask=0x70930000	
+#0x70930000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.d.w vrD, vrJ, vrK            is op15_31=0xe126 & vrD & vrJ & vrK {
+	vrD = vmulwod.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.q.d;
+
+#lsx.txt vmulwod.q.d mask=0x70938000	
+#0x70938000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.q.d vrD, vrJ, vrK            is op15_31=0xe127 & vrD & vrJ & vrK {
+	vrD = vmulwod.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.h.bu;
+
+#lsx.txt vmulwev.h.bu mask=0x70980000	
+#0x70980000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.h.bu vrD, vrJ, vrK           is op15_31=0xe130 & vrD & vrJ & vrK {
+	vrD = vmulwev.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.w.hu;
+
+#lsx.txt vmulwev.w.hu mask=0x70988000	
+#0x70988000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.w.hu vrD, vrJ, vrK           is op15_31=0xe131 & vrD & vrJ & vrK {
+	vrD = vmulwev.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.d.wu;
+
+#lsx.txt vmulwev.d.wu mask=0x70990000	
+#0x70990000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.d.wu vrD, vrJ, vrK           is op15_31=0xe132 & vrD & vrJ & vrK {
+	vrD = vmulwev.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.q.du;
+
+#lsx.txt vmulwev.q.du mask=0x70998000	
+#0x70998000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.q.du vrD, vrJ, vrK           is op15_31=0xe133 & vrD & vrJ & vrK {
+	vrD = vmulwev.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.h.bu;
+
+#lsx.txt vmulwod.h.bu mask=0x709a0000	
+#0x709a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.h.bu vrD, vrJ, vrK           is op15_31=0xe134 & vrD & vrJ & vrK {
+	vrD = vmulwod.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.w.hu;
+
+#lsx.txt vmulwod.w.hu mask=0x709a8000	
+#0x709a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.w.hu vrD, vrJ, vrK           is op15_31=0xe135 & vrD & vrJ & vrK {
+	vrD = vmulwod.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.d.wu;
+
+#lsx.txt vmulwod.d.wu mask=0x709b0000	
+#0x709b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.d.wu vrD, vrJ, vrK           is op15_31=0xe136 & vrD & vrJ & vrK {
+	vrD = vmulwod.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.q.du;
+
+#lsx.txt vmulwod.q.du mask=0x709b8000	
+#0x709b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.q.du vrD, vrJ, vrK           is op15_31=0xe137 & vrD & vrJ & vrK {
+	vrD = vmulwod.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.h.bu.b;
+
+#lsx.txt vmulwev.h.bu.b mask=0x70a00000	
+#0x70a00000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.h.bu.b vrD, vrJ, vrK         is op15_31=0xe140 & vrD & vrJ & vrK {
+	vrD = vmulwev.h.bu.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.w.hu.h;
+
+#lsx.txt vmulwev.w.hu.h mask=0x70a08000	
+#0x70a08000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.w.hu.h vrD, vrJ, vrK         is op15_31=0xe141 & vrD & vrJ & vrK {
+	vrD = vmulwev.w.hu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.d.wu.w;
+
+#lsx.txt vmulwev.d.wu.w mask=0x70a10000	
+#0x70a10000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.d.wu.w vrD, vrJ, vrK         is op15_31=0xe142 & vrD & vrJ & vrK {
+	vrD = vmulwev.d.wu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwev.q.du.d;
+
+#lsx.txt vmulwev.q.du.d mask=0x70a18000	
+#0x70a18000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwev.q.du.d vrD, vrJ, vrK         is op15_31=0xe143 & vrD & vrJ & vrK {
+	vrD = vmulwev.q.du.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.h.bu.b;
+
+#lsx.txt vmulwod.h.bu.b mask=0x70a20000	
+#0x70a20000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.h.bu.b vrD, vrJ, vrK         is op15_31=0xe144 & vrD & vrJ & vrK {
+	vrD = vmulwod.h.bu.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.w.hu.h;
+
+#lsx.txt vmulwod.w.hu.h mask=0x70a28000	
+#0x70a28000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.w.hu.h vrD, vrJ, vrK         is op15_31=0xe145 & vrD & vrJ & vrK {
+	vrD = vmulwod.w.hu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.d.wu.w;
+
+#lsx.txt vmulwod.d.wu.w mask=0x70a30000	
+#0x70a30000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.d.wu.w vrD, vrJ, vrK         is op15_31=0xe146 & vrD & vrJ & vrK {
+	vrD = vmulwod.d.wu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmulwod.q.du.d;
+
+#lsx.txt vmulwod.q.du.d mask=0x70a38000	
+#0x70a38000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmulwod.q.du.d vrD, vrJ, vrK         is op15_31=0xe147 & vrD & vrJ & vrK {
+	vrD = vmulwod.q.du.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmadd.b;
+
+#lsx.txt vmadd.b mask=0x70a80000	
+#0x70a80000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmadd.b vrD, vrJ, vrK                is op15_31=0xe150 & vrD & vrJ & vrK {
+	vrD = vmadd.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmadd.h;
+
+#lsx.txt vmadd.h mask=0x70a88000	
+#0x70a88000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmadd.h vrD, vrJ, vrK                is op15_31=0xe151 & vrD & vrJ & vrK {
+	vrD = vmadd.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmadd.w;
+
+#lsx.txt vmadd.w mask=0x70a90000	
+#0x70a90000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmadd.w vrD, vrJ, vrK                is op15_31=0xe152 & vrD & vrJ & vrK {
+	vrD = vmadd.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmadd.d;
+
+#lsx.txt vmadd.d mask=0x70a98000	
+#0x70a98000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmadd.d vrD, vrJ, vrK                is op15_31=0xe153 & vrD & vrJ & vrK {
+	vrD = vmadd.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmsub.b;
+
+#lsx.txt vmsub.b mask=0x70aa0000	
+#0x70aa0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmsub.b vrD, vrJ, vrK                is op15_31=0xe154 & vrD & vrJ & vrK {
+	vrD = vmsub.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmsub.h;
+
+#lsx.txt vmsub.h mask=0x70aa8000	
+#0x70aa8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmsub.h vrD, vrJ, vrK                is op15_31=0xe155 & vrD & vrJ & vrK {
+	vrD = vmsub.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmsub.w;
+
+#lsx.txt vmsub.w mask=0x70ab0000	
+#0x70ab0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmsub.w vrD, vrJ, vrK                is op15_31=0xe156 & vrD & vrJ & vrK {
+	vrD = vmsub.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmsub.d;
+
+#lsx.txt vmsub.d mask=0x70ab8000	
+#0x70ab8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmsub.d vrD, vrJ, vrK                is op15_31=0xe157 & vrD & vrJ & vrK {
+	vrD = vmsub.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.h.b;
+
+#lsx.txt vmaddwev.h.b mask=0x70ac0000	
+#0x70ac0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.h.b vrD, vrJ, vrK           is op15_31=0xe158 & vrD & vrJ & vrK {
+	vrD = vmaddwev.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.w.h;
+
+#lsx.txt vmaddwev.w.h mask=0x70ac8000	
+#0x70ac8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.w.h vrD, vrJ, vrK           is op15_31=0xe159 & vrD & vrJ & vrK {
+	vrD = vmaddwev.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.d.w;
+
+#lsx.txt vmaddwev.d.w mask=0x70ad0000	
+#0x70ad0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.d.w vrD, vrJ, vrK           is op15_31=0xe15a & vrD & vrJ & vrK {
+	vrD = vmaddwev.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.q.d;
+
+#lsx.txt vmaddwev.q.d mask=0x70ad8000	
+#0x70ad8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.q.d vrD, vrJ, vrK           is op15_31=0xe15b & vrD & vrJ & vrK {
+	vrD = vmaddwev.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.h.b;
+
+#lsx.txt vmaddwod.h.b mask=0x70ae0000	
+#0x70ae0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.h.b vrD, vrJ, vrK           is op15_31=0xe15c & vrD & vrJ & vrK {
+	vrD = vmaddwod.h.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.w.h;
+
+#lsx.txt vmaddwod.w.h mask=0x70ae8000	
+#0x70ae8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.w.h vrD, vrJ, vrK           is op15_31=0xe15d & vrD & vrJ & vrK {
+	vrD = vmaddwod.w.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.d.w;
+
+#lsx.txt vmaddwod.d.w mask=0x70af0000	
+#0x70af0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.d.w vrD, vrJ, vrK           is op15_31=0xe15e & vrD & vrJ & vrK {
+	vrD = vmaddwod.d.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.q.d;
+
+#lsx.txt vmaddwod.q.d mask=0x70af8000	
+#0x70af8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.q.d vrD, vrJ, vrK           is op15_31=0xe15f & vrD & vrJ & vrK {
+	vrD = vmaddwod.q.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.h.bu;
+
+#lsx.txt vmaddwev.h.bu mask=0x70b40000	
+#0x70b40000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.h.bu vrD, vrJ, vrK          is op15_31=0xe168 & vrD & vrJ & vrK {
+	vrD = vmaddwev.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.w.hu;
+
+#lsx.txt vmaddwev.w.hu mask=0x70b48000	
+#0x70b48000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.w.hu vrD, vrJ, vrK          is op15_31=0xe169 & vrD & vrJ & vrK {
+	vrD = vmaddwev.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.d.wu;
+
+#lsx.txt vmaddwev.d.wu mask=0x70b50000	
+#0x70b50000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.d.wu vrD, vrJ, vrK          is op15_31=0xe16a & vrD & vrJ & vrK {
+	vrD = vmaddwev.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.q.du;
+
+#lsx.txt vmaddwev.q.du mask=0x70b58000	
+#0x70b58000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.q.du vrD, vrJ, vrK          is op15_31=0xe16b & vrD & vrJ & vrK {
+	vrD = vmaddwev.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.h.bu;
+
+#lsx.txt vmaddwod.h.bu mask=0x70b60000	
+#0x70b60000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.h.bu vrD, vrJ, vrK          is op15_31=0xe16c & vrD & vrJ & vrK {
+	vrD = vmaddwod.h.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.w.hu;
+
+#lsx.txt vmaddwod.w.hu mask=0x70b68000	
+#0x70b68000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.w.hu vrD, vrJ, vrK          is op15_31=0xe16d & vrD & vrJ & vrK {
+	vrD = vmaddwod.w.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.d.wu;
+
+#lsx.txt vmaddwod.d.wu mask=0x70b70000	
+#0x70b70000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.d.wu vrD, vrJ, vrK          is op15_31=0xe16e & vrD & vrJ & vrK {
+	vrD = vmaddwod.d.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.q.du;
+
+#lsx.txt vmaddwod.q.du mask=0x70b78000	
+#0x70b78000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.q.du vrD, vrJ, vrK          is op15_31=0xe16f & vrD & vrJ & vrK {
+	vrD = vmaddwod.q.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.h.bu.b;
+
+#lsx.txt vmaddwev.h.bu.b mask=0x70bc0000	
+#0x70bc0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.h.bu.b vrD, vrJ, vrK        is op15_31=0xe178 & vrD & vrJ & vrK {
+	vrD = vmaddwev.h.bu.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.w.hu.h;
+
+#lsx.txt vmaddwev.w.hu.h mask=0x70bc8000	
+#0x70bc8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.w.hu.h vrD, vrJ, vrK        is op15_31=0xe179 & vrD & vrJ & vrK {
+	vrD = vmaddwev.w.hu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.d.wu.w;
+
+#lsx.txt vmaddwev.d.wu.w mask=0x70bd0000	
+#0x70bd0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.d.wu.w vrD, vrJ, vrK        is op15_31=0xe17a & vrD & vrJ & vrK {
+	vrD = vmaddwev.d.wu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwev.q.du.d;
+
+#lsx.txt vmaddwev.q.du.d mask=0x70bd8000	
+#0x70bd8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwev.q.du.d vrD, vrJ, vrK        is op15_31=0xe17b & vrD & vrJ & vrK {
+	vrD = vmaddwev.q.du.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.h.bu.b;
+
+#lsx.txt vmaddwod.h.bu.b mask=0x70be0000	
+#0x70be0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.h.bu.b vrD, vrJ, vrK        is op15_31=0xe17c & vrD & vrJ & vrK {
+	vrD = vmaddwod.h.bu.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.w.hu.h;
+
+#lsx.txt vmaddwod.w.hu.h mask=0x70be8000	
+#0x70be8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.w.hu.h vrD, vrJ, vrK        is op15_31=0xe17d & vrD & vrJ & vrK {
+	vrD = vmaddwod.w.hu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.d.wu.w;
+
+#lsx.txt vmaddwod.d.wu.w mask=0x70bf0000	
+#0x70bf0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.d.wu.w vrD, vrJ, vrK        is op15_31=0xe17e & vrD & vrJ & vrK {
+	vrD = vmaddwod.d.wu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmaddwod.q.du.d;
+
+#lsx.txt vmaddwod.q.du.d mask=0x70bf8000	
+#0x70bf8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmaddwod.q.du.d vrD, vrJ, vrK        is op15_31=0xe17f & vrD & vrJ & vrK {
+	vrD = vmaddwod.q.du.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.b;
+
+#lsx.txt vdiv.b mask=0x70e00000	
+#0x70e00000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.b vrD, vrJ, vrK                 is op15_31=0xe1c0 & vrD & vrJ & vrK {
+	vrD = vdiv.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.h;
+
+#lsx.txt vdiv.h mask=0x70e08000	
+#0x70e08000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.h vrD, vrJ, vrK                 is op15_31=0xe1c1 & vrD & vrJ & vrK {
+	vrD = vdiv.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.w;
+
+#lsx.txt vdiv.w mask=0x70e10000	
+#0x70e10000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.w vrD, vrJ, vrK                 is op15_31=0xe1c2 & vrD & vrJ & vrK {
+	vrD = vdiv.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.d;
+
+#lsx.txt vdiv.d mask=0x70e18000	
+#0x70e18000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.d vrD, vrJ, vrK                 is op15_31=0xe1c3 & vrD & vrJ & vrK {
+	vrD = vdiv.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.b;
+
+#lsx.txt vmod.b mask=0x70e20000	
+#0x70e20000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.b vrD, vrJ, vrK                 is op15_31=0xe1c4 & vrD & vrJ & vrK {
+	vrD = vmod.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.h;
+
+#lsx.txt vmod.h mask=0x70e28000	
+#0x70e28000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.h vrD, vrJ, vrK                 is op15_31=0xe1c5 & vrD & vrJ & vrK {
+	vrD = vmod.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.w;
+
+#lsx.txt vmod.w mask=0x70e30000	
+#0x70e30000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.w vrD, vrJ, vrK                 is op15_31=0xe1c6 & vrD & vrJ & vrK {
+	vrD = vmod.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.d;
+
+#lsx.txt vmod.d mask=0x70e38000	
+#0x70e38000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.d vrD, vrJ, vrK                 is op15_31=0xe1c7 & vrD & vrJ & vrK {
+	vrD = vmod.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.bu;
+
+#lsx.txt vdiv.bu mask=0x70e40000	
+#0x70e40000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.bu vrD, vrJ, vrK                is op15_31=0xe1c8 & vrD & vrJ & vrK {
+	vrD = vdiv.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.hu;
+
+#lsx.txt vdiv.hu mask=0x70e48000	
+#0x70e48000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.hu vrD, vrJ, vrK                is op15_31=0xe1c9 & vrD & vrJ & vrK {
+	vrD = vdiv.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.wu;
+
+#lsx.txt vdiv.wu mask=0x70e50000	
+#0x70e50000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.wu vrD, vrJ, vrK                is op15_31=0xe1ca & vrD & vrJ & vrK {
+	vrD = vdiv.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vdiv.du;
+
+#lsx.txt vdiv.du mask=0x70e58000	
+#0x70e58000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vdiv.du vrD, vrJ, vrK                is op15_31=0xe1cb & vrD & vrJ & vrK {
+	vrD = vdiv.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.bu;
+
+#lsx.txt vmod.bu mask=0x70e60000	
+#0x70e60000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.bu vrD, vrJ, vrK                is op15_31=0xe1cc & vrD & vrJ & vrK {
+	vrD = vmod.bu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.hu;
+
+#lsx.txt vmod.hu mask=0x70e68000	
+#0x70e68000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.hu vrD, vrJ, vrK                is op15_31=0xe1cd & vrD & vrJ & vrK {
+	vrD = vmod.hu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.wu;
+
+#lsx.txt vmod.wu mask=0x70e70000	
+#0x70e70000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.wu vrD, vrJ, vrK                is op15_31=0xe1ce & vrD & vrJ & vrK {
+	vrD = vmod.wu(vrD, vrJ, vrK);
+}
+
+define pcodeop vmod.du;
+
+#lsx.txt vmod.du mask=0x70e78000	
+#0x70e78000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vmod.du vrD, vrJ, vrK                is op15_31=0xe1cf & vrD & vrJ & vrK {
+	vrD = vmod.du(vrD, vrJ, vrK);
+}
+
+define pcodeop vsll.b;
+
+#lsx.txt vsll.b mask=0x70e80000	
+#0x70e80000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsll.b vrD, vrJ, vrK                 is op15_31=0xe1d0 & vrD & vrJ & vrK {
+	vrD = vsll.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsll.h;
+
+#lsx.txt vsll.h mask=0x70e88000	
+#0x70e88000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsll.h vrD, vrJ, vrK                 is op15_31=0xe1d1 & vrD & vrJ & vrK {
+	vrD = vsll.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsll.w;
+
+#lsx.txt vsll.w mask=0x70e90000	
+#0x70e90000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsll.w vrD, vrJ, vrK                 is op15_31=0xe1d2 & vrD & vrJ & vrK {
+	vrD = vsll.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsll.d;
+
+#lsx.txt vsll.d mask=0x70e98000	
+#0x70e98000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsll.d vrD, vrJ, vrK                 is op15_31=0xe1d3 & vrD & vrJ & vrK {
+	vrD = vsll.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrl.b;
+
+#lsx.txt vsrl.b mask=0x70ea0000	
+#0x70ea0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrl.b vrD, vrJ, vrK                 is op15_31=0xe1d4 & vrD & vrJ & vrK {
+	vrD = vsrl.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrl.h;
+
+#lsx.txt vsrl.h mask=0x70ea8000	
+#0x70ea8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrl.h vrD, vrJ, vrK                 is op15_31=0xe1d5 & vrD & vrJ & vrK {
+	vrD = vsrl.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrl.w;
+
+#lsx.txt vsrl.w mask=0x70eb0000	
+#0x70eb0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrl.w vrD, vrJ, vrK                 is op15_31=0xe1d6 & vrD & vrJ & vrK {
+	vrD = vsrl.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrl.d;
+
+#lsx.txt vsrl.d mask=0x70eb8000	
+#0x70eb8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrl.d vrD, vrJ, vrK                 is op15_31=0xe1d7 & vrD & vrJ & vrK {
+	vrD = vsrl.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsra.b;
+
+#lsx.txt vsra.b mask=0x70ec0000	
+#0x70ec0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsra.b vrD, vrJ, vrK                 is op15_31=0xe1d8 & vrD & vrJ & vrK {
+	vrD = vsra.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsra.h;
+
+#lsx.txt vsra.h mask=0x70ec8000	
+#0x70ec8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsra.h vrD, vrJ, vrK                 is op15_31=0xe1d9 & vrD & vrJ & vrK {
+	vrD = vsra.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsra.w;
+
+#lsx.txt vsra.w mask=0x70ed0000	
+#0x70ed0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsra.w vrD, vrJ, vrK                 is op15_31=0xe1da & vrD & vrJ & vrK {
+	vrD = vsra.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsra.d;
+
+#lsx.txt vsra.d mask=0x70ed8000	
+#0x70ed8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsra.d vrD, vrJ, vrK                 is op15_31=0xe1db & vrD & vrJ & vrK {
+	vrD = vsra.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vrotr.b;
+
+#lsx.txt vrotr.b mask=0x70ee0000	
+#0x70ee0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vrotr.b vrD, vrJ, vrK                is op15_31=0xe1dc & vrD & vrJ & vrK {
+	vrD = vrotr.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vrotr.h;
+
+#lsx.txt vrotr.h mask=0x70ee8000	
+#0x70ee8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vrotr.h vrD, vrJ, vrK                is op15_31=0xe1dd & vrD & vrJ & vrK {
+	vrD = vrotr.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vrotr.w;
+
+#lsx.txt vrotr.w mask=0x70ef0000	
+#0x70ef0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vrotr.w vrD, vrJ, vrK                is op15_31=0xe1de & vrD & vrJ & vrK {
+	vrD = vrotr.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vrotr.d;
+
+#lsx.txt vrotr.d mask=0x70ef8000	
+#0x70ef8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vrotr.d vrD, vrJ, vrK                is op15_31=0xe1df & vrD & vrJ & vrK {
+	vrD = vrotr.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlr.b;
+
+#lsx.txt vsrlr.b mask=0x70f00000	
+#0x70f00000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlr.b vrD, vrJ, vrK                is op15_31=0xe1e0 & vrD & vrJ & vrK {
+	vrD = vsrlr.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlr.h;
+
+#lsx.txt vsrlr.h mask=0x70f08000	
+#0x70f08000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlr.h vrD, vrJ, vrK                is op15_31=0xe1e1 & vrD & vrJ & vrK {
+	vrD = vsrlr.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlr.w;
+
+#lsx.txt vsrlr.w mask=0x70f10000	
+#0x70f10000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlr.w vrD, vrJ, vrK                is op15_31=0xe1e2 & vrD & vrJ & vrK {
+	vrD = vsrlr.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlr.d;
+
+#lsx.txt vsrlr.d mask=0x70f18000	
+#0x70f18000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlr.d vrD, vrJ, vrK                is op15_31=0xe1e3 & vrD & vrJ & vrK {
+	vrD = vsrlr.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrar.b;
+
+#lsx.txt vsrar.b mask=0x70f20000	
+#0x70f20000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrar.b vrD, vrJ, vrK                is op15_31=0xe1e4 & vrD & vrJ & vrK {
+	vrD = vsrar.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrar.h;
+
+#lsx.txt vsrar.h mask=0x70f28000	
+#0x70f28000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrar.h vrD, vrJ, vrK                is op15_31=0xe1e5 & vrD & vrJ & vrK {
+	vrD = vsrar.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrar.w;
+
+#lsx.txt vsrar.w mask=0x70f30000	
+#0x70f30000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrar.w vrD, vrJ, vrK                is op15_31=0xe1e6 & vrD & vrJ & vrK {
+	vrD = vsrar.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrar.d;
+
+#lsx.txt vsrar.d mask=0x70f38000	
+#0x70f38000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrar.d vrD, vrJ, vrK                is op15_31=0xe1e7 & vrD & vrJ & vrK {
+	vrD = vsrar.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrln.b.h;
+
+#lsx.txt vsrln.b.h mask=0x70f48000	
+#0x70f48000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrln.b.h vrD, vrJ, vrK              is op15_31=0xe1e9 & vrD & vrJ & vrK {
+	vrD = vsrln.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrln.h.w;
+
+#lsx.txt vsrln.h.w mask=0x70f50000	
+#0x70f50000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrln.h.w vrD, vrJ, vrK              is op15_31=0xe1ea & vrD & vrJ & vrK {
+	vrD = vsrln.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrln.w.d;
+
+#lsx.txt vsrln.w.d mask=0x70f58000	
+#0x70f58000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrln.w.d vrD, vrJ, vrK              is op15_31=0xe1eb & vrD & vrJ & vrK {
+	vrD = vsrln.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsran.b.h;
+
+#lsx.txt vsran.b.h mask=0x70f68000	
+#0x70f68000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsran.b.h vrD, vrJ, vrK              is op15_31=0xe1ed & vrD & vrJ & vrK {
+	vrD = vsran.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsran.h.w;
+
+#lsx.txt vsran.h.w mask=0x70f70000	
+#0x70f70000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsran.h.w vrD, vrJ, vrK              is op15_31=0xe1ee & vrD & vrJ & vrK {
+	vrD = vsran.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsran.w.d;
+
+#lsx.txt vsran.w.d mask=0x70f78000	
+#0x70f78000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsran.w.d vrD, vrJ, vrK              is op15_31=0xe1ef & vrD & vrJ & vrK {
+	vrD = vsran.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlrn.b.h;
+
+#lsx.txt vsrlrn.b.h mask=0x70f88000	
+#0x70f88000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlrn.b.h vrD, vrJ, vrK             is op15_31=0xe1f1 & vrD & vrJ & vrK {
+	vrD = vsrlrn.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlrn.h.w;
+
+#lsx.txt vsrlrn.h.w mask=0x70f90000	
+#0x70f90000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlrn.h.w vrD, vrJ, vrK             is op15_31=0xe1f2 & vrD & vrJ & vrK {
+	vrD = vsrlrn.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrlrn.w.d;
+
+#lsx.txt vsrlrn.w.d mask=0x70f98000	
+#0x70f98000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrlrn.w.d vrD, vrJ, vrK             is op15_31=0xe1f3 & vrD & vrJ & vrK {
+	vrD = vsrlrn.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrarn.b.h;
+
+#lsx.txt vsrarn.b.h mask=0x70fa8000	
+#0x70fa8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrarn.b.h vrD, vrJ, vrK             is op15_31=0xe1f5 & vrD & vrJ & vrK {
+	vrD = vsrarn.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrarn.h.w;
+
+#lsx.txt vsrarn.h.w mask=0x70fb0000	
+#0x70fb0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrarn.h.w vrD, vrJ, vrK             is op15_31=0xe1f6 & vrD & vrJ & vrK {
+	vrD = vsrarn.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsrarn.w.d;
+
+#lsx.txt vsrarn.w.d mask=0x70fb8000	
+#0x70fb8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsrarn.w.d vrD, vrJ, vrK             is op15_31=0xe1f7 & vrD & vrJ & vrK {
+	vrD = vsrarn.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrln.b.h;
+
+#lsx.txt vssrln.b.h mask=0x70fc8000	
+#0x70fc8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrln.b.h vrD, vrJ, vrK             is op15_31=0xe1f9 & vrD & vrJ & vrK {
+	vrD = vssrln.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrln.h.w;
+
+#lsx.txt vssrln.h.w mask=0x70fd0000	
+#0x70fd0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrln.h.w vrD, vrJ, vrK             is op15_31=0xe1fa & vrD & vrJ & vrK {
+	vrD = vssrln.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrln.w.d;
+
+#lsx.txt vssrln.w.d mask=0x70fd8000	
+#0x70fd8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrln.w.d vrD, vrJ, vrK             is op15_31=0xe1fb & vrD & vrJ & vrK {
+	vrD = vssrln.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssran.b.h;
+
+#lsx.txt vssran.b.h mask=0x70fe8000	
+#0x70fe8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssran.b.h vrD, vrJ, vrK             is op15_31=0xe1fd & vrD & vrJ & vrK {
+	vrD = vssran.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssran.h.w;
+
+#lsx.txt vssran.h.w mask=0x70ff0000	
+#0x70ff0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssran.h.w vrD, vrJ, vrK             is op15_31=0xe1fe & vrD & vrJ & vrK {
+	vrD = vssran.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssran.w.d;
+
+#lsx.txt vssran.w.d mask=0x70ff8000	
+#0x70ff8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssran.w.d vrD, vrJ, vrK             is op15_31=0xe1ff & vrD & vrJ & vrK {
+	vrD = vssran.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrlrn.b.h;
+
+#lsx.txt vssrlrn.b.h mask=0x71008000	
+#0x71008000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrlrn.b.h vrD, vrJ, vrK            is op15_31=0xe201 & vrD & vrJ & vrK {
+	vrD = vssrlrn.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrlrn.h.w;
+
+#lsx.txt vssrlrn.h.w mask=0x71010000	
+#0x71010000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrlrn.h.w vrD, vrJ, vrK            is op15_31=0xe202 & vrD & vrJ & vrK {
+	vrD = vssrlrn.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrlrn.w.d;
+
+#lsx.txt vssrlrn.w.d mask=0x71018000	
+#0x71018000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrlrn.w.d vrD, vrJ, vrK            is op15_31=0xe203 & vrD & vrJ & vrK {
+	vrD = vssrlrn.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrarn.b.h;
+
+#lsx.txt vssrarn.b.h mask=0x71028000	
+#0x71028000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrarn.b.h vrD, vrJ, vrK            is op15_31=0xe205 & vrD & vrJ & vrK {
+	vrD = vssrarn.b.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrarn.h.w;
+
+#lsx.txt vssrarn.h.w mask=0x71030000	
+#0x71030000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrarn.h.w vrD, vrJ, vrK            is op15_31=0xe206 & vrD & vrJ & vrK {
+	vrD = vssrarn.h.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrarn.w.d;
+
+#lsx.txt vssrarn.w.d mask=0x71038000	
+#0x71038000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrarn.w.d vrD, vrJ, vrK            is op15_31=0xe207 & vrD & vrJ & vrK {
+	vrD = vssrarn.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrln.bu.h;
+
+#lsx.txt vssrln.bu.h mask=0x71048000	
+#0x71048000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrln.bu.h vrD, vrJ, vrK            is op15_31=0xe209 & vrD & vrJ & vrK {
+	vrD = vssrln.bu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrln.hu.w;
+
+#lsx.txt vssrln.hu.w mask=0x71050000	
+#0x71050000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrln.hu.w vrD, vrJ, vrK            is op15_31=0xe20a & vrD & vrJ & vrK {
+	vrD = vssrln.hu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrln.wu.d;
+
+#lsx.txt vssrln.wu.d mask=0x71058000	
+#0x71058000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrln.wu.d vrD, vrJ, vrK            is op15_31=0xe20b & vrD & vrJ & vrK {
+	vrD = vssrln.wu.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssran.bu.h;
+
+#lsx.txt vssran.bu.h mask=0x71068000	
+#0x71068000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssran.bu.h vrD, vrJ, vrK            is op15_31=0xe20d & vrD & vrJ & vrK {
+	vrD = vssran.bu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssran.hu.w;
+
+#lsx.txt vssran.hu.w mask=0x71070000	
+#0x71070000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssran.hu.w vrD, vrJ, vrK            is op15_31=0xe20e & vrD & vrJ & vrK {
+	vrD = vssran.hu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssran.wu.d;
+
+#lsx.txt vssran.wu.d mask=0x71078000	
+#0x71078000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssran.wu.d vrD, vrJ, vrK            is op15_31=0xe20f & vrD & vrJ & vrK {
+	vrD = vssran.wu.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrlrn.bu.h;
+
+#lsx.txt vssrlrn.bu.h mask=0x71088000	
+#0x71088000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrlrn.bu.h vrD, vrJ, vrK           is op15_31=0xe211 & vrD & vrJ & vrK {
+	vrD = vssrlrn.bu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrlrn.hu.w;
+
+#lsx.txt vssrlrn.hu.w mask=0x71090000	
+#0x71090000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrlrn.hu.w vrD, vrJ, vrK           is op15_31=0xe212 & vrD & vrJ & vrK {
+	vrD = vssrlrn.hu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrlrn.wu.d;
+
+#lsx.txt vssrlrn.wu.d mask=0x71098000	
+#0x71098000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrlrn.wu.d vrD, vrJ, vrK           is op15_31=0xe213 & vrD & vrJ & vrK {
+	vrD = vssrlrn.wu.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrarn.bu.h;
+
+#lsx.txt vssrarn.bu.h mask=0x710a8000	
+#0x710a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrarn.bu.h vrD, vrJ, vrK           is op15_31=0xe215 & vrD & vrJ & vrK {
+	vrD = vssrarn.bu.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrarn.hu.w;
+
+#lsx.txt vssrarn.hu.w mask=0x710b0000	
+#0x710b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrarn.hu.w vrD, vrJ, vrK           is op15_31=0xe216 & vrD & vrJ & vrK {
+	vrD = vssrarn.hu.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vssrarn.wu.d;
+
+#lsx.txt vssrarn.wu.d mask=0x710b8000	
+#0x710b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vssrarn.wu.d vrD, vrJ, vrK           is op15_31=0xe217 & vrD & vrJ & vrK {
+	vrD = vssrarn.wu.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitclr.b;
+
+#lsx.txt vbitclr.b mask=0x710c0000	
+#0x710c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitclr.b vrD, vrJ, vrK              is op15_31=0xe218 & vrD & vrJ & vrK {
+	vrD = vbitclr.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitclr.h;
+
+#lsx.txt vbitclr.h mask=0x710c8000	
+#0x710c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitclr.h vrD, vrJ, vrK              is op15_31=0xe219 & vrD & vrJ & vrK {
+	vrD = vbitclr.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitclr.w;
+
+#lsx.txt vbitclr.w mask=0x710d0000	
+#0x710d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitclr.w vrD, vrJ, vrK              is op15_31=0xe21a & vrD & vrJ & vrK {
+	vrD = vbitclr.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitclr.d;
+
+#lsx.txt vbitclr.d mask=0x710d8000	
+#0x710d8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitclr.d vrD, vrJ, vrK              is op15_31=0xe21b & vrD & vrJ & vrK {
+	vrD = vbitclr.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitset.b;
+
+#lsx.txt vbitset.b mask=0x710e0000	
+#0x710e0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitset.b vrD, vrJ, vrK              is op15_31=0xe21c & vrD & vrJ & vrK {
+	vrD = vbitset.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitset.h;
+
+#lsx.txt vbitset.h mask=0x710e8000	
+#0x710e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitset.h vrD, vrJ, vrK              is op15_31=0xe21d & vrD & vrJ & vrK {
+	vrD = vbitset.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitset.w;
+
+#lsx.txt vbitset.w mask=0x710f0000	
+#0x710f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitset.w vrD, vrJ, vrK              is op15_31=0xe21e & vrD & vrJ & vrK {
+	vrD = vbitset.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitset.d;
+
+#lsx.txt vbitset.d mask=0x710f8000	
+#0x710f8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitset.d vrD, vrJ, vrK              is op15_31=0xe21f & vrD & vrJ & vrK {
+	vrD = vbitset.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitrev.b;
+
+#lsx.txt vbitrev.b mask=0x71100000	
+#0x71100000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitrev.b vrD, vrJ, vrK              is op15_31=0xe220 & vrD & vrJ & vrK {
+	vrD = vbitrev.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitrev.h;
+
+#lsx.txt vbitrev.h mask=0x71108000	
+#0x71108000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitrev.h vrD, vrJ, vrK              is op15_31=0xe221 & vrD & vrJ & vrK {
+	vrD = vbitrev.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitrev.w;
+
+#lsx.txt vbitrev.w mask=0x71110000	
+#0x71110000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitrev.w vrD, vrJ, vrK              is op15_31=0xe222 & vrD & vrJ & vrK {
+	vrD = vbitrev.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vbitrev.d;
+
+#lsx.txt vbitrev.d mask=0x71118000	
+#0x71118000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vbitrev.d vrD, vrJ, vrK              is op15_31=0xe223 & vrD & vrJ & vrK {
+	vrD = vbitrev.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackev.b;
+
+#lsx.txt vpackev.b mask=0x71160000	
+#0x71160000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackev.b vrD, vrJ, vrK              is op15_31=0xe22c & vrD & vrJ & vrK {
+	vrD = vpackev.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackev.h;
+
+#lsx.txt vpackev.h mask=0x71168000	
+#0x71168000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackev.h vrD, vrJ, vrK              is op15_31=0xe22d & vrD & vrJ & vrK {
+	vrD = vpackev.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackev.w;
+
+#lsx.txt vpackev.w mask=0x71170000	
+#0x71170000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackev.w vrD, vrJ, vrK              is op15_31=0xe22e & vrD & vrJ & vrK {
+	vrD = vpackev.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackev.d;
+
+#lsx.txt vpackev.d mask=0x71178000	
+#0x71178000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackev.d vrD, vrJ, vrK              is op15_31=0xe22f & vrD & vrJ & vrK {
+	vrD = vpackev.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackod.b;
+
+#lsx.txt vpackod.b mask=0x71180000	
+#0x71180000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackod.b vrD, vrJ, vrK              is op15_31=0xe230 & vrD & vrJ & vrK {
+	vrD = vpackod.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackod.h;
+
+#lsx.txt vpackod.h mask=0x71188000	
+#0x71188000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackod.h vrD, vrJ, vrK              is op15_31=0xe231 & vrD & vrJ & vrK {
+	vrD = vpackod.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackod.w;
+
+#lsx.txt vpackod.w mask=0x71190000	
+#0x71190000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackod.w vrD, vrJ, vrK              is op15_31=0xe232 & vrD & vrJ & vrK {
+	vrD = vpackod.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vpackod.d;
+
+#lsx.txt vpackod.d mask=0x71198000	
+#0x71198000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpackod.d vrD, vrJ, vrK              is op15_31=0xe233 & vrD & vrJ & vrK {
+	vrD = vpackod.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvl.b;
+
+#lsx.txt vilvl.b mask=0x711a0000	
+#0x711a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvl.b vrD, vrJ, vrK                is op15_31=0xe234 & vrD & vrJ & vrK {
+	vrD = vilvl.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvl.h;
+
+#lsx.txt vilvl.h mask=0x711a8000	
+#0x711a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvl.h vrD, vrJ, vrK                is op15_31=0xe235 & vrD & vrJ & vrK {
+	vrD = vilvl.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvl.w;
+
+#lsx.txt vilvl.w mask=0x711b0000	
+#0x711b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvl.w vrD, vrJ, vrK                is op15_31=0xe236 & vrD & vrJ & vrK {
+	vrD = vilvl.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvl.d;
+
+#lsx.txt vilvl.d mask=0x711b8000	
+#0x711b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvl.d vrD, vrJ, vrK                is op15_31=0xe237 & vrD & vrJ & vrK {
+	vrD = vilvl.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvh.b;
+
+#lsx.txt vilvh.b mask=0x711c0000	
+#0x711c0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvh.b vrD, vrJ, vrK                is op15_31=0xe238 & vrD & vrJ & vrK {
+	vrD = vilvh.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvh.h;
+
+#lsx.txt vilvh.h mask=0x711c8000	
+#0x711c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvh.h vrD, vrJ, vrK                is op15_31=0xe239 & vrD & vrJ & vrK {
+	vrD = vilvh.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvh.w;
+
+#lsx.txt vilvh.w mask=0x711d0000	
+#0x711d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvh.w vrD, vrJ, vrK                is op15_31=0xe23a & vrD & vrJ & vrK {
+	vrD = vilvh.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vilvh.d;
+
+#lsx.txt vilvh.d mask=0x711d8000	
+#0x711d8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vilvh.d vrD, vrJ, vrK                is op15_31=0xe23b & vrD & vrJ & vrK {
+	vrD = vilvh.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickev.b;
+
+#lsx.txt vpickev.b mask=0x711e0000	
+#0x711e0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickev.b vrD, vrJ, vrK              is op15_31=0xe23c & vrD & vrJ & vrK {
+	vrD = vpickev.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickev.h;
+
+#lsx.txt vpickev.h mask=0x711e8000	
+#0x711e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickev.h vrD, vrJ, vrK              is op15_31=0xe23d & vrD & vrJ & vrK {
+	vrD = vpickev.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickev.w;
+
+#lsx.txt vpickev.w mask=0x711f0000	
+#0x711f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickev.w vrD, vrJ, vrK              is op15_31=0xe23e & vrD & vrJ & vrK {
+	vrD = vpickev.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickev.d;
+
+#lsx.txt vpickev.d mask=0x711f8000	
+#0x711f8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickev.d vrD, vrJ, vrK              is op15_31=0xe23f & vrD & vrJ & vrK {
+	vrD = vpickev.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickod.b;
+
+#lsx.txt vpickod.b mask=0x71200000	
+#0x71200000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickod.b vrD, vrJ, vrK              is op15_31=0xe240 & vrD & vrJ & vrK {
+	vrD = vpickod.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickod.h;
+
+#lsx.txt vpickod.h mask=0x71208000	
+#0x71208000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickod.h vrD, vrJ, vrK              is op15_31=0xe241 & vrD & vrJ & vrK {
+	vrD = vpickod.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickod.w;
+
+#lsx.txt vpickod.w mask=0x71210000	
+#0x71210000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickod.w vrD, vrJ, vrK              is op15_31=0xe242 & vrD & vrJ & vrK {
+	vrD = vpickod.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vpickod.d;
+
+#lsx.txt vpickod.d mask=0x71218000	
+#0x71218000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vpickod.d vrD, vrJ, vrK              is op15_31=0xe243 & vrD & vrJ & vrK {
+	vrD = vpickod.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vreplve.b;
+
+#lsx.txt vreplve.b mask=0x71220000	
+#0x71220000	0xffff8000	v0:5,v5:5, r10:5	['vreg0_5_s0', 'vreg5_5_s0', 'reg10_5_s0']
+:vreplve.b vrD, vrJ, RKsrc            is op15_31=0xe244 & vrD & vrJ & RKsrc {
+	vrD = vreplve.b(vrD, vrJ, RKsrc);
+}
+
+define pcodeop vreplve.h;
+
+#lsx.txt vreplve.h mask=0x71228000	
+#0x71228000	0xffff8000	v0:5,v5:5, r10:5	['vreg0_5_s0', 'vreg5_5_s0', 'reg10_5_s0']
+:vreplve.h vrD, vrJ, RKsrc            is op15_31=0xe245 & vrD & vrJ & RKsrc {
+	vrD = vreplve.h(vrD, vrJ, RKsrc);
+}
+
+define pcodeop vreplve.w;
+
+#lsx.txt vreplve.w mask=0x71230000	
+#0x71230000	0xffff8000	v0:5,v5:5, r10:5	['vreg0_5_s0', 'vreg5_5_s0', 'reg10_5_s0']
+:vreplve.w vrD, vrJ, RKsrc            is op15_31=0xe246 & vrD & vrJ & RKsrc {
+	vrD = vreplve.w(vrD, vrJ, RKsrc);
+}
+
+define pcodeop vreplve.d;
+
+#lsx.txt vreplve.d mask=0x71238000	
+#0x71238000	0xffff8000	v0:5,v5:5, r10:5	['vreg0_5_s0', 'vreg5_5_s0', 'reg10_5_s0']
+:vreplve.d vrD, vrJ, RKsrc            is op15_31=0xe247 & vrD & vrJ & RKsrc {
+	vrD = vreplve.d(vrD, vrJ, RKsrc);
+}
+
+define pcodeop vand.v;
+
+#lsx.txt vand.v mask=0x71260000	
+#0x71260000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vand.v vrD, vrJ, vrK                 is op15_31=0xe24c & vrD & vrJ & vrK {
+	vrD = vand.v(vrD, vrJ, vrK);
+}
+
+define pcodeop vor.v;
+
+#lsx.txt vor.v mask=0x71268000	
+#0x71268000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vor.v vrD, vrJ, vrK                  is op15_31=0xe24d & vrD & vrJ & vrK {
+	vrD = vor.v(vrD, vrJ, vrK);
+}
+
+define pcodeop vxor.v;
+
+#lsx.txt vxor.v mask=0x71270000	
+#0x71270000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vxor.v vrD, vrJ, vrK                 is op15_31=0xe24e & vrD & vrJ & vrK {
+	vrD = vxor.v(vrD, vrJ, vrK);
+}
+
+define pcodeop vnor.v;
+
+#lsx.txt vnor.v mask=0x71278000	
+#0x71278000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vnor.v vrD, vrJ, vrK                 is op15_31=0xe24f & vrD & vrJ & vrK {
+	vrD = vnor.v(vrD, vrJ, vrK);
+}
+
+define pcodeop vandn.v;
+
+#lsx.txt vandn.v mask=0x71280000	
+#0x71280000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vandn.v vrD, vrJ, vrK                is op15_31=0xe250 & vrD & vrJ & vrK {
+	vrD = vandn.v(vrD, vrJ, vrK);
+}
+
+define pcodeop vorn.v;
+
+#lsx.txt vorn.v mask=0x71288000	
+#0x71288000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vorn.v vrD, vrJ, vrK                 is op15_31=0xe251 & vrD & vrJ & vrK {
+	vrD = vorn.v(vrD, vrJ, vrK);
+}
+
+define pcodeop vfrstp.b;
+
+#lsx.txt vfrstp.b mask=0x712b0000	
+#0x712b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfrstp.b vrD, vrJ, vrK               is op15_31=0xe256 & vrD & vrJ & vrK {
+	vrD = vfrstp.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vfrstp.h;
+
+#lsx.txt vfrstp.h mask=0x712b8000	
+#0x712b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfrstp.h vrD, vrJ, vrK               is op15_31=0xe257 & vrD & vrJ & vrK {
+	vrD = vfrstp.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vadd.q;
+
+#lsx.txt vadd.q mask=0x712d0000	
+#0x712d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vadd.q vrD, vrJ, vrK                 is op15_31=0xe25a & vrD & vrJ & vrK {
+	vrD = vadd.q(vrD, vrJ, vrK);
+}
+
+define pcodeop vsub.q;
+
+#lsx.txt vsub.q mask=0x712d8000	
+#0x712d8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsub.q vrD, vrJ, vrK                 is op15_31=0xe25b & vrD & vrJ & vrK {
+	vrD = vsub.q(vrD, vrJ, vrK);
+}
+
+define pcodeop vsigncov.b;
+
+#lsx.txt vsigncov.b mask=0x712e0000	
+#0x712e0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsigncov.b vrD, vrJ, vrK             is op15_31=0xe25c & vrD & vrJ & vrK {
+	vrD = vsigncov.b(vrD, vrJ, vrK);
+}
+
+define pcodeop vsigncov.h;
+
+#lsx.txt vsigncov.h mask=0x712e8000	
+#0x712e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsigncov.h vrD, vrJ, vrK             is op15_31=0xe25d & vrD & vrJ & vrK {
+	vrD = vsigncov.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vsigncov.w;
+
+#lsx.txt vsigncov.w mask=0x712f0000	
+#0x712f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsigncov.w vrD, vrJ, vrK             is op15_31=0xe25e & vrD & vrJ & vrK {
+	vrD = vsigncov.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vsigncov.d;
+
+#lsx.txt vsigncov.d mask=0x712f8000	
+#0x712f8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vsigncov.d vrD, vrJ, vrK             is op15_31=0xe25f & vrD & vrJ & vrK {
+	vrD = vsigncov.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfadd.s;
+
+#lsx.txt vfadd.s mask=0x71308000	
+#0x71308000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfadd.s vrD, vrJ, vrK                is op15_31=0xe261 & vrD & vrJ & vrK {
+	vrD = vfadd.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfadd.d;
+
+#lsx.txt vfadd.d mask=0x71310000	
+#0x71310000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfadd.d vrD, vrJ, vrK                is op15_31=0xe262 & vrD & vrJ & vrK {
+	vrD = vfadd.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfsub.s;
+
+#lsx.txt vfsub.s mask=0x71328000	
+#0x71328000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfsub.s vrD, vrJ, vrK                is op15_31=0xe265 & vrD & vrJ & vrK {
+	vrD = vfsub.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfsub.d;
+
+#lsx.txt vfsub.d mask=0x71330000	
+#0x71330000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfsub.d vrD, vrJ, vrK                is op15_31=0xe266 & vrD & vrJ & vrK {
+	vrD = vfsub.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmul.s;
+
+#lsx.txt vfmul.s mask=0x71388000	
+#0x71388000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmul.s vrD, vrJ, vrK                is op15_31=0xe271 & vrD & vrJ & vrK {
+	vrD = vfmul.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmul.d;
+
+#lsx.txt vfmul.d mask=0x71390000	
+#0x71390000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmul.d vrD, vrJ, vrK                is op15_31=0xe272 & vrD & vrJ & vrK {
+	vrD = vfmul.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfdiv.s;
+
+#lsx.txt vfdiv.s mask=0x713a8000	
+#0x713a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfdiv.s vrD, vrJ, vrK                is op15_31=0xe275 & vrD & vrJ & vrK {
+	vrD = vfdiv.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfdiv.d;
+
+#lsx.txt vfdiv.d mask=0x713b0000	
+#0x713b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfdiv.d vrD, vrJ, vrK                is op15_31=0xe276 & vrD & vrJ & vrK {
+	vrD = vfdiv.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmax.s;
+
+#lsx.txt vfmax.s mask=0x713c8000	
+#0x713c8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmax.s vrD, vrJ, vrK                is op15_31=0xe279 & vrD & vrJ & vrK {
+	vrD = vfmax.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmax.d;
+
+#lsx.txt vfmax.d mask=0x713d0000	
+#0x713d0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmax.d vrD, vrJ, vrK                is op15_31=0xe27a & vrD & vrJ & vrK {
+	vrD = vfmax.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmin.s;
+
+#lsx.txt vfmin.s mask=0x713e8000	
+#0x713e8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmin.s vrD, vrJ, vrK                is op15_31=0xe27d & vrD & vrJ & vrK {
+	vrD = vfmin.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmin.d;
+
+#lsx.txt vfmin.d mask=0x713f0000	
+#0x713f0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmin.d vrD, vrJ, vrK                is op15_31=0xe27e & vrD & vrJ & vrK {
+	vrD = vfmin.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmaxa.s;
+
+#lsx.txt vfmaxa.s mask=0x71408000	
+#0x71408000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmaxa.s vrD, vrJ, vrK               is op15_31=0xe281 & vrD & vrJ & vrK {
+	vrD = vfmaxa.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmaxa.d;
+
+#lsx.txt vfmaxa.d mask=0x71410000	
+#0x71410000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmaxa.d vrD, vrJ, vrK               is op15_31=0xe282 & vrD & vrJ & vrK {
+	vrD = vfmaxa.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmina.s;
+
+#lsx.txt vfmina.s mask=0x71428000	
+#0x71428000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmina.s vrD, vrJ, vrK               is op15_31=0xe285 & vrD & vrJ & vrK {
+	vrD = vfmina.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfmina.d;
+
+#lsx.txt vfmina.d mask=0x71430000	
+#0x71430000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfmina.d vrD, vrJ, vrK               is op15_31=0xe286 & vrD & vrJ & vrK {
+	vrD = vfmina.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcvt.h.s;
+
+#lsx.txt vfcvt.h.s mask=0x71460000	
+#0x71460000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcvt.h.s vrD, vrJ, vrK              is op15_31=0xe28c & vrD & vrJ & vrK {
+	vrD = vfcvt.h.s(vrD, vrJ, vrK);
+}
+
+define pcodeop vfcvt.s.d;
+
+#lsx.txt vfcvt.s.d mask=0x71468000	
+#0x71468000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vfcvt.s.d vrD, vrJ, vrK              is op15_31=0xe28d & vrD & vrJ & vrK {
+	vrD = vfcvt.s.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vffint.s.l;
+
+#lsx.txt vffint.s.l mask=0x71480000	
+#0x71480000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vffint.s.l vrD, vrJ, vrK             is op15_31=0xe290 & vrD & vrJ & vrK {
+	vrD = vffint.s.l(vrD, vrJ, vrK);
+}
+
+define pcodeop vftint.w.d;
+
+#lsx.txt vftint.w.d mask=0x71498000	
+#0x71498000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vftint.w.d vrD, vrJ, vrK             is op15_31=0xe293 & vrD & vrJ & vrK {
+	vrD = vftint.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vftintrm.w.d;
+
+#lsx.txt vftintrm.w.d mask=0x714a0000	
+#0x714a0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vftintrm.w.d vrD, vrJ, vrK           is op15_31=0xe294 & vrD & vrJ & vrK {
+	vrD = vftintrm.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vftintrp.w.d;
+
+#lsx.txt vftintrp.w.d mask=0x714a8000	
+#0x714a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vftintrp.w.d vrD, vrJ, vrK           is op15_31=0xe295 & vrD & vrJ & vrK {
+	vrD = vftintrp.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vftintrz.w.d;
+
+#lsx.txt vftintrz.w.d mask=0x714b0000	
+#0x714b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vftintrz.w.d vrD, vrJ, vrK           is op15_31=0xe296 & vrD & vrJ & vrK {
+	vrD = vftintrz.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vftintrne.w.d;
+
+#lsx.txt vftintrne.w.d mask=0x714b8000	
+#0x714b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vftintrne.w.d vrD, vrJ, vrK          is op15_31=0xe297 & vrD & vrJ & vrK {
+	vrD = vftintrne.w.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vshuf.h;
+
+#lsx.txt vshuf.h mask=0x717a8000	
+#0x717a8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vshuf.h vrD, vrJ, vrK                is op15_31=0xe2f5 & vrD & vrJ & vrK {
+	vrD = vshuf.h(vrD, vrJ, vrK);
+}
+
+define pcodeop vshuf.w;
+
+#lsx.txt vshuf.w mask=0x717b0000	
+#0x717b0000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vshuf.w vrD, vrJ, vrK                is op15_31=0xe2f6 & vrD & vrJ & vrK {
+	vrD = vshuf.w(vrD, vrJ, vrK);
+}
+
+define pcodeop vshuf.d;
+
+#lsx.txt vshuf.d mask=0x717b8000	
+#0x717b8000	0xffff8000	v0:5,v5:5,v10:5	['vreg0_5_s0', 'vreg5_5_s0', 'vreg10_5_s0']
+:vshuf.d vrD, vrJ, vrK                is op15_31=0xe2f7 & vrD & vrJ & vrK {
+	vrD = vshuf.d(vrD, vrJ, vrK);
+}
+
+define pcodeop vseqi.b;
+
+#lsx.txt vseqi.b mask=0x72800000	
+#0x72800000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vseqi.b vrD, vrJ, simm10_5           is op15_31=0xe500 & vrD & vrJ & simm10_5 {
+	vrD = vseqi.b(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vseqi.h;
+
+#lsx.txt vseqi.h mask=0x72808000	
+#0x72808000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vseqi.h vrD, vrJ, simm10_5           is op15_31=0xe501 & vrD & vrJ & simm10_5 {
+	vrD = vseqi.h(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vseqi.w;
+
+#lsx.txt vseqi.w mask=0x72810000	
+#0x72810000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vseqi.w vrD, vrJ, simm10_5           is op15_31=0xe502 & vrD & vrJ & simm10_5 {
+	vrD = vseqi.w(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vseqi.d;
+
+#lsx.txt vseqi.d mask=0x72818000	
+#0x72818000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vseqi.d vrD, vrJ, simm10_5           is op15_31=0xe503 & vrD & vrJ & simm10_5 {
+	vrD = vseqi.d(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.b;
+
+#lsx.txt vslei.b mask=0x72820000	
+#0x72820000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslei.b vrD, vrJ, simm10_5           is op15_31=0xe504 & vrD & vrJ & simm10_5 {
+	vrD = vslei.b(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.h;
+
+#lsx.txt vslei.h mask=0x72828000	
+#0x72828000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslei.h vrD, vrJ, simm10_5           is op15_31=0xe505 & vrD & vrJ & simm10_5 {
+	vrD = vslei.h(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.w;
+
+#lsx.txt vslei.w mask=0x72830000	
+#0x72830000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslei.w vrD, vrJ, simm10_5           is op15_31=0xe506 & vrD & vrJ & simm10_5 {
+	vrD = vslei.w(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.d;
+
+#lsx.txt vslei.d mask=0x72838000	
+#0x72838000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslei.d vrD, vrJ, simm10_5           is op15_31=0xe507 & vrD & vrJ & simm10_5 {
+	vrD = vslei.d(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.bu;
+
+#lsx.txt vslei.bu mask=0x72840000	
+#0x72840000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslei.bu vrD, vrJ, imm10_5           is op15_31=0xe508 & vrD & vrJ & imm10_5 {
+	vrD = vslei.bu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.hu;
+
+#lsx.txt vslei.hu mask=0x72848000	
+#0x72848000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslei.hu vrD, vrJ, imm10_5           is op15_31=0xe509 & vrD & vrJ & imm10_5 {
+	vrD = vslei.hu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.wu;
+
+#lsx.txt vslei.wu mask=0x72850000	
+#0x72850000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslei.wu vrD, vrJ, imm10_5           is op15_31=0xe50a & vrD & vrJ & imm10_5 {
+	vrD = vslei.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslei.du;
+
+#lsx.txt vslei.du mask=0x72858000	
+#0x72858000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslei.du vrD, vrJ, imm10_5           is op15_31=0xe50b & vrD & vrJ & imm10_5 {
+	vrD = vslei.du(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.b;
+
+#lsx.txt vslti.b mask=0x72860000	
+#0x72860000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslti.b vrD, vrJ, simm10_5           is op15_31=0xe50c & vrD & vrJ & simm10_5 {
+	vrD = vslti.b(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.h;
+
+#lsx.txt vslti.h mask=0x72868000	
+#0x72868000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslti.h vrD, vrJ, simm10_5           is op15_31=0xe50d & vrD & vrJ & simm10_5 {
+	vrD = vslti.h(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.w;
+
+#lsx.txt vslti.w mask=0x72870000	
+#0x72870000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslti.w vrD, vrJ, simm10_5           is op15_31=0xe50e & vrD & vrJ & simm10_5 {
+	vrD = vslti.w(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.d;
+
+#lsx.txt vslti.d mask=0x72878000	
+#0x72878000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vslti.d vrD, vrJ, simm10_5           is op15_31=0xe50f & vrD & vrJ & simm10_5 {
+	vrD = vslti.d(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.bu;
+
+#lsx.txt vslti.bu mask=0x72880000	
+#0x72880000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslti.bu vrD, vrJ, imm10_5           is op15_31=0xe510 & vrD & vrJ & imm10_5 {
+	vrD = vslti.bu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.hu;
+
+#lsx.txt vslti.hu mask=0x72888000	
+#0x72888000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslti.hu vrD, vrJ, imm10_5           is op15_31=0xe511 & vrD & vrJ & imm10_5 {
+	vrD = vslti.hu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.wu;
+
+#lsx.txt vslti.wu mask=0x72890000	
+#0x72890000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslti.wu vrD, vrJ, imm10_5           is op15_31=0xe512 & vrD & vrJ & imm10_5 {
+	vrD = vslti.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslti.du;
+
+#lsx.txt vslti.du mask=0x72898000	
+#0x72898000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslti.du vrD, vrJ, imm10_5           is op15_31=0xe513 & vrD & vrJ & imm10_5 {
+	vrD = vslti.du(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vaddi.bu;
+
+#lsx.txt vaddi.bu mask=0x728a0000	
+#0x728a0000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vaddi.bu vrD, vrJ, imm10_5           is op15_31=0xe514 & vrD & vrJ & imm10_5 {
+	vrD = vaddi.bu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vaddi.hu;
+
+#lsx.txt vaddi.hu mask=0x728a8000	
+#0x728a8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vaddi.hu vrD, vrJ, imm10_5           is op15_31=0xe515 & vrD & vrJ & imm10_5 {
+	vrD = vaddi.hu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vaddi.wu;
+
+#lsx.txt vaddi.wu mask=0x728b0000	
+#0x728b0000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vaddi.wu vrD, vrJ, imm10_5           is op15_31=0xe516 & vrD & vrJ & imm10_5 {
+	vrD = vaddi.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vaddi.du;
+
+#lsx.txt vaddi.du mask=0x728b8000	
+#0x728b8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vaddi.du vrD, vrJ, imm10_5           is op15_31=0xe517 & vrD & vrJ & imm10_5 {
+	vrD = vaddi.du(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsubi.bu;
+
+#lsx.txt vsubi.bu mask=0x728c0000	
+#0x728c0000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsubi.bu vrD, vrJ, imm10_5           is op15_31=0xe518 & vrD & vrJ & imm10_5 {
+	vrD = vsubi.bu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsubi.hu;
+
+#lsx.txt vsubi.hu mask=0x728c8000	
+#0x728c8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsubi.hu vrD, vrJ, imm10_5           is op15_31=0xe519 & vrD & vrJ & imm10_5 {
+	vrD = vsubi.hu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsubi.wu;
+
+#lsx.txt vsubi.wu mask=0x728d0000	
+#0x728d0000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsubi.wu vrD, vrJ, imm10_5           is op15_31=0xe51a & vrD & vrJ & imm10_5 {
+	vrD = vsubi.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsubi.du;
+
+#lsx.txt vsubi.du mask=0x728d8000	
+#0x728d8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsubi.du vrD, vrJ, imm10_5           is op15_31=0xe51b & vrD & vrJ & imm10_5 {
+	vrD = vsubi.du(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vbsll.v;
+
+#lsx.txt vbsll.v mask=0x728e0000	
+#0x728e0000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vbsll.v vrD, vrJ, imm10_5            is op15_31=0xe51c & vrD & vrJ & imm10_5 {
+	vrD = vbsll.v(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vbsrl.v;
+
+#lsx.txt vbsrl.v mask=0x728e8000	
+#0x728e8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vbsrl.v vrD, vrJ, imm10_5            is op15_31=0xe51d & vrD & vrJ & imm10_5 {
+	vrD = vbsrl.v(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.b;
+
+#lsx.txt vmaxi.b mask=0x72900000	
+#0x72900000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmaxi.b vrD, vrJ, simm10_5           is op15_31=0xe520 & vrD & vrJ & simm10_5 {
+	vrD = vmaxi.b(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.h;
+
+#lsx.txt vmaxi.h mask=0x72908000	
+#0x72908000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmaxi.h vrD, vrJ, simm10_5           is op15_31=0xe521 & vrD & vrJ & simm10_5 {
+	vrD = vmaxi.h(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.w;
+
+#lsx.txt vmaxi.w mask=0x72910000	
+#0x72910000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmaxi.w vrD, vrJ, simm10_5           is op15_31=0xe522 & vrD & vrJ & simm10_5 {
+	vrD = vmaxi.w(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.d;
+
+#lsx.txt vmaxi.d mask=0x72918000	
+#0x72918000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmaxi.d vrD, vrJ, simm10_5           is op15_31=0xe523 & vrD & vrJ & simm10_5 {
+	vrD = vmaxi.d(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.b;
+
+#lsx.txt vmini.b mask=0x72920000	
+#0x72920000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmini.b vrD, vrJ, simm10_5           is op15_31=0xe524 & vrD & vrJ & simm10_5 {
+	vrD = vmini.b(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.h;
+
+#lsx.txt vmini.h mask=0x72928000	
+#0x72928000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmini.h vrD, vrJ, simm10_5           is op15_31=0xe525 & vrD & vrJ & simm10_5 {
+	vrD = vmini.h(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.w;
+
+#lsx.txt vmini.w mask=0x72930000	
+#0x72930000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmini.w vrD, vrJ, simm10_5           is op15_31=0xe526 & vrD & vrJ & simm10_5 {
+	vrD = vmini.w(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.d;
+
+#lsx.txt vmini.d mask=0x72938000	
+#0x72938000	0xffff8000	v0:5,v5:5, s10:5	['vreg0_5_s0', 'vreg5_5_s0', 'simm10_5_s0']
+:vmini.d vrD, vrJ, simm10_5           is op15_31=0xe527 & vrD & vrJ & simm10_5 {
+	vrD = vmini.d(vrD, vrJ, simm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.bu;
+
+#lsx.txt vmaxi.bu mask=0x72940000	
+#0x72940000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmaxi.bu vrD, vrJ, imm10_5           is op15_31=0xe528 & vrD & vrJ & imm10_5 {
+	vrD = vmaxi.bu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.hu;
+
+#lsx.txt vmaxi.hu mask=0x72948000	
+#0x72948000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmaxi.hu vrD, vrJ, imm10_5           is op15_31=0xe529 & vrD & vrJ & imm10_5 {
+	vrD = vmaxi.hu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.wu;
+
+#lsx.txt vmaxi.wu mask=0x72950000	
+#0x72950000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmaxi.wu vrD, vrJ, imm10_5           is op15_31=0xe52a & vrD & vrJ & imm10_5 {
+	vrD = vmaxi.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmaxi.du;
+
+#lsx.txt vmaxi.du mask=0x72958000	
+#0x72958000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmaxi.du vrD, vrJ, imm10_5           is op15_31=0xe52b & vrD & vrJ & imm10_5 {
+	vrD = vmaxi.du(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.bu;
+
+#lsx.txt vmini.bu mask=0x72960000	
+#0x72960000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmini.bu vrD, vrJ, imm10_5           is op15_31=0xe52c & vrD & vrJ & imm10_5 {
+	vrD = vmini.bu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.hu;
+
+#lsx.txt vmini.hu mask=0x72968000	
+#0x72968000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmini.hu vrD, vrJ, imm10_5           is op15_31=0xe52d & vrD & vrJ & imm10_5 {
+	vrD = vmini.hu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.wu;
+
+#lsx.txt vmini.wu mask=0x72970000	
+#0x72970000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmini.wu vrD, vrJ, imm10_5           is op15_31=0xe52e & vrD & vrJ & imm10_5 {
+	vrD = vmini.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vmini.du;
+
+#lsx.txt vmini.du mask=0x72978000	
+#0x72978000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vmini.du vrD, vrJ, imm10_5           is op15_31=0xe52f & vrD & vrJ & imm10_5 {
+	vrD = vmini.du(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vfrstpi.b;
+
+#lsx.txt vfrstpi.b mask=0x729a0000	
+#0x729a0000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vfrstpi.b vrD, vrJ, imm10_5          is op15_31=0xe534 & vrD & vrJ & imm10_5 {
+	vrD = vfrstpi.b(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vfrstpi.h;
+
+#lsx.txt vfrstpi.h mask=0x729a8000	
+#0x729a8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vfrstpi.h vrD, vrJ, imm10_5          is op15_31=0xe535 & vrD & vrJ & imm10_5 {
+	vrD = vfrstpi.h(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vclo.b;
+
+#lsx.txt vclo.b mask=0x729c0000	
+#0x729c0000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclo.b vrD, vrJ                      is op10_31=0x1ca700 & vrD & vrJ {
+	vrD = vclo.b(vrD, vrJ);
+}
+
+define pcodeop vclo.h;
+
+#lsx.txt vclo.h mask=0x729c0400	
+#0x729c0400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclo.h vrD, vrJ                      is op10_31=0x1ca701 & vrD & vrJ {
+	vrD = vclo.h(vrD, vrJ);
+}
+
+define pcodeop vclo.w;
+
+#lsx.txt vclo.w mask=0x729c0800	
+#0x729c0800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclo.w vrD, vrJ                      is op10_31=0x1ca702 & vrD & vrJ {
+	vrD = vclo.w(vrD, vrJ);
+}
+
+define pcodeop vclo.d;
+
+#lsx.txt vclo.d mask=0x729c0c00	
+#0x729c0c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclo.d vrD, vrJ                      is op10_31=0x1ca703 & vrD & vrJ {
+	vrD = vclo.d(vrD, vrJ);
+}
+
+define pcodeop vclz.b;
+
+#lsx.txt vclz.b mask=0x729c1000	
+#0x729c1000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclz.b vrD, vrJ                      is op10_31=0x1ca704 & vrD & vrJ {
+	vrD = vclz.b(vrD, vrJ);
+}
+
+define pcodeop vclz.h;
+
+#lsx.txt vclz.h mask=0x729c1400	
+#0x729c1400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclz.h vrD, vrJ                      is op10_31=0x1ca705 & vrD & vrJ {
+	vrD = vclz.h(vrD, vrJ);
+}
+
+define pcodeop vclz.w;
+
+#lsx.txt vclz.w mask=0x729c1800	
+#0x729c1800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclz.w vrD, vrJ                      is op10_31=0x1ca706 & vrD & vrJ {
+	vrD = vclz.w(vrD, vrJ);
+}
+
+define pcodeop vclz.d;
+
+#lsx.txt vclz.d mask=0x729c1c00	
+#0x729c1c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vclz.d vrD, vrJ                      is op10_31=0x1ca707 & vrD & vrJ {
+	vrD = vclz.d(vrD, vrJ);
+}
+
+define pcodeop vpcnt.b;
+
+#lsx.txt vpcnt.b mask=0x729c2000	
+#0x729c2000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vpcnt.b vrD, vrJ                     is op10_31=0x1ca708 & vrD & vrJ {
+	vrD = vpcnt.b(vrD, vrJ);
+}
+
+define pcodeop vpcnt.h;
+
+#lsx.txt vpcnt.h mask=0x729c2400	
+#0x729c2400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vpcnt.h vrD, vrJ                     is op10_31=0x1ca709 & vrD & vrJ {
+	vrD = vpcnt.h(vrD, vrJ);
+}
+
+define pcodeop vpcnt.w;
+
+#lsx.txt vpcnt.w mask=0x729c2800	
+#0x729c2800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vpcnt.w vrD, vrJ                     is op10_31=0x1ca70a & vrD & vrJ {
+	vrD = vpcnt.w(vrD, vrJ);
+}
+
+define pcodeop vpcnt.d;
+
+#lsx.txt vpcnt.d mask=0x729c2c00	
+#0x729c2c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vpcnt.d vrD, vrJ                     is op10_31=0x1ca70b & vrD & vrJ {
+	vrD = vpcnt.d(vrD, vrJ);
+}
+
+define pcodeop vneg.b;
+
+#lsx.txt vneg.b mask=0x729c3000	
+#0x729c3000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vneg.b vrD, vrJ                      is op10_31=0x1ca70c & vrD & vrJ {
+	vrD = vneg.b(vrD, vrJ);
+}
+
+define pcodeop vneg.h;
+
+#lsx.txt vneg.h mask=0x729c3400	
+#0x729c3400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vneg.h vrD, vrJ                      is op10_31=0x1ca70d & vrD & vrJ {
+	vrD = vneg.h(vrD, vrJ);
+}
+
+define pcodeop vneg.w;
+
+#lsx.txt vneg.w mask=0x729c3800	
+#0x729c3800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vneg.w vrD, vrJ                      is op10_31=0x1ca70e & vrD & vrJ {
+	vrD = vneg.w(vrD, vrJ);
+}
+
+define pcodeop vneg.d;
+
+#lsx.txt vneg.d mask=0x729c3c00	
+#0x729c3c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vneg.d vrD, vrJ                      is op10_31=0x1ca70f & vrD & vrJ {
+	vrD = vneg.d(vrD, vrJ);
+}
+
+define pcodeop vmskltz.b;
+
+#lsx.txt vmskltz.b mask=0x729c4000	
+#0x729c4000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vmskltz.b vrD, vrJ                   is op10_31=0x1ca710 & vrD & vrJ {
+	vrD = vmskltz.b(vrD, vrJ);
+}
+
+define pcodeop vmskltz.h;
+
+#lsx.txt vmskltz.h mask=0x729c4400	
+#0x729c4400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vmskltz.h vrD, vrJ                   is op10_31=0x1ca711 & vrD & vrJ {
+	vrD = vmskltz.h(vrD, vrJ);
+}
+
+define pcodeop vmskltz.w;
+
+#lsx.txt vmskltz.w mask=0x729c4800	
+#0x729c4800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vmskltz.w vrD, vrJ                   is op10_31=0x1ca712 & vrD & vrJ {
+	vrD = vmskltz.w(vrD, vrJ);
+}
+
+define pcodeop vmskltz.d;
+
+#lsx.txt vmskltz.d mask=0x729c4c00	
+#0x729c4c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vmskltz.d vrD, vrJ                   is op10_31=0x1ca713 & vrD & vrJ {
+	vrD = vmskltz.d(vrD, vrJ);
+}
+
+define pcodeop vmskgez.b;
+
+#lsx.txt vmskgez.b mask=0x729c5000	
+#0x729c5000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vmskgez.b vrD, vrJ                   is op10_31=0x1ca714 & vrD & vrJ {
+	vrD = vmskgez.b(vrD, vrJ);
+}
+
+define pcodeop vmsknz.b;
+
+#lsx.txt vmsknz.b mask=0x729c6000	
+#0x729c6000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vmsknz.b vrD, vrJ                    is op10_31=0x1ca718 & vrD & vrJ {
+	vrD = vmsknz.b(vrD, vrJ);
+}
+
+define pcodeop vseteqz.v;
+
+#lsx.txt vseteqz.v mask=0x729c9800	
+#0x729c9800	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vseteqz.v fccD, vrJ                 is op10_31=0x1ca726 & fccD & vrJ {
+	fccD = vseteqz.v(fccD, vrJ);
+}
+
+define pcodeop vsetnez.v;
+
+#lsx.txt vsetnez.v mask=0x729c9c00	
+#0x729c9c00	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetnez.v fccD, vrJ                 is op10_31=0x1ca727 & fccD & vrJ {
+	fccD = vsetnez.v(fccD, vrJ);
+}
+
+define pcodeop vsetanyeqz.b;
+
+#lsx.txt vsetanyeqz.b mask=0x729ca000	
+#0x729ca000	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetanyeqz.b fccD, vrJ              is op10_31=0x1ca728 & fccD & vrJ {
+	fccD = vsetanyeqz.b(fccD, vrJ);
+}
+
+define pcodeop vsetanyeqz.h;
+
+#lsx.txt vsetanyeqz.h mask=0x729ca400	
+#0x729ca400	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetanyeqz.h fccD, vrJ              is op10_31=0x1ca729 & fccD & vrJ {
+	fccD = vsetanyeqz.h(fccD, vrJ);
+}
+
+define pcodeop vsetanyeqz.w;
+
+#lsx.txt vsetanyeqz.w mask=0x729ca800	
+#0x729ca800	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetanyeqz.w fccD, vrJ              is op10_31=0x1ca72a & fccD & vrJ {
+	fccD = vsetanyeqz.w(fccD, vrJ);
+}
+
+define pcodeop vsetanyeqz.d;
+
+#lsx.txt vsetanyeqz.d mask=0x729cac00	
+#0x729cac00	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetanyeqz.d fccD, vrJ              is op10_31=0x1ca72b & fccD & vrJ {
+	fccD = vsetanyeqz.d(fccD, vrJ);
+}
+
+define pcodeop vsetallnez.b;
+
+#lsx.txt vsetallnez.b mask=0x729cb000	
+#0x729cb000	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetallnez.b fccD, vrJ              is op10_31=0x1ca72c & fccD & vrJ {
+	fccD = vsetallnez.b(fccD, vrJ);
+}
+
+define pcodeop vsetallnez.h;
+
+#lsx.txt vsetallnez.h mask=0x729cb400	
+#0x729cb400	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetallnez.h fccD, vrJ              is op10_31=0x1ca72d & fccD & vrJ {
+	fccD = vsetallnez.h(fccD, vrJ);
+}
+
+define pcodeop vsetallnez.w;
+
+#lsx.txt vsetallnez.w mask=0x729cb800	
+#0x729cb800	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetallnez.w fccD, vrJ              is op10_31=0x1ca72e & fccD & vrJ {
+	fccD = vsetallnez.w(fccD, vrJ);
+}
+
+define pcodeop vsetallnez.d;
+
+#lsx.txt vsetallnez.d mask=0x729cbc00	
+#0x729cbc00	0xfffffc18	c0:3,v5:5	['fcc0_3_s0', 'vreg5_5_s0']
+:vsetallnez.d fccD, vrJ              is op10_31=0x1ca72f & fccD & vrJ {
+	fccD = vsetallnez.d(fccD, vrJ);
+}
+
+define pcodeop vflogb.s;
+
+#lsx.txt vflogb.s mask=0x729cc400	
+#0x729cc400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vflogb.s vrD, vrJ                    is op10_31=0x1ca731 & vrD & vrJ {
+	vrD = vflogb.s(vrD, vrJ);
+}
+
+define pcodeop vflogb.d;
+
+#lsx.txt vflogb.d mask=0x729cc800	
+#0x729cc800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vflogb.d vrD, vrJ                    is op10_31=0x1ca732 & vrD & vrJ {
+	vrD = vflogb.d(vrD, vrJ);
+}
+
+define pcodeop vfclass.s;
+
+#lsx.txt vfclass.s mask=0x729cd400	
+#0x729cd400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfclass.s vrD, vrJ                   is op10_31=0x1ca735 & vrD & vrJ {
+	vrD = vfclass.s(vrD, vrJ);
+}
+
+define pcodeop vfclass.d;
+
+#lsx.txt vfclass.d mask=0x729cd800	
+#0x729cd800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfclass.d vrD, vrJ                   is op10_31=0x1ca736 & vrD & vrJ {
+	vrD = vfclass.d(vrD, vrJ);
+}
+
+define pcodeop vfsqrt.s;
+
+#lsx.txt vfsqrt.s mask=0x729ce400	
+#0x729ce400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfsqrt.s vrD, vrJ                    is op10_31=0x1ca739 & vrD & vrJ {
+	vrD = vfsqrt.s(vrD, vrJ);
+}
+
+define pcodeop vfsqrt.d;
+
+#lsx.txt vfsqrt.d mask=0x729ce800	
+#0x729ce800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfsqrt.d vrD, vrJ                    is op10_31=0x1ca73a & vrD & vrJ {
+	vrD = vfsqrt.d(vrD, vrJ);
+}
+
+define pcodeop vfrecip.s;
+
+#lsx.txt vfrecip.s mask=0x729cf400	
+#0x729cf400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrecip.s vrD, vrJ                   is op10_31=0x1ca73d & vrD & vrJ {
+	vrD = vfrecip.s(vrD, vrJ);
+}
+
+define pcodeop vfrecip.d;
+
+#lsx.txt vfrecip.d mask=0x729cf800	
+#0x729cf800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrecip.d vrD, vrJ                   is op10_31=0x1ca73e & vrD & vrJ {
+	vrD = vfrecip.d(vrD, vrJ);
+}
+
+define pcodeop vfrsqrt.s;
+
+#lsx.txt vfrsqrt.s mask=0x729d0400	
+#0x729d0400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrsqrt.s vrD, vrJ                   is op10_31=0x1ca741 & vrD & vrJ {
+	vrD = vfrsqrt.s(vrD, vrJ);
+}
+
+define pcodeop vfrsqrt.d;
+
+#lsx.txt vfrsqrt.d mask=0x729d0800	
+#0x729d0800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrsqrt.d vrD, vrJ                   is op10_31=0x1ca742 & vrD & vrJ {
+	vrD = vfrsqrt.d(vrD, vrJ);
+}
+
+define pcodeop vfrint.s;
+
+#lsx.txt vfrint.s mask=0x729d3400	
+#0x729d3400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrint.s vrD, vrJ                    is op10_31=0x1ca74d & vrD & vrJ {
+	vrD = vfrint.s(vrD, vrJ);
+}
+
+define pcodeop vfrint.d;
+
+#lsx.txt vfrint.d mask=0x729d3800	
+#0x729d3800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrint.d vrD, vrJ                    is op10_31=0x1ca74e & vrD & vrJ {
+	vrD = vfrint.d(vrD, vrJ);
+}
+
+define pcodeop vfrintrm.s;
+
+#lsx.txt vfrintrm.s mask=0x729d4400	
+#0x729d4400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrm.s vrD, vrJ                  is op10_31=0x1ca751 & vrD & vrJ {
+	vrD = vfrintrm.s(vrD, vrJ);
+}
+
+define pcodeop vfrintrm.d;
+
+#lsx.txt vfrintrm.d mask=0x729d4800	
+#0x729d4800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrm.d vrD, vrJ                  is op10_31=0x1ca752 & vrD & vrJ {
+	vrD = vfrintrm.d(vrD, vrJ);
+}
+
+define pcodeop vfrintrp.s;
+
+#lsx.txt vfrintrp.s mask=0x729d5400	
+#0x729d5400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrp.s vrD, vrJ                  is op10_31=0x1ca755 & vrD & vrJ {
+	vrD = vfrintrp.s(vrD, vrJ);
+}
+
+define pcodeop vfrintrp.d;
+
+#lsx.txt vfrintrp.d mask=0x729d5800	
+#0x729d5800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrp.d vrD, vrJ                  is op10_31=0x1ca756 & vrD & vrJ {
+	vrD = vfrintrp.d(vrD, vrJ);
+}
+
+define pcodeop vfrintrz.s;
+
+#lsx.txt vfrintrz.s mask=0x729d6400	
+#0x729d6400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrz.s vrD, vrJ                  is op10_31=0x1ca759 & vrD & vrJ {
+	vrD = vfrintrz.s(vrD, vrJ);
+}
+
+define pcodeop vfrintrz.d;
+
+#lsx.txt vfrintrz.d mask=0x729d6800	
+#0x729d6800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrz.d vrD, vrJ                  is op10_31=0x1ca75a & vrD & vrJ {
+	vrD = vfrintrz.d(vrD, vrJ);
+}
+
+define pcodeop vfrintrne.s;
+
+#lsx.txt vfrintrne.s mask=0x729d7400	
+#0x729d7400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrne.s vrD, vrJ                 is op10_31=0x1ca75d & vrD & vrJ {
+	vrD = vfrintrne.s(vrD, vrJ);
+}
+
+define pcodeop vfrintrne.d;
+
+#lsx.txt vfrintrne.d mask=0x729d7800	
+#0x729d7800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfrintrne.d vrD, vrJ                 is op10_31=0x1ca75e & vrD & vrJ {
+	vrD = vfrintrne.d(vrD, vrJ);
+}
+
+define pcodeop vfcvtl.s.h;
+
+#lsx.txt vfcvtl.s.h mask=0x729de800	
+#0x729de800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfcvtl.s.h vrD, vrJ                  is op10_31=0x1ca77a & vrD & vrJ {
+	vrD = vfcvtl.s.h(vrD, vrJ);
+}
+
+define pcodeop vfcvth.s.h;
+
+#lsx.txt vfcvth.s.h mask=0x729dec00	
+#0x729dec00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfcvth.s.h vrD, vrJ                  is op10_31=0x1ca77b & vrD & vrJ {
+	vrD = vfcvth.s.h(vrD, vrJ);
+}
+
+define pcodeop vfcvtl.d.s;
+
+#lsx.txt vfcvtl.d.s mask=0x729df000	
+#0x729df000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfcvtl.d.s vrD, vrJ                  is op10_31=0x1ca77c & vrD & vrJ {
+	vrD = vfcvtl.d.s(vrD, vrJ);
+}
+
+define pcodeop vfcvth.d.s;
+
+#lsx.txt vfcvth.d.s mask=0x729df400	
+#0x729df400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vfcvth.d.s vrD, vrJ                  is op10_31=0x1ca77d & vrD & vrJ {
+	vrD = vfcvth.d.s(vrD, vrJ);
+}
+
+define pcodeop vffint.s.w;
+
+#lsx.txt vffint.s.w mask=0x729e0000	
+#0x729e0000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vffint.s.w vrD, vrJ                  is op10_31=0x1ca780 & vrD & vrJ {
+	vrD = vffint.s.w(vrD, vrJ);
+}
+
+define pcodeop vffint.s.wu;
+
+#lsx.txt vffint.s.wu mask=0x729e0400	
+#0x729e0400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vffint.s.wu vrD, vrJ                 is op10_31=0x1ca781 & vrD & vrJ {
+	vrD = vffint.s.wu(vrD, vrJ);
+}
+
+define pcodeop vffint.d.l;
+
+#lsx.txt vffint.d.l mask=0x729e0800	
+#0x729e0800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vffint.d.l vrD, vrJ                  is op10_31=0x1ca782 & vrD & vrJ {
+	vrD = vffint.d.l(vrD, vrJ);
+}
+
+define pcodeop vffint.d.lu;
+
+#lsx.txt vffint.d.lu mask=0x729e0c00	
+#0x729e0c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vffint.d.lu vrD, vrJ                 is op10_31=0x1ca783 & vrD & vrJ {
+	vrD = vffint.d.lu(vrD, vrJ);
+}
+
+define pcodeop vffintl.d.w;
+
+#lsx.txt vffintl.d.w mask=0x729e1000	
+#0x729e1000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vffintl.d.w vrD, vrJ                 is op10_31=0x1ca784 & vrD & vrJ {
+	vrD = vffintl.d.w(vrD, vrJ);
+}
+
+define pcodeop vffinth.d.w;
+
+#lsx.txt vffinth.d.w mask=0x729e1400	
+#0x729e1400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vffinth.d.w vrD, vrJ                 is op10_31=0x1ca785 & vrD & vrJ {
+	vrD = vffinth.d.w(vrD, vrJ);
+}
+
+define pcodeop vftint.w.s;
+
+#lsx.txt vftint.w.s mask=0x729e3000	
+#0x729e3000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftint.w.s vrD, vrJ                  is op10_31=0x1ca78c & vrD & vrJ {
+	vrD = vftint.w.s(vrD, vrJ);
+}
+
+define pcodeop vftint.l.d;
+
+#lsx.txt vftint.l.d mask=0x729e3400	
+#0x729e3400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftint.l.d vrD, vrJ                  is op10_31=0x1ca78d & vrD & vrJ {
+	vrD = vftint.l.d(vrD, vrJ);
+}
+
+define pcodeop vftintrm.w.s;
+
+#lsx.txt vftintrm.w.s mask=0x729e3800	
+#0x729e3800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrm.w.s vrD, vrJ                is op10_31=0x1ca78e & vrD & vrJ {
+	vrD = vftintrm.w.s(vrD, vrJ);
+}
+
+define pcodeop vftintrm.l.d;
+
+#lsx.txt vftintrm.l.d mask=0x729e3c00	
+#0x729e3c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrm.l.d vrD, vrJ                is op10_31=0x1ca78f & vrD & vrJ {
+	vrD = vftintrm.l.d(vrD, vrJ);
+}
+
+define pcodeop vftintrp.w.s;
+
+#lsx.txt vftintrp.w.s mask=0x729e4000	
+#0x729e4000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrp.w.s vrD, vrJ                is op10_31=0x1ca790 & vrD & vrJ {
+	vrD = vftintrp.w.s(vrD, vrJ);
+}
+
+define pcodeop vftintrp.l.d;
+
+#lsx.txt vftintrp.l.d mask=0x729e4400	
+#0x729e4400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrp.l.d vrD, vrJ                is op10_31=0x1ca791 & vrD & vrJ {
+	vrD = vftintrp.l.d(vrD, vrJ);
+}
+
+define pcodeop vftintrz.w.s;
+
+#lsx.txt vftintrz.w.s mask=0x729e4800	
+#0x729e4800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrz.w.s vrD, vrJ                is op10_31=0x1ca792 & vrD & vrJ {
+	vrD = vftintrz.w.s(vrD, vrJ);
+}
+
+define pcodeop vftintrz.l.d;
+
+#lsx.txt vftintrz.l.d mask=0x729e4c00	
+#0x729e4c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrz.l.d vrD, vrJ                is op10_31=0x1ca793 & vrD & vrJ {
+	vrD = vftintrz.l.d(vrD, vrJ);
+}
+
+define pcodeop vftintrne.w.s;
+
+#lsx.txt vftintrne.w.s mask=0x729e5000	
+#0x729e5000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrne.w.s vrD, vrJ               is op10_31=0x1ca794 & vrD & vrJ {
+	vrD = vftintrne.w.s(vrD, vrJ);
+}
+
+define pcodeop vftintrne.l.d;
+
+#lsx.txt vftintrne.l.d mask=0x729e5400	
+#0x729e5400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrne.l.d vrD, vrJ               is op10_31=0x1ca795 & vrD & vrJ {
+	vrD = vftintrne.l.d(vrD, vrJ);
+}
+
+define pcodeop vftint.wu.s;
+
+#lsx.txt vftint.wu.s mask=0x729e5800	
+#0x729e5800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftint.wu.s vrD, vrJ                 is op10_31=0x1ca796 & vrD & vrJ {
+	vrD = vftint.wu.s(vrD, vrJ);
+}
+
+define pcodeop vftint.lu.d;
+
+#lsx.txt vftint.lu.d mask=0x729e5c00	
+#0x729e5c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftint.lu.d vrD, vrJ                 is op10_31=0x1ca797 & vrD & vrJ {
+	vrD = vftint.lu.d(vrD, vrJ);
+}
+
+define pcodeop vftintrz.wu.s;
+
+#lsx.txt vftintrz.wu.s mask=0x729e7000	
+#0x729e7000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrz.wu.s vrD, vrJ               is op10_31=0x1ca79c & vrD & vrJ {
+	vrD = vftintrz.wu.s(vrD, vrJ);
+}
+
+define pcodeop vftintrz.lu.d;
+
+#lsx.txt vftintrz.lu.d mask=0x729e7400	
+#0x729e7400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrz.lu.d vrD, vrJ               is op10_31=0x1ca79d & vrD & vrJ {
+	vrD = vftintrz.lu.d(vrD, vrJ);
+}
+
+define pcodeop vftintl.l.s;
+
+#lsx.txt vftintl.l.s mask=0x729e8000	
+#0x729e8000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintl.l.s vrD, vrJ                 is op10_31=0x1ca7a0 & vrD & vrJ {
+	vrD = vftintl.l.s(vrD, vrJ);
+}
+
+define pcodeop vftinth.l.s;
+
+#lsx.txt vftinth.l.s mask=0x729e8400	
+#0x729e8400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftinth.l.s vrD, vrJ                 is op10_31=0x1ca7a1 & vrD & vrJ {
+	vrD = vftinth.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrml.l.s;
+
+#lsx.txt vftintrml.l.s mask=0x729e8800	
+#0x729e8800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrml.l.s vrD, vrJ               is op10_31=0x1ca7a2 & vrD & vrJ {
+	vrD = vftintrml.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrmh.l.s;
+
+#lsx.txt vftintrmh.l.s mask=0x729e8c00	
+#0x729e8c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrmh.l.s vrD, vrJ               is op10_31=0x1ca7a3 & vrD & vrJ {
+	vrD = vftintrmh.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrpl.l.s;
+
+#lsx.txt vftintrpl.l.s mask=0x729e9000	
+#0x729e9000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrpl.l.s vrD, vrJ               is op10_31=0x1ca7a4 & vrD & vrJ {
+	vrD = vftintrpl.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrph.l.s;
+
+#lsx.txt vftintrph.l.s mask=0x729e9400	
+#0x729e9400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrph.l.s vrD, vrJ               is op10_31=0x1ca7a5 & vrD & vrJ {
+	vrD = vftintrph.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrzl.l.s;
+
+#lsx.txt vftintrzl.l.s mask=0x729e9800	
+#0x729e9800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrzl.l.s vrD, vrJ               is op10_31=0x1ca7a6 & vrD & vrJ {
+	vrD = vftintrzl.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrzh.l.s;
+
+#lsx.txt vftintrzh.l.s mask=0x729e9c00	
+#0x729e9c00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrzh.l.s vrD, vrJ               is op10_31=0x1ca7a7 & vrD & vrJ {
+	vrD = vftintrzh.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrnel.l.s;
+
+#lsx.txt vftintrnel.l.s mask=0x729ea000	
+#0x729ea000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrnel.l.s vrD, vrJ              is op10_31=0x1ca7a8 & vrD & vrJ {
+	vrD = vftintrnel.l.s(vrD, vrJ);
+}
+
+define pcodeop vftintrneh.l.s;
+
+#lsx.txt vftintrneh.l.s mask=0x729ea400	
+#0x729ea400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vftintrneh.l.s vrD, vrJ              is op10_31=0x1ca7a9 & vrD & vrJ {
+	vrD = vftintrneh.l.s(vrD, vrJ);
+}
+
+define pcodeop vexth.h.b;
+
+#lsx.txt vexth.h.b mask=0x729ee000	
+#0x729ee000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.h.b vrD, vrJ                   is op10_31=0x1ca7b8 & vrD & vrJ {
+	vrD = vexth.h.b(vrD, vrJ);
+}
+
+define pcodeop vexth.w.h;
+
+#lsx.txt vexth.w.h mask=0x729ee400	
+#0x729ee400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.w.h vrD, vrJ                   is op10_31=0x1ca7b9 & vrD & vrJ {
+	vrD = vexth.w.h(vrD, vrJ);
+}
+
+define pcodeop vexth.d.w;
+
+#lsx.txt vexth.d.w mask=0x729ee800	
+#0x729ee800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.d.w vrD, vrJ                   is op10_31=0x1ca7ba & vrD & vrJ {
+	vrD = vexth.d.w(vrD, vrJ);
+}
+
+define pcodeop vexth.q.d;
+
+#lsx.txt vexth.q.d mask=0x729eec00	
+#0x729eec00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.q.d vrD, vrJ                   is op10_31=0x1ca7bb & vrD & vrJ {
+	vrD = vexth.q.d(vrD, vrJ);
+}
+
+define pcodeop vexth.hu.bu;
+
+#lsx.txt vexth.hu.bu mask=0x729ef000	
+#0x729ef000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.hu.bu vrD, vrJ                 is op10_31=0x1ca7bc & vrD & vrJ {
+	vrD = vexth.hu.bu(vrD, vrJ);
+}
+
+define pcodeop vexth.wu.hu;
+
+#lsx.txt vexth.wu.hu mask=0x729ef400	
+#0x729ef400	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.wu.hu vrD, vrJ                 is op10_31=0x1ca7bd & vrD & vrJ {
+	vrD = vexth.wu.hu(vrD, vrJ);
+}
+
+define pcodeop vexth.du.wu;
+
+#lsx.txt vexth.du.wu mask=0x729ef800	
+#0x729ef800	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.du.wu vrD, vrJ                 is op10_31=0x1ca7be & vrD & vrJ {
+	vrD = vexth.du.wu(vrD, vrJ);
+}
+
+define pcodeop vexth.qu.du;
+
+#lsx.txt vexth.qu.du mask=0x729efc00	
+#0x729efc00	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vexth.qu.du vrD, vrJ                 is op10_31=0x1ca7bf & vrD & vrJ {
+	vrD = vexth.qu.du(vrD, vrJ);
+}
+
+define pcodeop vreplgr2vr.b;
+
+#lsx.txt vreplgr2vr.b mask=0x729f0000	
+#0x729f0000	0xfffffc00	v0:5, r5:5	['vreg0_5_s0', 'reg5_5_s0']
+:vreplgr2vr.b vrD, RJsrc              is op10_31=0x1ca7c0 & vrD & RJsrc {
+	vrD = vreplgr2vr.b(vrD, RJsrc);
+}
+
+define pcodeop vreplgr2vr.h;
+
+#lsx.txt vreplgr2vr.h mask=0x729f0400	
+#0x729f0400	0xfffffc00	v0:5, r5:5	['vreg0_5_s0', 'reg5_5_s0']
+:vreplgr2vr.h vrD, RJsrc              is op10_31=0x1ca7c1 & vrD & RJsrc {
+	vrD = vreplgr2vr.h(vrD, RJsrc);
+}
+
+define pcodeop vreplgr2vr.w;
+
+#lsx.txt vreplgr2vr.w mask=0x729f0800	
+#0x729f0800	0xfffffc00	v0:5, r5:5	['vreg0_5_s0', 'reg5_5_s0']
+:vreplgr2vr.w vrD, RJsrc              is op10_31=0x1ca7c2 & vrD & RJsrc {
+	vrD = vreplgr2vr.w(vrD, RJsrc);
+}
+
+define pcodeop vreplgr2vr.d;
+
+#lsx.txt vreplgr2vr.d mask=0x729f0c00	
+#0x729f0c00	0xfffffc00	v0:5, r5:5	['vreg0_5_s0', 'reg5_5_s0']
+:vreplgr2vr.d vrD, RJsrc              is op10_31=0x1ca7c3 & vrD & RJsrc {
+	vrD = vreplgr2vr.d(vrD, RJsrc);
+}
+
+define pcodeop vrotri.b;
+
+#lsx.txt vrotri.b mask=0x72a02000	
+#0x72a02000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vrotri.b vrD, vrJ, imm10_3           is op13_31=0x39501 & vrD & vrJ & imm10_3 {
+	vrD = vrotri.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vrotri.h;
+
+#lsx.txt vrotri.h mask=0x72a04000	
+#0x72a04000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vrotri.h vrD, vrJ, imm10_4           is op14_31=0x1ca81 & vrD & vrJ & imm10_4 {
+	vrD = vrotri.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vrotri.w;
+
+#lsx.txt vrotri.w mask=0x72a08000	
+#0x72a08000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vrotri.w vrD, vrJ, imm10_5           is op15_31=0xe541 & vrD & vrJ & imm10_5 {
+	vrD = vrotri.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vrotri.d;
+
+#lsx.txt vrotri.d mask=0x72a10000	
+#0x72a10000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vrotri.d vrD, vrJ, imm10_6           is op16_31=0x72a1 & vrD & vrJ & imm10_6 {
+	vrD = vrotri.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrlri.b;
+
+#lsx.txt vsrlri.b mask=0x72a42000	
+#0x72a42000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsrlri.b vrD, vrJ, imm10_3           is op13_31=0x39521 & vrD & vrJ & imm10_3 {
+	vrD = vsrlri.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsrlri.h;
+
+#lsx.txt vsrlri.h mask=0x72a44000	
+#0x72a44000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrlri.h vrD, vrJ, imm10_4           is op14_31=0x1ca91 & vrD & vrJ & imm10_4 {
+	vrD = vsrlri.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrlri.w;
+
+#lsx.txt vsrlri.w mask=0x72a48000	
+#0x72a48000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrlri.w vrD, vrJ, imm10_5           is op15_31=0xe549 & vrD & vrJ & imm10_5 {
+	vrD = vsrlri.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrlri.d;
+
+#lsx.txt vsrlri.d mask=0x72a50000	
+#0x72a50000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrlri.d vrD, vrJ, imm10_6           is op16_31=0x72a5 & vrD & vrJ & imm10_6 {
+	vrD = vsrlri.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrari.b;
+
+#lsx.txt vsrari.b mask=0x72a82000	
+#0x72a82000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsrari.b vrD, vrJ, imm10_3           is op13_31=0x39541 & vrD & vrJ & imm10_3 {
+	vrD = vsrari.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsrari.h;
+
+#lsx.txt vsrari.h mask=0x72a84000	
+#0x72a84000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrari.h vrD, vrJ, imm10_4           is op14_31=0x1caa1 & vrD & vrJ & imm10_4 {
+	vrD = vsrari.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrari.w;
+
+#lsx.txt vsrari.w mask=0x72a88000	
+#0x72a88000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrari.w vrD, vrJ, imm10_5           is op15_31=0xe551 & vrD & vrJ & imm10_5 {
+	vrD = vsrari.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrari.d;
+
+#lsx.txt vsrari.d mask=0x72a90000	
+#0x72a90000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrari.d vrD, vrJ, imm10_6           is op16_31=0x72a9 & vrD & vrJ & imm10_6 {
+	vrD = vsrari.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vinsgr2vr.b;
+
+#lsx.txt vinsgr2vr.b mask=0x72eb8000	
+#0x72eb8000	0xffffc000	v0:5, r5:5,u10:4	['vreg0_5_s0', 'reg5_5_s0', 'imm10_4_s0']
+:vinsgr2vr.b vrD, RJsrc, imm10_4      is op14_31=0x1cbae & vrD & RJsrc & imm10_4 {
+	vrD = vinsgr2vr.b(vrD, RJsrc, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vinsgr2vr.h;
+
+#lsx.txt vinsgr2vr.h mask=0x72ebc000	
+#0x72ebc000	0xffffe000	v0:5, r5:5,u10:3	['vreg0_5_s0', 'reg5_5_s0', 'imm10_3_s0']
+:vinsgr2vr.h vrD, RJsrc, imm10_3      is op13_31=0x3975e & vrD & RJsrc & imm10_3 {
+	vrD = vinsgr2vr.h(vrD, RJsrc, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vinsgr2vr.w;
+
+#lsx.txt vinsgr2vr.w mask=0x72ebe000	
+#0x72ebe000	0xfffff000	v0:5, r5:5,u10:2	['vreg0_5_s0', 'reg5_5_s0', 'imm10_2_s0']
+:vinsgr2vr.w vrD, RJsrc, imm10_2      is op12_31=0x72ebe & vrD & RJsrc & imm10_2 {
+	vrD = vinsgr2vr.w(vrD, RJsrc, imm10_2:$(REGSIZE));
+}
+
+define pcodeop vinsgr2vr.d;
+
+#lsx.txt vinsgr2vr.d mask=0x72ebf000	
+#0x72ebf000	0xfffff800	v0:5, r5:5,u10:1	['vreg0_5_s0', 'reg5_5_s0', 'imm10_1_s0']
+:vinsgr2vr.d vrD, RJsrc, imm10_1      is op11_31=0xe5d7e & vrD & RJsrc & imm10_1 {
+	vrD = vinsgr2vr.d(vrD, RJsrc, imm10_1:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.b;
+
+#lsx.txt vpickve2gr.b mask=0x72ef8000	
+#0x72ef8000	0xffffc000	r0:5,v5:5,u10:4	['reg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vpickve2gr.b RD, vrJ, imm10_4        is op14_31=0x1cbbe & RD & vrJ & imm10_4 {
+	RD = vpickve2gr.b(RD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.h;
+
+#lsx.txt vpickve2gr.h mask=0x72efc000	
+#0x72efc000	0xffffe000	r0:5,v5:5,u10:3	['reg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vpickve2gr.h RD, vrJ, imm10_3        is op13_31=0x3977e & RD & vrJ & imm10_3 {
+	RD = vpickve2gr.h(RD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.w;
+
+#lsx.txt vpickve2gr.w mask=0x72efe000	
+#0x72efe000	0xfffff000	r0:5,v5:5,u10:2	['reg0_5_s0', 'vreg5_5_s0', 'imm10_2_s0']
+:vpickve2gr.w RD, vrJ, imm10_2        is op12_31=0x72efe & RD & vrJ & imm10_2 {
+	RD = vpickve2gr.w(RD, vrJ, imm10_2:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.d;
+
+#lsx.txt vpickve2gr.d mask=0x72eff000	
+#0x72eff000	0xfffff800	r0:5,v5:5,u10:1	['reg0_5_s0', 'vreg5_5_s0', 'imm10_1_s0']
+:vpickve2gr.d RD, vrJ, imm10_1        is op11_31=0xe5dfe & RD & vrJ & imm10_1 {
+	RD = vpickve2gr.d(RD, vrJ, imm10_1:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.bu;
+
+#lsx.txt vpickve2gr.bu mask=0x72f38000	
+#0x72f38000	0xffffc000	r0:5,v5:5,u10:4	['reg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vpickve2gr.bu RD, vrJ, imm10_4       is op14_31=0x1cbce & RD & vrJ & imm10_4 {
+	RD = vpickve2gr.bu(RD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.hu;
+
+#lsx.txt vpickve2gr.hu mask=0x72f3c000	
+#0x72f3c000	0xffffe000	r0:5,v5:5,u10:3	['reg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vpickve2gr.hu RD, vrJ, imm10_3       is op13_31=0x3979e & RD & vrJ & imm10_3 {
+	RD = vpickve2gr.hu(RD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.wu;
+
+#lsx.txt vpickve2gr.wu mask=0x72f3e000	
+#0x72f3e000	0xfffff000	r0:5,v5:5,u10:2	['reg0_5_s0', 'vreg5_5_s0', 'imm10_2_s0']
+:vpickve2gr.wu RD, vrJ, imm10_2       is op12_31=0x72f3e & RD & vrJ & imm10_2 {
+	RD = vpickve2gr.wu(RD, vrJ, imm10_2:$(REGSIZE));
+}
+
+define pcodeop vpickve2gr.du;
+
+#lsx.txt vpickve2gr.du mask=0x72f3f000	
+#0x72f3f000	0xfffff800	r0:5,v5:5,u10:1	['reg0_5_s0', 'vreg5_5_s0', 'imm10_1_s0']
+:vpickve2gr.du RD, vrJ, imm10_1       is op11_31=0xe5e7e & RD & vrJ & imm10_1 {
+	RD = vpickve2gr.du(RD, vrJ, imm10_1:$(REGSIZE));
+}
+
+define pcodeop vreplvei.b;
+
+#lsx.txt vreplvei.b mask=0x72f78000	
+#0x72f78000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vreplvei.b vrD, vrJ, imm10_4         is op14_31=0x1cbde & vrD & vrJ & imm10_4 {
+	vrD = vreplvei.b(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vreplvei.h;
+
+#lsx.txt vreplvei.h mask=0x72f7c000	
+#0x72f7c000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vreplvei.h vrD, vrJ, imm10_3         is op13_31=0x397be & vrD & vrJ & imm10_3 {
+	vrD = vreplvei.h(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vreplvei.w;
+
+#lsx.txt vreplvei.w mask=0x72f7e000	
+#0x72f7e000	0xfffff000	v0:5,v5:5,u10:2	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_2_s0']
+:vreplvei.w vrD, vrJ, imm10_2         is op12_31=0x72f7e & vrD & vrJ & imm10_2 {
+	vrD = vreplvei.w(vrD, vrJ, imm10_2:$(REGSIZE));
+}
+
+define pcodeop vreplvei.d;
+
+#lsx.txt vreplvei.d mask=0x72f7f000	
+#0x72f7f000	0xfffff800	v0:5,v5:5,u10:1	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_1_s0']
+:vreplvei.d vrD, vrJ, imm10_1         is op11_31=0xe5efe & vrD & vrJ & imm10_1 {
+	vrD = vreplvei.d(vrD, vrJ, imm10_1:$(REGSIZE));
+}
+
+define pcodeop vsllwil.h.b;
+
+#lsx.txt vsllwil.h.b mask=0x73082000	
+#0x73082000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsllwil.h.b vrD, vrJ, imm10_3        is op13_31=0x39841 & vrD & vrJ & imm10_3 {
+	vrD = vsllwil.h.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsllwil.w.h;
+
+#lsx.txt vsllwil.w.h mask=0x73084000	
+#0x73084000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsllwil.w.h vrD, vrJ, imm10_4        is op14_31=0x1cc21 & vrD & vrJ & imm10_4 {
+	vrD = vsllwil.w.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsllwil.d.w;
+
+#lsx.txt vsllwil.d.w mask=0x73088000	
+#0x73088000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsllwil.d.w vrD, vrJ, imm10_5        is op15_31=0xe611 & vrD & vrJ & imm10_5 {
+	vrD = vsllwil.d.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vextl.q.d;
+
+#lsx.txt vextl.q.d mask=0x73090000	
+#0x73090000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vextl.q.d vrD, vrJ                   is op10_31=0x1cc240 & vrD & vrJ {
+	vrD = vextl.q.d(vrD, vrJ);
+}
+
+define pcodeop vsllwil.hu.bu;
+
+#lsx.txt vsllwil.hu.bu mask=0x730c2000	
+#0x730c2000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsllwil.hu.bu vrD, vrJ, imm10_3      is op13_31=0x39861 & vrD & vrJ & imm10_3 {
+	vrD = vsllwil.hu.bu(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsllwil.wu.hu;
+
+#lsx.txt vsllwil.wu.hu mask=0x730c4000	
+#0x730c4000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsllwil.wu.hu vrD, vrJ, imm10_4      is op14_31=0x1cc31 & vrD & vrJ & imm10_4 {
+	vrD = vsllwil.wu.hu(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsllwil.du.wu;
+
+#lsx.txt vsllwil.du.wu mask=0x730c8000	
+#0x730c8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsllwil.du.wu vrD, vrJ, imm10_5      is op15_31=0xe619 & vrD & vrJ & imm10_5 {
+	vrD = vsllwil.du.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vextl.qu.du;
+
+#lsx.txt vextl.qu.du mask=0x730d0000	
+#0x730d0000	0xfffffc00	v0:5,v5:5	['vreg0_5_s0', 'vreg5_5_s0']
+:vextl.qu.du vrD, vrJ                 is op10_31=0x1cc340 & vrD & vrJ {
+	vrD = vextl.qu.du(vrD, vrJ);
+}
+
+define pcodeop vbitclri.b;
+
+#lsx.txt vbitclri.b mask=0x73102000	
+#0x73102000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vbitclri.b vrD, vrJ, imm10_3         is op13_31=0x39881 & vrD & vrJ & imm10_3 {
+	vrD = vbitclri.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vbitclri.h;
+
+#lsx.txt vbitclri.h mask=0x73104000	
+#0x73104000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vbitclri.h vrD, vrJ, imm10_4         is op14_31=0x1cc41 & vrD & vrJ & imm10_4 {
+	vrD = vbitclri.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vbitclri.w;
+
+#lsx.txt vbitclri.w mask=0x73108000	
+#0x73108000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vbitclri.w vrD, vrJ, imm10_5         is op15_31=0xe621 & vrD & vrJ & imm10_5 {
+	vrD = vbitclri.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vbitclri.d;
+
+#lsx.txt vbitclri.d mask=0x73110000	
+#0x73110000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vbitclri.d vrD, vrJ, imm10_6         is op16_31=0x7311 & vrD & vrJ & imm10_6 {
+	vrD = vbitclri.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vbitseti.b;
+
+#lsx.txt vbitseti.b mask=0x73142000	
+#0x73142000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vbitseti.b vrD, vrJ, imm10_3         is op13_31=0x398a1 & vrD & vrJ & imm10_3 {
+	vrD = vbitseti.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vbitseti.h;
+
+#lsx.txt vbitseti.h mask=0x73144000	
+#0x73144000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vbitseti.h vrD, vrJ, imm10_4         is op14_31=0x1cc51 & vrD & vrJ & imm10_4 {
+	vrD = vbitseti.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vbitseti.w;
+
+#lsx.txt vbitseti.w mask=0x73148000	
+#0x73148000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vbitseti.w vrD, vrJ, imm10_5         is op15_31=0xe629 & vrD & vrJ & imm10_5 {
+	vrD = vbitseti.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vbitseti.d;
+
+#lsx.txt vbitseti.d mask=0x73150000	
+#0x73150000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vbitseti.d vrD, vrJ, imm10_6         is op16_31=0x7315 & vrD & vrJ & imm10_6 {
+	vrD = vbitseti.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vbitrevi.b;
+
+#lsx.txt vbitrevi.b mask=0x73182000	
+#0x73182000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vbitrevi.b vrD, vrJ, imm10_3         is op13_31=0x398c1 & vrD & vrJ & imm10_3 {
+	vrD = vbitrevi.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vbitrevi.h;
+
+#lsx.txt vbitrevi.h mask=0x73184000	
+#0x73184000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vbitrevi.h vrD, vrJ, imm10_4         is op14_31=0x1cc61 & vrD & vrJ & imm10_4 {
+	vrD = vbitrevi.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vbitrevi.w;
+
+#lsx.txt vbitrevi.w mask=0x73188000	
+#0x73188000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vbitrevi.w vrD, vrJ, imm10_5         is op15_31=0xe631 & vrD & vrJ & imm10_5 {
+	vrD = vbitrevi.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vbitrevi.d;
+
+#lsx.txt vbitrevi.d mask=0x73190000	
+#0x73190000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vbitrevi.d vrD, vrJ, imm10_6         is op16_31=0x7319 & vrD & vrJ & imm10_6 {
+	vrD = vbitrevi.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsat.b;
+
+#lsx.txt vsat.b mask=0x73242000	
+#0x73242000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsat.b vrD, vrJ, imm10_3             is op13_31=0x39921 & vrD & vrJ & imm10_3 {
+	vrD = vsat.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsat.h;
+
+#lsx.txt vsat.h mask=0x73244000	
+#0x73244000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsat.h vrD, vrJ, imm10_4             is op14_31=0x1cc91 & vrD & vrJ & imm10_4 {
+	vrD = vsat.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsat.w;
+
+#lsx.txt vsat.w mask=0x73248000	
+#0x73248000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsat.w vrD, vrJ, imm10_5             is op15_31=0xe649 & vrD & vrJ & imm10_5 {
+	vrD = vsat.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsat.d;
+
+#lsx.txt vsat.d mask=0x73250000	
+#0x73250000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsat.d vrD, vrJ, imm10_6             is op16_31=0x7325 & vrD & vrJ & imm10_6 {
+	vrD = vsat.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsat.bu;
+
+#lsx.txt vsat.bu mask=0x73282000	
+#0x73282000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsat.bu vrD, vrJ, imm10_3            is op13_31=0x39941 & vrD & vrJ & imm10_3 {
+	vrD = vsat.bu(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsat.hu;
+
+#lsx.txt vsat.hu mask=0x73284000	
+#0x73284000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsat.hu vrD, vrJ, imm10_4            is op14_31=0x1cca1 & vrD & vrJ & imm10_4 {
+	vrD = vsat.hu(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsat.wu;
+
+#lsx.txt vsat.wu mask=0x73288000	
+#0x73288000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsat.wu vrD, vrJ, imm10_5            is op15_31=0xe651 & vrD & vrJ & imm10_5 {
+	vrD = vsat.wu(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsat.du;
+
+#lsx.txt vsat.du mask=0x73290000	
+#0x73290000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsat.du vrD, vrJ, imm10_6            is op16_31=0x7329 & vrD & vrJ & imm10_6 {
+	vrD = vsat.du(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vslli.b;
+
+#lsx.txt vslli.b mask=0x732c2000	
+#0x732c2000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vslli.b vrD, vrJ, imm10_3            is op13_31=0x39961 & vrD & vrJ & imm10_3 {
+	vrD = vslli.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vslli.h;
+
+#lsx.txt vslli.h mask=0x732c4000	
+#0x732c4000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vslli.h vrD, vrJ, imm10_4            is op14_31=0x1ccb1 & vrD & vrJ & imm10_4 {
+	vrD = vslli.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vslli.w;
+
+#lsx.txt vslli.w mask=0x732c8000	
+#0x732c8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vslli.w vrD, vrJ, imm10_5            is op15_31=0xe659 & vrD & vrJ & imm10_5 {
+	vrD = vslli.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vslli.d;
+
+#lsx.txt vslli.d mask=0x732d0000	
+#0x732d0000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vslli.d vrD, vrJ, imm10_6            is op16_31=0x732d & vrD & vrJ & imm10_6 {
+	vrD = vslli.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrli.b;
+
+#lsx.txt vsrli.b mask=0x73302000	
+#0x73302000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsrli.b vrD, vrJ, imm10_3            is op13_31=0x39981 & vrD & vrJ & imm10_3 {
+	vrD = vsrli.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsrli.h;
+
+#lsx.txt vsrli.h mask=0x73304000	
+#0x73304000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrli.h vrD, vrJ, imm10_4            is op14_31=0x1ccc1 & vrD & vrJ & imm10_4 {
+	vrD = vsrli.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrli.w;
+
+#lsx.txt vsrli.w mask=0x73308000	
+#0x73308000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrli.w vrD, vrJ, imm10_5            is op15_31=0xe661 & vrD & vrJ & imm10_5 {
+	vrD = vsrli.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrli.d;
+
+#lsx.txt vsrli.d mask=0x73310000	
+#0x73310000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrli.d vrD, vrJ, imm10_6            is op16_31=0x7331 & vrD & vrJ & imm10_6 {
+	vrD = vsrli.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrai.b;
+
+#lsx.txt vsrai.b mask=0x73342000	
+#0x73342000	0xffffe000	v0:5,v5:5,u10:3	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_3_s0']
+:vsrai.b vrD, vrJ, imm10_3            is op13_31=0x399a1 & vrD & vrJ & imm10_3 {
+	vrD = vsrai.b(vrD, vrJ, imm10_3:$(REGSIZE));
+}
+
+define pcodeop vsrai.h;
+
+#lsx.txt vsrai.h mask=0x73344000	
+#0x73344000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrai.h vrD, vrJ, imm10_4            is op14_31=0x1ccd1 & vrD & vrJ & imm10_4 {
+	vrD = vsrai.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrai.w;
+
+#lsx.txt vsrai.w mask=0x73348000	
+#0x73348000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrai.w vrD, vrJ, imm10_5            is op15_31=0xe669 & vrD & vrJ & imm10_5 {
+	vrD = vsrai.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrai.d;
+
+#lsx.txt vsrai.d mask=0x73350000	
+#0x73350000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrai.d vrD, vrJ, imm10_6            is op16_31=0x7335 & vrD & vrJ & imm10_6 {
+	vrD = vsrai.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrlni.b.h;
+
+#lsx.txt vsrlni.b.h mask=0x73404000	
+#0x73404000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrlni.b.h vrD, vrJ, imm10_4         is op14_31=0x1cd01 & vrD & vrJ & imm10_4 {
+	vrD = vsrlni.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrlni.h.w;
+
+#lsx.txt vsrlni.h.w mask=0x73408000	
+#0x73408000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrlni.h.w vrD, vrJ, imm10_5         is op15_31=0xe681 & vrD & vrJ & imm10_5 {
+	vrD = vsrlni.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrlni.w.d;
+
+#lsx.txt vsrlni.w.d mask=0x73410000	
+#0x73410000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrlni.w.d vrD, vrJ, imm10_6         is op16_31=0x7341 & vrD & vrJ & imm10_6 {
+	vrD = vsrlni.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrlni.d.q;
+
+#lsx.txt vsrlni.d.q mask=0x73420000	
+#0x73420000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vsrlni.d.q vrD, vrJ, imm10_7         is op17_31=0x39a1 & vrD & vrJ & imm10_7 {
+	vrD = vsrlni.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vsrlrni.b.h;
+
+#lsx.txt vsrlrni.b.h mask=0x73444000	
+#0x73444000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrlrni.b.h vrD, vrJ, imm10_4        is op14_31=0x1cd11 & vrD & vrJ & imm10_4 {
+	vrD = vsrlrni.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrlrni.h.w;
+
+#lsx.txt vsrlrni.h.w mask=0x73448000	
+#0x73448000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrlrni.h.w vrD, vrJ, imm10_5        is op15_31=0xe689 & vrD & vrJ & imm10_5 {
+	vrD = vsrlrni.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrlrni.w.d;
+
+#lsx.txt vsrlrni.w.d mask=0x73450000	
+#0x73450000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrlrni.w.d vrD, vrJ, imm10_6        is op16_31=0x7345 & vrD & vrJ & imm10_6 {
+	vrD = vsrlrni.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrlrni.d.q;
+
+#lsx.txt vsrlrni.d.q mask=0x73460000	
+#0x73460000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vsrlrni.d.q vrD, vrJ, imm10_7        is op17_31=0x39a3 & vrD & vrJ & imm10_7 {
+	vrD = vsrlrni.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrlni.b.h;
+
+#lsx.txt vssrlni.b.h mask=0x73484000	
+#0x73484000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrlni.b.h vrD, vrJ, imm10_4        is op14_31=0x1cd21 & vrD & vrJ & imm10_4 {
+	vrD = vssrlni.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrlni.h.w;
+
+#lsx.txt vssrlni.h.w mask=0x73488000	
+#0x73488000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrlni.h.w vrD, vrJ, imm10_5        is op15_31=0xe691 & vrD & vrJ & imm10_5 {
+	vrD = vssrlni.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrlni.w.d;
+
+#lsx.txt vssrlni.w.d mask=0x73490000	
+#0x73490000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrlni.w.d vrD, vrJ, imm10_6        is op16_31=0x7349 & vrD & vrJ & imm10_6 {
+	vrD = vssrlni.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrlni.d.q;
+
+#lsx.txt vssrlni.d.q mask=0x734a0000	
+#0x734a0000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrlni.d.q vrD, vrJ, imm10_7        is op17_31=0x39a5 & vrD & vrJ & imm10_7 {
+	vrD = vssrlni.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrlni.bu.h;
+
+#lsx.txt vssrlni.bu.h mask=0x734c4000	
+#0x734c4000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrlni.bu.h vrD, vrJ, imm10_4       is op14_31=0x1cd31 & vrD & vrJ & imm10_4 {
+	vrD = vssrlni.bu.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrlni.hu.w;
+
+#lsx.txt vssrlni.hu.w mask=0x734c8000	
+#0x734c8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrlni.hu.w vrD, vrJ, imm10_5       is op15_31=0xe699 & vrD & vrJ & imm10_5 {
+	vrD = vssrlni.hu.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrlni.wu.d;
+
+#lsx.txt vssrlni.wu.d mask=0x734d0000	
+#0x734d0000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrlni.wu.d vrD, vrJ, imm10_6       is op16_31=0x734d & vrD & vrJ & imm10_6 {
+	vrD = vssrlni.wu.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrlni.du.q;
+
+#lsx.txt vssrlni.du.q mask=0x734e0000	
+#0x734e0000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrlni.du.q vrD, vrJ, imm10_7       is op17_31=0x39a7 & vrD & vrJ & imm10_7 {
+	vrD = vssrlni.du.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.b.h;
+
+#lsx.txt vssrlrni.b.h mask=0x73504000	
+#0x73504000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrlrni.b.h vrD, vrJ, imm10_4       is op14_31=0x1cd41 & vrD & vrJ & imm10_4 {
+	vrD = vssrlrni.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.h.w;
+
+#lsx.txt vssrlrni.h.w mask=0x73508000	
+#0x73508000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrlrni.h.w vrD, vrJ, imm10_5       is op15_31=0xe6a1 & vrD & vrJ & imm10_5 {
+	vrD = vssrlrni.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.w.d;
+
+#lsx.txt vssrlrni.w.d mask=0x73510000	
+#0x73510000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrlrni.w.d vrD, vrJ, imm10_6       is op16_31=0x7351 & vrD & vrJ & imm10_6 {
+	vrD = vssrlrni.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.d.q;
+
+#lsx.txt vssrlrni.d.q mask=0x73520000	
+#0x73520000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrlrni.d.q vrD, vrJ, imm10_7       is op17_31=0x39a9 & vrD & vrJ & imm10_7 {
+	vrD = vssrlrni.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.bu.h;
+
+#lsx.txt vssrlrni.bu.h mask=0x73544000	
+#0x73544000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrlrni.bu.h vrD, vrJ, imm10_4      is op14_31=0x1cd51 & vrD & vrJ & imm10_4 {
+	vrD = vssrlrni.bu.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.hu.w;
+
+#lsx.txt vssrlrni.hu.w mask=0x73548000	
+#0x73548000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrlrni.hu.w vrD, vrJ, imm10_5      is op15_31=0xe6a9 & vrD & vrJ & imm10_5 {
+	vrD = vssrlrni.hu.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.wu.d;
+
+#lsx.txt vssrlrni.wu.d mask=0x73550000	
+#0x73550000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrlrni.wu.d vrD, vrJ, imm10_6      is op16_31=0x7355 & vrD & vrJ & imm10_6 {
+	vrD = vssrlrni.wu.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrlrni.du.q;
+
+#lsx.txt vssrlrni.du.q mask=0x73560000	
+#0x73560000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrlrni.du.q vrD, vrJ, imm10_7      is op17_31=0x39ab & vrD & vrJ & imm10_7 {
+	vrD = vssrlrni.du.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vsrani.b.h;
+
+#lsx.txt vsrani.b.h mask=0x73584000	
+#0x73584000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrani.b.h vrD, vrJ, imm10_4         is op14_31=0x1cd61 & vrD & vrJ & imm10_4 {
+	vrD = vsrani.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrani.h.w;
+
+#lsx.txt vsrani.h.w mask=0x73588000	
+#0x73588000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrani.h.w vrD, vrJ, imm10_5         is op15_31=0xe6b1 & vrD & vrJ & imm10_5 {
+	vrD = vsrani.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrani.w.d;
+
+#lsx.txt vsrani.w.d mask=0x73590000	
+#0x73590000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrani.w.d vrD, vrJ, imm10_6         is op16_31=0x7359 & vrD & vrJ & imm10_6 {
+	vrD = vsrani.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrani.d.q;
+
+#lsx.txt vsrani.d.q mask=0x735a0000	
+#0x735a0000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vsrani.d.q vrD, vrJ, imm10_7         is op17_31=0x39ad & vrD & vrJ & imm10_7 {
+	vrD = vsrani.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vsrarni.b.h;
+
+#lsx.txt vsrarni.b.h mask=0x735c4000	
+#0x735c4000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vsrarni.b.h vrD, vrJ, imm10_4        is op14_31=0x1cd71 & vrD & vrJ & imm10_4 {
+	vrD = vsrarni.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vsrarni.h.w;
+
+#lsx.txt vsrarni.h.w mask=0x735c8000	
+#0x735c8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vsrarni.h.w vrD, vrJ, imm10_5        is op15_31=0xe6b9 & vrD & vrJ & imm10_5 {
+	vrD = vsrarni.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vsrarni.w.d;
+
+#lsx.txt vsrarni.w.d mask=0x735d0000	
+#0x735d0000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vsrarni.w.d vrD, vrJ, imm10_6        is op16_31=0x735d & vrD & vrJ & imm10_6 {
+	vrD = vsrarni.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vsrarni.d.q;
+
+#lsx.txt vsrarni.d.q mask=0x735e0000	
+#0x735e0000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vsrarni.d.q vrD, vrJ, imm10_7        is op17_31=0x39af & vrD & vrJ & imm10_7 {
+	vrD = vsrarni.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrani.b.h;
+
+#lsx.txt vssrani.b.h mask=0x73604000	
+#0x73604000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrani.b.h vrD, vrJ, imm10_4        is op14_31=0x1cd81 & vrD & vrJ & imm10_4 {
+	vrD = vssrani.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrani.h.w;
+
+#lsx.txt vssrani.h.w mask=0x73608000	
+#0x73608000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrani.h.w vrD, vrJ, imm10_5        is op15_31=0xe6c1 & vrD & vrJ & imm10_5 {
+	vrD = vssrani.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrani.w.d;
+
+#lsx.txt vssrani.w.d mask=0x73610000	
+#0x73610000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrani.w.d vrD, vrJ, imm10_6        is op16_31=0x7361 & vrD & vrJ & imm10_6 {
+	vrD = vssrani.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrani.d.q;
+
+#lsx.txt vssrani.d.q mask=0x73620000	
+#0x73620000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrani.d.q vrD, vrJ, imm10_7        is op17_31=0x39b1 & vrD & vrJ & imm10_7 {
+	vrD = vssrani.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrani.bu.h;
+
+#lsx.txt vssrani.bu.h mask=0x73644000	
+#0x73644000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrani.bu.h vrD, vrJ, imm10_4       is op14_31=0x1cd91 & vrD & vrJ & imm10_4 {
+	vrD = vssrani.bu.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrani.hu.w;
+
+#lsx.txt vssrani.hu.w mask=0x73648000	
+#0x73648000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrani.hu.w vrD, vrJ, imm10_5       is op15_31=0xe6c9 & vrD & vrJ & imm10_5 {
+	vrD = vssrani.hu.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrani.wu.d;
+
+#lsx.txt vssrani.wu.d mask=0x73650000	
+#0x73650000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrani.wu.d vrD, vrJ, imm10_6       is op16_31=0x7365 & vrD & vrJ & imm10_6 {
+	vrD = vssrani.wu.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrani.du.q;
+
+#lsx.txt vssrani.du.q mask=0x73660000	
+#0x73660000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrani.du.q vrD, vrJ, imm10_7       is op17_31=0x39b3 & vrD & vrJ & imm10_7 {
+	vrD = vssrani.du.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrarni.b.h;
+
+#lsx.txt vssrarni.b.h mask=0x73684000	
+#0x73684000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrarni.b.h vrD, vrJ, imm10_4       is op14_31=0x1cda1 & vrD & vrJ & imm10_4 {
+	vrD = vssrarni.b.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrarni.h.w;
+
+#lsx.txt vssrarni.h.w mask=0x73688000	
+#0x73688000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrarni.h.w vrD, vrJ, imm10_5       is op15_31=0xe6d1 & vrD & vrJ & imm10_5 {
+	vrD = vssrarni.h.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrarni.w.d;
+
+#lsx.txt vssrarni.w.d mask=0x73690000	
+#0x73690000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrarni.w.d vrD, vrJ, imm10_6       is op16_31=0x7369 & vrD & vrJ & imm10_6 {
+	vrD = vssrarni.w.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrarni.d.q;
+
+#lsx.txt vssrarni.d.q mask=0x736a0000	
+#0x736a0000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrarni.d.q vrD, vrJ, imm10_7       is op17_31=0x39b5 & vrD & vrJ & imm10_7 {
+	vrD = vssrarni.d.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vssrarni.bu.h;
+
+#lsx.txt vssrarni.bu.h mask=0x736c4000	
+#0x736c4000	0xffffc000	v0:5,v5:5,u10:4	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_4_s0']
+:vssrarni.bu.h vrD, vrJ, imm10_4      is op14_31=0x1cdb1 & vrD & vrJ & imm10_4 {
+	vrD = vssrarni.bu.h(vrD, vrJ, imm10_4:$(REGSIZE));
+}
+
+define pcodeop vssrarni.hu.w;
+
+#lsx.txt vssrarni.hu.w mask=0x736c8000	
+#0x736c8000	0xffff8000	v0:5,v5:5,u10:5	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_5_s0']
+:vssrarni.hu.w vrD, vrJ, imm10_5      is op15_31=0xe6d9 & vrD & vrJ & imm10_5 {
+	vrD = vssrarni.hu.w(vrD, vrJ, imm10_5:$(REGSIZE));
+}
+
+define pcodeop vssrarni.wu.d;
+
+#lsx.txt vssrarni.wu.d mask=0x736d0000	
+#0x736d0000	0xffff0000	v0:5,v5:5,u10:6	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_6_s0']
+:vssrarni.wu.d vrD, vrJ, imm10_6      is op16_31=0x736d & vrD & vrJ & imm10_6 {
+	vrD = vssrarni.wu.d(vrD, vrJ, imm10_6:$(REGSIZE));
+}
+
+define pcodeop vssrarni.du.q;
+
+#lsx.txt vssrarni.du.q mask=0x736e0000	
+#0x736e0000	0xfffe0000	v0:5,v5:5,u10:7	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_7_s0']
+:vssrarni.du.q vrD, vrJ, imm10_7      is op17_31=0x39b7 & vrD & vrJ & imm10_7 {
+	vrD = vssrarni.du.q(vrD, vrJ, imm10_7:$(REGSIZE));
+}
+
+define pcodeop vextrins.d;
+
+#lsx.txt vextrins.d mask=0x73800000	
+#0x73800000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vextrins.d vrD, vrJ, imm10_8         is op18_31=0x1ce0 & vrD & vrJ & imm10_8 {
+	vrD = vextrins.d(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vextrins.w;
+
+#lsx.txt vextrins.w mask=0x73840000	
+#0x73840000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vextrins.w vrD, vrJ, imm10_8         is op18_31=0x1ce1 & vrD & vrJ & imm10_8 {
+	vrD = vextrins.w(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vextrins.h;
+
+#lsx.txt vextrins.h mask=0x73880000	
+#0x73880000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vextrins.h vrD, vrJ, imm10_8         is op18_31=0x1ce2 & vrD & vrJ & imm10_8 {
+	vrD = vextrins.h(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vextrins.b;
+
+#lsx.txt vextrins.b mask=0x738c0000	
+#0x738c0000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vextrins.b vrD, vrJ, imm10_8         is op18_31=0x1ce3 & vrD & vrJ & imm10_8 {
+	vrD = vextrins.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vshuf4i.b;
+
+#lsx.txt vshuf4i.b mask=0x73900000	
+#0x73900000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vshuf4i.b vrD, vrJ, imm10_8          is op18_31=0x1ce4 & vrD & vrJ & imm10_8 {
+	vrD = vshuf4i.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vshuf4i.h;
+
+#lsx.txt vshuf4i.h mask=0x73940000	
+#0x73940000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vshuf4i.h vrD, vrJ, imm10_8          is op18_31=0x1ce5 & vrD & vrJ & imm10_8 {
+	vrD = vshuf4i.h(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vshuf4i.w;
+
+#lsx.txt vshuf4i.w mask=0x73980000	
+#0x73980000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vshuf4i.w vrD, vrJ, imm10_8          is op18_31=0x1ce6 & vrD & vrJ & imm10_8 {
+	vrD = vshuf4i.w(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vshuf4i.d;
+
+#lsx.txt vshuf4i.d mask=0x739c0000	
+#0x739c0000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vshuf4i.d vrD, vrJ, imm10_8          is op18_31=0x1ce7 & vrD & vrJ & imm10_8 {
+	vrD = vshuf4i.d(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vbitseli.b;
+
+#lsx.txt vbitseli.b mask=0x73c40000	
+#0x73c40000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vbitseli.b vrD, vrJ, imm10_8         is op18_31=0x1cf1 & vrD & vrJ & imm10_8 {
+	vrD = vbitseli.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vandi.b;
+
+#lsx.txt vandi.b mask=0x73d00000	
+#0x73d00000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vandi.b vrD, vrJ, imm10_8            is op18_31=0x1cf4 & vrD & vrJ & imm10_8 {
+	vrD = vandi.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vori.b;
+
+#lsx.txt vori.b mask=0x73d40000	
+#0x73d40000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vori.b vrD, vrJ, imm10_8             is op18_31=0x1cf5 & vrD & vrJ & imm10_8 {
+	vrD = vori.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vxori.b;
+
+#lsx.txt vxori.b mask=0x73d80000	
+#0x73d80000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vxori.b vrD, vrJ, imm10_8            is op18_31=0x1cf6 & vrD & vrJ & imm10_8 {
+	vrD = vxori.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vnori.b;
+
+#lsx.txt vnori.b mask=0x73dc0000	
+#0x73dc0000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vnori.b vrD, vrJ, imm10_8            is op18_31=0x1cf7 & vrD & vrJ & imm10_8 {
+	vrD = vnori.b(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+
+define pcodeop vldi;
+
+#lsx.txt vldi mask=0x73e00000	
+#0x73e00000	0xfffc0000	v0:5, s5:13	['vreg0_5_s0', 'simm5_13_s0']
+:vldi vrD, simm5_13                   is op18_31=0x1cf8 & vrD & simm5_13 {
+	vrD = vldi(vrD, simm5_13:$(REGSIZE));
+}
+
+define pcodeop vpermi.w;
+
+#lsx.txt vpermi.w mask=0x73e40000	
+#0x73e40000	0xfffc0000	v0:5,v5:5,u10:8	['vreg0_5_s0', 'vreg5_5_s0', 'imm10_8_s0']
+:vpermi.w vrD, vrJ, imm10_8           is op18_31=0x1cf9 & vrD & vrJ & imm10_8 {
+	vrD = vpermi.w(vrD, vrJ, imm10_8:$(REGSIZE));
+}
+

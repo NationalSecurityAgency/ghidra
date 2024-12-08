@@ -20,6 +20,7 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -70,18 +71,25 @@ public class DebuggerModulesPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testCaptureDebuggerModulesPlugin() throws Throwable {
 		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
+
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
+					.addLoadedModule("Modules[/bin/bash]", "/bin/bash",
 						tb.range(0x00400000, 0x0060ffff), snap);
-			bin.addSection("bash[.text]", ".text", tb.range(0x00400000, 0x0040ffff));
-			bin.addSection("bash[.data]", ".data", tb.range(0x00600000, 0x0060ffff));
+			bin.addSection("Modules[/bin/bash].Sections[.text]", ".text",
+				tb.range(0x00400000, 0x0040ffff));
+			bin.addSection("Modules[/bin/bash].Sections[.data]", ".data",
+				tb.range(0x00600000, 0x0060ffff));
+
 			TraceModule lib = tb.trace.getModuleManager()
-					.addLoadedModule("/lib/libc.so.6", "/lib/libc.so.6",
+					.addLoadedModule("Modules[/lib/libc.so.6]", "/lib/libc.so.6",
 						tb.range(0x7fac0000, 0x7faeffff), snap);
-			lib.addSection("libc[.text]", ".text", tb.range(0x7fac0000, 0x7facffff));
-			lib.addSection("libc[.data]", ".data", tb.range(0x7fae0000, 0x7faeffff));
+			lib.addSection("Modules[/lib/libc.so.6].Sections[.text]", ".text",
+				tb.range(0x7fac0000, 0x7facffff));
+			lib.addSection("Modules[/lib/libc.so.6].Sections[.data]", ".data",
+				tb.range(0x7fae0000, 0x7faeffff));
 
 			traceManager.openTrace(tb.trace);
 			traceManager.activateTrace(tb.trace);
@@ -97,18 +105,25 @@ public class DebuggerModulesPluginScreenShots extends GhidraScreenShotGenerator 
 	private void populateTraceAndPrograms() throws Exception {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
+					.addLoadedModule("Modules[/bin/bash]", "/bin/bash",
 						tb.range(0x00400000, 0x0060ffff), snap);
-			bin.addSection("bash[.text]", ".text", tb.range(0x00400000, 0x0040ffff));
-			bin.addSection("bash[.data]", ".data", tb.range(0x00600000, 0x0060ffff));
+			bin.addSection("Modules[/bin/bash].Sections[.text]", ".text",
+				tb.range(0x00400000, 0x0040ffff));
+			bin.addSection("Modules[/bin/bash].Sections[.data]", ".data",
+				tb.range(0x00600000, 0x0060ffff));
+
 			TraceModule lib = tb.trace.getModuleManager()
-					.addLoadedModule("/lib/libc.so.6", "/lib/libc.so.6",
+					.addLoadedModule("Modules[/lib/libc.so.6]", "/lib/libc.so.6",
 						tb.range(0x7fac0000, 0x7faeffff), snap);
-			lib.addSection("libc[.text]", ".text", tb.range(0x7fac0000, 0x7facffff));
-			lib.addSection("libc[.data]", ".data", tb.range(0x7fae0000, 0x7faeffff));
+			lib.addSection("Modules[/lib/libc.so.6].Sections[.text]", ".text",
+				tb.range(0x7fac0000, 0x7facffff));
+			lib.addSection("Modules[/lib/libc.so.6].Sections[.data]", ".data",
+				tb.range(0x7fae0000, 0x7faeffff));
+
 		}
 
 		progBash = createDefaultProgram("bash", ProgramBuilder._X64, this);
@@ -148,6 +163,7 @@ public class DebuggerModulesPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testCaptureDebuggerModuleMapProposalDialog() throws Throwable {
 		populateTraceAndPrograms();
+		waitForTasks();
 
 		modulesProvider.setSelectedModules(Set.copyOf(tb.trace.getModuleManager().getAllModules()));
 		performAction(modulesProvider.actionMapModules, false);
@@ -158,6 +174,7 @@ public class DebuggerModulesPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testCaptureDebuggerSectionMapProposalDialog() throws Throwable {
 		populateTraceAndPrograms();
+		waitForTasks();
 
 		modulesProvider
 				.setSelectedSections(Set.copyOf(tb.trace.getModuleManager().getAllSections()));

@@ -21,7 +21,7 @@ import java.awt.GridBagLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 
 /**
@@ -57,7 +57,7 @@ public class ControlPanel extends JPanel {
 		gbc.weightx = 1.0;
 		this.add(directionWidget, gbc);
 
-		this.setBorder(BorderFactory.createLineBorder(Java.BORDER));
+		this.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 	}
 
 	public SelectionScopeWidget getRangeWidget() {

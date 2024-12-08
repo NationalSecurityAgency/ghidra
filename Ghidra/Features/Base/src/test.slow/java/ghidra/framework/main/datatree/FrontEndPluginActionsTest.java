@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -772,7 +772,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	private void clearText(Component c, String text) {
 		int n = text.length();
 		for (int i = 0; i < n; i++) {
-			triggerBackspaceKey(c);
+			triggerBackspace(c);
 		}
 	}
 
@@ -903,8 +903,8 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		//
 
 		//@formatter:off
-		Object projectFileManager = getInstanceField("fileManager", df);
-		invokeInstanceMethod("setDomainObject", projectFileManager,
+		Object projectData = getInstanceField("projectData", df);
+		invokeInstanceMethod("setDomainObject", projectData,
 			new Class[] { String.class, 	DomainObjectAdapter.class },
 			new Object[] { path, program }
 				);
@@ -962,8 +962,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 
-		return new FrontEndProjectTreeContext(null, null, paths, folderList, fileList, tree,
-			true);
+		return new FrontEndProjectTreeContext(null, null, paths, folderList, fileList, tree, true);
 	}
 
 }

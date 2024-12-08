@@ -41,7 +41,7 @@ public class ReferenceFunctionAlgorithm implements FunctionAlgorithm {
 		AddressIterator iterator = referenceManager.getReferenceSourceIterator(body, true);
 		int referenceCount = 0;
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = iterator.next();
 			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
 			referenceCount += referencesFrom.length;

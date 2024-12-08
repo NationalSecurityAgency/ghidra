@@ -27,7 +27,7 @@ public class Module implements StructConverter {
 	public final static String NAME = "MODULE_";
 
 	private long moduleBase;
-	private int moduleSize;
+	private long moduleSize;
 	private int moduleNameLength;
 	private String moduleName;
 
@@ -45,7 +45,7 @@ public class Module implements StructConverter {
 		reader.setPointerIndex(index);
 
 		setModuleBase(reader.readNextPointer());
-		setModuleSize(reader.readNextInt());
+		setModuleSize(reader.readNextUnsignedInt());
 		setModuleNameLength(reader.readNextInt());
 		setModuleName(reader.readNextAsciiString(getModuleNameLength()));
 	}
@@ -53,6 +53,7 @@ public class Module implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME + Long.toHexString(moduleBase), 0);
 
@@ -85,14 +86,14 @@ public class Module implements StructConverter {
 	/**
 	 * @return the moduleSize
 	 */
-	public int getModuleSize() {
+	public long getModuleSize() {
 		return moduleSize;
 	}
 
 	/**
 	 * @param moduleSize the moduleSize to set
 	 */
-	public void setModuleSize(int moduleSize) {
+	public void setModuleSize(long moduleSize) {
 		this.moduleSize = moduleSize;
 	}
 

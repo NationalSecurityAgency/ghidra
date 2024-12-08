@@ -63,41 +63,19 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testRemoveEquate() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					EquateTable equateTab = program.getEquateTable();
-					equateTab.removeEquate("uno"); // 01001bc9
-					equateTab.removeEquate("ein"); // 01001cea
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				EquateTable equateTab = program.getEquateTable();
+				equateTab.removeEquate("uno"); // 01001bc9
+				equateTab.removeEquate("ein"); // 01001cea
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					EquateTable equateTab = program.getEquateTable();
-					equateTab.removeEquate("one"); // 01001b5d
-					equateTab.removeEquate("ein"); // 01001cea
-					equateTab.removeEquate("zero"); // 010019a2, 010019f8
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				EquateTable equateTab = program.getEquateTable();
+				equateTab.removeEquate("one"); // 01001b5d
+				equateTab.removeEquate("ein"); // 01001cea
+				equateTab.removeEquate("zero"); // 010019a2, 010019f8
 			}
 		});
 
@@ -143,38 +121,16 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeEquate() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x1001b5d", 1, 1L, "SINGLE");
-					changeEquate(program, "0x1001bc9", 1, 1L, "first");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x1001b5d", 1, 1L, "SINGLE");
+				changeEquate(program, "0x1001bc9", 1, 1L, "first");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x1001b5d", 1, 1L, "ONE");
-					changeEquate(program, "0x1001bc9", 1, 1L, "INITIAL");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x1001b5d", 1, 1L, "ONE");
+				changeEquate(program, "0x1001bc9", 1, 1L, "INITIAL");
 			}
 		});
 
@@ -235,39 +191,17 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testRemoveVsChangeEquate() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					EquateTable equateTab = program.getEquateTable();
-					equateTab.removeEquate("uno"); // 01001bc9
-					equateTab.removeEquate("ein"); // 01001cea
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				EquateTable equateTab = program.getEquateTable();
+				equateTab.removeEquate("uno"); // 01001bc9
+				equateTab.removeEquate("ein"); // 01001cea
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x1001bc9", 1, 1L, "dog");
-					changeEquate(program, "0x1001cea", 1, 1L, "cat");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x1001bc9", 1, 1L, "dog");
+				changeEquate(program, "0x1001cea", 1, 1L, "cat");
 			}
 		});
 
@@ -292,41 +226,25 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d18");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d18");
-					try {
-						equateTab.createEquate("ONE", 1).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("ONE", 1).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d18");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d18");
-					try {
-						equateTab.createEquate("SINGLE", 1).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("SINGLE", 1).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -480,8 +398,6 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					Listing listing = program.getListing();
 					Address startAddr = addr(program, "0x1002d20");
@@ -491,55 +407,35 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 					Instruction instruction = listing.getInstructionAt(startAddr);
 					Assert.assertTrue(instruction != null);
 					Assert.assertEquals(2, instruction.getNumOperands());
-					commit = true;
 				}
 				catch (MemoryAccessException e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d20");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d20");
-					try {
-						equateTab.createEquate("NADA", 0).addReference(addr, 1);
-						equateTab.createEquate("FOUR", 4).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("NADA", 0).addReference(addr, 1);
+					equateTab.createEquate("FOUR", 4).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d20");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d20");
-					try {
-						equateTab.createEquate("ZERO", 0).addReference(addr, 1);
-						equateTab.createEquate("QUAD", 4).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("ZERO", 0).addReference(addr, 1);
+					equateTab.createEquate("QUAD", 4).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -647,49 +543,27 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddSameNameDiffValue() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d18");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d18");
-					try {
-						equateTab.createEquate("apple", 2).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("apple", 2).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d18");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d18");
-					try {
-						equateTab.createEquate("apple", 1).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("apple", 1).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -714,38 +588,16 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddSameNameDiffValueWithResolve() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x10019f8", 1, 0, "ORANGE");
-					changeEquate(program, "0x1001d0b", 1, 1, "PEAR");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x10019f8", 1, 0, "ORANGE");
+				changeEquate(program, "0x1001d0b", 1, 1, "PEAR");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x1001bc9", 1, 1, "ORANGE");
-					changeEquate(program, "0x1001d0b", 1, 1, "ORANGE");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x1001bc9", 1, 1, "ORANGE");
+				changeEquate(program, "0x1001d0b", 1, 1, "ORANGE");
 			}
 		});
 
@@ -779,38 +631,16 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	private void setupUseForAll() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x1001b5d", 1, 1L, "SINGLE");
-					changeEquate(program, "0x1001bc9", 1, 1L, "first");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x1001b5d", 1, 1L, "SINGLE");
+				changeEquate(program, "0x1001bc9", 1, 1L, "first");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x1001b5d", 1, 1L, "ONE");
-					changeEquate(program, "0x1001bc9", 1, 1L, "INITIAL");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x1001b5d", 1, 1L, "ONE");
+				changeEquate(program, "0x1001bc9", 1, 1L, "INITIAL");
 			}
 		});
 	}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,19 @@
  */
 package ghidra.app.cmd.refs;
 
+import java.util.List;
+
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 
-import java.util.List;
-
 /**
  * Command class to add a register reference to the program.
  */
-public class AddRegisterRefCmd implements Command {
+public class AddRegisterRefCmd implements Command<Program> {
 
 	private Address fromAddr;
 	private int opIndex;
@@ -70,13 +68,8 @@ public class AddRegisterRefCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program p = (Program) obj;
+	public boolean applyTo(Program p) {
 		ReferenceManager refMgr = p.getReferenceManager();
 
 		Function f = p.getFunctionManager().getFunctionContaining(fromAddr);
@@ -87,9 +80,8 @@ public class AddRegisterRefCmd implements Command {
 		int useOffset = (int) (fromAddr.getOffset() - f.getEntryPoint().getOffset());
 
 		if (refType == null) {
-			refType =
-				RefTypeFactory.getDefaultRegisterRefType(p.getListing().getInstructionAt(fromAddr),
-					reg, opIndex);
+			refType = RefTypeFactory.getDefaultRegisterRefType(
+				p.getListing().getInstructionAt(fromAddr), reg, opIndex);
 		}
 
 		if (refType.isWrite()) {
@@ -99,8 +91,9 @@ public class AddRegisterRefCmd implements Command {
 				if (registers == null) {
 					continue;
 				}
-				for (Register reg : registers) {
-					if (rv.getRegister().contains(reg) && rv.getFirstUseOffset() == useOffset) {
+				for (Register r : registers) {
+					// determine if reference reg contains variable storage register
+					if (reg.contains(r) && rv.getFirstUseOffset() == useOffset) {
 						found = true;
 						break;
 					}
@@ -109,8 +102,8 @@ public class AddRegisterRefCmd implements Command {
 			if (!found) {
 				// Create a variable on write
 				try {
-					Variable var =
-						new LocalVariableImpl(null, useOffset, null, new VariableStorage(p, reg), p);
+					Variable var = new LocalVariableImpl(null, useOffset, null,
+						new VariableStorage(p, reg), p);
 					var = f.addLocalVariable(var, SourceType.DEFAULT);
 				}
 				catch (DuplicateNameException e) {
@@ -127,17 +120,11 @@ public class AddRegisterRefCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return status;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Add Register Reference";

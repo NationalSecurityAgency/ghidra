@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +17,11 @@ package ghidra.pcode.error;
 
 public class LowlevelError extends RuntimeException {
 
-	public LowlevelError( String message ) {
-		super( message );
+	public LowlevelError(String message) {
+		super(message);
 	}
-	
-	public LowlevelError( String message, Throwable throwable ) {
-	    super( message, throwable );
+
+	public LowlevelError(String message, Throwable throwable) {
+		super(message, throwable);
 	}
 }

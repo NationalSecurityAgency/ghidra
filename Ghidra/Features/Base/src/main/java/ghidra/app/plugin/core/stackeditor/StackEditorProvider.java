@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,13 +23,14 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataTypePath;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 
@@ -113,18 +114,10 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return new ProgramActionContext(this, program);
 	}
 
-	/**
-	 * Gets the function name for the function stack frame being edited. 
-	 * @return the name
-	 */
 	String getStackName() {
 		return stackModel.getEditorStack().getDisplayName();
 	}
 
-	/**
-	 * Gets the function for the function stack frame being edited. 
-	 * @return the function
-	 */
 	Function getFunction() {
 		StackFrameDataType editorStack = stackModel.getEditorStack();
 		if (editorStack == null) {
@@ -138,9 +131,6 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return getDtPath().equals(functionPath);
 	}
 
-	/**
-	 * Gets the program associated with the stack frame being edited.
-	 */
 	protected Program getProgram() {
 		return program;
 	}
@@ -155,14 +145,8 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return actionMgr.getAllActions();
 	}
 
-	@Override
-	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
-		refreshName();
-		editorPanel.domainObjectRestored(domainObject);
-	}
-
 	private void refreshName() {
-		StackFrameDataType origDt = (StackFrameDataType) stackModel.getOriginalComposite();
+		StackFrameDataType origDt = stackModel.getOriginalComposite();
 		StackFrameDataType viewDt = stackModel.getViewComposite();
 		String oldName = origDt.getName();
 		String newName = function.getName();
@@ -196,50 +180,54 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		int recordCount = event.numRecords();
 		for (int i = 0; i < recordCount; i++) {
 			DomainObjectChangeRecord rec = event.getChangeRecord(i);
-			int eventType = rec.getEventType();
-			switch (eventType) {
-				case DomainObject.DO_OBJECT_RESTORED:
-					Object source = event.getSource();
-					if (source instanceof Program) {
-						Program restoredProgram = (Program) source;
-						domainObjectRestored(restoredProgram);
-					}
-					return;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					Function func = (Function) ((ProgramChangeRecord) rec).getObject();
-					if (func == function) {
-						this.dispose();
-						tool.setStatusInfo("Stack Editor was closed for " + getName());
-					}
-					return;
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
-					Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-					SymbolType symType = sym.getSymbolType();
-					if (symType == SymbolType.LABEL) {
-						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
+			EventType eventType = rec.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				refreshName();
+				// NOTE: editorPanel should be notified of restored datatype manager via the 
+				// CompositeViewerModel's DataTypeManagerChangeListener restored method
+				return;
+			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case FUNCTION_REMOVED:
+						Function func = (Function) ((ProgramChangeRecord) rec).getObject();
+						if (func == function) {
+							this.dispose();
+							tool.setStatusInfo("Stack Editor was closed for " + getName());
+						}
+						return;
+					case SYMBOL_RENAMED:
+					case SYMBOL_DATA_CHANGED:
+						Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
+						SymbolType symType = sym.getSymbolType();
+						if (symType == SymbolType.LABEL) {
+							if (sym.isPrimary() &&
+								sym.getAddress().equals(function.getEntryPoint())) {
+								refreshName();
+							}
+						}
+						else if (inCurrentFunction(rec)) {
+							reloadFunction();
+						}
+						break;
+					case FUNCTION_CHANGED:
+					case SYMBOL_ADDED:
+					case SYMBOL_REMOVED:
+					case SYMBOL_ADDRESS_CHANGED:
+						if (inCurrentFunction(rec)) {
+							reloadFunction();
+						}
+						break;
+					case SYMBOL_PRIMARY_STATE_CHANGED:
+						sym = (Symbol) ((ProgramChangeRecord) rec).getNewValue();
+						symType = sym.getSymbolType();
+						if (symType == SymbolType.LABEL &&
+							sym.getAddress().equals(function.getEntryPoint())) {
 							refreshName();
 						}
-					}
-					else if (inCurrentFunction(rec)) {
-						reloadFunction();
-					}
-					break;
-				case ChangeManager.DOCR_FUNCTION_CHANGED:
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-				case ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED:
-					if (inCurrentFunction(rec)) {
-						reloadFunction();
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
-					sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-					symType = sym.getSymbolType();
-					if (symType == SymbolType.LABEL &&
-						sym.getAddress().equals(function.getEntryPoint())) {
-						refreshName();
-					}
+						break;
+					default:
+				}
 			}
 		}
 	}

@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 
+import ghidra.util.SystemUtilities;
+
 public class TaskLauncherTest extends AbstractTaskTest {
 
 	private Thread swingThread;
@@ -112,6 +114,24 @@ public class TaskLauncherTest extends AbstractTaskTest {
 		assertTrue(
 			"Time waited is longer that the dialog delay: " + totalTime + " vs " + dialogDelay,
 			totalTime < dialogDelay);
+	}
+
+	@Test
+	public void testHeadless() throws Exception {
+
+		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.TRUE.toString());
+
+		SwingBlocker blocker = new SwingBlocker();
+		runSwing(blocker, false);
+		blocker.waitForStart();
+
+		// 4 - 2 per task
+		threadsFinished = new CountDownLatch(4);
+		launchTaskFromTask();
+		waitForTask();
+		assertDidNotRunInSwing();
+
+		assertNull(taskDialog);
 	}
 
 //==================================================================================================

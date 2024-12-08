@@ -38,7 +38,6 @@ class RemoveStackDepthChangeAction extends ListingContextAction {
 	/**
 	 * Creates a new action with the given name and associated to the given
 	 * plugin.
-	 * @param name the name for this action.
 	 * @param plugin the plugin this action is associated with.
 	 */
 	RemoveStackDepthChangeAction(FunctionPlugin plugin) {
@@ -60,7 +59,7 @@ class RemoveStackDepthChangeAction extends ListingContextAction {
 		if (CallDepthChangeInfo.getStackDepthChange(program, address) == null) {
 			return; // nothing to remove.
 		}
-		funcPlugin.execute(program, new RemoveStackDepthChangeCommand(program, address));
+		funcPlugin.execute(program, new RemoveStackDepthChangeCommand(address));
 	}
 
 	@Override

@@ -18,15 +18,16 @@ package ghidra.program.database.module;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 
 abstract class ProgramTreeDBAdapter {
-	
+
 	static final String PROGRAM_TREE_TABLE_NAME = "Trees";
-	
+
 	static final int TREE_NAME_COL = ProgramTreeDBAdapterV0.V0_TREE_NAME_COL;
 	static final int MODIFICATION_NUM_COL = ProgramTreeDBAdapterV0.V0_MODIFICATION_NUM_COL;
-	
+
 	/**
 	 * Gets an adapter for working with the  program tree database table.
 	 * @param handle handle to the database to be accessed.
@@ -35,9 +36,9 @@ abstract class ProgramTreeDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	static ProgramTreeDBAdapter getAdapter(DBHandle handle, int openMode)
+	static ProgramTreeDBAdapter getAdapter(DBHandle handle, OpenMode openMode)
 			throws VersionException, IOException {
-		return new ProgramTreeDBAdapterV0(handle, openMode == DBConstants.CREATE);
+		return new ProgramTreeDBAdapterV0(handle, openMode == OpenMode.CREATE);
 	}
 
 	/**

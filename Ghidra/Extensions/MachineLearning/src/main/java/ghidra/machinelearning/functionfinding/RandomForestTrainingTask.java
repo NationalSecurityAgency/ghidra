@@ -338,7 +338,7 @@ public class RandomForestTrainingTask extends Task {
 
 		List<CARTClassificationTrainer> trainers = new ArrayList<>();
 		for (int i = 0; i < NUM_TREES; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			//Integer.MAX_VALUE: unlimited depth
 			trainers.add(new CARTClassificationTrainer(Integer.MAX_VALUE, featureFraction,
 				ThreadLocalRandom.current().nextLong()));
@@ -371,7 +371,7 @@ public class RandomForestTrainingTask extends Task {
 				new VotingCombiner());
 		}
 		catch (Exception e) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Msg.error(this, "Exception while training model: " + e.getMessage());
 		}
 		return randomForest;
@@ -411,7 +411,7 @@ public class RandomForestTrainingTask extends Task {
 				RandomForestFunctionFinderPlugin.FUNC_START, errors);
 		}
 		catch (Exception e) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Msg.error(this,
 				"Exception while evaluating model on known function starts: " + e.getMessage());
 		}
@@ -430,7 +430,7 @@ public class RandomForestTrainingTask extends Task {
 				RandomForestFunctionFinderPlugin.NON_START, errors);
 		}
 		catch (Exception e) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Msg.error(this,
 				"Exception while evaluating model on known function interiors: " + e.getMessage());
 		}

@@ -24,7 +24,6 @@ import java.io.IOException;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class FileOptionsTest extends AbstractGenericTest {
 
@@ -76,17 +75,17 @@ public class FileOptionsTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void readState(SaveState saveState) {
-			name = saveState.getString("name", null);
-			count = saveState.getInt("count", 0);
-			active = saveState.getBoolean("active", false);
+		public void readState(GProperties properties) {
+			name = properties.getString("name", null);
+			count = properties.getInt("count", 0);
+			active = properties.getBoolean("active", false);
 		}
 
 		@Override
-		public void writeState(SaveState saveState) {
-			saveState.putString("name", name);
-			saveState.putInt("count", count);
-			saveState.putBoolean("active", active);
+		public void writeState(GProperties properties) {
+			properties.putString("name", name);
+			properties.putInt("count", count);
+			properties.putBoolean("active", active);
 		}
 
 		@Override

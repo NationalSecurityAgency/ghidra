@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.RefType;
@@ -40,13 +41,13 @@ public class ContextEvaluatorAdapter implements ContextEvaluator {
 
 	@Override
 	public Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop,
-			Address constant, int size, RefType refType) {
+			Address constant, int size, DataType dataType, RefType refType) {
 		return null;
 	}
 
 	@Override
 	public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
-			int size, RefType refType) {
+			int size, DataType dataType, RefType refType) {
 		return false;
 	}
 

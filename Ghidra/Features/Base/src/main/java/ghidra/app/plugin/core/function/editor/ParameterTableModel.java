@@ -20,6 +20,7 @@ import java.util.List;
 
 import docking.widgets.table.AbstractGTableModel;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.VariableStorage;
 
 class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
@@ -223,7 +224,15 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 
 		@Override
 		public boolean isCellEditable(int rowIndex) {
-			return canCustomizeStorage;
+			FunctionVariableData rowData = getRowObject(rowIndex);
+			if (rowData == null || !canCustomizeStorage) {
+				return false;
+			}
+			if (rowData.getIndex() == null) {
+				// return parameter - don't permit storage edit for void type
+				return !VoidDataType.isVoidDataType(rowData.getFormalDataType());
+			}
+			return true;
 		}
 
 		@Override
@@ -282,6 +291,11 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		public void setStorage(VariableStorage storage) {
 			functionModel.setParameterStorage(param, storage);
 		}
+
+		@Override
+		public boolean hasStorageConflict() {
+			return param.hasStorageConflict();
+		}
 	}
 
 	private class ReturnRowData implements FunctionVariableData {
@@ -326,6 +340,11 @@ class ParameterTableModel extends AbstractGTableModel<FunctionVariableData> {
 		@Override
 		public void setName(String name) {
 			// no name for return type
+		}
+
+		@Override
+		public boolean hasStorageConflict() {
+			return false;
 		}
 	}
 }

@@ -15,10 +15,8 @@
  */
 package ghidra.machinelearning.functionfinding;
 
+import java.awt.Font;
 import java.util.List;
-
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
@@ -48,7 +46,7 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 	 * Construct a table model for a table to display the closest function starts to
 	 * a potential function start
 	 * @param plugin owning program
-	 * @param program program 
+	 * @param program program
 	 * @param rows similar function starts
 	 * @param randomForestRow model and params
 	 */
@@ -123,9 +121,10 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 		@Override
 		public GColumnRenderer<String> getColumnRenderer() {
 			final GColumnRenderer<String> monospacedRenderer = new AbstractGColumnRenderer<>() {
+
 				@Override
-				protected void configureFont(JTable table, TableModel model, int column) {
-					setFont(getFixedWidthFont());
+				protected Font getDefaultFont() {
+					return fixedWidthFont;
 				}
 
 				@Override

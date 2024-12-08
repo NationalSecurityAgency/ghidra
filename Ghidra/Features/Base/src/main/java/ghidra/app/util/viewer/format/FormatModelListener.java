@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +19,26 @@ package ghidra.app.util.viewer.format;
  * Interface for listeners to format model changes.
  */
 public interface FormatModelListener {
+
 	/**
-	 * Notifies that a new format model was added to the format manager.
-	 * @param model the new model.
+	 * Format model added. Not used.
+	 * @param model the model that was added
+	 * @deprecated not used
 	 */
-	void formatModelAdded(FieldFormatModel model);
+	@Deprecated(since = "11.2", forRemoval = true)
+	default void formatModelAdded(FieldFormatModel model) {
+		// not used
+	}
+
 	/**
-	 * Notifies that a format model was removed.
-	 * @param model the model that was removed.
+	 * Format model removed. Not used.
+	 * @param model the model that was added
+	 * @deprecated not used
 	 */
-	void formatModelRemoved(FieldFormatModel model);
+	@Deprecated(since = "11.2", forRemoval = true)
+	default void formatModelRemoved(FieldFormatModel model) {
+		// not used
+	}
 
 	/**
 	 * Notifies that the given format model was changed.

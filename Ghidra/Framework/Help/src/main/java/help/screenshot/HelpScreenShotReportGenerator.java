@@ -146,7 +146,7 @@ public class HelpScreenShotReportGenerator {
 	}
 
 	private void writeHeader(BufferedWriter writer) throws IOException {
-		writer.write("<HTML>\n");
+		writer.write("<html>\n");
 		writer.write("<HEAD>\n");
 		createStyleSheet(writer);
 		writer.write("</HEAD>\n");
@@ -178,7 +178,7 @@ public class HelpScreenShotReportGenerator {
 		writer.write("</P>\n");
 
 		writer.write("</BODY>\n");
-		writer.write("</HTML>\n");
+		writer.write("</html>\n");
 	}
 
 	private void createStyleSheet(BufferedWriter writer) throws IOException {

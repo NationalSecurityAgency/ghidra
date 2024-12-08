@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public abstract class SymbolCategoryNode extends SymbolTreeNode {
-	public static final int MAX_NODES_BEFORE_ORGANIZING = 40;
+	public static final int MAX_NODES_BEFORE_ORGANIZING = 100;
 	public static final int MAX_NODES_BEFORE_CLOSING = 200;
 
 	protected SymbolCategory symbolCategory;
@@ -38,26 +37,45 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	protected GlobalNamespace globalNamespace;
 	protected Program program;
 
-	// dummy constructor for no program
-	protected SymbolCategoryNode() {
-		symbolCategory = null;
-		symbolTable = null;
-		globalNamespace = null;
-		program = null;
+	protected boolean isEnabled = true;
+
+	public SymbolCategoryNode(SymbolCategory symbolCategory, Program p) {
+		this.symbolCategory = symbolCategory;
+		this.program = p;
+		this.symbolTable = p == null ? null : p.getSymbolTable();
+		this.globalNamespace = p == null ? null : (GlobalNamespace) p.getGlobalNamespace();
 	}
 
-	public SymbolCategoryNode(SymbolCategory symbolCategory, Program program) {
-		this.symbolCategory = symbolCategory;
-		this.program = program;
-		this.symbolTable = program.getSymbolTable();
-		this.globalNamespace = (GlobalNamespace) program.getGlobalNamespace();
+	public void setEnabled(boolean enabled) {
+		if (isEnabled == enabled) {
+			return;
+		}
+
+		isEnabled = enabled;
+		unloadChildren();
+
+		GTree gTree = getTree();
+		if (gTree != null) {
+			SymbolCategoryNode modelNode = (SymbolCategoryNode) gTree.getModelNode(this);
+			if (this != modelNode) {
+				modelNode.setEnabled(enabled);
+			}
+		}
+	}
+
+	public boolean isEnabled() {
+		return isEnabled;
 	}
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+		if (!isEnabled) {
+			return Collections.emptyList();
+		}
+
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		return OrganizationNode.organize(list, MAX_NODES_BEFORE_ORGANIZING, monitor);
 	}
 
@@ -81,7 +99,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		while (it.hasNext()) {
 			Symbol s = it.next();
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (s != null && (s.getSymbolType() == symbolType)) {
 				list.add(SymbolNode.createNode(s, program));
 			}
@@ -198,7 +216,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		List<GTreeNode> children = parentNode.getChildren();
 		int index = Collections.binarySearch(children, newNode, comparator);
 		if (index >= 0) { // found a match			
-			GTreeNode matchingNode = getChild(index);
+			GTreeNode matchingNode = parentNode.getChild(index);
 
 			// we must handle OrganizationNodes specially, since they may be recursively defined
 			if (matchingNode instanceof OrganizationNode) {

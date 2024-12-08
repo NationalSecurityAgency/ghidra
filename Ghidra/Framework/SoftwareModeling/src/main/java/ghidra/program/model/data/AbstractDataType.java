@@ -78,6 +78,25 @@ public abstract class AbstractDataType implements DataType {
 				: DataOrganizationImpl.getDefaultOrganization();
 	}
 
+	/**
+	 * Get the {@link DataOrganization} which should be used by a {@link AbstractDataType} when 
+	 * associated with a specified {@link DataTypeManager dataMgr}.  If a null 
+	 * {@code dataMgr} is specified the default {@link DataOrganization} will be returned.
+	 * @param dataMgr datatype manager
+	 * @return the {@link DataOrganization} which should be used by a {@link AbstractDataType}
+	 * instance.
+	 */
+	protected static DataOrganization getDataOrganization(DataTypeManager dataMgr) {
+		DataOrganization dataOrganization = null;
+		if (dataMgr != null) {
+			dataOrganization = dataMgr.getDataOrganization();
+		}
+		if (dataOrganization == null) {
+			dataOrganization = DataOrganizationImpl.getDefaultOrganization();
+		}
+		return dataOrganization;
+	}
+
 	@Override
 	public DataTypePath getDataTypePath() {
 		// use methods instead of fields since they mey be overriden

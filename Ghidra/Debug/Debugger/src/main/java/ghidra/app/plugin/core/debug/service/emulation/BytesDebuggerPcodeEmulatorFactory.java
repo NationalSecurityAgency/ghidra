@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 
 /**
  * The Debugger's default emulator factory
  */
-public class BytesDebuggerPcodeEmulatorFactory implements DebuggerPcodeEmulatorFactory {
+public class BytesDebuggerPcodeEmulatorFactory extends AbstractDebuggerPcodeEmulatorFactory {
 	// TODO: Config options:
 	// 1) userop library
 

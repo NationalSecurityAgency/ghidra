@@ -63,7 +63,7 @@ public class VdexHeader_027 extends VdexHeader {
 			throws IOException, CancelledException {
 
 		for (int i = 0; i < number_of_sections_; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			sections.add(new VdexSectionHeader_S_T(reader));
 		}
 
@@ -80,7 +80,7 @@ public class VdexHeader_027 extends VdexHeader {
 		if (checksumSection.getSectionSize() > 0) {
 			reader.setPointerIndex(checksumSection.getSectionOffset());
 			for (int i = 0; i < checksumSection.getSectionSize() / 4; ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				checksums.add(reader.readNextInt());
 			}
 		}

@@ -95,6 +95,7 @@ class ArchitectureGhidra : public Architecture {
   virtual void buildLoader(DocumentStorage &store);
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void);
   virtual void buildTypegrp(DocumentStorage &store);
+  virtual void buildCoreTypes(DocumentStorage &store);
   virtual void buildCommentDB(DocumentStorage &store);
   virtual void buildStringManager(DocumentStorage &store);
   virtual void buildConstantPool(DocumentStorage &store);

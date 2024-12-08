@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,16 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 
-import db.Transaction;
 import db.DBHandle;
+import db.Transaction;
+import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.util.PathPredicates;
+import ghidra.framework.data.OpenMode;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.disassemble.Disassembler;
@@ -47,14 +52,17 @@ import ghidra.trace.database.bookmark.*;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.symbol.DBTraceReference;
+import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.symbol.TraceReferenceManager;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -88,7 +96,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public ToyDBTraceBuilder(File file)
 			throws CancelledException, VersionException, LanguageNotFoundException, IOException {
 		DBHandle handle = new DBHandle(file);
-		this.trace = new DBTrace(handle, DBOpenMode.UPDATE, new ConsoleTaskMonitor(), this);
+		this.trace = new DBTrace(handle, OpenMode.UPDATE, new ConsoleTaskMonitor(), this);
 		this.language = trace.getBaseLanguage();
 		this.host = trace.getPlatformManager().getHostPlatform();
 	}
@@ -546,8 +554,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @return the instruction unit
 	 * @throws CodeUnitInsertionException if the instruction cannot be created
 	 */
-	public DBTraceInstruction addInstruction(long snap, Address start,
-			TracePlatform platform) throws CodeUnitInsertionException {
+	public DBTraceInstruction addInstruction(long snap, Address start, TracePlatform platform)
+			throws CodeUnitInsertionException {
 		DBTraceCodeManager code = trace.getCodeManager();
 		Language platformLanguage = platform.getLanguage();
 		Disassembler dis =
@@ -561,7 +569,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		InstructionBlock block = dis.pseudoDisassembleBlock(memBuf, defaultContextValue, 1);
 		Instruction pseudoIns = block.iterator().next();
 		return code.instructions()
-				.create(Lifespan.nowOn(snap), start, platform, pseudoIns.getPrototype(), pseudoIns);
+				.create(Lifespan.nowOn(snap), start, platform, pseudoIns.getPrototype(), pseudoIns,
+					0);
 	}
 
 	/**
@@ -569,7 +578,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @param snap the starting snap
 	 * @param start the min address
-	 * @param platform the platform the the language to disassemble
+	 * @param platform the platform for the language to disassemble
 	 * @param buf the bytes to place, which will become the unit's bytes
 	 * @return the instruction unit
 	 * @throws CodeUnitInsertionException if the instruction cannot be created
@@ -629,8 +638,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to,
 			int operandIndex) {
 		return trace.getReferenceManager()
-				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to,
-					RefType.DATA, SourceType.DEFAULT, operandIndex);
+				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to, RefType.DATA,
+					SourceType.DEFAULT, operandIndex);
 	}
 
 	/**
@@ -647,8 +656,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addOffsetReference(long creationSnap, Address from, Address to,
 			boolean toAddrIsBase, long offset) {
 		return trace.getReferenceManager()
-				.addOffsetReference(Lifespan.nowOn(creationSnap), from, to, toAddrIsBase,
-					offset, RefType.DATA, SourceType.DEFAULT, -1);
+				.addOffsetReference(Lifespan.nowOn(creationSnap), from, to, toAddrIsBase, offset,
+					RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -669,8 +678,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addShiftedReference(long creationSnap, Address from, Address to,
 			int shift) {
 		return trace.getReferenceManager()
-				.addShiftedReference(Lifespan.nowOn(creationSnap), from,
-					to, shift, RefType.DATA, SourceType.DEFAULT, -1);
+				.addShiftedReference(Lifespan.nowOn(creationSnap), from, to, shift, RefType.DATA,
+					SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -688,8 +697,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceReference addRegisterReference(long creationSnap, Address from, String to) {
 		return trace.getReferenceManager()
-				.addRegisterReference(Lifespan.nowOn(creationSnap), from,
-					language.getRegister(to), RefType.DATA, SourceType.DEFAULT, -1);
+				.addRegisterReference(Lifespan.nowOn(creationSnap), from, language.getRegister(to),
+					RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -707,8 +716,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceReference addStackReference(long creationSnap, Address from, int to) {
 		return trace.getReferenceManager()
-				.addStackReference(Lifespan.nowOn(creationSnap), from, to,
-					RefType.DATA, SourceType.DEFAULT, -1);
+				.addStackReference(Lifespan.nowOn(creationSnap), from, to, RefType.DATA,
+					SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -721,6 +730,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public File save() throws IOException, CancelledException {
 		Path tmp = Files.createTempFile("test", ".db");
 		Files.delete(tmp); // saveAs must create the file
+		trace.objectManager.flushWbCaches();
 		trace.getDBHandle().saveAs(tmp.toFile(), false, new ConsoleTaskMonitor());
 		return tmp.toFile();
 	}
@@ -750,9 +760,98 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return getLanguage(langID).getCompilerSpecByID(new CompilerSpecID(compID));
 	}
 
+	public void createObjectsProcessAndThreads() {
+		DBTraceObjectManager objs = trace.getObjectManager();
+		TraceObjectKeyPath pathProc1 = TraceObjectKeyPath.parse("Processes[1]");
+		TraceObject proc1 = objs.createObject(pathProc1);
+		Lifespan zeroOn = Lifespan.nowOn(0);
+		proc1.insert(zeroOn, ConflictResolution.DENY);
+		TraceObject t1 = objs.createObject(pathProc1.key("Threads").index(1));
+		t1.insert(zeroOn, ConflictResolution.DENY);
+		TraceObject t2 = objs.createObject(pathProc1.key("Threads").index(2));
+		t2.insert(zeroOn, ConflictResolution.DENY);
+
+		proc1.setAttribute(zeroOn, "_state", TargetExecutionState.STOPPED.name());
+	}
+
+	public void createObjectsFramesAndRegs(TraceObjectThread thread, Lifespan lifespan,
+			TracePlatform platform, int n) {
+		DBTraceObjectManager objs = trace.getObjectManager();
+		TraceObjectKeyPath pathThread = thread.getObject().getCanonicalPath();
+		for (int i = 0; i < n; i++) {
+			TraceObjectKeyPath pathContainer = pathThread.key("Stack").index(i).key("Registers");
+			for (Register reg : platform.getLanguage().getRegisters()) {
+				TraceObject regObj = objs.createObject(pathContainer.index(reg.getName()));
+				regObj.insert(lifespan, ConflictResolution.DENY);
+			}
+		}
+	}
+
+	/**
+	 * Get an object by its canonical path
+	 * 
+	 * @param canonicalPath the canonical path
+	 * @return the object or null
+	 */
+	public TraceObject obj(String canonicalPath) {
+		return trace.getObjectManager()
+				.getObjectByCanonicalPath(TraceObjectKeyPath.parse(canonicalPath));
+	}
+
+	/**
+	 * Get an object by its path pattern
+	 * 
+	 * @param path the path pattern <em>at snapshot 0 only!</em>
+	 * @return the object or null
+	 */
+	public TraceObject objAny0(String path) {
+		return objAny(path, Lifespan.at(0));
+	}
+
+	/**
+	 * Get an object by its path pattern intersecting the given lifespan
+	 * 
+	 * @param path the path pattern
+	 * @return the object or null
+	 */
+	public TraceObject objAny(String path, Lifespan span) {
+		return trace.getObjectManager()
+				.getObjectsByPath(span, TraceObjectKeyPath.parse(path))
+				.findFirst()
+				.orElse(null);
+	}
+
+	/**
+	 * Get the value (not value entry) of an object
+	 * 
+	 * @param obj the object
+	 * @param snap the snapshot key
+	 * @param key the entry key
+	 * @return the value, possibly null
+	 */
+	public Object objValue(TraceObject obj, long snap, String key) {
+		TraceObjectValue value = obj.getValue(snap, key);
+		return value == null ? null : value.getValue();
+	}
+
+	/**
+	 * List all values matching the given pattern at the given snap.
+	 * 
+	 * @param snap the snap
+	 * @param pattern the pattern
+	 * @return the list of values
+	 */
+	public List<Object> objValues(long snap, String pattern) {
+		return trace.getObjectManager()
+				.getValuePaths(Lifespan.at(snap), PathPredicates.parse(pattern))
+				.map(p -> p.getDestinationValue(trace.getObjectManager().getRootObject()))
+				.toList();
+	}
+
 	@Override
 	public void close() {
 		if (trace.getConsumerList().contains(this)) {
+			AbstractGenericTest.waitFor(() -> !trace.isLocked());
 			trace.release(this);
 		}
 	}

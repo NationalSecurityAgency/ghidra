@@ -55,7 +55,7 @@ processTestResources {
 	duplicatesStrategy = 'exclude'
 }
 	
-plugins.withId('java') {
+java {
 	sourceCompatibility = "${rootProject.JAVA_COMPILER}"
 	targetCompatibility = "${rootProject.JAVA_COMPILER}"
 }

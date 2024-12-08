@@ -28,8 +28,7 @@ import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.LoadException;
 import ghidra.app.util.opinion.LoadResults;
-import ghidra.framework.Application;
-import ghidra.framework.HeadlessGhidraApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -38,6 +37,7 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
+import utility.application.ApplicationUtilities;
 
 /**
  * Wrapper for Ghidra code to find images (and maybe other artifacts later) in a program
@@ -122,8 +122,9 @@ public class ProgramExaminer {
 		if (!Application.isInitialized()) {
 			ApplicationLayout layout;
 			try {
-				layout =
-					new GhidraTestApplicationLayout(new File(System.getProperty("java.io.tmpdir")));
+				layout = new GhidraTestApplicationLayout(ApplicationUtilities.getDefaultUserTempDir(
+					new ApplicationProperties(ApplicationUtilities.findDefaultApplicationRootDirs())
+							.getApplicationName()));
 			}
 			catch (IOException e) {
 				throw new GhidraException(e);
@@ -184,8 +185,7 @@ public class ProgramExaminer {
 		int txID = program.startTransaction("find images");
 		try {
 			EmbeddedMediaAnalyzer imageAnalyzer = new EmbeddedMediaAnalyzer();
-			imageAnalyzer.added(program, program.getMemory(), TaskMonitor.DUMMY,
-				messageLog);
+			imageAnalyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, messageLog);
 		}
 		catch (CancelledException e) {
 			// using Dummy, can't happen

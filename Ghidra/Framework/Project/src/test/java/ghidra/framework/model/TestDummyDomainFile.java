@@ -102,7 +102,12 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
-	public URL getSharedProjectURL() {
+	public URL getSharedProjectURL(String ref) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -282,7 +287,7 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		throw new UnsupportedOperationException();
 	}

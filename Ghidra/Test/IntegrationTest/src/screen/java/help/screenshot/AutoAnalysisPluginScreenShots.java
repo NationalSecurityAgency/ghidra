@@ -86,7 +86,7 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 		TestBackgroundCommand cmd = new TestBackgroundCommand(start, end);
 		tool.executeBackgroundCommand(cmd, program);
 		start.await();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		captureWindow();
 		end.countDown();
 		int width = image.getWidth(null);
@@ -107,7 +107,7 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 // Inner Classes
 //==================================================================================================	
 
-	class TestBackgroundCommand extends BackgroundCommand {
+	class TestBackgroundCommand extends BackgroundCommand<DomainObject> {
 
 		private CountDownLatch start;
 		private CountDownLatch end;

@@ -184,7 +184,7 @@ public class ClassDefItem implements StructConverter {
 			TypeList interfaces = getInterfaces();
 			if (interfaces != null) {
 				for (TypeItem type : interfaces.getItems()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					builder.append(
 						"\t" + DexUtil.convertTypeIndexToString(header, type.getType()) + "\n");
 				}

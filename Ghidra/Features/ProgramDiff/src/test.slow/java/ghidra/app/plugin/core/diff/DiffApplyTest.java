@@ -32,14 +32,14 @@ public class DiffApplyTest extends DiffApplyTestAdapter {
 		assertTrue(isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		diffPlugin.getDiffApplySettingsProvider().closeComponent();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		invokeLater(diffApplySettings);
 		assertTrue(isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		diffPlugin.getDiffApplySettingsProvider().closeComponent();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		invokeLater(diffApplySettings);
@@ -229,7 +229,7 @@ public class DiffApplyTest extends DiffApplyTestAdapter {
 		programBuilderDiffTest2.createMemory("d2", "0x200", 0x100);
 
 		openDiff(diffTestP1, diffTestP2);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		invokeLater(replaceAll);

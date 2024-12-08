@@ -29,17 +29,22 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.dnd.StringTransferable;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.ClangTextField;
-import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.component.*;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.ByteCopier;
 import ghidra.app.util.ClipboardType;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerClipboardProvider extends ByteCopier
@@ -60,6 +65,20 @@ public class DecompilerClipboardProvider extends ByteCopier
 	private boolean copyFromSelectionEnabled;
 	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 	private int spaceCharWidthInPixels = 7;
+
+	void setLocation(ProgramLocation location) {
+		currentLocation = location;
+	}
+
+	void setSelection(ProgramSelection selection) {
+		currentSelection = selection;
+	}
+
+	void setProgram(Program p) {
+		currentProgram = p;
+		currentLocation = null;
+		currentSelection = null;
+	}
 
 	public DecompilerClipboardProvider(DecompilePlugin plugin, DecompilerProvider provider) {
 		this.provider = provider;
@@ -86,18 +105,28 @@ public class DecompilerClipboardProvider extends ByteCopier
 
 	@Override
 	public Transferable copy(TaskMonitor monitor) {
-		if (!copyFromSelectionEnabled) {
-			return createStringTransferable(getCursorText());
+		if (copyFromSelectionEnabled) {
+			return copyTextFromSelection(monitor);
 		}
-
-		return copyText(monitor);
+		return new StringTransferable(getCursorText());
 	}
 
 	private String getCursorText() {
+		if (currentProgram == null) {
+			return null; // disposed
+		}
+
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		ClangToken token = panel.getTokenAtCursor();
 		if (token == null) {
 			return null;
+		}
+
+		if (token instanceof ClangFuncNameToken functionToken) {
+			Function function = DecompilerUtils.getFunction(currentProgram, functionToken);
+			if (function != null) {
+				return function.getName();
+			}
 		}
 
 		String text = token.getText();
@@ -119,7 +148,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 	@Override
 	public Transferable copySpecial(ClipboardType copyType, TaskMonitor monitor) {
 		if (copyType == TEXT_TYPE) {
-			return copyText(monitor);
+			return copyTextFromSelection(monitor);
 		}
 
 		return null;
@@ -161,7 +190,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 		return false;
 	}
 
-	private Transferable copyText(TaskMonitor monitor) {
+	private Transferable copyTextFromSelection(TaskMonitor monitor) {
 		return createStringTransferable(getText());
 	}
 

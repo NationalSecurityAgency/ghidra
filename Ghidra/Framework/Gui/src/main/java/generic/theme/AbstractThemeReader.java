@@ -94,6 +94,18 @@ public abstract class AbstractThemeReader {
 					reportDuplicateKey(oldValue, lineNumber);
 				}
 			}
+
+			// 'external' look and feel property used by the UIManager
+			else if (BooleanPropertyValue.isBooleanKey(key)) {
+				JavaPropertyValue oldValue =
+					valueMap.addProperty(parseBooleanProperty(key, value, lineNumber));
+				reportDuplicateKey(oldValue, lineNumber);
+			}
+			else if (StringPropertyValue.isStringKey(key)) {
+				JavaPropertyValue oldValue =
+					valueMap.addProperty(parseStringProperty(key, value, lineNumber));
+				reportDuplicateKey(oldValue, lineNumber);
+			}
 			else {
 				error(lineNumber, "Can't process property: " + key + " = " + value);
 			}
@@ -139,6 +151,22 @@ public abstract class AbstractThemeReader {
 		ColorValue parsedValue = ColorValue.parse(key, value);
 		if (parsedValue == null) {
 			error(lineNumber, "Could not parse Color value: " + value);
+		}
+		return parsedValue;
+	}
+
+	private BooleanPropertyValue parseBooleanProperty(String key, String value, int lineNumber) {
+		BooleanPropertyValue parsedValue = BooleanPropertyValue.parse(key, value);
+		if (parsedValue == null) {
+			error(lineNumber, "Could not parse boolean property value: " + value);
+		}
+		return parsedValue;
+	}
+
+	private StringPropertyValue parseStringProperty(String key, String value, int lineNumber) {
+		StringPropertyValue parsedValue = StringPropertyValue.parse(key, value);
+		if (parsedValue == null) {
+			error(lineNumber, "Could not parse String property value: " + value);
 		}
 		return parsedValue;
 	}
@@ -208,7 +236,7 @@ public abstract class AbstractThemeReader {
 	}
 
 	/**
-	 * Represents all the value found in a section of the theme properties file. Sections are 
+	 * Represents all the value found in a section of the theme properties file. Sections are
 	 * defined by a line containing just "[section name]"
 	 */
 	protected class Section {
@@ -287,7 +315,7 @@ public abstract class AbstractThemeReader {
 		}
 
 		/**
-		 * Adds a raw line from the file to this section. The line will be parsed into a a 
+		 * Adds a raw line from the file to this section. The line will be parsed into a a
 		 * key-value pair.
 		 * @param line the line to be added/parsed
 		 * @param lineNumber the line number in the file for this line

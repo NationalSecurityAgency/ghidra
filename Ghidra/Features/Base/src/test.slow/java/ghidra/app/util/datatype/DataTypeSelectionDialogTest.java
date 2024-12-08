@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,6 +54,7 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -124,7 +125,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 				@Override
 				protected DataTypeSelectionEditor createEditor(PluginTool pluginTool,
 						AllowedDataTypes allowedDataTypes) {
-					return new DataTypeSelectionEditor(pluginTool, allowedDataTypes) {
+					return new DataTypeSelectionEditor(null, pluginTool, allowedDataTypes) {
 
 						@Override
 						protected DropDownSelectionTextField<DataType> createDropDownSelectionTextField(
@@ -723,7 +724,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
 			File tempArchiveFile;
 			try {
-				tempArchiveFile = File.createTempFile("TestFileArchive", ".gdt");
+				tempArchiveFile = Application.createTempFile("TestFileArchive", ".gdt");
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -1118,6 +1119,11 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 			// don't care for now
 		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
+			// don't care for now
+		}
 	}
 
 	private class CustomDataType extends StructureDataType {
@@ -1201,8 +1207,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			new DefaultHighlighter.DefaultHighlightPainter(Palette.YELLOW));
 
 		JPanel editorPanel = new JPanel(new BorderLayout());
-		DataTypeSelectionEditor editor = new DataTypeSelectionEditor(tool, AllowedDataTypes.ALL);
-		editor.setPreferredDataTypeManager(program.getDataTypeManager());
+		DataTypeSelectionEditor editor =
+			new DataTypeSelectionEditor(program.getDataTypeManager(), tool, AllowedDataTypes.ALL);
 
 		editorPanel.add(panelUpdateField, BorderLayout.SOUTH);
 		editorPanel.add(editor.getEditorComponent(), BorderLayout.NORTH);

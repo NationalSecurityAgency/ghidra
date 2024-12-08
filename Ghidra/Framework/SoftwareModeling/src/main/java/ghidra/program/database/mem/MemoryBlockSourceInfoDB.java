@@ -81,8 +81,7 @@ class MemoryBlockSourceInfoDB implements MemoryBlockSourceInfo {
 	@Override
 	public long getFileBytesOffset(Address address) {
 		if (subBlock instanceof FileBytesSubMemoryBlock && contains(address)) {
-			long blockOffset = address.subtract(getMinAddress());
-			long subBlockOffset = blockOffset - subBlock.subBlockOffset;
+			long subBlockOffset = address.subtract(getMinAddress());
 			return ((FileBytesSubMemoryBlock) subBlock).getFileBytesOffset() + subBlockOffset;
 		}
 		return -1;

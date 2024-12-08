@@ -227,12 +227,20 @@ public abstract class AbstractDemangledFunctionDefinitionDataType extends Demang
 
 		StringBuilder typeBuffer = new StringBuilder();
 		int pointerLevels = getPointerLevels();
-		if (pointerLevels > 0) {
+		if (pointerLevels > 0 || isReference()) {
 
 			addParentName(typeBuffer);
 
 			for (int i = 0; i < pointerLevels; ++i) {
 				typeBuffer.append(getTypeString());
+			}
+			// kludge for now... current type-emitting mechanism in DemangledObject hierarchy
+			//  lacks a lot... needs revamped.
+			if (isLValueReference()) {
+				typeBuffer.append(" &");
+			}
+			else if (isRValueReference()) {
+				typeBuffer.append(" &&");
 			}
 		}
 
@@ -331,7 +339,25 @@ public abstract class AbstractDemangledFunctionDefinitionDataType extends Demang
 			dt = fddt;
 		}
 
-		return new PointerDataType(dt, dataTypeManager);
+		// This was also totally wonked in terms of type-emitting.  Whole mangled type needs
+		//  gone through and revamped;  not sure it is good to have pointer levels or reference
+		//  information in a FunctionPointer... need to investigate more.
+		int numPointers = getPointerLevels();
+
+		for (int i = 0; i < numPointers; ++i) {
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+
+		if (isLValueReference()) {
+			// Placeholder in prep for more lref work
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+		else if (isRValueReference()) {
+			// Placeholder in prep for more rref work
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+
+		return dt;
 	}
 
 	private void setParameters(FunctionDefinitionDataType fddt, DataTypeManager dataTypeManager) {

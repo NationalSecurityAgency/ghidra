@@ -73,7 +73,7 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		worker.setDone();
 		worker.get(TaskMonitor.DUMMY);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -101,7 +101,7 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		r1.join();
 		assertEquals(ITEM_COUNT, r1.size());
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -129,7 +129,7 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		r1.join();
 		assertEquals(ITEM_COUNT, r1.size());
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
@@ -152,7 +152,7 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		dialog.cancel();
 		worker.get(TaskMonitor.DUMMY);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!dialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 

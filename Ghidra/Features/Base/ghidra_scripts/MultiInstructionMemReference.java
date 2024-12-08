@@ -46,6 +46,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.PartitionCodeSubModel;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
@@ -177,9 +178,9 @@ public class MultiInstructionMemReference extends GhidraScript {
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 
-				return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+				return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 			}
 
 			private boolean checkInstructionMatch(final int opIdx, boolean input,

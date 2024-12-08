@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingAction;
 import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -96,27 +97,27 @@ public class MemviewProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, zoomOutTAction);
 
 		new ToggleActionBuilder("Toggle Layout", plugin.getName()) //
-				//.menuPath("&Toggle layout") //
-				.toolBarIcon(AbstractRefreshAction.ICON)
-				.helpLocation(new HelpLocation(plugin.getName(), "toggle_layout")) //
-				.onAction(ctx -> performToggleLayout(ctx))
-				.buildAndInstallLocal(this);
+			//.menuPath("&Toggle layout") //
+			.toolBarIcon(AbstractRefreshAction.ICON)
+			.helpLocation(new HelpLocation(plugin.getName(), "toggle_layout")) //
+			.onAction(ctx -> performToggleLayout(ctx))
+			.buildAndInstallLocal(this);
 
 		new ToggleActionBuilder("Toggle Process Trace", plugin.getName()) //
-				//.menuPath("&Toggle layout") //
-				.toolBarIcon(DebuggerResources.ICON_SYNC)
-				.helpLocation(new HelpLocation(plugin.getName(), "toggle_process_trace")) //
-				.onAction(ctx -> performToggleTrace(ctx))
-				.selected(false)
-				.buildAndInstallLocal(this);
+			//.menuPath("&Toggle layout") //
+			.toolBarIcon(DebuggerResources.ICON_SYNC)
+			.helpLocation(new HelpLocation(plugin.getName(), "toggle_process_trace")) //
+			.onAction(ctx -> performToggleTrace(ctx))
+			.selected(false)
+			.buildAndInstallLocal(this);
 
 		new ToggleActionBuilder("Apply Filter To Panel", plugin.getName()) //
-				//.menuPath("&Toggle layout") //
-				.toolBarIcon(DebuggerResources.ICON_FILTER)
-				.helpLocation(new HelpLocation(plugin.getName(), "apply_to_panel")) //
-				.onAction(ctx -> performApplyFilterToPanel(ctx))
-				.selected(true)
-				.buildAndInstallLocal(this);
+			//.menuPath("&Toggle layout") //
+			.toolBarIcon(DebuggerResources.ICON_FILTER)
+			.helpLocation(new HelpLocation(plugin.getName(), "apply_to_panel")) //
+			.onAction(ctx -> performApplyFilterToPanel(ctx))
+			.selected(true)
+			.buildAndInstallLocal(this);
 
 	}
 
@@ -176,10 +177,10 @@ public class MemviewProvider extends ComponentProviderAdapter {
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (event != null && event.getSource() == mainPanel) {
-			return new ActionContext(this, mainPanel);
+			return new DefaultActionContext(this, mainPanel);
 		}
 		if (event != null && event.getSource() == memviewPanel) {
-			return new ActionContext(this, memviewPanel);
+			return new DefaultActionContext(this, memviewPanel);
 		}
 		return null;
 	}
@@ -217,7 +218,7 @@ public class MemviewProvider extends ComponentProviderAdapter {
 	public void goTo(int x, int y) {
 		Rectangle bounds = scrollPane.getBounds();
 		scrollPane.getViewport()
-				.scrollRectToVisible(new Rectangle(x, y, bounds.width, bounds.height));
+			.scrollRectToVisible(new Rectangle(x, y, bounds.width, bounds.height));
 		scrollPane.getViewport().doLayout();
 	}
 

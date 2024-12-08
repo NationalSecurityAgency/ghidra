@@ -15,8 +15,7 @@
  */
 package ghidra.graph;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import docking.action.DockingActionIf;
 import docking.widgets.EventTrigger;
@@ -62,8 +61,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setGraph(AttributedGraph graph, String title, boolean append,
-			TaskMonitor monitor)
+	public void setGraph(AttributedGraph graph, String title, boolean append, TaskMonitor monitor)
 			throws CancelledException {
 		if (append) {
 			this.graph = mergeGraphs(graph, this.graph);
@@ -111,6 +109,11 @@ public class TestGraphDisplay implements GraphDisplay {
 	@Override
 	public void addAction(DockingActionIf action) {
 		// do nothing, actions are not supported by this display
+	}
+
+	@Override
+	public Collection<DockingActionIf> getActions() {
+		return Collections.emptyList();
 	}
 
 	private AttributedGraph mergeGraphs(AttributedGraph newGraph, AttributedGraph oldGraph) {

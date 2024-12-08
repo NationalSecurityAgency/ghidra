@@ -20,6 +20,7 @@ import java.io.IOException;
 import db.DBHandle;
 import db.DBRecord;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.VoidPropertyMap;
@@ -41,7 +42,8 @@ public class VoidPropertyMapDB extends PropertyMapDB<Boolean> implements VoidPro
 	/**
 	 * Construct an void object property map.
 	 * @param dbHandle database handle.
-	 * @param openMode the mode that the program was openned in.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
 	 * @param errHandler database error handler.
 	 * @param changeMgr change manager for event notification	 
 	 * @param addrMap address map.
@@ -51,7 +53,7 @@ public class VoidPropertyMapDB extends PropertyMapDB<Boolean> implements VoidPro
 	 * @throws CancelledException if the user cancels the upgrade operation.
 	 * @throws IOException if a database io error occurs.
 	 */
-	public VoidPropertyMapDB(DBHandle dbHandle, int openMode, ErrorHandler errHandler,
+	public VoidPropertyMapDB(DBHandle dbHandle, OpenMode openMode, ErrorHandler errHandler,
 			ChangeManager changeMgr, AddressMap addrMap, String name, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		super(dbHandle, errHandler, changeMgr, addrMap, name);

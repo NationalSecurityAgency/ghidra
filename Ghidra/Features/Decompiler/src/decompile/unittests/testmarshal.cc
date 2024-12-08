@@ -49,7 +49,7 @@ static MarshalTestEnvironment theEnviron;
 TestAddrSpaceManager::TestAddrSpaceManager(Translate *t)
   : AddrSpaceManager()
 {
-  insertSpace(new AddrSpace(this,t,IPTR_PROCESSOR,"ram",8,1,3,AddrSpace::hasphysical,1));
+  insertSpace(new AddrSpace(this,t,IPTR_PROCESSOR,"ram",t->isBigEndian(),8,1,3,AddrSpace::hasphysical,1,1));
 }
 
 MarshalTestEnvironment::MarshalTestEnvironment(void)

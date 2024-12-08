@@ -16,11 +16,14 @@
 package ghidra.app.plugin.core.progmgr;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.menu.MultiActionDockingAction;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
@@ -37,11 +40,12 @@ import ghidra.util.*;
  * Abstract base class for the undo and redo actions. These actions add a listener to the
  * current context program in order to know when to update their enabled state and description.
  */
-public abstract class AbstractUndoRedoAction extends DockingAction {
+public abstract class AbstractUndoRedoAction extends MultiActionDockingAction {
 	private PluginTool tool;
-	private Program lastProgram;
+	private Program activeProgram;
 	private ProgramManagerPlugin plugin;
 	private TransactionListener transactionListener;
+	private HelpLocation helpLocation;
 
 	public AbstractUndoRedoAction(PluginTool tool, ProgramManagerPlugin plugin, String name,
 			String iconId, String keyBinding, String subGroup) {
@@ -52,6 +56,8 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&" + name };
 		Icon icon = new GIcon(iconId);
+		helpLocation = new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, name);
+
 		String group = "Undo";
 
 		MenuData menuData = new MenuData(menuPath, icon, group);
@@ -60,7 +66,7 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 
 		setToolBarData(new ToolBarData(icon, group));
 		setKeyBindingData(new KeyBindingData(keyBinding));
-		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, name));
+		setHelpLocation(helpLocation);
 		setDescription(name);
 
 		addToWindowWhen(ProgramActionContext.class);
@@ -68,7 +74,7 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 		transactionListener = new ContextProgramTransactionListener();
 	}
 
-	protected abstract void actionPerformed(Program program) throws IOException;
+	protected abstract void doAction(Program program, int repeatCount) throws IOException;
 
 	protected abstract boolean canPerformAction(Program program);
 
@@ -82,17 +88,21 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 		// here to keep track of the current program context and add a listener
 		// so that the action's name, description, and enablement is properly updated as the
 		// user makes changes to the program.
-		if (program != lastProgram) {
-			removeTransactionListener(lastProgram);
-			lastProgram = program;
-			addTransactionListener(lastProgram);
+		if (program != activeProgram) {
+			removeTransactionListener(activeProgram);
+			activeProgram = program;
+			addTransactionListener(activeProgram);
 			updateActionNameAndDescription();
 		}
-		return canPerformAction(lastProgram);
+		return canPerformAction(activeProgram);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		executeAction(context, 1);
+	}
+
+	private void executeAction(ActionContext context, int repeatCount) {
 		Program program = getProgram(context);
 		if (program == null) {
 			return;
@@ -101,11 +111,30 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 		saveCurrentLocationToHistory();
 
 		try {
-			actionPerformed(program);
+			doAction(program, repeatCount);
 		}
 		catch (IOException e) {
-			Msg.showError(this, null, null, null, e);
+			Msg.showError(this, null, getName() + " Error",
+				"Error occured while attempting " + getName() + "!", e);
 		}
+
+	}
+
+	protected abstract List<String> getDescriptions(Program program);
+
+	@Override
+	public List<DockingActionIf> getActionList(ActionContext context) {
+		Program program = getProgram(context);
+		List<String> descriptions = getDescriptions(program);
+		List<DockingActionIf> actions = new ArrayList<>();
+
+		int repeatCount = 1;
+		for (String string : descriptions) {
+			actions.add(new RepeatedAction(string, repeatCount));
+			repeatCount++;
+		}
+
+		return actions;
 	}
 
 	private Program getProgram(ActionContext context) {
@@ -129,24 +158,28 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 
 	private void updateAction() {
 		updateActionNameAndDescription();
-		setEnabled(canPerformAction(lastProgram));
+		setEnabled(canPerformAction(activeProgram));
 	}
 
 	private void updateActionNameAndDescription() {
 		String actionName = getName();
 		String description = actionName;
+		String menuName = actionName;
 
-		if (lastProgram != null) {
-			actionName += " " + lastProgram.getDomainFile().getName();
+		if (activeProgram != null) {
+			menuName = actionName + " " + activeProgram.getDomainFile().getName();
 			description = actionName;
 		}
 
-		if (canPerformAction(lastProgram)) {
-			description = HTMLUtilities.toWrappedHTML(
-				getName() + " " + HTMLUtilities.escapeHTML(getUndoRedoDescription(lastProgram)));
+		if (canPerformAction(activeProgram)) {
+			String programName = activeProgram.getDomainFile().getName();
+			String undoRedoDescription = getUndoRedoDescription(activeProgram);
+			String text = actionName + " " +
+				HTMLUtilities.escapeHTML(undoRedoDescription + " (" + programName + ")");
+			description = HTMLUtilities.toWrappedHTML(text);
 		}
 
-		getMenuBarData().setMenuItemNamePlain(actionName);
+		getMenuBarData().setMenuItemNamePlain(menuName);
 		setDescription(description);
 	}
 
@@ -156,6 +189,30 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 		if (goToService != null && historyService != null) {
 			historyService.addNewLocation(goToService.getDefaultNavigatable());
 		}
+	}
+
+	/**
+	 * Action for repeating the undo/redo action multiple times to effectively undo/redo to
+	 * a transaction that is not at the top of the list of undo/redo items.
+	 */
+	private class RepeatedAction extends DockingAction {
+
+		private int repeatCount;
+
+		public RepeatedAction(String name, int repeatCount) {
+			super(name, AbstractUndoRedoAction.this.getOwner());
+			this.repeatCount = repeatCount;
+			setHelpLocation(helpLocation);
+			setMenuBarData(new MenuData(new String[] { name }));
+			setEnabled(true);
+
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			executeAction(context, repeatCount);
+		}
+
 	}
 
 	private class ContextProgramTransactionListener implements TransactionListener {

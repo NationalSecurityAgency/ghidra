@@ -16,6 +16,7 @@
 package ghidra.framework.data;
 
 import java.io.IOException;
+import java.util.List;
 
 import db.TerminatedTransactionException;
 import ghidra.framework.model.*;
@@ -28,6 +29,8 @@ abstract class AbstractTransactionManager {
 	protected static final int NUM_UNDOS = 50;
 
 	private volatile LockingTaskMonitor lockingTaskMonitor;
+
+	protected boolean isImmutable = false;
 
 	protected int lockCount = 0;
 	protected String lockReason;
@@ -195,6 +198,10 @@ abstract class AbstractTransactionManager {
 			AbortedTransactionListener listener, boolean notify)
 			throws TerminatedTransactionException {
 
+		if (isImmutable) {
+			throw new TerminatedTransactionException("Transaction not permitted: read-only");
+		}
+
 		checkLockingTask();
 
 		synchronized (this) {
@@ -222,13 +229,43 @@ abstract class AbstractTransactionManager {
 	 */
 	abstract int getUndoStackDepth();
 
+	/**
+	 * Returns true if there is at least one redo transaction to be redone.
+	 * @return true if there is at least one redo transaction to be redone
+	 */
 	abstract boolean canRedo();
 
+	/**
+	 * Returns true if there is at least one undo transaction to be undone.
+	 * @return true if there is at least one undo transaction to be undone
+	 */
 	abstract boolean canUndo();
 
+	/**
+	 * Returns the name of the next undo transaction (The most recent change).
+	 * @return the name of the next undo transaction (The most recent change)
+	 */
 	abstract String getRedoName();
 
+	/**
+	 * Returns the name of the next redo transaction (The most recent undo).
+	 * @return the name of the next redo transaction (The most recent undo)
+	 */
 	abstract String getUndoName();
+
+	/**
+	 * Returns the names of all undoable transactions in reverse chronological order. In other
+	 * words the transaction at the top of the list must be undone first.
+	 * @return the names of all undoable transactions in reverse chronological order
+	 */
+	abstract List<String> getAllUndoNames();
+
+	/**
+	 * Returns the names of all redoable transactions in chronological order. In other words
+	 * the transaction at the top of the list must be redone first.
+	 * @return the names of all redoable transactions in chronological order
+	 */
+	abstract List<String> getAllRedoNames();
 
 	abstract TransactionInfo getCurrentTransactionInfo();
 
@@ -282,5 +319,13 @@ abstract class AbstractTransactionManager {
 	}
 
 	abstract void doClose(DomainObjectAdapterDB object);
+
+	/**
+	 * Set instance as immutable by disabling use of transactions.  Attempts to start a transaction
+	 * will result in a {@link TerminatedTransactionException}.
+	 */
+	public void setImmutable() {
+		isImmutable = true;
+	}
 
 }

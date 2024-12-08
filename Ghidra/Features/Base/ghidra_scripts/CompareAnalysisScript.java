@@ -38,19 +38,24 @@ public class CompareAnalysisScript extends GhidraScript {
 		if (otherProgram == null) {
 			return;
 		}
-		println("\n\n****** COMPARING FUNCTIONS:\n");
-		compareFunctions(otherProgram);
-		println("\n\n****** COMPARING STRINGS:\n");
-		compareStrings(otherProgram);
-		println("\n\n****** PERCENT ANALYZED COMPARE SUMMARY:\n");
-		reportPercentDisassembled(currentProgram);
-		reportPercentDisassembled(otherProgram);
-		println("\n\n****** COMPARING SWITCH TABLES:\n");
-		compareSwitchTables(otherProgram);
-		println("\n\n****** COMPARING NON-RETURNING FUNCTIONS:\n");
-		compareNoReturns(otherProgram);
-		println("\n\n****** COMPARING ERRORS:\n");
-		compareErrors(otherProgram);
+		try {
+			println("\n\n****** COMPARING FUNCTIONS:\n");
+			compareFunctions(otherProgram);
+			println("\n\n****** COMPARING STRINGS:\n");
+			compareStrings(otherProgram);
+			println("\n\n****** PERCENT ANALYZED COMPARE SUMMARY:\n");
+			reportPercentDisassembled(currentProgram);
+			reportPercentDisassembled(otherProgram);
+			println("\n\n****** COMPARING SWITCH TABLES:\n");
+			compareSwitchTables(otherProgram);
+			println("\n\n****** COMPARING NON-RETURNING FUNCTIONS:\n");
+			compareNoReturns(otherProgram);
+			println("\n\n****** COMPARING ERRORS:\n");
+			compareErrors(otherProgram);
+		}
+		finally {
+			otherProgram.release(this);
+		}
 	}
 
 	void compareFunctions(Program otherProgram) {

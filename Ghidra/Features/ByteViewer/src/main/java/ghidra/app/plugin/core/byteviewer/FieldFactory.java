@@ -21,9 +21,8 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.Highlight;
-import docking.widgets.fieldpanel.support.HighlightFactory;
+import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 import ghidra.app.plugin.core.format.*;
-import ghidra.app.util.HighlightProvider;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 
 /**
@@ -45,7 +44,7 @@ class FieldFactory {
 	private Color editColor;
 	private Color separatorColor;
 	private int unitByteSize;
-	private HighlightFactory highlightFactory;
+	private FieldHighlightFactory highlightFactory;
 
 	/**
 	 * Constructor
@@ -54,7 +53,7 @@ class FieldFactory {
 	 * @param label label that is used as a renderer in the field viewer
 	 */
 	FieldFactory(DataFormatModel model, int bytesPerLine, int fieldOffset, FontMetrics fm,
-			HighlightProvider highlightProvider) {
+			ByteViewerHighlighter highlightProvider) {
 		this.model = model;
 		this.fieldOffset = fieldOffset;
 		this.fm = fm;
@@ -204,7 +203,6 @@ class FieldFactory {
 		separatorColor = c;
 	}
 
-	///////////////////////////////////////////////////////////////////
 	/**
 	 * Get the padded string that has the given char value.
 	 */
@@ -221,16 +219,16 @@ class FieldFactory {
 		return new ByteField(value, fm, startX, width, false, fieldOffset, index, highlightFactory);
 	}
 
-	static class SimpleHighlightFactory implements HighlightFactory {
-		private final HighlightProvider provider;
+	static class SimpleHighlightFactory implements FieldHighlightFactory {
+		private final ByteViewerHighlighter provider;
 
-		public SimpleHighlightFactory(HighlightProvider provider) {
+		public SimpleHighlightFactory(ByteViewerHighlighter provider) {
 			this.provider = provider;
 		}
 
 		@Override
-		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
-			return provider.getHighlights(text, null, null, -1);
+		public Highlight[] createHighlights(Field field, String text, int cursorTextOffset) {
+			return provider.createHighlights(text);
 		}
 	}
 }

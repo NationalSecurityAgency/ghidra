@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
 import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
@@ -87,12 +88,15 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		}
 	}
 
-	private record Frame(TraceThread thread, int level) {
-	}
+	private record Frame(TraceThread thread, int level) {}
 
 	private record TabledSpace(DBTraceSpaceEntry entry, AddressSpace space, TraceThread thread) {
 		private boolean isRegisterSpace() {
 			return space.isRegisterSpace();
+		}
+
+		private boolean isOverlaySpace() {
+			return space.isOverlaySpace();
 		}
 
 		private Frame frame() {
@@ -112,7 +116,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected final Map<AddressSpace, M> memSpaces = new TreeMap<>();
 	// Note: can use hash map here. I see no need to order these spaces
 	protected final Map<Frame, M> regSpaces = new HashMap<>();
-	protected final Map<TraceObject, M> regSpacesByObject = new HashMap<>();
+	protected final Map<TraceObject, M> regSpacesByContainer = new HashMap<>();
 
 	protected final Collection<M> memSpacesView =
 		Collections.unmodifiableCollection(memSpaces.values());
@@ -121,7 +125,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected final Collection<M> allSpacesView =
 		new CatenatedCollection<>(memSpacesView, regSpacesView);
 
-	public AbstractDBTraceSpaceBasedManager(String name, DBHandle dbh, DBOpenMode openMode,
+	public AbstractDBTraceSpaceBasedManager(String name, DBHandle dbh, OpenMode openMode,
 			ReadWriteLock lock, TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
 		this.name = name;
@@ -145,7 +149,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		Map<Frame, TabledSpace> newRegSpaces = new HashMap<>();
 		Map<AddressSpace, TabledSpace> newMemSpaces = new HashMap<>();
 		for (TabledSpace ts : getTabledSpaces()) {
-			if (ts.isRegisterSpace()) {
+			if (ts.isRegisterSpace() && !ts.isOverlaySpace()) {
 				newRegSpaces.put(ts.frame(), ts);
 			}
 			else {
@@ -269,9 +273,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		return getForRegisterSpace(frame.getStack().getThread(), frame.getLevel(), createIfAbsent);
 	}
 
-	private M doGetForRegisterSpaceFoundContainer(TraceObject object, TraceObject objRegs,
-			boolean createIfAbsent) {
-		String name = objRegs.getCanonicalPath().toString();
+	private M doGetForRegisterSpaceFoundContainer(TraceObject regsObject, boolean createIfAbsent) {
+		String name = regsObject.getCanonicalPath().toString();
 		if (!createIfAbsent) {
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
 				AddressSpace as = trace.getBaseAddressFactory().getAddressSpace(name);
@@ -283,8 +286,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 				if (space == null) {
 					return null;
 				}
-				synchronized (regSpacesByObject) {
-					regSpacesByObject.put(object, space);
+				synchronized (regSpacesByContainer) {
+					regSpacesByContainer.put(regsObject, space);
 				}
 				return space;
 			}
@@ -294,8 +297,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 					.getOrCreateOverlayAddressSpace(name,
 						trace.getBaseAddressFactory().getRegisterSpace());
 			M space = getForSpace(as, createIfAbsent);
-			synchronized (regSpacesByObject) {
-				regSpacesByObject.put(object, space);
+			synchronized (regSpacesByContainer) {
+				regSpacesByContainer.put(regsObject, space);
 			}
 			return space;
 		}
@@ -306,24 +309,29 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		return getForRegisterSpace(thread.getObject(), frameLevel, createIfAbsent);
 	}
 
-	protected M getForRegisterSpace(TraceObject object, int frameLevel, boolean createIfAbsent) {
-		synchronized (regSpacesByObject) {
-			M space = regSpacesByObject.get(object);
-			if (space != null) {
-				return space;
-			}
+	protected TraceObject doGetRegisterContainer(TraceObject threadObject, int frameLevel) {
+		if (threadObject.getTargetSchema()
+				.getInterfaces()
+				.contains(TargetRegisterContainer.class)) {
+			return threadObject;
 		}
-		// It's not critical that we hold the regSpacesByObject the whole time.
-		// If a second has to compute, too, aww well.
+		return threadObject.queryRegisterContainer(frameLevel);
+	}
+
+	protected M getForRegisterSpace(TraceObject threadObject, int frameLevel,
+			boolean createIfAbsent) {
 		try (LockHold hold = LockHold.lock(createIfAbsent ? lock.writeLock() : lock.readLock())) {
-			if (object.getTargetSchema().getInterfaces().contains(TargetRegisterContainer.class)) {
-				return doGetForRegisterSpaceFoundContainer(object, object, createIfAbsent);
+			TraceObject regsObject = doGetRegisterContainer(threadObject, frameLevel);
+			if (regsObject == null) {
+				return null;
 			}
-			TraceObject objRegs = object.queryRegisterContainer(frameLevel);
-			if (objRegs != null) {
-				return doGetForRegisterSpaceFoundContainer(object, objRegs, createIfAbsent);
+			synchronized (regSpacesByContainer) {
+				M space = regSpacesByContainer.get(regsObject);
+				if (space != null) {
+					return space;
+				}
 			}
-			return null;
+			return doGetForRegisterSpaceFoundContainer(regsObject, createIfAbsent);
 		}
 	}
 

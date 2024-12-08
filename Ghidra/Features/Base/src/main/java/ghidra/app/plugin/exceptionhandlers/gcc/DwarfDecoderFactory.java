@@ -208,7 +208,7 @@ public class DwarfDecoderFactory {
 
 		@Override
 		public DataType getDataType(Program program) {
-			return new VoidDataType();
+			return VoidDataType.dataType;
 		}
 	}
 
@@ -370,7 +370,7 @@ public class DwarfDecoderFactory {
 
 		@Override
 		public DataType getDataType(Program program) {
-			return new VoidDataType();
+			return VoidDataType.dataType;
 		}
 	}
 

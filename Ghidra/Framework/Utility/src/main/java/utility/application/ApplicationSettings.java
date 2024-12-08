@@ -15,11 +15,11 @@
  */
 package utility.application;
 
-import ghidra.framework.PluggableServiceRegistry;
-
 import java.io.File;
+import java.io.IOException;
 
-import utilities.util.FileUtilities;
+import ghidra.framework.PluggableServiceRegistry;
+import ghidra.util.Msg;
 
 public class ApplicationSettings {
 	static {
@@ -46,6 +46,13 @@ public class ApplicationSettings {
 	 * 		   application version.
 	 */
 	protected File doGetUserApplicationSettingsDirectory() {
-		return FileUtilities.createTempDirectory("application.settings_");
+		try {
+			return ApplicationUtilities.getDefaultUserTempDir("application.settings");
+		}
+		catch (IOException e) {
+			Msg.error(ApplicationSettings.class, "Error creating application.settings directory",
+				e);
+			return null;
+		}
 	}
 }

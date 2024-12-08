@@ -95,7 +95,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 			createMethodByteCodeBlock(program, length, monitor);
 
 			for (ClassDefItem item : header.getClassDefs()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				ClassDataItem classDataItem = item.getClassDataItem();
 				if (classDataItem == null) {
@@ -140,7 +140,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 	protected void createMethods(Program program, DexHeader header, ClassDefItem item,
 			List<EncodedMethod> methods, TaskMonitor monitor, MessageLog log) throws Exception {
 		for (int i = 0; i < methods.size(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			EncodedMethod encodedMethod = methods.get(i);
 
@@ -174,7 +174,7 @@ public class DexLoader extends AbstractProgramWrapperLoader {
 
 		int methodIndex = 0;
 		for (MethodIDItem item : header.getMethods()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			StringBuilder builder = new StringBuilder();

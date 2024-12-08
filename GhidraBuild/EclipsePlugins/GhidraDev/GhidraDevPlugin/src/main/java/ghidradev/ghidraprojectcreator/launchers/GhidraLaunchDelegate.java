@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,6 +73,15 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 			return;
 		}
 
+		// Make sure there isn't a build/ directory present...it messes up the classpath.
+		// The build directory could exist if the user built an extension from the command line
+		// rather than from the Eclipse wizard
+		if (javaProject.getProject().getFolder("build").exists()) {
+			EclipseMessageUtils.showErrorDialog("Failed to launch project \"" + projectName +
+				"\".\nDelete top-level 'build' directory and try again.");
+			return;
+		}
+
 		// Set program arguments
 		String customProgramArgs =
 			configuration.getAttribute(GhidraLaunchUtils.ATTR_PROGAM_ARGUMENTS, "").trim();
@@ -91,6 +100,15 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		// Set VM arguments
 		String vmArgs = javaConfig.getLaunchProperties().getVmArgs();
 		vmArgs += " " + configuration.getAttribute(GhidraLaunchUtils.ATTR_VM_ARGUMENTS, "").trim();
+		vmArgs += " -Dghidra.external.modules=\"%s%s%s\"".formatted(
+			javaProject.getProject().getLocation(), File.pathSeparator,
+			getProjectDependencyDirs(javaProject));
+		File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
+		if (pyDevSrcDir != null) {
+			vmArgs += " " + "-Declipse.pysrc.dir=\"" + pyDevSrcDir + "\"";
+		}
+		
+		//---------Legacy properties--------------
 		vmArgs += " " + "-Declipse.install.dir=\"" +
 			Platform.getInstallLocation().getURL().getFile() + "\"";
 		vmArgs += " " + "-Declipse.workspace.dir=\"" +
@@ -98,10 +116,8 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		vmArgs += " " + "-Declipse.project.dir=\"" + javaProject.getProject().getLocation() + "\"";
 		vmArgs += " " + "-Declipse.project.dependencies=\"" +
 			getProjectDependencyDirs(javaProject) + "\"";
-		File pyDevSrcDir = PyDevUtils.getPyDevSrcDir();
-		if (pyDevSrcDir != null) {
-			vmArgs += " " + "-Declipse.pysrc.dir=\"" + pyDevSrcDir + "\"";
-		}
+		//----------------------------------------
+		
 		wc.setAttribute(IJavaLaunchConfigurationConstants.ATTR_VM_ARGUMENTS, vmArgs);
 
 		// Handle special debug mode tasks

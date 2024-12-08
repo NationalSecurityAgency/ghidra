@@ -21,9 +21,7 @@
  */
 package ghidra.program.model.pcode;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.*;
 
 import ghidra.program.model.address.Address;
 
@@ -93,18 +91,18 @@ public class VarnodeAST extends Varnode {
 	public Iterator<PcodeOp> getDescendants() {
 		return descend.iterator();
 	}
-	
+
 	@Override
 	public PcodeOp getLoneDescend() {
-		Iterator<PcodeOp> iter = getDescendants();
-		if (!iter.hasNext()) {
-			return null;		// If there are no descendants return null
+		if (descend.size() != 1) {
+			return null;
 		}
-		PcodeOp op = iter.next();
-		if (iter.hasNext()) {
-			return null;		// If there is more than one descendant return null
-		}
-		return op;
+		return descend.peekFirst();
+	}
+
+	@Override
+	public boolean hasNoDescend() {
+		return descend.isEmpty();
 	}
 
 	@Override
@@ -194,10 +192,11 @@ public class VarnodeAST extends Varnode {
 		ListIterator<PcodeOp> iter = vn.descend.listIterator();
 		while (iter.hasNext()) {
 			PcodeOp op = iter.next();
-			if (op.getOutput() == this)
+			if (op.getOutput() == this) {
 				continue;		// Cannot be input to your own definition
+			}
 			int num = op.getNumInputs();
-			for (int i = 0; i < num; ++i)
+			for (int i = 0; i < num; ++i) {
 				// Find reference to vn
 				if (op.getInput(i) == vn) {
 					vn.removeDescendant(op);
@@ -206,6 +205,7 @@ public class VarnodeAST extends Varnode {
 					op.setInput(this, i);
 					break;
 				}
+			}
 		}
 	}
 
@@ -217,28 +217,35 @@ public class VarnodeAST extends Varnode {
 
 	@Override
 	public boolean equals(Object o) {
-		if (o == this)
+		if (o == this) {
 			return true;
-		if (!(o instanceof VarnodeAST))
+		}
+		if (!(o instanceof VarnodeAST)) {
 			return false;
+		}
 		VarnodeAST vn = (VarnodeAST) o;
 
 		if (getOffset() != vn.getOffset() || getSize() != vn.getSize() ||
-			getSpace() != vn.getSpace())
-			return false;
-		if (isFree()) {
-			if (vn.isFree())
-				return (uniqId == vn.uniqId);
+			getSpace() != vn.getSpace()) {
 			return false;
 		}
-		else if (vn.isFree())
+		if (isFree()) {
+			if (vn.isFree()) {
+				return (uniqId == vn.uniqId);
+			}
 			return false;
-		if (isInput() != vn.isInput())
+		}
+		else if (vn.isFree()) {
 			return false;
+		}
+		if (isInput() != vn.isInput()) {
+			return false;
+		}
 		if (def != null) {
 			PcodeOp vnDef = vn.getDef();
-			if (vnDef == null)
+			if (vnDef == null) {
 				return false;
+			}
 			return (def.getSeqnum().equals(vnDef.getSeqnum()));
 		}
 		return true;

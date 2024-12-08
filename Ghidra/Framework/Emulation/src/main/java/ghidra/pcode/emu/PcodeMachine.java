@@ -116,7 +116,6 @@ public interface PcodeMachine<T> {
 	 * continuing from a breakpoint.
 	 * 
 	 * @param mode the new mode
-	 * @see #withSoftwareInterruptMode(SwiMode)
 	 */
 	void setSoftwareInterruptMode(SwiMode mode);
 
@@ -199,14 +198,20 @@ public interface PcodeMachine<T> {
 	/**
 	 * Set the suspension state of the machine
 	 * 
+	 * <p>
+	 * This does not simply suspend all threads, but sets a machine-wide flag. A thread is suspended
+	 * if either the thread's flag is set, or the machine's flag is set.
+	 * 
 	 * @see PcodeThread#setSuspended(boolean)
+	 * @param suspended true to suspend the machine, false to let it run
 	 */
 	void setSuspended(boolean suspended);
 
 	/**
 	 * Check the suspension state of the machine
 	 * 
-	 * @see PcodeThread#getSuspended()
+	 * @see PcodeThread#isSuspended()
+	 * @return true if suspended
 	 */
 	boolean isSuspended();
 
@@ -218,7 +223,7 @@ public interface PcodeMachine<T> {
 	 * userops, e.g., {@code emu_swi}.
 	 * 
 	 * @param sourceName a user-defined source name for the resulting "program"
-	 * @param lines the Sleigh source
+	 * @param source the Sleigh source
 	 * @return the compiled program
 	 */
 	PcodeProgram compileSleigh(String sourceName, String source);
@@ -296,8 +301,8 @@ public interface PcodeMachine<T> {
 	 * trapped. To interrupt on direct and/or abstract accesses, consider wrapping the relevant
 	 * state and/or overriding {@link PcodeExecutorStatePiece#getVar(Varnode, Reason)} and related.
 	 * For accesses to abstract offsets, consider overriding
-	 * {@link AbstractPcodeMachine#checkLoad(AddressSpace, Object)} and/or
-	 * {@link AbstractPcodeMachine#checkStore(AddressSpace, Object)} instead.
+	 * {@link AbstractPcodeMachine#checkLoad(AddressSpace, Object, int)} and/or
+	 * {@link AbstractPcodeMachine#checkStore(AddressSpace, Object, int)} instead.
 	 * 
 	 * <p>
 	 * A breakpoint's range cannot cross more than one page boundary. Pages are 4096 bytes each.

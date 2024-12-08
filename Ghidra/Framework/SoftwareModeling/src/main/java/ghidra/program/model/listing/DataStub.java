@@ -150,11 +150,6 @@ public class DataStub implements Data {
 	}
 
 	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int getLength() {
 		throw new UnsupportedOperationException();
 	}
@@ -394,6 +389,11 @@ public class DataStub implements Data {
 
 	@Override
 	public boolean isConstant() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isWritable() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -24,10 +24,14 @@ package ghidra.program.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import org.junit.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
@@ -88,7 +92,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * Test that ProgramDiff correctly returns program1 and program2.
 	 */
 	@Test
-    public void testGetPrograms() throws Exception {
+	public void testGetPrograms() throws Exception {
 		programDiff = new ProgramDiff(p1, p2);
 		assertEquals(p1, programDiff.getProgramOne());
 		assertEquals(p2, programDiff.getProgramTwo());
@@ -99,7 +103,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * in Program1 and Program2.
 	 */
 	@Test
-    public void testGetCombinedAddresses() throws Exception {
+	public void testGetCombinedAddresses() throws Exception {
 
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
@@ -126,7 +130,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * in common between Program1 and Program2.
 	 */
 	@Test
-    public void testGetAddressesInCommon() throws Exception {
+	public void testGetAddressesInCommon() throws Exception {
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
 
@@ -150,7 +154,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * initialized data are in common between Program1 and Program2.
 	 */
 	@Test
-    public void testGetInitializedInCommon() throws Exception {
+	public void testGetInitializedInCommon() throws Exception {
 
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
@@ -175,7 +179,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * and Program2.
 	 */
 	@Test
-    public void testGetByteDifferences() throws Exception {
+	public void testGetByteDifferences() throws Exception {
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
 		programBuilder1.createLabel("0x01006420", "Function1");
@@ -209,7 +213,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * and Program2 when the bytes differ for an instruction but its prototype doesn't.
 	 */
 	@Test
-    public void testGetByteDifferencesSamePrototype() throws Exception {
+	public void testGetByteDifferencesSamePrototype() throws Exception {
 
 		programBuilder1.clearCodeUnits("0x01002cf8", "0x01002cfb", false);
 		programBuilder1.setBytes("0x01002cf8", "3b 74 24 08", true);
@@ -230,7 +234,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * and Program2 when the bytes differ for an instruction but its prototype doesn't.
 	 */
 	@Test
-    public void testGetCodeUnitDifferencesSamePrototypeDiffByte() throws Exception {
+	public void testGetCodeUnitDifferencesSamePrototypeDiffByte() throws Exception {
 
 		programBuilder1.clearCodeUnits("0x01002cf8", "0x01002cfb", false);
 		programBuilder1.setBytes("0x01002cf8", "3b 74 24 08", true);
@@ -272,7 +276,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * Program1 and Program2.
 	 */
 	@Test
-    public void testGetCodeUnitDifferences() throws Exception {
+	public void testGetCodeUnitDifferences() throws Exception {
 		programBuilder1.createMemory("d1", "0x100", 0x100, null, (byte) 0xAC);
 		programBuilder1.createMemory("d2", "0x200", 0x100);
 		programBuilder1.createLabel("0x01006420", "Function1");
@@ -315,8 +319,53 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addrSet, diffAs);
 	}
 
+	/**
+	 * Test that ProgramDiff can determine the code unit differences between
+	 * Program1 and Program2 where Data Settings differ.
+	 */
 	@Test
-    public void testGetCommentDifference1() throws Exception {
+	public void testGetCodeUnitSettingsDifferences() throws Exception {
+
+		p1.withTransaction("Apply p1 Data", () -> {
+
+			// NOTE: unknown settings will be dropped
+
+			Data d1 = DataUtilities.createData(p1, addr(p1, 0x1008014), StringDataType.dataType, -1,
+				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+			CharsetSettingsDefinition.CHARSET.setChoice(d1, 2); // differs from p2
+
+			d1 = DataUtilities.createData(p1, addr(p1, 0x1008028), StringDataType.dataType, -1,
+				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+			CharsetSettingsDefinition.CHARSET.setChoice(d1, 3); // same as p2
+
+		});
+
+		p2.withTransaction("Apply p2 Data", () -> {
+
+			DataUtilities.createData(p2, addr(p2, 0x1008014), StringDataType.dataType, -1,
+				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+
+			Data d2 = DataUtilities.createData(p2, addr(p2, 0x1008028), StringDataType.dataType, -1,
+				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+			CharsetSettingsDefinition.CHARSET.setChoice(d2, 3); // same as p1
+
+		});
+
+		AddressSet as = new AddressSet();
+		as.addRange(addr(p1, 0x1008000), addr(p1, 0x10085ff));
+		programDiff = new ProgramDiff(p1, p2, as);
+		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.CODE_UNIT_DIFFS));
+
+		AddressSetView diffAs = programDiff.getDifferences(programDiff.getFilter(), null);
+
+		AddressSet addrSet = new AddressSet();
+		addrSet.addRange(addr(p1, 0x1008014), addr(p1, 0x1008015));
+
+		assertEquals(addrSet, diffAs);
+	}
+
+	@Test
+	public void testGetCommentDifference1() throws Exception {
 		// 0x1002040: p1 has Plate, Pre, EOL, Post, & Repeatable comment.
 		programBuilder1.createComment("0x1002040", "My Plate Comment", CodeUnit.PLATE_COMMENT);
 		programBuilder1.createComment("0x1002040", "My Pre Comment", CodeUnit.PRE_COMMENT);
@@ -329,7 +378,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference2() throws Exception {
+	public void testGetCommentDifference2() throws Exception {
 		// 0x100204c: p2 has Plate, Pre, EOL, Post, & Repeatable comment.
 		programBuilder2.createComment("0x100204c", "Other Plate Comment", CodeUnit.PLATE_COMMENT);
 		programBuilder2.createComment("0x100204c", "Other Pre Comment", CodeUnit.PRE_COMMENT);
@@ -342,7 +391,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference3() throws Exception {
+	public void testGetCommentDifference3() throws Exception {
 		// 0x1002304: p1 has EOL comment.
 		programBuilder1.createComment("0x1002304", "My EOL Comment", CodeUnit.EOL_COMMENT);
 
@@ -350,7 +399,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference4() throws Exception {
+	public void testGetCommentDifference4() throws Exception {
 		// 0x1002306: p1 has pre-comment.
 		programBuilder1.createComment("0x1002306", "My Pre Comment", CodeUnit.PRE_COMMENT);
 
@@ -358,7 +407,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference5() throws Exception {
+	public void testGetCommentDifference5() throws Exception {
 		// 0x100230b: p1 has plate and post comments.
 		programBuilder1.createComment("0x100230b", "My Plate Comment", CodeUnit.PLATE_COMMENT);
 		programBuilder1.createComment("0x100230b", "My Post Comment", CodeUnit.POST_COMMENT);
@@ -367,7 +416,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference6() throws Exception {
+	public void testGetCommentDifference6() throws Exception {
 		// p2 plate comments contain the p1 comment string.
 		programBuilder1.createComment("0x100230d", "Plate Comment", CodeUnit.PLATE_COMMENT);
 		programBuilder2.createComment("0x100230d", "Other Plate Comment", CodeUnit.PLATE_COMMENT);
@@ -376,7 +425,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference7() throws Exception {
+	public void testGetCommentDifference7() throws Exception {
 		// p2 pre comments contain the p1 comment string.
 		programBuilder1.createComment("0x100230d", "Pre Comment", CodeUnit.PRE_COMMENT);
 		programBuilder2.createComment("0x100230d", "Other Pre Comment", CodeUnit.PRE_COMMENT);
@@ -385,7 +434,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference8() throws Exception {
+	public void testGetCommentDifference8() throws Exception {
 		// p2 eol comments contain the p1 comment string.
 		programBuilder1.createComment("0x100230d", "EOL Comment", CodeUnit.EOL_COMMENT);
 		programBuilder2.createComment("0x100230d", "Other EOL Comment", CodeUnit.EOL_COMMENT);
@@ -394,7 +443,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference9() throws Exception {
+	public void testGetCommentDifference9() throws Exception {
 		// p2 post comments contain the p1 comment string.
 		programBuilder1.createComment("0x100230d", "Post Comment", CodeUnit.POST_COMMENT);
 		programBuilder2.createComment("0x100230d", "Other Post Comment", CodeUnit.POST_COMMENT);
@@ -403,7 +452,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference10() throws Exception {
+	public void testGetCommentDifference10() throws Exception {
 		// p2 repeatable comments contain the p1 comment string.
 		programBuilder1.createComment("0x100230d", "Repeatable Comment",
 			CodeUnit.REPEATABLE_COMMENT);
@@ -414,7 +463,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference11() throws Exception {
+	public void testGetCommentDifference11() throws Exception {
 		// 0x1002336: Different Repeatable comments.
 		programBuilder1.createComment("0x1002336", "Once upon a time,",
 			CodeUnit.REPEATABLE_COMMENT);
@@ -425,7 +474,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference12() throws Exception {
+	public void testGetCommentDifference12() throws Exception {
 		// 0x1002346: P1 Repeatable comment contains P2 Repeatable comment.
 		programBuilder1.createComment("0x1002346", "This is a sample comment.",
 			CodeUnit.REPEATABLE_COMMENT);
@@ -435,7 +484,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference13() throws Exception {
+	public void testGetCommentDifference13() throws Exception {
 		// 0x1002350: P1 Repeatable comment contained within P2 Repeatable comment.
 		programBuilder1.createComment("0x1002350", "This is a sample", CodeUnit.REPEATABLE_COMMENT);
 		programBuilder2.createComment("0x1002350", "This is a sample comment.",
@@ -445,7 +494,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference14() throws Exception {
+	public void testGetCommentDifference14() throws Exception {
 		// 0x100238f: Different EOL comments.
 		programBuilder1.createComment("0x100238f", "Once upon a time,", CodeUnit.EOL_COMMENT);
 		programBuilder2.createComment("0x100238f", "This is a sample comment.",
@@ -455,7 +504,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference15() throws Exception {
+	public void testGetCommentDifference15() throws Exception {
 		// 0x1002395: Different Pre comments.
 		programBuilder1.createComment("0x1002395", "Once upon a time,", CodeUnit.PRE_COMMENT);
 		programBuilder2.createComment("0x1002395", "This is a sample comment.",
@@ -465,7 +514,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference16() throws Exception {
+	public void testGetCommentDifference16() throws Exception {
 		// 0x100239d: Different Plate comments.
 		programBuilder1.createComment("0x100239d", "Once upon a time,", CodeUnit.PLATE_COMMENT);
 		programBuilder2.createComment("0x100239d", "This is a sample comment.",
@@ -475,7 +524,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference17() throws Exception {
+	public void testGetCommentDifference17() throws Exception {
 		// 0x100239d: Different Post comments.
 		programBuilder1.createComment("0x100239d", "Once upon a time,", CodeUnit.POST_COMMENT);
 		programBuilder2.createComment("0x100239d", "This is a sample comment.",
@@ -485,7 +534,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference18() throws Exception {
+	public void testGetCommentDifference18() throws Exception {
 		// 0x1002a91: p2 has a plate comment.
 		programBuilder2.createComment("0x1002a91", "This is a sample comment.",
 			CodeUnit.PLATE_COMMENT);
@@ -494,7 +543,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference19() throws Exception {
+	public void testGetCommentDifference19() throws Exception {
 		// 0x100248f: p1 has function comment.
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 
@@ -502,7 +551,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference20() throws Exception {
+	public void testGetCommentDifference20() throws Exception {
 		// 0x100248f: p2 has function comment.
 		programBuilder2.createFunctionComment("0x100248f", "Other function comment.");
 
@@ -510,7 +559,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference21() throws Exception {
+	public void testGetCommentDifference21() throws Exception {
 		// 0x100248f: p1 and p2 have same function comment.
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 		programBuilder2.createFunctionComment("0x100248f", "Sample function comment.");
@@ -519,7 +568,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetCommentDifference22() throws Exception {
+	public void testGetCommentDifference22() throws Exception {
 		// 0x100248f: p1 and p2 have different function comments.
 		programBuilder1.createFunctionComment("0x100248f", "Sample function comment.");
 		programBuilder2.createFunctionComment("0x100248f", "Other function comment.");
@@ -545,7 +594,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference1() throws Exception {
+	public void testGetBookmarkDifference1() throws Exception {
 		// 0x1002306: p1 and p2 have same bookmarks.
 		programBuilder1.createBookmark("0x1002306", BookmarkType.INFO, "Cat1", "My bookmark");
 		programBuilder2.createBookmark("0x1002306", BookmarkType.INFO, "Cat1", "My bookmark");
@@ -556,7 +605,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference2() throws Exception {
+	public void testGetBookmarkDifference2() throws Exception {
 		// 0x100230b: p1 and p2 have bookmarks with different categories.
 		programBuilder1.createBookmark("0x100230b", BookmarkType.INFO, "Cat1", "My bookmark");
 		programBuilder2.createBookmark("0x100230b", BookmarkType.INFO, "Stuff", "My bookmark");
@@ -567,7 +616,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference3() throws Exception {
+	public void testGetBookmarkDifference3() throws Exception {
 		// 0x100230c: p1 has bookmark, p2 doesn't.
 		programBuilder1.createBookmark("0x100230c", BookmarkType.INFO, "", "Something different");
 
@@ -577,7 +626,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference4() throws Exception {
+	public void testGetBookmarkDifference4() throws Exception {
 		// 0x100230d: p2 has bookmark, p1 doesn't.
 		programBuilder2.createBookmark("0x100230d", BookmarkType.INFO, "", "My bookmark");
 
@@ -587,7 +636,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference5() throws Exception {
+	public void testGetBookmarkDifference5() throws Exception {
 		// 0x1002312: p1 and p2 have bookmarks with no category and different descriptions.
 		programBuilder1.createBookmark("0x1002312", BookmarkType.INFO, "", "Something different");
 		programBuilder2.createBookmark("0x1002312", BookmarkType.INFO, "", "My bookmark");
@@ -598,7 +647,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference6() throws Exception {
+	public void testGetBookmarkDifference6() throws Exception {
 		// 0x1002318: p1 and p2 have bookmarks with same category and different descriptions.
 		programBuilder1.createBookmark("0x1002318", BookmarkType.INFO, "stuff",
 			"Something different");
@@ -610,7 +659,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference7() throws Exception {
+	public void testGetBookmarkDifference7() throws Exception {
 		// 0x100231d: p1 and p2 have same NOTE bookmarks.
 		programBuilder1.createBookmark("0x100231d", BookmarkType.NOTE, "stuff", "My bookmark");
 		programBuilder2.createBookmark("0x100231d", BookmarkType.NOTE, "stuff", "My bookmark");
@@ -621,7 +670,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetBookmarkDifference8() throws Exception {
+	public void testGetBookmarkDifference8() throws Exception {
 		// 0x1002323: p1 and p2 have same INFO bookmarks.
 		programBuilder1.createBookmark("0x1002323", BookmarkType.INFO, "stuff", "My bookmark");
 		programBuilder2.createBookmark("0x1002323", BookmarkType.INFO, "stuff", "My bookmark");
@@ -647,7 +696,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-    public void testGetUserDefinedPropertyDifferences() throws Exception {
+	public void testGetUserDefinedPropertyDifferences() throws Exception {
 		// SPACE property
 		// 0x10018ae: p1 has space=1.
 		// 0x10018ba: p1 and p2 have space=1.
@@ -696,7 +745,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * Program1 and Program2.
 	 */
 	@Test
-    public void testGetSymbolDifferences() throws Exception {
+	public void testGetSymbolDifferences() throws Exception {
 
 		// p1 and p2 have same default label  1002d11-1002d13  LAB...
 		// p1 and p2 have same symbols and same primary.  1002d14-1002d15  bar, baz, bam
@@ -755,7 +804,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * Program1 and Program2.
 	 */
 	@Test
-    public void testGetEquateDifferences() throws Exception {
+	public void testGetEquateDifferences() throws Exception {
 
 		// 0x100650e: Both have same equates. op2 is 0x22.
 
@@ -791,14 +840,14 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * are the same in Program1 and Program2.
 	 */
 	@Test
-    public void testFunctionsSame() throws Exception {
+	public void testFunctionsSame() throws Exception {
 		programDiff = new ProgramDiff(p1, p2, new AddressSet(addr(0x1002239), addr(0x100248c)));
 		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS));
 		assertEquals(new AddressSet(), programDiff.getDifferences(programDiff.getFilter(), null));
 	}
 
 	@Test
-    public void testFunctionRegParamDiff9() throws Exception {
+	public void testFunctionRegParamDiff9() throws Exception {
 
 		// added register param in program2
 
@@ -818,7 +867,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * different.
 	 */
 	@Test
-    public void testFunctionReturnDiff() throws Exception {
+	public void testFunctionReturnDiff() throws Exception {
 
 		// 0x010048a3: p1 returns DWord, p2 returns Float.
 		// 0x010059a3: p1 returns Byte, p2 returns Undefined.
@@ -863,7 +912,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 	 * between Program1 and Program2.
 	 */
 	@Test
-    public void testGetProgramContextDifferences() throws Exception {
+	public void testGetProgramContextDifferences() throws Exception {
 
 		// C0 is 1 bit
 		// AH is 8 bits

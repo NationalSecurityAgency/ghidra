@@ -34,7 +34,6 @@ import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.lang.*;
@@ -68,7 +67,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					RSP = 0x00110000;
 					""",
 				List.of(
-					"PUSH 0xdeadbeef"));
+					"PUSH 0x0dedbeef"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -78,17 +77,16 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(BigInteger.valueOf(0x00110000),
 				TraceSleighUtils.evaluate("RSP", tb.trace, 0, thread, 0));
 			assertEquals(BigInteger.valueOf(0),
-				TraceSleighUtils.evaluate("*:4 0x0010fffc:8", tb.trace, 0, thread, 0));
+				TraceSleighUtils.evaluate("*:8 0x0010fff8:8", tb.trace, 0, thread, 0));
 
 			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
-			// 4, not 8 bytes pushed?
-			assertEquals(BigInteger.valueOf(0x0010fffc),
+			assertEquals(BigInteger.valueOf(0x0010fff8),
 				TraceSleighUtils.evaluate("RSP", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xdeadbeefL),
-				TraceSleighUtils.evaluate("*:4 RSP", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0dedbeefL),
+				TraceSleighUtils.evaluate("*:8 RSP", tb.trace, 1, thread, 0));
 		}
 	}
 
@@ -107,8 +105,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					RSP = 0x00110000;
 					""",
 				List.of(
-					"PUSH 0xdeadbeef",
-					"PUSH 0xbaadf00d"));
+					"PUSH 0x0dedbeef",
+					"PUSH 0x0badf00d"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -119,12 +117,12 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				emu.writeDown(tb.host, 1, 1);
 			}
 
-			assertEquals(BigInteger.valueOf(0x0010fff8),
+			assertEquals(BigInteger.valueOf(0x0010fff0),
 				TraceSleighUtils.evaluate("RSP", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xdeadbeefL),
-				TraceSleighUtils.evaluate("*:4 (RSP + 4)", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xbaadf00dL),
-				TraceSleighUtils.evaluate("*:4 RSP", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0dedbeefL),
+				TraceSleighUtils.evaluate("*:8 (RSP + 8)", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0badf00dL),
+				TraceSleighUtils.evaluate("*:8 RSP", tb.trace, 1, thread, 0));
 		}
 	}
 
@@ -147,8 +145,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					""",
 				List.of(
 					"JMP 0x00400007",       // 2 bytes
-					"MOV EAX,0xdeadbeef",   // 5 bytes
-					"MOV ECX,0xbaadf00d")); // 5 bytes
+					"MOV EAX,0x0dedbeef",   // 5 bytes
+					"MOV ECX,0x0badf00d")); // 5 bytes
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -170,7 +168,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("RIP", tb.trace, 1, thread, 0));
 			assertEquals(BigInteger.valueOf(0x12345678),
 				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xbaadf00dL),
+			assertEquals(BigInteger.valueOf(0x0badf00dL),
 				TraceSleighUtils.evaluate("RCX", tb.trace, 1, thread, 0));
 		}
 	}
@@ -328,7 +326,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				List.of(
 					// First instruction undoes the modification above
 					"XOR byte ptr [0x00400007], 0xcc",  // 7 bytes
-					"MOV EAX,0xdeadbeef"));            // 5 bytes
+					"MOV EAX,0x0dedbeef"));            // 5 bytes
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -344,7 +342,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("RSP", tb.trace, 1, thread, 0));
 			assertEquals(BigInteger.valueOf(0x0040000c),
 				TraceSleighUtils.evaluate("RIP", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xdeadbeefL),
+			assertEquals(BigInteger.valueOf(0x0dedbeefL),
 				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
 		}
 	}
@@ -364,8 +362,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					RSP = 0x00110000;
 					""",
 				List.of(
-					"PUSH 0xdeadbeef",
-					"PUSH 0xbaadf00d"));
+					"PUSH 0x0dedbeef",
+					"PUSH 0x0badf00d"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -381,7 +379,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			emuThread.stepPcodeOp();
 			assertNull(emuThread.getFrame());
-			assertEquals(tb.addr(0x00400006), emuThread.getCounter());
+			assertEquals(tb.addr(0x00400005), emuThread.getCounter());
 
 			emuThread.stepPcodeOp();
 			assertEquals(0, emuThread.getFrame().index());
@@ -393,14 +391,14 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				emu.writeDown(tb.host, 1, 1);
 			}
 
-			assertEquals(BigInteger.valueOf(0x0040000c),
+			assertEquals(BigInteger.valueOf(0x0040000a),
 				TraceSleighUtils.evaluate("RIP", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0x0010fff8),
+			assertEquals(BigInteger.valueOf(0x0010fff0),
 				TraceSleighUtils.evaluate("RSP", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xdeadbeefL),
-				TraceSleighUtils.evaluate("*:4 (RSP + 4)", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(0xbaadf00dL),
-				TraceSleighUtils.evaluate("*:4 RSP", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0dedbeefL),
+				TraceSleighUtils.evaluate("*:8 (RSP + 8)", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0badf00dL),
+				TraceSleighUtils.evaluate("*:8 RSP", tb.trace, 1, thread, 0));
 		}
 	}
 
@@ -431,8 +429,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					RSP = 0x00110000;
 					""",
 				List.of(
-					"PUSH 0xdeadbeef",
-					"PUSH 0xbaadf00d"));
+					"PUSH 0x0dedbeef",
+					"PUSH 0x0badf00d"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
 				@Override
@@ -440,14 +438,14 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					return hexLib;
 				}
 			};
-			emu.inject(tb.addr(0x00400006), "hexdump(RSP);");
+			emu.inject(tb.addr(0x00400005), "hexdump(RSP);");
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 
 			emuThread.stepInstruction();
 			assertEquals("", dumped.toString());
 
 			emuThread.stepInstruction();
-			assertEquals("fcff100000000000", dumped.toString()); // LE
+			assertEquals("f8ff100000000000", dumped.toString()); // LE
 		}
 	}
 
@@ -478,8 +476,8 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					RSP = 0x00110000;
 					""",
 				List.of(
-					"PUSH 0xdeadbeef",
-					"PUSH 0xbaadf00d"));
+					"PUSH 0x0dedbeef",
+					"PUSH 0x0badf00d"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
 				@Override
@@ -487,7 +485,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					return hexLib;
 				}
 			};
-			emu.inject(tb.addr(0x00400006), """
+			emu.inject(tb.addr(0x00400005), """
 					hexdump(RSP);
 					emu_swi();
 					hexdump(RIP);
@@ -502,22 +500,22 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			catch (InterruptPcodeExecutionException e) {
 				assertEquals(e.getFrame(), emuThread.getFrame());
 			}
-			assertEquals("fcff100000000000", dumped.toString()); // LE
+			assertEquals("f8ff100000000000", dumped.toString()); // LE
 			dumped.delete(0, dumped.length());
 
 			emuThread.stepPcodeOp();
-			assertEquals("0600400000000000", dumped.toString());
+			assertEquals("0500400000000000", dumped.toString());
 			dumped.delete(0, dumped.length());
 
 			emuThread.finishInstruction();
-			assertEquals("0c00400000000000", dumped.toString());
+			assertEquals("0a00400000000000", dumped.toString());
 			dumped.delete(0, dumped.length());
 
 			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
-			assertEquals(BigInteger.valueOf(0xbaadf00dL),
+			assertEquals(BigInteger.valueOf(0x0badf00dL),
 				TraceSleighUtils.evaluate("*:4 RSP", tb.trace, 1, thread, 0));
 		}
 	}
@@ -534,12 +532,12 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					RAX = 0;
 					""",
 				List.of(
-					"PUSH 0xdeadbeef",
-					"PUSH 0xbaadf00d"));
+					"PUSH 0x0dedbeef",
+					"PUSH 0x0badf00d"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			emu.addBreakpoint(tb.addr(0x00400000), "RAX == 1");
-			emu.addBreakpoint(tb.addr(0x00400006), "RAX == 0");
+			emu.addBreakpoint(tb.addr(0x00400005), "RAX == 0");
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 
 			try {
@@ -548,7 +546,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			catch (InterruptPcodeExecutionException e) {
 				assertEquals(e.getFrame(), emuThread.getFrame());
 			}
-			assertEquals(tb.addr(0x00400006), emuThread.getCounter());
+			assertEquals(tb.addr(0x00400005), emuThread.getCounter());
 		}
 	}
 
@@ -679,120 +677,6 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(BigInteger.valueOf(0x12340078),
 				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
-		}
-	}
-
-	@Test(expected = AccessPcodeExecutionException.class)
-	public void testCheckedMOV_err() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-		}
-	}
-
-	@Test
-	public void testCheckedMOV_known() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			// Make RAX known in the trace
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					RAX = 0x1234;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			// No assertions. It should simply not throw an exception.
-		}
-	}
-
-	@Test(expected = AccessPcodeExecutionException.class)
-	public void testCheckedMOV_knownPast_err() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			// Make RAX known in the trace
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					RAX = 0x1234;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			// Start emulator one snap later
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 1) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			// No assertions. It should throw an exception.
-		}
-	}
-
-	@Test
-	public void testCheckedMOV_knownPast_has() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			// Make RAX known in the trace
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					RAX = 0x1234;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			// Start emulator one snap later, but with "has-known" checks
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 1) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			// No assertions. It should simply not throw an exception.
-		}
-	}
-
-	@Test
-	public void testCheckedMOV_initialized() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					""",
-				List.of(
-					"MOV RAX,0", // Have the program initialize it
-					"MOV RCX,RAX"));
-
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			emuThread.stepInstruction();
-			// No assertions. It should simply not throw an exception.
 		}
 	}
 
@@ -1034,7 +918,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 				Assembler asm = Assemblers.getAssembler(x64.getLanguage());
 				AssemblyBuffer buf = new AssemblyBuffer(asm, tb.addr(x64, 0x00400000));
-				buf.assemble("PUSH 0xdeadbeef");
+				buf.assemble("PUSH 0x0dedbeef");
 				mm.putBytes(0, tb.addr(0x00000000), ByteBuffer.wrap(buf.getBytes()));
 			}
 
@@ -1042,7 +926,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
-			String changedExpr = "*:4 0x2000fffc:8";
+			String changedExpr = "*:8 0x2000fff8:8";
 			// Verify no changes to trace
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, 0, false);
 			assertEquals(BigInteger.valueOf(0x00110000),
@@ -1054,11 +938,93 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				emu.writeDown(x64, 1, 1);
 			}
 
-			// 4, not 8 bytes pushed?
-			assertEquals(BigInteger.valueOf(0x0010fffc),
+			assertEquals(BigInteger.valueOf(0x0010fff8),
 				regs.getValue(x64, 1, tb.reg(x64, "RSP")).getUnsignedValue());
-			assertEquals(BigInteger.valueOf(0xefbeaddeL), // Guest is LE, host is BE
+			assertEquals(new BigInteger("efbeed0d00000000", 16), // Guest is LE, host is BE
 				TraceSleighUtils.evaluate(changedExpr, tb.trace, 1, thread, 0));
+		}
+	}
+
+	@Test
+	public void testIT_ContextFlow() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					r0 = 0x12341234;
+					r1 = 0x43214321;
+					r7 = 0xbeef;
+					CY = 1;
+					""",
+				List.of(
+					"it cc",
+					"mov r0,r7", // Assembler doesn't handle context flow
+					"mov r1,r7"));
+
+			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction();
+			emuThread.stepPcodeOp(); // decode second
+			assertEquals("mov.cc r0,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+			emuThread.stepPcodeOp(); // decode third
+			assertEquals("mov r1,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+
+			try (Transaction tx = tb.startTransaction()) {
+				emu.writeDown(tb.host, 1, 1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400006),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x12341234), // r0 Unaffected
+				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0xbeef), // r1 Affected
+				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
+		}
+	}
+	@Test
+	public void testITE_ContextFlow() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					r0 = 0x12341234;
+					r1 = 0x43214321;
+					r7 = 0xbeef;
+					CY = 1;
+					""",
+				List.of(
+					"ite cc",
+					"mov r0,r7", // Assembler doesn't handle context flow
+					"mov r1,r7", // "
+					"mov r2,r7"));
+
+			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction();
+			emuThread.stepPcodeOp(); // decode second
+			assertEquals("mov.cc r0,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+			emuThread.stepPcodeOp(); // decode third
+			assertEquals("mov.cs r1,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+			emuThread.stepPcodeOp(); // decode fourth
+			assertEquals("mov r2,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+
+			try (Transaction tx = tb.startTransaction()) {
+				emu.writeDown(tb.host, 1, 1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400008),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x12341234), // r0 Unaffected
+				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0xbeef), // r1 Affected
+				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0xbeef), // r2 Affected
+				TraceSleighUtils.evaluate("r2", tb.trace, 1, thread, 0));
 		}
 	}
 }

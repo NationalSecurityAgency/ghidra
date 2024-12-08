@@ -77,7 +77,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 		}
 
 		ParallelDecompiler.decompileFunctions(callback, funcsToDecompile, monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		tableDialog.setMessage("Finished");
 	}
 

@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.*;
 import ghidra.util.table.*;
@@ -31,7 +30,7 @@ import ghidra.util.table.*;
  * {@link SourceTagsPanel}
  */
 public class AllFunctionsPanel extends JPanel {
-
+	private static final String NAME = "Function Tags Applied Functions";
 	private FunctionTableModel model;
 	private GhidraTable table;
 	private GhidraTableFilterPanel<Function> filterPanel;
@@ -42,29 +41,26 @@ public class AllFunctionsPanel extends JPanel {
 	 * 
 	 * @param program the current program
 	 * @param provider the component provider
-	 * @param title the title of the panel
 	 */
-	public AllFunctionsPanel(Program program, ComponentProviderAdapter provider, String title) {
+	public AllFunctionsPanel(Program program, ComponentProviderAdapter provider) {
 
-		model = new FunctionTableModel(title, provider.getTool(), program, null);
-		GhidraThreadedTablePanel<Function> tablePanel =
-			new GhidraThreadedTablePanel<>(model);
+		model = new FunctionTableModel(NAME, provider.getTool(), program, null);
+		GhidraThreadedTablePanel<Function> tablePanel = new GhidraThreadedTablePanel<>(model);
 
 		table = tablePanel.getTable();
 		filterPanel = new GhidraTableFilterPanel<>(table, model);
 		setLayout(new BorderLayout());
-
-		titleLabel = new JLabel(title);
+		titleLabel = new JLabel(NAME);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
+
+		table.setAccessibleNamePrefix(NAME);
+		filterPanel.setAccessibleNamePrefix(NAME);
 
 		add(titleLabel, BorderLayout.NORTH);
 		add(tablePanel, BorderLayout.CENTER);
 		add(filterPanel, BorderLayout.SOUTH);
 
-		GoToService goToService = provider.getTool().getService(GoToService.class);
-		if (goToService != null) {
-			table.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		table.installNavigation(provider.getTool());
 	}
 
 	/**
@@ -105,10 +101,8 @@ public class AllFunctionsPanel extends JPanel {
 			return;
 		}
 
-		String tagNames = tags.stream()
-				.map(t -> t.getName())
-				.collect(Collectors.joining(" or "))
-				.toString();
+		String tagNames =
+			tags.stream().map(t -> t.getName()).collect(Collectors.joining(" or ")).toString();
 
 		titleLabel.setText("Functions With Tag: " + tagNames);
 		model.setTags(tags);

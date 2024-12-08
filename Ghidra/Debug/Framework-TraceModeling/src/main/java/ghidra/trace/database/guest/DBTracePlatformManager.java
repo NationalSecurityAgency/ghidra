@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -28,11 +29,12 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
-import ghidra.util.database.*;
+import ghidra.util.database.DBCachedObjectStore;
+import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -91,6 +93,11 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		}
 
 		@Override
+		public AddressFactory getAddressFactory() {
+			return trace.getBaseAddressFactory();
+		}
+
+		@Override
 		public AddressSetView getHostAddressSet() {
 			return trace.getBaseAddressFactory().getAddressSet();
 		}
@@ -141,7 +148,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		}
 	};
 
-	public DBTracePlatformManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTracePlatformManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, CompilerSpec baseCompilerSpec, DBTrace trace)
 			throws VersionException, IOException {
 		this.dbh = dbh;
@@ -282,7 +289,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			platformsByCompiler.remove(platform.getCompilerSpec());
 			platformStore.delete(platform);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.DELETED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_DELETED, null, platform));
 	}
 
 	@Override
@@ -307,7 +314,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			platform = doAddGuestPlatform(compilerSpec);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.ADDED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
 		return platform;
 	}
 
@@ -335,7 +342,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			}
 			platform = doAddGuestPlatform(compilerSpec);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.ADDED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
 		return platform;
 	}
 

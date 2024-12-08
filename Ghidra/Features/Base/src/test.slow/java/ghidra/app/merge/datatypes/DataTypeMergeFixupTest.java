@@ -53,50 +53,31 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
 				Structure inner = new StructureDataType("inner", 0);
 				inner.add(new ByteDataType());
 				inner.add(new WordDataType());
 				inner.setPackingEnabled(true);
 
-				try {
-					Category rootCategory = dtm.getCategory(rootPath);
-					rootCategory.addDataType(inner, null);
+				Category rootCategory = dtm.getCategory(rootPath);
+				rootCategory.addDataType(inner, null);
 
-					inner = (Structure) dtm.getDataType(rootPath, "inner");
-					assertNotNull(inner);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				inner = (Structure) dtm.getDataType(rootPath, "inner");
+				assertNotNull(inner);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
-				int transactionID = program.startTransaction("delete inner struct");
-				try {
-					// Remove inner struct
-					dtm.remove(inner, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Remove inner struct
+				dtm.remove(inner, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
@@ -105,17 +86,10 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				outer.add(inner);
 				outer.setPackingEnabled(true);
 
-				int transactionID = program.startTransaction("create outer struct, modify inner");
-				try {
-					// Add outer struct
-					dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
-					// Modify inner struct
-					inner.replace(0, new CharDataType(), 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Add outer struct
+				dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Modify inner struct
+				inner.replace(0, new CharDataType(), 1);
 			}
 		});
 	}
@@ -213,50 +187,31 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
 				Structure inner = new StructureDataType("inner", 0);
 				inner.add(new ByteDataType());
 				inner.add(new WordDataType());
 				inner.setPackingEnabled(true);
 
-				try {
-					Category rootCategory = dtm.getCategory(rootPath);
-					rootCategory.addDataType(inner, null);
+				Category rootCategory = dtm.getCategory(rootPath);
+				rootCategory.addDataType(inner, null);
 
-					inner = (Structure) dtm.getDataType(rootPath, "inner");
-					assertNotNull(inner);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				inner = (Structure) dtm.getDataType(rootPath, "inner");
+				assertNotNull(inner);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
-				int transactionID = program.startTransaction("delete inner struct");
-				try {
-					// Remove inner struct
-					dtm.remove(inner, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Remove inner struct
+				dtm.remove(inner, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
@@ -265,16 +220,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				outer.add(inner);
 				outer.setPackingEnabled(true);
 
-				int transactionID =
-					program.startTransaction("create outer struct, don't modify inner");
-				try {
-					// Add outer struct
-					dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Add outer struct
+				dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 
@@ -328,50 +275,31 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
 				Structure inner = new StructureDataType("inner", 0);
 				inner.add(new ByteDataType());
 				inner.add(new WordDataType());
 				inner.setPackingEnabled(true);
 
-				try {
-					Category rootCategory = dtm.getCategory(rootPath);
-					rootCategory.addDataType(inner, null);
+				Category rootCategory = dtm.getCategory(rootPath);
+				rootCategory.addDataType(inner, null);
 
-					inner = (Structure) dtm.getDataType(rootPath, "inner");
-					assertNotNull(inner);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				inner = (Structure) dtm.getDataType(rootPath, "inner");
+				assertNotNull(inner);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
-
-				int transactionID = program.startTransaction("delete inner struct");
-				try {
-					// Remove inner struct
-					dtm.remove(inner, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+			
+				// Remove inner struct
+				dtm.remove(inner, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure inner = (Structure) dtm.getDataType(rootPath, "inner");
 
@@ -388,16 +316,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				outer.add(new ByteDataType());
 				outer.setPackingEnabled(true);
 
-				int transactionID = program.startTransaction(
-					"create outer struct with other structure after inner");
-				try {
-					// Add outer struct
-					dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Add outer struct
+				dtm.addDataType(outer, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 

@@ -42,7 +42,7 @@ public class MarkUnimplementedPcode extends GhidraScript {
 
 		InstructionIterator instructions = currentProgram.getListing().getInstructions(set, true);
 		while (instructions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instr = instructions.next();
 
 			PcodeOp[] pcode = instr.getPcode();

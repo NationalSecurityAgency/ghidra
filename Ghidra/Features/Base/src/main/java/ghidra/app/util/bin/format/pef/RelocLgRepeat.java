@@ -33,7 +33,7 @@ public class RelocLgRepeat extends Relocation {
 		int value = reader.readNextShort() & 0xffff;
 
 		opcode       =  (value & 0xfc00) >> 10;
-		chunkCount   =  (value & 0x0330) >>  6;
+		chunkCount   =  (value & 0x03c0) >>  6;
 		repeatCount  =  (value & 0x003f) << 16;
 		repeatCount |=  reader.readNextShort() & 0xffff;
 	}
@@ -48,18 +48,19 @@ public class RelocLgRepeat extends Relocation {
 		return 4;
 	}
 
-	public int getChunkCount() {
+	@Override
+	public int getRepeatChunks() {
 		return chunkCount + 1;
 	}
 
+	@Override
 	public int getRepeatCount() {
-		return repeatCount + 1;
+		return repeatCount;
 	}
 
 	@Override
 	public void apply(ImportStateCache importState, RelocationState relocState, 
 			ContainerHeader header, Program program, MessageLog log, TaskMonitor monitor) {
-		
-		throw new RuntimeException("Unhandled relocation: RelocLgRepeat");
+		/* nothing to do */
 	}
 }

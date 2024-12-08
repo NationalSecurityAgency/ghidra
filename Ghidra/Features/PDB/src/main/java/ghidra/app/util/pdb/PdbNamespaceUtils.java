@@ -25,12 +25,12 @@ public class PdbNamespaceUtils {
 
 	/**
 	 * Fixes {@link SymbolPath} name, eliminating invalid characters and making the terminal
-	 *  name of the namespace unique by the index number when necessary.  For example, 
+	 *  name of the namespace unique by the index number when necessary.  For example,
 	 *  anonymous and unnamed components such as {@code <unnamed-tag>} and {@code <unnamed-type>}
 	 *  are fixed up. Example:
 	 * <pre>
 	 *   {@code _SYSTEM_INFO::<unnamed-tag>}
-	 * </pre> 
+	 * </pre>
 	 * @param symbolPath the source {@link SymbolPath}
 	 * @param index the index number used be used as part of a unique tag name.
 	 * @return the resulting {@link SymbolPath}
@@ -56,7 +56,7 @@ public class PdbNamespaceUtils {
 	 * NOTE: This could be an issue when there are multiple unnamed items, such as in, for example:
 	 * <pre>
 	 *   {@code _SYSTEM_INFO::<unnamed-tag>::<unnamed-tag>}
-	 * </pre> 
+	 * </pre>
 	 * @param symbolPath the source {@link SymbolPath}
 	 * @param index the index number used be used as part of a unique tag name.
 	 * @return the resulting {@link SymbolPath}
@@ -98,6 +98,9 @@ public class PdbNamespaceUtils {
 		}
 		if ("<unnamed-type>".equals(name)) {
 			return String.format("<unnamed-type_%08X>", index);
+		}
+		if ("__unnamed".equals(name)) {
+			return String.format("__unnamed_%08X", index);
 		}
 		return name;
 	}

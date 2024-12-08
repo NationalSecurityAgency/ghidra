@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.util.NoSuchElementException;
 
 import ghidra.docking.settings.Settings;
+import ghidra.program.database.data.EnumSignedState;
 
 public interface Enum extends DataType {
 
@@ -132,6 +133,12 @@ public interface Enum extends DataType {
 	 * @return true if the enum contains at least one negative value
 	 */
 	public boolean isSigned();
+
+	/**
+	 * Returns the signed state.
+	 * @return the signed state.
+	 */
+	public EnumSignedState getSignedState();
 
 	/**
 	 * Returns the maximum value that this enum can represent based on its size and signedness.

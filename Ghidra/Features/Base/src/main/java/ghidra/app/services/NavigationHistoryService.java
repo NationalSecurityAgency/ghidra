@@ -21,65 +21,71 @@ import ghidra.app.nav.LocationMemento;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.program.model.listing.Program;
 
 /**
- * The ToolStateHistoryService maintains a stack of locations that the user 
- * has visited via a navigation plugin.  
- * It provides methods querying and manipulating this list. 
+ * The NavigationHistoryService maintains a stack of locations that the user has visited via a
+ * navigation plugin. It provides methods querying and manipulating this list.
  */
-@ServiceInfo(defaultProvider = NavigationHistoryPlugin.class, description = "Maintains a history of tool states")
+@ServiceInfo(
+	defaultProvider = NavigationHistoryPlugin.class,
+	description = "Maintains a history of tool states")
 public interface NavigationHistoryService {
 
 	/**
-	 * Positions the current location to the next location in the history list.
-	 * If there is no "next" location, the history list remains unchanged.
+	 * Positions the current location to the next location in the history list. If there is no
+	 * "next" location, the history list remains unchanged.
+	 * 
 	 * @param navigatable the navigatable to be navigated
 	 */
 	public void next(Navigatable navigatable);
 
 	/**
-	 * Positions the "current" location to the previous location in the history list.
-	 * If there is no "previous" location, the history list remains unchanged.
+	 * Positions the "current" location to the previous location in the history list. If there is no
+	 * "previous" location, the history list remains unchanged.
+	 * 
 	 * @param navigatable the navigatable to be navigated
 	 */
 	public void previous(Navigatable navigatable);
 
-	/** 
-	 * Navigates to the given location in the "next" list.  If the location is not in the list, then
+	/**
+	 * Navigates to the given location in the "next" list. If the location is not in the list, then
 	 * nothing will happen.
 	 * 
 	 * @param navigatable the navigatable to be navigated
-	 * @param location The location within the "next" list to which to go 
+	 * @param location The location within the "next" list to which to go
 	 */
 	public void next(Navigatable navigatable, LocationMemento location);
 
-	/** 
-	 * Navigates to the given location in the "previous" list.  If the location is not in 
-	 * the list, then nothing will happen
+	/**
+	 * Navigates to the given location in the "previous" list. If the location is not in the list,
+	 * then nothing will happen
 	 * 
 	 * @param navigatable the navigatable to be navigated
-	 * @param location The location within the "previous" list to which to go. 
+	 * @param location The location within the "previous" list to which to go.
 	 */
 	public void previous(Navigatable navigatable, LocationMemento location);
 
 	/**
-	 * Positions the "current" location to the next location which is in a different function
-	 * from current one or previous non-code location.
-	 * If we are not inside any function, performs like "next".
+	 * Positions the "current" location to the next location which is in a different function from
+	 * current one or previous non-code location. If we are not inside any function, performs like
+	 * "next".
+	 * 
 	 * @param navigatable the navigatable to be navigated
 	 */
 	public void nextFunction(Navigatable navigatable);
 
 	/**
-	 * Positions the "previous" location to the next location which is in a different function
-	 * from current one or previous non-code location.
-	 * If we are not inside any function, performs like "next".
+	 * Positions the "previous" location to the next location which is in a different function from
+	 * current one or previous non-code location. If we are not inside any function, performs like
+	 * "next".
+	 * 
 	 * @param navigatable the navigatable to be navigated
 	 */
 	public void previousFunction(Navigatable navigatable);
 
 	/**
-	 * Returns the LocationMemento objects in the "previous" list
+	 * Returns the {@link LocationMemento} objects in the "previous" list
 	 * 
 	 * @param navigatable the navigatable to be navigated
 	 * @return the LocationMemento objects in the "previous" list
@@ -87,7 +93,7 @@ public interface NavigationHistoryService {
 	public List<LocationMemento> getPreviousLocations(Navigatable navigatable);
 
 	/**
-	 * Returns the LocationMemento objects in the "next" list
+	 * Returns the {@link LocationMemento} objects in the "next" list
 	 * 
 	 * @param navigatable the navigatable to be navigated
 	 * @return the LocationMemento objects in the "next" list
@@ -112,30 +118,39 @@ public interface NavigationHistoryService {
 
 	/**
 	 * Returns true if there is a valid "next" function location in the history list
+	 * 
 	 * @param navigatable Navigatable object we are looking at
-	 * @return true if there is a valid "next" function location 
+	 * @return true if there is a valid "next" function location
 	 */
 	public boolean hasNextFunction(Navigatable navigatable);
 
 	/**
 	 * Returns true if there is a valid "previous" function location in the history list
+	 * 
 	 * @param navigatable Navigatable object we are looking at
-	 * @return true if there is a valid "previous" function location 
+	 * @return true if there is a valid "previous" function location
 	 */
 	public boolean hasPreviousFunction(Navigatable navigatable);
 
 	/**
-	 * Adds the given locationMomento to the list of previous locations.  Clears the list
-	 * of next locations.
+	 * Adds the current location memento to the list of previous locations for the given
+	 * navigatable. Clears the list of next locations.
 	 * 
 	 * @param navigatable the navigatable to be navigated
 	 */
 	public void addNewLocation(Navigatable navigatable);
 
 	/**
-	 * Removes all visited locations from the history list
+	 * Removes all visited locations from the history list for the given navigatable
 	 * 
-	 * @param navigatable the navigatable to be navigated
+	 * @param navigatable the navigatable whose list to be cleared
 	 */
 	public void clear(Navigatable navigatable);
+
+	/**
+	 * Removes all entries for the given program from all history lists
+	 * 
+	 * @param program the program whose entries to be cleared
+	 */
+	public void clear(Program program);
 }

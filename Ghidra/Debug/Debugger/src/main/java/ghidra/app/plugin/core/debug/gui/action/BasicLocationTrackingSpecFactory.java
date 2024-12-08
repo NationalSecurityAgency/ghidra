@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.action.LocationTrackingSpecFactory;
 import ghidra.framework.plugintool.PluginTool;
 
 /**

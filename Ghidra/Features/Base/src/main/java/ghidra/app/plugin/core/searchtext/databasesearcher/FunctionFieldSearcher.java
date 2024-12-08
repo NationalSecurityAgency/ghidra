@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.app.plugin.core.navigation.FunctionUtils;
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
@@ -46,7 +47,7 @@ public class FunctionFieldSearcher extends ProgramDatabaseFieldSearcher {
 	}
 
 	@Override
-	protected Address advance(List<ProgramLocation> currentMatches) {
+	protected Address advance(List<TextSearchResult> currentMatches) {
 		if (iterator.hasNext()) {
 			Function function = iterator.next();
 			Address nextAddress = null;
@@ -62,34 +63,34 @@ public class FunctionFieldSearcher extends ProgramDatabaseFieldSearcher {
 	}
 
 	private void findMatchesForCurrentFunction(Function function,
-			List<ProgramLocation> currentMatches) {
+			List<TextSearchResult> currentMatches) {
 		findCommentMatches(function, currentMatches);
 		findSignatureMatches(function, currentMatches);
 		findVariableMatches(function, currentMatches);
 	}
 
-	private void findVariableMatches(Function function, List<ProgramLocation> currentMatches) {
+	private void findVariableMatches(Function function, List<TextSearchResult> currentMatches) {
 		Parameter[] parameters = function.getParameters();
-		for (int i = 0; i < parameters.length; i++) {
-			checkTypeString(parameters[i], currentMatches);
-			checkName(parameters[i], currentMatches);
-			checkStorage(parameters[i], currentMatches);
-			checkComment(parameters[i], currentMatches);
+		for (Parameter parameter : parameters) {
+			checkTypeString(parameter, currentMatches);
+			checkName(parameter, currentMatches);
+			checkStorage(parameter, currentMatches);
+			checkComment(parameter, currentMatches);
 		}
 		Variable[] localVariables = function.getLocalVariables();
-		for (int i = 0; i < localVariables.length; i++) {
-			checkTypeString(localVariables[i], currentMatches);
-			checkName(localVariables[i], currentMatches);
-			checkStorage(localVariables[i], currentMatches);
-			checkComment(localVariables[i], currentMatches);
+		for (Variable localVariable : localVariables) {
+			checkTypeString(localVariable, currentMatches);
+			checkName(localVariable, currentMatches);
+			checkStorage(localVariable, currentMatches);
+			checkComment(localVariable, currentMatches);
 		}
 
 	}
 
-	private void checkTypeString(Variable variable, List<ProgramLocation> currentMatches) {
+	private void checkTypeString(Variable variable, List<TextSearchResult> currentMatches) {
 		DataType dt;
 		if (variable instanceof Parameter) {
-			dt = ((Parameter)variable).getFormalDataType();
+			dt = ((Parameter) variable).getFormalDataType();
 		}
 		else {
 			dt = variable.getDataType();
@@ -102,29 +103,32 @@ public class FunctionFieldSearcher extends ProgramDatabaseFieldSearcher {
 		Matcher matcher = pattern.matcher(searchString);
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches.add(new VariableTypeFieldLocation(program, variable, index));
+			currentMatches.add(new TextSearchResult(
+				new VariableTypeFieldLocation(program, variable, index), index));
 		}
 	}
 
-	private void checkName(Variable variable, List<ProgramLocation> currentMatches) {
+	private void checkName(Variable variable, List<TextSearchResult> currentMatches) {
 		String searchString = variable.getName();
 		Matcher matcher = pattern.matcher(searchString);
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches.add(new VariableNameFieldLocation(program, variable, index));
+			currentMatches.add(new TextSearchResult(
+				new VariableNameFieldLocation(program, variable, index), index));
 		}
 	}
 
-	private void checkStorage(Variable var, List<ProgramLocation> currentMatches) {
+	private void checkStorage(Variable var, List<TextSearchResult> currentMatches) {
 		String searchString = var.getVariableStorage().toString();
 		Matcher matcher = pattern.matcher(searchString);
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches.add(new VariableLocFieldLocation(program, var, index));
+			currentMatches.add(
+				new TextSearchResult(new VariableLocFieldLocation(program, var, index), index));
 		}
 	}
 
-	private void checkComment(Variable variable, List<ProgramLocation> currentMatches) {
+	private void checkComment(Variable variable, List<TextSearchResult> currentMatches) {
 		String searchString = variable.getComment();
 		if (searchString == null) {
 			return;
@@ -132,23 +136,27 @@ public class FunctionFieldSearcher extends ProgramDatabaseFieldSearcher {
 		Matcher matcher = pattern.matcher(searchString);
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches.add(new VariableCommentFieldLocation(program, variable, index));
+			currentMatches.add(
+				new TextSearchResult(new VariableCommentFieldLocation(program, variable, index),
+					index));
 		}
 	}
 
-	private void findSignatureMatches(Function function, List<ProgramLocation> currentMatches) {
+	private void findSignatureMatches(Function function, List<TextSearchResult> currentMatches) {
 		String signature = function.getPrototypeString(false, false);
 		Matcher matcher = pattern.matcher(signature);
 		Address address = function.getEntryPoint();
 		int callingConventionOffset = FunctionUtils.getCallingConventionSignatureOffset(function);
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches.add(new FunctionSignatureFieldLocation(program, address, null, index +
-				callingConventionOffset, signature));
+			currentMatches.add(new TextSearchResult(
+				new FunctionSignatureFieldLocation(program, address, null, index +
+					callingConventionOffset, signature),
+				index));
 		}
 	}
 
-	private void findCommentMatches(Function function, List<ProgramLocation> currentMatches) {
+	private void findCommentMatches(Function function, List<TextSearchResult> currentMatches) {
 		String functionComment = function.getRepeatableComment();
 
 		if (functionComment == null) {
@@ -159,7 +167,8 @@ public class FunctionFieldSearcher extends ProgramDatabaseFieldSearcher {
 		Address address = function.getEntryPoint();
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches.add(getFunctionCommentLocation(functionComment, index, address));
+			currentMatches.add(new TextSearchResult(
+				getFunctionCommentLocation(functionComment, index, address), index));
 		}
 	}
 

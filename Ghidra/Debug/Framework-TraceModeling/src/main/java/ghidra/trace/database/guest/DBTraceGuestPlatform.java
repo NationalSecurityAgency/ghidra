@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,12 +34,10 @@ import ghidra.trace.database.DBTraceUtils.CompilerSpecIDDBFieldCodec;
 import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
-import ghidra.trace.util.OverlappingObjectIterator;
+import ghidra.trace.util.*;
 import ghidra.trace.util.OverlappingObjectIterator.Ranger;
-import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -217,8 +215,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.delete(hostRange);
 			guestAddressSet.delete(guestRange);
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_DELETED,
-			null, this, range, null));
+		manager.trace.setChanged(
+			new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_DELETED, null, this, range, null));
 	}
 
 	@Override
@@ -265,8 +263,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.add(mappedRange.getHostRange());
 			guestAddressSet.add(mappedRange.getGuestRange());
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_ADDED,
-			null, this, null, mappedRange));
+		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_ADDED, null,
+			this, null, mappedRange));
 		return mappedRange;
 	}
 
@@ -312,6 +310,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public Address mapHostToGuest(Address hostAddress) {
+		if (hostAddress == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostAddress);
@@ -324,6 +325,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public AddressRange mapHostToGuest(AddressRange hostRange) {
+		if (hostRange == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostRange.getMinAddress());
@@ -352,6 +356,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public Address mapGuestToHost(Address guestAddress) {
+		if (guestAddress == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestAddress);
@@ -364,6 +371,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public AddressRange mapGuestToHost(AddressRange guestRange) {
+		if (guestRange == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestRange.getMinAddress());
@@ -384,14 +394,14 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 		while (it.hasNext()) {
 			Pair<DBTraceGuestPlatformMappedRange, AddressRange> next = it.next();
 			DBTraceGuestPlatformMappedRange entry = next.getLeft();
-			AddressRange hostRange = next.getRight();
-			result.add(entry.mapGuestToHost(hostRange));
+			AddressRange guestRange = next.getRight();
+			result.add(entry.mapGuestToHost(guestRange));
 		}
 		return result;
 	}
 
 	/**
-	 * Map the an address only if the entire range is contained in a single mapped range
+	 * Map an address only if the entire range is contained in a single mapped range
 	 * 
 	 * @param guestMin the min address of the range to map
 	 * @param guestMax the max address of the range to check

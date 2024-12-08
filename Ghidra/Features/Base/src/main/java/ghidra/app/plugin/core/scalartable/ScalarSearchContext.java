@@ -15,19 +15,19 @@
  */
 package ghidra.app.plugin.core.scalartable;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.util.table.GhidraTable;
 
 /**
  * Plugin context for the scalar plugin that will initialize an instance of ActionContext with the scalarTable
  */
-public class ScalarSearchContext extends ActionContext {
+public class ScalarSearchContext extends DefaultActionContext {
 
 	ScalarSearchContext(ScalarSearchProvider provider, GhidraTable scalarTable) {
 		super(provider, scalarTable);
-    }
-    
+	}
+
 	GhidraTable getScalarTable() {
-        return (GhidraTable) getContextObject();
-    }
+		return (GhidraTable) getContextObject();
+	}
 }

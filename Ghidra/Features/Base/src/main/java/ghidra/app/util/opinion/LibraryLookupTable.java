@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.util.bin.format.pe.ResourceDataDirectory;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.options.Options;
@@ -147,8 +148,8 @@ public class LibraryLookupTable {
 
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		String format = program.getExecutableFormat();
-		String company = props.getString("CompanyName", "");
-		String version = props.getString("FileVersion", "");
+		String company = props.getString(ResourceDataDirectory.getPeResourceProperty("CompanyName"), "");
+		String version = props.getString(ResourceDataDirectory.getPeResourceProperty("FileVersion"), "");
 
 		boolean save =
 			!format.equals(PeLoader.PE_NAME) || company.toLowerCase().contains("microsoft");
@@ -165,7 +166,7 @@ public class LibraryLookupTable {
 			symTab.applyOrdinalFile(existingDefFile, false);
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		File f = file.getFile(true);
 		if (f == null) {
@@ -203,15 +204,15 @@ public class LibraryLookupTable {
 	 * </pre>
 	 * Alternatively, a user specific resource directory may be used which 
 	 * is located at 
-	 * <pre>
-	 *   &lt;USER_HOME&gt;/.ghidra/&lt;.ghidraVersion&gt;/symbols/[win32|win64]
-	 * </pre>
+	 * <pre>{@code
+	 *   <user settings>/symbols/[win32|win64]
+	 * }</pre>
 	 * The cacheMap is a static cache which always returns the same
 	 * instance for a given DLL name.
 	 * 
 	 * @param dllName The DLL name (including extension)
 	 * @param size The architecture size of the DLL (e.g., 32 or 64).
-	 * @param log The message log
+	 * @param log The message log (could be null)
 	 * @return LibrarySymbolTable associated with dllName
 	 */
 	synchronized static LibrarySymbolTable getSymbolTable(String dllName, int size,
@@ -219,6 +220,9 @@ public class LibraryLookupTable {
 		String cacheKey = LibrarySymbolTable.getCacheKey(dllName, size);
 		LibrarySymbolTable symTab = cacheMap.get(cacheKey);
 		if (symTab != null) {
+			if (log != null) {
+				log.appendMsg("Applying cached symbols from " + dllName);
+			}
 			return symTab;
 		}
 

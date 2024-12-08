@@ -100,6 +100,22 @@ public class ElfSectionHeaderConstants {
 	/**Android's experimental support for SHT_RELR sections (see above) */
 	public static final int SHT_ANDROID_RELR = 0x6fffff00;
 
+	/** LLVM-specific section header types **/
+	public static final int SHT_LLVM_ODRTAB = 0x6fff4c00;	// LLVM ODR table.
+	public static final int SHT_LLVM_LINKER_OPTIONS = 0x6fff4c01; // LLVM Linker Options.
+	public static final int SHT_LLVM_ADDRSIG = 0x6fff4c03;	// List of address-significant symbols
+															// for safe ICF.
+	public static final int SHT_LLVM_DEPENDENT_LIBRARIES = 0x6fff4c04; // LLVM Dependent Library Specifiers.
+	public static final int SHT_LLVM_SYMPART = 0x6fff4c05;		// Symbol partition specification.
+	public static final int SHT_LLVM_PART_EHDR = 0x6fff4c06;	// ELF header for loadable partition.
+	public static final int SHT_LLVM_PART_PHDR = 0x6fff4c07;	// Phdrs for loadable partition.
+	public static final int SHT_LLVM_BB_ADDR_MAP_V0 = 0x6fff4c08;	// LLVM Basic Block Address Map (old version kept for
+																	// backward-compatibility).
+	public static final int SHT_LLVM_CALL_GRAPH_PROFILE = 0x6fff4c09; // LLVM Call Graph Profile.
+	public static final int SHT_LLVM_BB_ADDR_MAP = 0x6fff4c0a;	// LLVM Basic Block Address Map.
+	public static final int SHT_LLVM_OFFLOADING = 0x6fff4c0b;	// LLVM device offloading data.
+	public static final int SHT_LLVM_LTO = 0x6fff4c0c;			// .llvm.lto for fat LTO.
+
 	/**Object attributes */
 	public static final int SHT_GNU_ATTRIBUTES = 0x6ffffff5;
 	/**GNU-style hash table */
@@ -122,27 +138,27 @@ public class ElfSectionHeaderConstants {
 	// Section Header Flag Bits
 
 	/**The section contains data that should be writable during process execution.*/
-	public static final int SHF_WRITE = (1 << 0);
+	public static final int SHF_WRITE = 0x1;
 	/**The section occupies memory during execution*/
-	public static final int SHF_ALLOC = (1 << 1);
+	public static final int SHF_ALLOC = 0x2;
 	/**The section contains executable machine instructions.*/
-	public static final int SHF_EXECINSTR = (1 << 2);
+	public static final int SHF_EXECINSTR = 0x4;
 	/**The section might be merged*/
-	public static final int SHF_MERGE = (1 << 4);
+	public static final int SHF_MERGE = 0x10;
 	/**The section contains null-terminated strings*/
-	public static final int SHF_STRINGS = (1 << 5);
+	public static final int SHF_STRINGS = 0x20;
 	/**sh_info contains SHT index*/
-	public static final int SHF_INFO_LINK = (1 << 6);
+	public static final int SHF_INFO_LINK = 0x40;
 	/**Preserve order after combining*/
-	public static final int SHF_LINK_ORDER = (1 << 7);
+	public static final int SHF_LINK_ORDER = 0x80;
 	/**Non-standard OS specific handling required*/
-	public static final int SHF_OS_NONCONFORMING = (1 << 8);
+	public static final int SHF_OS_NONCONFORMING = 0x100;
 	/**The section  is member of a group.*/
-	public static final int SHF_GROUP = (1 << 9);
+	public static final int SHF_GROUP = 0x200;
 	/**The section that holds thread-local data.*/
-	public static final int SHF_TLS = (1 << 10);
+	public static final int SHF_TLS = 0x400;
 	/**The bytes of the section are compressed */
-	public static final int SHF_COMPRESSED = (1 << 11);
+	public static final int SHF_COMPRESSED = 0x800;
 	/**This section is excluded from the final executable or shared library.*/
 	public static final int SHF_EXCLUDE = 0x80000000;
 	/**The section contains OS-specific data.*/
@@ -172,5 +188,5 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
-	
+
 }

@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import generic.Unique;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
@@ -45,7 +45,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerStackPlugin stackPlugin;
 	protected DebuggerStackProvider stackProvider;
 	protected DebuggerStaticMappingService mappingService;

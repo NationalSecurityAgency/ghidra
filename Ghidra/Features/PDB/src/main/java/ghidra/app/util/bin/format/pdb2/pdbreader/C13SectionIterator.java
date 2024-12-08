@@ -25,7 +25,7 @@ import ghidra.util.task.TaskMonitor;
  * Iterator for {@link C13Section} data being read from C13 section of module stream.
  * @param <T> the iterator type
  */
-class C13SectionIterator<T extends C13Section> implements ParsingIterator<T> {
+public class C13SectionIterator<T extends C13Section> implements ParsingIterator<T> {
 
 	private PdbByteReader reader;
 	private Class<T> clazz;
@@ -99,7 +99,7 @@ class C13SectionIterator<T extends C13Section> implements ParsingIterator<T> {
 	 */
 	public T findAndParse() throws CancelledException, PdbException {
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int index = reader.getIndex();
 			int typeVal = reader.parseInt();
 			boolean ignore = C13Type.ignore(typeVal);

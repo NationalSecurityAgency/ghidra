@@ -21,7 +21,7 @@ import mdemangler.*;
 import mdemangler.datatype.*;
 import mdemangler.datatype.complex.MDComplexType;
 import mdemangler.datatype.extended.MDExtendedType;
-import mdemangler.datatype.modifier.MDModifierType;
+import mdemangler.datatype.modifier.*;
 
 /**
  * This class represents the template arguments list portion of a
@@ -116,6 +116,12 @@ public class MDTemplateArgumentsList extends MDParsableItem {
 					if (dmang.peek(1) == '$') { // This is the same as the "default" case below
 						dt = MDDataTypeParser.parsePrimaryDataType(dmang, true);
 						dt.parse();
+						if (dt instanceof MDEmptyParameterType ||
+							dt instanceof MDEndParameterType) {
+							// These two do not get added to the arguments list and they don't
+							//  count as or change the indices of backreferences.
+							break;
+						}
 						commaDelimiter.add(needsComma);
 						needsComma = true;
 						args.add(dt);

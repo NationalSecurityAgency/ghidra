@@ -32,8 +32,12 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Information for interpreting the current stack frame and unwinding to the next
  */
-public record UnwindInfo(Function function, long depth, long adjust, Address ofReturn,
-		Map<Register, Address> saved, StackUnwindWarningSet warnings) {
+public record UnwindInfo(Function function, Long depth, Long adjust, Address ofReturn,
+		Map<Register, Address> saved, StackUnwindWarningSet warnings, Exception error) {
+
+	public static UnwindInfo errorOnly(Exception error) {
+		return new UnwindInfo(null, null, null, null, null, new StackUnwindWarningSet(), error);
+	}
 
 	/**
 	 * The function that was analyzed
@@ -55,7 +59,7 @@ public record UnwindInfo(Function function, long depth, long adjust, Address ofR
 	 * 
 	 * @return the depth
 	 */
-	public long depth() {
+	public Long depth() {
 		return depth;
 	}
 
@@ -67,7 +71,7 @@ public record UnwindInfo(Function function, long depth, long adjust, Address ofR
 	 * 
 	 * @return the adjustment
 	 */
-	public long adjust() {
+	public Long adjust() {
 		return adjust;
 	}
 
@@ -139,7 +143,7 @@ public record UnwindInfo(Function function, long depth, long adjust, Address ofR
 	 * @return the base address
 	 */
 	public Address computeBase(Address spVal) {
-		return spVal.subtract(depth);
+		return depth == null ? null : spVal.subtract(depth);
 	}
 
 	/**

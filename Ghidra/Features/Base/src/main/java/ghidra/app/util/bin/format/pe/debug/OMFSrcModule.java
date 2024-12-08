@@ -78,7 +78,7 @@ public class OMFSrcModule {
 		}
 
 		for (int i = 0; i < Conv.shortToInt(cFile); ++i) {
-			moduleFileList.add(new OMFSrcModuleFile(reader, ptr + baseSrcFile[i]));
+			moduleFileList.add(new OMFSrcModuleFile(reader, ptr, ptr + baseSrcFile[i]));
 		}
 	}
 

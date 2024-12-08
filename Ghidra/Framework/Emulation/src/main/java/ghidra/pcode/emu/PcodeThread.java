@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu;
 
-import java.util.List;
-
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
 import ghidra.pcode.exec.*;
@@ -197,6 +195,13 @@ public interface PcodeThread<T> {
 	void skipPcodeOp();
 
 	/**
+	 * Apply a patch to the emulator
+	 * 
+	 * @param sleigh a line of sleigh semantic source to execute (excluding the final semicolon)
+	 */
+	void stepPatch(String sleigh);
+
+	/**
 	 * Get the current frame, if present
 	 * 
 	 * <p>
@@ -282,6 +287,9 @@ public interface PcodeThread<T> {
 	 * reliable way to halt execution. Note the emulator may halt mid instruction. If this is not
 	 * desired, then upon catching the exception, un-suspend the p-code thread and call
 	 * {@link #finishInstruction()} or {@link #dropInstruction()}.
+	 * 
+	 * @see PcodeMachine#setSuspended(boolean)
+	 * @param suspended true to suspend the machine, false to let it run
 	 */
 	void setSuspended(boolean suspended);
 
@@ -334,6 +342,7 @@ public interface PcodeThread<T> {
 	 * The memory part of this state is shared among all threads in the same machine. See
 	 * {@link PcodeMachine#getSharedState()}.
 	 * 
+	 * @return the state
 	 */
 	ThreadPcodeExecutorState<T> getState();
 
@@ -341,7 +350,7 @@ public interface PcodeThread<T> {
 	 * Override the p-code at the given address with the given Sleigh source for only this thread
 	 * 
 	 * <p>
-	 * This works the same {@link PcodeMachine#inject(Address, List)} but on a per-thread basis.
+	 * This works the same {@link PcodeMachine#inject(Address, String)} but on a per-thread basis.
 	 * Where there is both a machine-level and thread-level inject the thread inject takes
 	 * precedence. Furthermore, the machine-level inject cannot be accessed by the thread-level
 	 * inject.

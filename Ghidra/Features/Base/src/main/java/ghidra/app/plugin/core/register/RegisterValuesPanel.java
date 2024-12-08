@@ -28,10 +28,10 @@ import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.Gui;
 import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
-import ghidra.app.services.*;
+import ghidra.app.services.MarkerService;
+import ghidra.app.services.MarkerSet;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
@@ -119,8 +119,7 @@ class RegisterValuesPanel extends JPanel {
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setRowSelectionAllowed(true);
 		table.setColumnSelectionAllowed(false);
-		GoToService goToService = tool.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
+		table.installNavigation(tool);
 		table.setNavigateOnSelectionEnabled(true);
 		return table;
 	}
@@ -498,7 +497,11 @@ class RegisterValueRenderer extends GTableCellRenderer {
 
 	RegisterValueRenderer(JTable table) {
 		setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-		Gui.registerFont(this, "font.monospaced");
+	}
+
+	@Override
+	protected Font getDefaultFont() {
+		return fixedWidthFont;
 	}
 
 	@Override

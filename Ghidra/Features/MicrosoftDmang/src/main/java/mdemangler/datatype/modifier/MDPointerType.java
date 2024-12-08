@@ -17,28 +17,28 @@ package mdemangler.datatype.modifier;
 
 import mdemangler.MDException;
 import mdemangler.MDMang;
-import mdemangler.datatype.MDDataType;
-import mdemangler.datatype.MDDataTypeParser;
 
 /**
  * This class represents a "pointer" data type within a Microsoft mangled symbol.
  */
 public class MDPointerType extends MDModifierType {
 
-	public MDPointerType(MDMang dmang) {
+	public MDPointerType(MDMang dmang, boolean isHighest, boolean isConst, boolean isVolatile) {
 		super(dmang);
+		if (isHighest) {
+			setConst(isConst);
+			setVolatile(isVolatile);
+		}
+		else {
+			setConst(false);
+			setVolatile(false);
+		}
 		cvMod.setPointerType();
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		// cvMod.setPointerType();
 		super.parseInternal();
-	}
-
-	@Override
-	protected MDDataType parseReferencedType() throws MDException {
-		return MDDataTypeParser.parseBasicDataType(dmang, false);
 	}
 
 	@Override

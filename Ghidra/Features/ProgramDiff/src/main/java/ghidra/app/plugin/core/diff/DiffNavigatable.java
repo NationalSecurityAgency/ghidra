@@ -19,7 +19,7 @@ import javax.swing.Icon;
 
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.codebrowser.CodeViewerLocationMemento;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -173,13 +173,13 @@ class DiffNavigatable implements Navigatable {
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// CodeViewerProvider handles the other listing (the Diff listing) highlights.
 		navigatable.setHighlightProvider(highlightProvider, program);
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// CodeViewerProvider handles the other listing (the Diff listing) highlights.
 		navigatable.removeHighlightProvider(highlightProvider, program);
 	}

@@ -66,7 +66,7 @@ public class TaskMonitorSplitter {
 
 		@Override
 		public void checkCanceled() throws CancelledException {
-			parent.checkCanceled();
+			parent.checkCancelled();
 		}
 
 		@Override

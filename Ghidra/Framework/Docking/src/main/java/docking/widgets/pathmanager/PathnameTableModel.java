@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package docking.widgets.pathmanager;
 
 import java.awt.Rectangle;
-import java.util.ArrayList;
+import java.util.*;
 
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
@@ -27,9 +26,9 @@ class PathnameTableModel extends AbstractTableModel {
 
 	private ArrayList<String> pathList;
 	private boolean isEditable;
-	
+
 	/**
-	 * @param paths initial list of paths; may be null 
+	 * @param paths initial list of paths; may be null
 	 * @param isEditable true if the path should be editable
 	 * 
 	 */
@@ -38,37 +37,40 @@ class PathnameTableModel extends AbstractTableModel {
 		this.isEditable = isEditable;
 		pathList = new ArrayList<String>();
 		if (paths != null) {
-			for (int i=0; i<paths.length; i++) {
+			for (int i = 0; i < paths.length; i++) {
 				pathList.add(paths[i]);
 			}
 		}
 	}
 
+	@Override
 	public int getColumnCount() {
 		return 1;
 	}
 
 	@Override
-    public Class<String> getColumnClass(int columnIndex) {
+	public Class<String> getColumnClass(int columnIndex) {
 		return String.class;
 	}
 
 	@Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		return isEditable;
 	}
 
 	@Override
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 		pathList.remove(rowIndex);
 		pathList.add(rowIndex, aValue.toString());
 		super.fireTableCellUpdated(rowIndex, 0);
 	}
 
+	@Override
 	public int getRowCount() {
 		return pathList.size();
 	}
 
+	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		if (rowIndex >= pathList.size()) {
 			return null;
@@ -79,32 +81,32 @@ class PathnameTableModel extends AbstractTableModel {
 	void setEditingEnabled(boolean isEditable) {
 		this.isEditable = isEditable;
 	}
-	
+
 	void remove(int[] selectedRows) {
 		String[] paths = new String[selectedRows.length];
-		for (int i=0; i<selectedRows.length; i++) {
+		for (int i = 0; i < selectedRows.length; i++) {
 			paths[i] = pathList.get(selectedRows[i]);
 		}
-		
-		for (int i=0; i<paths.length; i++) {
+
+		for (int i = 0; i < paths.length; i++) {
 			pathList.remove(paths[i]);
 		}
 		fireTableDataChanged();
 	}
-	
+
 	void moveUp(JTable table, int index) {
 		if (index < 0 || index >= pathList.size()) {
 			return;
 		}
 		String path = pathList.remove(index);
-		int newIndex=0;
+		int newIndex = 0;
 		if (index == 0) {
 			// place it last in the list
 			pathList.add(path);
-			newIndex = pathList.size()-1;
+			newIndex = pathList.size() - 1;
 		}
 		else {
-			newIndex = index-1;
+			newIndex = index - 1;
 			pathList.add(newIndex, path);
 		}
 		notifyDataChanged(table, newIndex);
@@ -115,43 +117,48 @@ class PathnameTableModel extends AbstractTableModel {
 			return;
 		}
 		int size = pathList.size();
-		int newIndex=0;
+		int newIndex = 0;
 		String path = pathList.remove(index);
-		if (index == size-1) {
+		if (index == size - 1) {
 			// move to the top of the list
 			pathList.add(0, path);
 		}
 		else {
-			newIndex = index+1;
-			pathList.add(index+1, path);
+			newIndex = index + 1;
+			pathList.add(index + 1, path);
 		}
 		notifyDataChanged(table, newIndex);
 	}
 
-	void addPaths(String[] paths, boolean addToTop) {
-		for (int i=0;i<paths.length; i++) {
-			if (!pathList.contains(paths[i])) {
-				if (addToTop) {
-					pathList.add(i, paths[i]);
-				}
-				else {
-					pathList.add(paths[i]);
-				}
-			}
+	void addPaths(String[] paths, boolean addToTop, boolean sorted) {
+		if (addToTop) {
+			pathList.addAll(0, Arrays.asList(paths));
+		}
+		else {
+			pathList.addAll(Arrays.asList(paths));
+		}
+		if (sorted) {
+			sortPaths();
 		}
 		fireTableDataChanged();
 	}
 
-	void setPaths(String[] paths) {
+	void setPaths(String[] paths, boolean sorted) {
 		pathList.clear();
-		addPaths(paths, false);
+		addPaths(paths, false, sorted);
 	}
-	
+
+	void sortPaths() {
+		// Not the most efficient, but we also want to de-duplicate
+		Set<String> paths = new TreeSet<>(pathList);
+		pathList.clear();
+		pathList.addAll(paths);
+	}
+
 	private void notifyDataChanged(JTable table, int newIndex) {
 		fireTableDataChanged();
 		table.setRowSelectionInterval(newIndex, newIndex);
 		Rectangle rect = table.getCellRect(newIndex, 0, true);
 		table.scrollRectToVisible(rect);
 	}
-
 }

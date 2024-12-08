@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,12 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -35,7 +35,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class ClearFlowAndRepairCmd extends BackgroundCommand {
+public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 
 	private static final int FALLTHROUGH_SEARCH_LIMIT = 12;
 
@@ -72,12 +72,11 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		try {
 			monitor.setMessage("Examining code flow...");
 
-			Program program = (Program) obj;
 			Listing listing = program.getListing();
 
 			Stack<Address> todoStarts = new Stack<>();
@@ -102,7 +101,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			clearSet = new AddressSet();
 
 			while (cuIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				CodeUnit cu = cuIter.next();
 				if (cu instanceof Instruction) {
 					Instruction instr = (Instruction) cu;
@@ -157,7 +156,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			HashSet<Address> ptrDestinations = new HashSet<>();
 
 			while (!todoStarts.isEmpty()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address addr = todoStarts.pop();
 				if (clearSet.contains(addr)) {
 					continue;
@@ -207,15 +206,13 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			opts.setClearSymbols(clearLabels);
 
 			ClearCmd clear = new ClearCmd(clearSet, opts);
-			clear.applyTo(obj, monitor);
+			clear.applyTo(program, monitor);
 
 			if (clearData && clearLabels) {
 				// Clear dereferenced symbols
 				SymbolTable symTable = program.getSymbolTable();
-				Iterator<Address> iter = ptrDestinations.iterator();
-				while (iter.hasNext()) {
-					monitor.checkCanceled();
-					Address addr = iter.next();
+				for (Address addr : ptrDestinations) {
+					monitor.checkCancelled();
 					Symbol[] syms = symTable.getSymbols(addr);
 					for (Symbol sym : syms) {
 						if (sym.getSource() == SourceType.DEFAULT) {
@@ -259,7 +256,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 		ReferenceIterator refIter = refMgr.getReferencesTo(destAddr);
 		while (refIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Reference ref = refIter.next();
 			RefType refType = ref.getReferenceType();
 			if (refType instanceof FlowType) {
@@ -290,7 +287,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 		AddressIterator fromAddrIter = refMgr.getReferenceSourceIterator(refFromSet, true);
 		while (fromAddrIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address fromAddr = fromAddrIter.next();
 
@@ -312,14 +309,23 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 					}
 					// no instruction, check if data is there
 					Data data = listing.getDefinedDataAt(toAddr);
+					// data or instruction not found at destination
 					if (data == null) {
-						continue; // instruction not found at destination
+						continue; // don't add to clear set
+					}
+					// has an external reference from data, not produced from bad flow
+					if (data.getExternalReference(0) != null) {
+						continue; // don't add to clear set
+					}
+					// if defined data is anything other than Undefined1,2... or a pointer
+					if (data.isDefined() && !(data.getDataType() instanceof Undefined) && !(data.isPointer())) {
+						continue; // don't add to clear set
 					}
 				}
 				boolean clearIt = true;
 				ReferenceIterator refIter = refMgr.getReferencesTo(toAddr);
 				while (refIter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Reference ref = refIter.next();
 					if (!clearSet.contains(ref.getFromAddress())) {
 						clearIt = false;
@@ -341,9 +347,6 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	 * @param program
 	 * @param fromInstrAddr existing instruction address to be used for
 	 * context regeneration
-	 * @param flowFallthrough true if fall-through location is clear and
-	 * is the intended disassembly start location, else only the future
-	 * flow context state is needed.
 	 * @param context disassembly context.
 	 */
 	private void repairFlowContextFrom(Program program, Address fromInstrAddr,
@@ -423,13 +426,13 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 		}
 		AddressIterator addrIter = refMgr.getReferenceDestinationIterator(clearSet, true);
 		while (addrIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = addrIter.next();
 			ReferenceIterator refIter = refMgr.getReferencesTo(addr);
 
 			Address dataRefAddr = null;
 			while (refIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Reference ref = refIter.next();
 				RefType refType = ref.getReferenceType();
 				if (refType.isFlow()) {
@@ -464,7 +467,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 		// get any in the clear set that were entry points
 		AddressIterator aiter = clearSet.getAddresses(true);
 		while (aiter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = aiter.next();
 			if (program.getSymbolTable().isExternalEntryPoint(addr)) {
 				disassemblePoints.addRange(addr, addr);
@@ -478,7 +481,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 		cmd.setSeedContext(seedContext);
 		cmd.applyTo(program, monitor);
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Analyze new data reference points (DisassembleCommand has already analyzed code)
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
@@ -503,7 +506,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 		AddressRangeIterator rangeIter = clearSet.getAddressRanges();
 		while (rangeIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = rangeIter.next();
 			Address addr = range.getMinAddress();
 			int searchCnt = 0;
@@ -572,7 +575,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 			Iterator<Function> fnIter = fnMgr.getFunctionsOverlapping(sub);
 			while (fnIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Function f = fnIter.next();
 				if (!starts.contains(f.getEntryPoint())) {
 					Msg.warn(this,
@@ -583,7 +586,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 			fnIter = fnMgr.getFunctionsOverlapping(sub);
 			while (fnIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Function f = fnIter.next();
 				if (starts.remove(f.getEntryPoint())) {
 					AddressSetView oldBody = f.getBody();
@@ -604,10 +607,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 				}
 			}
 
-			Iterator<Address> entryIter = starts.iterator();
-			while (entryIter.hasNext()) {
-				monitor.checkCanceled();
-				Address entry = entryIter.next();
+			for (Address entry : starts) {
+				monitor.checkCancelled();
 				CreateFunctionCmd cmd = new CreateFunctionCmd(entry);
 				cmd.applyTo(program, monitor);
 			}
@@ -670,7 +671,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 		// Follow start block flow and build graph
 		while (!todoVertices.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			BlockVertex fromVertex = todoVertices.pop();
 			CodeBlock fromBlock = fromVertex.block;
 			if (protectedSet.contains(fromBlock.getMinAddress())) {
@@ -685,7 +686,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 				findDestAddrs(fromBlock, destAddrs); // Needed for detecting offcut flows
 			}
 			while (blockRefIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				CodeBlockReference cbRef = blockRefIter.next();
 
 				Address blockAddr = cbRef.getReference();
@@ -742,10 +743,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 
 		ReferenceManager refMgr = program.getReferenceManager();
 		FunctionManager functionManager = program.getFunctionManager();
-		Iterator<BlockVertex> vertexIter = vertexMap.values().iterator();
-		while (vertexIter.hasNext()) {
-			monitor.checkCanceled();
-			BlockVertex v = vertexIter.next();
+		for (BlockVertex v : vertexMap.values()) {
+			monitor.checkCancelled();
 			if (v == startVertex || v.srcVertices.isEmpty()) {
 				continue;
 			}
@@ -768,7 +767,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 					continue;
 				}
 				while (refIter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Reference ref = refIter.next();
 					Address fromAddr = ref.getFromAddress();
 					RefType refType = ref.getReferenceType();
@@ -819,7 +818,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 		Listing listing = program.getListing();
 		InstructionIterator iter = listing.getInstructions(destBlock.getMinAddress(), true);
 		while (iter.hasNext() && offcutStart == null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction nextInstr = iter.next();
 			Address nextInstrAddr = nextInstr.getMinAddress();
 			if (nextInstrAddr.compareTo(blockEnd) > 0) {
@@ -846,7 +845,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 			Program program = offcutInstr.getProgram();
 			Listing listing = program.getListing();
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// Record outgoing flows as new starts for clearing
 			Reference[] refs = offcutInstr.getReferencesFrom();
@@ -897,7 +896,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 		// Check data fall-through locations for bookmarks
 		Listing listing = program.getListing();
 		for (AddressRange range : set.getAddressRanges()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address maxAddr = range.getMaxAddress();
 			Instruction lastInstr = listing.getInstructionContaining(maxAddr);
 			if (lastInstr == null) {

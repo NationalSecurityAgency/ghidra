@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public interface Composite extends DataType {
 
 	/**
 	 * Returns the component of this data type with the indicated ordinal.
-	 * @param ordinal the component's ordinal (zero based).
+	 * @param ordinal the component's ordinal (numbering starts at 0).
 	 * @return the data type component.
 	 * @throws IndexOutOfBoundsException if the ordinal is out of bounds
 	 */
@@ -155,7 +155,7 @@ public interface Composite extends DataType {
 	 * Inserts a new datatype at the specified ordinal position in this composite.
 	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
 	 * automatically to provide the proper alignment.
-	 * @param ordinal the ordinal where the new datatype is to be inserted.
+	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param dataType the datatype to insert.
 	 * @return the componentDataType created.
 	 * @throws IllegalArgumentException if the specified data type is not
@@ -171,7 +171,7 @@ public interface Composite extends DataType {
 	 * Inserts a new datatype at the specified ordinal position in this composite.
 	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
 	 * automatically to provide the proper alignment.
-	 * @param ordinal the ordinal where the new datatype is to be inserted.
+	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
 	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
@@ -190,7 +190,7 @@ public interface Composite extends DataType {
 	 * Inserts a new datatype at the specified ordinal position in this composite.
 	 * <BR>Note: For an aligned structure the ordinal position will get adjusted
 	 * automatically to provide the proper alignment.
-	 * @param ordinal the ordinal where the new datatype is to be inserted.
+	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
 	 * For fixed length types a length &lt;= 0 will use the length of the resolved dataType.
@@ -211,7 +211,7 @@ public interface Composite extends DataType {
 	 * Deletes the component at the given ordinal position.
 	 * <BR>Note: Removal of bitfields from a structure with packing disabled will
 	 * not shift other components causing vacated bytes to revert to undefined filler.
-	 * @param ordinal the ordinal of the component to be deleted.
+	 * @param ordinal the ordinal of the component to be deleted (numbering starts at 0).
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public void delete(int ordinal) throws IndexOutOfBoundsException;
@@ -275,9 +275,9 @@ public interface Composite extends DataType {
 	 * affect of disabled packing differs between {@link Structure} and {@link Union}.  When
 	 * packing disabled:
 	 * <ul>
-	 * <li>Structures utilize explicit component offsets and produce undefined filler
-	 * components where defined components do not consume space.</li>
-	 * <li>Unions always place components at offset 0 and do not pad for alignment.
+	 *   <li>Structures utilize explicit component offsets and produce undefined filler
+	 *       components where defined components do not consume space.</li>
+	 *   <li>Unions always place components at offset 0 and do not pad for alignment.</li>
 	 * </ul>
 	 * In addition, when packing is disabled the default alignment is always 1 unless a
 	 * different minimum alignment has been set.  When packing is enabled the overall

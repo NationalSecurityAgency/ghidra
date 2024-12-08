@@ -15,16 +15,15 @@
  */
 package docking.menu;
 
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.MenuItemUI;
 
 /**
  * Overrides the painting behavior of the BasicCheckBoxMenuItemUI
  */
-
 public class DockingCheckboxMenuItemUI extends DockingMenuItemUI {
-	public static ComponentUI createUI(JComponent c) {
+	public static DockingCheckboxMenuItemUI createUI(JComponent c) {
 		DockingCheckboxMenuItemUI result = new DockingCheckboxMenuItemUI();
 		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;

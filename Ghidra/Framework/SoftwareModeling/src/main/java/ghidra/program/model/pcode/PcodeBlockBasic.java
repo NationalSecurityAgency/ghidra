@@ -118,10 +118,8 @@ public class PcodeBlockBasic extends PcodeBlock {
 			AddressRange range = iter.next();
 			encoder.openElement(ELEM_RANGE);
 			encoder.writeSpace(ATTRIB_SPACE, range.getAddressSpace());
-			encoder.writeUnsignedInteger(ATTRIB_FIRST,
-				range.getMinAddress().getOffset());
-			encoder.writeUnsignedInteger(ATTRIB_LAST,
-				range.getMaxAddress().getOffset());
+			encoder.writeUnsignedInteger(ATTRIB_FIRST, range.getMinAddress().getOffset());
+			encoder.writeUnsignedInteger(ATTRIB_LAST, range.getMaxAddress().getOffset());
 		}
 		encoder.closeElement(ELEM_RANGELIST);
 	}
@@ -145,5 +143,19 @@ public class PcodeBlockBasic extends PcodeBlock {
 		}
 
 		decoder.closeElement(rangelistel);
+	}
+
+	/**
+	 * @return the first PcodeOp in this block (or null if the block is empty)
+	 */
+	public PcodeOp getFirstOp() {
+		return oplist.first();
+	}
+
+	/**
+	 * @return the last PcodeOp in this block (or null if the block is empty)
+	 */
+	public PcodeOp getLastOp() {
+		return oplist.last();
 	}
 }

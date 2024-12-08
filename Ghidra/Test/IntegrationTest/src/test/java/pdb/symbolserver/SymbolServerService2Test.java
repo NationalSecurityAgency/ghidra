@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 		List<SymbolFileLocation> results =
 			symbolServerService.find(SymbolFileInfo.fromValues("test.pdb", "11223344", 1),
-				FindOption.of(FindOption.ALLOW_REMOTE), TaskMonitor.DUMMY);
+				FindOption.of(FindOption.ALLOW_UNTRUSTED), TaskMonitor.DUMMY);
 
 		assertEquals(1, results.size());
 		System.out.println(results.get(0).getLocationStr());
@@ -118,7 +118,7 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 		List<SymbolFileLocation> results =
 			symbolServerService.find(SymbolFileInfo.fromValues("test.pdb", "11223344", 1),
-				FindOption.of(FindOption.ALLOW_REMOTE), TaskMonitor.DUMMY);
+				FindOption.of(FindOption.ALLOW_UNTRUSTED), TaskMonitor.DUMMY);
 
 		assertEquals(1, results.size());
 		System.out.println(results.get(0).getLocationStr());

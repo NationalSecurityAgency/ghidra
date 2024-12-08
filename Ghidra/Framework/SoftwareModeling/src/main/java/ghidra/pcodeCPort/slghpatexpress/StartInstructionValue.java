@@ -15,12 +15,12 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.translate.Translate;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class StartInstructionValue extends PatternValue {
@@ -50,12 +50,9 @@ public class StartInstructionValue extends PatternValue {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<start_exp/>");
-	}
-
-	@Override
-	public void restoreXml(Element el, Translate trans) {
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_START_EXP);
+		encoder.closeElement(ELEM_START_EXP);
 	}
 
 }

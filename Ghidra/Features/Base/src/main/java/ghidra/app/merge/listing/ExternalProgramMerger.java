@@ -591,7 +591,7 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 		for (int conflictIndex = 0; conflictIndex < totalConflicts; conflictIndex++) {
 			IDGroup idGroup = extPgms.get(conflictIndex);
 			if ((externalProgramChoice == ASK_USER) && askUser && mergeManager != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				showMergePanel(idGroup, monitor);
 			}
 			else {
@@ -852,14 +852,14 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 		int transactionID = resultPgm.startTransaction(getDescription());
 		boolean commit = false;
 		try {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			clearResolveInfo();
 
 			autoMerge(monitor);
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			mergeConflicts(ASK_USER, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			clearConflictPanel();
 			showResolveInfo();
 			commit = true;

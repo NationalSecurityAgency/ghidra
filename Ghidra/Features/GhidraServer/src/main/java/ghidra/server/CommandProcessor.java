@@ -168,7 +168,8 @@ public class CommandProcessor {
 						userMgr.addUser(sid, x500User);
 					}
 					catch (DuplicateNameException e) {
-						// should never occur
+						log.error("Add User Failed: " + e.getMessage());
+						return;
 					}
 				}
 				log.info("User '" + sid + "' DN set (" + x500User.getName() + ")");
@@ -191,6 +192,7 @@ public class CommandProcessor {
 				if (rep == null) {
 					log.error("Failed to grant access for '" + sid + "', repository '" + repName +
 						"' not found.");
+					return;
 				}
 				rep.setUserPermission(sid, permission);
 				break;
@@ -201,6 +203,7 @@ public class CommandProcessor {
 				if (rep == null) {
 					log.error("Failed to revoke access for '" + sid + "', repository '" + repName +
 						"' not found.");
+					return;
 				}
 				rep.removeUser(sid);
 				break;

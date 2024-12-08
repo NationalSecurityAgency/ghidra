@@ -22,16 +22,19 @@ public interface VerticalPixelAddressMap {
 
 	/**
 	 * Returns the Address of the first layout in this map
+	 * @return the address
 	 */
 	public Address getStartAddress();
 
 	/**
 	 * Returns the index of the last layout in this map.
+	 * @return the address
 	 */
 	public Address getEndAddress();
 
 	/**
 	 * Returns the number of layouts in this map.
+	 * @return the number of layouts
 	 */
 	public int getNumLayouts();
 
@@ -45,12 +48,14 @@ public interface VerticalPixelAddressMap {
 	/**
 	 * Returns the y position of the top of the i'th layout.
 	 * @param i the index of the layout.
+	 * @return the position
 	 */
 	public int getBeginPosition(int i);
 
 	/**
 	 * Returns the y position of the bottom of the i'th layout.
 	 * @param i the index of the layout.
+	 * @return the position
 	 */
 	public int getEndPosition(int i);
 
@@ -71,6 +76,7 @@ public interface VerticalPixelAddressMap {
 	/**
 	 * Finds the layout containing the given point.
 	 * @param y the y coordinate of layout to be found.
+	 * @return the layout index
 	 */
 	public int findLayoutAt(int y);
 

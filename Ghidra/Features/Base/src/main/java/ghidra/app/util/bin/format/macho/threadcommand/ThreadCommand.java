@@ -20,14 +20,9 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.LoadCommand;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.ProgramModule;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a thread_command structure 
@@ -66,7 +61,8 @@ public class ThreadCommand extends LoadCommand {
 				threadState = new ThreadStateARM(reader);
 			}
 		}
-		else if (header.getCpuType() == CpuTypes.CPU_TYPE_ARM_64) {
+		else if (header.getCpuType() == CpuTypes.CPU_TYPE_ARM_64 ||
+			header.getCpuType() == CpuTypes.CPU_TYPE_ARM64_32) {
 			if (threadStateHeader.getFlavor() == ThreadStateARM_64.ARM64_THREAD_STATE) {
 				threadState = new ThreadStateARM_64(reader);
 			}	
@@ -101,7 +97,9 @@ public class ThreadCommand extends LoadCommand {
 		struct.add(DWORD, "cmd", null);
 		struct.add(DWORD, "cmdsize", null);
 		struct.add(threadStateHeader.toDataType(), "threadStateHeader", null);
-		struct.add(threadState.toDataType(), "threadState", null);
+		if (threadState != null) {
+			struct.add(threadState.toDataType(), "threadState", null);
+		}
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}
@@ -109,21 +107,5 @@ public class ThreadCommand extends LoadCommand {
 	@Override
 	public String getCommandName() {
 		return "thread_command";
-	}
-
-	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
-			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
-		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address addr = baseAddress.getNewAddress(getStartIndex());
-				api.createData(addr, toDataType());
-			}
-		}
-		catch (Exception e) {
-			log.appendMsg("Unable to create " + getCommandName() + " - " + e.getMessage());
-		}
 	}
 }

@@ -19,6 +19,10 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.VariableStorage;
 
 interface FunctionVariableData {
+
+	/**
+	 * {@return parameter ordinal or null for return variable.}
+	 */
 	public Integer getIndex();
 
 	public void setStorage(VariableStorage storage);
@@ -32,4 +36,6 @@ interface FunctionVariableData {
 	public String getName();
 
 	public DataType getFormalDataType();
+
+	public boolean hasStorageConflict();
 }

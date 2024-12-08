@@ -423,7 +423,10 @@ class ToolActionManager implements ToolChestChangeListener {
 
 		String importDir = Preferences.getProperty(Preferences.LAST_TOOL_IMPORT_DIRECTORY);
 		if (importDir != null) {
-			fileChooser.setCurrentDirectory(new File(importDir));
+			File dir = new File(importDir);
+			if (dir.isDirectory()) {
+				fileChooser.setCurrentDirectory(dir);
+			}
 		}
 
 		fileChooser.rescanCurrentDirectory();

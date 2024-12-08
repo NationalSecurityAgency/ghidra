@@ -133,6 +133,9 @@ static ContentHandler *handler;					///< Global reference to the content handler
 %type <i> Reference
 %type <attr> EmptyElemTag STag stagstart
 %type <pair> SAttribute
+
+%destructor { } <i>
+%destructor { delete $$; } <*>
 %%
 
 document:  element Misc;

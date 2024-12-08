@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -407,9 +407,15 @@ bool FlowBlock::restrictedByConditional(const FlowBlock *cond) const
 {
   if (sizeIn() == 1) return true;	// Its impossible for any path to come through sibling to this
   if (getImmedDom() != cond) return false;	// This is not dominated by conditional block at all
+  bool seenCond = false;
   for(int4 i=0;i<sizeIn();++i) {
     const FlowBlock *inBlock = getIn(i);
-    if (inBlock == cond) continue;	// The unique edge from cond to this
+    if (inBlock == cond) {
+      if (seenCond)
+	return false;			// Coming in from cond block on multiple direct edges
+      seenCond = true;
+      continue;
+    }
     while(inBlock != this) {
       if (inBlock == cond) return false;	// Must have come through sibling
       inBlock = inBlock->getImmedDom();
@@ -806,6 +812,37 @@ FlowBlock *FlowBlock::findCommonBlock(const vector<FlowBlock *> &blockSet)
   for(int4 i=0;i<markedSet.size();++i)
     markedSet[i]->clearMark();
   return res;
+}
+
+/// \brief Find conditional block that decides between the given control-flow edges
+///
+/// There must be a unique path from the conditional block through the first edge, and
+/// a second unique path through the second edge. Otherwise null is returned.  The index of the
+/// output block from the conditional that flows to the first edge is passed back.
+/// \param bl1 is the destination block for the first given control-flow edge
+/// \param edge1 is the input slot for the first edge
+/// \param bl2 is the destination block for the second given control-flow edge
+/// \param edge2 is the input slot for the second edge
+/// \param slot1 will hold the output slot leading to the first control-flow edge
+/// \return the conditional FlowBlock if it exists or null
+FlowBlock *FlowBlock::findCondition(FlowBlock *bl1,int4 edge1,FlowBlock *bl2,int4 edge2,int4 &slot1)
+
+{
+  FlowBlock *cond = bl1->getIn(edge1);
+  while (cond->sizeOut() != 2) {
+    if (cond->sizeOut() != 1) return (FlowBlock *)0;
+    bl1 = cond;
+    edge1 = 0;
+    cond = bl1->getIn(0);
+  }
+
+  while (cond != bl2->getIn(edge2)) {
+    bl2 = bl2->getIn(edge2);
+    if (bl2->sizeOut() != 1) return (FlowBlock *)0;
+    edge2 = 0;
+  }
+  slot1 = bl1->getInRevIndex(edge1);
+  return cond;
 }
 
 /// Add the given FlowBlock to the list and make \b this the parent
@@ -1260,6 +1297,14 @@ void BlockGraph::printRaw(ostream &s) const
     (*iter)->printRaw(s);
 }
 
+PcodeOp *BlockGraph::firstOp(void) const
+
+{
+  if (getSize() == 0)
+    return (PcodeOp *)0;
+  return getBlock(0)->firstOp();
+}
+
 FlowBlock *BlockGraph::nextFlowAfter(const FlowBlock *bl) const
 
 {
@@ -1660,13 +1705,20 @@ BlockMultiGoto *BlockGraph::newBlockMultiGoto(FlowBlock *bl,int4 outedge)
   }
   else {
     ret = new BlockMultiGoto(bl);
+    int4 origSizeOut = bl->sizeOut();
     vector<FlowBlock *> nodes;
     nodes.push_back(bl);
     identifyInternal(ret,nodes);
     addBlock(ret);
     ret->addEdge(targetbl);
-    if (targetbl != bl)		// If the target is itself, edge is already removed by identifyInternal
-      removeEdge(ret,targetbl);
+    if (targetbl != bl)	{
+      if (ret->sizeOut() != origSizeOut) {	// If there are less out edges after identifyInternal
+	// it must have collapsed a self edge (switch out edges are already deduped)
+	ret->forceOutputNum(ret->sizeOut()+1);	// preserve the self edge (it is not the goto edge)
+      }
+      removeEdge(ret,targetbl);	// Remove the edge to the goto target
+    }
+    // else -- the goto edge is a self edge and will get removed by identifyInternal
     if (isdefaultedge)
       ret->setDefaultGoto();
   }
@@ -2255,6 +2307,13 @@ Address BlockBasic::getStop(void) const
   return range->getLastAddr();
 }
 
+PcodeOp *BlockBasic::firstOp(void) const
+
+{
+  if (op.empty()) return (PcodeOp *)0;
+  return (PcodeOp *)op.front();
+}
+
 PcodeOp *BlockBasic::lastOp(void) const
 
 {
@@ -2286,7 +2345,7 @@ int4 BlockBasic::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
   PcodeOp *lastop = op.back();
   if (lastop->code() != CPUI_CBRANCH)
     return 2;
-  return opFlipInPlaceTest(lastop,fliplist);
+  return Funcdata::opFlipInPlaceTest(lastop,fliplist);
 }
 
 void BlockBasic::flipInPlaceExecute(void)
@@ -2515,9 +2574,16 @@ bool BlockBasic::isDoNothing(void) const
   if (sizeIn() == 0) return false; // A block that does nothing but
 				// is a starting block, may need to be a
 				// placeholder for global(persistent) vars
-  if ((sizeIn()==1)&&(getIn(0)->isSwitchOut())) {
-    if (getOut(0)->sizeIn() > 1)
-      return false;		// Don't remove switch targets
+  for(int4 i=0;i<sizeIn();++i) {
+    const FlowBlock *switchbl = getIn(i);
+    if (!switchbl->isSwitchOut()) continue;
+    if (switchbl->sizeOut() > 1) {
+      // This block is a switch target
+      if (getOut(0)->sizeIn() > 1) {	// Multiple edges coming together
+					// Switch edge may still be propagating a unique value
+	return false;			// Don't remove it
+      }
+    }
   }
   PcodeOp *lastop = lastOp();
   if ((lastop != (PcodeOp *)0)&&(lastop->code()==CPUI_BRANCHIND))
@@ -2592,30 +2658,47 @@ void BlockBasic::printRaw(ostream &s) const
   }
 }
 
-/// \brief Check if there is meaningful activity between two branch instructions
+/// \brief Check for values created in \b this block that flow outside the block.
 ///
-/// The first branch is assumed to be a CBRANCH one edge of which flows into
-/// the other branch. The flow can be through 1 or 2 blocks.  If either block
-/// performs an operation other than MULTIEQUAL, INDIRECT (or the branch), then
-/// return \b false.
-/// \param first is the CBRANCH operation
-/// \param path is the index of the edge to follow to the other branch
-/// \param last is the other branch operation
-/// \return \b true if there is no meaningful activity
-bool BlockBasic::noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last)
+/// The block can calculate a value for a BRANCHIND or CBRANCH and can copy values and this method will still
+/// return \b true.  But calculating any value used outside the block, writing to an addressable location,
+/// or performing a CALL or STORE causes the method to return \b false.
+/// \return \b true if no value is created that can be used outside of the block
+bool BlockBasic::noInterveningStatement(void) const
 
 {
-  BlockBasic *curbl = (BlockBasic *)first->getParent()->getOut(path);
-  for(int4 i=0;i<2;++i) {
-    if (!curbl->hasOnlyMarkers()) return false;
-    if (curbl != last->getParent()) {
-      if (curbl->sizeOut() != 1) return false; // Intervening conditional branch
+  list<PcodeOp *>::const_iterator iter;
+  const PcodeOp *bop;
+  OpCode opc;
+
+  for(iter=op.begin();iter!=op.end();++iter) {
+    bop = *iter;
+    if (bop->isMarker()) continue;
+    if (bop->isBranch()) continue;
+    if (bop->getEvalType() == PcodeOp::special) {
+      if (bop->isCall())
+	return false;
+      opc = bop->code();
+      if (opc == CPUI_STORE || opc == CPUI_NEW)
+	return false;
     }
-    else
-      return true;
-    curbl = (BlockBasic *)curbl->getOut(0);
+    else {
+      opc = bop->code();
+      if (opc == CPUI_COPY || opc == CPUI_SUBPIECE)
+	continue;
+    }
+    const Varnode *outvn = bop->getOut();
+    if (outvn->isAddrTied())
+      return false;
+    list<PcodeOp *>::const_iterator iter = outvn->beginDescend();
+    while(iter!=outvn->endDescend()) {
+      PcodeOp *op = *iter;
+      if (op->getParent() != this)
+	return false;
+      ++iter;
+    }
   }
-  return false;
+  return true;
 }
 
 /// If there exists a CPUI_MULTIEQUAL PcodeOp in \b this basic block that takes the given exact list of Varnodes
@@ -2641,6 +2724,29 @@ PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
       return (PcodeOp *)0;
   }
   return op;
+}
+
+/// \brief Get the earliest use/read of a Varnode in \b this basic block
+///
+/// \param vn is the Varnode to search for
+/// \return the earliest PcodeOp reading the Varnode or NULL
+PcodeOp *BlockBasic::earliestUse(Varnode *vn)
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  PcodeOp *res = (PcodeOp *)0;
+
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->getParent() != this) continue;
+    if (res == (PcodeOp *)0)
+      res = op;
+    else {
+      if (op->getSeqNum().getOrder() < res->getSeqNum().getOrder())
+	res = op;
+    }
+  }
+  return res;
 }
 
 /// Each Varnode must be defined by a PcodeOp with the same OpCode.  The Varnode, within the array, is replaced
@@ -2952,7 +3058,7 @@ bool BlockIf::preferComplement(Funcdata &data)
   if (0 != split->flipInPlaceTest(fliplist))
     return false;
   split->flipInPlaceExecute();
-  opFlipInPlaceExecute(data,fliplist);
+  data.opFlipInPlaceExecute(fliplist);
   swapBlocks(1,2);
   return true;
 }

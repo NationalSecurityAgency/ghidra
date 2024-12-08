@@ -45,7 +45,7 @@ public abstract class NavigatableContextAction extends DockingAction {
 	public NavigatableContextAction(String name, String owner,
 			boolean supportsRestrictedAddressSetContext) {
 		super(name, owner);
-		setSupportsDefaultToolContext(true);
+		setContextClass(NavigatableActionContext.class, true);
 		this.supportsRestrictedAddressSetContext = supportsRestrictedAddressSetContext;
 	}
 
@@ -58,7 +58,7 @@ public abstract class NavigatableContextAction extends DockingAction {
 	 */
 	public NavigatableContextAction(String name, String owner, KeyBindingType type) {
 		super(name, owner, type);
-		setSupportsDefaultToolContext(true);
+		setContextClass(NavigatableActionContext.class, true);
 		this.supportsRestrictedAddressSetContext = true;
 	}
 

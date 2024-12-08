@@ -63,6 +63,13 @@ public class DataTree extends GTree {
 			KeyStroke.getKeyStroke(KeyEvent.VK_X, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 	}
 
+	@Override
+	protected boolean supportsPopupActions() {
+		// The base tree adds collapse/ expand actions, which we already provide, so signal that we
+		// do not want those actions.
+		return false;
+	}
+
 	void setProjectActive(boolean isActive) {
 		if (dragNDropHandler != null) {
 			dragNDropHandler.setProjectActive(isActive);

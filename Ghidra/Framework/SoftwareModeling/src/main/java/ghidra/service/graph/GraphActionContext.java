@@ -17,13 +17,13 @@ package ghidra.service.graph;
 
 import java.util.Set;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 
 /**
  * The base ActionContext for the GraphDisplay instances.
  */
-public class GraphActionContext extends ActionContext {
+public class GraphActionContext extends DefaultActionContext {
 	private final AttributedGraph graph;
 	private final Set<AttributedVertex> selectedVertices;
 	private final AttributedVertex focusedVertex;

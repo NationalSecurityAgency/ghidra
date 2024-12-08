@@ -23,6 +23,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.action.DockingAction;
 import ghidra.app.util.ClipboardType;
 import ghidra.util.task.TaskMonitor;
 
@@ -140,4 +141,35 @@ public interface ClipboardContentProviderService {
 	 * @return true if copy special is enabled
 	 */
 	public boolean canCopySpecial();
+
+	/**
+	 * Provide an alternative action owner.
+	 * 
+	 * <p>
+	 * This may be necessary if the key bindings or other user-customizable attributes need to be
+	 * separated from the standard clipboard actions. By default, the clipboard service will create
+	 * actions with a shared owner so that one keybinding, e.g., Ctrl-C, is shared across all Copy
+	 * actions.
+	 * 
+	 * @return the alternative owner, or null for the standard owner
+	 * @see #customizeClipboardAction(DockingAction)
+	 */
+	default public String getClipboardActionOwner() {
+		return null;
+	}
+
+	/**
+	 * Customize the given action.
+	 * 
+	 * <p>
+	 * This method is called at the end of the action's constructor, which takes placed
+	 * <em>before</em> the action is added to the provider. By default, this method does nothing.
+	 * Likely, you will need to know which action you are customizing. Inspect the action name.
+	 * 
+	 * @param action the action
+	 * @see #getClipboardActionOwner()
+	 */
+	default void customizeClipboardAction(DockingAction action) {
+		// Default is don't customize
+	}
 }

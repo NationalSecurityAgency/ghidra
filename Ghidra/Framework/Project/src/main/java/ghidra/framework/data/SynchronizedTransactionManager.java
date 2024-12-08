@@ -16,7 +16,7 @@
 package ghidra.framework.data;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 import ghidra.framework.model.*;
 import ghidra.framework.model.TransactionInfo.Status;
@@ -88,8 +88,8 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 
 	synchronized void removeDomainObject(DomainObjectAdapterDB domainObj) throws LockException {
 		if (getCurrentTransactionInfo() != null) {
-			throw new LockException(
-				"domain object has open transaction: " + getCurrentTransactionInfo().getDescription());
+			throw new LockException("domain object has open transaction: " +
+				getCurrentTransactionInfo().getDescription());
 		}
 		if (isLocked()) {
 			throw new LockException("domain object is locked!");
@@ -263,6 +263,26 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 			return t.getDescription();
 		}
 		return "";
+	}
+
+	@Override
+	List<String> getAllUndoNames() {
+		List<String> descriptions = new ArrayList<>();
+		for (SynchronizedTransaction tx : undoList) {
+			descriptions.add(tx.getDescription());
+		}
+		Collections.reverse(descriptions);
+		return descriptions;
+	}
+
+	@Override
+	List<String> getAllRedoNames() {
+		List<String> descriptions = new ArrayList<>();
+		for (SynchronizedTransaction tx : redoList) {
+			descriptions.add(tx.getDescription());
+		}
+		Collections.reverse(descriptions);
+		return descriptions;
 	}
 
 	@Override

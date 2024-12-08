@@ -22,6 +22,7 @@ import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 /**
  * Manages the nesting of scoping blocks for functions and scoped variables.
@@ -120,10 +121,17 @@ public class BlockCommentsManager {
 				CodeUnit.PRE_COMMENT);
 		}
 		for (Map.Entry<Address, String> entry : blockPostComments.entrySet()) {
-			Address endCodeUnitAddress = program.getListing().getCodeUnitContaining(
-				entry.getKey().add(addressDelta)).getAddress();
-			appendBlockComment(program, endCodeUnitAddress, entry.getValue(),
-				CodeUnit.POST_COMMENT);
+			CodeUnit codeUnit = program.getListing()
+					.getCodeUnitContaining(
+						entry.getKey().add(addressDelta));
+			if (codeUnit == null) {
+				Msg.warn(this, "PDB error: null Code unit");
+			}
+			else {
+				Address endCodeUnitAddress = codeUnit.getAddress();
+				appendBlockComment(program, endCodeUnitAddress, entry.getValue(),
+					CodeUnit.POST_COMMENT);
+			}
 		}
 	}
 

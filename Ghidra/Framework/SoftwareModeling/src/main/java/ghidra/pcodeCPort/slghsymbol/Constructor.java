@@ -15,10 +15,11 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
@@ -26,9 +27,8 @@ import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstructTpl;
 import ghidra.pcodeCPort.semantics.HandleTpl;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.*;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class Constructor {
@@ -298,105 +298,46 @@ public class Constructor {
 		// printpiece.pop_back();
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<constructor");
-		s.append(" parent=\"0x");
-		s.append(Long.toHexString(parent.getId()));
-		s.append("\"");
-		s.append(" first=\"");
-		s.print(firstwhitespace);
-		s.append("\"");
-		s.append(" length=\"");
-		s.print(minimumlength);
-		s.append("\"");
-		s.append(" line=\"");
-		s.print(sourceFileIndex);
-		s.append(":");
-		s.print(getLineno());
-		s.append("\">\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_CONSTRUCTOR);
+		encoder.writeUnsignedInteger(ATTRIB_PARENT, parent.getId());
+		encoder.writeSignedInteger(ATTRIB_FIRST, firstwhitespace);
+		encoder.writeSignedInteger(ATTRIB_LENGTH, minimumlength);
+		encoder.writeSignedInteger(ATTRIB_SOURCE, sourceFileIndex);
+		encoder.writeSignedInteger(ATTRIB_LINE, getLineno());
 		for (int i = 0; i < operands.size(); ++i) {
-			s.append("<oper id=\"0x");
-			s.append(Long.toHexString(operands.get(i).getId()));
-			s.append("\"/>\n");
+			encoder.openElement(ELEM_OPER);
+			encoder.writeUnsignedInteger(ATTRIB_ID, operands.get(i).getId());
+			encoder.closeElement(ELEM_OPER);
 		}
 		final int printpieces = printpiece.size();
 		for (int i = 0; i < printpieces; ++i) {
 			String piece = printpiece.get(i);
 			if (piece.length() > 0 && piece.charAt(0) == '\n') {
 				int index = piece.charAt(1) - 'A';
-				s.append("<opprint id=\"");
-				s.print(index);
-				s.append("\"/>\n");
+				encoder.openElement(ELEM_OPPRINT);
+				encoder.writeSignedInteger(ATTRIB_ID, index);
+				encoder.closeElement(ELEM_OPPRINT);
 			}
 			else {
-				s.append("<print piece=\"");
-				XmlUtils.xml_escape(s, piece);
-				s.append("\"/>\n");
+				encoder.openElement(ELEM_PRINT);
+				encoder.writeString(ATTRIB_PIECE, piece);
+				encoder.closeElement(ELEM_PRINT);
 			}
 		}
 		for (int i = 0; i < context.size(); ++i) {
-			context.get(i).saveXml(s);
+			context.get(i).encode(encoder);
 		}
 		if (templ != null) {
-			templ.saveXml(s, -1);
+			templ.encode(encoder, -1);
 		}
 		for (int i = 0; i < namedtempl.size(); ++i) {
 			if (namedtempl.get(i) == null) {
 				continue;
 			}
-			namedtempl.get(i).saveXml(s, i);
+			namedtempl.get(i).encode(encoder, i);
 		}
-		s.append("</constructor>\n");
-	}
-
-	public void restoreXml(Element el, SleighBase trans) {
-		int id = XmlUtils.decodeUnknownInt(el.getAttributeValue("parent"));
-		parent = (SubtableSymbol) trans.findSymbol(id);
-
-		firstwhitespace = XmlUtils.decodeUnknownInt(el.getAttributeValue("first"));
-		minimumlength = XmlUtils.decodeUnknownInt(el.getAttributeValue("length"));
-		int lineno = XmlUtils.decodeUnknownInt(el.getAttributeValue("line"));
-
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		while (iter.hasNext()) {
-			Element child = (Element) iter.next();
-			if (child.getName().equals("oper")) {
-				id = XmlUtils.decodeUnknownInt(child.getAttributeValue("id"));
-				OperandSymbol sym = (OperandSymbol) trans.findSymbol(id);
-				operands.push_back(sym);
-			}
-			else if (child.getName().equals("print")) {
-				printpiece.push_back(child.getAttributeValue("piece"));
-			}
-			else if (child.getName().equals("opprint")) {
-				int index = XmlUtils.decodeUnknownInt(child.getAttributeValue("id"));
-				char c = (char) ('A' + index);
-				String operstring = "\n" + c;
-				printpiece.push_back(operstring);
-			}
-			else if (child.getName().equals("context_op")) {
-				ContextOp c_op = new ContextOp(location);
-				c_op.restoreXml(child, trans);
-				context.push_back(c_op);
-			}
-			else if (child.getName().equals("commit")) {
-				ContextCommit c_op = new ContextCommit();
-				c_op.restoreXml(child, trans);
-				context.push_back(c_op);
-			}
-			else {
-				templ = new ConstructTpl(null);
-				templ.restoreXml(child, trans);
-			}
-		}
-		pattern = null;
-		if ((printpiece.size() == 1) && (printpiece.get(0).charAt(0) == '\n')) {
-			flowthruindex = printpiece.get(0).charAt(1) - 'A';
-		}
-		else {
-			flowthruindex = -1;
-		}
+		encoder.closeElement(ELEM_CONSTRUCTOR);
 	}
 
 	private void orderOperands() {

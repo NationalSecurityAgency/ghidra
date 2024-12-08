@@ -26,7 +26,7 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -42,13 +42,13 @@ public class DebuggerModuleMapProposalDialog
 		implements EnumeratedTableColumn<ModuleMapTableColumns, ModuleMapEntry> {
 		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
 		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getModule().getBase()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getFromRange().getMinAddress()),
 		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> (e.getToProgram().getDomainFile() == null
 				? e.getToProgram().getName()
 				: e.getToProgram().getDomainFile().getName())),
-		STATIC_BASE("Static Base", Address.class, e -> e.getToProgram().getImageBase()),
-		SIZE("Size", Long.class, e -> e.getModuleRange().getLength()),
+		STATIC_BASE("Static Base", Address.class, e -> e.getToRange().getMinAddress()),
+		SIZE("Size", Long.class, e -> e.getFromRange().getLength()),
 		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize, ModuleMapEntry::setMemorize);
 
 		private final String header;

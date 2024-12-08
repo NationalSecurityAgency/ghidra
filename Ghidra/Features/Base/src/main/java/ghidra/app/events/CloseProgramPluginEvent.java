@@ -18,16 +18,11 @@ package ghidra.app.events;
 import java.lang.ref.WeakReference;
 
 import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.plugintool.ToolEventName;
 import ghidra.program.model.listing.Program;
 
 /**
- * Event for telling a tool to open a program
- * <p>
- * This event shares a common tool-event name with the {@link OpenProgramPluginEvent}
- * so that they have a single shared tool connection.
+ * Event for telling a tool to close a program
  */
-@ToolEventName(OpenProgramPluginEvent.TOOL_EVENT_NAME) // this allows the event to be considered for tool connection
 public class CloseProgramPluginEvent extends PluginEvent {
 
 	static final String NAME = "Close Program";

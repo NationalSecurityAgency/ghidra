@@ -48,11 +48,19 @@ public interface TraceObjectInterface {
 
 	@Transitional
 	default long computeMinSnap() {
-		return computeSpan().lmin();
+		Lifespan span = computeSpan();
+		if (span == null) {
+			return 0;
+		}
+		return span.lmin();
 	}
 
 	@Transitional
 	default long computeMaxSnap() {
-		return computeSpan().lmax();
+		Lifespan span = computeSpan();
+		if (span == null) {
+			return 0;
+		}
+		return span.lmax();
 	}
 }

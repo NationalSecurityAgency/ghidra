@@ -63,7 +63,7 @@ public abstract class AbstractDataTypeMergeTest extends AbstractMergeTest {
 		ProgramChangeSet myChangeSet = mtf.getPrivateChangeSet();
 		mergeMgr = createMergeManager(resultChangeSet, myChangeSet);
 
-		testMonitor.clearCanceled();
+		testMonitor.clearCancelled();
 		final CountDownLatch started = new CountDownLatch(1);
 		final CountDownLatch done = new CountDownLatch(1);
 		Thread t = new Thread(() -> {

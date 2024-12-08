@@ -20,8 +20,7 @@ import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
-import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseBranch;
-import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
+import ghidra.app.plugin.assembler.sleigh.tree.*;
 import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 import ghidra.app.plugin.processors.sleigh.Constructor;
 import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
@@ -43,8 +42,8 @@ public class AssemblyConstructStateGenerator
 	 * @param node the node from which to generate states
 	 * @param fromLeft the accumulated patterns from the left sibling or the parent
 	 */
-	public AssemblyConstructStateGenerator(AssemblyTreeResolver resolver, AssemblyParseBranch node,
-			AssemblyResolvedPatterns fromLeft) {
+	public AssemblyConstructStateGenerator(AbstractAssemblyTreeResolver<?> resolver,
+			AssemblyParseBranch node, AssemblyResolvedPatterns fromLeft) {
 		super(resolver, node, fromLeft);
 	}
 
@@ -68,8 +67,9 @@ public class AssemblyConstructStateGenerator
 	 */
 	protected List<AssemblyParseTreeNode> orderOpNodes(AssemblyConstructorSemantic sem) {
 		Constructor cons = sem.getConstructor();
-		List<AssemblyParseTreeNode> result =
-			Arrays.asList(new AssemblyParseTreeNode[cons.getNumOperands()]);
+		AssemblyParseTreeNode[] arr = new AssemblyParseTreeNode[cons.getNumOperands()];
+		List<AssemblyParseTreeNode> result = Arrays.asList(arr);
+		Arrays.fill(arr, new AssemblyParseHiddenNode(resolver.grammar));
 		int index = 0;
 		AssemblyProduction production = node.getProduction();
 		List<AssemblyParseTreeNode> substitutions = node.getSubstitutions();
@@ -167,13 +167,13 @@ public class AssemblyConstructStateGenerator
 	 * child operand boundary is numbered. The offset base must always refer to an operand to the
 	 * left.
 	 * 
-	 * @param parentGc the generator context for othis node
+	 * @param parentGc the generator context for this node
 	 * @param childGcs a list to collect the generator context for each child operand. The root
 	 *            invocation should pass a fixed-length mutable list of nulls, one for each child.
 	 * @param fromLeft the accumulated patterns from the left sibling. The root invocation should
 	 *            pass the patterns accumulated after context changes.
 	 * @param sem the selected SLEIGH constructor, whose operands to generate
-	 * @param opOrdered the paresd children ordered as the constructor's operands
+	 * @param opOrdered the parsed children ordered as the constructor's operands
 	 * @param children the list of children generated so far. The root invocation should pass the
 	 *            empty list.
 	 * @return the stream of generated (sub) prototypes

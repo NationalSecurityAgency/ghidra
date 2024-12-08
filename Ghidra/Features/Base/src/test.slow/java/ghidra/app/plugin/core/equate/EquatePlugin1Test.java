@@ -25,8 +25,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
@@ -38,7 +37,6 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
-import ghidra.app.util.PluginConstants;
 import ghidra.app.util.bean.SetEquateDialog;
 import ghidra.app.util.viewer.field.ListingTextField;
 import ghidra.app.util.viewer.field.OperandFieldFactory;
@@ -673,7 +671,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		env.close(program);
 
-		assertFalse(setAction.isEnabledForContext(new ActionContext()));
+		assertFalse(setAction.isEnabledForContext(new DefaultActionContext()));
 	}
 
 	/*
@@ -863,7 +861,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 			}
 			else if (name.indexOf("Float") >= 0) {
 				assertTrue(popupPath[1].startsWith("Float"));
-				assertTrue(popupPath[1].endsWith(" 5.605194E-45"));
+				assertTrue(popupPath[1].endsWith(" 5.6051939E-45"));
 			}
 			else {
 				fail("Unhandled Convert item: " + name);
@@ -1022,7 +1020,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testConvertToUnsignedDecimal() {
 		// create an unsigned decimal as the equate name
 		putCursorOnOperand(0x010059ef, 1);
-		ComponentProvider provider = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
+		ComponentProvider provider = cb.getProvider();
 
 		Instruction inst = listing.getInstructionAt(addr(0x010059ef));
 		Scalar scalar = inst.getScalar(1);

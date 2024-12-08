@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,30 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.AbstractPeekableIterator;
 
+/**
+ * An iterator of overlapping objects return from two given iterators.
+ * 
+ * <p>
+ * The given iterators, named left and right, must return objects each having a range attribute.
+ * Each iterator must return objects having disjoint ranges, i.e., no two objects from the
+ * <em>same</em> iterator may intersect. Each iterator must also return the objects sorted by min
+ * address. This iterator will then discover every case where an object from the left iterator
+ * overlaps an object from the right iterator, and return a pair for each such instance, in order of
+ * min address.
+ * 
+ * <p>
+ * <b>WARNING:</b> To avoid heap pollution, this iterator re-uses the same {@link Pair} on each call
+ * to {@link #next()}. If you need to save an overlapping pair, you must copy it.
+ * 
+ * @param <L> the type of objects returned by the left iterator
+ * @param <R> the type of objects returned by the right iterator
+ */
 public class OverlappingObjectIterator<L, R> extends AbstractPeekableIterator<Pair<L, R>> {
+	/**
+	 * A means of obtaining the range attribute from each object
+	 * 
+	 * @param <T> the type of objects returned by an iterator
+	 */
 	public interface Ranger<T> {
 		Address getMinAddress(T t);
 

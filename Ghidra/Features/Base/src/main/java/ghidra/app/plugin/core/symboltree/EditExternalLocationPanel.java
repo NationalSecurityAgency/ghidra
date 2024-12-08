@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
@@ -269,7 +271,7 @@ class EditExternalLocationPanel extends JPanel {
 	 */
 	private void popupProgramChooser() {
 		DataTreeDialog d =
-			new DataTreeDialog(this.getParent(), "Choose External Program", DataTreeDialog.OPEN);
+			new DataTreeDialog(this.getParent(), "Choose External Program", OPEN);
 		final DataTreeDialog dialog = d;
 		d.addOkActionListener(e -> {
 			DomainFile df = dialog.getDomainFile();

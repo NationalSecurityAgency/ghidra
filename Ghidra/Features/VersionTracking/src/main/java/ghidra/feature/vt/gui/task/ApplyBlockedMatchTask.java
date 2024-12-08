@@ -86,7 +86,7 @@ public class ApplyBlockedMatchTask extends VtTask {
 			throws CancelledException, VersionTrackingApplyException {
 		monitor.setMessage("Applying a blocked match");
 		monitor.initialize(2);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		VTAssociation association = match.getAssociation();
 		VTAssociationStatus status = association.getStatus();
 		if (status != VTAssociationStatus.BLOCKED) {
@@ -114,7 +114,7 @@ public class ApplyBlockedMatchTask extends VtTask {
 	private void clearConflicts(TaskMonitor monitor)
 			throws CancelledException, VersionTrackingApplyException {
 		for (VTAssociation association : conflicts) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTAssociationStatus status = association.getStatus();
 			if (status != VTAssociationStatus.ACCEPTED) {
 				continue;
@@ -122,7 +122,7 @@ public class ApplyBlockedMatchTask extends VtTask {
 
 			Collection<VTMarkupItem> markupItems = association.getMarkupItems(monitor);
 			for (VTMarkupItem item : markupItems) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				maybeUnapply(item);
 				maybeClearStatus(item);
 			}
@@ -174,7 +174,7 @@ public class ApplyBlockedMatchTask extends VtTask {
 	private void applyMarkupItems(TaskMonitor monitor, Collection<VTMarkupItem> markupItems)
 			throws CancelledException {
 		for (VTMarkupItem item : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTMarkupItemStatus status = item.getStatus();
 			if (status != VTMarkupItemStatus.UNAPPLIED) {
 				// for now we only handle items that have not been applied

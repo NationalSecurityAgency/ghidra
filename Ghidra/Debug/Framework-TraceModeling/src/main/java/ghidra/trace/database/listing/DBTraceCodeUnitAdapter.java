@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -224,11 +224,9 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default Symbol[] getSymbols() {
 		try (LockHold hold = getTrace().lockRead()) {
-			Collection<? extends TraceSymbol> at =
-				getTrace().getSymbolManager()
-						.labelsAndFunctions()
-						.getAt(getStartSnap(), getThread(),
-							getAddress(), true);
+			Collection<? extends TraceSymbol> at = getTrace().getSymbolManager()
+					.labels()
+					.getAt(getStartSnap(), getThread(), getAddress(), true);
 			return at.toArray(new TraceSymbol[at.size()]);
 		}
 	}
@@ -236,11 +234,9 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default Symbol getPrimarySymbol() {
 		try (LockHold hold = getTrace().lockRead()) {
-			Collection<? extends TraceSymbol> at =
-				getTrace().getSymbolManager()
-						.labelsAndFunctions()
-						.getAt(getStartSnap(), getThread(),
-							getAddress(), true);
+			Collection<? extends TraceSymbol> at = getTrace().getSymbolManager()
+					.labels()
+					.getAt(getStartSnap(), getThread(), getAddress(), true);
 			if (at.isEmpty()) {
 				return null;
 			}
@@ -280,11 +276,6 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default String[] getCommentAsArray(int commentType) {
 		return DBTraceCommentAdapter.arrayFromComment(getComment(commentType));
-	}
-
-	@Override
-	default boolean isSuccessor(CodeUnit codeUnit) {
-		return getMaxAddress().isSuccessor(codeUnit.getMinAddress());
 	}
 
 	@Override

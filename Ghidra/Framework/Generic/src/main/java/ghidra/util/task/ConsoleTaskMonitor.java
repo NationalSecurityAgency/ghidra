@@ -22,7 +22,7 @@ import ghidra.util.Msg;
  */
 public class ConsoleTaskMonitor extends TaskMonitorAdapter {
 	@Override
-    public void setMessage(String msg) {
+	public void setMessage(String msg) {
 		Msg.info(this, msg);
 	}
 }

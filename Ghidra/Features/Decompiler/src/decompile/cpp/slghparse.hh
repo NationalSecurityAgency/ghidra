@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,6 +45,9 @@
 
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
 
 #ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 # define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
@@ -175,21 +179,17 @@ extern int sleighdebug;
     SPECSYM = 362,
     VARLISTSYM = 363,
     OPERANDSYM = 364,
-    STARTSYM = 365,
-    ENDSYM = 366,
-    NEXT2SYM = 367,
-    MACROSYM = 368,
-    LABELSYM = 369,
-    SUBTABLESYM = 370
+    JUMPSYM = 365,
+    MACROSYM = 366,
+    LABELSYM = 367,
+    SUBTABLESYM = 368
   };
 #endif
 
 /* Value type.  */
 #if ! defined SLEIGHSTYPE && ! defined SLEIGHSTYPE_IS_DECLARED
-
 union SLEIGHSTYPE
 {
-
 
   char ch;
   uintb *i;
@@ -220,9 +220,6 @@ union SLEIGHSTYPE
   MacroSymbol *macrosym;
   LabelSymbol *labelsym;
   SubtableSymbol *subtablesym;
-  StartSymbol *startsym;
-  EndSymbol *endsym;
-  Next2Symbol *next2sym;
   OperandSymbol *operandsym;
   VarnodeListSymbol *varlistsym;
   VarnodeSymbol *varsym;
@@ -236,7 +233,6 @@ union SLEIGHSTYPE
 
 
 };
-
 typedef union SLEIGHSTYPE SLEIGHSTYPE;
 # define SLEIGHSTYPE_IS_TRIVIAL 1
 # define SLEIGHSTYPE_IS_DECLARED 1

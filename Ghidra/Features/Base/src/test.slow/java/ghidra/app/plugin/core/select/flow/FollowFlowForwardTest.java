@@ -80,6 +80,33 @@ public class FollowFlowForwardTest extends AbstractFollowFlowTest {
 
 		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
 	}
+	
+	@Test
+	public void testFollowAllFlowsFromNoData0x10() {
+
+		AddressSetView flowAddresses = getFlowsFrom(0x10, followAllFlows(), true, false);
+
+		AddressSet expectedAddresses = new AddressSet();
+		expectedAddresses.add(addr(0x0), addr(0x24));
+		expectedAddresses.add(addr(0x26), addr(0x2f));
+		expectedAddresses.add(addr(0x30), addr(0x52));
+		expectedAddresses.add(addr(0x54), addr(0x5f));
+		expectedAddresses.add(addr(0x60), addr(0x84));
+		expectedAddresses.add(addr(0x86), addr(0x8f));
+		expectedAddresses.add(addr(0x90), addr(0xb4));
+		expectedAddresses.add(addr(0xb6), addr(0xbf));
+		expectedAddresses.add(addr(0x130), addr(0x131));
+		expectedAddresses.add(addr(0x160), addr(0x161));
+		expectedAddresses.add(addr(0x190), addr(0x191));
+		expectedAddresses.add(addr(0x230), addr(0x231));
+		expectedAddresses.add(addr(0x260), addr(0x261));
+		expectedAddresses.add(addr(0x290), addr(0x291));
+		expectedAddresses.add(addr(0x330), addr(0x331));
+		expectedAddresses.add(addr(0x360), addr(0x361));
+		expectedAddresses.add(addr(0x390), addr(0x391));
+
+		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
+	}
 
 	@Test
 	public void testFollowAllFlowsFrom0x17() {
@@ -101,6 +128,27 @@ public class FollowFlowForwardTest extends AbstractFollowFlowTest {
 		expectedAddresses.add(addr(0x390), addr(0x391));
 		expectedAddresses.add(addr(0x5034), addr(0x5037));
 		expectedAddresses.add(addr(0x5040), addr(0x5043));
+
+		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
+	}
+	@Test
+	public void testFollowAllFlowsFromNoData0x17() {
+
+		AddressSetView flowAddresses = getFlowsFrom(0x17, followAllFlows(), true, false);
+
+		AddressSet expectedAddresses = new AddressSet();
+		expectedAddresses.add(addr(0x17), addr(0x24));
+		expectedAddresses.add(addr(0x26), addr(0x2f));
+		expectedAddresses.add(addr(0x60), addr(0x84));
+		expectedAddresses.add(addr(0x86), addr(0x8f));
+		expectedAddresses.add(addr(0x90), addr(0xb4));
+		expectedAddresses.add(addr(0xb6), addr(0xbf));
+		expectedAddresses.add(addr(0x230), addr(0x231));
+		expectedAddresses.add(addr(0x260), addr(0x261));
+		expectedAddresses.add(addr(0x290), addr(0x291));
+		expectedAddresses.add(addr(0x330), addr(0x331));
+		expectedAddresses.add(addr(0x360), addr(0x361));
+		expectedAddresses.add(addr(0x390), addr(0x391));
 
 		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
 	}
@@ -156,6 +204,20 @@ public class FollowFlowForwardTest extends AbstractFollowFlowTest {
 		expectedAddresses.add(addr(0x260), addr(0x261));
 		expectedAddresses.add(addr(0x290), addr(0x291));
 		expectedAddresses.add(addr(0x5034), addr(0x5037));
+
+		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
+	}
+	
+	@Test
+	public void testFollowAllFlowsFromNoData0x77() {
+
+		AddressSetView flowAddresses = getFlowsFrom(0x77, followAllFlows(), true, false);
+
+		AddressSet expectedAddresses = new AddressSet();
+		expectedAddresses.add(addr(0x77), addr(0x84));
+		expectedAddresses.add(addr(0x86), addr(0x8f));
+		expectedAddresses.add(addr(0x260), addr(0x261));
+		expectedAddresses.add(addr(0x290), addr(0x291));
 
 		assertEquals(new MySelection(expectedAddresses), new MySelection(flowAddresses));
 	}

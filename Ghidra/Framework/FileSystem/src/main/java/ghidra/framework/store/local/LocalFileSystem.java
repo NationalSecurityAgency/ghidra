@@ -366,13 +366,9 @@ public abstract class LocalFileSystem implements FileSystem {
 	protected abstract void deallocateItemStorage(String folderPath, String itemName)
 			throws IOException;
 
-	protected abstract String[] getItemNames(String folderPath, boolean includeHiddenFiles)
+	public abstract String[] getItemNames(String folderPath, boolean includeHiddenFiles)
 			throws IOException;
 
-	/**
-	 *
-	 * @see ghidra.framework.store.FileSystem#getItemNames(java.lang.String)
-	 */
 	@Override
 	public synchronized String[] getItemNames(String folderPath) throws IOException {
 		return getItemNames(folderPath, false);
@@ -407,8 +403,19 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	@Override
-	public FolderItem getItem(String fileID) throws IOException, UnsupportedOperationException {
+	public LocalFolderItem getItem(String fileID)
+			throws IOException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("getItem by File-ID");
+	}
+
+	@Override
+	public LocalFolderItem[] getItems(String folderPath) throws IOException {
+		String[] itemNames = getItemNames(folderPath, false);
+		LocalFolderItem[] folderItems = new LocalFolderItem[itemNames.length];
+		for (int i = 0; i < itemNames.length; i++) {
+			folderItems[i] = getItem(folderPath, itemNames[i]);
+		}
+		return folderItems;
 	}
 
 	@Override
@@ -729,7 +736,7 @@ public abstract class LocalFileSystem implements FileSystem {
 				if (folderPath.length() == 1) {
 					return;
 				}
-				String[] items = getItemNames(folderPath);
+				String[] items = getItemNames(folderPath, false);
 				if (items.length > 0) {
 					return;
 				}

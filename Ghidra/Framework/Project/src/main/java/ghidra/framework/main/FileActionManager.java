@@ -35,6 +35,7 @@ import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
@@ -123,7 +124,7 @@ class FileActionManager {
 		closeProjectAction = new DockingAction("Close Project", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				closeProject(false); //not exiting
+				closeProject(false); // not exiting
 			}
 		};
 		closeProjectAction.setEnabled(false);
@@ -187,7 +188,7 @@ class FileActionManager {
 			// if all is well and we already have an active project, close it
 			Project activeProject = plugin.getActiveProject();
 			if (activeProject != null) {
-				if (!closeProject(false)) { // false -->not exiting
+				if (!closeProject(false)) { // false --> not exiting
 					return; // user canceled
 				}
 			}
@@ -351,31 +352,31 @@ class FileActionManager {
 	 * all domain objects.
 	 */
 	private DomainObject[] lockDomainObjects(List<DomainFile> files) {
-		DomainObject[] objs = new DomainObject[files.size()];
+		DomainObject[] domainObjects = new DomainObject[files.size()];
 		int lastIndex = 0;
 		boolean locked = true;
 		while (lastIndex < files.size()) {
 			try {
-				objs[lastIndex] = files.get(lastIndex).getDomainObject(this, false, false, null);
+				domainObjects[lastIndex] =
+					files.get(lastIndex).getDomainObject(this, false, false, null);
 			}
 			catch (Throwable t) {
 				Msg.error(this, "Failed to aqcuire domain object instance", t);
 				locked = false;
 				break;
 			}
-			if (!objs[lastIndex].lock(null)) {
+			if (!domainObjects[lastIndex].lock(null)) {
 				String title = "Exit Ghidra";
 				StringBuffer buf = new StringBuffer();
-				UndoableDomainObject udo = (UndoableDomainObject) objs[lastIndex];
+				DomainObject d = domainObjects[lastIndex];
 				buf.append("The File " + files.get(lastIndex).getPathname() +
 					" is currently being modified by the\n");
 				buf.append("the following actions:\n \n");
-				TransactionInfo t = udo.getCurrentTransactionInfo();
+				TransactionInfo t = d.getCurrentTransactionInfo();
 				List<String> list = t.getOpenSubTransactions();
-				Iterator<String> it = list.iterator();
-				while (it.hasNext()) {
+				for (String element : list) {
 					buf.append("\n     ");
-					buf.append(it.next());
+					buf.append(element);
 				}
 				buf.append("\n \n");
 				buf.append(
@@ -390,22 +391,22 @@ class FileActionManager {
 
 				if (result == OptionDialog.CANCEL_OPTION) {
 					locked = false;
-					objs[lastIndex].release(this);
+					domainObjects[lastIndex].release(this);
 					break;
 				}
-				udo.forceLock(true, null);
+				d.forceLock(true, null);
 			}
 			++lastIndex;
 		}
 		if (!locked) {
 			//skip the last one that could not be locked...
 			for (int i = 0; i < lastIndex; i++) {
-				objs[i].unlock();
-				objs[i].release(this);
+				domainObjects[i].unlock();
+				domainObjects[i].release(this);
 			}
 			return null;
 		}
-		return objs;
+		return domainObjects;
 	}
 
 	/**
@@ -428,7 +429,7 @@ class FileActionManager {
 		// check for any changes since last saved
 		PluginTool[] runningTools = activeProject.getToolManager().getRunningTools();
 		for (PluginTool runningTool : runningTools) {
-			if (!runningTool.canClose(isExiting)) {
+			if (!PluginToolAccessUtils.canClose(runningTool)) {
 				return false;
 			}
 		}

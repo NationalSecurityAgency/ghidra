@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,11 @@ import java.util.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema.*;
 
+/**
+ * @deprecated This will be moved/refactored into trace database. In general, it will still exist,
+ *             but things depending on it are now back on shifting sand.
+ */
+@Deprecated(since = "11.2")
 public class SchemaBuilder {
 	private final DefaultSchemaContext context;
 	private final SchemaName name;
@@ -33,6 +38,7 @@ public class SchemaBuilder {
 	private ResyncMode elementResync = TargetObjectSchema.DEFAULT_ELEMENT_RESYNC;
 
 	private Map<String, AttributeSchema> attributeSchemas = new LinkedHashMap<>();
+	private Map<String, String> attributeAliases = new LinkedHashMap<>();
 	private AttributeSchema defaultAttributeSchema = AttributeSchema.DEFAULT_ANY;
 	private ResyncMode attributeResync = TargetObjectSchema.DEFAULT_ATTRIBUTE_RESYNC;
 
@@ -163,10 +169,10 @@ public class SchemaBuilder {
 		if (schema.getName().equals("")) {
 			return setDefaultAttributeSchema(schema);
 		}
-		if (attributeSchemas.containsKey(schema.getName())) {
-			throw new IllegalArgumentException("Duplicate attribute name '" + schema.getName() +
-				"' origin1=" + attributeOrigins.get(schema.getName()) +
-				" origin2=" + origin);
+		if (attributeOrigins.containsKey(schema.getName())) {
+			throw new IllegalArgumentException(
+				"Duplicate attribute name '%s' adding schema origin1=%s origin2=%s".formatted(
+					schema.getName(), attributeOrigins.get(schema.getName()), origin));
 		}
 		attributeSchemas.put(schema.getName(), schema);
 		attributeOrigins.put(schema.getName(), origin);
@@ -178,6 +184,7 @@ public class SchemaBuilder {
 			return setDefaultAttributeSchema(AttributeSchema.DEFAULT_ANY);
 		}
 		attributeSchemas.remove(name);
+		attributeAliases.remove(name);
 		attributeOrigins.remove(name);
 		return this;
 	}
@@ -194,8 +201,38 @@ public class SchemaBuilder {
 		if (schema.getName().equals("")) {
 			return setDefaultAttributeSchema(schema);
 		}
+		attributeAliases.remove(schema.getName());
 		attributeSchemas.put(schema.getName(), schema);
 		attributeOrigins.put(schema.getName(), origin);
+		return this;
+	}
+
+	protected void validateAlias(String from, String to) {
+		if (from.equals("")) {
+			throw new IllegalArgumentException("Key '' cannot be an alias");
+		}
+		if (to.equals("")) {
+			throw new IllegalArgumentException("Cannot alias to key '' (from %s)".formatted(from));
+		}
+	}
+
+	public SchemaBuilder addAttributeAlias(String from, String to, Object origin) {
+		validateAlias(from, to);
+		if (attributeOrigins.containsKey(from)) {
+			throw new IllegalArgumentException(
+				"Duplicate attribute name '%s' adding alias origin1=%s origin2=%s".formatted(
+					from, attributeOrigins.get(from), origin));
+		}
+		attributeAliases.put(from, to);
+		attributeOrigins.put(from, origin);
+		return this;
+	}
+
+	public SchemaBuilder replaceAttributeAlias(String from, String to, Object origin) {
+		validateAlias(from, to);
+		attributeSchemas.remove(from);
+		attributeAliases.put(from, to);
+		attributeOrigins.put(from, origin);
 		return this;
 	}
 
@@ -227,6 +264,6 @@ public class SchemaBuilder {
 		return new DefaultTargetObjectSchema(
 			context, name, type, interfaces, isCanonicalContainer,
 			elementSchemas, defaultElementSchema, elementResync,
-			attributeSchemas, defaultAttributeSchema, attributeResync);
+			attributeSchemas, attributeAliases, defaultAttributeSchema, attributeResync);
 	}
 }

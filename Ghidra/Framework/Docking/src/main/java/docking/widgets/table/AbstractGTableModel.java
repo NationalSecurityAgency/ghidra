@@ -28,7 +28,7 @@ public abstract class AbstractGTableModel<T> extends AbstractTableModel
 
 	private List<T> lastSelectedObjects = new ArrayList<>();
 
-	private boolean isDisposed;
+	protected boolean isDisposed;
 
 	@Override
 	public T getRowObject(int row) {

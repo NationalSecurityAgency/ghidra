@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,13 @@
  */
 package docking;
 
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import docking.action.DockingActionIf;
 
@@ -57,8 +63,8 @@ class PlaceholderManager {
 			restoredPlaceholder.showHeader(false);
 		}
 
-		if (defaultPlaceholder.isShowing() != restoredPlaceholder.isShowing()) {
-			if (restoredPlaceholder.isShowing()) {
+		if (defaultPlaceholder.isActive() != restoredPlaceholder.isActive()) {
+			if (restoredPlaceholder.isActive()) {
 				provider.componentShown();
 			}
 			else {
@@ -290,13 +296,23 @@ class PlaceholderManager {
 		String name = newInfo.getName();
 		String group = newInfo.getGroup();
 
-		for (ComponentPlaceholder placeholder : activePlaceholders) {
-			if (name.equals(placeholder.getName()) && group.equals(placeholder.getGroup())) {
-				return placeholder;
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+		List<ComponentPlaceholder> matching = activePlaceholders.stream()
+				.filter(p -> name.equals(p.getName()) && group.equals(p.getGroup()))
+				.collect(Collectors.toList());
+
+		// prefer using the focused window
+		for (ComponentPlaceholder placeholder : matching) {
+			JComponent component = placeholder.getProviderComponent();
+			if (focusOwner != null && component != null) {
+				if (SwingUtilities.isDescendingFrom(focusOwner, component)) {
+					return placeholder;
+				}
 			}
 		}
 
-		return null;
+		return matching.stream().findAny().orElse(null);
 	}
 
 	private ComponentPlaceholder findBestUnusedPlaceholder(

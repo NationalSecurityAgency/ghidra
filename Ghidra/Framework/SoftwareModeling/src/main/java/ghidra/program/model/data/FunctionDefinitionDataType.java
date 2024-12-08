@@ -178,8 +178,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	@Override
 	public void setCallingConvention(String conventionName) throws InvalidInputException {
 
-		if (conventionName == null ||
-			CompilerSpec.CALLING_CONVENTION_unknown.equals(conventionName)) {
+		if (CompilerSpec.isUnknownCallingConvention(conventionName)) {
 			this.callingConventionName = CompilerSpec.CALLING_CONVENTION_unknown;
 			return;
 		}
@@ -365,8 +364,7 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		if ((signature.getName().equals(this.name)) && (compareComment(signature)) &&
 			(DataTypeUtilities.isSameOrEquivalentDataType(signature.getReturnType(),
 				this.returnType)) &&
-			(hasVarArgs == signature.hasVarArgs()) &&
-			(hasNoReturn == signature.hasNoReturn()) &&
+			(hasVarArgs == signature.hasVarArgs()) && (hasNoReturn == signature.hasNoReturn()) &&
 			callingConventionName.equals(signature.getCallingConventionName())) {
 			ParameterDefinition[] args = signature.getArguments();
 			if (args.length == this.params.length) {

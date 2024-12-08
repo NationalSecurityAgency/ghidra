@@ -42,7 +42,7 @@ public class BasicBlockCounterFunctionAlgorithm implements FunctionAlgorithm {
 
 		int blockCount = 0;
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iterator.next();
 			blockCount++;
 			monitor.incrementProgress(1);

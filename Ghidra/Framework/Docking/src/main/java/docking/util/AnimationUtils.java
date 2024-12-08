@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
@@ -133,24 +133,19 @@ public class AnimationUtils {
 		return driver.animator;
 	}
 
-	public static Animator createPaintingAnimator(Component window, AnimationPainter painter) {
+	public static Animator createPaintingAnimator(Component component, AnimationPainter painter) {
 		if (!animationEnabled) {
 			return null;
 		}
 
-		Component paneComponent = getGlassPane(window);
-		if (paneComponent == null) {
+		GGlassPane glassPane = getGlassPane(component);
+		if (glassPane == null) {
 			// could happen if the given component has not yet been realized
+			Msg.debug(AnimationUtils.class,
+				"Cannot animate without a " + GGlassPane.class.getName() + " installed");
 			return null;
 		}
 
-		if (!(paneComponent instanceof GGlassPane)) {
-			Msg.debug(AnimationUtils.class,
-				"Cannot animate without a " + GGlassPane.class.getName() + " installed");
-			return null; // shouldn't happen
-		}
-
-		GGlassPane glassPane = (GGlassPane) paneComponent;
 		BasicAnimationDriver driver =
 			new BasicAnimationDriver(glassPane, new UserDefinedPainter(painter));
 		return driver.animator;
@@ -596,6 +591,8 @@ public class AnimationUtils {
 
 			animator = PropertySetter.createAnimator(2000, this, "percentComplete", start, max);
 
+			painter.setPercentComplete(1D); // set initial value
+
 			animator.setAcceleration(0.2f);
 			animator.setDeceleration(0.8f);
 			animator.addTarget(new TimingTargetAdapter() {
@@ -878,7 +875,7 @@ public class AnimationUtils {
 			double cx = emphasizedBounds.getCenterX();
 			double cy = emphasizedBounds.getCenterY();
 			g2d.rotate(rad, cx, cy);
-			g.setColor(Java.BORDER);
+			g.setColor(Colors.BORDER);
 
 			int iw = emphasizedBounds.width;
 			int ih = emphasizedBounds.height;

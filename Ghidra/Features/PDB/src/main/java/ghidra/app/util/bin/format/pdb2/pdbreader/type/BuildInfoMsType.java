@@ -59,7 +59,7 @@ public class BuildInfoMsType extends AbstractMsType {
 		count = reader.parseUnsignedShortVal();
 		for (int i = 0; i < count; i++) {
 			int codeItemId = reader.parseInt();
-			RecordNumber itemRecordNumber = RecordNumber.make(RecordCategory.ITEM, codeItemId);
+			RecordNumber itemRecordNumber = RecordNumber.itemRecordNumber(codeItemId);
 			argsCodeItemRecordNumbers.add(itemRecordNumber);
 		}
 		reader.skipPadding();

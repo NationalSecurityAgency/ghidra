@@ -90,7 +90,7 @@ public interface EmuUnixFileSystem<T> {
 	 * A factory for constructing a new file (without adding it to the file system)
 	 * 
 	 * @param pathname the path of the file
-	 * @param the mode of the new file
+	 * @param mode the mode of the new file
 	 * @return the new file
 	 * @throws EmuIOException if the file cannot be constructed
 	 */

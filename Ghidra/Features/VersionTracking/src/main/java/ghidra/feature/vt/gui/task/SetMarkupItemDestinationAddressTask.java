@@ -45,7 +45,7 @@ public class SetMarkupItemDestinationAddressTask extends VtTask {
 		monitor.initialize(markupItems.size());
 
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			markupItem.setDestinationAddress(destinationAddress);
 			monitor.incrementProgress(1);
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,40 +17,37 @@ package ghidra.app.plugin.core.navigation;
 
 import static org.junit.Assert.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.test.TestUtils;
-import ghidra.GhidraOptions;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.cmd.refs.AddMemRefCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.plugin.core.gotoquery.GoToQueryResultsTableModel;
 import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.services.QueryData;
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.mem.FileBytes;
@@ -64,10 +61,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableNameFieldLocation;
 import ghidra.test.*;
-import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.table.GhidraProgramTableModel;
-import ghidra.util.table.field.LabelTableColumn;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
@@ -80,7 +75,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	private GoToAddressLabelDialog dialog;
 	private CodeBrowserPlugin cbPlugin;
 	private CodeViewerProvider provider;
-	private JButton okButton;
 
 	@Before
 	public void setUp() throws Exception {
@@ -96,7 +90,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		provider = cbPlugin.getProvider();
 		showTool(tool);
 		dialog = plugin.getDialog();
-		okButton = (JButton) TestUtils.getInstanceField("okButton", dialog);
 		setCaseSensitive(true);
 	}
 
@@ -575,8 +568,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDynamicFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
+		opt.setInt(SearchConstants.SEARCH_LIMIT_NAME, 20);
 
 		setText("L*");
 		performOkCallback();
@@ -587,8 +580,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDefinedFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
+		opt.setInt(SearchConstants.SEARCH_LIMIT_NAME, 5);
 
 		createLabel("1006960", "abc1");
 		createLabel("1006961", "abc2");
@@ -627,14 +620,9 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		tx(program, () -> {
 			symbol.setName("COmlg32.dll_PageSetupDlgW", SourceType.USER_DEFINED);
 		});
-
-		JCheckBox cb = findComponent(dialog, JCheckBox.class);
-		runSwing(() -> {
-			cb.setSelected(false);
-			dialog.setText("COm*");
-
-			dialog.okCallback();
-		});
+		setCaseSensitive(false);
+		setText("COm*");
+		performOkCallback();
 
 		GhidraProgramTableModel<?> model = waitForModel();
 		assertEquals(3, model.getRowCount());
@@ -689,7 +677,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
-		clear.actionPerformed(new ActionContext());
+		clear.actionPerformed(new DefaultActionContext());
 		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
@@ -697,29 +685,29 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001000");
 		performOkCallback();
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		next.actionPerformed(new ActionContext());
+		next.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
 
 		setText("1001010");
 		performOkCallback();
 		assertEquals(addr("1001010"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
@@ -728,7 +716,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001020");
 		performOkCallback();
 		assertEquals(addr("1001020"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
@@ -808,16 +796,13 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		//
 
 		loadProgram("x86");
+		setText("*");
+		setCaseSensitive(true);
+		performOkCallback();
 
-		boolean caseSensitive = true;
-		List<String> list = search("*", caseSensitive);
-		assertTrue("A wildcard search did not find all symbols - found: " + list, list.size() > 20);
-
-		list = search("dat*", caseSensitive);
-		assertEquals(0, list.size());
-
-		list = search("DAT*", caseSensitive);
-		assertItemsStartWtih(list, "DAT");
+		GhidraProgramTableModel<?> model = waitForModel();
+		List<?> list = model.getModelData();
+		assertTrue("A wildcard search did not find all symbols, found " + list, list.size() > 20);
 	}
 
 	@Test
@@ -859,50 +844,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			ToolOptions options = tool.getOptions("Navigation");
 			options.setBoolean("'Go To' in Current Program Only", false);
 		});
-	}
-
-	private void assertItemsStartWtih(List<String> list, String prefix) {
-		for (String s : list) {
-			assertTrue(String.format("List item '%s' does not start with prefix '%s'", s, prefix),
-				s.startsWith(prefix));
-		}
-	}
-
-	private List<String> search(String text, boolean caseSensitive) {
-
-		QueryData queryData = new QueryData(text, caseSensitive, true);
-
-		GoToQueryResultsTableModel model = runSwing(() -> {
-			int maxHits = 100;
-			return new GoToQueryResultsTableModel(program, queryData, new ServiceProviderStub(),
-				maxHits, TaskMonitor.DUMMY);
-		});
-
-		waitForTableModel(model);
-
-		int columnIndex = model.getColumnIndex(LabelTableColumn.class);
-
-		List<String> results = new ArrayList<>();
-		List<ProgramLocation> data = model.getModelData();
-
-		if (data.isEmpty()) {
-			// debug
-			Msg.debug(this, "No search results found *or* failure to wait for threaded table " +
-				"model - " + "trying again");
-			printOpenWindows();
-
-			waitForTableModel(model);
-			data = model.getModelData();
-
-			Msg.debug(this, "\twaited again--still empty? - size: " + data.size());
-		}
-
-		for (ProgramLocation loc : data) {
-			String label = (String) model.getColumnValueForRow(loc, columnIndex);
-			results.add(label);
-		}
-
-		return results;
 	}
 
 	private void loadProgram(String programName) throws Exception {
@@ -1029,7 +970,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	private ActionContext getActionContext() {
 		ActionContext context = runSwing(() -> cbPlugin.getProvider().getActionContext(null));
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}
@@ -1047,21 +988,11 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private GhidraProgramTableModel<?> waitForModel() throws Exception {
-		int i = 0;
-		while (i++ < 50) {
-			TableComponentProvider<?>[] providers = getProviders();
-			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
-						.getInstanceField("threadedPanel", providers[0]);
-				GTable table = panel.getTable();
-				while (panel.isBusy()) {
-					Thread.sleep(50);
-				}
-				return (GhidraProgramTableModel<?>) table.getModel();
-			}
-			Thread.sleep(50);
-		}
-		throw new Exception("Unable to get threaded table model");
+		TableComponentProvider<?> tableProvider =
+			waitForComponentProvider(TableComponentProvider.class);
+		GhidraProgramTableModel<?> model = tableProvider.getModel();
+		waitForTableModel(model);
+		return model;
 	}
 
 	private TableComponentProvider<?>[] getProviders() {
@@ -1092,7 +1023,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	private void showDialog() {
 		Swing.runLater(() -> dialog.show(provider, cbPlugin.getCurrentAddress(), tool));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void setText(final String text) throws Exception {
@@ -1101,14 +1032,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	private void performOkCallback() throws Exception {
 		runSwing(() -> dialog.okCallback());
-
-		waitForSwing();
-		waitForOKCallback();
-		waitForSwing();
-	}
-
-	private void waitForOKCallback() {
-		waitForCondition(() -> runSwing(() -> okButton.isEnabled()));
 	}
 
 	private void assumeCurrentAddressSpace(boolean b) {

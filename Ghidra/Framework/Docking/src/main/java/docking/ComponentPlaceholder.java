@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
+import generic.timer.ExpiringSwingTimer;
 import ghidra.util.Msg;
-import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -136,10 +136,21 @@ public class ComponentPlaceholder {
 	}
 
 	/**
-	 * Returns true if the component is not hidden
+	 * Returns true if the component is showing and visible to the user.
 	 * @return true if showing
+	 * @see #isActive()
 	 */
 	boolean isShowing() {
+		return isShowing && comp != null && comp.isShowing();
+	}
+
+	/**
+	 * Returns true if this provider wants to be showing and has a component provider, regardless 
+	 * of whether the provider is showing to the user.
+	 * @return true if active
+	 * @see #isShowing()
+	 */
+	boolean isActive() {
 		return isShowing && componentProvider != null;
 	}
 
@@ -276,8 +287,8 @@ public class ComponentPlaceholder {
 	/**
 	 * Requests focus for the component associated with this placeholder.
 	 */
-	void requestFocus() {
-		Component tmp = comp;// put in temp variable in case another thread deletes it
+	void requestFocusWhenReady() {
+		DockableComponent tmp = comp;// put in temp variable in case another thread deletes it
 		if (tmp == null) {
 			return;
 		}
@@ -286,12 +297,20 @@ public class ComponentPlaceholder {
 		activateWindow();
 
 		// make sure the tab has time to become active before trying to request focus
-		tmp.requestFocus();
-
-		Swing.runLater(() -> {
-			tmp.requestFocus();
-			contextChanged();
+		ExpiringSwingTimer.runWhen(this::isShowing, 750, () -> {
+			doRequestFocus(tmp);
 		});
+	}
+
+	private void doRequestFocus(DockableComponent dockableComponent) {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Window activeWindow = kfm.getActiveWindow();
+		if (activeWindow == null) {
+			return; // our application isn't focused--don't do anything
+		}
+
+		dockableComponent.requestFocus();
+		contextChanged();
 	}
 
 	// makes sure that the given window is not in an iconified state
@@ -399,7 +418,7 @@ public class ComponentPlaceholder {
 	 */
 	JComponent getProviderComponent() {
 		if (componentProvider != null) {
-			return componentProvider.getComponent();
+			return componentProvider.doGetComponent();
 		}
 		return new JPanel();
 	}
@@ -531,7 +550,7 @@ public class ComponentPlaceholder {
 
 		ActionContext actionContext = componentProvider.getActionContext(null);
 		if (actionContext == null) {
-			actionContext = new ActionContext(componentProvider, null);
+			actionContext = new DefaultActionContext(componentProvider, null);
 		}
 		for (DockingActionIf action : actions) {
 			action.setEnabled(

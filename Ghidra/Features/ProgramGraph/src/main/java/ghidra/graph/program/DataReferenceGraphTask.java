@@ -114,7 +114,7 @@ public class DataReferenceGraphTask extends Task {
 
 		try {
 			for (CodeUnit unit : program.getListing().getCodeUnits(addresses, true)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AttributedVertex centerVertex =
 					graph.graphFrom(unit.getAddress(), direction, monitor);
 				/* TODO

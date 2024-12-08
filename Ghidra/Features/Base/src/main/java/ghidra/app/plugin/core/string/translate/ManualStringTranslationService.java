@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string.translate;
 
-import static ghidra.program.model.data.TranslationSettingsDefinition.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
 
 import java.util.List;
 
@@ -50,7 +50,8 @@ public class ManualStringTranslationService implements StringTranslationService 
 	}
 
 	@Override
-	public void translate(Program program, List<ProgramLocation> stringLocations) {
+	public void translate(Program program, List<ProgramLocation> stringLocations,
+			TranslateOptions options) {
 		TaskLauncher.launchModal("Manually translate strings", monitor -> {
 
 			int id = program.startTransaction("Translate strings");

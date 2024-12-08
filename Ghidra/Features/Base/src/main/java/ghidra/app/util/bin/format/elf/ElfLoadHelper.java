@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.elf;
 
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.ElfLoaderOptionsFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
@@ -104,10 +105,13 @@ public interface ElfLoadHelper {
 			Address indirectPointerAddr);
 
 	/**
-	 * Create an undefined data item to reserve the location as data, without specifying the type
+	 * Create an undefined data item to reserve the location as data, without specifying the type.
+	 * If {@link ElfLoaderOptionsFactory#applyUndefinedSymbolData(java.util.List)} returns false
+	 * data will not be applied and null will be returned.
+	 * 
 	 * @param address  location of undefined data to create
 	 * @param length  size of the undefined data item
-	 * @return {@link Data} which was created or null if conflict occurs
+	 * @return {@link Data} which was created or null if conflict occurs or disabled by option
 	 */
 	Data createUndefinedData(Address address, int length);
 

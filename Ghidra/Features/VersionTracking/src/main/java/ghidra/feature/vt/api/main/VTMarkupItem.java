@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ public interface VTMarkupItem {
 	 * address and the address source must be set prior to calling this method.
 	 * 
 	 * @param applyAction the type of apply action to take when applying the given markup item
+	 * @param options the options
 	 * @throws VersionTrackingApplyException if an error occurred while attempting to apply the
 	 * markup item.
 	 */
@@ -94,7 +95,7 @@ public interface VTMarkupItem {
 	 * Returns the editable status of this markup item's destination address.
 	 *  
 	 * @return the editable status of this markup item's destination address.
-	 * @see #setDestinationAddress(Address, String)
+	 * @see #setDestinationAddress(Address)
 	 */
 	public VTMarkupItemDestinationAddressEditStatus getDestinationAddressEditStatus();
 
@@ -110,7 +111,6 @@ public interface VTMarkupItem {
 	 * 
 	 * @param status The <b>considered</b> status to set
 	 * @throws IllegalStateException if you call this method on an applied item
-	 * @see #setUnconsidered()
 	 */
 	public void setConsidered(VTMarkupItemConsideredStatus status);
 
@@ -124,6 +124,7 @@ public interface VTMarkupItem {
 	 * Returns an optional description of the current markup item status.  For example, if there
 	 * status is {@link VTMarkupItemStatus#FAILED_APPLY}, then this method should return a 
 	 * description of the failure.
+	 * @return the description.
 	 */
 	public String getStatusDescription();
 

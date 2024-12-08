@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.Set;
 
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
@@ -49,7 +50,7 @@ public class TestDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 
 		@Override
 		public int getConfidence() {
-			return 1;
+			return HostDebuggerPlatformOpinion.Offers.HOST.getConfidence() + 1;
 		}
 
 		@Override

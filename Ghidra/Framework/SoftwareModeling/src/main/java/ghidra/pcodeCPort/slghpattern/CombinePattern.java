@@ -15,10 +15,11 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import java.io.PrintStream;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 
 public class CombinePattern extends DisjointPattern {
 
@@ -162,22 +163,11 @@ public class CombinePattern extends DisjointPattern {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<combine_pat>\n");
-		context.saveXml(s);
-		instr.saveXml(s);
-		s.append("</combine_pat>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el) {
-		List<?> list = el.getChildren();
-		Element child = (Element) list.get(0);
-		context = new ContextPattern();
-		context.restoreXml(child);
-		child = (Element) list.get(1);
-		instr = new InstructionPattern();
-		instr.restoreXml(child);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_COMBINE_PAT);
+		context.encode(encoder);
+		instr.encode(encoder);
+		encoder.closeElement(ELEM_COMBINE_PAT);
 	}
 
 }

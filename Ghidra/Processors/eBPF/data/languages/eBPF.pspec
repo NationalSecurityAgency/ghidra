@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<processor_spec>
+    <programcounter register="PC"/>	 
+    <default_symbols>
+            <symbol name="bpf_unspec" address="syscall:0x0"/>
+            <symbol name="bpf_map_lookup_elem" address="syscall:0x1"/>
+            <symbol name="bpf_map_update_elem" address="syscall:0x2"/>
+            <symbol name="bpf_map_delete_elem" address="syscall:0x3"/>
+            <symbol name="bpf_probe_read" address="syscall:0x4"/>
+            <symbol name="bpf_ktime_get_ns" address="syscall:0x5"/>
+            <symbol name="bpf_trace_printk" address="syscall:0x6"/>
+            <symbol name="bpf_get_prandom_u32" address="syscall:0x7"/>
+            <symbol name="bpf_get_smp_processor_id" address="syscall:0x8"/>
+            <symbol name="bpf_skb_store_bytes" address="syscall:0x9"/>
+            <symbol name="bpf_l3_csum_replace" address="syscall:0xa"/>
+            <symbol name="bpf_l4_csum_replace" address="syscall:0xb"/>
+            <symbol name="bpf_tail_call" address="syscall:0xc"/>
+            <symbol name="bpf_clone_redirect" address="syscall:0xd"/>
+            <symbol name="bpf_get_current_pid_tgid" address="syscall:0xe"/>
+            <symbol name="bpf_get_current_uid_gid" address="syscall:0xf"/>
+            <symbol name="bpf_get_current_comm" address="syscall:0x10"/>
+            <symbol name="bpf_get_cgroup_classid" address="syscall:0x11"/>
+            <symbol name="bpf_skb_vlan_push" address="syscall:0x12"/>
+            <symbol name="bpf_skb_vlan_pop" address="syscall:0x13"/>
+            <symbol name="bpf_skb_get_tunnel_key" address="syscall:0x14"/>
+            <symbol name="bpf_skb_set_tunnel_key" address="syscall:0x15"/>
+            <symbol name="bpf_perf_event_read" address="syscall:0x16"/>
+            <symbol name="bpf_redirect" address="syscall:0x17"/>
+            <symbol name="bpf_get_route_realm" address="syscall:0x18"/>
+            <symbol name="bpf_perf_event_output" address="syscall:0x19"/>
+            <symbol name="bpf_skb_load_bytes" address="syscall:0x1a"/>
+            <symbol name="bpf_get_stackid" address="syscall:0x1b"/>	
+            <symbol name="bpf_csum_diff" address="syscall:0x1c"/>
+            <symbol name="bpf_skb_get_tunnel_opt" address="syscall:0x1d"/>
+            <symbol name="bpf_skb_set_tunnel_opt" address="syscall:0x1e"/>
+            <symbol name="bpf_skb_change_proto" address="syscall:0x1f"/>
+            <symbol name="bpf_skb_change_type" address="syscall:0x20"/>
+            <symbol name="bpf_skb_under_cgroup" address="syscall:0x21"/>
+            <symbol name="bpf_get_hash_recalc" address="syscall:0x22"/>
+            <symbol name="bpf_get_current_task" address="syscall:0x23"/>
+            <symbol name="bpf_probe_write_user" address="syscall:0x24"/>
+            <symbol name="bpf_current_task_under_cgroup" address="syscall:0x25"/>
+            <symbol name="bpf_skb_change_tail" address="syscall:0x26"/>
+            <symbol name="bpf_skb_pull_data" address="syscall:0x27"/>
+            <symbol name="bpf_csum_update" address="syscall:0x28"/>
+            <symbol name="bpf_set_hash_invalid" address="syscall:0x29"/>
+            <symbol name="bpf_get_numa_node_id" address="syscall:0x2a"/>
+            <symbol name="bpf_skb_change_head" address="syscall:0x2b"/>
+            <symbol name="bpf_xdp_adjust_head" address="syscall:0x2c"/>
+            <symbol name="bpf_probe_read_str" address="syscall:0x2d"/>
+            <symbol name="bpf_get_socket_cookie" address="syscall:0x2e"/>
+            <symbol name="bpf_get_socket_cookie" address="syscall:0x2f"/>
+            <symbol name="bpf_get_socket_cookie" address="syscall:0x30"/>
+            <symbol name="bpf_get_socket_uid" address="syscall:0x31"/>
+            <symbol name="bpf_set_hash" address="syscall:0x32"/>
+            <symbol name="bpf_setsockopt" address="syscall:0x33"/>
+            <symbol name="bpf_skb_adjust_room" address="syscall:0x34"/>
+            <symbol name="bpf_redirect_map" address="syscall:0x35"/>
+            <symbol name="bpf_sk_redirect_map" address="syscall:0x36"/>
+            <symbol name="bpf_sock_map_update" address="syscall:0x37"/>
+            <symbol name="bpf_xdp_adjust_meta" address="syscall:0x38"/>
+            <symbol name="bpf_perf_event_read_value" address="syscall:0x39"/>
+            <symbol name="bpf_perf_prog_read_value" address="syscall:0x3a"/>
+            <symbol name="bpf_getsockopt" address="syscall:0x3b"/>
+            <symbol name="bpf_override_return" address="syscall:0x3c"/>
+            <symbol name="bpf_sock_ops_cb_flags_set" address="syscall:0x3d"/>
+            <symbol name="bpf_msg_redirect_map" address="syscall:0x3e"/>
+            <symbol name="bpf_msg_apply_bytes" address="syscall:0x3f"/>	
+    </default_symbols>
+    <default_memory_blocks>
+        <memory_block name="eBPFHelper_functions" start_address="syscall:0" length="0x400" initialized="true"/>    
+    </default_memory_blocks>
+</processor_spec>

@@ -33,7 +33,7 @@ public interface BreakpointActionItem {
 	 * @param length the length
 	 * @return the range
 	 */
-	default AddressRange range(Address address, long length) {
+	static AddressRange range(Address address, long length) {
 		try {
 			return new AddressRangeImpl(address, length);
 		}

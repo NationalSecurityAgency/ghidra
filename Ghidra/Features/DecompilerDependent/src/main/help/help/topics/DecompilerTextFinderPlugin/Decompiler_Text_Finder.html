@@ -1,0 +1,197 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Search Decompiled Text</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+
+	<H1><A name="Search_Decompiled_Text"></A>Search Decompiled Text</H1>
+
+	<BLOCKQUOTE>
+	<P>
+	Available from <B>Search <IMG SRC="help/shared/arrow.gif" alt="-&gt;" border="0" /> Search 
+	Decompiled Text</B>, this action allows you to search the decompiled output 
+	for each function in the current program.
+	</P>
+	</BLOCKQUOTE>
+
+	<BLOCKQUOTE>
+	<P>	
+	The <B>Decompiled Function Search</B> dialog is shown when users execute the <B>Search 
+	Decompiled Text</B> action.   If <I>String Search</I> is selected, then a case insensitive text 
+	search is performed using the specified text.   If <I>Regular Expression</I> is selected, then
+	a <A href="help/topics/Search/Regular_Expressions.htm#Regex_Syntax">Regular Expression</A>
+	search is performed.  Selecting <I>Search Selection</I> will only search function entry points 
+	that are in the current program selection.
+	</P>
+	
+	<BR><BR>
+	<TABLE width="100%">
+	    <TBODY>
+	      <TR>
+	        <TD align="center" width="100%">
+	        <IMG border="1" src="images/DecompilerTextFinderDialog.png"></TD>
+	      </TR>
+	    </TBODY>
+	    
+	  <CAPTION align="bottom">
+	    <I>The Decompiled Function Search input dialog</I>
+	  </CAPTION>
+	</TABLE>
+
+	
+		
+		<BLOCKQUOTE>
+            <P><IMG src="help/shared/tip.png" alt="Note" border="0">When restricting the search to 
+            the current program selection, only functions whose entry point is in the selection will
+            be searched.  The selection will not search functions that have a program selection in 
+            the body, but not at the entry point. 
+            </P>
+        </BLOCKQUOTE><BR><BR>
+        
+       	<BLOCKQUOTE>
+            <P><IMG src="help/shared/tip.png" alt="Note" border="0">By default text searches apply
+            only to one line at a time.  If you would like a multi-line search, then you will need
+            to use a Regular Expression search to do so.   See the table below for an example. 
+            </P>
+        </BLOCKQUOTE><BR><BR>
+	
+	</BLOCKQUOTE>
+	
+	<H2>Search Results</H2>
+	<BLOCKQUOTE>
+	<P>	
+	The search results will be presented as they are found, as seen in the table below.  For single
+	line search matches, the matching part of the search will be highlighted in the <B>Context</B>
+	column.
+	</P>
+	
+	<BR><BR>
+	<TABLE width="100%">
+	    <TBODY>
+	      <TR>
+	        <TD align="center" width="100%">
+	        <IMG border="1" src="images/DecompilerTextFinderResultsTable.png" /></TD>
+	      </TR>
+	    </TBODY>
+	    
+	  <CAPTION align="bottom">
+	    <I>The Decompiled Function Search results table</I>
+	  </CAPTION>
+	</TABLE>
+
+	
+		<H3>Select Functions Action <IMG BORDER="1" SRC="icon.plugin.decompiler.text.finder.select.functions" />
+		</H3><A NAME="Select_Functions"></A>
+		<BLOCKQUOTE>
+		<P>
+		
+		This action will create a program selection for each function entry point for each function 
+		selected in the table.
+		</P>
+		</BLOCKQUOTE>		
+		
+		<H3>Other Actions</H3>
+		<BLOCKQUOTE>
+		<P>
+		Help for the other table actions can be found 
+		<A HREF="help/topics/Search/Query_Results_Dialog.htm#Make_Selection">here</A>.
+		</P>
+		</BLOCKQUOTE>
+	
+	</BLOCKQUOTE>
+
+
+	<H2>Example Searches</H2>
+	<BLOCKQUOTE>
+	<P>
+	The table below show some example searches and lines that they will match.  Note that the 
+	reported matches will show the entire line that matched, not just the matching portion of the 
+	line.
+	</P>
+	</BLOCKQUOTE>
+
+
+    <BLOCKQUOTE>
+    <CENTER>
+      <TABLE border="1">
+        <TR>
+          <TH align="left" bgcolor="#c0c0c0" valign="top"><B>Search String</B></TH>
+          <TH align="left" bgcolor="#c0c0c0" valign="top"><B>Description</B></TH>
+          <TH align="left" bgcolor="#c0c0c0" valign="top"><B>Example Matching Lines</B></TH>
+        </TR>
+        <TR>
+          <TD valign="top">
+          <CODE>
+           = '\0'
+          </CODE>          
+          </TD>
+          <TD valign="top">
+          A non-regular expression to find the null character assignment.
+          </TD>
+          <TD valign="top" nowrap>
+          <CODE>
+          ptr->data[1] = '\0';
+          </CODE>
+          </TD>
+        </TR>
+        <TR>
+          <TD valign="top">
+          <CODE>
+          set_string\(.*->.*\)
+          </CODE>
+          </TD>
+          <TD valign="top">
+          A regular expression to find <CODE>set_string(</CODE> followed by any number of characters,
+          followed by <CODE>-></CODE>, followed by any number of characters and a closing parenthesis.
+          </TD>
+          <TD valign="top" nowrap>
+          <CODE>
+          set_string(mytable->entry + mytable->numcodes,ptr);
+          </CODE>
+          </TD>
+        </TR>
+        <TR>
+          <TD valign="top">
+          <CODE>
+          (?s)ffff.*piVar2 =
+          </CODE>
+          </TD>
+          <TD valign="top">
+          A regular expression that searches across multiple lines by using <CODE>(?S)</CODE>.  This
+          will find <CODE>ffff</CODE> followed by any number of characters, followed by 
+          <CODE>piVar2 =</CODE>.
+          </TD>
+          <TD valign="top" nowrap>
+          <CODE>
+          if (__CTOR_LIST__ != (code *)0xffffffff) {<BR>
+    	  piVar2 = (int *)&__CTOR_LIST__;,
+    	  </CODE>
+          </TD>
+        </TR>
+      </TABLE>
+      </CENTER>
+    </BLOCKQUOTE>
+
+
+	
+	
+
+
+  
+    <P class="providedbyplugin">Provided by: <I>Decompiler Text Finder Plugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A></LI>
+
+      <LI><A href="help/topics/Search/Search_Program_Text.htm">Search Program Text</A></LI>
+    </UL><BR>
+     <BR>
+  </BODY>
+</HTML>

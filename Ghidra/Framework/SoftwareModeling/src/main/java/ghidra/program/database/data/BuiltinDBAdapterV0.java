@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	 * @param handle handle to the database containing the table.
 	 * @param tablePrefix prefix to be used with default table name
 	 * @param create create table if true else acquire for read-only or update use
-	 * @throws VersionException if the the table's version does not match the expected version
+	 * @throws VersionException if the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if there is trouble accessing the database.
 	 */
@@ -52,8 +52,7 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 
 		String tableName = tablePrefix + BUILT_IN_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(tableName, V0_SCHEMA,
-				new int[] { V0_BUILT_IN_CAT_COL });
+			table = handle.createTable(tableName, V0_SCHEMA, new int[] { V0_BUILT_IN_CAT_COL });
 		}
 		else {
 			table = handle.getTable(tableName);
@@ -87,7 +86,8 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	}
 
 	@Override
-	public DBRecord createRecord(String name, String className, long categoryID) throws IOException {
+	public DBRecord createRecord(String name, String className, long categoryID)
+			throws IOException {
 
 		long tableKey = table.getKey();
 		if (tableKey <= 100) {
@@ -106,6 +106,11 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	@Override
 	public RecordIterator getRecords() throws IOException {
 		return table.iterator();
+	}
+
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
 	}
 
 }

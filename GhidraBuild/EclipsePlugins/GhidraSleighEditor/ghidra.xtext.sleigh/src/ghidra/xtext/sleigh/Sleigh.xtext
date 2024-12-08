@@ -662,13 +662,19 @@ exprSingle returns Expression:
 	| pcodeop='round' '(' op1=expr ')'
 	| pcodeop='popcount' '(' op1=expr ')'
 	| pcodeop='lzcount' '(' op1=expr ')'
-	| pcodeop='cpool' '(' op1=expr ',' op2=expr ',' op3=expr ')'
+	| pcodeop='cpool' '(' op1=cpoolParams ')'
 	| pcodeop='newobject' '(' op1=newObjParams ')'
 	| op=[macroOrPcode] op1=paramlist
 ;
 
 newObjParams:
+	// must have at least 1 parameter
 	((parameters+=expr) (',' parameters+=expr)*)
+;
+
+cpoolParams:
+	// must have at least 2 parameters
+	((parameters+=expr) ',' (parameters+=expr) (',' parameters+=expr)*)
 ;
 
 exprSym:

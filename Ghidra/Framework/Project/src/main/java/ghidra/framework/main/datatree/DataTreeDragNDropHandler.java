@@ -78,19 +78,19 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 		DataFlavor[] transferDataFlavors = transferable.getTransferDataFlavors();
 		for (DataFlavor dataFlavor : transferDataFlavors) {
 			DataTreeFlavorHandler flavorHandler = getFlavorHandler(dataFlavor);
-			if (flavorHandler != null) {
-				handleDrop(destination, transferable, dropAction, dataFlavor, flavorHandler);
+			if (flavorHandler != null &&
+				handleDrop(destination, transferable, dropAction, dataFlavor, flavorHandler)) {
 				return;
 			}
 		}
 	}
 
-	private void handleDrop(GTreeNode destination, Transferable transferable, int dropAction,
+	private boolean handleDrop(GTreeNode destination, Transferable transferable, int dropAction,
 			DataFlavor dataFlavor, DataTreeFlavorHandler flavorHandler) {
 
 		try {
 			Object transferData = transferable.getTransferData(dataFlavor);
-			flavorHandler.handle(tool, tree, destination, transferData, dropAction);
+			return flavorHandler.handle(tool, tree, destination, transferData, dropAction);
 		}
 		catch (UnsupportedFlavorException e) {
 			throw new AssertException("Got unsupported flavor from using a supported flavor");
@@ -98,6 +98,7 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 		catch (IOException e) {
 			Msg.showError(this, null, "IO Error", "Error during drop", e);
 		}
+		return false;
 	}
 
 	private DataTreeFlavorHandler getFlavorHandler(DataFlavor flavor) {

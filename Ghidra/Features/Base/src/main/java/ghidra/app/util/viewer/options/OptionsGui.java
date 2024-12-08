@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,14 +40,13 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.app.util.viewer.field.ListingColors.*;
-import ghidra.util.SystemUtilities;
 
 /**
  * Class for displaying and manipulating field colors and fonts.
  */
 public class OptionsGui extends JPanel {
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private static final HighlightFactory hlFactory =
+	private static final FieldHighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
 	// @formatter:off
@@ -61,6 +60,7 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", ListingColors.EXT_ENTRY_POINT);
 	public static final ScreenElement COMMENT_EOL = new ScreenElement("Comment, EOL", "EOL Comment", CommentColors.EOL);
 	public static final ScreenElement EXT_REF_RESOLVED = new ScreenElement("External Reference, Resolved", ListingColors.EXT_REF_RESOLVED);
+	public static final ScreenElement EXT_REF_UNRESOLVED = new ScreenElement("External Reference, Unresolved", ListingColors.EXT_REF_UNRESOLVED);
 	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", ListingColors.FIELD_NAME);
 	public static final ScreenElement FUN_CALL_FIXUP = new ScreenElement("Function Call-Fixup", FunctionColors.CALL_FIXUP);
 	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", FunctionColors.NAME);
@@ -103,12 +103,13 @@ public class OptionsGui extends JPanel {
 	static ScreenElement[] elements =
 		{ ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE,
 			COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, COMMENT_REF_REPEAT, CONSTANT,
-			ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE, FLOW_ARROW_NON_ACTIVE,
-			FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS,
-			FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD,
-			MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL,
-			PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE,
-			MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
+			ENTRY_POINT, EXT_REF_RESOLVED, EXT_REF_UNRESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE,
+			FLOW_ARROW_NON_ACTIVE, FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS,
+			FUN_AUTO_PARAMS, FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY,
+			LABELS_PRIMARY, LABELS_UNREFD, MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM,
+			PARAMETER_DYNAMIC, PCODE_LINE_LABEL, PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP,
+			REGISTERS, SEPARATOR, UNDERLINE, MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT,
+			XREF_READ, XREF_WRITE, XREF_OTHER };
 
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 
@@ -133,13 +134,13 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param font the base font for the fields.
 	 * @param listener the listener to be notified when options change.
 	 */
 	public OptionsGui(Font font, PropertyChangeListener listener) {
 		propertyChangeListener = listener;
-		setBaseFont(SystemUtilities.adjustForFontSizeOverride(font));
+		setBaseFont(font);
 		genLayouts();
 		buildPanel();
 		fieldPanel.setBackgroundColor(BACKGROUND.getColor());
@@ -217,7 +218,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * callback for when the selected display field changes.
-	 * 
+	 *
 	 * @param index the index in the JList of the selected field.
 	 */
 	private void setSelectedIndex(int index) {
@@ -392,7 +393,7 @@ public class OptionsGui extends JPanel {
 	 * builds the preview panel.
 	 */
 	private JComponent buildPreviewPanel() {
-		fieldPanel = new FieldPanel(new SimpleLayoutModel());
+		fieldPanel = new FieldPanel(new SimpleLayoutModel(), "Preview");
 		IndexedScrollPane scroll = new IndexedScrollPane(fieldPanel);
 		return scroll;
 	}
@@ -735,7 +736,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * This listener will be notified when changes are made that need to be applied.
-	 * 
+	 *
 	 * @param listener The listener to be notified.
 	 */
 	void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
@@ -774,9 +775,9 @@ public class OptionsGui extends JPanel {
 		setSelectedIndex(selectedIndex);
 	}
 
-//==================================================================================================	
+//==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Simple layoutModel to be used for the preview panel.
@@ -850,7 +851,7 @@ public class OptionsGui extends JPanel {
 
 		/**
 		 * Constructor
-		 * 
+		 *
 		 * @param size the number of fields in the layout
 		 */
 		LayoutBuilder(int size) {
@@ -895,7 +896,7 @@ public class OptionsGui extends JPanel {
 		private ScreenElement screenElement;
 
 		ScreenElementTextField(ScreenElement screenElement, int startX, int length,
-				FieldElement field, HighlightFactory factory) {
+				FieldElement field, FieldHighlightFactory factory) {
 			super(startX, length, field, factory);
 			this.screenElement = screenElement;
 		}

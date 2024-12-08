@@ -20,6 +20,7 @@ import java.util.Set;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObjectInterface;
@@ -38,6 +39,12 @@ public interface TraceObjectMemoryRegion extends TraceMemoryRegion, TraceObjectI
 	void setName(Lifespan lifespan, String name);
 
 	void setRange(Lifespan lifespan, AddressRange range);
+
+	AddressRange getRange(long snap);
+
+	Address getMinAddress(long snap);
+
+	Address getMaxAddress(long snap);
 
 	void setFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
 

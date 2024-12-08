@@ -36,7 +36,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 	public static final Icon CLOSED_FOLDER_CLASSES_ICON =
 		new GIcon("icon.plugin.symboltree.node.category.classes.closed");
 
-	ClassCategoryNode(Program program) {
+	public ClassCategoryNode(Program program) {
 		super(SymbolCategory.CLASS_CATEGORY, program);
 	}
 
@@ -91,7 +91,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		while (it.hasNext()) {
 			Symbol s = it.next();
 			if (s != null && (s.getSymbolType() == symbolType)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				list.add(SymbolNode.createNode(s, program));
 			}
 			monitor.incrementProgress(1);

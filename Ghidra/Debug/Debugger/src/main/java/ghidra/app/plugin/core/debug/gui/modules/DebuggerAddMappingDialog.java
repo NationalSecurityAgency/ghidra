@@ -15,10 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import java.awt.Component;
 import java.awt.Font;
-import java.awt.event.*;
-import java.math.BigInteger;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -26,6 +23,7 @@ import javax.swing.border.EmptyBorder;
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
 import docking.widgets.model.GSpanField;
+import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
@@ -33,13 +31,10 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
-import ghidra.util.MathUtilities;
 import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
-	private static final String HEX_BIT64 = "0x" + BigInteger.ONE.shiftLeft(64).toString(16);
-
 	private DebuggerStaticMappingService mappingService;
 
 	private Program program;
@@ -56,23 +51,6 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		super("Add Static Mapping", false, true, true, false);
 
 		populateComponents();
-	}
-
-	protected static void rigFocusAndEnter(Component c, Runnable runnable) {
-		c.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent e) {
-				runnable.run();
-			}
-		});
-		c.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					runnable.run();
-				}
-			}
-		});
 	}
 
 	protected void populateComponents() {
@@ -99,10 +77,10 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		panel.add(new JLabel("Lifespan: "));
 		panel.add(fieldSpan);
 
-		rigFocusAndEnter(fieldProgRange, this::progRangeChanged);
-		rigFocusAndEnter(fieldTraceRange, this::traceRangeChanged);
-		rigFocusAndEnter(fieldLength, this::lengthChanged);
-		rigFocusAndEnter(fieldSpan, this::spanChanged);
+		MiscellaneousUtils.rigFocusAndEnter(fieldProgRange, this::progRangeChanged);
+		MiscellaneousUtils.rigFocusAndEnter(fieldTraceRange, this::traceRangeChanged);
+		MiscellaneousUtils.rigFocusAndEnter(fieldLength, this::lengthChanged);
+		MiscellaneousUtils.rigFocusAndEnter(fieldSpan, this::spanChanged);
 
 		fieldSpan.setLifespan(Lifespan.nowOn(0));
 
@@ -149,33 +127,12 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		revalidateByLength(fieldTraceRange, fieldProgRange);
 	}
 
-	protected static long lengthMin(long a, long b) {
-		if (a == 0) {
-			return b;
-		}
-		if (b == 0) {
-			return a;
-		}
-		return MathUtilities.unsignedMin(a, b);
-	}
-
-	protected static long revalidateLengthByRange(AddressRange range, long length) {
-		long maxLength =
-			range.getAddressSpace().getMaxAddress().subtract(range.getMinAddress()) + 1;
-		return lengthMin(length, maxLength);
-	}
-
 	protected void setFieldLength(long length) {
-		if (length == 0) {
-			fieldLength.setText(HEX_BIT64);
-		}
-		else {
-			fieldLength.setText("0x" + Long.toHexString(length));
-		}
+		fieldLength.setText(MiscellaneousUtils.lengthToString(length));
 	}
 
 	public long getLength() {
-		return parseLength(fieldLength.getText(), 1);
+		return MiscellaneousUtils.parseLength(fieldLength.getText(), 1);
 	}
 
 	protected void revalidateLength() {
@@ -186,8 +143,8 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		else {
 			length = getLength();
 		}
-		length = revalidateLengthByRange(fieldProgRange.getRange(), length);
-		length = revalidateLengthByRange(fieldTraceRange.getRange(), length);
+		length = MiscellaneousUtils.revalidateLengthByRange(fieldProgRange.getRange(), length);
+		length = MiscellaneousUtils.revalidateLengthByRange(fieldTraceRange.getRange(), length);
 		setFieldLength(length);
 	}
 
@@ -246,48 +203,6 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 
 	protected void spanChanged() {
 		revalidateSpan();
-	}
-
-	/**
-	 * Parses a value from 1 to 1<<64. Any value outside the range is "clipped" into the range.
-	 * 
-	 * <p>
-	 * Note that a returned value of 0 indicates 2 to the power 64, which is just 1 too high to fit
-	 * into a 64-bit long.
-	 * 
-	 * @param text the text to parse
-	 * @param defaultVal the default value should parsing fail altogether
-	 * @return the length, where 0 indicates {@code 1 << 64}.
-	 */
-	protected static long parseLength(String text, long defaultVal) {
-		text = text.trim();
-		String post;
-		int radix;
-		if (text.startsWith("-")) {
-			return 0;
-		}
-		if (text.startsWith("0x")) {
-			post = text.substring(2);
-			radix = 16;
-		}
-		else {
-			post = text;
-			radix = 10;
-		}
-		BigInteger bi;
-		try {
-			bi = new BigInteger(post, radix);
-		}
-		catch (NumberFormatException e) {
-			return defaultVal;
-		}
-		if (bi.equals(BigInteger.ZERO)) {
-			return 1;
-		}
-		if (bi.bitLength() > 64) {
-			return 0; // indicates 2**64, the max length
-		}
-		return bi.longValue(); // Do not use exact. It checks bitLength again, and considers sign.
 	}
 
 	@Override

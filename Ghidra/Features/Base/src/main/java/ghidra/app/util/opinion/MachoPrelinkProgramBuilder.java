@@ -46,16 +46,13 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
-	 *   fixups; otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	protected MachoPrelinkProgramBuilder(Program program, ByteProvider provider,
-			FileBytes fileBytes, boolean shouldAddChainedFixupsRelocations, MessageLog log,
-			TaskMonitor monitor) throws Exception {
-		super(program, provider, fileBytes, shouldAddChainedFixupsRelocations, log, monitor);
+			FileBytes fileBytes, MessageLog log, TaskMonitor monitor) throws Exception {
+		super(program, provider, fileBytes, log, monitor);
 	}
 
 	/**
@@ -64,17 +61,14 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param addChainedFixupsRelocations True if relocations should be added for chained fixups;
-	 *   otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean addChainedFixupsRelocations, MessageLog log, TaskMonitor monitor)
-			throws Exception {
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		MachoPrelinkProgramBuilder machoPrelinkProgramBuilder = new MachoPrelinkProgramBuilder(
-			program, provider, fileBytes, addChainedFixupsRelocations, log, monitor);
+			program, provider, fileBytes, log, monitor);
 		machoPrelinkProgramBuilder.build();
 	}
 
@@ -94,6 +88,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		for (MachoInfo info : machoInfoList) {
 			info.processMemoryBlocks();
 			info.markupHeaders();
+			info.markupLoadCommandData();
 			info.addToProgramTree();
 			monitor.incrementProgress(1);
 		}
@@ -110,7 +105,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		// Do things that needed to wait until after the inner Mach-O's are processed
-		super.markupChainedFixups(chainedFixups);
+		super.markupChainedFixups(machoHeader, chainedFixups);
 	}
 
 	/**
@@ -185,7 +180,8 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	}
 
 	@Override
-	protected void markupChainedFixups(List<Address> fixups) throws CancelledException {
+	protected void markupChainedFixups(MachHeader header, List<Address> fixups)
+			throws CancelledException {
 		// Just save the list.  
 		// We need to delay doing the markup until after we process all the inner Mach-O's.
 		this.chainedFixups = fixups;
@@ -222,7 +218,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * Processes memory blocks for this Mach-O.
 		 * 
 		 * @throws Exception If there was a problem processing memory blocks for this Mach-O.
-		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
+		 * @see MachoProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
 		public void processMemoryBlocks() throws Exception {
 			MachoPrelinkProgramBuilder.this.processMemoryBlocks(header, name, true, false);
@@ -232,7 +228,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 * Marks up the Mach-O headers.
 		 * 
 		 * @throws Exception If there was a problem marking up the Mach-O's headers.
-		 * @see MachoPrelinkProgramBuilder#markupHeaders(MachHeader, Address)
+		 * @see MachoProgramBuilder#markupHeaders(MachHeader, Address)
 		 */
 		public void markupHeaders() throws Exception {
 			MachoPrelinkProgramBuilder.this.markupHeaders(header, headerAddr);
@@ -240,6 +236,16 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 			if (!name.isEmpty()) {
 				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, name);
 			}
+		}
+
+		/**
+		 * Marks up the Mach-O load command data.
+		 * 
+		 * @throws Exception If there was a problem marking up the Mach-O's load command data.
+		 * @see MachoProgramBuilder#markupLoadCommandData(MachHeader, String)
+		 */
+		public void markupLoadCommandData() throws Exception {
+			MachoPrelinkProgramBuilder.this.markupLoadCommandData(header, name);
 		}
 
 		/**

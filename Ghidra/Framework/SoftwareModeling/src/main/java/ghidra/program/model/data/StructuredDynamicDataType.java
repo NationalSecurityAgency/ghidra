@@ -102,7 +102,8 @@ public abstract class StructuredDynamicDataType extends DynamicDataType {
 		MemoryBufferImpl newBuf = new MemoryBufferImpl(memory, buf.getAddress());
 		try {
 			for (int i = 0; i < components.size(); i++) {
-				DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(components.get(i), newBuf);
+				DataTypeInstance dti =
+					DataTypeInstance.getDataTypeInstance(components.get(i), newBuf, false);
 				if (dti == null) {
 					Msg.error(this, "Invalid data at " + newBuf.getAddress());
 					return null;

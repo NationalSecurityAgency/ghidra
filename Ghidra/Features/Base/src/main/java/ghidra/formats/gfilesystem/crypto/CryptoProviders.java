@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * Registry of {@link CryptoProvider crypto providers} and {@link #newSession() session creator}.
@@ -122,7 +123,7 @@ public class CryptoProviders {
 		}
 
 		@Override
-		public void addSuccessfulPassword(FSRL fsrl, PasswordValue password) {
+		public void addSuccessfulPassword(FSRL fsrl, Password password) {
 			cachedCryptoProvider.addPassword(fsrl, password);
 		}
 
@@ -159,16 +160,16 @@ public class CryptoProviders {
 		}
 
 		@Override
-		public Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt) {
+		public Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt) {
 			return new PasswordIterator(providers, fsrl, prompt);
 		}
 
 		/**
 		 * Union iterator of all password providers
 		 */
-		class PasswordIterator implements Iterator<PasswordValue> {
+		class PasswordIterator implements Iterator<Password> {
 			private List<PasswordProvider> providers;
-			private Iterator<PasswordValue> currentIt;
+			private Iterator<Password> currentIt;
 			private String prompt;
 			private FSRL fsrl;
 
@@ -194,7 +195,7 @@ public class CryptoProviders {
 			}
 
 			@Override
-			public PasswordValue next() {
+			public Password next() {
 				return currentIt.next();
 			}
 

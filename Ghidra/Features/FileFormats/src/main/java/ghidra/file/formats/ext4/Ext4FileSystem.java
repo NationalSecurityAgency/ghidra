@@ -20,7 +20,8 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.BitSet;
+import java.util.Date;
 
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
@@ -33,13 +34,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "ext4", description = "EXT4", factory = Ext4FileSystemFactory.class)
-public class Ext4FileSystem implements GFileSystem {
+public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 
 	public static final Charset EXT4_DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-	private FileSystemIndexHelper<Ext4File> fsih;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
-	private FSRLRoot fsrl;
 	private int blockSize;
 	private ByteProvider provider;
 	private String volumeName;
@@ -47,8 +45,7 @@ public class Ext4FileSystem implements GFileSystem {
 	private Ext4SuperBlock superBlock;
 
 	public Ext4FileSystem(FSRLRoot fsrl, ByteProvider provider) {
-		this.fsrl = fsrl;
-		this.fsih = new FileSystemIndexHelper<>(this, fsrl);
+		super(fsrl, FileSystemService.getInstance());
 		this.provider = provider;
 	}
 
@@ -78,9 +75,8 @@ public class Ext4FileSystem implements GFileSystem {
 		monitor.setMessage("Reading inode tables");
 		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
 		for (int i = 0; i < numGroups; i++) {
-			monitor.checkCanceled();
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, superBlock.is64Bit());
-			monitor.incrementProgress(1);
+			monitor.increment();
 		}
 
 		Ext4Inode[] inodes = getInodes(reader, groupDescriptors, monitor);
@@ -95,8 +91,8 @@ public class Ext4FileSystem implements GFileSystem {
 		monitor.initialize(usedInodeCount);
 
 		BitSet processedInodes = new BitSet(inodes.length);
-		processDirectory(inodes[Ext4Constants.EXT4_INODE_INDEX_ROOTDIR], fsih.getRootDir(), inodes,
-			processedInodes, monitor);
+		processDirectory(inodes[Ext4Constants.EXT4_INODE_INDEX_ROOTDIR], fsIndex.getRootDir(),
+			inodes, processedInodes, monitor);
 		checkUnprocessedInodes(inodes, processedInodes);
 	}
 
@@ -128,12 +124,11 @@ public class Ext4FileSystem implements GFileSystem {
 		BinaryReader reader = new BinaryReader(directoryStream, true /* LE */);
 		Ext4DirEntry dirEnt;
 		while ((dirEnt = isdir2 ? Ext4DirEntry2.read(reader) : Ext4DirEntry.read(reader)) != null) {
-			monitor.checkCanceled();
 			if (dirEnt.isUnused()) {
 				continue;
 			}
 			processDirEntry(dirEnt, dirGFile, inodes, processedInodes, monitor);
-			monitor.incrementProgress(1);
+			monitor.increment();
 		}
 	}
 
@@ -150,8 +145,8 @@ public class Ext4FileSystem implements GFileSystem {
 			return;
 		}
 		if (!(inode.isDir() || inode.isFile() || inode.isSymLink())) {
-			throw new IOException("Inode " + inode + " has unhandled file type: " +
-				Integer.toHexString(inode.getFileType()));
+			throw new IOException("Inode %d has unhandled file type: 0x%x".formatted(inodeNumber,
+				inode.getFileType()));
 		}
 
 		String name = dirEntry.getName();
@@ -160,8 +155,11 @@ public class Ext4FileSystem implements GFileSystem {
 			return;
 		}
 
-		GFile gfile = fsih.storeFileWithParent(name, parentDir, -1, inode.isDir(), inode.getSize(),
-			new Ext4File(name, inode));
+		GFile gfile = !inode.isSymLink()
+				? fsIndex.storeFileWithParent(name, parentDir, -1, inode.isDir(), inode.getSize(),
+					new Ext4File(name, inode))
+				: fsIndex.storeSymlinkWithParent(name, parentDir, -1, readLink(inode, monitor),
+					inode.getSize(), new Ext4File(name, inode));
 		if (processedInodes.get(inodeNumber)) {
 			// this inode was already seen and handled earlier. adding a second filename to the fsih is
 			// okay, but don't try to process as a directory, which shouldn't normally be possible
@@ -175,20 +173,10 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	@Override
-	public int getFileCount() {
-		return fsih.getFileCount();
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsih.getListing(directory);
-	}
-
-	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
 
-		Ext4File ext4File = fsih.getMetadata(file);
+		Ext4File ext4File = fsIndex.getMetadata(file);
 		if (ext4File != null) {
 			Ext4Inode inode = ext4File.getInode();
 			result.add(NAME_ATTR, ext4File.getName());
@@ -197,7 +185,7 @@ public class Ext4FileSystem implements GFileSystem {
 			if (inode.isSymLink()) {
 				String symLinkDest = "unknown";
 				try {
-					symLinkDest = readLink(file, ext4File, monitor);
+					symLinkDest = readLink(inode, monitor);
 				}
 				catch (IOException e) {
 					// fall thru with default value
@@ -226,54 +214,15 @@ public class Ext4FileSystem implements GFileSystem {
 		return FileType.UNKNOWN;
 	}
 
-	private static final int MAX_SYMLINK_LOOKUP_COUNT = 100;
-
-	private Ext4Inode resolveSymLink(GFile file, TaskMonitor monitor) throws IOException {
-		int lookupCount = 0;
-		GFile currentFile = file;
-		StringBuilder symlinkDebugPath = new StringBuilder();
-		while (true) {
-			if (lookupCount++ > MAX_SYMLINK_LOOKUP_COUNT) {
-				throw new IOException(
-					"Symlink too long: " + file.getPath() + ", " + symlinkDebugPath);
-			}
-			Ext4File extFile = fsih.getMetadata(currentFile);
-			if (extFile == null) {
-				throw new IOException("Missing Ext4 metadata for " + currentFile.getPath());
-			}
-			Ext4Inode inode = extFile.getInode();
-			if (!inode.isSymLink()) {
-				return inode;
-			}
-			
-			String symlinkDestPath = readLink(file, extFile, monitor);
-			symlinkDebugPath.append(" -> ").append(symlinkDestPath);
-			if (!symlinkDestPath.startsWith("/")) {
-				if (currentFile.getParentFile() == null) {
-					throw new IOException("No parent file for " + currentFile);
-				}
-				symlinkDestPath =
-					FSUtilities.appendPath(currentFile.getParentFile().getPath(),
-						symlinkDestPath);
-			}
-
-			currentFile = lookup(symlinkDestPath);
-			if (currentFile == null) {
-				throw new IOException("Missing symlink dest: " + file.getPath() +
-					", broken symlink: " + symlinkDebugPath);
-			}
-		}
-	}
-
-	private String readLink(GFile file, Ext4File extFile, TaskMonitor monitor) throws IOException {
-		try (ByteProvider bp = getInodeByteProvider(extFile.getInode(), file.getFSRL(), monitor)) {
+	private String readLink(Ext4Inode inode, TaskMonitor monitor) throws IOException {
+		try (ByteProvider bp = getInodeByteProvider(inode, null, monitor)) {
 			byte[] tmp = bp.readBytes(0, bp.length());
 			return new String(tmp, StandardCharsets.UTF_8);
 		}
 	}
 
-	private Ext4Inode getInodeFor(GFile file, TaskMonitor monitor) throws IOException {
-		Ext4File extFile = fsih.getMetadata(file);
+	private Ext4Inode getInodeFor(GFile file) {
+		Ext4File extFile = fsIndex.getMetadata(file);
 		if (extFile == null) {
 			return null;
 		}
@@ -282,9 +231,6 @@ public class Ext4FileSystem implements GFileSystem {
 			return null;
 		}
 
-		if (inode.isSymLink()) {
-			inode = resolveSymLink(file, monitor);
-		}
 		return inode;
 	}
 
@@ -299,8 +245,9 @@ public class Ext4FileSystem implements GFileSystem {
 	 */
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
-		Ext4Inode inode = getInodeFor(file, monitor);
-		if (inode == null) {
+		file = fsIndex.resolveSymlinks(file);
+		Ext4Inode inode;
+		if (file == null || (inode = getInodeFor(file)) == null) {
 			return null;
 		}
 
@@ -336,16 +283,15 @@ public class Ext4FileSystem implements GFileSystem {
 		int inodeIndex = 1;
 
 		for (int i = 0; i < groupDescriptors.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table();
 			long offset = inodeTableBlockOffset * blockSize;
 			reader.setPointerIndex(offset);
 			monitor.setMessage(
-				"Reading inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
+				"Reading inode table %d of %d...".formatted(i, groupDescriptors.length - 1));
 			monitor.initialize(inodesPerGroup);
 			for (int j = 0; j < inodesPerGroup; j++) {
-				monitor.checkCanceled();
-				monitor.incrementProgress(1);
+				monitor.increment();
 
 				Ext4Inode inode = new Ext4Inode(reader, superBlock.getS_inode_size());
 				offset = offset + superBlock.getS_inode_size();
@@ -362,32 +308,17 @@ public class Ext4FileSystem implements GFileSystem {
 		refManager.onClose();
 		provider.close();
 		provider = null;
-		fsih.clear();
+		fsIndex.clear();
 	}
 
 	@Override
 	public String getName() {
-		return fsrl.getContainer().getName() + " - " + volumeName + " - " + uuid;
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsrl;
+		return "%s - %s - %s".formatted(fsFSRL.getContainer().getName(), volumeName, uuid);
 	}
 
 	@Override
 	public boolean isClosed() {
 		return provider == null;
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsih.lookup(path);
 	}
 
 }

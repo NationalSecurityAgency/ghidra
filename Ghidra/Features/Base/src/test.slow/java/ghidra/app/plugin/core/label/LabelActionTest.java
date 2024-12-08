@@ -23,8 +23,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import generic.test.TestUtils;
 import ghidra.app.LocationCallback;
@@ -135,7 +134,7 @@ public class LabelActionTest extends AbstractGhidraHeadedIntegrationTest
 
 	@Test
 	public void testNotepadLocations() {
-		ActionContext context = new ActionContext();
+		ActionContext context = new DefaultActionContext();
 		assertFalse(addLabel.isEnabledForContext(context));
 
 		assertFalse(editLabel.isEnabledForContext(context));

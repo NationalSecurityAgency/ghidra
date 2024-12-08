@@ -15,13 +15,11 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractProcedureMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.CallingConvention;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Pointer;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -29,53 +27,50 @@ import ghidra.util.exception.CancelledException;
  */
 public class ProcedureTypeApplier extends AbstractFunctionTypeApplier {
 
+	// Intended for: AbstractProcedureMsType
 	/**
 	 * Constructor for the applicator that applies {@link AbstractProcedureMsType},
-	 * transforming it into a Ghidra {@link DataType}.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractProcedureMsType} to processes.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * transforming it into a Ghidra {@link DataType}
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 * @throws IllegalArgumentException Upon invalid arguments
 	 */
-	public ProcedureTypeApplier(DefaultPdbApplicator applicator, AbstractProcedureMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, msType);
+	public ProcedureTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
+	protected CallingConvention getCallingConvention(AbstractMsType type) {
+		return ((AbstractProcedureMsType) type).getCallingConvention();
 	}
 
 	@Override
-	protected CallingConvention getCallingConvention() {
-		return ((AbstractProcedureMsType) msType).getCallingConvention();
+	protected RecordNumber getThisPointerRecordNumber(AbstractMsType type) {
+		return null;
 	}
 
 	@Override
-	protected boolean hasThisPointer() {
-		return false;
+	protected RecordNumber getContainingComplexRecordNumber(AbstractMsType type) {
+		return null;
 	}
 
 	@Override
-	protected RecordNumber getReturnRecordNumber() {
-		return ((AbstractProcedureMsType) msType).getReturnRecordNumber();
+	protected Pointer getThisPointer(AbstractMsType type) throws CancelledException, PdbException {
+		return null;
 	}
 
 	@Override
-	protected RecordNumber getArgListRecordNumber() {
-		return ((AbstractProcedureMsType) msType).getArgListRecordNumber();
+	protected void processContainingType(AbstractMsType type) {
+		return; // do nothing
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
-		applyFunction(getCallingConvention(), hasThisPointer());
+	protected RecordNumber getReturnRecordNumber(AbstractMsType type) {
+		return ((AbstractProcedureMsType) type).getReturnRecordNumber();
+	}
 
-//		AbstractProcedureMsType procType = (AbstractProcedureMsType) msType;
-//		applyFunction(procType.getCallingConvention(), false, procType.getReturnTypeIndex(),
-//			procType.getArgListTypeIndex());
-//		DataType definition = applyFunction(procType.getCallingConvention(), false,
-//			procType.getReturnTypeIndex(), procType.getArgListTypeIndex());
-//		ghDataTypeDB = applicator.resolve(definition);
+	@Override
+	protected RecordNumber getArgListRecordNumber(AbstractMsType type) {
+		return ((AbstractProcedureMsType) type).getArgListRecordNumber();
 	}
 
 }

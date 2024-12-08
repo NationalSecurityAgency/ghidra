@@ -89,7 +89,7 @@ public class OldFunctionManager implements ErrorHandler {
 
 		OldFunctionIteratorDB iter = getFunctions();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			upgradeFunction(iter.next());
 			monitor.setProgress(++cnt);
 		}

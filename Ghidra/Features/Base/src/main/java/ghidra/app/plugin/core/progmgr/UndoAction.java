@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.progmgr;
 
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -31,8 +32,10 @@ public class UndoAction extends AbstractUndoRedoAction {
 	}
 
 	@Override
-	protected void actionPerformed(Program program) throws IOException {
-		program.undo();
+	protected void doAction(Program program, int count) throws IOException {
+		for (int i = 0; i < count; i++) {
+			program.undo();
+		}
 	}
 
 	@Override
@@ -43,6 +46,11 @@ public class UndoAction extends AbstractUndoRedoAction {
 	@Override
 	protected String getUndoRedoDescription(Program program) {
 		return program.getUndoName();
+	}
+
+	@Override
+	protected List<String> getDescriptions(Program program) {
+		return program.getAllUndoNames();
 	}
 
 }

@@ -327,11 +327,8 @@ public class UndefinedFunction implements Function {
 	public Parameter getReturn() {
 		try {
 			DataType dt = getReturnType();
-			if (dt instanceof TypeDef) {
-				dt = ((TypeDef) dt).getBaseDataType();
-			}
 			return new ReturnParameterImpl(dt,
-				(dt instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
+				VoidDataType.isVoidDataType(dt) ? VariableStorage.VOID_STORAGE
 						: VariableStorage.UNASSIGNED_STORAGE,
 				getProgram());
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.pcode.floatformat.BigFloat;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
@@ -70,7 +71,7 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 		program.endTransaction(transactionID, false);
 
 		env.dispose();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	@Test
@@ -156,25 +157,6 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 		assertEquals(script.toAddr(0x1006428), results[0]);
 		assertEquals(script.toAddr(0x100642d), results[1]);
 		assertEquals(script.toAddr(0x1006453), results[2]);
-
-	}
-
-	@Test
-	public void testFindBytesAcrossGap() throws Exception {
-		GhidraScript script = getScript();
-
-		AddressSet set = new AddressSet();
-
-		//Match charAt 0x010064db, 0x010064df 
-		set.addRange(script.toAddr(0x10064d5), script.toAddr(0x010064db));
-		set.addRange(script.toAddr(0x010064df), script.toAddr(0x010064e3));
-
-		String byteString = "\\x51\\x52";
-
-		Address[] results = script.findBytes(set, byteString, 20, 1, true);
-
-		assertEquals(1, results.length);
-		assertEquals(script.toAddr(0x010064db), results[0]);
 
 	}
 
@@ -400,13 +382,13 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 		address = script.toAddr(0x010085a7);
 		data = script.createFloat(address);
 		assertNotNull(data);
-		assertEquals(-1.4682312f, data.getValue());
+		assertEquals("-1.468231", ((BigFloat) data.getValue()).toString());
 		script.clearListing(address);
 
 		address = script.toAddr(0x010085a9);
 		data = script.createDouble(address);
 		assertNotNull(data);
-		assertEquals(-8.373196719664668E298, data.getValue());
+		assertEquals("-8.37319671966467E+298", ((BigFloat) data.getValue()).toString());
 		script.clearListing(address);
 	}
 

@@ -15,14 +15,14 @@
  */
 package ghidra.app.util.bin.format.pef;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * See Apple's -- PEFBinaryFormat
@@ -97,22 +97,24 @@ public class SectionHeader implements StructConverter {
 		}
 		return _name;
 	}
-    /**
-     * Returns an input stream to underlying bytes of this section.
-     * @return an input stream to underlying bytes of this section
-     * @throws IOException if an i/o error occurs.
-     */
-    public InputStream getData() throws IOException {
-        return _reader.getByteProvider().getInputStream(containerOffset);
-    }
-    /**
-     * Unpack the data in a packed section.
-     * Calling this method is only valid on a packed section.
-     * @param monitor the task monitor
-     * @return the unpacked data
-     * @throws IOException if an i/o error occurs or the section is not packed.
-     */
-    public byte [] getUnpackedData(TaskMonitor monitor) throws IOException {
+
+	/**
+	 * Returns an input stream to underlying bytes of this section.
+	 * @return an input stream to underlying bytes of this section
+	 * @throws IOException if an i/o error occurs.
+	 */
+	public InputStream getData() throws IOException {
+		return _reader.getByteProvider().getInputStream(containerOffset);
+	}
+
+	/**
+	 * Unpack the data in a packed section.
+	 * Calling this method is only valid on a packed section.
+	 * @param monitor the task monitor
+	 * @return the unpacked data
+	 * @throws IOException if an i/o error occurs or the section is not packed.
+	 */
+	public byte[] getUnpackedData(TaskMonitor monitor) throws IOException {
 		if (getSectionKind() != SectionKind.PackedData) {
 			throw new IOException("Attempt to unpack a section that is not packed.");
 		}
@@ -153,7 +155,7 @@ public class SectionHeader implements StructConverter {
 						throw new IllegalStateException(
 							"Unable to read enough bytes for " + opcode);
 					}
-					for (int i = 0; i < repeatCount - 1; ++i) {
+					for (int i = 0; i < repeatCount + 1; ++i) {
 						System.arraycopy(rawData, 0, data, index, rawData.length);
 						index += rawData.length;
 					}
@@ -214,7 +216,7 @@ public class SectionHeader implements StructConverter {
 			}
 			return data;
 		}
-    }
+	}
 
 	private int unpackNextValue(InputStream input) throws IOException {
 		int unpacked = 0;
@@ -310,6 +312,7 @@ public class SectionHeader implements StructConverter {
 		return "Name="+_name+" Kind="+getSectionKind()+" Share="+getShareKind();
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		return StructConverterUtil.toDataType(getClass());
 	}

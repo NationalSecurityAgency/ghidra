@@ -216,21 +216,21 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 
 		// make some changes to check in
 		Program program = (Program) ((DomainFileNode) node).getDomainFile()
-				.getDomainObject(this,
-					true, false, TaskMonitor.DUMMY);
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		editProgram(program, (p) -> {
 			SymbolTable symTable = p.getSymbolTable();
 			symTable.createLabel(p.getMinAddress().getNewAddress(0x010001000), "fred",
 				SourceType.USER_DEFINED);
 		});
+		program.release(this);
 
 		program = (Program) ((DomainFileNode) xnode).getDomainFile()
-				.getDomainObject(this, true,
-					false, TaskMonitor.DUMMY);
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		editProgram(program, (p) -> {
 			SymbolTable symTable = p.getSymbolTable();
 			symTable.createLabel(p.getMinAddress(), "bob", SourceType.USER_DEFINED);
 		});
+		program.release(this);
 
 		DockingActionIf checkInAction = getAction("CheckIn");
 		performAction(checkInAction, getDomainFileActionContext(node, xnode), false);
@@ -254,10 +254,8 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 
 		checkout(programNode);
 
-		Program program =
-			(Program) ((DomainFileNode) programNode).getDomainFile()
-					.getDomainObject(this, true,
-						false, TaskMonitor.DUMMY);
+		Program program = (Program) ((DomainFileNode) programNode).getDomainFile()
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 
 		createHistoryEntry(program, "Symbol1");
 		frontEnd.checkIn(programNode, "This is checkin 1");

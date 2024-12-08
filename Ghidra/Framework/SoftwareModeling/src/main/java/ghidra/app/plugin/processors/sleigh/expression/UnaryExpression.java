@@ -21,12 +21,10 @@
 package ghidra.app.plugin.processors.sleigh.expression;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * Base class for unary operators on PatternExpressions
  */
 
@@ -59,10 +57,10 @@ public abstract class UnaryExpression extends PatternExpression {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start();
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement();
 
-		unary = PatternExpression.restoreExpression(parser, lang);
-		parser.end(el);
+		unary = PatternExpression.decodeExpression(decoder, lang);
+		decoder.closeElement(el);
 	}
 }

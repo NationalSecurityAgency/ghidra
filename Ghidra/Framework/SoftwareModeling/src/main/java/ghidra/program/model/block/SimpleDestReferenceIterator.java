@@ -54,7 +54,7 @@ public class SimpleDestReferenceIterator implements CodeBlockReferenceIterator {
      * @see ghidra.program.model.block.CodeBlockReferenceIterator#next()
      */
     public CodeBlockReference next() throws CancelledException {
-    	monitor.checkCanceled();
+    	monitor.checkCancelled();
     	return blockRefQueue.isEmpty() ? null : blockRefQueue.removeFirst();
     }
 
@@ -62,7 +62,7 @@ public class SimpleDestReferenceIterator implements CodeBlockReferenceIterator {
      * @see ghidra.program.model.block.CodeBlockReferenceIterator#hasNext()
      */
     public boolean hasNext() throws CancelledException {
-    	monitor.checkCanceled();
+    	monitor.checkCancelled();
 		return !blockRefQueue.isEmpty();
     }
     
@@ -249,7 +249,7 @@ public class SimpleDestReferenceIterator implements CodeBlockReferenceIterator {
 			Reference refs[] = primitive.getReferencesFrom();
 			for (int i = 0; i < refs.length; i++) {
 				
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				
 				CodeBlock destBlock = null;
 				

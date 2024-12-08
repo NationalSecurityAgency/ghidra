@@ -24,7 +24,9 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramModule;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -55,11 +57,13 @@ public class LinkEditDataCommand extends LoadCommand {
 		this.dataReader.setPointerIndex(dataoff);
 	}
 
-	public int getDataOffset() {
+	@Override
+	public int getLinkerDataOffset() {
 		return dataoff;
 	}
 
-	public int getDataSize() {
+	@Override
+	public int getLinkerDataSize() {
 		return datasize;
 	}
 
@@ -69,23 +73,22 @@ public class LinkEditDataCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		markupPlateComment(program, fileOffsetToAddress(program, header, dataoff, datasize), source,
+			null);
+	}
+
+	@Override
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address address = baseAddress.getNewAddress(getStartIndex());
-				api.createData(address, toDataType());
-				api.setPlateComment(address,
-					LoadCommandTypes.getLoadCommandName(getCommandType()));
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-//TODO markup actual data
-
-				if (datasize > 0) {
-					Address start = baseAddress.getNewAddress(dataoff);
-					api.createFragment(parentModule, getCommandName() + "_DATA", start, datasize);
-				}
+			if (datasize > 0) {
+				Address start = baseAddress.getNewAddress(dataoff);
+				api.createFragment(parentModule,
+					LoadCommandTypes.getLoadCommandName(getCommandType()), start, datasize);
 			}
 		}
 		catch (Exception e) {

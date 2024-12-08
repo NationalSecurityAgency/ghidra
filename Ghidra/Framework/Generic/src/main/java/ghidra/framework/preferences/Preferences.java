@@ -195,7 +195,7 @@ public class Preferences {
 	/**
 	 * Get the property with the given name.
 	 * <p>
-	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
+	 * Note: all <code>getProperty(...)</code> methods will check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
 	 * @param name the property name
 	 * @return the current property value; null if not set
@@ -213,7 +213,7 @@ public class Preferences {
 	/**
 	 * Get the property with the given name; if there is no property, return the defaultValue.
 	 * <p>
-	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
+	 * Note: all <code>getProperty(...)</code> methods will check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
 	 * @param name the property name
 	 * @param defaultValue the default value
@@ -237,7 +237,7 @@ public class Preferences {
 	 * This version of <code>getProperty</code> will, when <code>useHistoricalValue</code> is true, look
 	 * for the given preference value in the last used installation of the application.
 	 * <p>
-	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
+	 * Note: all <code>getProperty(...)</code> methods will check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
 	 * 
 	 * @param name The name of the property for which to get a value

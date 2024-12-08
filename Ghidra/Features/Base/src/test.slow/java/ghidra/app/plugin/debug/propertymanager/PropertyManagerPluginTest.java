@@ -112,7 +112,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		provider = plugin.getPropertyViewProvider();
 		SwingUtilities.invokeLater(() -> tool.showComponentProvider(provider, true));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DockingWindowManager winMgr = DockingWindowManager.getActiveInstance();
 		waitForComponentProvider(winMgr.getActiveWindow(), PropertyManagerProvider.class, 2000);
@@ -153,13 +153,13 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// No selection yet - verify no popup action
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		DockingActionIf deleteAction =
 			getAction(plugin, PropertyManagerProvider.DELETE_PROPERTIES_ACTION_NAME);
 
 		// Select Type1
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(0, table.getSelectedRow());
 
 		// Verify marker set
@@ -179,7 +179,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Select Type2
 		r = table.getCellRect(1, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, false);
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(1, table.getSelectedRow());
 
 		// Verify marker set
@@ -196,7 +196,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Select Type3
 		r = table.getCellRect(2, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, false);
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(2, table.getSelectedRow());
 
 		// Verify marker set
@@ -217,7 +217,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		MouseEvent e = new MouseEvent(table, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
 			0, r.x, r.y, 1, false, MouseEvent.BUTTON3);
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(
 			deleteAction.isEnabledForContext(plugin.getPropertyViewProvider().getActionContext(e)));
 
@@ -245,7 +245,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		makeSelection("01001031", "01001040");
 
 		waitForUpdateTimer();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(1, model.getRowCount());
 		assertEquals("Type2", model.getValueAt(0, PropertyManagerTableModel.PROPERTY_NAME_COLUMN));
@@ -253,7 +253,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Select Type2
 		Rectangle r = table.getCellRect(0, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, false);
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(0, table.getSelectedRow());
 		MarkerSet markerSet =
 			markerService.getMarkerSet(PropertyManagerPlugin.PROPERTY_MARKER_NAME, program);
@@ -271,7 +271,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		MouseEvent e = new MouseEvent(table, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
 			0, r.x, r.y, 1, false, MouseEvent.BUTTON3);
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(
 			deleteAction.isEnabledForContext(plugin.getPropertyViewProvider().getActionContext(e)));
 
@@ -319,10 +319,10 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// No selection yet - verify no popup action
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		// Select Type1
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(0, table.getSelectedRow());
 
 		// Verify marker set
@@ -342,7 +342,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Select Type2
 		r = table.getCellRect(1, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, false);
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(1, table.getSelectedRow());
 
 		// Verify marker set
@@ -358,7 +358,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Verify popup action
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 	}
 
@@ -386,7 +386,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		clearSelection();
 		waitForUpdateTimer();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(3, model.getRowCount());
 		assertEquals("Type1", model.getValueAt(0, PropertyManagerTableModel.PROPERTY_NAME_COLUMN));
@@ -394,7 +394,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("Type3", model.getValueAt(2, PropertyManagerTableModel.PROPERTY_NAME_COLUMN));
 
 		table.clearSelection();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		addrs = getAddresses(markerSet);
 		assertTrue(addrs.isEmpty());
@@ -403,11 +403,11 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// No selection yet - verify no popup action
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// Select Type1
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(0, table.getSelectedRow());
 
 		// Verify marker set
@@ -427,7 +427,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Select Type2
 		r = table.getCellRect(1, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, false);
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(1, table.getSelectedRow());
 
 		// Verify marker set
@@ -441,7 +441,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// Select Type3
 		r = table.getCellRect(2, PropertyManagerTableModel.PROPERTY_NAME_COLUMN, false);
 		clickMouse(table, MouseEvent.BUTTON1, r.x, r.y, 1, 0, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(2, table.getSelectedRow());
 
 		// Verify marker set
@@ -462,7 +462,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		MouseEvent e = new MouseEvent(table, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
 			0, r.x, r.y, 1, false, MouseEvent.BUTTON3);
 		clickMouse(table, MouseEvent.BUTTON3, r.x, r.y, 1, 0, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(
 			deleteAction.isEnabledForContext(plugin.getPropertyViewProvider().getActionContext(e)));
 

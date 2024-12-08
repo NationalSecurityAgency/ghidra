@@ -15,42 +15,18 @@
  */
 package ghidra.app.plugin.assembler;
 
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.program.model.listing.Program;
 
 /**
  * An interface to build an assembler for a given language
  */
-public interface AssemblerBuilder {
-	/**
-	 * Get the ID of the language for which this instance builds an assembler
-	 * 
-	 * @return the language ID
-	 */
-	public LanguageID getLanguageID();
+public interface AssemblerBuilder
+		extends GenericAssemblerBuilder<AssemblyResolvedPatterns, Assembler> {
 
-	/**
-	 * Get the language for which this instance builds an assembler
-	 * 
-	 * @return the language
-	 */
-	public Language getLanguage();
-
-	/**
-	 * Build an assembler with the given selector callback
-	 * 
-	 * @param selector the selector callback
-	 * @return the built assembler
-	 */
+	@Override
 	public Assembler getAssembler(AssemblySelector selector);
 
-	/**
-	 * Build an assembler with the given selector callback and program binding
-	 * 
-	 * @param selector the selector callback
-	 * @param program the bound program
-	 * @return the built assembler
-	 */
+	@Override
 	public Assembler getAssembler(AssemblySelector selector, Program program);
 }

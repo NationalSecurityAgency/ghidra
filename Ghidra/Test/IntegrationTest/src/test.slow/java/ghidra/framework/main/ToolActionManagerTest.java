@@ -27,7 +27,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
 import docking.tool.ToolConstants;
@@ -176,7 +176,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		String toolNamePrefix = "TestCodeBrowser";
 		final File cbFile = ResourceManager
-				.getResourceFile("defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
+			.getResourceFile("defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
 		assertNotNull(cbFile);
 
 		DockingActionIf importAction = getAction("Import Tool");
@@ -713,7 +713,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private void performToolButtonAction(final DockingActionIf action, String name, boolean doWait,
 			boolean runningTool) throws Exception {
 		final ToolButton tb = findToolButton(frontEndTool.getToolFrame(), name, runningTool);
-		Runnable r = () -> action.actionPerformed(new ActionContext(null, tb, tb));
+		Runnable r = () -> action.actionPerformed(new DefaultActionContext(null, tb, tb));
 		if (doWait) {
 			runSwing(r);
 		}
@@ -748,7 +748,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		runSwing(() -> {
 			JMenuItem item = new JMenuItem(name);
-			action.actionPerformed(new ActionContext(null, null, item));
+			action.actionPerformed(new DefaultActionContext(null, null, item));
 		}, doWait);
 
 		waitForSwing();

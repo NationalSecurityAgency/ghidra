@@ -25,9 +25,9 @@ import javax.swing.JComponent;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
-import docking.widgets.fieldpanel.support.*;
-import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.viewer.format.FieldFormatModel;
+import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.fieldpanel.support.RowColLocation;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
@@ -39,6 +39,7 @@ public class ListingTextField implements ListingField, TextField {
 	private ProxyObj<?> proxy;
 	private FieldFactory factory;
 	protected TextField field;
+	protected ListingFieldHighlightFactoryAdapter hlFactory;
 
 	/**
 	 * Creates a new ListingTextField that displays the text on a single line, clipping as needed.
@@ -53,21 +54,24 @@ public class ListingTextField implements ListingField, TextField {
 	 */
 	public static ListingTextField createSingleLineTextField(FieldFactory factory,
 			ProxyObj<?> proxy, FieldElement fieldElement, int startX, int width,
-			HighlightProvider provider) {
+			ListingHighlightProvider provider) {
 
-		HighlightFactory hlFactory =
-			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(provider);
 		TextField field = new ClippingTextField(startX, width, fieldElement, hlFactory);
-		return new ListingTextField(factory, proxy, field);
+		ListingTextField listingField = new ListingTextField(factory, proxy, field, hlFactory);
+		return listingField;
 	}
 
 	public static ListingTextField createSingleLineTextFieldWithReverseClipping(
 			AddressFieldFactory factory, ProxyObj<?> proxy, FieldElement fieldElement, int startX,
-			int width, HighlightProvider provider) {
-		HighlightFactory hlFactory =
-			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
+			int width, ListingHighlightProvider provider) {
+
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(provider);
 		TextField field = new ReverseClippingTextField(startX, width, fieldElement, hlFactory);
-		return new ListingTextField(factory, proxy, field);
+		ListingTextField listingField = new ListingTextField(factory, proxy, field, hlFactory);
+		return listingField;
 	}
 
 	/**
@@ -85,13 +89,14 @@ public class ListingTextField implements ListingField, TextField {
 	 */
 	public static ListingTextField createWordWrappedTextField(FieldFactory factory,
 			ProxyObj<?> proxy, FieldElement fieldElement, int startX, int width, int maxLines,
-			HighlightProvider provider) {
+			ListingHighlightProvider provider) {
 
-		HighlightFactory hlFactory =
-			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(provider);
 		TextField field =
 			new WrappingVerticalLayoutTextField(fieldElement, startX, width, maxLines, hlFactory);
-		return new ListingTextField(factory, proxy, field);
+		ListingTextField listingField = new ListingTextField(factory, proxy, field, hlFactory);
+		return listingField;
 	}
 
 	/**
@@ -109,20 +114,21 @@ public class ListingTextField implements ListingField, TextField {
 	 */
 	public static ListingTextField createPackedTextField(FieldFactory factory, ProxyObj<?> proxy,
 			FieldElement[] textElements, int startX, int width, int maxLines,
-			HighlightProvider provider) {
+			ListingHighlightProvider provider) {
 
-		HighlightFactory hlFactory =
-			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(provider);
 		List<FieldElement> list = Arrays.asList(textElements);
 		TextField field = new FlowLayoutTextField(list, startX, width, maxLines, hlFactory);
-		return new ListingTextField(factory, proxy, field);
+		ListingTextField listingField = new ListingTextField(factory, proxy, field, hlFactory);
+		return listingField;
 	}
 
 	/**
-	 * Displays the given array of text, each on its own line.
+	 * Displays the given List of text elements, each on its own line.
 	 * @param factory the field factory that generated this field
 	 * @param proxy the object used to populate this field
-	 * @param textElements the array of elements for the field.
+	 * @param textElements the list of text elements 
 	 * Each of these holds text, attributes and location information.
 	 * @param startX the starting X position of the field
 	 * @param width the width of the field
@@ -131,21 +137,43 @@ public class ListingTextField implements ListingField, TextField {
 	 * @return the text field.
 	 */
 	public static ListingTextField createMultilineTextField(FieldFactory factory, ProxyObj<?> proxy,
-			FieldElement[] textElements, int startX, int width, int maxLines,
-			HighlightProvider provider) {
+			List<FieldElement> textElements, int startX, int width, int maxLines,
+			ListingHighlightProvider provider) {
 
-		HighlightFactory hlFactory =
-			new FieldHighlightFactory(provider, factory.getClass(), proxy.getObject());
-		List<FieldElement> list = Arrays.asList(textElements);
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(provider);
 		TextField field =
-			new VerticalLayoutTextField(list, startX, width, maxLines, hlFactory);
-		return new ListingTextField(factory, proxy, field);
+			new VerticalLayoutTextField(textElements, startX, width, maxLines, hlFactory);
+		ListingTextField listingField = new ListingTextField(factory, proxy, field, hlFactory);
+		return listingField;
 	}
 
-	protected ListingTextField(FieldFactory factory, ProxyObj<?> proxy, TextField field) {
+	/**
+	 * Displays the given List of text elements, each on its own line with no max line restriction
+	 * @param factory the field factory that generated this field
+	 * @param proxy the object used to populate this field
+	 * @param textElements the list of text elements 
+	 * Each of these holds text, attributes and location information.
+	 * @param startX the starting X position of the field
+	 * @param width the width of the field
+	 * @param provider the highlight provider
+	 * @return the text field.
+	 */
+	public static ListingTextField createMultilineTextField(FieldFactory factory, ProxyObj<?> proxy,
+			List<FieldElement> textElements, int startX, int width,
+			ListingHighlightProvider provider) {
+
+		return ListingTextField.createMultilineTextField(factory, proxy, textElements, startX,
+			width, Integer.MAX_VALUE, provider);
+	}
+
+	protected ListingTextField(FieldFactory factory, ProxyObj<?> proxy, TextField field,
+			ListingFieldHighlightFactoryAdapter hlFactory) {
 		this.factory = factory;
 		this.proxy = proxy;
 		this.field = field;
+		this.hlFactory = hlFactory;
+		hlFactory.setListingField(this);
 	}
 
 	@Override
@@ -301,11 +329,6 @@ public class ListingTextField implements ListingField, TextField {
 			return EmptyProxy.EMPTY_PROXY;
 		}
 		return proxy;
-	}
-
-	@Override
-	public FieldFormatModel getFieldModel() {
-		return factory.getFieldModel();
 	}
 
 	@Override

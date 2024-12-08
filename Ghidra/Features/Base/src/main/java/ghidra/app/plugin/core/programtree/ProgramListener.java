@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.programtree;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.util.*;
 
 import javax.swing.tree.TreePath;
@@ -22,8 +25,8 @@ import javax.swing.tree.TreePath;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.StringKeyIndexer;
 import ghidra.util.task.SwingUpdateManager;
@@ -74,30 +77,30 @@ class ProgramListener implements DomainObjectListener {
 				continue;
 			}
 			ProgramChangeRecord record = (ProgramChangeRecord) rec;
-			int eventType = rec.getEventType();
+			EventType eventType = rec.getEventType();
 
-			if (eventType == ChangeManager.DOCR_TREE_RENAMED) {
+			if (eventType == ProgramEvent.PROGRAM_TREE_RENAMED) {
 				plugin.treeRenamed((String) record.getOldValue(), (String) record.getNewValue());
 			}
-			else if (eventType == ChangeManager.DOCR_GROUP_ADDED) {
+			else if (eventType == ProgramEvent.GROUP_ADDED) {
 				processGroupAdded(record);
 			}
-			else if (eventType == ChangeManager.DOCR_GROUP_REMOVED) {
+			else if (eventType == ProgramEvent.GROUP_REMOVED) {
 				processGroupRemoved(record);
 			}
-			else if (eventType == ChangeManager.DOCR_GROUP_RENAMED) {
+			else if (eventType == ProgramEvent.GROUP_RENAMED) {
 				processGroupRenamed(record);
 			}
-			else if (eventType == ChangeManager.DOCR_MODULE_REORDERED) {
+			else if (eventType == ProgramEvent.MODULE_REORDERED) {
 				processModuleReordered(record);
 			}
-			else if (eventType == ChangeManager.DOCR_GROUP_REPARENTED) {
+			else if (eventType == ProgramEvent.GROUP_REPARENTED) {
 				processGroupReparented(record);
 			}
-			else if (eventType == ChangeManager.DOCR_FRAGMENT_MOVED) {
+			else if (eventType == ProgramEvent.FRAGMENT_MOVED) {
 				plugin.fragmentMoved();
 			}
-			else if (eventType == ChangeManager.DOCR_MEMORY_BLOCKS_JOINED) {
+			else if (eventType == ProgramEvent.MEMORY_BLOCKS_JOINED) {
 				viewChanged |= processBlockJoined(record);
 			}
 
@@ -359,24 +362,23 @@ class ProgramListener implements DomainObjectListener {
 		int recordCount = event.numRecords();
 		for (int i = 0; i < recordCount; i++) {
 			DomainObjectChangeRecord rec = event.getChangeRecord(i);
-			int eventType = rec.getEventType();
-			if (eventType == DomainObject.DO_OBJECT_RESTORED ||
-				eventType == ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) {
+			EventType eventType = rec.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == ProgramEvent.MEMORY_BLOCK_REMOVED) {
 				// for object restored, check the root node to see if it is invalid; 
 				// otherwise for memory block removed, rebuild the tree
-				plugin.reloadProgram(eventType == DomainObject.DO_OBJECT_RESTORED);
+				plugin.reloadProgram(eventType == DomainObjectEvent.RESTORED);
 				return true;
 			}
-			if (eventType == ChangeManager.DOCR_GROUP_ADDED ||
-				eventType == ChangeManager.DOCR_GROUP_REMOVED ||
-				eventType == ChangeManager.DOCR_FRAGMENT_MOVED ||
-				eventType == ChangeManager.DOCR_MODULE_REORDERED) {
+			if (eventType == ProgramEvent.GROUP_ADDED || eventType == ProgramEvent.GROUP_REMOVED ||
+				eventType == ProgramEvent.FRAGMENT_MOVED ||
+				eventType == ProgramEvent.MODULE_REORDERED) {
 				changeCnt++;
 			}
-			else if (eventType == ChangeManager.DOCR_TREE_REMOVED) {
+			else if (eventType == ProgramEvent.PROGRAM_TREE_REMOVED) {
 				plugin.treeRemoved((String) rec.getOldValue());
 			}
-			else if (eventType == ChangeManager.DOCR_TREE_CREATED) {
+			else if (eventType == ProgramEvent.PROGRAM_TREE_CREATED) {
 				plugin.treeViewAdded((String) rec.getNewValue());
 			}
 		}
@@ -396,8 +398,7 @@ class ProgramListener implements DomainObjectListener {
 			return false;
 		}
 
-		return event.containsEvent(ChangeManager.DOCR_TREE_RENAMED) ||
-			event.containsEvent(DomainObject.DO_OBJECT_RENAMED);
+		return event.contains(PROGRAM_TREE_RENAMED, RENAMED);
 	}
 
 	private int[] findViewedIndexes(String oldParentName, String childName) {

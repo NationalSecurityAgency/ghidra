@@ -35,7 +35,7 @@ public class ClearMarkupItemConsideredStatusTask extends VtTask {
 	protected boolean doWork(TaskMonitor monitor) throws Exception {
 		monitor.initialize(markupItems.size());
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			markupItem.setConsidered(VTMarkupItemConsideredStatus.UNCONSIDERED);
 			monitor.incrementProgress(1);
 		}

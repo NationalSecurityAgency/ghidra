@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,33 +24,34 @@ import docking.widgets.tree.GTreeNode;
 
 public interface GTreeDragNDropHandler extends GTreeTransferHandler {
 	/**
-     * Return true if the dragUserData can be dragged.
-     * @param dragUserData data where user is initiating the drag operation
-     * @param dragAction user action for the drag operation
-     */
-    public boolean isStartDragOk(List<GTreeNode> dragUserData, int dragAction);
-    /**
+	 * Return true if the dragUserData can be dragged.
+	 * @param dragUserData data where user is initiating the drag operation
+	 * @param dragAction user action for the drag operation
+	 * @return true if the dragUserData can be dragged
+	 */
+	public boolean isStartDragOk(List<GTreeNode> dragUserData, int dragAction);
+
+	/**
 	 * Returns the supported Drag actions for this tree.  For available actions see
 	 * {@link DnDConstants}.
 	 * @return the supported Drag actions.
 	 */
 	public int getSupportedDragActions();
 
+	/**
+	 * Return true if the drop site is valid for the given target.
+	 * @param destUserData destination for node being dragged
+	 * @param flavors flavor(s) being dragged
+	 * @param dropAction user action for drop operation
+	 * @return  true if the drop site is valid for the given target
+	 */
+	public boolean isDropSiteOk(GTreeNode destUserData, DataFlavor[] flavors, int dropAction);
 
-    /**
-     * Return true if the drop site is valid for the given target.
-     * @param destUserData destination for node being dragged
-     * @param flavors flavor(s) being dragged
-     * @param dropAction user action for drop operation
-     */
-    boolean isDropSiteOk(GTreeNode destUserData, DataFlavor[] flavors, int dropAction);
-
-    /**
-     * Add the given transferable's data to the destination user data.
-     * @param destUserData destination node for the data.
-     * @param transferable  the transferable being dragged whose data will be dropped.
-     * @param dropAction user action for drop operation
-     */
-    void drop(GTreeNode destUserData, Transferable transferable, int dropAction);
-
+	/**
+	 * Add the given transferable's data to the destination user data.
+	 * @param destUserData destination node for the data.
+	 * @param transferable  the transferable being dragged whose data will be dropped.
+	 * @param dropAction user action for drop operation
+	 */
+	public void drop(GTreeNode destUserData, Transferable transferable, int dropAction);
 }

@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.commentwindow;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.util.table.GhidraTable;
 
 /*
  * This the action context for actions invoked from the Comment Window
  */
-public class CommentWindowContext extends ActionContext {
+public class CommentWindowContext extends DefaultActionContext {
 
 	CommentWindowContext(CommentWindowProvider provider, GhidraTable commentTable) {
 		super(provider, commentTable);

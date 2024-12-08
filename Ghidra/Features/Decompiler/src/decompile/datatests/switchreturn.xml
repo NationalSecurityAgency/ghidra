@@ -1,0 +1,26 @@
+<decompilertest>
+<binaryimage arch="MIPS:LE:32:default:default">
+<!--
+    Example of a return instruction occuring through a non-standard register.
+    The decompiler should process initially as a jumptable, but should discover
+    it is actually branching through the return value.  It should convert the
+    indirect jump into a return operation.
+-->
+<bytechunk space="ram" offset="0x10000">
+fa630b620018084000650b9700ef0065
+</bytechunk>
+<symbol space="ram" offset="0x10000" name="switchreturn"/>
+<symbol space="ram" offset="0x10020" name="testcall"/>
+</binaryimage>
+<script>
+  <com>set context ISA_MODE 1 [ram,0x10000] [ram,0x20000]</com>
+  <com>set context RELP 1 [ram,0x10000] [ram,0x20000]</com>
+  <com>lo fu switchreturn</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Switch return #1" min="1" max="1">Treating indirect jump as return</stringmatch>
+<stringmatch name="Switch return #2" min="0" max="0">Could not recover</stringmatch>
+<stringmatch name="Switch return #3" min="0" max="0">\(\*UNRECOVERED_JUMPTABLE\)</stringmatch>
+</decompilertest>

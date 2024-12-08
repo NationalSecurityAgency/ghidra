@@ -18,9 +18,8 @@ package ghidra.app.plugin.core.functiongraph.mvc;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiConsumer;
 
 import javax.swing.JComponent;
@@ -28,20 +27,22 @@ import javax.swing.SwingUtilities;
 
 import com.google.common.cache.*;
 
+import docking.options.OptionsService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.codebrowser.ListingHighlightProvider;
+import ghidra.app.plugin.core.codebrowser.ListingMiddleMouseHighlightProvider;
 import ghidra.app.plugin.core.functiongraph.*;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.*;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
 import ghidra.app.services.ButtonPressedListener;
 import ghidra.app.services.CodeViewerService;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -50,7 +51,6 @@ import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.graph.viewer.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -58,6 +58,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.SystemUtilities;
+import ghidra.util.datastruct.WeakDataStructureFactory;
+import ghidra.util.datastruct.WeakSet;
 
 public class FGController implements ProgramLocationListener, ProgramSelectionListener {
 
@@ -81,7 +83,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	private FunctionGraphOptions functionGraphOptions;
 
-	private SharedHighlightProvider sharedHighlightProvider;
+	private FgHighlightProvider sharedHighlightProvider;
 	private StringSelectionListener sharedStringSelectionListener =
 		string -> provider.setClipboardStringContent(string);
 
@@ -89,6 +91,9 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	private BiConsumer<FGData, Boolean> fgDataDisposeListener = (data, evicted) -> {
 		// dummy
 	};
+
+	private WeakSet<MarginProviderSupplier> marginProviders =
+		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 
 	public FGController(FGProvider provider, FunctionGraphPlugin plugin) {
 		this.provider = provider;
@@ -140,7 +145,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	private void setMinimalFormatManager(FormatManager formatManager) {
 		this.minimalFormatManager = formatManager;
-		SharedHighlightProvider highlightProvider = lazilyCreateSharedHighlightProvider();
+		FgHighlightProvider highlightProvider = lazilyCreateSharedHighlightProvider();
 		minimalFormatManager.addHighlightProvider(highlightProvider);
 	}
 
@@ -158,12 +163,12 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		return defaultFormatManager;
 	}
 
-	private SharedHighlightProvider lazilyCreateSharedHighlightProvider() {
+	private FgHighlightProvider lazilyCreateSharedHighlightProvider() {
 		if (sharedHighlightProvider != null) {
 			return sharedHighlightProvider;
 		}
 		sharedHighlightProvider =
-			new SharedHighlightProvider(plugin.getTool(), provider.getComponent());
+			new FgHighlightProvider(plugin.getTool(), provider.getComponent());
 		return sharedHighlightProvider;
 	}
 
@@ -421,7 +426,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 //==================================================================================================
 
 //==================================================================================================
-//  Methods call by the providers
+//  Methods called by the providers
 //==================================================================================================
 
 	public void programClosed(Program program) {
@@ -490,10 +495,6 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	public boolean hasResults() {
 		return functionGraphData.hasResults();
-	}
-
-	public void requestFocus() {
-		view.requestFocus();
 	}
 
 	public void cleanup() {
@@ -830,8 +831,16 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		}
 	}
 
+	public void addMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		marginProviders.add(supplier);
+	}
+
+	public void removeMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		marginProviders.add(supplier);
+	}
+
 //==================================================================================================
-//  Methods call by the model
+//  Methods called by the model
 //==================================================================================================
 
 	public void setFunctionGraphData(FGData data) {
@@ -916,7 +925,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 //==================================================================================================
-//  Methods call by the vertices (actions and such)
+//  Methods called by the vertices (actions and such)
 //==================================================================================================
 
 	/** Zooms so that the graph will fit completely into the size of the primary viewer */
@@ -1007,6 +1016,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		return plugin.getColorProvider();
 	}
 
+	public <T> T getService(Class<T> serviceClass) {
+		return plugin.getService(serviceClass);
+	}
+
 	/**
 	 * Update the graph's notion of the current location based upon that of the Tool. This method is
 	 * meant to be called from internal mutative operations.
@@ -1063,22 +1076,25 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		};
 	}
 
+	public Set<MarginProviderSupplier> getMarginProviderSuppliers() {
+		return Collections.unmodifiableSet(marginProviders);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	private static class SharedHighlightProvider
-			implements HighlightProvider, ButtonPressedListener {
-		private ListingHighlightProvider highlighter;
+	private static class FgHighlightProvider
+			implements ListingHighlightProvider, ButtonPressedListener {
+		private ListingMiddleMouseHighlightProvider highlighter;
 
-		SharedHighlightProvider(PluginTool tool, Component repaintComponent) {
-			highlighter = new ListingHighlightProvider(tool, repaintComponent);
+		FgHighlightProvider(PluginTool tool, Component repaintComponent) {
+			highlighter = new ListingMiddleMouseHighlightProvider(tool, repaintComponent);
 		}
 
 		@Override
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
-			return highlighter.getHighlights(text, obj, fieldFactoryClass, cursorTextOffset);
+		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
+			return highlighter.createHighlights(text, field, cursorTextOffset);
 		}
 
 		@Override

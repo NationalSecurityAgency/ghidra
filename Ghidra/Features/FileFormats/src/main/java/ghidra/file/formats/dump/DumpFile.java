@@ -183,7 +183,7 @@ public class DumpFile {
 		intAddressRanges.put(address, dao);
 	}
 
-	public void addExteriorAddressObject(String id, int rva, long base, long len) {
+	public void addExteriorAddressObject(String id, long rva, long base, long len) {
 		Address address = minAddr.getNewAddress(base);
 		extAddressRanges.put(address, new DumpAddressObject(id, rva, base, len));
 	}

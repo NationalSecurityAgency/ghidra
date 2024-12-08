@@ -123,11 +123,6 @@ public abstract class DomainFolderListenerAdapter implements DomainFolderChangeL
 	}
 
 	@Override
-	public void domainFolderSetActive(DomainFolder folder) {
-		// do nothing
-	}
-
-	@Override
 	public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 		if (enableStateChangeCallback) {
 			String path = file.getPathname();
@@ -135,18 +130,4 @@ public abstract class DomainFolderListenerAdapter implements DomainFolderChangeL
 		}
 	}
 
-	@Override
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		// do nothing
-	}
-
-	@Override
-	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-		// do nothing
-	}
-
-	@Override
-	public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-		// do nothing
-	}
 }

@@ -173,7 +173,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			for (int i = 0; i < imageExtrasCount; ++i) {
 				imageInfoExtraList.add(new DyldCacheImageInfoExtra(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -191,7 +191,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			for (int i = 0; i < initializersCount; ++i) {
 				acceleratorInitializerList.add(new DyldCacheAcceleratorInitializer(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -209,7 +209,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			for (int i = 0; i < dofSectionsCount; ++i) {
 				acceleratorDofList.add(new DyldCacheAcceleratorDof(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -227,7 +227,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			for (int i = 0; i < rangeTableCount; ++i) {
 				rangeEntryList.add(new DyldCacheRangeEntry(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -247,7 +247,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 				Data d = DataUtilities.createData(program, addr, imageInfoExtra.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -275,7 +275,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 					// Function already created...skip
 				}
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -295,7 +295,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 				Data d = DataUtilities.createData(program, addr, dof.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -351,7 +351,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 				Data d = DataUtilities.createData(program, addr, rangeEntry.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}

@@ -19,15 +19,14 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jdom.Element;
-
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.address.*;
+import ghidra.pcodeCPort.address.Address;
+import ghidra.pcodeCPort.address.RangeList;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
-import ghidra.pcodeCPort.space.*;
+import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
-import ghidra.pcodeCPort.xml.DocumentStorage;
 import ghidra.program.model.lang.SpaceNames;
 
 public abstract class Translate implements BasicSpaceProvider {
@@ -212,8 +211,6 @@ public abstract class Translate implements BasicSpaceProvider {
 		return !nohighptr.inRange(loc, size);
 	}
 
-	public abstract void initialize(DocumentStorage store);
-
 	protected void registerContext(String name, int sbit, int ebit) {
 		// Base implementation (for compiling) doesn't need to keep track of context symbol
 	}
@@ -234,44 +231,6 @@ public abstract class Translate implements BasicSpaceProvider {
 	public Translate() {
 		unique_base = 0;
 		alignment = 1;
-	}
-
-	AddrSpace restoreXmlSpace(Element el) { // Factory for spaces
-		AddrSpace res;
-		String tp = el.getName();
-		if ("space_base".equals(tp)) {
-			res = new SpacebaseSpace(this);
-		}
-		else if ("space_unique".equals(tp)) {
-			res = new UniqueSpace(this);
-		}
-		else if ("space_other".equals(tp)) {
-			res = new OtherSpace(this);
-		}
-		else {
-			res = new AddrSpace(this, spacetype.IPTR_PROCESSOR);
-		}
-
-		res.restoreXml(el);
-		return res;
-	}
-
-	protected void restoreXmlSpaces(Element el) {
-		// The first space should always be the constant space
-		insertSpace(new ConstantSpace(this));
-
-		// The second space should always be the other space
-		insertSpace(
-			new OtherSpace(this, SpaceNames.OTHER_SPACE_NAME, SpaceNames.OTHER_SPACE_INDEX));
-
-		String defname = el.getAttributeValue("defaultspace");
-		List<?> children = el.getChildren();
-		for (Object object : children) {
-			AddrSpace spc = restoreXmlSpace((Element) object);
-			insertSpace(spc);
-		}
-		AddrSpace spc = getSpaceByName(defname);
-		setDefaultSpace(spc.getIndex());
 	}
 
 	public AddrSpace getSpaceByName(String nm) { // Convert name to space
@@ -467,56 +426,6 @@ public abstract class Translate implements BasicSpaceProvider {
 			shortcut = (char) i;
 		}
 		throw new LowlevelError("Unable to assign shortcut");
-	}
-
-	public void parseStackPointer(Element el) {
-		int ind = baselist.size();
-
-		AddrSpace basespace = getSpaceByName(el.getAttributeValue("space"));
-		if (basespace == null) {
-			throw new LowlevelError("Unknown space name: " + el.getAttributeValue("space"));
-		}
-		AddrSpace spc;
-
-		// Get data for the stackpointer
-		VarnodeData point = getRegister(el.getAttributeValue("register"));
-		spc = new SpacebaseSpace(SpaceNames.STACK_SPACE_NAME, ind, point.size, basespace,
-			point.space.getDelay() + 1);
-		insertSpace(spc);
-		addSpacebase(stackspace, point.space, point.offset, point.size);
-	}
-
-	public void parseSpacebase(Element el) { // Parse a "spacebase" command in configuration file
-		String namestring = el.getAttributeValue("name");
-		VarnodeData point = getRegister(el.getAttributeValue("register"));
-		AddrSpace spc = getSpaceByName(namestring);
-		if (spc == null) { // Space not previously defined
-			int ind = baselist.size();
-
-			AddrSpace basespace = getSpaceByName(el.getAttributeValue("space"));
-			if (basespace == null) {
-				throw new LowlevelError("Unknown space name: " + el.getAttributeValue("space"));
-			}
-			spc = new SpacebaseSpace(namestring, ind, point.size, basespace,
-				point.space.getDelay() + 1);
-			insertSpace(spc);
-		}
-		addSpacebase(spc, point.space, point.offset, point.size);
-	}
-
-	/**
-	 * This routine is used by the initialization process to add
-	 * address ranges to which there is never an (indirect) pointer
-	 * Should only be called during initialization
-	 * @param el is the parse XML describing the address range
-	 */
-	public void parseNoHighPtr(Element el) {
-		List<?> list = el.getChildren();
-		for (Object object : list) {
-			Range range = new Range();
-			range.restoreXml((Element) object, this);
-			nohighptr.insertRange(range.getSpace(), range.getFirst(), range.getLast());
-		}
 	}
 
 	// Get space the next space in the absolute order of addresses

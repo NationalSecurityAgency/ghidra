@@ -38,6 +38,9 @@ public abstract class ByteCache {
 			if (!valid || start == null) {
 				return false;
 			}
+			if (start.getAddressSpace() != address.getAddressSpace()) {
+				return false;
+			}
 			long offset = address.subtract(start);
 			return Long.compareUnsigned(offset + length, len) < 0;
 		}

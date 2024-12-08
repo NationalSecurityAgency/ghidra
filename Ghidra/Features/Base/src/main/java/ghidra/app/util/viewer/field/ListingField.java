@@ -17,7 +17,6 @@ package ghidra.app.util.viewer.field;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
 /**
@@ -30,24 +29,6 @@ public interface ListingField extends Field {
 	 * @return the FieldFactory that generated this Field
 	 */
 	public FieldFactory getFieldFactory();
-
-	/**
-	 * Returns the height above the imaginary base line used for alignment of fields.
-	 */
-	@Override
-	public int getHeightAbove();
-
-	/**
-	 * Returns the height below the imaginary base line used for alignment of fields.
-	 */
-	@Override
-	public int getHeightBelow();
-
-	/**
-	 * Returns the fieldModel that has the FieldFactory that generated this field.
-	 * @return the fieldModel that has the FieldFactory that generated this field.
-	 */
-	public FieldFormatModel getFieldModel();
 
 	/**
 	 * Returns the object that the fieldFactory used to generate the information in this field.

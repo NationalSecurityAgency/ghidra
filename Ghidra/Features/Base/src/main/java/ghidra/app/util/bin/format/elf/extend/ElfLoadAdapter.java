@@ -24,6 +24,7 @@ import java.util.*;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.opinion.ElfLoaderOptionsFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
@@ -528,6 +529,41 @@ public class ElfLoadAdapter {
 	 */
 	public void addLoadOptions(ElfHeader elf, List<Option> options) {
 		// no additional options
+	}
+
+	/**
+	 * Get the default image base to be used when one cannot be determined.
+	 * @param elfHeader ELF header
+	 * @return default image base
+	 */
+	public long getDefaultImageBase(ElfHeader elfHeader) {
+		return elfHeader.is64Bit() ? ElfLoaderOptionsFactory.IMAGE64_BASE_DEFAULT
+				: ElfLoaderOptionsFactory.IMAGE32_BASE_DEFAULT;
+	}
+
+	/**
+	 * Get the section-relative offset for the specified ELF symbol which is bound to
+	 * the specified section.  If the symbol has an absolute symbol value/offset this method
+	 * should return null.
+	 * <p>
+	 * For Harvard Architectures it may be necessary to adjust offset if section was mapped
+	 * to a non-default data space.
+	 * <p>
+	 * The default behavior is to return {@link ElfSymbol#getValue()} if {@link ElfHeader#isRelocatable()}
+	 * is true.
+	 * 
+	 * @param section ELF section header which is specified by the ELF symbol
+	 * @param sectionBase memory address where section has been loaded.  Could be within overlay
+	 * space if load conflict occured.
+	 * @param elfSymbol ELF symbol
+	 * @return section relative symbol offset or null if symbol value offset is absolute
+	 */
+	public Long getSectionSymbolRelativeOffset(ElfSectionHeader section, Address sectionBase,
+			ElfSymbol elfSymbol) {
+		if (section.getElfHeader().isRelocatable()) {
+			return elfSymbol.getValue();
+		}
+		return null;
 	}
 
 }

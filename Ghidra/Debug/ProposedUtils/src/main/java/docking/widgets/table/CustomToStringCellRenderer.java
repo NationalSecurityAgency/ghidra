@@ -25,7 +25,6 @@ import java.util.function.BiFunction;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicHTML;
-import javax.swing.table.TableModel;
 import javax.swing.text.View;
 
 import ghidra.docking.settings.Settings;
@@ -92,11 +91,7 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 	}
 
 	@Override
-	protected void configureFont(JTable table, TableModel model, int column) {
-		setFont(getCustomFont());
-	}
-
-	protected Font getCustomFont() {
+	protected Font getDefaultFont() {
 		switch (customFont) {
 			default:
 			case DEFAULT:

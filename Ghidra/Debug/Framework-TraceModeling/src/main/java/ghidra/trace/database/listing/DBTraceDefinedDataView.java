@@ -21,10 +21,9 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceCodeChangeType;
-import ghidra.trace.model.Trace.TraceCompositeDataChangeType;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 
 /**
@@ -157,12 +156,12 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			if (dataType instanceof Composite || dataType instanceof Array ||
 				dataType instanceof Dynamic) {
 				// TODO: Track composites?
-				space.trace.setChanged(new TraceChangeRecord<>(TraceCompositeDataChangeType.ADDED,
+				space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_ADDED,
 					space, tasr, created));
 			}
 
-			space.trace.setChanged(new TraceChangeRecord<>(TraceCodeChangeType.ADDED,
-				space, tasr, created));
+			space.trace.setChanged(
+				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space, tasr, created));
 			return created;
 		}
 		catch (AddressOverflowException e) {
@@ -176,7 +175,7 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 		DataType dataType = unit.getBaseDataType();
 		if (dataType instanceof Composite || dataType instanceof Array ||
 			dataType instanceof Dynamic) {
-			space.trace.setChanged(new TraceChangeRecord<>(TraceCompositeDataChangeType.REMOVED,
+			space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_REMOVED,
 				space, unit.getBounds(), unit, null));
 		}
 	}
@@ -188,7 +187,7 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 		if (dataType instanceof Composite || dataType instanceof Array ||
 			dataType instanceof Dynamic) {
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceCompositeDataChangeType.LIFESPAN_CHANGED,
+				new TraceChangeRecord<>(TraceEvents.COMPOSITE_DATA_LIFESPAN_CHANGED,
 					space, unit, oldSpan, unit.getLifespan()));
 		}
 	}

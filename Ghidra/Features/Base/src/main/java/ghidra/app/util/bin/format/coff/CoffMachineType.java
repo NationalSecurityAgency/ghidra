@@ -203,6 +203,11 @@ public class CoffMachineType {
 	 * Hitachi SH5
 	 */
 	public final static short IMAGE_FILE_MACHINE_SH5 = 0x01a8;
+	
+	/**
+	 * Texas Instruments TMS320C3x/4x
+	 */
+	public final static short IMAGE_FILE_MACHINE_TI_TMS320C3x4x = 0x0093;
 
 	/**
 	 * Texas Instruments TMS470

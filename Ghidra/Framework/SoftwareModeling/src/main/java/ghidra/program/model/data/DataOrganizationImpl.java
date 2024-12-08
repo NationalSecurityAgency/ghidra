@@ -20,17 +20,17 @@ import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.program.database.DBStringMapAdapter;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.util.exception.NoValueException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * DataOrganization provides a single place for determining size and alignment information 
+ * DataOrganization provides a single place for determining size and alignment information
  * for data types within an archive or a program.
  */
 public class DataOrganizationImpl implements DataOrganization {
@@ -48,9 +48,9 @@ public class DataOrganizationImpl implements DataOrganization {
 	public static final int DEFAULT_INT_SIZE = 4;
 	public static final int DEFAULT_LONG_SIZE = 4;
 	public static final int DEFAULT_LONG_LONG_SIZE = 8;
-	public static final int DEFAULT_FLOAT_SIZE = 4;
-	public static final int DEFAULT_DOUBLE_SIZE = 8;
-	public static final int DEFAULT_LONG_DOUBLE_SIZE = 8;
+	public static final int DEFAULT_FLOAT_SIZE = 4;			// encoding size only
+	public static final int DEFAULT_DOUBLE_SIZE = 8; 		// encoding size only
+	public static final int DEFAULT_LONG_DOUBLE_SIZE = 8;	// encoding size only
 
 	// DBStringMapAdapter save/restore keys
 	private static final String BIG_ENDIAN_NAME = "big_endian";
@@ -75,7 +75,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	private int doubleSize = DEFAULT_DOUBLE_SIZE;
 	private int longDoubleSize = DEFAULT_LONG_DOUBLE_SIZE;
 
-	// Endianess explicitly set and not supported by saveXml/restore
+	// Endianness explicitly set and not supported by saveXml/restore
 	private boolean bigEndian = false;
 
 	private BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
@@ -83,7 +83,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	/*
 	 * Map for determining the alignment of a data type based upon its size.
 	 */
-	private final HashMap<Integer, Integer> sizeAlignmentMap = new HashMap<>();
+	private final TreeMap<Integer, Integer> sizeAlignmentMap = new TreeMap<>();
 
 	/**
 	 * Creates a new default DataOrganization. This has a mapping which defines the alignment
@@ -99,7 +99,8 @@ public class DataOrganizationImpl implements DataOrganization {
 	 * Creates a new default DataOrganization. This has a mapping which defines the alignment
 	 * of a data type based on its size. The map defines pairs for data types that are
 	 * 1, 2, 4, and 8 bytes in length.
-	 * @param language optional language used to initialize defaults (pointer size, endianess, etc.) (may be null)
+	 * @param language optional language used to initialize defaults (pointer size, endianness, etc.)
+	 *  (may be null)
 	 * @return a new default DataOrganization.
 	 */
 	public static DataOrganizationImpl getDefaultOrganization(Language language) {
@@ -107,11 +108,11 @@ public class DataOrganizationImpl implements DataOrganization {
 		dataOrganization.setSizeAlignment(1, 1);
 		dataOrganization.setSizeAlignment(2, 2);
 		dataOrganization.setSizeAlignment(4, 4);
-		dataOrganization.setSizeAlignment(8, 4);
+		dataOrganization.setSizeAlignment(8, 8);
 		if (language != null) {
 			// NOTE: Ensure that saveXml always saves pointer size
 			dataOrganization.setPointerSize(language.getDefaultSpace().getPointerSize());
-			// NOTE: Endianess is not handled by saveXml/restore
+			// NOTE: Endianness is not handled by saveXml/restore
 			dataOrganization.setBigEndian(language.isBigEndian());
 		}
 		return dataOrganization;
@@ -194,7 +195,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Set data endianess
+	 * Set data endianness
 	 * @param bigEndian true if big-endian, false if little-endian
 	 */
 	public void setBigEndian(boolean bigEndian) {
@@ -294,7 +295,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Defines the size of a float primitive data type.
+	 * Defines the encoding size of a float primitive data type.
 	 * @param floatSize the size of a float.
 	 */
 	public void setFloatSize(int floatSize) {
@@ -305,7 +306,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Defines the size of a double primitive data type.
+	 * Defines the encoding size of a double primitive data type.
 	 * @param doubleSize the size of a double.
 	 */
 	public void setDoubleSize(int doubleSize) {
@@ -319,7 +320,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Defines the size of a long double primitive data type.
+	 * Defines the encoding size of a long double primitive data type.
 	 * @param longDoubleSize the size of a long double.
 	 */
 	public void setLongDoubleSize(int longDoubleSize) {
@@ -352,10 +353,10 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Gets the default alignment to be used for any data type that isn't a 
-	 * structure, union, array, pointer, type definition, and whose size isn't in the 
+	 * Gets the default alignment to be used for any data type that isn't a
+	 * structure, union, array, pointer, type definition, and whose size isn't in the
 	 * size/alignment map.
-	 * @return the default alignment to be used if no other alignment can be 
+	 * @return the default alignment to be used if no other alignment can be
 	 * determined for a data type.
 	 */
 	@Override
@@ -391,10 +392,10 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Sets the default alignment to be used for any data type that isn't a 
-	 * structure, union, array, pointer, type definition, and whose size isn't in the 
+	 * Sets the default alignment to be used for any data type that isn't a
+	 * structure, union, array, pointer, type definition, and whose size isn't in the
 	 * size/alignment map.
-	 * @param defaultAlignment the default alignment to be used if no other alignment can be 
+	 * @param defaultAlignment the default alignment to be used if no other alignment can be
 	 * determined for a data type.
 	 */
 	public void setDefaultAlignment(int defaultAlignment) {
@@ -409,15 +410,14 @@ public class DataOrganizationImpl implements DataOrganization {
 		this.defaultPointerAlignment = defaultPointerAlignment;
 	}
 
-	/**
-	 * Gets the alignment that is defined for a data type of the indicated size if one is defined.
-	 * @param size the size of the data type
-	 * @return the alignment of the data type.
-	 * @throws NoValueException if there isn't an alignment defined for the indicated size.
-	 */
 	@Override
-	public int getSizeAlignment(int size) throws NoValueException {
-		return sizeAlignmentMap.get(size);
+	public int getSizeAlignment(int size) {
+		Entry<Integer, Integer> floorEntry = sizeAlignmentMap.floorEntry(size);
+		int alignment = floorEntry != null ? floorEntry.getValue() : defaultAlignment;
+		if (absoluteMaxAlignment != 0) {
+			return Math.min(alignment, absoluteMaxAlignment);
+		}
+		return alignment;
 	}
 
 	/**
@@ -500,7 +500,7 @@ public class DataOrganizationImpl implements DataOrganization {
 
 	@Override
 	public int getAlignment(DataType dataType) {
-		int dtSize = dataType.getLength();
+		int dtSize = dataType.getAlignedLength();
 		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType || dtSize <= 0) {
 			return 1;
 		}
@@ -525,22 +525,19 @@ public class DataOrganizationImpl implements DataOrganization {
 			BitFieldDataType bitfieldDt = (BitFieldDataType) dataType;
 			return getAlignment(bitfieldDt.getBaseDataType());
 		}
-		// Otherwise get the alignment based on the size.
-		if (sizeAlignmentMap.containsKey(dtSize)) {
-			int sizeAlignment = sizeAlignmentMap.get(dtSize);
-			return ((absoluteMaxAlignment == 0) || (sizeAlignment < absoluteMaxAlignment))
-					? sizeAlignment
-					: absoluteMaxAlignment;
-		}
-		if (dataType instanceof Pointer) {
+
+		// If pointer size not found in size alignment map use default pointer alignment
+		// TODO: this should probably be re-evaluated for its neccessity
+		if (!sizeAlignmentMap.containsKey(dtSize) && dataType instanceof Pointer) {
 			return getDefaultPointerAlignment();
 		}
-		// Otherwise just assume the default alignment.
-		return getDefaultAlignment();
+
+		// Otherwise get the alignment based on the size.
+		return getSizeAlignment(dtSize);
 	}
 
 	/**
-	 * Determines the first offset that is equal to or greater than the minimum offset which 
+	 * Determines the first offset that is equal to or greater than the minimum offset which
 	 * has the specified alignment.  If a non-positive alignment is specified the origina
 	 * minimumOffset will be return.
 	 * @param alignment the desired alignment (positive value)
@@ -551,13 +548,17 @@ public class DataOrganizationImpl implements DataOrganization {
 		if (alignment <= 0) {
 			return minimumOffset;
 		}
-		if ((alignment & 1) == 0) {
+		if (isPowerOfTwo(alignment)) {
 			// handle alignment which is a power-of-2
 			return alignment + ((minimumOffset - 1) & ~(alignment - 1));
 		}
 		int offcut = (minimumOffset % alignment);
 		int adj = (offcut != 0) ? (alignment - offcut) : 0;
 		return minimumOffset + adj;
+	}
+
+	private static boolean isPowerOfTwo(int n) {
+		return (n & (n - 1)) == 0;
 	}
 
 	/**
@@ -598,7 +599,7 @@ public class DataOrganizationImpl implements DataOrganization {
 				dataMap.delete(key);
 			}
 		}
-		
+
 		if (dataOrg.isBigEndian()) { // default is little-endian
 			dataMap.put(keyPrefix + BIG_ENDIAN_NAME, Boolean.TRUE.toString());
 		}
@@ -689,13 +690,8 @@ public class DataOrganizationImpl implements DataOrganization {
 		}
 
 		for (int size : dataOrg.getSizes()) {
-			try {
-				String key = keyPrefix + ELEM_SIZE_ALIGNMENT_MAP.name() + "." + size;
-				dataMap.put(key, Integer.toString(dataOrg.getSizeAlignment(size)));
-			}
-			catch (NoValueException e) {
-				// skip entry
-			}
+			String key = keyPrefix + ELEM_SIZE_ALIGNMENT_MAP.name() + "." + size;
+			dataMap.put(key, Integer.toString(dataOrg.getSizeAlignment(size)));
 		}
 
 		BitFieldPackingImpl.save(dataOrg.getBitFieldPacking(), dataMap,
@@ -706,15 +702,26 @@ public class DataOrganizationImpl implements DataOrganization {
 	 * Restore a data organization from the specified DB data map.
 	 * @param dataMap DB data map
 	 * @param keyPrefix key prefix for all map entries
-	 * @return data organization
+	 * @return stored data organization or null if not stored
 	 * @throws IOException if an IO error occurs
 	 */
 	public static DataOrganizationImpl restore(DBStringMapAdapter dataMap, String keyPrefix)
 			throws IOException {
 
+		boolean containsDataOrgEntries = false;
+		for (String key : dataMap.keySet()) {
+			if (key.startsWith(keyPrefix)) {
+				containsDataOrgEntries = true;
+				break;
+			}
+		}
+		if (!containsDataOrgEntries) {
+			return null;
+		}
+
 		DataOrganizationImpl dataOrg = new DataOrganizationImpl();
 		
-		dataOrg.bigEndian = dataMap.getBoolean(BIG_ENDIAN_NAME, false);
+		dataOrg.bigEndian = dataMap.getBoolean(keyPrefix + BIG_ENDIAN_NAME, false);
 
 		dataOrg.absoluteMaxAlignment =
 			dataMap.getInt(keyPrefix + ELEM_ABSOLUTE_MAX_ALIGNMENT.name(),
@@ -728,7 +735,7 @@ public class DataOrganizationImpl implements DataOrganization {
 
 		dataOrg.defaultPointerAlignment =
 			dataMap.getInt(keyPrefix + ELEM_DEFAULT_POINTER_ALIGNMENT.name(),
-			dataOrg.defaultPointerAlignment);
+				dataOrg.defaultPointerAlignment);
 
 		dataOrg.pointerSize =
 			dataMap.getInt(keyPrefix + ELEM_POINTER_SIZE.name(), dataOrg.pointerSize);
@@ -795,9 +802,9 @@ public class DataOrganizationImpl implements DataOrganization {
 	 */
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_DATA_ORGANIZATION);
-		
-		// NOTE: endianess intentionally omitted from output 
-		
+
+		// NOTE: endianness intentionally omitted from output
+
 		if (absoluteMaxAlignment != NO_MAXIMUM_ALIGNMENT) {
 			encoder.openElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
 			encoder.writeSignedInteger(ATTRIB_VALUE, absoluteMaxAlignment);
@@ -895,17 +902,17 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Restore settings from an XML stream. This expects to see parser positioned on the 
-	 * &lt;data_organization&gt; start tag.  The XML is designed to override existing language-specific 
-	 * default settings which are pre-populated with {@link #getDefaultOrganization(Language)}.  This 
-	 * will will ensure that the endianess setting is properly established since it is not included 
+	 * Restore settings from an XML stream. This expects to see parser positioned on the
+	 * &lt;data_organization&gt; start tag.  The XML is designed to override existing language-specific
+	 * default settings which are pre-populated with {@link #getDefaultOrganization(Language)}.  This
+	 * will will ensure that the endianness setting is properly established since it is not included
 	 * in the XML.
 	 * @param parser is the XML stream
 	 */
 	public void restoreXml(XmlPullParser parser) {
-		
-		// NOTE: endianess intentionally omitted from XML. 
-		
+
+		// NOTE: endianness intentionally omitted from XML.
+
 		parser.start();
 		while (parser.peek().isStart()) {
 			String name = parser.peek().getName();
@@ -988,5 +995,36 @@ public class DataOrganizationImpl implements DataOrganization {
 
 		parser.end();
 
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(absoluteMaxAlignment, bigEndian, bitFieldPacking, charSize,
+			defaultAlignment, defaultPointerAlignment, doubleSize, floatSize, integerSize,
+			isSignedChar, longDoubleSize, longLongSize, longSize, machineAlignment, pointerShift,
+			pointerSize, shortSize, sizeAlignmentMap, wideCharSize);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DataOrganizationImpl other = (DataOrganizationImpl) obj;
+		return absoluteMaxAlignment == other.absoluteMaxAlignment && bigEndian == other.bigEndian &&
+			Objects.equals(bitFieldPacking, other.bitFieldPacking) && charSize == other.charSize &&
+			defaultAlignment == other.defaultAlignment &&
+			defaultPointerAlignment == other.defaultPointerAlignment &&
+			doubleSize == other.doubleSize && floatSize == other.floatSize &&
+			integerSize == other.integerSize && isSignedChar == other.isSignedChar &&
+			longDoubleSize == other.longDoubleSize && longLongSize == other.longLongSize &&
+			longSize == other.longSize && machineAlignment == other.machineAlignment &&
+			pointerShift == other.pointerShift && pointerSize == other.pointerSize &&
+			shortSize == other.shortSize &&
+			Objects.equals(sizeAlignmentMap, other.sizeAlignmentMap) &&
+			wideCharSize == other.wideCharSize;
 	}
 }

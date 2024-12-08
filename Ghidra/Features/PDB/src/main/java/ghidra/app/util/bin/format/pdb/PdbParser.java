@@ -352,7 +352,7 @@ public class PdbParser {
 				if (hasErrors()) {
 					throw new IOException(getErrorAndWarningMessages());
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				XmlElement element = parser.next();
 				if (!element.isStart()) {
 					continue;
@@ -458,7 +458,7 @@ public class PdbParser {
 		monitor.setMessage("Define classes...");
 		monitor.initialize(namespaceMap.size());
 		for (SymbolPath path : namespaceMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			boolean isClass = namespaceMap.get(path);
 			Namespace parentNamespace =
 				NamespaceUtils.getNonFunctionNamespace(program, path.getParent());
@@ -794,7 +794,7 @@ public class PdbParser {
 
 	void createData(Address address, DataType dataType, MessageLog log) {
 		DumbMemBufferImpl memBuffer = new DumbMemBufferImpl(program.getMemory(), address);
-		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer);
+		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer, false);
 		if (dti == null) {
 			log.appendMsg("PDB",
 				"Failed to apply datatype " + dataType.getName() + " at " + address);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.app.util.pdb.pdbapplicator.DefaultPdbApplicator;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.*;
+import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -82,7 +83,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private File DEFAULT_FORCE_LOAD_FILE = new File(DEFAULT_SYMBOLS_DIR, "sample.pdb");
 	private File forceLoadFile;
 
-	private boolean searchRemoteLocations = false;
+	private boolean searchUntrustedLocations = false;
 
 	//==============================================================================================
 	// Additional instance data
@@ -163,13 +164,35 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			pdbFile = forceLoadFile;
 		}
 		else {
-			pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchRemoteLocations, monitor);
+			pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchUntrustedLocations, monitor);
 		}
 		if (pdbFile == null) {
 			// warnings have already been logged
 			return false;
 		}
 
+		return doAnalysis(program, pdbFile, pdbReaderOptions, pdbApplicatorOptions, log, monitor);
+	}
+
+	/**
+	 * Initializes and calls the methods of the PdbApplicator pertaining to the various phases
+	 *  of PDB analysis.  These methods can be called via scheduled background commands set with
+	 *  the appropriate analysis priorities to allow the work to be done at the appropriate time
+	 *  amongst other analyzers.  The return PDB
+	 * @param program the program to which the PDB is being applied
+	 * @param pdbFile the PDB file to be applied
+	 * @param pdbReaderOptions the PDB "reader" options to use
+	 * @param pdbApplicatorOptions the PDB "applicator" options to use
+	 * @param log the message log to which messages will be written
+	 * @param monitor the task monitor
+	 * @return {@code true} if the first phase of analysis has completed without error.  Follow-on
+	 *  background commands will also have return values, which will include a {@code false} value
+	 *  upon user cancellation during those phases.
+	 * @throws CancelledException upon user cancellation
+	 */
+	public static boolean doAnalysis(Program program, File pdbFile,
+			PdbReaderOptions pdbReaderOptions, PdbApplicatorOptions pdbApplicatorOptions,
+			MessageLog log, TaskMonitor monitor) throws CancelledException {
 		PdbLog.message(
 			"================================================================================");
 		PdbLog.message(new Date(System.currentTimeMillis()).toString() + "\n");
@@ -178,17 +201,46 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		PdbLog.message(DESCRIPTION);
 		PdbLog.message("PDB Filename: " + pdbFile + "\n");
 
-		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), pdbReaderOptions, monitor)) {
+		try (AbstractPdb pdb = PdbParser.parse(pdbFile, pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, log);
+
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+					program.getImageBase(), pdbApplicatorOptions, monitor, log);
+			applicator.applyDataTypesAndMainSymbolsAnalysis();
+
+			AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
+
+			// TODO: Consider the various types of work we might want to do... they probably
+			//  shouldn't all be the same priority.
+			//   * function nested scopes, local/scope variables, static locals (might be in
+			//     scopes).  Includes register/stack scopes of local/scoped variables
+			//   * parameters
+			//   * code source module/file/line numbers
+
+			Msg.info(PdbUniversalAnalyzer.class,
+				NAME + ": scheduling PDB Function Internals Analysis");
+			// TODO: set this to appropriate priority (this is a guess for locals/params/scopes)
+			// Initial thought on priority:  AnalysisPriority.FUNCTION_ANALYSIS.priority()
+			// From meeting:
+			//  * before/after parameter ID
+			//  different statement:
+			//  * run before stack reference analysis runs (maybe turn it that one off)
+			// 902  Decompiler Parameter ID (DecompilerFunctionAnalyzer)
+			// 903  Stack (StackVariableAnalyzer)
+			aam.schedule(
+				new ProcessPdbFunctionInternalsCommand(pdbFile, pdbReaderOptions,
+					pdbApplicatorOptions, log),
+				AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after().priority());
+
+			// Following is intended to be the last PDB analysis background command
+			aam.schedule(new PdbReportingBackgroundCommand(),
+				AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after().after().priority());
 
 		}
 		catch (PdbException | IOException e) {
-			log.appendMsg(getName(),
-				"Issue processing PDB file:  " + pdbFile + ":\n   " + e.toString());
+			log.appendMsg(NAME, "Issue processing PDB file:  " + pdbFile + ":\n   " + e.toString());
 			return false;
 		}
 
@@ -210,9 +262,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
 				DEFAULT_FORCE_LOAD_FILE, null, OPTION_DESCRIPTION_FORCELOAD_FILE);
 		}
-		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS,
-			searchRemoteLocations, null,
-			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_REMOTE_LOCATIONS);
+		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS,
+			searchUntrustedLocations, null,
+			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_UNTRUSTED_LOCATIONS);
 
 		pdbReaderOptions.registerOptions(options);
 		pdbApplicatorOptions.registerAnalyzerOptions(options);
@@ -229,8 +281,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			forceLoadFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
 		}
 
-		searchRemoteLocations = options.getBoolean(
-			PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS, searchRemoteLocations);
+		searchUntrustedLocations = options.getBoolean(
+			PdbAnalyzerCommon.OPTION_NAME_SEARCH_UNTRUSTED_LOCATIONS, searchUntrustedLocations);
 
 		pdbReaderOptions.loadOptions(options);
 		pdbApplicatorOptions.loadAnalyzerOptions(options);
@@ -260,18 +312,90 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Sets the "allow remote" option that will be used by the analyzer when it is next invoked
+	 * Sets the "allow untrusted" option that will be used by the analyzer when it is next invoked
 	 * on the specified program.
 	 * <p>
 	 * Normally when the analyzer attempts to locate a matching PDB file it
-	 * will default to NOT searching remote symbol servers.  A headless script could
-	 * use this method to allow the analyzer to search remote symbol servers.
+	 * will default to NOT searching untrusted symbol servers.  A headless script could
+	 * use this method to allow the analyzer to search untrusted symbol servers.
 	 *
 	 * @param program {@link Program}
-	 * @param allowRemote boolean flag, true means analyzer can search remote symbol
+	 * @param allowUntrusted boolean flag, true means analyzer can search remote symbol
 	 * servers
 	 */
-	public static void setAllowRemoteOption(Program program, boolean allowRemote) {
-		PdbAnalyzerCommon.setAllowRemoteOption(NAME, program, allowRemote);
+	public static void setAllowUntrustedOption(Program program, boolean allowUntrusted) {
+		PdbAnalyzerCommon.setAllowUntrustedOption(NAME, program, allowUntrusted);
 	}
+
+	//==============================================================================================
+	/**
+	 * A background command that performs additional PDB analysis after after other analysis
+	 *  works on function internals.  The first phase must have been run, as it reads the PDB
+	 *  and processes data types, retaining the information needed for this step.  Not what all
+	 *  processing we will do here and whether we might need additional commands like this one.
+	 *    For now, we want this one for doing global/module symbol function processing to
+	 *    set up locals/params/scopes, but some of the data encountered could be for static
+	 *    local variables and other things that might make sense to process in the first phase
+	 *    (for now, they will be in the second phase).
+	 */
+	private static class ProcessPdbFunctionInternalsCommand extends BackgroundCommand<Program> {
+
+		File pdbFile;
+		private PdbReaderOptions pdbReaderOptions;
+		private PdbApplicatorOptions pdbApplicatorOptions;
+		private MessageLog log;
+
+		public ProcessPdbFunctionInternalsCommand(File pdbFile, PdbReaderOptions pdbReaderOptions,
+				PdbApplicatorOptions pdbApplicatorOptions, MessageLog log) {
+			super("PDB Universal Function Internals", false, false, false);
+			this.pdbFile = pdbFile;
+			this.pdbReaderOptions = pdbReaderOptions;
+			this.pdbApplicatorOptions = pdbApplicatorOptions;
+			this.log = log;
+		}
+
+		@Override
+		public boolean applyTo(Program program, TaskMonitor monitor) {
+			try (AbstractPdb pdb = PdbParser.parse(pdbFile, pdbReaderOptions, monitor)) {
+				monitor.setMessage("PDB: Parsing " + pdbFile + "...");
+				pdb.deserialize();
+				DefaultPdbApplicator applicator =
+					new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+						program.getImageBase(), pdbApplicatorOptions, monitor, log);
+				applicator.applyFunctionInternalsAnalysis();
+				return true;
+			}
+			catch (PdbException | IOException e) {
+				log.appendMsg(getName(),
+					"Issue processing PDB file:  " + pdbFile + ":\n   " + e.toString());
+				return false;
+			}
+			catch (CancelledException e) {
+				return false;
+			}
+		}
+	}
+
+	/**
+	 * A background command that performs final PDB analysis reporting.
+	 */
+	private static class PdbReportingBackgroundCommand extends BackgroundCommand<Program> {
+
+		public PdbReportingBackgroundCommand() {
+			super("PDB Universal Reporting", false, false, false);
+		}
+
+		@Override
+		public boolean applyTo(Program program, TaskMonitor monitor) {
+			try {
+				DefaultPdbApplicator.applyAnalysisReporting(program);
+				return true;
+			}
+			catch (CancelledException e) {
+				return false;
+			}
+		}
+
+	}
+
 }

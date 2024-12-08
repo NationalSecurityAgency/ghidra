@@ -63,7 +63,6 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 //		new String[] { "Name", "Comments", "Source Name", "Permissions", "Start Address",
 //			"Block Type", "Overlay Address", "Length", "Chain Buffer ID", "Segment" });
 
-
 	protected MemoryMapDBAdapterV2(DBHandle handle, MemoryMapDB memMap)
 			throws VersionException, IOException {
 		this.handle = handle;
@@ -86,7 +85,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 		RecordIterator it = table.iterator();
 		while (it.hasNext()) {
 			DBRecord rec = it.next();
-			int permissions = rec.getByteValue(V2_PERMISSIONS_COL);
+			int flags = rec.getByteValue(V2_PERMISSIONS_COL);
 
 			long startAddr = rec.getLongValue(V2_START_ADDR_COL);
 			long length = rec.getLongValue(V2_LENGTH_COL);
@@ -99,7 +98,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 			blockRecord.setString(NAME_COL, rec.getString(V2_NAME_COL));
 			blockRecord.setString(COMMENTS_COL, rec.getString(V2_COMMENTS_COL));
 			blockRecord.setString(SOURCE_COL, rec.getString(V2_SOURCE_COL));
-			blockRecord.setByteValue(PERMISSIONS_COL, (byte) permissions);
+			blockRecord.setByteValue(FLAGS_COL, (byte) flags);
 			blockRecord.setLongValue(START_ADDR_COL, startAddr);
 			blockRecord.setLongValue(LENGTH_COL, length);
 			blockRecord.setIntValue(SEGMENT_COL, segment);
@@ -149,22 +148,21 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	MemoryBlockDB createInitializedBlock(String name, Address startAddr, DBBuffer buf,
-			int permissions) throws AddressOverflowException, IOException {
+	MemoryBlockDB createInitializedBlock(String name, Address startAddr, DBBuffer buf, int flags)
+			throws AddressOverflowException, IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	MemoryBlockDB createInitializedBlock(String name, Address startAddr, InputStream is,
-			long length, int permissions) throws AddressOverflowException, IOException {
+			long length, int flags) throws AddressOverflowException, IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address mappedAddress, boolean initializeBytes, int permissions,
-			int mappingScheme)
-			throws AddressOverflowException, IOException {
+			long length, Address mappedAddress, boolean initializeBytes, int flags,
+			int mappingScheme) throws AddressOverflowException, IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -223,14 +221,14 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	protected MemoryBlockDB createBlock(String name, Address addr, long length, int permissions,
+	protected MemoryBlockDB createBlock(String name, Address addr, long length, int flags,
 			List<SubMemoryBlock> splitBlocks) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	protected MemoryBlockDB createFileBytesBlock(String name, Address startAddress, long length,
-			FileBytes fileBytes, long offset, int permissions)
+			FileBytes fileBytes, long offset, int flags)
 			throws IOException, AddressOverflowException {
 		throw new UnsupportedOperationException();
 	}

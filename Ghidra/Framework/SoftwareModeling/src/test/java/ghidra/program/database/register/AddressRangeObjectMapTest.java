@@ -44,7 +44,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
     public void testTwoSpacesWithSecondRangeAt0() throws Exception {
 		AddressSpace space2 = new GenericAddressSpace("Test2", 32, AddressSpace.TYPE_RAM, 1);
 		AddressRangeObjectMap<Integer> rangeMap = new AddressRangeObjectMap<Integer>();
-		Integer one = new Integer(1);
+		Integer one = Integer.valueOf(1);
 		rangeMap.setObject(addr(0x1000), addr(0x2000), one);
 		rangeMap.setObject(space2.getAddress(0), space2.getAddress(10), one);
 		AddressRangeIterator it = rangeMap.getAddressRangeIterator();
@@ -66,7 +66,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
     public void testAddOverlappingRangeWithSameObject() {
 		AddressRangeObjectMap<Integer> rangeMap = new AddressRangeObjectMap<Integer>();
 
-		Integer one = new Integer(1);
+		Integer one = Integer.valueOf(1);
 
 		rangeMap.setObject(addr(0x1000), addr(0x2000), one);
 		rangeMap.setObject(addr(0x1500), addr(0x3000), one);
@@ -85,7 +85,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
     public void testAddAdjoiningRangesWithSameObject() {
 		AddressRangeObjectMap<Integer> rangeMap = new AddressRangeObjectMap<Integer>();
 
-		Integer one = new Integer(1);
+		Integer one = Integer.valueOf(1);
 
 		rangeMap.setObject(addr(0x1000), addr(0x2000), one);
 		rangeMap.setObject(addr(0x2001), addr(0x3000), one);
@@ -104,8 +104,8 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 	public void testAddAdjoiningRangesWithDifferentObject() {
 		AddressRangeObjectMap<Integer> rangeMap = new AddressRangeObjectMap<Integer>();
 
-		Integer one = new Integer(1);
-		Integer two = new Integer(2);
+		Integer one = Integer.valueOf(1);
+		Integer two = Integer.valueOf(2);
 
 		rangeMap.setObject(addr(0x1000), addr(0x2000), one);
 		rangeMap.setObject(addr(0x2001), addr(0x3000), two);
@@ -128,8 +128,8 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 	public void testAddCompletelyCoveredRangeWithDifferentObject() {
 		AddressRangeObjectMap<Integer> rangeMap = new AddressRangeObjectMap<Integer>();
 
-		Integer one = new Integer(1);
-		Integer two = new Integer(2);
+		Integer one = Integer.valueOf(1);
+		Integer two = Integer.valueOf(2);
 
 		rangeMap.setObject(addr(0x1000), addr(0x2000), one);
 		rangeMap.setObject(addr(0x500), addr(0x3000), two);
@@ -147,8 +147,8 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
     public void testAddSingleAddressRangeInMiddleOfExistingRangeWithDifferentObject() {
 		AddressRangeObjectMap<Integer> rangeMap = new AddressRangeObjectMap<Integer>();
 
-		Integer one = new Integer(1);
-		Integer two = new Integer(2);
+		Integer one = Integer.valueOf(1);
+		Integer two = Integer.valueOf(2);
 
 		rangeMap.setObject(addr(0x1000), addr(0x2000), one);
 

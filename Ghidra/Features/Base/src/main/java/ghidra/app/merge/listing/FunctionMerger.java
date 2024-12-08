@@ -275,7 +275,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 		// Auto-merge parts of functions where possible and determine conflicts.
 		AddressIterator iter = possibleDetailConflicts.getAddresses(true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			updateProgress((int) (DETAILS_CONFLICT_START +
 				((addressCount * DETAILS_CONFLICT_SIZE) / totalAddresses)));
 			Address entry = iter.next();
@@ -334,7 +334,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 		int count = 0;
 		while (latestIter.hasNext()) {
 			monitor.setProgress(count++);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address entry = latestIter.next();
 			Function originalFunc = functionManagers[ORIGINAL].getFunctionAt(entry);
 			Function latestFunc = functionManagers[LATEST].getFunctionAt(entry);
@@ -361,7 +361,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 		int count = 0;
 		while (latestIter.hasNext()) {
 			monitor.setProgress(count++);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address entry = latestIter.next();
 			Function originalFunc = functionManagers[ORIGINAL].getFunctionAt(entry);
 			Function latestFunc = functionManagers[LATEST].getFunctionAt(entry);
@@ -384,7 +384,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 		int count = 0;
 		while (myIter.hasNext()) {
 			monitor.setProgress(count++);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address entry = myIter.next();
 			Function originalFunc = functionManagers[ORIGINAL].getFunctionAt(entry);
 			Function myFunc = functionManagers[MY].getFunctionAt(entry);
@@ -409,12 +409,12 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	 */
 	private void determineOverlapConflicts(AddressSet changeSet, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		AddressSet alreadyChecked = new AddressSet();
 		AddressIterator iter = changeSet.getAddresses(true);
 		// Look at every address where the Latest or My made a function change.
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address changeEntry = iter.next(); // Entry Point of function being checked.
 			if (overlapAddressSet.contains(changeEntry)) {
 				continue;
@@ -497,7 +497,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	private void determineBodyConflicts(AddressSetView addrs, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		long totalAddresses = addrs.getNumAddresses();
 		monitor.initialize(totalAddresses);
 		long granularity = (totalAddresses / 100) + 1;
@@ -523,7 +523,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	private void determineBodyConflicts(Address entry, Function original, Function latest,
 			Function my, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		AddressSetView originalAddrs = (original != null) ? original.getBody() : null;
 		AddressSetView latestAddrs = (latest != null) ? latest.getBody() : null;
 		AddressSetView myAddrs = (my != null) ? my.getBody() : null;
@@ -556,7 +556,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	private void determineRemoveConflicts(AddressSet possibleConflicts, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		AddressSet myRemoveConflicts =
 			removeMy.intersect(changeLatest).intersect(possibleConflicts);
 		AddressSet latestRemoveConflicts =
@@ -570,7 +570,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	private void determineThunkConflicts(Function[] functions, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		boolean latestIsThunk = functions[LATEST].isThunk();
 		boolean myIsThunk = functions[MY].isThunk();
@@ -842,7 +842,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 			setupAddressSetConflictPanel(listingPanel, choicesPanel, addr,
 				overlapConflicts.get(addr), monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a function overlap choice then a "Use For All" has already occurred.
@@ -865,7 +865,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 			setupAddressSetConflictPanel(listingPanel, choicesPanel, addr, getBodySet(addr),
 				monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a function body choice then a "Use For All" has already occurred.
@@ -888,7 +888,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 			choicesPanel.setConflictType("Function Removal");
 
 			setupConflictPanel(listingPanel, choicesPanel, addr, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		else {
 			// If we have a function remove choice then a "Use For All" has already occurred.
@@ -930,7 +930,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				choicesPanel.setConflictType("Function Detail");
 
 				setupConflictPanel(listingPanel, choicesPanel, addr, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			else {
 				mergeFunctionDetails(functions, currentConflictOption, monitor);
@@ -983,7 +983,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				choicesPanel.setConflictType("Function Return");
 
 				setupConflictPanel(listingPanel, choicesPanel, addr, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			else {
 				mergeFunctionReturn(functions, currentConflictOption, monitor);
@@ -1000,14 +1000,14 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 			if (variableStorageChoice != ASK_USER) {
 				for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
 						.getOverlappingVariables()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					mergeVariableStorage(addr, pair, variableStorageChoice, monitor);
 				}
 			}
 			else if (askUser && mergeManager != null) {
 				for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
 						.getOverlappingVariables()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					boolean useForAll = (variableStorageChoice != ASK_USER);
 					if (useForAll) {
 						mergeVariableStorage(addr, pair, variableStorageChoice, monitor);
@@ -1025,7 +1025,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 			else {
 				for (Pair<List<Variable>, List<Variable>> pair : variableStorageConflicts
 						.getOverlappingVariables()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					mergeVariableStorage(addr, pair, currentConflictOption, monitor);
 				}
 			}
@@ -1047,7 +1047,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				choicesPanel.setConflictType("Function Parameter Signature");
 
 				setupConflictPanel(listingPanel, choicesPanel, addr, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			else {
 				mergeParameters(addr, currentConflictOption, monitor);
@@ -1067,7 +1067,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 			else if (askUser && mergeManager != null) {
 				Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
 				while (iter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					ParamInfoConflict pc = iter.next();
 					boolean useForAll = (parameterInfoChoice != ASK_USER);
 					if (useForAll) {
@@ -1080,7 +1080,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 					choicesPanel.setConflictType("Function Parameter Info");
 
 					setupConflictPanel(listingPanel, choicesPanel, pc.entry, monitor);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 
 			}
@@ -1098,7 +1098,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 			}
 			if (askUser && mergeManager != null) {
 				for (LocalVariableConflict localVariableConflict : localVarConflicts) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					ConflictPanel choicesPanel = null;
 					if ((localVariableConflict.varConflicts & VAR_REMOVED) != 0) {
 						currentConflictType = FunctionConflictType.REMOVED_LOCAL_VARIABLE_CONFLICT;
@@ -1187,12 +1187,12 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				choicesPanel.setConflictType("Thunk Function");
 
 				setupConflictPanel(listingPanel, choicesPanel, thunkConflictAddress, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			else {
 				merge(thunkConflictAddress, currentConflictOption, monitor);
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		showResolveErrors(ERROR_TITLE);

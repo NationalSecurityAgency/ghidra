@@ -44,7 +44,7 @@ public class AndroidXmlConvertor {
 			int indent = -1;
 			int type;
 			while ((type = parser.next()) != XmlPullParser.END_DOCUMENT) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				StringBuffer buffer = new StringBuffer();
 				switch (type) {

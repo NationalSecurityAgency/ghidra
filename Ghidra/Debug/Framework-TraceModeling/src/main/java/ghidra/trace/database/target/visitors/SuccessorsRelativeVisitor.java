@@ -61,9 +61,7 @@ public class SuccessorsRelativeVisitor implements SpanIntersectingVisitor {
 
 		Stream<? extends TraceObjectValue> attrStream;
 		if (nextKeys.contains("")) {
-			attrStream = object.getAttributes()
-					.stream()
-					.filter(v -> span.intersects(v.getLifespan()));
+			attrStream = object.getAttributes(span).stream();
 		}
 		else {
 			attrStream = Stream.empty();
@@ -71,9 +69,7 @@ public class SuccessorsRelativeVisitor implements SpanIntersectingVisitor {
 
 		Stream<? extends TraceObjectValue> elemStream;
 		if (nextKeys.contains("[]")) {
-			elemStream = object.getElements()
-					.stream()
-					.filter(v -> span.intersects(v.getLifespan()));
+			elemStream = object.getElements(span).stream();
 		}
 		else {
 			elemStream = Stream.empty();

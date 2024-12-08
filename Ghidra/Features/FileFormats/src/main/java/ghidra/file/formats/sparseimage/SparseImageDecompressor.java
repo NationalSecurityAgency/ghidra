@@ -78,7 +78,7 @@ public class SparseImageDecompressor {
 		monitor.setProgress(0);
 
 		for (int i = 0; i < sparseHeader.getTotal_chunks(); i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage(
 				"Processing chunk " + i + " of " + sparseHeader.getTotal_chunks() + "...");
 
@@ -140,7 +140,7 @@ public class SparseImageDecompressor {
 		if (length > bufferSize) {
 			byte[] bytes = new byte[bufferSize];
 			for (int i = 0; i < length / bufferSize; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				tempFos.write(bytes);
 			}
 		}
@@ -190,7 +190,7 @@ public class SparseImageDecompressor {
 		fillArray(srcPattern, fillBuffer);
 
 		while (length > 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int bytesToWrite = (int) Math.min(length, fillBufferSize);
 			crc.update(fillBuffer, 0, bytesToWrite);
 			tempFos.write(fillBuffer, 0, bytesToWrite);
@@ -210,7 +210,7 @@ public class SparseImageDecompressor {
 			throws IOException, CancelledException {
 		long length = (long) blocks * blockSize;
 		while (length > 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int bytesToRead = (int) Math.min(length, bufferSize);
 			byte[] bytes = reader.readNextByteArray(bytesToRead);
 			crc.update(bytes);

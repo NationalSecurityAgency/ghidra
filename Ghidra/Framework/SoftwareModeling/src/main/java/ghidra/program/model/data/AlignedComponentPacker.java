@@ -299,7 +299,7 @@ class AlignedComponentPacker {
 			int minOffset) {
 		DataType componentDt = dataTypeComponent.getDataType();
 
-		int dtSize = componentDt.isZeroLength() ? 0 : componentDt.getLength();
+		int dtSize = componentDt.isZeroLength() ? 0 : componentDt.getAlignedLength();
 		if (dtSize < 0) {
 			dtSize = dataTypeComponent.getLength();
 		}

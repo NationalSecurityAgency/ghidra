@@ -35,7 +35,7 @@ import ghidra.util.Swing;
 /**
  * Font Table for Theme Dialog
  */
-public class ThemeFontTable extends JPanel implements ActionContextProvider {
+public class ThemeFontTable extends JPanel implements ActionContextProvider, ThemeTable {
 
 	private ThemeFontTableModel fontTableModel;
 	private FontValueEditor fontEditor = new FontValueEditor(this::fontValueChanged);
@@ -84,6 +84,17 @@ public class ThemeFontTable extends JPanel implements ActionContextProvider {
 
 	}
 
+	@Override
+	public void setShowSystemValues(boolean show) {
+		fontTableModel.setShowSystemValues(show);
+		reloadAll();
+	}
+
+	@Override
+	public boolean isShowingSystemValues() {
+		return fontTableModel.isShowingSystemValues();
+	}
+
 	void fontValueChanged(PropertyChangeEvent event) {
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
@@ -115,7 +126,7 @@ public class ThemeFontTable extends JPanel implements ActionContextProvider {
 			}
 			String id = currentValue.getId();
 			FontValue themeValue = fontTableModel.getThemeValue(id);
-			return new ThemeTableContext<Font>(currentValue, themeValue);
+			return new ThemeTableContext<Font>(currentValue, themeValue, this);
 		}
 		return null;
 	}

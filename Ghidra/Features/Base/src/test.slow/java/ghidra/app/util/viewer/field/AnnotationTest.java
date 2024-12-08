@@ -201,14 +201,69 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSymbolAnnotation_WithBracesInName_Escaped() {
 		String rawComment = "This is a symbol {@sym mySym\\{0\\}} annotation";
 		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals("This is a symbol mySym\\{0\\} annotation", display);
+		assertEquals("This is a symbol mySym{0} annotation", display);
+	}
+
+	@Test
+	public void testSymbolAnnotation_WithEscapedItemsOutsideOfAnnotation() {
+		String rawComment = "This is a foo} symbol {@sym mySym\\{0\\}} annotation {bar";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("This is a foo} symbol mySym{0} annotation {bar", display);
+	}
+
+	@Test
+	public void testAddressAnnotation_QuotedQuote() {
+		String rawComment = "Test {@address 0 \"quote\\\"\"} extra}";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("Test quote\" extra}", display);
+	}
+
+	@Test
+	public void testAddressAnnotation_EscapedBrace() {
+		String rawComment = "Test {@address 0 \"quote\\}\"} blah";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("Test quote} blah", display);
+	}
+
+	@Test
+	public void testAddressAnnotation_BackslashAndEscapedBrace() {
+		String rawComment = "Test {@address 0 \"quote\\\\}\"} blah";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("Test quote\\} blah", display);
+	}
+
+	@Test
+	public void testAddressAnnotation_BackslashBackslash() {
+		String rawComment = "Test {@address 0 \"quote\\\\\"} blah";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("Test quote\\ blah", display);
+	}
+
+	@Test
+	public void testAddressAnnotation_LonelyBackslash() {
+		String rawComment = "Test {@address 0 bo\\b} some text";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("Test bo\\b some text", display);
 	}
 
 	@Test
 	public void testSymbolAnnotation_FullyEscaped() {
+		// We currently don't support rendering escaped annotation characters unless they are 
+		// inside of an annotation.
 		String rawComment = "This is a symbol \\{@sym bob\\} annotation";
 		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals(rawComment, display);
+		assertEquals("This is a symbol \\{@sym bob\\} annotation", display);
+	}
+
+	@Test
+	public void testSymbolAnnotation_LonelyBackslash() {
+		// We currently don't support rendering escaped annotation characters unless they are 
+		// inside of an annotation.
+		String rawComment = "This is a symbol {@sym bob jo\\e} annotation";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+
+		// Note: Symbol Annotations ignore display text which means that the symbol name 
+		assertEquals("This is a symbol bob annotation", display);
 	}
 
 	@Test

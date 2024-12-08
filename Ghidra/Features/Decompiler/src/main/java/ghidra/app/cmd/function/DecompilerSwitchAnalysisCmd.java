@@ -23,7 +23,6 @@ import ghidra.app.decompiler.DecompileResults;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -40,7 +39,7 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
+public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 	private static final int DEFAULT_CASE_VALUE = 0xbad1abe1;
 
 	private Program program;
@@ -54,8 +53,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		if (monitor.isCancelled()) {
 			return false;
@@ -73,13 +72,13 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 
 		try {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function f = decompilerResults.getFunction();
 			HighFunction hfunction = decompilerResults.getHighFunction();
 			processBranchIND(f, hfunction, monitor);
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String errMsg = getStatusMsg();
 			if (decompilerResults.getHighFunction() == null) {
@@ -124,7 +123,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			boolean foundNotThere = false;
 			int tableIndx;
 			for (tableIndx = 0; tableIndx < tableDest.length; tableIndx++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				boolean foundit = false;
 				if (containingBody != null && !containingBody.contains(tableDest[tableIndx])) {
 					// switch case missing from owner function's body
@@ -174,7 +173,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			Address[] cases = table.getCases();
 			AddressSet disSetList = new AddressSet();
 			for (Address caseStart : cases) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				instr.addMnemonicReference(caseStart, flowType, SourceType.ANALYSIS);
 
 				// if conflict skip case
@@ -185,25 +184,12 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 				if (disSetList.contains(caseStart)) {
 					continue;
 				}
-				if (switchContext != null) {
-					try {
-						// Combine flowed switch context with context register value at case address
-						RegisterValue curContext =
-							programContext.getRegisterValue(baseContextRegister, caseStart);
-						if (curContext != null) {
-							curContext = curContext.combineValues(switchContext);
-
-							// lay down the new merged context
-							programContext.setRegisterValue(caseStart, caseStart, curContext);
-						}
-						else {
-							programContext.setRegisterValue(caseStart, caseStart, switchContext);
-						}
-					}
-					catch (ContextChangeException e) {
-						// This can occur when two or more threads are working on the same function
-						continue;
-					}
+				try {
+					setSwitchTargetContext(programContext, caseStart, switchContext);
+				}
+				catch (ContextChangeException e) {
+					// This can occur when two or more threads are working on the same function
+					continue;
 				}
 				disSetList.add(caseStart);
 			}
@@ -228,6 +214,26 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 				program.getListing().getInstructionAt(fixupFunc.getEntryPoint());
 			CreateFunctionCmd.fixupFunctionBody(program, funcStartInstr, monitor);
 		}
+	}
+
+	private void setSwitchTargetContext(ProgramContext programContext, Address targetStart, RegisterValue switchContext) throws ContextChangeException {
+		if (switchContext == null) {
+			return;
+		}
+		
+		// Combine flowed switch context with context register value at case address
+		RegisterValue curContext =
+			programContext.getNonDefaultValue(switchContext.getRegister(), targetStart);
+		if (curContext != null) {
+			switchContext = curContext.combineValues(switchContext);
+		}
+		
+		if (switchContext == null || !switchContext.hasAnyValue()) {
+			return;
+		}
+
+		// only store if different than what is already there, which could be a default value
+		program.getProgramContext().setRegisterValue(targetStart, targetStart, switchContext);
 	}
 
 	private void labelSwitch(JumpTable table, TaskMonitor monitor) throws CancelledException {
@@ -264,7 +270,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 		Symbol[] caseSymbols = new Symbol[caseLabels.length];
 		SymbolTable symTable = program.getSymbolTable();
 		for (int i = 0; i < switchCases.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int offset = (i >= caseLabels.length ? i : caseLabels[i]);
 			String caseName = "caseD_" + Integer.toHexString(offset);
 			if (offset == DEFAULT_CASE_VALUE) { // magic constant to indicate default case
@@ -365,7 +371,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 
 		// Create load table data
 		for (int i = 0; i < num; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = tableAddr.addWrap(i * size);
 			Data defData = program.getListing().getDefinedDataAt(addr);
 			if (defData != null) {
@@ -382,7 +388,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 		if (pointers != null && !usingPointers) {
 			ReferenceManager refMgr = program.getReferenceManager();
 			for (int i = 0; i < num; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				int tableOffset = size * i;
 				Address addr = tableAddr.add(tableOffset);
 				refMgr.addMemoryReference(addr, switchCases[i], RefType.DATA, SourceType.ANALYSIS,

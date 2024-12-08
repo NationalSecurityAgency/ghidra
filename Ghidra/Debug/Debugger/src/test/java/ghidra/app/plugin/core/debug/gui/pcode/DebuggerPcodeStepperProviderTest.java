@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.pcode;
 
 import static org.junit.Assert.*;
 
+import java.awt.Color;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 
@@ -25,17 +26,20 @@ import org.junit.Test;
 
 import db.Transaction;
 import generic.Unique;
+import generic.theme.*;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider.PcodeRowHtmlFormatter;
-import ghidra.app.plugin.core.debug.service.emulation.*;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
+import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulatorFactory;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
@@ -47,7 +51,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
-public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerTraceManagerService traceManager;
 	protected DebuggerPcodeStepperPlugin pcodePlugin;
@@ -62,6 +66,9 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 
 	@Before
 	public void setUpPcodeStepperProviderTest() throws Exception {
+		ThemeManager themeManager = ApplicationThemeManager.getInstance();
+		themeManager.setColor("color.fg.listing.pcode.label", new Color(0, 0, 255));
+
 		traceManager = addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
 		pcodePlugin = addPlugin(tool, DebuggerPcodeStepperPlugin.class);
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class); // For colors
@@ -196,7 +203,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 				goto <L0>;
 				""");
 		assertEquals(3, rows.size());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(0).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(2).getClass());
 	}
@@ -211,7 +219,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertEquals(4, rows.size());
 		assertEquals("<html></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(2).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(3).getClass());
 	}
 
@@ -225,7 +234,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertEquals(3, rows.size());
 		assertEquals("<html></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(2).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(2).getClass());
 	}
 
@@ -240,11 +250,15 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 				""");
 		assertEquals(5, rows.size());
 		// NB. templates number labels in order of appearance in BRANCHes
-		assertEquals("<html><font color=\"Blue\">&lt;3&gt;</font></html>", rows.get(0).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(1).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;1&gt;</font></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;3&gt;</font></html>",
+			rows.get(0).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(1).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;1&gt;</font></html>",
+			rows.get(2).getLabel());
 		assertEquals("<html></html>", rows.get(3).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;2&gt;</font></html>", rows.get(4).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;2&gt;</font></html>",
+			rows.get(4).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(4).getClass());
 	}
 }

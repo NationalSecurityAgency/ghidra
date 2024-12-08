@@ -79,7 +79,7 @@ public class VTMatchDestinationTableModel extends VTMatchOneToManyTableModel {
 			monitor.initialize(associations.size());
 			for (VTAssociation vtAssociation : associations) {
 				accumulator.addAll(session.getMatches(vtAssociation));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}

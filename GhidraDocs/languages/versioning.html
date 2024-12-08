@@ -4,17 +4,15 @@
   <meta content="text/html; charset=ISO-8859-1"
  http-equiv="content-type">
   <title>Language Versioning and Migration</title>
-  <style type="text/css">
-	li { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; }
-	h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
-	h2 { color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
-	h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; }
-	h4 { font-family:times new roman; font-size:14pt; font-style:italic; font-family:times new roman; font-size:14pt; font-style:italic; }
-	p { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; }
-	td { font-family:times new roman; font-size:14pt; font-family:times new roman; font-size:14pt; }
-	th { font-family:times new roman; font-size:14pt; font-weight:bold; font-family:times new roman; font-size:14pt; font-weight:bold; }
-	code { color:black; font-family:courier new font-size: 14pt; }
-	span.code { font-family:courier new\000d\000a font-size: 14pt; color:#000000; }
+  <style name="text/css">
+    li { font-family:times new roman; font-size:14pt; margin-bottom: 12px; }
+    h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
+    h2 { padding-top:30px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
+	h2 { color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; color:#984c4c; }
+	h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; color:#0000ff; }
+    p { font-family:times new roman; font-size:14pt; }
+    td { font-family:times new roman; font-size:14pt; padding-left:10px; padding-right:10px; vertical-align: top; }
+    th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; }    
   </style>
 </head>
 <body>
@@ -50,7 +48,15 @@ re-disassembly of all instructions.</p>
 a user to make certain transitions between similar language
 implementations.&nbsp; Such transitions are generally facilitated via a
 default translator, although certain limitations are imposed based upon
-address space sizes and register mappings.<br>
+address space sizes and register mappings.</p>
+<p>Any changes made to a Data Organization could impact the packing of 
+components within a structure or union.  While such changes should be avoided
+due to the possible fallout, any such change to a 
+<span style="font-style: italic;">*.cspec</span> should be made
+in conjunction with a version change to all affected languages within
+the relevant <span style="font-style: italic;">*.ldefs</span> files.  The
+resulting program upgrade will allow affected data types to be updated.
+<br>
 </p>
 <h2><a name="versioning"></a>Language Versioning</h2>
 <p>A language's version is specified as a<span

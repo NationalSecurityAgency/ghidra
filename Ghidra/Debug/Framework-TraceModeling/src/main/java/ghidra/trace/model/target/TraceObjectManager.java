@@ -123,16 +123,34 @@ public interface TraceObjectManager {
 	/**
 	 * Get all the objects in the database
 	 * 
-	 * @return the collection of all objects
+	 * @return the stream of all objects
 	 */
-	Collection<? extends TraceObject> getAllObjects();
+	Stream<? extends TraceObject> getAllObjects();
+
+	/**
+	 * Get the number of objects in the database
+	 * 
+	 * @return the number of objects
+	 */
+	int getObjectCount();
 
 	/**
 	 * Get all the values (edges) in the database
 	 * 
-	 * @return the collect of all values
+	 * @return the stream of all values
 	 */
-	Collection<? extends TraceObjectValue> getAllValues();
+	Stream<? extends TraceObjectValue> getAllValues();
+
+	/**
+	 * Get all address-ranged values intersecting the given span and address range
+	 * 
+	 * @param span the span that desired values lifespans must intersect
+	 * @param range the range that desired address-ranged values must intersect
+	 * @param entryKey the entry key if a single one should be matched, or null for any
+	 * @return the collection of values
+	 */
+	Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
+			AddressRange range, String entryKey);
 
 	/**
 	 * Get all address-ranged values intersecting the given span and address range
@@ -141,8 +159,10 @@ public interface TraceObjectManager {
 	 * @param range the range that desired address-ranged values must intersect
 	 * @return the collection of values
 	 */
-	Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
-			AddressRange range);
+	default Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
+			AddressRange range) {
+		return getValuesIntersecting(span, range, null);
+	}
 
 	/**
 	 * Get all interfaces of the given type in the database

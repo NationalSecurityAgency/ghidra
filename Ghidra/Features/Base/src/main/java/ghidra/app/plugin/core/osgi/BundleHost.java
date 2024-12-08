@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,11 +49,11 @@ import utilities.util.FileUtilities;
  * Note: {@link GhidraBundle}, its implementations, and this class constitute a bridge between 
  * OSGi's {@link Bundle} and Ghidra.
  * <ul>
- * <li> unqualified, "bundle" will mean {@link GhidraBundle}
+ * <li> unqualified, "bundle" will mean {@link GhidraBundle}</li>
  * <li> use of OSGi types, including {@link Bundle} and {@link Framework}, should be package scoped 
- * (not public)  
+ * (not public) </li>
  * <li> bundle lifecycle is simplified to "active"(same as OSGi "active" state) and "inactive" 
- * (OSGi "uninstalled" state)
+ * (OSGi "uninstalled" state)</li>
  * </ul>
  */
 public class BundleHost {
@@ -72,7 +72,7 @@ public class BundleHost {
 	private List<BundleHostListener> listeners = new CopyOnWriteArrayList<>();
 
 	/**
-	 * If a {@link GhidraBundle} hasn't already been added for {@bundleFile}, add it now as a 
+	 * If a {@link GhidraBundle} hasn't already been added for {@code bundleFile}, add it now as a 
 	 * non-system bundle.
 	 * 
 	 * <p>Enable the bundle.
@@ -303,6 +303,22 @@ public class BundleHost {
 	}
 
 	/**
+	 * Return the list of currently managed enabled bundle files.
+	 * 
+	 * @return all the enabled bundle files
+	 */
+	public Collection<ResourceFile> getEnabledBundleFiles() {
+		List<ResourceFile> enabledList = new ArrayList<>();
+		for (ResourceFile bundleFile : bundleMap.getBundleFiles()) {
+			GhidraBundle bundle = bundleMap.get(bundleFile);
+			if (bundle.isEnabled()) {
+				enabledList.add(bundleFile);
+			}
+		}
+		return enabledList;
+	}
+
+	/**
 	 * Attempt to resolve a list of BundleRequirements with active Bundle capabilities.
 	 * 
 	 * @param requirements list of requirements -- satisfied requirements are removed as 
@@ -457,6 +473,10 @@ public class BundleHost {
 
 		frameworkBundleContext = felixFramework.getBundleContext();
 
+		if (frameworkBundleContext == null) {
+			throw new OSGiException("Felix OSGi framework has no bundle context");
+		}
+
 		addDebuggingListeners();
 
 		Bundle bundle = frameworkBundleContext.getBundle();
@@ -512,6 +532,11 @@ public class BundleHost {
 	 * @return the OSGi bundle or null
 	 */
 	Bundle getOSGiBundle(String bundleLocation) {
+		// TODO: Is it safe/better to return null when the framework isn't started?
+		// 'frameworkBundleContext' is currently not set to null when it gets stopped.
+		if (frameworkBundleContext == null) {
+			return null;
+		}
 		return frameworkBundleContext.getBundle(bundleLocation);
 	}
 
@@ -667,7 +692,7 @@ public class BundleHost {
 			}
 			catch (Exception e) {
 				// write the error to the console or log file
-				console.println("Unexpected error activating bundles: " + bundles);
+				console.println("Unexpected error activating bundle: " + bundle);
 				e.printStackTrace(console);
 			}
 			monitor.incrementProgress(1);
@@ -736,7 +761,7 @@ public class BundleHost {
 				}
 				catch (Exception e) {
 					// write the error to the console or log file
-					console.println("Unexpected error activating bundles: " + bundles);
+					console.println("Unexpected error activating bundle: " + bundle);
 					e.printStackTrace(console);
 				}
 				monitor.incrementProgress(1);
@@ -866,7 +891,7 @@ public class BundleHost {
 		}
 
 		if (!bundlesToActivate.isEmpty()) {
-			TaskLauncher.launchNonModal("Restoring bundle state",
+			TaskLauncher.launchModal("Restoring Bundle State",
 				(monitor) -> activateInStages(bundlesToActivate, monitor, new NullPrintWriter()));
 		}
 	}

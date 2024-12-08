@@ -37,6 +37,8 @@ public class CompLzssFileSystem implements GFileSystem {
 
 	public CompLzssFileSystem(FSRLRoot fsrl, ByteProvider provider, FileSystemService fsService,
 			TaskMonitor monitor) throws IOException, CancelledException {
+		this.fsFSRL = fsrl;
+
 		monitor.setMessage("Decompressing LZSS...");
 
 		try (ByteProvider tmpBP = new ByteProviderWrapper(provider, LzssConstants.HEADER_LENGTH,

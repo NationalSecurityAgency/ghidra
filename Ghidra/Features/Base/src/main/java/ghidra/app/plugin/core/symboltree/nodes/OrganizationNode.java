@@ -116,7 +116,7 @@ public class OrganizationNode extends SymbolTreeNode {
 		// loop through and create organization nodes for groups larger than one element
 		List<GTreeNode> children = new ArrayList<>();
 		for (String prefix : prefixMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<GTreeNode> nodesSamePrefix = prefixMap.get(prefix);
 
@@ -368,7 +368,7 @@ public class OrganizationNode extends SymbolTreeNode {
 		int uniquePrefixSize = commonPrefixSize + 1;
 		Map<String, List<GTreeNode>> map = new LinkedHashMap<>();
 		for (GTreeNode node : nodeList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String prefix = getPrefix(node, uniquePrefixSize);
 			List<GTreeNode> list = map.computeIfAbsent(prefix, k -> new ArrayList<>());
 			list.add(node);

@@ -29,7 +29,7 @@ import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GLabel;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
@@ -46,7 +46,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 
 	private final static long serialVersionUID = 1;
 	private static final Border UNDERLINE_BORDER =
-		BorderFactory.createMatteBorder(0, 0, 1, 0, Java.BORDER);
+		BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.BORDER);
 
 	private JPanel rowPanel;
 	private GDHtmlLabel headerLabel;

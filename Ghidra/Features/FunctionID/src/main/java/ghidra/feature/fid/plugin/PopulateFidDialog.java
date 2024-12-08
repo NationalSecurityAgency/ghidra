@@ -15,6 +15,8 @@
  */
 package ghidra.feature.fid.plugin;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.io.File;
@@ -225,7 +227,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> {
 			final DataTreeDialog dialog = new DataTreeDialog(tool.getToolFrame(),
-				"Choose Root Folder", DataTreeDialog.CHOOSE_FOLDER);
+				"Choose Root Folder", CHOOSE_FOLDER);
 			tool.showDialog(dialog);
 			DomainFolder domainFolder = dialog.getDomainFolder();
 			if (domainFolder != null) {

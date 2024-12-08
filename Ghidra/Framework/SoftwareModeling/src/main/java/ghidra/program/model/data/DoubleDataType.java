@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-
 /**
  * Provides a definition of a Double within a program.
  */
@@ -31,7 +30,12 @@ public class DoubleDataType extends AbstractFloatDataType {
 	}
 
 	public DoubleDataType(DataTypeManager dtm) {
-		super("double", dtm);
+		super("double", getDataOrganization(dtm).getDoubleSize(), dtm);
+	}
+
+	@Override
+	protected String buildDescription() {
+		return "Compiler-defined 'double' " + super.buildDescription();
 	}
 
 	public DataType clone(DataTypeManager dtm) {
@@ -44,11 +48,6 @@ public class DoubleDataType extends AbstractFloatDataType {
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
-	}
-
-	@Override
-	public int getLength() {
-		return getDataOrganization().getDoubleSize();
 	}
 
 }

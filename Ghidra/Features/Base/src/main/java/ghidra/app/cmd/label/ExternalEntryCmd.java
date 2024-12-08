@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.label;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolTable;
@@ -25,11 +23,10 @@ import ghidra.program.model.symbol.SymbolTable;
 /**
  * Command for setting/unsetting an external entry point.
  */
-public class ExternalEntryCmd implements Command {
-	private SymbolTable st;
+public class ExternalEntryCmd implements Command<Program> {
+
 	private Address addr;
 	private boolean isEntry;
-
 
 	/**
 	 * Construct a new command for setting/unsetting an external entry point
@@ -41,13 +38,9 @@ public class ExternalEntryCmd implements Command {
 		this.isEntry = isEntry;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		st = ((Program)obj).getSymbolTable();
-
+	@Override
+	public boolean applyTo(Program program) {
+		SymbolTable st = program.getSymbolTable();
 		if (isEntry) {
 			st.addExternalEntryPoint(addr);
 		}
@@ -57,18 +50,12 @@ public class ExternalEntryCmd implements Command {
 		return true;
 	}
 
-
-
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
-		return "Set External" +isEntry;
+		return "Set External" + isEntry;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return "";
 	}

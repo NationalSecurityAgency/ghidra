@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.util.Swing;
 
 /**
@@ -133,7 +134,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel styleLabel = new GDLabel("Styles");
-			styleLabel.setFont(getFont().deriveFont(1));
+			Gui.registerFont(styleLabel, Font.BOLD);
 			styleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(styleLabel);
 
@@ -150,13 +151,12 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel sizeLabel = new GDLabel("Sizes");
-			sizeLabel.setFont(getFont().deriveFont(1));
+			Gui.registerFont(sizeLabel, Font.BOLD);
 			sizeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(sizeLabel);
 
 			sizeCombo =
 				new GComboBox<>(IntStream.rangeClosed(1, 72).boxed().toArray(Integer[]::new));
-			sizeCombo.setMaximumRowCount(9);
 			sizeCombo.setMaximumRowCount(9);
 			sizeCombo.addActionListener(actionListener);
 			panel.add(sizeCombo);
@@ -168,7 +168,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel fontLabel = new GDLabel("Fonts");
-			fontLabel.setFont(getFont().deriveFont(1));
+			Gui.registerFont(fontLabel, Font.BOLD);
 			fontLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(fontLabel);
 

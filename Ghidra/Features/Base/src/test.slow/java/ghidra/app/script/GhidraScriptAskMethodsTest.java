@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,10 +130,14 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	public void testAskProgram_SCR8486() throws Exception {
 		createScript();
 
-		Program[] container = new Program[1];
+		AtomicReference<Program> container = new AtomicReference<>();
 		runSwing(() -> {
 			try {
-				container[0] = script.askProgram("Test - Pick Program");
+				Program p = script.askProgram("Test - Pick Program");
+				container.set(p);
+				if (p != null) {
+					p.release(this);
+				}
 			}
 			catch (Exception ioe) {
 				failWithException("Caught unexepected during askProgram()", ioe);
@@ -146,7 +150,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		runSwing(() -> okButton.doClick());
 
 		// this test will fail if we encountered an exception
-		assertNull(container[0]);
+		assertNull(container.get());
 
 		runSwing(() -> dtd.close());
 	}
@@ -709,22 +713,22 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	 */
 
 	/*
-	 * No test for 'askYesNo()" because it does not use either the the last-selected value or
+	 * No test for 'askYesNo()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProjectFolder()" because it does not use either the the last-selected value
+	 * No test for 'askProjectFolder()" because it does not use either the last-selected value
 	 * or a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askProgram()" because it does not use either the the last-selected value or
+	 * No test for 'askProgram()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 
 	/*
-	 * No test for 'askDomainFile()" because it does not use either the the last-selected value or
+	 * No test for 'askDomainFile()" because it does not use either the last-selected value or
 	 * a .properties file value to pre-populate the user choice in the GUI.
 	 */
 

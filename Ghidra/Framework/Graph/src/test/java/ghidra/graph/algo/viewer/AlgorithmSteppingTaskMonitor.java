@@ -24,7 +24,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 import utility.function.Callback;
 
 /**
- * Task monitor that will trigger a {@link #wait()} when {@link #checkCanceled()} is called.  This
+ * Task monitor that will trigger a {@link #wait()} when {@link #checkCancelled()} is called.  This
  * allows clients to watch algorithms as they proceed.
  */
 public class AlgorithmSteppingTaskMonitor extends TaskMonitorAdapter {
@@ -46,9 +46,9 @@ public class AlgorithmSteppingTaskMonitor extends TaskMonitorAdapter {
 	}
 
 	@Override
-	public void checkCanceled() throws CancelledException {
+	public void checkCancelled() throws CancelledException {
 
-		super.checkCanceled();
+		super.checkCancelled();
 
 		pause();
 	}

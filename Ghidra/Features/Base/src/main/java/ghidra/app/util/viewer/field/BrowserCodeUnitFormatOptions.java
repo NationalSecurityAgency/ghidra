@@ -58,8 +58,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Always Show Primary Reference";
 
 	/**
-	 * Option for whether to follow referenced pointers, for read or indirect reference types, 
-	 * to show pointer's referenced symbol instead of symbol at pointer.  When applied the 
+	 * Option for whether to follow referenced pointers, for read or indirect reference types,
+	 * to show pointer's referenced symbol instead of symbol at pointer.  When applied the
 	 * resulting label will be preceded by -&gt;.
 	 */
 	private final static String FOLLOW_POINTER_REFERENCE_MARKUP_OPTION =
@@ -98,7 +98,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	 * This constructor must be used by the field factory since an OptionsService may
 	 * not obtainable at the time they are constructed.
 	 * @param fieldOptions field options
-	 * @param autoUpdate if true format will auto update if associated options are changed, in 
+	 * @param autoUpdate if true format will auto update if associated options are changed, in
 	 * addition any listeners will be notified when this format is updated.
 	 */
 	BrowserCodeUnitFormatOptions(ToolOptions fieldOptions, boolean autoUpdate) {
@@ -110,7 +110,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 		if (!exists) {
 			fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
 				new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
-				new NamespacePropertyEditor());
+				() -> new NamespacePropertyEditor());
 
 			HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Operands_Field");
 			fieldOptions.getOptions(GhidraOptions.OPERAND_GROUP_TITLE).setOptionsHelpLocation(hl);
@@ -165,7 +165,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	private void updateFormat() {
 		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
 			new NamespaceWrappedOption(), null, NAMESPACE_OPTIONS_DESCRIPTIONS,
-			new NamespacePropertyEditor());
+			() -> new NamespacePropertyEditor());
 		CustomOption customOption =
 			fieldOptions.getCustomOption(NAMESPACE_OPTIONS, new NamespaceWrappedOption());
 		if (!(customOption instanceof NamespaceWrappedOption)) {
@@ -240,9 +240,9 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	}
 
 	/**
-	 * Get current state of the Follow Referenced Pointers option. 
-	 * @return true if operand pointer read of indirect references will be followed and 
-	 * non-dynamic pointer referenced symbol will be rendered in place of pointer label. 
+	 * Get current state of the Follow Referenced Pointers option.
+	 * @return true if operand pointer read of indirect references will be followed and
+	 * non-dynamic pointer referenced symbol will be rendered in place of pointer label.
 	 */
 	public boolean followReferencedPointers() {
 		return followReferencedPointers;

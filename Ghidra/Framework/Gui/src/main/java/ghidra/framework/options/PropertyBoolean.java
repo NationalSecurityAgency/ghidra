@@ -15,16 +15,14 @@
  */
 package ghidra.framework.options;
 
-// Support for a PropertyEditor that uses text.
-
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.beans.*;
+import java.beans.PropertyEditor;
 
 import javax.swing.JCheckBox;
 
 /**
- * An implementation of PropertyComponent that is represented as a text field.
+ * A basic editor for booleans.
  */
 public class PropertyBoolean extends JCheckBox implements ItemListener {
 
@@ -32,46 +30,32 @@ public class PropertyBoolean extends JCheckBox implements ItemListener {
 	private boolean notifyEditorOfChanges = true;
 
 	/**
-	 * Constructor new PropertyText.
-	 * @param pe bean property editor that is used to get the value
-	 * to show in the text field
+	 * Constructor
+	 * @param pe bean property editor that is used to get the value to show in the text field
 	 */
 	public PropertyBoolean(PropertyEditor pe) {
-		super();
-		setSelected((Boolean) pe.getValue());
-
 		editor = pe;
+		setSelected((Boolean) pe.getValue());
 		addItemListener(this);
 
-		editor.addPropertyChangeListener(new PropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				Object value = editor.getValue();
-				if ((value instanceof Boolean) && !value.equals(getText())) {
-					notifyEditorOfChanges = false;
-					try {
-						setSelected((Boolean) value);
-					}
-					finally {
-						notifyEditorOfChanges = true;
-					}
+		editor.addPropertyChangeListener(evt -> {
+			Object value = editor.getValue();
+			if ((value instanceof Boolean) && !value.equals(getText())) {
+				notifyEditorOfChanges = false;
+				try {
+					setSelected((Boolean) value);
+				}
+				finally {
+					notifyEditorOfChanges = true;
 				}
 			}
 		});
 	}
 
-	//----------------------------------------------------------------------
-	// Change listener methods.
 	@Override
 	public void itemStateChanged(ItemEvent e) {
 		if (notifyEditorOfChanges) {
-			try {
-				editor.setValue(isSelected() ? Boolean.TRUE : Boolean.FALSE);
-			}
-			catch (IllegalArgumentException ex) {
-				// Quietly ignore.
-			}
+			editor.setValue(isSelected() ? Boolean.TRUE : Boolean.FALSE);
 		}
 	}
-
 }

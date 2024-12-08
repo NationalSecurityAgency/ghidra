@@ -221,7 +221,7 @@ public class ProgramContextMergeManager implements MergeResolver, ListingMergeCo
 					mergeManager.updateProgress(currentProgressPercentage,
 						"Merging register values for " + regName);
 					monitor.setProgress(i);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					rmm =
 						new RegisterMergeManager(regName, mergeManager, resultPgm, originalPgm,
 							latestPgm, myPgm, latestChanges, myChanges);

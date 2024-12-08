@@ -28,4 +28,8 @@ public class AssemblyProduction extends AbstractAssemblyProduction<AssemblyNonTe
 			AssemblySentential<AssemblyNonTerminal> rhs) {
 		super(lhs, rhs);
 	}
+
+	public boolean isConstructor() {
+		return true;
+	}
 }

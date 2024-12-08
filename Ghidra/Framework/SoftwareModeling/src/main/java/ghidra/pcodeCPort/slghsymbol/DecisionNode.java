@@ -15,21 +15,18 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.*;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.slghpattern.DisjointPattern;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 
 public class DecisionNode {
 
-	private VectorSTL<Pair<DisjointPattern, Constructor>> list =
-		new VectorSTL<>();
+	private VectorSTL<Pair<DisjointPattern, Constructor>> list = new VectorSTL<>();
 	private VectorSTL<DecisionNode> children = new VectorSTL<>();
 	private int num; // Total number of patterns we distinguish
 	private boolean contextdecision; // True if this is decision based on context
@@ -37,7 +34,7 @@ public class DecisionNode {
 	private DecisionNode parent;
 
 	public DecisionNode() {
-	} // For use with restoreXml
+	}
 
 	public DecisionNode(DecisionNode p) {
 		parent = p;
@@ -213,7 +210,7 @@ public class DecisionNode {
 		long dontCareMask = m ^ commonMask;
 
 		for (int i = 0; i <= dontCareMask; ++i) { // Iterate over values that contain all don't
-														// care bits
+													// care bits
 			if ((i & dontCareMask) != i) {
 				continue; // If all 1 bits in the value are don't cares
 			}
@@ -284,8 +281,7 @@ public class DecisionNode {
 	public void orderPatterns(DecisionProperties props) {
 		int i, j, k;
 		VectorSTL<Pair<DisjointPattern, Constructor>> newlist = list.copy();
-		VectorSTL<Pair<DisjointPattern, Constructor>> conflictlist =
-			new VectorSTL<>();
+		VectorSTL<Pair<DisjointPattern, Constructor>> conflictlist = new VectorSTL<>();
 
 		// Check for identical patterns
 		for (i = 0; i < list.size(); ++i) {
@@ -312,10 +308,8 @@ public class DecisionNode {
 						// So there is no conflict
 					}
 					else {			// A true conflict that needs to be resolved
-						conflictlist.push_back(
-							new Pair<>(ipat, iconst));
-						conflictlist.push_back(
-							new Pair<>(jpat, jconst));
+						conflictlist.push_back(new Pair<>(ipat, iconst));
+						conflictlist.push_back(new Pair<>(jpat, jconst));
 					}
 				}
 			}
@@ -354,65 +348,22 @@ public class DecisionNode {
 		}
 	}
 
-	void saveXml(PrintStream s) {
-		s.append("<decision");
-		s.append(" number=\"");
-		s.print(num);
-		s.append("\"");
-		s.append(" context=\"");
-		if (contextdecision) {
-			s.append("true\"");
-		}
-		else {
-			s.append("false\"");
-		}
-		s.append(" start=\"");
-		s.print(startbit);
-		s.append("\"");
-		s.append(" size=\"");
-		s.print(bitsize);
-		s.append("\"");
-		s.append(">\n");
+	void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_DECISION);
+		encoder.writeSignedInteger(ATTRIB_NUMBER, num);
+		encoder.writeBool(ATTRIB_CONTEXT, contextdecision);
+		encoder.writeSignedInteger(ATTRIB_STARTBIT, startbit);
+		encoder.writeSignedInteger(ATTRIB_SIZE, bitsize);
 		for (int i = 0; i < list.size(); ++i) {
-			s.append("<pair id=\"");
-			s.print(list.get(i).second.getId());
-			s.append("\">\n");
-			list.get(i).first.saveXml(s);
-			s.append("</pair>\n");
+			encoder.openElement(ELEM_PAIR);
+			encoder.writeSignedInteger(ATTRIB_ID, list.get(i).second.getId());
+			list.get(i).first.encode(encoder);
+			encoder.closeElement(ELEM_PAIR);
 		}
 		for (int i = 0; i < children.size(); ++i) {
-			children.get(i).saveXml(s);
+			children.get(i).encode(encoder);
 		}
-		s.append("</decision>\n");
-	}
-
-	void restoreXml(Element el, DecisionNode par, SubtableSymbol sub) {
-		parent = par;
-		num = XmlUtils.decodeUnknownInt(el.getAttributeValue("number"));
-
-		contextdecision = XmlUtils.decodeBoolean(el.getAttributeValue("context"));
-		startbit = XmlUtils.decodeUnknownInt(el.getAttributeValue("start"));
-		bitsize = XmlUtils.decodeUnknownInt(el.getAttributeValue("size"));
-
-		List<?> childlist = el.getChildren();
-		Iterator<?> iter = childlist.iterator();
-		while (iter.hasNext()) {
-			Element child = (Element) iter.next();
-			if (child.getName().equals("pair")) {
-				int id = XmlUtils.decodeUnknownInt(child.getAttributeValue("id"));
-				Constructor ct = sub.getConstructor(id);
-				DisjointPattern pat =
-					DisjointPattern.restoreDisjoint((Element) child.getChildren().get(0));
-				// This increments num addConstructorPair(pat,ct);
-				list.push_back(new Pair<>(pat, ct));
-				// delete pat; // addConstructorPair makes its own copy
-			}
-			else if (child.getName().equals("decision")) {
-				DecisionNode subnode = new DecisionNode();
-				subnode.restoreXml(child, this, sub);
-				children.push_back(subnode);
-			}
-		}
+		encoder.closeElement(ELEM_DECISION);
 	}
 
 }

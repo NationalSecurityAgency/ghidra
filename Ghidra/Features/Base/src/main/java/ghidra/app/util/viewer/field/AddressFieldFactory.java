@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.*;
@@ -47,7 +46,6 @@ public class AddressFieldFactory extends FieldFactory {
 	private boolean padZeros;
 	private int minHexDigits;
 	private boolean rightJustify;
-	private PropertyEditor addressFieldOptionsEditor = new AddressFieldOptionsPropertyEditor();
 
 	/**
 	 * Default Constructor
@@ -63,7 +61,7 @@ public class AddressFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private AddressFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private AddressFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		initOptions(fieldOptions);
@@ -74,7 +72,7 @@ public class AddressFieldFactory extends FieldFactory {
 
 		fieldOptions.registerOption(ADDRESS_DISPLAY_OPTIONS_NAME, OptionType.CUSTOM_TYPE,
 			new AddressFieldOptionsWrappedOption(), helpLoc, "Adjusts the Address Field display",
-			addressFieldOptionsEditor);
+			() -> new AddressFieldOptionsPropertyEditor());
 
 		CustomOption customOption =
 			fieldOptions.getCustomOption(ADDRESS_DISPLAY_OPTIONS_NAME, null);
@@ -198,7 +196,7 @@ public class AddressFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel newModel,
-			HighlightProvider highlightStringProvider, ToolOptions toolOptions,
+			ListingHighlightProvider highlightStringProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
 		return new AddressFieldFactory(newModel, highlightStringProvider, toolOptions,
 			fieldOptions);

@@ -46,9 +46,7 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
 				Structure xyz = new StructureDataType("XYZ", 0);
 				xyz.add(new WordDataType());
@@ -72,77 +70,40 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 				//     byte
 				// } (size=8)
 
-				try {
-					Category miscCategory = dtm.getCategory(miscPath);
-					miscCategory.addDataType(abc, null);
+				Category miscCategory = dtm.getCategory(miscPath);
+				miscCategory.addDataType(abc, null);
 
-					abc = (Structure) dtm.getDataType(miscPath, "ABC");
-					xyz = (Structure) dtm.getDataType(rootPath, "XYZ");
+				abc = (Structure) dtm.getDataType(miscPath, "ABC");
+				xyz = (Structure) dtm.getDataType(rootPath, "XYZ");
 
-					assertNotNull(abc);
-					assertNotNull(xyz);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				assertNotNull(abc);
+				assertNotNull(xyz);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure abc = (Structure) dtm.getDataType(miscPath, "ABC");
 				Structure xyz = (Structure) dtm.getDataType(rootPath, "XYZ");
 
-				int transactionID = program.startTransaction("change ABC");
-				try {
-					// Change first byte in ABC to a char.
-					abc.replace(0, new CharDataType(), 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Change first byte in ABC to a char.
+				abc.replace(0, new CharDataType(), 1);
 
-				transactionID = program.startTransaction("remove XYZ");
-				try {
-					// Remove the XYZ data type.
-					dtm.remove(xyz, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Remove the XYZ data type.
+				dtm.remove(xyz, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure abc = (Structure) dtm.getDataType(miscPath, "ABC");
 				Structure xyz = (Structure) dtm.getDataType(rootPath, "XYZ");
 
-				int transactionID = program.startTransaction("change ABC");
-				try {
-					// Change second byte in ABC to a char.
-					abc.replace(1, new CharDataType(), 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Change second byte in ABC to a char.
+				abc.replace(1, new CharDataType(), 1);
 
-				transactionID = program.startTransaction("expand XYZ");
-				try {
-					// Increase the size of XYZ data type so it won't fit in its component.
-					xyz.add(new FloatDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// Increase the size of XYZ data type so it won't fit in its component.
+				xyz.add(new FloatDataType());
 			}
 		});
 

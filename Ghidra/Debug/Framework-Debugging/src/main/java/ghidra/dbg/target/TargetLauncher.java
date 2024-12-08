@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,10 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * 
  * <p>
  * The targets this launcher creates ought to appear in its successors.
+ * 
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
  */
+@Deprecated(forRemoval = true, since = "11.2")
 @DebuggerTargetObjectIface("Launcher")
 public interface TargetLauncher extends TargetObject {
 
@@ -59,6 +62,25 @@ public interface TargetLauncher extends TargetObject {
 		 * A map of parameters suitable for invoking {@link #launch(List)}
 		 */
 		TargetParameterMap PARAMETERS = TargetMethod.makeParameters(PARAMETER_CMDLINE_ARGS);
+
+		/**
+		 * Check if the given image path contains spaces, and surround it in double quotes
+		 * ({@code "}) if necessary.
+		 * 
+		 * <p>
+		 * Without the quotes the launcher will likely confuse the spaces for separating arguments.
+		 * When constructing the command-line to launch a program, this method must be used, even if
+		 * the image is the only "argument."
+		 * 
+		 * @param imagePath the path to the image on the target platform.
+		 * @return the path, possibly surrounded in quotes.
+		 */
+		static String quoteImagePathIfSpaces(String imagePath) {
+			if (imagePath.contains(" ")) {
+				return '"' + imagePath + '"';
+			}
+			return imagePath;
+		}
 
 		@Override
 		default public TargetParameterMap getParameters() {

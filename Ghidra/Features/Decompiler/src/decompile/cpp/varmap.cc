@@ -23,6 +23,35 @@ AttributeId ATTRIB_MAIN = AttributeId("main",134);
 
 ElementId ELEM_LOCALDB = ElementId("localdb",228);
 
+/// This is assumed to be \e open. If \b this is a primitive integer or float, and if the other range
+/// is just a constant being COPYed, return \b true, even if the constant is bigger.
+/// \param b is the other range to test for absorption
+/// \return \b true if the other range can be absorbed as a constant
+bool RangeHint::isConstAbsorbable(const RangeHint *b) const
+
+{
+  if ((b->flags & copy_constant) == 0)
+    return false;
+  if (b->isTypeLock())
+    return false;
+  if (b->size < size)
+    return false;
+  type_metatype meta = type->getMetatype();
+  if (meta != TYPE_INT && meta != TYPE_UINT && meta != TYPE_BOOL && meta != TYPE_FLOAT)
+    return false;
+  type_metatype bMeta = b->type->getMetatype();
+  if (bMeta != TYPE_UNKNOWN && bMeta != TYPE_INT && bMeta != TYPE_UINT)
+    return false;
+  intb end = sstart;
+  if (highind > 0)
+    end += highind * type->getAlignSize();
+  else
+    end += size;
+  if (b->sstart > end)
+    return false;
+  return true;
+}
+
 /// \brief Can the given intersecting RangeHint coexist with \b this at their given offsets
 ///
 /// Determine if the data-type information in the two ranges \e line \e up
@@ -34,32 +63,36 @@ bool RangeHint::reconcile(const RangeHint *b) const
 
 {
   const RangeHint *a = this;
-  if (a->type->getSize() < b->type->getSize()) {
+  if (a->type->getAlignSize() < b->type->getAlignSize()) {
     const RangeHint *tmp = b;
     b = a;			// Make sure b is smallest
     a = tmp;
   }
-  intb mod = (b->sstart - a->sstart) % a->type->getSize();
+  int8 mod = (b->sstart - a->sstart) % a->type->getAlignSize();
   if (mod < 0)
-    mod += a->type->getSize();
+    mod += a->type->getAlignSize();
 
   Datatype *sub = a->type;
-  uintb umod = mod;
-  while((sub!=(Datatype *)0)&&(sub->getSize() > b->type->getSize()))
-    sub = sub->getSubType(umod,&umod);
+  while((sub!=(Datatype *)0)&&(sub->getAlignSize() > b->type->getAlignSize())) {
+    sub = sub->getSubType(mod,&mod);
+  }
 
-  if (sub == (Datatype *)0) return false;
-  if (umod != 0) return false;
-  if (sub->getSize() == b->type->getSize()) return true;
-  if ((b->flags & Varnode::typelock)!=0) return false;
-  // If we reach here, component sizes do not match
-  // Check for data-types we want to protect more
+  if (sub != (Datatype *)0) {
+    if (sub->getAlignSize() == b->type->getAlignSize()) return true;
+    // If we reach here, b overlaps multiple components of a
+  }
+
+  // If we reach here, component sizes do not match. Check for data-types we want to protect more
+
+  if (b->rangeType == RangeType::open && b->isConstAbsorbable(a))
+    return true;
+  if (b->isTypeLock()) return false;
   type_metatype meta = a->type->getMetatype();
   if (meta != TYPE_STRUCT && meta != TYPE_UNION) {
-    if (meta != TYPE_ARRAY || ((TypeArray *)(a->type))->getBase()->getMetatype() == TYPE_UNKNOWN)
+    if (meta != TYPE_ARRAY || ((TypeArray *)(a->type))->getBase()->getMetatype() != TYPE_UNKNOWN)
       return false;
   }
-  // For structures, unions, and arrays, test if b looks like a partial data-type
+  // For structures, unions, and arrays, test if b looks like a partial/combined data-type
   meta = b->type->getMetatype();
   if (meta == TYPE_UNKNOWN || meta == TYPE_INT || meta == TYPE_UINT) {
     return true;
@@ -89,31 +122,41 @@ bool RangeHint::contain(const RangeHint *b) const
 /// Otherwise data-type ordering is used.
 /// \param b is the other given range
 /// \param reconcile is \b true is the two ranges have \e reconciled data-types
-/// \return \b true if the \b this ranges's data-type is preferred
+/// \return \b true if \b this ranges's data-type is preferred
 bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 
 {
   if (start != b->start)
     return true;		// Something must occupy a->start to b->start
 				// Prefer the locked type
-  if ((b->flags & Varnode::typelock)!=0) {
-    if ((flags & Varnode::typelock)==0)
+  if (b->isTypeLock()) {
+    if (!isTypeLock())
       return false;
   }
-  else if ((flags & Varnode::typelock)!=0)
+  else if (isTypeLock())
     return true;
 
-  if (!reconcile) {		// If the ranges don't reconcile
-    if ((rangeType == RangeHint::open)&&(b->rangeType != RangeHint::open)) // Throw out the open range
-      return false;
-    if ((b->rangeType == RangeHint::open)&&(rangeType != RangeHint::open))
+  if (rangeType == open && b->rangeType != open) {
+    if (!reconcile)
+      return false;		// Throw out open range
+    if (isConstAbsorbable(b))
       return true;
+  }
+  else if (b->rangeType == open && rangeType != open) {
+    if (!reconcile)
+      return true;		// Throw out open range
+    if (b->isConstAbsorbable(this))
+      return false;
+  }
+  else if (rangeType == fixed && b->rangeType == fixed) {
+    if (size != b->size && !reconcile)
+      return (size > b->size);
   }
 
   return (0>type->typeOrder(*b->type)); // Prefer the more specific
 }
 
-/// If \b this RangeHint is an array and the following details line up, adjust \b this
+/// If \b this RangeHint is an array and the following RangeHint line up, adjust \b this
 /// so that it \e absorbs the other given RangeHint and return \b true.
 /// The second RangeHint:
 ///   - must have the same element size
@@ -124,14 +167,18 @@ bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 ///
 /// \param b is the other RangeHint to absorb
 /// \return \b true if the other RangeHint was successfully absorbed
-bool RangeHint::absorb(RangeHint *b)
+bool RangeHint::attemptJoin(RangeHint *b)
 
 {
-  if (rangeType != RangeHint::open) return false;
+  if (rangeType != open) return false;
+  if (b->rangeType == endpoint) return false;			// Don't merge with bounding range
+  if (isConstAbsorbable(b)) {
+    absorb(b);
+    return true;
+  }
   if (highind < 0) return false;
-  if (b->rangeType == RangeHint::endpoint) return false;	// Don't merge with bounding range
   Datatype *settype = type;					// Assume we will keep this data-type
-  if (settype->getSize() != b->type->getSize()) return false;
+  if (settype->getAlignSize() != b->type->getAlignSize()) return false;
   if (settype != b->type) {
     Datatype *aTestType = type;
     Datatype *bTestType = b->type;
@@ -152,20 +199,52 @@ bool RangeHint::absorb(RangeHint *b)
     else if (aTestType != bTestType)	// If they are both not unknown, they must be the same
       return false;
   }
-  if ((flags & Varnode::typelock)!=0) return false;
-  if ((b->flags & Varnode::typelock)!=0) return false;
-  if (flags != b->flags) return false;
+  if (isTypeLock()) return false;
+  if (b->isTypeLock()) return false;
   intb diffsz = b->sstart - sstart;
-  if ((diffsz % settype->getSize()) != 0) return false;
-  diffsz /= settype->getSize();
+  if ((diffsz % settype->getAlignSize()) != 0) return false;
+  diffsz /= settype->getAlignSize();
   if (diffsz > highind) return false;
   type = settype;
-  if (b->rangeType == RangeHint::open && (0 <= b->highind)) { // If b has array indexing
-    int4 trialhi = b->highind + diffsz;
-    if (highind < trialhi)
-      highind = trialhi;
-  }
+  absorb(b);
   return true;
+}
+
+/// Absorb details of the other RangeHint into \b this, except for the data-type.  Inherit an \e open range
+/// type and any indexing information. The data-type for \b this is assumed to be compatible and preferred
+/// over the other data-type and is not changed.
+/// \param b is the other RangeHint to absorb
+void RangeHint::absorb(RangeHint *b)
+
+{
+  if (b->rangeType == open) {
+    if (type->getAlignSize() == b->type->getAlignSize()) {	// Compatible element data-type
+      rangeType = open;
+      if (0 <= b->highind) { // If b has array indexing
+	intb diffsz = b->sstart - sstart;
+	diffsz /= type->getAlignSize();
+	int4 trialhi = b->highind + diffsz;
+	if (highind < trialhi)
+	  highind = trialhi;
+      }
+    }
+    else if (start == b->start) {
+      type_metatype meta = type->getMetatype();
+      if (meta != TYPE_STRUCT && meta != TYPE_UNION)
+	rangeType = open;
+    }
+  }
+  else if ((b->flags & copy_constant)!=0 && rangeType == open) {
+    intb diffsz = b->sstart - sstart + b->size;
+    if (diffsz > size) {
+      int4 trialhi = diffsz / type->getAlignSize();
+      if (highind < trialhi)
+	highind = trialhi;
+    }
+  }
+  if ((flags & copy_constant)!=0 && (b->flags & copy_constant)==0) {
+    flags ^= copy_constant;
+  }
 }
 
 /// Given that \b this and the other RangeHint intersect, redefine \b this so that it
@@ -180,87 +259,62 @@ bool RangeHint::absorb(RangeHint *b)
 bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
 
 {
-  uintb aend,bend;
-  uintb end;
-  Datatype *resType;
-  uint4 resFlags;
   bool didReconcile;
-  int4 resHighIndex;
-  bool overlapProblems = false;
-
-  aend = space->wrapOffset(start+size);
-  bend = space->wrapOffset(b->start+b->size);
-  RangeHint::RangeType resRangeType = RangeHint::fixed;
-  resHighIndex = -1;
-  if ((aend==0)||(bend==0))
-    end = 0;
-  else
-    end = (aend > bend) ? aend : bend;
+  int4 resType;		// 0=this, 1=b, 2=confuse
 
   if (contain(b)) {			// Does one range contain the other
     didReconcile = reconcile(b);	// Can the data-type layout be reconciled
-    if (preferred(b,didReconcile)) { 	// If a's data-type is preferred over b
-      resType = type;
-      resFlags = flags;
-      resRangeType = rangeType;
-      resHighIndex = highind;
-    }
-    else {
-      resType = b->type;
-      resFlags = b->flags;
-      resRangeType = b->rangeType;
-      resHighIndex = b->highind;
-    }
-    if ((start==b->start)&&(size==b->size)) {
-      resRangeType = (rangeType==RangeHint::open || b->rangeType==RangeHint::open) ? RangeHint::open : RangeHint::fixed;
-      if (resRangeType == RangeHint::open)
-	resHighIndex = (highind < b->highind) ? b->highind : highind;
-    }
-    if (!didReconcile) { // See if two types match up
-      if ((b->rangeType != RangeHint::open)&&(rangeType != RangeHint::open))
-	overlapProblems = true;
-    }
+    if (!didReconcile && start != b->start)
+      resType = 2;
+    else
+      resType = preferred(b,didReconcile) ? 0 : 1;
   }
   else {
     didReconcile = false;
-    resType = (Datatype *)0;	// Unable to resolve the type
-    resFlags = 0;
+    resType =  isTypeLock() ? 0 : 2;
   }
 				// Check for really problematic cases
   if (!didReconcile) {
-    if ((b->flags & Varnode::typelock)!=0) {
-      if ((flags & Varnode::typelock)!=0)
+    if (isTypeLock()) {
+      if (b->isTypeLock())
 	throw LowlevelError("Overlapping forced variable types : " + type->getName() + "   " + b->type->getName());
+      if (start != b->start)
+	return false;		// Discard b entirely
     }
   }
-  if (resType == (Datatype *)0) // If all else fails
-    resType = typeFactory->getBase(1,TYPE_UNKNOWN); // Do unknown array (size 1)
 
-  type = resType;
-  flags = resFlags;
-  rangeType = resRangeType;
-  highind = resHighIndex;
-  if ((!didReconcile)&&(start != b->start)) { // Truncation is forced
-    if ((flags & Varnode::typelock)!=0) { // If a is locked
-      return overlapProblems;		// Discard b entirely in favor of a
-    }
-    // Concede confusion about types, set unknown type rather than a or b's type
-    rangeType = RangeHint::fixed;
-    size = space->wrapOffset(end-start);
+  if (resType == 0) {
+    absorb(b);
+  }
+  else if (resType == 1) {
+    RangeHint copyRange = *this;
+    type = b->type;
+    flags = b->flags;
+    rangeType = b->rangeType;
+    highind = b->highind;
+    size = b->size;
+    absorb(&copyRange);
+  }
+  else if (resType == 2) {
+    // Concede confusion about types, set unknown type rather than this or b's type
+    flags = 0;
+    rangeType = fixed;
+    int4 diff = (int4)(b->sstart - sstart);
+    if (diff + b->size > size)
+      size = diff + b->size;
     if (size != 1 && size != 2 && size != 4 && size != 8) {
       size = 1;
-      rangeType = RangeHint::open;
+      rangeType = open;
     }
     type = typeFactory->getBase(size,TYPE_UNKNOWN);
     flags = 0;
     highind = -1;
-    return overlapProblems;
+    return false;
   }
-  size = resType->getSize();
-  return overlapProblems;
+  return false;
 }
 
-/// Compare (signed) offset, size, RangeType, type lock, and high index, in that order.
+/// Compare (signed) offset, size, RangeType, flags, and high index, in that order.
 /// Datatype is \e not compared.
 /// \param op2 is the other RangeHint to compare with \b this
 /// \return -1, 0, or 1 depending on if \b this comes before, is equal to, or comes after
@@ -273,10 +327,8 @@ int4 RangeHint::compare(const RangeHint &op2) const
     return (size < op2.size) ? -1 : 1;		// Small sizes come first
   if (rangeType != op2.rangeType)
     return (rangeType < op2.rangeType) ? -1 : 1;
-  uint4 thisLock = flags & Varnode::typelock;
-  uint4 op2Lock = op2.flags & Varnode::typelock;
-  if (thisLock != op2Lock)
-    return (thisLock < op2Lock) ? -1 : 1;
+  if (flags != op2.flags)
+    return (flags < op2.flags) ? -1 : 1;
   if (highind != op2.highind)
     return (highind < op2.highind) ? -1 : 1;
   return 0;
@@ -294,6 +346,7 @@ ScopeLocal::ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g) : S
   maxParamOffset = 0;
   rangeLocked = false;
   stackGrowsNegative = true;
+  overlapProblems = false;
   restrictScope(fd);
 } 
 
@@ -352,6 +405,26 @@ void ScopeLocal::annotateRawStackPtr(void)
     PcodeOp *ptrsub = fd->newOpBefore(op,CPUI_PTRSUB,spVn,fd->newConstant(spVn->getSize(),0));
     fd->opSetInput(op, ptrsub->getOut(), slot);
   }
+}
+
+/// If the return value is passed back in a location whose address space holds \b this scope's variables,
+/// assume the return value is unmapped, unless there is a specific alias into the location.
+/// Mark the range as unmapped.
+/// \param alias is the sorted list of alias offsets into the space
+void ScopeLocal::checkUnaliasedReturn(const vector<uintb> &alias)
+
+{
+  PcodeOp *retOp = fd->getFirstReturnOp();
+  if (retOp == (PcodeOp *)0 || retOp->numInput() < 2) return;
+  Varnode *vn = retOp->getIn(1);
+  if (vn->getSpace() != space) return;
+  // Assume vn is mapped.  Cannot check vn->isMapped() as we are in the middle of restructuring.
+  vector<uintb>::const_iterator iter = lower_bound(alias.begin(),alias.end(),vn->getOffset());
+  if (iter != alias.end()) {
+    // Alias is greater than or equal to vn offset
+    if (*iter <= (vn->getOffset() + vn->getSize() - 1)) return;	// Alias into return storage, don't continue
+  }
+  markNotMapped(space, vn->getOffset(), vn->getSize(), false);
 }
 
 /// This resets the discovery process for new local variables mapped to the scope's address space.
@@ -422,7 +495,7 @@ bool ScopeLocal::isUnmappedUnaliased(Varnode *vn) const
 
 {
   if (vn->getSpace() != space) return false;	// Must be in mapped local (stack) space
-  if (maxParamOffset < minParamOffset) return false;	// If no min/max, then we have no know stack parameters
+  if (maxParamOffset < minParamOffset) return true;	// If no min/max, then we have no know stack parameters
   if (vn->getOffset() < minParamOffset || vn->getOffset() > maxParamOffset)
     return true;
   return false;
@@ -463,6 +536,9 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
 	fd->warningHeader("Variable defined which should be unmapped: "+sym->getName());
       return;
     }
+    else if (sym->getCategory() == Symbol::fake_input) {
+      return;	// Inputs in the stack space should not be unmapped
+    }
     removeSymbol(sym);
     overlap = findOverlap(addr,sz);
   }
@@ -478,7 +554,7 @@ string ScopeLocal::buildVariableName(const Address &addr,
       addr.getSpace() == space) {
     if (fd->getFuncProto().getLocalRange().inRange(addr,1)) {
       intb start = (intb) AddrSpace::byteToAddress(addr.getOffset(),space->getWordSize());
-      sign_extend(start,addr.getAddrSize()*8-1);
+      start = sign_extend(start,addr.getAddrSize()*8-1);
       if (stackGrowsNegative)
 	start = -start;
       ostringstream s;
@@ -512,7 +588,7 @@ bool ScopeLocal::adjustFit(RangeHint &a) const
 
 {
   if (a.size==0) return false;	// Nothing to fit
-  if ((a.flags & Varnode::typelock)!=0) return false; // Already entered
+  if (a.isTypeLock()) return false; // Already entered
   Address addr(space,a.start);
   uintb maxsize = getRangeTree().longestFit(addr,a.size);
   if (maxsize==0) return false;
@@ -544,7 +620,7 @@ void ScopeLocal::createEntry(const RangeHint &a)
   Address addr(space,a.start);
   Address usepoint;
   Datatype *ct = glb->types->concretize(a.type);
-  int4 num = a.size/ct->getSize();
+  int4 num = a.size/ct->getAlignSize();
   if (num>1)
     ct = glb->types->getTypeArray(num,ct);
 
@@ -763,11 +839,14 @@ uintb AliasChecker::gatherOffset(Varnode *vn)
   case CPUI_PTRADD:
     othervn = def->getIn(2);
     retval = gatherOffset(def->getIn(0));
-    // We need to treat PTRADD exactly as if it were encoded as an ADD and MULT
-    // Because a plain MULT truncates the ADD tree
-    // We only follow getIn(1) if the PTRADD multiply is by 1
-    if (othervn->isConstant() && (othervn->getOffset()==1))
-      retval = retval + gatherOffset(def->getIn(1));
+    if (def->getIn(1)->isConstant())
+      retval = retval + def->getIn(1)->getOffset() * othervn->getOffset();
+    else if (othervn->getOffset()==1) {
+      // We need to treat PTRADD exactly as if it were encoded as an ADD and MULT
+      // Because a plain MULT truncates the ADD tree
+      // We only follow getIn(1) if the PTRADD multiply is by 1
+     retval = retval + gatherOffset(def->getIn(1));
+    }
     break;
   case CPUI_SEGMENTOP:
     retval = gatherOffset(def->getIn(2));
@@ -823,7 +902,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
   if (!range.inRange(Address(spaceid,st),sz))
     return;
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
-  sign_extend(sst,spaceid->getAddrSize()*8-1);
+  sst = sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   RangeHint *newRange = new RangeHint(st,sz,sst,ct,fl,rt,hi);
   maplist.push_back(newRange);
@@ -837,6 +916,43 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
     glb->printDebug(s.str());
   }
 #endif
+}
+
+/// If the data-type is an array, partial struct, or partial union, the reference may be added as \e open.
+/// \param start is the starting offset of the range
+/// \param ct is the data-type
+/// \param flags indicates any boolean properties applied to the range
+/// \param types is the TypeFactory used to construct unknown data-types
+void MapState::addFixedType(uintb start,Datatype *ct,uint4 flags,TypeFactory *types)
+
+{
+  if (ct->getMetatype() == TYPE_PARTIALSTRUCT) {
+    TypePartialStruct *tps = (TypePartialStruct *)ct;
+    ct = tps->getParent();
+    if (ct->getMetatype() == TYPE_STRUCT && tps->getOffset() == 0) {	// If initial fields of TYPE_STRUCT are moved here
+	addRange(start,ct,0,RangeHint::open,-1);	// Treat as an open reference
+    }
+    else if (ct->getMetatype() == TYPE_ARRAY) {	// If elements of an array are moved here
+	ct = ((TypeArray *)ct)->getBase();
+	if (ct->getMetatype() != TYPE_UNKNOWN)
+	  addRange(start,ct,0,RangeHint::open,-1);	// Treat as an open reference
+    }
+    // If the Varnode is a constant COPY, generate a fixed reference as well
+    if (flags != 0) {
+	ct = types->getBase(tps->getSize(), TYPE_UNKNOWN);
+	addRange(start,ct,flags,RangeHint::fixed,-1);
+    }
+  }
+  else if (ct->getMetatype() == TYPE_PARTIALUNION) {
+    TypePartialUnion *tpu = (TypePartialUnion *)ct;
+    if (tpu->getOffset() == 0) {	// If the initial fields of TYPE_UNION are moved here
+	ct = tpu->getParentUnion();
+	addRange(start,ct,0,RangeHint::open,-1);	// Treat as an open reference
+    }
+  }
+  else {
+    addRange(start,ct,flags,RangeHint::fixed,-1);
+  }
 }
 
 /// Assuming a sorted list, from among a sequence of RangeHints with the same start and size, select
@@ -853,7 +969,7 @@ void MapState::reconcileDatatypes(void)
   int4 curPos = 1;
   while(curPos < maplist.size()) {
     RangeHint *curHint = maplist[curPos++];
-    if (curHint->start == startHint->start && curHint->size == startHint->size) {
+    if (curHint->start == startHint->start && curHint->size == startHint->size && curHint->flags == startHint->flags) {
       Datatype *curDatatype = curHint->type;
       if (curDatatype->typeOrder(*startDatatype) < 0)	// Take the most specific variant of data-type
 	startDatatype = curDatatype;
@@ -909,7 +1025,7 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
     // we pretend we have an array of LOAD's size
     step = outSize;
   }
-  if (ct->getSize() != step) {	// Make sure data-type matches our step size
+  if (ct->getAlignSize() != step) {	// Make sure data-type matches our step size
     if (step > 8)
       return;		// Don't manufacture primitives bigger than 8-bytes
     ct = typeFactory->getBase(step, TYPE_UNKNOWN);
@@ -937,7 +1053,8 @@ void MapState::gatherSymbols(const EntryMap *rangemap)
     //    if ((*iter).isPiece()) continue;     // This should probably never happen
     uintb start = (*riter).getAddr().getOffset();
     Datatype *ct = sym->getType();
-    addRange(start,ct,sym->getFlags(),RangeHint::fixed,-1);
+    uint4 flags = sym->isTypeLocked() ? RangeHint::typelock : 0;
+    addRange(start,ct,flags,RangeHint::fixed,-1);
   }
 }
 
@@ -952,7 +1069,7 @@ bool MapState::initialize(void)
   if (maplist.empty()) return false;
   uintb high = spaceid->wrapOffset(lastrange->getLast()+1);
   intb sst = (intb)AddrSpace::byteToAddress(high,spaceid->getWordSize());
-  sign_extend(sst,spaceid->getAddrSize()*8-1);
+  sst = sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
   RangeHint *termRange = new RangeHint(high,1,sst,defaultType,0,RangeHint::endpoint,-2);
@@ -964,6 +1081,42 @@ bool MapState::initialize(void)
   return true;
 }
 
+/// Filter out INDIRECT, MULTIEQUAL, and PIECE operations that are just copying between the same storage location.
+/// If there is another operation reading the Varnode, return \b true, otherwise return \b false.
+/// \param vn is the given Varnode to test
+/// \return \b true if there is an active operation reading the Varnode
+bool MapState::isReadActive(Varnode *vn)
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->isMarker()) {
+      if (vn->getAddr() != op->getOut()->getAddr())
+	return true;
+    }
+    else {
+      OpCode opc = op->code();
+      if (opc == CPUI_PIECE) {
+	Address addr  = op->getOut()->getAddr();
+	int4 slot = addr.isBigEndian() ? 0 : 1;
+	if (op->getIn(slot) != vn) {
+	  addr = addr + op->getIn(slot)->getSize();
+	}
+	if (vn->getAddr() != addr)
+	  return true;
+      }
+      else if (opc == CPUI_SUBPIECE) {
+	// Any data-type information comes from the output Varnode, so we ignore input
+      }
+      else {
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
 /// Add a RangeHint corresponding to each Varnode stored in the address space
 /// for the given function.  The current knowledge of the Varnode's data-type
 /// is included as part of the hint.
@@ -973,51 +1126,83 @@ void MapState::gatherVarnodes(const Funcdata &fd)
 {
   VarnodeLocSet::const_iterator riter,iterend;
   Varnode *vn;
+  TypeFactory *types = fd.getArch()->types;
   riter = fd.beginLoc(spaceid);
   iterend = fd.endLoc(spaceid);
   while(riter != iterend) {
     vn = *riter++;
     if (vn->isFree()) continue;
-    uintb start = vn->getOffset();
-    Datatype *ct = vn->getType();
-    // Assume parents are present so partials aren't needed
-    if (ct->getMetatype() == TYPE_PARTIALSTRUCT) continue;
-    if (ct->getMetatype() == TYPE_PARTIALUNION) continue;
-				// Do not force Varnode flags on the entry
-				// as the flags were inherited from the previous
-				// (now obsolete) entry
-    addRange(start,ct,0,RangeHint::fixed,-1);
+	// Do not force Varnode flags on the entry
+	// as the flags were inherited from the previous
+	// (now obsolete) entry
+    if (!vn->isWritten()) {
+      if (isReadActive(vn))
+	addFixedType(vn->getOffset(), vn->getType(), 0, types);
+      continue;
+    }
+    PcodeOp *op = vn->getDef();
+    switch(op->code()) {
+      case CPUI_INDIRECT:
+      {
+        Varnode *invn = op->getIn(0);
+        if (vn->getAddr() != invn->getAddr() || isReadActive(vn)) {
+          addFixedType(vn->getOffset(), vn->getType(), 0, types);
+        }
+        break;
+      }
+      case CPUI_MULTIEQUAL:
+      {
+	int4 i;
+        for(i=0;i<op->numInput();++i) {
+          Varnode *invn = op->getIn(i);
+          if (vn->getAddr() != invn->getAddr())
+            break;
+        }
+        if (i != op->numInput() || isReadActive(vn))
+          addFixedType(vn->getOffset(), vn->getType(), 0, types);
+        break;
+      }
+      case CPUI_PIECE:
+      {
+	// Treat PIECE as two COPYs
+	Address addr = vn->getAddr();
+	int4 slot = addr.isBigEndian() ? 0 : 1;
+	Varnode *inFirst = op->getIn(slot);
+	if (inFirst->getAddr() != addr)
+	  addFixedType(addr.getOffset(),inFirst->getType(), 0, types);
+	addr = addr + inFirst->getSize();
+	Varnode *inSecond = op->getIn(1-slot);
+	if (inSecond->getAddr() != addr)
+	  addFixedType(addr.getOffset(),inSecond->getType(), 0, types);
+	if (isReadActive(vn))
+	  addFixedType(vn->getOffset(),vn->getType(), 0, types);
+	break;
+      }
+      case CPUI_SUBPIECE:
+      {
+	// Don't treat SUBPIECE as an active write if it is just copying to the same storage location
+	Address addr = op->getIn(0)->getAddr();
+	int4 trunc;
+	if (addr.isBigEndian()) {
+	  trunc = op->getIn(0)->getSize() - vn->getSize() - (int4)op->getIn(1)->getOffset();
+	}
+	else {
+	  trunc = (int4)op->getIn(1)->getOffset();
+	}
+	addr = addr + trunc;
+	if (addr != vn->getAddr() || isReadActive(vn)) {
+	  addFixedType(vn->getOffset(), vn->getType(), 0, types);
+	}
+	break;
+      }
+      case CPUI_COPY:
+        addFixedType(vn->getOffset(), vn->getType(), op->getIn(0)->isConstant() ? RangeHint::copy_constant : 0, types);
+        break;
+       default:
+        addFixedType(vn->getOffset(), vn->getType(), 0, types);
+        break;
+    }
   }
-}
-
-/// Add a RangeHint corresponding to each HighVariable that is mapped to our
-/// address space for the given function.
-/// \param fd is the given function
-void MapState::gatherHighs(const Funcdata &fd)
-
-{
-  vector<HighVariable *> varvec;
-  VarnodeLocSet::const_iterator riter,iterend;
-  Varnode *vn;
-  HighVariable *high;
-  riter = fd.beginLoc(spaceid);
-  iterend = fd.endLoc(spaceid);
-  while(riter != iterend) {
-    vn = *riter++;
-    high = vn->getHigh();
-    if (high == (HighVariable *)0) continue;
-    if (high->isMark()) continue;
-    if (!high->isAddrTied()) continue;
-    vn = high->getTiedVarnode();	// Original vn may not be good representative
-    high->setMark();
-    varvec.push_back(high);
-    uintb start = vn->getOffset();
-    Datatype *ct = high->getType(); // Get type from high
-    if (ct->getMetatype() == TYPE_PARTIALUNION) continue;
-    addRange(start,ct,0,RangeHint::fixed,-1);
-  }
-  for(int4 i=0;i<varvec.size();++i)
-    varvec[i]->clearMark();
 }
 
 /// For any Varnode that looks like a pointer into our address space, create an
@@ -1082,43 +1267,22 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   state.gatherVarnodes(*fd); // Gather stack type information from varnodes
   state.gatherOpen(*fd);
   state.gatherSymbols(maptable[space->getIndex()]);
-  restructure(state);
+  overlapProblems = restructure(state);
 
   // At some point, processing mapped input symbols may be folded
   // into the above gather/restructure process, but for now
   // we just define fake symbols so that mark_unaliased will work
-  clearUnlockedCategory(0);
+  clearUnlockedCategory(Symbol::function_parameter);
+  clearCategory(Symbol::fake_input);
   fakeInputSymbols();
 
   state.sortAlias();
-  if (aliasyes)
+  if (aliasyes) {
     markUnaliased(state.getAlias());
+    checkUnaliasedReturn(state.getAlias());
+  }
   if (!state.getAlias().empty() && state.getAlias()[0] == 0)	// If a zero offset use of the stack pointer exists
     annotateRawStackPtr();					// Add a special placeholder PTRSUB
-}
-
-/// Define stack Symbols based on HighVariables.
-/// This method is called once at the end of decompilation to create the final set of stack Symbols after
-/// all data-type propagation has settled. It creates a consistent data-type for all Varnode instances of
-/// a HighVariable.
-void ScopeLocal::restructureHigh(void)
-
-{				// Define stack mapping based on highs
-  clearUnlockedCategory(-1);	// Clear out any unlocked entries
-  MapState state(space,getRangeTree(),fd->getFuncProto().getParamRange(),
-		  glb->types->getBase(1,TYPE_UNKNOWN)); // Organize list of ranges to insert
-    
-#ifdef OPACTION_DEBUG
-  if (debugon)
-    state.turnOnDebug(glb);
-#endif
-  state.gatherHighs(*fd); // Gather stack type information from highs
-  state.gatherOpen(*fd);
-  state.gatherSymbols(maptable[space->getIndex()]);
-  bool overlapProblems = restructure(state);
-
-  if (overlapProblems)
-    fd->warningHeader("Could not reconcile some variable overlaps");
 }
 
 /// RangeHints from the given collection are merged into a definitive set of Symbols
@@ -1146,7 +1310,7 @@ bool ScopeLocal::restructure(MapState &state)
 	overlapProblems = true;
     }
     else {
-      if (!cur.absorb(next)) {
+      if (!cur.attemptJoin(next)) {
 	if (cur.rangeType == RangeHint::open)
 	  cur.size = next->sstart-cur.sstart;
 	if (adjustFit(cur))
@@ -1273,12 +1437,12 @@ void ScopeLocal::fakeInputSymbols(void)
       int4 size = (endpoint - addr.getOffset()) + 1;
       Datatype *ct = fd->getArch()->types->getBase(size,TYPE_UNKNOWN);
       try {
-	addSymbol("",ct,addr,usepoint)->getSymbol();
+	Symbol *sym  = addSymbol("",ct,addr,usepoint)->getSymbol();
+	setCategory(sym, Symbol::fake_input, -1);
       }
       catch(LowlevelError &err) {
 	fd->warningHeader(err.explain);
       }
-      //      setCategory(sym,0,index);
     }
   }
 }

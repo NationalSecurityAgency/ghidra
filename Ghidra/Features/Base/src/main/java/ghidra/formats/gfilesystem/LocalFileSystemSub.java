@@ -16,11 +16,8 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
@@ -99,7 +96,7 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 			return List.of();
 		}
 		File localDir = getFileFromGFile(directory);
-		if (Files.isSymbolicLink(localDir.toPath())) {
+		if (FSUtilities.isSymlink(localDir)) {
 			return List.of();
 		}
 
@@ -114,7 +111,8 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 		String relPath = FSUtilities.normalizeNativePath(directory.getPath());
 
 		for (File f : localFiles) {
-			if (!(f.isFile() || f.isDirectory())) {
+			boolean isSymlink = FSUtilities.isSymlink(f); // check this manually to allow broken symlinks to appear in listing
+			if (!(isSymlink || f.isFile() || f.isDirectory())) {
 				// skip non-file things
 				continue;
 			}
@@ -135,7 +133,7 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 			return rootFS.getFileAttributes(localFile);
 		}
 		catch (IOException e) {
-			// fail and return null
+			// fail and return empty
 		}
 		return FileAttributes.EMPTY;
 	}
@@ -151,24 +149,43 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 	}
 
 	@Override
+	public GFile getRootDir() {
+		return rootGFile;
+	}
+
+	@Override
 	public GFile lookup(String path) throws IOException {
-		path = StringUtils.defaultString(path, "/");
-
-		// Create a new GFile instance with a FSRL based on the RootFS (and not this FS),
-		File curFile = localfsRootDir;
-		GFileLocal result = rootGFile;
-
-		String[] parts = path.split("/");
-		for (String name : parts) {
-			if (name.isEmpty()) {
-				continue;
-			}
-			curFile = new File(curFile, name);
-			FSRL fsrl = result.getFSRL().appendPath(name);
-			String relPath = FSUtilities.appendPath(result.getPath(), name);
-			result = new GFileLocal(curFile, relPath, fsrl, this, result);
+		File f = LocalFileSystem.lookupFile(localfsRootDir, path, null);
+		if ( f == null ) {
+			return null;
 		}
+		GFile result = getGFile(f);
 		return result;
+	}
+
+	private GFile getGFile(File f) throws IOException {
+		List<File> parts = LocalFileSystem.getFilePathParts(f); // [/subdir/subroot/file, /subdir/subroot, /subdir, /]
+		int rootDirIndex = findRootDirIndex(parts);
+		if (rootDirIndex < 0) {
+			throw new IOException("Invalid directory " + f);
+		}
+		GFile current = rootGFile;
+		for (int i = rootDirIndex - 1; i >= 0; i--) {
+			File part = parts.get(i);
+			FSRL childFSRL = current.getFSRL().appendPath(part.getName());
+			String childPath = FSUtilities.appendPath(current.getPath(), part.getName());
+			current = new GFileLocal(part, childPath, childFSRL, this, current);
+		}
+		return current;
+	}
+
+	private int findRootDirIndex(List<File> dirList) {
+		for (int i = 0; i < dirList.size(); i++) {
+			if (localfsRootDir.equals(dirList.get(i))) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	@Override
@@ -197,5 +214,15 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 	public String getMD5Hash(GFile file, boolean required, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		return rootFS.getMD5Hash(file.getFSRL(), required, monitor);
+	}
+
+	@Override
+	public GFile resolveSymlinks(GFile file) throws IOException {
+		File f = getFileFromGFile(file);
+		File canonicalFile = f.getCanonicalFile();
+		if (f.equals(canonicalFile)) {
+			return file;
+		}
+		return getGFile(canonicalFile);
 	}
 }

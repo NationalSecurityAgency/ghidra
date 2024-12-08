@@ -49,25 +49,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstr() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes.
@@ -84,28 +71,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddMyInstr() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 		});
 
@@ -119,25 +93,12 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestData() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new WordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes.
@@ -154,28 +115,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddMyData() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 		});
 
@@ -189,36 +137,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstrMyDataPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 		});
 
@@ -233,36 +160,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstrMyDataPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new TerminatedStringDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new TerminatedStringDataType());
 			}
 		});
 
@@ -277,36 +183,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstrMyDataPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new TerminatedStringDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new TerminatedStringDataType());
 			}
 		});
 
@@ -321,36 +206,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestDataMyInstrPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new TerminatedStringDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new TerminatedStringDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 		});
 
@@ -365,36 +229,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestDataMyInstrPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 		});
 
@@ -409,36 +252,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestDataMyInstrPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new TerminatedStringDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new TerminatedStringDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 		});
 
@@ -453,36 +275,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstrMyInstrPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013da", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013da", "0x10013e1");
 			}
 		});
 
@@ -497,36 +298,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstrMyInstrPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013da", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013da", "0x10013e1");
 			}
 		});
 
@@ -541,36 +321,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestInstrMyInstrPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013da", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013da", "0x10013e1");
 			}
 		});
 
@@ -585,36 +344,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestDataMyDataPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new WordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 		});
 
@@ -629,36 +367,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestDataMyDataPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new WordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 		});
 
@@ -673,36 +390,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testAddLatestDataMyDataPickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new WordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 		});
 
@@ -717,36 +413,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testSameInstrLatestMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					disassemble(program, "0x10013d9", "0x10013e1");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x10013d9", "0x10013e1");
 			}
 		});
 
@@ -760,36 +434,15 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testSameDataLatestMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x10013d9", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x10013d9", new DWordDataType());
 			}
 		});
 
@@ -803,13 +456,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testMergeCodeUnitsOriginal() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 1002312 to 1002320
 					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
@@ -844,23 +493,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					catch (MemoryAccessException e) {
 						Assert.fail(e.getMessage());
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
@@ -886,14 +526,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100652a to 100652a
 					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
 						addr(program, "0x100652a"), false);
-
-					commit = true;
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -924,13 +559,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testMergeCodeUnitsLatest() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 1002312 to 1002320
 					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
@@ -965,23 +596,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					catch (MemoryAccessException e) {
 						Assert.fail(e.getMessage());
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
@@ -1008,13 +630,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
 						addr(program, "0x100652a"), false);
 
-					commit = true;
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1039,13 +657,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 @Test
     public void testMergeCodeUnitsMine() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 1002312 to 1002320
 					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
@@ -1080,23 +694,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					catch (MemoryAccessException e) {
 						Assert.fail(e.getMessage());
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
@@ -1122,14 +727,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100652a to 100652a
 					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
 						addr(program, "0x100652a"), false);
-
-					commit = true;
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1178,13 +778,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 
 	private void setupUseForAll() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 1002312 to 1002320
 					program.getListing().clearCodeUnits(addr(program, "0x1002312"),
@@ -1219,23 +815,14 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					catch (MemoryAccessException e) {
 						Assert.fail(e.getMessage());
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
@@ -1261,14 +848,9 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100652a to 100652a
 					program.getListing().clearCodeUnits(addr(program, "0x100652a"),
 						addr(program, "0x100652a"), false);
-
-					commit = true;
 				}
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

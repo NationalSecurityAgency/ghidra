@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -144,6 +144,87 @@ void TypeOp::selectJavaOperators(vector<TypeOp *> &inst,bool val)
     inst[CPUI_INT_RIGHT]->setMetatypeOut(TYPE_UINT);
     inst[CPUI_INT_RIGHT]->setSymbol(">>");
   }
+}
+
+/// Return CPUI_FLOAT_NEG if the \e sign bit is flipped, or CPUI_FLOAT_ABS if the \e sign bit is zeroed out.
+/// Otherwise CPUI_MAX is returned.
+/// \param op is the given PcodeOp to test
+/// \return the floating-point operation the PcodeOp is equivalent to, or CPUI_MAX
+OpCode TypeOp::floatSignManipulation(PcodeOp *op)
+
+{
+  OpCode opc = op->code();
+  if (opc == CPUI_INT_AND) {
+    Varnode *cvn = op->getIn(1);
+    if (cvn->isConstant()) {
+      uintb val = calc_mask(cvn->getSize());
+      val >>= 1;
+      if (val == cvn->getOffset())
+	return CPUI_FLOAT_ABS;
+    }
+  }
+  else if (opc == CPUI_INT_XOR) {
+    Varnode *cvn = op->getIn(1);
+    if (cvn->isConstant()) {
+      uintb val = calc_mask(cvn->getSize());
+      val = val ^ (val >> 1);
+      if (val == cvn->getOffset())
+	return CPUI_FLOAT_NEG;
+    }
+  }
+  return CPUI_MAX;
+}
+
+/// \brief Propagate a dereferenced data-type up to its pointer data-type through a LOAD or STORE
+///
+/// Don't create more than a depth of 1, i.e. ptr->ptr
+/// \param t is the TypeFactory containing the data-types
+/// \param dt is the pointed-to data-type
+/// \param sz is the size of the pointer
+/// \param wordsz is the wordsize associated with the pointer
+/// \return the TypePointer object
+Datatype *TypeOp::propagateToPointer(TypeFactory *t,Datatype *dt,int4 sz,int4 wordsz)
+
+{
+  type_metatype meta = dt->getMetatype();
+  if (meta==TYPE_PTR) {
+    // Make sure that at least we return a pointer to something the size of -pt-
+    dt = t->getBase(dt->getSize(),TYPE_UNKNOWN);		// Pass back unknown *
+  }
+  else if (meta == TYPE_PARTIALSTRUCT) {
+    dt = ((TypePartialStruct *)dt)->getComponentForPtr();
+  }
+  return t->getTypePointer(sz,dt,wordsz);
+}
+
+/// \brief Propagate a pointer data-type down to its element data-type through a LOAD or STORE
+///
+/// \param t is the TypeFactory containing the data-types
+/// \param dt is the pointer data-type
+/// \param sz is the size of the dereferenced pointer
+/// \return the dereferenced data-type
+Datatype *TypeOp::propagateFromPointer(TypeFactory *t,Datatype *dt,int4 sz)
+
+{
+  if (dt->getMetatype() != TYPE_PTR)
+    return (Datatype *)0;
+  Datatype *ptrto = ((TypePointer *)dt)->getPtrTo();
+  if (ptrto->isVariableLength())
+    return (Datatype *)0;
+  if (ptrto->getSize() == sz)
+    return ptrto;
+  // If we reach here, there is a size mismatch between the pointer data-type and the dereferenced value.
+  // We only propagate (partial) enumerations in this case.
+  if (dt->isPointerRel()) {
+    TypePointerRel *ptrrel = (TypePointerRel *)dt;
+    Datatype *res = t->getExactPiece(ptrrel->getParent(), ptrrel->getByteOffset(), sz);
+    if (res != (Datatype *)0 && res->isEnumType())
+      return res;
+  }
+  else if (ptrto->isEnumType() && !ptrto->hasStripped()) {
+    return t->getTypePartialEnum((TypeEnum *)ptrto, 0, sz);
+  }
+  return (Datatype *)0;
 }
 
 /// \param t is the TypeFactory used to construct data-types
@@ -411,15 +492,10 @@ Datatype *TypeOpLoad::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,
   Datatype *newtype;
   if (inslot == -1) {	 // Propagating output to input (value to ptr)
     AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
-    newtype = tlst->getTypePointerNoDepth(outvn->getTempType()->getSize(),alttype,spc->getWordSize());
-  }
-  else if (alttype->getMetatype()==TYPE_PTR) {
-    newtype = ((TypePointer *)alttype)->getPtrTo();
-    if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength()) // Size must be appropriate
-	newtype = outvn->getTempType();
+    newtype = propagateToPointer(tlst,alttype,outvn->getSize(),spc->getWordSize());
   }
   else
-    newtype = outvn->getTempType(); // Don't propagate anything
+    newtype = propagateFromPointer(tlst, alttype, outvn->getSize());
   return newtype;
 }
 
@@ -486,15 +562,10 @@ Datatype *TypeOpStore::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn
   Datatype *newtype;
   if (inslot==2) {		// Propagating value to ptr
     AddrSpace *spc = op->getIn(0)->getSpaceFromConst();
-    newtype = tlst->getTypePointerNoDepth(outvn->getTempType()->getSize(),alttype,spc->getWordSize());
-  }
-  else if (alttype->getMetatype()==TYPE_PTR) {
-    newtype = ((TypePointer *)alttype)->getPtrTo();
-    if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength())
-	newtype = outvn->getTempType();
+    newtype = propagateToPointer(tlst,alttype,outvn->getSize(),spc->getWordSize());
   }
   else
-    newtype = outvn->getTempType(); // Don't propagate anything
+    newtype = propagateFromPointer(tlst, alttype, outvn->getSize());
   return newtype;
 }
 
@@ -767,49 +838,27 @@ string TypeOpCallother::getOperatorName(const PcodeOp *op) const
 Datatype *TypeOpCallother::getInputLocal(const PcodeOp *op,int4 slot) const
 
 {
-  if (!op->doesSpecialPropagation())
-    return TypeOp::getInputLocal(op,slot);
-  Architecture *glb = tlst->getArch();
-  VolatileWriteOp *vw_op = glb->userops.getVolatileWrite(); // Check if this a volatile write op
-  if ((vw_op->getIndex() == op->getIn(0)->getOffset()) && (slot == 2)) { // And we are requesting slot 2
-    const Address &addr ( op->getIn(1)->getAddr() ); // Address of volatile memory
-    int4 size = op->getIn(2)->getSize(); // Size of memory being written
-    uint4 vflags = 0;
-    SymbolEntry *entry = glb->symboltab->getGlobalScope()->queryProperties(addr,size,op->getAddr(),vflags);
-    if (entry != (SymbolEntry *)0) {
-      Datatype *res = entry->getSizedType(addr,size);
-      if (res != (Datatype *)0)
-	return res;
-    }
-  }
+  UserPcodeOp *userOp = tlst->getArch()->userops.getOp(op->getIn(0)->getOffset());
+  Datatype *res = userOp->getInputLocal(op, slot);
+  if (res != (Datatype *)0)
+    return res;
   return TypeOp::getInputLocal(op,slot);
 }
 
 Datatype *TypeOpCallother::getOutputLocal(const PcodeOp *op) const
 
 {
-  if (!op->doesSpecialPropagation())
-    return TypeOp::getOutputLocal(op);
-  Architecture *glb = tlst->getArch();
-  VolatileReadOp *vr_op = glb->userops.getVolatileRead(); // Check if this a volatile read op
-  if (vr_op->getIndex() == op->getIn(0)->getOffset()) {
-    const Address &addr ( op->getIn(1)->getAddr() ); // Address of volatile memory
-    int4 size = op->getOut()->getSize(); // Size of memory being written
-    uint4 vflags = 0;
-    SymbolEntry *entry = glb->symboltab->getGlobalScope()->queryProperties(addr,size,op->getAddr(),vflags);
-    if (entry != (SymbolEntry *)0) {
-      Datatype *res = entry->getSizedType(addr,size);
-      if (res != (Datatype *)0)
-	return res;
-    }
-  }
+  UserPcodeOp *userOp = tlst->getArch()->userops.getOp(op->getIn(0)->getOffset());
+  Datatype *res = userOp->getOutputLocal(op);
+  if (res != (Datatype *)0)
+    return res;
   return TypeOp::getOutputLocal(op);
 }
 
 TypeOpReturn::TypeOpReturn(TypeFactory *t) : TypeOp(t,CPUI_RETURN,"return")
 
 {
-  opflags = PcodeOp::special|PcodeOp::returns|PcodeOp::nocollapse|PcodeOp::no_copy_propagation;
+  opflags = PcodeOp::special|PcodeOp::returns|PcodeOp::nocollapse|PcodeOp::return_copy;
   behave = new OpBehavior(CPUI_RETURN,false,true); // Dummy behavior
 }
 
@@ -905,7 +954,7 @@ Datatype *TypeOpEqual::propagateAcrossCompare(Datatype *alttype,TypeFactory *typ
   }
   else if (alttype->isPointerRel() && !outvn->isConstant()) {
     TypePointerRel *relPtr = (TypePointerRel *)alttype;
-    if (relPtr->getParent()->getMetatype() == TYPE_STRUCT && relPtr->getPointerOffset() >= 0) {
+    if (relPtr->getParent()->getMetatype() == TYPE_STRUCT && relPtr->getByteOffset() >= 0) {
 	// If we know the pointer is in the middle of a structure, don't propagate across comparison operators
 	// as the two sides of the operator are likely to be different types , and the other side can also
 	// get data-type information from the structure pointer
@@ -1102,7 +1151,7 @@ TypeOpIntAdd::TypeOpIntAdd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_ADD,"+",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntAdd();
 }
 
@@ -1128,7 +1177,7 @@ Datatype *TypeOpIntAdd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   if (outvn->isConstant() && (alttype->getMetatype() != TYPE_PTR))
     newtype = alttype;
   else if (inslot == -1)		// Propagating output to input
-    newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
+    newtype = (Datatype *)0;	// Don't propagate pointer types this direction
   else
     newtype = propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
@@ -1150,19 +1199,19 @@ Datatype *TypeOpIntAdd::propagateAddIn2Out(Datatype *alttype,TypeFactory *typegr
 
 {
   TypePointer *pointer = (TypePointer *)alttype;
-  uintb uoffset;
-  int4 command = propagateAddPointer(uoffset,op,inslot,pointer->getPtrTo()->getSize());
-  if (command == 2) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
+  uintb offset;
+  int4 command = propagateAddPointer(offset,op,inslot,pointer->getPtrTo()->getAlignSize());
+  if (command == 2) return (Datatype *)0; // Doesn't look like a good pointer add
   TypePointer *parent = (TypePointer *)0;
-  uintb parentOff;
+  int8 parentOff;
   if (command != 3) {
-    uoffset = AddrSpace::addressToByte(uoffset,pointer->getWordSize());
+    int8 typeOffset = AddrSpace::addressToByteInt(offset,pointer->getWordSize());
     bool allowWrap = (op->code() != CPUI_PTRSUB);
     do {
-      pointer = pointer->downChain(uoffset,parent,parentOff,allowWrap,*typegrp);
+      pointer = pointer->downChain(typeOffset,parent,parentOff,allowWrap,*typegrp);
       if (pointer == (TypePointer *)0)
 	break;
-    } while(uoffset != 0);
+    } while(typeOffset != 0);
   }
   if (parent != (TypePointer *)0) {
     // If the innermost containing object is a TYPE_STRUCT or TYPE_ARRAY
@@ -1177,7 +1226,7 @@ Datatype *TypeOpIntAdd::propagateAddIn2Out(Datatype *alttype,TypeFactory *typegr
   if (pointer == (TypePointer *)0) {
     if (command == 0)
       return alttype;
-    return  op->getOut()->getTempType();
+    return (Datatype *)0;
   }
   if (op->getIn(inslot)->isSpacebase()) {
     if (pointer->getPtrTo()->getMetatype() == TYPE_SPACEBASE)
@@ -1253,7 +1302,7 @@ TypeOpIntSub::TypeOpIntSub(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SUB,"-",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntSub();
 }
 
@@ -1266,7 +1315,8 @@ Datatype *TypeOpIntSub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 TypeOpIntCarry::TypeOpIntCarry(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_CARRY,"CARRY",TYPE_BOOL,TYPE_UINT)
 {
-  opflags = PcodeOp::binary;
+  opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntCarry();
 }
 
@@ -1281,7 +1331,8 @@ string TypeOpIntCarry::getOperatorName(const PcodeOp *op) const
 TypeOpIntScarry::TypeOpIntScarry(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_SCARRY,"SCARRY",TYPE_BOOL,TYPE_INT)
 {
-  opflags = PcodeOp::binary;
+  opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntScarry();
 }
 
@@ -1296,7 +1347,8 @@ string TypeOpIntScarry::getOperatorName(const PcodeOp *op) const
 TypeOpIntSborrow::TypeOpIntSborrow(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_SBORROW,"SBORROW",TYPE_BOOL,TYPE_INT)
 {
-  opflags = PcodeOp::binary;
+  opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntSborrow();
 }
 
@@ -1312,7 +1364,7 @@ TypeOpInt2Comp::TypeOpInt2Comp(TypeFactory *t)
   : TypeOpUnary(t,CPUI_INT_2COMP,"-",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::unary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorInt2Comp();
 }
 
@@ -1326,7 +1378,7 @@ TypeOpIntNegate::TypeOpIntNegate(TypeFactory *t)
   : TypeOpUnary(t,CPUI_INT_NEGATE,"~",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::unary;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntNegate();
 }
 
@@ -1340,7 +1392,7 @@ TypeOpIntXor::TypeOpIntXor(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_XOR,"^",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntXor();
 }
 
@@ -1353,7 +1405,12 @@ Datatype *TypeOpIntXor::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 Datatype *TypeOpIntXor::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				      int4 inslot,int4 outslot)
 {
-  if (!alttype->isPowerOfTwo()) return (Datatype *)0; // Only propagate flag enums
+  if (!alttype->isEnumType()) {
+    if (alttype->getMetatype() != TYPE_FLOAT)
+      return (Datatype *)0;
+    if (floatSignManipulation(op) == CPUI_MAX)
+      return (Datatype *)0;
+  }
   Datatype *newtype;
   if (invn->isSpacebase()) {
     AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
@@ -1368,7 +1425,7 @@ TypeOpIntAnd::TypeOpIntAnd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_AND,"&",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntAnd();
 }
 
@@ -1381,7 +1438,12 @@ Datatype *TypeOpIntAnd::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 Datatype *TypeOpIntAnd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				      int4 inslot,int4 outslot)
 {
-  if (!alttype->isPowerOfTwo()) return (Datatype *)0; // Only propagate flag enums
+  if (!alttype->isEnumType()) {
+    if (alttype->getMetatype() != TYPE_FLOAT)
+      return (Datatype *)0;
+    if (floatSignManipulation(op) == CPUI_MAX)
+      return (Datatype *)0;
+  }
   Datatype *newtype;
   if (invn->isSpacebase()) {
     AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
@@ -1396,7 +1458,7 @@ TypeOpIntOr::TypeOpIntOr(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_OR,"|",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntOr();
 }
 
@@ -1409,7 +1471,7 @@ Datatype *TypeOpIntOr::getOutputToken(const PcodeOp *op,CastStrategy *castStrate
 Datatype *TypeOpIntOr::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				     int4 inslot,int4 outslot)
 {
-  if (!alttype->isPowerOfTwo()) return (Datatype *)0; // Only propagate flag enums
+  if (!alttype->isEnumType()) return (Datatype *)0; // Only propagate enums
   Datatype *newtype;
   if (invn->isSpacebase()) {
     AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
@@ -1539,7 +1601,7 @@ TypeOpIntMult::TypeOpIntMult(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_MULT,"*",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntMult();
 }
 
@@ -1553,7 +1615,7 @@ TypeOpIntDiv::TypeOpIntDiv(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_DIV,"/",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntDiv();
 }
 
@@ -1573,7 +1635,7 @@ TypeOpIntSdiv::TypeOpIntSdiv(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SDIV,"/",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntSdiv();
 }
 
@@ -1593,7 +1655,7 @@ TypeOpIntRem::TypeOpIntRem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_REM,"%",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntRem();
 }
 
@@ -1613,7 +1675,7 @@ TypeOpIntSrem::TypeOpIntSrem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SREM,"%",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntSrem();
 }
 
@@ -1633,6 +1695,7 @@ TypeOpBoolNegate::TypeOpBoolNegate(TypeFactory *t)
   : TypeOpUnary(t,CPUI_BOOL_NEGATE,"!",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::unary | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolNegate();
 }
 
@@ -1640,6 +1703,7 @@ TypeOpBoolXor::TypeOpBoolXor(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_XOR,"^^",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolXor();
 }
 
@@ -1647,6 +1711,7 @@ TypeOpBoolAnd::TypeOpBoolAnd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_AND,"&&",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolAnd();
 }
 
@@ -1654,6 +1719,7 @@ TypeOpBoolOr::TypeOpBoolOr(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_OR,"||",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolOr();
 }
 
@@ -1661,6 +1727,7 @@ TypeOpFloatEqual::TypeOpFloatEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_EQUAL,"==",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatEqual(trans);
 }
 
@@ -1668,6 +1735,7 @@ TypeOpFloatNotEqual::TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_NOTEQUAL,"!=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNotEqual(trans);
 }
 
@@ -1675,6 +1743,7 @@ TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESS,"<",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLess(trans);
 }
 
@@ -1682,6 +1751,7 @@ TypeOpFloatLessEqual::TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans
   : TypeOpBinary(t,CPUI_FLOAT_LESSEQUAL,"<=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLessEqual(trans);
 }
 
@@ -1689,6 +1759,7 @@ TypeOpFloatNan::TypeOpFloatNan(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_NAN,"NAN",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNan(trans);
 }
 
@@ -1696,6 +1767,7 @@ TypeOpFloatAdd::TypeOpFloatAdd(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_ADD,"+",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatAdd(trans);
 }
 
@@ -1703,6 +1775,7 @@ TypeOpFloatDiv::TypeOpFloatDiv(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_DIV,"/",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatDiv(trans);
 }
 
@@ -1710,6 +1783,7 @@ TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_MULT,"*",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatMult(trans);
 }
 
@@ -1717,6 +1791,7 @@ TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_SUB,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatSub(trans);
 }
 
@@ -1724,6 +1799,7 @@ TypeOpFloatNeg::TypeOpFloatNeg(TypeFactory *t,const Translate *trans)
   : TypeOpUnary(t,CPUI_FLOAT_NEG,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNeg(trans);
 }
 
@@ -1731,6 +1807,7 @@ TypeOpFloatAbs::TypeOpFloatAbs(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ABS,"ABS",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatAbs(trans);
 }
 
@@ -1738,6 +1815,7 @@ TypeOpFloatSqrt::TypeOpFloatSqrt(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_SQRT,"SQRT",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatSqrt(trans);
 }
 
@@ -1745,13 +1823,72 @@ TypeOpFloatInt2Float::TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans
   : TypeOpFunc(t,CPUI_FLOAT_INT2FLOAT,"INT2FLOAT",TYPE_FLOAT,TYPE_INT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatInt2Float(trans);
+}
+
+Datatype *TypeOpFloatInt2Float::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
+
+{
+  if (absorbZext(op) != (const PcodeOp *)0)
+    return (Datatype *)0;		// No cast if we are absorbing an INT_ZEXT
+  const Varnode *vn = op->getIn(slot);
+  Datatype *reqtype = op->inputTypeLocal(slot);
+  Datatype *curtype = vn->getHighTypeReadFacing(op);
+  bool care_uint_int = true;
+  if (vn->getSize() <= sizeof(uintb)) {
+    uintb val = vn->getNZMask();
+    val >>= (8*vn->getSize() - 1);
+    care_uint_int = (val & 1) != 0;	// If the high-bit is not set, we don't care if input is signed or unsigned
+  }
+  return castStrategy->castStandard(reqtype,curtype,care_uint_int,true);
+}
+
+/// \brief Return any INT_ZEXT PcodeOp that the given FLOAT_INT2FLOAT absorbs
+///
+/// FLOAT_INT2FLOAT expects a signed integer input, but if the input is produced by an INT_ZEXT, we treat
+/// the FLOAT_INT2FLOAT as a conversion of the unsigned integer input to the INT_ZEXT and effectively
+/// absorb the extension operation into the FLOAT_INT2FLOAT operation.  If this is happening, the specific
+/// INT_ZEXT operation is returned, otherwise null is returned.
+/// \param op is the given FLOAT_INT2FLOAT
+/// \return the absorbed INT_ZEXT or null
+const PcodeOp *TypeOpFloatInt2Float::absorbZext(const PcodeOp *op)
+
+{
+  const Varnode *vn0 = op->getIn(0);
+  if (vn0->isWritten() && vn0->isImplied()) {
+    const PcodeOp *zextOp = vn0->getDef();
+    if (zextOp->code() == CPUI_INT_ZEXT) {
+      return zextOp;
+    }
+  }
+  return (const PcodeOp *)0;
+}
+
+/// \brief Return the preferred extension size for passing a an unsigned value to FLOAT_INT2FLOAT
+///
+/// FLOAT_INT2FLOAT expects a signed input but can be used for unsigned conversion by first zero extending
+/// the value to be converted.  This method returns the preferred output size for this extension.
+/// \param inSize is the size in bytes of the value to be converted
+/// \return the preferred size of the INT_ZEXT output
+int4 TypeOpFloatInt2Float::preferredZextSize(int4 inSize)
+
+{
+  int4 outSize;
+  if (inSize < 4)
+    outSize = 4;
+  else if (inSize < 8)
+    outSize = 8;
+  else
+    outSize = inSize + 1;
+  return outSize;
 }
 
 TypeOpFloatFloat2Float::TypeOpFloatFloat2Float(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOAT2FLOAT,"FLOAT2FLOAT",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatFloat2Float(trans);
 }
 
@@ -1759,6 +1896,7 @@ TypeOpFloatTrunc::TypeOpFloatTrunc(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_TRUNC,"TRUNC",TYPE_INT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatTrunc(trans);
 }
 
@@ -1766,6 +1904,7 @@ TypeOpFloatCeil::TypeOpFloatCeil(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_CEIL,"CEIL",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatCeil(trans);
 }
 
@@ -1773,6 +1912,7 @@ TypeOpFloatFloor::TypeOpFloatFloor(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOOR,"FLOOR",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatFloor(trans);
 }
 
@@ -1780,6 +1920,7 @@ TypeOpFloatRound::TypeOpFloatRound(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ROUND,"ROUND",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatRound(trans);
 }
 
@@ -1794,15 +1935,6 @@ Datatype *TypeOpMulti::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn
 				     int4 inslot,int4 outslot)
 {
   if ((inslot!=-1)&&(outslot!=-1)) {
-    if (invn == outvn && outvn->getTempType()->needsResolution()) {
-      // If same Varnode occupies two input slots of the MULTIEQUAL
-      // the second input slot should inherit the resolution of the first
-      Funcdata *fd = op->getParent()->getFuncdata();
-      Datatype *unionType = outvn->getTempType();
-      const ResolvedUnion *res = fd->getUnionField(unionType, op, inslot);
-      if (res != (const ResolvedUnion *)0)
-	fd->setUnionField(unionType, op, outslot, *res);
-    }
     return (Datatype *)0; // Must propagate input <-> output
   }
   Datatype *newtype;
@@ -1890,6 +2022,10 @@ TypeOpPiece::TypeOpPiece(TypeFactory *t)
 {
   opflags = PcodeOp::binary;
   behave = new OpBehaviorPiece();
+  nearPointerSize = 0;
+  farPointerSize = t->getSizeOfAltPointer();
+  if (farPointerSize != 0)
+    nearPointerSize = t->getSizeOfPointer();
 }
 
 string TypeOpPiece::getOperatorName(const PcodeOp *op) const
@@ -1918,11 +2054,57 @@ Datatype *TypeOpPiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrate
   return tlst->getBase(vn->getSize(),TYPE_UINT);	// If output is unknown or pointer, treat as cast to uint
 }
 
+Datatype *TypeOpPiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
+				     int4 inslot,int4 outslot)
+{
+  if (nearPointerSize != 0 && alttype->getMetatype() == TYPE_PTR) {
+    if (inslot == 1 && outslot == -1) {
+      if (invn->getSize() == nearPointerSize && outvn->getSize() == farPointerSize)
+        return tlst->resizePointer((TypePointer *)alttype, farPointerSize);
+    }
+    else if (inslot == -1 && outslot == 1) {
+      if (invn->getSize() == farPointerSize && outvn->getSize() == nearPointerSize)
+        return tlst->resizePointer((TypePointer *)alttype, nearPointerSize);
+    }
+    return (Datatype *)0;
+  }
+  if (inslot != -1) return (Datatype *)0;
+  int8 byteOff = computeByteOffsetForComposite(op,outslot);
+  while(alttype != (Datatype *)0 && (byteOff != 0 || alttype->getSize() != outvn->getSize())) {
+    alttype = alttype->getSubType(byteOff, &byteOff);
+  }
+  return alttype;
+}
+
+/// \brief Compute the byte offset into an assumed composite data-type for an input to the given CPUI_PIECE
+///
+/// If the output Varnode is a composite data-type, the an input to PIECE represents a
+/// range of bytes starting at a particular offset within the data-type.  Return this offset, which
+/// depends on endianness of the output and the particular input.
+/// \param op is the given CPUI_PIECE
+/// \param slot is the slot of the particular input
+/// \return the byte offset into the composite represented by the input of the PIECE
+int4 TypeOpPiece::computeByteOffsetForComposite(const PcodeOp *op,int4 slot)
+
+{
+  const Varnode *inVn0 = op->getIn(0);
+  int byteOff;
+  if (inVn0->getSpace()->isBigEndian())
+    byteOff = (slot==0) ? 0 : inVn0->getSize();
+  else
+    byteOff = (slot==0) ? op->getIn(1)->getSize() : 0;
+  return byteOff;
+}
+
 TypeOpSubpiece::TypeOpSubpiece(TypeFactory *t)
   : TypeOpFunc(t,CPUI_SUBPIECE,"SUB",TYPE_UNKNOWN,TYPE_UNKNOWN)
 {
   opflags = PcodeOp::binary;
   behave = new OpBehaviorSubpiece();
+  nearPointerSize = 0;
+  farPointerSize = t->getSizeOfAltPointer();
+  if (farPointerSize != 0)
+    nearPointerSize = t->getSizeOfPointer();
 }
 
 string TypeOpSubpiece::getOperatorName(const PcodeOp *op) const
@@ -1946,8 +2128,8 @@ Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStr
   const Varnode *outvn = op->getOut();
   const TypeField *field;
   Datatype *ct = op->getIn(0)->getHighTypeReadFacing(op);
-  int4 offset;
-  int4 byteOff = computeByteOffsetForComposite(op);
+  int8 offset;
+  int8 byteOff = computeByteOffsetForComposite(op);
  field = ct->findTruncation(byteOff,outvn->getSize(),op,1,offset);	// Use artificial slot
   if (field != (const TypeField *)0) {
     if (outvn->getSize() == field->type->getSize())
@@ -1962,27 +2144,28 @@ Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStr
 Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 					int4 inslot,int4 outslot)
 {
+  if (nearPointerSize != 0 && alttype->getMetatype() == TYPE_PTR && inslot == -1 && outslot == 0) {
+    // Try to propagate UP, producing a far pointer input from a near pointer output of the SUBPIECE
+    // The case of propagating DOWN is handled by the getSubType below
+    if (op->getIn(1)->getOffset() != 0)
+      return (Datatype *)0;
+    if (invn->getSize() == nearPointerSize && outvn->getSize() == farPointerSize)
+      return tlst->resizePointer((TypePointer *)alttype, farPointerSize);
+    return (Datatype *)0;
+  }
   if (inslot != 0 || outslot != -1) return (Datatype *)0;	// Propagation must be from in0 to out
-  int4 byteOff;
-  int4 newoff;
-  const TypeField *field;
+  int8 byteOff = computeByteOffsetForComposite(op);
   type_metatype meta = alttype->getMetatype();
   if (meta == TYPE_UNION || meta == TYPE_PARTIALUNION) {
     // NOTE: We use an artificial slot here to store the field being truncated to
     // as the facing data-type for slot 0 is already to the parent (this TYPE_UNION)
-    byteOff = computeByteOffsetForComposite(op);
-    field = alttype->resolveTruncation(byteOff,op,1,newoff);
+    const TypeField *field = alttype->resolveTruncation(byteOff,op,1,byteOff);
+    alttype = (field != (const TypeField *)0) ? field->type : (Datatype *)0;
   }
-  else if (alttype->getMetatype() == TYPE_STRUCT) {
-    int4 byteOff = computeByteOffsetForComposite(op);
-    field = alttype->findTruncation(byteOff, outvn->getSize(), op, 1, newoff);
+  while(alttype != (Datatype *)0 && (byteOff != 0 || alttype->getSize() != outvn->getSize())) {
+    alttype = alttype->getSubType(byteOff, &byteOff);
   }
-  else
-    return (Datatype *)0;
-  if (field != (const TypeField *)0  && newoff == 0 && field->type->getSize() == outvn->getSize()) {
-    return field->type;
-  }
-  return (Datatype *)0;
+  return alttype;
 }
 
 /// \brief Compute the byte offset into an assumed composite data-type produced by the given CPUI_SUBPIECE
@@ -1998,7 +2181,7 @@ int4 TypeOpSubpiece::computeByteOffsetForComposite(const PcodeOp *op)
   int4 outSize = op->getOut()->getSize();
   int4 lsb = (int4)op->getIn(1)->getOffset();
   const Varnode *vn = op->getIn(0);
-  int byteOff;
+  int4 byteOff;
   if (vn->getSpace()->isBigEndian())
     byteOff = vn->getSize() - outSize - lsb;
   else
@@ -2025,6 +2208,7 @@ TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 
 {
   opflags = PcodeOp::ternary | PcodeOp::nocollapse;
+  addlflags = arithmetic_op;
   behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
 }
 
@@ -2067,7 +2251,7 @@ Datatype *TypeOpPtradd::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   if (metain != TYPE_PTR) return (Datatype *)0;
   Datatype *newtype;
   if (inslot == -1)		// Propagating output to input
-    newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
+    newtype = (Datatype *)0;	// Don't propagate pointer types this direction
   else
     newtype = TypeOpIntAdd::propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
@@ -2094,6 +2278,7 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// But the typing information doesn't really
 				// allow this to be commutative.
   opflags = PcodeOp::binary|PcodeOp::nocollapse;
+  addlflags = arithmetic_op;
   behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
 }
 
@@ -2126,8 +2311,8 @@ Datatype *TypeOpPtrsub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 {
   TypePointer *ptype = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
   if (ptype->getMetatype() == TYPE_PTR) {
-    uintb offset = AddrSpace::addressToByte(op->getIn(1)->getOffset(),ptype->getWordSize());
-    uintb unusedOffset;
+    int8 offset = AddrSpace::addressToByte((int8)op->getIn(1)->getOffset(),ptype->getWordSize());
+    int8 unusedOffset;
     TypePointer *unusedParent;
     Datatype *rettype = ptype->downChain(offset,unusedParent,unusedOffset,false,*tlst);
     if ((offset==0)&&(rettype != (Datatype *)0))
@@ -2146,7 +2331,7 @@ Datatype *TypeOpPtrsub::propagateType(Datatype *alttype,PcodeOp *op,Varnode *inv
   if (metain != TYPE_PTR) return (Datatype *)0;
   Datatype *newtype;
   if (inslot == -1)		// Propagating output to input
-    newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
+    newtype = (Datatype *)0;	// Don't propagate pointer types this direction
   else
     newtype = TypeOpIntAdd::propagateAddIn2Out(alttype,tlst,op,inslot);
   return newtype;
@@ -2212,9 +2397,7 @@ Datatype *TypeOpSegment::propagateType(Datatype *alttype,PcodeOp *op,Varnode *in
   if (invn->isSpacebase()) return (Datatype *)0;
   type_metatype metain = alttype->getMetatype();
   if (metain != TYPE_PTR) return (Datatype *)0;
-  AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
-  Datatype *btype = ((TypePointer *)alttype)->getPtrTo();
-  return tlst->getTypePointer(outvn->getSize(),btype,spc->getWordSize());
+  return tlst->resizePointer((TypePointer *)alttype, outvn->getSize());
 }
 
 TypeOpCpoolref::TypeOpCpoolref(TypeFactory *t) : TypeOp(t,CPUI_CPOOLREF,"cpoolref")

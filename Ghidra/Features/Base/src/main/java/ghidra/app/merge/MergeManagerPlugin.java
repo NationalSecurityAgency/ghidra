@@ -15,25 +15,25 @@
  */
 package ghidra.app.merge;
 
+import java.rmi.NoSuchObjectException;
+
+import javax.swing.JComponent;
+
 import ghidra.framework.main.ProgramaticUseOnly;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-import java.rmi.NoSuchObjectException;
-
-import javax.swing.JComponent;
-
 /**
  * Plugin that provides a merge component provider.
  */
-public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUseOnly,
-		DomainObjectListener {
+public abstract class MergeManagerPlugin extends Plugin
+		implements ProgramaticUseOnly, DomainObjectListener {
 
 	protected MergeManager mergeManager;
 	protected MergeManagerProvider provider;
-	protected UndoableDomainObject currentDomainObject;
+	protected DomainObject currentDomainObject;
 
 	/**
 	 * Constructor for plugin that handles multi-user merge of programs.
@@ -42,7 +42,7 @@ public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUs
 	 * @param domainObject the current domain object
 	 */
 	public MergeManagerPlugin(PluginTool tool, MergeManager mergeManager,
-			UndoableDomainObject domainObject) {
+			DomainObject domainObject) {
 		super(tool);
 		this.mergeManager = mergeManager;
 		this.currentDomainObject = domainObject;
@@ -180,21 +180,19 @@ public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUs
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		// Only concerned about error which will be the only change record
 		DomainObjectChangeRecord docr = ev.getChangeRecord(0);
-		if (!domainFileErrorOccurred && docr.getEventType() == DomainObject.DO_OBJECT_ERROR) {
+		if (!domainFileErrorOccurred && docr.getEventType() == DomainObjectEvent.ERROR) {
 			domainFileErrorOccurred = true;
 			String msg;
 			Throwable t = (Throwable) docr.getNewValue();
 			if (t instanceof NoSuchObjectException) {
-				msg =
-					"Merge is closing due to an unrecoverable error!"
-						+ "\nThis error can be caused when your system becomes"
-						+ "\nsuspended or due to a server/network problem.";
+				msg = "Merge is closing due to an unrecoverable error!" +
+					"\nThis error can be caused when your system becomes" +
+					"\nsuspended or due to a server/network problem.";
 			}
 			else {
-				msg =
-					"Merge is closing due to an unrecoverable error!"
-						+ "\n \nSuch failures are generally due to an IO Error caused"
-						+ "\nby the local filesystem or server.";
+				msg = "Merge is closing due to an unrecoverable error!" +
+					"\n \nSuch failures are generally due to an IO Error caused" +
+					"\nby the local filesystem or server.";
 			}
 
 			//abort();
@@ -212,26 +210,26 @@ public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUs
 		return false;
 	}
 
-	public boolean closeDomainObject(UndoableDomainObject domainObject, boolean ignoreChanges) {
+	public boolean closeDomainObject(DomainObject domainObject, boolean ignoreChanges) {
 		return false;
 	}
 
-	public UndoableDomainObject[] getAllOpenDomainObjects() {
-		return new UndoableDomainObject[] { mergeManager.getDomainObject(MergeConstants.RESULT),
+	public DomainObject[] getAllOpenDomainObjects() {
+		return new DomainObject[] { mergeManager.getDomainObject(MergeConstants.RESULT),
 			mergeManager.getDomainObject(MergeConstants.LATEST),
 			mergeManager.getDomainObject(MergeConstants.MY),
 			mergeManager.getDomainObject(MergeConstants.ORIGINAL) };
 	}
 
-	public UndoableDomainObject getCurrentDomainObject() {
+	public DomainObject getCurrentDomainObject() {
 		return currentDomainObject;
 	}
 
-	public int getSearchPriority(UndoableDomainObject domainObject) {
+	public int getSearchPriority(DomainObject domainObject) {
 		return 0;
 	}
 
-	public boolean isVisible(UndoableDomainObject domainObject) {
+	public boolean isVisible(DomainObject domainObject) {
 		return false;
 	}
 
@@ -247,26 +245,26 @@ public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUs
 		return null;
 	}
 
-	public void openDomainObject(UndoableDomainObject domainObject) {
+	public void openDomainObject(DomainObject domainObject) {
 	}
 
-	public void openDomainObject(UndoableDomainObject domainObject, boolean current) {
+	public void openDomainObject(DomainObject domainObject, boolean current) {
 	}
 
-	public void openDomainObject(UndoableDomainObject domainObject, int state) {
+	public void openDomainObject(DomainObject domainObject, int state) {
 	}
 
-	public void releaseDomainObject(UndoableDomainObject domainObject, Object persistentOwner) {
+	public void releaseDomainObject(DomainObject domainObject, Object persistentOwner) {
 	}
 
-	public void setCurrentDomainObject(UndoableDomainObject domainObject) {
+	public void setCurrentDomainObject(DomainObject domainObject) {
 	}
 
-	public boolean setPersistentOwner(UndoableDomainObject domainObject, Object owner) {
+	public boolean setPersistentOwner(DomainObject domainObject, Object owner) {
 		return false;
 	}
 
-	public void setSearchPriority(UndoableDomainObject domainObject, int priority) {
+	public void setSearchPriority(DomainObject domainObject, int priority) {
 	}
 
 }

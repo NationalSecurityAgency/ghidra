@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.gui.register;
 import java.math.BigInteger;
 import java.util.Objects;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerControlService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -170,7 +170,7 @@ public class RegisterRow {
 	/**
 	 * Check if the register's value can be set via its data type's representation
 	 * 
-	 * @return
+	 * @return true if the representation cell is editable
 	 */
 	public boolean isRepresentationEditable() {
 		return provider.canWriteRegisterRepresentation(register);

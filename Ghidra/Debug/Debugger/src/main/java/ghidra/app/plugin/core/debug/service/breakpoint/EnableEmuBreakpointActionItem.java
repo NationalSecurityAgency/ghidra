@@ -28,6 +28,6 @@ public record EnableEmuBreakpointActionItem(TraceBreakpoint bpt) implements Brea
 			bpt.getTrace().openTransaction("Enable Emulated Breakpoint")) {
 			bpt.setEmuEnabled(true);
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

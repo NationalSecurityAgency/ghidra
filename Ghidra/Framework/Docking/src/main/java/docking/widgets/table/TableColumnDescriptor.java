@@ -17,12 +17,13 @@ package docking.widgets.table;
 
 import java.util.*;
 
+import ghidra.util.Msg;
+
 public class TableColumnDescriptor<ROW_TYPE> {
 	private List<TableColumnInfo> columns = new ArrayList<>();
 
 	public List<DynamicTableColumn<ROW_TYPE, ?, ?>> getAllColumns() {
-		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list =
-			new ArrayList<>();
+		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list = new ArrayList<>();
 		for (TableColumnInfo info : columns) {
 			list.add(info.column);
 		}
@@ -30,8 +31,7 @@ public class TableColumnDescriptor<ROW_TYPE> {
 	}
 
 	public List<DynamicTableColumn<ROW_TYPE, ?, ?>> getDefaultVisibleColumns() {
-		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list =
-			new ArrayList<>();
+		List<DynamicTableColumn<ROW_TYPE, ?, ?>> list = new ArrayList<>();
 		for (TableColumnInfo info : columns) {
 			if (info.isVisible) {
 				list.add(info.column);
@@ -60,20 +60,31 @@ public class TableColumnDescriptor<ROW_TYPE> {
 		return editor.createTableSortState();
 	}
 
-	private int remove(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
-		for (int i = 0; i < columns.size(); i++) {
-			TableColumnDescriptor<ROW_TYPE>.TableColumnInfo info = columns.get(i);
-			if (info.column == column) {
-				columns.remove(i);
-				return i;
-			}
+	public void setVisible(String columnName, boolean visible) {
+		TableColumnInfo info = getColumn(columnName);
+		if (info == null) {
+			Msg.debug(this,
+				"Unable to change visibility state of column '%s'".formatted(columnName));
+			return;
 		}
-		return -1;
+		if (visible) {
+			info.isVisible = true;
+		}
+		else {
+			// remove and add a new info to clear any sort state info for a hidden column
+			int index = columns.indexOf(info);
+			columns.set(index, new TableColumnInfo(info.column));
+		}
 	}
 
-	public void setHidden(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
-		int index = remove(column);
-		columns.add(index, new TableColumnInfo(column));
+	private TableColumnInfo getColumn(String name) {
+		for (TableColumnInfo info : columns) {
+			String columnName = info.column.getColumnName();
+			if (columnName.equals(name)) {
+				return info;
+			}
+		}
+		return null;
 	}
 
 	public void addHiddenColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
@@ -105,8 +116,8 @@ public class TableColumnDescriptor<ROW_TYPE> {
 			this.column = column;
 		}
 
-		TableColumnInfo(DynamicTableColumn<ROW_TYPE, ?, ?> column, boolean isVisible,
-				int sortIndex, boolean ascending) {
+		TableColumnInfo(DynamicTableColumn<ROW_TYPE, ?, ?> column, boolean isVisible, int sortIndex,
+				boolean ascending) {
 			this.column = column;
 			this.isVisible = isVisible;
 			this.sortIndex = sortIndex;

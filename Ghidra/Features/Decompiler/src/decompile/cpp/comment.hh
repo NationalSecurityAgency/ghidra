@@ -68,7 +68,7 @@ public:
   int4 getUniq(void) const { return uniq; }			///< Get the sub-sorting index
   const string &getText(void) const { return text; }		///< Get the body of the comment
   void encode(Encoder &encoder) const;				///< Encode the comment to a stream
-  void decode(Decoder &decoder);				///< Restore the comment from XML
+  void decode(Decoder &decoder);				///< Decode the comment from a stream
   static uint4 encodeCommentType(const string &name);		///< Convert name string to comment property
   static string decodeCommentType(uint4 val);			///< Convert comment property to string
 };
@@ -146,7 +146,7 @@ public:
   /// \param encoder is the stream encoder
   virtual void encode(Encoder &encoder) const=0;
 
-  /// \brief Restore all comments from a \<commentdb> element
+  /// \brief Decode all comments from a \<commentdb> element
   ///
   /// \param decoder is the stream decoder
   virtual void decode(Decoder &decoder)=0;

@@ -15,15 +15,23 @@
  */
 package ghidra.app.util.bin.format.macho;
 
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Processor;
 
+/**
+ * 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/osfmk/mach/machine.h">osfmk/mach/machiine.h</a> 
+ */
 public final class CpuTypes {
 
 	/** mask for architecture bits */
-	public final static int CPU_ARCH_MASK    = 0xff000000;
+	public final static int CPU_ARCH_MASK = 0xff000000;
 
 	/** 64 bit ABI */
-	public final static int CPU_ARCH_ABI64   = 0x01000000;
+	public final static int CPU_ARCH_ABI64 = 0x01000000;
+
+	/** ABI for 64-bit hardware with 32-bit types; LP32 */
+	public final static int CPU_ARCH_ABI64_32 = 0x02000000;
+
 
 	public final static int CPU_TYPE_ANY        = -1;
 	public final static int CPU_TYPE_VAX        = 0x1;
@@ -46,10 +54,10 @@ public final class CpuTypes {
 	// UNUSED                                     0x11
 	public final static int CPU_TYPE_POWERPC    = 0x12;
 
-	public final static int CPU_TYPE_POWERPC64  = (CPU_TYPE_POWERPC | CPU_ARCH_ABI64);
-	public final static int CPU_TYPE_X86_64     = (CPU_TYPE_X86     | CPU_ARCH_ABI64);
-	public final static int CPU_TYPE_ARM_64     = (CPU_TYPE_ARM     | CPU_ARCH_ABI64);
-
+	public final static int CPU_TYPE_POWERPC64 = (CPU_TYPE_POWERPC | CPU_ARCH_ABI64);
+	public final static int CPU_TYPE_X86_64 = (CPU_TYPE_X86 | CPU_ARCH_ABI64);
+	public final static int CPU_TYPE_ARM_64 = (CPU_TYPE_ARM | CPU_ARCH_ABI64);
+	public final static int CPU_TYPE_ARM64_32 = (CPU_TYPE_ARM | CPU_ARCH_ABI64_32);
 
 	/**
 	 * Returns the processor name of the given CPU type value.
@@ -75,31 +83,35 @@ public final class CpuTypes {
 				return Processor.findOrPossiblyCreateProcessor("ARM");
 			case CPU_TYPE_ARM_64:        
 				return Processor.findOrPossiblyCreateProcessor("AARCH64");
+			case CPU_TYPE_ARM64_32:
+				return Processor.findOrPossiblyCreateProcessor("AARCH64");
 		}
 		throw new RuntimeException("Unrecognized CPU type: 0x"+Integer.toHexString(cpuType));
 	}
 
 	public final static int getProcessorBitSize(int cpuType) {
-		switch (cpuType) {
+		return switch (cpuType) {
 			case CPU_TYPE_ARM:
 			case CPU_TYPE_SPARC:
 			case CPU_TYPE_I860:
 			case CPU_TYPE_POWERPC:
-			case CPU_TYPE_X86:       return 32;
-
+			case CPU_TYPE_X86:
+			case CPU_TYPE_ARM64_32:
+				yield 32;
 			case CPU_TYPE_ARM_64:
 			case CPU_TYPE_POWERPC64:
-			case CPU_TYPE_X86_64:    return 64;
-		}
-		throw new RuntimeException("Unrecognized CPU type: 0x"+Integer.toHexString(cpuType));
+			case CPU_TYPE_X86_64:
+				yield 64;
+			default:
+				throw new RuntimeException("Unrecognized CPU type: 0x" + Integer.toHexString(cpuType));
+		};
 	}
 
 	public static String getMagicString(int cpuType, int cpuSubtype) {
-		switch (cpuType) {
-			case CPU_TYPE_ARM:        
-				return ""+cpuType+"."+cpuSubtype;
-		}
-		return ""+cpuType;
+		return switch (cpuType) {
+			case CPU_TYPE_ARM -> cpuType + "." + cpuSubtype;
+			default -> "" + cpuType;
+		};
 	}
 	
 }

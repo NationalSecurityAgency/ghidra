@@ -63,4 +63,9 @@ public class InvalidAnnotatedStringHandler implements AnnotatedStringHandler {
 	public String getPrototypeString() {
 		return "";
 	}
+
+	@Override
+	public String getPrototypeString(String displayText) {
+		return this.getPrototypeString();
+	}
 }

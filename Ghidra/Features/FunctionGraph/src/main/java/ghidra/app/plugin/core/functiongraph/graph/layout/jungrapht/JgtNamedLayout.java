@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class JgtNamedLayout extends AbstractFGLayout {
 	}
 
 	@Override
-	protected Point2D getVertexLocation(FGVertex v, Column col, Row<FGVertex> row,
+	protected Point2D getVertexLocation(FGVertex v, Column<FGVertex> col, Row<FGVertex> row,
 			java.awt.Rectangle bounds) {
 		return getCenteredVertexLocation(v, col, row, bounds);
 	}
@@ -104,7 +104,7 @@ public class JgtNamedLayout extends AbstractFGLayout {
 
 		Set<FGVertex> jungVertices = jGraph.vertexSet();
 		for (FGVertex fgVertex : jungVertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Point point = layoutModel.get(fgVertex);
 			columns.put(point.x, 0);
@@ -114,7 +114,7 @@ public class JgtNamedLayout extends AbstractFGLayout {
 		Function<FGEdge, List<Point>> articulator = getArticulator(layoutAlgorithm);
 		Set<FGEdge> edges = jGraph.edgeSet();
 		for (FGEdge fgEdge : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<Point> ariculations = articulator.apply(fgEdge);
 			for (Point point : ariculations) {
@@ -126,19 +126,19 @@ public class JgtNamedLayout extends AbstractFGLayout {
 		// translate the real coordinates to grid coordinates (row and column indices)
 		int counter = 0;
 		for (Double x : columns.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			columns.put(x, counter++);
 		}
 
 		counter = 0;
 		for (Double y : rows.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			rows.put(y, counter++);
 		}
 
 		jungVertices = jGraph.vertexSet();
 		for (FGVertex fgVertex : jungVertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Point point = layoutModel.get(fgVertex);
 			grid.set(fgVertex, rows.get(point.y), columns.get(point.x));
@@ -146,16 +146,16 @@ public class JgtNamedLayout extends AbstractFGLayout {
 
 		edges = jGraph.edgeSet();
 		for (FGEdge fgEdge : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
-			List<java.awt.Point> newPoints = new ArrayList<>();
+			List<GridPoint> newPoints = new ArrayList<>();
 
 			List<Point> articulations = articulator.apply(fgEdge);
 			for (Point point : articulations) {
 
 				Integer col = columns.get(point.x);
 				Integer row = rows.get(point.y);
-				newPoints.add(new java.awt.Point(col, row));
+				newPoints.add(new GridPoint(row, col));
 			}
 
 			// The jung layout will provide articulations at the vertex points.   We do not want to

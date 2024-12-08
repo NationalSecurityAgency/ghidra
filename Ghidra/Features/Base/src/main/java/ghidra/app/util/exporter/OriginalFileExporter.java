@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.*;
+import ghidra.framework.Application;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.mem.FileBytes;
@@ -166,7 +167,7 @@ public class OriginalFileExporter extends Exporter {
 		// Write source program's file bytes to a temp file.
 		// This is done to ensure a random access write failure doesn't corrupt a file the user 
 		// might be overwriting.
-		File tempFile = File.createTempFile("ghidra_export_", null);
+		File tempFile = Application.createTempFile("ghidra_export_", null);
 		try (OutputStream out = new FileOutputStream(tempFile, false)) {
 			FileUtilities.copyStreamToStream(new FileBytesInputStream(fileBytes, true), out,
 				monitor);
@@ -178,6 +179,10 @@ public class OriginalFileExporter extends Exporter {
 			Iterable<Relocation> relocs = () -> program.getRelocationTable().getRelocations();
 			Memory memory = program.getMemory();
 			for (Relocation reloc : relocs) {
+				if (reloc.getStatus() != Relocation.Status.APPLIED &&
+					reloc.getStatus() != Relocation.Status.APPLIED_OTHER) {
+					continue;
+				}
 				Address addr = reloc.getAddress();
 				AddressSourceInfo addrSourceInfo = memory.getAddressSourceInfo(addr);
 				if (addrSourceInfo == null) {
@@ -187,10 +192,12 @@ public class OriginalFileExporter extends Exporter {
 				if (offset >= 0) {
 					MemoryBlockSourceInfo memSourceInfo = addrSourceInfo.getMemoryBlockSourceInfo();
 					byte[] bytes = reloc.getBytes();
-					int len = Math.min(bytes.length,
-						(int) memSourceInfo.getMaxAddress().subtract(addr) + 1);
-					fout.seek(offset);
-					fout.write(bytes, 0, len);
+					if (bytes != null) {
+						int len = Math.min(bytes.length,
+							(int) memSourceInfo.getMaxAddress().subtract(addr) + 1);
+						fout.seek(offset);
+						fout.write(bytes, 0, len);
+					}
 				}
 			}
 		}
@@ -198,6 +205,7 @@ public class OriginalFileExporter extends Exporter {
 			if (!tempFile.delete()) {
 				log.appendMsg("Failed to delete malformed file: " + tempFile);
 			}
+			log.appendException(e);
 			return false;
 		}
 		

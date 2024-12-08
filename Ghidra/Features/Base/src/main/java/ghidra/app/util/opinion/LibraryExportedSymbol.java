@@ -25,14 +25,14 @@ class LibraryExportedSymbol {
 	private int memsize;
 	private int ordinal = -1;
 	private String symbolName;
-	private String fowardLibraryName;
-	private String fowardSymbolName;
+	private String forwardLibraryName;
+	private String forwardSymbolName;
 	private int purge;
 	private boolean noReturn;
 	private String comment;
 
 	LibraryExportedSymbol(String libName, int memsize, int ordinal, String symbolName,
-			String fowardLibraryName, String fowardSymbolName, int purge, boolean noReturn,
+			String forwardLibraryName, String forwardSymbolName, int purge, boolean noReturn,
 			String comment) {
 		this.libName = libName;
 		this.memsize = memsize;
@@ -41,8 +41,8 @@ class LibraryExportedSymbol {
 		this.purge = purge;
 		this.noReturn = noReturn;
 		this.comment = comment;
-		this.fowardLibraryName = fowardLibraryName;
-		this.fowardSymbolName = fowardSymbolName;
+		this.forwardLibraryName = forwardLibraryName;
+		this.forwardSymbolName = forwardSymbolName;
 	}
 
 	/**
@@ -125,12 +125,12 @@ class LibraryExportedSymbol {
 	private synchronized void processForwardedEntry() {
 
 		purge = -2;
-		LibrarySymbolTable lib = LibraryLookupTable.getSymbolTable(fowardLibraryName, memsize);
+		LibrarySymbolTable lib = LibraryLookupTable.getSymbolTable(forwardLibraryName, memsize);
 		if (lib == null) {
 			return;
 		}
 
-		LibraryExportedSymbol libSym = lib.getSymbol(fowardSymbolName);
+		LibraryExportedSymbol libSym = lib.getSymbol(forwardSymbolName);
 		if (libSym == null) {
 			return;
 		}
@@ -151,24 +151,24 @@ class LibraryExportedSymbol {
 	}
 
 	/**
-	 * @return true if this symbol is fowarded to another library
+	 * @return true if this symbol is forwarded to another library
 	 */
 	boolean isFowardEntry() {
-		return fowardLibraryName != null;
+		return forwardLibraryName != null;
 	}
 
 	/**
-	 * @return the fowarded library name
+	 * @return the forwarded library name
 	 */
 	String getFowardLibraryName() {
-		return fowardLibraryName;
+		return forwardLibraryName;
 	}
 
 	/**
-	 * @return the fowarded symbol name
+	 * @return the forwarded symbol name
 	 */
 	String getFowardSymbolName() {
-		return fowardSymbolName;
+		return forwardSymbolName;
 	}
 
 	void setName(String name) {

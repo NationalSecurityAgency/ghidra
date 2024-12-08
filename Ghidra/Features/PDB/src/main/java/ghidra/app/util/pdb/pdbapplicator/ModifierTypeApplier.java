@@ -15,96 +15,65 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractModifierMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractModifierMsType} types.
  */
-public class ModifierTypeApplier extends MsTypeApplier {
+public class ModifierTypeApplier extends MsDataTypeApplier {
 
-	private MsTypeApplier modifiedTypeApplier = null;
-
+	// Intended for: AbstractModifierMsType
 	/**
-	 * Constructor for modifier type applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractModifierMsType} to processes.
+	 * Constructor for modifier type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
-	public ModifierTypeApplier(DefaultPdbApplicator applicator, AbstractModifierMsType msType) {
-		super(applicator, msType);
+	public ModifierTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
-	//==============================================================================================
 	@Override
-	void deferredApply() throws PdbException, CancelledException {
-		// Do nothing.  Already applied.  Just needs late resolve
-	}
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
 
-	//==============================================================================================
-	@Override
-	BigInteger getSize() {
-		if (modifiedTypeApplier == null) {
-			return BigInteger.ZERO;
+		AbstractModifierMsType modifierMsType = (AbstractModifierMsType) type;
+		// Doing pre-check on type first using the getDataTypeOrSchedule method.  The logic is
+		//  simpler here for Composites or Functions because we only have one dependency type,
+		//  so we are not doing a separate call to a pre-check method as there is in those appliers.
+		//  If type is not available, return false.
+		RecordNumber modifiedRecordNumber = modifierMsType.getModifiedRecordNumber();
+		DataType modifiedType = applicator.getDataTypeOrSchedule(modifiedRecordNumber);
+		if (modifiedType == null) {
+			return false;
 		}
-		return modifiedTypeApplier.getSize();
+
+		// If Ghidra eventually has a modified type (const, volatile) in its model, then we can
+		//  perform the applicator.getDataType(modifierType) here, and the
+		//  applicator.put(modifierType,dataType) before the return.
+		// Obviously, we would also need to process and apply the modifier attributes.
+
+		// If ghidra has modified types in the future, we will likely not perform a pass-through
+		//  of the underlying type.  We might actually need to do a fixup or be able to pass the
+		//  cycle-break information to a pointer or handle cycle-break information information
+		//  in this modifier type.  Lots of things to consider.  Would we want to create a typedef
+		//  for modifier type as a short-gap solution??? Not sure.
+
+		// Note:
+		// Pointers normally have their own modifiers, so would not necessarily expect to see
+		//  the underlying type of a Modifier to be a pointer.  However, MSFT primitives include
+		//  pointers to primitives, so in these cases we could see a const pointer to primitive
+		//  where the const comes from the Modifier type.
+		DataType modifierType = modifiedType;
+
+		// Store modified type as modifier type
+		applicator.putDataType(modifierMsType, modifierType);
+		// I'm hesitant to schedule resolve... what if I'm a pointer.  Should I resolve
+		//  modified pointers, modified other types, both, or neither?  TODO; investigate
+
+		return true;
 	}
 
-	@Override
-	void apply() throws PdbException, CancelledException {
-//		dataType = applyModifierMsType((AbstractModifierMsType) msType);
-		applyOrDeferForDependencies();
-	}
-
-	private void applyOrDeferForDependencies() {
-		AbstractModifierMsType type = (AbstractModifierMsType) msType;
-		applyModifierMsType(type);
-		MsTypeApplier modifiedApplier = applicator.getTypeApplier(type.getModifiedRecordNumber());
-		if (modifiedApplier.isDeferred()) {
-			applicator.addApplierDependency(this, modifiedApplier);
-			setDeferred();
-		}
-		else {
-//			applyModifierMsType(type);
-//			defer(false);
-		}
-	}
-
-	@Override
-	DataType getDataType() {
-		return modifiedTypeApplier.getDataType();
-	}
-
-	private DataType applyModifierMsType(AbstractModifierMsType type) {
-		modifiedTypeApplier = applicator.getTypeApplier(type.getModifiedRecordNumber());
-
-		return modifiedTypeApplier.getDataType();
-	}
-
-//	ghDataTypeDB = applicator.resolve(dataType);
-
-//	boolean underlyingIsCycleBreakable() {
-//		// TODO: need to deal with InterfaceTypeApplier (will it be incorporated into
-//		// CompostieTypeapplier?) Is it in this list of places to break (i.e., can it contain)?
-//		return (modifiedTypeApplier != null &&
-//			(modifiedTypeApplier instanceof CompositeTypeApplier ||
-//				modifiedTypeApplier instanceof EnumTypeApplier));
-//	}
-
-	@Override
-	DataType getCycleBreakType() {
-		// hope to eliminate the null check if/when modifierTypeApplier is created at time of
-		// construction
-		if (modifiedTypeApplier == null) {
-			return null;
-		}
-		return modifiedTypeApplier.getCycleBreakType();
-	}
-
-	MsTypeApplier getModifiedTypeApplier() {
-		return modifiedTypeApplier;
-	}
 }

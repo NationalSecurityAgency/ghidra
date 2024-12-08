@@ -22,6 +22,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
 import ghidra.app.plugin.core.exporter.ExporterDialog;
 import ghidra.app.services.*;
 import ghidra.framework.plugintool.PluginInfo;
@@ -68,7 +69,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 
 	public DebuggerCopyActionsPlugin(PluginTool tool) {
 		super(tool);
@@ -87,41 +88,29 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 	protected void createActions() {
 		actionExportView = ExportTraceViewAction.builder(this)
 				.enabled(false)
-				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(this::checkTrace)
+				.withContext(DebuggerProgramLocationActionContext.class, true)
 				.onAction(this::activatedExportView)
 				.buildAndInstall(tool);
 
 		// Using programManager here depends on it calling tool.updateContext()
 		actionCopyIntoCurrentProgram = CopyIntoCurrentProgramAction.builder(this)
 				.enabled(false)
-				.withContext(ProgramLocationActionContext.class)
+				.withContext(DebuggerProgramLocationActionContext.class, true)
 				.enabledWhen(
-					ctx -> checkTraceSelection(ctx) && programManager.getCurrentProgram() != null)
+					ctx -> ctx.hasSelection() && programManager.getCurrentProgram() != null)
 				.onAction(this::activatedCopyIntoCurrentProgram)
 				.buildAndInstall(tool);
 
 		actionCopyIntoNewProgram = CopyIntoNewProgramAction.builder(this)
 				.enabled(false)
-				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(this::checkTraceSelection)
+				.withContext(DebuggerProgramLocationActionContext.class, true)
+				.enabledWhen(DebuggerProgramLocationActionContext::hasSelection)
 				.onAction(this::activatedCopyIntoNewProgram)
 				.buildAndInstall(tool);
 	}
 
-	protected boolean checkTrace(ProgramLocationActionContext context) {
-		return context.getProgram() instanceof TraceProgramView;
-	}
-
-	protected boolean checkTraceSelection(ProgramLocationActionContext context) {
-		return checkTrace(context) && context.hasSelection();
-	}
-
-	protected void activatedExportView(ProgramLocationActionContext context) {
-		if (!checkTrace(context)) {
-			return;
-		}
-		TraceProgramView view = (TraceProgramView) context.getProgram();
+	protected void activatedExportView(DebuggerProgramLocationActionContext context) {
+		TraceProgramView view = context.getProgram();
 		// Avoid odd race conditions by fixing the snap
 		TraceProgramView fixed = view instanceof TraceVariableSnapProgramView
 				? view.getTrace().getFixedProgramView(view.getSnap())
@@ -133,28 +122,28 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		tool.showDialog(dialog);
 	}
 
-	protected void activatedCopyIntoCurrentProgram(ProgramLocationActionContext context) {
-		if (!checkTraceSelection(context)) {
+	protected void activatedCopyIntoCurrentProgram(DebuggerProgramLocationActionContext context) {
+		if (!context.hasSelection()) {
 			return;
 		}
-		copyDialog.setSource((TraceProgramView) context.getProgram(), context.getSelection());
+		copyDialog.setSource(context.getProgram(), context.getSelection());
 		copyDialog.setProgramManager(programManager);
 		copyDialog.setStaticMappingService(mappingService);
-		copyDialog.setModelService(modelService);
+		copyDialog.setTargetService(targetService);
 		copyDialog.setDestination(programManager.getCurrentProgram());
 		copyDialog.reset();
 		copyDialog.setStatusText("");
 		tool.showDialog(copyDialog);
 	}
 
-	protected void activatedCopyIntoNewProgram(ProgramLocationActionContext context) {
-		if (!checkTraceSelection(context)) {
+	protected void activatedCopyIntoNewProgram(DebuggerProgramLocationActionContext context) {
+		if (!context.hasSelection()) {
 			return;
 		}
-		copyDialog.setSource((TraceProgramView) context.getProgram(), context.getSelection());
+		copyDialog.setSource(context.getProgram(), context.getSelection());
 		copyDialog.setProgramManager(programManager);
 		copyDialog.setStaticMappingService(mappingService);
-		copyDialog.setModelService(modelService);
+		copyDialog.setTargetService(targetService);
 		copyDialog.setDestination(copyDialog.NEW_PROGRAM);
 		copyDialog.reset();
 		copyDialog.setStatusText("");

@@ -95,7 +95,7 @@ public class DexExceptionHandlersAnalyzer extends FileFormatAnalyzer {
 		Address address = toAddr(program, DexUtil.METHOD_ADDRESS);
 
 		for (ClassDefItem item : header.getClassDefs()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			ClassDataItem classDataItem = item.getClassDataItem();
@@ -120,7 +120,7 @@ public class DexExceptionHandlersAnalyzer extends FileFormatAnalyzer {
 		monitor.setProgress(0);
 
 		for (int i = 0; i < methods.size(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			EncodedMethod method = methods.get(i);
@@ -145,11 +145,11 @@ public class DexExceptionHandlersAnalyzer extends FileFormatAnalyzer {
 			}
 
 			for (EncodedCatchHandler handler : handlerList.getHandlers()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				List<EncodedTypeAddressPair> pairs = handler.getPairs();
 				for (EncodedTypeAddressPair pair : pairs) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					int catchTypeIndex = pair.getTypeIndex();
 					TypeIDItem catchTypeIDItem = header.getTypes().get(catchTypeIndex);

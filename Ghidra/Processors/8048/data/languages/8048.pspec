@@ -24,13 +24,13 @@
     <symbol name="BANK1_R6" address="INTMEM:1e"/>
     <symbol name="BANK1_R7" address="INTMEM:1f"/>
 
-    <symbol name="BUS" address="PORT:0"/>
-    <symbol name="P1" address="PORT:1"/>
-    <symbol name="P2" address="PORT:2"/>
-    <symbol name="P4" address="PORT:4"/>
-    <symbol name="P5" address="PORT:5"/>
-    <symbol name="P6" address="PORT:6"/>
-    <symbol name="P7" address="PORT:7"/>
+    <symbol name="BUS" address="PORT:0" volatile="true" />
+    <symbol name="P1" address="PORT:1" volatile="true" />
+    <symbol name="P2" address="PORT:2" volatile="true" />
+    <symbol name="P4" address="PORT:4" volatile="true" />
+    <symbol name="P5" address="PORT:5" volatile="true" />
+    <symbol name="P6" address="PORT:6" volatile="true" />
+    <symbol name="P7" address="PORT:7" volatile="true" />
 
     <symbol name="RESET" address="CODE:0" entry="true"/>
     <symbol name="EXTIRQ" address="CODE:3" entry="true"/>
@@ -45,5 +45,15 @@
     <memory_block name="INTMEM" start_address="INTMEM:20" length="0xe0" initialized="false"/>
     <memory_block name="PORT" start_address="PORT:0" length="0x8" initialized="false"/>
   </default_memory_blocks>
+  
+  <context_data>
+	  <context_set space="CODE" first="0x0" last="0x7ff">
+	  	  	<set name="DBF" val="0"/>
+	  </context_set>
+	  
+	  <context_set space="CODE" first="0x800" last="0xfff">
+	  	  	<set name="DBF" val="1"/>
+	  </context_set>
+  </context_data>
   
 </processor_spec>

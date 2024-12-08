@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.jdom.Element;
 
 import docking.widgets.fieldpanel.support.Highlight;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.app.util.viewer.field.*;
 import ghidra.framework.options.*;
@@ -71,7 +71,7 @@ public class FormatManager implements OptionsChangeListener {
 	TemplateSimplifier templateSimplifier;
 
 	// NOTE:  Unused custom format code was removed.  The custom format code last existed in
-	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.  
+	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.
 
 	/**
 	 * Constructs a new FormatManager.
@@ -100,7 +100,7 @@ public class FormatManager implements OptionsChangeListener {
 	private void getArrayDisplayOptions(Options options) {
 		options.registerOption(ARRAY_DISPLAY_OPTIONS, OptionType.CUSTOM_TYPE,
 			new ArrayElementWrappedOption(), null, ARRAY_DISPLAY_DESCRIPTION,
-			new ArrayElementPropertyEditor());
+			() -> new ArrayElementPropertyEditor());
 		CustomOption option = options.getCustomOption(ARRAY_DISPLAY_OPTIONS, null);
 		if (option instanceof ArrayElementWrappedOption) {
 			ArrayElementWrappedOption arrayOption = (ArrayElementWrappedOption) option;
@@ -159,7 +159,9 @@ public class FormatManager implements OptionsChangeListener {
 	 * @param listener the listener to be added
 	 */
 	public void addFormatModelListener(FormatModelListener listener) {
-		formatListeners.add(listener);
+		if (listener != null) {
+			formatListeners.add(listener);
+		}
 	}
 
 	/**
@@ -174,7 +176,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the total number of model in the format manager.
-	 * @return the total number of model in the format manager 
+	 * @return the total number of model in the format manager
 	 */
 	public int getNumModels() {
 		return NUM_MODELS;
@@ -200,7 +202,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model for the plate field.
-	 * @return the format model for the plate field 
+	 * @return the format model for the plate field
 	 */
 	public FieldFormatModel getPlateFormat() {
 		return models[FieldFormatModel.PLATE];
@@ -279,7 +281,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the Options used for field specific properties.
-	 * @return the Options used for field specific properties 
+	 * @return the Options used for field specific properties
 	 */
 	public ToolOptions getFieldOptions() {
 		return fieldOptions;
@@ -824,10 +826,10 @@ public class FormatManager implements OptionsChangeListener {
 	 * 
 	 * @param provider
 	 *            the provider to use.
-	 * @see #removeHighlightProvider(HighlightProvider)
+	 * @see #removeHighlightProvider(ListingHighlightProvider)
 	 * @see #getHighlightProviders()
 	 */
-	public void addHighlightProvider(HighlightProvider provider) {
+	public void addHighlightProvider(ListingHighlightProvider provider) {
 		if (provider instanceof MultipleHighlighterProvider) {
 			throw new AssertException("Cannot set FormatManager's internal highlight provider " +
 				"on another FormatManager!");
@@ -840,27 +842,27 @@ public class FormatManager implements OptionsChangeListener {
 	 * 
 	 * @param provider
 	 *            the provider to remove.
-	 * @see #addHighlightProvider(HighlightProvider)
+	 * @see #addHighlightProvider(ListingHighlightProvider)
 	 */
-	public void removeHighlightProvider(HighlightProvider provider) {
+	public void removeHighlightProvider(ListingHighlightProvider provider) {
 		highlightProvider.removeHighlightProvider(provider);
 	}
 
 	/**
-	 * Gets all {@link HighlightProvider}s installed on this FormatManager via the 
-	 * {@link #addHighlightProvider(HighlightProvider)}.
+	 * Gets all {@link ListingHighlightProvider}s installed on this FormatManager via the
+	 * {@link #addHighlightProvider(ListingHighlightProvider)}.
 	 * 
-	 * @return all {@link HighlightProvider}s installed on this FormatManager.
+	 * @return all {@link ListingHighlightProvider}s installed on this FormatManager.
 	 */
-	public List<HighlightProvider> getHighlightProviders() {
+	public List<ListingHighlightProvider> getHighlightProviders() {
 		return highlightProvider.getHighlightProviders();
 	}
 
 	/**
-	 * Returns the {@link HighlightProvider} that should be used when creating {@link FieldFactory}
+	 * Returns the {@link ListingHighlightProvider} that should be used when creating {@link FieldFactory}
 	 * objects.
 	 */
-	public HighlightProvider getFormatHighlightProvider() {
+	public ListingHighlightProvider getFormatHighlightProvider() {
 		return highlightProvider;
 	}
 
@@ -921,27 +923,27 @@ public class FormatManager implements OptionsChangeListener {
 // Inner Classes
 //==================================================================================================
 
-	private class MultipleHighlighterProvider implements HighlightProvider {
+	private class MultipleHighlighterProvider implements ListingHighlightProvider {
 
-		private List<HighlightProvider> highlightProviders = new CopyOnWriteArrayList<>();
+		private List<ListingHighlightProvider> highlightProviders =
+			new CopyOnWriteArrayList<>();
 
 		@Override
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
 			//
-			// Gather and use all other registered providers.  
-			// 
+			// Gather and use all other registered providers.
+			//
 			// Note: we loop backwards here as a hacky method to make sure that the middle-mouse
-			//       highlighter runs last and is thus painted above other highlights.  This 
-			//       works because the middle-mouse highlighter is installed before any other 
+			//       highlighter runs last and is thus painted above other highlights.  This
+			//       works because the middle-mouse highlighter is installed before any other
 			//       highlighters.
 			List<Highlight> list = new ArrayList<>();
 			int size = highlightProviders.size();
 			for (int i = size - 1; i >= 0; i--) {
-				HighlightProvider provider = highlightProviders.get(i);
+				ListingHighlightProvider provider = highlightProviders.get(i);
 				Highlight[] highlights =
-					provider.getHighlights(text, obj, fieldFactoryClass, cursorTextOffset);
+					provider.createHighlights(text, field, cursorTextOffset);
 				for (Highlight highlight : highlights) {
 					list.add(highlight);
 				}
@@ -950,17 +952,17 @@ public class FormatManager implements OptionsChangeListener {
 			return list.toArray(new Highlight[list.size()]);
 		}
 
-		List<HighlightProvider> getHighlightProviders() {
+		List<ListingHighlightProvider> getHighlightProviders() {
 			return new ArrayList<>(highlightProviders);
 		}
 
-		void addHighlightProvider(HighlightProvider provider) {
+		void addHighlightProvider(ListingHighlightProvider provider) {
 			if (!highlightProviders.contains(provider)) {
 				highlightProviders.add(provider);
 			}
 		}
 
-		void removeHighlightProvider(HighlightProvider provider) {
+		void removeHighlightProvider(ListingHighlightProvider provider) {
 			highlightProviders.remove(provider);
 		}
 	}

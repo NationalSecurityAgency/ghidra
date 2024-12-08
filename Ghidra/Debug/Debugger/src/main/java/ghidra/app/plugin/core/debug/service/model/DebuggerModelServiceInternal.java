@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,21 +18,23 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.io.IOException;
 import java.util.Collection;
 
-import ghidra.app.plugin.core.debug.event.*;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
-import ghidra.app.services.*;
+import ghidra.app.plugin.core.debug.event.ModelActivatedPluginEvent;
+import ghidra.app.services.DebuggerModelService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.lifecycle.Internal;
-import ghidra.util.Swing;
 
 /**
  * Specifies additional methods on the model service which are available for internal testing
  * purposes only.
  */
 @Internal
+@Deprecated(forRemoval = true, since = "11.2")
 public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	/**
 	 * Force the set of factory instances to be that given
@@ -96,10 +98,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * 
 	 * @param focused the focused object
 	 */
-	default void fireFocusEvent(TargetObject focused) {
-		Swing.runIfSwingOrRunLater(
-			() -> firePluginEvent(new ModelObjectFocusedPluginEvent(getName(), focused)));
-	}
+	void fireFocusEvent(TargetObject focused);
 
 	/**
 	 * Fire a recorder-advanced event
@@ -107,12 +106,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * @param recorder the recorder that advanced
 	 * @param snap the snap to which it advanced
 	 */
-	default void fireSnapEvent(TraceRecorder recorder, long snap) {
-		// firePluginEvent uses Swing.runNow, and I can't wait here.
-		// Especially since the swing thread gets real busy during a step
-		Swing.runIfSwingOrRunLater(
-			() -> firePluginEvent(new TraceRecorderAdvancedPluginEvent(getName(), recorder, snap)));
-	}
+	void fireSnapEvent(TraceRecorder recorder, long snap);
 
 	// Impl should inherit from Plugin
 	String getName();

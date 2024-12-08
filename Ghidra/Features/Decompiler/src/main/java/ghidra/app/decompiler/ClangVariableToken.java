@@ -17,7 +17,10 @@ package ghidra.app.decompiler;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.scalar.Scalar;
 
 /**
  * 
@@ -42,6 +45,34 @@ public class ClangVariableToken extends ClangToken {
 	@Override
 	public PcodeOp getPcodeOp() {
 		return op;
+	}
+
+	@Override
+	public Scalar getScalar() {
+		if (varnode == null) {
+			return null;
+		}
+
+		long offset = varnode.getOffset();
+		int sz = varnode.getSize();
+		HighVariable high = varnode.getHigh();
+		if (!(high instanceof HighConstant)) {
+			return null;
+		}
+
+		HighConstant constant = (HighConstant) high;
+		boolean isSigned = true;
+		DataType dt = constant.getDataType();
+		if (dt instanceof AbstractIntegerDataType) {
+			isSigned = ((AbstractIntegerDataType) dt).isSigned();
+		}
+
+		if (sz > 8) {
+			// our Scalar can currently only handle long values
+			return null;
+		}
+
+		return new Scalar(sz * 8, offset, isSigned);
 	}
 
 	@Override

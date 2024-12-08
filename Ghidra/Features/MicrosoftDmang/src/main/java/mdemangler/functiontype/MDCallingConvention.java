@@ -90,7 +90,7 @@ public class MDCallingConvention extends MDParsableItem {
 				break;
 			case 'K':
 			case 'L':
-				dmang.parseInfoPush(1, "(blank convention)");
+				dmang.parseInfoPush(1, "(KL blank convention)");
 				convention = "";
 				dmang.parseInfoPop();
 				break;
@@ -107,8 +107,39 @@ public class MDCallingConvention extends MDParsableItem {
 				dmang.parseInfoPop();
 				break;
 			case 'Q':
+			case 'R':
 				dmang.parseInfoPush(1, "__vectorcall");
 				convention = "__vectorcall";
+				dmang.parseInfoPop();
+				break;
+			case 'S':
+			case 'T':
+				// MSFT is as shown
+				// LLVM is "__attribute__((__swiftcall__))" for code S and blank for T
+				dmang.parseInfoPush(1, "__swift_1");
+				convention = "__swift_1";
+				dmang.parseInfoPop();
+				break;
+			case 'U':
+			case 'V':
+				// MSFT is as shown for U, but blank for V
+				// LLVM is blank for both
+				dmang.parseInfoPush(1, "__swift_2");
+				convention = "__swift_2";
+				dmang.parseInfoPop();
+				break;
+			case 'W':
+			case 'X':
+				// MSFT is blank
+				// LLVM is "__attribute__((__swiftasynccall__))" for code W and blank for X
+				dmang.parseInfoPush(1, "__swiftasynccall");
+				convention = "__swiftasynccall"; // we made up... maybe MSFT will do an _1 suffix?
+				dmang.parseInfoPop();
+				break;
+			case 'Y':
+			case 'Z':
+				dmang.parseInfoPush(1, "(YZ blank convention)");
+				convention = "";
 				dmang.parseInfoPop();
 				break;
 			default:

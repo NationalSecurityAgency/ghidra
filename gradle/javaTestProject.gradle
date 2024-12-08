@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,17 +95,17 @@ task pcodeTest (type: Test) { t ->
 }
 
 rootProject.unitTestReport {
-	reportOn this.project.test
+	testResults.from(this.project.test)
 }
 rootProject.integrationTestReport {
-	reportOn this.project.integrationTest
+	testResults.from(this.project.integrationTest)
 }
 rootProject.pcodeTestReport {
-	reportOn this.project.pcodeTest
+	testResults.from(this.project.pcodeTest)
 }
 rootProject.combinedTestReport { 
-	reportOn this.project.test
-	reportOn this.project.integrationTest
+	testResults.from(this.project.test)
+	testResults.from(this.project.integrationTest)
 }
 
 
@@ -154,6 +154,7 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Dmachine.name=' + machineName,
 			'-Djava.io.tmpdir=' + testTempDir,
 			'-Duser.data.dir=' + userHome + '/.ghidra/.ghidra-' + srcTreeName + '-Test',
+			'-XX:ErrorFile=' + testReportDir + '/java_error_%p.log',
 			'-Dcpu.core.override=8',
 			'-XX:ParallelGCThreads=8',
 			'-XX:+UseParallelGC',

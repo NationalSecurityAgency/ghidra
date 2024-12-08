@@ -19,7 +19,6 @@ import java.awt.Color;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -28,25 +27,25 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.colors.*;
 import ghidra.app.plugin.core.debug.gui.colors.MultiSelectionBlendedLayoutBackgroundColorManager.ColoredFieldSelection;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerTrackedRegisterListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.async.AsyncUtils;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.action.LocationTrackingSpec.TrackingSpecConfigFieldCodec;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
+import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 
 public class DebuggerTrackLocationTrait {
@@ -56,8 +55,8 @@ public class DebuggerTrackLocationTrait {
 	protected class ForTrackingListener extends TraceDomainObjectListener {
 
 		public ForTrackingListener() {
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registersChanged);
-			listenFor(TraceStackChangeType.CHANGED, this::stackChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::registersChanged);
+			listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
 		}
 
 		private void registersChanged(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -177,9 +176,22 @@ public class DebuggerTrackLocationTrait {
 		return true;
 	}
 
+	protected boolean hasSpec(LocationTrackingSpec spec) {
+		for (ActionState<LocationTrackingSpec> state : action.getAllActionStates()) {
+			if (spec.equals(state.getUserData())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public void setSpec(LocationTrackingSpec spec) {
 		if (action == null) {
 			// It might if the client doesn't need a new button, e.g., TraceDiff
+			doSetSpec(spec);
+		}
+		else if (!hasSpec(spec)) {
+			Msg.warn(this, "No action state for given tracking spec: " + spec);
 			doSetSpec(spec);
 		}
 		else {
@@ -239,7 +251,7 @@ public class DebuggerTrackLocationTrait {
 		doTrack();
 	}
 
-	protected CompletableFuture<ProgramLocation> computeTrackedLocation() {
+	protected ProgramLocation computeTrackedLocation() {
 		// Change of register values (for current frame)
 		// Change of stack pc (for current frame)
 		// Change of current view (if not caused by goTo)
@@ -248,14 +260,19 @@ public class DebuggerTrackLocationTrait {
 		// Change of current frame
 		// Change of tracking settings
 		DebuggerCoordinates cur = current;
+		if (cur.getView() == null) {
+			return null;
+		}
 		TraceThread thread = cur.getThread();
 		if (thread == null || spec == null) {
-			return AsyncUtils.nil();
+			return null;
 		}
 		// NB: view's snap may be forked for emulation
-		return tracker.computeTraceAddress(tool, cur).thenApply(address -> {
-			return address == null ? null : new ProgramLocation(cur.getView(), address);
-		});
+		Address address = tracker.computeTraceAddress(tool, cur);
+		if (address == null) {
+			return null;
+		}
+		return new ProgramLocation(cur.getView(), address);
 	}
 
 	public String computeLabelText() {
@@ -266,13 +283,13 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	protected void doTrack() {
-		computeTrackedLocation().thenAccept(loc -> {
-			trackedLocation = loc;
+		try {
+			trackedLocation = computeTrackedLocation();
 			locationTracked();
-		}).exceptionally(ex -> {
+		}
+		catch (Throwable ex) {
 			Msg.error(this, "Error while computing location: " + ex);
-			return null;
-		});
+		}
 	}
 
 	protected void addNewListeners() {

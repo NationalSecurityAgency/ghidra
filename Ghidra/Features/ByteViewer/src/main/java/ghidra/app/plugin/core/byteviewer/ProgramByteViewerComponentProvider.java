@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.byteviewer;
+
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.event.*;
 import java.math.BigInteger;
@@ -31,7 +34,7 @@ import ghidra.app.nav.*;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.services.ClipboardService;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginEvent;
@@ -39,7 +42,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -58,6 +62,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	protected Program program;
 	protected ProgramSelection currentSelection;
+	protected ProgramSelection liveSelection;
 	protected ProgramSelection currentHighlight;
 	protected ProgramLocation currentLocation;
 
@@ -86,12 +91,16 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 
 		decorationComponent = new DecoratorPanel(panel, isConnected);
-		clipboardProvider = new ByteViewerClipboardProvider(this, tool);
+		clipboardProvider = newClipboardProvider();
 		addToTool();
 
 		createProgramActions();
 		updateTitle();
 		registerNavigatable();
+	}
+
+	protected ByteViewerClipboardProvider newClipboardProvider() {
+		return new ByteViewerClipboardProvider(this, tool);
 	}
 
 	public void createProgramActions() {
@@ -132,14 +141,14 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return getByteViewerActionContext();
-	}
-
-	ByteViewerActionContext getByteViewerActionContext() {
 		ByteBlockInfo info = panel.getCursorLocation();
 		if (info == null) {
 			return null;
 		}
+		return newByteViewerActionContext();
+	}
+
+	protected ByteViewerActionContext newByteViewerActionContext() {
 		return new ByteViewerActionContext(this);
 	}
 
@@ -170,8 +179,10 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		return getCurrentTextSelection();
 	}
 
-	private void setSelection(ProgramSelection selection, boolean notify) {
+	protected void setSelection(ProgramSelection selection, boolean notify) {
+		liveSelection = null;
 		currentSelection = selection;
+		updateTitle();
 		if (selection == null) {
 			return;
 		}
@@ -250,8 +261,26 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (!isConnected()) {
 			title = "[" + title + "]";
 		}
-
 		setTitle(title);
+		updateSubTitle();
+	}
+
+	private void updateSubTitle() {
+		// Note: the Listing has similar code
+		ProgramSelection selection = liveSelection != null ? liveSelection : currentSelection;
+		String selectionInfo = null;
+		if (selection != null && !selection.isEmpty()) {
+			long n = selection.getNumAddresses();
+			String nString = Long.toString(n);
+			if (n == 1) {
+				selectionInfo = "(1 byte selected)";
+			}
+			else {
+				selectionInfo = '(' + nString + " bytes selected)";
+			}
+		}
+
+		setSubTitle(selectionInfo);
 	}
 
 //==================================================================================================
@@ -339,11 +368,11 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	public Icon getIcon() {
 		if (isConnected()) {
-			return super.getIcon();
+			return getBaseIcon();
 		}
 
 		if (navigatableIcon == null) {
-			Icon primaryIcon = super.getIcon();
+			Icon primaryIcon = getBaseIcon();
 			navigatableIcon = NavigatableIconFactory.createSnapshotOverlayIcon(primaryIcon);
 		}
 		return navigatableIcon;
@@ -357,12 +386,6 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	public boolean isVisible() {
 		return tool.isVisible(this);
-	}
-
-	@Override
-	public void requestFocus() {
-		panel.getCurrentComponent().requestFocus();
-		tool.toFront(this);
 	}
 
 //==================================================================================================
@@ -534,8 +557,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public void domainObjectChanged(DomainObjectChangedEvent event) {
 
 		if (blockSet != null) {
-			if (event.containsEvent(DomainObject.DO_OBJECT_SAVED) ||
-				event.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
+			if (event.contains(SAVED, FILE_CHANGED)) {
 				// drop all changes
 
 				blockSet.setByteBlockChangeManager(newByteBlockChangeManager(blockSet, null));
@@ -543,13 +565,8 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			}
 		}
 
-		if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			event.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_CHANGED) ||
-			event.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			event.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			event.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			event.containsEvent(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED) ||
-			event.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_SPLIT)) {
+		if (event.contains(RESTORED, MEMORY_BLOCK_CHANGED, MEMORY_BLOCK_ADDED, MEMORY_BLOCK_MOVED,
+			MEMORY_BLOCK_REMOVED, MEMORY_BLOCKS_JOINED, MEMORY_BLOCK_SPLIT)) {
 
 			// call plugin to update data models
 			memoryConfigurationChanged();
@@ -557,9 +574,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			// changeManager, so get out now.
 		}
 
-		if (event.containsEvent(ChangeManager.DOCR_MEMORY_BYTES_CHANGED) ||
-			event.containsEvent(ChangeManager.DOCR_CODE_ADDED) ||
-			event.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_ADDED)) {
+		if (event.contains(MEMORY_BYTES_CHANGED, CODE_ADDED, REFERENCE_ADDED)) {
 			updateManager.update();
 		}
 	}
@@ -589,10 +604,19 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	protected void updateSelection(ByteBlockSelection selection) {
 		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
+		liveSelection = null;
 		currentSelection = event.getSelection();
 		plugin.updateSelection(this, event, program);
 		clipboardProvider.setSelection(currentSelection);
+		updateTitle();
 		contextChanged();
+	}
+
+	@Override
+	protected void updateLiveSelection(ByteBlockSelection selection) {
+		ProgramSelectionPluginEvent event = blockSet.getPluginEvent(plugin.getName(), selection);
+		liveSelection = event.getSelection();
+		updateTitle();
 	}
 
 	@Override
@@ -787,12 +811,12 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program p) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program p) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program p) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program p) {
 		// currently unsupported
 
 	}

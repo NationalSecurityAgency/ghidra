@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.graph.viewer.layout;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -244,6 +243,56 @@ public class GridLocationMapTest {
 		assertCoordinates(v7, 2, 3);
 	}
 
+	@Test
+	public void testGetVertexColumnRanges() {
+		V v1 = new V("v1");
+		V v2 = new V("v2");
+		V v3 = new V("v3");
+		locations.set(v1, 0, 0);
+		locations.set(v2, 2, 4);
+		locations.set(v3, 2, 6);
+
+		GridRange[] columnRanges = locations.getVertexColumnRanges();
+		assertEquals(3, columnRanges.length);
+		assertEquals(new GridRange(0, 0), columnRanges[0]);
+		assertEquals(new GridRange(), columnRanges[1]);
+		assertEquals(new GridRange(4, 6), columnRanges[2]);
+
+	}
+
+	@Test
+	public void testAddGrids() {
+		// This method creates two grids with points and edge articulations. It then merges
+		// the other map into the first map with a given row and column shift. It then checks
+		// the merged grid has all the edge points and vertex points in the expected locations.
+		V v1 = new V("v1");
+		V v2 = new V("v2");
+		E e1 = new E(v1, v2);
+
+		V v3 = new V("v3");
+		V v4 = new V("v4");
+		E e2 = new E(v3, v4);
+
+		locations.set(v1, 0, 0);
+		locations.set(v2, 2, 4);
+		locations.setArticulations(e1, List.of(new GridPoint(3, 3)));
+
+		GridLocationMap<V, E> otherMap = new GridLocationMap<>();
+		otherMap.set(v3, 1, 1);
+		otherMap.set(v4, 2, 2);
+		otherMap.setArticulations(e1, List.of(new GridPoint(1, 2)));
+
+		locations.add(otherMap, 10, 10);
+
+		assertEquals(13, locations.width());
+		assertEquals(13, locations.height());
+
+		assertCoordinates(v1, 0, 0);
+		assertCoordinates(v2, 2, 4);
+		assertCoordinates(v3, 11, 11);
+		assertCoordinates(v4, 12, 12);
+
+	}
 //==================================================================================================
 // Private Methods
 //==================================================================================================	
@@ -253,7 +302,7 @@ public class GridLocationMapTest {
 		List<Row<V>> rows = locations.rows();
 		Row<V> row = getRow(rows, rowIndex);
 		assertEquals("Row " + rowIndex + " has wrong column count", size,
-			(int) row.getColumnCount());
+			row.getColumnCount());
 		assertEquals(startColumnIndex, (int) row.getStartColumn());
 	}
 
@@ -279,8 +328,8 @@ public class GridLocationMapTest {
 	}
 
 	private void assertCoordinates(V v, int row, int col) {
-		assertEquals("Row not set for '" + v + "'", row, (int) locations.row(v));
-		assertEquals("Column not set for '" + v + "'", col, (int) locations.col(v));
+		assertEquals("Row not set for '" + v + "'", row, locations.row(v));
+		assertEquals("Column not set for '" + v + "'", col, locations.col(v));
 	}
 
 	private class V extends TestVertex {

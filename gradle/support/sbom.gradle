@@ -48,48 +48,87 @@ def generateHash(File file, String alg) {
  
  /******************************************************************************************
  * 
- * Gets the group, name, and version of the given jar from its pom.xml file, if it exists.
- * Empty strings are returned for the group, name, and version if they could not be found
- * in a pom.xml file.
+ * Gets the group, name, description, and version of the given jar from its pom.xml file, if
+ * it exists. Empty strings are returned for the group, name, description, and version if 
+ * they could not be found in a pom.xml file.
  *
  * Note that some jars have more than one pom.xml for one reason or another, so we validate
  * against the jar filename to ensure we'll get the right one.
  *
  ******************************************************************************************/
- def extractPomGroupNameVersion(File jarFile, FileTree jarFileTree) {
+ def extractFromPom(File jarFile, FileTree jarFileTree) {
 	def group = ""
 	def name = ""
+	def description = ""
 	def version = ""
 	jarFileTree.matching { include "**/pom.xml" }.each { pomFile ->
 		def pomProject = new XmlSlurper().parse(pomFile)
 		def artifactId = pomProject.artifactId.toString()
 		if (jarFile.name.contains(artifactId)) {
 			name = artifactId
+			description = pomProject.description.toString()
 			group = pomProject.groupId.toString() ?: pomProject.parent.groupId.toString()
 			version = pomProject.version.toString() ?: pomProject.parent.version.toString()
 		}
 	}
-	return [group, name, version]
+	return [group ?: "", name ?: "", description ?: "", version ?: ""]
  }
  
  /******************************************************************************************
  * 
- * Returns the name and version of the given jar file, which we expect to be of the form
- * <name>-<version>.jar.  Beware that both the name and version parts can contain dashes of
- * their own.  We will assume that the first dash with a digit that directly follows begins
- * the version substring.
+ * Returns the name and version of the given jar file, which we expect to be of the form 
+ * <name>-<version>.jar.  Beware that both the name and version parts can contain dashes of 
+ * their own.  We will assume that the first dash with a digit that directly follows begins 
+ * the version substring.  An empty string is returned for the version if it could not be 
+ * found.
  *
  ******************************************************************************************/
- def extractNameAndVersion(File jarFile) {
-	def name = jarFile.name[0..-5] // remove ".jar" extension
+ def extractFromFilename(File jarFile) {
+	def name = jarFile.name[0..<-4] // remove ".jar" extension
 	def version = ""
 	def matcher = name =~ ~/(?<name>.+?)-(?<version>\d.*)/
 	if (matcher.matches()) {
 		name = matcher.group("name")
 		version = matcher.group("version")
 	}
-	return [name, version]
+	return [name, version ?: ""]
 }
+
+ /******************************************************************************************
+ * 
+ * Gets the group, description and version of the given jar from its MANIFEST.MF file, if it 
+ * exists. Empty strings are returned for the group, description, and version if they could 
+ * not be found in a MANIFEST.MF file.
+ *
+ ******************************************************************************************/
+ def extractFromManifest(File jarFile) {
+ 	def group = ""
+	def description = ""
+	def version = ""
+	def manifest = new JarFile(jarFile).manifest
+	if (manifest) {
+		version = manifest.mainAttributes.getValue("Bundle-Version")
+		if (!version) {
+			version = manifest.mainAttributes.getValue("Specification-Version")
+		}
+		if (!version) {
+			version = manifest.mainAttributes.getValue("Implementation-Version")
+		}
+		
+		if (manifest.mainAttributes.getValue("Specification-Vendor") == "Ghidra") {
+			def name = jarFile.getName()[0..<-4] // remove ".jar" extension
+			description = "Ghidra ${name} module"
+			group = "ghidra"
+		}
+		if (!description) {
+			description = manifest.mainAttributes.getValue("Bundle-Description")
+		}
+		if (!description) {
+			description = manifest.mainAttributes.getValue("Specification-Title")
+		}
+	}
+	return [group ?: "", description ?: "", version ?: ""]
+ }
 
 /******************************************************************************************
  * 
@@ -109,13 +148,15 @@ def initializeSoftwareBillOfMaterials() {
  * dependency arguments.
  *
  ******************************************************************************************/
-def getSoftwareBillOfMaterialsComponent(File distroDir, File jarFile, String group, String name, String version, String license) {
+def getSoftwareBillOfMaterialsComponent(File distroDir, File jarFile, String group, String name, 
+		String description, String version, String license) {
 	def component = [:]
 	component.type = "library"
 	component.group = group ?: ""
 	component.name = name ?: ""
+	component.description = description ?: ""
 	component.version = version ?: ""
-	if (group && name && version) {
+	if (group && name && version && !group.equals("ghidra")) {
 		component.purl = "pkg:maven/${group}/${name}@${version}"
 	}
 	component.hashes = []
@@ -135,8 +176,6 @@ def getSoftwareBillOfMaterialsComponent(File distroDir, File jarFile, String gro
  * Generates a CycloneDX Software Bill of Materials (SBOM) for the given distibution 
  * directory and writes it to the given SBOM file.
  *
- * Note that the SBOM will only contain entries for non-Ghidra jars.
- *
  ******************************************************************************************/
 ext.writeSoftwareBillOfMaterials = { distroDir, sbomFile -> 
 	def sbom = initializeSoftwareBillOfMaterials()
@@ -144,21 +183,37 @@ ext.writeSoftwareBillOfMaterials = { distroDir, sbomFile ->
 	fileTree(distroDir).matching { include "**/*.jar" }.each { jarFile ->
 		def jarFileTree = zipTree(jarFile)
 		
-		if (!isGhidraJar(jarFile)) {
-
-			// First try to get the group, name, and version from a pom.xml (if it exists)
-			def (group, name, version) = extractPomGroupNameVersion(jarFile, jarFileTree)
+		// First try to get the group, name, description, and version from a pom.xml (if it exists)
+		def (group, name, description, version) = extractFromPom(jarFile, jarFileTree)
 		
-			// If that didn't work, get the name and version from the filename.  We are out of luck
-			// with the group for now.
-			if (!name) {
-				(name, version) = extractNameAndVersion(jarFile)
-			}
-		
-			// Add our jar to the SBOM
-			sbom.components << getSoftwareBillOfMaterialsComponent(distroDir, jarFile, group, name, version, "")
-		
+		// If that didn't work, get the name and version from the filename.  We are out of luck
+		// with the group for now.
+		if (!name) {
+			(name, version) = extractFromFilename(jarFile)
 		}
+		
+		// Now try to get the description from a MANIFEST.MF file (if it exists). If we were unable 
+		// to get the group and/or version from prior lookups, try to get them from the MANIFEST.MF
+		// file.
+		if (!description) {
+			def manifestGroup
+			def manifestVersion
+			(manifestGroup, description, manifestVersion) = extractFromManifest(jarFile)
+			if (!group) {
+				group = manifestGroup
+			}
+			if (!version) {
+				version = manifestVersion
+			}
+		}
+		
+		// Normalize the whitespace in the description
+		if (description) {
+			description = description.trim().replaceAll("\\s+", " ")
+		}
+
+		// Add our jar to the SBOM
+		sbom.components << getSoftwareBillOfMaterialsComponent(distroDir, jarFile, group, name, description, version, "")
 	}
 	
 	// Write the SBOM to a new file

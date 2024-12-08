@@ -23,12 +23,19 @@ import java.text.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.util.Msg;
+import ghidra.util.SpyErrorLogger;
+
 public class FontValueTest {
 	private static Font FONT = new Font("Dialog", Font.PLAIN, 12);
 	private GThemeValueMap values;
 
 	@Before
 	public void setup() {
+
+		// disable warning messages when some test values cannot be found
+		Msg.setErrorLogger(new SpyErrorLogger());
+
 		values = new GThemeValueMap();
 	}
 
@@ -140,4 +147,33 @@ public class FontValueTest {
 		assertFalse(grandParent.inheritsFrom("font.test", values));
 	}
 
+	@Test
+	public void testJavaFontValueRoundTrip() throws Exception {
+
+		FontValue value = FontValue.parse("[laf.font]Button.font", "monospaced-PLAIN-12");
+		values.addFont(value);
+
+		assertEquals("laf.font.Button.font", value.getId());
+		assertEquals(new Font("monospaced", Font.PLAIN, 12), value.get(values));
+
+		assertEquals("[laf.font]Button.font = monospaced-PLAIN-12",
+			value.getSerializationString());
+	}
+
+	@Test
+	public void testInheritsFrom_JavaValues() throws Exception {
+
+		FontValue parent = FontValue.parse("[laf.font]Button.font", "monospaced-PLAIN-12");
+		values.addFont(parent);
+		FontValue value =
+			FontValue.parse("[laf.font]ToggleButton.font", "[laf.font]Button.font");
+		values.addFont(value);
+
+		//
+		// Note: ColorValue.parse() works on external ids or normalized ids.
+		//
+		//       ColorValue() constructor and inheritsFrom() only work on normalized ids
+		//
+		assertTrue(value.inheritsFrom("laf.font.Button.font", values));
+	}
 }

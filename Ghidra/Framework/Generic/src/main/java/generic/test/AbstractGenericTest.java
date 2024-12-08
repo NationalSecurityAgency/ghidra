@@ -15,11 +15,12 @@
  */
 package generic.test;
 
+import static org.junit.Assert.*;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
@@ -27,6 +28,12 @@ import java.util.regex.Pattern;
 
 import javax.swing.SwingUtilities;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.*;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.*;
 import org.junit.runner.Description;
@@ -36,8 +43,7 @@ import generic.test.rule.Repeated;
 import generic.test.rule.RepeatedTestRule;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
-import ghidra.framework.Application;
-import ghidra.framework.ApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
@@ -66,6 +72,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	private static ApplicationConfiguration loadedApplicationConfiguration;
 
 	private volatile boolean hasFailed;
+
+	private boolean logSettingsChanged;
 
 	public TestWatcher watchman = new TestWatcher() {
 
@@ -113,6 +121,13 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	@Rule
 	public TestRule repeatedRule = new RepeatedTestRule();
+
+	@After
+	public void resetLogging() {
+		if (logSettingsChanged) {
+			LoggingInitialization.reinitialize();
+		}
+	}
 
 	private void debugBatch(String message) {
 		if (BATCH_MODE) {
@@ -233,6 +248,71 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
+	 * A convenience method for {@link #setLogLevel(String, Level)}.
+	 *
+	 * @param loggerClazz the logger class
+	 * @param newLevel the new level
+	 */
+	protected void setLogLevel(Class<?> loggerClazz, Level newLevel) {
+		setLogLevel(loggerClazz.getName(), newLevel);
+	}
+
+	/**
+	 * A convenience method to change the log level of the given logger name.  The logger name is
+	 * typically the class name that contains specialized logging.  You may also pass a package
+	 * name to get logging for all classes in that package.
+	 * See {@link Configurator#setLevel(String, Level)}
+	 * <P>
+	 * The console appender's log level will be changed if needed to ensure that messages for the
+	 * given log level are displayed.
+	 * <P>
+	 * The log system will be reset to the default settings when the test is finished.
+	 *
+	 * @param loggerName the logger name
+	 * @param newLevel the new log level to use
+	 */
+	protected void setLogLevel(String loggerName, Level newLevel) {
+
+		logSettingsChanged = true;
+
+		Configurator.setLevel(loggerName, newLevel);
+
+		LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+		Configuration configuration = loggerContext.getConfiguration();
+		LoggerConfig rootLoggerConfiguration = configuration.getLoggers().get("");
+
+		AppenderRef consoleAppender = getConsoleAppender(configuration, rootLoggerConfiguration);
+		Level currentLevel = consoleAppender.getLevel();
+		if (currentLevel.compareTo(newLevel) > 0) {
+			// the requested level is lower than the current level, so the messages will be shown
+			return;
+		}
+
+		// Note: we have to tell the console appender to change its level as well.  Otherwise, users
+		// may not see their messages in the console. It is set to DEBUG by default.
+		String consoleAppenderName = "console";
+		rootLoggerConfiguration.removeAppender(consoleAppenderName);
+		Appender appender = configuration.getAppender(consoleAppenderName);
+		rootLoggerConfiguration.addAppender(appender, newLevel, null);
+		loggerContext.updateLoggers();
+	}
+
+	private AppenderRef getConsoleAppender(Configuration configuration,
+			LoggerConfig rootLoggerConfigiguration) {
+		String consoleAppenderName = "console";
+		List<AppenderRef> appenders = rootLoggerConfigiguration.getAppenderRefs();
+		for (AppenderRef ref : appenders) {
+			String refName = ref.getRef();
+			if (refName.equals(consoleAppenderName)) {
+				return ref;
+			}
+		}
+
+		fail("Unable to find the logging console appender");
+		return null;
+	}
+
+	/**
 	 * Returns the window parent of c. If c is a window, then c is returned.
 	 *
 	 * <P>
@@ -245,18 +325,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static Window windowForComponent(Component c) {
 		return WindowUtilities.windowForComponent(c);
-	}
-
-	public File getLocalResourceFile(String relativePath) {
-		URL resource = getClass().getResource(relativePath);
-		try {
-			URI uri = resource.toURI();
-			return new File(uri);
-		}
-		catch (URISyntaxException e) {
-			Msg.error(this, "Unable to convert URL to URI", e);
-		}
-		return null;
 	}
 
 	/**
@@ -274,13 +342,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (is == null) {
 			throw new IOException("Could not find resource: " + name);
 		}
+		Msg.debug(AbstractGenericTest.class, "Loading classpath resource: " + name);
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		ArrayList<String> text = readText(br);
+		List<String> text = readText(br);
 		br.close();
 		return text;
 	}
 
-	private static ArrayList<String> readText(BufferedReader br) throws IOException {
+	private static List<String> readText(BufferedReader br) throws IOException {
 		ArrayList<String> list = new ArrayList<>();
 		String line = "";
 		while (line != null) {
@@ -293,10 +362,11 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	}
 
-	public static ArrayList<String> loadTextResource(String name) throws IOException {
+	public static List<String> loadTextResource(String name) throws IOException {
 		File file = getTestDataFile(name);
+		Msg.debug(AbstractGenericTest.class, "Loading text file: " + file);
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-		ArrayList<String> text = readText(reader);
+		List<String> text = readText(reader);
 		reader.close();
 		return text;
 	}
@@ -315,6 +385,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static File getTestDataFile(String path) throws FileNotFoundException {
 		ResourceFile resourceFile = Application.getModuleDataFile("TestResources", path);
+		Msg.debug(AbstractGenericTest.class, "Loading test data file: " + resourceFile);
 		return resourceFile.getFile(false);
 	}
 
@@ -348,6 +419,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	public static File findTestDataFile(String path) {
 		try {
 			ResourceFile resourceFile = Application.getModuleDataFile("TestResources", path);
+			Msg.debug(AbstractGenericTest.class, "Loading test data file: " + resourceFile);
 			return resourceFile.getFile(false);
 		}
 		catch (FileNotFoundException e) {
@@ -565,11 +637,11 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static void setErrorsExpected(boolean expected) {
 		if (expected) {
-			Msg.error(AbstractGenericTest.class, ">>>>>>>>>>>>>>>> Expected Exception");
+			Msg.error(AbstractGenericTest.class, ">>>>>>>>>>>>>>>> Expected Errors");
 			ConcurrentTestExceptionHandler.disable();
 		}
 		else {
-			Msg.error(AbstractGenericTest.class, "<<<<<<<<<<<<<<<< End Expected Exception");
+			Msg.error(AbstractGenericTest.class, "<<<<<<<<<<<<<<<< End Expected Errors");
 			ConcurrentTestExceptionHandler.enable();
 		}
 	}
@@ -728,10 +800,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file in the Java temp directory using the given name as a
+	 * Creates a file in the Application temp directory using the given name as a
 	 * prefix and the given suffix. The final filename will also include the
 	 * current test name, as well as any data added by
-	 * {@link File#createTempFile(String, String)}. The file suffix will be
+	 * {@link File#createTempFile(String, String, File)}. The file suffix will be
 	 * <code>.tmp</code>
 	 * <p>
 	 * The file will be marked to delete on JVM exit. This will not work if the
@@ -749,10 +821,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file in the Java temp directory using the given name as a
+	 * Creates a file in the Application temp directory using the given name as a
 	 * prefix and the given suffix. The final filename will also include the
 	 * current test name, as well as any data added by
-	 * {@link File#createTempFile(String, String)}.
+	 * {@link File#createTempFile(String, String, File)}.
 	 * <p>
 	 * The file will be marked to delete on JVM exit. This will not work if the
 	 * JVM is taken down the hard way, as when pressing the stop button in

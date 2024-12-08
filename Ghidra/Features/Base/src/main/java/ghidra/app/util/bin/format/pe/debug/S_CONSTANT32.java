@@ -38,8 +38,6 @@ class S_CONSTANT32 extends DebugSymbol {
 		ptr += BinaryReader.SIZEOF_BYTE;
 
 		name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen));
-
-		Msg.debug(this, "S_CONSTANT32: " + unknown1 + " - " + unknown2);
 	}
 
 }

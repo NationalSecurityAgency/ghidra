@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
+import docking.action.MenuData;
 import ghidra.program.model.data.CycleGroup;
 
 /**
@@ -30,9 +31,13 @@ public class CycleGroupAction extends CompositeEditorTableAction {
 	private CycleGroup cycleGroup;
 
 	public CycleGroupAction(CompositeEditorProvider provider, CycleGroup cycleGroup) {
-		super(provider, cycleGroup.getName(), GROUP_NAME,
-			new String[] { "Cycle", cycleGroup.getName() },
-			new String[] { "Cycle", cycleGroup.getName() }, null);
+		super(provider, cycleGroup.getName());
+
+		setMenuBarData(
+			new MenuData(new String[] { "Cycle", cycleGroup.getName() }, null, GROUP_NAME));
+		setPopupMenuData(
+			new MenuData(new String[] { "Cycle", cycleGroup.getName() }, null, GROUP_NAME));
+
 		this.cycleGroup = cycleGroup;
 		getPopupMenuData().setParentMenuGroup(GROUP_NAME);
 		initKeyStroke(cycleGroup.getDefaultKeyStroke());
@@ -52,13 +57,16 @@ public class CycleGroupAction extends CompositeEditorTableAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		if (!isEnabledForContext(context)) {
+			return;
+		}
 		model.cycleDataType(cycleGroup);
 		requestTableFocus();
 	}
 
 	@Override
-	public void adjustEnablement() {
-		setEnabled(true);
+	public boolean isEnabledForContext(ActionContext context) {
+		return !hasIncompleteFieldEntry();
 	}
 
 	@Override

@@ -88,10 +88,10 @@ public class VTMatchTableModel extends AbstractVTMatchTableModel {
 
 		List<VTMatchSet> matchSets = session.getMatchSets();
 		for (VTMatchSet matchSet : matchSets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Collection<VTMatch> matches = matchSet.getMatches();
 			for (VTMatch match : matches) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				accumulator.add(match);
 			}

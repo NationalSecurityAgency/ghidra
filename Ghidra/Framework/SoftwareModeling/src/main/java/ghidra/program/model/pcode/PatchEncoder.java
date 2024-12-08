@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 /**
  * This is an encoder that produces encodings that can be retroactively patched.
  * The contained encoding is expected to be byte based.  The user can record a position
@@ -22,7 +24,7 @@ package ghidra.program.model.pcode;
  * use the returned offset to call the patchIntegerAttribute() method and modify the
  * encoding at the recorded position.
  */
-public interface PatchEncoder extends Encoder {
+public interface PatchEncoder extends CachedEncoder {
 
 	/**
 	 * Write a given raw spaceid (as returned by AddressSpace.getSpaceID()) as an attribute.
@@ -30,8 +32,9 @@ public interface PatchEncoder extends Encoder {
 	 * the spaceid, i.e. the decoder will read this as just space attribute.
 	 * @param attribId is the attribute
 	 * @param spaceId is the given spaceid
+	 * @throws IOException for problems writing to the stream
 	 */
-	public void writeSpaceId(AttributeId attribId, long spaceId);
+	public void writeSpaceId(AttributeId attribId, long spaceId) throws IOException;
 
 	/**
 	 * The returned value can be used as a position for later modification

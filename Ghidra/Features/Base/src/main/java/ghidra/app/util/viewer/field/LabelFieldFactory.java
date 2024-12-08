@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -60,8 +59,6 @@ public class LabelFieldFactory extends FieldFactory {
 	private Icon ANCHOR_ICON =
 		new MultiIcon(EMPTY_ICON, new GIcon("icon.base.util.viewer.fieldfactory.label"));
 
-	private PropertyEditor namespaceOptionsEditor = new NamespacePropertyEditor();
-
 	private boolean displayFunctionLabel;
 	private boolean displayLocalNamespace;
 	private boolean displayNonLocalNamespace;
@@ -83,7 +80,7 @@ public class LabelFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private LabelFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private LabelFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
@@ -107,7 +104,7 @@ public class LabelFieldFactory extends FieldFactory {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
 			new NamespaceWrappedOption(), null, "Adjusts the Label Field namespace display",
-			namespaceOptionsEditor);
+			() -> new NamespacePropertyEditor());
 		CustomOption wrappedOption =
 			fieldOptions.getCustomOption(NAMESPACE_OPTIONS, new NamespaceWrappedOption());
 		if (!(wrappedOption instanceof NamespaceWrappedOption)) {
@@ -151,7 +148,6 @@ public class LabelFieldFactory extends FieldFactory {
 		Address currAddr = cu.getMinAddress();
 
 		Program prog = cu.getProgram();
-		inspector.setProgram(prog);
 
 		Listing list = prog.getListing();
 		Function func = list.getFunctionAt(currAddr);
@@ -184,8 +180,7 @@ public class LabelFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		FieldElement[] textElements = new FieldElement[length];
-		int nextPos = 0;
+		List<FieldElement> elements = new ArrayList<>(length);
 
 		if (hasOffcuts) {
 			for (Address offcut : offcuts) {
@@ -196,7 +191,7 @@ public class LabelFieldFactory extends FieldFactory {
 						inspector.getOffcutSymbolColor(),
 						getMetrics(inspector.getOffcutSymbolStyle()), false, null);
 				}
-				textElements[nextPos++] = new TextFieldElement(as, nextPos, 0);
+				elements.add(new TextFieldElement(as, elements.size(), 0));
 			}
 		}
 
@@ -209,11 +204,11 @@ public class LabelFieldFactory extends FieldFactory {
 			ColorAndStyle c = inspector.getColorAndStyle(symbol);
 			AttributedString as = new AttributedString(icon, checkLabelString(symbol, prog),
 				c.getColor(), getMetrics(c.getStyle()), false, null);
-			textElements[nextPos++] = new TextFieldElement(as, nextPos, 0);
+			elements.add(new TextFieldElement(as, elements.size(), 0));
 		}
 
-		return ListingTextField.createMultilineTextField(this, proxy, textElements, x, width,
-			Integer.MAX_VALUE, hlProvider);
+		return ListingTextField.createMultilineTextField(this, proxy, elements, x, width,
+			hlProvider);
 	}
 
 	private String getOffsetText(CodeUnit cu, Address currAddr, Address offcutAddress) {
@@ -230,7 +225,7 @@ public class LabelFieldFactory extends FieldFactory {
 		String offcutSymbolText = null;
 		if (!offcutSymbol.isDynamic()) {
 			// the formatter doesn't change dynamic labels
-			offcutSymbolText = codeUnitFormat.getOffcutLabelString(offcutAddress, cu);
+			offcutSymbolText = codeUnitFormat.getOffcutLabelString(offcutAddress, cu, null);
 		}
 		else {
 			offcutSymbolText = offcutSymbol.getName();
@@ -449,7 +444,7 @@ public class LabelFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions pDisplayOptions, ToolOptions fieldOptions) {
 		return new LabelFieldFactory(formatModel, provider, pDisplayOptions, fieldOptions);
 	}

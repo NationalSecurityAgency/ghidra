@@ -13,22 +13,19 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Time</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerTimePlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerTimePlugin.png">
+    </DIV>
 
     <P>This window displays all recorded snapshots in the current trace. Typically, there is one
     snapshot per event recorded. Other windows often display the times of various events or use
-    time ranges to describe lifespans of various records. Those times refer to the "snap," which is
-    a 0-up counter of snapshot records. Thus, a snapshot is a collection of observations of a
-    target's state, usually while suspended, along with any mark up. Double-clicking a snapshot
-    navigates to the selected point in time. Note that navigating to the past may change your <A
-    href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control mode</A>.</P>
+    time ranges to describe lifespans of various objects. Those times refer to the <EM>snap</EM>,
+    which is a 0-up counter of snapshot records. Thus, a snapshot is a collection of observations
+    of a target's state, usually while suspended, along with any mark up. Double-clicking a
+    snapshot <EM>activates</EM> the selected point in time, i.e., the entire Debugger UI will
+    navigate to the selected snapshot. <B>NOTE:</B> Navigating through time is not permitted while
+    in <B>Control Target</B> <A href=
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">mode</A>.</P>
 
     <H2>Table Columns</H2>
 
@@ -45,11 +42,9 @@
       creation, this should probably be the spawned thread, not the parent.</LI>
 
       <LI>Schedule - if applicable, a source snap and the stepping schedule which produces this
-      snapshot. This always applies to "scratch" snapshots produced by emulation, but may also
-      apply if the stepping schedule between recorded events is somehow known. Typically, it is
-      just the number of steps of the source snapshot's event thread; however, the notation does
-      allow other threads to be stepped, too. See the <A href="#goto_time">Go To Time</A>
-      action.</LI>
+      snapshot. This always applies to <EM>scratch</EM> snapshots produced by emulation, but may
+      (rarely) apply to recorded events if the stepping schedule between them is somehow known. See
+      the <A href="#goto_time">Go To Time</A> action for a description of the notation.</LI>
 
       <LI>Description - a user-modifiable description of the snapshot or event. This defaults to
       the debugger's description of the event.</LI>
@@ -66,43 +61,43 @@
 
     <H3><A name="goto_time"></A>Go To Time</H3>
 
-    <P>This action is available when a trace is active. It prompts for a <B>Time Schedule</B>
-    expression. This is the same form as the expression in the sub-title of the <A href=
+    <P>This action is available when a trace is active. It prompts for a <EM>time schedule</EM>.
+    This is the same form as the notation in the sub-title of the <A href=
     "help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html">Threads</A> window. In many
     cases, it is simply the snapshot number, e.g., <CODE>3</CODE>, which will go to the snapshot
-    with key 3. It may optionally include an emulation schedule, for example, <CODE>3:10</CODE>
+    with key 3. It may optionally include an emulation schedule. For example, <CODE>3:10</CODE>
     will use snapshot 3 for an emulator's initial state and step 10 machine instructions on
     snapshot 3's event thread. If the snapshot does not give an event thread, then the thread must
     be specified in the expression, e.g., <CODE>3:t1-10</CODE>. That expression will start at
     snapshot 3, get the thread with key 1, and step it 10 machine instructions. The stepping
     commands can be repeated any number of times, separated by semicolons, to step threads in a
-    specified sequence, e.g., <CODE>3:t1-10;t2-5</CODE> will do the same as before, then get thread
-    2 and step it 5 times.</P>
+    specified sequence. For example, <CODE>3:t1-10;t2-5</CODE> will do the same as before, then get
+    thread 2 and step it 5 times.</P>
 
-    <P>The emulator's state can also be modified by the schedule. Instead of specifying a number of
-    steps, write a <B>Sleigh</B> statement, e.g., <CODE>3:t1-{r0=0x1234};10</CODE>. This will start
-    at snapshot 3, patch thread 1's r0 to 0x1234, then step 10 instructions. Like stepping
-    commands, the thread may be omitted for Sleigh commands. Each command without a thread
-    specified implicitly uses the one from the previous command, or in the case of the first
-    command, the event thread. Only one Sleigh statement is permitted per command.</P>
+    <P>The emulator's state can also be patched by the schedule. Instead of specifying the number
+    of steps, write a <EM>Sleigh</EM> statement, e.g., <CODE>3:t1-{r0=0x1234};10</CODE>. This will
+    start at snapshot 3, patch thread 1's r0 to 0x1234, then step 10 instructions. As for steps,
+    the thread key may be omitted for Sleigh commands. Each command without a thread specified
+    implicitly uses the one from the previous command, or in the case of the first command, the
+    event thread. Only one Sleigh statement is permitted per command.</P>
 
     <P>A second command sequence may be appended, following a dot, to command the emulator at the
     level of p-code operations as well. This is particularly useful when debugging a processor
-    specification. See also the <A href=
+    specification. See the <A href=
     "help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html">P-code Stepper</A>
     window. For example, <CODE>3:2.10</CODE> will start at snapshot 3 and step the event thread 2
     machine instructions then 10 p-code operations. The same thread-by-thread sequencing and state
-    patching commands are allowed in the p-code command sequence. The <EM>entire</EM> instruction
-    sequence precedes the entire p-code sequence, i.e., only a single dot is allowed. Once the
-    expression enters p-code mode, it cannot re-enter instruction mode.</P>
+    patching commands are allowed in the p-code command sequence. <B>NOTE:</B> the entire
+    instruction sequence precedes the entire p-code sequence, i.e., only a single dot is allowed.
+    Once the schedule enters p-code mode, it cannot re-enter instruction mode.</P>
 
     <H3><A name="hide_scratch"></A>Hide Scratch</H3>
 
     <P>This toggle action is always available in the drop-down actions of the Time window. It is
     enabled by default. The emulation service, which enables trace extrapolation and interpolation,
-    writes emulated state into the trace's "scratch space," which comprises all negative snaps.
-    When this toggle is enabled, those snapshots are hidden. They can be displayed by disabling
-    this toggle. Note that navigating into scratch space may cause temporary undefined behavior in
-    some windows, and may prevent interaction with the target.</P>
+    writes emulated state into the trace's <EM>scratch space</EM>, which comprises all negative
+    snaps. When this toggle is enabled, those snapshots are hidden. They can be displayed by
+    disabling this toggle. Note that navigating into scratch space may cause temporary undefined
+    behavior in some windows, and may prevent interaction with the target.</P>
   </BODY>
 </HTML>

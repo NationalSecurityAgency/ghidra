@@ -25,7 +25,6 @@ import javax.swing.JTable;
 
 import docking.widgets.table.*;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.Settings;
@@ -156,8 +155,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 				JTable table = data.getTable();
 				if (!eq.isValidUUID()) { // Error equate
-					label.setForeground(
-						(isSelected) ? table.getSelectionForeground() : Tables.FG_ERROR_UNSELECTED);
+					label.setForeground(getErrorForegroundColor(isSelected));
 				}
 				else if (!eq.isEnumBased()) { // User label
 					label.setForeground(

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,16 +28,22 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
+import ghidra.util.datastruct.PrivatelyQueuedListener;
 
+@Deprecated(forRemoval = true, since = "11.2")
 public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectModel {
 	public final Object lock = new Object();
 	public final Object cbLock = new Object();
-	protected final ExecutorService clientExecutor =
-		Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
-				.namingPattern(getClass().getSimpleName() + "-thread-%d")
+	protected final ExecutorService clientExecutor = Executors.newSingleThreadExecutor(
+		new BasicThreadFactory.Builder().namingPattern(getClass().getSimpleName() + "-thread-%d")
 				.build());
+
 	protected final ListenerSet<DebuggerModelListener> listeners =
-		new ListenerSet<>(DebuggerModelListener.class, clientExecutor);
+		new ListenerSet<>(DebuggerModelListener.class, true);
+
+	protected final PrivatelyQueuedListener<DebuggerModelListener> asyncListeners =
+		new PrivatelyQueuedListener<DebuggerModelListener>(DebuggerModelListener.class,
+			clientExecutor, listeners.invoke());
 
 	protected SpiTargetObject root;
 	protected boolean rootAdded;
@@ -98,7 +104,9 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 				return null;
 			});
 			this.completedRoot.completeAsync(() -> root, clientExecutor);
-			listeners.fire.rootAdded(root);
+
+			// broadcast is privately queued on clientExecutor
+			broadcast().rootAdded(root);
 		}
 	}
 
@@ -198,9 +206,13 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		listeners.remove(listener);
 	}
 
+	protected DebuggerModelListener broadcast() {
+		return asyncListeners.in;
+	}
+
 	/**
 	 * Ensure that dependent computations occur on the client executor
-	 * 
+	 *
 	 * @param <T> the type of the future value
 	 * @param v the future
 	 * @return a future which completes after the given one on the client executor
@@ -218,7 +230,7 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	@Override
 	public CompletableFuture<Void> close() {
 		clientExecutor.shutdown();
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public void removeExisting(List<String> path) {
@@ -249,13 +261,11 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		}
 		DefaultTargetObject<?, ?> dtoParent = (DefaultTargetObject<?, ?>) delegate;
 		if (PathUtils.isIndex(path)) {
-			dtoParent.changeElements(List.of(PathUtils.getIndex(path)), List.of(),
-				"Replaced");
+			dtoParent.changeElements(List.of(PathUtils.getIndex(path)), List.of(), "Replaced");
 		}
 		else {
 			assert PathUtils.isName(path);
-			dtoParent.changeAttributes(List.of(PathUtils.getKey(path)), Map.of(),
-				"Replaced");
+			dtoParent.changeAttributes(List.of(PathUtils.getKey(path)), Map.of(), "Replaced");
 		}
 	}
 

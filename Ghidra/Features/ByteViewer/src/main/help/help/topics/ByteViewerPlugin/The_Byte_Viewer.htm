@@ -87,17 +87,41 @@
     		<p>This view does not support <a href="#EditBytes">editing</a>.</p>
   			</blockquote>
   
-  		<h3><a name="Add_Byteviewer_HexInteger_Panel"></a><a name="HexInteger"></a>HexInteger </h3>
+  		<h3><a name="Add_Byteviewer_HexShortPanel"></a><a name="HexShort"></a>Hex Short</h3>
   			<blockquote>
-	    		<p>This format shows four byte numbers represented as an eight digit hex number.&nbsp;</p>
+	    		<p>This format shows two-byte numbers represented as an four-digit hex number.&nbsp;</p>
+	    		<p> This view supports <a href="#EditBytes">editing</a>. When a byte
+				is changed, both bytes associated with this address are rendered in
+	    		<font color="#ff0000"> red</font> to denote the change.</p>
+  			</blockquote>
+
+  		<h3><a name="Add_Byteviewer_HexInteger_Panel"></a><a name="HexInteger"></a>Hex Integer</h3>
+  			<blockquote>
+	    		<p>This format shows four-byte numbers represented as an eight-digit hex number.&nbsp;</p>
 	    		<p> This view supports <a href="#EditBytes">editing</a>. When a byte
 				is changed, all four bytes associated with this address are rendered in
 	    		<font color="#ff0000"> red</font> to denote the change.</p>
   			</blockquote>
 
+  		<h3><a name="Add_Byteviewer_HexLong_Panel"></a><a name="HexLongr"></a>Hex Long</h3>
+  			<blockquote>
+	    		<p>This format shows eight-byte numbers represented as an 16-digit hex number.&nbsp;</p>
+	    		<p> This view supports <a href="#EditBytes">editing</a>. When a byte
+				is changed, all eight bytes associated with this address are rendered in
+	    		<font color="#ff0000"> red</font> to denote the change.</p>
+  			</blockquote>
+
+  		<h3><a name="Add_Byteviewer_HexLongLong_Panel"></a><a name="HexLongLong"></a>Hex Long Long</h3>
+  			<blockquote>
+	    		<p>This format shows 16-byte numbers represented as an 32-digit hex number.&nbsp;</p>
+	    		<p> This view supports <a href="#EditBytes">editing</a>. When a byte
+				is changed, all 16 bytes associated with this address are rendered in
+	    		<font color="#ff0000"> red</font> to denote the change.</p>
+  			</blockquote>
+
 	 	<h3><a name="Add_Byteviewer_Integer_Panel"></a><a name="Integer"></a>Integer&nbsp; </h3>
   			<blockquote>
-    			<p>This view shows four byte numbers represented in decimal format.&nbsp;</p>
+    			<p>This view shows four-byte numbers represented in decimal format.&nbsp;</p>
     			<p> This view does not support <a href="#EditBytes">editing</a>.</p>
   			</blockquote>
   
@@ -277,11 +301,14 @@
   			</blockquote>
 	</blockquote>
 
-	<h2>Reorder Views</h2>
+	<h2>Reorder / Resize Views</h2>
 		<blockquote>
 			<p>The various views in the ByteViewer can be reordered by dragging
 			the view header to the left or right of its current position. The view
 			positions are swapped.<br></p>
+			<p>The width of each view can also be changed by dragging the separator
+			bars in the view header to the left or right. This will resize the view that is to 
+			the left of the separator bar.<P> 
 		</blockquote>
 
 	<h2><a name="WriteYourOwn"></a>Writing Your Own Format Plugin</h2>

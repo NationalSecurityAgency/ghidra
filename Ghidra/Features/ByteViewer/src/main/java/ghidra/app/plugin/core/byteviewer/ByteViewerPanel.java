@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,26 +21,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.*;
 
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
-import docking.widgets.indexedscrollpane.*;
+import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import generic.theme.GColor;
 import generic.theme.Gui;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.PairLayout;
 import help.Help;
 import help.HelpService;
@@ -49,10 +45,8 @@ import help.HelpService;
  * Top level component that has a scrolled pane for the panel of components that show the
  * view for each format.
  */
-public class ByteViewerPanel extends JPanel
-		implements TableColumnModelListener, LayoutModel, LayoutListener {
+public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListener {
 	private static final String FONT_STATUS_ID = "font.byteviewer.status";
-//    private ByteViewerPlugin plugin;
 	private List<ByteViewerComponent> viewList; // list of field viewers
 	private FieldPanel indexPanel; // panel for showing indexes
 	private IndexFieldFactory indexFactory;
@@ -61,12 +55,9 @@ public class ByteViewerPanel extends JPanel
 	private JLabel offsetField;
 	private JLabel insertionField;
 	private JPanel statusPanel;
-	private CompositePanel compPanel;
 	private int fontHeight;
-	private FontMetrics fm;
+	private FontMetrics fontMetrics;
 	private int bytesPerLine;
-	private IndexedScrollPane scrollp;
-	private ByteViewerHeader columnHeader;
 	private ByteBlockSet blockSet;
 	private ByteBlock[] blocks;
 	private IndexMap indexMap; // maps indexes to the correct block and offset
@@ -78,12 +69,12 @@ public class ByteViewerPanel extends JPanel
 	private Color highlightColor;
 	private int highlightButton;
 	private List<LayoutModelListener> layoutListeners = new ArrayList<>(1);
-	private int indexPanelWidth;
 	private boolean addingView; // don't respond to cursor location
 	// changes while this flag is true
 	private final ByteViewerComponentProvider provider;
 
 	private List<AddressSetDisplayListener> displayListeners = new ArrayList<>();
+	private ByteViewerIndexedView indexedView;
 
 	protected ByteViewerPanel(ByteViewerComponentProvider provider) {
 		super();
@@ -109,9 +100,8 @@ public class ByteViewerPanel extends JPanel
 			height += dim.height;
 		}
 		boolean addHeight = true;
-		for (int i = 0; i < viewList.size(); i++) {
+		for (ByteViewerComponent c : viewList) {
 
-			ByteViewerComponent c = viewList.get(i);
 			Dimension d = c.getPreferredSize();
 			width += d.width;
 			width += 2; // for separator
@@ -136,98 +126,52 @@ public class ByteViewerPanel extends JPanel
 		super.paintComponent(g);
 	}
 
-	// TableColumnModelListener interface methods
-	@Override
-	public void columnAdded(TableColumnModelEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void columnMarginChanged(ChangeEvent e) {
-		// no-op
-	}
-
-	/**
-	 * Interface method called when the columns move.
-	 */
-	@Override
-	public void columnMoved(TableColumnModelEvent e) {
-
-		int fromIndex = e.getFromIndex();
-		int toIndex = e.getToIndex();
-		if (fromIndex == toIndex) {
-			return;
-		}
-		compPanel.swapView(fromIndex, toIndex);
-
-		invalidate();
-		validate();
-		repaint();
-	}
-
-	@Override
-	public void columnRemoved(TableColumnModelEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void columnSelectionChanged(ListSelectionEvent e) {
-		// no-op
-	}
-
 	//////////////////////////////////////////////////////////////////////////
 	// ** package-level methods **
 	//////////////////////////////////////////////////////////////////////////
 	void setCurrentCursorColor(Color c) {
 		currentCursorColor = c;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setCurrentCursorColor(c);
 		}
 	}
 
 	void setCurrentCursorLineColor(Color c) {
 		currentCursorLineColor = c;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setCurrentCursorLineColor(c);
 		}
 	}
 
 	void setHighlightButton(int highlightButton) {
 		this.highlightButton = highlightButton;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setHighlightButton(highlightButton);
 		}
 	}
 
 	void setMouseButtonHighlightColor(Color color) {
 		this.highlightColor = color;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setMouseButtonHighlightColor(color);
 		}
 	}
 
 	void setCursorColor(Color c) {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setNonFocusCursorColor(c);
 		}
 	}
 
 	void setSeparatorColor(Color c) {
 		indexFactory.setMissingValueColor(c);
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setSeparatorColor(c);
 		}
 	}
 
 	void setNonFocusCursorColor(Color c) {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent comp = viewList.get(i);
+		for (ByteViewerComponent comp : viewList) {
 			comp.setNonFocusCursorColor(c);
 		}
 	}
@@ -250,43 +194,37 @@ public class ByteViewerPanel extends JPanel
 				startField.setText(start);
 				ByteBlock lastBlock = blocks[blocks.length - 1];
 				endField.setText(lastBlock
-					.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
+						.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
 
-				indexPanelWidth = getIndexPanelWidth(blocks);
-				int center = indexPanelWidth / 2;
-				int startx = center - getMaxIndexSize() / 2;
-				indexFactory.setStartX(startx);
 				clearSelection();
 			}
 		}
 		if (indexMap == null) {
 			indexMap = new IndexMap();
 		}
-		indexFactory.setIndexMap(indexMap, indexPanelWidth);
+		indexFactory.setIndexMap(indexMap);
+		indexFactory.setSize(getIndexSizeInChars());
 
 		// Do the following loop twice - once with update off and then with update on.
 		// need to do this because all the byte view components must have their models 
 		// updated before any one of them tells their dependents about the change.
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.enableIndexUpdate(false);
 			c.setIndexMap(indexMap);
 		}
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.enableIndexUpdate(true);
 			c.setIndexMap(indexMap);
 		}
 		if (blocks != null && blocks.length > 0) {
-			columnHeader.setColumnName(indexPanel, blocks[0].getIndexName());
+			indexedView.setIndexName(blocks[0].getIndexName());
 		}
 		indexPanel.dataChanged(BigInteger.ZERO, indexMap.getNumIndexes());
 		indexSetChanged();
 	}
 
 	void setViewerSelection(ByteBlockSelection selection) {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.setViewerSelection(selection);
 		}
 	}
@@ -299,8 +237,7 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	void setViewerHighlight(ByteBlockSelection highlight) {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.setViewerHighlight(highlight);
 		}
 	}
@@ -329,8 +266,7 @@ public class ByteViewerPanel extends JPanel
 	void setCursorLocation(ByteBlock block, BigInteger index, int column) {
 
 		int modelIndex = -1;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			modelIndex = c.setViewerCursorLocation(block, index, column);
 		}
 		if (modelIndex >= 0) {
@@ -366,7 +302,8 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	protected ByteViewerComponent newByteViewerComponent(DataFormatModel model) {
-		return new ByteViewerComponent(this, new ByteViewerLayoutModel(), model, bytesPerLine, fm);
+		return new ByteViewerComponent(this, new ByteViewerLayoutModel(), model, bytesPerLine,
+			fontMetrics);
 	}
 
 	/**
@@ -399,10 +336,7 @@ public class ByteViewerPanel extends JPanel
 		c.setHighlightButton(highlightButton);
 		viewList.add(c);
 		c.setSize(c.getPreferredSize());
-		compPanel.addByteViewerComponent(c);
-		// tell column header it needs to grow
-		columnHeader.addColumn(viewName, c);
-
+		indexedView.addView(viewName, c);
 		c.addListeners();
 
 		if (viewList.size() == 1) {
@@ -427,9 +361,8 @@ public class ByteViewerPanel extends JPanel
 				c.setViewerCursorLocation(info.getBlock(), info.getOffset(), info.getColumn());
 			}
 			if (updateViewPosition) {
-				Runnable r = () -> indexPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(),
-					vp.getYOffset());
-				SwingUtilities.invokeLater(r);
+				Swing.runLater(() -> indexPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(),
+					vp.getYOffset()));
 			}
 			addingView = false;
 		}
@@ -441,8 +374,7 @@ public class ByteViewerPanel extends JPanel
 	void removeView(ByteViewerComponent comp) {
 
 		viewList.remove(comp);
-		compPanel.removeByteViewerComponent(comp);
-		columnHeader.removeColumn(comp);
+		indexedView.removeView(comp);
 
 		if (currentView == comp) {
 			currentView = null;
@@ -464,8 +396,7 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	void setEditMode(boolean editMode) {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.setEditMode(editMode);
 		}
 	}
@@ -481,14 +412,9 @@ public class ByteViewerPanel extends JPanel
 	 * Force the current view to be refreshed.
 	 */
 	void refreshView() {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.refreshView();
 		}
-//        PluginEvent lastSelectionEvent = plugin.getLastSelectionEvent();
-//        if (lastSelectionEvent != null) {
-//            plugin.firePluginEvent(lastSelectionEvent);
-//        }
 	}
 
 	int getNumberOfViews() {
@@ -509,9 +435,11 @@ public class ByteViewerPanel extends JPanel
 			this.bytesPerLine = bytesPerLine;
 			updateIndexMap();
 		}
+		// reset view column widths to preferred width for new bytesPerline
+		indexedView.resetViewWidthToDefaults();
+
 		// force everything to get validated, or else the
 		// header columns do not get repainted properly...
-
 		invalidate();
 		validate();
 		repaint();
@@ -524,8 +452,7 @@ public class ByteViewerPanel extends JPanel
 	 * @throws InvalidInputException if a model cannot support the bytesPerLine value
 	 */
 	void checkBytesPerLine(int numBytesPerLine) throws InvalidInputException {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			DataFormatModel model = c.getDataModel();
 			int groupSize = model.getGroupSize();
 			if (groupSize > 0) {
@@ -586,8 +513,7 @@ public class ByteViewerPanel extends JPanel
 			}
 			insertionField.setText(locRep);
 		}
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			if (source == c) {
 				continue;
 			}
@@ -605,8 +531,7 @@ public class ByteViewerPanel extends JPanel
 	void updateSelection(ByteViewerComponent source, ByteBlockSelection selection) {
 		provider.updateSelection(selection);
 
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			if (source == c) {
 				continue;
 			}
@@ -614,37 +539,16 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	FontMetrics getCurrentFontMetrics() {
-		return fm;
+	void updateLiveSelection(ByteViewerComponent source, ByteBlockSelection selection) {
+		provider.updateLiveSelection(selection);
 	}
 
-	/**
-	 * Return array of names of views in the order that they appear in the panel. The name array
-	 * includes an entry for the index panel.
-	 * @return a DataModelInfo object that describes the current views
-	 */
-	DataModelInfo getDataModelInfo() {
+	FontMetrics getCurrentFontMetrics() {
+		return fontMetrics;
+	}
 
-		DataModelInfo info = new DataModelInfo(viewList.size());
-		Component[] c = compPanel.getComponents();
-		int index = 0;
-		for (Component element : c) {
-			if (element instanceof JSeparator) {
-				continue;
-			}
-			if (element == indexPanel) {
-				// don't put the index panel into the data model info, as it is not configurable
-				continue;
-			}
-			else if (element instanceof ByteViewerComponent) {
-				DataFormatModel model = ((ByteViewerComponent) element).getDataModel();
-				String name = model.getName();
-				int groupSize = model.getGroupSize();
-				info.set(index, name, groupSize);
-				++index;
-			}
-		}
-		return info;
+	List<String> getViewNamesInDisplayOrder() {
+		return indexedView.getViewNamesInDisplayOrder();
 	}
 
 	/**
@@ -669,8 +573,7 @@ public class ByteViewerPanel extends JPanel
 		BigInteger offset = vp.getOffset();
 		ViewerPosition vpos = vp.getViewerPosition();
 
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.returnToView(block, offset, vpos);
 		}
 		indexPanel.setViewerPosition(vpos.getIndex(), vpos.getXOffset(), vpos.getYOffset());
@@ -679,11 +582,11 @@ public class ByteViewerPanel extends JPanel
 	/**
 	 * Restore the configuration of the plugin.
 	 * 
-	 * @param fontMetrics font metrics
+	 * @param metrics font metrics
 	 * @param newEditColor color for showing edits
 	 */
-	void restoreConfigState(FontMetrics fontMetrics, Color newEditColor) {
-		setFontMetrics(fontMetrics);
+	void restoreConfigState(FontMetrics metrics, Color newEditColor) {
+		setFontMetrics(metrics);
 		setEditColor(newEditColor);
 	}
 
@@ -704,34 +607,25 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	void setFontMetrics(FontMetrics fm) {
-		this.fm = fm;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		this.fontMetrics = fm;
+		for (ByteViewerComponent c : viewList) {
 			c.setFontMetrics(fm);
 		}
 		indexFactory = new IndexFieldFactory(fm);
-
-		int charWidth = fm.charWidth('W');
-		indexFactory.setStartX(charWidth);
-		indexPanelWidth =
-			ByteViewerComponentProvider.DEFAULT_NUMBER_OF_CHARS * charWidth + (2 * charWidth);
-		if (blocks != null) {
-			indexPanelWidth = getIndexPanelWidth(blocks);
-		}
-		indexFactory.setIndexMap(indexMap, indexPanelWidth);
+		updateIndexMap();
+		indexFactory.setSize(getIndexSizeInChars());
 		indexPanel.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 	}
 
 	void setEditColor(Color editColor) {
 		this.editColor = editColor;
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.setEditColor(editColor);
 		}
 	}
 
 	protected FontMetrics getFontMetrics() {
-		return fm;
+		return fontMetrics;
 	}
 
 	protected int getBytesPerLine() {
@@ -745,35 +639,25 @@ public class ByteViewerPanel extends JPanel
 
 		setLayout(new BorderLayout(10, 0));
 
-		columnHeader = new ByteViewerHeader(this);
-
-		fm = getFontMetrics(Gui.getFont(ByteViewerComponentProvider.DEFAULT_FONT_ID));
-		fontHeight = fm.getHeight();
+		fontMetrics = getFontMetrics(Gui.getFont(ByteViewerComponentProvider.DEFAULT_FONT_ID));
+		fontHeight = fontMetrics.getHeight();
 
 		// for the index/address column
-		indexFactory = new IndexFieldFactory(fm);
-		indexPanel = new FieldPanel(this);
+		indexFactory = new IndexFieldFactory(fontMetrics);
+		indexPanel = new FieldPanel(this, "Byte Viewer");
 
 		indexPanel.enableSelection(false);
 		indexPanel.setCursorOn(false);
 		indexPanel.setFocusable(false);
 		indexPanel.addLayoutListener(this);
 
-		compPanel = new CompositePanel(indexPanel);
-
-		scrollp = new IndexedScrollPane(compPanel);
-		scrollp.setWheelScrollingEnabled(false);
-
-		columnHeader = new ByteViewerHeader(this);
-		columnHeader.addColumnModelListener(this);
-
-		columnHeader.addColumn(ByteViewerComponentProvider.DEFAULT_INDEX_NAME, indexPanel);
-		scrollp.setColumnHeaderComp(columnHeader);
-
-		compPanel.setBackground(new GColor("color.bg.byteviewer"));
+		indexedView = new ByteViewerIndexedView(indexPanel);
+		IndexedScrollPane indexedScrollPane = new IndexedScrollPane(indexedView);
+		indexedScrollPane.setWheelScrollingEnabled(false);
+		indexedScrollPane.setColumnHeaderComp(indexedView.getColumnHeader());
 
 		statusPanel = createStatusPanel();
-		add(scrollp, BorderLayout.CENTER);
+		add(indexedScrollPane, BorderLayout.CENTER);
 		add(statusPanel, BorderLayout.SOUTH);
 
 		HelpService help = Help.getHelpService();
@@ -852,16 +736,14 @@ public class ByteViewerPanel extends JPanel
 		}
 
 		indexMap = new IndexMap(blockSet, bytesPerLine, blockOffset);
-		indexPanelWidth = getIndexPanelWidth(blocks);
-		indexFactory.setIndexMap(indexMap, indexPanelWidth);
+		indexFactory.setIndexMap(indexMap);
 		ByteBlock block = null;
 		BigInteger offset = BigInteger.ZERO;
 		if (info != null) {
 			block = info.getBlock();
 			offset = info.getOffset();
 		}
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.setIndexMap(indexMap);
 			if (info != null) {
 				c.setViewerCursorLocation(block, offset, info.getColumn());
@@ -874,8 +756,7 @@ public class ByteViewerPanel extends JPanel
 	 * Clear the selection.
 	 */
 	private void clearSelection() {
-		for (int i = 0; i < viewList.size(); i++) {
-			ByteViewerComponent c = viewList.get(i);
+		for (ByteViewerComponent c : viewList) {
 			c.clearViewerSelection();
 		}
 	}
@@ -887,7 +768,8 @@ public class ByteViewerPanel extends JPanel
 
 	@Override
 	public Dimension getPreferredViewSize() {
-		return new Dimension(indexPanelWidth, 500);
+		// this is the preferred size of the address panel
+		return new Dimension(100, 500);
 	}
 
 	@Override
@@ -926,26 +808,16 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	private int getIndexPanelWidth(ByteBlock[] blocks1) {
-		FontMetrics headerFm = columnHeader.getFontMetrics(columnHeader.getFont());
-		String indexName = ByteViewerComponentProvider.DEFAULT_INDEX_NAME;
-		if (blocks1.length > 0) {
-			indexName = blocks1[0].getIndexName();
+	private int getIndexSizeInChars() {
+		// set the field size at least the size of the column header name
+		int minChars = ByteViewerComponentProvider.INDEX_COLUMN_NAME.length();
+		if (blocks != null) {
+			for (ByteBlock element : blocks) {
+				int charCount = element.getMaxLocationRepresentationSize();
+				minChars = Math.max(minChars, charCount);
+			}
 		}
-		int nameWidth = headerFm.stringWidth(indexName);
-		int charWidth = fm.charWidth('W');
-		return Math.max(nameWidth, getMaxIndexSize() + 2 * charWidth);
-	}
-
-	private int getMaxIndexSize() {
-		int maxWidth = 0;
-		int charWidth = fm.charWidth('W');
-		for (ByteBlock element : blocks) {
-			int width = element.getMaxLocationRepresentationSize() * charWidth;
-			maxWidth = Math.max(maxWidth, width);
-		}
-
-		return maxWidth;
+		return minChars;
 	}
 
 	@Override
@@ -1024,170 +896,12 @@ public class ByteViewerPanel extends JPanel
 	public void removeDisplayListener(AddressSetDisplayListener listener) {
 		displayListeners.add(listener);
 	}
-}
 
-class CompositePanel extends JPanel implements IndexedScrollable, IndexScrollListener {
-	FieldPanel indexPanel;
-	BoundedRangeModel verticalScrollBarModel;
-	BoundedRangeModel horizontalScrollBarModel;
-	List<ByteViewerComponent> viewList = new ArrayList<>();
-	List<FieldPanel> allPanels = new ArrayList<>();
-	private boolean processingIndexRangeChanged;
-
-	CompositePanel(FieldPanel indexPanel) {
-		super(new HorizontalLayout(0));
-		this.indexPanel = indexPanel;
-		indexPanel.addIndexScrollListener(this);
-		addMouseWheelListener(e -> {
-			// this lets us scroll the byte viewer when the user is not over any panel, but still over the view
-			Layout firstLayout = indexPanel.getLayoutModel().getLayout(BigInteger.ZERO);
-			int layoutScrollHt = firstLayout != null //
-					? firstLayout.getScrollableUnitIncrement(0, 1)
-					: 0;
-
-			double wheelRotation = e.getPreciseWheelRotation();
-			int scrollAmount =
-				(int) (wheelRotation * layoutScrollHt * FieldPanel.MOUSEWHEEL_LINES_TO_SCROLL);
-
-			indexPanel.scrollView(scrollAmount);
-			e.consume();
-		});
-
-		allPanels.add(indexPanel);
-		rebuildPanels();
+	public int getViewWidth(String viewName) {
+		return indexedView.getViewWidth(viewName);
 	}
 
-	public void swapView(int fromIndex, int toIndex) {
-		FieldPanel from = allPanels.get(fromIndex);
-		FieldPanel to = allPanels.get(toIndex);
-		allPanels.set(fromIndex, to);
-		allPanels.set(toIndex, from);
-		rebuildPanels();
+	public void setViewWidth(String viewName, int width) {
+		indexedView.setColumnWidth(viewName, width);
 	}
-
-	void addByteViewerComponent(ByteViewerComponent comp) {
-		comp.addIndexScrollListener(this);
-		viewList.add(comp);
-		allPanels.add(comp);
-		rebuildPanels();
-	}
-
-	void removeByteViewerComponent(ByteViewerComponent comp) {
-		comp.removeIndexScrollListener(this);
-		viewList.remove(comp);
-		allPanels.remove(comp);
-		rebuildPanels();
-	}
-
-	private void rebuildPanels() {
-		removeAll();
-		int count = 0;
-		for (FieldPanel panel : allPanels) {
-			if (count++ != 0) {
-				super.add(new JSeparator(SwingConstants.VERTICAL));
-			}
-			super.add(panel);
-		}
-//		setSize(getPreferredSize());
-		invalidate();
-	}
-
-	@Override
-	public Component add(Component comp) {
-		throw new UnsupportedOperationException("External call to add(Component) not allowed");
-	}
-
-	@Override
-	public void remove(Component comp) {
-		throw new UnsupportedOperationException("External call to remove(Component) not allowed");
-	}
-
-	@Override
-	public void addIndexScrollListener(IndexScrollListener listener) {
-		indexPanel.addIndexScrollListener(listener);
-	}
-
-	@Override
-	public int getHeight(BigInteger index) {
-		return indexPanel.getHeight(index);
-	}
-
-	@Override
-	public BigInteger getIndexAfter(BigInteger index) {
-		return indexPanel.getIndexAfter(index);
-	}
-
-	@Override
-	public BigInteger getIndexBefore(BigInteger index) {
-		return indexPanel.getIndexBefore(index);
-	}
-
-	@Override
-	public BigInteger getIndexCount() {
-		return indexPanel.getIndexCount();
-	}
-
-	@Override
-	public boolean isUniformIndex() {
-		return true;
-	}
-
-	@Override
-	public void removeIndexScrollListener(IndexScrollListener listener) {
-		indexPanel.removeIndexScrollListener(listener);
-	}
-
-	@Override
-	public void scrollLineDown() {
-		indexPanel.scrollLineDown();
-	}
-
-	@Override
-	public void scrollLineUp() {
-		indexPanel.scrollLineUp();
-	}
-
-	@Override
-	public void scrollPageDown() {
-		indexPanel.scrollPageDown();
-	}
-
-	@Override
-	public void scrollPageUp() {
-		indexPanel.scrollPageUp();
-	}
-
-	@Override
-	public void showIndex(BigInteger index, int verticalOffset) {
-		indexPanel.showIndex(index, verticalOffset);
-	}
-
-	@Override
-	public void indexModelChanged() {
-		// handled by indexPanel
-	}
-
-	@Override
-	public void indexModelDataChanged(BigInteger start, BigInteger end) {
-		// handled by indexPanel
-	}
-
-	@Override
-	public void indexRangeChanged(BigInteger startIndex, BigInteger endIndex, int yStart,
-			int yEnd) {
-		if (processingIndexRangeChanged) {
-			return;
-		}
-		processingIndexRangeChanged = true;
-		try {
-			// need to update all views
-			for (FieldPanel fieldPanel : allPanels) {
-				fieldPanel.showIndex(startIndex, yStart);
-			}
-		}
-		finally {
-			processingIndexRangeChanged = false;
-		}
-	}
-
 }

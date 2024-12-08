@@ -17,10 +17,10 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import java.util.Objects;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.framework.model.DomainFile;
 
-public class DebuggerOpenProgramActionContext extends ActionContext {
+public class DebuggerOpenProgramActionContext extends DefaultActionContext {
 	private final DomainFile df;
 	private final int hashCode;
 

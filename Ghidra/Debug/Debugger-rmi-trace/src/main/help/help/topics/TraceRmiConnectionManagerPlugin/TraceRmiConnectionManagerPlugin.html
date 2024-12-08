@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Connections</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Connections</H1>
+
+    <DIV class="image">
+      <IMG alt="" src="images/TraceRmiConnectionManagerPlugin.png">
+    </DIV>
+
+    <P>The Connections window manages connections to live debuggers and, at a high level, their
+    targets. Each item is a Trace RMI connection (or a step toward one) to a back-end debugger.
+    Usually, the back end is a native debugger with a plugin that communicates with Ghidra via
+    Trace RMI. These connections are typically established using a launcher script, invoked from
+    the <A href=
+    "help/topics/TraceRmiLauncherServicePlugin/TraceRmiLauncherServicePlugin.html">Launcher
+    Menu</A>, though there are actions here for establishing connections manually or to remote back
+    ends. There are different kinds of items displayed in the connection list.</P>
+
+    <UL>
+      <LI><IMG alt="" src="icon.debugger.thread"> <B>Server:</B> This node displays the current
+      state of the Trace RMI server. Ordinarily, the server is not used, since Ghidra can accept
+      connections on a one-off basis without starting a persistent server. Nevertheless, often for
+      development purposes, it may be convenient to keep a socket open. There is only one server,
+      and it is either listening on a port, or not.</LI>
+
+      <LI><IMG alt="" src="icon.debugger.connect.accept"> <B>Acceptor:</B> Each acceptor is ready
+      to receive a single connection from a Trace RMI client. The node displays the host/interface
+      and port on which it is listening. Once it has received a connection, the acceptor is
+      destroyed.</LI>
+
+      <LI><IMG alt="" src="icon.debugger.connect"> <B>Connection:</B> A connection is a complete
+      connection to a Trace RMI client. It may have one or more (but usually only one) target trace
+      associated with it. The node displays a description given by the client along with the remote
+      host and port. Double-clicking the node will expand its targets, if any.</LI>
+
+      <LI><IMG alt="" src="icon.debugger.record"> <B>Target:</B> These are children of their
+      creating connection. A client can create any number of traces to describe each target it
+      wishes to trace, but by convention each client ought to create only one. The target node
+      displays the name of the trace and the last snapshot activated by the client. Double-clicking
+      the node will activate the target at the last snapshot, and change to <B>Control Target</B>
+      <A href=
+      "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">mode</A>.</LI>
+    </UL>
+
+    <H2>Actions</H2>
+
+    <H3><A name="connect_outbound"></A><IMG alt="" src="icon.debugger.connect.outbound"> Connect
+    Outbound</H3>
+
+    <P>Connect to a back end. The back end plays the role of TCP server while Ghidra plays the TCP
+    client. The dialog prompts for the (possibly remote) back end's host and port. Once the
+    connection is established, the back end takes the role of Trace RMI client, despite being the
+    TCP server. Check the command documentation for your back end's plugin to figure out how to
+    have it listen first.</P>
+
+    <DIV class="image">
+      <IMG alt="" src="images/ConnectDialog.png">
+    </DIV>
+
+    <H3><A name="connect_accept"></A><IMG alt="" src="icon.debugger.connect.accept"> Connect by
+    Accept</H3>
+
+    <P>Accept a single connection from a back end. Ghidra plays the role of TCP server, and the
+    back end is the TCP client. The dialog prompts for the host/interface and port on which to
+    listen. Check the command documentation for your back end's plugin to figure out how to have it
+    connect to a listening Ghidra. Once the connection is established, the listening port is
+    closed. The back end plays the role of Trace RMI client.</P>
+
+    <H3><A name="close"></A>Close</H3>
+
+    <P>Right-click a connection or acceptor to access this action. For an acceptor, this will
+    cancel it. For an established connection, this will tear it down, rendering its target traces
+    dead. Note that the back end may retain its live targets, despite losing its connection to
+    Ghidra.</P>
+
+    <H3><A name="close_all"></A>Close All</H3>
+
+    <P>Burn it all to the ground and start over. This closes the server, cancels all acceptors, and
+    tears down all connections. Any live trace in the Debugger will be rendered dead, which often
+    causes the trace manager to close them. Note that the back ends may retain their live targets,
+    despite losting their connections to Ghidra.</P>
+
+    <H3><A name="start_server"></A>Start Server</H3>
+
+    <P>Start a persistent server, able to accept many back-end connections. Ghidra plays the role
+    of TCP server, and each back end is a TCP client. The dialog prompts for the host/interface and
+    port on which to listen. Check the command documentation for your back end's plugin to figure
+    out how to have it connect to a listening Ghidra. The listening port remains open no matter how
+    many connections it has accepted. It is still possible to connect by other means while the
+    server is active.</P>
+
+    <H3><A name="stop_server"></A>Stop Server</H3>
+
+    <P>Stop the server. This closes the persistent server. This does not affect pending acceptors
+    or established connections.</P>
+  </BODY>
+</HTML>

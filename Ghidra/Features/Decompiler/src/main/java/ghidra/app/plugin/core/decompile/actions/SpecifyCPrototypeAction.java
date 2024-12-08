@@ -30,6 +30,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
+import ghidra.util.exception.InvalidInputException;
 
 public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
@@ -59,7 +60,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		int autoParamCnt = modelParamCnt - decompParamCnt;
 
 		// make sure decomp params account for injected auto params
-		boolean useCustom = (decompParamCnt < autoParamCnt);
+		boolean useCustom = (decompParamCnt < autoParamCnt) | model.canUseCustomStorage();
 
 		for (int i = 0; i < autoParamCnt && !useCustom; i++) {
 			if (i >= decompParamCnt) {
@@ -78,7 +79,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 			// remove original params which replicate auto params
 			for (int i = 0; i < autoParamCnt; i++) {
 				// be sure to select beyond auto-params.  First auto-param is on row 1
-				model.setSelectedParameterRow(new int[] { autoParamCnt + 1 });
+				model.setSelectedParameterRows(new int[] { autoParamCnt + 1 });
 				model.removeParameters();
 			}
 
@@ -117,6 +118,13 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 			func.getName(), func.getProgram().getDataTypeManager());
 		FunctionPrototype functionPrototype = hf.getFunctionPrototype();
 
+		try {
+			fsig.setCallingConvention(functionPrototype.getModelName());
+		}
+		catch (InvalidInputException e) {
+			// ignore
+		}
+
 		int np = hf.getLocalSymbolMap().getNumParams();
 		fsig.setReturnType(functionPrototype.getReturnType());
 
@@ -131,34 +139,23 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		return fsig;
 	}
 
-	/**
-	 * Get function affected by specified action context
-	 * 
-	 * @param function is the current decompiled function which will be the default if no other 
-	 * function identified by context token.
-	 * @param context decompiler action context
-	 * @return the function associated with the current context token.  If no function corresponds
-	 * to context token the decompiled function will be returned.
-	 */
-	private Function getFunction(Function function, DecompilerActionContext context) {
-		// try to look up the function that is at the current cursor location
-		//   If there isn't one, just use the function we are in.
-		Function tokenFunction = getFunction(context);
-		return tokenFunction != null ? tokenFunction : function;
-	}
-
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function function = context.getFunction();
-		if (function instanceof UndefinedFunction) {
+		Function decompiledFunction = context.getFunction();
+		Function func = getFunction(context);
+		if (func == null || (func instanceof UndefinedFunction)) {
 			return false;
 		}
-		return getFunction(function, context) != null;
+		if (func != decompiledFunction && OverridePrototypeAction.getSymbol(decompiledFunction,
+			context.getTokenAtCursor()) != null) {
+			return false; // disable action for sub-function call w/ override
+		}
+		return true;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Function function = getFunction(context.getFunction(), context);
+		Function function = getFunction(context);
 		PluginTool tool = context.getTool();
 		DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
 
@@ -170,15 +167,14 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		// If editing the decompiled function (i.e., not a subfunction) and function
 		// is not fully locked update the model to reflect the decompiled results
 		if (function.getEntryPoint().equals(hf.getFunction().getEntryPoint())) {
+
 			if (function.getSignatureSource() == SourceType.DEFAULT) {
-				model.setUseCustomizeStorage(false);
-				model.setCallingConventionName(functionPrototype.getModelName());
 				model.setFunctionData(buildSignature(hf));
 				verifyDynamicEditorModel(hf, model);
 			}
 			else if (function.getReturnType() == DataType.DEFAULT) {
 				model.setFormalReturnType(functionPrototype.getReturnType());
-				if (model.canCustomizeStorage()) {
+				if (model.canUseCustomStorage()) {
 					model.setReturnStorage(functionPrototype.getReturnStorage());
 				}
 			}
@@ -186,9 +182,9 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
 		// make the model think it is not changed, so if the user doesn't change anything, 
 		// we don't save the changes made above.
-		model.setModelChanged(false);
+		model.setModelUnchanged();
 
-		FunctionEditorDialog dialog = new FunctionEditorDialog(model);
+		FunctionEditorDialog dialog = new FunctionEditorDialog(model, true);
 		tool.showDialog(dialog, context.getComponentProvider());
 	}
 }

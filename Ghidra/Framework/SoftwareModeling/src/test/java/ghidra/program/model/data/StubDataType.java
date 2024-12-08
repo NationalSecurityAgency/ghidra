@@ -135,6 +135,11 @@ public class StubDataType implements DataType {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean isZeroLength() {
 		throw new UnsupportedOperationException();
 	}

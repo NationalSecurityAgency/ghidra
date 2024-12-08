@@ -25,20 +25,17 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
 
 import docking.widgets.list.GListCellRenderer;
-import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Tooltips;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 
 /**
  * This class encapsulates a code completion popup Window for the ConsolePlugin.
- * 
- * 
- *
  */
 public class CodeCompletionWindow extends JDialog {
-	private static final long serialVersionUID = 1L;
-	/* from ReferenceHoverPlugin */
-	private static final Color BACKGROUND_COLOR = Colors.BG_TOOLTIP;
+
+	private static final String FONT_ID = "font.plugin.terminal.completion.list";
 
 	protected final InterpreterPanel console;
 	protected final JTextPane outputTextField;
@@ -46,43 +43,32 @@ public class CodeCompletionWindow extends JDialog {
 	 * If the substitution value is null, then that attribute will not be
 	 * selectable for substitution.
 	 */
-	protected List<CodeCompletion> completion_list;
+	protected List<CodeCompletion> completionData;
 	/* current list of completions */
-	protected JList jlist;
+	protected JList<CodeCompletion> jlist;
 
-	/**
-	 * Constructs a new CodeCompletionWindow.
-	 * 
-	 * We pass in the PluginTool so we can get a reference to the Frame we are
-	 * popping up over, as well as the text field we are coming from (so we
-	 * can fine-tune where we pop up).
-	 * 
-	 * @param tool the PluginTool the has the Frame we are popping up over
-	 * @param console the ConsolePlugin we are providing services for
-	 * @param outputTextField the JTextField from whence we came
-	 */
 	public CodeCompletionWindow(Window parent, InterpreterPanel cp, JTextPane textField) {
 		super(parent);
 
 		this.console = cp;
 		outputTextField = textField;
-		jlist = new JList();
-		completion_list = null;
+		jlist = new JList<>();
+		completionData = null;
 
 		setUndecorated(true);
 		/* don't steal focus from text input! */
 		setFocusableWindowState(false);
 
-		jlist.setBackground(BACKGROUND_COLOR);
+		jlist.setBackground(Tooltips.BACKGROUND);
 		jlist.setCellRenderer(new CodeCompletionListCellRenderer());
-		/* add the ability to double-click a code completion */
+
+		// add the ability to double-click a code completion
 		MouseListener mouseListener = new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				/* when the user clicks the popup window, make sure
-				 * that the outputTextField gets the focus (so that the escape
-				 * key and other hotkeys to manage the popup work correctly
-				 */
+				// when the user clicks the popup window, make sure that the outputTextField gets
+				// the focus (so that the escape key and other hotkeys to manage the popup work
+				// correctly
 				outputTextField.requestFocusInWindow();
 				/* double-click inserts a completion */
 				if (e.getClickCount() == 2) {
@@ -91,9 +77,9 @@ public class CodeCompletionWindow extends JDialog {
 			}
 		};
 		jlist.addMouseListener(mouseListener);
-		/* actually put the components together */
+
 		getContentPane().add(new JScrollPane(jlist));
-		updateCompletionList(completion_list);
+		updateCompletionList(completionData);
 
 		jlist.addKeyListener(new KeyAdapter() {
 			@Override
@@ -105,11 +91,11 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Process a KeyEvent for this Window.
-	 * 
+	 *
 	 * This method is located here so that others (e.g. ConsolePlugin) can
 	 * forward KeyEvents to us, or we can process KeyEvents that were directed
 	 * to us (because we had focus instead).
-	 * 
+	 *
 	 * @param e KeyEvent
 	 */
 	@Override
@@ -119,26 +105,26 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Updates the completion list with the given completion mapping.
-	 * 
+	 *
 	 * The format, as mentioned above, is:
 	 * "attribute" -> "substitution value"
 	 * If the substitution value is null, then that attribute will not be
 	 * selectable for substitution.
-	 * 
+	 *
 	 * After updating the mapping, this Window then updates its size as
 	 * appropriate.
-	 * 
+	 *
 	 * The Window also will attempt to move out of the way of the cursor/caret
 	 * in the textField.  However, if the caret's position had recently been
 	 * changed and the caret had not been repainted yet, then the caret's
 	 * location can be null.  In this case, the Window will not move.
 	 * You can avoid this condition by calling this method in a
 	 * SwingUtilities.invokeLater(Runnable).
-	 * 
+	 *
 	 * @param list List of code completions
 	 */
 	public void updateCompletionList(List<CodeCompletion> list) {
-		completion_list = list;
+		completionData = list;
 		jlist.setModel(new CodeCompletionListModel(list));
 		jlist.setSelectionModel(new CodeCompletionListSelectionModel(list));
 		jlist.clearSelection();
@@ -257,14 +243,14 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Sets the Font on this CodeCompletionWindow.
-	 * 
+	 *
 	 * Basically sets the Font in the completion list.
-	 * 
+	 *
 	 * @param font the new Font
 	 */
 	@Override
 	public void setFont(Font font) {
-		jlist.setFont(font);
+		Gui.registerFont(jlist, FONT_ID);
 	}
 
 	/**
@@ -273,7 +259,7 @@ public class CodeCompletionWindow extends JDialog {
 	 */
 	public void selectPrevious() {
 		for (int i = jlist.getSelectedIndex() - 1; i >= 0; i--) {
-			CodeCompletion completion = completion_list.get(i);
+			CodeCompletion completion = completionData.get(i);
 			if (CodeCompletion.isValid(completion)) {
 				jlist.setSelectedIndex(i);
 				jlist.ensureIndexIsVisible(i);
@@ -288,11 +274,11 @@ public class CodeCompletionWindow extends JDialog {
 	 */
 	public void selectNext() {
 
-		if (null == completion_list) {
+		if (null == completionData) {
 			return;
 		}
-		for (int i = jlist.getSelectedIndex() + 1; i < completion_list.size(); i++) {
-			CodeCompletion completion = completion_list.get(i);
+		for (int i = jlist.getSelectedIndex() + 1; i < completionData.size(); i++) {
+			CodeCompletion completion = completionData.get(i);
 			if (CodeCompletion.isValid(completion)) {
 				jlist.setSelectedIndex(i);
 				jlist.ensureIndexIsVisible(i);
@@ -303,9 +289,9 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Returns the currently selected code completion.
-	 * 
+	 *
 	 * Returns "" if there is none.
-	 * 
+	 *
 	 * @return the currently selected code completion, or null if none selected
 	 */
 	public CodeCompletion getCompletion() {
@@ -313,18 +299,18 @@ public class CodeCompletionWindow extends JDialog {
 		if (-1 == i) {
 			return null;
 		}
-		return completion_list.get(i);
+		return completionData.get(i);
 	}
 }
 
 /**
  * Code completion ListModel.
  */
-class CodeCompletionListModel implements ListModel {
-	List<CodeCompletion> completion_list;
+class CodeCompletionListModel implements ListModel<CodeCompletion> {
+	List<CodeCompletion> completionData;
 
 	public CodeCompletionListModel(List<CodeCompletion> completion_list) {
-		this.completion_list = completion_list;
+		this.completionData = completion_list;
 	}
 
 	@Override
@@ -338,33 +324,33 @@ class CodeCompletionListModel implements ListModel {
 	}
 
 	@Override
-	public Object getElementAt(int index) {
-		if ((null == completion_list) || completion_list.isEmpty()) {
+	public CodeCompletion getElementAt(int index) {
+		if ((null == completionData) || completionData.isEmpty()) {
 			if (0 == index) {
 				return new CodeCompletion("(no completions available)", null, null);
 			}
 			return null;
 		}
-		return completion_list.get(index);
+		return completionData.get(index);
 	}
 
 	@Override
 	public int getSize() {
-		if ((null == completion_list) || completion_list.isEmpty()) {
+		if ((null == completionData) || completionData.isEmpty()) {
 			return 1;
 		}
-		return completion_list.size();
+		return completionData.size();
 	}
 }
 
 /**
  * This data type handles selection changes in the CodeCompletionWindow.
- * 
+ *
  * This contains all the "smarts" to determine whether or not indices can be
  * selected.  So when the user clicks on an entry with the mouse, we choose
  * whether or not that index can actually be highlighted/selected.
- * 
- * 
+ *
+ *
  *
  */
 class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
@@ -372,7 +358,7 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
 
 	/**
 	 * Constructs a new CodeCompletionListSelectionModel using the given List.
-	 * 
+	 *
 	 * @param l the List to use
 	 */
 	public CodeCompletionListSelectionModel(List<CodeCompletion> l) {
@@ -382,10 +368,10 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
 
 	/**
 	 * Called when the selection needs updating.
-	 * 
+	 *
 	 * Here we will check the value of the new index and determine whether or
 	 * not we actually want to select it.
-	 * 
+	 *
 	 * @param index0 old index
 	 * @param index1 new index
 	 */
@@ -405,9 +391,6 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
 
 /**
  * Renders CodeCompletions for the CodeCompletionWindow.
- * 
- * 
- *
  */
 class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 
@@ -418,21 +401,17 @@ class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 
 	/**
 	 * Render either a default list cell, or use the one provided.
-	 * 
+	 *
 	 * If the CodeCompletion we got has a Component to be used, then use that.
 	 * Otherwise, we use the DefaultListCellRenderer routine.
 	 */
 	@Override
 	public Component getListCellRendererComponent(JList<? extends CodeCompletion> list,
 			CodeCompletion codeCompletion, int index, boolean isSelected, boolean cellHasFocus) {
-		if (null == codeCompletion.getComponent()) {
-			return super.getListCellRendererComponent(list, codeCompletion, index, isSelected,
-				cellHasFocus);
-		}
+		JLabel component = (JLabel) super.getListCellRendererComponent(list, codeCompletion, index,
+			isSelected, cellHasFocus);
 
-		/* ooh, we have a fancy component! */
-		JComponent component = codeCompletion.getComponent();
-		/* if it's selected, make sure it shows up that way */
+		// if it's selected, make sure it shows up that way
 		component.setOpaque(true);
 		if (isSelected) {
 			component.setBackground(list.getSelectionBackground());
@@ -440,7 +419,7 @@ class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 		else {
 			component.setBackground(list.getBackground());
 		}
-		/* other nice formatting stuff */
+
 		component.setEnabled(list.isEnabled());
 		component.setFont(list.getFont());
 		component.setComponentOrientation(list.getComponentOrientation());

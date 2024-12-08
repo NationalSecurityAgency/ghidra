@@ -166,7 +166,7 @@ public class PowerPC_ElfExtension extends ElfExtension {
 		MemoryBlock[] blocks = memory.getBlocks();
 
 		for (MemoryBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			MemoryBlock gotBlock = block;
 
@@ -282,7 +282,7 @@ public class PowerPC_ElfExtension extends ElfExtension {
 			// Rely on section headers if present
 			for (ElfSectionHeader section : elf.getSections(
 				ElfSectionHeaderConstants.SHT_PROGBITS)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if ((section.getFlags() & SHF_PPC_VLE) == 0) {
 					continue;
 				}
@@ -292,7 +292,7 @@ public class PowerPC_ElfExtension extends ElfExtension {
 		else {
 			for (ElfProgramHeader segment : elf.getProgramHeaders(
 				ElfProgramHeaderConstants.PT_LOAD)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if ((segment.getFlags() & PF_PPC_VLE) == 0) {
 					continue;
 				}

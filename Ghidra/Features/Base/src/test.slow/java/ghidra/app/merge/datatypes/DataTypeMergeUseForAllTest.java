@@ -74,14 +74,10 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 	public void setupTestDataTypeDeletedChangedUseForAll() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure intStruct =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 						"IntStruct");
@@ -91,27 +87,16 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category4"),
 						"CharStruct");
 
-				try {
-					intStruct.add(new ByteDataType());// Change data type.
-					dtm.remove(coolUnion, TaskMonitor.DUMMY);// Remove the data type.
-					charStruct.add(new FloatDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				intStruct.add(new ByteDataType());// Change data type.
+				dtm.remove(coolUnion, TaskMonitor.DUMMY);// Remove the data type.
+				charStruct.add(new FloatDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				Structure intStruct =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 						"IntStruct");
@@ -121,15 +106,9 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category4"),
 						"CharStruct");
 
-				try {
-					dtm.remove(intStruct, TaskMonitor.DUMMY);// Remove the data type.
-					coolUnion.delete(2);
-					charStruct.add(new CharDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.remove(intStruct, TaskMonitor.DUMMY);// Remove the data type.
+				coolUnion.delete(2);
+				charStruct.add(new CharDataType());
 			}
 		});
 	}

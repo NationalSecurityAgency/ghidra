@@ -62,7 +62,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForRunManagerToFinish(runManager);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(0, listener.taskCancelled);
 		assertEquals(1, listener.taskCompleted);
@@ -94,7 +94,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		trace(testName.getMethodName() + "waiting for run manager");
 		waitForRunManagerToFinish(runManager);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(2, listener.taskCompleted);
 		assertEquals(0, listener.taskCancelled);// no cancel (only internal cancel)
@@ -226,7 +226,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForRunManagerToFinish(runManager);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertTrue(runnable.hasCompleted());
 		assertTrue(runnable.swingRunRan());
@@ -242,7 +242,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForRunManagerToFinish(runManager);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(0, listener.taskCancelled);
 		assertEquals(1, listener.taskCompleted);
@@ -263,7 +263,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForRunnableToFinish(runManager, runnable);
 
 		Msg.debug(this, "before waiting");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Msg.debug(this, "after waiting");
 
 		assertEquals(0, listener.taskCompleted);
@@ -312,14 +312,14 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Interrupted while sleeping for test");
 		}
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(component.isShowing());
 
 		startLatch.countDown();
 
 		waitForRunManagerToFinish(runManager);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForComponentToBeHidden(component);
 		frame.setVisible(false);
 	}
@@ -380,13 +380,13 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Interrupted while sleeping for test");
 		}
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(component.isShowing());
 
 		runManager.cancelAllRunnables();
 		runManager.waitForNotBusy(DEFAULT_WINDOW_TIMEOUT);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(!component.isShowing());
 		frame.setVisible(false);
 	}

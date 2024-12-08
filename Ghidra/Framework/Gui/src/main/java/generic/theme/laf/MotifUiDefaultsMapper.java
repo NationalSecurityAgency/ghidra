@@ -24,9 +24,9 @@ public class MotifUiDefaultsMapper extends UiDefaultsMapper {
 	}
 
 	@Override
-	protected void registerIgnoredLafIds() {
-		super.registerIgnoredLafIds();
-		ignoredLafIds.add("controlLightShadow");
+	protected void registerIgnoredJavaIds() {
+		super.registerIgnoredJavaIds();
+		ignoredJavaIds.add("controlLightShadow");
 	}
 
 }

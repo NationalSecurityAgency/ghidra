@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.pe.cli.blobs;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
@@ -23,7 +24,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
 public class CliSigAssembly extends CliAbstractSig {
-	byte[] sha1Hash = new byte[CLISIGASSEMBLY_SHA1_LENGTH];
+	byte[] sha1Hash;
 	int bitLength;
 	int publicExponent;
 	byte[] publicKeySignature;
@@ -75,7 +76,7 @@ public class CliSigAssembly extends CliAbstractSig {
 	public String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
 		return String.format(
 			"Assembly:\r\tSHA1: %s\r\tBit length: %d\r\tPublic exponent: %d\r\tSignature: %s",
-			sha1Hash.toString(), bitLength, publicExponent, publicKeySignature);
+				Arrays.toString(sha1Hash), bitLength, publicExponent, Arrays.toString(publicKeySignature));
 	}
 
 }

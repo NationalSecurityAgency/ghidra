@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
+import ghidra.app.cmd.function.FunctionRenameOption;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FunctionDefinitionDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.program.model.symbol.SourceType;
@@ -175,7 +175,8 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 				return null;
 			}
 			cmd = new ApplyFunctionSignatureCmd(function.getEntryPoint(), definition,
-				SourceType.USER_DEFINED, true, true);
+				SourceType.USER_DEFINED, true, false, DataTypeConflictHandler.DEFAULT_HANDLER,
+				FunctionRenameOption.RENAME);
 		}
 
 		CompoundCmd compoundCommand = new CompoundCmd("Update Function Signature");

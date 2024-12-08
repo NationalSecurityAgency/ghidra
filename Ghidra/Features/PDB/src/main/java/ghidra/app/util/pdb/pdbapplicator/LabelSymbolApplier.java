@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,46 +17,40 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import java.util.regex.Matcher;
 
-import ghidra.app.cmd.disassemble.DisassembleCommand;
-import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractLabelMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Applier for {@link AbstractLabelMsSymbol} symbols.
  */
-public class LabelSymbolApplier extends MsSymbolApplier {
+public class LabelSymbolApplier extends MsSymbolApplier
+		implements DirectSymbolApplier, NestableSymbolApplier, DisassembleableAddressSymbolApplier {
 
 	private AbstractLabelMsSymbol symbol;
-	private Function function = null;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public LabelSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractLabelMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (AbstractLabelMsSymbol) abstractSymbol;
+	public LabelSymbolApplier(DefaultPdbApplicator applicator, AbstractLabelMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
+		getValidatedSymbol(iter, true);
 		// A naked label seems to imply an assembly procedure, unlike that applyTo(MsSymbolApplier),
 		// which is used for applying to something else (basically a block sequence of symbols,
 		// as is seen with GlobalProcedure symbols), in which case it is typically an instruction
@@ -83,12 +77,20 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 			applyFunction(symbolAddress, label, applicator.getCancelOnlyWrappingMonitor());
 		}
 		else {
-			applicator.createSymbol(symbolAddress, label, true);
+			applicator.createSymbol(symbolAddress, label, false);
 		}
 	}
 
 	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
+	public Address getAddressForDisassembly() {
+		return applicator.getAddress(symbol);
+	}
+
+	@Override
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
+		getValidatedSymbol(iter, true);
 		String label = getLabel();
 		if (label == null) {
 			return;
@@ -123,7 +125,7 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 		// how function symbols are applied.  Perhaps we need to apply all GPROC symbols before
 		// we apply their internals (frames, local vars, labels, blocks) because some labels (here)
 		// are getting applied and becoming primary (because some have addresses that are located
-		// outside of the the address range of their GPROC, and will prevent another GPROC at the
+		// outside of the address range of their GPROC, and will prevent another GPROC at the
 		// same address as the label from becoming primary (e.g., $LN7 of cn3 at a750).
 		applicator.createSymbol(symbolAddress, label, false);
 	}
@@ -161,8 +163,8 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 	}
 
 	private boolean applyFunction(Address address, String name, TaskMonitor monitor) {
-		applicator.createSymbol(address, name, true);
-		function = createFunction(address, monitor);
+		applicator.createSymbol(address, name, false);
+		Function function = applicator.getExistingOrCreateOneByteFunction(address);
 		if (function == null) {
 			return false;
 		}
@@ -176,46 +178,10 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 			function.setNoReturn(isNonReturning());
 			// We have seen no examples of custom calling convention flag being set.
 			if (hasCustomCallingConvention()) {
-				try {
-					function.setCallingConvention("unknown");
-				}
-				catch (InvalidInputException e) {
-					Msg.warn(this,
-						"PDB: Could not set \"unknown\" calling convention for label: " + name);
-				}
+				// For now: do nothing... the convention is unknown by default.
 			}
 		}
 		return true;
-	}
-
-	private Function createFunction(Address address, TaskMonitor monitor) {
-
-		// Check for existing function.
-		Function myFunction = applicator.getProgram().getListing().getFunctionAt(address);
-		if (myFunction != null) {
-			return myFunction;
-		}
-
-		// Disassemble
-		Instruction instr = applicator.getProgram().getListing().getInstructionAt(address);
-		if (instr == null) {
-			DisassembleCommand cmd = new DisassembleCommand(address, null, true);
-			cmd.applyTo(applicator.getProgram(), monitor);
-		}
-
-		myFunction = createFunctionCommand(address, monitor);
-
-		return myFunction;
-	}
-
-	private Function createFunctionCommand(Address address, TaskMonitor monitor) {
-		CreateFunctionCmd funCmd = new CreateFunctionCmd(address);
-		if (!funCmd.applyTo(applicator.getProgram(), monitor)) {
-			applicator.appendLogMsg("Failed to apply function at address " + address.toString() +
-				"; attempting to use possible existing function");
-			return applicator.getProgram().getListing().getFunctionAt(address);
-		}
-		return funCmd.getFunction();
 	}
 
 	/**
@@ -235,4 +201,14 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 		}
 		return label;
 	}
+
+	private AbstractLabelMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractLabelMsSymbol labelSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return labelSymbol;
+	}
+
 }

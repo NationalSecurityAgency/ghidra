@@ -18,6 +18,7 @@ package ghidra.program.database.symbol;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -39,10 +40,10 @@ abstract class EquateDBAdapter {
 	final static int NAME_COL = 0;
 	final static int VALUE_COL = 1;
 
-	static EquateDBAdapter getAdapter(DBHandle dbHandle, int openMode, TaskMonitor monitor)
+	static EquateDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new EquateDBAdapterV0(dbHandle, true);
 		}
 

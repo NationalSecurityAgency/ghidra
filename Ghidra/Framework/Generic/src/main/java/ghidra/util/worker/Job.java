@@ -28,6 +28,8 @@ public abstract class Job {
 	/**
 	 * The method that gets called by the Worker when this job is selected to be run
 	 * by the Worker.
+	 * @param monitor the monitor
+	 * @throws CancelledException jobs may choose to throw a cancelled exception
 	 */
 	public abstract void run(TaskMonitor monitor) throws CancelledException;
 

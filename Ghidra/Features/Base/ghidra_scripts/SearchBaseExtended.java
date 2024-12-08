@@ -430,7 +430,7 @@ public class SearchBaseExtended extends GhidraScript {
 	private boolean containsOnBit(byte[] array) {
 
 		for (byte element : array) {
-			Byte temp = new Byte(element);
+			Byte temp = Byte.valueOf(element);
 			int value = temp.intValue();
 			if (value != 0) {
 				return true;

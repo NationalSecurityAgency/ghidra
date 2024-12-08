@@ -206,7 +206,7 @@ public class AddressEvaluator {
 		}
 
 		/*
-		 * Make sure we account for endianess of the program.
+		 * Make sure we account for endianness of the program.
 		 * Computing the number of bits to shift the current byte value
 		 * is different for Little vs. Big Endian. Need to multiply by
 		 * 8 to shift in 1-byte increments.

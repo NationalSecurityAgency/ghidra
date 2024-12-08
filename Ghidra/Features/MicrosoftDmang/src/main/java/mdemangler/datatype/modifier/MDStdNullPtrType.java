@@ -15,32 +15,21 @@
  */
 package mdemangler.datatype.modifier;
 
-import mdemangler.MDException;
 import mdemangler.MDMang;
+import mdemangler.datatype.extended.MDExtendedType;
 
 /**
  * This class represents a std::nullptr_t type within a Microsoft mangled symbol.
  * It is one of a number of "extended" data types not originally planned by Microsoft.
  */
-public class MDStdNullPtrType extends MDModifierType {
-
-	private static final String modifierTypeName = "std::nullptr_t";
+public class MDStdNullPtrType extends MDExtendedType {
 
 	public MDStdNullPtrType(MDMang dmang) {
 		super(dmang, 3);
 	}
 
 	@Override
-	protected void parseInternal() throws MDException {
-		cvMod.setOtherType();
-	}
-
-	@Override
-	public void insert(StringBuilder builder) {
-		builder.setLength(0);
-		dmang.appendString(builder, modifierTypeName); // TODO: consider moving string here.
+	public String getTypeName() {
+		return "std::nullptr_t";
 	}
 }
-
-/******************************************************************************/
-/******************************************************************************/

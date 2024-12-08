@@ -77,7 +77,7 @@ public class ExactInstructionsFunctionHasher extends AbstractFunctionHasher {
 		byte[] buffer = new byte[byteCount];
 		int offset = 0;
 		for (CodeUnit codeUnit : units) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			try {
 				codeUnit.getBytesInCodeUnit(buffer, offset);

@@ -31,13 +31,12 @@ import docking.DialogComponentProvider;
 import docking.StatusBar;
 import docking.action.DockingActionIf;
 import docking.actions.KeyEntryDialog;
-import docking.actions.ToolActions;
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.LoggingInitialization;
@@ -45,7 +44,6 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.main.PickToolDialog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.dialog.PluginInstallerDialog;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskDialog;
 import ghidra.util.task.TaskMonitor;
@@ -138,7 +136,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		tool.executeBackgroundCommand(new DummyBackgroundCommand(), program);
 
 		Border inner = BorderFactory.createRaisedBevelBorder();
-		Border outer = BorderFactory.createLineBorder(Java.BORDER);
+		Border outer = BorderFactory.createLineBorder(Colors.BORDER);
 		statusBar.setBorder(BorderFactory.createCompoundBorder(outer, inner));
 		captureComponent(statusBar);
 		program.endTransaction(id, false);
@@ -289,10 +287,8 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void testSetKeyBindings() {
 
 		tool = env.launchDefaultTool();
-		ToolActions toolActions = (ToolActions) getInstanceField("toolActions", tool);
-
 		DockingActionIf action = getAction(tool, "FunctionPlugin", "Delete Function");
-		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(action, toolActions);
+		final KeyEntryDialog keyEntryDialog = new KeyEntryDialog(tool, action);
 
 		runSwing(() -> tool.showDialog(keyEntryDialog), false);
 		captureDialog();
@@ -313,7 +309,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		return helpTopicDirs;
 	}
 
-	private class DummyBackgroundCommand extends BackgroundCommand {
+	private static class DummyBackgroundCommand extends BackgroundCommand<DomainObject> {
 
 		public DummyBackgroundCommand() {
 			super("Dummy", true, true, false);

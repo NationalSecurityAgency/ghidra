@@ -35,11 +35,6 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event) {
-		// override
-	}
-
-	@Override
 	public File exportTool(ToolTemplate tool) throws FileNotFoundException, IOException {
 		return null;
 	}

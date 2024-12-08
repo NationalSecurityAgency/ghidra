@@ -47,7 +47,7 @@ public class MemoryBlockDefinition {
 	private boolean readPermission = true;
 	private boolean writePermission = true;
 	private boolean executePermission = false;
-	private boolean volatilePermission = false;
+	private boolean isVolatile = false;
 
 	/**
 	 * Construct <code>MemoryBlockDefinition</code> using a text-based specified.
@@ -107,7 +107,7 @@ public class MemoryBlockDefinition {
 			readPermission = mode.indexOf('r') >= 0;
 			writePermission = mode.indexOf('w') >= 0;
 			executePermission = mode.indexOf('x') >= 0;
-			volatilePermission = mode.indexOf('v') >= 0;
+			isVolatile = mode.indexOf('v') >= 0;
 		}
 		try {
 			length = XmlUtilities.parseInt(lengthString);
@@ -186,7 +186,7 @@ public class MemoryBlockDefinition {
 		block.setRead(readPermission);
 		block.setWrite(writePermission);
 		block.setExecute(executePermission);
-		block.setVolatile(volatilePermission);
+		block.setVolatile(isVolatile);
 	}
 
 	@Override

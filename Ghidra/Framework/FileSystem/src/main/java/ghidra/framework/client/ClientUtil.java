@@ -133,6 +133,21 @@ public class ClientUtil {
 	}
 
 	/**
+	 * Determine if a connected {@link RepositoryServerAdapter} already exists for the specified server.
+	 * @param host server name or address
+	 * @param port server port, 0 indicates that default port applies.
+	 * @return true if connection already exists, else false
+	 */
+	public static boolean isConnected(String host, int port) {
+		if (port <= 0) {
+			port = GhidraServerHandle.DEFAULT_PORT;
+		}
+		ServerInfo server = new ServerInfo(host, port);
+		RepositoryServerAdapter rsa = serverHandles.get(server);
+		return rsa != null && rsa.isConnected();
+	}
+
+	/**
 	 * Eliminate the specified repository server from the connection cache
 	 * @param host host name or IP address
 	 * @param port port (0: use default port)
@@ -156,13 +171,7 @@ public class ClientUtil {
 	 * @return default user name
 	 */
 	public static String getUserName() {
-		String name = SystemUtilities.getUserName();
-		// exclude domain prefix which may be included
-		int slashIndex = name.lastIndexOf('\\');
-		if (slashIndex >= 0) {
-			name = name.substring(slashIndex + 1);
-		}
-		return name;
+		return SystemUtilities.getUserName();
 	}
 
 	/**
@@ -189,6 +198,9 @@ public class ClientUtil {
 		if ((exc instanceof ConnectException) || (exc instanceof NotConnectedException)) {
 			Msg.debug(ClientUtil.class, "Server not connected (" + operation + ")");
 			promptForReconnect(repository, operation, mustRetry, parent);
+		}
+		else if (exc instanceof RepositoryNotFoundException) {
+			Msg.showError(ClientUtil.class, parent, title, exc.getMessage());
 		}
 		else if (exc instanceof UserAccessException) {
 			Msg.showError(ClientUtil.class, parent, title,
@@ -431,8 +443,8 @@ public class ClientUtil {
 	static void processSignatureCallback(String serverName, SignatureCallback sigCb)
 			throws IOException {
 		try {
-			SignedToken signedToken = ApplicationKeyManagerUtils.getSignedToken(
-				sigCb.getRecognizedAuthorities(), sigCb.getToken());
+			SignedToken signedToken = ApplicationKeyManagerUtils
+					.getSignedToken(sigCb.getRecognizedAuthorities(), sigCb.getToken());
 			sigCb.sign(signedToken.certChain, signedToken.signature);
 			Msg.info(ClientUtil.class, "PKI Authenticating to " + serverName + " as user '" +
 				signedToken.certChain[0].getSubjectX500Principal() + "'");

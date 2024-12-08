@@ -128,6 +128,10 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		int opcode = accessOp.getOpcode();
 		if (opcode == PcodeOp.PTRSUB) {
 			parentDt = typeIsUnionRelated(accessOp.getInput(0));
+			if (parentDt == null) {
+				accessOp = null;
+				return;
+			}
 			accessVn = accessOp.getInput(0);
 			accessSlot = 0;
 			if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op

@@ -311,7 +311,7 @@ class SettingsDBAdapterV1 extends SettingsDBAdapter {
 		DBFieldIterator it = settingsTable.indexKeyIterator(V1_SETTINGS_ASSOCIATION_ID_COL,
 			new LongField(minAssociationId), new LongField(maxAssociationId), true);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			settingsTable.deleteRecord(it.next());
 		}
 	}

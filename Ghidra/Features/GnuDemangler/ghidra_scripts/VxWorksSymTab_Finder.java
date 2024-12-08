@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@
 // table entries are deleted.  Mangled C++ symbol names are demangled.
 //
 // The VxWorks symbol table is an array [0..n-1] of (struct SYMBOL) entries.
-// The table may be immediately followed or preceeded by an (int) vxSymTblLen
+// The table may be immediately followed or preceded by an (int) vxSymTblLen
 // value.
 //
 // Prerequisites:
@@ -49,6 +49,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.MangledContext;
 import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -464,17 +465,17 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 	private boolean isValidSymType(byte symType) {
 		switch (symType) {
-			case 0: // Undefined Symbol
+			case 0:    // Undefined Symbol
 				return false;
-			case 2: // Local Absolute
-			case 3: // Global Absolute
-			case 6: // Local Data
-			case 7: // Global Data
-			case 8: // Local BSS
-			case 9: // Global BSS
-			case 4: // Local .text
-			case 5: // Global .text
-			case 0x11: // External ref -- ignore
+			case 2:    // Local Absolute
+			case 3:    // Global Absolute
+			case 6:    // Local Data
+			case 7:    // Global Data
+			case 8:    // Local BSS
+			case 9:    // Global BSS
+			case 4:    // Local .text
+			case 5:    // Global .text
+			case 0x11: // External ref
 				return true;
 			default:
 				return false;
@@ -604,7 +605,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 	/**
 	 * Look before/after the table to see if there is a size value there and mark it if it agrees with TableLen
-	 * 
+	 *
 	 * @param symTbl
 	 * @param vxSymbol
 	 * @param tableLen
@@ -784,7 +785,9 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			// Demangle symName
 			String symDemangledName = null;
 			try {
-				symDemangledName = demangler.demangle(symName).getSignature(false);
+				MangledContext mangledContext =
+					demangler.createMangledContext(symName, null, currentProgram, symNameAddr);
+				symDemangledName = demangler.demangle(mangledContext).getSignature(false);
 			}
 			catch (DemangledException e) {		// report demangling error
 				if (!e.isInvalidMangledName()) {
@@ -815,18 +818,21 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					println("NULL symType!");
 					break;
 
-				case 2: // Local Absolute 
-				case 3: // Global Absolute
-				case 6: // Local Data
-				case 7: // Global Data
-				case 8: // Local BSS
-				case 9: // Global BSS
+				case 2:    // Local Absolute 
+				case 3:    // Global Absolute
+				case 6:    // Local Data
+				case 7:    // Global Data
+				case 8:    // Local BSS
+				case 9:    // Global BSS
+				case 0x11: // External ref
+
 					createLabel(symLoc, symName, true);
 					applyDemangled(symLoc, symName, symDemangledName);
 					break;
 
 				case 4: // Local .text
 				case 5: // Global .text  
+					
 					doLocalDisassemble(symLoc);
 					createFunction(symLoc, symName);
 					if (getFunctionAt(symLoc) != null) {
@@ -840,11 +846,8 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					}
 					break;
 
-				case 0x11: // External ref -- ignore
-					break;
-
 				default:
-					println("Invalid symType!");
+					println("Invalid symType " + symType + " !");
 					break;
 			}
 		}

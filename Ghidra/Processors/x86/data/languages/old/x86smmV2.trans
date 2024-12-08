@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_translation>
+    <from_language version="2">x86:LE:32:System Management Mode</from_language>
+    <to_language version="3">x86:LE:32:System Management Mode</to_language>
+    <map_compiler_spec from="default" to="default" />
+</language_translation>
+

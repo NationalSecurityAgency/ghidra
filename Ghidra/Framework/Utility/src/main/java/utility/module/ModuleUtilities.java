@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,7 +92,13 @@ public class ModuleUtilities {
 		if (!rootDir.exists() || remainingDepth <= 0) {
 			return moduleRootDirs;
 		}
-		for (ResourceFile subDir : rootDir.listFiles(ResourceFile::isDirectory)) {
+
+		ResourceFile[] subDirs = rootDir.listFiles(ResourceFile::isDirectory);
+		if (subDirs == null) {
+			throw new RuntimeException("Failed to read directory: " + rootDir);
+		}
+
+		for (ResourceFile subDir : subDirs) {
 			if ("build".equals(subDir.getName())) {
 				continue; // ignore all "build" directories
 			}
@@ -159,7 +165,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches for modules in a given collection of module root directories.
 	 *
-	 * @param appRootDirs The collection of application root directories associated with the the given
+	 * @param appRootDirs The collection of application root directories associated with the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
 	 * @return The discovered modules as a map (mapping module name to module for convenience).
@@ -174,7 +180,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches for modules in a given collection of module root directories.
 	 *
-	 * @param appRootDirs The collection of application root directories associated with the the given
+	 * @param appRootDirs The collection of application root directories associated with the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
 	 * @param moduleFilter a predicate used to filter modules; a given module will not be included
@@ -224,9 +230,9 @@ public class ModuleUtilities {
 	 * @param modules The modules to get the library directories of.
 	 * @return A collection of library directories from the given modules.
 	 */
-	public static Collection<ResourceFile> getModuleLibDirectories(Map<String, GModule> modules) {
+	public static Collection<ResourceFile> getModuleLibDirectories(Collection<GModule> modules) {
 		List<ResourceFile> libraryDirectories = new ArrayList<>();
-		for (GModule module : modules.values()) {
+		for (GModule module : modules) {
 			module.collectExistingModuleDirs(libraryDirectories, "lib");
 			module.collectExistingModuleDirs(libraryDirectories, "libs");
 		}
@@ -239,10 +245,10 @@ public class ModuleUtilities {
 	 * @param modules The modules to get the compiled .class and resources directories of.
 	 * @return A collection of directories containing classes and resources from the given modules.
 	 */
-	public static Collection<ResourceFile> getModuleBinDirectories(Map<String, GModule> modules) {
+	public static Collection<ResourceFile> getModuleBinDirectories(Collection<GModule> modules) {
 		String[] binaryPathTokens = BINARY_PATH.split(":");
 		List<ResourceFile> binDirectories = new ArrayList<>();
-		for (GModule module : modules.values()) {
+		for (GModule module : modules) {
 			Arrays.stream(binaryPathTokens)
 					.forEach(token -> module.collectExistingModuleDirs(binDirectories, token));
 		}
@@ -397,5 +403,32 @@ public class ModuleUtilities {
 				.stream()
 				.map(dir -> dir.getParentFile().getFile(false))
 				.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir, moduleRootDir));
+	}
+
+	/**
+	 * Returns true if the given module has been uninstalled.  
+	 * @param path the module path to check
+	 * @return true if uninstalled
+	 */
+	public static boolean isUninstalled(String path) {
+		return isUninstalled(new File(path));
+	}
+
+	/**
+	 * Returns true if the given module has been uninstalled.  
+	 * @param dir the module dir to check
+	 * @return true if uninstalled
+	 */
+	public static boolean isUninstalled(File dir) {
+		return new File(dir, MANIFEST_FILE_NAME_UNINSTALLED).exists();
+	}
+
+	/**
+	 * Returns true if the given module has been uninstalled.  
+	 * @param dir the module dir to check
+	 * @return true if uninstalled
+	 */
+	public static boolean isUninstalled(ResourceFile dir) {
+		return new ResourceFile(dir, MANIFEST_FILE_NAME_UNINSTALLED).exists();
 	}
 }

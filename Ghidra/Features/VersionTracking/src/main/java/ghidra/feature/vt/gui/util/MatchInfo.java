@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,17 @@
  */
 package ghidra.feature.vt.gui.util;
 
+import java.util.*;
+
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.*;
 import ghidra.feature.vt.gui.plugin.AddressCorrelatorManager;
-import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
-
-import java.util.*;
+import ghidra.util.task.CachingSwingWorker;
+import ghidra.util.task.TaskMonitor;
 
 public class MatchInfo {
 
@@ -43,7 +43,7 @@ public class MatchInfo {
 	private boolean initCorrelationCache = true;
 	private final AddressCorrelatorManager correlator;
 
-	MatchInfo(VTController controller, VTMatch match, AddressCorrelatorManager correlator) {
+	MatchInfo(VTMatch match, AddressCorrelatorManager correlator) {
 		this.match = match;
 		this.correlator = correlator;
 		VTAssociation association = match.getAssociation();
@@ -54,9 +54,9 @@ public class MatchInfo {
 		VTAssociationType type = association.getType();
 
 		Address sourceAddress = association.getSourceAddress();
-		sourceFunction =
-			(sourceProgram != null) ? sourceProgram.getFunctionManager().getFunctionAt(
-				sourceAddress) : null;
+		sourceFunction = (sourceProgram != null)
+				? sourceProgram.getFunctionManager().getFunctionAt(sourceAddress)
+				: null;
 		if (type == VTAssociationType.FUNCTION && sourceFunction != null) {
 			sourceData = null;
 			sourceAddressSet = sourceFunction.getBody();
@@ -75,9 +75,9 @@ public class MatchInfo {
 		}
 
 		Address destinationAddress = association.getDestinationAddress();
-		destinationFunction =
-			(destinationProgram != null) ? destinationProgram.getFunctionManager().getFunctionAt(
-				destinationAddress) : null;
+		destinationFunction = (destinationProgram != null)
+				? destinationProgram.getFunctionManager().getFunctionAt(destinationAddress)
+				: null;
 		if (type == VTAssociationType.FUNCTION && destinationFunction != null) {
 			destinationData = null;
 			destinationAddressSet = destinationFunction.getBody();
@@ -93,7 +93,7 @@ public class MatchInfo {
 				Address minAddress = codeUnit.getMinAddress();
 				Address maxAddress = codeUnit.getMaxAddress();
 
-				// Adjust the maxAddress for the destination addressSet to show multiple code units 
+				// Adjust the maxAddress for the destination addressSet to show multiple code units
 				// if it is smaller than the source. We want to know what gets overwritten if applied.
 				if (destinationData != null) {
 					int sourceLength = (sourceData != null) ? sourceData.getLength() : 0;
@@ -147,8 +147,8 @@ public class MatchInfo {
 		return markupItemsCache.get(monitor);
 	}
 
-	private void setDefaultDestination(VTMarkupItem markupItem,
-			AddressCorrelation addressTranslator, TaskMonitor monitor) throws CancelledException {
+	private void setDefaultDestination(VTMarkupItem markupItem, AddressCorrelation correlation,
+			TaskMonitor monitor) throws CancelledException {
 
 		Address destinationAddress = getDestinationAddress(markupItem);
 		Address sourceAddress = markupItem.getSourceAddress();
@@ -158,12 +158,12 @@ public class MatchInfo {
 		}
 
 		String destinationAddressSource = null;
-		if (addressTranslator != null) {
-			AddressRange correlatedDestinationRange =
-				addressTranslator.getCorrelatedDestinationRange(sourceAddress, monitor);
-			if (correlatedDestinationRange != null) {
-				destinationAddress = correlatedDestinationRange.getMinAddress();
-				destinationAddressSource = addressTranslator.getName();
+		if (correlation != null) {
+			AddressCorrelationRange range =
+				correlation.getCorrelatedDestinationRange(sourceAddress, monitor);
+			if (range != null) {
+				destinationAddress = range.getMinAddress();
+				destinationAddressSource = range.getCorrelatorName();
 			}
 		}
 
@@ -204,26 +204,27 @@ public class MatchInfo {
 			return null;
 		}
 
-		AddressCorrelation addressTranslator = getAddressTranslator(correlatorMgr);
-		if (addressTranslator == null) {
+		AddressCorrelation correlation = getAddressTranslator(correlatorMgr);
+		if (correlation == null) {
 			return null;
 		}
-		AddressRange correlatedDestinationRange = null;
+
+		AddressCorrelationRange range = null;
 		try {
-			correlatedDestinationRange =
-				addressTranslator.getCorrelatedDestinationRange(sourceAddress,
-					TaskMonitor.DUMMY);
+			range = correlation.getCorrelatedDestinationRange(sourceAddress, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// check for null below
 		}
-		if (correlatedDestinationRange == null) {
+
+		if (range == null) {
 			return null;
 		}
-		return correlatedDestinationRange.getMinAddress();
+		return range.getMinAddress();
 	}
 
-	public VTMarkupItem getCurrentMarkupForLocation(ProgramLocation programLocation, Program program) {
+	public VTMarkupItem getCurrentMarkupForLocation(ProgramLocation programLocation,
+			Program program) {
 
 		VTMarkupType markupType = getMarkupTypeForLocation(programLocation, program);
 		if (markupType == null) {
@@ -242,21 +243,19 @@ public class MatchInfo {
 
 		List<VTMarkupItem> list = markupItemsCache.getCachedValue();
 		if (list == null) {
-			// not sure how this could happen--perhaps after 
+			// not sure how this could happen--perhaps after
 			// the cache has been cleared, before we are again loaded?
 			return null;
 		}
 
 		for (VTMarkupItem markupItem : list) {
-			ProgramLocation location =
-				isSourceAddress ? markupItem.getSourceLocation()
-						: markupItem.getDestinationLocation();
+			ProgramLocation location = isSourceAddress ? markupItem.getSourceLocation()
+					: markupItem.getDestinationLocation();
 			if (location == null) {
 				continue;
 			}
-			Address markupItemAddress =
-				MatchInfo.getMarkupAddressForLocation(location, (isSourceAddress ? sourceProgram
-						: destinationProgram));
+			Address markupItemAddress = MatchInfo.getMarkupAddressForLocation(location,
+				(isSourceAddress ? sourceProgram : destinationProgram));
 			if (address.equals(markupItemAddress) && (markupItem.getMarkupType() == markupType)) {
 				return markupItem;
 			}

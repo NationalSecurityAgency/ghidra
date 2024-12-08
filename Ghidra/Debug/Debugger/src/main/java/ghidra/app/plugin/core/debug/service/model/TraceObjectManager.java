@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,14 +23,13 @@ import java.util.function.*;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.mapping.DefaultDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
-import ghidra.app.services.TraceRecorder;
-import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncLazyMap;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
+import ghidra.debug.api.model.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -42,6 +41,7 @@ import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.DuplicateNameException;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class TraceObjectManager {
 
 	private final TargetObject target;
@@ -59,7 +59,7 @@ public class TraceObjectManager {
 	//private AbstractRecorderRegisterSet threadRegisters;
 
 	private final ListenerSet<TraceRecorderListener> listeners =
-		new ListenerSet<>(TraceRecorderListener.class);
+		new ListenerSet<>(TraceRecorderListener.class, true);
 
 	protected final Set<TargetBreakpointLocation> breakpoints = new HashSet<>();
 
@@ -118,6 +118,7 @@ public class TraceObjectManager {
 		putAttributesHandler(TargetBreakpointLocation.class,
 			this::attributesChangedBreakpointLocation);
 		putAttributesHandler(TargetMemoryRegion.class, this::attributesChangedMemoryRegion);
+		putAttributesHandler(TargetModule.class, this::attributesChangedModule);
 		putAttributesHandler(TargetRegister.class, this::attributesChangedRegister);
 		putAttributesHandler(TargetStackFrame.class, this::attributesChangedStackFrame);
 		putAttributesHandler(TargetThread.class, this::attributesChangedThread);
@@ -147,11 +148,12 @@ public class TraceObjectManager {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	private <U extends TargetObject> BiFunction<TargetObject, Map<String, ?>, Void> putHandler(
-			Class<?> key, BiConsumer<TargetObject, Map<String, ?>> handler,
+			Class<?> key, BiConsumer<U, Map<String, ?>> handler,
 			LinkedHashMap<Class<?>, BiFunction<TargetObject, Map<String, ?>, Void>> handlerMap) {
 		return handlerMap.put(key, (u, v) -> {
-			handler.accept(u, v);
+			handler.accept((U) u, v);
 			return null;
 		});
 	}
@@ -172,7 +174,7 @@ public class TraceObjectManager {
 	}
 
 	public <U extends TargetObject> BiFunction<TargetObject, Map<String, ?>, Void> putAttributesHandler(
-			Class<?> key, BiConsumer<TargetObject, Map<String, ?>> handler) {
+			Class<U> key, BiConsumer<U, Map<String, ?>> handler) {
 		return putHandler(key, handler, handlerMapAttributes);
 	}
 
@@ -506,6 +508,13 @@ public class TraceObjectManager {
 	public void attributesChangedMemoryRegion(TargetObject region, Map<String, ?> added) {
 		if (added.containsKey(TargetObject.DISPLAY_ATTRIBUTE_NAME)) {
 			recorder.memoryRecorder.regionChanged((TargetMemoryRegion) region, region.getDisplay());
+		}
+	}
+
+	public void attributesChangedModule(TargetModule module, Map<String, ?> added) {
+		if (added.containsKey(TargetModule.RANGE_ATTRIBUTE_NAME)) {
+			AddressRange traceRng = recorder.getMemoryMapper().targetToTrace(module.getRange());
+			recorder.moduleRecorder.moduleChanged(module, traceRng);
 		}
 	}
 

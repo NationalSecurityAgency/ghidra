@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataUtilities;
@@ -37,8 +36,7 @@ import ghidra.util.task.TaskMonitor;
  * of a pointer, then a pointer to dataType will only be created if there are
  * enough undefined bytes following to make a pointer.
  */
-public class CreateDataBackgroundCmd extends BackgroundCommand {
-	private static final int EVENT_LIMIT = 1000;
+public class CreateDataBackgroundCmd extends BackgroundCommand<Program> {
 
 	private AddressSetView addrSet;
 	private DataType newDataType;
@@ -76,12 +74,7 @@ public class CreateDataBackgroundCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		return doApplyTo(obj, monitor);
-	}
-
-	public boolean doApplyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		Listing listing = program.getListing();
 		InstructionIterator iter = listing.getInstructions(addrSet, true);
 		if (iter.hasNext()) {
@@ -127,28 +120,37 @@ public class CreateDataBackgroundCmd extends BackgroundCommand {
 	}
 
 	private void createData(Address start, Address end, DataType dataType, Program p,
-			TaskMonitor monitor) throws AddressOverflowException, CodeUnitInsertionException {
+			TaskMonitor monitor) throws CodeUnitInsertionException {
 
+		Address nextAddr = start;
 		Listing listing = p.getListing();
 		listing.clearCodeUnits(start, end, false);
-		int length = (int) end.subtract(start) + 1;
-		while (start.compareTo(end) <= 0) {
+
+		int initialProgress = bytesApplied;
+
+		int length = (int) end.subtract(nextAddr) + 1;
+		while (nextAddr != null && nextAddr.compareTo(end) <= 0) {
 			if (monitor.isCancelled()) {
 				return;
 			}
 
-			Data d = listing.createData(start, dataType, length);
-			int dataLen = d.getLength();
-			start = start.addNoWrap(dataLen);
-			length -= dataLen;
-			bytesApplied += dataLen;
+			Data d = listing.createData(nextAddr, dataType, length);
+			int dataLength = d.getLength();
+			bytesApplied = initialProgress + dataLength;
+
+			try {
+				nextAddr = nextAddr.addNoWrap(dataLength);
+				length -= dataLength;
+			}
+			catch (AddressOverflowException e) {
+				return;
+			}
 
 			monitor.setProgress(bytesApplied);
 			if (++numDataCreated % 10000 == 0) {
 				monitor.setMessage("Created " + numDataCreated);
 
-				// Allow the Swing thread a chance to paint components that may require
-				// a DB lock.
+				// Allow the Swing thread a chance to paint components that may require lock
 				Swing.allowSwingToProcessEvents();
 			}
 		}

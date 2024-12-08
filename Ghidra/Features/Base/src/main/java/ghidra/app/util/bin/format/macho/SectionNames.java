@@ -73,4 +73,9 @@ public final class SectionNames {
 	public final static String IMPORT_POINTERS      = "__pointers";
 	/** Section dedicated to holding global program variables */
 	public final static String PROGRAM_VARS         = "__program_vars";
+
+	/** Section containing dyld_chained_starts_offsets structure */
+	public final static String CHAIN_STARTS = "__chain_starts";
+	/** Section containing chained fixups */
+	public final static String THREAD_STARTS = "__thread_starts";
 }

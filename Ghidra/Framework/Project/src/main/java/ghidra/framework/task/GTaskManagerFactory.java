@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,20 @@
  */
 package ghidra.framework.task;
 
-import generic.concurrent.GThreadPool;
-import ghidra.framework.model.UndoableDomainObject;
-import ghidra.util.exception.AssertException;
-
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import generic.concurrent.GThreadPool;
+import ghidra.framework.model.DomainObject;
+import ghidra.util.exception.AssertException;
+
 /**
- * Factory class managing a single GTaskManager for an UndoableDomainObject.
+ * Factory class managing a single GTaskManager for an DomainObject.
  * 
  */
 public class GTaskManagerFactory {
-	private static Map<UndoableDomainObject, GTaskManager> map =
-		new WeakHashMap<UndoableDomainObject, GTaskManager>();
+	private static Map<DomainObject, GTaskManager> map =
+		new WeakHashMap<DomainObject, GTaskManager>();
 
 	/**
 	 * Returns the one GTaskManager for the domainObject. A new GTaskManager will be created if
@@ -38,7 +37,7 @@ public class GTaskManagerFactory {
 	 * @param domainObject the domainObject for which to get a GTaskManager.
 	 * @return the GTaskManager for the given domainObject.
 	 */
-	public static GTaskManager getTaskManager(UndoableDomainObject domainObject) {
+	public static GTaskManager getTaskManager(DomainObject domainObject) {
 		if (domainObject.isClosed()) {
 			throw new AssertException("Attempted to get a TaskManger for a closed domain object");
 		}
@@ -51,7 +50,7 @@ public class GTaskManagerFactory {
 		return gTaskManager;
 	}
 
-	static void domainObjectClosed(UndoableDomainObject domainObject) {
+	static void domainObjectClosed(DomainObject domainObject) {
 		map.remove(domainObject);
 	}
 }

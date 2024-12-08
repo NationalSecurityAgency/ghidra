@@ -17,10 +17,10 @@ package ghidra.app.cmd.disassemble;
 
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.disassemble.*;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Command object for performing disassembly
  */
-public class DisassembleCommand extends BackgroundCommand {
+public class DisassembleCommand extends BackgroundCommand<Program> {
 
 	protected AddressSetView startSet;
 	protected boolean useDefaultRepeatPatternBehavior = false;
@@ -78,6 +78,8 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * @param startSet set of addresses to be the start of a disassembly. The Command object will
 	 *            attempt to start a disassembly at each address in this set.
 	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
+	 * @param followFlow follow all flows within restricted set if true, otherwise limit to using 
+	 * startSet for flows.
 	 */
 	public DisassembleCommand(AddressSetView startSet, AddressSetView restrictedSet,
 			boolean followFlow) {
@@ -125,7 +127,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * Set code analysis enablement. By default new instructions will be submitted for
 	 * auto-analysis.
 	 * 
-	 * @param enable
+	 * @param enable true if incremental code analysis should be done, else false to prevent this.
 	 */
 	public void enableCodeAnalysis(boolean enable) {
 		this.enableAnalysis = enable;
@@ -150,8 +152,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	}
 
 	@Override
-	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	synchronized public boolean applyTo(Program program, TaskMonitor monitor) {
 		return doDisassembly(monitor, program, program.getLanguage().getInstructionAlignment());
 	}
 
@@ -317,7 +318,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * 
 	 * @param disassembler disassembler to use
 	 * @param seedSet set of addresses to be disassembled
-	 * @param mgr
+	 * @param mgr auto analysis manager
 	 * 
 	 * @return addresses actually disassembled
 	 */

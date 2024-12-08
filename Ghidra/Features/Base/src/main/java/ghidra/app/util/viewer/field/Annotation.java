@@ -16,8 +16,6 @@
 package ghidra.app.util.viewer.field;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import ghidra.app.nav.Navigatable;
@@ -26,12 +24,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.classfinder.ClassSearcher;
 
 public class Annotation {
-	/**
-	 * A pattern to match text between two quote characters and to capture that text.  This
-	 * pattern does not match quote characters that are escaped with a '\' character.
-	 */
-	private static final Pattern QUOTATION_PATTERN =
-		Pattern.compile("(?<!\\\\)[\"](.*?)(?<!\\\\)[\"]");
+
+	public static final String ESCAPABLE_CHARS = "{}\"\\";
 
 	private static List<AnnotatedStringHandler> ANNOTATED_STRING_HANDLERS;
 	private static Map<String, AnnotatedStringHandler> ANNOTATED_STRING_MAP;
@@ -149,55 +143,149 @@ public class Annotation {
 			serviceProvider);
 	}
 
-	private String[] parseAnnotationText(String theAnnotationText) {
-		StringBuffer buffer = new StringBuffer(theAnnotationText);
-
-		// strip off the brackets
-		buffer.delete(0, 2); // remove '{' and '@'
-		buffer.deleteCharAt(buffer.length() - 1);
-
-		// first split out the tokens on '"' so that annotations can have groupings with
-		// whitespace
-		int unqouotedOffset = 0;
-		List<String> tokens = new ArrayList<>();
-		Matcher matcher = QUOTATION_PATTERN.matcher(buffer.toString());
-		while (matcher.find()) {
-			// put all text in the buffer,
-			int quoteStart = matcher.start();
-			String contentBeforeQuote = buffer.substring(unqouotedOffset, quoteStart);
-			grabTokens(tokens, contentBeforeQuote);
-			unqouotedOffset = matcher.end();
-
-			String quotedContent = matcher.group(1); // group 0 is the entire string
-			tokens.add(quotedContent);
-		}
-
-		// handle any remaining part of the text after quoted sections
-		if (unqouotedOffset < buffer.length()) {
-			String remainingString = buffer.substring(unqouotedOffset);
-			grabTokens(tokens, remainingString);
-		}
-
-		// split on whitespace
-		return tokens.toArray(new String[tokens.size()]);
-	}
-
-	private void grabTokens(List<String> tokenContainer, String content) {
-		String[] strings = content.split("\\s");
-		for (String string : strings) {
-			// 0 length strings can happen when 'content' begins with a space
-			if (string.length() > 0) {
-				tokenContainer.add(string);
-			}
-		}
-	}
-
 	public String getAnnotationText() {
+		return annotationText;
+	}
+
+	@Override
+	public String toString() {
 		return annotationText;
 	}
 
 	/*package*/ static Set<String> getAnnotationNames() {
 		return Collections.unmodifiableSet(getAnnotatedStringHandlerMap().keySet());
+	}
+
+	private String[] parseAnnotationText(String text) {
+
+		String trimmed = text.substring(2, text.length() - 1); // remove "{@" and '}' 
+		List<String> tokens = new ArrayList<>();
+		List<TextPart> parts = parseText(trimmed);
+		for (TextPart part : parts) {
+			part.grabTokens(tokens);
+		}
+
+		return tokens.toArray(new String[tokens.size()]);
+	}
+
+	private List<TextPart> parseText(String text) {
+
+		List<TextPart> textParts = new ArrayList<>();
+		boolean escaped = false;
+		boolean inQuote = false;
+		int partStart = 0;
+		int n = text.length();
+		for (int i = 0; i < n; i++) {
+
+			boolean wasEscaped = escaped;
+			escaped = false;
+			char prev = '\0';
+			if (i != 0 && !wasEscaped) {
+				prev = text.charAt(i - 1);
+			}
+
+			char c = text.charAt(i);
+			if (prev == '\\') {
+				if (Annotation.ESCAPABLE_CHARS.indexOf(c) != -1) {
+					escaped = true;
+					continue;
+				}
+			}
+
+			if (c == '"') {
+				if (inQuote) {
+					// end quote
+					String s = text.substring(partStart, i + 1); // keep the quote
+					textParts.add(new QuotedTextPart(s));
+					partStart = i + 1;
+				}
+				else {
+					// end previous word; start quote
+					if (i != 0) {
+						String s = text.substring(partStart, i);
+						textParts.add(new TextPart(s));
+						partStart = i;
+					}
+				}
+				inQuote = !inQuote;
+			}
+		}
+
+		if (partStart < n) { // grab trailing text
+			String s = text.substring(partStart, n);
+			textParts.add(new TextPart(s));
+		}
+
+		return textParts;
+	}
+
+	// remove any backslashes that escape special annotation characters, like '{' and '}'
+	private static String removeEscapeChars(String text) {
+		boolean escaped = false;
+		StringBuilder buffy = new StringBuilder();
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			boolean wasEscaped = escaped;
+			escaped = false;
+			if (c != '\\') {
+				buffy.append(c);
+				continue;
+			}
+
+			char next = '\0';
+			if (i != text.length() - 1 && !wasEscaped) {
+				next = text.charAt(i + 1);
+			}
+
+			if (ESCAPABLE_CHARS.indexOf(next) != -1) {
+				escaped = true;
+				continue;
+			}
+			buffy.append(c);
+		}
+
+		return buffy.toString();
+	}
+
+	/**
+	 * A simple class to hold text and extract tokens 
+	 */
+	private class TextPart {
+
+		protected String text;
+
+		TextPart(String text) {
+			this.text = text;
+		}
+
+		public void grabTokens(List<String> tokens) {
+			String escaped = removeEscapeChars(text);
+			String[] strings = escaped.split("\\s");
+			for (String string : strings) {
+				// 0 length strings can happen when 'content' begins with a space
+				if (string.length() > 0) {
+					tokens.add(string);
+				}
+			}
+		}
+
+		@Override
+		public String toString() {
+			return text;
+		}
+	}
+
+	private class QuotedTextPart extends TextPart {
+		QuotedTextPart(String text) {
+			super(text);
+		}
+
+		@Override
+		public void grabTokens(List<String> tokens) {
+			String unquoted = text.substring(1, text.length() - 1);
+			String escaped = removeEscapeChars(unquoted);
+			tokens.add(escaped); // all quoted text is a 'token'
+		}
 	}
 
 }

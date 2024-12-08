@@ -104,11 +104,11 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	private int listCheckouts(DomainFolder folder) throws IOException, CancelledException {
 		int count = 0;
 		for (DomainFile df : folder.getFiles()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += listCheckouts(df);
 		}
 		for (DomainFolder subfolder : folder.getFolders()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += listCheckouts(subfolder);
 		}
 		return count;
@@ -130,13 +130,13 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	private int performProgramUpgrades(DomainFolder folder) throws IOException, CancelledException {
 		int count = 0;
 		for (DomainFile df : folder.getFiles()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (performProgramUpgrade(df)) {
 				++count;
 			}
 		}
 		for (DomainFolder subfolder : folder.getFolders()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += performProgramUpgrades(subfolder);
 		}
 		return count;
@@ -208,7 +208,7 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 				dobj.release(this);
 				dobj = null;
 				if (df.isVersioned()) {
-					df.checkin(checkinHandler, false, monitor);
+					df.checkin(checkinHandler, monitor);
 					println("Repository file upgraded: " + df.getPathname());
 				}
 				else {

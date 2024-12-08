@@ -168,6 +168,20 @@ public class GTableWidget<T> extends JPanel {
 		return table.getSelectedRowCount();
 	}
 
+	/**
+	 * Sets the selection mode of this table.
+	 *
+	 * @param mode the mode
+	 * @see ListSelectionModel#setSelectionMode(int)
+	 */
+	public void setSelectionMode(int mode) {
+		table.getSelectionModel().setSelectionMode(mode);
+	}
+
+	public int getSelectionMode() {
+		return table.getSelectionModel().getSelectionMode();
+	}
+
 	public void addSelectionListener(ObjectSelectedListener<T> l) {
 		gFilterTable.addSelectionListener(l);
 	}

@@ -22,6 +22,7 @@ import java.awt.Component;
 import docking.DockingWindowManager;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.crypto.PasswordDialog.RESULT_STATE;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * Pops up up a GUI dialog prompting the user to enter a password for the specified file.
@@ -36,7 +37,7 @@ import ghidra.formats.gfilesystem.crypto.PasswordDialog.RESULT_STATE;
 public class PopupGUIPasswordProvider implements PasswordProvider {
 
 	@Override
-	public Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt, Session session) {
+	public Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt, Session session) {
 		return new PasswordIterator(session, fsrl, prompt);
 	}
 
@@ -44,11 +45,11 @@ public class PopupGUIPasswordProvider implements PasswordProvider {
 		boolean cancelAll;
 	}
 
-	class PasswordIterator implements Iterator<PasswordValue> {
+	class PasswordIterator implements Iterator<Password> {
 		private SessionState sessionState;
 		private FSRL fsrl;
 		private boolean cancelled;
-		private PasswordValue password;
+		private Password password;
 		private String prompt;
 		private int tryCount;
 
@@ -73,7 +74,7 @@ public class PopupGUIPasswordProvider implements PasswordProvider {
 			DockingWindowManager.showDialog(rootFrame, pwdDialog);
 
 			cancelled = pwdDialog.resultState == RESULT_STATE.CANCELED;
-			password = cancelled ? null : PasswordValue.wrap(pwdDialog.passwordField.getPassword());
+			password = cancelled ? null : Password.wrap(pwdDialog.passwordField.getPassword());
 			sessionState.cancelAll |= cancelled && pwdDialog.cancelledAll;
 			pwdDialog.dispose();
 		}
@@ -90,8 +91,8 @@ public class PopupGUIPasswordProvider implements PasswordProvider {
 		}
 
 		@Override
-		public PasswordValue next() {
-			PasswordValue result = password;
+		public Password next() {
+			Password result = password;
 			password = null;
 			return result;
 		}

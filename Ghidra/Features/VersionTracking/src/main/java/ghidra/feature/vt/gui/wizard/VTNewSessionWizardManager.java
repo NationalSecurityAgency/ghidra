@@ -44,8 +44,7 @@ public class VTNewSessionWizardManager extends AbstractMagePanelManager<VTWizard
 
 	@Override
 	protected List<MagePanel<VTWizardStateKey>> createPanels() {
-		List<MagePanel<VTWizardStateKey>> panels =
-			new ArrayList<>();
+		List<MagePanel<VTWizardStateKey>> panels = new ArrayList<>();
 		panels.add(new NewSessionPanel(controller.getTool()));
 		panels.add(new PreconditionsPanel(this));
 		panels.add(new SummaryPanel());

@@ -40,6 +40,11 @@ public enum SleighUtils {
 
 	/**
 	 * A Sleigh parsing error
+	 * 
+	 * @param header the header / title for the message
+	 * @param message the detail message
+	 * @param start the character position where the syntax error starts
+	 * @param stop the character position where the syntax error ends
 	 */
 	public record SleighParseErrorEntry(String header, String message, int start, int stop) {
 		public String fullMessage() {
@@ -308,9 +313,12 @@ public enum SleighUtils {
 						match(tree, SleighParser.OP_DEREFERENCE, onSize, onOffset);
 						return;
 					default:
-						throw new AssertionError(
-							"OP_DEREFERENCE with 2 children where child[0] is " +
-								SleighParser.tokenNames[child0.getType()]);
+						matchTree(tree, SleighParser.OP_DEREFERENCE, children -> {
+							throw new AssertionError(
+								"OP_DEREFERENCE with 2 children where child[0] is " +
+									SleighParser.tokenNames[child0.getType()]);
+						});
+						return;
 				}
 			case 1:
 				match(tree, SleighParser.OP_DEREFERENCE, onOffset);

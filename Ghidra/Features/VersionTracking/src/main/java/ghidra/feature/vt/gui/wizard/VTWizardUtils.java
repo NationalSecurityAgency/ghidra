@@ -15,6 +15,8 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -55,8 +57,8 @@ public class VTWizardUtils {
 	static DomainFile chooseDomainFile(Component parent, String domainIdentifier,
 			DomainFileFilter filter, DomainFile fileToSelect) {
 		final DataTreeDialog dataTreeDialog = filter == null
-				? new DataTreeDialog(parent, "Choose " + domainIdentifier, DataTreeDialog.OPEN)
-				: new DataTreeDialog(parent, "Choose " + domainIdentifier, DataTreeDialog.OPEN,
+				? new DataTreeDialog(parent, "Choose " + domainIdentifier, OPEN)
+				: new DataTreeDialog(parent, "Choose " + domainIdentifier, OPEN,
 					filter);
 		final DomainFileBox box = new DomainFileBox();
 		dataTreeDialog.addOkActionListener(new ActionListener() {

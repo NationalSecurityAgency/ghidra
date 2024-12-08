@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,13 @@ import java.util.*;
 
 import org.junit.Test;
 
-import db.Transaction;
 import db.DBHandle;
+import db.Transaction;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
@@ -683,62 +683,52 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		}
 
 		try {
-			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1),
-				true, TaskMonitor.DUMMY);
+			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1), true,
+				TaskMonitor.DUMMY);
 		}
 		catch (IllegalArgumentException e) {
 			// pass
 		}
 
 		// Degenerate
-		assertNull(
-			memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(), b.buf(),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(), b.buf(), true,
+			TaskMonitor.DUMMY));
 
 		// Too soon
-		assertNull(
-			memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too small
-		assertNull(
-			memory.findBytes(3, b.range(0x4000, 0x4002), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x4000, 0x4002), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too high
-		assertNull(
-			memory.findBytes(3, b.range(0x4001, 0x4004), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x4001, 0x4004), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too high, into unknown
-		assertNull(
-			memory.findBytes(3, b.range(0x4001, 0x4005), b.buf(1, 2, 3, 4, 5),
-				b.buf(-1, -1, -1, -1, -1), true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x4001, 0x4005), b.buf(1, 2, 3, 4, 5),
+			b.buf(-1, -1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too low
-		assertNull(
-			memory.findBytes(3, b.range(0x3fff, 0x4002), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x3fff, 0x4002), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Perfect match
-		assertEquals(b.addr(0x4000),
-			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertEquals(b.addr(0x4000), memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
+
+		// Make it work for the match
+		assertEquals(b.addr(0x4000), memory.findBytes(3, b.range(0x0, -1), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Make it work for the match
 		assertEquals(b.addr(0x4000),
-			memory.findBytes(3, b.range(0x0, -1), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
-
-		// Make it work for the match
-		assertEquals(b.addr(0x4000),
-			memory.findBytes(3, b.range(0x0, -1), b.buf(1), b.buf(-1),
-				true, TaskMonitor.DUMMY));
+			memory.findBytes(3, b.range(0x0, -1), b.buf(1), b.buf(-1), true, TaskMonitor.DUMMY));
 
 		// Sub match
-		assertEquals(b.addr(0x4001),
-			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(2, 3, 4), b.buf(-1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertEquals(b.addr(0x4001), memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(2, 3, 4),
+			b.buf(-1, -1, -1), true, TaskMonitor.DUMMY));
 	}
 
 	@Test
@@ -811,7 +801,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		DBHandle opened = new DBHandle(tmp.toFile());
 		DBTrace restored = null;
 		try {
-			restored = new DBTrace(opened, DBOpenMode.UPDATE, new ConsoleTaskMonitor(), this);
+			restored = new DBTrace(opened, OpenMode.UPDATE, new ConsoleTaskMonitor(), this);
 
 			DBTraceMemorySpace rSpace =
 				restored.getMemoryManager().getMemorySpace(b.language.getDefaultDataSpace(), true);
@@ -968,6 +958,37 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 
 			assertEquals(4, space.getBytes(0, os.getAddress(0x4000), read));
 			assertArrayEquals(b.arr(1, 2, 3, 4), read.array());
+		}
+	}
+
+	@Test
+	public void testReplicateNpeScenario() throws Exception {
+		ByteBuffer buf4k = ByteBuffer.allocate(0x1000);
+		AddressSetView set = b.set(
+			b.range(0x00400000, 0x00404fff),
+			b.range(0x00605000, 0x00606fff),
+			b.range(0x7ffff7a2c000L, 0x7ffff7a33fffL));
+		Random random = new Random();
+		for (int i = 0; i < 30; i++) {
+			try (Transaction tx = b.startTransaction()) {
+				for (int j = 0; j < 3; j++) {
+					for (AddressRange r : set) {
+						for (AddressRange rc : new AddressRangeChunker(r, 0x1000)) {
+							if (random.nextInt(100) < 20) {
+								memory.setState(0, rc, TraceMemoryState.ERROR);
+								continue;
+							}
+							buf4k.position(0);
+							buf4k.limit(0x1000);
+							memory.putBytes(0, rc.getMinAddress(), buf4k);
+						}
+					}
+				}
+			}
+
+			try (Transaction tx = b.startTransaction()) {
+				memory.setState(0, b.range(0, -1), TraceMemoryState.UNKNOWN);
+			}
 		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,20 @@
  */
 package ghidra.framework.task;
 
-import generic.concurrent.GThreadPool;
-import ghidra.framework.model.DomainObjectClosedListener;
-import ghidra.framework.model.UndoableDomainObject;
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import generic.concurrent.GThreadPool;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectClosedListener;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+
 /** 
  * Class for managing a queue of tasks to be executed, one at a time, in priority order.  All the
- * tasks pertain to an UndoableDomainObject and transactions are created on the UndoableDomainObject
+ * tasks pertain to an DomainObject and transactions are created on the DomainObject
  * so that tasks can operate on them.
  * <P>
  * Tasks are organized into groups such that all tasks in a group will be completed before the
@@ -37,7 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * in the order that they are scheduled.
  * <P>
  * All tasks within the same group are executed within the same transaction on the
- * UndoableDomainObject.  When all the tasks within a group are completed, the transaction is closed
+ * DomainObject.  When all the tasks within a group are completed, the transaction is closed
  * unless there is another group scheduled and that group does not specify that it should run in its
  * own transaction.
  * <P>
@@ -49,7 +49,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <P>
  * <U>Yielding to Other Tasks:</U><BR>
  * While running, a GTask can call the method {@link #waitForHigherPriorityTasks()} on the GTaskManager, 
- * which will cause the the GTaskManager to run scheduled tasks (within the same group) that are 
+ * which will cause the GTaskManager to run scheduled tasks (within the same group) that are 
  * a higher priority than the running task, effectively allowing the running task to yield until all
  * higher priority tasks are executed.
  * 
@@ -60,7 +60,7 @@ public class GTaskManager {
 
 	private static final int MAX_RESULTS = 100;
 
-	private UndoableDomainObject domainObject;
+	private DomainObject domainObject; // value will be set to null on close
 	private SortedSet<GScheduledTask> priorityQ = new TreeSet<GScheduledTask>();
 	private Deque<GTaskGroup> taskGroupList = new LinkedList<GTaskGroup>();
 	private GThreadPool threadPool;
@@ -83,21 +83,22 @@ public class GTaskManager {
 	private Queue<GTaskResult> results = new ArrayDeque<GTaskResult>();
 
 	/**
-	 * Creates a new GTaskManager for an UndoableDomainObject
-	 * @param undoableDomainObject the domainObject that tasks scheduled in this GTaskManager will
+	 * Creates a new GTaskManager for an DomainObject
+	 * @param domainObject the domainObject that tasks scheduled in this GTaskManager will
 	 * operate upon.
 	 * @param threadPool the GThreadPool that will provide the threads that will be used to run 
 	 * tasks in this GTaskManager.
 	 */
-	public GTaskManager(UndoableDomainObject undoableDomainObject, GThreadPool threadPool) {
-		this.domainObject = undoableDomainObject;
+	public GTaskManager(DomainObject domainObject, GThreadPool threadPool) {
+		this.domainObject = domainObject;
 		this.threadPool = threadPool;
 
 		domainObject.addCloseListener(new DomainObjectClosedListener() {
 			@Override
-			public void domainObjectClosed() {
+			public void domainObjectClosed(DomainObject dobj) {
+				// assert dobj == domainObj
 				GTaskManagerFactory.domainObjectClosed(domainObject);
-				domainObject = null;
+				GTaskManager.this.domainObject = null;
 			}
 		});
 	}
@@ -107,10 +108,11 @@ public class GTaskManager {
 	 * 
 	 * @param task the task to be run.
 	 * @param priority the priority of the task.  Lower numbers are run before higher numbers.
-	 * @param useCurrentGroup. If true, this task will be rolled into the current transaction group
+	 * @param useCurrentGroup If true, this task will be rolled into the current transaction group
 	 * 							if one exists.  If false, any open transaction 
 	 * 							will be closed and a new transaction will be opened before 
 	 * 							this task is run.
+	 * @return scheduled task
 	 */
 	public GScheduledTask scheduleTask(GTask task, int priority, boolean useCurrentGroup) {
 		GScheduledTask newTask;
@@ -154,7 +156,7 @@ public class GTaskManager {
 	 * 
 	 * @param task the task to be run.
 	 * @param priority the priority of the task.  Lower numbers are run before higher numbers.
-	 * @param groupName. The name of the group that the task will be added to.
+	 * @param groupName The name of the group that the task will be added to.
 	 */
 	public void scheduleTask(GTask task, int priority, String groupName) {
 		lock.lock();
@@ -616,14 +618,16 @@ public class GTaskManager {
 	}
 
 	private void openTransaction(String description) {
-		if (currentGroupTransactionID == null) {
+		DomainObject d = domainObject;
+		if (d != null && currentGroupTransactionID == null) {
 			currentGroupTransactionID = domainObject.startTransaction(description);
 		}
 	}
 
 	private void closeTransaction() {
-		if (currentGroupTransactionID != null) {
-			domainObject.endTransaction(currentGroupTransactionID, true);
+		DomainObject d = domainObject;
+		if (d != null && currentGroupTransactionID != null) {
+			d.endTransaction(currentGroupTransactionID, true);
 			currentGroupTransactionID = null;
 		}
 	}
@@ -680,7 +684,8 @@ public class GTaskManager {
 			taskListener.taskCompleted(task, result);
 		}
 		catch (Throwable unexpected) {
-			Msg.error(this, "Unexpected exception notifying listener of task completed", unexpected);
+			Msg.error(this, "Unexpected exception notifying listener of task completed",
+				unexpected);
 		}
 	}
 
@@ -705,7 +710,8 @@ public class GTaskManager {
 			taskListener.taskScheduled(scheduledTask);
 		}
 		catch (Throwable unexpected) {
-			Msg.error(this, "Unexpected exception notifying listener of task scheduled", unexpected);
+			Msg.error(this, "Unexpected exception notifying listener of task scheduled",
+				unexpected);
 		}
 	}
 
@@ -761,12 +767,13 @@ public class GTaskManager {
 				scheduledTask.setThread(Thread.currentThread());
 				notifyTaskStarted(scheduledTask);
 
-				if (scheduledTask.getGroup().wasCancelled()) {
+				DomainObject d = domainObject;
+				if (d == null || scheduledTask.getGroup().wasCancelled()) {
 					taskCompleted(scheduledTask, new CancelledException());
 					return;
 				}
 
-				scheduledTask.getTask().run(domainObject, scheduledTask.getTaskMonitor());
+				scheduledTask.getTask().run(d, scheduledTask.getTaskMonitor());
 				taskCompleted(scheduledTask, null);
 			}
 			catch (Exception e) {

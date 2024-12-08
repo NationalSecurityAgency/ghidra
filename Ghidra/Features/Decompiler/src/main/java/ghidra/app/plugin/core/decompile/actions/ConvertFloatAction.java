@@ -64,7 +64,7 @@ public class ConvertFloatAction extends ConvertConstantAction {
 	private static BigDecimal value(int size, Scalar s) {
 		try {
 			FloatFormat format = FloatFormatFactory.getFloatFormat(size);
-			return format.round(format.getHostFloat(s.getBigInteger()));
+			return format.round(format.decodeBigFloat(s.getBigInteger()));
 		}
 		catch (UnsupportedFloatFormatException e) {
 			return null;

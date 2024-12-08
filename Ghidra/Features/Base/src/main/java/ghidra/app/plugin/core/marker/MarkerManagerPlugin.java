@@ -25,13 +25,11 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 
-/**
- * Plugin to manage marker and navigation panels.
- */
+//@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Provides the marker display",
 	description = "This plugin extends the code browser to include left and right marker" +
 		"components.  The left margin shows marks related to the address being shown at " +
@@ -43,15 +41,17 @@ import ghidra.util.HelpLocation;
 		"as bookmarks.",
 	servicesRequired = { CodeViewerService.class, GoToService.class },
 	servicesProvided = { MarkerService.class },
-	eventsConsumed = {})
+	eventsConsumed = {}
+)
+//@formatter:on
+/**
+ * Plugin to manage marker and navigation panels.
+ */
 public class MarkerManagerPlugin extends Plugin {
 
 	private CodeViewerService codeViewerService;
 	private MarkerManager markerManager;
 
-	/**
-	 * @param tool
-	 */
 	public MarkerManagerPlugin(PluginTool tool) {
 		super(tool);
 		markerManager = new MarkerManager(this);

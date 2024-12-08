@@ -186,15 +186,15 @@ public class OptionTypeTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public void readState(SaveState saveState) {
-			a = saveState.getInt("a", 0);
-			b = saveState.getString("b", null);
+		public void readState(GProperties properties) {
+			a = properties.getInt("a", 0);
+			b = properties.getString("b", null);
 		}
 
 		@Override
-		public void writeState(SaveState saveState) {
-			saveState.putInt("a", a);
-			saveState.putString("b", b);
+		public void writeState(GProperties properties) {
+			properties.putInt("a", a);
+			properties.putString("b", b);
 		}
 
 	}

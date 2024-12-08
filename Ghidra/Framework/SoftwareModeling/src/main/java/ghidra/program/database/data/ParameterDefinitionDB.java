@@ -61,19 +61,32 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 
 	@Override
 	public void setDataType(DataType type) {
-		type = ParameterDefinitionImpl.validateDataType(type, dataMgr, false);
+		// TODO: This is not a DatabaseObject so it lacks ability to refresh properly
+		// and parameter objects are not singletons.  It also lacks locking.
+		// There is risk of using a stale or deleted parameter object which could lead 
+		// to corruption of a function definition and datatype parent tracking.
 
-		getDataType().removeParent(parent);
+		doSetDataType(type, true);
+	}
 
-		type = dataMgr.resolve(type, null);
-		type.addParent(parent);
-
-		record.setLongValue(FunctionParameterAdapter.PARAMETER_DT_ID_COL,
-			dataMgr.getResolvedID(type));
-		record.setIntValue(FunctionParameterAdapter.PARAMETER_DT_LENGTH_COL, type.getLength());
+	void doSetDataType(DataType type, boolean notify) {
 		try {
+
+			type = ParameterDefinitionImpl.validateDataType(type, dataMgr, false);
+
+			getDataType().removeParent(parent);
+
+			type = dataMgr.resolve(type, null);
+			type.addParent(parent);
+
+			record.setLongValue(FunctionParameterAdapter.PARAMETER_DT_ID_COL,
+				dataMgr.getResolvedID(type));
+			record.setIntValue(FunctionParameterAdapter.PARAMETER_DT_LENGTH_COL, type.getLength());
 			adapter.updateRecord(record);
-			dataMgr.dataTypeChanged(parent, false);
+
+			if (notify) {
+				dataMgr.dataTypeChanged(parent, false);
+			}
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -139,6 +152,30 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 		return record.getIntValue(FunctionParameterAdapter.PARAMETER_ORDINAL_COL);
 	}
 
+	boolean isEquivalent(ParameterDefinition parm, DataTypeConflictHandler handler) {
+		if (parm == null) {
+			return false;
+		}
+		if (getOrdinal() != parm.getOrdinal()) {
+			return false;
+		}
+
+		DataType dataType = getDataType();
+		DataType otherDataType = parm.getDataType();
+
+		// if they contain datatypes that have same ids, then we are essentially equivalent.
+		if (DataTypeUtilities.isSameDataType(dataType, otherDataType)) {
+			return true;
+		}
+
+		return DataTypeDB.isEquivalent(dataType, otherDataType, handler);
+	}
+
+	@Override
+	public boolean isEquivalent(ParameterDefinition parm) {
+		return isEquivalent(parm, null);
+	}
+
 	@Override
 	public boolean isEquivalent(Variable otherVar) {
 		if (otherVar == null) {
@@ -151,20 +188,6 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 			return false;
 		}
 		if (!DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), otherVar.getDataType())) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public boolean isEquivalent(ParameterDefinition parm) {
-		if (parm == null) {
-			return false;
-		}
-		if (getOrdinal() != parm.getOrdinal()) {
-			return false;
-		}
-		if (!DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), parm.getDataType())) {
 			return false;
 		}
 		return true;

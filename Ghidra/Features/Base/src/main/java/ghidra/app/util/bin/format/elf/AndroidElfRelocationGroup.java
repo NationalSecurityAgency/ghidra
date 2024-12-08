@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.util.ArrayList;
-
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.help.UnsupportedOperationException;
 
@@ -177,7 +176,7 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 			WrappedMemBuffer cbuf = new WrappedMemBuffer(buf, comps[2].getOffset());
 			s = (Scalar) comps[2].getDataType().getValue(cbuf, null, comps[2].getLength());
 			long groupOffsetDelta = s.getValue();
-			return baseRelocOffset + ((groupSize - 1) * groupOffsetDelta);
+			return baseRelocOffset + (groupSize * groupOffsetDelta);
 		}
 
 		if (lastDtc.getFieldName().startsWith("group_")) {

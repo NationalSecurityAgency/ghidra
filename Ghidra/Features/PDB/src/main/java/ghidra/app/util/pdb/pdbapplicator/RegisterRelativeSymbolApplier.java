@@ -17,10 +17,9 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import java.util.Objects;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractRegisterRelativeAddressMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -30,44 +29,25 @@ import ghidra.util.exception.*;
 /**
  * Applier for {@link AbstractRegisterRelativeAddressMsSymbol} symbols.
  */
-public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
+public class RegisterRelativeSymbolApplier extends MsSymbolApplier
+		implements NestableSymbolApplier {
 
 	private AbstractRegisterRelativeAddressMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
 	public RegisterRelativeSymbolApplier(DefaultPdbApplicator applicator,
-			AbstractMsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractRegisterRelativeAddressMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (AbstractRegisterRelativeAddressMsSymbol) abstractSymbol;
+			AbstractRegisterRelativeAddressMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
-	@Override
-	void apply() throws PdbException, CancelledException {
-		pdbLogAndInfoMessage(this,
-			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
-	}
-
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
-		if (!applicator.getPdbApplicatorOptions().applyFunctionVariables()) {
-			return;
-		}
-		if (applyToApplier instanceof FunctionSymbolApplier) {
-			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
-			createFunctionVariable(functionSymbolApplier);
-		}
-	}
-
-	private boolean createFunctionVariable(FunctionSymbolApplier applier) {
+	private boolean createFunctionVariable(FunctionSymbolApplier applier,
+			AbstractRegisterRelativeAddressMsSymbol symbol)
+			throws CancelledException, PdbException {
 		Objects.requireNonNull(applier, "FunctionSymbolApplier cannot be null");
 		Function function = applier.getFunction();
 
@@ -105,8 +85,8 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 //		}
 		int offset = (int) (relativeOffset & 0xffffffffL);
 
-		MsTypeApplier dataTypeApplier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
-		DataType dt = dataTypeApplier.getDataType();
+		RecordNumber typeRecord = symbol.getTypeRecordNumber();
+		DataType dt = applicator.getCompletedDataType(typeRecord);
 		if (dt != null) {
 //			Variable m16 = stackFrame.getVariableContaining(-16);
 //			Variable m8 = stackFrame.getVariableContaining(-8);
@@ -152,6 +132,28 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		if (!applicator.getPdbApplicatorOptions().applyFunctionVariables()) {
+			return;
+		}
+		if (applyToApplier instanceof FunctionSymbolApplier functionSymbolApplier) {
+			createFunctionVariable(functionSymbolApplier, symbol);
+		}
+	}
+
+	private AbstractRegisterRelativeAddressMsSymbol getValidatedSymbol(MsSymbolIterator iter,
+			boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractRegisterRelativeAddressMsSymbol regRelSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return regRelSymbol;
 	}
 
 }

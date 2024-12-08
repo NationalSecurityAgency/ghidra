@@ -58,7 +58,7 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
     private void recurseProjectFolder( DomainFolder domainFolder ) throws Exception {
         DomainFile[] files = domainFolder.getFiles();
         for ( DomainFile domainFile : files ) {
-        	monitor.checkCanceled();
+        	monitor.checkCancelled();
         	try {
         		processDomainFile( domainFile );
         	} catch(Exception ex) {
@@ -67,7 +67,7 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
         }
         DomainFolder[] folders = domainFolder.getFolders();
         for ( DomainFolder folder : folders ) {
-        	monitor.checkCanceled();
+        	monitor.checkCancelled();
             recurseProjectFolder( folder );
         }
     }
@@ -100,7 +100,7 @@ public class UpgradeDexToGhidra71Script extends GhidraScript {
 		boolean success = false;
 		try {
 			for (Function func : program.getFunctionManager().getFunctions(true)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				processFunction(func);
 			}
 			success = true;

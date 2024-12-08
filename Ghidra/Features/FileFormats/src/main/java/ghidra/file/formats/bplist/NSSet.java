@@ -67,7 +67,7 @@ public class NSSet extends NSObject {
 			throws CancelledException {
 		ReferenceManager referenceManager = program.getReferenceManager();
 		for (int i = 0; i < objectData.getNumComponents(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data component = objectData.getComponent(i);
 			if (component.getFieldName().startsWith("value")) {
 				long value = getValue(component);

@@ -89,6 +89,17 @@ public interface TaskMonitor {
 	public void initialize(long max);
 
 	/**
+	 * Initializes the progress value to 0, sets the max value and message of this monitor.
+	 * 
+	 * @param max maximum value for progress
+	 * @param message the message to display
+	 */
+	default public void initialize(long max, String message) {
+		initialize(max);
+		setMessage(message);
+	}
+
+	/**
 	 * Set the progress maximum value
 	 * <p><b>
 	 * Note: setting this value will reset the progress to be the max if the progress is currently
@@ -120,7 +131,7 @@ public interface TaskMonitor {
 	 * @throws CancelledException if monitor has been cancelled
 	 * @deprecated Use {@link #checkCancelled()} instead
 	 */
-	@Deprecated(forRemoval = false, since = "10.3")
+	@Deprecated(since = "10.3")
 	public void checkCanceled() throws CancelledException;
 
 	/**
@@ -128,15 +139,45 @@ public interface TaskMonitor {
 	 * @throws CancelledException if monitor has been cancelled
 	 */
 	public default void checkCancelled() throws CancelledException {
-		// note: call checkCanceled() until it is removed; this produces the least number of changes
+		// note: call checkCancelled() until it is removed; this produces the least number of changes
 		checkCanceled();
 	}
 
 	/**
-	 * A convenience method to increment the current progress by the given value
+	 * Increases the progress value by 1.
+	 */
+	default public void incrementProgress() {
+		incrementProgress(1);
+	}
+
+	/**
+	 * Changes the progress value by the specified amount.
+	 * 
 	 * @param incrementAmount The amount by which to increment the progress
 	 */
 	public void incrementProgress(long incrementAmount);
+
+	/**
+	 * Increases the progress value by 1, and checks if this monitor has been cancelled.
+	 * 
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	default public void increment() throws CancelledException {
+		checkCancelled();
+		incrementProgress(1);
+	}
+
+	/**
+	 * Changes the progress value by the specified amount, and checks if this monitor has 
+	 * been cancelled.
+	 * 
+	 * @param incrementAmount The amount by which to increment the progress
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	default public void increment(long incrementAmount) throws CancelledException {
+		checkCancelled();
+		incrementProgress(incrementAmount);
+	}
 
 	/**
 	 * Returns the current progress value or {@link #NO_PROGRESS_VALUE} if there is no value set
@@ -177,14 +218,14 @@ public interface TaskMonitor {
 	 * Clear the cancellation so that this TaskMonitor may be reused
 	 * @deprecated Use {@link #clearCancelled()} instead
 	 */
-	@Deprecated(forRemoval = false, since = "10.3")
+	@Deprecated(since = "10.3")
 	public void clearCanceled();
 
 	/**
 	 * Clear the cancellation so that this TaskMonitor may be reused
 	 */
 	public default void clearCancelled() {
-		// note: call clearCanceled() until it is removed; this produces the least number of changes
+		// note: call clearCancelled() until it is removed; this produces the least number of changes
 		clearCanceled();
 	}
 }

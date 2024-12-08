@@ -87,7 +87,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 
 			if (!vdexHeader.isDexHeaderEmbeddedInDataType()) {
 				for (int i = 0; i < vdexHeader.getDexHeaderList().size(); ++i) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					program.getListing()
 							.setComment(address, CodeUnit.PLATE_COMMENT,

@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.util.Map;
 
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.SectionMapProposal;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
+import ghidra.debug.api.modules.SectionMapProposal;
+import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.listing.Program;

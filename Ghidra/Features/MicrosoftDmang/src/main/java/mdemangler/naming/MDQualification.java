@@ -96,16 +96,63 @@ public class MDQualification extends MDParsableItem implements Iterable<MDQualif
 
 	@Override
 	protected void parseInternal() throws MDException {
+		// TODO: consider a do-while loop so we do not need this initial test for an empty
+		//  qualification, but also need to make sure MDQualifier logic also handles the first
+		//  '@' in the qualifier, which might not be possible at this time with the immediate
+		//  qualifier creation below (probably should wait to do this until when we refactor
+		//  MDMang to use factory models).  The other solution is to look for any place that an
+		//  MDQualification is used (but not as part of a MDQualfiedName or MDBasicName)
+//		if (dmang.peek() == '@' && dmang.peek(1) == '@') {
+//			// We have an empty qualification.  Remove the first '@' and the second one will
+//			// be handled below.
+//			dmang.increment();
+//		}
+		// We currently have a check to see if the index has moved (loc) to know to abort the
+		//  processing of this loop.  We could have also done a loop check on the '`' character
+		//  from an LLVM suffix on mangled "type" name that looks like:
+		//  "`fedcba98" ('`' character followed by exactly 8 (zero padded) hex digits
+		//  TODO:  need to determine what they are and where they should get processed... but
+		//    could be part of end of MDQualification, MDQualifiedName, MDClassType,
+		//    MDQuestionModifierType, or at same level as complete mangled name.  For now, we
+		//    have put the processing in MDQuestionModifierType, but this will take future study
+		//    to determine what it is and to what object it belongs.
+		//    We have a similar issue with dot-separated symbols... needs more study.
 		while ((dmang.peek() != MDMang.DONE) && (dmang.peek() != '@')) {
+			int loc = dmang.getIndex();
 			MDQualifier qual = new MDQualifier(dmang);
 			qual.parse();
+			// This is a quick fix to prevent infinite looping when the next character is not
+			//  expected.  TODO: need to work on code the breaks symbols on these other
+			//  characters that we have seen such as '.' and '`'.
+			if (dmang.getIndex() == loc) {
+				break;
+			}
 			quals.add(qual);
 		}
 		if (dmang.peek() == '@') {
 			dmang.increment(); // Skip past @.
 		}
+//		// For future debugging to try to figure out where to process the '`' suffix
+//		if (dmang.peek() == '`') {
+//			Exception e = new Exception();
+//			StackTraceElement[] trace = e.getStackTrace();
+//			StringBuilder builder = new StringBuilder();
+//			for (StackTraceElement t : trace) {
+//				String s = t.toString();
+//				builder.append(s);
+//				builder.append('\n');
+//				if (s.contains("MDMang.demangle(")) {
+//					System.out.println(builder.toString());
+//					break;
+//				}
+//			}
+//		}
 	}
 
+	/**
+	 * Provides iterator of MDQualifiers, where the last iteration is the namespace root
+	 * @return the iterator
+	 */
 	@Override
 	public Iterator<MDQualifier> iterator() {
 		return quals.iterator();

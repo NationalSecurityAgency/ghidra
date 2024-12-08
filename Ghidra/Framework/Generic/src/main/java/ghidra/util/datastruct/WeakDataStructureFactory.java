@@ -37,16 +37,6 @@ public class WeakDataStructureFactory {
 	}
 
 	/**
-	 * Use to signal that the returned weak set is not thread safe and must be protected accordingly
-	 * when used in a multi-threaded environment.
-	 *
-	 * @return a new WeakSet
-	 */
-	public static <T> WeakSet<T> createThreadUnsafeWeakSet() {
-		return new ThreadUnsafeWeakSet<>();
-	}
-
-	/**
 	 * Use when mutations outweigh iterations.
 	 *
 	 * @return a new WeakSet

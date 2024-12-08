@@ -87,7 +87,7 @@ public class FidProgramSeeker {
 		AddressIterator referenceIterator =
 			referenceManager.getReferenceSourceIterator(function.getBody(), true);
 		for (Address address : referenceIterator) {
-//			monitor.checkCanceled();
+//			monitor.checkCancelled();
 			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
 			for (Reference reference : referencesFrom) {
 				Address toAddress = reference.getToAddress();
@@ -119,7 +119,7 @@ public class FidProgramSeeker {
 //		SymbolTable symbolTable = function.getProgram().getSymbolTable();
 		ArrayList<Function> children = getChildren(function, true);
 		for (Function relation : children) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FidHashQuad hash = cacheFactory.get(relation);
 			if (hash != null) {
 				family.addChild(hash);
@@ -158,7 +158,7 @@ public class FidProgramSeeker {
 		for (;;) {
 			ReferenceIterator referenceIterator = referenceManager.getReferencesTo(curAddr);
 			for (Reference reference : referenceIterator) {
-				// monitor.checkCanceled();
+				// monitor.checkCancelled();
 				Address fromAddress = reference.getFromAddress();
 				if (reference.getReferenceType().isCall()) {
 					Function par = functionManager.getFunctionContaining(fromAddress);
@@ -193,7 +193,7 @@ public class FidProgramSeeker {
 			throws MemoryAccessException, CancelledException {
 		ArrayList<Function> parents = getParents(function, true);
 		for (Function relation : parents) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FidHashQuad hash = cacheFactory.get(relation);
 			if (hash != null) {
 				family.addParent(hash);
@@ -223,7 +223,7 @@ public class FidProgramSeeker {
 				culledHashMatches.add(hashMatches.get(0));
 				final float maxOverall = hashMatches.get(0).getOverallScore();
 				for (int ii = 1; ii < hashMatches.size(); ++ii) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					HashMatch hashMatch = hashMatches.get(ii);
 					if (hashMatch.getOverallScore() < maxOverall) {
 						break;
@@ -256,7 +256,7 @@ public class FidProgramSeeker {
 			ArrayList<HashMatch> culledHashMatches, TaskMonitor monitor) throws CancelledException {
 		ArrayList<FidMatch> fidMatches = new ArrayList<FidMatch>();
 		for (FidMatchScore hashMatch : culledHashMatches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FidMatch match = new FidMatchImpl(
 				fidQueryService.getLibraryForFunction(hashMatch.getFunctionRecord()),
 				function.getEntryPoint(), hashMatch);
@@ -336,7 +336,7 @@ public class FidProgramSeeker {
 		int childCodeUnits = 0;
 
 		for (FidHashQuad fidHashQuad : family.getChildren()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (fidQueryService.getSuperiorFullRelation(functionRecord, fidHashQuad)) {
 				childCodeUnits += fidHashQuad.getCodeUnitSize();
 			}
@@ -350,7 +350,7 @@ public class FidProgramSeeker {
 
 		if (family.getParents().size() < MAX_NUM_PARENTS_FOR_SCORE) {
 			for (FidHashQuad fidHashQuad : family.getParents()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (fidQueryService.getInferiorFullRelation(fidHashQuad, functionRecord)) {
 					parentCodeUnits += fidHashQuad.getCodeUnitSize();
 				}
@@ -386,7 +386,7 @@ public class FidProgramSeeker {
 			fidQueryService.findFunctionsByFullHash(family.getHash().getFullHash());
 
 		for (FunctionRecord functionRecord : functionsByFullHash) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			HashMatch match = scoreMatch(functionRecord, family, monitor);
 			if (match != null) {
 				result.add(match);
@@ -432,7 +432,7 @@ public class FidProgramSeeker {
 		monitor.initialize(functionManager.getFunctionCount());
 		FunctionIterator functions = functionManager.getFunctions(true);
 		for (Function function : functions) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			try {
 				HashFamily family = getFamily(function, monitor);

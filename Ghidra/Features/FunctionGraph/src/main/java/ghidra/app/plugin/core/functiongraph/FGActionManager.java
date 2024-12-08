@@ -27,6 +27,7 @@ import docking.DockingUtils;
 import docking.action.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
+import docking.options.OptionsService;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import edu.uci.ics.jung.graph.Graph;
@@ -42,7 +43,6 @@ import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FGData;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
@@ -662,7 +662,7 @@ class FGActionManager {
 		Icon image = new GIcon("icon.plugin.functiongraph.action.viewer.clone");
 		cloneAction.setToolBarData(new ToolBarData(image, toolbarEndGroup));
 		cloneAction.setDescription(
-			"Create a snapshot (disconnected) copy of this Function Graph window ");
+			"Create a snapshot (disconnected) copy of this Function Graph window");
 		cloneAction.setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
 		cloneAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Snapshot"));

@@ -59,6 +59,10 @@ public class MemviewTable {
 		component.add(filterPanel, BorderLayout.SOUTH);
 		table.setAutoscrolls(true);
 
+		String namePrefix = "Memory View";
+		table.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 		table.getSelectionModel().addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
 				return;

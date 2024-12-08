@@ -152,11 +152,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 //==================================================================================================
 
 	@Override
-	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		// nothing to do
-	}
-
-	@Override
 	public boolean isDropOk(DropTargetDragEvent e) {
 		DataFlavor[] flavors = e.getCurrentDataFlavors();
 		Transferable transferable = e.getTransferable();
@@ -220,11 +215,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	@Override
-	public void undoDragUnderFeedback() {
-		// nothing to do
-	}
-
-	@Override
 	public void add(Object obj, DropTargetDropEvent event, DataFlavor f) {
 
 		if (f.equals(DataTreeDragNDropHandler.localDomainFileFlavor)) {
@@ -255,8 +245,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 				}
 			}
 		}
+		// else assume ToolButtonTransferable
 		else {
-			plugin.setToolButtonTransferable(null);
 			ToolButton toolButton = (ToolButton) obj;
 			resetButtonAfterDrag(toolButton);
 			addFromToolButton(toolButton);
@@ -264,7 +254,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	private void addFromToolButton(ToolButton toolButton) {
-		plugin.setToolButtonTransferable(null);
 		PluginTool tool = null;
 		if (associatedRunningTool != null && toolButton.associatedRunningTool != null) {
 			final PluginTool t2 = toolButton.associatedRunningTool;
@@ -353,51 +342,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		clearBorder();
 	}
 
-	/**
-	 * Method called when the drag operation exits the drop target
-	 * without dropping.
-	 */
 	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		plugin.setToolButtonTransferable(null);
+	public void dragFinished(boolean wasCancelled) {
 		resetButtonAfterDrag(this);
-
-		// Unusual Code Alert!
-		// When dragging, we do not get mouseReleased() events, which we use to launch tools.
-		// In this case, the drag was cancelled; if we are over ourselves, then simulate
-		// the Java-eaten mouseReleased() call
-		Container parent = getParent();
-		if (parent == null) {
-			return;
-		}
-
-		Point point = event.getLocation();
-		if (point == null) {
-			return;
-		}
-		SwingUtilities.convertPointFromScreen(point, parent);
-		Component componentUnderMouse =
-			SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
-
-		if (componentUnderMouse == this) {
-			handleMouseReleased();
-		}
-
 	}
 
-	/**
-	 * Return true if the object at the location in the DragGesture
-	 * event is draggable.
-	 *
-	 * @param e event passed to a DragGestureListener via its
-	 * dragGestureRecognized() method when a particular DragGestureRecognizer
-	 * detects a platform dependent Drag and Drop action initiating
-	 * gesture has occurred on the Component it is tracking.
-	 * @see docking.dnd.DragGestureAdapter
-	 */
 	@Override
 	public boolean isStartDragOk(DragGestureEvent e) {
-		plugin.setToolButtonTransferable(new ToolButtonTransferable(this));
 		return true;
 	}
 
@@ -408,12 +359,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 	@Override
 	public Transferable getTransferable(Point p) {
-		return plugin.getToolButtonTransferable();
-	}
-
-	@Override
-	public void move() {
-		resetButtonAfterDrag(this);
+		return new ToolButtonTransferable(this);
 	}
 
 	@Override
@@ -608,10 +554,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	private void setHelpLocation(String anchorTag) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(this, new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, anchorTag));
-	}
-
-	private void handleMouseReleased() {
-		activateTool();
 	}
 
 //==================================================================================================

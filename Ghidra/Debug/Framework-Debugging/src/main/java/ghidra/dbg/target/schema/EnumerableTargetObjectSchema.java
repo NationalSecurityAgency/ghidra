@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,11 @@ import ghidra.dbg.util.PathMatcher;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
+/**
+ * @deprecated This will be moved/refactored into trace database. In general, it will still exist,
+ *             but things depending on it are now back on shifting sand.
+ */
+@Deprecated(since = "11.2")
 public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	/**
 	 * The top-most type descriptor
@@ -46,6 +51,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 		public AttributeSchema getDefaultAttributeSchema() {
 			return AttributeSchema.DEFAULT_ANY;
 		}
+
+		@Override
+		public boolean isAssignableFrom(TargetObjectSchema that) {
+			return true;
+		}
 	},
 	/**
 	 * The least restrictive, but least informative object schema.
@@ -62,6 +72,12 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 		@Override
 		public AttributeSchema getDefaultAttributeSchema() {
 			return AttributeSchema.DEFAULT_ANY;
+		}
+
+		@Override
+		public boolean isAssignableFrom(TargetObjectSchema that) {
+			// That is has as schema implies it's a TargetObject
+			return true;
 		}
 	},
 	TYPE(Class.class),
@@ -89,7 +105,16 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	SET_ATTACH_KIND(TargetAttachKindSet.class),
 	SET_BREAKPOINT_KIND(TargetBreakpointKindSet.class),
 	SET_STEP_KIND(TargetStepKindSet.class),
-	EXECUTION_STATE(TargetExecutionState.class);
+	EXECUTION_STATE(TargetExecutionState.class),
+	// Additional types supported by the Trace database
+	CHAR(Character.class, char.class),
+	BOOL_ARR(boolean[].class),
+	BYTE_ARR(byte[].class),
+	CHAR_ARR(char[].class),
+	SHORT_ARR(short[].class),
+	INT_ARR(int[].class),
+	LONG_ARR(long[].class),
+	STRING_ARR(String[].class);
 
 	public static final class MinimalSchemaContext extends DefaultSchemaContext {
 		public static final SchemaContext INSTANCE = new MinimalSchemaContext();
@@ -179,6 +204,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 
 	@Override
 	public Map<String, AttributeSchema> getAttributeSchemas() {
+		return Map.of();
+	}
+
+	@Override
+	public Map<String, String> getAttributeAliases() {
 		return Map.of();
 	}
 

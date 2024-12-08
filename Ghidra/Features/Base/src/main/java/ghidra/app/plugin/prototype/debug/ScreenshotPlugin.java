@@ -39,7 +39,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Capture Screenshots",
 	description = "Capture screen images and export to Portable Network Graphic (.PNG) format."
 )
@@ -84,7 +84,8 @@ public class ScreenshotPlugin extends ProgramPlugin {
 				RenderedImage image = generateImage(activeComponent);
 
 				String componentName =
-					((DockableComponent) activeComponent).getComponentWindowingPlaceholder().getName();
+					((DockableComponent) activeComponent).getComponentWindowingPlaceholder()
+							.getName();
 				File file = getFile(componentName + ".png");
 
 				if (file != null) {
@@ -93,7 +94,8 @@ public class ScreenshotPlugin extends ProgramPlugin {
 			}
 		};
 		captureActiveWindowAction.setAddToAllWindows(true);
-		captureActiveWindowAction.setDescription("Takes a screenshot of the active component provider and exports it to PNG format.");
+		captureActiveWindowAction.setDescription(
+			"Takes a screenshot of the active component provider and exports it to PNG format.");
 		captureActiveWindowAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F11,
 			InputEvent.ALT_DOWN_MASK));
 		String group = "ScreenCapture";
@@ -118,7 +120,8 @@ public class ScreenshotPlugin extends ProgramPlugin {
 			}
 		};
 		captureToolFrameAction.setAddToAllWindows(true);
-		captureToolFrameAction.setDescription("Takes a screenshot of the active tool and exports it to PNG format.");
+		captureToolFrameAction.setDescription(
+			"Takes a screenshot of the active tool and exports it to PNG format.");
 		captureToolFrameAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F12,
 			InputEvent.ALT_DOWN_MASK));
 		captureToolFrameAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_TOOLS,

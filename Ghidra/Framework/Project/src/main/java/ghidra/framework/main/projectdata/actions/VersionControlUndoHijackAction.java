@@ -156,7 +156,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 		public void run(TaskMonitor monitor) {
 			try {
 				for (DomainFile currentDF : hijackFiles) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					monitor.setMessage("Undoing Hijack " + currentDF.getName());
 					if (saveCopy) {
 						// rename the file

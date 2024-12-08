@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +24,15 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * A command to create a new function register parameter.
  * 
- * 
- * @since  Tracker Id 526
+ * @deprecated function signatures should be modified in their entirety using 
+ * either {@link UpdateFunctionCommand} or {@link ApplyFunctionSignatureCmd}. 
  */
+@Deprecated(since = "11.1")
 public class AddRegisterParameterCommand extends AddParameterCommand {
 
-	private Register register;
-	private String name;
-	private DataType dataType;
+	private final Register register;
+	private final String name;
+	private final DataType dataType;
 
 	public AddRegisterParameterCommand(Function function, Register register, String name,
 			DataType dataType, int ordinal, SourceType source) {
@@ -40,7 +40,6 @@ public class AddRegisterParameterCommand extends AddParameterCommand {
 		this.register = register;
 		this.name = name;
 		this.dataType = dataType;
-		this.ordinal = ordinal;
 	}
 
 	@Override
@@ -48,9 +47,6 @@ public class AddRegisterParameterCommand extends AddParameterCommand {
 		return new ParameterImpl(name, dataType, register, program);
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Create Register Parameter";

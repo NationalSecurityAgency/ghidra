@@ -18,11 +18,11 @@ package ghidra.trace.database.symbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceLabelSymbolView;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.exception.InvalidInputException;
 
@@ -54,7 +54,7 @@ public class DBTraceLabelSymbolView
 			cacheForAt.notifyNewEntry(lifespan, address, label);
 
 			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceSymbolChangeType.ADDED, label.getSpace(), label));
+				new TraceChangeRecord<>(TraceEvents.SYMBOL_ADDED, label.getSpace(), label));
 			return label;
 		}
 	}

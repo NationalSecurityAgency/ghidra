@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package docking.widgets.table.threaded;
 import static docking.widgets.table.AddRemoveListItem.Type.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
@@ -145,6 +146,10 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			updateManager.addThreadedTableListener(new NonIncrementalUpdateManagerListener());
 		}
 
+		startInitialLoad();
+	}
+
+	protected void startInitialLoad() {
 		// We are expecting to be in the swing thread.  We want the reload to happen after our
 		// constructor is fully completed since the reload will cause our initialize method to
 		// be called in another thread, thereby creating a possible race condition.
@@ -161,10 +166,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * A package-level method.  Subclasses should not call this.
+	 * Subclasses should not call this.  Loading for subclasses is done inside their implementation
+	 * of {@link #doLoad(Accumulator, TaskMonitor)}.
 	 * 
 	 * <p>This exists to handle whether this model should load incrementally.
-	 * 
+	 *
 	 * @param monitor the monitor
 	 * @return the loaded data
 	 * @throws CancelledException if the load was cancelled
@@ -178,9 +184,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		}
 
 		// do the load now
-		ListAccumulator<ROW_OBJECT> accumulator = new ListAccumulator<>();
+		ListAccumulator<ROW_OBJECT> accumulator = createAccumulator();
 		doLoad(accumulator, monitor);
 		return accumulator.asList();
+	}
+
+	protected ListAccumulator<ROW_OBJECT> createAccumulator() {
+		return new ListAccumulator<ROW_OBJECT>();
 	}
 
 	private void initializeWorker() {
@@ -221,7 +231,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * This method will retrieve a column value for the given row object.  Further, the retrieved
 	 * value will be cached.   This is useful when sorting a table, as the same column value may
 	 * be requested multiple times.
-	 * 
+	 *
 	 * <p><u>Performance Notes</u>
 	 * <ul>
 	 * 	<li>This method uses a {@link HashMap} to cache column values for a row object.   Further,
@@ -241,7 +251,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 *      {@link Comparable}.  This is possible any time that a row object already has a field
 	 *      that is used for a given column.
 	 * </ul>
-	 * 
+	 *
 	 * @param rowObject the row object
 	 * @param columnIndex the column index for which to get a value
 	 * @return the column value
@@ -413,7 +423,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * Override this to change how filtering is performed.  This implementation will do nothing
 	 * if a <code>TableFilter</code> has not been set via a call to
 	 * {@link #setTableFilter(TableFilter)}.
-	 * 
+	 *
 	 * @param data The list of data to be filtered.
 	 * @param monitor the progress monitor to check for cancellation.
 	 * @param lastSortingContext the comparator used to sort data.  This can be used by overridden
@@ -513,17 +523,17 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Removes the specified object from this model and schedules an update.
-	 * 
+	 *
 	 * <P>Note: for this method to function correctly, the given object must compare as
 	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed
 	 * from the table data.   This allows clients to create proxy objects to pass into this method,
 	 * as long as they honor those requirements.
-	 * 
+	 *
 	 * <P>If this model's data is sorted, then a binary search will be used to locate the item
 	 * to be removed.  However, for this to work, all field used to sort the data must still be
 	 * available from the original object and must be the same values.   If this is not true, then
 	 * the binary search will not work and a brute force search will be used.
-	 * 
+	 *
 	 * @param obj the object to remove
 	 */
 	public void removeObject(ROW_OBJECT obj) {
@@ -537,7 +547,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Called when a {@link TableUpdateJob} is cancelled by the user via the Gui. (Disposing of the
 	 * table takes a different path.) This is not called when using an incrementally loading
-	 * table model. 
+	 * table model.
 	 */
 	protected void backgroundWorkCancelled() {
 		pendingSortContext = null;
@@ -668,6 +678,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		doClearData();
 		disposeDynamicColumnData();
 		clearCache();
+		isDisposed = true;
 	}
 
 	/**
@@ -787,7 +798,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Sets the update delay, which is how long the model should wait before updating, after a
 	 * change has been made the data.
-	 * 
+	 *
 	 * @param updateDelayMillis the new update delay.
 	 * @param maxUpdateDelayMillis the new max update delay; updates will not wait past this time.
 	 */
@@ -818,13 +829,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * Returns the strategy to use for performing adds and removes to this table.   Subclasses can
 	 * override this method to customize this process for their particular type of data.  See the
 	 * implementations of {@link TableAddRemoveStrategy} for details.
-	 * 
+	 *
 	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the same
 	 * instance that is in the list of this model.   This allows the {@link #equals(Object)} and
 	 * {@link #hashCode()} to be used when removing the object from the list.   If you model does
 	 * not pass the same instance into {@link #removeObject(Object)}, then you will need to update
 	 * your add/remove strategy accordingly.
-	 * 
+	 *
 	 * @return the strategy
 	 */
 	protected TableAddRemoveStrategy<ROW_OBJECT> getAddRemoveStrategy() {
@@ -848,6 +859,17 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 */
 	public void addInitialLoadListener(ThreadedTableModelListener listener) {
 		listeners.add(new OneTimeListenerWrapper(listener));
+	}
+
+	/**
+	 * Adds a consumer that will be notified when the model finishes loading. The consumer
+	 * is passed a boolean that indicates is true if the loading was cancelled. After the
+	 * table completes loading, the listener is removed.
+	 *
+	 * @param completedLoadingConsumer the consumer to be notified when the table is done loading
+	 */
+	public void addInitialLoadListener(Consumer<Boolean> completedLoadingConsumer) {
+		listeners.add(new OneTimeCompletedLoadingAdapter(completedLoadingConsumer));
 	}
 
 	/**
@@ -1004,6 +1026,36 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			removeThreadedTableModelListener(this);
 			delegate.loadingFinished(wasCancelled);
 		}
+	}
+
+	/**
+	 * Class to adapt a {@link ThreadedTableModelListener} to a single use Consumer that gets
+	 * notified once when the table is done loading and then removes the threaded table model 
+	 * listener.
+	 */
+	private class OneTimeCompletedLoadingAdapter implements ThreadedTableModelListener {
+		private Consumer<Boolean> completedLoadingConsumer;
+
+		OneTimeCompletedLoadingAdapter(Consumer<Boolean> completedLoadingConsumer) {
+			this.completedLoadingConsumer = completedLoadingConsumer;
+		}
+
+		@Override
+		public void loadPending() {
+			// do nothing
+		}
+
+		@Override
+		public void loadingStarted() {
+			// do nothing
+		}
+
+		@Override
+		public void loadingFinished(boolean wasCancelled) {
+			removeThreadedTableModelListener(this);
+			completedLoadingConsumer.accept(wasCancelled);
+		}
+
 	}
 
 }

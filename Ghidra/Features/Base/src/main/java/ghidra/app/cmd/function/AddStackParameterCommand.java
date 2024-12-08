@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +23,15 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * A command to create a new function stack parameter.
  * 
- * 
- * @since  Tracker Id 526
+ * @deprecated function signatures should be modified in their entirety using 
+ * either {@link UpdateFunctionCommand} or {@link ApplyFunctionSignatureCmd}. 
  */
+@Deprecated(since = "11.1")
 public class AddStackParameterCommand extends AddParameterCommand {
 
-	private int stackOffset;
-	private String name;
-	private DataType dataType;
+	private final int stackOffset;
+	private final String name;
+	private final DataType dataType;
 
 	public AddStackParameterCommand(Function function, int stackOffset, String name,
 			DataType dataType, int ordinal, SourceType source) {
@@ -39,8 +39,6 @@ public class AddStackParameterCommand extends AddParameterCommand {
 		this.stackOffset = stackOffset;
 		this.name = name;
 		this.dataType = dataType;
-		this.ordinal = ordinal;
-		this.source = source;
 	}
 
 	@Override

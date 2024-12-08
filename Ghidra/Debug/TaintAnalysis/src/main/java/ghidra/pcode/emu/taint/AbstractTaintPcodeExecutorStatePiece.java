@@ -121,10 +121,11 @@ public abstract class AbstractTaintPcodeExecutorStatePiece<S extends TaintSpace>
 	}
 
 	@Override
-	protected Map<Register, TaintVec> getRegisterValuesFromSpace(S space, List<Register> registers) {
+	protected Map<Register, TaintVec> getRegisterValuesFromSpace(S space,
+			List<Register> registers) {
 		return space.getRegisterValues(registers);
 	}
-	
+
 	@Override
 	public void clear() {
 		for (S space : spaceMap.values()) {

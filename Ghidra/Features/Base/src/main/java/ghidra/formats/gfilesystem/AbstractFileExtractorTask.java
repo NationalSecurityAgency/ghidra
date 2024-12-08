@@ -103,7 +103,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 		totalDirsExportedCount++;
 
 		for (GFile srcFile : fs.getListing(srcGFileDirectory)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String destFname = mapSourceFilenameToDest(srcFile);
 

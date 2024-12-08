@@ -25,7 +25,6 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.symbol.DBTraceReference;
-import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -96,9 +95,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setLong(getLifespan(), getAddress(), name, value);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -121,9 +119,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setString(getLifespan(), getAddress(), name, value);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -147,9 +144,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		try (LockHold hold = getTrace().lockWrite()) {
 			getSettingsSpace(true).setValue(getLifespan(), getAddress(), name, value);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -176,9 +172,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			}
 			space.clear(getLifespan(), getAddress(), name);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override
@@ -190,9 +185,8 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			}
 			space.clear(getLifespan(), getAddress(), null);
 		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
+		getTrace().setChanged(new TraceChangeRecord<>(TraceEvents.CODE_DATA_SETTINGS_CHANGED,
+			getTraceSpace(), this.getBounds(), null, null));
 	}
 
 	@Override

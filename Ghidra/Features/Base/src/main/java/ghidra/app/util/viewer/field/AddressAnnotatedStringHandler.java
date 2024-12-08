@@ -35,6 +35,33 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		"@address annotation must have an address" + "string";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "address", "addr" };
 
+	/**
+	 * Constructs a well-formed Address Annotation comment string.
+	 * 
+	 * @param destinationAddress destination of the annotation
+	 * @param displayText text that will be used as the body of the annotation.  Problematic
+	 * characters will be escaped
+	 * @return string
+	 */
+	public static String createAddressAnnotationString(Address destinationAddress,
+			String displayText) {
+		return "{@address %s %s}".formatted(destinationAddress.toString(false),
+			AnnotatedStringHandler.escapeAnnotationPart(displayText));
+	}
+
+	/**
+	 * Constructs a well-formed Address Annotation comment string.
+	 * 
+	 * @param addressOffset destination of the annotation
+	 * @param displayText text that will be used as the body of the annotation.  Problematic
+	 * characters will be escaped
+	 * @return string
+	 */
+	public static String createAddressAnnotationString(long addressOffset, String displayText) {
+		return "{@address 0x%x %s}".formatted(addressOffset,
+			AnnotatedStringHandler.escapeAnnotationPart(displayText));
+	}
+
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) throws AnnotationException {
@@ -56,7 +83,7 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 
 		String addressText = address.toString();
 		if (text.length > 2) { // address and display text
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			for (int i = 2; i < text.length; i++) {
 				buffer.append(text[i]).append(" ");
 			}
@@ -96,8 +123,8 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 			return goToService.goTo(sourceNavigatable, address);
 		}
 
-		Msg.showInfo(getClass(), null,
-			"No address: " + addressText, "Unable to locate address \"" + addressText + "\"");
+		Msg.showInfo(getClass(), null, "No address: " + addressText,
+			"Unable to locate address \"" + addressText + "\"");
 		return false;
 	}
 
@@ -109,6 +136,11 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 	@Override
 	public String getPrototypeString() {
 		return "{@address 0x00}";
+	}
+
+	@Override
+	public String getPrototypeString(String displayText) {
+		return "{@address " + displayText.trim() + "}";
 	}
 
 }

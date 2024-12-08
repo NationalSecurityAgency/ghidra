@@ -189,6 +189,7 @@ class ActionConstantPtr : public Action {
   int4 localcount;		///< Number of passes made for this function
   static AddrSpace *searchForSpaceAttribute(Varnode *vn,PcodeOp *op);
   static AddrSpace *selectInferSpace(Varnode *vn,PcodeOp *op,const vector<AddrSpace *> &spaceList);
+  static bool checkCopy(PcodeOp *op,Funcdata &data);
   static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
 				Address &rampoint,uintb &fullEncoding,Funcdata &data);
 public:
@@ -318,7 +319,7 @@ public:
 /// immediately.
 class ActionSetCasts : public Action {
   static void checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data);
-  static bool testStructOffset0(Varnode *vn,PcodeOp *op,Datatype *ct,CastStrategy *castStrategy);
+  static bool testStructOffset0(Datatype *reqtype,Datatype *curtype,CastStrategy *castStrategy);
   static bool tryResolutionAdjustment(PcodeOp *op,int4 slot,Funcdata &data);
   static bool isOpIdentical(Datatype *ct1,Datatype *ct2);
   static int4 resolveUnion(PcodeOp *op,int4 slot,Funcdata &data);
@@ -554,7 +555,6 @@ class ActionDeadCode : public Action {
   static bool neverConsumed(Varnode *vn,Funcdata &data);
   static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
   static uintb gatherConsumedReturn(Funcdata &data);
-  static bool isEventualConstant(Varnode *vn,int4 addCount,int4 loadCount);
   static bool lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist);
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
@@ -831,6 +831,9 @@ public:
 /// This produces on intermediate view of symbols on the stack.
 class ActionRestructureVarnode : public Action {
   int4 numpass;			///< Number of passes performed for this function
+  static bool isDelayedConstant(Varnode *vn);		///< Determine if given Varnode is or will be a constant
+  static void protectSwitchPathIndirects(PcodeOp *op);	///< Protect path to the given switch from INDIRECT collapse
+  static void protectSwitchPaths(Funcdata &data);	///< Look for switches and protect path of switch variable
 public:
   ActionRestructureVarnode(const string &g) : Action(0,"restructure_varnode",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { numpass = 0; }
@@ -841,15 +844,15 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
-/// \brief Create symbols that map out the local stack-frame for the function.
+/// \brief Do final synchronization of symbols in the local scope with Varnodes
 ///
-/// This produces the final set of symbols on the stack.
-class ActionRestructureHigh : public Action {
+/// Push data-types from the last local scope restructuring onto Varnodes
+class ActionMappedLocalSync : public Action {
 public:
-  ActionRestructureHigh(const string &g) : Action(0,"restructure_high",g) {}	///< Constructor
+  ActionMappedLocalSync(const string &g) : Action(0,"mapped_local_sync",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
-    return new ActionRestructureHigh(getGroup());
+    return new ActionMappedLocalSync(getGroup());
   }
   virtual int4 apply(Funcdata &data);
 };
@@ -1028,6 +1031,19 @@ public:
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionPrototypeWarnings(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
+/// \brief Check for constants getting written to the stack from \e internal \e storage registers
+///
+/// The constant is internal to the compiler and its storage location on the stack should not be addressable.
+class ActionInternalStorage : public Action {
+public:
+  ActionInternalStorage(const string &g) : Action(rule_onceperfunc,"internalstorage",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionInternalStorage(getGroup());
   }
   virtual int4 apply(Funcdata &data);
 };

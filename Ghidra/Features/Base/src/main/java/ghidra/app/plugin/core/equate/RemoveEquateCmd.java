@@ -16,37 +16,25 @@
 package ghidra.app.plugin.core.equate;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.EquateTable;
+import ghidra.util.Msg;
 
 /**
  * Command for removing all references to an equate.
  */
-class RemoveEquateCmd implements Command {
+class RemoveEquateCmd implements Command<Program> {
 
 	private String[] equateNames;
 
 	private String msg;
-	private PluginTool tool;
 
 	/**
 	 * Constructor
-	 * @param equateName name of equate to be removed.
+	 * @param equateNames one or more equate names to be removed.
 	 */
-	RemoveEquateCmd(String equateName, PluginTool tool) {
-		this.equateNames = new String[] { equateName };
-		this.tool = tool;
-	}
-
-	/**
-	 * Constructor
-	 * @param equateName name of equate to be removed.
-	 */
-	RemoveEquateCmd(String[] equateNames, PluginTool tool) {
+	RemoveEquateCmd(String... equateNames) {
 		this.equateNames = equateNames;
-		this.tool = tool;
 	}
 
 	/**
@@ -57,18 +45,14 @@ class RemoveEquateCmd implements Command {
 		return "Remove Equate" + (equateNames.length > 1 ? "s" : "");
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		EquateTable etable = ((Program) obj).getEquateTable();
+		EquateTable etable = program.getEquateTable();
 		boolean success = true;
-		for (int i = 0; i < equateNames.length; i++) {
-			String name = equateNames[i];
+		for (String name : equateNames) {
 			if (!etable.removeEquate(name)) {
-				tool.setStatusInfo("Unable to remove equate: " + name);
+				Msg.error(this, "Failed to remove equate: " + name);
 				success = false;
 			}
 		}
@@ -78,9 +62,6 @@ class RemoveEquateCmd implements Command {
 		return success;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;

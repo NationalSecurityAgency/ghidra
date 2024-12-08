@@ -131,7 +131,7 @@ public class ProjectTestUtils {
 			Msg.warn(ProjectTestUtils.class, "deleteLockFile(): " + "unable to delete file " +
 				lockFile.getAbsolutePath() + "- trying again.");
 			for (int i = 0; i < 6; i++) {
-				AbstractGuiTest.waitForPostedSwingRunnables();
+				AbstractGuiTest.waitForSwing();
 				try {
 					Thread.sleep(1000);
 				}

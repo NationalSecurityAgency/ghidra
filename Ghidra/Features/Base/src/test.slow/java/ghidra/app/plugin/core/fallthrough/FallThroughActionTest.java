@@ -15,13 +15,14 @@
  */
 package ghidra.app.plugin.core.fallthrough;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.Set;
 
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.LocationCallback;
 import ghidra.app.SampleLocationGenerator;
@@ -138,7 +139,7 @@ public class FallThroughActionTest extends AbstractGhidraHeadedIntegrationTest
 			if (actionName.equals(name)) {
 				ActionContext actionContext = cb.getProvider().getActionContext(null);
 				if (actionContext == null) {
-					actionContext = new ActionContext();
+					actionContext = new DefaultActionContext();
 				}
 				boolean validContext = action.isAddToPopup(actionContext);
 				assertEquals("Enablement: actionName = " + actionName + " [case: " + caseName + "]",

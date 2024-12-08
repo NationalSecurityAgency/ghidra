@@ -42,7 +42,7 @@ ScopeGhidra::~ScopeGhidra(void)
 
 /// The Ghidra client reports a \e namespace id associated with
 /// Symbol. Determine if a matching \e namespace Scope already exists in the cache and build
-/// it if it isn't. This may mean creating a new \e namespace Scope.
+/// it if it isn't. This may mean creating the \e namespace Scope and its ancestors.
 /// \param id is the ID associated with the Ghidra namespace
 /// \return the Scope matching the id.
 Scope *ScopeGhidra::reresolveScope(uint8 id) const
@@ -58,19 +58,7 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
   if (!ghidra->getNamespacePath(id,decoder))
     throw LowlevelError("Could not get namespace info");
 
-  Scope *curscope = symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
-  uint4 elemId = decoder.openElement();
-  uint4 subId = decoder.openElement();
-  decoder.closeElementSkipping(subId);		// Skip element describing the root scope
-  for(;;) {
-    subId = decoder.openElement();
-    if (subId == 0) break;
-    uint8 scopeId = decoder.readUnsignedInteger(ATTRIB_ID);
-    curscope = symboltab->findCreateScope(scopeId, decoder.readString(ATTRIB_CONTENT), curscope);
-    decoder.closeElement(subId);
-  }
-  decoder.closeElement(elemId);
-  return curscope;
+  return symboltab->decodeScopePath(decoder);
 }
 
 /// The Ghidra client can respond to a query negatively by sending a

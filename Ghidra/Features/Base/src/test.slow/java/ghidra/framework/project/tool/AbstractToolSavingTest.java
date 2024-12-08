@@ -73,7 +73,7 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 		setToolPosition(tool, defaultPosition);
 
 		closeTool(tool);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	protected void startGhidra() throws IOException {
@@ -120,7 +120,7 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 				throw afe;
 			}
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	protected void closeTool(PluginTool tool) {
@@ -129,7 +129,7 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 
 	protected void closeToolAndManuallySave(PluginTool tool) {
 		closeTool(tool); // close the changed one (this will trigger a modal dialog)
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Window saveChangesDialog = getSaveChangesDialog(tool);
 		assertNotNull(saveChangesDialog);
 		pressSave(saveChangesDialog);

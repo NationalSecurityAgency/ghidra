@@ -29,14 +29,21 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
 
 public class PathTableModel extends AbstractQueryTableModel<PathRow> {
+	record Seen(List<String> path, long minSnap) {
+		static Seen forPath(TraceObjectValPath path) {
+			TraceObjectValue last = path.getLastEntry();
+			return new Seen(path.getKeyList(), last == null ? 0 : last.getMinSnap());
+		}
+	}
+
 	/** Initialized in {@link #createTableColumnDescriptor()}, which precedes this. */
 	private TracePathValueColumn valueColumn;
 	private TracePathLastLifespanPlotColumn lifespanPlotColumn;
 
 	protected static Stream<? extends TraceObjectValPath> distinctKeyPath(
 			Stream<? extends TraceObjectValPath> stream) {
-		Set<List<String>> seen = new HashSet<>();
-		return stream.filter(path -> seen.add(path.getKeyList()));
+		Set<Seen> seen = new HashSet<>();
+		return stream.filter(path -> seen.add(Seen.forPath(path)));
 	}
 
 	public class PathRow {
@@ -153,9 +160,9 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	protected TableColumnDescriptor<PathRow> createTableColumnDescriptor() {
 		TableColumnDescriptor<PathRow> descriptor = new TableColumnDescriptor<>();
 		descriptor.addHiddenColumn(new TracePathStringColumn());
-		descriptor.addVisibleColumn(new TracePathLastKeyColumn());
+		descriptor.addVisibleColumn(new TracePathLastKeyColumn(), 1, true);
 		descriptor.addVisibleColumn(valueColumn = new TracePathValueColumn());
-		descriptor.addVisibleColumn(new TracePathLastLifespanColumn());
+		descriptor.addVisibleColumn(new TracePathLastLifespanColumn(), 2, true);
 		descriptor.addHiddenColumn(lifespanPlotColumn = new TracePathLastLifespanPlotColumn());
 		return descriptor;
 	}

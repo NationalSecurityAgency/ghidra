@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,6 +130,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		List<String> names = new ArrayList<>();
 		Collection<List<String>> values = valueMap.values();
 		for (List<String> list : values) {
+			list = new ArrayList<>(list);
 			Collections.sort(list);
 			names.addAll(list);
 		}
@@ -148,6 +149,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	@Override
 	public void add(String valueName, long value, String comment) {
+		doAdd(valueName, value, comment);
+		signedState = computeSignedness();
+	}
+
+	private void doAdd(String valueName, long value, String comment) {
 		bitGroups = null;
 		checkValue(value);
 		if (nameMap.containsKey(valueName)) {
@@ -161,8 +167,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 		if (!StringUtils.isBlank(comment)) {
 			commentMap.put(valueName, comment);
 		}
-		signedState = computeSignedness();
-
 	}
 
 	private EnumSignedState computeSignedness() {
@@ -172,11 +176,15 @@ public class EnumDataType extends GenericDataType implements Enum {
 		long minValue = valueMap.firstKey();
 		long maxValue = valueMap.lastKey();
 
+		if (maxValue > getMaxPossibleValue(length, true)) {
+			if (minValue < 0) {
+				return INVALID;
+			}
+			return UNSIGNED;
+		}
+
 		if (minValue < 0) {
 			return SIGNED;
-		}
-		if (maxValue > getMaxPossibleValue(length, true)) {
-			return UNSIGNED;
 		}
 
 		return NONE;		// we have no negatives and no large unsigned values
@@ -239,6 +247,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 		return length;
 	}
 
+	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
 	public void setLength(int newLength) {
 		if (newLength == length) {
 			return;
@@ -270,6 +283,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 	@Override
 	public boolean isSigned() {
 		return signedState == SIGNED;
+	}
+
+	@Override
+	public EnumSignedState getSignedState() {
+		return signedState;
 	}
 
 	@Override
@@ -498,10 +516,10 @@ public class EnumDataType extends GenericDataType implements Enum {
 		commentMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
+		signedState = enumm.getSignedState();
 		for (String valueName : names) {
-			add(valueName, enumm.getValue(valueName), enumm.getComment(valueName));
+			doAdd(valueName, enumm.getValue(valueName), enumm.getComment(valueName));
 		}
-		computeSignedness();
 	}
 
 	@Override

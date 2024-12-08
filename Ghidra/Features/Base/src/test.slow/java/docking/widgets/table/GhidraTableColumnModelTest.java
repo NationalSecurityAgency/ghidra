@@ -337,7 +337,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		JTableHeader tableHeader = table.getTableHeader();
 		Rectangle headerRect = tableHeader.getHeaderRect(newColumnIndex);
 		clickMouse(tableHeader, MouseEvent.BUTTON3, headerRect.x + 2, headerRect.y + 2, 1, 0);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// verify the sort
 		int newSortedIndex = sortedModel.getPrimarySortColumnIndex();
@@ -405,7 +405,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// press OK
 		final JButton okButton = (JButton) TestUtils.getInstanceField("okButton", dialog);
 		runSwing(() -> okButton.doClick());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// make sure the deselected column from above is now not visible
 		runSwing(() -> {

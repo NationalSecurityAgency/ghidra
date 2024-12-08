@@ -23,12 +23,12 @@ import docking.DockingUtils;
 import docking.UndoRedoKeeper;
 import ghidra.program.model.symbol.Symbol;
 
-class SymbolEditor extends DefaultCellEditor {
+public class SymbolEditor extends DefaultCellEditor {
 
 	private JTextField symbolField = null;
 	private UndoRedoKeeper undoRedoKeeper;
 
-	SymbolEditor() {
+	public SymbolEditor() {
 		super(new JTextField());
 		symbolField = (JTextField) super.getComponent();
 		symbolField.setBorder(BorderFactory.createEmptyBorder());

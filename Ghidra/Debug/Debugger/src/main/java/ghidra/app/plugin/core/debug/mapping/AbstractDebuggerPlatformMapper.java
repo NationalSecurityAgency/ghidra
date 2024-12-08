@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +16,26 @@
 package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.Comparator;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInject;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.platform.DisassemblyResult;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Endian;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceInstruction;
+import ghidra.trace.model.memory.TraceMemoryOperations;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatformMapper {
@@ -57,35 +66,45 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 	}
 
 	protected boolean isCancelSilently(Address start, long snap) {
-		return trace.getCodeManager().definedUnits().containsAddress(snap, start);
+		TraceInstruction exists = trace.getCodeManager().instructions().getAt(snap, start);
+		if (exists == null) {
+			return false;
+		}
+		var states = trace.getMemoryManager().getStates(snap, exists.getRange());
+		return TraceMemoryOperations.isStateEntirely(exists.getRange(), states,
+			TraceMemoryState.KNOWN);
 	}
 
-	protected Collection<DisassemblyInject> getDisassemblyInjections(TraceObject object) {
-		return Set.of();
+	protected Collection<DisassemblyInject> getDisassemblyInjections(TracePlatform platform) {
+		return ClassSearcher.getInstances(DisassemblyInject.class)
+				.stream()
+				.filter(i -> i.isApplicable(platform))
+				.sorted(Comparator.comparing(i -> i.getPriority()))
+				.collect(Collectors.toList());
 	}
 
 	@Override
-	public DisassemblyResult disassemble(TraceThread thread, TraceObject object,
-			Address start, AddressSetView restricted, long snap, TaskMonitor monitor) {
+	public DisassemblyResult disassemble(TraceThread thread, TraceObject object, Address start,
+			AddressSetView restricted, long snap, TaskMonitor monitor) {
 		if (isCancelSilently(start, snap)) {
 			return DisassemblyResult.CANCELLED;
 		}
 		TracePlatform platform = trace.getPlatformManager().getPlatform(getCompilerSpec(object));
 
-		Collection<DisassemblyInject> injects = getDisassemblyInjections(object);
+		Collection<DisassemblyInject> injects = getDisassemblyInjections(platform);
 		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, start, restricted);
-		Language language = platform.getLanguage();
 		AddressSet startSet = new AddressSet(start);
 		for (DisassemblyInject i : injects) {
-			i.pre(tool, dis, trace, language, snap, thread, startSet, restricted);
+			i.pre(tool, dis, platform, snap, thread, startSet, restricted);
 		}
-		boolean result = dis.applyToTyped(trace.getFixedProgramView(snap), monitor);
+		boolean result = dis.applyTo(trace.getFixedProgramView(snap), monitor);
 		if (!result) {
 			return DisassemblyResult.failed(dis.getStatusMsg());
 		}
+		AddressSetView actualSet = dis.getDisassembledAddressSet();
 		for (DisassemblyInject i : injects) {
-			i.post(tool, trace, snap, dis.getDisassembledAddressSet());
+			i.post(tool, platform, snap, actualSet);
 		}
-		return DisassemblyResult.success(!dis.getDisassembledAddressSet().isEmpty());
+		return DisassemblyResult.success(actualSet != null && !actualSet.isEmpty());
 	}
 }

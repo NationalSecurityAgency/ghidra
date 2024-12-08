@@ -505,19 +505,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		return program.getListing().getCodeUnitBefore(address);
 	}
 
-	/**
-	 * Return true if the given CodeUnit follows directly after this code unit.
-	 * 
-	 * @throws ConcurrentModificationException
-	 *             if this object is no longer valid.
-	 */
-	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
-		Address min = codeUnit.getMinAddress();
-
-		return this.getMaxAddress().isSuccessor(min);
-	}
-
 	@Override
 	public String getComment(int commentType) {
 		return comments.get(commentType);

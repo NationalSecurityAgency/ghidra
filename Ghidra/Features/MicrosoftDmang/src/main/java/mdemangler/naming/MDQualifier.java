@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,8 +44,44 @@ public class MDQualifier extends MDParsableItem {
 		return (nameNested != null);
 	}
 
+	public boolean isAnon() {
+		return (nameAnonymous != null);
+	}
+
+	public boolean isLocalNamespace() {
+		return (nameNumbered != null);
+	}
+
+	public boolean isNameC() {
+		return (nameC != null);
+	}
+
+	public boolean isNameQ() {
+		return (nameQ != null);
+	}
+
 	public MDNestedName getNested() {
 		return nameNested;
+	}
+
+	public String getAnonymousName() {
+		return nameAnonymous.getName();
+	}
+
+	public String getLocalNamespace() {
+		return nameNumbered.getName();
+	}
+
+	public String getLocalNamespaceNumber() {
+		return nameNumbered.getNumber().toString();
+	}
+
+	public String getNameC() {
+		return nameC;
+	}
+
+	public String getNameQ() {
+		return nameQ;
 	}
 
 	@Override
@@ -55,7 +91,13 @@ public class MDQualifier extends MDParsableItem {
 			name.insert(builder);
 		}
 		else if (nameAnonymous != null) {
-			dmang.insertString(builder, ANONYMOUS_NAMESPACE);
+			if (dmang.getOutputOptions().useEncodedAnonymousNamespace()) {
+				dmang.insertString(builder,
+					MDMangUtils.createStandardAnonymousNamespaceNode(nameAnonymous.getName()));
+			}
+			else {
+				dmang.insertString(builder, ANONYMOUS_NAMESPACE);
+			}
 		}
 		else if (nameInterface != null) {
 			nameInterface.insert(builder);
@@ -99,7 +141,7 @@ public class MDQualifier extends MDParsableItem {
 					nameAnonymous.parse();
 					dmang.parseInfoPop();
 					break;
-				case 'I': // Believe this is interface namespace 
+				case 'I': // Believe this is interface namespace
 					// 20140522: See note for 'A' anonymous namespace; for 'I' there is no
 					// evidence to include the 'I' in the fragment (investigation seems to have
 					// it removed).
@@ -180,7 +222,19 @@ public class MDQualifier extends MDParsableItem {
 					dmang.parseInfoPop();
 					break;
 				default: // special name
-					throw new MDException("SpecialName not expected in qualification list");
+					if (!dmang.isLlvmProcessingMode()) {
+						throw new MDException("SpecialName not expected in qualification list");
+					}
+					// Working around LLVM non-compliance with MSFT mangling standard (See
+					//  MDNestedName too).  LLVM does not follow the double question mark ("??")
+					// convention, but is only using one "?" (which we got above).  Maybe this
+					// is not a nested object, but it has attributes of a nested object other than
+					// not adhering to what MSFT does.  There is no test we can do such as checking
+					// for lower-case letter because an embedded object name could start with
+					// one of the capital letters that have meaning in the above switch cases.
+					nameNested = new MDNestedName(dmang);
+					nameNested.parse();
+					break;
 			}
 		}
 		else {

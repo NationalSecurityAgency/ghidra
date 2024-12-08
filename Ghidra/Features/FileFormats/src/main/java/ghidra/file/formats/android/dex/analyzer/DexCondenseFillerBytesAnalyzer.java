@@ -57,7 +57,7 @@ public class DexCondenseFillerBytesAnalyzer extends FileFormatAnalyzer {
 
 		AddressRangeIterator addressRanges = undefinedSet.getAddressRanges();
 		while (addressRanges.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			AddressRange addressRange = addressRanges.next();
 			if (isRangeAllSameBytes(program, addressRange, (byte) 0xff, monitor)) {
@@ -119,7 +119,7 @@ public class DexCondenseFillerBytesAnalyzer extends FileFormatAnalyzer {
 			//ignore
 		}
 		for (byte b : bytes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (b != value) {
 				return false;
 			}

@@ -64,7 +64,7 @@ public class DumpPeShim extends PeLoader {
 		program.setEffectiveImageBase(minAddress);
 		try {
 			load(provider, loadSpec, options, program, monitor, log);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		finally {
 			program.setEffectiveImageBase(null);

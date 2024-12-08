@@ -24,7 +24,7 @@ import ghidra.program.model.address.*;
  * Any space that matches the overlay space is encoded as the overlayed space.
  * This causes addresses in the overlay space to be converted into the underlying space.
  */
-public class PackedEncodeOverlay extends PackedEncode {
+public class PackedEncodeOverlay extends PatchPackedEncode {
 	private OverlayAddressSpace overlay = null;
 	private int overlayId;		// Id of the overlay space
 	private int underlyingId;	// If of the space underlying the overlay
@@ -53,7 +53,7 @@ public class PackedEncodeOverlay extends PackedEncode {
 	}
 
 	@Override
-	public void writeSpaceId(AttributeId attribId, long spaceId) {
+	public void writeSpaceId(AttributeId attribId, long spaceId) throws IOException {
 		if (spaceId == overlayId) {
 			spaceId = underlyingId;
 		}

@@ -322,7 +322,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 			monitor.initialize(tags.size());
 
 			for (TagState tagState : tags) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				switch (tagState.action) {
 					case ADD:
 						addTag(tagState.getTagName());

@@ -15,8 +15,7 @@
  */
 package ghidra.framework.task;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,11 +45,11 @@ public class GProgressBarTest extends AbstractDockingTest {
 				cancelled = true;
 			}
 		};
-		progressBar = new GProgressBar(cancelledListener, true, true, true, 10.0f);
+		progressBar = new GProgressBar(cancelledListener, true, true, true);
 	}
 
 	@Test
-    public void testBasicProgress() {
+	public void testBasicProgress() {
 		progressBar.initialize(100);
 		assertEquals(0, progressBar.getProgress());
 		assertEquals(100, progressBar.getMax());
@@ -62,7 +61,7 @@ public class GProgressBarTest extends AbstractDockingTest {
 	}
 
 	@Test
-    public void testLongValues() {
+	public void testLongValues() {
 		progressBar.initialize(0x400000000L);
 		progressBar.setProgress(10);
 		assertEquals(10, progressBar.getProgress());
@@ -73,7 +72,7 @@ public class GProgressBarTest extends AbstractDockingTest {
 	}
 
 	@Test
-    public void testMessage() {
+	public void testMessage() {
 		progressBar.initialize(100);
 		progressBar.setMessage("Hey");
 		assertEquals("Hey", progressBar.getMessage());
@@ -91,7 +90,7 @@ public class GProgressBarTest extends AbstractDockingTest {
 	}
 
 	@Test
-    public void testCancel() {
+	public void testCancel() {
 		progressBar.initialize(100);
 		progressBar.setProgress(50);
 		assertTrue(!cancelled);

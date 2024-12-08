@@ -131,7 +131,7 @@ public class OdexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 		depsAddress = depsAddress.add(4);
 
 		while (depsAddress.compareTo(depsEndAddress) < 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			createData(program, depsAddress, new DWordDataType());
 			int stringLength = program.getMemory().getInt(depsAddress);

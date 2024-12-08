@@ -57,7 +57,7 @@ class ApplyStackVariables {
 		boolean skipParameters = !isParameterRecoverySupported();
 
 		while (xmlParser.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			XmlElement elem = xmlParser.peek();
 			if (elem.isEnd() && elem.getName().equals("function")) {
@@ -134,7 +134,7 @@ class ApplyStackVariables {
 			function.getProgram().getListing().getInstructions(scopeSet, true);
 		int max = 0;
 		while (instructions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction next = instructions.next();
 			int newValue = valueChange.getDepth(next.getMinAddress());
 			if (newValue < -(20 * 1024) || newValue > (20 * 1024)) {

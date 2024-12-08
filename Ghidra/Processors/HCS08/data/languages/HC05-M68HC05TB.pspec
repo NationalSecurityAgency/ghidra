@@ -6,6 +6,7 @@
   <programcounter register="PC"/>
   <volatile outputop="write_volatile" inputop="read_volatile">
     <range space="RAM" first="0x0"    last="0x1F"/>
+    <range space="RAM" first="0x20"   last="0x8F"/>
   </volatile>
   <default_symbols>
     <symbol name="PORTA" address="0"/>
@@ -40,21 +41,22 @@
     <symbol name="Reserved_1D"  address="1D"/>
     <symbol name="Reserved_1E"  address="1E"/>
     <symbol name="Reserved_1F"  address="1F"/>
-    <symbol name="COP_Register"            address="1FF0" entry="true" type="code_ptr"/>
-    <symbol name="MaskOption"              address="1FF1" entry="true" type="code_ptr"/>
-    <symbol name="Reserved_1FF2"           address="1FF2" entry="true" type="code_ptr"/>
-    <symbol name="Reserved_1FF3"           address="1FF3" entry="true" type="code_ptr"/>
-    <symbol name="Reserved_1FF4"           address="1FF4" entry="true" type="code_ptr"/>
-    <symbol name="Reserved_1FF5"           address="1FF5" entry="true" type="code_ptr"/>
-    <symbol name="Reserved_1FF6"           address="1FF6" entry="true" type="code_ptr"/>
-    <symbol name="Reserved_1FF7"           address="1FF7" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_On-Chip_Timer"           address="1FF8" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_IRQ"                     address="1FFA" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_SWI"                     address="1FFC" entry="true" type="code_ptr"/>
-    <symbol name="VECTOR_Reset"                   address="1FFE" entry="true" type="code_ptr"/>
+    <symbol name="COP_Register"            address="07F0" entry="true" type="code_ptr"/>
+    <symbol name="MaskOption"              address="07F1" entry="true" type="code_ptr"/>
+    <symbol name="Reserved_07F2"           address="07F2" entry="true" type="code_ptr"/>
+    <symbol name="Reserved_07F3"           address="07F3" entry="true" type="code_ptr"/>
+    <symbol name="Reserved_07F4"           address="07F4" entry="true" type="code_ptr"/>
+    <symbol name="Reserved_07F5"           address="07F5" entry="true" type="code_ptr"/>
+    <symbol name="Reserved_07F6"           address="07F6" entry="true" type="code_ptr"/>
+    <symbol name="Reserved_07F7"           address="07F7" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_On-Chip_Timer"           address="07F8" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_IRQ"                     address="07FA" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_SWI"                     address="07FC" entry="true" type="code_ptr"/>
+    <symbol name="VECTOR_Reset"                   address="07FE" entry="true" type="code_ptr"/>
   </default_symbols>
   <default_memory_blocks>
-    <memory_block name="IO"      start_address="0"    length="0x20" initialized="false"/>
-    <memory_block name="LOW_RAM" start_address="0xC0" length="0x40" initialized="false"/>
+    <memory_block name="IO"       start_address="0"    length="0x20" initialized="false"/>
+    <memory_block name="USER_RAM" start_address="0x20" length="0x60" initialized="false"/>
+    <memory_block name="LOW_RAM"  start_address="0xC0" length="0x40" initialized="false"/>
   </default_memory_blocks>
 </processor_spec>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -30,11 +29,11 @@ import javax.swing.table.TableColumnModel;
 import docking.ActionContext;
 import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.framework.model.DomainObject;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -42,9 +41,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -107,9 +106,8 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		}
 	}
 
-	protected static class RegionTableModel
-			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
-					RegionTableColumns, ObjectKey, RegionRow, TraceMemoryRegion> {
+	protected static class RegionTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
+			RegionTableColumns, ObjectKey, RegionRow, TraceMemoryRegion> {
 
 		public RegionTableModel(PluginTool tool) {
 			super(tool, "Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
@@ -117,37 +115,21 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		}
 	}
 
-	protected static RegionRow getSelectedRegionRow(ActionContext context) {
-		if (!(context instanceof DebuggerRegionActionContext)) {
-			return null;
-		}
-		DebuggerRegionActionContext ctx = (DebuggerRegionActionContext) context;
-		Set<RegionRow> regions = ctx.getSelectedRegions();
-		if (regions.size() != 1) {
-			return null;
-		}
-		return regions.iterator().next();
-	}
-
 	protected static Set<TraceMemoryRegion> getSelectedRegions(ActionContext context) {
-		if (!(context instanceof DebuggerRegionActionContext)) {
+		if (!(context instanceof DebuggerRegionActionContext ctx)) {
 			return null;
 		}
-		DebuggerRegionActionContext ctx = (DebuggerRegionActionContext) context;
-		return ctx.getSelectedRegions()
-				.stream()
-				.map(r -> r.getRegion())
-				.collect(Collectors.toSet());
+		return ctx.getSelectedRegions();
 	}
 
 	private class RegionsListener extends TraceDomainObjectListener {
 		public RegionsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
-			listenFor(TraceMemoryRegionChangeType.ADDED, this::regionAdded);
-			listenFor(TraceMemoryRegionChangeType.CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.DELETED, this::regionDeleted);
+			listenFor(TraceEvents.REGION_ADDED, this::regionAdded);
+			listenFor(TraceEvents.REGION_CHANGED, this::regionChanged);
+			listenFor(TraceEvents.REGION_LIFESPAN_CHANGED, this::regionChanged);
+			listenFor(TraceEvents.REGION_DELETED, this::regionDeleted);
 		}
 
 		private void objectRestored() {
@@ -280,23 +262,13 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		return !ctx.getSelectedRegions().isEmpty();
 	}
 
-	private static Set<TraceMemoryRegion> getSelectedRegions(DebuggerRegionActionContext ctx) {
-		if (ctx == null) {
-			return null;
-		}
-		return ctx.getSelectedRegions()
-				.stream()
-				.map(r -> r.getRegion())
-				.collect(Collectors.toSet());
-	}
-
 	protected void navigateToSelectedRegion() {
 		if (listingService != null) {
 			int selectedRow = regionTable.getSelectedRow();
 			int selectedColumn = regionTable.getSelectedColumn();
 			Object value = regionTable.getValueAt(selectedRow, selectedColumn);
-			if (value instanceof Address) {
-				listingService.goTo((Address) value, true);
+			if (value instanceof Address address) {
+				listingService.goTo(address, true);
 			}
 		}
 	}
@@ -322,7 +294,6 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		currentTrace = trace;
 		addNewListeners();
 		loadRegions();
-		contextChanged();
 	}
 
 	public void contextChanged() {

@@ -42,10 +42,12 @@ public class RelocSmRepeat extends Relocation {
 		return opcode == 0x9;
 	}
 
-	public int getChunks() {
+	@Override
+	public int getRepeatChunks() {
 		return chunks + 1;
 	}
 
+	@Override
 	public int getRepeatCount() {
 		return repeatCount + 1;
 	}
@@ -53,7 +55,6 @@ public class RelocSmRepeat extends Relocation {
 	@Override
 	public void apply(ImportStateCache importState, RelocationState relocState, 
 			ContainerHeader header, Program program, MessageLog log, TaskMonitor monitor) {
-
-		throw new RuntimeException("Unhandled relocation: RelocSmRepeat");
+		/* nothing to do */
 	}
 }

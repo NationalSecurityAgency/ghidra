@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+#----------------------------------------
+# PyGhidra launch
+#----------------------------------------
+
+# Resolve symbolic link if present and get the directory this script lives in.
+# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# fallback, which doesn't attempt to do anything with links.
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="${SCRIPT_FILE%/*}"
+
+# Add optional JVM args inside the quotes
+VMARG_LIST=""
+
+# Make sure Python3 is installed
+if ! [ -x "$(command -v python3)" ] ; then
+	echo "Python 3 is not installed."
+	exit 1
+fi
+
+# Dev mode or production mode?
+DEV_ARG=
+INSTALL_DIR="${SCRIPT_DIR}/.."
+if [ ! -d "${INSTALL_DIR}/Ghidra" ]; then
+	DEV_ARG="--dev"
+	INSTALL_DIR="${SCRIPT_DIR}/../../../.."
+fi
+
+PYGHIDRA_LAUNCHER="${INSTALL_DIR}/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py"
+
+python3 "${PYGHIDRA_LAUNCHER}" "${INSTALL_DIR}" ${DEV_ARG} ${VMARG_LIST} "$@"

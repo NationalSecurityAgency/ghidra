@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.datamgr.actions;
-
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 
 import java.awt.datatransfer.*;
 import java.awt.event.InputEvent;
@@ -36,6 +31,9 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeTransferHandler;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 
 public class CutAction extends DockingAction {
 	private Clipboard clipboard;
@@ -50,6 +48,7 @@ public class CutAction extends DockingAction {
 		setEnabled(true);
 
 		clipboardOwner = new ClipboardOwner() {
+			@Override
 			public void lostOwnership(Clipboard currentClipboard, Transferable transferable) {
 				GTreeNodeTransferable gtTransferable = (GTreeNodeTransferable) transferable;
 				List<GTreeNode> nodeList = gtTransferable.getAllData();
@@ -86,7 +85,7 @@ public class CutAction extends DockingAction {
 
 		// cut to clipboard
 		TreePath[] paths = gTree.getSelectionPaths();
-		List<GTreeNode> nodeList = createList(paths);
+		List<GTreeNode> nodeList = createList(gTree, paths);
 
 		clearClipboard();
 
@@ -103,12 +102,13 @@ public class CutAction extends DockingAction {
 		}
 	}
 
-	private ArrayList<GTreeNode> createList(TreePath[] paths) {
-		ArrayList<GTreeNode> list = new ArrayList<GTreeNode>();
+	private ArrayList<GTreeNode> createList(GTree gTree, TreePath[] paths) {
+		ArrayList<GTreeNode> list = new ArrayList<>();
 		if (paths != null) {
-			for (int i = 0; i < paths.length; i++) {
-				GTreeNode node = (GTreeNode) paths[i].getLastPathComponent();
-				list.add(node);
+			for (TreePath path : paths) {
+				GTreeNode node = (GTreeNode) path.getLastPathComponent();
+				GTreeNode modelNode = gTree.getModelNode(node);
+				list.add(modelNode);
 			}
 		}
 		return list;

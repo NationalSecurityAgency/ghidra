@@ -15,11 +15,7 @@
  */
 package ghidra.util.classfinder;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.List;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -27,30 +23,9 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a place from which {@link Class}s can be obtained
  */
-abstract class ClassLocation {
+interface ClassLocation {
 
-	protected static final String CLASS_EXT = ".class";
+	public static final String CLASS_EXT = ".class";
 
-	final Logger log = LogManager.getLogger(getClass());
-
-	protected Set<Class<?>> classes = new HashSet<>();
-
-	abstract void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException;
-
-	void checkForDuplicates(Set<Class<?>> existingClasses) {
-		if (!log.isTraceEnabled()) {
-			return;
-		}
-
-		for (Class<?> c : classes) {
-			if (existingClasses.contains(c)) {
-				Module module = c.getModule();
-				module.toString();
-				log.trace("Attempting to load the same class twice: {}.  " +
-					"Keeping loaded class ; ignoring class from {}", c, this);
-				return;
-			}
-		}
-	}
-
+	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) throws CancelledException;
 }

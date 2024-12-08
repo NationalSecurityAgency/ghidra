@@ -40,12 +40,12 @@ import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolCategoryNode;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
+import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.GhidraClass;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -60,7 +60,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	private PluginTool tool;
 	private Program program;
 	private SymbolTreePlugin plugin;
-	private DockingActionIf symTreeAction;
 	private CodeBrowserPlugin cbPlugin;
 	private GTreeNode rootNode;
 	private GTreeNode namespacesNode;
@@ -93,7 +92,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(SymbolTreePlugin.class.getName());
 		plugin = env.getPlugin(SymbolTreePlugin.class);
 
-		symTreeAction = getAction(plugin, "Symbol Tree");
 		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
 
 		util = new SymbolTreeTestUtils(plugin);
@@ -131,17 +129,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		// should have 4 nodes, one for each of the original 3 functions and a org node with
 		// all new "FUNCTION*" named functions
 		assertEquals(4, functionsNode.getChildCount());
-	}
-
-	private void addFunctions(int count) throws Exception {
-		tx(program, () -> {
-			for (int i = 0; i < count; i++) {
-				String name = "FUNCTION_" + i;
-				Address address = util.addr(0x1002000 + i);
-				AddressSet body = new AddressSet(address);
-				program.getListing().createFunction(name, address, body, SourceType.USER_DEFINED);
-			}
-		});
 	}
 
 	@Test
@@ -227,12 +214,12 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		Object selectedObject = selectionPath.getLastPathComponent();
 		assertEquals(fNode, selectedObject);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		performAction(goToExtLocAction, util.getSymbolTreeContext(), false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
-		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		pressButtonByText(d, "Cancel");
 	}
@@ -270,15 +257,15 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(rootNode);
 		ActionContext context = util.getSymbolTreeContext();
 		assertTrue(createLibraryAction.isEnabledForContext(context));
-		assertTrue(!createClassAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!goToExtLocAction.isEnabledForContext(context));
-		assertTrue(!goToExtLocAction.isEnabledForContext(context));
+		assertFalse(createClassAction.isEnabledForContext(context));
+		assertFalse(createNamespaceAction.isEnabledForContext(context));
+		assertFalse(renameAction.isEnabledForContext(context));
+		assertFalse(cutAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
+		assertFalse(deleteAction.isEnabledForContext(context));
+		assertFalse(selectionAction.isEnabledForContext(context));
+		assertFalse(goToExtLocAction.isEnabledForContext(context));
+		assertFalse(goToExtLocAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -294,9 +281,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(node);
 		performAction(cutAction, util.getSymbolTreeContext(), true);
 
-		util.selectNode(rootNode);
-		assertTrue(pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
-
 		// move a function to a namespace
 		// cut a function; select global; paste should be enabled
 		GTreeNode nsParentNode = rootNode.getChild(5);
@@ -310,7 +294,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		nsNode = nsParentNode.getChild(0);
 		util.expandNode(nsNode);
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 		gNode = nsNode.getChild(0);
 
@@ -325,10 +309,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(gNode);
 		assertTrue(cutAction.isEnabledForContext(util.getSymbolTreeContext()));
 		performAction(cutAction, util.getSymbolTreeContext(), true);
-
-		// select the root node
-		util.selectNode(rootNode);
-		assertTrue(pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 
 	@Test
@@ -357,7 +337,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode fredNode = labelsNode.getChild("fred");
 		util.selectNode(fredNode);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(cutAction.isEnabledForContext(util.getSymbolTreeContext()));
 		performAction(cutAction, util.getSymbolTreeContext(), true);
 
@@ -367,7 +347,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		GTreeNode dNode = fNode.getChild(0);
 		util.selectNode(dNode);
-		assertTrue(!pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
+		assertFalse(pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 
 	@Test
@@ -401,11 +381,11 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(util.getClipboardContents());
 
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		util.selectNode(functionsNode);
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// verify node selected
 		assertEquals("Node not selected.", functionsNode, util.getSelectedNode());
@@ -428,35 +408,25 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		else {
 			assertFalse(createLibraryIsEnabled);
 		}
-		assertTrue(!createClassAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
+		assertFalse(createClassAction.isEnabledForContext(context));
+		assertFalse(createNamespaceAction.isEnabledForContext(context));
+		assertFalse(renameAction.isEnabledForContext(context));
+		assertFalse(cutAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
+		assertFalse(deleteAction.isEnabledForContext(context));
+		assertFalse(selectionAction.isEnabledForContext(context));
 
 		GTreeNode lNode = rootNode.getChild(1);
 		util.selectNode(lNode);
 		context = util.getSymbolTreeContext();
-		assertTrue(!createLibraryAction.isEnabledForContext(context));
-		assertTrue(!createClassAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
+		assertFalse(createLibraryAction.isEnabledForContext(context));
+		assertFalse(createClassAction.isEnabledForContext(context));
+		assertFalse(createNamespaceAction.isEnabledForContext(context));
+		assertFalse(renameAction.isEnabledForContext(context));
+		assertFalse(cutAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
+		assertFalse(deleteAction.isEnabledForContext(context));
+		assertFalse(selectionAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -470,8 +440,8 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode pNode = gNode.getChild(0);
 		util.selectNode(pNode);
 		ActionContext context = util.getSymbolTreeContext();
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
+		assertFalse(cutAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(selectionAction.isEnabledForContext(context));
@@ -489,7 +459,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(gNode);
 		ActionContext context = util.getSymbolTreeContext();
 		assertTrue(cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(selectionAction.isEnabledForContext(context));
@@ -508,7 +478,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(pNode);
 		ActionContext context = util.getSymbolTreeContext();
 		assertTrue(cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(selectionAction.isEnabledForContext(context));
@@ -567,7 +537,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode cnode = rootNode.getChild(4);
 		util.expandNode(cnode);
 
-		// wait until NewClass gets added		
+		// wait until NewClass gets added
 		GTreeNode newNode = waitForValue(() -> cnode.getChild(0));
 
 		assertNotNull(newNode);
@@ -778,6 +748,63 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	@Test
+	public void testAddNode_FunctionInAClass() throws Exception {
+
+		//
+		// This tests a particular edge case where adding a function inside of a class would cause
+		// the tree to throw an exception to to an improper child node lookup.  This test was
+		// triggering the exception before the fix.
+		//
+		showSymbolTree();
+		GTreeNode classesNode = rootNode.getChild("Classes");
+		assertFalse(classesNode.isLoaded());
+		classesNode.expand();
+		waitForTree(tree);
+		assertTrue(classesNode.isLoaded());
+		addFunctionInClass(100);
+		waitForTree(tree);
+
+		GTreeNode parentClassNode = classesNode.getChild("PARENT_CLASS");
+		parentClassNode.expand();
+		waitForTree(tree);
+
+		// Grab a node with a large index that will not be in the parent node
+		FunctionSymbolNode fNode = (FunctionSymbolNode) parentClassNode.getChild("FUNCTION_99");
+		SymbolTreeRootNode symbolRootNode = (SymbolTreeRootNode) rootNode;
+		Symbol symbol = fNode.getSymbol();
+
+		// symbolAdded() was throwing an exception before the fix
+		symbolRootNode.symbolAdded(symbol);
+	}
+
+	private void addFunctions(int count) throws Exception {
+		tx(program, () -> {
+			for (int i = 0; i < count; i++) {
+				String name = "FUNCTION_" + i;
+				Address address = util.addr(0x1002000 + i);
+				AddressSet body = new AddressSet(address);
+				program.getListing().createFunction(name, address, body, SourceType.USER_DEFINED);
+			}
+		});
+	}
+
+	private void addFunctionInClass(int count) throws Exception {
+		tx(program, () -> {
+
+			GhidraClass parentClass =
+				program.getSymbolTable().createClass(null, "PARENT_CLASS", SourceType.USER_DEFINED);
+
+			for (int i = 0; i < count; i++) {
+				String name = "FUNCTION_" + i;
+				Address address = util.addr(0x1002000 + i);
+				AddressSet body = new AddressSet(address);
+				program.getListing()
+						.createFunction(name, parentClass, address, body, SourceType.USER_DEFINED);
+			}
+		});
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -790,7 +817,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		executeOnSwingWithoutBlocking(
 			() -> dragNDropHandler.drop(destinationNode, transferable, dragAction));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private GTreeNode createNewNamespace() throws Exception {
@@ -822,8 +849,8 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void renameSelectedNode() throws Exception {
-		SwingUtilities.invokeAndWait(
-			() -> renameAction.actionPerformed(util.getSymbolTreeContext()));
+		SwingUtilities
+				.invokeAndWait(() -> renameAction.actionPerformed(util.getSymbolTreeContext()));
 		waitForEditing();
 	}
 
@@ -954,7 +981,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void flushAndWaitForTree() {
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 	}
 }

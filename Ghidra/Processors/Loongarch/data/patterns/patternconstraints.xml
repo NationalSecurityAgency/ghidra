@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="Loongarch:LE:*:*">
+    <patternfile>loongarch_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

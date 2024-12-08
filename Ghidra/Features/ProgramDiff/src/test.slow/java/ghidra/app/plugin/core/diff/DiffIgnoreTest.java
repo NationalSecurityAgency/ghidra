@@ -40,7 +40,7 @@ public class DiffIgnoreTest extends DiffApplyTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		byte[] bytes = diffTestP1.getListing().getCodeUnitAt(addr("100")).getBytes();
 		assertEquals((byte) 0xac, bytes[0]);
@@ -65,7 +65,7 @@ public class DiffIgnoreTest extends DiffApplyTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		List<Equate> eqs = diffTestP1.getEquateTable().getEquates(addr("1002261"), 0);
 		assertEquals(0, eqs.size());
@@ -89,7 +89,7 @@ public class DiffIgnoreTest extends DiffApplyTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		AddressSet addrSet = new AddressSet(addr("1005e4f"), addr("1005e53"));
 		setDiffSelection(addrSet);

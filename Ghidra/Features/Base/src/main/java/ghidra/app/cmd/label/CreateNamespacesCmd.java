@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.cmd.label;
 
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
@@ -31,8 +30,8 @@ import ghidra.util.exception.InvalidInputException;
  * <a id="examples"></a>
  * Example strings:
  * <ul>
- *     <li>global{@link Namespace#DELIMITER ::}child1{@link Namespace#DELIMITER ::}child2
- *     <li>child1
+ *     <li>global{@link Namespace#DELIMITER ::}child1{@link Namespace#DELIMITER ::}child2</li>
+ *     <li>child1</li>
  * </ul>
  * <p>
  * <a id="assumptions"></a>
@@ -43,7 +42,7 @@ import ghidra.util.exception.InvalidInputException;
  * @since  Tracker Id 619
  * @see    NamespaceUtils
  */
-public class CreateNamespacesCmd implements Command {
+public class CreateNamespacesCmd implements Command<Program> {
 
 	private String statusMsg;
 
@@ -83,11 +82,12 @@ public class CreateNamespacesCmd implements Command {
 	 * @see   <a href="#examples">example format</a>
 	 * @see   <a href="#assumptions">assumptions</a>
 	 */
-	public CreateNamespacesCmd(String namespacesString, Namespace parentNamespace, SourceType source) {
+	public CreateNamespacesCmd(String namespacesString, Namespace parentNamespace,
+			SourceType source) {
 
 		if (namespacesString == null) {
-			throw new NullPointerException("Cannot create namespaces from a "
-					+ "null namespacesString value.");
+			throw new NullPointerException(
+				"Cannot create namespaces from a " + "null namespacesString value.");
 		}
 
 		this.namespacesString = namespacesString;
@@ -95,16 +95,12 @@ public class CreateNamespacesCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
 		try {
-			leafNamespace =
-					NamespaceUtils.createNamespaceHierarchy(namespacesString, rootNamespace,
-						(Program) obj, source);
+			leafNamespace = NamespaceUtils.createNamespaceHierarchy(namespacesString, rootNamespace,
+				program, source);
 
 			if (leafNamespace != null) {
 				return true;

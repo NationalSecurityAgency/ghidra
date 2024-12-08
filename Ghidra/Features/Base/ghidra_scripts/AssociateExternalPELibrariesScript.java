@@ -55,7 +55,7 @@ public class AssociateExternalPELibrariesScript extends GhidraScript {
 		String[] externalLibraryNames = externalManager.getExternalLibraryNames();
 
 		for (String name : externalLibraryNames) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<DomainFile> ciLibraries = getProgramsCaseInsensitive(name, libraries);
 			if (ciLibraries.isEmpty()) {
@@ -83,7 +83,7 @@ public class AssociateExternalPELibrariesScript extends GhidraScript {
 		List<DomainFile> matchingFiles = new ArrayList<DomainFile>();
 
 		for (DomainFile file : projectFiles) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (!file.getName().equalsIgnoreCase(name)) {
 				continue;

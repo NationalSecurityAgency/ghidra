@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ import utility.application.ApplicationLayout;
 public class GhidraProjectCreatorPreferencePage extends PreferencePage
 implements IWorkbenchPreferencePage {
 
-	private static ApplicationVersion MIN_GHIDRA_VERSION = new ApplicationVersion("9.1");
+	private static ApplicationVersion MIN_GHIDRA_VERSION = new ApplicationVersion("11.2");
 
 	private Table table;
 	private Button addButton;
@@ -212,6 +212,9 @@ implements IWorkbenchPreferencePage {
 		catch (IOException e) {
 			throw new IOException("Not a valid Ghidra installation.");			
 		}
+		if (new File(ghidraInstallDir, "certification.local.manifest").isFile()) {
+			throw new IOException("Ghidra source repositories are not supported.");
+		}
 		ApplicationProperties applicationProperties = layout.getApplicationProperties();
 		ApplicationVersion version;
 		try {
@@ -226,12 +229,21 @@ implements IWorkbenchPreferencePage {
 		}
 		String layoutVersion = applicationProperties.getProperty(
 			ApplicationProperties.APPLICATION_LAYOUT_VERSION_PROPERTY);
-		if (layoutVersion == null || !layoutVersion.equals("1")) {
-			// We can be smarter about this check and what we support later, once the layout version 
-			// actually changes.
+		boolean layoutVersionError = false;
+		try {
+			int ver = Integer.parseInt(layoutVersion);
+			if (ver < 1 || ver > 3) {
+				layoutVersionError = true;
+			}
+		}
+		catch (NumberFormatException e) {
+			layoutVersionError = true;
+		}
+		if (layoutVersionError) {
 			throw new IOException(
-				"Ghidra application layout is not supported.  Please upgrade " +
-					Activator.PLUGIN_ID + " to use this version of Ghidra.");
+				"Ghidra application layout '%s' is not supported.  Please upgrade %s to use this version of Ghidra."
+						.formatted(layoutVersion != null ? layoutVersion : "<null>",
+							Activator.PLUGIN_ID));
 		}
 	}
 }

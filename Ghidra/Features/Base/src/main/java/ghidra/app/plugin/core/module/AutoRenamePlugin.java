@@ -52,7 +52,7 @@ import docking.action.MenuData;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Rename Fragment",
 	description = "Rename a fragment in the program tree viewer with either the " +
 			"selected label within the fragment or with the minimum " +

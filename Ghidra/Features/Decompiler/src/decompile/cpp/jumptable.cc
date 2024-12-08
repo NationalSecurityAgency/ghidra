@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,8 @@ ElementId ELEM_NORMADDR = ElementId("normaddr",215);
 ElementId ELEM_NORMHASH = ElementId("normhash",216);
 ElementId ELEM_STARTVAL = ElementId("startval",217);
 
+const uint8 JumpValues::NO_LABEL = 0xBAD1ABE1BAD1ABE1;
+
 /// \param encoder is the stream encoder
 void LoadTable::encode(Encoder &encoder) const
 
@@ -53,18 +55,44 @@ void LoadTable::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
-/// We assume the list of LoadTable entries is sorted and perform an in-place
-/// collapse of any sequences into a single LoadTable entry.
+/// Sort the entries and collapse any contiguous sequences into a single LoadTable entry.
 /// \param table is the list of entries to collapse
 void LoadTable::collapseTable(vector<LoadTable> &table)
 
 {
   if (table.empty()) return;
-  vector<LoadTable>::iterator iter,lastiter;
+
+  // Test if the table is already sorted and contiguous entries
+  bool issorted = true;
+  vector<LoadTable>::iterator iter = table.begin();
+  int4 num = (*iter).num;
+  int4 size = (*iter).size;
+  Address nextaddr = (*iter).addr + size;
+  ++iter;
+
+  for(;iter!=table.end();++iter) {
+    if ( (*iter).addr == nextaddr && (*iter).size == size) {
+      num += (*iter).num;
+      nextaddr = (*iter).addr + (*iter).size;
+    }
+    else {
+      issorted = false;
+      break;
+    }
+  }
+  if (issorted) {
+    // Table is sorted and contiguous.
+    table.resize(1);	// Truncate everything but the first entry
+    table.front().num = num;
+    return;
+  }
+
+  sort(table.begin(),table.end());
+
   int4 count = 1;
   iter = table.begin();
-  lastiter = iter;
-  Address nextaddr = (*iter).addr + (*iter).size * (*iter).num;
+  vector<LoadTable>::iterator lastiter = iter;
+  nextaddr = (*iter).addr + (*iter).size * (*iter).num;
   ++iter;
   for(;iter!=table.end();++iter) {
     if (( (*iter).addr == nextaddr ) && ((*iter).size == (*lastiter).size)) {
@@ -85,12 +113,12 @@ void LoadTable::collapseTable(vector<LoadTable> &table)
 void EmulateFunction::executeLoad(void)
 
 {
-  if (collectloads) {
+  if (loadpoints != (vector<LoadTable> *)0) {
     uintb off = getVarnodeValue(currentOp->getIn(1));
     AddrSpace *spc = currentOp->getIn(0)->getSpaceFromConst();
     off = AddrSpace::addressToByte(off,spc->getWordSize());
     int4 sz = currentOp->getOut()->getSize();
-    loadpoints.push_back(LoadTable(Address(spc,off),sz));
+    loadpoints->push_back(LoadTable(Address(spc,off),sz));
   }
   EmulatePcodeOp::executeLoad();
 }
@@ -133,7 +161,7 @@ EmulateFunction::EmulateFunction(Funcdata *f)
   : EmulatePcodeOp(f->getArch())
 {
   fd = f;
-  collectloads = false;
+  loadpoints = (vector<LoadTable> *)0;
 }
 
 void EmulateFunction::setExecuteAddress(const Address &addr)
@@ -225,39 +253,6 @@ uintb EmulateFunction::emulatePath(uintb val,const PathMeld &pathMeld,
   return getVarnodeValue(invn);
 }
 
-/// Pass back any LOAD records collected during emulation.  The individual records
-/// are sorted and collapsed into concise \e table descriptions.
-/// \param res will hold any resulting table descriptions
-void EmulateFunction::collectLoadPoints(vector<LoadTable> &res) const
-
-{
-  if (loadpoints.empty()) return;
-  bool issorted = true;
-  vector<LoadTable>::const_iterator iter;
-  vector<LoadTable>::iterator lastiter;
-
-  iter = loadpoints.begin();
-  res.push_back( *iter );	// Copy the first entry
-  ++iter;
-  lastiter = res.begin();
-
-  Address nextaddr = (*lastiter).addr + (*lastiter).size;
-  for(;iter!=loadpoints.end();++iter) {
-    if (issorted && (( (*iter).addr == nextaddr ) && ((*iter).size == (*lastiter).size))) {
-      (*lastiter).num += (*iter).num;
-      nextaddr = (*iter).addr + (*iter).size;
-    }
-    else {
-      issorted = false;
-      res.push_back( *iter );
-    }
-  }
-  if (!issorted) {
-    sort(res.begin(),res.end());
-    LoadTable::collapseTable(res);
-  }
-}
-
 /// The starting value for the range and the step is preserved.  The
 /// ending value is set so there are exactly the given number of elements
 /// in the range.
@@ -344,9 +339,14 @@ bool JumpValuesRangeDefault::contains(uintb val) const
 bool JumpValuesRangeDefault::initializeForReading(void) const
 
 {
-  if (range.getSize()==0) return false;
-  curval = range.getMin();
-  lastvalue = false;
+  if (range.getSize()==0) {
+    curval = extravalue;
+    lastvalue = true;
+  }
+  else {
+    curval = range.getMin();
+    lastvalue = false;
+  }
   return true;
 }
 
@@ -393,8 +393,8 @@ bool JumpModelTrivial::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,
   return ((size != 0)&&(size<=matchsize));
 }
 
-void JumpModelTrivial::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpModelTrivial::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+				      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   addresstable.clear();
   BlockBasic *bl = indop->getParent();
@@ -1049,7 +1049,7 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
   int4 i,j,indpath;
   int4 maxbranch = 2;		// Maximum number of CBRANCHs to consider
   int4 maxpullback = 2;
-  bool usenzmask = (jumptable->getStage() == 0);
+  bool usenzmask = !jumptable->isPartial();
 
   selectguards.clear();
   BlockBasic *prevbl;
@@ -1357,42 +1357,38 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
 
 {
   PcodeOp *cbranch = guard.getBranch();
-  int4 indpath = guard.getPath();	// Get stored path to indirect block
   BlockBasic *cbranchblock = cbranch->getParent();
-  if (cbranchblock->getFlipPath()) // Based on whether out branches have been flipped
-    indpath = 1 - indpath;	// get actual path to indirect block
-  BlockBasic *guardtarget = (BlockBasic *)cbranchblock->getOut(1-indpath);
-  bool change = false;
-  int4 pos;
-
   // Its possible the guard branch has been converted between the switch recovery and now
   if (cbranchblock->sizeOut() != 2) return false; // In which case, we can't fold it in
+  int4 indpath = guard.getPath();	// Get stored path to indirect block
+  if (cbranchblock->getFlipPath()) // Based on whether out branches have been flipped
+    indpath = 1 - indpath;	// get actual path to indirect block
   BlockBasic *switchbl = jump->getIndirectOp()->getParent();
+  if (cbranchblock->getOut(indpath) != switchbl) // Guard must go directly into switch block
+    return false;
+  BlockBasic *guardtarget = (BlockBasic *)cbranchblock->getOut(1-indpath);
+  int4 pos;
+
   for(pos=0;pos<switchbl->sizeOut();++pos)
     if (switchbl->getOut(pos) == guardtarget) break;
+  if (jump->hasFoldedDefault() && jump->getDefaultBlock() != pos)	// There can be only one folded target
+    return false;
+
+  if (!switchbl->noInterveningStatement())
+    return false;
   if (pos == switchbl->sizeOut()) {
-    if (BlockBasic::noInterveningStatement(cbranch,indpath,switchbl->lastOp())) {
-      // Adjust tables and control flow graph
-      // for new jumptable destination
-      jump->addBlockToSwitch(guardtarget,0xBAD1ABE1);
-      jump->setLastAsMostCommon();
-      fd->pushBranch(cbranchblock,1-indpath,switchbl);
-      guard.clear();
-      change = true;
-    }
+    jump->addBlockToSwitch(guardtarget,JumpValues::NO_LABEL);	// Add new destination to table without a label
+    jump->setLastAsDefault();			// treating it as either the default case or an exit
+    fd->pushBranch(cbranchblock,1-indpath,switchbl);	// Turn branch target into target of the switch instead
   }
   else {
-    // We should probably check that there are no intervening
-    // statements between the guard and the switch. But the
-    // fact that the guard target is also a switch target
-    // is a good indicator that there are none
     uintb val = ((indpath==0)!=(cbranch->isBooleanFlip())) ? 0 : 1;
     fd->opSetInput(cbranch,fd->newConstant(cbranch->getIn(0)->getSize(),val),1);
     jump->setDefaultBlock(pos);	// A guard branch generally targets the default case
-    guard.clear();
-    change = true;
   }
-  return change;
+  jump->setFoldedDefault();	// Mark that the default branch has been folded (and cannot take a label)
+  guard.clear();
+  return true;
 }
 
 JumpBasic::~JumpBasic(void)
@@ -1418,15 +1414,14 @@ bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 m
   return true;
 }
 
-void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			       vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   uintb val,addr;
   addresstable.clear();		// Clear out any partial recoveries
 				// Build the emulation engine
   EmulateFunction emul(fd);
-  if (loadpoints != (vector<LoadTable> *)0)
-    emul.setLoadCollect(true);
+  emul.setLoadCollect(loadpoints);
 
   uintb mask = ~((uintb)0);
   int4 bit = fd->getArch()->funcptr_align;
@@ -1441,10 +1436,10 @@ void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addr
     addr = AddrSpace::addressToByte(addr,spc->getWordSize());
     addr &= mask;
     addresstable.push_back(Address(spc,addr));
+    if (loadcounts != (vector<int4> *)0)
+      loadcounts->push_back(loadpoints->size());
     notdone = jrange->next();
   }
-  if (loadpoints != (vector<LoadTable> *)0)
-    emul.collectLoadPoints(*loadpoints);
 }
 
 void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext)
@@ -1507,12 +1502,12 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
       try {
 	switchval = backup2Switch(fd,val,normalvn,switchvn);		// Do reverse emulation to get original switch value
       } catch(EvaluationError &err) {
-	switchval = 0xBAD1ABE1;
+	switchval = JumpValues::NO_LABEL;
 	needswarning = 2;
       }
     }
     else
-      switchval = 0xBAD1ABE1;	// If can't reverse, hopefully this is the default or exit, otherwise give "badlabel"
+      switchval = JumpValues::NO_LABEL;	// If can't reverse, hopefully this is the default or exit
     if (needswarning==1)
       fd->warning("This code block may not be properly labeled as switch case",addresstable[label.size()]);
     else if (needswarning==2)
@@ -1527,7 +1522,7 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
 
   while(label.size() < addresstable.size()) {
     fd->warning("Bad switch case",addresstable[label.size()]);
-    label.push_back(0xBAD1ABE1);
+    label.push_back(JumpValues::NO_LABEL);
   }
 }
 
@@ -1557,8 +1552,8 @@ bool JumpBasic::foldInGuards(Funcdata *fd,JumpTable *jump)
   return change;
 }
 
-bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)
-
+bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			    vector<LoadTable> &loadpoints,vector<int4> *loadcounts)
 {
   // Test all the addresses in \b this address table checking
   // that they are reasonable. We cut off at the first unreasonable address.
@@ -1591,6 +1586,9 @@ bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &address
   if (i!=addresstable.size()) {
     addresstable.resize(i);
     jrange->truncate(i);
+    if (loadcounts != (vector<int4> *)0) {
+      loadpoints.resize((*loadcounts)[i-1]);
+    }
   }
   return true;
 }
@@ -1628,7 +1626,7 @@ bool JumpBasic2::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
   // So we don't make any special mods, in case there are extra statements in these blocks
 
   // The final block in the table is the single value produced by the model2 guard
-  jump->setLastAsMostCommon();	// It should be the default block
+  jump->setLastAsDefault();	// It should be the default block
   guard.clear();		// Mark that we are folded
   return true;
 }
@@ -1962,8 +1960,8 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize
   return true;
 }
 
-void JumpBasicOverride::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpBasicOverride::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+				       vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   addresstable = addrtable;	// Addresses are already calculated, just copy them out
 }
@@ -1977,7 +1975,7 @@ void JumpBasicOverride::buildLabels(Funcdata *fd,vector<Address> &addresstable,v
     try {
       addr = backup2Switch(fd,values[i],normalvn,switchvn);
     } catch(EvaluationError &err) {
-      addr = 0xBAD1ABE1;
+      addr = JumpValues::NO_LABEL;
     }
     label.push_back(addr);
     if (label.size() >= addresstable.size()) break; // This should never happen
@@ -1985,7 +1983,7 @@ void JumpBasicOverride::buildLabels(Funcdata *fd,vector<Address> &addresstable,v
 
   while(label.size() < addresstable.size()) {
     fd->warning("Bad switch case",addresstable[label.size()]); // This should never happen
-    label.push_back(0xBAD1ABE1);
+    label.push_back(JumpValues::NO_LABEL);
   }
 }
 
@@ -2084,8 +2082,10 @@ bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint
   if (assistOp->code() != CPUI_CALLOTHER) return false;
   if (assistOp->numInput() < 3) return false;
   int4 index = assistOp->getIn(0)->getOffset();
-  userop = dynamic_cast<JumpAssistOp *>(fd->getArch()->userops.getOp(index));
-  if (userop == (JumpAssistOp *)0) return false;
+  UserPcodeOp *tmpOp = fd->getArch()->userops.getOp(index);
+  if (tmpOp->getType() != UserPcodeOp::jumpassist)
+    return false;
+  userop = (JumpAssistOp *)tmpOp;
 
   switchvn = assistOp->getIn(1);		// The switch variable
   for(int4 i=2;i<assistOp->numInput();++i)
@@ -2111,8 +2111,8 @@ bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint
   return true;
 }
 
-void JumpAssisted::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpAssisted::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+				  vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   if (userop->getIndex2Addr() == -1)
     throw LowlevelError("Final index2addr calculation outside of jumpassist");
@@ -2170,7 +2170,7 @@ void JumpAssisted::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector
       label.push_back(output);
     }
   }
-  label.push_back(0xBAD1ABE1);		// Add fake label to match the defaultAddress
+  label.push_back(JumpValues::NO_LABEL);	// Add fake label to match the defaultAddress
 }
 
 Varnode *JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
@@ -2192,7 +2192,7 @@ bool JumpAssisted::foldInGuards(Funcdata *fd,JumpTable *jump)
 
 {
   int4 origVal = jump->getDefaultBlock();
-  jump->setLastAsMostCommon();			// Default case is always the last block
+  jump->setLastAsDefault();			// Default case is always the last block
   return (origVal != jump->getDefaultBlock());
 }
 
@@ -2205,6 +2205,33 @@ JumpModel *JumpAssisted::clone(JumpTable *jt) const
   return clone;
 }
 
+void JumpTable::saveModel(void)
+
+{
+  if (origmodel != (JumpModel *)0)
+    delete origmodel;
+  origmodel = jmodel;
+  jmodel = (JumpModel *)0;
+}
+
+void JumpTable::restoreSavedModel(void)
+
+{
+  if (jmodel != (JumpModel *)0)
+    delete jmodel;
+  jmodel = origmodel;
+  origmodel = (JumpModel *)0;
+}
+
+void JumpTable::clearSavedModel(void)
+
+{
+  if (origmodel != (JumpModel *)0) {
+    delete origmodel;
+    origmodel = (JumpModel *)0;
+  }
+}
+
 /// Try to recover each model in turn, until we find one that matches the specific BRANCHIND.
 /// \param fd is the function containing the switch
 void JumpTable::recoverModel(Funcdata *fd)
@@ -2212,7 +2239,7 @@ void JumpTable::recoverModel(Funcdata *fd)
 {
   if (jmodel != (JumpModel *)0) {
     if (jmodel->isOverride()) {	// If preexisting model is override
-      jmodel->recoverModel(fd,indirect,0,maxtablesize);
+      jmodel->recoverModel(fd,indirect,0,glb->max_jumptable_size);
       return;
     }
     delete jmodel;		// Otherwise this is an old attempt we should remove
@@ -2223,18 +2250,18 @@ void JumpTable::recoverModel(Funcdata *fd)
     if (op->code() == CPUI_CALLOTHER) {
       JumpAssisted *jassisted = new JumpAssisted(this);
       jmodel = jassisted;
-      if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
+      if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
 	return;
     }
   }
   JumpBasic *jbasic = new JumpBasic(this);
   jmodel = jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
     return;
   jmodel = new JumpBasic2(this);
   ((JumpBasic2 *)jmodel)->initializeStart(jbasic->getPathMeld());
   delete jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
     return;
   delete jmodel;
   jmodel = (JumpModel *)0;
@@ -2244,15 +2271,20 @@ void JumpTable::recoverModel(Funcdata *fd)
 /// Check pathological cases when there is only one address in the table, if we find
 /// this, throw the JumptableThunkError. Let the model run its sanity check.
 /// Print a warning if the sanity check truncates the original address table.
+/// Passing in \b loadcounts indicates that LOADs were collected in \b loadpoints, which may
+/// need to be truncated as well.
 /// \param fd is the function containing the switch
-void JumpTable::sanityCheck(Funcdata *fd)
+/// \param loadcounts (if non-null) associates each switch value with the number of LOADs it needed
+void JumpTable::sanityCheck(Funcdata *fd,vector<int4> *loadcounts)
 
 {
+  if (jmodel->isOverride())
+    return;				// Don't perform sanity check on an override
   uint4 sz = addresstable.size();
 
   if (!isReachable(indirect))
-    throw JumptableNotReachableError("No legal flow");
-  if (addresstable.size() == 1) { // One entry is likely some kind of thunk
+    partialTable = true;		// If the jumptable is not reachable, mark as incomplete
+  if (addresstable.size() == 1) { 	// One entry is likely some kind of thunk
     bool isthunk = false;
     uintb diff;
     Address addr = addresstable[0];
@@ -2270,7 +2302,7 @@ void JumpTable::sanityCheck(Funcdata *fd)
       throw JumptableThunkError("Likely thunk");
     }
   }
-  if (!jmodel->sanityCheck(fd,indirect,addresstable)) {
+  if (!jmodel->sanityCheck(fd,indirect,addresstable,loadpoints,loadcounts)) {
     ostringstream err;
     err << "Jumptable at " << opaddress << " did not pass sanity check.";
     throw LowlevelError(err.str());
@@ -2338,12 +2370,12 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = -1;
-  maxtablesize = 1024;
   maxaddsub = 1;
   maxleftright = 1;
   maxext = 1;
-  recoverystage = 0;
+  partialTable = false;
   collectloads = false;
+  defaultIsFolded = false;
 }
 
 /// This is a partial clone of another jump-table. Objects that are specific
@@ -2359,12 +2391,12 @@ JumpTable::JumpTable(const JumpTable *op2)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = op2->lastBlock;
-  maxtablesize = op2->maxtablesize;
   maxaddsub = op2->maxaddsub;
   maxleftright = op2->maxleftright;
   maxext = op2->maxext;
-  recoverystage = op2->recoverystage;
+  partialTable = op2->partialTable;
   collectloads = op2->collectloads;
+  defaultIsFolded = false;
 				// We just clone the addresses themselves
   addresstable = op2->addresstable;
   loadpoints = op2->loadpoints;
@@ -2450,7 +2482,7 @@ int4 JumpTable::getIndexByBlock(const FlowBlock *bl,int4 i) const
   throw LowlevelError("Could not get jumptable index for block");
 }
 
-void JumpTable::setLastAsMostCommon(void)
+void JumpTable::setLastAsDefault(void)
 
 {
   defaultBlock = lastBlock;
@@ -2582,16 +2614,21 @@ void JumpTable::recoverAddresses(Funcdata *fd)
   }
   if (jmodel->getTableSize() == 0) {
     ostringstream err;
-    err << "Impossible to reach jumptable at " << opaddress;
-    throw JumptableNotReachableError(err.str());
+    err << "Jumptable with 0 entries at " << opaddress;
+    throw LowlevelError(err.str());
   }
   //  if (sz < 2)
   //    fd->warning("Jumptable has only one branch",opaddress);
-  if (collectloads)
-    jmodel->buildAddresses(fd,indirect,addresstable,&loadpoints);
-  else
-    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0);
-  sanityCheck(fd);
+  if (collectloads) {
+    vector<int4> loadcounts;
+    jmodel->buildAddresses(fd,indirect,addresstable,&loadpoints,&loadcounts);
+    sanityCheck(fd,&loadcounts);
+    LoadTable::collapseTable(loadpoints);
+  }
+  else {
+    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
+    sanityCheck(fd,(vector<int4> *)0);
+  }
 }
 
 /// Do a normal recoverAddresses, but save off the old JumpModel, and if we fail recovery, put back the old model.
@@ -2599,10 +2636,7 @@ void JumpTable::recoverAddresses(Funcdata *fd)
 void JumpTable::recoverMultistage(Funcdata *fd)
 
 {
-  if (origmodel != (JumpModel *)0)
-    delete origmodel;
-  origmodel = jmodel;
-  jmodel = (JumpModel *)0;
+  saveModel();
   
   vector<Address> oldaddresstable = addresstable;
   addresstable.clear();
@@ -2611,36 +2645,25 @@ void JumpTable::recoverMultistage(Funcdata *fd)
     recoverAddresses(fd);
   }
   catch(JumptableThunkError &err) {
-    if (jmodel != (JumpModel *)0)
-      delete jmodel;
-    jmodel = origmodel;
-    origmodel = (JumpModel *)0;
+    restoreSavedModel();
     addresstable = oldaddresstable;
     fd->warning("Second-stage recovery error",indirect->getAddr());
   }
   catch(LowlevelError &err) {
-    if (jmodel != (JumpModel *)0)
-      delete jmodel;
-    jmodel = origmodel;
-    origmodel = (JumpModel *)0;
+    restoreSavedModel();
     addresstable = oldaddresstable;
     fd->warning("Second-stage recovery error",indirect->getAddr());
   }
-  recoverystage = 2;
-  if (origmodel != (JumpModel *)0) { // Keep the new model if it was created successfully
-    delete origmodel;
-    origmodel = (JumpModel *)0;
-  }
+  partialTable = false;
+  clearSavedModel();		// Keep the new model if it was created successfully
 }
 
-/// This is run assuming the address table has already been recovered, via recoverAddresses() in another
-/// Funcdata instance. So recoverModel() needs to be rerun on the instance passed in here.
-///
-/// The unnormalized switch variable is recovered, and for each possible address table entry, the variable
-/// value that produces it is calculated and stored as the formal \e case label for the associated code block.
-/// \param fd is the (final instance of the) function containing the switch
-/// \return \b true if it looks like a multi-stage restart is needed.
-bool JumpTable::recoverLabels(Funcdata *fd)
+/// This assumes the address table has already been recovered, via recoverAddresses() in another
+/// Funcdata instance. We rerun recoverModel() to match with the current Funcdata.  If the recovered model
+/// does not match the original address table size, we may be missing control-flow. In this case,
+/// if it looks like we have a \e multistage jumptable, we generate a multistage restart, otherwise
+/// we generate a warning of the mismatch.
+void JumpTable::matchModel(Funcdata *fd)
 
 {
   if (!isRecovered())
@@ -2648,24 +2671,33 @@ bool JumpTable::recoverLabels(Funcdata *fd)
 
   // Unless the model is an override, move model (created on a flow copy) so we can create a current instance
   if (jmodel != (JumpModel *)0) {
-    if (origmodel != (JumpModel *)0)
-      delete origmodel;
-    if (!jmodel->isOverride()) {
-      origmodel = jmodel;
-      jmodel = (JumpModel *)0;
-    }
-    else
+    if (!jmodel->isOverride())
+      saveModel();
+    else {
+      clearSavedModel();
       fd->warning("Switch is manually overridden",opaddress);
-  }
-
-  bool multistagerestart = false;
-  recoverModel(fd);		// Create a current instance of the model
-  if (jmodel != (JumpModel *)0) {
-    if (jmodel->getTableSize() != addresstable.size()) {
-      fd->warning("Could not find normalized switch variable to match jumptable",opaddress);
-      if ((addresstable.size()==1)&&(jmodel->getTableSize() > 1))
-	multistagerestart = true;
     }
+  }
+  recoverModel(fd);		// Create a current instance of the model
+  if (jmodel != (JumpModel *)0 && jmodel->getTableSize() != addresstable.size()) {
+    if ((addresstable.size()==1)&&(jmodel->getTableSize() > 1)) {
+      // The jumptable was not fully recovered during flow analysis, try to issue a restart
+      fd->getOverride().insertMultistageJump(opaddress);
+      fd->setRestartPending(true);
+      return;
+    }
+    fd->warning("Could not find normalized switch variable to match jumptable",opaddress);
+  }
+}
+
+
+/// The unnormalized switch variable is recovered, and for each possible address table entry, the variable
+/// value that produces it is calculated and stored as the formal \e case label for the associated code block.
+/// \param fd is the (final instance of the) function containing the switch
+void JumpTable::recoverLabels(Funcdata *fd)
+
+{
+  if (jmodel != (JumpModel *)0) {
     if ((origmodel == (JumpModel *)0)||(origmodel->getTableSize()==0)) {
       jmodel->findUnnormalized(maxaddsub,maxleftright,maxext);
       jmodel->buildLabels(fd,addresstable,label,jmodel);
@@ -2677,41 +2709,35 @@ bool JumpTable::recoverLabels(Funcdata *fd)
   }
   else {
     jmodel = new JumpModelTrivial(this);
-    jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize);
-    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0);
+    jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size);
+    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);
   }
-  if (origmodel != (JumpModel *)0) {
-    delete origmodel;
-    origmodel = (JumpModel *)0;
-  }
-  return multistagerestart;
+  clearSavedModel();
 }
 
-/// Clear out any data that is specific to a Funcdata instance.  The address table is not cleared
-/// if it was recovered, and override information is left intact.
+/// Clear out any data that is specific to a Funcdata instance.
 /// Right now this is only getting called, when the jumptable is an override in order to clear out derived data.
 void JumpTable::clear(void)
 
 {
-  if (origmodel != (JumpModel *)0) {
-    delete origmodel;
-    origmodel = (JumpModel *)0;
-  }
+  clearSavedModel();
   if (jmodel->isOverride())
     jmodel->clear();
   else {
     delete jmodel;
     jmodel = (JumpModel *)0;
   }
+  addresstable.clear();
   block2addr.clear();
   lastBlock = -1;
   label.clear();
   loadpoints.clear();
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
-  recoverystage = 0;
+  defaultBlock = -1;
+  partialTable = false;
   // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
 }
 
@@ -2733,7 +2759,7 @@ void JumpTable::encode(Encoder &encoder) const
     if (spc != (AddrSpace *)0)
       spc->encodeAttributes(encoder,off);
     if (i<label.size()) {
-      if (label[i] != 0xBAD1ABE1)
+      if (label[i] != JumpValues::NO_LABEL)
 	encoder.writeUnsignedInteger(ATTRIB_LABEL, label[i]);
     }
     encoder.closeElement(ELEM_DEST);
@@ -2793,7 +2819,7 @@ void JumpTable::decode(Decoder &decoder)
 
   if (label.size()!=0) {
     while(label.size() < addresstable.size())
-      label.push_back(0xBAD1ABE1);
+      label.push_back(JumpValues::NO_LABEL);
   }
 }
 
@@ -2805,11 +2831,11 @@ bool JumpTable::checkForMultistage(Funcdata *fd)
 
 {
   if (addresstable.size()!=1) return false;
-  if (recoverystage != 0) return false;
+  if (partialTable) return false;
   if (indirect == (PcodeOp *)0) return false;
 
   if (fd->getOverride().queryMultistageJumptable(indirect->getAddr())) {
-    recoverystage = 1;		// Mark that we need additional recovery
+    partialTable = true;		// Mark that we need additional recovery
     return true;
   }
   return false;

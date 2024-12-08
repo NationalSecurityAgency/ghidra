@@ -224,8 +224,8 @@ public final class TraceObjectKeyPath implements Comparable<TraceObjectKeyPath> 
 	/**
 	 * Stream, starting with the longer paths, paths that match the given predicates
 	 * 
-	 * @param matcher
-	 * @return
+	 * @param predicates the predicates to filter the ancestor paths
+	 * @return the stream of matching paths, longest to shortest
 	 */
 	public Stream<TraceObjectKeyPath> streamMatchingAncestry(PathPredicates predicates) {
 		if (!predicates.ancestorMatches(keyList, false)) {
@@ -252,5 +252,16 @@ public final class TraceObjectKeyPath implements Comparable<TraceObjectKeyPath> 
 	 */
 	public boolean isAncestor(TraceObjectKeyPath that) {
 		return PathUtils.isAncestor(keyList, that.keyList);
+	}
+
+	/**
+	 * Assuming this is an ancestor of the given successor, compute the relative path from here to
+	 * there
+	 * 
+	 * @param successor the successor
+	 * @return the relative path
+	 */
+	public TraceObjectKeyPath relativize(TraceObjectKeyPath successor) {
+		return TraceObjectKeyPath.of(PathUtils.relativize(keyList, successor.keyList));
 	}
 }

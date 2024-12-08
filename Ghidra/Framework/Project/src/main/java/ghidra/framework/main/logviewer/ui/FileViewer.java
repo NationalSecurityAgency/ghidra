@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,17 +40,17 @@ import utilities.util.FileUtilities;
  * <ol>
  * <li>The viewer consists of a simple JTable and a custom JSlider. The table displays lines of
  *    text described by {@link Chunk} objects. The number of chunks visible at any given time
- *    is restricted by the {@link ChunkModel#MAX_VISIBLE_CHUNKS} property.
+ *    is restricted by the {@link ChunkModel#MAX_VISIBLE_CHUNKS} property.</li>
  *
  * <li>Because only part of the file is loaded into the viewable table at any given time, the
  *    built-in scrollbar associated with the scroll pane cannot be used. We want the scroll bar
  *    maximum size to reflect the total size of the file, not just what's in view at the time. So
  *    we use our own slider implementation ({@link FVSlider}) and manage the size/position
  *    ourselves. If you're asking why a JSlider is used instead of a JScrollPane, it's because the
- *    former is more easily configuration for what we need.
+ *    former is more easily configuration for what we need.</li>
  *
  * <li>Communication between modules (the table, the slider, the viewport utility, etc...) is done
- *    almost exclusively via events, using the custom {@link FVEvent} framework.
+ *    almost exclusively via events, using the custom {@link FVEvent} framework.</li>
  * </ol>
  */
 public class FileViewer extends JPanel implements Observer {

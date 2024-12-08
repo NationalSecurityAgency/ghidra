@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,16 @@ package ghidra.framework;
 /**
  * Class to represent an application's version information.
  * <p>
- * The version format is \d\.\d(\.\d)?(\-.+)?
+ * The version format is {@code \d\.\d(\.\d)?(\-.+)?}
  * <p>
  * Note: this class has a natural ordering that is inconsistent with equals (the <code>tag</code>
  * part of the version is disregarded in the {@link #compareTo(ApplicationVersion)} method).
  * <p>
  * Examples:
  * <ul>
- * <li>7.4
- * <li>7.4.1
- * <li>7.4.1-BETA
+ * <li>7.4</li>
+ * <li>7.4.1</li>
+ * <li>7.4.1-BETA</li>
  * </ul>
  */
 public class ApplicationVersion implements Comparable<ApplicationVersion> {

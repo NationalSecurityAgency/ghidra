@@ -45,6 +45,8 @@
         </pentry>
       </output>
       <unaffected>
+        <register name="r2"/>  <!-- _SDA2_BASE_ -->
+        <register name="r13"/> <!-- _SDA_BASE_  -->
         <register name="r14"/>
         <register name="r15"/>
         <register name="r16"/>
@@ -69,6 +71,7 @@
   </default_proto>
 
   <callfixup name="get_pc_thunk_lr">
+    <target name="__get_pc_thunk_lr"/>
     <pcode>
       <body><![CDATA[
       LR = inst_dest + 4;

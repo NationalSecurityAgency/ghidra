@@ -32,8 +32,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class DataTypeArchiveTransformerPanel extends JPanel {
 
-	private final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
-	private final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
+	private final static Cursor WAIT_CURSOR = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
+	private final static Cursor DEFAULT_CURSOR = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 
 	private JPanel filePanel;
 	private JTextField oldFileTextField;
@@ -57,9 +57,9 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 	private void setupDescription() {
 		JLabel label = new GHtmlLabel(
-			"<HTML>Specify the files for converting a new data type archive (.gdt)<BR>" +
+			"<html>Specify the files for converting a new data type archive (.gdt)<BR>" +
 				"to match the IDs of data types in an old data type archive.<BR>" +
-				"The result will be saved to the destination archive.</HTML>");
+				"The result will be saved to the destination archive.</html>");
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		add(label, BorderLayout.NORTH);
@@ -85,7 +85,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		oldBrowseButton.addActionListener(e -> {
 			setCursor(WAIT_CURSOR);
 			File file = chooseFile("Choose old data type archive");
-			setCursor(NORM_CURSOR);
+			setCursor(DEFAULT_CURSOR);
 			if (file != null) {
 				oldFileTextField.setText(file.getAbsolutePath());
 			}
@@ -119,7 +119,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		newBrowseButton.addActionListener(e -> {
 			setCursor(WAIT_CURSOR);
 			File file = chooseFile("Choose new data type archive");
-			setCursor(NORM_CURSOR);
+			setCursor(DEFAULT_CURSOR);
 			if (file != null) {
 				newFileTextField.setText(file.getAbsolutePath());
 			}
@@ -148,7 +148,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		destinationBrowseButton.addActionListener(e -> {
 			setCursor(WAIT_CURSOR);
 			File file = chooseFile("Choose destination file");
-			setCursor(NORM_CURSOR);
+			setCursor(DEFAULT_CURSOR);
 			if (file != null) {
 				destinationFileTextField.setText(file.getAbsolutePath());
 			}

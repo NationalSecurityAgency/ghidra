@@ -17,12 +17,14 @@ package ghidra.program.database;
 
 import java.io.IOException;
 
-import db.*;
+import db.DBHandle;
+import db.DBTestUtils;
 import db.buffers.BufferFile;
 import generic.test.AbstractGenericTest;
 import generic.test.AbstractGuiTest;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.data.GhidraFolder;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.*;
 import ghidra.program.model.listing.Program;
@@ -122,8 +124,8 @@ public abstract class AbstractMTFModel {
 		AbstractGenericTest.setInstanceField("isEnabled", analysisMgr, Boolean.FALSE);
 	}
 
-	static DomainFile copyDatabaseDomainFile(DomainFile df, String newName) throws IOException,
-			InvalidNameException, CancelledException {
+	static DomainFile copyDatabaseDomainFile(DomainFile df, String newName)
+			throws IOException, InvalidNameException, CancelledException {
 		FileSystem fileSystem = (FileSystem) AbstractGenericTest.getInstanceField("fileSystem", df);
 
 		GhidraFolder parent = (GhidraFolder) df.getParent();
@@ -132,8 +134,7 @@ public abstract class AbstractMTFModel {
 		BufferFile bufferFile = item.open();
 		try {
 			fileSystem.createDatabase(parent.getPathname(), newName, FileIDFactory.createFileID(),
-				bufferFile, null, item.getContentType(), false, TaskMonitor.DUMMY,
-				null);
+				bufferFile, null, item.getContentType(), false, TaskMonitor.DUMMY, null);
 		}
 		finally {
 			bufferFile.dispose();
@@ -183,8 +184,7 @@ public abstract class AbstractMTFModel {
 	public static ProgramDB cloneProgram(ProgramDB prog, Object consumer) throws IOException {
 		try {
 			DBHandle newDbh = DBTestUtils.cloneDbHandle(prog.getDBHandle());
-			ProgramDB newProg =
-				new ProgramDB(newDbh, DBConstants.UPDATE, TaskMonitor.DUMMY, consumer);
+			ProgramDB newProg = new ProgramDB(newDbh, OpenMode.UPDATE, TaskMonitor.DUMMY, consumer);
 			newProg.setChangeSet(new ProgramDBChangeSet(newProg.getAddressMap(), 20));
 			disableAutoAnalysis(newProg);
 			return newProg;

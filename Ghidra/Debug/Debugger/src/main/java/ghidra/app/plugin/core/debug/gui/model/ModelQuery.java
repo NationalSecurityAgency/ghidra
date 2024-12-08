@@ -115,6 +115,9 @@ public class ModelQuery {
 
 	public List<TargetObjectSchema> computeSchemas(Trace trace) {
 		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		if (rootSchema == null) {
+			return List.of();
+		}
 		return predicates.getPatterns()
 				.stream()
 				.map(p -> rootSchema.getSuccessorSchema(p.asPath()))
@@ -142,9 +145,13 @@ public class ModelQuery {
 	public Stream<AttributeSchema> computeAttributes(Trace trace) {
 		TargetObjectSchema schema = computeSingleSchema(trace);
 		return schema.getAttributeSchemas()
-				.values()
+				.entrySet()
 				.stream()
-				.filter(as -> !"".equals(as.getName()));
+				.filter(ent -> {
+					String attrName = ent.getValue().getName();
+					return !"".equals(attrName) && ent.getKey().equals(attrName);
+				})
+				.map(e -> e.getValue());
 	}
 
 	protected static boolean includes(Lifespan span, PathPattern pattern, TraceObjectValue value) {
@@ -218,6 +225,8 @@ public class ModelQuery {
 	/**
 	 * Determine whether the query results could depend on the given value
 	 * 
+	 * @param span the lifespan of interest, e.g., the span being displayed
+	 * @param value the value that has changed
 	 * @return true if the query results depend on the given value
 	 */
 	public boolean involves(Lifespan span, TraceObjectValue value) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -159,8 +159,8 @@ public class BatchInfo {
 			}
 		}
 
-		for (Iterator<UserAddedSourceInfo> iterator =
-			userAddedSources.iterator(); iterator.hasNext();) {
+		for (Iterator<UserAddedSourceInfo> iterator = userAddedSources.iterator(); iterator
+				.hasNext();) {
 			UserAddedSourceInfo uasi = iterator.next();
 			if (uasi.getFSRL().equals(fsrl)) {
 				iterator.remove();
@@ -177,7 +177,7 @@ public class BatchInfo {
 	 * <p>
 	 * @param fsrl {@link FSRL} of the file to add.
 	 * @param taskMonitor {@link TaskMonitor} to watch and update with progress.
-	 * @return boolean true if something in the the file produced something to import.
+	 * @return boolean true if something in the file produced something to import.
 	 * @throws IOException if io error when reading files.
 	 * @throws CancelledException if user cancels.
 	 */
@@ -210,7 +210,7 @@ public class BatchInfo {
 	 * <p>
 	 * @param fsrl {@link FSRL} of the file to probe and process
 	 * @param taskMonitor {@link TaskMonitor} to watch and update.
-	 * @return boolean true if something in the the file produced something to import.
+	 * @return boolean true if something in the file produced something to import.
 	 * @throws IOException if io error when reading files.
 	 * @throws CancelledException if user cancels.
 	 */
@@ -297,8 +297,7 @@ public class BatchInfo {
 		return sb.toString();
 	}
 
-	private boolean processAsFS(FSRL fsrl, TaskMonitor taskMonitor)
-			throws CancelledException {
+	private boolean processAsFS(FSRL fsrl, TaskMonitor taskMonitor) throws CancelledException {
 
 		try (FileSystemRef fsRef = fsService.probeFileForFilesystem(fsrl, taskMonitor,
 			FileSystemProbeConflictResolver.CHOOSEFIRST)) {
@@ -338,7 +337,7 @@ public class BatchInfo {
 
 		// TODO: drop FSUtils.listFileSystem and do recursion here.
 		for (GFile file : FSUtilities.listFileSystem(fs, startDir, null, taskMonitor)) {
-			taskMonitor.checkCanceled();
+			taskMonitor.checkCancelled();
 			FSRL fqFSRL;
 			try {
 				fqFSRL = fsService.getFullyQualifiedFSRL(file.getFSRL(), taskMonitor);
@@ -390,7 +389,8 @@ public class BatchInfo {
 		}
 	}
 
-	private LoaderMap pollLoadersForLoadSpecs(ByteProvider provider, FSRL fsrl, TaskMonitor monitor) {
+	private LoaderMap pollLoadersForLoadSpecs(ByteProvider provider, FSRL fsrl,
+			TaskMonitor monitor) {
 		monitor.setMessage(fsrl.getName());
 		return LoaderService.getSupportedLoadSpecs(provider,
 			loader -> !(loader instanceof BinaryLoader));
@@ -465,8 +465,6 @@ public class BatchInfo {
 		// just remove existing files that are deeper.  Recalculating user added source info 
 		// number is hard so I'm skipping it now.
 
-		Msg.trace(this, "Switching maxDepth from " + maxDepth + " to " + newMaxDepth);
-
 		//@formatter:off
 		List<FSRL> files = userAddedSources
 			.stream()
@@ -495,11 +493,10 @@ public class BatchInfo {
 		try (CryptoSession cryptoSession = fsService.newCryptoSession()) {
 			List<FSRL> badFiles = new ArrayList<>();
 			for (FSRL fsrl : filesToAdd) {
-				Msg.trace(this, "Adding " + fsrl);
 				batchMonitor.setPrefix("Processing " + fsrl.getName() + ": ");
 
 				try {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					addFile(fsrl, batchMonitor);
 				}
 				catch (CryptoException ce) {

@@ -57,7 +57,7 @@ public abstract class AbstractByteViewerPlugin<P extends ProgramByteViewerCompon
 
 	public P createNewDisconnectedProvider() {
 		P newProvider = createProvider(false);
-		disconnectedProviders.add(newProvider);
+		addProvider(newProvider);
 		tool.showComponentProvider(newProvider, true);
 		return newProvider;
 	}

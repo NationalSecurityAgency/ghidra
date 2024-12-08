@@ -49,16 +49,12 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
-import docking.options.editor.OptionsDialog;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.graph.AttributeFilters;
 import ghidra.graph.job.GraphJobRunner;
 import ghidra.graph.viewer.popup.*;
@@ -166,7 +162,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private SelectedEdgePaintable<AttributedVertex, AttributedEdge> selectedEdgePaintable;
 
-	private GraphDisplayOptions graphDisplayOptions = GraphDisplayOptions.DEFAULT;
+	private GraphDisplayOptions graphDisplayOptions = new DefaultGraphDisplayOptions();
 
 	private ChangeListener graphDisplayOptionsChangeListener;
 
@@ -258,12 +254,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				// this lens' delegate is the viewer's VIEW layer, abandoned above
 				.delegate(transformer)
 				.build();
-		LensGraphMouse lensGraphMouse =
-			DefaultLensGraphMouse.builder()
-					.magnificationFloor(1.f)
-					.magnificationCeiling(60.f)
-					.magnificationDelta(.2f)
-					.build();
+		LensGraphMouse lensGraphMouse = DefaultLensGraphMouse.builder()
+				.magnificationFloor(1.f)
+				.magnificationCeiling(60.f)
+				.magnificationDelta(.2f)
+				.build();
 		return MagnifyImageLensSupport.builder(viewer)
 				.lensTransformer(shapeTransformer)
 				.lensGraphMouse(lensGraphMouse)
@@ -525,30 +520,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void editGraphDisplayOptions() {
-		String rootOptionsName = graphDisplayOptions.getRootOptionsName();
-		String relativePath = rootOptionsName + ".Vertex Colors";
-
-		// if the options are registered in the tool options, just show them
-		// otherwise, create a transient options and create an options dialog. This will
-		// allow the user to edit the options for the current graph instance.
-
-		if (graphDisplayOptions.isRegisteredWithTool()) {
-			OptionsService service = tool.getService(OptionsService.class);
-			service.showOptionsDialog("Graph." + relativePath, "");
-		}
-		else {
-			ToolOptions transientOptions = new ToolOptions("Graph");
-			HelpLocation help = new HelpLocation("GraphServices", "Graph Type Display Options");
-			graphDisplayOptions.registerOptions(transientOptions, help);
-			transientOptions.addOptionsChangeListener(graphDisplayOptions);
-			Options[] optionsArray = new Options[] { transientOptions };
-			String dialogTitle = "Graph Instance Settings (Not Saved in Tool Options)";
-			OptionsDialog dialog = new OptionsDialog(dialogTitle, "Graph", optionsArray, null);
-			// we have one less level for these transient tool options, so no need to prepend "graph."
-			dialog.displayCategory(relativePath, "");
-			tool.showDialog(dialog, componentProvider);
-			dialog.dispose();
-		}
+		HelpLocation help = new HelpLocation("GraphServices", "Graph Type Display Options");
+		graphDisplayOptions.displayEditor(tool, help);
 	}
 
 	private void groupSelectedVertices() {
@@ -602,7 +575,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			display.setGraph(createSubGraph(), graphRenderer.getGraphDisplayOptions(),
 				title + " - Sub-graph", false, TaskMonitor.DUMMY);
 			display.setGraphDisplayListener(listener.cloneWith(display));
-			copyActionsToNewGraph((DefaultGraphDisplay) display);
+			copyActionsToNewGraph(display);
 		}
 		catch (CancelledException e) {
 			// using Dummy, so can't happen
@@ -831,10 +804,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public void close() {
 		graphDisplayProvider.remove(this);
 		if (listener != null) {
-			listener.graphClosed();
+			listener.dispose();
+			listener = null;
 		}
-		listener = null;
+
 		componentProvider.closeComponent();
+
 		if (graphDisplayOptions != null) {
 			graphDisplayOptions.removeChangeListener(graphDisplayOptionsChangeListener);
 		}
@@ -843,7 +818,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	@Override
 	public void setGraphDisplayListener(GraphDisplayListener listener) {
 		if (this.listener != null) {
-			this.listener.graphClosed();
+			// This is a bit odd to do here, but this seems like the easiest way to cleanup any
+			// previous listener when reusing the graph display.
+			this.listener.dispose();
 		}
 		this.listener = listener;
 	}
@@ -975,20 +952,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		configureViewerPreferredSize();
 
-		Swing.runNow(() -> {
-			// set the graph but defer the layout algorithm setting
-			viewer.getVisualizationModel().setGraph(graph, false);
-			configureFilters();
-			setInitialLayoutAlgorithm();
-		});
+		// set the graph but defer the layout algorithm setting
+		viewer.getVisualizationModel().setGraph(graph, false);
+		configureFilters();
+		setInitialLayoutAlgorithm();
 		componentProvider.setVisible(true);
 	}
 
 	private void setInitialLayoutAlgorithm() {
 		String layoutAlgorithmName = graphDisplayOptions.getDefaultLayoutAlgorithmNameLayout();
 		layoutAction.setCurrentActionStateByUserData(layoutAlgorithmName);
-		TaskLauncher
-				.launch(new SetLayoutTask(viewer, layoutTransitionManager, layoutAlgorithmName));
 	}
 
 	/**
@@ -998,6 +971,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * @return true if the vertex is a root
 	 */
 	private boolean isRoot(AttributedVertex vertex) {
+		// Prevent the exception thrown by the graphing library if the given node is not in the
+		// graph. This can happen during graph transitions.
+		if (!graph.containsVertex(vertex)) {
+			return false;
+		}
 		Set<AttributedEdge> incomingEdgesOf = graph.incomingEdgesOf(vertex);
 		return incomingEdgesOf.isEmpty() ||
 			graph.incomingEdgesOf(vertex).equals(graph.outgoingEdgesOf(vertex));
@@ -1056,7 +1034,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		// set the layoutModel's initials size to a minimal value. Not sure this should be necessary
 		// but it makes the initial scaling look better for small graphs. Otherwise it seems
 		// to use a very large area to layout the graph, resulting in tiny nodes that are spaced
-		// very far apart. This might just be a work around for a bug in some of the layout 
+		// very far apart. This might just be a work around for a bug in some of the layout
 		// algorithms that don't seem to properly compute a good layout size.
 		viewer.getVisualizationModel().getLayoutModel().setSize(1, 1);
 
@@ -1273,10 +1251,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		return vv;
 	}
 
-	private void copyActionsToNewGraph(DefaultGraphDisplay display) {
+	private void copyActionsToNewGraph(GraphDisplay display) {
 
+		Collection<DockingActionIf> defaultActions = display.getActions();
 		for (DockingActionIf action : addedActions) {
-			if (display.containsAction(action)) {
+			if (defaultActions.contains(action)) {
 				// ignore actions added by the graph itself and any actions that the end user may
 				// accidentally add more than once
 				continue;
@@ -1284,7 +1263,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 			display.addAction(new DockingActionProxy(action));
 		}
-
 	}
 
 	private boolean containsAction(DockingActionIf action) {
@@ -1300,7 +1278,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	@Override
 	public void addAction(DockingActionIf action) {
-
 		if (containsAction(action)) {
 			Msg.warn(this,
 				"Action with same name and owner already exixts in graph: " + action.getFullName());
@@ -1308,7 +1285,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 
 		addedActions.add(action);
-		Swing.runLater(() -> componentProvider.addLocalAction(action));
+		componentProvider.addLocalAction(action);
+	}
+
+	@Override
+	public Collection<DockingActionIf> getActions() {
+		return new ArrayList<>(addedActions);
 	}
 
 	@Override
@@ -1380,14 +1362,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * new graph which may add its own set of actions for that particular graph.
 	 */
 	void restoreToDefaultSetOfActions() {
-		Swing.runLater(() -> {
-			// remove all actions
-			componentProvider.removeAllLocalActions();
-			addedActions.clear();
-			// put the standard graph actions back
-			createToolbarActions();
-			createPopupActions();
-		});
+		// remove all actions
+		componentProvider.removeAllLocalActions();
+		addedActions.clear();
+		// put the standard graph actions back
+		createToolbarActions();
+		createPopupActions();
 	}
 
 	@Override

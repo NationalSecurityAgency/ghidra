@@ -18,7 +18,8 @@ package ghidra.pcode.exec.debug.auxiliary;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.core.debug.service.emulation.*;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory;
 import ghidra.pcode.exec.trace.TracePcodeExecutorState;

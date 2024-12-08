@@ -22,6 +22,7 @@ import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import ghidra.app.util.opinion.Loader;
 import ghidra.app.util.opinion.LoaderService;
+import ghidra.formats.gfilesystem.GFileSystem;
 import ghidra.framework.client.HeadlessClientAuthenticator;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -62,6 +63,7 @@ public class HeadlessOptions {
 
 	// -recursive
 	boolean recursive;
+	Integer recursiveDepth; // 'null' means use default depth, which is different for files vs dirs
 
 	// -readOnly
 	boolean readOnly;
@@ -128,6 +130,7 @@ public class HeadlessOptions {
 		propertiesFilePaths = new ArrayList<>();
 		overwrite = false;
 		recursive = false;
+		recursiveDepth = null;
 		readOnly = false;
 		deleteProject = false;
 		analyze = true;
@@ -319,14 +322,28 @@ public class HeadlessOptions {
 
 	/**
 	 * This method can be used to enable recursive processing of files during
-	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of files to
-	 * occur, the user must have specified a directory (and not a specific file)
-	 * for the Headless Analyzer to import or process.
+	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of 
+	 * files to occur, the user must have specified a project folder to process or a directory or 
+	 * supported {@link GFileSystem} container file to import
 	 * 
-	 * @param enabled  if true, enables recursive processing
+	 * @param enabled if true, enables recursive import/processing
 	 */
 	public void enableRecursiveProcessing(boolean enabled) {
+		enableRecursiveProcessing(enabled, null);
+	}
+
+	/**
+	 * This method can be used to enable recursive processing of files during
+	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of 
+	 * files to occur, the user must have specified a project folder to process or a directory or 
+	 * supported {@link GFileSystem} container file to import
+	 * 
+	 * @param enabled if true, enables recursive import/processing
+	 * @param depth maximum container recursion depth (could be null to use default)
+	 */
+	public void enableRecursiveProcessing(boolean enabled, Integer depth) {
 		this.recursive = enabled;
+		this.recursiveDepth = depth;
 	}
 
 	/**

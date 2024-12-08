@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import java.util.function.Function;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jungrapht.visualization.RenderContext;
 import org.jungrapht.visualization.VisualizationViewer;
 import org.jungrapht.visualization.decorators.*;
@@ -104,7 +105,11 @@ public class DefaultGraphRenderer implements GraphRenderer {
 	}
 
 	private String getVertexRenderedLabel(AttributedVertex v) {
-		return HTMLUtilities.toLiteralHTML(v.toString(), 80);
+		String displayName = v.getName();
+		if (StringUtils.isBlank(displayName)) {
+			displayName = v.getId();
+		}
+		return HTMLUtilities.toLiteralHTML(displayName, 80);
 	}
 
 	@Override
@@ -310,10 +315,8 @@ public class DefaultGraphRenderer implements GraphRenderer {
 
 		graphics.setTransform(graphicsTransform); // restore the original transform
 		graphics.dispose();
-		Image scaledImage =
-			ImageUtils.createScaledImage(bufferedImage, iconWidth * ICON_ZOOM,
-				iconHeight * ICON_ZOOM,
-				Image.SCALE_FAST);
+		Image scaledImage = ImageUtils.createScaledImage(bufferedImage, iconWidth * ICON_ZOOM,
+			iconHeight * ICON_ZOOM, Image.SCALE_FAST);
 		ImageIcon imageIcon = new ImageIcon(scaledImage);
 		return imageIcon;
 
@@ -328,7 +331,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		label.setText(escapedText);
 		Dimension labelSize = label.getPreferredSize();
 
-		// make sure the the vertexName doesn't make the icon ridiculously big
+		// make sure that the vertexName doesn't make the icon ridiculously big
 		int width = Math.min(labelSize.width, MAX_WIDTH);
 		int height = Math.min(labelSize.height, MAX_HEIGHT);
 		label.setSize(width, height);

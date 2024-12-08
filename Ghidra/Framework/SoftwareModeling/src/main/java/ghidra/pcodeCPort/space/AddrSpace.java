@@ -15,15 +15,13 @@
  */
 package ghidra.pcodeCPort.space;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 import java.io.PrintStream;
-import java.util.StringTokenizer;
 
-import org.jdom.Element;
-
-import ghidra.pcodeCPort.error.LowlevelError;
-import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.*;
+import ghidra.pcodeCPort.utils.Utils;
 /// \brief A region where processor data is stored
 ///
 /// An AddrSpace (Address Space) is an arbitrary sequence of
@@ -54,11 +52,7 @@ import ghidra.pcodeCPort.utils.*;
 ///     - \b unique       There is always a \e unique address space used
 ///                       as a pool for temporary registers. (See UniqueSpace)
 ///
-
-import ghidra.pcodeCPort.error.LowlevelError;
-import ghidra.pcodeCPort.pcoderaw.VarnodeData;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.*;
+import ghidra.program.model.pcode.Encoder;
 
 public class AddrSpace {
 
@@ -235,18 +229,16 @@ public class AddrSpace {
 		shortcut = trans.assignShortcut(type);
 	}
 
-	void save_basic_attributes(PrintStream s) { // write the name, shortcut,
-		// and index as XML
-		// attributes
-		XmlUtils.a_v(s, "name", name);
-		XmlUtils.a_v_i(s, "index", index);
-		XmlUtils.a_v_b(s, "bigendian", isBigEndian());
-		XmlUtils.a_v_i(s, "delay", delay);
-		XmlUtils.a_v_i(s, "size", addressSize);
+	void encode_basic_attributes(Encoder encoder) throws IOException { // write the name, shortcut, and index
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeSignedInteger(ATTRIB_INDEX, index);
+		encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());
+		encoder.writeSignedInteger(ATTRIB_DELAY, delay);
+		encoder.writeSignedInteger(ATTRIB_SIZE, addressSize);
 		if (wordsize > 1) {
-			XmlUtils.a_v_i(s, "wordsize", wordsize);
+			encoder.writeSignedInteger(ATTRIB_WORDSIZE, wordsize);
 		}
-		XmlUtils.a_v_b(s, "physical", hasPhysical());
+		encoder.writeBool(ATTRIB_PHYSICAL, hasPhysical());
 	}
 
 	public boolean contain(AddrSpace id2) { // Does this contain -id2- ?
@@ -279,47 +271,6 @@ public class AddrSpace {
 			}
 		}
 		return res;
-	}
-
-	public void saveXmlAttributes(PrintStream s, long offset) { // Save address
-		// as XML
-		// attributes
-		XmlUtils.a_v(s, "space", getName()); // Just append the proper
-		// attributes
-		s.append(' ');
-		s.append("offset=\"");
-		printOffset(s, offset);
-		s.append("\"");
-	}
-
-	public void saveXmlAttributes(PrintStream s, long offset, int size) { // Save
-		// address
-		// as
-		// XML
-		// attributes
-		XmlUtils.a_v(s, "space", getName()); // Just append the proper
-		// attributes
-		s.append(" offset=\"");
-		printOffset(s, offset);
-		s.append("\"");
-		XmlUtils.a_v_i(s, "size", size);
-	}
-
-	public static long restore_xml_offset(Element el) {
-		String offsetString = el.getAttributeValue("offset");
-		if (offsetString == null) {
-			throw new LowlevelError("Address missing offset");
-		}
-		return XmlUtils.decodeUnknownLong(offsetString);
-
-	}
-
-	public static int restore_xml_size(Element el) {
-		String sizeString = el.getAttributeValue("size");
-		if (sizeString == null) {
-			return 0;
-		}
-		return XmlUtils.decodeUnknownInt(sizeString);
 	}
 
 	public void printOffset(PrintStream s, long offset) { // Print the offset as
@@ -373,64 +324,10 @@ public class AddrSpace {
 		return s.toString();
 	}
 
-	public long read(String s, MutableInt size) { // Read string to produce offset value
-		long offset;
-		StringTokenizer tokenizzy = new StringTokenizer(s, ":+");
-		String frontpart = tokenizzy.nextToken();
-		size.set(getAddrSize());
-
-		try {
-			VarnodeData point = getTrans().getRegister(frontpart);
-			offset = point.offset;
-			size.set(point.size);
-			return offset;
-		}
-		catch (LowlevelError err) { // Name doesn't exist
-			// not a register; handled below
-		}
-
-		// value is an address offset and not a register
-		try {
-			offset = XmlUtils.decodeUnknownLong(frontpart);
-		}
-		catch (NumberFormatException nfe) {
-			size.set(-1);
-			return -1;
-		}
-		offset <<= scale;
-
-		if (tokenizzy.countTokens() > 1) { // there is a size			 
-			try {
-				size.set(Integer.parseInt(tokenizzy.nextToken()));
-			}
-			catch (NumberFormatException nfe) {
-				// don't update the size
-			}
-		}
-
-		return offset;
-	}
-
-	public void saveXml(PrintStream s) {
-		s.append("<space"); // This implies type=processor
-		save_basic_attributes(s);
-		s.println("/>");
-	}
-
-	public void restoreXml(Element el) {
-		name = el.getAttributeValue("name");
-		index = XmlUtils.decodeUnknownInt(el.getAttributeValue("index"));
-		addressSize = XmlUtils.decodeUnknownInt(el.getAttributeValue("size"));
-		wordsize = XmlUtils.decodeUnknownInt(el.getAttributeValue("wordsize"));
-		if (XmlUtils.decodeBoolean(el.getAttributeValue("bigendian"))) {
-			flags |= big_endian;
-		}
-		delay = XmlUtils.decodeUnknownInt(el.getAttributeValue("delay"));
-		if (XmlUtils.decodeBoolean(el.getAttributeValue("physical"))) {
-			flags |= hasphysical;
-		}
-
-		calcScaleMask();
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SPACE);	// This implies type=processor
+		encode_basic_attributes(encoder);
+		encoder.closeElement(ELEM_SPACE);
 	}
 
 }

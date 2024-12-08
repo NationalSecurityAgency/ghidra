@@ -15,7 +15,7 @@ define register offset=0x0084 size=4 [ r14_svc r13_svc spsr_svc ];
 define register offset=0x0090 size=8 [ mult_dat8 ];	# Special internal register for dealing with multiple stores/loads
 define register offset=0x0090 size=16 [ mult_dat16 ];	# Special internal register for dealing with multiple stores/loads
 define register offset=0x00A0 size=4 [ fpsr ];		# floating point state register (for FPA10 floating-point accelerator)
-define register offset=0x00B0 size=1 [ ISAModeSwitch ];  # generic name for TB ThumbBit - set same as TB
+define register offset=0x0078 size=1 [ ISAModeSwitch ];  # generic name for TB ThumbBit - set same as TB
 
 @define FPSCR_N "fpscr[31,1]"
 @define FPSCR_Z "fpscr[30,1]"
@@ -23,7 +23,7 @@ define register offset=0x00B0 size=1 [ ISAModeSwitch ];  # generic name for TB T
 @define FPSCR_V "fpscr[28,1]"
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
-	define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 ];
+define register offset=0x00B0 size=4 [ fpsid fpscr fpexc mvfr0 mvfr1 ];
 @endif
 define register offset=0x0100 size=10 [ fp0 fp1 fp2 fp3 fp4 fp5 fp6 fp7 ];	# eight 80-bit floating registers
 

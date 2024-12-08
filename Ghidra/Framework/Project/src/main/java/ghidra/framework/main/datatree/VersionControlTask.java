@@ -57,21 +57,22 @@ public abstract class VersionControlTask extends Task {
 	 * Show the dialog.
 	 * @param addToVersionControl true if the dialog is for
 	 * adding files to version control, false for checking in files.
-	 * @param filename the name of the file currently to be added, whose comment we need.
-	 * @param isLinkFile true if file is a link file, else false.  Link-files may not be checked-out
-	 * so keep-checked-out control disabled if this is true.
+	 * @param file the file currently to be added or checked-in to version control
 	 */
-	protected void showDialog(boolean addToVersionControl, String filename, boolean isLinkFile) {
+	protected void showDialog(boolean addToVersionControl, DomainFile file) {
 		Runnable r = () -> {
 			VersionControlDialog vcDialog = new VersionControlDialog(addToVersionControl);
-			vcDialog.setCurrentFileName(filename);
+			vcDialog.setCurrentFileName(file.getName());
 			vcDialog.setMultiFiles(list.size() > 1);
-			if (isLinkFile) {
-				vcDialog.setKeepCheckboxEnabled(false, false, "Link files may not be Checked Out");
+			if (file.isLinkFile()) {
+				vcDialog.setKeepCheckboxEnabled(false, false, "Link file may not be Checked Out");
 			}
-			else if (filesInUse) {
-				vcDialog.setKeepCheckboxEnabled(false, true,
-					"Must keep Checked Out because the file is in use");
+			else {
+				checkFilesInUse();
+				if (filesInUse) {
+					vcDialog.setKeepCheckboxEnabled(false, true,
+						"Must keep Checked Out because the file is in use");
+				}
 			}
 			actionID = vcDialog.showDialog(tool, parent);
 			keepCheckedOut = vcDialog.keepCheckedOut();
@@ -93,9 +94,11 @@ public abstract class VersionControlTask extends Task {
 	 * are still in use.
 	 */
 	protected void checkFilesInUse() {
+		// NOTE: In-use check is currently limited to files open for update but for the purpose of 
+		// maintaining a checkout should really correspond to any file use (e.g., open read-only
+		// with DomainFileProxy).
 		filesInUse = false;
-		for (int i = 0; i < list.size(); i++) {
-			DomainFile df = list.get(i);
+		for (DomainFile df : list) {
 			if (df.getConsumers().size() > 0) {
 				filesInUse = true;
 				return;
@@ -104,8 +107,7 @@ public abstract class VersionControlTask extends Task {
 	}
 
 	protected boolean checkFilesForUnsavedChanges() {
-		for (int i = 0; i < list.size(); i++) {
-			DomainFile df = list.get(i);
+		for (DomainFile df : list) {
 			if (df.modifiedSinceCheckout()) {
 				return true;
 			}

@@ -15,16 +15,17 @@
  */
 package ghidra.app.cmd.function;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.CodeBlock;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.ProcessorContext;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.util.*;
 import ghidra.program.util.*;
 import ghidra.program.util.SymbolicPropogator.Value;
@@ -33,13 +34,6 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * CallDepthChangeInfo.java
- * 
- * Date: Feb 6, 2003
- * 
- */
-/**
- * 
  * Given a function in a program or the start of a function, record information
  * about the change to a stack pointer from a subroutine call. The routine
  * getCallChange() can be called with the address of a call instruction. If the
@@ -49,10 +43,7 @@ import ghidra.util.task.TaskMonitor;
  * The computation is based on a set of equations that are generated and solved.
  * Each equation represents the stack change for a given basic flow block or
  * call instruction within the function.
- * 
- * 
  */
-
 public class CallDepthChangeInfo {
 
 	Program program;
@@ -142,17 +133,10 @@ public class CallDepthChangeInfo {
 	public CallDepthChangeInfo(Program program, Address addr, AddressSetView restrictSet,
 			Register frameReg, TaskMonitor monitor) throws CancelledException {
 		Function func = program.getFunctionManager().getFunctionContaining(addr);
-		Register stackReg = program.getCompilerSpec().getStackPointer();
-		initialize(func, restrictSet, stackReg, monitor);
+		Register stackPtrReg = program.getCompilerSpec().getStackPointer();
+		initialize(func, restrictSet, stackPtrReg, monitor);
 	}
 
-	/**
-	 * initialize codeblocks and call locations.
-	 * 
-	 * @param addressSetView
-	 * @param monitor
-	 * @throws CancelledException
-	 */
 	private void initialize(Function func, AddressSetView restrictSet, Register reg,
 			TaskMonitor monitor) throws CancelledException {
 		changeMap = new DefaultIntPropertyMap("change");
@@ -177,6 +161,7 @@ public class CallDepthChangeInfo {
 			i = changeMap.getInt(addr);
 		}
 		catch (NoValueException exc) {
+			// ignore
 		}
 
 		return i;
@@ -196,6 +181,7 @@ public class CallDepthChangeInfo {
 			depth = depthMap.getInt(addr);
 		}
 		catch (NoValueException exc) {
+			// ignore
 		}
 		return depth;
 	}
@@ -221,6 +207,8 @@ public class CallDepthChangeInfo {
 	 * unknown.
 	 * 
 	 * @param instr instruction to analyze
+	 * @param procContext 
+	 * @param currentStackDepth 
 	 * 
 	 * @return int change to stack depth if it can be determined,
 	 *         Function.UNKNOWN_STACK_DEPTH_CHANGE otherwise.
@@ -396,7 +384,6 @@ public class CallDepthChangeInfo {
 		return false;
 	}
 
-
 	/**
 	 * Gets the stack depth change value that has been set at the indicated address.
 	 * 
@@ -475,7 +462,6 @@ public class CallDepthChangeInfo {
 		return ipm.getPropertyIterator(addressSet);
 	}
 
-
 	/**
 	 * Follow the flows of the subroutine, accumulating information about the
 	 * stack pointer and any other register the stack pointer is assigned to.
@@ -511,8 +497,9 @@ public class CallDepthChangeInfo {
 				Varnode stackValue = null;
 				try {
 					stackValue = context.getValue(stackRegVarnode, true, this);
-					
-					if (stackValue != null && context.isSymbol(stackValue) && context.isStackSymbolicSpace(stackValue)) {
+
+					if (stackValue != null && context.isSymbol(stackValue) &&
+						context.isStackSymbolicSpace(stackValue)) {
 						int stackPointerDepth = (int) stackValue.getOffset();
 						setDepth(instr, stackPointerDepth);
 					}
@@ -579,7 +566,6 @@ public class CallDepthChangeInfo {
 
 		return;
 	}
-
 
 	public int getStackPurge() {
 		return stackPurge;

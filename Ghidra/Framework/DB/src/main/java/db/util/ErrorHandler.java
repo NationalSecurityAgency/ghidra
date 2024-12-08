@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +24,10 @@ public interface ErrorHandler {
 	
 	/**
 	 * Notification that an IO exception occurred.
+	 * 
+	 * @param e {@link IOException} which was cause of error
+	 * @throws RuntimeException optional exception which may be thrown when
+	 * responding to error condition.
 	 */
-	public void dbError(IOException e);
+	public void dbError(IOException e) throws RuntimeException;
 }

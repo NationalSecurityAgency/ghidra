@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,6 +83,7 @@ package ghidra.app.util.cparser.C;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.InvalidNameException;
@@ -514,6 +515,39 @@ public class CParser {
 
         return null;
     }
+    
+
+    private DataType allocateEnumDT(Token t, ArrayList<EnumMember> list) {
+    	String enumName = (t != null ? t.image : ("enum_" + cnt++));
+    	
+    	// get the normal enum size, which is an int
+    	// TODO: allow for packing of enum to smallest value with either dataOrganization, or packing flag
+        int normalEnumLen = (dtMgr != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
+        
+        // create an initial enum and add all new members
+        EnumDataType enumDT= new EnumDataType(getCurrentCategoryPath(), enumName, 8, dtMgr);
+        if (list != null) {
+            for (EnumMember member : list) {
+                try {
+                        enumDT.add(member.name, member.value);
+                } catch (IllegalArgumentException exc) {
+                    addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
+                }
+            }
+            // get the minimum length to represent the values and resize if too big
+            int minLen = enumDT.getMinimumPossibleLength();
+            if (minLen > normalEnumLen) {
+                enumDT.setLength(minLen);
+            } else {
+                enumDT.setLength(normalEnumLen);
+            }
+        } else {
+            // length doesn't really matter, forward declaration with no values
+            enumDT.setLength(normalEnumLen);
+        }
+        
+        return addDef(enums, enumDT.getName(), enumDT);
+    }
 
     private DataType getDef(Map<String, DataType> table, String name) {
         return table.get(name);
@@ -623,24 +657,42 @@ public class CParser {
    * @param funcDT function data type to qualify
    */
     private void applyFunctionQualifiers(Declaration dec, FunctionDefinition funcDT) {
-        List<Integer> qualifierList = dec.getQualifiers();
-        if (qualifierList.contains(NORETURN) ) {
-            funcDT.setNoReturn(true);
-        }
-        // TODO: switch to setting calling convention by string identifier
-        for (Integer qualifier : qualifierList) {
-                switch (qualifier) {
-                    case CDECL:
-                            funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
-                            break;
-                    case STDCALL:
-                            funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
-                            break;
-                    case FASTCALL:
-                            funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
-                            break;
-                }
-        }
+		List<Integer> qualifierList = dec.getQualifiers();
+		if (qualifierList.contains(NORETURN)) {
+			funcDT.setNoReturn(true);
+		}
+
+		String convention = null;
+		for (Integer qualifier : qualifierList) {
+			switch (qualifier) {
+				case CDECL:
+					convention = CompilerSpec.CALLING_CONVENTION_cdecl;
+					break;
+				case STDCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_stdcall;
+					break;
+				case FASTCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_fastcall;
+					break;
+				case VECTORCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_vectorcall;
+					break;
+				case RUSTCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_rustcall;
+					break;
+				case PASCALCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_pascal;
+					break;
+			}
+		}
+		if (convention != null) {
+			try {
+				funcDT.setCallingConvention(convention);
+			}
+			catch (InvalidInputException e) {
+				// should not happen
+			}
+		}
     }
     
     private Integer getConstantValue (Object obj, int defaultValue) {
@@ -1131,17 +1183,25 @@ TOKEN :
     |
     <CONST : ( [ "_" ] )* "const">
     |
-    <CDECL : ( [ "_" ] )+ "cdecl"> 
-    |
     <DECLSPEC : "__declspec">
     |
-    <PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
+    <PRAGMA : "#" "pragma"> {parenNesting=-1; SwitchTo(PRAGMALINE); }
+    |
+    <PRAGMA_FUNC : ("__pragma" | "_Pragma")> {parenNesting=0; SwitchTo(PRAGMALINE); }
     | 
     <READABLETO : "__readableTo">
+    |
+    <CDECL : ( [ "_" ] )+ "cdecl"> 
     |
     <STDCALL : ( [ "_" ] )+ "stdcall"> 
     |
     <FASTCALL : ( [ "_" ] )+ "fastcall"> 
+    |
+    <VECTORCALL : ( [ "_" ] )+ "vectorcall"> 
+    |
+    <RUSTCALL : ( [ "_" ] )+ "rustcall">
+    |
+    <PASCALCALL : ( [ "_" ] )+ "pascal">
     |
     <NORETURN : "_Noreturn" >
     |
@@ -1319,9 +1379,9 @@ TOKEN :
     |
     <#PDIGIT : [ "0"-"9" ]>
     |
-    <POPEN : "("> { parenNesting++; }
+    <POPEN : "("> { if (parenNesting != -1) parenNesting++; }
     |
-    <PCLOSE : ")"> { parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
+    <PCLOSE : ")"> { if (parenNesting != -1) parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
     |
     <PMINUS : "-">
     |
@@ -1427,7 +1487,8 @@ TOKEN :
 //jjt SimpleNode TranslationUnit() #TranslationUnit : {}
 void TranslationUnit() : {}
 {
-    ( ExternalDeclaration() )+ 
+    ( ExternalDeclaration() )+
+    < EOF >
     {
         //jjt         return jjtThis;
     }
@@ -1436,8 +1497,8 @@ void TranslationUnit() : {}
 void ExternalDeclaration() : {}
 {
     (
-        LOOKAHEAD(FunctionDefinition() )
-        FunctionDefinition() 
+        LOOKAHEAD( FunctionDefinition() "{" )
+          (FunctionDefinition() "{" [ StatementList() ] "}")
         |
 //        <INLINE> FunctionDefinition() 
 //        |
@@ -1492,7 +1553,7 @@ void FunctionDefinition() : {
         retDT = DeclarationSpecifiers(retDT) 
     ]
     {typedefParsingStack.push(Boolean.FALSE);}
-    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
+    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();}
     {
         if (dec.getDataType() instanceof FunctionDefinition) {
             addDef(functions, dec.getName(), dec.getDataType());
@@ -1763,6 +1824,9 @@ Declaration TypeQualifier(Declaration dec) : {}
       <FAR> |
       <STDCALL> { dec.addQualifier(STDCALL); } |
       <FASTCALL> { dec.addQualifier(FASTCALL); } |
+      <VECTORCALL> { dec.addQualifier(VECTORCALL); } |
+      <RUSTCALL> { dec.addQualifier(RUSTCALL); } |
+      <PASCALCALL> { dec.addQualifier(PASCALCALL); } |
       <NORETURN> { dec.addQualifier(NORETURN); } |
       <W64> |
       <PTR64> |
@@ -1877,7 +1941,8 @@ Token MultiLineString() : {
 void PragmaSpec() : {
 }
 {
-  ( ( <PRAGMA> ) PragmaSpecifier() )
+  <PRAGMA> (PragmaSpecifier())+ | 
+  <PRAGMA_FUNC> PragmaSpecifier()
 }
 
  
@@ -1889,7 +1954,7 @@ void PragmaSpecifier() : {
 {
   LOOKAHEAD(3)
   <POPEN> PragmaSpecifier() <PCLOSE> |
-      id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL>)*
+      id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL> | <PCOMMA> )*
           ([ <POPEN> [ (ds1=PragmaConstant())+ [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ] ) 
   {
     if (id.image.equals("pack") && ds1 != null) {
@@ -2198,20 +2263,17 @@ DataType EnumSpecifier() : {
         LOOKAHEAD(3)
         [AttributeSpecList(dec)] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
         {
-            String enumName= (t != null ? t.image : ("enum_" + cnt++));
-            EnumDataType enuum= new EnumDataType(getCurrentCategoryPath(), enumName, 4, dtMgr);
-            for (EnumMember member : list) {
-                try {
-                    enuum.add(member.name, member.value);
-                } catch (IllegalArgumentException exc) {
-                    addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
-                }
-            }
-            dt= enuum;
-            dt= addDef(enums, enumName, enuum);
+            dt = allocateEnumDT(t, list);
         }
         |
-        t= <IDENTIFIER>             { dt= getEnumDef(t.image); }
+        t= <IDENTIFIER>
+        {
+            dt= getEnumDef(t.image);
+            // not defined yet, define an empty one
+            if (dt == null) {
+            	dt = allocateEnumDT(t, null);
+            }
+        }
     )
     {
         return dt;
@@ -2256,6 +2318,7 @@ int Enumerator(ArrayList<EnumMember> list, int value) : {
         if (evalue != null) {
             value = evalue;
         }
+        list.add(new EnumMember(t.image, value));
         return value;
     }
 }
@@ -2734,7 +2797,7 @@ Object AssignmentExpression() : {
       |
       LOOKAHEAD(3)
       obj = ConditionalExpression()
-    )
+    ) [ PragmaSpec() ]
     {
         return obj;
     }

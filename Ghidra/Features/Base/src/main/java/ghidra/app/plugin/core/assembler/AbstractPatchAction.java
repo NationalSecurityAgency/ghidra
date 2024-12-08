@@ -23,6 +23,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.*;
+import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.context.ListingActionContext;
@@ -268,8 +269,9 @@ public abstract class AbstractPatchAction extends DockingAction {
 		BigInteger index = adapter.getAddressIndexMap().getIndex(address);
 		int count = layout.getNumFields();
 		for (int i = 0; i < count; i++) {
-			ListingField field = (ListingField) layout.getField(i);
-			if (field.getFieldFactory().getFieldName().equals(fieldName)) {
+			Field f = layout.getField(i);
+			if ((f instanceof ListingField field) &&
+				field.getFieldFactory().getFieldName().equals(fieldName)) {
 				return new FieldLocation(index, i);
 			}
 		}

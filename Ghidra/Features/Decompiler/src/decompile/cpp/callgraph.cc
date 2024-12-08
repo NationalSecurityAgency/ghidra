@@ -213,7 +213,7 @@ CallGraphNode *CallGraph::addNode(Funcdata *f)
     throw LowlevelError("Functions with duplicate entry points: "+f->getName()+" "+node.getFuncdata()->getName());
 
   node.entryaddr = f->getAddress();
-  node.name = f->getName();
+  node.name = f->getDisplayName();
   node.fd = f;
   return &node;
 }

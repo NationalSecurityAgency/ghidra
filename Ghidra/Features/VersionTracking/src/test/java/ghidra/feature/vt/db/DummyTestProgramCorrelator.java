@@ -20,7 +20,6 @@ import static ghidra.feature.vt.db.VTTestUtils.*;
 import ghidra.feature.vt.api.main.VTMatchSet;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
@@ -28,27 +27,25 @@ import ghidra.util.task.TaskMonitor;
 
 public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 
+	private String name = "DummyTestProgramCorrelator";
 	private int matchCount = 1;
 
 	public DummyTestProgramCorrelator() {
 		this(1);
 	}
 
-	public DummyTestProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+	public DummyTestProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
+			Program destinationProgram, AddressSetView destinationAddressSet, ToolOptions options) {
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 	}
 
-	public DummyTestProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			Program destinationProgram) {
-		super(serviceProvider, sourceProgram, createAddressSet(), destinationProgram,
-			createAddressSet(), createOptions());
+	public DummyTestProgramCorrelator(Program sourceProgram, Program destinationProgram) {
+		super(sourceProgram, createAddressSet(), destinationProgram, createAddressSet(),
+			createOptions());
 	}
 
 	public DummyTestProgramCorrelator(int matchCount) {
-		super(null, null, createAddressSet(), null, createAddressSet(), createOptions());
+		super(null, createAddressSet(), null, createAddressSet(), createOptions());
 		this.matchCount = matchCount;
 	}
 
@@ -88,8 +85,12 @@ public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 		}
 	}
 
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	@Override
 	public String getName() {
-		return "DummyTestProgramCorrelator";
+		return name;
 	}
 }

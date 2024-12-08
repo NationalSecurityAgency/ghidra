@@ -43,7 +43,7 @@ public class MSVCUnionBitFieldTest extends AbstractCompositeBitFieldTest {
 			"   0   int:4(0)   1   a   \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -58,7 +58,7 @@ public class MSVCUnionBitFieldTest extends AbstractCompositeBitFieldTest {
 			"   0   longlong:0(0)   0      \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8", struct);
+			"Length: 8 Alignment: 8", struct);
 		//@formatter:on
 	}
 
@@ -72,7 +72,7 @@ public class MSVCUnionBitFieldTest extends AbstractCompositeBitFieldTest {
 			"   0   int:4(0)   1   a   \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", struct);
+			"Length: 4 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -87,7 +87,7 @@ public class MSVCUnionBitFieldTest extends AbstractCompositeBitFieldTest {
 			"   0   longlong:0(0)   0      \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 1", struct);
+			"Length: 8 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -101,7 +101,7 @@ public class MSVCUnionBitFieldTest extends AbstractCompositeBitFieldTest {
 			"   0   int:4(0)   1   a   \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 2", struct);
+			"Length: 4 Alignment: 2", struct);
 		//@formatter:on
 	}
 

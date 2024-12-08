@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class SleighSymbol implements Comparable<SleighSymbol> {
 	@Override
@@ -49,7 +47,7 @@ public class SleighSymbol implements Comparable<SleighSymbol> {
 
 	public SleighSymbol(Location location) {
 		this.location = location;
-	} // For use with restoreXml
+	}
 
 	public SleighSymbol(Location location, String nm) {
 		this.location = location;
@@ -72,30 +70,19 @@ public class SleighSymbol implements Comparable<SleighSymbol> {
 		return symbol_type.dummy_symbol;
 	}
 
-	public void saveXml(PrintStream s) {
+	public void encode(Encoder encoder) throws IOException {
+		throw new IOException("Symbol " + name + " cannot be encoded directly");
 	}
 
-	public void restoreXml(Element el, SleighBase trans) {
-	}
-
-	protected final void saveSleighSymbolXmlHeader(PrintStream s) {
-		s.append(" name=\"").append(name).append("\"");
-		s.append(" id=\"0x").print(Long.toHexString(id));
-		s.append("\"");
-		s.append(" scope=\"0x");
-		s.print(Long.toHexString(scopeid));
-		s.append("\"");
+	protected final void encodeSleighSymbolHeader(Encoder encoder) throws IOException {
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.writeUnsignedInteger(ATTRIB_SCOPE, scopeid);
 	}
 
 	// Save the basic attributes of a symbol
-	protected void saveXmlHeader(PrintStream s) {
-		saveSleighSymbolXmlHeader(s);
-	}
-
-	void restoreXmlHeader(Element el) {
-		name = el.getAttributeValue("name");
-		id = XmlUtils.decodeUnknownInt(el.getAttributeValue("id"));
-		scopeid = XmlUtils.decodeUnknownInt(el.getAttributeValue("scope"));
+	protected void encodeHeader(Encoder encoder) throws IOException {
+		encodeSleighSymbolHeader(encoder);
 	}
 
 	@Override

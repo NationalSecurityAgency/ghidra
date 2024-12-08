@@ -120,11 +120,11 @@ class OatDexFile_KitKat extends OatDexFile {
 		monitor.setProgress(0);
 		monitor.setMaximum(oatDexFileHeaderDataList.size());
 		for (Data data : oatDexFileHeaderDataList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			for (int i = 0; i < data.getNumComponents(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMaximum(data.getNumComponents());
 				monitor.setProgress(i);
 
@@ -145,7 +145,7 @@ class OatDexFile_KitKat extends OatDexFile {
 		}
 
 		for (int i = 0; i < oat_class_offsets_pointer_.length; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMaximum(oat_class_offsets_pointer_.length);
 			monitor.setProgress(i);
 
@@ -184,7 +184,7 @@ class OatDexFile_KitKat extends OatDexFile {
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		for (int j = 0; j < dexClassOffsetsData.getNumComponents(); ++j) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data component = dexClassOffsetsData.getComponent(j);
 			if (component.getFieldName().startsWith("oat_class_offsets_pointer")) {
 				Scalar scalar = component.getScalar(0);
@@ -201,7 +201,7 @@ class OatDexFile_KitKat extends OatDexFile {
 			throws Exception {
 		List<Data> list = new ArrayList<Data>();
 		for (int i = 0; i < oatHeaderData.getNumComponents(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMaximum(oatHeaderData.getNumComponents());
 			monitor.setProgress(i);
 
@@ -216,7 +216,7 @@ class OatDexFile_KitKat extends OatDexFile {
 	private Data getDexClassOffsetsData(Data oatDexFileHeaderData, TaskMonitor monitor)
 			throws Exception {
 		for (int i = 0; i < oatDexFileHeaderData.getNumComponents(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMaximum(oatDexFileHeaderData.getNumComponents());
 			monitor.setProgress(i);
 

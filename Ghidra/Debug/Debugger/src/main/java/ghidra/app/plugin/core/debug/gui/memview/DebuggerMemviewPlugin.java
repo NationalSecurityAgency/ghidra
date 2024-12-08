@@ -26,22 +26,21 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 
-@PluginInfo( //
-		shortDescription = "Displays memory vs time", //
-		description = "Provides visualiztion/navigation across time/address axes", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = { //
-			TraceActivatedPluginEvent.class //
-		}, //
-		servicesRequired = { //
-			DebuggerTraceManagerService.class //
-		}, //
-		servicesProvided = { //
-			MemviewService.class //
-		} //
-)
+@PluginInfo(
+	shortDescription = "Displays memory vs time",
+	description = "Provides visualiztion/navigation across time/address axes",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class
+	},
+	servicesProvided = {
+		MemviewService.class
+	})
 public class DebuggerMemviewPlugin extends AbstractDebuggerPlugin implements MemviewService {
 
 	protected MemviewProvider provider;
@@ -67,12 +66,12 @@ public class DebuggerMemviewPlugin extends AbstractDebuggerPlugin implements Mem
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			listener.coordinatesActivated(ev.getActiveCoordinates());
 		}
 	}
 
+	@Override
 	public MemviewProvider getProvider() {
 		return provider;
 	}

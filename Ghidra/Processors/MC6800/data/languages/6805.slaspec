@@ -169,7 +169,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 }
 :BHI REL	is op=0x22;REL
 {
-	local tmp = C + Z;
+	local tmp = C || Z;
 	if (tmp == 0) goto REL;
 }
 
@@ -195,7 +195,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 
 :BLS REL	is op=0x23;REL
 {
-	local tmp = C + Z;
+	local tmp = C || Z;
 	if (tmp) goto REL;
 }
 

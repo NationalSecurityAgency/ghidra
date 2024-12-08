@@ -44,3 +44,10 @@ rootProject.assembleDistribution {
 		into  { getZipPath(p) }
 	}
 }
+
+task cleanNatives {
+	File nativeOutputDir = file('build/os')
+	doFirst {
+		delete nativeOutputDir
+	}
+}

@@ -22,17 +22,17 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import org.jdom.Element;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.DefaultRowFilterTransformer;
 import docking.widgets.table.RowFilterTransformer;
-import ghidra.app.services.GoToService;
+import ghidra.app.plugin.core.symtable.AbstractSymbolTableModel.OriginalNameColumn;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.*;
 
 class SymbolPanel extends JPanel {
@@ -50,7 +50,7 @@ class SymbolPanel extends JPanel {
 	private GhidraTableFilterPanel<SymbolRowObject> tableFilterPanel;
 
 	SymbolPanel(SymbolProvider provider, SymbolTableModel model, SymbolRenderer renderer,
-			final PluginTool tool, GoToService gotoService) {
+			PluginTool tool) {
 
 		super(new BorderLayout());
 
@@ -62,8 +62,7 @@ class SymbolPanel extends JPanel {
 		this.listener = e -> symProvider.updateTitle();
 
 		symTable = threadedTablePanel.getTable();
-		symTable.setAutoLookupColumn(SymbolTableModel.LABEL_COL);
-		symTable.setName("SymbolTable");//used by JUnit...
+		symTable.setAutoLookupColumn(AbstractSymbolTableModel.LABEL_COL);
 		symTable.setRowSelectionAllowed(true);
 		symTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		symTable.getModel().addTableModelListener(listener);
@@ -74,13 +73,14 @@ class SymbolPanel extends JPanel {
 			}
 		});
 
-		GoToService goToService = tool.getService(GoToService.class);
-		symTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		symTable.setAccessibleNamePrefix("Symbol");
+
+		symTable.installNavigation(tool);
 
 		for (int i = 0; i < symTable.getColumnCount(); i++) {
 			TableColumn column = symTable.getColumnModel().getColumn(i);
 			column.setCellRenderer(renderer);
-			if (column.getModelIndex() == SymbolTableModel.LABEL_COL) {
+			if (column.getModelIndex() == AbstractSymbolTableModel.LABEL_COL) {
 				column.setCellEditor(new SymbolEditor());
 			}
 		}
@@ -89,6 +89,9 @@ class SymbolPanel extends JPanel {
 		add(createFilterFieldPanel(), BorderLayout.SOUTH);
 
 		filterDialog = new FilterDialog(tool);
+
+		// enable dragging symbols out of the symbol table
+		new SymbolTableDragProvider(symTable, model);
 	}
 
 	private JPanel createFilterFieldPanel() {
@@ -104,8 +107,8 @@ class SymbolPanel extends JPanel {
 			"<html><b>Selected</b> causes filter to only consider the symbol's name.");
 		nameColumnOnlyCheckbox.setFocusable(false);
 		nameColumnOnlyCheckbox.setSelected(FILTER_NAME_ONLY_DEFAULT);
-		tableFilterPanel.setFilterRowTransformer(
-			updateRowDataTransformer(FILTER_NAME_ONLY_DEFAULT));
+		tableFilterPanel
+				.setFilterRowTransformer(updateRowDataTransformer(FILTER_NAME_ONLY_DEFAULT));
 		nameColumnOnlyCheckbox.addItemListener(e -> {
 			boolean nameOnly = nameColumnOnlyCheckbox.isSelected();
 			tableFilterPanel.setFilterRowTransformer(updateRowDataTransformer(nameOnly));
@@ -113,19 +116,16 @@ class SymbolPanel extends JPanel {
 
 		tableFilterPanel.add(nameColumnOnlyCheckbox);
 
+		tableFilterPanel.setAccessibleNamePrefix("Symbol");
 		return tableFilterPanel;
 	}
 
 	protected RowFilterTransformer<SymbolRowObject> updateRowDataTransformer(boolean nameOnly) {
+		TableColumnModel columnModel = symTable.getColumnModel();
 		if (nameOnly) {
-			return new NameOnlyRowTransformer();
+			return new NameOnlyRowTransformer(tableModel, columnModel);
 		}
-
-		return new DefaultRowFilterTransformer<>(tableModel, symTable.getColumnModel());
-	}
-
-	ProgramSelection getProgramSelection() {
-		return symTable.getProgramSelection();
+		return new DefaultRowFilterTransformer<>(tableModel, columnModel);
 	}
 
 	void dispose() {
@@ -203,8 +203,16 @@ class SymbolPanel extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private static class NameOnlyRowTransformer implements RowFilterTransformer<SymbolRowObject> {
+	private static class NameOnlyRowTransformer
+			extends DefaultRowFilterTransformer<SymbolRowObject> {
+
 		private List<String> list = new ArrayList<>();
+		private SymbolTableModel symbolTableModel;
+
+		NameOnlyRowTransformer(SymbolTableModel symbolTableModel, TableColumnModel columnModel) {
+			super(symbolTableModel, columnModel);
+			this.symbolTableModel = symbolTableModel;
+		}
 
 		@Override
 		public List<String> transform(SymbolRowObject rowObject) {
@@ -213,8 +221,20 @@ class SymbolPanel extends JPanel {
 				// The toString() returns the name for the symbol, which may be cached.  Calling
 				// toString() will also avoid locking for cached values.
 				list.add(rowObject.toString());
+
+				// Add the 'Original Imported Name' value as well, which may feel intuitive to the
+				// user when filtering on the name.
+				addOriginalName(rowObject);
 			}
 			return list;
+		}
+
+		private void addOriginalName(SymbolRowObject rowObject) {
+			int index = symbolTableModel.getColumnIndex(OriginalNameColumn.class);
+			String originalName = getStringValue(rowObject, index);
+			if (originalName != null) {
+				list.add(originalName);
+			}
 		}
 
 		@Override

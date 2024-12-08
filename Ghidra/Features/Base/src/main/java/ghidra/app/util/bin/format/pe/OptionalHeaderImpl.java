@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.NotYetImplementedException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -157,21 +157,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public boolean is64bit() {
-		switch (magic) {
-			case Constants.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-				return false;
-
-			case Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-				return true;
-		}
-		int characteristics = ntHeader.getFileHeader().getCharacteristics();
-		if ((characteristics & FileHeader.IMAGE_FILE_DLL) == FileHeader.IMAGE_FILE_DLL &&
-			(characteristics & FileHeader.IMAGE_FILE_EXECUTABLE_IMAGE) == 0) {
-			Msg.warn(this, "Invalid magic " + magic + " but potentially data-only DLL");
-			return false;
-		}
-		throw new NotYetImplementedException(
-			"Optional header of type [" + Integer.toHexString(magic) + "] is not supported");
+		return magic == Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC;
 	}
 
 	@Override
@@ -181,7 +167,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public long getAddressOfEntryPoint() {
-		return Conv.intToLong(addressOfEntryPoint);
+		return Integer.toUnsignedLong(addressOfEntryPoint);
 	}
 
 	@Override
@@ -196,7 +182,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public long getSizeOfInitializedData() {
-		return Conv.intToLong(sizeOfInitializedData);
+		return Integer.toUnsignedLong(sizeOfInitializedData);
 	}
 
 	@Override
@@ -206,7 +192,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public long getSizeOfUninitializedData() {
-		return Conv.intToLong(sizeOfUninitializedData);
+		return Integer.toUnsignedLong(sizeOfUninitializedData);
 	}
 
 	@Override
@@ -216,17 +202,17 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public long getBaseOfCode() {
-		return Conv.intToLong(baseOfCode);
+		return Integer.toUnsignedLong(baseOfCode);
 	}
 
 	@Override
 	public long getBaseOfData() {
-		return Conv.intToLong(baseOfData);
+		return Integer.toUnsignedLong(baseOfData);
 	}
 
 	@Override
 	public long getSizeOfImage() {
-		return Conv.intToLong(sizeOfImage);
+		return Integer.toUnsignedLong(sizeOfImage);
 	}
 
 	@Override
@@ -236,7 +222,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public long getSizeOfHeaders() {
-		return Conv.intToLong(sizeOfHeaders);
+		return Integer.toUnsignedLong(sizeOfHeaders);
 	}
 
 	@Override
@@ -246,7 +232,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public long getNumberOfRvaAndSizes() {
-		return Conv.intToLong(numberOfRvaAndSizes);
+		return Integer.toUnsignedLong(numberOfRvaAndSizes);
 	}
 
 	@Override
@@ -486,6 +472,11 @@ public class OptionalHeaderImpl implements OptionalHeader {
 		reader.setPointerIndex(startIndex);
 
 		magic = reader.readNextShort();
+		if (magic != Constants.IMAGE_ROM_OPTIONAL_HDR_MAGIC &&
+			magic != Constants.IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+			magic != Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+			Msg.warn(this, "Unsupported magic value: 0x%x. Assuming 32-bit.".formatted(magic));
+		}
 		majorLinkerVersion = reader.readNextByte();
 		minorLinkerVersion = reader.readNextByte();
 		sizeOfCode = reader.readNextInt();
@@ -541,10 +532,10 @@ public class OptionalHeaderImpl implements OptionalHeader {
 			sizeOfHeapCommit = reader.readNextLong();
 		}
 		else {
-			sizeOfStackReserve = reader.readNextInt() & Conv.INT_MASK;
-			sizeOfStackCommit = reader.readNextInt() & Conv.INT_MASK;
-			sizeOfHeapReserve = reader.readNextInt() & Conv.INT_MASK;
-			sizeOfHeapCommit = reader.readNextInt() & Conv.INT_MASK;
+			sizeOfStackReserve = reader.readNextUnsignedInt();
+			sizeOfStackCommit = reader.readNextUnsignedInt();
+			sizeOfHeapReserve = reader.readNextUnsignedInt();
+			sizeOfHeapCommit = reader.readNextUnsignedInt();
 		}
 
 		loaderFlags = reader.readNextInt();

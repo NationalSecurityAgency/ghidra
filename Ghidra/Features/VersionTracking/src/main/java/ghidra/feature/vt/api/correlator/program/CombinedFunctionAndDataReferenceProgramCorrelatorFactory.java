@@ -17,7 +17,6 @@ package ghidra.feature.vt.api.correlator.program;
 
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 
@@ -28,7 +27,6 @@ public class CombinedFunctionAndDataReferenceProgramCorrelatorFactory
 		extends VTAbstractReferenceProgramCorrelatorFactory {
 
 	public CombinedFunctionAndDataReferenceProgramCorrelatorFactory() {
-		super();
 		setName("Combined Function and Data Reference Match");
 		correlatorDescription =
 			"Matches functions based on the accepted data and function matches they have in common.";
@@ -38,10 +36,10 @@ public class CombinedFunctionAndDataReferenceProgramCorrelatorFactory
 	}
 
 	@Override
-	protected VTProgramCorrelator doCreateCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	protected VTProgramCorrelator doCreateCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, VTOptions options) {
-		return new CombinedFunctionAndDataReferenceProgramCorrelator(serviceProvider, sourceProgram,
+		return new CombinedFunctionAndDataReferenceProgramCorrelator(sourceProgram,
 			sourceAddressSet, destinationProgram, destinationAddressSet, correlatorName, options);
 	}
 }

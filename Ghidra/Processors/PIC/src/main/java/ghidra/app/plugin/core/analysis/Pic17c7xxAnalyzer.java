@@ -462,7 +462,7 @@ public class Pic17c7xxAnalyzer extends AbstractAnalyzer {
 		fs32Context.writeValue(block.getMaxAddress());
 		fs10Context.writeValue(block.getMaxAddress());
 		bsrContext.writeValue(block.getMaxAddress());
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	private void markupFRegAndBitInstruction(Instruction instr) {

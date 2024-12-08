@@ -21,7 +21,6 @@ import javax.swing.Icon;
 
 import docking.widgets.fieldpanel.field.SimpleImageField;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
@@ -77,11 +76,6 @@ public class ImageFactoryField extends SimpleImageField implements ListingField 
 	@Override
 	public FieldFactory getFieldFactory() {
 		return factory;
-	}
-
-	@Override
-	public FieldFormatModel getFieldModel() {
-		return factory.getFieldModel();
 	}
 
 	@Override

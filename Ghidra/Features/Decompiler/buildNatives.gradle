@@ -26,7 +26,6 @@ if (findProject(':Generic') == null) {
  * Define the "native build model" for building the decompiler executables.
  */
 model {
-	
 	// Define the source files that are compiled and linked to become the decompiler.
 	// The decompiler source is a bit weird in that all the cpp and headers all live in
 	// the same directory with other files that are not used by the decompiler.
@@ -43,6 +42,8 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -71,6 +72,7 @@ model {
 		                include "cpool.cc"
 		                include "comment.cc"
 						include "stringmanage.cc"
+						include "modelrules.cc"
 		                include "fspec.cc"
 		                include "action.cc"
 		                include "loadimage.cc"
@@ -84,6 +86,7 @@ model {
 		                include "emulateutil.cc"
 		                include "flow.cc"
 		                include "userop.cc"
+		                include "multiprecision.cc"
 		                include "funcdata.cc"
 		                include "funcdata_block.cc"
 		                include "funcdata_varnode.cc"
@@ -99,6 +102,7 @@ model {
 		                include "blockaction.cc"
 		                include "merge.cc"
 		                include "double.cc"
+		                include "constseq.cc"
 		                include "coreaction.cc"
 		                include "condexe.cc"
 		                include "override.cc"
@@ -122,6 +126,8 @@ model {
 		                include "ghidra_process.cc"
 		                include "comment_ghidra.cc"
 						include "string_ghidra.cc"
+						include "signature.cc"
+						include "signature_ghidra.cc"
 		         //       include "callgraph.cc"			// uncomment for debug
 		         //       include "ifacedecomp.cc"			// uncomment for debug
 		         //       include "ifaceterm.cc"			// uncomment for debug
@@ -145,6 +151,8 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -169,6 +177,8 @@ model {
 						include "slghpattern.cc"
 						include "semantics.cc"
 						include "context.cc"
+						include "slaformat.cc"
+						include "compression.cc"
 						include "filemanage.cc"
 						include "slgh_compile.cc"
 						
@@ -183,7 +193,21 @@ model {
 						srcDir "src/decompile/cpp"
 					}
 				} // end cpp
+				
+				c {
+					source {
+						srcDir "src/decompile/zlib"
+						include "*.c"
+					}
+				}
 			} // end sources (sleigh)
+			
+			binaries {
+				all{ b ->
+					b.cppCompiler.define "LOCAL_ZLIB"
+					b.cCompiler.define "NO_GZIP"
+				}
+			} // end binaries.all (sleigh)
 		} // end sleigh
 		
 	}  // end components
@@ -218,7 +242,13 @@ model {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
 					}	
-				}	
+				}
+				b.cCompiler.args "/W3"
+				b.cCompiler.args "/O2"
+				b.cCompiler.args "/Oy"			// Omit frame pointer
+				b.cCompiler.define "_CRT_SECURE_NO_DEPRECATE"
+				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
+				b.cCompiler.define "ZLIB_WINAPI"
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"

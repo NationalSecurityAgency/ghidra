@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.bookmark;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 
@@ -28,7 +27,7 @@ import ghidra.program.model.listing.*;
  *      2) at a given address
  *      3) by the information contained in a Bookmark
  */
-public class BookmarkEditCmd implements Command {
+public class BookmarkEditCmd implements Command<Program> {
 
 	private String category;
 	private String comment;
@@ -94,9 +93,9 @@ public class BookmarkEditCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		BookmarkManager mgr = ((Program) obj).getBookmarkManager();
+		BookmarkManager mgr = program.getBookmarkManager();
 
 		if (bookmark != null) {
 			bookmark.set(category, comment);

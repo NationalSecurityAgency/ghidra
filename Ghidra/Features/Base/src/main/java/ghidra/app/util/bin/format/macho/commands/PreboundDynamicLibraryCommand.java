@@ -85,19 +85,15 @@ public class PreboundDynamicLibraryCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address addr = baseAddress.getNewAddress(getStartIndex());
-				api.createData(addr, toDataType());
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-				int nameLen = getCommandSize() - name.getOffset();
-				Address nameAddr = addr.add(name.getOffset());
-				api.createAsciiString(nameAddr, nameLen);
-			}
+			Address addr = baseAddress.getNewAddress(getStartIndex());
+			int nameLen = getCommandSize() - name.getOffset();
+			Address nameAddr = addr.add(name.getOffset());
+			api.createAsciiString(nameAddr, nameLen);
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName() + " - " + e.getMessage());

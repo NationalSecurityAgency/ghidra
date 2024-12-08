@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -28,13 +29,13 @@ import javax.swing.table.*;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
@@ -94,11 +95,11 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	private class SnapshotListener extends TraceDomainObjectListener {
 		public SnapshotListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
-			listenFor(TraceSnapshotChangeType.CHANGED, this::snapChanged);
-			listenFor(TraceSnapshotChangeType.DELETED, this::snapDeleted);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
+			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapChanged);
+			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
 		}
 
 		private void objectRestored() {
@@ -141,7 +142,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
 			SnapshotRow row = (SnapshotRow) data.getRowObject();
-			if (row != null && row.getSnap() == currentSnap) {
+			if (row != null && currentSnap != null && currentSnap.longValue() == row.getSnap()) {
 				setBold();
 			}
 			return this;
@@ -154,7 +155,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 	protected boolean hideScratch = true;
 
 	private Trace currentTrace;
-	private Long currentSnap;
+	private volatile Long currentSnap;
 
 	protected final SnapshotListener listener = new SnapshotListener();
 
@@ -234,11 +235,14 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		TraceTimeManager manager = currentTrace.getTimeManager();
-		Collection<? extends TraceSnapshot> snapshots = hideScratch
-				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
-				: manager.getAllSnapshots();
-		snapshotTableModel
-				.addAll(snapshots.stream().map(s -> new SnapshotRow(currentTrace, s)).toList());
+		Collection<? extends TraceSnapshot> snapshots =
+			hideScratch ? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
+					: manager.getAllSnapshots();
+		// Use .collect instead of .toList to avoid size/sync issues
+		// Even though access is synchronized, size may change during iteration
+		snapshotTableModel.addAll(snapshots.stream()
+				.map(s -> new SnapshotRow(currentTrace, s))
+				.collect(Collectors.toList()));
 	}
 
 	protected void deleteScratchSnapshots() {
@@ -250,10 +254,11 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		TraceTimeManager manager = currentTrace.getTimeManager();
-		snapshotTableModel.addAll(manager.getSnapshots(Long.MIN_VALUE, true, 0, false)
-				.stream()
+		Collection<? extends TraceSnapshot> sratch =
+			manager.getSnapshots(Long.MIN_VALUE, true, 0, false);
+		snapshotTableModel.addAll(sratch.stream()
 				.map(s -> new SnapshotRow(currentTrace, s))
-				.toList());
+				.collect(Collectors.toList()));
 	}
 
 	public ListSelectionModel getSelectionModel() {
@@ -265,8 +270,12 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		return row == null ? null : row.getSnap();
 	}
 
-	public void setSelectedSnapshot(Long snap) {
+	public void setCurrentSnapshot(Long snap) {
 		currentSnap = snap;
+		snapshotTableModel.fireTableDataChanged();
+	}
+
+	public void setSelectedSnapshot(Long snap) {
 		if (snap == null) {
 			snapshotTable.clearSelection();
 			return;
@@ -283,6 +292,5 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		snapshotFilterPanel.setSelectedItem(row);
-		snapshotTableModel.fireTableDataChanged();
 	}
 }

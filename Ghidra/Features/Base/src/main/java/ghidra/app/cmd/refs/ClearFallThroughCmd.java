@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
@@ -25,40 +23,31 @@ import ghidra.program.model.listing.Program;
 /**
  * Command to clear a fallthrough.
  */
-public class ClearFallThroughCmd implements Command {
+public class ClearFallThroughCmd implements Command<Program> {
 	Address instAddr;
-    /**
-     * Constructs a new command to remove a fallthrough.
-     * @param instAddr the address of the instruction from which to remove the
-     * fallthrough.
-     */
-    public ClearFallThroughCmd(Address instAddr) {
-    	this.instAddr = instAddr;
-    }
 
 	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
+	 * Constructs a new command to remove a fallthrough.
+	 * @param instAddr the address of the instruction from which to remove the
+	 * fallthrough.
 	 */
-    public boolean applyTo(DomainObject obj) {
-    	Program program = (Program)obj;
-    	Instruction inst = program.getListing().getInstructionAt(instAddr);
-    	inst.clearFallThroughOverride();
-    	return true;
-    }	
+	public ClearFallThroughCmd(Address instAddr) {
+		this.instAddr = instAddr;
+	}
 
+	@Override
+	public boolean applyTo(Program program) {
+		Instruction inst = program.getListing().getInstructionAt(instAddr);
+		inst.clearFallThroughOverride();
+		return true;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Clear Fall-through Override";
-    }
+	@Override
+	public String getName() {
+		return "Clear Fall-through Override";
+	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return null;
 	}

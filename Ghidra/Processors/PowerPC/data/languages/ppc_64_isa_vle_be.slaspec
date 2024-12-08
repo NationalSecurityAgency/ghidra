@@ -30,5 +30,6 @@
 @include "SPEF_SCR.sinc"
 @include "SPE_EFSD.sinc"
 @include "SPE_EFV.sinc"
+@include "SPE_FloatMulAdd.sinc"
 # OR
 #@include "altivec.sinc"

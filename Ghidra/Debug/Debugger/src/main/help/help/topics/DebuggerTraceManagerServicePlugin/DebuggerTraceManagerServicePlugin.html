@@ -14,10 +14,10 @@
     <H1><A name="plugin"></A>Debugger: Trace Management</H1>
 
     <P>This service plugin manages the collection of open traces, and it is controlled primarily
-    via the <A href="help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html">Threads</A>
-    window. It maintains a list of open traces, the active trace coordinates (trace, time, thread,
-    frame), and permits saving, opening, and closing traces. To some extent, it also tracks which
-    traces are being actively recorded.</P>
+    via the <A href="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A>
+    window's tab panel. It maintains a list of open traces, the active trace coordinates (trace,
+    time, object), and permits saving, opening, and closing traces. To some extent, it also tracks
+    which traces have live targets.</P>
 
     <H2>Actions</H2>
 
@@ -26,7 +26,7 @@
     <H3><A name="open_trace"></A>Open Trace</H3>
 
     <P>This action is always available. It prompts for a trace in the current project and opens
-    that trace in the tool.</P>
+    that trace in the Debugger tool.</P>
 
     <H3><A name="save_trace"></A>Save Trace</H3>
 
@@ -37,26 +37,22 @@
     <H3><A name="close_trace"></A>Close Trace</H3>
 
     <P>This action is available whenever at least one trace is open and active. It closes the
-    current trace. <FONT color="red">WARNING:</FONT> If the trace has not been saved, it will be
-    lost, even when Save by Default is active.</P>
+    current trace.</P>
 
     <H3><A name="close_all_traces"></A>Close All Traces</H3>
 
     <P>This action is available whenever at least one trace is open. It closes all traces in this
-    tool. <FONT color="red">WARNING:</FONT> Any trace that has not been saved will be lost, even
-    when Save by Default is active.</P>
+    tool.</P>
 
     <H3><A name="close_other_traces"></A>Close Other Traces</H3>
 
     <P>This action is available whenever there is an open trace other than the active one. It
-    closes all traces in this tool, except the active trace. <FONT color="red">WARNING:</FONT> Any
-    closed trace that has not been saved will be lost, even when Save by Default is active.</P>
+    closes all traces in this tool, except the active trace.</P>
 
     <H3><A name="close_dead_traces"></A>Close Dead Traces</H3>
 
     <P>This action is available whenever at least one trace is open. It closes all dead traces in
-    this tool. <FONT color="red">WARNING:</FONT> Any closed trace that has not been saved will be
-    lost, even when Save by Default is active.</P>
+    this tool.</P>
 
     <H3><A name="save_by_default"></A>Save by Default</H3>
 

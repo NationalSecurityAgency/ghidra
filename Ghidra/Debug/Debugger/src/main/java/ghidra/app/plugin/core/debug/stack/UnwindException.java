@@ -23,7 +23,7 @@ public class UnwindException extends RuntimeException {
 		super(message);
 	}
 
-	public UnwindException(String message, UnwindException cause) {
+	public UnwindException(String message, Exception cause) {
 		super(message, cause);
 	}
 }

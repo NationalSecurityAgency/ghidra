@@ -57,7 +57,7 @@ public class ExportProgramScript extends GhidraScript {
 		RelocationTable relocTable = currentProgram.getRelocationTable();
 		Iterator<Relocation> iter = relocTable.getRelocations();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Relocation reloc = iter.next();
 			Address relocStart = reloc.getAddress();
@@ -102,7 +102,7 @@ public class ExportProgramScript extends GhidraScript {
 		// the original
 		for (long i = 0; i < size; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			byte originalByte = fileBytes.getOriginalByte(i);
 			byte currentByte = fileBytes.getModifiedByte(i);
@@ -158,7 +158,7 @@ public class ExportProgramScript extends GhidraScript {
 		}
 
 		for (Address address : list) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (set.contains(address)) {
 				return true;
 			}

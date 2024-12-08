@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.calltree;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.Icon;
 
@@ -40,15 +39,20 @@ public class DeadEndNode extends CallNode {
 
 	private final Program program;
 
-	DeadEndNode(Program program, Reference reference) {
-		super(new AtomicInteger(0)); // can't recurse
+	DeadEndNode(Program program, Reference reference, CallTreeOptions callTreeOptions) {
+		super(callTreeOptions);
 		this.program = program;
 		this.reference = reference;
 	}
 
 	@Override
+	public int loadAll(TaskMonitor monitor) throws CancelledException {
+		return 1; // this node cannot be opened
+	}
+
+	@Override
 	CallNode recreate() {
-		return new DeadEndNode(program, reference);
+		return new DeadEndNode(program, reference, callTreeOptions);
 	}
 
 	@Override
@@ -59,6 +63,10 @@ public class DeadEndNode extends CallNode {
 	@Override
 	public Address getSourceAddress() {
 		return reference.getFromAddress();
+	}
+
+	public Address getRemoteAddress() {
+		return reference.getToAddress();
 	}
 
 	@Override

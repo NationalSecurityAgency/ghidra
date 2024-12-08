@@ -154,7 +154,7 @@ public class FunctionBitPatternInfo {
 				currentFlowType.equals(RefType.CONDITIONAL_CALL_TERMINATOR) ||
 				currentFlowType.equals(RefType.CONDITIONAL_TERMINATOR)) {
 				returnsToSizes.put(currentInstruction.getAddress(),
-					new Integer(currentInstruction.getLength()));
+					Integer.valueOf(currentInstruction.getLength()));
 			}
 		}
 

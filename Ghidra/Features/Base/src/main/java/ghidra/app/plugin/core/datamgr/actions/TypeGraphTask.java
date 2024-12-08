@@ -121,7 +121,7 @@ public class TypeGraphTask extends Task {
 		}
 
 		for (DataTypeComponent inner : struct.getComponents()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dt = inner.getDataType();
 			if (dt instanceof TypeDef) {
 				dt = ((TypeDef) dt).getBaseDataType();
@@ -138,7 +138,7 @@ public class TypeGraphTask extends Task {
 
 	private void recursePointer(Pointer pointer, AttributedGraph graph, AttributedVertex lastVertex,
 			TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		DataType ptrType = pointer.getDataType();
 		if (ptrType == null) {
 			return;

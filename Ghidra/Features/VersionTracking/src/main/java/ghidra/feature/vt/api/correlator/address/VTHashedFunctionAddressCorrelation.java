@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,14 @@
  */
 package ghidra.feature.vt.api.correlator.address;
 
-import ghidra.program.model.address.*;
+import static ghidra.util.datastruct.Duo.Side.*;
+
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.correlate.HashedFunctionAddressCorrelation;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.util.AddressCorrelation;
+import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -35,14 +38,15 @@ public class VTHashedFunctionAddressCorrelation implements AddressCorrelation {
 
 	private final Function sourceFunction;
 	private final Function destinationFunction;
-	private HashedFunctionAddressCorrelation addressCorrelation;
+	private ListingAddressCorrelation addressCorrelation;
 
 	/**
 	 * Constructs an address correlation between two functions.
 	 * @param sourceFunction the source function
 	 * @param destinationFunction the destination function
 	 */
-	public VTHashedFunctionAddressCorrelation(Function sourceFunction, Function destinationFunction) {
+	public VTHashedFunctionAddressCorrelation(Function sourceFunction,
+			Function destinationFunction) {
 		this.sourceFunction = sourceFunction;
 		this.destinationFunction = destinationFunction;
 		addressCorrelation = null;
@@ -54,15 +58,16 @@ public class VTHashedFunctionAddressCorrelation implements AddressCorrelation {
 	}
 
 	@Override
-	public AddressRange getCorrelatedDestinationRange(Address sourceAddress, TaskMonitor monitor)
-			throws CancelledException {
+	public AddressCorrelationRange getCorrelatedDestinationRange(Address sourceAddress,
+			TaskMonitor monitor) throws CancelledException {
 		try {
 			initializeCorrelation(monitor);
-			Address destinationAddress = addressCorrelation.getAddressInSecond(sourceAddress);
+			Address destinationAddress = addressCorrelation.getAddress(RIGHT, sourceAddress);
 			if (destinationAddress == null) {
 				return null; // No matching destination.
 			}
-			return new AddressRangeImpl(destinationAddress, destinationAddress);
+			AddressRangeImpl range = new AddressRangeImpl(destinationAddress, destinationAddress);
+			return new AddressCorrelationRange(range, getName());
 		}
 		catch (MemoryAccessException e) {
 			Msg.error(this, "Could not create HashedFunctionAddressCorrelation", e);
@@ -78,13 +83,17 @@ public class VTHashedFunctionAddressCorrelation implements AddressCorrelation {
 	 * @throws CancelledException if the user cancels
 	 * @throws MemoryAccessException if either function's memory can't be accessed.
 	 */
-	private void initializeCorrelation(TaskMonitor monitor) throws CancelledException,
-			MemoryAccessException {
+	private void initializeCorrelation(TaskMonitor monitor)
+			throws CancelledException, MemoryAccessException {
 		if (addressCorrelation != null) {
 			return;
 		}
-		addressCorrelation =
-				new HashedFunctionAddressCorrelation(sourceFunction, destinationFunction,
-				monitor);
+		if (sourceFunction != null && destinationFunction != null) {
+			addressCorrelation =
+				new HashedFunctionAddressCorrelation(sourceFunction, destinationFunction, monitor);
+		}
+		else {
+			addressCorrelation = new DummyListingAddressCorrelation();
+		}
 	}
 }

@@ -112,4 +112,12 @@ public class VariableValueTable {
 			rows.remove(key);
 		}
 	}
+
+	public void reportDetails() {
+		synchronized (rows) {
+			for (VariableValueRow row : rows.values()) {
+				row.reportDetails();
+			}
+		}
+	}
 }

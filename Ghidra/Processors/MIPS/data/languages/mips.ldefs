@@ -4,7 +4,7 @@
             endian="big"
             size="32"
             variant="default"
-            version="1.7"
+            version="1.8"
             slafile="mips32be.sla"
             processorspec="mips32.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -13,15 +13,18 @@
     <compiler name="default" spec="mips32be.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32be.cspec" id="windows"/>
     <compiler name="eabi" spec="mips32be_eabi.cspec" id="eabi"/>
+    <external_name tool="gnu" name="mips:3000"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips"/>
+    <external_name tool="qemu_system" name="qemu-system-mips"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="32"
             variant="default"
-            version="1.7"
+            version="1.8"
             slafile="mips32le.sla"
             processorspec="mips32.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -30,15 +33,18 @@
     <compiler name="default" spec="mips32le.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
     <compiler name="eabi" spec="mips32le_eabi.cspec" id="eabi"/>
+    <external_name tool="gnu" name="mips:3000"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsel"/>
+    <external_name tool="qemu_system" name="qemu-system-mipsel"/>
   </language>
   <language processor="MIPS"
             endian="big"
             size="32"
             variant="R6"
-            version="1.7"
+            version="1.8"
             slafile="mips32R6be.sla"
             processorspec="mips32R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -47,12 +53,14 @@
     <compiler name="default" spec="mips32_fp64.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips"/>
+    <external_name tool="qemu_system" name="qemu-system-mips"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="32"
             variant="R6"
-            version="1.7"
+            version="1.8"
             slafile="mips32R6le.sla"
             processorspec="mips32R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -61,12 +69,14 @@
     <compiler name="default" spec="mips32_fp64.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsel"/>
+    <external_name tool="qemu_system" name="qemu-system-mipsel"/>
   </language>
   <language processor="MIPS"
             endian="big"
             size="64"
             variant="default"
-            version="1.7"
+            version="1.8"
             slafile="mips64be.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -77,12 +87,14 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="64"
             variant="default"
-            version="1.7"
+            version="1.8"
             slafile="mips64le.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -94,12 +106,14 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
   </language>
   <language processor="MIPS"
             endian="big"
             size="64"
             variant="micro"
-            version="1.7"
+            version="1.8"
             slafile="mips64be.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -114,7 +128,7 @@
             endian="little"
             size="64"
             variant="micro"
-            version="1.7"
+            version="1.8"
             slafile="mips64le.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -130,7 +144,7 @@
             endian="big"
             size="64"
             variant="R6"
-            version="1.7"
+            version="1.8"
             slafile="mips64be.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -140,12 +154,14 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="64"
             variant="R6"
-            version="1.7"
+            version="1.8"
             slafile="mips64le.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -156,12 +172,14 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
   </language>
   <language processor="MIPS"
             endian="big"
             size="32"
             variant="64-32addr"
-            version="1.7"
+            version="1.8"
             slafile="mips64be.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -176,12 +194,14 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="32"
             variant="64-32addr"
-            version="1.7"
+            version="1.8"
             slafile="mips64le.sla"
             processorspec="mips64.pspec"
             manualindexfile="../manuals/mipsM16.idx"
@@ -197,12 +217,14 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="32"
             variant="64-32addr-micro"
-            version="1.7"
+            version="1.8"
             slafile="mips64le.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -222,7 +244,7 @@
             endian="big"
             size="32"
             variant="64-32addr-micro"
-            version="1.7"
+            version="1.8"
             slafile="mips64be.sla"
             processorspec="mips64micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -241,7 +263,7 @@
             endian="big"
             size="32"
             variant="64-32addr-R6"
-            version="1.7"
+            version="1.8"
             slafile="mips64be.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -255,12 +277,14 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64"/>
   </language>
   <language processor="MIPS"
             endian="little"
             size="32"
             variant="64-32addr-R6"
-            version="1.7"
+            version="1.8"
             slafile="mips64le.sla"
             processorspec="mips64R6.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -275,12 +299,14 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32el"/>
+    <external_name tool="qemu_system" name="qemu-system-mips64el"/>
   </language>
   <language processor="MIPS"
             endian="big"
             size="32"
             variant="micro"
-            version="1.7"
+            version="1.8"
             slafile="mips32be.sla"
             processorspec="mips32micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"
@@ -295,7 +321,7 @@
             endian="little"
             size="32"
             variant="micro"
-            version="1.7"
+            version="1.8"
             slafile="mips32le.sla"
             processorspec="mips32micro.pspec"
             manualindexfile="../manuals/mipsMic.idx"

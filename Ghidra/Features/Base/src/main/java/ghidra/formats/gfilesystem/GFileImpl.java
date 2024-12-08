@@ -89,7 +89,8 @@ public class GFileImpl implements GFile {
 			parent = fromFilename(fileSystem, parent, split[i], true, -1, null);
 		}
 		if (fsrl == null) {
-			fsrl = getFSRLFromParent(fileSystem, parent, split[split.length - 1]);
+			String filename = split.length > 0 ? split[split.length - 1] : "/";
+			fsrl = getFSRLFromParent(fileSystem, parent, filename);
 		}
 		return new GFileImpl(fileSystem, parent, isDirectory, length, fsrl);
 	}

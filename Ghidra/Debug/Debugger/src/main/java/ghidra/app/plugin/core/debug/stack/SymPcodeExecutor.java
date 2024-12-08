@@ -67,17 +67,16 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 * @return the executor
 	 */
 	public static SymPcodeExecutor forProgram(Program program, SymPcodeExecutorState state,
-			Reason reason, Set<StackUnwindWarning> warnings, TaskMonitor monitor) {
+			Reason reason, TaskMonitor monitor) {
 		CompilerSpec cSpec = program.getCompilerSpec();
 		SleighLanguage language = (SleighLanguage) cSpec.getLanguage();
 		SymPcodeArithmetic arithmetic = new SymPcodeArithmetic(cSpec);
-		return new SymPcodeExecutor(program, cSpec, language, arithmetic, state, reason, warnings,
-			monitor);
+		return new SymPcodeExecutor(program, cSpec, language, arithmetic, state, reason, monitor);
 	}
 
 	private final Program program;
 	private final Register sp;
-	private final Set<StackUnwindWarning> warnings;
+	final Set<StackUnwindWarning> warnings;
 	private final TaskMonitor monitor;
 
 	private final DecompInterface decomp = new DecompInterface();
@@ -87,11 +86,11 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 
 	public SymPcodeExecutor(Program program, CompilerSpec cSpec, SleighLanguage language,
 			SymPcodeArithmetic arithmetic, SymPcodeExecutorState state, Reason reason,
-			Set<StackUnwindWarning> warnings, TaskMonitor monitor) {
+			TaskMonitor monitor) {
 		super(language, arithmetic, state, reason);
 		this.program = program;
 		this.sp = cSpec.getStackPointer();
-		this.warnings = warnings;
+		this.warnings = state.warnings;
 		this.monitor = monitor;
 	}
 
@@ -216,7 +215,14 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 */
 	protected FunctionSignature getSignatureFromTargetPointerType(PcodeOpAST op) {
 		VarnodeAST target = (VarnodeAST) op.getInput(0);
-		DataType dataType = target.getHigh().getDataType();
+		HighVariable high = target.getHigh();
+
+		if (high == null) {
+			warnings.add(new NoHighVariableFromTargetPointerTypeUnwindWarning(target));
+			return null;
+		}
+
+		DataType dataType = high.getDataType();
 		if (!(dataType instanceof Pointer ptrType)) {
 			warnings.add(new UnexpectedTargetTypeStackUnwindWarning(dataType));
 			return null;
@@ -236,7 +242,13 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 */
 	protected FunctionSignature getSignatureFromContextAtCallSite(PcodeOpAST op) {
 		FunctionDefinitionDataType sig = new FunctionDefinitionDataType("__indirect");
-		sig.setReturnType(op.getOutput().getHigh().getDataType());
+		Varnode output = op.getOutput();
+		if (output == null) {
+			sig.setReturnType(VoidDataType.dataType);
+		}
+		else {
+			sig.setReturnType(output.getHigh().getDataType());
+		}
 		// input 0 is the target, so drop it.
 		int numInputs = op.getNumInputs();
 		Parameter[] params = new Parameter[numInputs - 1];
@@ -244,19 +256,19 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		for (int i = 1; i < numInputs; i++) {
 			Varnode input = op.getInput(i);
 			HighVariable highVar = input.getHigh();
+			DataType dataType = highVar.getDataType();
 			try {
 				/**
 				 * NOTE: Not specifying storage, since: 1) It's not germane to the function
 				 * signature, and 2) It may require chasing use-def chains through uniques.
 				 */
-				params[i - 1] = new ParameterImpl("param_" + i, highVar.getDataType(),
+				params[i - 1] = new ParameterImpl("param_" + i, dataType,
 					/*new VariableStorage(program, input),*/ program);
 			}
 			catch (InvalidInputException e) {
 				throw new AssertionError(e);
 			}
-			arguments[i - 1] = new ParameterDefinitionImpl("param_" + i,
-				input.getHigh().getDataType(), "generated");
+			arguments[i - 1] = new ParameterDefinitionImpl("param_" + i, dataType, "generated");
 		}
 		sig.setArguments(arguments);
 		sig.setComment("generated");

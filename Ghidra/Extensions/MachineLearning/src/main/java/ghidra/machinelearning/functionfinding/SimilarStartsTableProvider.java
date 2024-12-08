@@ -21,7 +21,6 @@ import java.util.List;
 
 import javax.swing.*;
 
-import ghidra.app.services.GoToService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -88,10 +87,8 @@ public class SimilarStartsTableProvider extends ProgramAssociatedComponentProvid
 		GhidraTable similarStartsTable = similarStartsPanel.getTable();
 		similarStartsPanel.setName(
 			targetProgram.getName() + ": Known Starts Similar to " + potentialStart.toString());
-		GoToService goToService = tool.getService(GoToService.class);
-		if (goToService != null) {
-			similarStartsTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+
+		similarStartsTable.installNavigation(tool);
 		similarStartsTable.setNavigateOnSelectionEnabled(true);
 		similarStartsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		similarStartsTable.setPreferredScrollableViewportSize(new Dimension(700, 200));
@@ -107,9 +104,7 @@ public class SimilarStartsTableProvider extends ProgramAssociatedComponentProvid
 		GhidraTable potentialStartTable = potentialStartPanel.getTable();
 		potentialStartTable
 				.setToolTipText("Potential Function Start in " + targetProgram.getName());
-		if (goToService != null) {
-			potentialStartTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		potentialStartTable.installNavigation(tool);
 		potentialStartTable.setNavigateOnSelectionEnabled(true);
 		potentialStartTable.setPreferredScrollableViewportSize(new Dimension(700, 30));
 		potentialStartTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,15 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.DefaultTraceRecorder;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.model.Trace;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class DefaultDebuggerTargetTraceMapper implements DebuggerTargetTraceMapper {
 	protected final TargetObject target;
 	protected final Language language;
@@ -97,7 +98,7 @@ public class DefaultDebuggerTargetTraceMapper implements DebuggerTargetTraceMapp
 	}
 
 	@Override
-	public TraceRecorder startRecording(DebuggerModelServicePlugin service, Trace trace) {
-		return new DefaultTraceRecorder(service, trace, target, this);
+	public TraceRecorder startRecording(PluginTool tool, Trace trace) {
+		return new DefaultTraceRecorder(tool, trace, target, this);
 	}
 }

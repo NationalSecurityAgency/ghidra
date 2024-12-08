@@ -15,12 +15,14 @@
  */
 package ghidra.program.database.function;
 
+import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.DynamicVariableStorage;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -28,14 +30,15 @@ public class ReturnParameterDB extends ParameterDB {
 
 	private DataType dataType;
 
-	/**
-	 * @param function
-	 * @param s
-	 */
 	ReturnParameterDB(FunctionDB function, DataType dt, VariableStorage storage) {
 		super(function, null);
 		this.dataType = dt;
 		this.storage = storage;
+	}
+
+	@Override
+	protected boolean isVoidAllowed() {
+		return true;
 	}
 
 	@Override
@@ -44,8 +47,8 @@ public class ReturnParameterDB extends ParameterDB {
 	}
 
 	@Override
-	public void setName(String name, SourceType source) throws DuplicateNameException,
-			InvalidInputException {
+	public void setName(String name, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -80,10 +83,9 @@ public class ReturnParameterDB extends ParameterDB {
 				newStorage = VariableStorage.UNASSIGNED_STORAGE;
 			}
 			Program program = function.getProgram();
-			type =
-				VariableUtilities.checkDataType(type,
-					newStorage.isVoidStorage() || newStorage.isUnassignedStorage(), getLength(),
-					program);
+			type = VariableUtilities.checkDataType(type,
+				newStorage.isVoidStorage() || newStorage.isUnassignedStorage(), getLength(),
+				program);
 			if (!newStorage.isUnassignedStorage()) {
 				newStorage = VariableUtilities.checkStorage(function, newStorage, type, force);
 			}
@@ -97,7 +99,7 @@ public class ReturnParameterDB extends ParameterDB {
 				function.updateParametersAndReturn();
 			}
 			function.updateSignatureSourceAfterVariableChange(source, type);
-			functionMgr.functionChanged(function, ChangeManager.FUNCTION_CHANGED_RETURN);
+			functionMgr.functionChanged(function, RETURN_TYPE_CHANGED);
 		}
 		catch (IOException e) {
 			functionMgr.dbError(e);
@@ -123,15 +125,10 @@ public class ReturnParameterDB extends ParameterDB {
 			VariableStorage newStorage = VariableStorage.UNASSIGNED_STORAGE;
 			boolean hasCustomVariableStorage = function.hasCustomVariableStorage();
 			if (hasCustomVariableStorage) {
-				DataType baseType = type;
-				if (baseType instanceof TypeDef) {
-					baseType = ((TypeDef) baseType).getBaseDataType();
-				}
 				try {
-					newStorage =
-						(baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
-								: VariableUtilities.resizeStorage(getVariableStorage(), type,
-									alignStack, function);
+					newStorage = VoidDataType.isVoidDataType(type) ? VariableStorage.VOID_STORAGE
+							: VariableUtilities.resizeStorage(getVariableStorage(), type,
+								alignStack, function);
 					VariableUtilities.checkStorage(newStorage, type, force);
 				}
 				catch (InvalidInputException e) {
@@ -152,7 +149,7 @@ public class ReturnParameterDB extends ParameterDB {
 				function.updateParametersAndReturn();
 			}
 			function.updateSignatureSourceAfterVariableChange(source, type);
-			functionMgr.functionChanged(function, ChangeManager.FUNCTION_CHANGED_RETURN);
+			functionMgr.functionChanged(function, RETURN_TYPE_CHANGED);
 		}
 		catch (IOException e) {
 			functionMgr.dbError(e);
@@ -165,6 +162,19 @@ public class ReturnParameterDB extends ParameterDB {
 	@Override
 	public DataType getFormalDataType() {
 		return dataType;
+	}
+
+	@Override
+	public DataType getDataType() {
+		if (storage == DynamicVariableStorage.INDIRECT_VOID_STORAGE) {
+			return VoidDataType.dataType;
+		}
+		return super.getDataType();
+	}
+
+	@Override
+	public boolean isForcedIndirect() {
+		return storage.isForcedIndirect();
 	}
 
 	@Override

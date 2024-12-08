@@ -93,7 +93,7 @@ public class SetMatchTagTask extends Task {
 		monitor.initialize(matches.size());
 
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTMatchTag currentTag = match.getTag();
 			if (!currentTag.equals(tag)) {
 				match.setTag(tag);

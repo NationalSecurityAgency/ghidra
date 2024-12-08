@@ -27,6 +27,7 @@ import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 
 public interface AutoOptions {
 
@@ -148,7 +149,7 @@ public interface AutoOptions {
 			String description = annotation.description();
 			Class<? extends PropertyEditor> editorClass = annotation.editor();
 			final PropertyEditor editor;
-			if (editorClass == PropertyEditor.class) {
+			if (editorClass == PropertyEditor.class || SystemUtilities.isInHeadlessMode()) {
 				editor = null;
 			}
 			else {
@@ -169,16 +170,16 @@ public interface AutoOptions {
 			else if ( is font option ) {
 			
 				// Note: there is no font value to check against for fonts in the new Theme system.
-				// If annotation fonts are needed, then they should be bound by String id.  Likely, 
-				// annotation fonts are not needed now that have themes.  We also probably no 
-				// longer need annotation colors either. 
+				// If annotation fonts are needed, then they should be bound by String id.  Likely,
+				// annotation fonts are not needed now that have themes.  We also probably no
+				// longer need annotation colors either.
 			
 				options.registerThemeFontBinding(description, fontId, help, description);
 			}
 			*/
 			else {
 				options.registerOption(key.name, type, defaultValue, help, description,
-					editor);
+					() -> editor);
 				// TODO: Wish Ghidra would do this upon any option registration
 				options.putObject(key.name, defaultValue, type);
 			}

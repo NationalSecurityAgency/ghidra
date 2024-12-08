@@ -88,7 +88,7 @@ public class FunctionPrototype {
 	 */
 	public FunctionPrototype(FunctionSignature proto, CompilerSpec cspec,
 			boolean voidimpliesdotdotdot) {
-		modelname = proto.getName();
+		modelname = proto.getCallingConventionName();
 		PrototypeModel model = cspec.matchConvention(modelname);
 		localsyms = null;
 		injectname = null;
@@ -132,7 +132,8 @@ public class FunctionPrototype {
 			protoModel = f.getProgram().getCompilerSpec().getDefaultCallingConvention();
 		}
 		hasThis = protoModel.hasThisPointer();
-		modellock = !f.hasUnknownCallingConventionName();
+		modellock =
+			((modelname != null) && !Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(modelname));
 		injectname = f.getCallFixup();
 		voidinputlock = false;
 		Parameter returnparam = f.getReturn();

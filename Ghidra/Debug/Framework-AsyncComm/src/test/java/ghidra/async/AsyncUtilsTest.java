@@ -98,7 +98,7 @@ public class AsyncUtilsTest {
 	// Functions that communicate result via completion handler
 	protected static CompletableFuture<Void> append(String message, List<String> to) {
 		to.add(message);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	protected static CompletableFuture<Integer> add(int a, int b) {
@@ -304,7 +304,7 @@ public class AsyncUtilsTest {
 
 	private CompletableFuture<Void> someTask() {
 		// Placeholder for example
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public void exampleLoop2() {

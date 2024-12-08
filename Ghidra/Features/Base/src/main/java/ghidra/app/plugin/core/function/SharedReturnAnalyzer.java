@@ -17,11 +17,13 @@ package ghidra.app.plugin.core.function;
 
 import ghidra.app.cmd.analysis.SharedReturnAnalysisCmd;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.lang.GhidraLanguagePropertyKeys;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -86,6 +88,9 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 
 		boolean sharedReturnEnabled = language.getPropertyAsBoolean(
 			GhidraLanguagePropertyKeys.ENABLE_SHARED_RETURN_ANALYSIS, true);
+		if (GoRttiMapper.isGolangProgram(program)) {
+			sharedReturnEnabled = false;
+		}
 	
 		// If the language (in the .pspec file) overrides this setting, use that value
 		boolean contiguousFunctionsEnabled = language.getPropertyAsBoolean(

@@ -165,7 +165,7 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 				}
 
 				consistent &= node.isConsistent(tableName, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			finally {
 				if (node != null) {
@@ -174,7 +174,7 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 				}
 			}
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		return consistent;
 	}
 

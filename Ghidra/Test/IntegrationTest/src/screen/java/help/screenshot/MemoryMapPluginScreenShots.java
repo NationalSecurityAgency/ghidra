@@ -32,6 +32,7 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.exception.AssertException;
 import ghidra.util.table.GhidraTable;
+import ghidra.util.task.TaskMonitor;
 
 public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 
@@ -40,7 +41,13 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testMemoryMap() {
+	public void testMemoryMap() throws Exception {
+
+		program.withTransaction("Add Blocks", () -> {
+			program.getMemory()
+					.createInitializedBlock("OV1", addr(0x1000), 0x100, (byte) 0, TaskMonitor.DUMMY,
+						true);
+		});
 
 		performAction("Memory Map", "DockingWindows", true);
 
@@ -48,7 +55,7 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 		moveProviderToItsOwnWindow(provider);
 		JComponent component = getDockableComponent(provider);
 
-		captureIsolatedComponent(component, 800, 225);
+		captureIsolatedComponent(component, 1000, 250);
 	}
 
 	@Test

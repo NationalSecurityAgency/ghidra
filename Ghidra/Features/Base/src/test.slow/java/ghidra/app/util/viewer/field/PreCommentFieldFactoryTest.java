@@ -171,13 +171,13 @@ public class PreCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 
 	private void setFieldWidth(final FieldFactory fieldFactory, final int width) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldFactory.setWidth(width));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 
 	private void setBooleanOption(final String name, final boolean value) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldOptions.setBoolean(name, value));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 

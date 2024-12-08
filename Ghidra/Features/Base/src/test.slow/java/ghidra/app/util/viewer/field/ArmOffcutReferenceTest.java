@@ -27,6 +27,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
@@ -119,4 +120,24 @@ public class ArmOffcutReferenceTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("bob+1 bob", tf.getText());
 
 	}
+
+	@Test
+	public void testOffcutReferenceInLabelAndOperandFieldWithDefinedFunctionInClass()
+			throws Exception {
+
+		builder.createClassNamespace("Foo", null, SourceType.USER_DEFINED);
+		builder.createLabel("0023303a", "test", "Foo");
+		builder.createFunction("0023303a");
+
+		assertTrue(cb.goToField(addr("0045b3a0"), OperandFieldFactory.FIELD_NAME, 0, 1));
+		ListingTextField tf = (ListingTextField) cb.getCurrentField();
+		assertEquals("Foo::test+1", tf.getText());
+
+		assertTrue(cb.goToField(addr("0023303a"), LabelFieldFactory.FIELD_NAME, 0, 1));
+		tf = (ListingTextField) cb.getCurrentField();
+		// TODO: offcut label should really show namespace as well
+		assertEquals("test+1 Foo::test", tf.getText());
+
+	}
+
 }

@@ -262,11 +262,10 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 		assertEquals(Set.of(nsA, clsA), new HashSet<>(manager.allNamespaces().getAll(false)));
 		assertEquals(2, manager.allNamespaces().size(false));
-		assertEquals(Set.of(lab1, lab2), new HashSet<>(manager.labelsAndFunctions().getAll(false)));
-		assertEquals(2, manager.labelsAndFunctions().size(false));
-		assertEquals(Set.of(nsA, clsA),
-			new HashSet<>(manager.notLabelsNorFunctions().getAll(false)));
-		assertEquals(2, manager.notLabelsNorFunctions().size(false));
+		assertEquals(Set.of(lab1, lab2), new HashSet<>(manager.labels().getAll(false)));
+		assertEquals(2, manager.labels().size(false));
+		assertEquals(Set.of(nsA, clsA), new HashSet<>(manager.notLabels().getAll(false)));
+		assertEquals(2, manager.notLabels().size(false));
 		// TODO: Remaining composites
 		assertEquals(Set.of(nsA, clsA, lab1, lab2),
 			new HashSet<>(manager.allSymbols().getAll(false)));
@@ -297,8 +296,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(clsA), new HashSet<>(manager.classes().getChildrenNamed("A", nsA)));
 		assertEquals(clsA, manager.classes().getChildNamed("A", nsA));
 		assertEquals(Set.of(lab1), new HashSet<>(manager.labels().getChildrenNamed("LAB1", nsA)));
-		assertEquals(Set.of(lab2),
-			new HashSet<>(manager.labelsAndFunctions().getChildrenNamed("LAB2", clsA)));
+		assertEquals(Set.of(lab2), new HashSet<>(manager.labels().getChildrenNamed("LAB2", clsA)));
 		assertEquals(Set.of(), new HashSet<>(manager.labels().getChildrenNamed("LAB2", nsA)));
 	}
 
@@ -405,9 +403,9 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 						SourceType.USER_DEFINED);
 		}
 		assertEquals(Set.of(lab1),
-			new HashSet<>(manager.labelsAndFunctions().getWithMatchingName("LAB?", true)));
+			new HashSet<>(manager.labels().getWithMatchingName("LAB?", true)));
 		assertEquals(Set.of(lab1, lab2),
-			new HashSet<>(manager.labelsAndFunctions().getWithMatchingName("LAB?", false)));
+			new HashSet<>(manager.labels().getWithMatchingName("LAB?", false)));
 	}
 
 	@Test
@@ -440,21 +438,19 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 		assertEquals(lab1,
 			manager.labels().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), nsA));
-		assertNull(manager.functions().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), nsA));
 		assertNull(manager.labels().getChildWithNameAt("LAB2", 4, null, b.addr(0x4000), nsA));
 		assertNull(manager.labels().getChildWithNameAt("LAB1", 0, null, b.addr(0x4000), nsA));
 		assertNull(manager.labels()
 				.getChildWithNameAt("LAB1", 4, thread,
 					b.language.getRegister("r4").getAddress(), nsA));
 		assertNull(manager.labels().getChildWithNameAt("LAB1", 4, null, b.addr(0x4001), nsA));
-		assertNull(
-			manager.labelsAndFunctions().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), clsA));
+		assertNull(manager.labels().getChildWithNameAt("LAB1", 4, null, b.addr(0x4000), clsA));
 
 		assertEquals(lab2,
-			manager.labelsAndFunctions().getChildWithNameAt("lab2", 4, null, b.addr(0x4001), clsA));
+			manager.labels().getChildWithNameAt("lab2", 4, null, b.addr(0x4001), clsA));
 		assertEquals(lab3,
-			manager.labelsAndFunctions().getChildWithNameAt("lab3", 4, null, b.addr(0x4001), clsA));
-		assertEquals(lab4, manager.labelsAndFunctions()
+			manager.labels().getChildWithNameAt("lab3", 4, null, b.addr(0x4001), clsA));
+		assertEquals(lab4, manager.labels()
 				.getChildWithNameAt("lab4", 0, thread,
 					b.language.getRegister("r4").getAddress(), nsA));
 	}
@@ -468,8 +464,6 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 					.create(4, null, b.addr(0x4000), "LAB1", global,
 						SourceType.USER_DEFINED);
 		}
-		assertEquals(lab1,
-			manager.labelsAndFunctions().getGlobalWithNameAt("LAB1", 4, null, b.addr(0x4000)));
 		assertEquals(lab1, manager.labels().getGlobalWithNameAt("LAB1", 4, null, b.addr(0x4000)));
 	}
 
@@ -504,9 +498,9 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		// TODO: Test that functions are properly excluded from labels()
 		// once I have a means of adding them.
 		assertEquals(Set.of(),
-			new HashSet<>(manager.labelsAndFunctions()
-					.getIntersecting(Lifespan.span(0, 0), null,
-						b.range(0x0000, 0x4000), false, true)));
+			new HashSet<>(manager.labels()
+					.getIntersecting(Lifespan.span(0, 0), null, b.range(0x0000, 0x4000), false,
+						true)));
 		assertEquals(Set.of(lab1, lab2, lab3),
 			new HashSet<>(manager.labels()
 					.getIntersecting(Lifespan.nowOn(0), null,
@@ -549,7 +543,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(lab1),
 			new HashSet<>(manager.labels().getAt(4, null, b.addr(0x4000), false)));
 		assertEquals(Set.of(lab2, lab3),
-			new HashSet<>(manager.labelsAndFunctions().getAt(4, null, b.addr(0x4001), false)));
+			new HashSet<>(manager.labels().getAt(4, null, b.addr(0x4001), false)));
 		// TODO: Test ordering by setPrimary
 
 		assertFalse(manager.labels().hasAt(0, null, b.addr(0x4000), false));

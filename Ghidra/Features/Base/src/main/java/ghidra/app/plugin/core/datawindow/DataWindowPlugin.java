@@ -15,8 +15,10 @@
  */
 package ghidra.app.plugin.core.datawindow;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
+import java.util.*;
 
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
@@ -26,8 +28,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramTreeService;
-import ghidra.framework.model.*;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressRangeIterator;
@@ -36,7 +38,8 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
+import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
@@ -54,7 +57,7 @@ import ghidra.util.task.SwingUpdateManager;
 	eventsConsumed = { ViewChangedPluginEvent.class }
 )
 //@formatter:on
-public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListener {
+public class DataWindowPlugin extends ProgramPlugin {
 
 	private DockingAction selectAction;
 	private FilterAction filterAction;
@@ -63,12 +66,18 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 	private SwingUpdateManager resetUpdateMgr;
 	private SwingUpdateManager reloadUpdateMgr;
 	private boolean resetTypesNeeded;
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
+
+	private SortedMap<String, Boolean> typeEnablementByDisplayName =
+		new TreeMap<>(new DataTypeNameComparator());
+
+	private boolean isFilterEnabled = false;
+	private Coverage coverage = Coverage.PROGRAM;
 
 	public DataWindowPlugin(PluginTool tool) {
 		super(tool);
 
 		resetUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReset());
-
 		reloadUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReload());
 	}
 
@@ -85,59 +94,65 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 		reloadUpdateMgr.dispose();
 		resetUpdateMgr.dispose();
 		if (currentProgram != null) {
-			currentProgram.removeListener(this);
+			currentProgram.removeListener(domainObjectListener);
 		}
 		provider.dispose();
 		super.dispose();
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-			resetTypes();
-			reload();
-			return;
-		}
-		if (ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_RENAMED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_REPLACED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED)) {
-			resetTypes();
-		}
-		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED)) {
-			reload();
-			return;  // if we are going to reload, no need to check for data additions.
-		}
-		if (ev.containsEvent(ChangeManager.DOCR_CODE_ADDED)) {
-			for (int i = 0; i < ev.numRecords(); ++i) {
-				DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-				int eventType = doRecord.getEventType();
-				if (eventType == ChangeManager.DOCR_CODE_ADDED) {
-					ProgramChangeRecord rec = (ProgramChangeRecord) doRecord;
-					if (rec.getNewValue() instanceof Data) {
-						provider.dataAdded(rec.getStart());
-					}
-				}
-			}
+	private DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.any(RESTORED)
+				.terminate(() -> resetTypes())
+			.any(MEMORY_BLOCK_ADDED, MEMORY_BLOCK_REMOVED, CODE_REMOVED)
+				.terminate(e -> reload())
+			.any(DATA_TYPE_ADDED,DATA_TYPE_CHANGED, DATA_TYPE_MOVED, DATA_TYPE_RENAMED, 
+				   DATA_TYPE_REPLACED, DATA_TYPE_SETTING_CHANGED)
+				.terminate(() -> resetTypes())
+			.with(ProgramChangeRecord.class)
+				.each(CODE_ADDED).call(r -> codeAdded(r))
+			.build();
+		// @formatter:on
+	}
+
+	private void codeAdded(ProgramChangeRecord rec) {
+		if (rec.getNewValue() instanceof Data) {
+			provider.dataAdded(rec.getStart());
 		}
 	}
 
-	void reload() {
+	void dataWindowShown() {
+		if (resetTypesNeeded) {
+			resetTypes();
+		}
+
+	}
+
+	void setFilterEnabled(boolean enabled) {
+		isFilterEnabled = enabled;
+		reload();
+	}
+
+	void setFilter(SortedMap<String, Boolean> typeEnabledMap, Coverage coverage) {
+		this.isFilterEnabled = true;
+		this.typeEnablementByDisplayName = new TreeMap<>(typeEnabledMap);
+		this.coverage = coverage;
+		reload();
+	}
+
+	private void reload() {
 		reloadUpdateMgr.update();
 	}
 
-	void doReload() {
+	private void doReload() {
 		provider.reload();
 	}
 
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ViewChangedPluginEvent) {
-			if (filterAction.getViewMode() && provider.isVisible()) {
+			if (isFilterEnabled && provider.isVisible()) {
 				reload();
 			}
 		}
@@ -148,17 +163,17 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 
 	@Override
 	protected void programActivated(Program program) {
-		program.addListener(this);
+		program.addListener(domainObjectListener);
 		provider.programOpened(program);
-		filterAction.programOpened(program);
+		filterAction.setEnabled(true);
 		resetTypes();
 	}
 
 	@Override
 	protected void programDeactivated(Program program) {
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 		provider.programClosed();
-		filterAction.programClosed();
+		filterAction.setEnabled(false);
 	}
 
 	Program getProgram() {
@@ -169,14 +184,11 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 		return currentSelection;
 	}
 
-	// Junit access
+	// test access
 	DataWindowProvider getProvider() {
 		return provider;
 	}
 
-	/**
-	 * Create the action objects for this plugin.
-	 */
 	private void createActions() {
 
 		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
@@ -208,55 +220,85 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 
 	private void doReset() {
 		resetTypesNeeded = false;
-		ArrayList<String> selectedList = filterAction.getSelectedTypes();
-
-		filterAction.clearTypes();
-		if (currentProgram != null) {
-			DataTypeManager typeManager = currentProgram.getDataTypeManager();
-			Iterator<DataType> itr = typeManager.getAllDataTypes();
-			while (itr.hasNext()) {
-				DataType type = itr.next();
-				filterAction.addType(type.getDisplayName());
-			}
-			filterAction.selectTypes(selectedList);
-			provider.reload();
-		}
-	}
-
-	public boolean typeEnabled(String type) {
-		return filterAction.typeEnabled(type);
-	}
-
-	public AddressSet getLimitedAddresses() {
-		if (filterAction.getSelectionMode()) {
-			AddressSet ret = new AddressSet();
-			AddressRangeIterator itr = currentSelection.getAddressRanges();
-			while (itr.hasNext()) {
-				ret.add(itr.next());
-			}
-
-			return ret;
+		typeEnablementByDisplayName.clear();
+		if (currentProgram == null) {
+			return;
 		}
 
-		if (filterAction.getViewMode()) {
+		DataTypeManager dtm = currentProgram.getDataTypeManager();
+		Iterator<DataType> it = dtm.getAllDataTypes();
+		while (it.hasNext()) {
+			DataType type = it.next();
+			typeEnablementByDisplayName.put(type.getDisplayName(), true);
+		}
+
+		provider.reload();
+	}
+
+	boolean isTypeEnabled(String type) {
+		if (!isFilterEnabled) {
+			return true;
+		}
+
+		Boolean enabled = typeEnablementByDisplayName.get(type);
+		return enabled != null && enabled;
+	}
+
+	SortedMap<String, Boolean> getTypeMap() {
+		return typeEnablementByDisplayName;
+	}
+
+	AddressSet getLimitedAddresses() {
+		if (coverage == Coverage.SELECTION) {
+			AddressSet addrs = new AddressSet();
+			AddressRangeIterator it = currentSelection.getAddressRanges();
+			while (it.hasNext()) {
+				addrs.add(it.next());
+			}
+
+			return addrs;
+		}
+
+		if (coverage == Coverage.VIEW) {
 			ProgramTreeService service = tool.getService(ProgramTreeService.class);
 			if (service != null) {
 				return service.getView();
 			}
 		}
-		return null;
+
+		return null; // PROGRAM
 	}
 
-	@Override
-	public void readConfigState(SaveState saveState) {
-		filterAction.setSelected(true);
+	private static class DataTypeNameComparator implements Comparator<String> {
+
+		@Override
+		public int compare(String o1, String o2) {
+			if (o1 != null) {
+				if (!o1.equalsIgnoreCase(o2)) {
+					return o1.compareToIgnoreCase(o2);
+				}
+				return o1.compareTo(o2);
+			}
+			return -1;
+		}
 	}
 
-	public void dataWindowShown() {
-		if (resetTypesNeeded) {
-			resetTypes();
+	public enum Coverage {
+		//@formatter:off
+		PROGRAM("Entire Program"), 
+		SELECTION("Current Selection"), 
+		VIEW("Current View");
+		//@formatter:on
+
+		private String displayName;
+
+		Coverage(String displayName) {
+			this.displayName = displayName;
 		}
 
+		@Override
+		public String toString() {
+			return displayName;
+		}
 	}
-
 }

@@ -15,9 +15,8 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.util.List;
-
 import java.io.*;
+import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
@@ -211,11 +210,11 @@ public class FileSystemService {
 	}
 
 	/**
-	 * Returns a direct reference to a filesystem that represents the local filesystem.
+	 * Returns a direct reference to the {@link LocalFileSystem local filesystem}.
 	 *
-	 * @return {@link GFileSystem} that represents the local filesystem.
+	 * @return A direct reference to the {@link LocalFileSystem local filesystem}.
 	 */
-	public GFileSystem getLocalFS() {
+	public LocalFileSystem getLocalFS() {
 		return localFS;
 	}
 
@@ -578,7 +577,7 @@ public class FileSystemService {
 	public File createPlaintextTempFile(ByteProvider provider, String filenamePrefix,
 			TaskMonitor monitor) throws IOException {
 		File tmpFile =
-			File.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
+			Application.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
 		monitor.setMessage("Copying " + provider.getName() + " to temp file");
 		monitor.initialize(provider.length());
 		try {

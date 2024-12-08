@@ -36,22 +36,22 @@ public class StoredAnalyzerTimes implements CustomOption {
 	private String[] names;
 
 	@Override
-	public void readState(SaveState saveState) {
+	public void readState(GProperties properties) {
 		taskTimes.clear();
-		for (String taskName : saveState.getNames()) {
+		for (String taskName : properties.getNames()) {
 			if (CustomOption.CUSTOM_OPTION_CLASS_NAME_KEY.equals(taskName)) {
 				continue; // skip this reserved key 
 			}
-			taskTimes.put(taskName, saveState.getLong(taskName, 0));
+			taskTimes.put(taskName, properties.getLong(taskName, 0));
 		}
 		names = null;
 		totalTime = null;
 	}
 
 	@Override
-	public void writeState(SaveState saveState) {
+	public void writeState(GProperties properties) {
 		for (String taskName : taskTimes.keySet()) {
-			saveState.putLong(taskName, taskTimes.get(taskName));
+			properties.putLong(taskName, taskTimes.get(taskName));
 		}
 	}
 
@@ -164,7 +164,7 @@ public class StoredAnalyzerTimes implements CustomOption {
 	public static StoredAnalyzerTimes getStoredAnalyzerTimes(Program program) {
 		Options options = program.getOptions(OPTIONS_LIST);
 		StoredAnalyzerTimes times = (StoredAnalyzerTimes) options
-			.getCustomOption(StoredAnalyzerTimes.OPTION_NAME, new StoredAnalyzerTimes());
+				.getCustomOption(StoredAnalyzerTimes.OPTION_NAME, new StoredAnalyzerTimes());
 		return times.clone();
 	}
 

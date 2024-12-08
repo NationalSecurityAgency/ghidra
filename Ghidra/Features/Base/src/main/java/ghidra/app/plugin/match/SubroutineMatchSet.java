@@ -74,11 +74,11 @@ public class SubroutineMatchSet extends ArrayList<SubroutineMatch> {
 //		Address aAddr = m.getAAddresses()[0];
 //		a[0] = aAddr;
 //		a[1] = aSymbolTable.getPrimarySymbol( aAddr );
-//		a[2] = new Integer( getLength( aAddr, aModel ));
+//		a[2] = Integer.valueOf( getLength( aAddr, aModel ));
 //		Address bAddr = m.getBAddresses()[0];
 //		a[3] = bAddr;
 //		a[4] = bSymbolTable.getPrimarySymbol( bAddr );
-//		a[5] = new Integer( getLength( bAddr, bModel ) );
+//		a[5] = Integer.valueOf( getLength( bAddr, bModel ) );
 //		a[6] = m.getReason();
 //		return a;
 //	}

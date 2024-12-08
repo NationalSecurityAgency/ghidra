@@ -126,7 +126,7 @@ public final class MultiDexLinker {
 		programs.clear();
 		dexMap.clear();
 		for (DexHeader header : cmpMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			cmpMap.get(header).clear();
 		}
 		cmpMap.clear();
@@ -143,7 +143,7 @@ public final class MultiDexLinker {
 		monitor.setMaximum(programs.size());
 		monitor.setProgress(1);
 		for (Program program : programs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			monitor.setMessage(program.getName());
 
@@ -167,7 +167,7 @@ public final class MultiDexLinker {
 				while (dataIterator.hasNext()) {
 					Data data = dataIterator.next();
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					monitor.setMessage(program.getName() + " " + data.getMinAddress());
 
 					if (program.getMemory().getInt(data.getMinAddress()) != -1) {
@@ -222,7 +222,7 @@ public final class MultiDexLinker {
 			new ClassMethodPrototype(className, methodName, prototype);
 
 		for (Program otherProgram : programs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (otherProgram.equals(program)) {
 				continue;
@@ -249,7 +249,7 @@ public final class MultiDexLinker {
 		monitor.setMaximum(programs.size());
 		monitor.setProgress(1);
 		for (Program program : programs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			monitor.setMessage("Caching DEX header for " + program.getName() + "...");
 
@@ -261,7 +261,7 @@ public final class MultiDexLinker {
 
 			int index = 0;
 			for (MethodIDItem item : dexHeader.getMethods()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				String className =
 					DexUtil.convertTypeIndexToString(dexHeader, item.getClassIndex());
@@ -286,7 +286,7 @@ public final class MultiDexLinker {
 		ExternalManager externalManager = program.getExternalManager();
 		Reference[] referencesFrom = data.getReferencesFrom();
 		for (Reference reference : referencesFrom) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (reference instanceof ExternalReference) {
 				ExternalReference extref = (ExternalReference) reference;
 				ExternalLocation externalLocation = extref.getExternalLocation();

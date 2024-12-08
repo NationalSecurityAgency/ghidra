@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.searchtext;
 
-import ghidra.GhidraOptions;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.ProgramLocationPreviewTableModel;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
@@ -48,21 +48,21 @@ public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTab
 		this.tool = tool;
 		this.set = set;
 		this.options = options;
-		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		searchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(SearchConstants.SEARCH_LIMIT_NAME, SearchConstants.DEFAULT_SEARCH_LIMIT);
 	}
 
 	@Override
 	protected void doLoad(Accumulator<ProgramLocation> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		Searcher searcher = getSearcher(tool, monitor);
-		monitor.checkCanceled();
-		ProgramLocation loc = searcher.search();
-		while (loc != null && accumulator.size() < searchLimit) {
-			accumulator.add(loc);
-			monitor.checkCanceled();
-			loc = searcher.search();
+		monitor.checkCancelled();
+		TextSearchResult result = searcher.search();
+		while (result != null && accumulator.size() < searchLimit) {
+			accumulator.add(result.programLocation());
+			monitor.checkCancelled();
+			result = searcher.search();
 		}
 	}
 

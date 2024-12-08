@@ -50,6 +50,6 @@ public enum AllPathsVisitor implements SpanIntersectingVisitor {
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
 			Lifespan span, TraceObjectValPath path) {
-		return object.getParents().stream().filter(v -> !path.contains(v));
+		return object.getParents(span).stream().filter(v -> !path.contains(v));
 	}
 }

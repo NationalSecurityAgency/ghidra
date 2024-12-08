@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import db.*;
+import db.DBHandle;
+import db.Schema;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -52,20 +54,21 @@ abstract class CallingConventionDBAdapter {
 	 * @throws IOException if there is a problem accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static CallingConventionDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
-			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
+	static CallingConventionDBAdapter getAdapter(DBHandle handle, OpenMode openMode,
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
+		if (openMode == OpenMode.CREATE) {
 			return new CallingConventionDBAdapterV0(handle, tablePrefix, true);
 		}
 		try {
 			return new CallingConventionDBAdapterV0(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			CallingConventionDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;

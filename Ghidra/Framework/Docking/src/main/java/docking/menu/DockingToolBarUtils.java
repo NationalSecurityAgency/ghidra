@@ -52,8 +52,8 @@ class DockingToolBarUtils {
 	private static String combingToolTipTextWithKeyBinding(String toolTipText,
 			String keyBindingText) {
 		StringBuilder buffy = new StringBuilder(toolTipText);
-		if (StringUtilities.startsWithIgnoreCase(toolTipText, "<HTML>")) {
-			String endHTMLTag = "</HTML>";
+		if (StringUtilities.startsWithIgnoreCase(toolTipText, "<html>")) {
+			String endHTMLTag = "</html>";
 			int closeTagIndex = StringUtils.indexOfIgnoreCase(toolTipText, endHTMLTag);
 			if (closeTagIndex < 0) {
 				// no closing tag, which is acceptable

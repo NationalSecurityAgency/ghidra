@@ -21,6 +21,7 @@ import java.util.*;
 
 import db.Transaction;
 import ghidra.feature.vt.api.main.*;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -88,6 +89,16 @@ public class EmptyVTSession implements VTSession {
 
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
 		// do nothing
 	}
 
@@ -307,8 +318,8 @@ public class EmptyVTSession implements VTSession {
 	}
 
 	@Override
-	public void saveToPackedFile(File outputFile, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		// do nothing
 	}
 
@@ -370,6 +381,16 @@ public class EmptyVTSession implements VTSession {
 	@Override
 	public void redo() throws IOException {
 		// do nothing
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public List<String> getAllUndoNames() {
+		return Collections.emptyList();
 	}
 
 	@Override

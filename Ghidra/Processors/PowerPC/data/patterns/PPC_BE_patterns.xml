@@ -31,4 +31,9 @@
       <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
   </pattern>
   
+  <pattern> 
+      <data> 0x4e 0x80 0x00 0x21</data> <!-- blrl -->
+      <possiblefuncstart validcode="function" label="__get_pc_thunk_lr" /> <!-- must be a function here -->
+  </pattern>
+  
 </patternlist>

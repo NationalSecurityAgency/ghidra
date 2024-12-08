@@ -140,8 +140,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 //	}
 
 	@Override
-	protected String[] getItemNames(String folderPath, boolean includeHiddenFiles)
-			throws IOException {
+	public String[] getItemNames(String folderPath, boolean includeHiddenFiles) throws IOException {
 
 		File dir = getFile(folderPath);
 		File[] dirList = dir.listFiles();
@@ -294,8 +293,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	 */
 	@Override
 	public synchronized void renameFolder(String parentPath, String folderName,
-			String newFolderName)
-			throws InvalidNameException, IOException {
+			String newFolderName) throws InvalidNameException, IOException {
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -440,16 +438,14 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 
 		cleanupAfterConstruction(); // remove all temporary content
 
-		File tmpRoot =
-			new File(root.getCanonicalFile().getParentFile(), HIDDEN_DIR_PREFIX + '.' +
-				root.getName());
+		File tmpRoot = new File(root.getCanonicalFile().getParentFile(),
+			HIDDEN_DIR_PREFIX + '.' + root.getName());
 		if (tmpRoot.exists() || !tmpRoot.mkdir()) {
 			throw new IOException("Failed to create data directory: " + tmpRoot);
 		}
 
-		IndexedV1LocalFileSystem indexedFs =
-			new IndexedV1LocalFileSystem(tmpRoot.getAbsolutePath(), isVersioned, false, false,
-				true);
+		IndexedV1LocalFileSystem indexedFs = new IndexedV1LocalFileSystem(tmpRoot.getAbsolutePath(),
+			isVersioned, false, false, true);
 
 		migrationInProgress = true;
 		migrateFolder(SEPARATOR, indexedFs);
@@ -474,7 +470,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 				indexedFs.createFolder(folderPath, name);
 				migrateFolder(getPath(folderPath, name), indexedFs);
 			}
-			for (String name : getItemNames(folderPath)) {
+			for (String name : getItemNames(folderPath, false)) {
 				LocalFolderItem item = getItem(folderPath, name);
 				indexedFs.migrateItem(item);
 			}

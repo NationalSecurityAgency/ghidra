@@ -16,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.PrototypeModel;
@@ -32,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Command for analyzing the Stack; the command is run in the background.
  */
-public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
+public class FunctionPurgeAnalysisCmd extends BackgroundCommand<Program> {
 	private AddressSetView entryPoints;
 	private Program program;
 	private PrototypeModel[] nearFarModels = null;
@@ -52,13 +51,9 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand {
 		entryPoints = entries;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		Processor processor = program.getLanguage().getProcessor();
 		AddressSpace defaultSpace = program.getLanguage().getDefaultSpace();

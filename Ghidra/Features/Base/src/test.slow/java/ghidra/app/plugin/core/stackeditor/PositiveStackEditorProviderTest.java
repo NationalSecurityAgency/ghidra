@@ -22,8 +22,6 @@ import javax.swing.JTextField;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.framework.model.*;
-import ghidra.program.model.data.DataTypeManagerDomainObject;
 import ghidra.program.model.data.Pointer;
 
 public class PositiveStackEditorProviderTest extends AbstractStackEditorTest {
@@ -111,41 +109,6 @@ public class PositiveStackEditorProviderTest extends AbstractStackEditorTest {
 		assertEquals(0x16, stackModel.getLocalSize());
 		assertEquals(-0x4, stackModel.getParameterOffset());
 		assertEquals(0x4, stackModel.getParameterSize());
-	}
-
-//	public void testIncreasePosReturnAddrOffset() throws Exception {
-//		init(SIMPLE_STACK);
-//		assertEquals(0x20, stackModel.getFrameSize());
-//		assertEquals(0x0, stackModel.getReturnAddressOffset());
-//		assertEquals(0x12, stackModel.getLocalSize());
-//		assertEquals(-0x8, stackModel.getParameterOffset());
-//		assertEquals(0x7, stackModel.getParameterSize());
-//	}
-//
-//	public void testDecreasePosReturnAddrOffset() throws Exception {
-//		init(SIMPLE_STACK);
-//		assertEquals(0x20, stackModel.getFrameSize());
-//		assertEquals(0x0, stackModel.getReturnAddressOffset());
-//		assertEquals(0x12, stackModel.getLocalSize());
-//		assertEquals(-0x8, stackModel.getParameterOffset());
-//		assertEquals(0x7, stackModel.getParameterSize());
-//	}
-
-	protected class RestoreListener implements DomainObjectListener {
-		/**
-		 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-		 */
-		@Override
-		public void domainObjectChanged(DomainObjectChangedEvent event) {
-			if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-				Object source = event.getSource();
-				if (source instanceof DataTypeManagerDomainObject) {
-					DataTypeManagerDomainObject restoredDomainObject =
-						(DataTypeManagerDomainObject) source;
-					provider.domainObjectRestored(restoredDomainObject);
-				}
-			}
-		}
 	}
 
 }

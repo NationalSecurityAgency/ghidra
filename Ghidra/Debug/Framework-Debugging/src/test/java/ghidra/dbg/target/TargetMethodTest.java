@@ -50,7 +50,7 @@ public class TargetMethodTest implements AsyncTestUtils {
 
 							@TargetMethod.Export("MyMethod")
 							public CompletableFuture<Void> myMethod() {
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 						};
 					}
@@ -96,7 +96,7 @@ public class TargetMethodTest implements AsyncTestUtils {
 										display = "P1",
 										description = "A boolean param",
 										name = "p1") boolean b) {
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 						};
 					}

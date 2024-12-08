@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import generic.jar.ResourceFile;
+import ghidra.GhidraApplicationLayout;
 
 /**
  * The application properties.  Application properties may either be stored on disk, or created
@@ -48,7 +49,16 @@ public class ApplicationProperties extends Properties {
 	 * The application's layout version.  The layout version should get incremented any time
 	 * something changes about the application that could affect external tools that need to 
 	 * navigate the application in some way (such as the Eclipse GhidraDev plugin).
-	 * For example, "1".
+	 * <p>
+	 * Current application versions are:
+	 * <ul>
+	 *   <li>1: Layout used by Ghidra &lt; 11.1</li>
+	 *   <li>2: Introduced with Ghidra 11.1. Default user settings/cache/temp directories changed,
+	 *       and XDG environment variables are supported.</li>
+	 *   <li>3: Introduced with Ghidra 11.2. Ghidra no longer finds external modules by examining 
+	 *       the initial classpath. Instead, the "ghidra.external.modules" system property is used 
+	 *       (see {@link GhidraApplicationLayout}).</li>
+	 * </ul>
 	 */
 	public static final String APPLICATION_LAYOUT_VERSION_PROPERTY = "application.layout.version";
 

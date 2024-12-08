@@ -26,21 +26,21 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
 /**
- * Presents the user with a {@link ComponentProvider} showing all function tags available, 
- * along with all those currently assigned to the selected function.  
+ * Presents the user with a {@link ComponentProvider} showing all function tags available,along with
+ * all those currently assigned to the selected function.
+ * <p>
  * Users may select, deselect, edit or delete tags.
  */
 public class EditFunctionTagsAction extends ListingContextAction {
 
 	private FunctionTagPlugin plugin;
 
-	// Menu option that will show up when right-clicking on a function in
-	// the listing.
-	private final String MENU_LABEL = "Edit Tags...";
+	// Menu option that will show up when right-clicking on a function in the listing
+	private final String MENU_LABEL = "Edit Tags";
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name the name for this action.
 	 * @param plugin the plugin this action is associated with.
 	 */
@@ -57,10 +57,6 @@ public class EditFunctionTagsAction extends ListingContextAction {
 		setEnabled(true);
 	}
 
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
-
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 
@@ -74,25 +70,22 @@ public class EditFunctionTagsAction extends ListingContextAction {
 		showProvider(context);
 	}
 
-	/******************************************************************************
-	 * PROTECTED METHODS
-	 ******************************************************************************/
-
 	/**
 	 * Overridden to only allow this menu option when clicking in a function.
 	 * Note that we do not allow external functions to have tags.
-	 * 
+	 *
 	 * @param context the listing context
-	 * @return
+	 * @return true if enabled
 	 */
 	@Override
 	protected boolean isEnabledForContext(ListingActionContext context) {
 
-		if (context.hasSelection() || context.getAddress() == null) {
+		Address address = context.getAddress();
+		if (context.hasSelection() || address == null) {
 			return false;
 		}
 
-		if (context.getLocation().getAddress().isExternalAddress()) {
+		if (address.isExternalAddress()) {
 			return false;
 		}
 
@@ -104,12 +97,9 @@ public class EditFunctionTagsAction extends ListingContextAction {
 		return !funcAddress.isExternalAddress();
 	}
 
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
 	/**
 	 * Retrieves the address of the function associated with the given program location.
-	 * 
+	 *
 	 * @param loc the program location
 	 * @return the entry point of the function, or null if not valid
 	 */
@@ -126,7 +116,7 @@ public class EditFunctionTagsAction extends ListingContextAction {
 
 	/**
 	 * Displays the provider.
-	 * 
+	 *
 	 * @param context the listing context
 	 */
 	private void showProvider(ListingActionContext context) {

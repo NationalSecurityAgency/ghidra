@@ -94,8 +94,8 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 		Path file = Files.createFile(fullTOCPath);
 
 		//@formatter:off
-	    String TOCXML =  "<?xml version='1.0' encoding='ISO-8859-1' ?>\n" + 
-	    			     "<!-- Auto-generated on Fri Apr 03 09:37:08 EDT 2015 -->\n\n" + 
+	    String TOCXML =  "<?xml version='1.0' encoding='ISO-8859-1' ?>\n" +
+	    			     "<!-- Auto-generated on Fri Apr 03 09:37:08 EDT 2015 -->\n\n" +
 	    			     
 						 "<tocroot>\n" +
 						 "</tocroot>\n";
@@ -114,14 +114,14 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 		}
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
 		   
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "    <H1><A name=\""+anchor+"\"></A>Configure Tool</H1>\n" +
 		   "    Some text with reference to shared image <IMG src=\"help/shared/note.png\">\n" +
 		   "    \n" +
@@ -140,19 +140,19 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 		assertNotNull("Must specify the A tag HREF attribute", HREF);
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
 		   
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "    <H1><A name=\"Fake_Anchor\"></A>Configure Tool</H1>\n" +
-		   "    And this is a link <A HREF=\""+HREF+"\">Click Me</A>" + 
+		   "    And this is a link <A HREF=\""+HREF+"\">Click Me</A>" +
 		   "    \n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);
@@ -167,19 +167,19 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 		assertNotNull("Must specify the A tag SRC attribute", SRC);
 
 		//@formatter:off
-	    String HTML =  
-	       "<HTML>\n" + 
-		   "<HEAD>\n" + 
-		   "<TITLE>Configure Tool</TITLE>\n" + 
+	    String HTML =
+	       "<html>\n" +
+		   "<HEAD>\n" +
+		   "<TITLE>Configure Tool</TITLE>\n" +
 		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
 		   
-		   "<BODY>\n" + 
+		   "<BODY>\n" +
 		   "    <H1><A name=\"Fake_Anchor\"></A>Configure Tool</H1>\n" +
-		   "    Some text with reference to shared image <IMG src=\""+SRC+"\">\n" + 
+		   "    Some text with reference to shared image <IMG src=\""+SRC+"\">\n" +
 		   "    \n" +
 		   "</BODY>\n" +
-		   "</HTML>\n";
+		   "</html>\n";
 	    //@formatter:on
 
 		Files.write(file, HTML.getBytes(), StandardOpenOption.CREATE);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.util.constraint;
+
+import java.util.Objects;
 
 import generic.constraint.ConstraintData;
 import ghidra.program.model.listing.Program;
@@ -47,6 +48,11 @@ public class ExecutableFormatConstraint extends ProgramConstraint {
 			return false;
 		}
 		return ((ExecutableFormatConstraint) obj).executableFormat.equals(executableFormat);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(executableFormat);
 	}
 
 	@Override

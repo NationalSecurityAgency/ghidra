@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,14 +124,6 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	@Override
 	public int getNumDefinedComponents() {
 		return components.size();
-	}
-
-	@Override
-	protected int getPreferredComponentLength(DataType dataType, int length) {
-		if (!(dataType instanceof Dynamic)) {
-			length = -1;
-		}
-		return super.getPreferredComponentLength(dataType, length);
 	}
 
 	@Override
@@ -294,6 +286,11 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			return;
 		}
 
+		if (ordinals.size() == 1) {
+			ordinals.forEach(ordinal -> delete(ordinal));
+			return;
+		}
+
 		int oldAlignment = getAlignment();
 
 		List<DataTypeComponentImpl> newComponents = new ArrayList<>();
@@ -320,7 +317,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 				notifyAlignmentChanged();
 			}
 		}
-		else {
+		else if (unionLength != newLength) {
 			unionLength = newLength;
 			notifySizeChanged();
 		}
@@ -400,7 +397,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			}
 			unionLength = Math.max(length, unionLength);
 		}
-		
+
 		unionAlignment = -1; // force recompute of unionAlignment
 		getAlignment();
 
@@ -490,8 +487,8 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		boolean changed = false;
 		for (DataTypeComponentImpl dtc : components) {
 			if (dtc.getDataType() == dt) {
-				int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
-				if (length >= 0 && length != dtc.getLength()) {
+				int length = getPreferredComponentLength(dt, dtc.getLength());
+				if (length != dtc.getLength()) {
 					dtc.setLength(length);
 					changed = true;
 				}
@@ -545,14 +542,10 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 					remove = true;
 				}
 				else {
-					int len =
-						DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getLength();
-					if (len < 0) {
-						len = dtc.getLength();
-					}
+					int len = getPreferredComponentLength(newDt, dtc.getLength());
 					oldDt.removeParent(this);
 					dtc.setLength(len);
-					dtc.setDataType(replacementDt); 
+					dtc.setDataType(replacementDt);
 					dtc.invalidateSettings();
 					replacementDt.addParent(this);
 					changed = true;
@@ -604,9 +597,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 		UnionInternal union = (UnionInternal) dataType;
 
-		Iterator<DataTypeComponentImpl> it = components.iterator();
-		while (it.hasNext()) {
-			DataTypeComponent dtc = it.next();
+		for (DataTypeComponent dtc : components) {
 			dtc.getDataType().removeParent(this);
 		}
 		components.clear();

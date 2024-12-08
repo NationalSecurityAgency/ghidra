@@ -140,7 +140,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testAssociationLocking() {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// To create our locking scenario we will create associations that are related and
@@ -235,7 +235,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testAddNewCompetingAssociationIsLockedOut() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// To create our locking scenario we will create associations that are competing.  First
@@ -274,7 +274,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testAddNewRelatedAssociationIsAccepted() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// To create our locking scenario we will create associations that are related.  First
@@ -311,7 +311,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testGetRelatedAssociations() {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// Exercise the lookup routines for finding related matches
@@ -371,7 +371,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testSetAcceptedFailsWhenNotAccepted() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// To create our locking scenario we will create associations that are related.  First
@@ -418,7 +418,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testSetAssocaiationAccepted_WithNoCompetingAssociations() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// The accepted association
@@ -435,7 +435,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testSetAssocaiationAccepted_WithCompetingAssociations() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// The accepted association
@@ -462,7 +462,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testClearAccepted_WithNoCompetingAssociations() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// The accepted association
@@ -482,7 +482,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testClearAccepted_WithCompetingAssociations() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// The accepted association
@@ -513,7 +513,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testClearAcceptedFailsWithAppliedMatches() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
 		// The accepted association
@@ -561,7 +561,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testAcceptingAnEmptyAssociationSetsTheFullyAppliedStatus() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatchInfo mainMatchInfo = createRandomMatch(db);
 		VTMatch mainMatch = addMatch(matchSet, mainMatchInfo);
@@ -679,7 +679,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testVotes() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatchInfo mainMatchInfo = createRandomMatch(db);
 		VTMatch mainMatch = addMatch(matchSet, mainMatchInfo);
@@ -698,7 +698,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	public void testAssociationHook() throws Exception {
 
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 		VTMatchInfo mainMatchInfo = createRandomMatch(db);
 		VTMatch mainMatch = addMatch(matchSet, mainMatchInfo);
 		SpyAssociationHook spyHook = new SpyAssociationHook();
@@ -715,7 +715,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	public void testRejectingAssociation() throws Exception {
 		// reject
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatchInfo mainMatchInfo = createRandomMatch(db);
 		VTMatch mainMatch = addMatch(matchSet, mainMatchInfo);
@@ -734,7 +734,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	@Test
 	public void testRejectingAssociation_CannotApplyMarkupItems() throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatchInfo mainMatchInfo = createRandomMatch(db);
 		VTMatch mainMatch = addMatch(matchSet, mainMatchInfo);
@@ -761,7 +761,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	public void testRejectingAssocation_CannotRejectAssociationWithAppliedMarkupItems()
 			throws Exception {
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatchInfo mainMatchInfo = createRandomMatch(db);
 		VTMatch mainMatch = addMatch(matchSet, mainMatchInfo);
@@ -823,7 +823,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 	private VTMatch createMatchSetWithOneMatch() {
 		VTMatchInfo match = createRandomMatch(db);
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 		return addMatch(matchSet, match);
 	}
 

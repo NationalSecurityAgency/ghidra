@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +23,11 @@ public class TerminatedTransactionException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Constructor.
-	 */
 	public TerminatedTransactionException() {
 		super("Transaction has been terminated");
+	}
+
+	public TerminatedTransactionException(String msg) {
+		super(msg);
 	}
 }

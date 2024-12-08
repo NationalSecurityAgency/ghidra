@@ -19,7 +19,8 @@ package ghidra.pcodeCPort.slgh_compile.regression;
 import static org.junit.Assert.*;
 
 import java.io.*;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.antlr.runtime.RecognitionException;
@@ -66,7 +67,6 @@ public class SleighCompileRegressionTest extends AbstractGenericTest {
 
 		StringBuffer summary = new StringBuffer();
 
-		LoggingInitialization.initializeLoggingSystem();
 		List<ResourceFile> inputs = getSlaspecFiles();
 		Iterator<ResourceFile> ii = inputs.iterator();
 

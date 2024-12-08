@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,10 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * 
  * <p>
  * Most often, this interface is supported by the (root) session.
+ * 
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
  */
+@Deprecated(forRemoval = true, since = "11.2")
 @DebuggerTargetObjectIface("EventScope")
 public interface TargetEventScope extends TargetObject {
 
@@ -64,17 +67,6 @@ public interface TargetEventScope extends TargetObject {
 		 * A target thread in this session has exited
 		 */
 		THREAD_EXITED(false),
-		/**
-		 * A new module has been loaded by this session
-		 * 
-		 * <p>
-		 * The new module must be passed as a parameter.
-		 */
-		MODULE_LOADED(false),
-		/**
-		 * A module has been unloaded by this session
-		 */
-		MODULE_UNLOADED(false),
 		/**
 		 * The session has stopped, because one if its targets was trapped by a breakpoint
 		 * 

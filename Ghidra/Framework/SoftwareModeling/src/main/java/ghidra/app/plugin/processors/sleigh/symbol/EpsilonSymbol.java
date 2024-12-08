@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,50 +19,43 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.xml.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.util.*;
+import java.util.ArrayList;
+
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A pattern with no semantic or printing content, that will match
  * any pattern.
  */
 public class EpsilonSymbol extends PatternlessSymbol {
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getFixedHandle(ghidra.app.plugin.processors.sleigh.FixedHandle, ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
+	public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
 		hand.space = walker.getConstSpace();
 		hand.offset_space = null;	// Not a dynamic value
 		hand.offset_offset = 0;
 		hand.size = 0;				// Cannot provide size
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#print(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public String print(ParserWalker walker) {
+	public String print(ParserWalker walker) {
 		return "0";
 	}
 
 	@Override
-    public void printList(ParserWalker walker, ArrayList<Object> list) {
+	public void printList(ParserWalker walker, ArrayList<Object> list) {
 		list.add(walker.getParentHandle());
 	}
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Symbol#restoreXml(org.jdom.Element, ghidra.program.model.address.AddressFactory)
-	 */
+
 	@Override
-    public void restoreXml(XmlPullParser parser,SleighLanguage sleigh) {
-	    XmlElement element = parser.start("epsilon_sym");
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int element = decoder.openElement(ELEM_EPSILON_SYM);
+		decoder.closeElement(ELEM_EPSILON_SYM.id());
 		// Nothing to do
-	    parser.end(element);
 	}
 
 }

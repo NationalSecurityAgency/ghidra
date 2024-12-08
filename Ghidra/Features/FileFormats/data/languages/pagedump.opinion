@@ -19,7 +19,7 @@
         	<constraint primary="386"   processor="x86"     endian="little" size="32" />
         	<constraint primary="486"   processor="x86"     endian="little" size="32" />
         	<constraint primary="586"   processor="x86"     endian="little" size="32" />
-        	<constraint primary="8664"  processor="x86"     endian="little" size="64" />
+        	<constraint primary="8664"  processor="x86"     endian="little" size="64"	variant="default" />
         </constraint>
         <constraint compilerSpecID="default">
         	<constraint primary="601"   processor="PowerPC" endian="little" size="32" />

@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -37,14 +37,14 @@ public class FunctionPurgeFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	private FunctionPurgeFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private FunctionPurgeFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel newModel, HighlightProvider newHlProvider,
+	public FieldFactory newInstance(FieldFormatModel newModel, ListingHighlightProvider newHlProvider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new FunctionPurgeFieldFactory(newModel, newHlProvider, toolOptions, fieldOptions);
 	}

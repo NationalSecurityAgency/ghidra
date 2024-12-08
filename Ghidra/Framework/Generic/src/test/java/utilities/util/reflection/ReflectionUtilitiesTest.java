@@ -35,7 +35,7 @@ public class ReflectionUtilitiesTest {
 	@Test
 	public void testGetClassNameAfter_NoClasses() {
 
-		String caller = ReflectionUtilities.getClassNameOlderThan();
+		String caller = ReflectionUtilities.getClassNameOlderThan(new Class[0]);
 		assertThat(caller, is(equalTo(ReflectionUtilitiesTest.class.getName())));
 	}
 

@@ -107,7 +107,7 @@ public class DeleteFunctionDefaultPlatesScriptTest extends AbstractGhidraHeadedI
 		waitForScriptCompletion(scriptID, 1200000);
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		for (int i = 0; i < list.size(); i++) {
 			Address addr = list.get(i);
@@ -141,7 +141,7 @@ public class DeleteFunctionDefaultPlatesScriptTest extends AbstractGhidraHeadedI
 		waitForScriptCompletion(scriptID, 100000);
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		for (int i = 0; i < list.size(); i++) {
 			Address addr = list.get(i);

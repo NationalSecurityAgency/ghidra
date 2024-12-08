@@ -23,6 +23,11 @@ import java.util.Map;
  * Class for web color support. This class defines many of the colors used by html. This class
  * includes methods for converting a color to a string (name or hex value) and for converting
  * those strings back to a color.
+ * <p>
+ * Usage Note: Java's HTML rendering engine supports colors in hex form ('#aabb11').  Also, the
+ * engine supports many web color names ('silver').  However, not all web color names defined in
+ * this file are supported.  Thus, when specifying HTML colors, do not rely on these web color
+ * names.
  */
 public abstract class WebColors {
 	private static final Map<String, Color> nameToColorMap = new HashMap<>();
@@ -229,7 +234,7 @@ public abstract class WebColors {
 	}
 
 	/**
-	 * Returns the hex value string for the given color 
+	 * Returns the hex value string for the given color
 	 * @param color the color
 	 * @return the string
 	 */
@@ -382,7 +387,7 @@ public abstract class WebColors {
 			value = value.substring(4, value.length() - 1);
 		}
 
-		// strip off to comma separated values		
+		// strip off to comma separated values
 		String[] split = value.split(",");
 		if (split.length != 3) {
 			return null;
@@ -404,7 +409,7 @@ public abstract class WebColors {
 			value = value.substring(5, value.length() - 1);
 		}
 
-		// strip off to comma separated values		
+		// strip off to comma separated values
 		value = value.replaceAll(" ", "");
 		String[] split = value.split(",");
 		if (split.length != 4) {

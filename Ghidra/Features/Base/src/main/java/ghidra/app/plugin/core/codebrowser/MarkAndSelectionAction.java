@@ -53,7 +53,7 @@ public class MarkAndSelectionAction extends ToggleDockingAction {
 			new ToolBarData(unarmedIcon, ToolConstants.TOOLBAR_GROUP_THREE, "Z"));
 
 		setHelpLocation((new HelpLocation(HelpTopics.SELECTION, "Mark_And_Select")));
-		setSupportsDefaultToolContext(true);
+		setContextClass(NavigatableActionContext.class, true);
 		addToWindowWhen(NavigatableActionContext.class);
 
 	}
@@ -103,7 +103,7 @@ public class MarkAndSelectionAction extends ToggleDockingAction {
 		if (markedLocation != null) {
 			Address address = markedLocation.getByteAddress();
 			menuName = "Create Selection from " + address;
-			description = "Create seletion from marked location: " + address;
+			description = "Create selection from marked location: " + address;
 			icon = armedIcon;
 		}
 

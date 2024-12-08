@@ -16,28 +16,24 @@
 package ghidra.trace.model;
 
 import ghidra.framework.model.*;
-import ghidra.util.TimedMsg;
+import ghidra.trace.util.TypedEventDispatcher;
 
 public class TraceDomainObjectListener extends TypedEventDispatcher
 		implements DomainObjectListener {
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		//TimedMsg.info(this, "Handing (" + this + "): " + ev);
-		if (restoredHandler != null && ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (restoredHandler != null && ev.contains(DomainObjectEvent.RESTORED)) {
 			for (DomainObjectChangeRecord rec : ev) {
-				if (rec.getEventType() == DomainObject.DO_OBJECT_RESTORED) {
+				if (rec.getEventType() == DomainObjectEvent.RESTORED) {
 					restoredHandler.accept(rec);
-					TimedMsg.debug(this, "  Done: OBJECT_RESTORED");
 					return;
 				}
 			}
 			throw new AssertionError();
 		}
-		//Map<String, Integer> CountsByType = new TreeMap<>();
 		for (DomainObjectChangeRecord rec : ev) {
 			handleChangeRecord(rec);
 		}
-		//TimedMsg.info(this, "  Done: " + CountsByType);
 	}
 }

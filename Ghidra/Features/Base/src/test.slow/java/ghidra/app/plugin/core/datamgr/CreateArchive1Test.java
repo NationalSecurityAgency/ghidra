@@ -234,7 +234,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 
 		assertNull(archiveRootNode.getChild(archiveName));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// make sure it is deleted on disk as well
 		try {
@@ -267,7 +267,7 @@ public class CreateArchive1Test extends AbstractCreateArchiveTest {
 
 		JButton button = findButtonByText(optDialog.getComponent(), "No");
 		pressButton(button);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForTree();
 
 		ArchiveNode archiveNode = (ArchiveNode) archiveRootNode.getChild("MyArchive");

@@ -39,7 +39,7 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 	 * @param operands the operands
 	 * @return the farthest end byte
 	 */
-	protected static int computeEnd(List<AbstractAssemblyState> operands) {
+	protected static int computeEnd(List<? extends AbstractAssemblyState> operands) {
 		return operands.stream()
 				.map(s -> s.shift + s.length)
 				.reduce(0, Integer::max);
@@ -61,7 +61,7 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 	 * @param sem the selected SLEIGH constructor
 	 * @param children the child state for each operand in the constructor
 	 */
-	public AssemblyConstructState(AssemblyTreeResolver resolver,
+	public AssemblyConstructState(AbstractAssemblyTreeResolver<?> resolver,
 			List<AssemblyConstructorSemantic> path, int shift,
 			AssemblyConstructorSemantic sem, List<AbstractAssemblyState> children) {
 		super(resolver, path, shift,
@@ -150,8 +150,10 @@ public class AssemblyConstructState extends AbstractAssemblyState {
 				})
 				.filter(ar -> {
 					if (ar == null) {
-						errors.add(AssemblyResolution.error("Pattern conflict",
-							"Resolving " + sem.getLocation() + " in " + path));
+						errors.add(factory.newErrorBuilder()
+								.error("Pattern conflict")
+								.description("Resolving " + sem.getLocation() + " in " + path)
+								.build());
 						return false;
 					}
 					return true;

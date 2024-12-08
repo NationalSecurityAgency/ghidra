@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,6 +68,23 @@ void VariableGroup::removePiece(VariablePiece *piece)
 {
   pieceSet.erase(piece);
   // We currently don't adjust size here as removePiece is currently only called during clean up
+}
+
+/// Every VariablePiece in the given group is moved into \b this and the VariableGroup object is deleted.
+/// There must be no matching VariablePieces with the same size and offset between the two groups
+/// or a LowlevelError exception is thrown.
+/// \param op2 is the given VariableGroup to merge into \b this
+void VariableGroup::combineGroups(VariableGroup *op2)
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter = op2->pieceSet.begin();
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator enditer = op2->pieceSet.end();
+
+  while(iter != enditer) {
+    VariablePiece *piece = *iter;
+    ++iter;
+    piece->transferGroup(this);
+  }
 }
 
 /// Construct piece given a HighVariable and its position within the whole.
@@ -164,15 +181,15 @@ void VariablePiece::transferGroup(VariableGroup *newGroup)
   newGroup->addPiece(this);
 }
 
-/// Combine the VariableGroup associated with the given other VariablePiece and the VariableGroup of \b this
-/// into one group. Combining in this way requires pieces of the same size and offset to be merged. This
+/// Combine the VariableGroup associated \b this and the given other VariablePiece into one group.
+/// Offsets are adjusted so that \b this and the other VariablePiece have the same offset.
+/// Combining in this way requires pieces of the same size and offset to be merged. This
 /// method does not do the merging but passes back a list of HighVariable pairs that need to be merged.
 /// The first element in the pair will have its VariablePiece in the new group, and the second element
 /// will have its VariablePiece freed in preparation for the merge.
-/// Offsets are adjusted so that \b this and the given other piece have the same offset;
 /// \param op2 is the given other VariablePiece
 /// \param mergePairs passes back the collection of HighVariable pairs that must be merged
-void VariablePiece::combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs)
+void VariablePiece::mergeGroups(VariablePiece *op2,vector<HighVariable *> &mergePairs)
 
 {
   int4 diff = groupOffset - op2->groupOffset;	// Add to op2, or subtract from this
@@ -280,6 +297,27 @@ void HighVariable::transferPiece(HighVariable *tv2)
   tv2->highflags &= ~(uint4)(intersectdirty | extendcoverdirty);
 }
 
+/// Except in specific circumstances, convert \b type into its stripped form.
+void HighVariable::stripType(void) const
+
+{
+  if (!type->hasStripped())
+    return;
+  if (type->getMetatype() == TYPE_PARTIALUNION) {
+    if (symbol != (Symbol *)0 && symboloffset != -1) {
+	type_metatype meta = symbol->getType()->getMetatype();
+	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
+	  type = type->getStripped();			// strip the partial union
+    }
+  }
+  else if (type->isEnumType()) {
+    if (inst.size() != 1 || !inst[0]->isConstant())	// Only preserve partial enum on a constant
+      type = type->getStripped();
+  }
+  else
+    type = type->getStripped();
+}
+
 /// Only update if the cover is marked as \e dirty.
 /// Merge the covers of all Varnode instances.
 void HighVariable::updateInternalCover(void) const
@@ -369,17 +407,7 @@ void HighVariable::updateType(void) const
   vn = getTypeRepresentative();
 
   type = vn->getType();
-  if (type->hasStripped()) {
-    if (type->getMetatype() == TYPE_PARTIALUNION) {
-      if (symbol != (Symbol *)0 && symboloffset != -1) {
-	type_metatype meta = symbol->getType()->getMetatype();
-	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
-	  type = type->getStripped();			// strip the partial union
-      }
-    }
-    else
-      type = type->getStripped();
-  }
+  stripType();
 				// Update lock flags
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
@@ -516,13 +544,23 @@ SymbolEntry *HighVariable::getSymbolEntry(void) const
   return (SymbolEntry *)0;
 }
 
-/// The data-type its dirtying mechanism is disabled.  The data-type will not change, unless
-/// this method is called again.
-/// \param tp is the data-type to set
-void HighVariable::finalizeDatatype(Datatype *tp)
+/// If there is an associated Symbol, its data-type (or the appropriate piece) is assigned
+/// to \b this. The dirtying mechanism is disabled so that data-type cannot change.
+/// \param typeFactory is the factory used to construct any required piece
+void HighVariable::finalizeDatatype(TypeFactory *typeFactory)
 
 {
+  if (symbol == (Symbol *)0) return;
+  Datatype *cur = symbol->getType();
+  int4 off = symboloffset;
+  if (off < 0)
+    off = 0;
+  int4 sz = inst[0]->getSize();
+  Datatype *tp = typeFactory->getExactPiece(cur, off, sz);
+  if (tp == (Datatype *)0 || tp->getMetatype() == TYPE_UNKNOWN)
+    return;
   type = tp;
+  stripType();
   highflags |= type_finalized;
 }
 
@@ -557,7 +595,11 @@ void HighVariable::groupWith(int4 off,HighVariable *hi2)
     hi2->piece = new VariablePiece(hi2,hi2Off,this);
   }
   else {
-    throw LowlevelError("Cannot group HighVariables that are already grouped");
+    int4 offDiff = hi2->piece->getOffset() + off - piece->getOffset();
+    if (offDiff != 0)
+      piece->getGroup()->adjustOffsets(offDiff);
+    hi2->piece->getGroup()->combineGroups(piece->getGroup());
+    hi2->piece->markIntersectionDirty();
   }
 }
 
@@ -657,7 +699,7 @@ void HighVariable::merge(HighVariable *tv2,HighIntersectTest *testCache,bool iss
   if (isspeculative)
     throw LowlevelError("Trying speculatively merge variables in separate groups");
   vector<HighVariable *> mergePairs;
-  piece->combineOtherGroup(tv2->piece, mergePairs);
+  piece->mergeGroups(tv2->piece, mergePairs);
   for(int4 i=0;i<mergePairs.size();i+=2) {
     HighVariable *high1 = mergePairs[i];
     HighVariable *high2 = mergePairs[i+1];
@@ -804,7 +846,7 @@ void HighVariable::encode(Encoder &encoder) const
     if (symboloffset >= 0)
       encoder.writeSignedInteger(ATTRIB_OFFSET, symboloffset);
   }
-  getType()->encode(encoder);
+  getType()->encodeRef(encoder);
   for(int4 j=0;j<inst.size();++j) {
     encoder.openElement(ELEM_ADDR);
     encoder.writeUnsignedInteger(ATTRIB_REF, inst[j]->getCreateIndex());
@@ -1016,6 +1058,29 @@ void HighIntersectTest::purgeHigh(HighVariable *high)
   highedgemap.erase(iterfirst,iterlast);
 }
 
+/// \brief Test if a given HighVariable might intersect an address tied HighVariable during a call
+///
+/// If an address tied Varnode has aliases, we need to consider it as \e in \e scope during
+/// calls, even if the value is never read after the call.  In particular, another Varnode
+/// that \e crosses the call is considered to be intersecting with the address tied Varnode.
+/// This method tests whether the address tied HighVariable has aliases, then if so,
+/// it tests if the given HighVariable intersects a call site.
+/// \param tied is the address tied HighVariable
+/// \param untied is the given HighVariable to consider for intersection
+/// \return \b true if we consider the HighVariables to be intersecting
+bool HighIntersectTest::testUntiedCallIntersection(HighVariable *tied,HighVariable *untied)
+
+{
+  // If the address tied part is global, we do not need to test for crossings, as the
+  // address forcing mechanism should act as a placeholder across calls
+  if (tied->isPersist()) return false;
+  Varnode *vn = tied->getTiedVarnode();
+  if (vn->hasNoLocalAlias()) return false;	// A local variable is only in scope if it has aliases
+  if (!affectingOps.isPopulated())
+    affectingOps.populate();
+  return untied->getCover().intersect(affectingOps,vn);
+}
+
 /// \brief Translate any intersection tests for \e high2 into tests for \e high1
 ///
 /// The two variables will be merged and \e high2, as an object, will be freed.
@@ -1117,6 +1182,16 @@ bool HighIntersectTest::intersection(HighVariable *a,HighVariable *b)
     if (blockIntersection(a,b,blockisect[blk])) {
       res = true;
       break;
+    }
+  }
+  if (!res) {
+    bool aTied = a->isAddrTied();
+    bool bTied = b->isAddrTied();
+    if (aTied != bTied) {			// If one variable is address tied and the other isn't
+      if (aTied)
+	res = testUntiedCallIntersection(a,b);		// Test if the non-tied variable crosses any calls
+      else
+	res = testUntiedCallIntersection(b,a);
     }
   }
   highedgemap[ HighEdge(a,b) ] = res; // Cache the result

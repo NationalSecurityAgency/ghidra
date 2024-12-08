@@ -26,14 +26,14 @@ import org.junit.experimental.categories.Category;
 import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerLegacyRegionsPanel.RegionTableColumns;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionMapProposalDialog.RegionMapTableColumns;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -43,7 +43,7 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceStaticMapping;
 
 @Category(NightlyCategory.class)
-public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	DebuggerRegionsProvider provider;
 
@@ -241,7 +241,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 	@Test
 	public void testActionMapRegions() throws Exception {
-		assertFalse(provider.actionMapRegions.isEnabled());
+		assertDisabled(provider, provider.actionMapRegions);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -253,7 +253,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		waitForSwing();
 
 		// Still
-		assertFalse(provider.actionMapRegions.isEnabled());
+		assertDisabled(provider, provider.actionMapRegions);
 
 		addBlocks();
 		try (Transaction tx = program.openTransaction("Change name")) {
@@ -355,6 +355,11 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 	}
 
 	@Test
+	public void testActionAddRegion() throws Exception {
+		createAndOpenTrace();
+	}
+
+	@Test
 	public void testActionSelectRows() throws Exception {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		DebuggerListingProvider listing = waitForComponentProvider(DebuggerListingProvider.class);
@@ -378,7 +383,8 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		assertEquals(region, row.getRegion());
 		assertFalse(tb.trace.getProgramView().getMemory().isEmpty());
 
-		listing.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))));
+		runSwing(() -> listing
+				.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321)))));
 		waitForPass(() -> assertEquals(tb.set(tb.range(0x00401234, 0x00404321)),
 			new AddressSet(listing.getSelection())));
 

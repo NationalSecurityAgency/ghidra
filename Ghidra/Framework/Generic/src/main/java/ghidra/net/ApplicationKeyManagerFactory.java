@@ -159,7 +159,7 @@ public class ApplicationKeyManagerFactory {
 
 	/**
 	 * If the system property <i>ghidra.keystore</i> takes precedence in establishing 
-	 * the ketsore.  If using a GUI and the system property has not been set, the 
+	 * the keystore.  If using a GUI and the system property has not been set, the 
 	 * user preference with the same name will be used.
 	 * @return active keystore path or null if currently not running with a keystore or
 	 * one has not been set.

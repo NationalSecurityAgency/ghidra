@@ -20,7 +20,7 @@ import static ghidra.feature.vt.api.db.VTMatchTableDBAdapter.ColumnDescription.*
 import java.io.IOException;
 
 import db.DBRecord;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
 import ghidra.feature.vt.api.main.*;
 import ghidra.program.database.DBObjectCache;
@@ -125,8 +125,7 @@ public class VTMatchDB extends DatabaseObject implements VTMatch {
 
 			record.setLongValue(TAG_KEY_COL.column(), tagKey);
 			updateRecord();
-			session.setObjectChanged(VTChangeManager.DOCR_VT_MATCH_TAG_CHANGED, this, oldTag,
-				newTagDB);
+			session.setObjectChanged(VTEvent.MATCH_TAG_CHANGED, this, oldTag, newTagDB);
 		}
 		finally {
 			lock.release();

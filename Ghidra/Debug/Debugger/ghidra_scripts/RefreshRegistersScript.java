@@ -15,7 +15,6 @@
  */
 import java.util.Set;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
@@ -23,6 +22,8 @@ import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.util.PathMatcher;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 
 public class RefreshRegistersScript extends GhidraScript {
 	@Override

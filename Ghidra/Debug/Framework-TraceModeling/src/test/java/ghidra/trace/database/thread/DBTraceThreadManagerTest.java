@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import java.util.Set;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.*;
 
 import db.Transaction;
@@ -86,6 +88,28 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(Set.of(thread2), Set.copyOf(threadManager.getThreadsByPath("Threads[2]")));
 	}
 
+	protected static class InvalidThreadMatcher extends BaseMatcher<TraceThread> {
+		private final long snap;
+
+		public InvalidThreadMatcher(long snap) {
+			this.snap = snap;
+		}
+
+		@Override
+		public boolean matches(Object actual) {
+			return actual == null || actual instanceof TraceThread thread && !thread.isValid(snap);
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("An invalid or null thread");
+		}
+	}
+
+	protected static InvalidThreadMatcher invalidThread(long snap) {
+		return new InvalidThreadMatcher(snap);
+	}
+
 	@Test
 	public void testLiveThreadByPath() throws Exception {
 		assertNull(threadManager.getLiveThreadByPath(0, "Threads[1]"));
@@ -95,8 +119,8 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(thread2, threadManager.getLiveThreadByPath(0, "Threads[2]"));
 		assertEquals(thread2, threadManager.getLiveThreadByPath(10, "Threads[2]"));
 		assertNull(threadManager.getLiveThreadByPath(0, "Threads[3]"));
-		assertNull(threadManager.getLiveThreadByPath(-1, "Threads[2]"));
-		assertNull(threadManager.getLiveThreadByPath(11, "Threads[2]"));
+		assertThat(threadManager.getLiveThreadByPath(-1, "Threads[2]"), invalidThread(-1));
+		assertThat(threadManager.getLiveThreadByPath(11, "Threads[2]"), invalidThread(11));
 	}
 
 	@Test

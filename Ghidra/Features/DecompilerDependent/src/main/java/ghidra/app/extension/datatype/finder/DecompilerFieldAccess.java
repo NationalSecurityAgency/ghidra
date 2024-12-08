@@ -51,7 +51,6 @@ public class DecompilerFieldAccess extends DecompilerVariable {
 		DataType dt = field.getDataType();
 		dt = getBaseType(dt);
 		if (!(dt instanceof Composite)) {
-			// can the dt be a pointer?
 			Msg.error(this, "Have a field for a type that is not a Composite type");
 			return dt;
 		}
@@ -65,6 +64,11 @@ public class DecompilerFieldAccess extends DecompilerVariable {
 			}
 		}
 
+		int n = composite.getNumComponents();
+		if (offset >= n) {
+			// how sure when this condition can happen, but we have seen this in the wild
+			return null;
+		}
 		DataTypeComponent component = composite.getComponent(offset);
 		if (component == null) {
 			return null; // not sure what else to do

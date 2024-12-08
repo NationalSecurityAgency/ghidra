@@ -128,7 +128,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			DockingActionIf action = getAction("New Project");
 			performAction(action, false);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			WizardManager wm =
 				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
@@ -164,14 +164,14 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals("", projField.getText());
 
 			SwingUtilities.invokeAndWait(() -> projField.setText("ProjectTest"));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			assertTrue(createSelectProjectPanelOutputMessage(wm.getStatusMessage(), projPanel),
 				finishButton.isEnabled());
 
 			pressButton(finishButton, true);
 			Thread.sleep(500);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			Project project = frontEndTool.getProject();
 			assertNotNull(project);
@@ -191,7 +191,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 
 			DockingActionIf action = getAction("New Project");
 			performAction(action, false);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			WizardManager wm =
 				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
@@ -231,7 +231,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 				dirField.setText(dirText);
 				projField.setText("MyProject");
 			});
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			assertTrue(!finishButton.isEnabled());
 			assertEquals("Project directory does not exist.", wm.getStatusMessage());
@@ -251,7 +251,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 
 			DockingActionIf action = getAction("New Project");
 			performAction(action, false);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			WizardManager wm =
 				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
@@ -265,7 +265,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(!rb.isSelected());
 
 			SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			JButton nextButton = findButtonByText(wm, "Next >>");
 			assertNotNull(nextButton);
@@ -290,7 +290,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 				serverField.setText(LOCALHOST);
 				portNumberField.setText(Integer.toString(SERVER_PORT));
 			});
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			assertTrue(nextButton.isEnabled());
 			assertTrue(!finishButton.isEnabled());
@@ -327,7 +327,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(!finishButton.isEnabled());
 
 			SwingUtilities.invokeAndWait(() -> repNameField.setText("TestRepository"));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertTrue(nextButton.isEnabled());
 			assertTrue(!finishButton.isEnabled());
 
@@ -362,13 +362,13 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals("TestRepository", projField.getText());
 
 			SwingUtilities.invokeAndWait(() -> projField.setText("ProjectTest"));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertTrue(finishButton.isEnabled());
 			assertTrue(!nextButton.isEnabled());
 
 			pressButton(finishButton, true);
 			Thread.sleep(500);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			Project project = frontEndTool.getProject();
 			assertNotNull(project);
@@ -391,7 +391,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 
 			DockingActionIf action = getAction("New Project");
 			performAction(action, false);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			WizardManager wm =
 				waitForDialogComponent(frontEndTool.getToolFrame(), WizardManager.class, 2000);
@@ -405,7 +405,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(!rb.isSelected());
 
 			SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			JButton nextButton = findButtonByText(wm, "Next >>");
 			assertNotNull(nextButton);
@@ -436,7 +436,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 				serverField.setText(LOCALHOST);
 				portNumberField.setText(Integer.toString(SERVER_PORT));
 			});
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertTrue(nextButton.isEnabled());
 			assertTrue(!finishButton.isEnabled());
 
@@ -472,7 +472,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 
 			// select existing repository
 			SwingUtilities.invokeAndWait(() -> repList.setSelectedIndex(0));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertTrue(nextButton.isEnabled());
 			assertTrue(!finishButton.isEnabled());
 
@@ -493,14 +493,14 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertEquals("My_Repository", projField.getText());
 
 			SwingUtilities.invokeAndWait(() -> projField.setText("ProjectTest"));
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertTrue(createSelectProjectPanelOutputMessage(wm.getStatusMessage(), projPanel),
 				finishButton.isEnabled());
 			assertTrue(!nextButton.isEnabled());
 
 			pressButton(finishButton, true);
 			Thread.sleep(500);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 			Project project = frontEndTool.getProject();
 			assertNotNull(project);

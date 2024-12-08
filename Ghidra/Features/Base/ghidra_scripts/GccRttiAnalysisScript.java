@@ -117,7 +117,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 			int index = 0;
 			String newCategoryName = new String();
 			while (index < categoryName.length()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (categoryName.substring(index).startsWith("::") && !insideBrackets) {
 					newCategoryName = newCategoryName.concat("/");
@@ -453,7 +453,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		SymbolIterator symbols = symbolTable.getSymbolIterator("*" + string1 + "*", true);
 
 		while (symbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
 			Address symbolAddress = symbol.getAddress();
 
@@ -483,7 +483,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 		SymbolIterator symbols = symbolTable.getSymbols(symbolName);
 		while (symbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
 			if (symbol.getParentNamespace().getName().equals(namespaceName)) {
 				Namespace namespace = symbol.getParentNamespace();
@@ -519,7 +519,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		Iterator<Symbol> typeinfoIterator = typeinfoSymbols.iterator();
 		while (typeinfoIterator.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Symbol typeinfoSymbol = typeinfoIterator.next();
 			Address typeinfoAddress = typeinfoSymbol.getAddress();
@@ -696,7 +696,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		Iterator<Symbol> vtableIterator = listOfVtableSymbols.iterator();
 		while (vtableIterator.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Symbol vtableSymbol = vtableIterator.next();
 			Namespace vtableNamespace = vtableSymbol.getParentNamespace();
@@ -949,7 +949,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		int index = 0;
 		try {
 			while (index < numZeros) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (getByte(address.add(index)) != 0x00) {
 					return false;
 				}
@@ -1220,7 +1220,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 		SymbolIterator symbols = symbolTable.getSymbols(addressSet, SymbolType.LABEL, true);
 
 		while (symbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
 			if (exact && symbol.getName().equals(symbolName)) {
 				symbolsInSet.add(symbol);

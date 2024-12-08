@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@
 
 namespace ghidra {
 
-vector<UnitTest *> UnitTest::tests;
-
 /// Run all the tests unless a non-empty set of names is passed in.
 /// In which case, only the named tests in the set are run.
 /// \param testNames is the set of names
@@ -30,7 +28,7 @@ int UnitTest::run(set<string> &testNames)
   int total = 0;
   int passed = 0;
 
-  for(auto &t : UnitTest::tests) {
+  for(auto &t : UnitTest::tests()) {
     if (testNames.size() > 0 && testNames.find(t->name) == testNames.end()) {
       continue;
     }
@@ -40,7 +38,10 @@ int UnitTest::run(set<string> &testNames)
       t->func();
       ++passed;
       cerr << "  passed." << endl;
+    } catch(LowlevelError &err) {
+      cerr << "  fail: " << err.explain << endl;
     } catch(...) {
+      cerr << "  fail" << endl;
     }
   }
   cerr << "==============================" << endl;

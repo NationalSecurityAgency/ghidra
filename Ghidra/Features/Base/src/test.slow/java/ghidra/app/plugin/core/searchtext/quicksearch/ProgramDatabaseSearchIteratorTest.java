@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.plugin.core.searchtext.SearchOptions;
 import ghidra.app.plugin.core.searchtext.Searcher;
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.app.plugin.core.searchtext.databasesearcher.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
@@ -115,7 +116,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 
 		while (currentAddress != null) {
 			if (searcher.hasMatch(currentAddress)) {
-				return searcher.getMatch();
+				return searcher.getMatch().programLocation();
 			}
 			currentAddress = searcher.getNextSignificantAddress(currentAddress);
 		}
@@ -413,7 +414,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		ProgramLocation startLoc = new ProgramLocation(program, getAddr(0x1001950));
 		Searcher ts = new ProgramDatabaseSearcher(tool, program, startLoc, null, options, monitor);
 
-		ProgramLocation loc = ts.search();
+		ProgramLocation loc = ts.search().programLocation();
 		assertNotNull(loc);
 
 		assertTrue("Expected CommentFieldLocation, got " + loc.getClass() + " instead!",
@@ -422,7 +423,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		assertEquals(cloc.getCharOffset(), 5);
 
 		// should be 3 hits at address 0x1001960
-		loc = ts.search();
+		loc = ts.search().programLocation();
 		assertNotNull(loc);
 		assertTrue("Expected CommentFieldLocation, got " + loc.getClass() + " instead!",
 			(loc instanceof CommentFieldLocation));
@@ -431,7 +432,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		cloc = (CommentFieldLocation) loc;
 		assertEquals(cloc.getCharOffset(), 12);
 
-		loc = ts.search();
+		loc = ts.search().programLocation();
 		assertNotNull(loc);
 		assertTrue("Expected LabelFieldLocation, got " + loc.getClass() + " instead!",
 			(loc instanceof LabelFieldLocation));
@@ -439,7 +440,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		assertEquals(floc.getCharOffset(), 3);
 		assertEquals(getAddr(0x1001960L), floc.getAddress());
 
-		loc = ts.search();
+		loc = ts.search().programLocation();
 		assertEquals(getAddr(0x1001960), loc.getAddress());
 		assertTrue("Expected CommentFieldLocation, got " + loc.getClass() + " instead!",
 			(loc instanceof CommentFieldLocation));
@@ -470,12 +471,12 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		ProgramLocation startLoc =
 			new ProgramLocation(program, program.getMinAddress().getNewAddress(0x1001950L));
 		Searcher ts = new ProgramDatabaseSearcher(tool, program, startLoc, null, options, monitor);
-		ProgramLocation loc = ts.search();
+		ProgramLocation loc = ts.search().programLocation();
 		assertEquals(getAddr(0x1001955L), loc.getAddress());
 		assertTrue("Expected MnemonicFieldLocation, got " + loc.getClass() + " instead!",
 			(loc instanceof MnemonicFieldLocation));
 
-		loc = ts.search();
+		loc = ts.search().programLocation();
 		assertTrue("Expected CommentFieldLocation, got " + loc.getClass() + " instead!",
 			(loc instanceof CommentFieldLocation));
 		assertEquals(CodeUnit.POST_COMMENT, ((CommentFieldLocation) loc).getCommentType());
@@ -534,8 +535,10 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 			return new ProgramDatabaseSearcher(pluginTool, searchProgram, startLoc, set, options,
 				taskMonitor);
 		});
-		ProgramLocation loc = null;
-		while ((loc = ts.search()) != null) {
+
+		TextSearchResult searchResult = null;
+		while ((searchResult = ts.search()) != null) {
+			ProgramLocation loc = searchResult.programLocation();
 			list.add(loc);
 			++count;
 			if (searchLimit > 0 && count >= searchLimit) {

@@ -48,7 +48,7 @@ public interface ClientAuthenticator extends KeyStorePasswordProvider {
 	 * @see ChoiceCallback#setSelectedIndex(int)
 	 * A null is specified if no choice is available (password authenticator determined by server configuration).
 	 * @see AnonymousCallback#setAnonymousAccessRequested(boolean)
-	 * @return
+	 * @return true if password provided, false if entry cancelled
 	 */
 	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
 			NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,

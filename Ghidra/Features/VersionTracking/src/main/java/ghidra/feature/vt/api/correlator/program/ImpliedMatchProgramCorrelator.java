@@ -29,8 +29,8 @@ public class ImpliedMatchProgramCorrelator extends VTAbstractProgramCorrelator {
 	public static final String NAME = "Implied Match";
 
 	public ImpliedMatchProgramCorrelator(Program sourceProgram, Program destinationProgram) {
-		super(null, sourceProgram, sourceProgram.getMemory(), destinationProgram,
-			destinationProgram.getMemory(), new ToolOptions(NAME));
+		super(sourceProgram, sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(),
+			new ToolOptions(NAME));
 	}
 
 	@Override

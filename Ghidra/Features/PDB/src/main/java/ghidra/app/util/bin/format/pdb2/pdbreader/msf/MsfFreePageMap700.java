@@ -54,7 +54,7 @@ class MsfFreePageMap700 extends MsfFreePageMap {
 		MsfFileReader fileReader = msf.getFileReader();
 		int pageSize = msf.getPageSize();
 		while (freePageMapNumPages > 0) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			byte[] bytes = new byte[pageSize];
 			fileReader.read(nextPageNumber, 0, pageSize, bytes, 0);
 			addMap(bytes);

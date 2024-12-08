@@ -16,14 +16,12 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.*;
 
 /**
  * Updates the name or comment field for a given function tag
  */
-public class ChangeFunctionTagCmd implements Command {
+public class ChangeFunctionTagCmd implements Command<Program> {
 
 	private final int field;
 	private final String tagName;
@@ -51,8 +49,8 @@ public class ChangeFunctionTagCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		ProgramDB program = (ProgramDB) obj;
+	public boolean applyTo(Program program) {
+
 		FunctionManager functionManager = program.getFunctionManager();
 		FunctionTagManager tagManager = functionManager.getFunctionTagManager();
 		FunctionTag tag = tagManager.getFunctionTag(tagName);

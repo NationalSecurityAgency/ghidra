@@ -37,6 +37,8 @@ public interface Decoder extends ByteIngest {
 
 	public AddressFactory getAddressFactory();
 
+	public void setAddressFactory(AddressFactory addrFactory);
+
 	/**
 	 * Peek at the next child element of the current parent, without traversing in (opening) it.
 	 * The element id is returned, which can be compared to ElementId labels.
@@ -242,6 +244,26 @@ public interface Decoder extends ByteIngest {
 	 * @throws DecoderException if the expected value is not present
 	 */
 	public AddressSpace readSpace(AttributeId attribId) throws DecoderException;
+
+	/**
+	 * Parse the current attribute is a p-code opcode
+	 * The last attribute, as returned by getNextAttributeId, is returned as an opcode.
+	 * The opcode is one of the constants specified in {@link PcodeOp}
+	 * @return the opcode associated with the current attribute
+	 * @throws DecoderException if the expected value is not present
+	 */
+	public int readOpcode() throws DecoderException;
+
+	/**
+	 * Find the specific attribute in the current element and return it as an opcode
+	 * Search attributes from the current element for a match to the given attribute id.
+	 * Return this attribute as an opcode constant from {@link PcodeOp}. If there is no
+	 * matching attribute id, an exception is thrown. Parse via getNextAttributeId is reset. 
+	 * @param attribId is the specific attribute id to match
+	 * @return the opcode associated with the attribute
+	 * @throws DecoderException if the expected value is not present
+	 */
+	public int readOpcode(AttributeId attribId) throws DecoderException;
 
 	/**
 	 * Skip parsing of the next element

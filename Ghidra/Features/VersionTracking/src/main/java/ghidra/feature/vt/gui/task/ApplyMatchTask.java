@@ -97,7 +97,7 @@ public class ApplyMatchTask extends VtTask {
 		monitor.setMessage("Processing matches");
 		monitor.initialize(matches.size());
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTAssociation association = match.getAssociation();
 			VTAssociationStatus status = association.getStatus();
 			if (!status.canApply()) {
@@ -144,7 +144,7 @@ public class ApplyMatchTask extends VtTask {
 			throws CancelledException {
 
 		for (VTMarkupItem item : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTMarkupItemStatus status = item.getStatus();
 			if (status != VTMarkupItemStatus.UNAPPLIED) {
 				// for now we only handle items that have not been applied

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,17 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.thread.TraceThread;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class DefaultStackRecorder implements ManagedStackRecorder {
 
 	protected static int getFrameLevel(TargetStackFrame frame) {
@@ -57,23 +58,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 
 	@Override
 	public void recordStack() {
-		long snap = recorder.getSnap();
-		DebuggerMemoryMapper mm = recorder.getMemoryMapper();
-		Map<Integer, Address> pcsByLevel;
-		synchronized (stack) {
-			pcsByLevel = stack.entrySet()
-					.stream()
-					.collect(Collectors.toMap(e -> e.getKey(), e -> {
-						return mm.targetToTrace(e.getValue().getProgramCounter());
-					}));
-		}
-		recorder.parTx.execute("Stack changed", () -> {
-			TraceStack traceStack = stackManager.getStack(thread, snap, true);
-			traceStack.setDepth(stackDepth(), false);
-			for (Map.Entry<Integer, Address> ent : pcsByLevel.entrySet()) {
-				doRecordFrame(traceStack, ent.getKey(), ent.getValue());
-			}
-		}, thread.getPath());
+		doRecordStack(recorder.getSnap(), getPcsByLevel());
 	}
 
 	public void popStack() {
@@ -89,21 +74,35 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 		traceFrame.setProgramCounter(null, pc); // Not object-based, so span=null
 	}
 
+	protected Map<Integer, Address> getPcsByLevel() {
+		DebuggerMemoryMapper mm = recorder.getMemoryMapper();
+		synchronized (stack) {
+			return stack.entrySet()
+					.stream()
+					.collect(Collectors.toMap(e -> e.getKey(), e -> {
+						return mm.targetToTrace(e.getValue().getProgramCounter());
+					}));
+		}
+	}
+
+	protected void doRecordStack(long snap, Map<Integer, Address> pcsByLevel) {
+		recorder.parTx.execute("Stack changed", () -> {
+			TraceStack traceStack = stackManager.getStack(thread, snap, true);
+			traceStack.setDepth(stackDepth(), false);
+			for (Map.Entry<Integer, Address> ent : pcsByLevel.entrySet()) {
+				doRecordFrame(traceStack, ent.getKey(), ent.getValue());
+			}
+		}, thread.getPath());
+	}
+
 	public void recordFrame(TargetStackFrame frame) {
 		long snap = recorder.getSnap();
+		Map<Integer, Address> pcsByLevel;
 		synchronized (stack) {
 			stack.put(getFrameLevel(frame), frame);
+			pcsByLevel = getPcsByLevel();
 		}
-		recorder.parTx.execute("Stack frame added", () -> {
-			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
-			if (memoryMapper == null) {
-				return;
-			}
-			Address pc = frame.getProgramCounter();
-			Address tracePc = pc == null ? null : memoryMapper.targetToTrace(pc);
-			TraceStack traceStack = stackManager.getStack(thread, snap, true);
-			doRecordFrame(traceStack, getFrameLevel(frame), tracePc);
-		}, thread.getPath());
+		doRecordStack(snap, pcsByLevel);
 	}
 
 	protected int stackDepth() {
@@ -117,7 +116,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 		for (TargetObject p = successor; p != null; p = p.getParent()) {
 			if (p instanceof TargetStackFrame) {
 				if (!PathUtils.isIndex(p.getPath())) {
-					throw new AssertionError("Invalid path index "+p.getPath());
+					throw new AssertionError("Invalid path index " + p.getPath());
 				}
 				int index = Integer.decode(p.getIndex());
 				TargetStackFrame frame;

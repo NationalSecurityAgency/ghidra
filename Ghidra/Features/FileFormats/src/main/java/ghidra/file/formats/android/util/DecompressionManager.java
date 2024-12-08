@@ -86,7 +86,7 @@ public class DecompressionManager {
 	public static void decompressOverMemory(Program program, List<ArtBlock> blocks,
 			TaskMonitor monitor) throws Exception {
 		for (ArtBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address sourceAddress = program.getMinAddress().add(block.getDataOffset());
 			byte[] compressedBytes = new byte[block.getDataSize()];
@@ -102,7 +102,7 @@ public class DecompressionManager {
 				destinationAddress.add(decompressedBytes.length));
 			AddressSet uncreatedSet = destinationSet.subtract(program.getMemory());
 			for (AddressRange range : uncreatedSet) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				program.getMemory()
 						.createInitializedBlock(toBlockName(range), range.getMinAddress(),
 							range.getLength(), (byte) 0x00, monitor, false);
@@ -137,7 +137,7 @@ public class DecompressionManager {
 				destinationAddress.add(decompressedBytes.length));
 			AddressSet uncreatedSet = destinationSet.subtract(program.getMemory());
 			for (AddressRange range : uncreatedSet) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				program.getMemory()
 						.createInitializedBlock(toBlockName(range), range.getMinAddress(),
 							range.getLength(), (byte) 0x00, monitor, false);

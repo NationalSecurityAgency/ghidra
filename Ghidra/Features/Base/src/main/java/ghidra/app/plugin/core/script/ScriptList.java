@@ -30,14 +30,14 @@ import ghidra.util.datastruct.WeakSet;
 import ghidra.util.task.SwingUpdateManager;
 
 /**
- * Loads and manages updating of available script files.   
+ * Loads and manages updating of available script files.
  * <p>
  * Use the {@link #refresh()} method to reload the script files.
  */
 public class ScriptList {
 
 	private BundleHost bundleHost;
-	private List<ResourceFile> scriptFiles = new ArrayList<>();
+	private List<ResourceFile> scriptFiles = null;
 	private WeakSet<ChangeListener> listeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	private SwingUpdateManager refreshUpdateManager = new SwingUpdateManager(this::doRefresh);
@@ -76,7 +76,7 @@ public class ScriptList {
 
 	void load() {
 		Swing.runNow(() -> {
-			if (scriptFiles.isEmpty()) {
+			if (scriptFiles == null) {
 				doRefresh();
 			}
 		});
@@ -87,7 +87,7 @@ public class ScriptList {
 		return Collections.unmodifiableList(scriptFiles);
 	}
 
-	List<ResourceFile> getScriptDirectories() {
+	private List<ResourceFile> getScriptDirectories() {
 		return bundleHost.getGhidraBundles()
 				.stream()
 				.filter(GhidraSourceBundle.class::isInstance)
@@ -96,8 +96,8 @@ public class ScriptList {
 				.collect(Collectors.toList());
 	}
 
-	private void updateAvailableScriptFilesForDirectory(
-			List<ResourceFile> scriptAccumulator, ResourceFile directory) {
+	private void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptAccumulator,
+			ResourceFile directory) {
 		ResourceFile[] files = directory.listFiles();
 		if (files == null) {
 			return;

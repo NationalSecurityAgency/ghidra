@@ -60,7 +60,7 @@ public class SharedReturnJumpAnalyzer extends SharedReturnAnalyzer {
 		//
 		AddressIterator iter = mgr.getReferenceSourceIterator(set, true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = iter.next();
 

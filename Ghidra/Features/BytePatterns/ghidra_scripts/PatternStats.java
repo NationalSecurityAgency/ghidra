@@ -107,7 +107,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 			if (exampleFalse.size() >= MAX_EXAMPLE_PER) {
 				return;
 			}
-			exampleFalse.add(new Long(addr.getOffset()));
+			exampleFalse.add(Long.valueOf(addr.getOffset()));
 		}
 
 		public void saveXml(StringBuffer buf) {
@@ -140,7 +140,7 @@ public class PatternStats extends GhidraScript implements PatternFactory {
 			while (parser.peek().isStart()) {
 				parser.start("example");
 				long value = SpecXmlUtils.decodeLong(parser.end().getText());
-				exampleFalse.add(new Long(value));
+				exampleFalse.add(Long.valueOf(value));
 			}
 			parser.end();
 		}

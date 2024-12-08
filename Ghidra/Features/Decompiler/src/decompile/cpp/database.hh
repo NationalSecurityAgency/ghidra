@@ -176,6 +176,7 @@ class Symbol {
 protected:
   Scope *scope;			///< The scope that owns this symbol
   string name;			///< The local name of the symbol
+  string displayName;		///< Name to use when displaying symbol in output
   Datatype *type;		///< The symbol's data-type
   uint4 nameDedup;		///< id to distinguish symbols with the same name
   uint4 flags;			///< Varnode-like properties of the symbol
@@ -212,12 +213,14 @@ public:
     no_category = -1,		///< Symbol is not in a special category
     function_parameter = 0,	///< The Symbol is a parameter to a function
     equate = 1,			///< The Symbol holds \e equate information about a constant
-    union_facet = 2		///< Symbol holding read or write facing union field information
+    union_facet = 2,		///< Symbol holding read or write facing union field information
+    fake_input = 3		///< Temporary placeholder for an input symbol prior to formalizing parameters
   };
 
   Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
   Symbol(Scope *sc);		  			///< Construct for use with decode()
   const string &getName(void) const { return name; }		///< Get the local name of the symbol
+  const string &getDisplayName(void) const { return displayName; }	///< Get the name to display in output
   Datatype *getType(void) const { return type; }		///< Get the data-type
   uint8 getId(void) const { return symbolId; }			///< Get a unique id for the symbol
   uint4 getFlags(void) const { return flags; }			///< Get the boolean properties of the Symbol
@@ -469,6 +472,7 @@ class Scope {
 protected:
   Architecture *glb;				///< Architecture of \b this scope
   string name;					///< Name of \b this scope
+  string displayName;				///< Name to display in output
   Funcdata *fd;					///< (If non-null) the function which \b this is the local Scope for
   uint8 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
   static const Scope *stackAddr(const Scope *scope1,
@@ -551,6 +555,7 @@ protected:
 					     const RangeList &uselim)=0;
   SymbolEntry *addMap(SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
   void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
+  void setDisplayName(const string &nm) { displayName = nm; }		///< Change name displayed in output
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -559,7 +564,7 @@ public:
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
   Scope(uint8 id,const string &nm,Architecture *g,Scope *own) {
-    uniqueId = id; name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; owner=own;
+    uniqueId = id; name = nm; displayName = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; owner=own;
 #ifdef OPACTION_DEBUG
     debugon = false;
 #endif
@@ -705,7 +710,13 @@ public:
 
   virtual void encode(Encoder &encoder) const=0;	///< Encode \b this as a \<scope> element
   virtual void decode(Decoder &decoder)=0;		///< Decode \b this Scope from a \<scope> element
-  virtual void decodeWrappingAttributes(Decoder &decoder) {}	///< Restore attributes for \b this Scope from wrapping element
+
+  /// \brief Restore attributes for \b this from a parent element that is not a Scope
+  ///
+  /// Attributes are read from the (already opened) element, prior to reading reading the
+  /// \<scope> element specific to \b this Scope
+  /// \param decoder is the stream decoder
+  virtual void decodeWrappingAttributes(Decoder &decoder) {}
   virtual void printEntries(ostream &s) const=0;	///< Dump a description of all SymbolEntry objects to a stream
 
   /// \brief Get the number of Symbols in the given category
@@ -725,13 +736,14 @@ public:
   ///
   /// \param sym is the given Symbol
   /// \param cat is the \e category to set for the Symbol
-  /// \param ind is the index position to set (within the category)
+  /// \param ind is, for the function_parameter category, the index position to set, and is unused for other categories
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind)=0;
 
   virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
 				 const Address &addr,const Address &usepoint);
 
   const string &getName(void) const { return name; }		///< Get the name of the Scope
+  const string &getDisplayName(void) const { return displayName; }	///< Get name displayed in output
   uint8 getId(void) const { return uniqueId; }			///< Get the globally unique id
   bool isGlobal(void) const { return (fd == (Funcdata *)0); }	///< Return \b true if \b this scope is global
 
@@ -938,7 +950,8 @@ public:
   const partmap<Address,uint4> &getProperties(void) const { return flagbase; }	///< Get the entire property map
   void encode(Encoder &encoder) const;				///< Encode the whole Database to a stream
   void decode(Decoder &decoder);				///< Decode the whole database from a stream
-  void decodeScope(Decoder &decoder,Scope *newScope);	///< Register and fill out a single Scope from  an XML \<scope> tag
+  void decodeScope(Decoder &decoder,Scope *newScope);	///< Register and fill out a single Scope from an XML \<scope> tag
+  Scope *decodeScopePath(Decoder &decoder);	///< Decode a namespace path and make sure each namespace exists
 };
 
 /// \param sc is the scope containing the new symbol
@@ -949,6 +962,7 @@ inline Symbol::Symbol(Scope *sc,const string &nm,Datatype *ct)
 {
   scope=sc;
   name=nm;
+  displayName = nm;
   nameDedup=0;
   type=ct;
   flags=0;

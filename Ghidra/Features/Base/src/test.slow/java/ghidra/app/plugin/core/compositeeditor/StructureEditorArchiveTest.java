@@ -70,7 +70,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 
 		createStruct = getAction(plugin, "Structure");
 		performAction(createStruct, plugin.getProvider(), true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		CompEditorPanel editorPanel =
 			findComponent(tool.getToolFrame(), CompEditorPanel.class, true);
 		model = editorPanel.model;
@@ -120,7 +120,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		// hit "Create Archive" button
 		JButton saveAsButton = findButtonByText(chooser, "Create Archive");
 		pressButton(saveAsButton);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 	}
 
@@ -161,7 +161,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 	public void testCreateArchiveStructure() throws Exception {
 		createStruct = getAction(plugin, "Structure");
 		performAction(createStruct, plugin.getProvider(), true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		CompEditorPanel editorPanel =
 			findComponent(tool.getToolFrame(), CompEditorPanel.class, true);
 

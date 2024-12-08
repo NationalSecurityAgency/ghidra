@@ -17,6 +17,8 @@ package ghidra.app.decompiler.component.hover;
 
 import javax.swing.JComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
@@ -97,33 +99,45 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 		int offset = fieldToken.getOffset();
 		DataType fieldType = getFieldDataType(fieldToken);
 
+		String comment = null;
+		if (parentType instanceof Structure structure) {
+			DataTypeComponent dtc = structure.getComponentAt(offset);
+			if (dtc != null) {
+				comment = StringUtils.truncate(dtc.getComment(), 80); // arbitrary limit
+			}
+		}
+
 		//
 		// Parent:     BarBar
 		// Offset:     0x8
 		// Field Name: fooField
-		//
+		// Comment:    This is a comment
+		//		
 
-		String BR = HTMLUtilities.BR;
-		StringBuilder newContent = new StringBuilder();
-		newContent.append("<TABLE>");
+		StringBuilder buffy = new StringBuilder(HTMLUtilities.HTML);
 
 		//@formatter:off
-		newContent.append(
+		buffy.append("<TABLE>");
+		buffy.append(
 			row("Parent: ",	HTMLUtilities.friendlyEncodeHTML(parentType.getName())));
-		newContent.append(
+		buffy.append(
 			row("Offset: ", NumericUtilities.toHexString(offset)));
-		newContent.append(
+		buffy.append(
 			row("Field Name: ", HTMLUtilities.friendlyEncodeHTML(token.getText())));
+		
+		if (comment != null) {
+			buffy.append(
+				row("Comment: ", HTMLUtilities.friendlyEncodeHTML(comment)));
+		}
+		
+		buffy.append("</TABLE>");
 		//@formatter:on
 
-		newContent.append("</TABLE>");
+		if (fieldType != null) {
+			buffy.append(HTMLUtilities.BR).append("<HR WIDTH=\"95%\">").append(HTMLUtilities.BR);
+			buffy.append(ToolTipUtils.getHTMLRepresentation(fieldType).getFullHTMLContentString());
+		}
 
-		newContent.append(BR).append("<HR WIDTH=\"95%\">").append(BR);
-
-		String toolTipText = ToolTipUtils.getToolTipText(fieldType);
-		StringBuilder buffy = new StringBuilder(toolTipText);
-		int start = HTMLUtilities.HTML.length();
-		buffy.insert(start, newContent);
 		return buffy.toString();
 	}
 
@@ -144,6 +158,9 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 			int n = parent.getLength();
 			if (offset >= 0 && offset < n) {
 				DataTypeComponent dtc = parent.getComponentAt(offset);
+				if (dtc == null) {
+					return null;
+				}
 				fieldDt = dtc.getDataType();
 			}
 		}

@@ -23,7 +23,7 @@ class GetPutFieldTest{
     public float testFloat = 1.1f;
     public double testDouble = 2.2;
     public long testLong = 0x1234567812345678l;
-    public Integer testRef = new Integer(0);
+    public Integer testRef = Integer.valueOf(0);
     public int[] test1dArray;
     public int[][] test2dArray;
     public Class testClass = String.class;

@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.gui.thread;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 
-public class DebuggerThreadActionContext extends ActionContext {
+public class DebuggerThreadActionContext extends DefaultActionContext {
 	private final Trace trace;
 	private final TraceThread thread;
 

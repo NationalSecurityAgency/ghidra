@@ -20,6 +20,15 @@ import db.DBRecord;
 
 public class ByteColumnAdapter extends AbstractColumnAdapter {
 
+	ByteColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
+	@Override
+	public int getColumnPreferredWidth() {
+		return 100;
+	}
+
 	@Override
 	Class<?> getValueClass() {
 		return Byte.class;
@@ -27,12 +36,16 @@ public class ByteColumnAdapter extends AbstractColumnAdapter {
 
 	@Override
 	Object getKeyValue(DBRecord rec) {
-		return new Byte(((ByteField) rec.getKeyField()).getByteValue());
+		return Byte.valueOf(((ByteField) rec.getKeyField()).getByteValue());
 	}
 
 	@Override
-	Object getValue(DBRecord rec, int col) {
-		return new Byte(rec.getByteValue(col));
+	Object getValue(DBRecord rec, int dbColumn) {
+		return Byte.valueOf(rec.getByteValue(dbColumn));
 	}
 
+	@Override
+	public LongRenderer getColumnRenderer() {
+		return longRenderer;
+	}
 }

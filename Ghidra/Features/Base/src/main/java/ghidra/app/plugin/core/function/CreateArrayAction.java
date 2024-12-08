@@ -100,16 +100,19 @@ class CreateArrayAction extends ListingContextAction {
 			Variable var = varLoc.getVariable();
 			if (var.isStackVariable()) {
 				DataType dt = var.getDataType();
-				int len = var.getLength();
-				int defaultElements = plugin.getMaxStackVariableSize(fun, var);
-				if (defaultElements <= 0) {
-					defaultElements = 1;
+				if (dt.getLength() < 1) {
+					return;
 				}
-				int n = getNumElements(dt, Integer.MAX_VALUE, defaultElements);
+				int availableLen = plugin.getMaxStackVariableSize(fun, var);
+				if (availableLen <= 0) {
+					availableLen = 1;
+				}
+				int maxElements = availableLen / var.getDataType().getAlignedLength();
+				int n = getNumElements(dt, Integer.MAX_VALUE, maxElements);
 				if (n == 0) {
 					return;
 				}
-				Array array = new ArrayDataType(dt, n, len);
+				Array array = new ArrayDataType(dt, n, -1);
 				plugin.createData(array, context, true, true);
 			}
 		}

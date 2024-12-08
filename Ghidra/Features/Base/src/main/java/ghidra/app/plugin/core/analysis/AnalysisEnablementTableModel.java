@@ -19,8 +19,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.util.List;
 
-import javax.swing.JComponent;
-import javax.swing.JTable;
+import javax.swing.*;
 
 import docking.widgets.table.*;
 import generic.theme.GColor;
@@ -40,9 +39,6 @@ public class AnalysisEnablementTableModel
 	//@formatter:off
 	private static Color FG_COLOR_PROTOTYPE = new GColor("color.fg.analysis.options.prototype");
 	private static Color FG_COLOR_PROTOTYPE_SELECTED = new GColor("color.fg.analysis.options.prototype.selected");
-
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT = new GColor("color.bg.analysis.options.not.default.enablement");
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED = new GColor("color.bg.analysis.options.not.default.enablement.selected");
 	//@formatter:on
 
 	private List<AnalyzerEnablementState> analyzerStates;
@@ -115,7 +111,7 @@ public class AnalysisEnablementTableModel
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class AnalyzerEnabledColumn
 			extends AbstractDynamicTableColumn<AnalyzerEnablementState, Boolean, Object> {
@@ -179,15 +175,9 @@ public class AnalysisEnablementTableModel
 			}
 
 			// not the default enablement
-			if (isSelected) {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
-			}
-			else {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);
-			}
-
+			JLabel label = (JLabel) component;
+			label.setText("*");
 			setToolTip(component, "This option differs from the default");
-
 			return component;
 		}
 
@@ -222,13 +212,6 @@ public class AnalysisEnablementTableModel
 
 			// not the default enablement
 			component.setForeground(Palette.BLACK);
-			if (data.isSelected()) {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
-			}
-			else {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);
-			}
-
 			setToolTip(component, "This option differs from the default");
 			return component;
 		}

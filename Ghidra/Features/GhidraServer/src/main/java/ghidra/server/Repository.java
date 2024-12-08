@@ -424,7 +424,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		synchronized (fileSystem) {
 			if (userMap.remove(username) != null) {
 				writeUserList(userMap, anonymousAccessAllowed);
-				log.info("User access d from repository '" + name + "': " + username);
+				log.info("User access removed from repository '" + name + "': " + username);
 				return true;
 			}
 			return false;

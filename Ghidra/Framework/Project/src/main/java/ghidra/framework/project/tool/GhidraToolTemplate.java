@@ -95,19 +95,11 @@ public class GhidraToolTemplate implements ToolTemplate {
 		return iconURL;
 	}
 
-	/**
-	 * Returns a hash code value for the object. This method is
-	 * supported for the benefit of hashtables such as those provided by
-	 * <code>java.util.Hashtable</code>.
-	 */
 	@Override
 	public int hashCode() {
 		return getName().hashCode();
 	}
 
-	/**
-	 * Indicates whether some other object is "equal to" this one.
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
@@ -129,13 +121,6 @@ public class GhidraToolTemplate implements ToolTemplate {
 		return getName().equals(otherTemplate.getName());
 	}
 
-	/**
-	 * Returns a string representation of the object. In general, the
-	 * <code>toString</code> method returns a string that
-	 * "textually represents" this object. The result should
-	 * be a concise but informative representation that is easy for a
-	 * person to read.
-	 */
 	@Override
 	public String toString() {
 		return getName() + " - " + path;
@@ -154,7 +139,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 			catch (ClassNotFoundException e) {
 				Msg.warn(this, "Tool supported content class not found: " + className);
 			}
-			catch (Exception exc) {//TODO
+			catch (Exception exc) {
 				Msg.error(this, "Unexpected Exception: " + exc.getMessage(), exc);
 			}
 		}

@@ -51,6 +51,7 @@
         <LI>Raw Binary</LI>
         <LI>Relocatable Object Module Format (OMF)</LI>
         <LI>XML Input Format</LI>
+        <LI>SARIF Input Format</LI>
       </UL>
     </BLOCKQUOTE>
 
@@ -183,6 +184,32 @@
           in it.</LI>
         </UL>
       </BLOCKQUOTE>
+      
+      <H3><A name="Load_Libraries"></A>Load Libraries</H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to load libraries into the project and link them to an existing 
+        program. The program must be open in the tool to perform this action.</P>
+        
+        <P><B>NOTE: </B>If you know at the time of import that you want to load/link libraries, it
+        is preferred to set the library loading options directly from the <A href="#Importer_Dialog">
+        Importer Dialog's</A> <A href="#Common_Options">Options...</A> button.
+
+        <H4>Steps:</H4>
+
+        <UL>
+          <LI>Invoke the action from the <B>File<IMG src="help/shared/arrow.gif" alt="">Load 
+          Libraries...</B> menu item.</LI>
+
+          <LI>Use the options dialog that appears to control the library import settings.</LI>
+
+          <LI>Press OK on the dialog to initiate importing any discovered libraries.</LI>
+
+          <LI>When complete, the currently open program should have additional 
+          <A href="help/topics/ReferencesPlugin/external_program_names.htm#ExternalNamesDialog">
+          External Programs</A> linked if matching libraries were found.</LI>
+        </UL>
+      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H2>Other Import Actions</H2>
@@ -310,18 +337,8 @@
           <P>The project folder that will get searched for existing library programs.  If left
           empty, the folder that the main program is being imported to will be searched.</P>
         </BLOCKQUOTE>
-
-        <H4>Load Local Libraries From Disk</H4>
-
-        <BLOCKQUOTE>
-          <P>Searches the executable's directory to recursively resolve the external libraries used 
-          by the executable. The entire library dependency tree will be traversed in a depth-first 
-          manner and a program will be created for each found library (if it doesn't exist already).
-          The <A href="help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A>
-          in these programs will be resolved.<BR>
-        </BLOCKQUOTE>
         
-        <H4>Load System Libraries From Disk</H4>
+        <H4>Load Libraries From Disk</H4>
 
         <BLOCKQUOTE>
           <P>Searches a user-defined path list to recursively resolve the external libraries used 
@@ -383,6 +400,16 @@
           <P>If selected, Ghidra will import ELF sections that don't get loaded into memory when
           the program is run. These sections will not be stored in a special address space called
           "other".</P>
+        </BLOCKQUOTE>
+        
+        <H4>Max Zero-Segment Discard Size</H4>
+
+        <BLOCKQUOTE>
+          <P>When both section-headers and program-headers are present, this option controls the 
+          maximum byte-size of a non-section-based memory block which has a zero-fill which will
+          be discarded.  This is intended to allow section-alignment load sequences to be ignored
+          and discarded.  A value of "0" will disable all such discards.  The default value is 
+          255-bytes.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -670,13 +697,27 @@
           Names</A>.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
+      
+      <H3>SARIF Options <A name="sarif_options"><A name="Options_SARIF_Input_Format"/></A></H3>
+
+      <BLOCKQUOTE>
+        <P>The SARIF format is used to load from a SARIF formatted file. The options are simply
+        switches for which types of program information to import and are identical to the options
+        specified above for XML.</P>
+      </BLOCKQUOTE>
+
+
       </BLOCKQUOTE>
 
       <H2><A name="Library_Paths"></A>Library Search Path</H2>
 
       <BLOCKQUOTE>
-        <P>The Library Search Path dialog is used to specify the directories that Ghidra should use
-        to resolve external libraries (e.g.; *.dll, *.so) while importing.</P>
+        <P>The Library Search Path dialog is used to specify the directories, container files,
+        and/or FSRLs that Ghidra should use to resolve external libraries (e.g.; *.dll, *.so) while
+        importing. A "." can be added to specify the the program's import location.  FSRLs can be
+        added via the
+        <A href="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html#FSB_Add_Library_Search_Path">File System Browser context menu</A>.
+        </P>
       </BLOCKQUOTE>
 
       <P align="center"><IMG alt="" src="images/SearchPathsDialog.png"></P>
@@ -713,7 +754,8 @@
           <OL>
             <LI>Click the <IMG alt="" src="images/Plus.png"> button</LI>
 
-            <LI>Select a directory from the file chooser</LI>
+            <LI>Select a directory or container file from the file chooser, or the program's
+            import location if "." is not present in the list already</LI>
 
             <LI>Click the "Select Directory" button</LI>
           </OL>
@@ -781,7 +823,7 @@
 
           <LI><B>Size</B> - the size in bits of the processor address space</LI>
 
-          <LI><B>Endian</B> - the endianess of the processor</LI>
+          <LI><B>Endian</B> - the endianness of the processor</LI>
 
           <LI><B>Compile</B> - the compiler specification used to build the program</LI>
         </UL>

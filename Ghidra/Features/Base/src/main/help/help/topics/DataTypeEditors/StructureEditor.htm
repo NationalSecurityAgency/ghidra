@@ -87,6 +87,15 @@
         <LI>Immediately below the structure information area is a status line where status messages
         will appear.</LI>
       </UL>
+      
+      <P><IMG src="help/shared/note.png" alt=""> All actions will be disabled while information 
+      entries are being modified and have not yet been comitted (e.g., Name, Description, Size, etc.).
+      Such edits must either be comitted or reverted
+      before other actions may be performed.  An entry's background will changed to reflect the 
+      validity of an uncomitted value.  A valid entry will be comitted by hitting the &lt;Enter&gt; 
+      key or changing focus.  While in this edit state the entry may be reverted by hitting the
+      &lt;Escape&gt; key.</P>
+      
     </BLOCKQUOTE>
 
     <H2><A name="Structure_Editor_Apply_Editor_Changes"></A>Applying Changes</H2>
@@ -100,8 +109,46 @@
       applied and it is assigned to data in the program, all data items with the structure or union
       as the data type now have the new data type. In other words, the size or composition of those
       data items in the program will have changed due to the apply.</P>
+      
     </BLOCKQUOTE>
 
+	<H2><A name="Structure_Editor_Undo_Editor_Change"></A>Undo Change</H2>
+
+    <BLOCKQUOTE>
+      <P>Select the Undo Change icon <IMG src="icon.undo" alt=""> in the toolbar to revert
+      the previous change within the editor.  The editor state maintains a stack of changes
+      made within the editor.  The last change which may be reverted is described by the button's 
+      tooltip.  If this action is used and a change is reverted it may be re-applied by using the
+      <A href="#Structure_Editor_Redo_Editor_Change">Redo Change</A> action.  When changes are 
+      <A href="#Structure_Editor_Apply_Editor_Changes">applied</A> 
+      back to the original program or archive the undo/redo stack is cleared.<BR>
+      </P>
+
+	  <P><IMG src="help/shared/note.png" alt=""> Any change made to the editor's origininating 
+	  datatype manager (i.e., datatype or categories) which impact any datatype directly, or 
+	  indirectly, referenced by the edited composite at anytime during the edit session will 
+	  cause the undo/redo stack to be cleared.</P>
+	
+    </BLOCKQUOTE>
+    
+    <H2><A name="Structure_Editor_Redo_Editor_Change"></A>Redo Change</H2>
+
+    <BLOCKQUOTE>
+      <P>Select the Redo Change icon <IMG src="icon.redo" alt=""> in the toolbar to re-apply
+      a previous change which was just <A href="#Structure_Editor_Undo_Editor_Change">reverted</A>.
+      The last reverted change which may be re-applied is described by the button's 
+      tooltip.  If this action is used and a change is re-applied it may again be reverted by using the
+      <A href="#Structure_Editor_Undo_Editor_Change">Undo Change</A> action.  When changes are 
+      <A href="#Structure_Editor_Apply_Editor_Changes">applied</A> 
+      back to the original program or archive the undo/redo stack is cleared.<BR>
+      </P>
+      
+      <P><IMG src="help/shared/note.png" alt=""> Any change made to the editor's origininating 
+	  datatype manager (i.e., datatype or categories) which impact any datatype directly, or 
+	  indirectly, referenced by the edited composite at anytime during the edit session will 
+	  cause the undo/redo stack to be cleared.</P>
+
+    </BLOCKQUOTE>
 
     <H2><A name="Show_In_Data_Type_Manager"></A><A name="Structure_Editor_Show_In_Data_Type_Manager">Show In Data Type Manager</H2>
 
@@ -128,7 +175,12 @@
       Alternatively, the down <IMG src="images/go-down.tango.16.png" alt=""> and up <IMG src=
       "images/go-up.tango.16.png" alt=""> arrows next to the search field can be used to search
       forwards and backwards respectively. Searches are not case sensitive.</P>
+    
+
+	<P><IMG src="help/shared/tip.png" alt="" border="0">The default name of each structure field 
+	will also be examined when searching, even though they are not visible in the UI.</P>
     </BLOCKQUOTE>
+    
 
     <H2><A name="Structure_Editor_Name"></A>Changing the Name</H2>
 
@@ -254,7 +306,7 @@
         <LI><SPAN style="font-weight: bold;">machine</SPAN> - Sets the minimum alignment to conform 
         to the machine alignment specified by the associated data organization (i.e., compiler specification).
         This genrally corresponds to the largest alignment which is ever
-        used for any data type on the program's intended machine.  If this is choosen and
+        used for any data type on the program's intended machine.  If this is chosen and
         the resulting alignment is larger, this is likely due to a component data type
         having an alignment larger than the machine alignment.
         <BR>
@@ -357,7 +409,7 @@
       		bit-size is generally appended to the base datatype for datatype specification and 
       		presentation purposes (e.g., char:1).</li>
       		<li>A zero-length bitfield may be defined within a byte but its precise bit position
-      		is controlled by endianess alone.  A zero-length bitfield has no affect within a non-packed
+      		is controlled by endianness alone.  A zero-length bitfield has no affect within a non-packed
       		structure and is intended for use within packed structures where it may impart alignment
       		affects based upon compiler conventions.</li> 
       		<li>Inserting a bitfield within a non-packed structure may cause component shifts based 
@@ -377,7 +429,7 @@
     
     <P><IMG alt="Note:" src="help/shared/note.png">While packing of bitfields within packed 
     structures is controlled by the compiler specification (e.g., data organization), bit-packing
-    order is currently fixed based upon endianess.  Little-endian packs starting with bit-0 (lsb)
+    order is currently fixed based upon endianness.  Little-endian packs starting with bit-0 (lsb)
     while big-endian packs starting with bit-7 (msb).</P>
     
     <P><IMG alt="Note:" src="help/shared/note.png">The use of bitfield components is not 

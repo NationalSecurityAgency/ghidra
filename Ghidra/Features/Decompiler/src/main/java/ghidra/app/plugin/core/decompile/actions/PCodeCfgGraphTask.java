@@ -40,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
  * Task to create a PCode control flow graph based on decompiler output
  */
 public class PCodeCfgGraphTask extends Task {
-	enum PcodeGraphSubType {
+	public enum PcodeGraphSubType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
 
 		private String name;
@@ -95,8 +95,7 @@ public class PCodeCfgGraphTask extends Task {
 				createControlFlowGraph(graph, monitor);
 			}
 
-			GraphDisplay display =
-				graphService.getDefaultGraphDisplay(!newGraph, monitor);
+			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, monitor);
 
 			PCodeCfgDisplayListener displayListener =
 				new PCodeCfgDisplayListener(tool, display, hfunction, pcodeGraphType);
@@ -148,7 +147,7 @@ public class PCodeCfgGraphTask extends Task {
 			throws CancelledException {
 		Iterator<PcodeOpAST> opIter = hfunction.getPcodeOps();
 		while (opIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			graphOpData(graph, opIter.next(), monitor);
 		}
 	}
@@ -187,7 +186,7 @@ public class PCodeCfgGraphTask extends Task {
 		}
 
 		for (int i = start; i <= stop; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Varnode input = op.getInput(i);
 			if (input != null) {
 				if (opVertex == null) {
@@ -270,10 +269,9 @@ public class PCodeCfgGraphTask extends Task {
 
 	protected void createControlFlowGraph(AttributedGraph graph, TaskMonitor monitor)
 			throws CancelledException {
-		Iterator<PcodeBlockBasic> pblockIter = hfunction.getBasicBlocks().iterator();
-		while (pblockIter.hasNext()) {
-			monitor.checkCanceled();
-			graphPcodeBlock(graph, pblockIter.next(), monitor);
+		for (PcodeBlockBasic element : hfunction.getBasicBlocks()) {
+			monitor.checkCancelled();
+			graphPcodeBlock(graph, element, monitor);
 		}
 	}
 
@@ -288,7 +286,7 @@ public class PCodeCfgGraphTask extends Task {
 
 		int outCnt = pblock.getOutSize();
 		for (int i = 0; i < outCnt; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			PcodeBlock outPBlock = pblock.getOut(i);
 			AttributedVertex toVertex = getBlockVertex(graph, outPBlock, monitor);
 			graph.addEdge(fromVertex, toVertex);

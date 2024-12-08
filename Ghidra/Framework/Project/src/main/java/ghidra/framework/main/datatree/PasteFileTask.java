@@ -68,7 +68,7 @@ public class PasteFileTask extends Task {
 
 		monitor.initialize(list.size());
 		for (GTreeNode node : list) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (node instanceof DomainFolderNode) {
 				monitor.setMessage("Pasting folder");

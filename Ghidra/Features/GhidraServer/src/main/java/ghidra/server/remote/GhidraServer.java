@@ -69,6 +69,10 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	private static final String SERIAL_FILTER_FILE = "serial.filter";
 
 	private static final String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
+	private static final String TLS_ENABLED_CIPHERS_PROPERTY = "jdk.tls.server.cipherSuites";
+
+	private static final String SERIALIZATION_FILTER_DISABLED_PROPERTY =
+		"ghidra.server.serialization.filter.disabled";
 
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
@@ -207,7 +211,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 		GhidraServer.server = this;
 
-		// Establish serialization filter to address deserialization vulnerabity concerns
+		// Establish serialization filter to address deserialization vulnerabity concerns.
 		setGlobalSerializationFilter();
 
 		// Start block stream server - use RMI serverSocketFactory
@@ -408,7 +412,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	/**
 	 * Display an optional message followed by usage syntax.
 	 *
-	 * @param msg
+	 * @param msg optional message (may be null)
 	 */
 	private static void displayUsage(String msg) {
 		if (msg != null) {
@@ -498,7 +502,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 		ResourceFile serverRoot = new ResourceFile(Application.getInstallationDirectory(),
 			SystemUtilities.isInDevelopmentMode() ? "ghidra/Ghidra/RuntimeScripts/Common/server"
 					: "server");
-		if (serverRoot == null || serverRoot.getFile(false) == null) {
+		if (serverRoot.getFile(false) == null) {
 			System.err.println(
 				"Failed to resolve installation root directory!: " + serverRoot.getAbsolutePath());
 			System.exit(-1);
@@ -723,7 +727,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			System.exit(-1);
 		}
 
-		Application.initializeLogging(new File(serverRoot, "server.log"), null);
+		File serverLogFile = new File(serverRoot, "server.log");
+		Application.initializeLogging(serverLogFile, serverLogFile);
 
 		// In the absence of module initialization - we must invoke directly
 		SSLContextInitializer.initialize();
@@ -749,8 +754,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
 				// keystore has not been identified - use self-signed certificate
-				ApplicationKeyManagerFactory.setDefaultIdentity(
-					new X500Principal("CN=GhidraServer"));
+				ApplicationKeyManagerFactory
+						.setDefaultIdentity(new X500Principal("CN=GhidraServer"));
 				ApplicationKeyManagerFactory.addSubjectAlternativeName(hostname);
 			}
 			if (!ApplicationKeyManagerFactory.initialize()) {
@@ -795,6 +800,15 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 			log.info(
 				"   Anonymous server access: " + (allowAnonymousAccess ? "enabled" : "disabled"));
+
+			String enabledCiphers = System.getProperty(TLS_ENABLED_CIPHERS_PROPERTY);
+			if (enabledCiphers != null) {
+				String[] cipherList = enabledCiphers.split(",");
+				log.info("   Enabled cipher suites:");
+				for (String s : cipherList) {
+					log.info("       " + s);
+				}
+			}
 
 			serverSocketFactory = new SslRMIServerSocketFactory(null, getEnabledTlsProtocols(),
 				authMode == PKI_LOGIN) {
@@ -864,7 +878,13 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	private static void setGlobalSerializationFilter() throws IOException {
-		
+
+		// NOTE: Serialization filter may need to be disabled when profiling with VisualVM
+		String disabledStr = System.getProperty(SERIALIZATION_FILTER_DISABLED_PROPERTY);
+		if (Boolean.valueOf(disabledStr)) {
+			return;
+		}
+
 		ObjectInputFilter patternFilter = readSerialFilterPatternFile();
 
 		ObjectInputFilter filter = new ObjectInputFilter() {
@@ -883,11 +903,10 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					return status;
 				}
 
-
 				if (clazz == null) {
 					return Status.ALLOWED;
 				}
-				
+
 				Class<?> componentType = clazz.getComponentType();
 				if (componentType != null && componentType.isPrimitive()) {
 					return Status.ALLOWED; // allow all primitive arrays

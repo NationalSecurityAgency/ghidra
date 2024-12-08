@@ -1,0 +1,112 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search Memory</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+	<BLOCKQUOTE>
+	  
+   <H1><A name="Mnemonic_Search"></A>Search for Matching Instructions</H1>
+
+    <BLOCKQUOTE>
+      <P>This action works only on a selection of code. It uses the selected instructions to build
+      a combined mask/value bit pattern that is then used to populate the search field in a
+      <A href="Search_Memory.htm">Memory Search Window</A>. This enables searching through memory
+	  for a particular ordering of
+      instructions. There are three options available:&nbsp;</P>
+
+      <UL>
+        <LI><B>Include Operands</B> - All bits that make up the instruction and all bits that make
+        up the operands will be included in the search pattern.</LI>
+
+        <LI><B>Exclude Operands</B> - All bits that make up the instruction are included in the
+        search pattern but the bits that make up the operands will be masked off to enable wild
+        carding for those bits.</LI>
+
+        <LI><B>Include Operands (except constants)</B> - All bits that make up the instruction are
+        included in the search pattern and all bits that make up the operands, except constant
+        operands, which will be masked off to enable wild carding for those bits.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <P>Example:</P>
+
+        <P>A user first selects the following lines of code. Then, from the Search menu they choose
+        <B>Search for Matching Instructions</B> and one of the following options:</P>
+
+        <P align="center"><IMG border="1" src="images/SearchInstructions.png" alt=""></P>
+        <B>Option 1:</B> 
+
+        <BLOCKQUOTE>
+          <P>If the <B>Include Operands</B> action is chosen then the search will find all
+          instances of the following instructions and operands.</P>
+
+          <P align="center"><IMG border="1" src="images/SearchInstructionsIncludeOperands.png" alt=
+          ""></P>
+
+          <P>All of the bytes that make up the selected code will be searched for exactly, with no
+          wild carding. The bit pattern <B>10000101 11000000 01010110 01101010 00010100
+          01011110</B> which equates to the byte pattern <B>85 c0 56 6a 14 5e</B> is searched
+          for.<BR>
+          <BR>
+          </P>
+        </BLOCKQUOTE><B>Option 2:</B> 
+
+        <BLOCKQUOTE>
+          <P>If the <B>Exclude Operands</B> option is chosen then the search will find all
+          instances of the following instructions only.</P>
+
+          <P align="center"><IMG border="1" src="images/SearchInstructionsExcludeOperands.png" alt=
+          ""></P>
+
+          <P>Only the parts of the byte pattern that make up the instructions will be searched for
+          with the remaining bits used as wildcards. The bit pattern <B>10000101 11...... 01010...
+          01101010 ........ 01011...</B> is searched for where the .'s indicate the wild carded
+          values.<BR>
+          <BR>
+          </P>
+        </BLOCKQUOTE><B>Option 3:</B> 
+
+        <BLOCKQUOTE>
+          <P>If the <B>Include Operands (except constants)</B> option is chosen then the search
+          will find all instances of the instruction and all operands except the 0x14 which is a
+          constant.</P>
+
+          <P align="center"><IMG border="1" src=
+          "images/SearchInstructionsIncludeOperandsNoConsts.png" alt=""></P>
+
+          <P>The bit pattern <B>10000101 11000000 01010110 01101010 ........ 01011110</B> which
+          equates to the byte pattern <B>85 c0 56 6a xx 5e</B> is searched for where xx can be any
+          number N between 0x0 and 0xff.<BR>
+          <BR>
+          </P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P><IMG alt="Note" src="help/shared/note.png">The previous operations can only work on a
+      <B>single</B> selected region. If multiple regions are selected, the following error dialog
+      will be shown and the operation will be cancelled.</P>
+
+      <P align="center"><IMG border="1" src="images/MultipleSelectionError.png" alt=""></P>
+      <BR>
+      <BR>
+      
+      <P class="providedbyplugin">Provided by: <I>Mnemonic Search Plugin</I></P>
+  
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/Search/Search_Memory.htm">Search Memory</A></LI>
+    </UL><BR>
+     <BR>    
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

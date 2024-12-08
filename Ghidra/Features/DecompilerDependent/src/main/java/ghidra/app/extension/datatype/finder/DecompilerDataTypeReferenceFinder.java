@@ -111,7 +111,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		Listing listing = program.getListing();
 		FunctionIterator it = listing.getFunctions(true);
 		for (Function f : it) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (results.contains(f)) {
 				continue;
 			}
@@ -124,11 +124,25 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		// note: do this here, so that don't cause the code above to skip processing these functions
 		Set<Function> callers = new HashSet<>();
 		for (Function f : results) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Set<Function> callingFunctions = f.getCallingFunctions(monitor);
 			callers.addAll(callingFunctions);
 		}
 
+		results.addAll(callers);
+		
+		// Add any callers to external function that use any form of the data type
+		it = listing.getExternalFunctions();
+		callers = new HashSet<>();
+		for (Function f : it) {
+			monitor.checkCancelled();
+
+			if (usesAnyType(f, types)) {
+				Set<Function> callingFunctions = f.getCallingFunctions(monitor);
+				callers.addAll(callingFunctions);
+			}
+		}
+		
 		results.addAll(callers);
 
 		return results;

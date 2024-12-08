@@ -15,6 +15,7 @@
  */
 package ghidra.pcodeCPort.opcodes;
 // Names of ops associated with their opcode number
+
 // Some of the names have been replaced with special placeholder
 // ops for the sleigh compiler and interpreter these are as follows:
 //    MULTIEQUAL = BUILD
@@ -23,7 +24,8 @@ package ghidra.pcodeCPort.opcodes;
 //    PTRSUB     = CROSSBUILD
 
 public enum OpCode {
-	DO_NOT_USE_ME_I_AM_ENUM_ELEMENT_ZERO, CPUI_COPY, // Copy one operand to another
+	DO_NOT_USE_ME_I_AM_ENUM_ELEMENT_ZERO,
+	CPUI_COPY, // Copy one operand to another
 	CPUI_LOAD, // Dereference a pointer into specified space
 	CPUI_STORE, // Store at a pointer into specified space
 
@@ -127,9 +129,9 @@ public enum OpCode {
 	public OpCode getOpCodeFlip()
 
 	{ // Return the complimentary opcode for boolean operations
-		// (or CPUI_MAX if not boolean) Set reorder to true if
-		// the complimentary operation would involve reordering
-		// the input parameters
+									// (or CPUI_MAX if not boolean) Set reorder to true if
+									// the complimentary operation would involve reordering
+									// the input parameters
 		switch (this) {
 			case CPUI_INT_EQUAL:
 				return CPUI_INT_NOTEQUAL;
@@ -162,9 +164,9 @@ public enum OpCode {
 	public boolean getBooleanFlip()
 
 	{ // Return the complimentary opcode for boolean operations
-		// (or CPUI_MAX if not boolean) Set reorder to true if
-		// the complimentary operation would involve reordering
-		// the input parameters
+										// (or CPUI_MAX if not boolean) Set reorder to true if
+										// the complimentary operation would involve reordering
+										// the input parameters
 		switch (this) {
 			case CPUI_INT_EQUAL:
 				return false;
@@ -200,21 +202,20 @@ public enum OpCode {
 		"INT_ADD", "INT_SUB", "INT_CARRY", "INT_SCARRY", "INT_SBORROW", "INT_2COMP", "INT_NEGATE",
 		"INT_XOR", "INT_AND", "INT_OR", "INT_LEFT", "INT_RIGHT", "INT_SRIGHT", "INT_MULT",
 		"INT_DIV", "INT_SDIV", "INT_REM", "INT_SREM", "BOOL_NEGATE", "BOOL_XOR", "BOOL_AND",
-		"BOOL_OR", "FLOAT_EQUAL", "FLOAT_NOTEQUAL", "FLOAT_LESS", "FLOAT_LESSEQUAL",
-		"UNUSED1", "FLOAT_NAN", "FLOAT_ADD", "FLOAT_DIV", "FLOAT_MULT", "FLOAT_SUB",
-		"FLOAT_NEG", "FLOAT_ABS", "FLOAT_SQRT", "INT2FLOAT", "FLOAT2FLOAT", "TRUNC", "CEIL",
-		"FLOOR", "ROUND", "BUILD", "DELAY_SLOT", "PIECE", "SUBPIECE", "CAST", "LABEL",
-		"CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW", "INSERT", "EXTRACT", "POPCOUNT",
-		"LZCOUNT" };
+		"BOOL_OR", "FLOAT_EQUAL", "FLOAT_NOTEQUAL", "FLOAT_LESS", "FLOAT_LESSEQUAL", "UNUSED1",
+		"FLOAT_NAN", "FLOAT_ADD", "FLOAT_DIV", "FLOAT_MULT", "FLOAT_SUB", "FLOAT_NEG", "FLOAT_ABS",
+		"FLOAT_SQRT", "INT2FLOAT", "FLOAT2FLOAT", "TRUNC", "CEIL", "FLOOR", "ROUND", "BUILD",
+		"DELAY_SLOT", "PIECE", "SUBPIECE", "CAST", "LABEL", "CROSSBUILD", "SEGMENTOP", "CPOOLREF",
+		"NEW", "INSERT", "EXTRACT", "POPCOUNT", "LZCOUNT" };
 
 	public static String get_opname(OpCode op) {
 		return opcode_name[op.ordinal()];
 	}
 
-	static final int opcode_indices[] = { 0, 39, 37, 40, 38, 4, 6, 60, 7, 8, 9, 64, 5, 57, 1, 68, 66,
-			61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70, 54, 24, 19, 27, 21,
-			33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30, 23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17,
-			65, 2, 73, 69, 62, 72, 10, 59, 67, 3, 63, 56, 45 };
+	static final int opcode_indices[] = { 0, 39, 37, 40, 38, 4, 6, 60, 7, 8, 9, 64, 5, 57, 1, 68,
+		66, 61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70, 54, 24, 19, 27, 21,
+		33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30, 23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17, 65,
+		2, 73, 69, 62, 72, 10, 59, 67, 3, 63, 56, 45 };
 
 	public static OpCode get_opcode(String nm) { // Use binary search to find name
 		int min = 1; // Don't include BLANK

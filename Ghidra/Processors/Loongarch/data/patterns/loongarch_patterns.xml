@@ -1,0 +1,38 @@
+<patternlist>
+
+  <patternpairs totalbits="32" postbits="16">
+    <!--  Higher confidence patterns, after a return and more defined bits -->
+    <prepatterns>
+      <data>0x20 0x00 0x00 0x4c</data>                    <!-- ret -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x63 ......00 111..... 0x02 01100001 .....000 11...... 0x29 </data>           <!-- addi.d sp sp,-imm;  st.d  ra,sp(imm8)-->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+  
+  
+  <patternpairs totalbits="32" postbits="16">
+    <!--  Medium confidence, more bits, but prepattern are jumps, not return -->
+    <prepatterns>
+      <data> 11111111 ......11 ........ 01010011 </data> <!-- b imm , backwards a small amount -->
+      <data> 0x80 0x01 0x00 0x4c                 </data> <!-- jr       t0 -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x63 ......00 111..... 0x02 </data>           <!-- addi.d sp sp,-imm; -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  
+    <patternpairs totalbits="32" postbits="16">
+    <!--  Higher confidence patterns, after a return and more defined bits -->
+    <prepatterns>
+      <data>0x20 0x00 0x00 0x4c</data>                    <!-- ret -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x63 ......00 111..... 0x02  </data>           <!-- addi.d sp sp,-imm; -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  
+</patternlist>

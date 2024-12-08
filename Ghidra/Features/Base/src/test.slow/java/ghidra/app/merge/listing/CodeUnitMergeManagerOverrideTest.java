@@ -15,15 +15,16 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
 import ghidra.program.database.*;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramDiff;
-
-import org.junit.Test;
 
 /**
  * Test the merge of the versioned program's listing.
@@ -43,26 +44,13 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 @Test
     public void testAddLatestFlowOverride() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
 				// Do nothing.
 			}
@@ -78,28 +66,15 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 @Test
     public void testAddMyFlowOverride() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
 				// Do nothing.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
 			}
 		});
 
@@ -113,38 +88,17 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 @Test
     public void testAddLatestFlowOverrideMyFlowOverridePickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
 			}
 		});
 
@@ -159,38 +113,17 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 @Test
     public void testAddLatestFlowOverrideMyFlowOverridePickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
 			}
 		});
 
@@ -205,38 +138,17 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 @Test
     public void testAddLatestFlowOverrideMyFlowOverridePickOrig() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
 			}
 		});
 
@@ -251,38 +163,17 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 @Test
     public void testSameFlowOverrideLatestMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 		});
 
@@ -298,47 +189,23 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		mtf.initialize("DiffTestPgm1", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.NONE);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.NONE);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
 			}
 		});
 
@@ -355,18 +222,10 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		mtf.initialize("DiffTestPgm1", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					// Create a data ref.
-					refMgr.addMemoryReference(addr(program, "0100354f"), addr(program, "01003553"),
-						RefType.DATA, SourceType.USER_DEFINED, 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				// Create a data ref.
+				refMgr.addMemoryReference(addr(program, "0100354f"), addr(program, "01003553"),
+					RefType.DATA, SourceType.USER_DEFINED, 1);
 			}
 
 			@Override
@@ -381,17 +240,10 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-			}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
+					
 				ReferenceManager refMgr = program.getReferenceManager();
 				Reference[] referencesFrom = refMgr.getReferencesFrom(addr(program, "0100354f"), 1);
 				assertEquals(1, referencesFrom.length);
@@ -422,33 +274,18 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		mtf.initialize("DiffTestPgm1", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
 				ReferenceManager refMgr = program.getReferenceManager();
-					// Create a data ref.
-					refMgr.addMemoryReference(addr(program, "0100354f"), addr(program, "01003553"),
-						RefType.DATA, SourceType.USER_DEFINED, 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Create a data ref.
+				refMgr.addMemoryReference(addr(program, "0100354f"), addr(program, "01003553"),
+					RefType.DATA, SourceType.USER_DEFINED, 1);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
+					
 				ReferenceManager refMgr = program.getReferenceManager();
 				Reference[] referencesFrom = refMgr.getReferencesFrom(addr(program, "0100354f"), 1);
 				assertEquals(1, referencesFrom.length);
@@ -459,17 +296,10 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-			}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				Reference[] referencesFrom = refMgr.getReferencesFrom(addr(program, "0100354f"), 1);
 				assertEquals(1, referencesFrom.length);
@@ -501,33 +331,18 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		mtf.initialize("DiffTestPgm1", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
 					ReferenceManager refMgr = program.getReferenceManager();
-					// Create a data ref.
-					refMgr.addMemoryReference(addr(program, "0100354f"), addr(program, "01003553"),
-						RefType.DATA, SourceType.USER_DEFINED, 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Create a data ref.
+				refMgr.addMemoryReference(addr(program, "0100354f"), addr(program, "01003553"),
+					RefType.DATA, SourceType.USER_DEFINED, 1);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.BRANCH);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.BRANCH);
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				Reference[] referencesFrom = refMgr.getReferencesFrom(addr(program, "0100354f"), 1);
 				assertEquals(1, referencesFrom.length);
@@ -538,17 +353,10 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				Reference[] referencesFrom = refMgr.getReferencesFrom(addr(program, "0100354f"), 1);
 				assertEquals(1, referencesFrom.length);
@@ -580,38 +388,22 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// Fallthrough override from 0100354f to 01003553.
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFallThrough(addr(program, "01003553"));
-					commit = true;
-					assertEquals(addr(program, "01003553"), instruction.getFallThrough());
-					assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Fallthrough override from 0100354f to 01003553.
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFallThrough(addr(program, "01003553"));
+				assertEquals(addr(program, "01003553"), instruction.getFallThrough());
+				assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// Flow override at 0100354f was changed to a CallReturn.
-					Instruction instruction =
-						program.getListing().getInstructionAt(addr(program, "0100354f"));
-					instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-					assertEquals(addr(program, "01003551"), instruction.getFallThrough());
-					assertEquals(FlowOverride.CALL_RETURN, instruction.getFlowOverride());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Flow override at 0100354f was changed to a CallReturn.
+				Instruction instruction =
+					program.getListing().getInstructionAt(addr(program, "0100354f"));
+				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
+				assertEquals(addr(program, "01003551"), instruction.getFallThrough());
+				assertEquals(FlowOverride.CALL_RETURN, instruction.getFlowOverride());
 			}
 		});
 

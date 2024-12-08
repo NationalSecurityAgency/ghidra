@@ -157,7 +157,7 @@ public class MatchNameAnalysis {
 		exactDemangledBaseNames = new TreeSet<String>();
 
 		for (FidMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			FunctionRecord function = match.getFunctionRecord();
 
@@ -225,7 +225,7 @@ public class MatchNameAnalysis {
 			// Try getting rid of the variant field, to see if we can reduce the count
 			libraries.clear();
 			for (FidMatch match : matches) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				LibraryRecord libraryRecord = match.getLibraryRecord();
 				String familyVersion =
@@ -240,7 +240,7 @@ public class MatchNameAnalysis {
 			// Try just listing the library family
 			libraries.clear();
 			for (FidMatch match : matches) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				LibraryRecord libraryRecord = match.getLibraryRecord();
 				String familyVersion = libraryRecord.getLibraryFamilyName();

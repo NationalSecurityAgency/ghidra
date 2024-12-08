@@ -37,8 +37,6 @@ class GFileChooserOptionsDialog extends ReusableDialogComponentProvider {
 
 		addOKButton();
 		addCancelButton();
-
-		setPreferredSize(300, 100);
 	}
 
 	@Override

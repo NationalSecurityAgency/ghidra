@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +51,7 @@ public class SubroutineDestReferenceIterator implements CodeBlockReferenceIterat
      * @see ghidra.program.model.block.CodeBlockReferenceIterator#next()
      */
     public CodeBlockReference next() throws CancelledException {
-    	monitor.checkCanceled();
+    	monitor.checkCancelled();
     	return blockRefQueue.isEmpty() ? null : blockRefQueue.removeFirst();
     }
 
@@ -60,7 +59,7 @@ public class SubroutineDestReferenceIterator implements CodeBlockReferenceIterat
      * @see ghidra.program.model.block.CodeBlockReferenceIterator#hasNext()
      */
     public boolean hasNext() throws CancelledException {
-    	monitor.checkCanceled();
+    	monitor.checkCancelled();
 		return !blockRefQueue.isEmpty();
     }
     

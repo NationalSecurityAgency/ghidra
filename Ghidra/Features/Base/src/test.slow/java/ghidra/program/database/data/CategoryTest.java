@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,17 +44,17 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	private List<Event> events = Collections.synchronizedList(new ArrayList<Event>());
 
 	private int getEventCount() {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return events.size();
 	}
 
 	private Event getEvent(int index) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return events.get(index);
 	}
 
 	private void clearEvents() {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		events.clear();
 	}
 
@@ -85,7 +85,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		waitForPostedSwingRunnables();// wait for leftover datatype events
+		waitForSwing();// wait for leftover datatype events
 
 		endTransaction();
 		program.release(this);
@@ -219,7 +219,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move c4 to c5
 		cat5.moveCategory(cat4, TaskMonitor.DUMMY);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new CategoryPath("/c1/c2/c5/c4"), cat4.getCategoryPath());
 		assertTrue(dataMgr.containsCategory(new CategoryPath("/c1/c2/c5/c4")));
@@ -402,12 +402,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(dts[i].isEquivalent(newdts[i]));
 		}
 		DataType[] d = s.getDataTypes();
-		Arrays.sort(d, new Comparator<DataType>() {
-			@Override
-			public int compare(DataType o1, DataType o2) {
-				return o1.getName().compareTo(o2.getName());
-			}
-		});
+		Arrays.sort(d, DataTypeComparator.INSTANCE);
 		assertEquals(dts.length, d.length);
 		assertTrue(newdts[0] == d[0]);
 	}
@@ -690,6 +685,8 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		DataType byteDt = root.getDataType("byte");
 		DataType wordDt = root.getDataType("word");
 
+		assertEquals(4, getEventCount());
+
 		Event ev = getEvent(0);
 		assertEquals("Cat Added", ev.evName);
 		assertEquals(null, ev.dt);
@@ -706,21 +703,9 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(root.getCategoryPath(), ev.parent);
 
 		ev = getEvent(3);
-		assertEquals("DT Changed", ev.evName);
-		assertTrue(dt.isEquivalent(ev.dt));
-		assertEquals(null, ev.parent);
-
-//		ev = getEvent(4);  // eliminated size change event during creation
-//		assertEquals("DT Changed", ev.evName);
-//		assertTrue(dt.isEquivalent(ev.dt));
-//		assertEquals(null, ev.parent);
-
-		ev = getEvent(4);
 		assertEquals("DT Added", ev.evName);
 		assertTrue(dt.isEquivalent(ev.dt));
 		assertEquals(sub1.getCategoryPath(), ev.parent);
-
-		assertEquals(5, getEventCount());
 
 	}
 
@@ -785,7 +770,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		clearEvents();
 		DataType byteAdded = root.getDataType("Enum");
 		sub2.moveDataType(byteAdded, null);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(1, getEventCount());
 		Event ev = getEvent(0);
@@ -812,8 +797,9 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		struct2 = (Structure) newDt.insert(3, struct2).getDataType();
 
-		assertEquals(4, getEventCount());
-		Event ev = getEvent(3);
+		assertEquals(3, getEventCount());
+
+		Event ev = getEvent(2);
 		assertEquals("DT Changed", ev.evName);
 		assertEquals(newDt, ev.dt);
 	}
@@ -852,7 +838,8 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		@Override
-		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
+				CategoryPath newPath) {
 			events.add(new Event("Cat Renamed", null, newPath, oldPath.getName(), null));
 		}
 
@@ -877,12 +864,13 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
-			events.add(new Event("DT Removed", path.getCategoryPath(), null,
-				path.getDataTypeName(), null));
+			events.add(new Event("DT Removed", path.getCategoryPath(), null, path.getDataTypeName(),
+				null));
 		}
 
 		@Override
-		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
+				DataTypePath newPath) {
 			DataType dataType = dtm.getDataType(newPath);
 			events.add(new Event("DT Renamed", null, null, oldPath.getDataTypeName(), dataType));
 		}
@@ -911,6 +899,11 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			// don't care
+		}
+
+		@Override
+		public void restored(DataTypeManager dataTypeManager) {
 			// don't care
 		}
 	}

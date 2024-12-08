@@ -107,7 +107,7 @@ class DexHeaderFragmentManager {
 			return;
 		}
 		monitor.incrementProgress(1);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("DEX: creating fragment: " + fragmentName + " ...");
 		try {
 			ProgramModule module = program.getListing().getDefaultRootModule();
@@ -116,7 +116,7 @@ class DexHeaderFragmentManager {
 				fragment = module.createFragment(fragmentName);
 			}
 			for (AddressRange range : addressSet) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				fragment.move(range.getMinAddress(), range.getMaxAddress());
 			}
 		}

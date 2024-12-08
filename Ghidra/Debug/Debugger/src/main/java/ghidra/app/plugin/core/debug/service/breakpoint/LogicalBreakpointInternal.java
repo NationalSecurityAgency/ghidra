@@ -15,10 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.target.Target;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Bookmark;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 
@@ -31,7 +32,7 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 */
 	void setTraceAddress(Trace trace, Address address);
 
-	void setRecorder(Trace trace, TraceRecorder recorder);
+	void setTarget(Trace trace, Target target);
 
 	/**
 	 * Remove the given trace from this set

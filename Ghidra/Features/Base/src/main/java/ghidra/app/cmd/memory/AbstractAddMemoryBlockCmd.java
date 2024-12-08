@@ -16,7 +16,6 @@
 package ghidra.app.cmd.memory;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -28,7 +27,8 @@ import ghidra.util.exception.*;
 /**
  * Base command class for adding memory blocks.
  */
-abstract class AbstractAddMemoryBlockCmd implements Command {
+public abstract class AbstractAddMemoryBlockCmd implements Command<Program> {
+
 	protected String message;
 	protected final String name;
 	protected final String comment;
@@ -41,6 +41,8 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 	protected final boolean execute;
 	protected final boolean isVolatile;
 	protected final boolean isOverlay;
+
+	private boolean isArtificial = false;
 
 	AbstractAddMemoryBlockCmd(String name, String comment, String source, Address start,
 			long length, boolean read, boolean write, boolean execute, boolean isVolatile,
@@ -57,6 +59,15 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 		this.isOverlay = isOverlay;
 	}
 
+	/**
+	 * Prior to command execution the block's artificial attribute state may be specified
+	 * and will be applied to the new memory block.
+	 * @param a block artificial attribute state
+	 */
+	public void setArtificial(boolean a) {
+		isArtificial = a;
+	}
+
 	@Override
 	public String getStatusMsg() {
 		return message;
@@ -67,13 +78,11 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 		return "Add Memory Block";
 	}
 
-	protected abstract MemoryBlock createMemoryBlock(Memory memory)
-			throws LockException, MemoryConflictException, AddressOverflowException,
-			CancelledException;
+	protected abstract MemoryBlock createMemoryBlock(Memory memory) throws LockException,
+			MemoryConflictException, AddressOverflowException, CancelledException;
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		try {
 			Memory memory = program.getMemory();
 			MemoryBlock block = createMemoryBlock(memory);
@@ -82,6 +91,7 @@ abstract class AbstractAddMemoryBlockCmd implements Command {
 			block.setWrite(write);
 			block.setExecute(execute);
 			block.setVolatile(isVolatile);
+			block.setArtificial(isArtificial);
 			block.setSourceName(source);
 			renameFragment(program, block.getStart());
 			return true;

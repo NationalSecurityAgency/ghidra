@@ -24,8 +24,5 @@ eclipse.project.name = 'Features BytePatterns'
 
 dependencies {
 	api project(':Base')
-	api project(':Utility')
-	
-	helpPath project(path: ":Base", configuration: 'helpPath')
-	
+	api project(':Utility')	
 }

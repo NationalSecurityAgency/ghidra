@@ -27,7 +27,7 @@ import ghidra.sleigh.grammar.Location;
  */
 public class FlowRefSymbol extends SpecificSymbol {
 	private AddrSpace const_space;
-	
+
 	public FlowRefSymbol(Location location, String nm, AddrSpace cspc) {
 		super(location, nm);
 		const_space = cspc;
@@ -36,13 +36,13 @@ public class FlowRefSymbol extends SpecificSymbol {
 	}
 
 	@Override
-    public PatternExpression getPatternExpression() {
+	public PatternExpression getPatternExpression() {
 		return null;		// Cannot be used in pattern expressions
 	}
 
 	@Override
 	public symbol_type getType() {
-		return symbol_type.start_symbol;
+		return symbol_type.flowref_symbol;
 	}
 
 	@Override

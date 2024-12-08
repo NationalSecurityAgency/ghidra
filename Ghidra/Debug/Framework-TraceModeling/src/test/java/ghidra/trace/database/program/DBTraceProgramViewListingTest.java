@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +15,20 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.app.plugin.assembler.*;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.disassemble.Disassembler;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -35,6 +38,13 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCodeManager;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -42,15 +52,17 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 	ToyDBTraceBuilder b;
 
-	DBTraceProgramView view;
-	DBTraceProgramViewListing listing; // TODO: Do I want to expose the internal types?
+	DBTraceVariableSnapProgramView view;
+	DBTraceProgramViewListing listing;
 	DBTraceMemoryManager memory;
 	DBTraceCodeManager code;
 
 	protected static void assertUndefined(CodeUnit cu) {
-		Data data = (Data) cu;
-		assertEquals(DataType.DEFAULT, data.getDataType());
-		assertFalse(data.isDefined());
+		if (cu instanceof Data data && DataType.DEFAULT.equals(data.getDataType()) &&
+			!data.isDefined()) {
+			return;
+		}
+		fail("Expected undefined unit, but was '%s'".formatted(cu));
 	}
 
 	protected <T> List<T> takeN(int n, Iterator<T> it) {
@@ -877,5 +889,100 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		}
 		assertEquals(i4005, listing.getDefinedCodeUnitBefore(b.addr(0x4006)));
 		assertEquals(d4000, listing.getDefinedCodeUnitBefore(b.addr(0x4005)));
+	}
+
+	@Test
+	public void testGetCodeUnitsInTwoViews() throws Throwable {
+		try (Transaction tx = b.startTransaction()) {
+			memory.putBytes(0, b.addr(0x00400000), b.buf(1, 2, 3, 4, 5, 6, 7, 8));
+			memory.putBytes(1, b.addr(0x00400000), b.buf(8, 7, 6, 5, 4, 3, 2, 1));
+		}
+
+		view.setSnap(1);
+		DBTraceProgramView view0 = b.trace.getFixedProgramView(0);
+		DBTraceProgramViewListing listing0 = view0.getListing();
+
+		CodeUnit cu0 = listing0.getCodeUnitAt(b.addr(0x00400000));
+		CodeUnit cu1 = listing.getCodeUnitAt(b.addr(0x00400000));
+
+		assertArrayEquals(b.arr(1), cu0.getBytes());
+		assertArrayEquals(b.arr(8), cu1.getBytes());
+	}
+
+	@Test
+	public void testGetCodeUnitsInScratchView() throws Throwable {
+		TraceTimeManager tm = b.trace.getTimeManager();
+		Address entry = b.addr(0x00400000);
+		AddressSetView set = b.set(b.range(0x00400000, 0x00400003));
+		Assembler asm = Assemblers.getAssembler(b.language);
+
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+		buf.assemble("imm r1, #234");
+		buf.assemble("add r1, r1");
+
+		final long snap;
+		try (Transaction tx = b.startTransaction()) {
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
+			tm.getSnapshot(0, true);
+			memory.addRegion("Memory[test]", Lifespan.nowOn(0), b.range(0x00400000, 0x00400fff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+
+			TraceSnapshot scratch = tm.getSnapshot(Long.MIN_VALUE, true);
+			snap = scratch.getKey();
+			scratch.setSchedule(TraceSchedule.ZERO.steppedForward(thread, 1));
+
+			view.setSnap(snap);
+			Disassembler dis =
+				Disassembler.getDisassembler(view, TaskMonitor.DUMMY, msg -> Msg.error(this, msg));
+			AddressSetView result = dis.disassemble(entry, set);
+			assertEquals(set, result);
+
+			assertEquals(4, memory.putBytes(0, entry, ByteBuffer.wrap(buf.getBytes())));
+			// No disassembly at snap 0
+		}
+
+		byte[] arr = new byte[4];
+		view.getMemory().getBytes(entry, arr);
+		assertArrayEquals(buf.getBytes(), arr);
+		assertUndefined(listing.getCodeUnitAt(entry));
+	}
+
+	@Test
+	public void testCreateCodeUnitsInScratchViewAfterBytesChanged() throws Throwable {
+		TraceTimeManager tm = b.trace.getTimeManager();
+		Address entry = b.addr(0x00400000);
+		AddressSetView set = b.set(b.range(0x00400000, 0x00400003));
+		Assembler asm = Assemblers.getAssembler(b.language);
+
+		AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+		buf.assemble("imm r1, #234");
+		buf.assemble("add r1, r1");
+
+		final long snap;
+		try (Transaction tx = b.startTransaction()) {
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
+			tm.getSnapshot(0, true);
+			memory.addRegion("Memory[test]", Lifespan.nowOn(0), b.range(0x00400000, 0x00400fff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+
+			TraceSnapshot scratch = tm.getSnapshot(Long.MIN_VALUE, true);
+			snap = scratch.getKey();
+			scratch.setSchedule(TraceSchedule.ZERO.steppedForward(thread, 1));
+
+			view.setSnap(snap);
+			Disassembler dis =
+				Disassembler.getDisassembler(view, TaskMonitor.DUMMY, msg -> Msg.error(this, msg));
+			AddressSetView result = dis.disassemble(entry, set);
+			assertEquals(set, result);
+
+			assertEquals(4, memory.putBytes(0, entry, ByteBuffer.wrap(buf.getBytes())));
+			// No disassembly at snap 0
+
+			// Attempt re-disassembly at scratch snap
+			result = dis.disassemble(entry, set);
+			assertEquals(set, result);
+		}
+
+		assertEquals("imm r1,#0xea", listing.getCodeUnitAt(entry).toString());
 	}
 }

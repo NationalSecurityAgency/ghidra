@@ -15,14 +15,14 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 // Another name for zero pattern/value
@@ -32,7 +32,7 @@ public class EpsilonSymbol extends PatternlessSymbol {
 
 	public EpsilonSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public EpsilonSymbol(Location location, String nm, AddrSpace spc) {
 		super(location, nm);
@@ -46,27 +46,22 @@ public class EpsilonSymbol extends PatternlessSymbol {
 
 	@Override
 	public VarnodeTpl getVarnode() {
-		return new VarnodeTpl(location, new ConstTpl(const_space), new ConstTpl(
-			ConstTpl.const_type.real, 0), new ConstTpl(ConstTpl.const_type.real, 0));
+		return new VarnodeTpl(location, new ConstTpl(const_space),
+			new ConstTpl(ConstTpl.const_type.real, 0), new ConstTpl(ConstTpl.const_type.real, 0));
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<epsilon_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_EPSILON_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.closeElement(ELEM_EPSILON_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<epsilon_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		const_space = trans.getConstantSpace();
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_EPSILON_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_EPSILON_SYM_HEAD);
 	}
 
 }

@@ -53,7 +53,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public final static String READ_ONLY_PROPERTY = "READ_ONLY";
 
 	/**
-	 * Get the name of  the StoredObj that is associated with the data.
+	 * Get the name of this project file
 	 * @return the name
 	 */
 	public String getName();
@@ -65,8 +65,13 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public boolean exists();
 
 	/**
-	 * Returns a unique file-ID 
-	 * @return the ID
+	 * Returns a unique file-ID if one has been established or null.  Examples which may result in 
+	 * null ID:
+	 * <ul>
+	 * <li>Very old project file which pre-dates introduction of file ID, or</li>
+	 * <li>Remote versioned file with lost connection</li> 
+	 * </ul>
+	 * @return the file-ID or null if failed to obtain ID.
 	 */
 	public String getFileID();
 
@@ -83,18 +88,29 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public DomainFile setName(String newName) throws InvalidNameException, IOException;
 
 	/**
-	 * Returns the path name to the domain object.
+	 * Returns the full path name to this file
 	 * @return the path name
 	 */
 	public String getPathname();
 
 	/**
-	 * Get a remote Ghidra URL for this domain file if available within the associated shared
+	 * Get a remote Ghidra URL for this domain file if available within an associated shared
 	 * project repository.  A null value will be returned if shared file does not exist and
-	 * may be returned if shared repository is not connected or a connection error occurs.
+	 * may also be returned if shared repository is not connected or a connection error occurs.
+	 * @param ref reference within a file, may be null.  NOTE: such reference interpretation
+	 * is specific to a domain object and tooling with limited support.
 	 * @return remote Ghidra URL for this file or null
 	 */
-	public URL getSharedProjectURL();
+	public URL getSharedProjectURL(String ref);
+
+	/**
+	 * Get a local Ghidra URL for this domain file if available within the associated non-transient
+	 * local project.  A null value will be returned if project is transient.
+	 * @param ref reference within a file, may be null.  NOTE: such reference interpretation
+	 * is specific to a domain object and tooling with limited support.
+	 * @return local Ghidra URL for this file or null if transient or not applicable
+	 */
+	public URL getLocalProjectURL(String ref);
 
 	/**
 	 * Returns the local storage location for the project that this DomainFile belongs to.
@@ -103,7 +119,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public ProjectLocator getProjectLocator();
 
 	/**
-	 * Returns content-type string
+	 * Returns content-type string for this file
 	 * @return the file content type or a reserved content type {@link ContentHandler#MISSING_CONTENT}
 	 * or {@link ContentHandler#UNKNOWN_CONTENT}.
 	 */
@@ -123,8 +139,11 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Returns changes made to versioned file by others since checkout was performed.
+	 * NOTE: This method is unable to cope with version issues which may require an
+	 * upgrade.
 	 * @return change set or null
-	 * @throws VersionException latest version was created with a newer version of software
+	 * @throws VersionException latest version was created with a different version of software
+	 * which prevents rapid determination of change set.
 	 * @throws IOException if a folder item access error occurs or change set was 
 	 * produced by newer version of software and can not be read
 	 */
@@ -286,19 +305,34 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Returns true if this file may be checked-in to the associated repository.
-	 * @return true if can check-in
+	 * 
+	 * Note: this does not take into consideration cases where the file is currently
+	 * in-use which may cause a failure if a checkin is attempted.
+	 * 
+	 * @return true if a check-in can be attempted (i.e., file is checked-out with changes),
+	 * else false
 	 */
 	public boolean canCheckin();
 
 	/**
 	 * Returns true if this file can be merged with the current versioned file.
-	 * @return true if can merge
+	 * 
+	 * Note: this does not take into consideration cases where the file is currently
+	 * in-use which may cause a failure if a merge is attempted.
+	 * 
+	 * @return true if a merge can be attempted (i.e., file is checked-out and a newer 
+	 * version exists), else false
 	 */
 	public boolean canMerge();
 
 	/**
 	 * Returns true if this private file may be added to the associated repository.
-	 * @return true if can add to the repository
+	 * 
+	 * Note: this does not take into consideration cases where the file is currently
+	 * in-use which may cause a failure if add to repository is attempted.
+	 * 
+	 * @return true if add to the repository can be attempted (i.e., file in active project
+	 * is not versioned or hijacked)
 	 */
 	public boolean canAddToRepository();
 
@@ -312,9 +346,12 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public void setReadOnly(boolean state) throws IOException;
 
 	/**
-	 * Returns whether the object is read-only. From a framework point of view a read-only object 
-	 * can never be changed.
-	 * @return true if read-only
+	 * Returns whether this file is explicitly marked as read-only.  This method is only supported
+	 * by the local file system and does not apply to a versioned file that is not checked-out.
+	 * A versioned file that is not checked-out will always return false, while a 
+	 * {@link DomainFileProxy} will always return true.
+	 * From a framework point of view a read-only file can never be changed.
+	 * @return true if this file is marked read-only
 	 */
 	public boolean isReadOnly();
 
@@ -359,7 +396,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/** 
 	 * Adds this private file to version control.
 	 * @param comment new version comment
-	 * @param keepCheckedOut if true, the file will be initially checked-out
+	 * @param keepCheckedOut if true, the file will be initially checked-out.  This option will be
+	 * ignored if file is currently open in which case file will remain checked-out.
 	 * @param monitor progress monitor
 	 * @throws FileInUseException if this file is in-use.
 	 * @throws IOException if an IO or access error occurs.  Also if file is not 
@@ -384,19 +422,41 @@ public interface DomainFile extends Comparable<DomainFile> {
 			throws IOException, CancelledException;
 
 	/**
+	* Performs check in to associated repository.  File must be checked-out 
+	* and modified since checkout.
+	* @param checkinHandler provides user input data to complete checkin process.
+	* The keep-checked-out option supplied by this handler will be ignored if file is currently 
+	* open in which case file will remain checked-out.
+	* @param monitor the TaskMonitor.
+	* @throws IOException if an IO or access error occurs
+	* @throws VersionException if unable to handle domain object version in versioned filesystem.
+	* We are unable to upgrade since this would only occur if checkout is not exclusive.
+	* @throws CancelledException if task monitor cancelled operation
+	*/
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
+			throws IOException, VersionException, CancelledException;
+
+	/**
 	 * Performs check in to associated repository.  File must be checked-out 
 	 * and modified since checkout.
 	 * @param checkinHandler provides user input data to complete checkin process.
-	 * @param okToUpgrade if true an upgrade will be performed if needed
+	 * This keep-checked-out option supplied by this handler will be ignored and forced true 
+	 * if file is currently open.
+	 * @param okToUpgrade if true an upgrade will be performed if needed (ignored)
 	 * @param monitor the TaskMonitor.
 	 * @throws IOException if an IO or access error occurs
 	 * @throws VersionException if unable to handle domain object version in versioned filesystem.
 	 * If okToUpgrade was false, check exception to see if it can be upgraded
 	 * sometime after doing a checkout.
 	 * @throws CancelledException if task monitor cancelled operation
+	 * @deprecated use alternative {@link #checkin(CheckinHandler, TaskMonitor)} method since
+	 * okToUpgrade cannot be respected and is ignored.  Upgrade cannot be performed during checkin.
 	 */
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
-			throws IOException, VersionException, CancelledException;
+	@Deprecated(since = "11.1", forRemoval = true)
+	public default void checkin(CheckinHandler checkinHandler, boolean okToUpgrade,
+			TaskMonitor monitor) throws IOException, VersionException, CancelledException {
+		checkin(checkinHandler, monitor);
+	}
 
 	/**
 	 * Performs merge from current version of versioned file into local checked-out file. 
@@ -415,7 +475,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @param keep if true, the private database will be renamed with a .keep
 	 * extension.
 	 * @throws NotConnectedException if shared project and not connected to repository
-	 * @throws FileInUseException if this file is in-use / checked-out.
+	 * @throws FileInUseException if this file is in-use.
 	 * @throws IOException if file is not checked-out or an IO / access error occurs.
 	 */
 	public void undoCheckout(boolean keep) throws IOException;
@@ -538,7 +598,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Get the list of consumers (Objects) for this domain file.
-	 * @return empty array list if there are no consumers
+	 * @return true if linking is supported allowing a link-file to be created which 
+	 * references this file, else false.
 	 */
 	public List<?> getConsumers();
 
@@ -582,7 +643,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to track changes, etc. 
 	 * @return file length
 	 * @throws IOException if IO or access error occurs
 	 */

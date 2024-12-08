@@ -24,9 +24,10 @@ import java.util.Date;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
@@ -70,6 +71,13 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 		env.connectTools(toolOne, tool2);
 
 		program = buildNotepad();
+
+		// open program in toolOne
+		env.open(program);
+
+		// open same program in second tool - cannot rely on tool connection for this
+		tool2.firePluginEvent(new OpenProgramPluginEvent("Test", program));
+
 		final ProgramManager pm = toolOne.getService(ProgramManager.class);
 		runSwing(() -> pm.openProgram(program.getDomainFile()));
 	}
@@ -130,7 +138,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 		assertNotNull(endPoint);
 
 		dragMouse(c, 1, startPoint.x, startPoint.y, endPoint.x, endPoint.y, 0);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		ByteBlockSelection selOne = c.getViewerSelection();
 
@@ -153,7 +161,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 			ByteViewerComponent c = panelOne.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panelOne.getCurrentComponent();
@@ -183,7 +191,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 			ByteViewerComponent c = panelOne.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panelOne.getCurrentComponent();
@@ -223,8 +231,8 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 	}
 
 	private Address convertToAddr(ByteViewerPlugin plugin, ByteBlockInfo info) {
-		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddress(
-			info.getBlock(), info.getOffset());
+		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet())
+				.getAddress(info.getBlock(), info.getOffset());
 	}
 
 	private boolean byteBlockSelectionEquals(ByteBlockSelection b1, ByteBlockSelection b2) {

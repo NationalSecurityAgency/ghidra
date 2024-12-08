@@ -28,6 +28,10 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * {@code LinkedGhidraSubFolder} corresponds to a {@link DomainFolder} contained within a
+ * {@link LinkedGhidraFolder} or another {@code LinkedGhidraSubFolder}.
+ */
 class LinkedGhidraSubFolder implements LinkedDomainFolder {
 
 	private final LinkedGhidraFolder linkedRootFolder;
@@ -103,6 +107,15 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 			catch (MalformedURLException e) {
 				// ignore
 			}
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL() {
+		ProjectLocator projectLocator = parent.getProjectLocator();
+		if (!projectLocator.isTransient()) {
+			return GhidraURL.makeURL(projectLocator, getPathname(), null);
 		}
 		return null;
 	}

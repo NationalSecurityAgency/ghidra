@@ -20,13 +20,13 @@ import java.util.List;
 import ghidra.framework.plugintool.util.*;
 
 /**
- * The default plugin package provider that uses the {@link PluginClassManager} to supply packages
+ * The default plugin package provider that uses the {@link PluginsConfiguration} to supply packages
  */
 public class DeafultPluginPackagingProvider implements PluginPackagingProvider {
 
-	private PluginClassManager pluginClassManager;
+	private PluginsConfiguration pluginClassManager;
 
-	DeafultPluginPackagingProvider(PluginClassManager pluginClassManager) {
+	DeafultPluginPackagingProvider(PluginsConfiguration pluginClassManager) {
 		this.pluginClassManager = pluginClassManager;
 	}
 

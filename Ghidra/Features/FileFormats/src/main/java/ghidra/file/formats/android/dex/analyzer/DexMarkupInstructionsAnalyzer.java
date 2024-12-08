@@ -54,7 +54,7 @@ public class DexMarkupInstructionsAnalyzer extends FileFormatAnalyzer {
 		while (instructionIterator.hasNext()) {
 			Instruction instruction = instructionIterator.next();
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			monitor.setMessage("DEX: Instruction markup ... " + instruction.getMinAddress());
 

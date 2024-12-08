@@ -15,46 +15,31 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.exception.CancelledException;
-
 /**
  * A class that is meant to wrap a {@link TaskMonitor} when you do not know the maximum value
  * of the progress.
  */
-public class UnknownProgressWrappingTaskMonitor extends TaskMonitorAdapter {
+public class UnknownProgressWrappingTaskMonitor extends WrappingTaskMonitor {
 
-	private TaskMonitor delegate;
+	public UnknownProgressWrappingTaskMonitor(TaskMonitor delegate) {
+		this(delegate, 0);
+	}
 
 	public UnknownProgressWrappingTaskMonitor(TaskMonitor delegate, long startMaximum) {
-		this.delegate = delegate;
+		super(delegate);
 		delegate.setMaximum(startMaximum);
 	}
 
 	@Override
-	public void setMessage(String message) {
-		delegate.setMessage(message);
-	}
-
-	@Override
 	public void setProgress(long value) {
-		delegate.setProgress(value);
+		super.setProgress(value);
 		maybeUpdateMaximum();
 	}
 
 	@Override
 	public void incrementProgress(long incrementAmount) {
-		delegate.incrementProgress(incrementAmount);
+		super.incrementProgress(incrementAmount);
 		maybeUpdateMaximum();
-	}
-
-	@Override
-	public synchronized boolean isCancelled() {
-		return delegate.isCancelled();
-	}
-
-	@Override
-	public void checkCanceled() throws CancelledException {
-		delegate.checkCanceled();
 	}
 
 	private void maybeUpdateMaximum() {
@@ -63,7 +48,8 @@ public class UnknownProgressWrappingTaskMonitor extends TaskMonitorAdapter {
 
 		long _75_percent = currentMaximum - (currentMaximum / 4);
 		if (progress > _75_percent) {
-			delegate.setMaximum(Math.max(progress, currentMaximum + currentMaximum / 4));
+			delegate.setMaximum(
+				Math.max(Math.max(progress, 4), currentMaximum + currentMaximum / 4));
 		}
 	}
 

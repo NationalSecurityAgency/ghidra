@@ -115,7 +115,7 @@ import ghidra.util.exception.AssertException;
  * and <B>minorEnd</B> {@link Location Locations}.  The major Location specifies the <B>edge</B>
  * for an {@link EdgePopupPlacer} and the minorBegin Location specifies the placement <B>cell</B>
  * on this edge and the minorEnds specifies the last cell (amount of shift allowed), starting
- * from the minorBegin Location.  For a CENTER minorBeing Location, the minorEnd cell may be
+ * from the minorBegin Location.  For a CENTER minorBegin Location, the minorEnd cell may be
  * any of the three allowed Locations on that major edge as well as null, representing that a
  * shift is allowed in either direction.  When the minorEnd Location is set to the minorBegin
  * Location, then no shift is permitted.

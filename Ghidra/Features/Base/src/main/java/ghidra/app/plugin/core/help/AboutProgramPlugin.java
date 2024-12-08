@@ -116,7 +116,8 @@ public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin
 				}
 			};
 			aboutAction.addToWindowWhen(ProgramActionContext.class);
-			aboutAction.setSupportsDefaultToolContext(true);
+			// use the CodeBrowser as a backup context provider
+			aboutAction.setContextClass(ProgramActionContext.class, true);
 
 			aboutAction.setMenuBarData(
 				new MenuData(new String[] { ToolConstants.MENU_HELP, ACTION_NAME }, null, "ZZZ"));

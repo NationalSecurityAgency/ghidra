@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="68000:BE:*:*">
+    <patternfile>68000_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

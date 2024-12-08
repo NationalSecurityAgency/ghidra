@@ -198,7 +198,7 @@ of RAM. It is defined simply as an indexed sequence of bytes that can
 be read and written by the p-code operations. For a specific byte, the unique index
 that labels it is the byte's <emphasis role="bold">address</emphasis>. An address space has a
 name to identify it, a size that indicates the number of distinct
-indices into the space, and an <emphasis role="bold">endianess</emphasis>
+indices into the space, and an <emphasis role="bold">endianness</emphasis>
 associated with it that indicates how integers and other multi-byte
 values are encoded into the space. A typical processor
 will have a <emphasis role="bold">ram</emphasis> space, to model
@@ -249,7 +249,7 @@ on the varnodes: integer, boolean, and floating-point.
 <itemizedlist mark='bullet' spacing='compact'>
   <listitem>
     Operations that manipulate integers always interpret a varnode as a
-    twos-complement encoding using the endianess associated with the
+    twos-complement encoding using the endianness associated with the
     address space containing the varnode.
   </listitem>
   <listitem>
@@ -878,7 +878,7 @@ subroutine.
 </table>
 </informalexample>
 <para>
-This is a concatenation operator that understands the endianess of the
+This is a concatenation operator that understands the endianness of the
 data. The size of input0 and input1 must add up to the size of
 output. The data from the inputs is concatenated in such a way that,
 if the inputs and output are considered integers, the first input
@@ -928,7 +928,7 @@ makes up the most significant part of the output.
 </table>
 </informalexample>
 <para>
-This is a truncation operator that understands the endianess of the
+This is a truncation operator that understands the endianness of the
 data. Input1 indicates the number of least significant bytes of input0
 to be thrown away. Output is then filled with any remaining bytes of
 input0 <emphasis>up to the size of output</emphasis>. If the size of

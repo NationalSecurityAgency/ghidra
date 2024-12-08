@@ -67,8 +67,10 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 	private BuiltInDataTypeManager() {
 		super(BUILT_IN_DATA_TYPES_NAME);
 		initialize();
+		setImmutable();
 	}
 
+	@Override
 	protected final void setProgramArchitecture(ProgramArchitecture programArchitecture,
 			VariableStorageManager variableStorageMgr, boolean force, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -95,6 +97,16 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 			throw new UnsupportedOperationException();
 		}
 		super.endTransaction(transactionID, commit);
+	}
+
+	@Override
+	public synchronized boolean canUndo() {
+		return false;
+	}
+
+	@Override
+	public synchronized boolean canRedo() {
+		return false;
 	}
 
 	@Override
@@ -168,9 +180,8 @@ public final class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		if (dataType instanceof BuiltInDataType) {
 			return DataTypeManager.BUILT_IN_ARCHIVE_UNIVERSAL_ID;
 		}
-		throw new IllegalArgumentException(
-			"Only Built-in data types can be resolved by the " + getClass().getSimpleName() +
-				" manager.");
+		throw new IllegalArgumentException("Only Built-in data types can be resolved by the " +
+			getClass().getSimpleName() + " manager.");
 	}
 
 	@Override

@@ -106,7 +106,7 @@ abstract class MsfFreePageMap {
 		// TODO: If we implement FreePageMap further, then consider passing in a PdbByteReader
 		//  and using the reader to parse the appropriate Integral types.
 		for (int index = 0; index < bytes.length - MAP_FIELD_SIZE; index += MAP_FIELD_SIZE) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			byte[] selectedBytes = Arrays.copyOfRange(bytes, index, index + MAP_FIELD_SIZE);
 			map.add(LittleEndianDataConverter.INSTANCE.getInt(selectedBytes));
 		}

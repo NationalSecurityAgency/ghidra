@@ -15,14 +15,12 @@
  */
 package ghidra.app.plugin.core.datamgr.editor;
 
-import ghidra.app.plugin.core.compositeeditor.StructureEditorOptionManager;
-import ghidra.app.plugin.core.compositeeditor.UnionEditorOptionManager;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
 
 public class EditorOptionManager
-		implements OptionsChangeListener, StructureEditorOptionManager, UnionEditorOptionManager {
+		implements OptionsChangeListener {
 
 	private final static String STRUCTURE_EDITOR_NAME = "Structure Editor";
 	private final static String UNION_EDITOR_NAME = "Union Editor";
@@ -63,6 +61,7 @@ public class EditorOptionManager
 		options.addOptionsChangeListener(this);
 	}
 
+	@Override
 	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
 		setOptions(options);
 	}

@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.assembler.PatchInstructionAction;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.model.guest.TracePlatform;
@@ -134,10 +133,9 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 	}
 
 	protected TraceProgramView getView() {
-		Program program = getProgram();
-		if (!(program instanceof TraceProgramView)) {
+		if (!(getProgram() instanceof TraceProgramView view)) {
 			return null;
 		}
-		return (TraceProgramView) program;
+		return view;
 	}
 }

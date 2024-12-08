@@ -32,9 +32,6 @@ import ghidra.graph.viewer.vertex.VisualVertexRenderer;
  */
 public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCallGraph> {
 
-	// our parent stores a reference to this graph, but we do it here to maintain its type
-	private FunctionCallGraph fcGraph;
-
 	private FcgVertexPaintTransformer vertexPaintTransformer =
 		new FcgVertexPaintTransformer(FcgVertex.DEFAULT_VERTEX_SHAPE_COLOR);
 
@@ -55,7 +52,7 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 
 	@Override
 	protected FcgVertex getInitialVertex() {
-		return fcGraph.getSource();
+		return graph.getSource();
 	}
 
 	@Override
@@ -89,13 +86,6 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 		VisualEdgeRenderer<FcgVertex, FcgEdge> edgeRenderer =
 			(VisualEdgeRenderer<FcgVertex, FcgEdge>) renderer.getEdgeRenderer();
 		edgeRenderer.setDrawColorTransformer(satelliteEdgePaintTransformer);
-	}
-
-	@Override
-	public void dispose() {
-
-		fcGraph = null;
-		super.dispose();
 	}
 
 	@Override // open access for testing

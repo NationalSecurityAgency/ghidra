@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import javax.swing.*;
 
@@ -37,6 +38,7 @@ import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.util.image.ToolIconURL;
@@ -45,15 +47,17 @@ import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.main.*;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.UserAgreementDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.dialog.ExtensionTableProvider;
 import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
+import ghidra.framework.project.extensions.ExtensionTableProvider;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
@@ -174,7 +178,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		pluginMgr = new PluginManager(this, serviceMgr);
+		pluginMgr = new PluginManager(this, serviceMgr, createPluginsConfigurations());
 		dialogMgr = new DialogManager(this);
 		initActions();
 		initOptions();
@@ -191,7 +195,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 		// non-public constructor for stub subclasses
 	}
 
-	public abstract PluginClassManager getPluginClassManager();
+	protected PluginsConfiguration createPluginsConfigurations() {
+		return new DefaultPluginsConfiguration();
+	}
+
+	public PluginsConfiguration getPluginsConfiguration() {
+		return pluginMgr.getPluginsConfiguration();
+	}
 
 	/**
 	 * This method exists here, as opposed to inline in the constructor, so that subclasses can
@@ -232,21 +242,15 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	protected void installUtilityPlugins() {
 
-		PluginClassManager classManager = getPluginClassManager();
-		PluginPackage utilityPackage = PluginPackage.getPluginPackage(UtilityPluginPackage.NAME);
-		List<PluginDescription> descriptions = classManager.getPluginDescriptions(utilityPackage);
-
-		Set<String> classNames = new HashSet<>();
-		if (descriptions == null) {
-			return;
-		}
-		for (PluginDescription description : descriptions) {
-			String pluginClass = description.getPluginClass().getName();
-			classNames.add(pluginClass);
-		}
-
 		try {
-			addPlugins(classNames);
+			checkedRunSwingNow(() -> {
+				try {
+					pluginMgr.installUtilityPlugins();
+				}
+				finally {
+					setConfigChanged(true);
+				}
+			}, PluginException.class);
 		}
 		catch (PluginException e) {
 			Msg.showError(this, null, "Error Adding Utility Plugins",
@@ -413,6 +417,31 @@ public abstract class PluginTool extends AbstractDockingTool {
 		winMgr.setDefaultComponent(provider);
 	}
 
+	/**
+	 * Registers an action context provider as the default provider for a specific action
+	 * context type. Note that this registers a default provider for exactly
+	 * that type and not a subclass of that type. If the provider want to support a hierarchy of
+	 * types, then it must register separately for each type. See {@link ActionContext} for details
+	 * on how the action context system works.
+	 * @param type the ActionContext class to register a default provider for
+	 * @param provider the ActionContextProvider that provides default tool context for actions
+	 * that consume the given ActionContext type
+	 */
+	public void registerDefaultContextProvider(Class<? extends ActionContext> type,
+			ActionContextProvider provider) {
+		winMgr.registerDefaultContextProvider(type, provider);
+	}
+
+	/**
+	 * Removes the default provider for the given ActionContext type.
+	 * @param type the subclass of ActionContext to remove a provider for
+	 * @param provider the ActionContextProvider to remove for the given ActionContext type
+	 */
+	public void unregisterDefaultContextProvider(Class<? extends ActionContext> type,
+			ActionContextProvider provider) {
+		winMgr.unregisterDefaultContextProvider(type, provider);
+	}
+
 	public ToolTemplate getToolTemplate(boolean includeConfigState) {
 		throw new UnsupportedOperationException(
 			"You cannot create templates for generic tools: " + getClass().getName());
@@ -467,10 +496,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return eventMgr.hasToolListeners();
 	}
 
-	public void exit() {
-		dispose();
-	}
-
 	protected void dispose() {
 		isDisposed = true;
 
@@ -500,6 +525,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		disposeManagers();
 		winMgr.dispose();
+		toolServices.closeTool(this);
 	}
 
 	private void disposeManagers() {
@@ -608,7 +634,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		winMgr.restoreWindowDataFromXml(root);
-		winMgr.setToolName(fullName);
+		updateTitle();
 		return hasErrors;
 	}
 
@@ -667,6 +693,39 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	/**
+	 * Execute the given command in the foreground.  Required domain object transaction will be
+	 * started with delayed end to ensure that any follow-on analysis starts prior to transaction 
+	 * end.
+	 * 
+	 * @param <T> {@link DomainObject} implementation interface
+	 * @param commandName command name to be associated with transaction
+	 * @param domainObject domain object to be modified
+	 * @param f command function callback which should return true on success or false on failure.
+	 * @return result from command function callback
+	 */
+	public <T extends DomainObject> boolean execute(String commandName, T domainObject,
+			Function<T, Boolean> f) {
+		return taskMgr.execute(commandName, domainObject, f);
+	}
+
+	/**
+	 * Execute the given command in the foreground.  Required domain object transaction will be
+	 * started with delayed end to ensure that any follow-on analysis starts prior to transaction 
+	 * end.
+	 * 
+	 * @param <T> {@link DomainObject} implementation interface
+	 * @param commandName command name to be associated with transaction
+	 * @param domainObject domain object to be modified
+	 * @param r command function runnable
+	 */
+	public <T extends DomainObject> void execute(String commandName, T domainObject, Runnable r) {
+		execute(commandName, domainObject, d -> {
+			r.run();
+			return true;
+		});
+	}
+
+	/**
 	 * Call the applyTo() method on the given command to make some change to
 	 * the domain object; the command is done in the AWT thread, therefore,
 	 * the command that is to be executed should be a relatively quick operation
@@ -675,9 +734,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param command command to apply
 	 * @param obj domain object that the command will be applied to
 	 * @return status of the command's applyTo() method
-	 * @see #executeBackgroundCommand(BackgroundCommand, UndoableDomainObject)
+	 * @see #executeBackgroundCommand(BackgroundCommand, DomainObject)
 	 */
-	public boolean execute(Command command, DomainObject obj) {
+	public <T extends DomainObject> boolean execute(Command<T> command, T obj) {
 		return taskMgr.execute(command, obj);
 	}
 
@@ -711,16 +770,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * AWT Thread)
 	 * @param obj domain object that the command will be applied to
 	 */
-	public void executeBackgroundCommand(BackgroundCommand cmd, UndoableDomainObject obj) {
+	public <T extends DomainObject> void executeBackgroundCommand(BackgroundCommand<T> cmd, T obj) {
 		taskMgr.executeCommand(cmd, obj);
-	}
-
-	/**
-	 * Cancel any running command and clear the command queue.
-	 * @param wait if true wait for current task to cancel cleanly
-	 */
-	public void terminateBackgroundCommands(boolean wait) {
-		taskMgr.stop(wait);
 	}
 
 	/**
@@ -729,7 +780,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param cmd background command to submit
 	 * @param obj the domain object to be modified by the command.
 	 */
-	public void scheduleFollowOnCommand(BackgroundCommand cmd, UndoableDomainObject obj) {
+	public <T extends DomainObject> void scheduleFollowOnCommand(BackgroundCommand<T> cmd, T obj) {
 		taskMgr.scheduleFollowOnCommand(cmd, obj);
 	}
 
@@ -1033,8 +1084,28 @@ public abstract class PluginTool extends AbstractDockingTool {
 		addAction(saveAsAction);
 	}
 
-	protected void addExportToolAction() {
+	/**
+	 * Adds actions to the tool for transferring focus to the first component in the next
+	 * or previous dockable component provider.
+	 */
+	protected void addNextPreviousProviderActions() {
+		// @formatter:off
+		new ActionBuilder("Jump to Next Dockable Provider", ToolConstants.TOOL_OWNER)
+			.keyBinding(KeyStroke.getKeyStroke("control J"))
+			.description("Transfer focus to the next major component in this windows")
+			.onAction(e -> nextDockableComponent(true))
+			.buildAndInstall(this);
 
+		new ActionBuilder("Jump to Previous Dockable Provider", ToolConstants.TOOL_OWNER)
+			.keyBinding("shift control J")
+			.description("Transfer focus to the previous major component in this windows")
+			.onAction(e -> nextDockableComponent(false))
+			.buildAndInstall(this);
+		// @formatter:on
+
+	}
+
+	protected void addExportToolAction() {
 		String menuGroup = "Tool";
 		String exportPullright = "Export";
 		setMenuGroup(new String[] { ToolConstants.MENU_FILE, exportPullright }, menuGroup);
@@ -1123,46 +1194,89 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	/**
-	 * Close this tool:
+	 * Closes this tool, possibly with input from the user. The following conditions are checked
+	 * and can prompt the user for more info and allow them to cancel the close.
 	 * <OL>
-	 * 	<LI>if there are no tasks running.
-	 * 	<LI>resolve the state of any plugins so they can be closed.
-	 * 	<LI>Prompt the user to save any changes.
-	 * 	<LI>close all associated plugins (this closes the domain object if one is open).
-	 * 	<LI>pop up dialog to save the configuration if it has changed.
-	 * 	<LI>notify the project tool services that this tool is going away.
+	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.</LI>
+	 *  <LI>Plugins get asked if they can be closed. They may prompt the user to resolve
+	 *  some plugin specific state.</LI>
+	 * 	<LI>The user is prompted to save any data changes.</LI>
+	 * 	<LI>Tools are saved, possibly asking the user to resolve any conflicts caused by
+	 *  changing multiple instances of the same tool in different ways.</LI>
+	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.</LI>
 	 * </OL>
 	 */
 	@Override
 	public void close() {
-		close(false);
+		if (canClose()) {
+			dispose();
+		}
 	}
 
-	protected void close(boolean isExiting) {
-		if (canClose(isExiting) && pluginMgr.saveData()) {
-			doClose();
+	protected boolean canClose() {
+		if (!canStopTasks()) {
+			return false;
 		}
+		if (!canClosePlugins()) {
+			return false;
+		}
+		if (!pluginMgr.saveData()) {
+			return false;
+		}
+		return doSaveTool();
 	}
 
 	/**
-	 * Close this tool:
-	 * <OL>
-	 * 	<LI>if there are no tasks running.
-	 * 	<LI>close all associated plugins (this closes the domain object if one is open).
-	 * 	<LI>pop up dialog to save the configuration if it has changed;
-	 * 	<LI>notify the project tool services that this tool is going away.
-	 * </OL>
+	 * Normally, tools are not allowed to close while tasks are running in that tool as it
+	 * could leave the application in an unstable state. Tools that exit the application
+	 * (such as the FrontEndTool) can override this so that the user can terminate running tasks
+	 * and not have that prevent exiting the application.
+	 * @return whether the user is allowed to terminate tasks so that the tool can be closed.
 	 */
-	private void doClose() {
-
-		if (!doSaveTool()) {
-			return; // if cancelled, don't close
-		}
-
-		exit();
-		toolServices.closeTool(this);
+	protected boolean allowTerminatingTasksWhenClosing() {
+		return false;
 	}
 
+	/**
+	 * Checks if this tool's plugins are in a state to be closed.
+	 * @return true if all the plugins in the tool can be closed without further user input.
+	 */
+	protected boolean canClosePlugins() {
+		return pluginMgr.canClose();
+	}
+
+	/**
+	 * Checks if this tool has running tasks, with optionally giving the user an
+	 * opportunity to cancel them.
+	 *
+	 * @return true if this tool has running tasks
+	 */
+	protected boolean canStopTasks() {
+		if (!taskMgr.isBusy()) {
+			return true;
+		}
+
+		int result = OptionDialog.showYesNoDialog(getToolFrame(), "Tool Busy Executing Task",
+			"The tool is busy performing a background task.\n If you continue the" +
+				" task may be terminated and some work may be lost!\n\nContinue anyway?");
+		if (result != OptionDialog.YES_OPTION) {
+			return false;
+		}
+
+		Task task = new Task("Stopping Tasks", true, false, true) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				taskMgr.stop(monitor);
+			}
+		};
+		TaskLauncher.launch(task);
+		return !task.isCancelled();
+	}
+
+	/**
+	 * Returns true if this tool needs saving
+	 * @return true if this tool needs saving
+	 */
 	public boolean shouldSave() {
 		return hasConfigChanged(); // ignore the window layout changes
 	}
@@ -1195,41 +1309,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 				}
 			}
 			// option 3 is don't save; just exit
-		}
-		return true;
-	}
-
-	/**
-	 * Can this tool be closed?
-	 * <br>Note: This forces plugins to terminate any tasks they have running and
-	 * apply any unsaved data to domain objects or files. If they can't do
-	 * this or the user cancels then this returns false.
-	 *
-	 * @param isExiting whether the tool is exiting
-	 * @return false if this tool has tasks in progress or can't be closed
-	 * since the user has unfinished/unsaved changes.
-	 */
-	public boolean canClose(boolean isExiting) {
-		if (taskMgr.isBusy()) {
-			if (isExiting) {
-				int result = OptionDialog.showYesNoDialog(getToolFrame(),
-					"Tool Busy Executing Task",
-					"The tool is busy performing a background task.\n If you continue the" +
-						" task may be terminated and some work may be lost!\n\nContinue anyway?");
-				if (result == OptionDialog.NO_OPTION) {
-					return false;
-				}
-				taskMgr.stop(false);
-			}
-			else {
-				beep();
-				Msg.showInfo(getClass(), getToolFrame(), "Tool Busy",
-					"You must stop all background tasks before tool may close.");
-				return false;
-			}
-		}
-		if (!pluginMgr.canClose()) {
-			return false;
 		}
 		return true;
 	}
@@ -1323,7 +1402,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void restoreOptionsFromXml(Element root) {
 		optionsMgr.setConfigState(root.getChild("OPTIONS"));
-		toolActions.restoreKeyBindings();
+		toolActions.optionsRebuilt();
 		setToolOptionsHelpLocation();
 	}
 
@@ -1339,7 +1418,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void restorePluginsFromXml(Element elem) throws PluginException {
 		pluginMgr.restorePluginsFromXml(elem);
-
 	}
 
 	PluginEvent[] getLastEvents() {
@@ -1384,22 +1462,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	void removeEventListener(String className) {
 		eventMgr.removeEventListener(className);
-	}
-
-	/**
-	 * Display an text edit box on top of the specified component.
-	 * @param defaultText initial text to be displayed in edit box
-	 * @param comp component over which the edit box will be placed
-	 * @param rect specifies the bounds of the edit box relative to the
-	 * component.  The height is ignored.  The default text field height
-	 * is used as the preferred height.
-	 * @param listener when the edit is complete, this listener is notified
-	 * with the new text.  The edit box is dismissed prior to notifying
-	 * the listener.
-	 */
-	public void showEditWindow(String defaultText, Component comp, Rectangle rect,
-			EditListener listener) {
-		winMgr.showEditWindow(defaultText, comp, rect, listener);
 	}
 
 	/**
@@ -1474,10 +1536,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return winMgr.getActiveComponentProvider();
 	}
 
-	public void refreshKeybindings() {
-		toolActions.restoreKeyBindings();
-	}
-
 	public void setUnconfigurable() {
 		isConfigurable = false;
 	}
@@ -1491,11 +1549,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	@Override
-	public ActionContext getDefaultToolContext() {
-		return winMgr.getDefaultToolContext();
-	}
-
-	@Override
 	public void contextChanged(ComponentProvider provider) {
 		if (isDisposed) {
 			return;
@@ -1505,6 +1558,63 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	public boolean isRestoringDataState() {
 		return restoringDataState;
+	}
+
+	/**
+	 * Transfers focus to the first component in the next/previous dockable component provider.
+	 * @param forward true to go to next provider, false to go to previous provider
+	 */
+	private void nextDockableComponent(boolean forward) {
+		KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = focusManager.getPermanentFocusOwner();
+		Component next = findNextProviderComponent(focusOwner, forward);
+
+		// If going backwards, go back one more provider, then go forward to get the first
+		// component in the resulting provider. This makes it so that when going backwards, you
+		// still get the first component in the component provider and not the last.
+		if (!forward) {
+			next = findNextProviderComponent(next, false);
+			next = findNextProviderComponent(next, true);
+		}
+		if (next != null) {
+			next.requestFocus();
+		}
+	}
+
+	private Component findNextProviderComponent(Component component, boolean forward) {
+		if (component == null) {
+			return null;
+		}
+
+		DockingWindowManager windowManager = getWindowManager();
+		ComponentProvider startingProvider = windowManager.getComponentProvider(component);
+
+		Component next = getNext(component, forward);
+		while (next != null && next != component) {
+			// Skip JTabbedPanes. Assume the user prefers that the component inside the tabbed
+			// pane gets focus, not the tabbed pane itself so the user does not have to navigate
+			// twice to get the internal component.
+			if (next instanceof JTabbedPane) {
+				next = getNext(next, forward);
+				continue;
+			}
+			ComponentProvider nextProvider = windowManager.getComponentProvider(next);
+			if (nextProvider != startingProvider) {
+				return next;
+			}
+			next = getNext(next, forward);
+		}
+		return null;
+	}
+
+	private Component getNext(Component component, boolean forward) {
+		KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Window window = focusManager.getFocusedWindow();
+		FocusTraversalPolicy policy = window.getFocusTraversalPolicy();
+		if (forward) {
+			return policy.getComponentAfter(window, component);
+		}
+		return policy.getComponentBefore(window, component);
 	}
 
 //==================================================================================================

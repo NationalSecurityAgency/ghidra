@@ -18,7 +18,7 @@ package ghidra.app.util.viewer.field;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.ToolOptions;
@@ -48,7 +48,7 @@ public class SubDataFieldFactory extends OperandFieldFactory {
 	}
 
 	private SubDataFieldFactory(String name, int[] componentPath, FieldFormatModel model,
-			HighlightProvider hlProvider, ToolOptions displayOptions, ToolOptions fieldOptions) {
+			ListingHighlightProvider hlProvider, ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(model, hlProvider, displayOptions, fieldOptions);
 		this.name = name;
 		this.componentPath = componentPath;
@@ -125,7 +125,7 @@ public class SubDataFieldFactory extends OperandFieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new SubDataFieldFactory(name, componentPath, formatModel, provider, options,
 			fieldOptions);

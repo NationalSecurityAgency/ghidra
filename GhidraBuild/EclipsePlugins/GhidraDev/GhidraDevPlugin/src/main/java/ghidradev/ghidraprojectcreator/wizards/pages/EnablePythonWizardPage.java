@@ -68,7 +68,7 @@ public class EnablePythonWizardPage extends WizardPage {
 		enablePythonCheckboxButton.setText("Enable Python");
 		enablePythonCheckboxButton.setToolTipText("Enables Python support using the PyDev " +
 			"Eclipse plugin.  Requires PyDev version " + PyDevUtils.MIN_SUPPORTED_VERSION +
-			" or later.");
+			" - " + PyDevUtils.MAX_SUPPORTED_VERSION);
 		enablePythonCheckboxButton.setSelection(PyDevUtils.isSupportedPyDevInstalled());
 		enablePythonCheckboxButton.addSelectionListener(new SelectionListener() {
 			@Override
@@ -166,7 +166,7 @@ public class EnablePythonWizardPage extends WizardPage {
 		if (pyDevEnabled) {
 			if (!pyDevInstalled) {
 				message = "PyDev version " + PyDevUtils.MIN_SUPPORTED_VERSION +
-					" or later is not installed.";
+					" - " + PyDevUtils.MAX_SUPPORTED_VERSION + " is not installed.";
 			}
 			else {
 				try {

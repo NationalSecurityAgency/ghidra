@@ -29,6 +29,8 @@ import ghidra.util.Msg;
 public class DefineTable {
 	private static final String VARARG_ELLIPSIS = "...";
 
+	// the macro substitution could be done on a very large string, not just
+	// a single line, Don't want it to go out of control replacing things
 	private static final int ARBITRARY_MAX_REPLACEMENTS = 900000;
 
 	// Hastable for storing #defs
@@ -274,22 +276,32 @@ public class DefineTable {
 	 * @param pos position within string to start expanding
 	 * @return string with all substitutions applied
 	 */
-	private String macroSub(String image, int pos, ArrayList<String> sublist) {
+	private String macroSub(String image, int pos, ArrayList<String> initialList) {
 		int replaceCount = 0;
 
 		StringBuffer buf = new StringBuffer(image);
 		int lastReplPos = pos;
+		
+		boolean initialListSupplied = initialList != null;  // initial list passed in
+		ArrayList<String> sublist = new ArrayList<String>();
+		if (initialList != null) {
+			sublist.addAll(initialList);
+		}
+
 
 		// don't replace an infinite number of times.  Fail safe for possible ininite loop
 		while (pos < buf.length() && replaceCount < ARBITRARY_MAX_REPLACEMENTS) {
 			// clear list of used macros when move past replacement area
 			if (pos == lastReplPos) {
 				sublist = new ArrayList<String>(); // ok to clear list of used macro names
+				if (initialList != null) {
+					sublist.addAll(initialList); // add back in initialList of nonreplacement names
+				}
 			}
 			String defName = getDefineAt(buf, pos);
 			if (shouldReplace(buf, defName, pos)) {
 				// stop recursion on the same replacement string
-				int replPos = replace(buf, defName, pos, sublist);
+				int replPos = replace(buf, defName, pos, sublist, initialListSupplied);
 
 				if (replPos == -1) {
 					// if no replacement string, move on
@@ -341,7 +353,7 @@ public class DefineTable {
 		return true;
 	}
 
-	int replace(StringBuffer buf, String currKey, int fromIndex, ArrayList<String> sublist) {
+	int replace(StringBuffer buf, String currKey, int fromIndex, ArrayList<String> sublist, boolean initialList) {
 		String replacementString = null;
 
 		if (sublist == null) {
@@ -375,7 +387,9 @@ public class DefineTable {
 		Vector<PPToken> argv = getArgs(currKey);
 		int replacedSubpieceLen = currKey.length();
 		if (argv == null && sublist.contains(currKey)) {
-			System.err.println("DONT Replace " + currKey + " in: " + buf);
+			if (!initialList) {
+				System.err.println("DONT Replace " + currKey + " in: " + buf);
+			}
 			return -1;
 		}
 		if (argv != null) {
@@ -613,7 +627,20 @@ public class DefineTable {
 	 * @return
 	 */
 	public String expand(String image, boolean join) {
-		image = macroSub(image, 0, null);
+		return expand(image, join, null);
+	}
+	
+	/**
+	 * do the final expansion of "##" concats in the define strings that protect normal macro substitution.
+	 * 
+	 * @param image
+	 * @param join
+	 * @param list of defines not to re-replace, stops recursive replacement on a define
+	 * @return
+	 */
+	public String expand(String image, boolean join, ArrayList<String> list) {
+		
+		image = macroSub(image, 0, list);
 
 		// get rid of ## constructs
 		if (join) {
@@ -714,8 +741,10 @@ public class DefineTable {
 	public void populateDefineEquate(DataTypeManager openDTMgrs[], DataTypeManager dtMgr, String category, String prefix, String defName, long value) {
 		String enumName = prefix + defName;
 
+		// Start the Enum at 8, then resize to fit the value
 		EnumDataType enuum = new EnumDataType(enumName, 8);
 		enuum.add(defName, value);
+		enuum.setLength(enuum.getMinimumPossibleLength());
 
 		String defPath = getDefinitionPath(defName);
 		String currentCategoryName = getFileName(defPath);
@@ -760,7 +789,11 @@ public class DefineTable {
 		// check if this is a numeric expression that could be simplified
 		//
 		String strValue = getValue(defName);
-		String strExpanded = expand(strValue, true);
+		
+		ArrayList<String> list = new ArrayList();
+		list.add(defName);
+		
+		String strExpanded = expand(strValue, true, list);
 		strValue = strExpanded;
 		
 		return strValue;

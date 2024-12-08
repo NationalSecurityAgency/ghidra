@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ghidra.program.database.DBStringMapAdapter;
 import ghidra.program.model.pcode.Encoder;
@@ -164,7 +165,7 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 	}
 
 	/**
-	 * Restore settings from a \<bitfield_packing> tag in an XML stream.
+	 * Restore settings from a {@code <bitfield_packing>} tag in an XML stream.
 	 * The XML is designed to override existing settings from the default constructor
 	 * @param parser is the XML stream
 	 */
@@ -188,5 +189,24 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 			parser.end(subel);
 		}
 		parser.end();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(typeAlignmentEnabled, useMSConvention, zeroLengthBoundary);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BitFieldPackingImpl other = (BitFieldPackingImpl) obj;
+		return typeAlignmentEnabled == other.typeAlignmentEnabled &&
+			useMSConvention == other.useMSConvention &&
+			zeroLengthBoundary == other.zeroLengthBoundary;
 	}
 }

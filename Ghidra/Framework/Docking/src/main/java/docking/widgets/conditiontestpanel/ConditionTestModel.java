@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,7 +200,7 @@ public class ConditionTestModel {
 					return;
 				}
 
-				monitor.clearCanceled();
+				monitor.clearCancelled();
 				monitor.setMessage("");
 				monitor.setProgress(0);
 				ConditionTestState conditionTestState = map.get(test);

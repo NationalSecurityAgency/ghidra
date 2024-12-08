@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,8 +41,7 @@ import javax.swing.table.JTableHeader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.*;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
 import org.junit.*;
 
 import docking.*;
@@ -51,8 +50,11 @@ import docking.test.AbstractDockingTest;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.SpyDropDownWindowVisibilityListener;
 import docking.widgets.table.*;
+import docking.widgets.textfield.GFormattedTextField;
+import docking.widgets.textfield.GFormattedTextField.Status;
 import generic.concurrent.ConcurrentQ;
-import ghidra.framework.*;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
@@ -241,7 +243,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		//  3) Double-click on the root drive.
 		//  3) Boom.
 
-		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
+		// hack: the focus listeners can trigger an editCancelled(), which is a problem in
 		//       parallel mode
 		DirectoryList dirlist = getListView();
 		removeFocusListeners(dirlist);
@@ -275,7 +277,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		DirectoryList dirlist = getListView();
 
-		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
+		// hack: the focus listeners can trigger an editCancelled(), which is a problem in
 		//       parallel mode
 		removeFocusListeners(dirlist);
 
@@ -336,7 +338,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		String name = "Foo_" + Math.random();
 		setText(editorField, name);
 
-		// cannot use triggerEnter() here because that uses the actionPerformed() of the 
+		// cannot use triggerEnter() here because that uses the actionPerformed() of the
 		// text field and our editor uses a key listener
 		triggerEnter(editorField);
 		waitForSwing();
@@ -367,7 +369,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// a string long enough to make the pick unique, in case there are similarly named files
 		String filenameText = prefix.substring(0, 13);
-		typeTextForTextField(filenameText);
+		typeTextForFilenameTextField(filenameText);
 		triggerEnter(getFilenameTextField());
 
 // the following code should be put back if we move to the Enter key press simply closing the
@@ -698,7 +700,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		setMode(FILES_AND_DIRECTORIES);
 		DirectoryList dirlist = getListView();
 
-		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
+		// hack: the focus listeners can trigger an editCancelled(), which is a problem in
 		//       parallel mode
 		removeFocusListeners(dirlist);
 
@@ -802,7 +804,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		setFilenameFieldText("");// clear any text so that we can trigger the matching window
 		String desktopText = "test";
-		typeTextForTextField(desktopText);
+		typeTextForFilenameTextField(desktopText);
 
 		assertDropDownWindowIsShowing(true);
 
@@ -864,8 +866,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testDirectoryInFileOnlyMode_Selection_NoTextFieldText() throws Exception {
 
-		/* 
-		 * test when a user single clicks a directory name and clicks the action button 
+		/*
+		 * test when a user single clicks a directory name and clicks the action button
 		 * when the filename text field is empty
 		 */
 
@@ -892,8 +894,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testDirectoryInFileOnlyMode_Selection_WithTextFieldText() throws Exception {
 
-		/* 
-		 * test when a user single clicks a directory name and clicks the action button 
+		/*
+		 * test when a user single clicks a directory name and clicks the action button
 		 * when the filename text field has a value
 		 */
 
@@ -1351,7 +1353,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	/*
-	 * Tests GhidraFileChooser's Desktop button to ensure it changes to the user's native 
+	 * Tests GhidraFileChooser's Desktop button to ensure it changes to the user's native
 	 * desktop directory.  This test is skipped if there is no native desktop directory.
 	 */
 	@Test
@@ -1372,13 +1374,13 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	/*
-	 * Tests GhidraFileChooser's Desktop button to ensure it is disabled when there is no 
+	 * Tests GhidraFileChooser's Desktop button to ensure it is disabled when there is no
 	 * user Desktop directory
 	 */
 	@Test
 	public void testMissingDesktop() throws Exception {
 
-		// close existing chooser window so we can make a new special one 
+		// close existing chooser window so we can make a new special one
 		runSwing(() -> chooser.close());
 		waitForSwing();
 
@@ -1405,7 +1407,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	/*
-	 * Tests GhidraFileChooser's Desktop button to ensure it is works by creating a 
+	 * Tests GhidraFileChooser's Desktop button to ensure it is works by creating a
 	 * fake user desktop directory.
 	 */
 	@Test
@@ -1556,9 +1558,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		//
 
 		// Enable tracing to catch odd test failure
-		LoggingInitialization.initializeLoggingSystem();
-		Logger logger = LogManager.getLogger(GhidraFileChooser.class);
-		Configurator.setLevel(logger.getName(), Level.TRACE);
+		setLogLevel(GhidraFileChooser.class, Level.TRACE);
 
 		final JComponent component = chooser.getComponent();
 		Dimension originalSize = component.getSize();
@@ -1591,9 +1591,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		//
 
 		// Enable tracing to catch odd test failure
-		LoggingInitialization.initializeLoggingSystem();
-		Logger logger = LogManager.getLogger(GhidraFileChooser.class);
-		Configurator.setLevel(logger.getName(), Level.TRACE);
+		setLogLevel(GhidraFileChooser.class, Level.TRACE);
 
 		JComponent component = chooser.getComponent();
 		EmptyBorderToggleButton detailsButton =
@@ -1621,7 +1619,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testFilenameAutoLookup_InTable() throws Exception {
 
-		// Note: the table auto lookup is tested elsewhere.  This test is just making sure that 
+		// Note: the table auto lookup is tested elsewhere.  This test is just making sure that
 		//       the feature responds within the file chooser.
 
 		// dir file names start with 'a_...', 'b_...', etc
@@ -1899,9 +1897,9 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		File file = files.files.get(0);
 		selectFiles(file);
 
-		//		
+		//
 		// A single file selection will set the text field text
-		// 
+		//
 		waitForChooser();
 		String filenameFieldText = getFilenameFieldText();
 		assertEquals("Filename text field not updated upon file selection", file.getName(),
@@ -1909,7 +1907,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		//
 		// A multi-selection will clear the text field text
-		// 
+		//
 		selectFiles(files.files);
 		waitForChooser();
 		filenameFieldText = getFilenameFieldText();
@@ -1918,7 +1916,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		//
 		// Clear the multi-selection; a single file selection will set the text field text
-		// 
+		//
 		selectFiles(file);
 		waitForChooser();
 		filenameFieldText = getFilenameFieldText();
@@ -1980,6 +1978,70 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertChooserPreference(key, null);
 	}
 
+	@Test
+	public void testEditPath_Directory() throws Exception {
+
+		TestFiles files = createMixedDirectory();
+		File dir = files.randomDir();
+		setPathFieldText(dir.getAbsolutePath());
+
+		triggerEnter(getPathTextField());
+		waitForChooser();
+
+		File currentDir = getCurrentDirectory();
+		assertEquals(dir, currentDir);
+	}
+
+	@Test
+	public void testEditPath_File() throws Exception {
+		TestFiles files = createMixedDirectory();
+		File file = files.randomFile();
+		setPathFieldText(file.getAbsolutePath());
+
+		triggerEnter(getPathTextField());
+		waitForChooser();
+
+		File currentDir = getCurrentDirectory();
+		File parent = file.getParentFile();
+		assertEquals(parent, currentDir);
+
+		File selectedFile = getSelectedFile();
+		assertEquals(file, selectedFile);
+	}
+
+	@Test
+	public void testEditPath_InvalidPath_Enter() throws Exception {
+
+		File startDir = getCurrentDirectory();
+
+		setPathFieldText("/some/fake/path");
+		triggerEnter(getPathTextField());
+		waitForChooser();
+
+		assertPathFieldIsInvalid();
+
+		// no change
+		File currentDir = getCurrentDirectory();
+		assertEquals(startDir, currentDir);
+	}
+
+	@Test
+	public void testEditPath_InvalidPath_Escape() throws Exception {
+
+		File startDir = getCurrentDirectory();
+
+		setPathFieldText("/some/fake/path");
+		assertPathFieldIsInvalid();
+
+		triggerEscape(getPathTextField());
+		waitForChooser();
+		assertPathFieldIsUnchanged();
+
+		// no change
+		File currentDir = getCurrentDirectory();
+		assertEquals(startDir, currentDir);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -2033,7 +2095,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	private ActionContext createDirListContext() {
 
 		DirectoryList dirlist = getListView();
-		return new ActionContext(null, dirlist);
+		return new DefaultActionContext(null, dirlist);
 	}
 
 	private boolean isEnabled(DockingAction action, ActionContext context) {
@@ -2045,8 +2107,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// debug code
 		if (expected != actual) {
-			waitForCondition(() -> expected == actual,
-				"Wrong list index selected ");
+			waitForCondition(() -> expected == actual, "Wrong list index selected ");
 		}
 	}
 
@@ -2119,8 +2180,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	private void setTableMode() {
-		AbstractButton button = (AbstractButton) findComponentByName(chooser.getComponent(),
-			"DETAILS_BUTTON");
+		AbstractButton button =
+			(AbstractButton) findComponentByName(chooser.getComponent(), "DETAILS_BUTTON");
 		boolean isSelected = runSwing(() -> button.isSelected());
 		if (!isSelected) {
 			// toggle from the table 'details mode'
@@ -2129,8 +2190,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	private void setListMode() {
-		AbstractButton button = (AbstractButton) findComponentByName(chooser.getComponent(),
-			"DETAILS_BUTTON");
+		AbstractButton button =
+			(AbstractButton) findComponentByName(chooser.getComponent(), "DETAILS_BUTTON");
 		boolean isSelected = runSwing(() -> button.isSelected());
 		if (isSelected) {
 			// toggle from the table 'details mode'
@@ -2343,7 +2404,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			// Batch mode has focus issue when running in parallel.  In this case, update
 			// the drop-down field to disable closing the popup window during focus changes.  By
 			// only doing this in batch mode, the test can still be run by a developer with
-			// the normal behavior.		
+			// the normal behavior.
 			return;
 		}
 
@@ -2353,7 +2414,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		}
 	}
 
-	private void typeTextForTextField(String text) {
+	private void typeTextForFilenameTextField(String text) {
 		JTextField textField = getFilenameTextField();
 		triggerText(textField, text);
 		waitForSwing();
@@ -2380,11 +2441,20 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		}
 	}
 
-	private void setFilenameFieldText(final String text) {
-		final JTextField textField = getFilenameTextField();
+	private void setFilenameFieldText(String text) {
+		JTextField textField = getFilenameTextField();
+		runSwing(() -> textField.requestFocusInWindow());
+		runSwing(() -> textField.setText(text));
+	}
+
+	private void setPathFieldText(String text) {
+		GFormattedTextField textField = getPathTextField();
 		runSwing(() -> textField.requestFocusInWindow());
 
-		runSwing(() -> textField.setText(text));
+		// note: we cannot call textField.setText() here, as that is overridden to make the new 
+		// text the default value, which affects our test for textField.isChanged().
+		triggerText(textField, text);
+		waitForSwing();
 	}
 
 	private String getFilenameFieldText() {
@@ -2396,6 +2466,10 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		DropDownSelectionTextField<?> textField =
 			(DropDownSelectionTextField<?>) getInstanceField("filenameTextField", chooser);
 		return textField;
+	}
+
+	private GFormattedTextField getPathTextField() {
+		return (GFormattedTextField) findComponentByName(chooser, "Path");
 	}
 
 	private void show() throws Exception {
@@ -2748,6 +2822,18 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		fail("File chooser does not in its list have file: " + expected);
 	}
 
+	private void assertPathFieldIsInvalid() {
+		GFormattedTextField textField = getPathTextField();
+		Status status = runSwing(() -> textField.getTextEntryStatus());
+		assertEquals(Status.INVALID, status);
+	}
+
+	private void assertPathFieldIsUnchanged() {
+		GFormattedTextField textField = getPathTextField();
+		Status status = runSwing(() -> textField.getTextEntryStatus());
+		assertEquals(Status.UNCHANGED, status);
+	}
+
 	private void assertChooserHidden() {
 		assertFalse("The chooser is showing; it should be closed",
 			runSwing(() -> chooser.isShowing()));
@@ -2884,7 +2970,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** Simple container class for newly created dirs and files */
 	private class TestFiles {

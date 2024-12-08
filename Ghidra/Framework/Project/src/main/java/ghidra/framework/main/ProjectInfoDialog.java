@@ -38,6 +38,7 @@ import ghidra.framework.data.ConvertFileSystem;
 import ghidra.framework.data.TransientDataManager;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.*;
 import ghidra.util.*;
@@ -95,9 +96,9 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
-		connectionButton.setBorder(
-			isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		connectionButton
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		updateConnectButtonToolTip();
 		if (isConnected) {
 			try {
@@ -181,8 +182,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		String toolTipForChange = "Change server information or specify another repository.";
 		String toolTipForConvert = "Convert project to be a shared project.";
-		changeConvertButton.setToolTipText(
-			repository != null ? toolTipForChange : toolTipForConvert);
+		changeConvertButton
+				.setToolTipText(repository != null ? toolTipForChange : toolTipForConvert);
 
 		Class<? extends LocalFileSystem> fsClass = project.getProjectData().getLocalStorageClass();
 		String convertStorageButtonLabel = null;
@@ -198,8 +199,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			convertStorageButton.addActionListener(e -> convertToIndexedFilesystem());
 			help.registerHelp(changeConvertButton,
 				new HelpLocation(GenericHelpTopics.FRONT_END, "Convert_Project_Storage"));
-			convertStorageButton.setToolTipText(
-				"Convert/Upgrade project storage to latest Indexed Filesystem");
+			convertStorageButton
+					.setToolTipText("Convert/Upgrade project storage to latest Indexed Filesystem");
 		}
 
 		JPanel p = new JPanel(new FlowLayout());
@@ -260,9 +261,9 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		connectionButton.setName("Connect Button");
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
-		connectionButton.setBorder(
-			isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		connectionButton
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		updateConnectButtonToolTip();
 		HelpService help = Help.getHelpService();
 		help.registerHelp(connectionButton,
@@ -343,8 +344,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	private void updateSharedProjectInfo() {
 		int openCount = getOpenFileCount();
 		if (openCount != 0) {
-			Msg.showInfo(getClass(), getComponent(),
-				"Cannot Change Project Info with Open Files",
+			Msg.showInfo(getClass(), getComponent(), "Cannot Change Project Info with Open Files",
 				"Found " + openCount + " open project file(s).\n" +
 					"Before your project info can be updated, you must\n" +
 					"close all open project files and tools.");
@@ -392,7 +392,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 	private boolean checkToolsClose() {
 		PluginTool[] runningTools = project.getToolManager().getRunningTools();
 		for (PluginTool runningTool : runningTools) {
-			if (!runningTool.canClose(false)) {
+			if (!PluginToolAccessUtils.canClose(runningTool)) {
 				return false;
 			}
 			runningTool.close();
@@ -448,8 +448,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		int openCount = getOpenFileCount();
 		if (openCount != 0) {
-			Msg.showInfo(getClass(), getComponent(),
-				"Cannot Convert Project with Open Files",
+			Msg.showInfo(getClass(), getComponent(), "Cannot Convert Project with Open Files",
 				"Found " + openCount + " open project file(s).\n" +
 					"Before your project can be converted, you must close\n" +
 					"all open project files and tools.");

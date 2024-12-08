@@ -21,7 +21,6 @@ import javax.swing.*;
 
 import docking.WindowPosition;
 import docking.widgets.label.GLabel;
-import ghidra.app.services.GoToService;
 import ghidra.bitpatterns.info.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.AddressSet;
@@ -67,10 +66,7 @@ public class PatternEvalTableProvider extends ComponentProviderAdapter {
 			new GhidraThreadedTablePanel<>(patternEvalModel, 1000);
 		GhidraTable table = threadedPanel.getTable();
 
-		GoToService goToService = tool.getService(GoToService.class);
-		if (goToService != null) {
-			table.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		table.installNavigation(tool);
 		table.setRowSelectionAllowed(true);
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);

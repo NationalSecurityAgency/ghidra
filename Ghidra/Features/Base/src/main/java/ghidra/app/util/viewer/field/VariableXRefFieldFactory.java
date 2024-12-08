@@ -22,7 +22,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.field.ListingColors.XrefColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -62,13 +62,13 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	public VariableXRefFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	public VariableXRefFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, ToolOptions fieldOptions) {
 		this(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
 
 	protected VariableXRefFieldFactory(String name, FieldFormatModel model,
-			HighlightProvider hlProvider, Options displayOptions, ToolOptions fieldOptions) {
+			ListingHighlightProvider hlProvider, Options displayOptions, ToolOptions fieldOptions) {
 		super(name, model, hlProvider, displayOptions, fieldOptions);
 	}
 
@@ -229,7 +229,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new VariableXRefFieldFactory(formatModel, provider, options, fieldOptions);
 	}

@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.LogicalBreakpoint.Mode;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.Mode;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.pcode.exec.SleighUtils;

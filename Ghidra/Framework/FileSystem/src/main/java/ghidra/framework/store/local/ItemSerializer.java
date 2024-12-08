@@ -58,8 +58,8 @@ public class ItemSerializer {
 	 * @param content content input stream
 	 * @param packedFile output packed file to be created
 	 * @param monitor task monitor
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @throws CancelledException if output is cancelled
+	 * @throws IOException if IO error occurs
 	 */
 	public static void outputItem(String itemName, String contentType, int fileType, long length,
 			InputStream content, File packedFile, TaskMonitor monitor) throws CancelledException,

@@ -15,7 +15,8 @@
  */
 package ghidra.framework.main;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -28,6 +29,7 @@ import docking.StatusBarSpacer;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -39,14 +41,13 @@ import log.LogListener;
 import log.LogPanelAppender;
 
 /**
- * A JPanel that contains a label to show the last message displayed. It also has a button to 
- * show the Console. 
+ * A JPanel that contains a label to show the last message displayed. It also has a button to
+ * show the Console.
  */
 public class LogPanel extends JPanel implements LogListener {
 
 	private JButton button;
 	private JLabel label;
-	private Color defaultColor;
 
 	private BufferedSwingRunner messageUpdater = new BufferedSwingRunner();
 
@@ -57,7 +58,6 @@ public class LogPanel extends JPanel implements LogListener {
 		button = new EmptyBorderButton(new GIcon("icon.console"));
 		label = new GDLabel();
 		label.setName("Details");
-		defaultColor = label.getForeground();
 		panel.add(label, BorderLayout.CENTER);
 
 		JPanel eastPanel = new JPanel(new HorizontalLayout(0));
@@ -96,7 +96,7 @@ public class LogPanel extends JPanel implements LogListener {
 	public void messageLogged(String message, boolean isError) {
 
 		messageUpdater.run(() -> {
-			label.setForeground(isError ? Messages.ERROR : defaultColor);
+			label.setForeground(isError ? Messages.ERROR : Colors.FOREGROUND);
 			String text = message.replace("\n", " ");
 			label.setText(text);
 			label.setToolTipText(text);
@@ -105,7 +105,7 @@ public class LogPanel extends JPanel implements LogListener {
 
 	/**
 	 * Extracts the {@link LogPanelAppender} from the root logger configuration
-	 * and hands an instance of this panel to it. 
+	 * and hands an instance of this panel to it.
 	 */
 	private void addLogAppender() {
 		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);

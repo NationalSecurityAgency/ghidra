@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.instructionsearch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.Window;
@@ -66,7 +65,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	private GhidraTable instructionTable;
 	private GTable previewTable;
 
-	/**
+	/*
 	 * Test setup.  Each test will start with a simple program having a selection
 	 * encompassing the entire range.
 	 */
@@ -98,7 +97,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		env.dispose();
 	}
 
-	/**
+	/*
 	 * This builds a small program based on a section of WinHelloCpp.exe.  The specific
 	 * section disassembles as follows:
 	 * 
@@ -112,7 +111,6 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	 *	    004065ef 83 c4 0c        ADD        ESP,nope
 	 *	    004065f2 89 45 fc        MOV        [EBP + local_8],EAX
 	 *	
-	 * @throws Exception
 	 */
 	private Program buildProgram() throws Exception {
 
@@ -215,6 +213,28 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("", obj52.getData());
 		assertEquals("0xc", obj62.getData());
 		assertEquals("EAX", obj72.getData());
+	}
+
+	@Test
+	public void testAddInstructions() throws Exception {
+
+		// start selection
+		// loadSelection("0x004065e1", "0x004065f2");
+
+		// sanity check
+		assertEquals(8, instructionTable.getRowCount());
+		assertInstructionValue(0, "INC EDI");
+		assertInstructionValue(7, "MOV dword ptr [EBP + -0x4] EAX");
+
+		// Now create a selection to add an instruction and call 'add'
+		createSelection("0x004065e6", "0x004065e6");
+		pressButtonByName(component, "add");
+		waitForTasks();
+
+		// grab the rebuilt table
+		instructionTable = dialog.getTablePanel().getTable();
+		assertEquals(9, instructionTable.getRowCount());
+		assertInstructionValue(8, "PUSH EAX");
 	}
 
 	/**
@@ -480,11 +500,10 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertResultsTableRowCount(1);
 	}
 
-	/**
+	/*
 	 * Tests that we can perform a search over the entire memory space and return multiple
 	 * results. To do this we're going to have to select the "PUSH EDI" instruction and mask
 	 * out the operand, which should yield 2 matches.
-	 * @throws Exception 
 	 */
 	@Test
 	public void testSearchEntireProgramMultipleResults() throws Exception {
@@ -513,7 +532,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the the hex view button correctly switches the preview table to hex, and that
+	 * Tests that the hex view button correctly switches the preview table to hex, and that
 	 * the hex is formatted correctly when masking.
 	 */
 	@Test
@@ -771,6 +790,18 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	 * PRIVATE METHODS
 	 ********************************************************************************************/
 
+	private void assertInstructionValue(int row, String expectedText) {
+		InstructionTableDataObject cell1 =
+			(InstructionTableDataObject) instructionTable.getModel().getValueAt(row, 0);
+		InstructionTableDataObject cell2 =
+			(InstructionTableDataObject) instructionTable.getModel().getValueAt(row, 1);
+		InstructionTableDataObject cell3 =
+			(InstructionTableDataObject) instructionTable.getModel().getValueAt(row, 2);
+		String actualText = cell1.getData() + " " + cell2.getData() + " " + cell3.getData();
+		assertEquals("Instruction value in table was not as expected", expectedText,
+			actualText.trim());
+	}
+
 	private void closeDialog() {
 		runSwing(() -> dialog.close());
 		waitForSwing();
@@ -821,12 +852,11 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 	}
 
-	/**
+	/*
 	 * Loads the instructions in the given range into the instruction table.
 	 * 
 	 * @param addr1 address in the form "0x01234567"
-	 * @param addr2 address in the form "0x01234567"
-	 * @throws Exception 
+	 * @param addr2 address in the form "0x01234567" 
 	 */
 	private void loadSelection(String addr1, String addr2) throws Exception {
 

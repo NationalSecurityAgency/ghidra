@@ -106,6 +106,14 @@ int foo;
  
 #pragma once
 
+#pragma multiple \
+        lines \
+        pragma
+
+#pragma no comment here /* no comment / here */
+
+#pragma with no EOL comment here // no comment here
+
 #define PTYPE 4
 
 #define TYPE2               2   /* 2 */
@@ -248,6 +256,21 @@ int TEST_FAILED;
 #define BIGNUM 64 * 16 + 16
 
 #define ImOctal 01234567
+
+
+#define BYTE_LEN_1   0x1
+#define BYTE_LEN_8   0x8
+#define BYTE_LEN_1F   0x1F
+#define BYTE_LEN_FF   0xFF
+#define BYTE_LEN_1FF   0x1FF
+#define BYTE_LEN_7FFF   0x7FFF
+#define BYTE_LEN_10000   0x10000
+#define BYTE_LEN_1000000 0x1000000
+#define BYTE_LEN_100000000   0x100000000
+#define BYTE_LEN_10000000000   0x10000000000
+#define BYTE_LEN_1000000000000   0x1000000000000
+#define BYTE_LEN_100000000000000   0x100000000000000
+#define BYTE_LEN_neg1   -1
 
 /**
  ** Test for recursive definitions, Should not cause an infinite loop
@@ -498,5 +521,20 @@ int does_not_has_include();
 #define BEGINC  QUOTED('"')
 #define TEST_QUOTED_QUOTE    QUOTED('"')
 
+#define TEST_MULTILINE_TEXT(t) multi_line_worked(t)
 
+A = TEST_MULTILINE_TEXT("One Line")
+
+B = TEST_MULTILINE_TEXT("Some text first line"
+               "More text second line") 
+
+#define DUAL_MULTILINE(A, B) dual_line_worked(A,B)
+       
+C = DUAL_MULTILINE(1, OneLine("Caution: One Line"))
+
+D = DUAL_MULTILINE(2, "Caution: First line"
+                                      " second line"
+                                      " third line"
+                                      " fourth line")
+                                                                 
 theEnd();

@@ -15,10 +15,8 @@
  */
 package ghidra.generic.util.datastruct;
 
-import java.lang.reflect.Array;
 import java.util.*;
-
-import ghidra.util.ReversedListIterator;
+import java.util.Map.Entry;
 
 /**
  * A view of the value-sorted map for implementing
@@ -252,6 +250,15 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 	 */
 	public class RestrictedValueSortedMapEntryList implements ValueSortedMapEntryList<K, V> {
 		@Override
+		public List<Entry<K, V>> toList() {
+			List<Entry<K, V>> copy = new ArrayList<>(size());
+			for (Entry<K, V> ent : this) {
+				copy.add(ent);
+			}
+			return copy;
+		}
+
+		@Override
 		public int size() {
 			return restrictedSize();
 		}
@@ -281,77 +288,6 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public Object[] toArray() {
-			Object[] result = new Object[size()];
-			int i = 0;
-			for (Entry<K, V> ent : this) {
-				result[i] = ent;
-				i++;
-			}
-			return result;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] a) {
-			int size = size();
-			if (a.length != size) {
-				a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
-			}
-			int i = 0;
-			for (Entry<K, V> ent : this) {
-				a[i] = (T) ent;
-				i++;
-			}
-			return a;
-		}
-
-		@Override
-		public boolean add(Entry<K, V> e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> c) {
-			for (Object o : c) {
-				if (!contains(o)) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends Entry<K, V>> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(int index, Collection<? extends Entry<K, V>> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public Entry<K, V> get(int index) {
 			if (index < 0) {
 				throw new IndexOutOfBoundsException("" + index);
@@ -364,33 +300,8 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public Entry<K, V> set(int index, Entry<K, V> element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void add(int index, Entry<K, V> element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> remove(int index) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public int indexOf(Object o) {
 			return inBoundsOrNeg1(wrapped.entrySet().indexOf(o));
-		}
-
-		@Override
-		public int lastIndexOf(Object o) {
-			return inBoundsOrNeg1(wrapped.entrySet().lastIndexOf(o));
-		}
-
-		@Override
-		public ListIterator<Entry<K, V>> listIterator() {
-			return new RestrictedEntryListIterator();
 		}
 
 		@Override
@@ -399,146 +310,13 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public List<Entry<K, V>> subList(int fromIndex, int toIndex) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addFirst(Entry<K, V> e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addLast(Entry<K, V> e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerFirst(Entry<K, V> e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerLast(Entry<K, V> e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> removeFirst() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> removeLast() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> pollFirst() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> pollLast() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> getFirst() {
-			Entry<K, V> ent = peekFirst();
-			if (ent == null) {
-				throw new NoSuchElementException();
-			}
-			return ent;
-		}
-
-		@Override
-		public Entry<K, V> getLast() {
-			Entry<K, V> ent = peekLast();
-			if (ent == null) {
-				throw new NoSuchElementException();
-			}
-			return ent;
-		}
-
-		@Override
-		public Entry<K, V> peekFirst() {
-			Entry<K, V> ent;
-			if (!hasFrom) {
-				ent = wrapped.entrySet().getFirst();
-			}
-			else if (fromInclusive) {
-				ent = wrapped.ceilingEntryByValue(fromValue);
-			}
-			else {
-				ent = wrapped.higherEntryByValue(fromValue);
-			}
-			return inBoundsOrNull(ent);
-		}
-
-		@Override
-		public Entry<K, V> peekLast() {
-			Entry<K, V> ent;
-			if (!hasTo) {
-				ent = wrapped.entrySet().getLast();
-			}
-			else if (toInclusive) {
-				ent = wrapped.floorEntryByValue(toValue);
-			}
-			else {
-				ent = wrapped.lowerEntryByValue(toValue);
-			}
-			return inBoundsOrNull(ent);
-		}
-
-		@Override
-		public boolean removeFirstOccurrence(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeLastOccurrence(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offer(Entry<K, V> e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public Entry<K, V> poll() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public Entry<K, V> element() {
-			return getFirst();
-		}
-
-		@Override
-		public Entry<K, V> peek() {
-			return peekFirst();
-		}
-
-		@Override
-		public void push(Entry<K, V> e) {
+		public boolean remove(Object o) {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Entry<K, V> pop() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Iterator<Entry<K, V>> descendingIterator() {
-			return new ReversedListIterator<>(new RestrictedEntryListIterator(restrictedSize()));
 		}
 	}
 
@@ -546,6 +324,15 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 	 * A list view suitable for {@link ValueSortedMap#keySet()} of {@link RestrictedValueSortedMap}
 	 */
 	public class RestrictedValueSortedMapKeyList implements ValueSortedMapKeyList<K> {
+		@Override
+		public List<K> toList() {
+			List<K> copy = new ArrayList<>(size());
+			for (K k : this) {
+				copy.add(k);
+			}
+			return copy;
+		}
+
 		@Override
 		public int size() {
 			return restrictedSize();
@@ -567,77 +354,6 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public Object[] toArray() {
-			Object[] result = new Object[size()];
-			int i = 0;
-			for (K key : this) {
-				result[i] = key;
-				i++;
-			}
-			return result;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] a) {
-			int size = size();
-			if (a.length != size) {
-				a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
-			}
-			int i = 0;
-			for (K key : this) {
-				a[i] = (T) key;
-				i++;
-			}
-			return a;
-		}
-
-		@Override
-		public boolean add(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> c) {
-			for (Object o : c) {
-				if (!contains(o)) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends K> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(int index, Collection<? extends K> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public K get(int index) {
 			if (index < 0) {
 				throw new IndexOutOfBoundsException("" + index);
@@ -650,33 +366,8 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public K set(int index, K element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void add(int index, K element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K remove(int index) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public int indexOf(Object o) {
 			return inBoundsOrNeg1(wrapped.keySet().indexOf(o));
-		}
-
-		@Override
-		public int lastIndexOf(Object o) {
-			return inBoundsOrNeg1(wrapped.keySet().lastIndexOf(o));
-		}
-
-		@Override
-		public ListIterator<K> listIterator() {
-			return new RestrictedKeyListIterator();
 		}
 
 		@Override
@@ -685,134 +376,13 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public List<K> subList(int fromIndex, int toIndex) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addFirst(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void addLast(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerFirst(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offerLast(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K removeFirst() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K removeLast() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K pollFirst() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K pollLast() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K getFirst() {
-			Entry<K, V> ent = entrySet().peekFirst();
-			if (ent == null) {
-				throw new NoSuchElementException();
-			}
-			return ent.getKey();
-		}
-
-		@Override
-		public K getLast() {
-			Entry<K, V> ent = entrySet().peekLast();
-			if (ent == null) {
-				throw new NoSuchElementException();
-			}
-			return ent.getKey();
-		}
-
-		@Override
-		public K peekFirst() {
-			Entry<K, V> ent = entrySet().peekFirst();
-			if (ent == null) {
-				return null;
-			}
-			return ent.getKey();
-		}
-
-		@Override
-		public K peekLast() {
-			Entry<K, V> ent = entrySet().peekLast();
-			if (ent == null) {
-				return null;
-			}
-			return ent.getKey();
-		}
-
-		@Override
-		public boolean removeFirstOccurrence(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeLastOccurrence(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean offer(K e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public K poll() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public K element() {
-			return getFirst();
-		}
-
-		@Override
-		public K peek() {
-			return peekFirst();
-		}
-
-		@Override
-		public void push(K e) {
+		public boolean remove(Object o) {
 			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public K pop() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Iterator<K> descendingIterator() {
-			return new ReversedListIterator<>(new RestrictedKeyListIterator(restrictedSize()));
 		}
 	}
 
@@ -820,6 +390,15 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 	 * A list view suitable for {@link ValueSortedMap#values()} of {@link RestrictedValueSortedMap}
 	 */
 	public class RestrictedSortedList implements SortedList<V> {
+		@Override
+		public List<V> toList() {
+			List<V> copy = new ArrayList<>(size());
+			for (V v : this) {
+				copy.add(v);
+			}
+			return copy;
+		}
+
 		@Override
 		public int size() {
 			return restrictedSize();
@@ -841,77 +420,6 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public Object[] toArray() {
-			Object[] result = new Object[size()];
-			int i = 0;
-			for (V val : this) {
-				result[i] = val;
-				i++;
-			}
-			return result;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] a) {
-			int size = size();
-			if (a.length != size) {
-				a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
-			}
-			int i = 0;
-			for (V val : this) {
-				a[i] = (T) val;
-				i++;
-			}
-			return a;
-		}
-
-		@Override
-		public boolean add(V e) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> c) {
-			for (Object o : c) {
-				if (!contains(o)) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends V> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(int index, Collection<? extends V> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public V get(int index) {
 			if (index < 0) {
 				throw new IndexOutOfBoundsException("" + index);
@@ -924,33 +432,8 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public V set(int index, V element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void add(int index, V element) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public V remove(int index) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public int indexOf(Object o) {
 			return inBoundsOrNeg1(wrapped.values().indexOf(o));
-		}
-
-		@Override
-		public int lastIndexOf(Object o) {
-			return inBoundsOrNeg1(wrapped.values().lastIndexOf(o));
-		}
-
-		@Override
-		public ListIterator<V> listIterator() {
-			return new RestrictedValueListIterator();
 		}
 
 		@Override
@@ -959,7 +442,12 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 		}
 
 		@Override
-		public List<V> subList(int fromIndex, int toIndex) {
+		public V poll() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean remove(Object o) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -1152,11 +640,6 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 
 	@Override
 	public V remove(Object key) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void putAll(Map<? extends K, ? extends V> m) {
 		throw new UnsupportedOperationException();
 	}
 

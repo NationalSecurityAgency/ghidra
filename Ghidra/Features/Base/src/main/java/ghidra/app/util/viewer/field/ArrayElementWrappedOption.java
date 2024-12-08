@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import ghidra.framework.options.CustomOption;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.GProperties;
 
 public class ArrayElementWrappedOption implements CustomOption {
 	private static final String SHOW_MULTI_ELEMENTS_PER_LINE = "showMultiArrayElementsPerLine";
@@ -56,16 +55,16 @@ public class ArrayElementWrappedOption implements CustomOption {
 // Persistence
 //==================================================================================================
 	@Override
-	public void readState(SaveState saveState) {
+	public void readState(GProperties properties) {
 		showMultipleArrayElementPerLine =
-			saveState.getBoolean(SHOW_MULTI_ELEMENTS_PER_LINE, DEFAULT_SHOW_MULTI);
-		arrayElementsPerLine = saveState.getInt(ELEMENTS_PER_LINE, DEFAULT_ELEMENTS_PER_LINE);
+			properties.getBoolean(SHOW_MULTI_ELEMENTS_PER_LINE, DEFAULT_SHOW_MULTI);
+		arrayElementsPerLine = properties.getInt(ELEMENTS_PER_LINE, DEFAULT_ELEMENTS_PER_LINE);
 	}
 
 	@Override
-	public void writeState(SaveState saveState) {
-		saveState.putBoolean(SHOW_MULTI_ELEMENTS_PER_LINE, showMultipleArrayElementPerLine);
-		saveState.putInt(ELEMENTS_PER_LINE, arrayElementsPerLine);
+	public void writeState(GProperties properties) {
+		properties.putBoolean(SHOW_MULTI_ELEMENTS_PER_LINE, showMultipleArrayElementPerLine);
+		properties.putInt(ELEMENTS_PER_LINE, arrayElementsPerLine);
 	}
 
 	public boolean showMultipleArrayElementPerLine() {

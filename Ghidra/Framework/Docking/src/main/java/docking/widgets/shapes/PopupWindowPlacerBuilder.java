@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 package docking.widgets.shapes;
+
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.util.Arrays;
 
 import docking.widgets.shapes.PopupWindowPlacer.*;
 
@@ -279,7 +283,8 @@ public class PopupWindowPlacerBuilder {
 	 */
 	public PopupWindowPlacerBuilder edge(Location major, Location... minors) {
 		if (minors.length > 3) {
-			throw new IllegalArgumentException("Too many preferred Locations: " + minors);
+			throw new IllegalArgumentException(
+				"Too many preferred Locations: " + Arrays.toString(minors));
 		}
 		for (Location minor : minors) {
 			if (!major.validMinor(minor)) {
@@ -310,7 +315,7 @@ public class PopupWindowPlacerBuilder {
 				}
 			}
 			else {
-				// Only looking from greater/lesser to the the center.
+				// Only looking from greater/lesser to the center.
 				add(new EdgePopupPlacer(major, minors[0], Location.CENTER));
 			}
 		}
@@ -426,4 +431,24 @@ public class PopupWindowPlacerBuilder {
 		return this;
 	}
 
+	/**
+	 * A method that allows clients to specify an exact rectangle to be used.  This method can be
+	 * used to hardcode a rectangle to use when the placement algorithm specified earlier in the 
+	 * builder chain has failed.
+	 * 
+	 * @param r the rectangle
+	 * @return this builder
+	 */
+	public PopupWindowPlacerBuilder useRectangle(Rectangle r) {
+		add(new PopupWindowPlacer() {
+
+			@Override
+			protected Rectangle getMyPlacement(Dimension toBePlaced, Rectangle innerBounds,
+					Rectangle outerBounds) {
+				return r;
+			}
+
+		});
+		return this;
+	}
 }

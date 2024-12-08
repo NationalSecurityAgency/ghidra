@@ -23,12 +23,12 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 
 /**
- * An ELF note that specifies the build-id hash of the containing program.
+ * An ELF note that specifies the build-id (sha1/md5/etc hash or manually specified bytes that 
+ * can be hex-ified) of the containing program.
  * <p>
- * The build-id hash is useful to find an external debug file.
+ * The hex values of the build-id are useful to find an external debug file.
  */
 public class NoteGnuBuildId extends ElfNote {
-	private static final int SHA1_DESC_LEN = 20; // 160bit SHA1 == 20 bytes
 	public static final String SECTION_NAME = ".note.gnu.build-id";
 
 	/**
@@ -40,7 +40,7 @@ public class NoteGnuBuildId extends ElfNote {
 	 * @throws IOException if data error
 	 */
 	public static NoteGnuBuildId read(ElfNote note, Program program) throws IOException {
-		if (!note.isGnu() || note.getDescription().length != SHA1_DESC_LEN) {
+		if (!note.isGnu() || note.getDescription().length == 0) {
 			throw new IOException("Invalid .note.gnu.build-id values: %s, %d"
 					.formatted(note.getName(), note.getDescription().length));
 		}
@@ -63,10 +63,6 @@ public class NoteGnuBuildId extends ElfNote {
 		super(nameLen, name, vendorType, description);
 	}
 
-	public byte[] getHash() {
-		return getDescription();
-	}
-
 	@Override
 	public String getNoteTypeName() {
 		return "GNU BuildId";
@@ -76,7 +72,7 @@ public class NoteGnuBuildId extends ElfNote {
 	public StructureDataType toStructure(DataTypeManager dtm) {
 		StructureDataType result =
 			createNoteStructure(null, "GnuBuildId", false, getNameLen(), 0, dtm);
-		result.add(new ArrayDataType(BYTE, getDescriptionLen(), -1, dtm), "hash", "SHA1");
+		result.add(new ArrayDataType(BYTE, getDescriptionLen(), -1, dtm), "hash", null);
 
 		return result;
 	}

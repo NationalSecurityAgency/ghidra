@@ -33,41 +33,23 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.delete();
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.delete();
 			}
 
 		});
@@ -94,41 +76,23 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.delete();
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.delete();
 			}
 
 		});
@@ -154,43 +118,25 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.delete();
-					program.getExternalManager().addExternalLibraryName("baz",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.delete();
+				program.getExternalManager().addExternalLibraryName("baz",
+					SourceType.USER_DEFINED);
 			}
 
 		});
@@ -222,43 +168,25 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.delete();
-					program.getExternalManager().addExternalLibraryName("baz",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.delete();
+				program.getExternalManager().addExternalLibraryName("baz",
+					SourceType.USER_DEFINED);
 			}
 
 		});
@@ -289,43 +217,25 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.delete();
-					program.getExternalManager().addExternalLibraryName("bar",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.delete();
+				program.getExternalManager().addExternalLibraryName("bar",
+					SourceType.USER_DEFINED);
 			}
 
 		});
@@ -356,43 +266,25 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.delete();
-					program.getExternalManager().addExternalLibraryName("bar",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.delete();
+				program.getExternalManager().addExternalLibraryName("bar",
+					SourceType.USER_DEFINED);
 			}
 
 		});
@@ -426,40 +318,22 @@ public class SymbolMergeManagerNamespace2Test extends AbstractListingMergeManage
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createNameSpace(program.getGlobalNamespace(), "foo",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createNameSpace(program.getGlobalNamespace(), "foo",
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
-					namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol namespaceSymbol = symtab.getNamespaceSymbol("foo", null);
+				namespaceSymbol.setName("bar", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				try {
-					program.getExternalManager().addExternalLibraryName("bar",
-						SourceType.USER_DEFINED);
-				}
-				finally {
-					program.endTransaction(txId, true);
-				}
+				program.getExternalManager().addExternalLibraryName("bar",
+					SourceType.USER_DEFINED);
 			}
 
 		});

@@ -352,7 +352,7 @@ public class ApplicationThemeManagerTest {
 		}
 
 		@Override
-		protected ApplicationThemeDefaults getApplicationDefaults() {
+		protected ApplicationThemeDefaults loadApplicationDefaults() {
 			return new ApplicationThemeDefaults() {
 
 				@Override

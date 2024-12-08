@@ -26,11 +26,11 @@ public enum FileAttributeTypeGroup {
 	PERMISSION_INFO("Permission Info"),
 	ENCRYPTION_INFO("Encryption Info"),
 	MISC_INFO("Misc"),
-	ADDITIONAL_INFO("Addional Info");
+	ADDITIONAL_INFO("Additional Info");
 
 	private final String descriptiveName;
 
-	private FileAttributeTypeGroup(String descriptiveName) {
+	FileAttributeTypeGroup(String descriptiveName) {
 		this.descriptiveName = descriptiveName;
 	}
 

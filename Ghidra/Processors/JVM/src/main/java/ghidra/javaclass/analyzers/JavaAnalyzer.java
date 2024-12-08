@@ -417,7 +417,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 			getBootStrapMethodAttribute(classFile, constantPool, indexMap);
 
 		for (Instruction instruction : instructionIt) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (!hasConstantPoolReference(instruction.getMnemonicString())) {
 				continue;

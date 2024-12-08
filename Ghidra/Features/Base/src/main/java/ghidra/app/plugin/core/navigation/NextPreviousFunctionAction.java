@@ -110,7 +110,7 @@ public class NextPreviousFunctionAction extends AbstractNextPreviousAction {
 		Address address = startFunction.getEntryPoint();
 		InstructionIterator it = program.getListing().getInstructions(address, isForward);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instruction = it.next();
 			Address instructionAddress = instruction.getMinAddress();
 			if (!body.contains(instructionAddress)) {

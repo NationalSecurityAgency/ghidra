@@ -26,7 +26,6 @@ import generic.lsh.vector.VectorCompare;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -46,11 +45,10 @@ public class SimilarSymbolNameProgramCorrelator extends VTAbstractProgramCorrela
 	int featureID = 0;
 	int minNameLength;
 
-	public SimilarSymbolNameProgramCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	public SimilarSymbolNameProgramCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, ToolOptions options) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 	}
 
 	@Override

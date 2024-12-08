@@ -21,6 +21,7 @@ import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.IllegalCharCppTransformer;
 
 /**
  * Class for getting at the various structures returned
@@ -72,6 +73,7 @@ public class DecompileResults {
 		hfunc = null;
 		hparamid = null;
 		docroot = null;
+		this.processState = processState;
 		//dumpResults(raw);
 		decodeStream(decoder);
 	}
@@ -143,6 +145,14 @@ public class DecompileResults {
 		return processState == DecompileProcess.DisposeState.DISPOSED_ON_STARTUP_FAILURE;
 	}
 
+	/** 
+	 * Returns true if the decompile completed normally
+	 * @return true if the decompile completed normally
+	 */
+	public boolean isValid() {
+		return errMsg == null || errMsg.isBlank();
+	}
+
 	/**
 	 * Return any error message associated with the
 	 * decompilation producing these results.  Generally,
@@ -179,7 +189,7 @@ public class DecompileResults {
 	/**
 	 * Get the marked up C code associated with these
 	 * decompilation results. If there was an error, or
-	 * code generation was turned off, retur null
+	 * code generation was turned off, return null
 	 * @return the resulting root of C markup
 	 */
 	public ClangTokenGroup getCCodeMarkup() {
@@ -197,8 +207,9 @@ public class DecompileResults {
 		if (docroot == null) {
 			return null;
 		}
-		PrettyPrinter printer = new PrettyPrinter(function, docroot);
-		return printer.print(true);
+		PrettyPrinter printer =
+			new PrettyPrinter(function, docroot, new IllegalCharCppTransformer());
+		return printer.print();
 	}
 
 	private void decodeStream(Decoder decoder) {

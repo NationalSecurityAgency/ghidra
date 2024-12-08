@@ -148,6 +148,21 @@
       <optional>
         <attribute name="piece4"/>
       </optional>
+      <optional>
+        <attribute name="piece5"/>
+      </optional>
+      <optional>
+        <attribute name="piece6"/>
+      </optional>
+      <optional>
+        <attribute name="piece7"/>
+      </optional>
+      <optional>
+        <attribute name="piece8"/>
+      </optional>
+      <optional>
+        <attribute name="piece9"/>
+      </optional>
     </element>
   </define>
 

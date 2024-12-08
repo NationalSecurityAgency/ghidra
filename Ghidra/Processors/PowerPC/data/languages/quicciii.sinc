@@ -8,7 +8,6 @@ define pcodeop debuggerNotifyHalt;
 define pcodeop instructionCacheBlockClearLock;
 define pcodeop queryInstructionCacheBlockLock;
 define pcodeop prefetchInstructionCacheBlockLockSetX;
-define pcodeop memoryBarrier;
 define pcodeop moveFromAPIDIndirect;
 define pcodeop moveFromPerformanceMonitorRegister;
 define pcodeop moveToPerformanceMonitorRegister;
@@ -69,14 +68,6 @@ define pcodeop invalidateTLB;
 	D = tmp;
 #        D = (zext(CC_X_OP) * RA_OR_ZERO) + (zext(!CC_X_OP) * B);
 }
-
-@ifndef IS_ISA
-#mbar 0         #FIXME
-:mbar MO        is OP=31 & MO & XOP_1_10=854
-{ 
-	memoryBarrier(MO:1);
-}
-@endif
 
 #mfapidi r0,r1  #FIXME
 :mfapidi D,A    is $(NOTVLE) & OP=31 & D & A & XOP_1_10=275

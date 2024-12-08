@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,12 +25,13 @@ ElementId ELEM_HIGHLIST = ElementId("highlist",117);
 ElementId ELEM_JUMPTABLELIST = ElementId("jumptablelist",118);
 ElementId ELEM_VARNODES = ElementId("varnodes",119);
 
-/// \param nm is the (base) name of the function
+/// \param nm is the (base) name of the function, as a formal symbol
+/// \param disp is the name used when displaying the function name in output
 /// \param scope is Symbol scope associated with the function
 /// \param addr is the entry address for the function
 /// \param sym is the symbol representing the function
 /// \param sz is the number of bytes (of code) in the function body
-Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,FunctionSymbol *sym,int4 sz)
+Funcdata::Funcdata(const string &nm,const string &disp,Scope *scope,const Address &addr,FunctionSymbol *sym,int4 sz)
   : baseaddr(addr),
     funcp(),
     vbank(scope->getArch()),
@@ -47,6 +48,7 @@ Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,FunctionSym
   glb = scope->getArch();
   minLanedSize = glb->getMinimumLanedRegisterSize();
   name = nm;
+  displayName = disp;
 
   size = sz;
   AddrSpace *stackid = glb->getStackSpace();
@@ -170,6 +172,8 @@ void Funcdata::stopProcessing(void)
 {
   flags |= processing_complete;
   obank.destroyDead();		// Free up anything in the dead list
+  if (!isJumptableRecoveryOn())
+    issueDatatypeWarnings();
 #ifdef CPUI_STATISTICS
   glb->stats->process(*this);
 #endif
@@ -293,6 +297,47 @@ Varnode *Funcdata::findSpacebaseInput(AddrSpace *id) const
   const VarnodeData &point(id->getSpacebase(0));
   vn = vbank.findInput(point.size, Address(point.space,point.offset));
   return vn;
+}
+
+/// \brief If it doesn't exist, create an input Varnode of the base register corresponding to the given address space
+///
+/// The address space must have a base register associated with it or an exception is thrown.
+/// If a Varnode representing the incoming base register already exists, it is returned. Otherwise
+/// a new Varnode is created and returned.  In either case, the Varnode will have the TypeSpacebase data-type set.
+/// \param id is the given address space
+/// \return the input Varnode corresponding to the base register
+Varnode *Funcdata::constructSpacebaseInput(AddrSpace *id)
+
+{
+  Varnode *spacePtr = findSpacebaseInput(id);
+  if (spacePtr != (Varnode *)0)
+    return spacePtr;
+  if (id->numSpacebase() == 0)
+    throw LowlevelError("Unable to construct pointer into space: "+id->getName());
+  const VarnodeData &point(id->getSpacebase(0));
+  Datatype *ct = glb->types->getTypeSpacebase(id,getAddress());
+  Datatype *ptr = glb->types->getTypePointer(point.size,ct,id->getWordSize());
+  spacePtr = newVarnode(point.size, point.getAddr(), ptr);
+  spacePtr = setInputVarnode(spacePtr);
+  spacePtr->setFlags(Varnode::spacebase);
+  spacePtr->updateType(ptr, true, true);
+  return spacePtr;
+}
+
+/// \brief Create a constant representing the \e base of the given global address space
+///
+/// The constant will have the TypeSpacebase data-type set.
+/// \param id is the given address space
+/// \return the constant base Varnode
+Varnode *Funcdata::constructConstSpacebase(AddrSpace *id)
+
+{
+  Datatype *ct = glb->types->getTypeSpacebase(id,Address());
+  Datatype *ptr = glb->types->getTypePointer(id->getAddrSize(),ct,id->getWordSize());
+  Varnode *spacePtr = newConstant(id->getAddrSize(),0);
+  spacePtr->updateType(ptr,true,true);
+  spacePtr->setFlags(Varnode::spacebase);
+  return spacePtr;
 }
 
 /// \brief Convert a constant pointer into a \e ram CPUI_PTRSUB
@@ -425,6 +470,15 @@ void Funcdata::clearCallSpecs(void)
     delete qlst[i];		// Delete each func_callspec
 
   qlst.clear();			// Delete list of pointers
+}
+
+void Funcdata::issueDatatypeWarnings(void)
+
+{
+  list<DatatypeWarning>::const_iterator iter;
+  for(iter=glb->types->beginWarnings();iter!=glb->types->endWarnings();++iter) {
+    warningHeader((*iter).getWarning());
+  }
 }
 
 FuncCallSpecs *Funcdata::getCallSpecs(const PcodeOp *op) const
@@ -734,9 +788,13 @@ uint8 Funcdata::decode(Decoder &decoder)
       if (decoder.readBool())
 	flags |= no_code;
     }
+    else if (attribId == ATTRIB_LABEL)
+      displayName = decoder.readString();
   }
   if (name.size() == 0)
     throw LowlevelError("Missing function name");
+  if (displayName.size() == 0)
+    displayName = name;
   if (size == -1)
     throw LowlevelError("Missing function size");
   baseaddr = Address::decode( decoder );
@@ -887,6 +945,21 @@ bool Funcdata::setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,
       return false;
     }
     (*res.first).second = resolve;
+  }
+  if (op->code() == CPUI_MULTIEQUAL && slot >= 0) {
+    // Data-type propagation doesn't happen between MULTIEQUAL input slots holding the same Varnode
+    // So if this is a MULTIEQUAL, copy resolution to any other input slots holding the same Varnode
+    const Varnode *vn = op->getIn(slot);		// The Varnode being directly set
+    for(int4 i=0;i<op->numInput();++i) {
+      if (i == slot) continue;
+      if (op->getIn(i) != vn) continue;		// Check that different input slot holds same Varnode
+      ResolveEdge dupedge(parent,op,i);
+      res = unionMap.emplace(dupedge,resolve);
+      if (!res.second) {
+	if (!(*res.first).second.isLocked())
+	  (*res.first).second = resolve;
+      }
+    }
   }
   return true;
 }

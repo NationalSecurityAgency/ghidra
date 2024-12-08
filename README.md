@@ -29,22 +29,26 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 17 64-bit][jdk17]
+* Install [JDK 21 64-bit][jdk]
 * Download a Ghidra [release file][releases]
+  - **NOTE:** The official multi-platform release file is named 
+    `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
+    Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
 
 For additional information and troubleshooting tips about installing and running a Ghidra release, 
-please refer to `docs/InstallationGuide.html` which can be found in your extracted Ghidra release 
-directory. 
+please refer to the [Installation Guide][installationguide] which can be found in a Ghidra release
+at `docs/InstallationGuide.html`. 
 
 ## Build
 
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 17 64-bit][jdk17]
-* [Gradle 7.3+][gradle]
+* [JDK 21 64-bit][jdk]
+* [Gradle 8.5+][gradle] (or provided Gradle wrapper if Internet connection is available)
+* [Python3][python3] (version 3.9 to 3.12) with bundled pip
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
@@ -55,20 +59,22 @@ To create the latest development build for your platform from this source reposi
 ##### Download and extract the source:
 [Download from GitHub][master]
 ```
-$ unzip ghidra-master
-$ cd ghidra-master
+unzip ghidra-master
+cd ghidra-master
 ```
 **NOTE:** Instead of downloading the compressed source, you may instead want to clone the GitHub 
 repository: `git clone https://github.com/NationalSecurityAgency/ghidra.git`
 
-##### Download additional build dependencies into source repository: 
+##### Download additional build dependencies into source repository:
+**NOTE:** If an Internet connection is available and you did not install Gradle, the following 
+`gradle` commands may be replaced with `./gradle(.bat)`.
 ```
-$ gradle -I gradle/support/fetchDependencies.gradle init
+gradle -I gradle/support/fetchDependencies.gradle
 ```
 
 ##### Create development build: 
 ```
-$ gradle buildGhidra
+gradle buildGhidra
 ```
 The compressed development build will be located at `build/dist/`.
 
@@ -81,7 +87,10 @@ For issues building, please check the [Known Issues][known-issues] section for p
 ### User Scripts and Extensions
 Ghidra installations support users writing custom scripts and extensions via the *GhidraDev* plugin 
 for Eclipse.  The plugin and its corresponding instructions can be found within a Ghidra release at
-`Extensions/Eclipse/GhidraDev/`.
+`Extensions/Eclipse/GhidraDev/` or at [this link][ghidradev].
+
+**NOTE:** The *GhidraDev* plugin for Eclipse only supports developing against fully built
+Ghidra installations which can be downloaded from the [Releases][releases] page.
 
 ### Advanced Development
 To develop the Ghidra tool itself, it is highly recommended to use Eclipse, which the Ghidra 
@@ -93,7 +102,7 @@ development process has been highly customized for.
 
 ##### Prepare the development environment:
 ``` 
-$ gradle prepdev eclipse buildNatives
+gradle prepdev eclipse buildNatives
 ```
 
 ##### Import Ghidra projects into Eclipse:
@@ -117,13 +126,16 @@ source project.
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
+[installationguide]: GhidraDocs/InstallationGuide.md
 [known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
-[jdk17]: https://adoptium.net/temurin/releases
+[jdk]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
+[python3]: https://www.python.org/downloads/
 [vs]: https://visualstudio.microsoft.com/vs/community/
 [vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
+[ghidradev]: GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md

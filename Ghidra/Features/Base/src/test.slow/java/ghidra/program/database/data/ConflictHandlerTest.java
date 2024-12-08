@@ -17,6 +17,8 @@ package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+
 import org.junit.*;
 
 import ghidra.program.database.ProgramBuilder;
@@ -26,6 +28,8 @@ import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for the {@link DataTypeConflictHandler conflict handler} stuff.
@@ -523,17 +527,15 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 			EnumDataType e = new EnumDataType(subc.getCategoryPath(), "Enum", 2);
 
-			DataType resolvedEnum =
-				dtm.resolve(e,
-					DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+			DataType resolvedEnum = dtm.resolve(e,
+				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 			assertTrue(e.isEquivalent(resolvedEnum));
 			assertEquals("/subc/Enum", resolvedEnum.getPathName());
 
 			e.add("xyz", 1);
 
-			resolvedEnum =
-				dtm.resolve(e,
-					DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+			resolvedEnum = dtm.resolve(e,
+				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 			assertTrue(e.isEquivalent(resolvedEnum));
 			assertEquals("/subc/Enum.conflict", resolvedEnum.getPathName());
 		}
@@ -597,9 +599,8 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testResolveArrayConflict() {
 
-		DataType array1 =
-			new ArrayDataType(new TypedefDataType("size_t", UnsignedIntegerDataType.dataType), 2,
-				-1);
+		DataType array1 = new ArrayDataType(
+			new TypedefDataType("size_t", UnsignedIntegerDataType.dataType), 2, -1);
 		DataType array2 =
 			new ArrayDataType(new TypedefDataType("size_t", IntegerDataType.dataType), 2, -1);
 
@@ -616,6 +617,203 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(array2resolvedC == array2resolvedB);
 	}
 
+	@Test
+	public void testResolveWithCircularDependency() {
+
+		Structure struct1 = new StructureDataType("s1", 0, dataMgr);
+		struct1.setPackingEnabled(true);
+
+		Structure struct2 = new StructureDataType("s2", 0, dataMgr);
+		struct2.setPackingEnabled(true);
+
+		struct1.add(new PointerDataType(struct2));
+		struct2.add(new PointerDataType(struct1));
+
+		Structure struct1a = (Structure) dataMgr.resolve(struct1,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		Structure struct1b = (Structure) dataMgr.resolve(struct1,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		assertTrue(struct1a == struct1b);
+
+		assertEquals(5, dataMgr.getDataTypeRecordCount());
+	}
+
+	@Test
+	public void testComplexResolveWithConflictReplacement() {
+
+		// FIXME: Add typedef to struct1 pointer used as struct2 component
+		// FIXME: Add add array of struct1 pointers used as struct1 component
+
+		Structure struct1a = new StructureDataType("s1", 0, dataMgr);
+		struct1a.setPackingEnabled(true);
+		Structure struct2a = new StructureDataType("s2", 0, dataMgr);
+		struct2a.add(ByteDataType.dataType);
+		struct2a.add(new PointerDataType(struct1a, dataMgr));
+
+		struct1a.add(new PointerDataType(struct1a, dataMgr));
+		struct1a.add(new PointerDataType(struct2a, dataMgr));
+		struct1a.add(new ArrayDataType(struct2a, 2, -1, dataMgr));
+		struct1a.add(new TypedefDataType("S2TD", struct2a));
+
+		struct1a = (Structure) dataMgr.resolve(struct1a,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		Structure struct1b = new StructureDataType("s1", 0, dataMgr);
+		struct1b.setPackingEnabled(true);
+		Structure struct2b = new StructureDataType("s2", 0, dataMgr); // not-yet-defined - will get replaced by struct2a
+
+		struct1b.add(new PointerDataType(struct1b, dataMgr));
+		struct1b.add(new PointerDataType(struct2b, dataMgr));
+		struct1b.add(new ArrayDataType(struct2b, 2, -1, dataMgr));
+		struct1b.add(new TypedefDataType("S2TD", struct2b));
+
+		struct1b = (Structure) dataMgr.resolve(struct1b,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		assertTrue(struct1a == struct1b);
+
+		assertNoConflict("s1");
+		assertNoConflict("s2");
+	}
+
+	@Test
+	public void testComplexResolveWithConflictReplacement2() {
+
+		// FIXME: Add typedef to struct1 pointer used as struct2 component
+		// FIXME: Add add array of struct1 pointers used as struct1 component
+
+		Structure struct1a = new StructureDataType("s1", 0, dataMgr);
+		struct1a.setPackingEnabled(true);
+		Structure struct2a = new StructureDataType("s2", 0, dataMgr); // not-yet-defined - will get replaced by struct2b
+
+		struct1a.add(new PointerDataType(struct1a, dataMgr));
+		struct1a.add(new PointerDataType(struct2a, dataMgr));
+		struct1a.add(new ArrayDataType(struct2a, 2, -1, dataMgr));
+		struct1a.add(new TypedefDataType("S2TD", struct2a));
+
+		struct1a = (Structure) dataMgr.resolve(struct1a,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		System.out.println("-- After First Resolve --");
+		System.out.println(struct1a);
+		Pointer ptr2a = (Pointer) struct1a.getComponent(1).getDataType();
+		struct2a = (Structure) ptr2a.getDataType();
+		System.out.println(struct2a);
+
+		Structure struct1b = new StructureDataType("s1", 0, dataMgr);
+		struct1b.setPackingEnabled(true);
+		Structure struct2b = new StructureDataType("s2", 0, dataMgr);
+		struct2b.setPackingEnabled(true);
+		struct2b.add(ByteDataType.dataType);
+		struct2b.add(new PointerDataType(struct1b, dataMgr));
+
+		struct1b.add(new PointerDataType(struct1b, dataMgr));
+		struct1b.add(new PointerDataType(struct2b, dataMgr));
+		struct1b.add(new ArrayDataType(struct2b, 2, -1, dataMgr));
+		struct1b.add(new TypedefDataType("S2TD", struct2b));
+
+		struct1b = (Structure) dataMgr.resolve(struct1b,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		System.out.println("-- After Second Resolve (original instances - s2 content replaced) --");
+		System.out.println(struct1a);
+		System.out.println(struct2a);
+
+		System.out.println("-- After Second Resolve (bad s1.conflict) --");
+		System.out.println(struct1b);
+		Pointer ptr2b = (Pointer) struct1b.getComponent(1).getDataType();
+		struct2b = (Structure) ptr2b.getDataType();
+		System.out.println(struct2b);
+
+		// struct1a should get eliminated and replaced by struct1b
+		assertTrue(struct1a == struct1b);
+
+		assertNoConflict("s1");
+		assertNoConflict("s2");
+	}
+
+	@Test
+	public void testDedupeAllConflicts() throws CancelledException {
+
+		Structure struct1a = new StructureDataType("s1", 0, dataMgr);
+		struct1a.setPackingEnabled(true);
+
+		struct1a.add(ByteDataType.dataType);
+		Structure s1 = (Structure) dataMgr.resolve(struct1a, null);
+
+		struct1a.add(ByteDataType.dataType);
+		Structure s2 = (Structure) dataMgr.resolve(struct1a, null);
+
+		struct1a.add(ByteDataType.dataType);
+		Structure s3 = (Structure) dataMgr.resolve(struct1a, null);
+
+		// force all conflicts to become equivalent
+		s1.deleteAll();
+		s2.deleteAll();
+		s3.deleteAll();
+
+		ArrayList<DataType> list = new ArrayList<>();
+		dataMgr.findDataTypes("s1", list);
+		assertEquals(3, list.size());
+
+		dataMgr.dedupeAllConflicts(TaskMonitor.DUMMY);
+
+		list.clear();
+		dataMgr.findDataTypes("s1", list);
+		assertEquals(1, list.size());
+	}
+
+	@Test
+	public void testDedupeConflicts() {
+
+		Structure struct1a = new StructureDataType("s1", 0, dataMgr);
+		struct1a.setPackingEnabled(true);
+
+		struct1a.add(ByteDataType.dataType);
+		Structure s1 = (Structure) dataMgr.resolve(struct1a, null);
+
+		struct1a.add(ByteDataType.dataType);
+		Structure s2 = (Structure) dataMgr.resolve(struct1a, null);
+
+		struct1a.add(ByteDataType.dataType);
+		Structure s3 = (Structure) dataMgr.resolve(struct1a, null);
+
+		// force two of the conflicts to become equivalent
+		s1.deleteAll();
+		// leave s2 unchanged
+		s3.deleteAll();
+
+		ArrayList<DataType> list = new ArrayList<>();
+		dataMgr.findDataTypes("s1", list);
+		assertEquals(3, list.size());
+
+		dataMgr.dedupeConflicts(s3);
+		assertTrue(s3.isDeleted());
+
+		list.clear();
+		dataMgr.findDataTypes("s1", list);
+		assertEquals(2, list.size());
+	}
+
+	private void assertNoConflict(String dtName) {
+		DataType dt1 = dataMgr.getDataType("/" + dtName);
+		assertNotNull("DataType not found: " + dtName, dt1);
+
+		DataType dt2 = dataMgr.getDataType("/" + dtName + ".conflict");
+		if (dt2 != null) {
+			System.out.println("Original type: " + dt1.toString());
+			System.out.println("Conflict type: " + dt2.toString());
+
+			if (dt1.isEquivalent(dt2)) {
+				System.out.println(dtName + " - TYPES ARE EQUIVALENT");
+			}
+
+			fail("DataType conflict found: " + dt2.getPathName());
+		}
+	}
+
 	private static class DummySourceArchive implements SourceArchive {
 
 		private final UniversalID id;
@@ -626,36 +824,45 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 			this.archiveName = archiveName;
 		}
 
+		@Override
 		public ArchiveType getArchiveType() {
 			return ArchiveType.FILE;
 		}
 
+		@Override
 		public String getDomainFileID() {
 			return null;
 		}
 
+		@Override
 		public long getLastSyncTime() {
 			return 0;
 		}
 
+		@Override
 		public String getName() {
 			return archiveName;
 		}
 
+		@Override
 		public UniversalID getSourceArchiveID() {
 			return id;
 		}
 
+		@Override
 		public boolean isDirty() {
 			return false;
 		}
 
+		@Override
 		public void setDirtyFlag(boolean dirty) {
 		}
 
+		@Override
 		public void setLastSyncTime(long time) {
 		}
 
+		@Override
 		public void setName(String name) {
 		}
 

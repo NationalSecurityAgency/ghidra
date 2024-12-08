@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -256,8 +256,8 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				}
 				MemoryBlock block;
 				if (length > 0) {
-					block = MemoryBlockUtils.createInitializedBlock(program, false,
-						name, addr, fileBytes, offset, length, "", "", r, w, x, log);
+					block = MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
+						fileBytes, offset, length, "", "", r, w, x, log);
 					if (length < minalloc) {
 						// Things actually rely on the block being padded out with real 0's, so we
 						// must expand it
@@ -350,12 +350,18 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
-					int offset = resource.getFileOffsetShifted();
-					int length = resource.getFileLengthShifted();
+					long offset = Integer.toUnsignedLong(resource.getFileOffsetShifted());
+					long length = Integer.toUnsignedLong(resource.getFileLengthShifted());
+					long extra = offset + length - fileBytes.getSize();
+					if (extra > 0) {
+						log.appendMsg(
+							"Resource at 0x%x exceeds file length by 0x%x bytes...truncating"
+									.formatted(offset, extra));
+						length -= extra;
+					}
 					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
-							addr, fileBytes, offset, length, "", "", true,
-							false, false, log);
+							addr, fileBytes, offset, length, "", "", true, false, false, log);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -445,8 +451,12 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		String comment = "";
 		String source = "";
 		// This isn't a real block, just place holder addresses, so don't create an initialized block
-		MemoryBlockUtils.createUninitializedBlock(program, false, MemoryBlock.EXTERNAL_BLOCK_NAME,
-			addr, length, comment, source, true, false, false, log);
+		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program, false,
+			MemoryBlock.EXTERNAL_BLOCK_NAME, addr, length, comment, source, true, false, false,
+			log);
+
+		// Mark block as an artificial fabrication
+		block.setArtificial(true);
 
 		for (int i = 0; i < names.length; ++i) {
 			String moduleName = names[i].getString();

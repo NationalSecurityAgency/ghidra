@@ -73,7 +73,7 @@ public abstract class DBWithUserDataContentHandler<T extends DomainObjectAdapter
 			return;
 		}
 		String path = "/";
-		String name = ProjectFileManager.getUserDataFilename(associatedFileID);
+		String name = DefaultProjectData.getUserDataFilename(associatedFileID);
 		BufferFile bf = null;
 		boolean success = false;
 		try {
@@ -109,7 +109,7 @@ public abstract class DBWithUserDataContentHandler<T extends DomainObjectAdapter
 	public final void removeUserDataFile(FolderItem associatedItem, FileSystem userFilesystem)
 			throws IOException {
 		String path = "/";
-		String name = ProjectFileManager.getUserDataFilename(associatedItem.getFileID());
+		String name = DefaultProjectData.getUserDataFilename(associatedItem.getFileID());
 		FolderItem item = userFilesystem.getItem(path, name);
 		if (item != null) {
 			item.delete(-1, null);
@@ -130,7 +130,7 @@ public abstract class DBWithUserDataContentHandler<T extends DomainObjectAdapter
 			String associatedContentType, FileSystem userfs, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		String path = "/";
-		String name = ProjectFileManager.getUserDataFilename(associatedFileID);
+		String name = DefaultProjectData.getUserDataFilename(associatedFileID);
 		FolderItem item = userfs.getItem(path, name);
 		if (item == null || !(item instanceof DatabaseItem) ||
 			!getUserDataContentType(associatedContentType).equals(item.getContentType())) {

@@ -24,10 +24,10 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -110,7 +110,7 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 			this.name = name;
 			update(NAME_COLUMN);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.CHANGED, null, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_CHANGED, null, this));
 	}
 
 	@Override
@@ -128,7 +128,7 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 			}
 			doSetRange(range);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_CHANGED, space, this));
 	}
 
 	@Override
@@ -190,7 +190,7 @@ public class DBTraceModule extends AbstractDBTraceAddressSnapRangePropertyMapDat
 				traceSection.doSetLifespan(newLifespan);
 			}
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.LIFESPAN_CHANGED,
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_LIFESPAN_CHANGED,
 			null, this, oldLifespan, newLifespan));
 	}
 

@@ -73,7 +73,7 @@ public class FunctionXrefsTableModel extends ReferencesFromTableModel {
 		}
 
 		for (Address address : thunks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			addReferences(accumulator, address);
 		}
 	}

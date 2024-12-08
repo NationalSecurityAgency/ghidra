@@ -109,6 +109,19 @@ public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {
 	}
 
 	@Override
+	public FolderItem[] getItems(String folderPath) throws IOException {
+		RepositoryItem[] items = repository.getItemList(folderPath);
+		FolderItem[] folderItems = new FolderItem[items.length];
+		for (int i = 0; i < items.length; i++) {
+			if (items[i].getItemType() != RepositoryItem.DATABASE) {
+				throw new IOException("Unsupported file type");
+			}
+			folderItems[i] = new RemoteDatabaseItem(repository, items[i]);
+		}
+		return folderItems;
+	}
+
+	@Override
 	public synchronized FolderItem getItem(String folderPath, String name) throws IOException {
 		RepositoryItem item = repository.getItem(folderPath, name);
 		if (item == null) {

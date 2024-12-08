@@ -85,8 +85,7 @@ public class ElfNote implements ElfInfoItem {
 	 * @param program {@link Program}
 	 * @param sectionName name of the note section
 	 * @param readerFunc {@link NoteReaderFunc} that converts a generic note instance into a
-	 * specialized note.<br>
-	 * Example: <code>(note, programContext) -> new MyNote(....)</code>
+	 * specialized note.
 	 * @return new Note instance, or null if not present or error reading
 	 */
 	protected static <T extends ElfNote> T readFromProgramHelper(Program program,

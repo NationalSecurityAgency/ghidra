@@ -42,7 +42,7 @@ public class TestTool extends GhidraTool {
 		}
 
 		Runnable r = () -> {
-			exit();
+			dispose();
 			if (getProject().getToolServices() != null) {
 				getProject().getToolServices().closeTool(TestTool.this);
 			}

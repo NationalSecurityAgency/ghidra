@@ -69,7 +69,7 @@ public class ExtractELFDebugFilesScript extends GhidraScript {
 	void processDir(GFile dir, File destDir) throws IOException, CancelledException {
 		List<GFile> listing = dir.getListing();
 		for (GFile file : listing) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (file.isDirectory()) {
 				continue;
 			}
@@ -89,7 +89,7 @@ public class ExtractELFDebugFilesScript extends GhidraScript {
 			}
 		}
 		for (GFile file : listing) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (file.isDirectory()) {
 				processDir(file, destDir);
 			}

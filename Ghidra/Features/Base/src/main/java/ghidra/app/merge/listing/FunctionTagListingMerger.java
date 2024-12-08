@@ -210,7 +210,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 					else {
 						showMergePanel(listingPanel, addr, id, monitor);
 					}
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 			}
 		}

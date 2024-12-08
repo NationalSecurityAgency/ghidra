@@ -69,7 +69,7 @@ public class DecodedProvider implements ByteProvider {
 				byte[] header = decoder.decode(fileHeader.getBlob(0).trim());
 				parseHeader(header);
 				for (int i = 1; i < fileHeader.getBlobCount(); i++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					byte[] decode = decoder.decode(fileHeader.getBlob(i).trim());
 					inflater.setInput(decode, 0, decode.length);
 					int nDecompressed = inflater.inflate(decompressed);

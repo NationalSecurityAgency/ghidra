@@ -18,6 +18,7 @@ package ghidra.program.model.util;
 import java.util.Iterator;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.util.Saveable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -153,7 +154,10 @@ public interface PropertyMapManager {
 
 	/**
 	 * Removes all properties in the given range from all user 
-	 * defined PropertyMaps.
+	 * defined PropertyMaps. 
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
+	 * 
 	 * @param startAddr the first address in the range of addresses where 
 	 * propertie values are to be removed.
 	 * @param endAddr the last address in the range of addresses where 

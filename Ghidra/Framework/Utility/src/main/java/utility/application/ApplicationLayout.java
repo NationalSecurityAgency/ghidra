@@ -16,13 +16,11 @@
 package utility.application;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
-import utilities.util.FileUtilities;
 
 /**
  * The Application Layout base class defines the customizable elements of the application's
@@ -109,7 +107,15 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the directory where archived application Extensions are stored.
+	 * Returns the directory where archived application Extensions are stored.  This directory may
+	 * contain both zip files and subdirectories.   This directory is only used inside of an
+	 * installation; development mode does not use this directory.   This directory is used to ship 
+	 * pre-built Ghidra extensions as part of a distribution.
+	 * <P>
+	 * This should be at the following location:<br>
+	 * <ul>
+	 * <li><code>{install dir}/Extensions/Ghidra</code></li>
+	 * </ul>
 	 *
 	 * @return the application Extensions archive directory.  Could be null if the
 	 *   {@link ApplicationLayout} does not support application Extensions.
@@ -120,7 +126,13 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns an {@link List ordered list} of the application Extensions installation directories.
+	 * Returns a prioritized {@link List ordered list} of the application Extensions installation 
+	 * directories.   Typically, the values may be any of the following locations:<br>
+	 * <ul>
+	 * <li><code>[user settings dir]/Extensions</code></li>
+	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
+	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
+	 * </ul>
 	 *
 	 * @return an {@link List ordered list} of the application Extensions installation directories.
 	 *   Could be empty if the {@link ApplicationLayout} does not support application Extensions.
@@ -136,35 +148,6 @@ public abstract class ApplicationLayout {
 	 */
 	public final ResourceFile getPatchDir() {
 		return patchDir;
-	}
-
-	/**
-	 * Creates the application's user directories (or ensures they already exist).
-	 *
-	 * @throws IOException if there was a problem creating the application's user directories.
-	 */
-	public final void createUserDirs() throws IOException {
-		if (userTempDir != null) {
-			if (!FileUtilities.mkdirs(userTempDir)) {
-				throw new IOException("Failed to create user temp directory: " + userTempDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userTempDir);
-		}
-
-		if (userCacheDir != null) {
-			if (!FileUtilities.mkdirs(userCacheDir)) {
-				throw new IOException("Failed to create user cache directory: " + userCacheDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userCacheDir);
-		}
-
-		if (userSettingsDir != null) {
-			if (!FileUtilities.mkdirs(userSettingsDir)) {
-				throw new IOException(
-					"Failed to create user settings directory: " + userSettingsDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userSettingsDir);
-		}
 	}
 
 	/**

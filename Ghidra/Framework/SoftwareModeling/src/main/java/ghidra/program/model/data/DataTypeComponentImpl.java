@@ -347,4 +347,33 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		return InternalDataTypeComponent.toString(this);
 	}
 
+	/**
+	 * Get the preferred length for a new component. The length returned will be no
+	 * larger than the specified length.
+	 * 
+	 * @param dataType new component datatype
+	 * @param length   constrained length or -1 to force use of dataType size.
+	 *                 Dynamic types such as string must have a positive length
+	 *                 specified.
+	 * @return preferred component length
+	 * @throws IllegalArgumentException if length not specified for a {@link Dynamic} dataType.
+	 */
+	public static int getPreferredComponentLength(DataType dataType, int length) {
+		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
+			return 0;
+		}
+		int dtLength = dataType.getLength();
+		if (length <= 0) {
+			length = dtLength;
+		}
+		else if (dtLength >= 0 && dtLength < length) { // constrain fixed-length type
+			length = dtLength;
+		}
+		if (length <= 0) {
+			throw new IllegalArgumentException("Positive length must be specified for " +
+				dataType.getDisplayName() + " component");
+		}
+		return length;
+	}
+
 }

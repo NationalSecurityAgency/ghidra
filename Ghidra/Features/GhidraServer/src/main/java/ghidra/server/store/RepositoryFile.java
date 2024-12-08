@@ -49,27 +49,13 @@ public class RepositoryFile {
 	 * @param fileSystem local file-system which corresponds to repository.
 	 * @param parent parent repository folder
 	 * @param name item/file name
-	 * @throws IOException
 	 */
 	RepositoryFile(Repository repository, LocalFileSystem fileSystem, RepositoryFolder parent,
-			String name) throws IOException {
+			String name) {
 		this.repository = repository;
 		this.fileSystem = fileSystem;
 		this.parent = parent;
 		this.name = name;
-//		LocalFolderItem folderItem = fileSystem.getItem(parent.getPathname(), name);
-//		if (folderItem == null || !folderItem.isVersioned() ||
-//			!(folderItem instanceof LocalDatabaseItem)) {
-//			// must build pathname just in case folderItem does not exist
-//			String pathname = parent.getPathname();
-//			if (pathname.length() != 1) {
-//				pathname += "/";
-//			}
-//			pathname += name;
-//			RepositoryManager.log(repository.getName(), pathname, "file is corrupt", null);
-//			throw new FileNotFoundException(pathname + " is corrupt");
-//		}
-//		this.databaseItem = (LocalDatabaseItem) folderItem;
 	}
 
 	/**
@@ -104,6 +90,7 @@ public class RepositoryFile {
 
 	/**
 	 * Returns item/file name
+	 * @return file name
 	 */
 	public String getName() {
 		return name;
@@ -111,6 +98,7 @@ public class RepositoryFile {
 
 	/**
 	 * Returns parent folder
+	 * @return parent folder
 	 */
 	public RepositoryFolder getParent() {
 		return parent;
@@ -118,6 +106,7 @@ public class RepositoryFile {
 
 	/**
 	 * Returns file/item path within repository.
+	 * @return path within repository
 	 */
 	public String getPathname() {
 		synchronized (fileSystem) {
@@ -131,7 +120,7 @@ public class RepositoryFile {
 
 	/**
 	 * Returns data pertaining to this file.
-	 * @throws IOException
+	 * @return Serializable {@link RepositoryItem} which corresponds to this file
 	 */
 	public RepositoryItem getItem() {
 		synchronized (fileSystem) {
@@ -157,9 +146,10 @@ public class RepositoryFile {
 	 * This method is only valid for an underlying FolderItem of type database.
 	 * @param version requested version or -1 for current version
 	 * @param minChangeDataVer minimum version to include within change data or -1 if not applicable.
-	 * @param user 
+	 * @param user user who initiated the request
 	 * @return open BufferFile for read-only use.
-	 * @throws IOException
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
 	 */
 	public LocalManagedBufferFile openDatabase(int version, int minChangeDataVer, String user)
 			throws IOException {
@@ -177,8 +167,10 @@ public class RepositoryFile {
 	/**
 	 * Open the current version for checkin use.
 	 * @param checkoutId checkout ID
-	 * @param user
+	 * @param user user who initiated the request
 	 * @return open BufferFile for update/checkin use
+	 * @throws UserAccessException if user is denied write access
+	 * @throws IOException if an IO error occurs
 	 */
 	public LocalManagedBufferFile openDatabase(long checkoutId, String user) throws IOException {
 		synchronized (fileSystem) {
@@ -199,7 +191,11 @@ public class RepositoryFile {
 	}
 
 	/**
-	 * Returns list of all available versions.
+	 * Returns all available versions.
+	 * @param user user who initiated the request
+	 * @return all available versions
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
 	 */
 	public Version[] getVersions(String user) throws IOException {
 		synchronized (fileSystem) {
@@ -225,35 +221,36 @@ public class RepositoryFile {
 
 	/**
 	 * Delete oldest or current version of this file/item.
-	 * @param version oldest or current version, or -1 to remove
+	 * @param deleteVersion oldest or current version, or -1 to remove
 	 * all versions.
-	 * @param user
-	 * @throws IOException
+	 * @param user user who initiated the request
+	 * @throws UserAccessException if user is denied ability to delete version(s)
+	 * @throws IOException if an IO error occurs
 	 */
-	public void delete(int version, String user) throws IOException {
+	public void delete(int deleteVersion, String user) throws IOException {
 		synchronized (fileSystem) {
 			validate();
 			User userObj = repository.validateWritePrivilege(user);
 
 			if (!userObj.isAdmin()) {
 				Version[] versions = databaseItem.getVersions();
-				if (version == -1) {
-					for (int i = 0; i < versions.length; i++) {
-						if (!user.equals(versions[i].getUser())) {
+				if (deleteVersion == -1) {
+					for (Version version : versions) {
+						if (!user.equals(version.getUser())) {
 							throw new UserAccessException(getName() + " version " +
-								versions[i].getVersion() + " owned by " + versions[i].getUser());
+								version.getVersion() + " owned by " + version.getUser());
 						}
 					}
 				}
-				else if (version == versions[0].getVersion()) {
+				else if (deleteVersion == versions[0].getVersion()) {
 					if (!user.equals(versions[0].getUser())) {
-						throw new UserAccessException(getName() + " version " + version +
+						throw new UserAccessException(getName() + " version " + deleteVersion +
 							" owned by " + versions[0].getUser());
 					}
 				}
-				else if (version == versions[versions.length - 1].getVersion()) {
+				else if (deleteVersion == versions[versions.length - 1].getVersion()) {
 					if (!user.equals(versions[versions.length - 1].getUser())) {
-						throw new UserAccessException(getName() + " version " + version +
+						throw new UserAccessException(getName() + " version " + deleteVersion +
 							" owned by " + versions[versions.length - 1].getUser());
 					}
 				}
@@ -267,7 +264,7 @@ public class RepositoryFile {
 
 			}
 			else {
-				databaseItem.delete(version, user);
+				databaseItem.delete(deleteVersion, user);
 			}
 			deleted = true;
 			repositoryItem = null;
@@ -284,9 +281,10 @@ public class RepositoryFile {
 	 * Move this file/item to a new folder and optionally change its name.
 	 * @param newParent new parent folder
 	 * @param newItemName new file/item name
-	 * @param user
+	 * @param user user who initiated the request
 	 * @throws InvalidNameException if name is invalid
-	 * @throws IOException
+	 * @throws UserAccessException if user is denied write access
+	 * @throws IOException if an IO error occurs
 	 */
 	public void moveTo(RepositoryFolder newParent, String newItemName, String user)
 			throws InvalidNameException, IOException {
@@ -309,10 +307,12 @@ public class RepositoryFile {
 	/**
 	 * Request a checkout of the underlying item.
 	 * @param checkoutType checkout type requested
-	 * @param user
+	 * @param user user who initiated the request
+	 * @param projectPath user's project path which will own checkout
 	 * @return checkout data if successful.  Null is returned if exclusive checkout
 	 * failed due to existing checkout(s).
-	 * @throws IOException
+	 * @throws UserAccessException if user is denied write access
+	 * @throws IOException if an IO error occurs
 	 */
 	public ItemCheckoutStatus checkout(CheckoutType checkoutType, String user, String projectPath)
 			throws IOException {
@@ -332,8 +332,8 @@ public class RepositoryFile {
 	 * Update checkout version for an existing checkout.
 	 * @param checkoutId existing checkout ID
 	 * @param checkoutVersion newer version now associated with checkout
-	 * @param user
-	 * @throws IOException
+	 * @param user user who initiated the request
+	 * @throws IOException if an IO error occurs
 	 */
 	public void updateCheckoutVersion(long checkoutId, int checkoutVersion, String user)
 			throws IOException {
@@ -346,9 +346,9 @@ public class RepositoryFile {
 	/**
 	 * Terminate an existing checkout
 	 * @param checkoutId existing checkout ID
-	 * @param user
+	 * @param user user who initiated the request
 	 * @param notify if true notify listeners of item change.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public void terminateCheckout(long checkoutId, String user, boolean notify) throws IOException {
 		synchronized (fileSystem) {
@@ -368,8 +368,10 @@ public class RepositoryFile {
 	/**
 	 * Returns checkout data for a specified checkout ID.
 	 * @param checkoutId existing checkout ID
-	 * @param user
-	 * @throws IOException
+	 * @param user user who initiated the request
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
+	 * @return checkout data for a specified checkout ID.
 	 */
 	public ItemCheckoutStatus getCheckout(long checkoutId, String user) throws IOException {
 		synchronized (fileSystem) {
@@ -380,9 +382,11 @@ public class RepositoryFile {
 	}
 
 	/**
-	 * Returns a list of all checkouts for this file/item.
-	 * @param user
-	 * @throws IOException
+	 * Returns all checkouts for this file/item.
+	 * @param user user who initiated the request
+	 * @throws UserAccessException if user is denied access
+	 * @throws IOException if an IO error occurs
+	 * @return all checkouts for this file/item.
 	 */
 	public ItemCheckoutStatus[] getCheckouts(String user) throws IOException {
 		synchronized (fileSystem) {
@@ -394,7 +398,8 @@ public class RepositoryFile {
 
 	/**
 	 * Returns true if one or more checkouts exist for this file/item.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
+	 * @return true if one or more checkouts exist for this file/item.
 	 */
 	public boolean hasCheckouts() throws IOException {
 		synchronized (fileSystem) {
@@ -405,7 +410,8 @@ public class RepositoryFile {
 
 	/**
 	 * Returns true if checkin is currently in process.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
+	 * @return true if checkin is currently in process.
 	 */
 	public boolean isCheckinActive() throws IOException {
 		synchronized (fileSystem) {
@@ -419,15 +425,12 @@ public class RepositoryFile {
 	 */
 	public void itemChanged() {
 		synchronized (fileSystem) {
-			// Nulling the repositoryItem deletes the cache information & gets new version info.
 			repositoryItem = null;
 		}
 	}
 
 	/**
-	 * Reaquire associated folder item following a folder move or name change.
-	 * @param newName items new name (which may be unchanged if path change was
-	 * the result of a moved or renamed folder).
+	 * Clear cached data as a result of a path change
 	 */
 	void pathChanged() {
 		synchronized (fileSystem) {

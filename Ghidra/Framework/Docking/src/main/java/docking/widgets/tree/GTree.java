@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,13 @@
  */
 package docking.widgets.tree;
 
+import static docking.action.MenuData.*;
 import static docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin.*;
 import static ghidra.util.SystemUtilities.*;
 
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
@@ -36,8 +36,10 @@ import javax.swing.tree.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingWindowManager;
+import docking.*;
+import docking.action.*;
 import docking.actions.KeyBindingUtils;
+import docking.actions.ToolActions;
 import docking.widgets.JTreeMouseListenerDelegate;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.table.AutoscrollAdapter;
@@ -51,6 +53,7 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import ghidra.util.worker.PriorityWorker;
+import resources.Icons;
 
 /**
  * Class for creating a JTree that supports filtering, threading, and a progress bar.
@@ -136,8 +139,7 @@ public class GTree extends JPanel implements BusyListener {
 		init();
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager,
-				uniquePreferenceKey));
+			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
 		Gui.addThemeListener(themeListener);
@@ -243,6 +245,25 @@ public class GTree extends JPanel implements BusyListener {
 		mouseListenerDelegate = createMouseListenerDelegate();
 		filterProvider = new DefaultGTreeFilterProvider(this);
 		add(filterProvider.getFilterComponent(), BorderLayout.SOUTH);
+	}
+
+	/**
+	 * Sets an accessible name on the GTree. This prefix will be used to assign
+	 * meaningful accessible names to the tree, filter text field and the filter options button such
+	 * that screen readers will properly describe them.
+	 * <P>
+	 * This prefix should be the base name that describes the type of items in the tree.
+	 * This method will then append the necessary information to name the text field and the button.
+	 *
+	 * @param namePrefix the accessible name prefix to assign to the filter component. For
+	 * example if the tree contains fruits, then "Fruits" would be an appropriate prefix name.
+	 */
+	public void setAccessibleNamePrefix(String namePrefix) {
+		setName(namePrefix + "GTree");
+		tree.setName(namePrefix + " Tree");
+		tree.getAccessibleContext().setAccessibleName(namePrefix);
+		tree.getAccessibleContext().setAccessibleDescription("");
+		filterProvider.setAccessibleNamePrefix(namePrefix);
 	}
 
 	public void setCellRenderer(GTreeRenderer renderer) {
@@ -364,6 +385,17 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
+	 * Sets the filter restore state.  This method is a way to override the tree's filtering
+	 * behavior, which is usually set by a call to {@link #saveFilterRestoreState()}.  Most clients
+	 * will never need to call this method.
+	 * 
+	 * @param state the state to set
+	 */
+	protected void setFilterRestoreState(GTreeState state) {
+		this.filterRestoreTreeState = state;
+	}
+
+	/**
 	 * Signal to the tree that it should record its expanded and selected state when a new filter is
 	 * applied
 	 */
@@ -380,6 +412,14 @@ public class GTree extends JPanel implements BusyListener {
 
 	void clearFilterRestoreState() {
 		filterRestoreTreeState = null;
+	}
+
+	/**
+	 * Returns the key that this tree uses to store preferences.
+	 * @return the key that this tree uses to store preferences.
+	 */
+	public String getPreferenceKey() {
+		return uniquePreferenceKey;
 	}
 
 	/**
@@ -667,7 +707,8 @@ public class GTree extends JPanel implements BusyListener {
 			return node; // this node is a valid child of the given root
 		}
 
-		GTreeNode parentNode = getNodeForPath(root, path.getParentPath());
+		TreePath parentPath = path.getParentPath();
+		GTreeNode parentNode = getNodeForPath(root, parentPath);
 		if (parentNode == null) {
 			return null; // must be a path we don't have
 		}
@@ -824,7 +865,7 @@ public class GTree extends JPanel implements BusyListener {
 	void swingRestoreNonFilteredRootNode() {
 		realViewRootNode = realModelRootNode;
 		GTreeNode currentRoot = swingSetModelRootNode(realModelRootNode);
-		if (currentRoot != realModelRootNode) {
+		if (currentRoot != realModelRootNode && currentRoot != null) {
 			currentRoot.disposeClones();
 		}
 	}
@@ -1091,17 +1132,17 @@ public class GTree extends JPanel implements BusyListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-
+		
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-
+		
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-
+		
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view
@@ -1394,6 +1435,24 @@ public class GTree extends JPanel implements BusyListener {
 		node.fireNodeChanged();
 	}
 
+	/**
+	 * A method that subclasses can override to signal that they wish not to have this tree's
+	 * built-in popup actions.   Subclasses will almost never need to override this method.
+	 *
+	 * @return true if popup actions are supported
+	 */
+	protected boolean supportsPopupActions() {
+		return true;
+	}
+
+	/**
+	 * Enable or disable using double-click to open and close tree nodes.  The default is true.
+	 * @param b true to enable
+	 */
+	public void setDoubleClickExpansionEnabled(boolean b) {
+		tree.setToggleClickCount(b ? 2 : 0);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -1440,11 +1499,15 @@ public class GTree extends JPanel implements BusyListener {
 			this.scrollableUnitIncrementOverride = increment;
 		}
 
+		GTree getGTree() {
+			return GTree.this;
+		}
+
 		@Override
 		public String getToolTipText(MouseEvent event) {
 			// Use the GTree's method so clients can override the behavior; provide the
 			// default method below so we they can get the default behavior when needed.
-			return GTree.this.getToolTipText(event);
+			return getGTree().getToolTipText(event);
 		}
 
 		public String getDefaultToolTipText(MouseEvent event) {
@@ -1463,7 +1526,7 @@ public class GTree extends JPanel implements BusyListener {
 
 		@Override
 		public boolean isPathEditable(TreePath path) {
-			return GTree.this.isPathEditable(path);
+			return getGTree().isPathEditable(path);
 		}
 
 		@Override
@@ -1568,9 +1631,172 @@ public class GTree extends JPanel implements BusyListener {
 		}
 	}
 
+	private abstract static class GTreeAction extends DockingAction
+			implements ComponentBasedDockingAction {
+
+		GTreeAction(String name, String owner) {
+			super(name, owner);
+		}
+
+		@Override
+		public boolean isAddToPopup(ActionContext context) {
+			if (!isEnabledForContext(context)) {
+				return false;
+			}
+
+			GTree gTree = getTree(context);
+			return gTree.supportsPopupActions();
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return getTree(context) != null;
+		}
+
+		@Override
+		public boolean isValidComponentContext(ActionContext context) {
+			return getTree(context) != null;
+		}
+
+		protected GTree getTree(ActionContext context) {
+			Component c = context.getSourceComponent();
+			if (c instanceof GTree) {
+				return (GTree) c;
+			}
+			if (c instanceof AutoScrollTree) {
+				return ((AutoScrollTree) c).getGTree();
+			}
+			return null;
+		}
+	}
+
 //==================================================================================================
 // Static Methods
 //==================================================================================================
+
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
+
+		String actionMenuGroup = "zzzTreeGroup";
+		tool.setMenuGroup(new String[] { "Collapse" }, actionMenuGroup, "1");
+		tool.setMenuGroup(new String[] { "Expand" }, actionMenuGroup, "2");
+
+		int subGroupIndex = 1; // order by insertion
+		GTreeAction collapseAction = new GTreeAction("Tree Collapse Node", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				GTree gTree = getTree(context);
+				List<GTreeNode> nodes = gTree.getSelectedNodes();
+				for (GTreeNode node : nodes) {
+					gTree.collapseAll(node);
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				List<GTreeNode> nodes = gTree.getSelectedNodes();
+				return !nodes.isEmpty();
+			}
+		};
+		//@formatter:off
+		collapseAction.setPopupMenuData(new MenuData(
+				new String[] { "Collapse" },
+				Icons.COLLAPSE_ALL_ICON,
+				actionMenuGroup, NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);
+		collapseAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK));
+		collapseAction.setHelpLocation(new HelpLocation("Trees", "Collapse"));
+		//@formatter:on
+
+		GTreeAction expandAction = new GTreeAction("Tree Expand Node", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				GTree gTree = getTree(context);
+				List<GTreeNode> nodes = gTree.getSelectedNodes();
+				for (GTreeNode node : nodes) {
+					gTree.expandTree(node);
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTree gTree = getTree(context);
+				List<GTreeNode> nodes = gTree.getSelectedNodes();
+				return !nodes.isEmpty();
+			}
+		};
+		//@formatter:off
+		expandAction.setPopupMenuData(new MenuData(
+				new String[] { "Expand" },
+				Icons.EXPAND_ALL_ICON,
+				actionMenuGroup, NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);
+		expandAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK));
+		expandAction.setHelpLocation(new HelpLocation("Trees", "Expand"));
+		//@formatter:on
+
+		GTreeAction collapseTreeAction = new GTreeAction("Tree Collapse All", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				GTree gTree = getTree(context);
+				GTreeNode root = gTree.getViewRoot();
+				gTree.collapseAll(root);
+			}
+		};
+		//@formatter:off
+		collapseTreeAction.setPopupMenuData(new MenuData(
+				new String[] { "Collapse Tree" },
+				null,
+				actionMenuGroup, NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);
+		collapseTreeAction.setHelpLocation(new HelpLocation("Trees", "Collapse_Tree"));
+		//@formatter:on
+
+		GTreeAction expandTreeAction = new GTreeAction("Tree Expand All", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				GTree gTree = getTree(context);
+				gTree.expandAll();
+			}
+		};
+		//@formatter:off
+		expandTreeAction.setPopupMenuData(new MenuData(
+				new String[] { "Expand Tree" },
+				null,
+				actionMenuGroup, NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);
+		expandTreeAction.setHelpLocation(new HelpLocation("Trees", "Expand_Tree"));
+		//@formatter:on
+
+		// these actions are self-explanatory and do need help
+		collapseAction.markHelpUnnecessary();
+		expandAction.markHelpUnnecessary();
+		collapseTreeAction.markHelpUnnecessary();
+		expandTreeAction.markHelpUnnecessary();
+
+		toolActions.addGlobalAction(collapseAction);
+		toolActions.addGlobalAction(expandAction);
+		toolActions.addGlobalAction(collapseTreeAction);
+		toolActions.addGlobalAction(expandTreeAction);
+	}
 
 	private static String generateFilterPreferenceKey() {
 		Throwable throwable = new Throwable();

@@ -21,7 +21,6 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.util.TraceRegisterUtils;
 
 /**
  * A view of defined data units
@@ -74,8 +73,8 @@ public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceDat
 	 */
 	default TraceData create(Lifespan lifespan, Register register, DataType dataType)
 			throws CodeUnitInsertionException {
-		TraceRegisterUtils.requireByteBound(register);
-		return create(lifespan, register.getAddress(), dataType, register.getNumBytes());
+		return create(getTrace().getPlatformManager().getHostPlatform(), lifespan, register,
+			dataType);
 	}
 
 	/**

@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.TreeMap;
 
@@ -30,61 +29,99 @@ import ghidra.program.model.mem.MemBuffer;
  */
 public abstract class AbstractFloatDataType extends BuiltIn {
 
-	private final static long serialVersionUID = 1;
-
+	// TODO: Add FloatDisplayPrecisionSettingsDefinition
 	private static SettingsDefinition[] SETTINGS_DEFS = {};
 
-	public AbstractFloatDataType(String name, DataTypeManager dtm) {
-		super(null, name, dtm);
-	}
+	private final FloatFormat floatFormat;
+	private final int encodedLength;
+
+	private String description;
 
 	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
+	 * Abstract float datatype constructor
+	 * @param name name of the float datatype.
+	 * @param encodedLength the floating encoding length as number of 8-bit bytes.
+	 * @param dtm associated datatype manager which dictates the {@link DataOrganization} to
+	 * be used.  This argument may be null to adopt the default data organization.
 	 */
+	public AbstractFloatDataType(String name, int encodedLength, DataTypeManager dtm) {
+		super(null, name, dtm);
+		if (encodedLength < 1) {
+			throw new IllegalArgumentException("Invalid encoded length: " + encodedLength);
+		}
+		this.encodedLength = encodedLength;
+		FloatFormat format = null;
+		try {
+			// Establish float format
+			format = FloatFormatFactory.getFloatFormat(getLength());
+		}
+		catch (UnsupportedFloatFormatException e) {
+			// ignore
+		}
+		floatFormat = format;
+	}
+
 	@Override
 	public String getMnemonic(Settings settings) {
 		return name;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
+	protected final String buildIEEE754StandardDescription() {
+		StringBuilder buf = new StringBuilder("IEEE 754 floating-point type (");
+		int bitLen = encodedLength * 8;
+		buf.append(Integer.toString(bitLen));
+		buf.append("-bit / ");
+		buf.append(Integer.toString(encodedLength));
+		buf.append("-byte format, aligned-length is ");
+		buf.append(Integer.toString(getAlignedLength()));
+		buf.append("-bytes)");
+		return buf.toString();
+	}
+
+	protected String buildDescription() {
+		return buildIEEE754StandardDescription();
+	}
+
 	@Override
-	public String getDescription() {
-		return "IEEE-754 Float";
+	public final String getDescription() {
+		if (description == null) {
+			description = buildDescription();
+		}
+		return description;
+	}
+
+	@Override
+	public Class<?> getValueClass(Settings settings) {
+		return BigFloat.class;
 	}
 
 	/**
+	 * Get the encoded length (number of 8-bit bytes) of this float datatype.
 	 * 
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer,
-	 *      ghidra.docking.settings.Settings, int)
+	 * @return encoded length of this float datatype.
 	 */
 	@Override
-	public Object getValue(MemBuffer buf, Settings settings, int length) {
+	public final int getLength() {
+		return encodedLength;
+	}
+
+	@Override
+	public BigFloat getValue(MemBuffer buf, Settings settings, int length) {
 		try {
 			int len = getLength(); // use type length (ignore length arg)
-			FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(len);
+			if (floatFormat == null) {
+				return null;
+			}
 			byte[] bytes = new byte[len];
 			if (buf.getBytes(bytes, 0) != len) {
 				return null;
 			}
 			if (len <= 8) {
 				long value = Utils.bytesToLong(bytes, len, buf.isBigEndian());
-				double doubleValue = floatFormat.getHostFloat(value);
-				switch (len) {
-					case 2:
-						// TODO: GP-1379
-						return (short) doubleValue;
-					case 4:
-						return (float) doubleValue;
-				}
-				return doubleValue;
+				return floatFormat.decodeBigFloat(value);
 			}
 			BigInteger value = Utils.bytesToBigInteger(bytes, len, buf.isBigEndian(), false);
-			BigDecimal decValue = floatFormat.round(floatFormat.getHostFloat(value));
-			return decValue;
+			return floatFormat.decodeBigFloat(value);
 		}
 		catch (UnsupportedFloatFormatException e) {
 			return null;
@@ -93,31 +130,25 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 
 	@Override
 	public boolean isEncodable() {
-		int length = getLength();
-		return length == 4 || length == 8;
+		return floatFormat != null;
 	}
 
 	@Override
 	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
 			throws DataTypeEncodeException {
+		// value expected as Number or BigFloat object
 		try {
 			int len = getLength();
-			if (length != -1 && length != len) {
-				throw new DataTypeEncodeException("Length mismatch", value, this);
+			if (floatFormat == null) {
+				throw new DataTypeEncodeException(
+					"Unsupported float format (" + len + " bytes)", value, this);
 			}
-			FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(len);
-			if (len == 8 || len == 4) {
-				if (!(value instanceof Number)) {
-					throw new DataTypeEncodeException(
-						"length-" + len + " float requires Number type", value, this);
-				}
+			if ((len == 8 || len == 4) && (value instanceof Number)) {
 				double doubleValue = ((Number) value).doubleValue();
 				long encoding = floatFormat.getEncoding(doubleValue);
 				return Utils.longToBytes(encoding, len, buf.isBigEndian());
 			}
 			if (!(value instanceof BigFloat)) {
-				// TODO: BigFloat really ought to have a valueOf(double) method, or --
-				// TODO: -- or BigFloat really ought to have a valueOf(BigDecimal) method
 				throw new DataTypeEncodeException(
 					"non-standard float length requires BigFloat type", value, this);
 			}
@@ -132,17 +163,13 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 		}
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		Object obj = getValue(buf, settings, length);
-		if (obj == null) {
+		BigFloat value = getValue(buf, settings, length);
+		if (value == null) {
 			return "??";
 		}
-		return obj.toString();
+		return floatFormat != null ? floatFormat.toDecimalString(value, true) : value.toString();
 	}
 
 	@Override
@@ -150,16 +177,17 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 			throws DataTypeEncodeException {
 		try {
 			int len = getLength();
-			if (length != -1 && length != len) {
-				throw new DataTypeEncodeException("Length mismatch", repr, this);
+			if (floatFormat == null) {
+				throw new DataTypeEncodeException(
+					"Unsupported float format (" + len + " bytes)", repr, this);
 			}
 			if (length == 8 || length == 4) {
 				double doubleValue = Double.parseDouble(repr);
 				return encodeValue(doubleValue, buf, settings, length);
 			}
-			// TODO: BigFloat ought to have a parse(String) method, or valueOf(BigDecimal)
-			throw new DataTypeEncodeException(
-				"Cannot yet parse values of non-standard float length", repr, this);
+			BigFloat bf = floatFormat.getBigFloat(repr);
+			floatFormat.round(bf);
+			return encodeValue(bf, buf, settings, length);
 		}
 		catch (DataTypeEncodeException e) {
 			throw e;
@@ -169,9 +197,6 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.BuiltIn#getBuiltInSettingsDefinitions()
-	 */
 	@Override
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return SETTINGS_DEFS;
@@ -184,6 +209,8 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 
 	@Override
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
+		// NOTE: There are a variety of naming conventions for fixed-length floats
+		// so we will just use our name and rely on user to edit to suit there needs.
 		return hasLanguageDependantLength() ? null : name;
 	}
 
@@ -196,53 +223,60 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 		if (floatTypes == null) {
 			// unsupported sizes filled-in with a null
 			floatTypes = new TreeMap<Integer, AbstractFloatDataType>();
-			floatTypes.put(2, Float2DataType.dataType);
-			floatTypes.put(4, Float4DataType.dataType);
-			floatTypes.put(8, Float8DataType.dataType);
-			floatTypes.put(10, Float10DataType.dataType);
-			floatTypes.put(16, Float16DataType.dataType);
+			floatTypes.put(Float2DataType.dataType.getLength(), Float2DataType.dataType);
+			floatTypes.put(Float4DataType.dataType.getLength(), Float4DataType.dataType);
+			floatTypes.put(Float8DataType.dataType.getLength(), Float8DataType.dataType);
+			floatTypes.put(Float10DataType.dataType.getLength(), Float10DataType.dataType);
+			floatTypes.put(Float16DataType.dataType.getLength(), Float16DataType.dataType);
 		}
 		return floatTypes;
 	}
 
 	/**
-	 * Get a Float data-type instance of the requested size
+	 * Get a Float data-type instance with the requested raw format size in bytes. It is important that the
+	 * "raw" format size is specified since the {@link DataType#getAlignedLength() aligned-length}
+	 * used by compilers (e.g., {@code sizeof()}) may be larger and duplicated across different 
+	 * float formats.  Example: an 80-bit (10-byte) float may have an aligned-length of 12 or 16-bytes 
+	 * based upon alignment requirements of a given compiler.  This can result in multiple float
+	 * types having the same aligned-length.
 	 * 
-	 * @param size data type size, unsupported sizes will cause an undefined type to be returned.
+	 * @param rawFormatByteSize raw float format size, unsupported sizes will cause an undefined 
+	 * 				type to be returned.
 	 * @param dtm optional program data-type manager, if specified a generic data-type will be
-	 *            returned if possible (i.e., float, double, long double).
+	 *            	returned if possible (i.e., float, double, long double).
 	 * @return float data type of specified size
 	 */
-	public static DataType getFloatDataType(int size, DataTypeManager dtm) {
-		if (size < 1) {
+	public static DataType getFloatDataType(int rawFormatByteSize, DataTypeManager dtm) {
+		if (rawFormatByteSize < 1) {
 			return DefaultDataType.dataType;
 		}
 		if (dtm != null) {
 			DataOrganization dataOrganization = dtm.getDataOrganization();
 			if (dataOrganization != null) {
-				if (size == dataOrganization.getFloatSize()) {
+				if (rawFormatByteSize == dataOrganization.getFloatSize()) {
 					return FloatDataType.dataType.clone(dtm);
 				}
-				if (size == dataOrganization.getDoubleSize()) {
+				if (rawFormatByteSize == dataOrganization.getDoubleSize()) {
 					return DoubleDataType.dataType.clone(dtm);
 				}
-				if (size == dataOrganization.getLongDoubleSize()) {
+				if (rawFormatByteSize == dataOrganization.getLongDoubleSize()) {
 					return LongDoubleDataType.dataType.clone(dtm);
 				}
 			}
 		}
-		DataType dt = getFloatTypes().get(size);
+		DataType dt = getFloatTypes().get(rawFormatByteSize);
 		if (dt == null) {
-			return Undefined.getUndefinedDataType(size);
+			return Undefined.getUndefinedDataType(rawFormatByteSize);
 		}
 		return dt;
 	}
 
 	/**
-	 * Returns all built-in float data-types
+	 * Returns all built-in floating-point data types
 	 * 
 	 * @param dtm optional program data-type manager, if specified generic data-types will be
 	 *            returned in place of fixed-sized data-types.
+	 * @return array of floating-point data types
 	 */
 	public static AbstractFloatDataType[] getFloatDataTypes(DataTypeManager dtm) {
 		TreeMap<Integer, AbstractFloatDataType> floatMap = getFloatTypes();

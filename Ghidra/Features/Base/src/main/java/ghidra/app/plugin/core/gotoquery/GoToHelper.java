@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.gotoquery;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.util.Stack;
 
 import org.apache.commons.lang3.StringUtils;
@@ -437,7 +439,7 @@ public class GoToHelper {
 		}
 
 		DataTreeDialog dialog = new DataTreeDialog(null,
-			"Choose External Program (" + extProgName + ")", DataTreeDialog.OPEN);
+			"Choose External Program (" + extProgName + ")", OPEN);
 		dialog.setSearchText(extProgName);
 		dialog.setHelpLocation(new HelpLocation("ReferencesPlugin", "ChooseExternalProgram"));
 		tool.showDialog(dialog);
@@ -449,7 +451,7 @@ public class GoToHelper {
 		ExternalManager externalManager = program.getExternalManager();
 		String externalLibraryPath = externalManager.getExternalLibraryPath(extProgName);
 		if (!pathName.equals(externalLibraryPath)) {
-			Command cmd = new SetExternalNameCmd(extProgName, domainFile.getPathname());
+			Command<Program> cmd = new SetExternalNameCmd(extProgName, domainFile.getPathname());
 			tool.execute(cmd, program);
 		}
 	}

@@ -60,7 +60,8 @@ public abstract class RepeatCountDataType extends DynamicDataType {
 			MemoryBufferImpl newBuf = new MemoryBufferImpl(buf.getMemory(), buf.getAddress());
 			newBuf.advance(countSize);
 			for (int i = 1; i < n; i++) {
-				DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(repeatDataType, newBuf);
+				DataTypeInstance dti =
+					DataTypeInstance.getDataTypeInstance(repeatDataType, newBuf, false);
 				if (dti == null) {
 					Msg.error(this, "ERROR: problem with data at " + newBuf.getAddress());
 					return null;

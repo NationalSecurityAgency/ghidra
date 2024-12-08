@@ -74,6 +74,19 @@ public abstract class AbstractFollowFlowTest extends AbstractGhidraHeadedIntegra
 		return followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 	}
 
+	AddressSetView getFlowsFrom(int startAddressOffset, FlowType[] excludedFlows, boolean includeFunctions, boolean includeData) {
+		return getFlowsFrom(addr(startAddressOffset), excludedFlows, includeFunctions, includeData);
+	}
+
+	AddressSetView getFlowsFrom(Address startAddress, FlowType[] excludedFlows, boolean includeFunctions, boolean includeData) {
+		return getFlowsFrom(new AddressSet(startAddress), excludedFlows, includeFunctions, includeData);
+	}
+	
+	AddressSetView getFlowsFrom(AddressSet startSet, FlowType[] excludedFlows, boolean includeFunctions, boolean includeData) {
+		FollowFlow followFlow = new FollowFlow(program, startSet, excludedFlows, includeFunctions, includeData);
+		return followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
+	}
+
 	AddressSetView getFlowsTo(int startAddressOffset, FlowType[] excludedFlows) {
 		return getFlowsTo(addr(startAddressOffset), excludedFlows);
 	}

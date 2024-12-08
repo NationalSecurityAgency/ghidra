@@ -37,14 +37,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 		// Set up multiple category conflicts and choose my for all using the checkbox.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat1 =
@@ -62,7 +58,6 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					DataTypeManager dtm = program.getDataTypeManager();
 					dtm.createCategory(new CategoryPath("/newCat"));
 					cat2.removeCategory("Category4", TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
@@ -70,18 +65,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat3 = program.getDataTypeManager().getCategory(
@@ -91,16 +78,12 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("Some Other Misc");
 					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -125,14 +108,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 		// Set up multiple category conflicts and choose my for all using the checkbox.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat1 =
@@ -142,7 +121,6 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("My Misc");
 					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
@@ -150,18 +128,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat3 = program.getDataTypeManager().getCategory(
@@ -171,16 +141,12 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("Some Other Misc");
 					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -202,14 +168,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 		// Set up multiple category conflicts and choose my for all using the checkbox.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat1 =
@@ -219,7 +181,6 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("My Misc");
 					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
@@ -227,18 +188,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat3 = program.getDataTypeManager().getCategory(
@@ -248,16 +201,12 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("Some Other Misc");
 					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -279,14 +228,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 		// Set up multiple category conflicts and choose my for all using the checkbox.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat1 =
@@ -296,7 +241,6 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("My Misc");
 					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
@@ -304,18 +248,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat3 = program.getDataTypeManager().getCategory(
@@ -325,16 +261,12 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("Some Other Misc");
 					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -371,14 +303,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 		// Set up multiple category conflicts and choose my for all using the checkbox.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat1 =
@@ -388,7 +316,6 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("My Misc");
 					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
@@ -396,18 +323,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category cat3 = program.getDataTypeManager().getCategory(
@@ -417,16 +336,12 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 				try {
 					miscCat.setName("Some Other Misc");
 					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!" + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});

@@ -188,7 +188,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 
 		for (DBTraceInstruction instruction : instructionMapSpace.reduce(
 			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			if (instruction.platform != guest) {
 				continue;
@@ -200,7 +200,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		monitor.setMaximum(dataMapSpace.size()); // This is OK
 		for (DBTraceData dataUnit : dataMapSpace.reduce(
 			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			if (dataUnit.platform != guest) {
 				continue;

@@ -98,7 +98,7 @@ public class SleighDebugLogger {
 			append("\nNOTE: bitrange's number leftmost/most-significant bit as 0 (zero).\n");
 			append("      This bit numbering agrees with the context field specification\n");
 			append("      but differs from token field specification.  The bit correspondence\n");
-			append("      for token fields depends upon the specific token size/endianess and\n");
+			append("      for token fields depends upon the specific token size/endianness and\n");
 			append("      current byte-offset of pattern matcher.\n\n");
 
 			int contextSize = contextCache.getContextSize();

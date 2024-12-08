@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,8 @@ import ghidra.app.plugin.processors.sleigh.symbol.ContextSymbol;
 import ghidra.app.plugin.processors.sleigh.symbol.Symbol;
 import ghidra.app.util.DataTypeDependencyOrderer;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.BuiltIn;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -331,22 +332,15 @@ public class DecompileDebug {
 	}
 
 	private void dumpDataTypes(OutputStream debugStream) throws IOException {
-		DataOrganization dataOrganization = program.getCompilerSpec().getDataOrganization();
-		int intSize = dataOrganization.getIntegerSize();
-		int longSize = dataOrganization.getLongSize();
 		XmlEncode encoder = new XmlEncode();
 		encoder.openElement(ELEM_TYPEGRP);
-		encoder.writeSignedInteger(ATTRIB_INTSIZE, intSize);
-		encoder.writeSignedInteger(ATTRIB_LONGSIZE, longSize);
 		encoder.writeSignedInteger(ATTRIB_STRUCTALIGN, 4);
-		encoder.writeSignedInteger(ATTRIB_ENUMSIZE, 4);
-		encoder.writeBool(ATTRIB_ENUMSIGNED, false);
 		// structalign should come out of pcodelanguage.getCompilerSpec()
 		DataTypeDependencyOrderer TypeOrderer =
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
 		//First output all structures as zero size so to avoid any cyclic dependencies.
 		for (DataType dataType : TypeOrderer.getCompositeList()) {
-			dtmanage.encodeCompositeZeroSizePlaceholder(encoder, dataType);
+			dtmanage.encodeCompositePlaceholder(encoder, dataType);
 		}
 		//Next, use the dependency stack to output types.
 		for (DataType dataType : TypeOrderer.getDependencyList()) {

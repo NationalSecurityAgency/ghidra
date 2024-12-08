@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import org.junit.Test;
 import generic.test.ConcurrentTestExceptionHandler;
 import ghidra.program.model.data.*;
 
-public class StructureEditorUnlockedCellEdit2Test
-		extends AbstractStructureEditorTest {
+public class StructureEditorUnlockedCellEdit2Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testF2EditKey() throws Exception {
@@ -208,8 +207,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		assertEquals(model.getDataTypeColumn(), model.getColumn());
 
 		// Bad value allows escape.
-		escape();
-		escape();
+		escape(); // cancel editing
 		waitForSwing();
 		assertTrue(!model.isEditingField());
 		assertEquals(1, model.getNumSelectedRows());
@@ -764,7 +762,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		enter();
 		assertIsEditingField(rowNum, colNum);
 
-		assertEquals("simpleStructure doesn't fit within 4 bytes, need 29 bytes",
+		assertEquals("simpleStructure doesn't fit within 4 bytes, need 12 bytes",
 			model.getStatus());
 
 		escape();
@@ -778,9 +776,9 @@ public class StructureEditorUnlockedCellEdit2Test
 
 		DataType newDt = getDataType(22);
 		assertEquals("simpleStructure", newDt.getDisplayName());
-		assertEquals(29, newDt.getLength());
-		assertEquals(29, getLength(22));
-		assertEquals(350, model.getLength());
+		assertEquals(12, newDt.getLength());
+		assertEquals(12, getLength(22));
+		assertEquals(333, model.getLength());
 	}
 
 	@Override

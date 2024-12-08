@@ -211,6 +211,11 @@ public class PointerTypedef extends GenericDataType implements TypeDef {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return modelTypedef.getAlignedLength();
+	}
+
+	@Override
 	public DataType getDataType() {
 		return modelTypedef.getDataType();
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package docking.widgets.fieldpanel.support;
 
 import java.awt.*;
+import java.util.Arrays;
 
 import javax.swing.JComponent;
 
@@ -201,9 +202,7 @@ public class RowLayout implements Layout {
 		if (index < 0) {
 			index = 0;
 		}
-
 		Field field = fields[index];
-
 		// y passed-in is 0-based; update y to be relative to our starting position, which is 
 		// the tallest field in this group of fields, using that field's height above its font
 		// baseline.
@@ -381,9 +380,9 @@ public class RowLayout implements Layout {
 	 * Finds the most appropriate field to place the cursor for the given horizontal
 	 * position.  If the position is between fields, first try to the left and if that
 	 * doesn't work, try to the right.
-	 * @param x the x value
-	 * @param y the y value
-	 * @return the index
+	 * @param x the x coordinate relative to the field panel
+	 * @param y the y coordinate relative to the field panel
+	 * @return the index 
 	 */
 	int findAppropriateFieldIndex(int x, int y) {
 		y -= heightAbove;
@@ -440,5 +439,16 @@ public class RowLayout implements Layout {
 	@Override
 	public int getEndRowFieldNum(int field2) {
 		return getNumFields();
+	}
+
+	@Override
+	public int getFieldIndex(int x, int y) {
+		int index = this.findAppropriateFieldIndex(x, y);
+		return index >= 0 ? index : 0;
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(fields);
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.DuplicateNameException;
@@ -29,17 +27,23 @@ import ghidra.util.exception.InvalidInputException;
  * Note: If no ordinal is provided to this class at construction time, then
  * the ordinal of hte given parameter will be used.
  * 
+ * @see AddRegisterParameterCommand
+ * @see AddStackParameterCommand
+ * @see AddMemoryParameterCommand
  * 
- * @see ghidra.app.cmd.function.AddRegisterParameterCommand
- * @see ghidra.app.cmd.function.AddStackParameterCommand
+ * @deprecated function signatures should be modified in their entirety using 
+ * either {@link UpdateFunctionCommand} or {@link ApplyFunctionSignatureCmd}. 
  */
-public class AddParameterCommand implements Command {
+@Deprecated(since = "11.1")
+public class AddParameterCommand implements Command<Program> {
 
-	protected Function function;
-	protected Parameter parameter;
+	protected final Function function;
+	protected final int ordinal;
+	protected final SourceType source;
+
+	private final Parameter parameter;
+
 	protected String statusMessage;
-	protected int ordinal;
-	protected SourceType source;
 
 	public AddParameterCommand(Function function, Parameter parameter, int ordinal,
 			SourceType source) {
@@ -49,31 +53,32 @@ public class AddParameterCommand implements Command {
 		this.source = source;
 	}
 
-//	// lets this be usable by code that already has a parameter
-//	public AddParameterCommand(Function function, Parameter parameter) {
-//		this(function, parameter, parameter.getOrdinal());
-//	}
-
 	// allows subclasses to use this class without having to already have
 	// a parameter created
 	protected AddParameterCommand(Function function, int ordinal, SourceType source) {
 		this(function, null, ordinal, source);
 	}
 
+	/**
+	 * Get parameter to be added
+	 * @param program target program
+	 * @return parameter to be added
+	 * @throws InvalidInputException if unable to generate parameter due to invalid data
+	 */
 	protected Parameter getParameter(Program program) throws InvalidInputException {
 		return parameter;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public final boolean applyTo(Program program) {
+		if (program != function.getProgram()) {
+			throw new AssertionError("Program instance mismatch");
+		}
 		String name = null;
 		try {
-			Parameter parameter2add = getParameter((Program) obj);
-			name = parameter2add.getName();
-			if (function.insertParameter(ordinal, parameter2add, source) == null) {
+			Parameter param = getParameter(program);
+			name = param.getName();
+			if (function.insertParameter(ordinal, param, source) == null) {
 				statusMessage = "Create parameter failed";
 				return false;
 			}
@@ -102,17 +107,11 @@ public class AddParameterCommand implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return statusMessage;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Add Parameter Command";

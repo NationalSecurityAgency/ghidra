@@ -20,6 +20,8 @@ import static org.junit.Assert.*;
 import java.util.List;
 import java.util.Set;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.*;
 
 import db.Transaction;
@@ -257,14 +259,38 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		assertEquals("WinMain", breakMain.getComment());
 	}
 
+	protected static class InvalidBreakpointMatcher extends BaseMatcher<TraceBreakpoint> {
+		private final long snap;
+
+		public InvalidBreakpointMatcher(long snap) {
+			this.snap = snap;
+		}
+
+		@Override
+		public boolean matches(Object actual) {
+			return actual == null || actual instanceof TraceBreakpoint bpt && !bpt.isValid(snap);
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("An invalid or null breakpoint");
+		}
+	}
+
+	protected static InvalidBreakpointMatcher invalidBreakpoint(long snap) {
+		return new InvalidBreakpointMatcher(snap);
+	}
+
 	@Test
 	public void testDelete() throws Exception {
 		addBreakpoints();
 		assertEquals(breakMain, breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"));
 		try (Transaction tx = b.startTransaction()) {
 			breakMain.delete();
-			assertNull(breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"));
+			assertThat(breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"),
+				invalidBreakpoint(0));
 		}
-		assertNull(breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"));
+		assertThat(breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"),
+			invalidBreakpoint(0));
 	}
 }

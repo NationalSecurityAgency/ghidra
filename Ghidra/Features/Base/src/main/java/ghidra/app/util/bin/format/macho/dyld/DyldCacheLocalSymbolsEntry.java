@@ -28,29 +28,56 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
-@SuppressWarnings("unused")
 public class DyldCacheLocalSymbolsEntry implements StructConverter {
 
-	private int dylibOffset;
+	private long dylibOffset;
 	private int nlistStartIndex;
 	private int nlistCount;
+
+	private boolean use64bitOffsets;
 
 	/**
 	 * Create a new {@link DyldCacheLocalSymbolsEntry}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD local symbols entry
+	 * @param use64bitOffsets True if the DYLD local symbol entries use 64-bit dylib offsets; false
+	 *   if they use 32-bit 
 	 * @throws IOException if there was an IO-related problem creating the DYLD local symbols entry
 	 */
-	public DyldCacheLocalSymbolsEntry(BinaryReader reader) throws IOException {
-		dylibOffset = reader.readNextInt();
+	public DyldCacheLocalSymbolsEntry(BinaryReader reader, boolean use64bitOffsets)
+			throws IOException {
+		this.use64bitOffsets = use64bitOffsets;
+
+		dylibOffset = use64bitOffsets ? reader.readNextLong() : reader.readNextInt();
 		nlistStartIndex = reader.readNextInt();
 		nlistCount = reader.readNextInt();
+	}
+
+	/**
+	 * {@return The dylib offset}
+	 */
+	public long getDylibOffset() {
+		return dylibOffset;
+	}
+
+	/**
+	 * {@return The nlist start index}
+	 */
+	public int getNListStartIndex() {
+		return nlistStartIndex;
+	}
+
+	/**
+	 * {@return The nlist count}
+	 */
+	public int getNListCount() {
+		return nlistCount;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType("dyld_cache_local_symbols_entry", 0);
-		struct.add(DWORD, "dylibOffset", "");
+		struct.add(use64bitOffsets ? QWORD : DWORD, "dylibOffset", "");
 		struct.add(DWORD, "nlistStartIndex", "");
 		struct.add(DWORD, "nlistCount", "");
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));

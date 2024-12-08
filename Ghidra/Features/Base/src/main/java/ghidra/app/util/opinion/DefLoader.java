@@ -88,10 +88,14 @@ public class DefLoader extends AbstractProgramWrapperLoader {
 		}
 
 		SymbolTable symtab = prog.getSymbolTable();
-		Consumer<String> errorConsumer = err -> log.error("DefLoader", err);
+		Consumer<String> errorConsumer = err -> log.appendMsg("DefLoader", err);
 		for (DefExportLine def : parseExports(provider)) {
+			Integer ordinal = def.getOrdinal();
+			if (ordinal == null) {
+				continue;
+			}
 			Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(prog,
-				SymbolUtilities.ORDINAL_PREFIX + def.getOrdinal(), errorConsumer);
+				SymbolUtilities.ORDINAL_PREFIX + ordinal, errorConsumer);
 			if (symbol == null) {
 				continue;
 			}
@@ -109,5 +113,10 @@ public class DefLoader extends AbstractProgramWrapperLoader {
 	@Override
 	public String getName() {
 		return DEF_NAME;
+	}
+
+	@Override
+	public boolean supportsLoadIntoProgram(Program program) {
+		return true;
 	}
 }

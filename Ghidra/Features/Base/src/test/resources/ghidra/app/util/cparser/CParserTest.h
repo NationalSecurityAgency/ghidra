@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ void testFunc()
 {
     typedef int InternFunc(int);
     
-// TODO    InternFunc * func = (InternFunc *) 0;
+    InternFunc * func = (InternFunc *) 0;
 }
 
 
@@ -149,7 +149,13 @@ void __cdecl _Once(_Once_t *, void (__cdecl *)(void));
 
 void __stdcall _Twice(void (__cdecl *)(void));
 
+void __vectorcall _Vect(void (__cdecl *)(void));
+
+void __rustcall _Rusty(void (__cdecl *)(void));
+
 void _Thrice(void (__cdecl *)(void));
+
+void _Iron(void (__rustcall *)(void));
 
 /**
  ** use of long as an attribute
@@ -176,6 +182,11 @@ int (__stdcall * GetSectionBlock) (
 
  #pragma region Input compatibility macros
 
+// nothing will parse after this line if the this fails
+  #pragma test for, pragma, with, commas outside parens
+  
+  #pragma region System Family (kernel drivers) with Desktop Family for compat
+
    #pragma warning(disable)
 
   #pragma warning(disable:4035 4793)               // re-enable below
@@ -187,6 +198,22 @@ int (__stdcall * GetSectionBlock) (
  #pragma our macros nachos (for use only within FileProvider.h)
  
  #pragma warning (suppress: 28128)
+ 
+struct pragmaPassed {
+    char dummy;
+};
+
+int whileWithPragma(int a)
+{
+    do {
+        a++;
+    } while (0 __pragma(warning(disable: 28110)));
+    
+    __pragma(warning(push)) __pragma(warning(disable : 4548)) do {__noop(pszDest);} while((0,0) __pragma(warning(pop)) );
+    
+    return a;
+}
+
 
 int g(int a, int b, int c)
 {
@@ -919,6 +946,16 @@ enum options_enum {
 
 	TRINARY =  (0 ? 10 : 11),
 };
+
+/**
+ ** Predeclare Enum
+ **/
+ 
+typedef enum _PARAM_TYPE PARAM_TYPE;
+
+typedef int FuncUseEnum(PARAM_TYPE ptype);
+
+typedef enum _PARAM_TYPE { A, B, C } PARAM_TYPE;
 
 
 /**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
@@ -59,39 +60,80 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 */
 	protected abstract void initialize();
 
+	@Override
+	public final int getAlignedLength() {
+		return getLength();
+	}
+
 	/**
-	 * Get the preferred length for a new component. For Unions and packed
-	 * structures the preferred component length for a fixed-length dataType
-	 * will be the length of that dataType. Otherwise the length returned will be no
-	 * larger than the specified length.
+	 * Get the preferred length for a new component. If type is dynamic length must be specified
+	 * (assuming {@link Dynamic#canSpecifyLength()} is true).  Otherwise, when packing is enabled
+	 * the {@link DataType#getAlignedLength()} is returned; when packing disabled for Union
+	 * use of fixed-length type size is forced. Otherwise the decision
+	 * is deferred to {@link DataTypeComponentImpl#getPreferredComponentLength(DataType, int)}.
+	 * During packing the actual component length may be changed.
 	 * 
 	 * @param dataType new component datatype
-	 * @param length   constrained length or -1 to force use of dataType size.
-	 *                 Dynamic types such as string must have a positive length
+	 * @param length   constrained length or -1 to force use of dataType size for non-packing.
+	 *                 Dynamic types such as string must have a positive length specified.
+	 *                 This value is ignored for fixed-length types if maxLength has been 
 	 *                 specified.
+	 * @param maxLength applies to non-packed structures only to indicate available space for
+	 *                 fixed-length types using {@link DataType#getLength()}. Specify -1
+	 *                 to ignore this value.
 	 * @return preferred component length
+	 * @throws IllegalArgumentException if length not specified for a {@link Dynamic} dataType.
 	 */
-	protected int getPreferredComponentLength(DataType dataType, int length) {
+	protected int getPreferredComponentLength(DataType dataType, int length, int maxLength) {
+
 		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
 			return 0;
 		}
-		if ((isPackingEnabled() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
-			length = -1; // force use of datatype size
+
+		if (!(dataType instanceof Dynamic)) {
+			if (isPackingEnabled()) {
+				length = dataType.getAlignedLength();
+				if (length > 0) {
+					return length;
+				}
+			}
+			else if (this instanceof Union) {
+				// enforce Union component size for fixed-length types
+				length = dataType.getLength();
+				if (length > 0) {
+					return length;
+				}
+			}
+			else if (maxLength >= 0) {
+				// length determined by datatype but must not exceed maxLength
+				length = Math.min(dataType.getLength(), maxLength);
+				if (length > 0) {
+					return length;
+				}
+			}
 		}
-		int dtLength = dataType.getLength();
-		if (length <= 0) {
-			length = dtLength;
-		}
-		else if (dtLength > 0 && dtLength < length) {
-			length = dtLength;
-		}
-		if (length <= 0) {
-			throw new IllegalArgumentException("Positive length must be specified for " +
-				dataType.getDisplayName() + " component");
-		}
-		return length;
+
+		return DataTypeComponentImpl.getPreferredComponentLength(dataType, length);
 	}
-	
+
+	/**
+	 * Get the preferred length for a new component. If type is dynamic length must be specified
+	 * (assuming {@link Dynamic#canSpecifyLength()} is true).  Otherwise, when packing is enabled
+	 * the {@link DataType#getAlignedLength()} is returned; when packing disabled for Union
+	 * use of fixed-length type size is forced. Otherwise the decision
+	 * is deferred to {@link DataTypeComponentImpl#getPreferredComponentLength(DataType, int)}.
+	 * During packing the actual component length may be changed.
+	 * 
+	 * @param dataType new component datatype
+	 * @param length   constrained length or -1 to force use of dataType size for non-packing.
+	 *                 Dynamic types such as string must have a positive length specified.
+	 * @return preferred component length
+	 * @throws IllegalArgumentException if length not specified for a {@link Dynamic} dataType.
+	 */
+	protected int getPreferredComponentLength(DataType dataType, int length) {
+		return getPreferredComponentLength(dataType, length, -1);
+	}
+
 	@Override
 	protected String doGetName() {
 		return record.getString(CompositeDBAdapter.COMPOSITE_NAME_COL);
@@ -171,13 +213,15 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		lock.acquire();
 		try {
 			checkDeleted();
+			if (Objects.equals(desc, record.getString(CompositeDBAdapter.COMPOSITE_COMMENT_COL))) {
+				return;
+			}
 			record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, desc);
-			try {
-				compositeAdapter.updateRecord(record, true);
-			}
-			catch (IOException e) {
-				dataMgr.dbError(e);
-			}
+			compositeAdapter.updateRecord(record, true);
+			dataMgr.dataTypeChanged(this, false);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
 		}
 		finally {
 			lock.release();
@@ -199,7 +243,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 
 	@Override
 	public abstract boolean hasLanguageDependantLength();
-	
+
 	/**
 	 * Determine if this composite should be treated as undefined.
 	 * <p>
@@ -289,8 +333,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		}
 	}
 
-	protected DataType doCheckedResolve(DataType dt)
-			throws DataTypeDependencyException {
+	protected DataType doCheckedResolve(DataType dt) throws DataTypeDependencyException {
 		if (dt instanceof Pointer) {
 			pointerPostResolveRequired = true;
 			return resolve(((Pointer) dt).newPointer(DataType.DEFAULT));
@@ -304,6 +347,11 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	protected void doSetNameRecord(String name) throws IOException {
 		record.setString(CompositeDBAdapter.COMPOSITE_NAME_COL, name);
 		compositeAdapter.updateRecord(record, true);
+	}
+
+	protected void removeComponentRecord(long compKey) throws IOException {
+		componentAdapter.removeRecord(compKey);
+		dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
 	}
 
 	/**
@@ -347,13 +395,17 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		return record.getLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL);
 	}
 
+	void doSetLastChangeTime(long lastChangeTime) throws IOException {
+		record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
+		compositeAdapter.updateRecord(record, false);
+	}
+
 	@Override
 	public void setLastChangeTime(long lastChangeTime) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			record.setLongValue(CompositeDBAdapter.COMPOSITE_LAST_CHANGE_TIME_COL, lastChangeTime);
-			compositeAdapter.updateRecord(record, false);
+			doSetLastChangeTime(lastChangeTime);
 			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
@@ -687,15 +739,13 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	public String toString() {
 		return CompositeInternal.toString(this);
 	}
-	
+
 	/**
-	 * Perform any neccessary component adjustments based on
-	 * sizes and alignment of components differing from their 
-	 * specification which may be influenced by the data organization.
-	 * If this composite changes parents will not be
-	 * notified - handling this is the caller's responsibility.
-	 * It is assumed that this method is invoked on composites
-	 * in dependency order.
+	 * Perform any neccessary component adjustments based on sizes of components differing from 
+	 * their specification which may be influenced by the data organization.  This method
+	 * does not consider alignment changes and should be used on non-packed structures only.
+	 * If this composite changes parents will not be notified - handling this is the caller's 
+	 * responsibility. It is assumed that this method is invoked on composites in dependency order.
 	 * @throws IOException if database IO error occurs
 	 */
 	protected abstract void fixupComponents() throws IOException;

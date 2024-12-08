@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.time;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Calendar;
 import java.util.List;
@@ -25,7 +26,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.trace.database.time.DBTraceSnapshot;
@@ -34,7 +35,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
-public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerTimePlugin timePlugin;
 	protected DebuggerTimeProvider timeProvider;
@@ -286,35 +287,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 			tb.trace.getTimeManager().getSnapshot(0, false).getDescription());
 	}
 
-	@Test
-	public void testActivateSnapSelectsRow() throws Exception {
-		createSnaplessTrace();
-		traceManager.openTrace(tb.trace);
-		addSnapshots();
-		waitForDomainObject(tb.trace);
-
-		assertProviderEmpty();
-
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
-
-		traceManager.activateSnap(0);
-		waitForSwing();
-
-		assertEquals(data.get(0), timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
-
-		traceManager.activateSnap(10);
-		waitForSwing();
-
-		assertEquals(data.get(1), timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
-
-		traceManager.activateSnap(5);
-		waitForSwing();
-
-		assertNull(timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
-	}
+	// TODO: Test activation bolds the row
 
 	@Test
 	public void testDoubleClickRowActivatesSnap() throws Exception {

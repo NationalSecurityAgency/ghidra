@@ -71,7 +71,7 @@ public class DebugFrameSection extends AbstractFrameSection {
 		monitor.setMaximum(blockCount);
 
 		for (MemoryBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			if (block.getName().startsWith(DEBUG_FRAME_BLOCK_NAME)) {
 				descriptors.addAll(analyzeSection(block));

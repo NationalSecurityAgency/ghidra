@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.assembler;
 import docking.ActionContext;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
-import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.docking.settings.Settings;
@@ -40,7 +39,7 @@ import ghidra.program.model.mem.MemBuffer;
  * The API for instruction assembly is available from {@link Assemblers}. For data assembly, the API
  * is in {@link DataType#encodeRepresentation(String, MemBuffer, Settings, int)}.
  */
-@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = PluginCategoryNames.PATCHING, shortDescription = "Assembler", description = "This plugin provides functionality for assembly patching. " +
+@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = "Patching", shortDescription = "Assembler", description = "This plugin provides functionality for assembly patching. " +
 	"The assembler supports most processor languages also supported by the " +
 	"disassembler. Depending on the particular processor, your mileage may vary. " +
 	"We are in the process of testing and improving support for all our processors. " +

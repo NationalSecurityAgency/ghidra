@@ -16,7 +16,6 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.NotEmptyException;
@@ -28,7 +27,7 @@ import ghidra.util.exception.NotFoundException;
  * 
  * 
  */
-public class MergeFolderCmd implements Command {
+public class MergeFolderCmd implements Command<Program> {
 
 	private String treeName;
 	private String folderName;
@@ -49,13 +48,9 @@ public class MergeFolderCmd implements Command {
 		this.parentName = parentName;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		Program program = (Program) obj;
 		Listing listing = program.getListing();
 
 		ProgramModule parentModule = listing.getModule(treeName, parentName);
@@ -66,12 +61,12 @@ public class MergeFolderCmd implements Command {
 		}
 		Group[] groups = module.getChildren();
 
-		for (int i = 0; i < groups.length; i++) {
+		for (Group group : groups) {
 
 			// first check to make sure that the parent module
 			// does not alreay contain tree group
 
-			String name = groups[i].getName();
+			String name = group.getName();
 			ProgramModule m = listing.getModule(treeName, name);
 			ProgramFragment f = null;
 			try {
@@ -100,8 +95,8 @@ public class MergeFolderCmd implements Command {
 		try {
 			ProgramModule m = listing.getModule(treeName, folderName);
 			ProgramModule[] parents = m.getParents();
-			for (int i = 0; i < parents.length; i++) {
-				parents[i].removeChild(folderName);
+			for (ProgramModule parent : parents) {
+				parent.removeChild(folderName);
 			}
 			return true;
 		}
@@ -111,17 +106,11 @@ public class MergeFolderCmd implements Command {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errMsg;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Merge " + folderName + " with Parent";

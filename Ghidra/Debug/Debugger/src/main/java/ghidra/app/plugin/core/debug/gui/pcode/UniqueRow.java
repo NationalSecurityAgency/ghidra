@@ -106,6 +106,9 @@ public class UniqueRow {
 	}
 
 	public RefType getRefType() {
+		if (provider.pcodeTable.getSelectedRowCount() != 1) {
+			return RefType.NONE;
+		}
 		int index = provider.pcodeTable.getSelectedRow();
 		if (index == -1) {
 			return RefType.NONE;

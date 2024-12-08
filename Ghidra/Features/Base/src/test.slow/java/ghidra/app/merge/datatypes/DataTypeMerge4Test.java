@@ -42,44 +42,26 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-
-				try {
-					Union union = (Union) dt;
-					union.add(new ByteDataType());
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new ByteDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Union union = (Union) dt;
+				union.add(new ByteDataType());
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new ByteDataType());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-
-				try {
-					Union union = (Union) dt;
-					union.add(new FloatDataType());
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Union union = (Union) dt;
+				union.add(new FloatDataType());
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge();
@@ -115,9 +97,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
@@ -128,34 +108,21 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 					s.add(new ByteDataType());
 					Category c = dtm.getCategory(new CategoryPath("/Category1"));
 					c.moveDataType(union, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (DataTypeDependencyException e) {
 					Assert.fail("Got Data Type Dependency Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-
-				try {
-					Union union = (Union) dt;
-					union.add(new FloatDataType());
-					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Union union = (Union) dt;
+				union.add(new FloatDataType());
+				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge();
@@ -197,9 +164,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 				Structure s1 = (Structure) dt;
@@ -217,7 +182,6 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 					bar.add(dt);
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
@@ -225,16 +189,11 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 				catch (DuplicateNameException e) {
 					Assert.fail("Got DuplicateNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt =
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 				Structure s1 = (Structure) dt;
@@ -251,16 +210,12 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 					Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 					bar.add(new ByteDataType());
 					bar.add(PointerDataType.getPointer(foo, 4));
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got DuplicateNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -332,24 +287,14 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure s = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
-				try {
-					s.add(new FloatDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				s.add(new FloatDataType());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -359,16 +304,12 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					s.add(new WordDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -401,24 +342,14 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure s = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
-				try {
-					s.add(new FloatDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				s.add(new FloatDataType());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -434,17 +365,12 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 					ns.add(PointerDataType.getPointer(s, 4));
 
 					s.add(PointerDataType.getPointer(ns, 4));
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -497,43 +423,26 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				try {
-					dtm.remove(foo, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.remove(foo, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					foo.deleteAll();
-					foo.add(new QWordDataType());
-					foo.add(bar);
-					foo.add(PointerDataType.getPointer(foo, 4));
+				foo.deleteAll();
+				foo.add(new QWordDataType());
+				foo.add(bar);
+				foo.add(PointerDataType.getPointer(foo, 4));
 
-					Structure ms = new StructureDataType(
-						new CategoryPath("/Category1/Category2/Category3"), "my_struct", 0);
-					ms.add(foo);
-					ms.add(new ByteDataType());
-					ms = (Structure) dtm.addDataType(ms, DataTypeConflictHandler.DEFAULT_HANDLER);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure ms = new StructureDataType(
+					new CategoryPath("/Category1/Category2/Category3"), "my_struct", 0);
+				ms.add(foo);
+				ms.add(new ByteDataType());
+				ms = (Structure) dtm.addDataType(ms, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge();
@@ -593,43 +502,27 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				try {
-					// delete Bar from Foo
-					fs.delete(3);
-					// add Foo to Bar
-					Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-					bar.add(fs);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// delete Bar from Foo
+				fs.delete(3);
+				// add Foo to Bar
+				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
+				bar.add(fs);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef");
-				try {
-					fs.add(new QWordDataType());
-					fs.add(bs);
-					fs.add(PointerDataType.getPointer(fs, 4));
+				fs.add(new QWordDataType());
+				fs.add(bs);
+				fs.add(PointerDataType.getPointer(fs, 4));
 
-					// change Bar
-					bs.add(new ByteDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// change Bar
+				bs.add(new ByteDataType());
 			}
 		});
 
@@ -698,80 +591,66 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				Structure array =
 					(Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
-				try {
-					// delete Bar from Foo
-					fs.delete(3);
-					// add Foo to Bar
-					dtm.remove(bs, TaskMonitor.DUMMY);
+				
+				// delete Bar from Foo
+				fs.delete(3);
+				// add Foo to Bar
+				dtm.remove(bs, TaskMonitor.DUMMY);
 
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(array);
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(array);
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(PointerDataType.getPointer(fs, 4));
-					s2.add(new QWordDataType());
-					s2.add(PointerDataType.getPointer(array, 4));
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(PointerDataType.getPointer(fs, 4));
+				s2.add(new QWordDataType());
+				s2.add(PointerDataType.getPointer(array, 4));
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef"));
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef"));
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					// edit Foo to include s1 and s2
-					fs.add(s1);
-					fs.add(s2);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// edit Foo to include s1 and s2
+				fs.add(s1);
+				fs.add(s2);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(new ByteDataType());
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(PointerDataType.getPointer(fs, 4));
-					s2.add(new QWordDataType());
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(new ByteDataType());
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(new QWordDataType());
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(PointerDataType.getPointer(fs, 4));
+				s2.add(new QWordDataType());
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(new QWordDataType());
 
-					// edit Foo to include s1 and s2
-					fs.add(s1);
-					fs.add(s2);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+				// edit Foo to include s1 and s2
+				fs.add(s1);
+				fs.add(s2);
 			}
 		});
 		executeMerge();
@@ -798,84 +677,69 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				Structure array =
 					(Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
-				try {
-					// delete Bar from Foo
-					foo.delete(3);
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
 
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(array);
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// delete Bar from Foo
+				foo.delete(3);
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(PointerDataType.getPointer(foo, 4));
-					s2.add(new QWordDataType());
-					s2.add(PointerDataType.getPointer(array, 4));
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(array);
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef"));
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(PointerDataType.getPointer(foo, 4));
+				s2.add(new QWordDataType());
+				s2.add(PointerDataType.getPointer(array, 4));
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef"));
 
-					// edit Foo to include s1 and s2
-					foo.add(s1);
-					foo.add(s2);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+				// edit Foo to include s1 and s2
+				foo.add(s1);
+				foo.add(s2);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(new ByteDataType());
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+	
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(new ByteDataType());
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(PointerDataType.getPointer(fs, 4));
-					s2.add(new QWordDataType());
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(PointerDataType.getPointer(fs, 4));
+				s2.add(new QWordDataType());
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(new QWordDataType());
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(new QWordDataType());
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					// edit Foo to include s1 and s2
-					fs.add(s1);
-					fs.add(s2);
+				// edit Foo to include s1 and s2
+				fs.add(s1);
+				fs.add(s2);
 
-					// edit Bar to create conflict because Latest deleted it
-					bs.add(PointerDataType.getPointer(s3, 4));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// edit Bar to create conflict because Latest deleted it
+				bs.add(PointerDataType.getPointer(s3, 4));
 			}
 		});
 		executeMerge();
@@ -909,84 +773,69 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				Structure array =
 					(Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
-				try {
-					// delete Bar from Foo
-					fs.delete(3);
-					// remove Bar from the data type manager
-					dtm.remove(bs, TaskMonitor.DUMMY);
 
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(array);
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// delete Bar from Foo
+				fs.delete(3);
+				// remove Bar from the data type manager
+				dtm.remove(bs, TaskMonitor.DUMMY);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(PointerDataType.getPointer(fs, 4));
-					s2.add(new QWordDataType());
-					s2.add(PointerDataType.getPointer(array, 4));
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(array);
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef"));
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(PointerDataType.getPointer(fs, 4));
+				s2.add(new QWordDataType());
+				s2.add(PointerDataType.getPointer(array, 4));
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef"));
 
-					// edit Foo to include s1 and s2
-					fs.add(s1);
-					fs.add(s2);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+				// edit Foo to include s1 and s2
+				fs.add(s1);
+				fs.add(s2);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(new ByteDataType());
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(new ByteDataType());
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(PointerDataType.getPointer(fs, 4));
-					s2.add(new QWordDataType());
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(PointerDataType.getPointer(fs, 4));
+				s2.add(new QWordDataType());
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(new QWordDataType());
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(new QWordDataType());
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					// edit Foo to include s1 and s2
-					fs.add(s1);
-					fs.add(s2);
+				// edit Foo to include s1 and s2
+				fs.add(s1);
+				fs.add(s2);
 
-					// edit Bar to create conflict because Latest deleted it
-					bs.add(PointerDataType.getPointer(s3, 4));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// edit Bar to create conflict because Latest deleted it
+				bs.add(PointerDataType.getPointer(s3, 4));
 			}
 		});
 		executeMerge();
@@ -1028,66 +877,49 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				try {
-					// delete Foo from the data type manager
-					dtm.remove(fs, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// delete Foo from the data type manager
+				dtm.remove(fs, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// delete Foo from the data type manager
-					dtm.remove(foo, TaskMonitor.DUMMY);
+				// delete Foo from the data type manager
+				dtm.remove(foo, TaskMonitor.DUMMY);
 
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(new ByteDataType());
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					s1 = (Structure) dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(new ByteDataType());
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				s1 = (Structure) dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(new QWordDataType());
-					s2.add(new ByteDataType());
-					s2.add(PointerDataType.getPointer(s1, 4));
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(new QWordDataType());
+				s2.add(new ByteDataType());
+				s2.add(PointerDataType.getPointer(s1, 4));
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(new QWordDataType());
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(new QWordDataType());
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					// create a new Foo
-					foo = new StructureDataType(new CategoryPath("/MISC"), "Foo", 0);
-					// edit Foo to include s1 and s2
-					foo.add(s1);
-					foo.add(s2);
-					foo = (Structure) dtm.addDataType(foo, DataTypeConflictHandler.DEFAULT_HANDLER);
-					Pointer p = PointerDataType.getPointer(foo, 4);
-					p = PointerDataType.getPointer(p, 4);
-					p = PointerDataType.getPointer(p, 4);
-					// add Foo * * * to Foo
-					foo.add(p);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a new Foo
+				foo = new StructureDataType(new CategoryPath("/MISC"), "Foo", 0);
+				// edit Foo to include s1 and s2
+				foo.add(s1);
+				foo.add(s2);
+				foo = (Structure) dtm.addDataType(foo, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Pointer p = PointerDataType.getPointer(foo, 4);
+				p = PointerDataType.getPointer(p, 4);
+				p = PointerDataType.getPointer(p, 4);
+				// add Foo * * * to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1123,66 +955,50 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure fs = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				try {
-					// delete Foo from the data type manager
-					dtm.remove(fs, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// delete Foo from the data type manager
+				dtm.remove(fs, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// delete Foo from the data type manager
-					dtm.remove(foo, TaskMonitor.DUMMY);
 
-					// Add s1, s2, s3
-					Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
-					s1.add(new ByteDataType());
-					s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
-					s1 = (Structure) dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// delete Foo from the data type manager
+				dtm.remove(foo, TaskMonitor.DUMMY);
 
-					Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
-					s2.add(new QWordDataType());
-					s2.add(new ByteDataType());
-					s2.add(PointerDataType.getPointer(s1, 4));
-					dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
+				// Add s1, s2, s3
+				Structure s1 = new StructureDataType(new CategoryPath("/MISC"), "S1", 0);
+				s1.add(new ByteDataType());
+				s1.add(PointerDataType.getPointer(new ByteDataType(), 4));
+				s1 = (Structure) dtm.addDataType(s1, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
-					s3.add(new ByteDataType());
-					s3.add(new QWordDataType());
+				Structure s2 = new StructureDataType(new CategoryPath("/MISC"), "S2", 0);
+				s2.add(new QWordDataType());
+				s2.add(new ByteDataType());
+				s2.add(PointerDataType.getPointer(s1, 4));
+				dtm.addDataType(s2, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Structure s3 = new StructureDataType(new CategoryPath("/MISC"), "S3", 0);
+				s3.add(new ByteDataType());
+				s3.add(new QWordDataType());
 
-					// create a new Foo
-					foo = new StructureDataType(new CategoryPath("/MISC"), "Foo", 0);
-					// edit Foo to include s1 and s2
-					foo.add(s1);
-					foo.add(s2);
-					foo = (Structure) dtm.addDataType(foo, DataTypeConflictHandler.DEFAULT_HANDLER);
-					Pointer p = PointerDataType.getPointer(foo, 4);
-					p = PointerDataType.getPointer(p, 4);
-					p = PointerDataType.getPointer(p, 4);
-					// add Foo * * * to Foo
-					foo.add(p);
+				dtm.addDataType(s3, DataTypeConflictHandler.DEFAULT_HANDLER);
 
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a new Foo
+				foo = new StructureDataType(new CategoryPath("/MISC"), "Foo", 0);
+				// edit Foo to include s1 and s2
+				foo.add(s1);
+				foo.add(s2);
+				foo = (Structure) dtm.addDataType(foo, DataTypeConflictHandler.DEFAULT_HANDLER);
+				Pointer p = PointerDataType.getPointer(foo, 4);
+				p = PointerDataType.getPointer(p, 4);
+				p = PointerDataType.getPointer(p, 4);
+				// add Foo * * * to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1218,49 +1034,34 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				try {
-					// delete Bar from Foo
-					foo.delete(3);
-					// add Foo to Bar
-					Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-					bar.add(foo);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// delete Bar from Foo
+				foo.delete(3);
+				// add Foo to Bar
+				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
+				bar.add(foo);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"), "FooTypedef");
-				try {
-					foo.add(new QWordDataType());
-					foo.add(bar);
-					foo.add(PointerDataType.getPointer(foo, 4));
 
-					// change Bar
-					bar.add(new ByteDataType());
-					Pointer p = PointerDataType.getPointer(td, 4);// FooTypedef *
-					p = PointerDataType.getPointer(p, 4);// FooTypedef * * 
-					p = PointerDataType.getPointer(p, 4);// FooTypedef * * *
-					p = PointerDataType.getPointer(p, 4);// FooTypedef * * * *
-					p = PointerDataType.getPointer(p, 4);// FooTypedef * * * * *
-					bar.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				foo.add(new QWordDataType());
+				foo.add(bar);
+				foo.add(PointerDataType.getPointer(foo, 4));
+
+				// change Bar
+				bar.add(new ByteDataType());
+				Pointer p = PointerDataType.getPointer(td, 4);// FooTypedef *
+				p = PointerDataType.getPointer(p, 4);// FooTypedef * * 
+				p = PointerDataType.getPointer(p, 4);// FooTypedef * * *
+				p = PointerDataType.getPointer(p, 4);// FooTypedef * * * *
+				p = PointerDataType.getPointer(p, 4);// FooTypedef * * * * *
+				bar.add(p);
 			}
 		});
 		executeMerge();
@@ -1312,65 +1113,49 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
+				
+				// edit Bar to create conflict because Latest deleted it
+				Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
+				p = PointerDataType.getPointer(p, 4);// Foo * * 
+				p = PointerDataType.getPointer(p, 4);// Foo * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
+				bar.add(p);
 
-					// edit Bar to create conflict because Latest deleted it
-					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
-					p = PointerDataType.getPointer(p, 4);// Foo * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
-					bar.add(p);
+				// create a multi-dimension array on Bar
+				Array array = new ArrayDataType(bar, 11, bar.getLength());
+				array = new ArrayDataType(array, 10, array.getLength());
+				array = new ArrayDataType(array, 9, array.getLength());
+				array = new ArrayDataType(array, 8, array.getLength());
+				array = new ArrayDataType(array, 7, array.getLength());
+				array = new ArrayDataType(array, 6, array.getLength());
 
-					// create a multi-dimension array on Bar
-					Array array = new ArrayDataType(bar, 11, bar.getLength());
-					array = new ArrayDataType(array, 10, array.getLength());
-					array = new ArrayDataType(array, 9, array.getLength());
-					array = new ArrayDataType(array, 8, array.getLength());
-					array = new ArrayDataType(array, 7, array.getLength());
-					array = new ArrayDataType(array, 6, array.getLength());
-
-					// create a TypeDef on the array
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyArray_Typedef", array);
-					// create a Pointer to typedef on MyArray_Typedef
-					p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * * *
-					// add pointer to Foo
-					foo.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a TypeDef on the array
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyArray_Typedef", array);
+				// create a Pointer to typedef on MyArray_Typedef
+				p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * * *
+				// add pointer to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1435,66 +1220,50 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
 
-					// edit Bar to create conflict because Latest deleted it
-					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
-					p = PointerDataType.getPointer(p, 4);// Foo * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
-					bar.add(p);
+				// edit Bar to create conflict because Latest deleted it
+				Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
+				p = PointerDataType.getPointer(p, 4);// Foo * * 
+				p = PointerDataType.getPointer(p, 4);// Foo * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
+				bar.add(p);
 
-					// create a multi-dimension array on Bar
-					Array array = new ArrayDataType(bar, 11, bar.getLength());
-					array = new ArrayDataType(array, 10, array.getLength());
-					array = new ArrayDataType(array, 9, array.getLength());
-					array = new ArrayDataType(array, 8, array.getLength());
-					array = new ArrayDataType(array, 7, array.getLength());
-					array = new ArrayDataType(array, 6, array.getLength());
-					array = new ArrayDataType(array, 5, array.getLength());
+				// create a multi-dimension array on Bar
+				Array array = new ArrayDataType(bar, 11, bar.getLength());
+				array = new ArrayDataType(array, 10, array.getLength());
+				array = new ArrayDataType(array, 9, array.getLength());
+				array = new ArrayDataType(array, 8, array.getLength());
+				array = new ArrayDataType(array, 7, array.getLength());
+				array = new ArrayDataType(array, 6, array.getLength());
+				array = new ArrayDataType(array, 5, array.getLength());
 
-					// create a TypeDef on the array
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyArray_Typedef", array);
-					// create a Pointer to typedef on MyArray_Typedef
-					p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * * *
-					// add pointer to Foo
-					foo.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a TypeDef on the array
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyArray_Typedef", array);
+				// create a Pointer to typedef on MyArray_Typedef
+				p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * * *
+				// add pointer to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1549,56 +1318,40 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
 
-					// create a multi-dimension array on Foo
-					Array array = new ArrayDataType(foo, 11, foo.getLength());
-					array = new ArrayDataType(array, 10, array.getLength());
-					array = new ArrayDataType(array, 9, array.getLength());
-					array = new ArrayDataType(array, 8, array.getLength());
-					array = new ArrayDataType(array, 7, array.getLength());
-					array = new ArrayDataType(array, 6, array.getLength());
+				// create a multi-dimension array on Foo
+				Array array = new ArrayDataType(foo, 11, foo.getLength());
+				array = new ArrayDataType(array, 10, array.getLength());
+				array = new ArrayDataType(array, 9, array.getLength());
+				array = new ArrayDataType(array, 8, array.getLength());
+				array = new ArrayDataType(array, 7, array.getLength());
+				array = new ArrayDataType(array, 6, array.getLength());
 
-					// create a TypeDef on the array
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyFooArray_Typedef", array);
-					// create a Pointer to typedef on MyArray_Typedef
-					Pointer p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * * *
-					// add pointer to Bar
-					bar.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a TypeDef on the array
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyFooArray_Typedef", array);
+				// create a Pointer to typedef on MyArray_Typedef
+				Pointer p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * * * * *
+				// add pointer to Bar
+				bar.add(p);
 			}
 		});
 		executeMerge();
@@ -1637,57 +1390,41 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
+				
+				// edit Bar to create conflict because Latest deleted it
+				Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
+				p = PointerDataType.getPointer(p, 4);// Foo * * 
+				p = PointerDataType.getPointer(p, 4);// Foo * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
+				bar.add(p);
 
-					// edit Bar to create conflict because Latest deleted it
-					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
-					p = PointerDataType.getPointer(p, 4);// Foo * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
-					bar.add(p);
-
-					// create a TypeDef on Bar
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
-					// create a Pointer to typedef on Bar
-					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
-					// add pointer to Foo
-					foo.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a TypeDef on Bar
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
+				// create a Pointer to typedef on Bar
+				p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
+				// add pointer to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1744,57 +1481,42 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
 
-					// edit Bar to create conflict because Latest deleted it
-					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
-					p = PointerDataType.getPointer(p, 4);// Foo * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
-					bar.add(p);
+				// edit Bar to create conflict because Latest deleted it
+				Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
+				p = PointerDataType.getPointer(p, 4);// Foo * * 
+				p = PointerDataType.getPointer(p, 4);// Foo * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
+				bar.add(p);
 
-					// create a TypeDef on Bar
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
-					// create a Pointer to typedef on Bar
-					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
-					// add pointer to Foo
-					foo.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a TypeDef on Bar
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
+				// create a Pointer to typedef on Bar
+				p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
+				// add pointer to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1838,57 +1560,42 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
 
-					// edit Bar to create conflict because Latest deleted it
-					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
-					p = PointerDataType.getPointer(p, 4);// Foo * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
-					p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
-					bar.add(p);
+				// edit Bar to create conflict because Latest deleted it
+				Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
+				p = PointerDataType.getPointer(p, 4);// Foo * * 
+				p = PointerDataType.getPointer(p, 4);// Foo * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * *
+				p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
+				bar.add(p);
 
-					// create a TypeDef on Bar
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
-					// create a Pointer to typedef on Bar
-					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
-					// add pointer to Foo
-					foo.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// create a TypeDef on Bar
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
+				// create a Pointer to typedef on Bar
+				p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
+				// add pointer to Foo
+				foo.add(p);
 			}
 		});
 		executeMerge();
@@ -1937,28 +1644,17 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
@@ -1984,11 +1680,6 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
 					// add pointer to Foo
 					foo.add(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 		});
 		executeMerge();
@@ -2030,45 +1721,31 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change ArrayStruct
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure s =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 						"IntStruct");
-				try {
-					s.add(new FloatDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				s.add(new FloatDataType());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
+				
 				try {
 					dt.setName("MyIntStruct");
 					dt.setCategoryPath(new CategoryPath("/MyCategory/Ints"));
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					s.add(new WordDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});

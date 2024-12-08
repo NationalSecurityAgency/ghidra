@@ -25,7 +25,6 @@ import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.plugintool.PluginConfigurationModel;
@@ -56,7 +55,6 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 		this.pluginConfigurationModel = pluginConfigurationModel;
 		pluginComponent = new PluginManagerComponent(tool, pluginConfigurationModel);
 		JScrollPane scrollPane = new JScrollPane(pluginComponent);
-		scrollPane.getViewport().setBackground(Colors.BACKGROUND);
 		scrollPane.getViewport().setViewPosition(new Point(0, 0));
 		addWorkPanel(scrollPane);
 		createActions(addSaveActions);

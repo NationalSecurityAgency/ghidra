@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,9 +104,14 @@ public class DeleteAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		//@formatter:off
 		int choice = OptionDialog.showYesNoDialogWithNoAsDefaultButton(null,
-			"Confirm Delete Operation", "Are you sure you want to delete selected\n categories " +
-				"and/or dataTypes?\n(Note: There is no undo for archives.)");
+			"Confirm Delete Operation", 
+				"Are you sure you want to delete selected\n" + 
+				"data types and/or categories?\n\n" + 
+				"Note: Changes may trigger the removal of related\n" + 
+				"data types, components and defined data.)");
+		//@formatter:on
 		if (choice != OptionDialog.OPTION_ONE) {
 			return;
 		}

@@ -29,6 +29,7 @@ import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -169,7 +170,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 		// each address should correspond to a function
 		for (Function function : listing.getFunctions(set, true)) {
 			
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(functionCount++);
 			
 			Address entryAddr = function.getEntryPoint();
@@ -264,7 +265,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 			
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
-					int size, RefType refType) {
+					int size, DataType dataType, RefType refType) {
 				return true;
 			}
 			

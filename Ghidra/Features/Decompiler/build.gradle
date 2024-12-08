@@ -32,8 +32,6 @@ dependencies {
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
 	integrationTestImplementation project(path: ':Base', configuration: 'testArtifacts')
 	integrationTestImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
-	
-    helpPath project(path: ":Base", configuration: 'helpPath')
 }
 
 // Include buildable native source in distribution

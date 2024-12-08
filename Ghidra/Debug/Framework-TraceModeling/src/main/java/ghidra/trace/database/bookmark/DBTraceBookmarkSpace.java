@@ -25,11 +25,11 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkSpace;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectIndex;
 import ghidra.util.exception.VersionException;
@@ -110,8 +110,7 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			DBTraceBookmark bookmark = bookmarkMapSpace.put(address, lifespan, null);
 			bookmark.set(type.getTypeString(), category, comment);
-			trace.setChanged(
-				new TraceChangeRecord<>(TraceBookmarkChangeType.ADDED, this, bookmark));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_ADDED, this, bookmark));
 			return bookmark;
 		}
 	}

@@ -42,7 +42,7 @@ public class OptionDialogTest extends AbstractDockingTest {
 
 	@After
 	public void tearDown() {
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test

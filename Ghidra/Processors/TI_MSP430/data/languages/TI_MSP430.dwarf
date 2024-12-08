@@ -1,0 +1,9 @@
+<dwarf>
+	<register_mappings>
+        <register_mapping dwarf="0" ghidra="PC"/>
+        <register_mapping dwarf="1" ghidra="SP" stackpointer="true"/>
+        <register_mapping dwarf="2" ghidra="SR"/>
+		<register_mapping dwarf="3" ghidra="R3" auto_count="13"/> <!-- R3..R15 -->
+	</register_mappings>
+	<call_frame_cfa value="2"/>
+</dwarf>

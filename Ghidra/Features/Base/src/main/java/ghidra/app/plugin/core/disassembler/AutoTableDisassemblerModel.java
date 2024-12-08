@@ -110,7 +110,7 @@ class AutoTableDisassemblerModel extends AddressBasedTableModel<AddressTable> {
 		storage = new MapStorage();
 		while (addrIter.hasNext()) {
 			++addrCount;
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(addrCount);
 			Address start = addrIter.next();
 

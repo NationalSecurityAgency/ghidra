@@ -20,6 +20,8 @@ package ghidra.program.model.address;
  */
 public class GenericAddressSpace extends AbstractAddressSpace {
 
+	private final String name;
+
 	/**
 	 * Constructs a new GenericAddress space with the given name, bit size, type
 	 * and unique value.
@@ -77,7 +79,18 @@ public class GenericAddressSpace extends AbstractAddressSpace {
 	 *            the unique id for this space.
 	 */
 	public GenericAddressSpace(String name, int size, int unitSize, int type, int unique) {
-		super(name, size, unitSize, type, unique);
+		super(size, unitSize, type, unique);
+		this.name = name;
+	}
+
+	@Override
+	int computeHashCode() {
+		return name.hashCode() ^ getType();
+	}
+
+	@Override
+	public final String getName() {
+		return name;
 	}
 
 	/**

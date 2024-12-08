@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -27,7 +28,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents an nlist and nlist_64 structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/nlist.h.auto.html">mach-o/nlist.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/nlist.h">EXTERNAL_HEADERS/mach-o/nlist.h</a> 
  */
 public class NList implements StructConverter {
 	private int n_strx;
@@ -68,11 +69,14 @@ public class NList implements StructConverter {
 	 * @param stringTableOffset offset of the string table
 	 */
 	public void initString(BinaryReader reader, long stringTableOffset) {
-		try {
-			string = reader.readAsciiString(stringTableOffset + n_strx);
-		}
-		catch (Exception e) {
-			string = "";
+		string = "";
+		if (n_strx != 0) {
+			try {
+				string = reader.readAsciiString(stringTableOffset + n_strx);
+			}
+			catch (Exception e) {
+				// use empty string
+			}
 		}
 	}
 
@@ -192,8 +196,33 @@ public class NList implements StructConverter {
 		return (((n_desc) >> 8) & 0xff);
 	}
 
+	public boolean is32bit() {
+		return is32bit;
+	}
+
+	public int getSize() {
+		return is32bit ? 12 : 16;
+	}
+
 	@Override
 	public String toString() {
 		return string;
+	}
+
+	/**
+	 * Gets the size in bytes of the given {@link NList}s (including associated strings)
+	 * 
+	 * @param nlists A {@link List} of {@link NList}s
+	 * @return The size in bytes of the given {@link NList}s (including associated strings)
+	 */
+	public static int getSize(List<NList> nlists) {
+		if (!nlists.isEmpty()) {
+			int totalStringSize = 0;
+			for (NList nlist : nlists) {
+				totalStringSize += nlist.getString().length() + 1; // Add 1 for null terminator
+			}
+			return nlists.size() * nlists.get(0).getSize() + totalStringSize;
+		}
+		return 0;
 	}
 }

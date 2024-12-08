@@ -42,7 +42,7 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 		super.setUp();
 
 		symbolTreePlugin = getPlugin(tool, SymbolTreePlugin.class);
-		treeProvider = (SymbolTreeProvider) getInstanceField("provider", symbolTreePlugin);
+		treeProvider = (SymbolTreeProvider) getInstanceField("connectedProvider", symbolTreePlugin);
 		showProvider(tool, treeProvider.getName());
 		symbolTree = (SymbolGTree) getInstanceField("tree", treeProvider);
 		showSymbolReferencesAction =
@@ -118,8 +118,9 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 			externalLocation);
 		int txId = program.startTransaction("Add Ext Ref");
 		try {
-			program.getReferenceManager().addExternalReference(refAddr, 1, externalLocation,
-				SourceType.USER_DEFINED, refType);
+			program.getReferenceManager()
+					.addExternalReference(refAddr, 1, externalLocation, SourceType.USER_DEFINED,
+						refType);
 			return externalLocation.createFunction();
 		}
 		finally {
@@ -130,8 +131,9 @@ public class SymbolTreeLocationReferencesTest extends AbstractLocationReferences
 	private void addThunk(Address thunkAddr, Function thunkedFunction) throws Exception {
 		int txId = program.startTransaction("Add Thunk");
 		try {
-			Function f = program.getFunctionManager().createFunction(null, thunkAddr,
-				new AddressSet(thunkAddr), SourceType.USER_DEFINED);
+			Function f = program.getFunctionManager()
+					.createFunction(null, thunkAddr, new AddressSet(thunkAddr),
+						SourceType.USER_DEFINED);
 			f.setThunkedFunction(thunkedFunction);
 		}
 		finally {

@@ -15,12 +15,13 @@
  */
 package ghidra.feature.vt.api.correlator.program;
 
+import java.util.List;
+
 import ghidra.app.plugin.match.MatchData;
 import ghidra.app.plugin.match.MatchedData;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Data;
@@ -28,18 +29,15 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.List;
-
 public class DataMatchProgramCorrelator extends VTAbstractProgramCorrelator {
 	private final String name;
 
 	private final boolean oneToOne;
 
-	public DataMatchProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options, String name, boolean oneToOne) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+	public DataMatchProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
+			Program destinationProgram, AddressSetView destinationAddressSet, ToolOptions options,
+			String name, boolean oneToOne) {
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 		this.name = name;
 		this.oneToOne = oneToOne;
 	}

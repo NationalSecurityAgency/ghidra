@@ -28,7 +28,6 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.Gui;
 
 class TipOfTheDayDialog extends ReusableDialogComponentProvider {
@@ -57,7 +56,6 @@ class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 		Icon tipIcon = new GIcon("icon.plugin.totd.provider");
 
 		tipArea = new JTextArea(4, 30);
-		tipArea.setEditable(false);
 		tipArea.setFont(Gui.getFont(FONT_ID));
 		tipArea.setWrapStyleWord(true);
 		tipArea.setLineWrap(true);
@@ -88,7 +86,7 @@ class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		Border panelBorder =
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
-				BorderFactory.createLineBorder(Java.BORDER));
+				BorderFactory.createLineBorder(Colors.BORDER));
 		panel.setBorder(panelBorder);
 
 		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);
@@ -140,6 +138,8 @@ class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 		}
 		String tip = tips.get(tipIndex);
 		tipArea.setText(tip);
+		tipArea.getAccessibleContext().setAccessibleName("Ghidra Tip of The Day");
+		tipArea.getAccessibleContext().setAccessibleDescription(tip);
 	}
 
 	int getTipIndex() {

@@ -39,13 +39,12 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceReferenceChangeType;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceReferenceSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -229,11 +228,11 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 			if (oldSymbol != null) {
 				space.trace.setChanged(new TraceChangeRecord<>(
-					TraceSymbolChangeType.ASSOCIATION_REMOVED, space, oldSymbol, ref));
+					TraceEvents.SYMBOL_ASSOCIATION_REMOVED, space, oldSymbol, ref));
 			}
 			if (newSymbol != null) {
 				space.trace.setChanged(new TraceChangeRecord<>(
-					TraceSymbolChangeType.ASSOCIATION_ADDED, space, newSymbol, ref));
+					TraceEvents.SYMBOL_ASSOCIATION_ADDED, space, newSymbol, ref));
 			}
 		}
 
@@ -692,8 +691,8 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		if (ref.getLifespan().lmin() < otherStartSnap) {
 			Lifespan oldSpan = ref.getLifespan();
 			ref.setEndSnap(otherStartSnap - 1);
-			trace.setChanged(new TraceChangeRecord<>(TraceReferenceChangeType.LIFESPAN_CHANGED,
-				this, ref.ref, oldSpan, ref.getLifespan()));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.REFERENCE_LIFESPAN_CHANGED, this,
+				ref.ref, oldSpan, ref.getLifespan()));
 		}
 		else {
 			ref.ref.delete();

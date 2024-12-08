@@ -90,7 +90,7 @@ public class CodeBrowserNavigationx86Test extends AbstractGhidraHeadedIntegratio
     public void testStackReferenceNavigation() throws Exception {
 		loadProgram("notepad");
 		env.showTool();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.goTo(new OperandFieldLocation(program, addr("1002cf8"), null, null, null, 0, 0));
 		assertEquals(addr("1002cf8"), cb.getCurrentAddress());
 

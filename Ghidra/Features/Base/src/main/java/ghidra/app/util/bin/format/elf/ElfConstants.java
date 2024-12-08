@@ -392,7 +392,10 @@ public interface ElfConstants {
 	public static final short EM_TI_C2000 = 141;
 	/** The Texas Instruments TMS320C55x DSP family */
 	public static final short EM_TI_C5500 = 142;
-	// 143 - 159 reserved
+	// 143 reserved
+	/** Texas Instruments Programmable Realtime Unit */
+	public static final short EM_TI_PRU = 144;
+	// 145 - 159 reserved
 	/** STMicroelectronics 64bit VLIW Data Signal Processor */
 	public static final short EM_MMDSP_PLUS = 160;
 	/** Cypress M8C microprocessor */
@@ -439,9 +442,10 @@ public interface ElfConstants {
 	public static final short EM_L10M = 180;
 	/** Intel K10M */
 	public static final short EM_K10M = 181;
-	// 182 reserved
+	// 182 reserved by Intel
 	/** AARCH64 Architecture */
 	public static final short EM_AARCH64 = 183;
+	// 184 reserved by ARM
 	/** Atmel Corporation 32-bit microprocessor family */
 	public static final short EM_AVR32 = 185;
 	/** STMicroeletronics STM8 8-bit microcontroller */
@@ -480,7 +484,9 @@ public interface ElfConstants {
 	public static final short EM_XCORE = 203;
 	/** Microchip 8-bit PIC(r) family */
 	public static final short EM_MCHP_PIC = 204;
-	// 205 - 209 reserved by Intel
+	/** Intel Graphics Technology */
+	public static final short EM_INTELGT = 205;
+	// 206 - 209 reserved by Intel
 	/** KM211 KM32 32-bit processor */
 	public static final short EM_KM32 = 210;
 	/** KM211 KMX32 32-bit processor */
@@ -501,16 +507,57 @@ public interface ElfConstants {
 	public static final short EM_NORC = 218;
 	/** CSR Kalimba architecture family */
 	public static final short EM_CSR_KALIMBA = 219;
-	// 220 - 223 reserved
+	/** Zilog Z80 */
+	public static final short EM_Z80 = 220;
+	/** Controls and Data Services VISIUMcore processor */
+	public static final short EM_VISIUM = 221;
+	/** FTDI Chip FT32 high performance 32-bit RISC architecture */
+	public static final short EM_FT32 = 222;
+	/** Moxie processor family */
+	public static final short EM_MOXIE = 223;
 	/** AMD GPU architecture */
 	public static final short EM_AMDGPU = 224;
 	/** RISC-V */
 	public static final short EM_RISCV = 243;
 	/** Lanai 32-bit processor */
 	public static final short EM_LANAI = 244;
+	/** CEVA Processor Architecture Family */
+	public static final short EM_CEVA = 245;
+	/** CEVA X2 Processor Family */
+	public static final short EM_CEVA_X2 = 246;
 	/** Linux kernel bpf virtual machine */
 	public static final short EM_BPF = 247;
-
+	/** Graphcore Intelligent Processing Unit */
+	public static final short EM_GRAPHCORE_IPU = 248;
+	/** Imagination Technologies */
+	public static final short EM_IMG1 = 249;
+	/** Netronome Flow Processor. */
+	public static final short EM_NFP = 250;
+	/** NEC Vector Engine */
+	public static final short EM_VE = 251;
+	/** C-SKY processor family. */
+	public static final short EM_CSKY = 252;
+	/** Synopsys ARCv2.3 64-bit */
+	public static final short EM_ARC_COMPACT3_64 = 253;
+	/** MOS Technology MCS 6502 processor */
+	public static final short EM_MCS6502 = 254;
+	/** Synopsys ARCv2.3 32-bit */
+	public static final short EM_ARC_COMPACT3 = 255;
+	/** Kalray VLIW core of the MPPA processor family */
+	public static final short EM_KVX = 256;
+	/** WDC 65816/65C816 */
+	public static final short EM_65816 = 257;
+	/** LoongArch*/
+	public static final short EM_LOONGARCH = 258;
+	/** ChipON KungFu32 */
+	public static final short EM_KF32 = 259;
+	/** Linux kernel bpf virtual machine */
+	public static final short EM_U16_U8CORE = 260;
+	/** Tachyum */
+	public static final short EM_TACHYUM = 261;
+	/** NXP 56800EF Digital Signal Controller (DSC) */
+	public static final short EM_56800EF = 262;
+	
 	/** used by NetBSD/avr32 - AVR 32-bit */
 	public static final short EM_AVR32_unofficial = 0x18ad;
 

@@ -26,13 +26,15 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -306,14 +308,14 @@ public class DebuggerPlatformPlugin extends Plugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent evt) {
-			coordinatesActivated(evt.getActiveCoordinates());
+		if (event instanceof TraceActivatedPluginEvent ev) {
+			coordinatesActivated(ev.getActiveCoordinates());
 		}
-		if (event instanceof TraceClosedPluginEvent evt) {
-			traceClosed(evt.getTrace());
+		if (event instanceof TraceClosedPluginEvent ev) {
+			traceClosed(ev.getTrace());
 		}
-		if (event instanceof DebuggerPlatformPluginEvent evt) {
-			mapperActivated(evt.getTrace(), evt.getMapper());
+		if (event instanceof DebuggerPlatformPluginEvent ev) {
+			mapperActivated(ev.getTrace(), ev.getMapper());
 		}
 	}
 

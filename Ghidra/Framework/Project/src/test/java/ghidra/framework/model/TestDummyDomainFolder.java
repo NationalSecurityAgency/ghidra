@@ -89,6 +89,11 @@ public class TestDummyDomainFolder implements DomainFolder {
 	}
 
 	@Override
+	public URL getLocalProjectURL() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean isInWritableProject() {
 		throw new UnsupportedOperationException();
 	}

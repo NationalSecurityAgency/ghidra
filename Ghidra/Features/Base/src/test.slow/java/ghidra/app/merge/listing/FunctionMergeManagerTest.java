@@ -53,13 +53,8 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 	public void testChangeLatestRemoveMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function func = getFunction(program, "0x10031ee");
 					func.addLocalVariable(
@@ -67,32 +62,17 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 						SourceType.USER_DEFINED);
 					func = getFunction(program, "0x1003bed");
 					func.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x10031ee");
-					removeFunction(program, "0x1003bed");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x10031ee");
+				removeFunction(program, "0x1003bed");
 			}
 		});
 
@@ -123,54 +103,30 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 			// 01005c6f		FUN_01005c6f	body:[1005c6f-1005fbd][1005ff5-10061e2]
 			// 01006420		entry			body:[1006420-1006581][10065a4-10065cd]
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x1002a91");
-					removeFunction(program, "0x1002b44");
-					AddressSet body1002a91 =
-						new AddressSet(addr(program, "0x1002a91"), addr(program, "0x1002b49"));
-					createFunction(program, "0x1002a91", "FUN_01002a91", body1002a91);
+				removeFunction(program, "0x1002a91");
+				removeFunction(program, "0x1002b44");
+				AddressSet body1002a91 =
+					new AddressSet(addr(program, "0x1002a91"), addr(program, "0x1002b49"));
+				createFunction(program, "0x1002a91", "FUN_01002a91", body1002a91);
 
-					removeFunction(program, "0x1002b7d");
-					removeFunction(program, "0x1002c93");
-					AddressSet body1002b7d =
-						new AddressSet(addr(program, "0x1002b7d"), addr(program, "0x1002c9c"));
-					createFunction(program, "0x1002b7d", "FUN_01002b7d", body1002b7d);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002b7d");
+				removeFunction(program, "0x1002c93");
+				AddressSet body1002b7d =
+					new AddressSet(addr(program, "0x1002b7d"), addr(program, "0x1002c9c"));
+				createFunction(program, "0x1002b7d", "FUN_01002b7d", body1002b7d);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x1002a91");
-					Function func = getFunction(program, "0x1002b44");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
+				removeFunction(program, "0x1002a91");
+				Function func = getFunction(program, "0x1002b44");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
 
-					removeFunction(program, "0x1002b7d");
-					func = getFunction(program, "0x1002c93");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002b7d");
+				func = getFunction(program, "0x1002c93");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
 			}
 		});
 
@@ -205,49 +161,25 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 			// 01005c6f		FUN_01005c6f	body:[1005c6f-1005fbd][1005ff5-10061e2]
 			// 01006420		entry			body:[1006420-1006581][10065a4-10065cd]
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x1002a91");
-					removeFunction(program, "0x1002b44");
-					AddressSet body1002a91 =
-						new AddressSet(addr(program, "0x1002a91"), addr(program, "0x1002b49"));
-					createFunction(program, "0x1002a91", "FUN_01002a91", body1002a91);
+				removeFunction(program, "0x1002a91");
+				removeFunction(program, "0x1002b44");
+				AddressSet body1002a91 =
+					new AddressSet(addr(program, "0x1002a91"), addr(program, "0x1002b49"));
+				createFunction(program, "0x1002a91", "FUN_01002a91", body1002a91);
 
-					removeFunction(program, "0x1002b7d");
-					removeFunction(program, "0x1002c93");
-					AddressSet body1002b7d =
-						new AddressSet(addr(program, "0x1002b7d"), addr(program, "0x1002c92"));
-					createFunction(program, "0x1002b7d", "FUN_01002b7d", body1002b7d);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002b7d");
+				removeFunction(program, "0x1002c93");
+				AddressSet body1002b7d =
+					new AddressSet(addr(program, "0x1002b7d"), addr(program, "0x1002c92"));
+				createFunction(program, "0x1002b7d", "FUN_01002b7d", body1002b7d);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x1002a91");
-					removeFunction(program, "0x1002b7d");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002a91");
+				removeFunction(program, "0x1002b7d");
 			}
 		});
 
@@ -272,40 +204,18 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 			}
 		});
 
@@ -324,37 +234,17 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				//Empty
 			}
 		});
 
@@ -373,37 +263,16 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				//Empty
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 			}
 		});
 
@@ -426,52 +295,28 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x100194b");
-					AddressSet body100194b =
-						new AddressSet(addr(program, "0x100194b"), addr(program, "0x100197f"));
-					createFunction(program, "0x100194b", "FUN_0100194b", body100194b);
+				removeFunction(program, "0x100194b");
+				AddressSet body100194b =
+					new AddressSet(addr(program, "0x100194b"), addr(program, "0x100197f"));
+				createFunction(program, "0x100194b", "FUN_0100194b", body100194b);
 
-					removeFunction(program, "0x1002950");
-					AddressSet body1002950 =
-						new AddressSet(addr(program, "0x1002950"), addr(program, "0x10029a4"));
-					createFunction(program, "0x1002950", "FUN_01002950", body1002950);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002950");
+				AddressSet body1002950 =
+					new AddressSet(addr(program, "0x1002950"), addr(program, "0x10029a4"));
+				createFunction(program, "0x1002950", "FUN_01002950", body1002950);
 			}
 		});
 
@@ -502,52 +347,28 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x100194b");
-					AddressSet body100194b =
-						new AddressSet(addr(program, "0x100194b"), addr(program, "0x100197f"));
-					createFunction(program, "0x100194b", "FUN_0100194b", body100194b);
+				removeFunction(program, "0x100194b");
+				AddressSet body100194b =
+					new AddressSet(addr(program, "0x100194b"), addr(program, "0x100197f"));
+				createFunction(program, "0x100194b", "FUN_0100194b", body100194b);
 
-					removeFunction(program, "0x1002950");
-					AddressSet body1002950 =
-						new AddressSet(addr(program, "0x1002950"), addr(program, "0x10029a4"));
-					createFunction(program, "0x1002950", "FUN_01002950", body1002950);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002950");
+				AddressSet body1002950 =
+					new AddressSet(addr(program, "0x1002950"), addr(program, "0x10029a4"));
+				createFunction(program, "0x1002950", "FUN_01002950", body1002950);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 		});
 
@@ -578,34 +399,19 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x1001ae3");
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x1001b00"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				removeFunction(program, "0x1001ae3");
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x1001b00"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					removeFunction(program, "0x1002a91");
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x1002a99"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002a91");
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x1002a99"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Empty
@@ -636,37 +442,22 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Empty
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x1001ae3");
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x1001b00"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				removeFunction(program, "0x1001ae3");
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x1001b00"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					removeFunction(program, "0x1002a91");
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x1002a99"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x1002a91");
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x1002a99"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 		});
 
@@ -694,50 +485,26 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001984 =
-						new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
-					createFunction(program, "0x1001984", "FUN_01001984", body1001984);
+				AddressSet body1001984 =
+					new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
+				createFunction(program, "0x1001984", "FUN_01001984", body1001984);
 
-					AddressSet body10029bc =
-						new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
-					createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029bc =
+					new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
+				createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
 			}
 		});
 
@@ -767,50 +534,26 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100198a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100198a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029d3"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029d3"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 		});
 
@@ -838,58 +581,34 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setReturnType(Undefined2DataType.dataType, SourceType.ANALYSIS);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setReturnType(Undefined2DataType.dataType, SourceType.ANALYSIS);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setReturnType(Undefined2DataType.dataType, SourceType.ANALYSIS);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setReturnType(Undefined2DataType.dataType, SourceType.ANALYSIS);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setReturnType(WordDataType.dataType, SourceType.ANALYSIS);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setReturnType(WordDataType.dataType, SourceType.ANALYSIS);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setReturnType(WordDataType.dataType, SourceType.ANALYSIS);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setReturnType(WordDataType.dataType, SourceType.ANALYSIS);
 			}
 		});
 
@@ -920,67 +639,43 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setReturnType(new Undefined2DataType(), SourceType.ANALYSIS);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setReturnType(new Undefined2DataType(), SourceType.ANALYSIS);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r0l")),
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new Undefined2DataType(),
+					new VariableStorage(program, program.getRegister("r0l")),
+					SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0l")),
-						SourceType.USER_DEFINED);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new WordDataType(),
+					new VariableStorage(program, program.getRegister("r0l")),
+					SourceType.USER_DEFINED);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r1l")),
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new Undefined2DataType(),
+					new VariableStorage(program, program.getRegister("r1l")),
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1016,67 +711,43 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setReturnType(new Undefined2DataType(), SourceType.ANALYSIS);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setReturnType(new Undefined2DataType(), SourceType.ANALYSIS);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r0l")),
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new Undefined2DataType(),
+					new VariableStorage(program, program.getRegister("r0l")),
+					SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0l")),
-						SourceType.USER_DEFINED);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new WordDataType(),
+					new VariableStorage(program, program.getRegister("r0l")),
+					SourceType.USER_DEFINED);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r1l")),
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new Undefined2DataType(),
+					new VariableStorage(program, program.getRegister("r1l")),
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1111,68 +782,44 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setReturnType(new IntegerDataType(), SourceType.ANALYSIS);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setReturnType(new IntegerDataType(), SourceType.ANALYSIS);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new IntegerDataType(),
-						new VariableStorage(program, program.getRegister("EBX")),
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new IntegerDataType(),
+					new VariableStorage(program, program.getRegister("EBX")),
+					SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new FloatDataType(),
-						new VariableStorage(program, program.getRegister("AX"),
-							program.getRegister("BL"), program.getRegister("CL")),
-						SourceType.USER_DEFINED);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new FloatDataType(),
+					new VariableStorage(program, program.getRegister("AX"),
+						program.getRegister("BL"), program.getRegister("CL")),
+					SourceType.USER_DEFINED);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setCustomVariableStorage(true);
-					func.setReturn(new IntegerDataType(),
-						new VariableStorage(program, program.getRegister("ECX")),
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setCustomVariableStorage(true);
+				func.setReturn(new IntegerDataType(),
+					new VariableStorage(program, program.getRegister("ECX")),
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1216,13 +863,8 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					latest_Parm1[0] = new MyParameter("Parm1", 0, new DWordDataType(), 4, program);
 					latest_Parm2[0] = new MyParameter("Parm2", 1, new WordDataType(), 8, program);
@@ -1242,8 +884,6 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x10029a1");
 					func.addParameter(latest_p1[0], SourceType.USER_DEFINED);
 					func.addParameter(latest_p2[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					e.printStackTrace();
@@ -1253,18 +893,10 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					my_Parm1[0] = new MyParameter("Parm1", 0, new FloatDataType(), 4, program);
 					my_Parm2[0] = new MyParameter("Parm2", 1, new WordDataType(), 8, program);
@@ -1287,8 +919,6 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func.addParameter(my_count[0], SourceType.USER_DEFINED);
 					func.addParameter(my_offset[0], SourceType.USER_DEFINED);
 					func.addParameter(my_increment[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					e.printStackTrace();
@@ -1297,9 +927,6 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 				catch (InvalidInputException e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1344,13 +971,8 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					latestLocal4[0] =
 						new LocalVariableImpl("local_4", new ByteDataType(), -4, program);
@@ -1371,25 +993,15 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 					func = getFunction(program, "0x10029a1");
 					func.addLocalVariable(latestLocalC[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					myLocal4[0] = new LocalVariableImpl("local_4", new WordDataType(), -4, program);
 					myLocala[0] =
@@ -1409,15 +1021,10 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 					func = getFunction(program, "0x10029a1");
 					func.addLocalVariable(myLocal30[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1462,13 +1069,8 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					latestLocal4[0] =
 						new LocalVariableImpl("local_4", new ByteDataType(), -4, program);
@@ -1489,25 +1091,15 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 					func = getFunction(program, "0x10029a1");
 					func.addLocalVariable(latestLocalC[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					myLocal4[0] = new LocalVariableImpl("local_4", new WordDataType(), -4, program);
 					myLocala[0] =
@@ -1527,15 +1119,10 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 					func = getFunction(program, "0x10029a1");
 					func.addLocalVariable(myLocal30[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1582,13 +1169,8 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					latest3[0] = new MyParameter("elm", 3, new WordDataType(), 20, program);
 					latest1[0] = new MyParameter("pine", 1, new Undefined4DataType(), 8, program);
@@ -1601,25 +1183,15 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x1002c93");
 					func.setCustomVariableStorage(true);
 					func.addParameter(latest3[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					my3[0] = new MyParameter("three", 3, new FloatDataType(), 24, program);
 					my1[0] = new MyParameter("one", 1, new ByteDataType(), 8, program);
@@ -1632,15 +1204,10 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x1002c93");
 					func.setCustomVariableStorage(true);
 					func.addParameter(my3[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1682,52 +1249,28 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("notepad.exe_3.1_w_DotDotDot", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// 0x0100194b	"undefined FUN_0100194b(undefined4 param_1, undefined4 param_2)"
-					// 0x0100299e	"undefined FUN_0100299e(undefined4 param_1, undefined4 param_2, undefined param_3)"
-					// 0x01004a15	"undefined FUN_01004a15(undefined4 param_1, undefined4 param_2)"
-					Function func;
-					func = getFunction(program, "0x0100194b");
-					func.setVarArgs(true);
-					func = getFunction(program, "0x01004a15");
-					func.setVarArgs(true);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 0x0100194b	"undefined FUN_0100194b(undefined4 param_1, undefined4 param_2)"
+				// 0x0100299e	"undefined FUN_0100299e(undefined4 param_1, undefined4 param_2, undefined param_3)"
+				// 0x01004a15	"undefined FUN_01004a15(undefined4 param_1, undefined4 param_2)"
+				Function func;
+				func = getFunction(program, "0x0100194b");
+				func.setVarArgs(true);
+				func = getFunction(program, "0x01004a15");
+				func.setVarArgs(true);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// 0x0100194b	"undefined FUN_0100194b(undefined4 param_1, undefined4 param_2)"
-					// 0x0100299e	"undefined FUN_0100299e(undefined4 param_1, undefined4 param_2, undefined param_3)"
-					// 0x01004a15	"undefined FUN_01004a15(undefined4 param_1, undefined4 param_2)"
-					Function func;
-					func = getFunction(program, "0x0100299e");
-					func.setVarArgs(true);
-					func = getFunction(program, "0x01004a15");
-					func.setVarArgs(true);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 0x0100194b	"undefined FUN_0100194b(undefined4 param_1, undefined4 param_2)"
+				// 0x0100299e	"undefined FUN_0100299e(undefined4 param_1, undefined4 param_2, undefined param_3)"
+				// 0x01004a15	"undefined FUN_01004a15(undefined4 param_1, undefined4 param_2)"
+				Function func;
+				func = getFunction(program, "0x0100299e");
+				func.setVarArgs(true);
+				func = getFunction(program, "0x01004a15");
+				func.setVarArgs(true);
 			}
 		});
 
@@ -1756,13 +1299,8 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("notepad.exe_3.1_w_DotDotDot", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Parameter my_count =
 						new MyParameter("count", 0, new IntegerDataType(), 4, program);
@@ -1782,8 +1320,6 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x01004a15");
 					func.removeParameter(0);
 					func.insertParameter(0, my_count, SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					e.printStackTrace();
@@ -1793,18 +1329,10 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Parameter my_count =
 						new ParameterImpl("count", new IntegerDataType(), 4, program);
@@ -1824,8 +1352,6 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func.insertParameter(0, my_count, SourceType.USER_DEFINED);
 					func = getFunction(program, "0x01004a15");
 					func.setVarArgs(true);
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					e.printStackTrace();
@@ -1834,9 +1360,6 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 				catch (InvalidInputException e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1871,40 +1394,18 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 	public void testChangeLatestRemoveMyFunctionNoReturn() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Function func = getFunction(program, "0x10031ee");
-					func.setNoReturn(true);
-					func = getFunction(program, "0x1003bed");
-					func.setNoReturn(true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Function func = getFunction(program, "0x10031ee");
+				func.setNoReturn(true);
+				func = getFunction(program, "0x1003bed");
+				func.setNoReturn(true);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x10031ee");
-					removeFunction(program, "0x1003bed");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x10031ee");
+				removeFunction(program, "0x1003bed");
 			}
 		});
 
@@ -1931,58 +1432,34 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setInline(true);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setInline(true);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setInline(false);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setInline(false);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setInline(false);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setInline(false);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setInline(true);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setInline(true);
 			}
 		});
 
@@ -2011,58 +1488,34 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setNoReturn(true);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setNoReturn(true);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setNoReturn(false);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setNoReturn(false);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
-					Function func = getFunction(program, "0x1001979");
-					func.setNoReturn(false);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				Function func = getFunction(program, "0x1001979");
+				func.setNoReturn(false);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-					func = getFunction(program, "0x10029a1");
-					func.setNoReturn(true);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
+				func = getFunction(program, "0x10029a1");
+				func.setNoReturn(true);
 			}
 		});
 

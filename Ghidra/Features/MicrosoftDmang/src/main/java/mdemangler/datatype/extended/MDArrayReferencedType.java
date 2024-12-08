@@ -15,66 +15,50 @@
  */
 package mdemangler.datatype.extended;
 
-import java.util.Objects;
-
 import mdemangler.*;
+import mdemangler.datatype.MDDataType;
 import mdemangler.datatype.MDDataTypeParser;
-import mdemangler.datatype.modifier.MDModifierType;
 
 /**
  * This class represents an "array referenced" data type within a Microsoft mangled symbol.
  */
-public class MDArrayReferencedType extends MDModifierType {
+public class MDArrayReferencedType extends MDDataType {
 
-	// public static final String ARR_NOTATION = "[]";
 	private String arrayString = "";
-	// protected MDDataType refDataType;
+
+	private MDDataType refDataType;
 
 	public MDArrayReferencedType(MDMang dmang) {
 		super(dmang, 0);
-		// cvMod.setOtherType();
-		cvMod.clearProperties();
-		cvMod.clearCV();
 	}
 
-	/**
-	 * This method will possibly become private and also removed
-	 *  from the base class.  It is used to set the arrayString.
-	 *  @param arrayString -- null not permitted.
-	 */
-	@Override
-	public void setArrayString(String arrayString) {
-		this.arrayString = Objects.requireNonNull(arrayString);
-	}
-
-	@Override
 	public String getArrayString() {
 		return arrayString;
+	}
+
+	public MDDataType getReferencedType() {
+		return refDataType;
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
 		if (dmang.peek() == 'Y') {
+			dmang.parseInfoPush(0, "Array Property");
 			dmang.increment();
 			MDEncodedNumber n1 = new MDEncodedNumber(dmang);
 			n1.parse();
 			int num = n1.getValue().intValue();
-			String arrString = "";
+			arrayString = "";
 			while (num-- > 0) {
 				MDEncodedNumber n2 = new MDEncodedNumber(dmang);
 				n2.parse();
-				arrString = arrString + '[' + n2 + ']';
+				arrayString = arrayString + '[' + n2 + ']';
 			}
-			setArrayString(arrString);
-			// refDataType = MDDataTypeParser.parsePrimaryDataType(dmang,
-			// false);
-			// refDataType.setIsReferencedType();
-			// //20170523 refDataType.setIsArray();
-			// dmang.parse(refDataType);
-			refType = MDDataTypeParser.parsePrimaryDataType(dmang, false);
-			// refType.setIsReferencedType();
-			// 20170523 refType.setIsArray();
-			refType.parse();
+			dmang.parseInfoPop();
+
+			refDataType = MDDataTypeParser.parsePrimaryDataType(dmang, false);
+			refDataType.parse();
+
 		}
 	}
 
@@ -85,7 +69,6 @@ public class MDArrayReferencedType extends MDModifierType {
 			dmang.appendString(builder, ")");
 		}
 		dmang.appendString(builder, getArrayString());
-		// refDataType.insert(builder);
-		refType.insert(builder);
+		refDataType.insert(builder);
 	}
 }

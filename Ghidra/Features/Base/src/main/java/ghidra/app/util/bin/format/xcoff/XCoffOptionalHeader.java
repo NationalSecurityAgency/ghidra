@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,35 +106,34 @@ public final class XCoffOptionalHeader implements StructConverter {
 
 	@Override
     public String toString() {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("OPTIONAL HEADER VALUES").append(NL);
-		buffer.append("magic      = ").append(o_magic).append(NL);
-		buffer.append("vstamp     = ").append(o_vstamp).append(NL);
-		buffer.append("tsize      = ").append(o_tsize).append(NL);
-		buffer.append("dsize      = ").append(o_dsize).append(NL);
-		buffer.append("bsize      = ").append(o_bsize).append(NL);
-		buffer.append("entry      = ").append(o_entry).append(NL);
-		buffer.append("text_start = ").append(o_text_start).append(NL);
-		buffer.append("data_start = ").append(o_data_start).append(NL);
-		buffer.append("o_toc      = ").append(o_toc).append(NL);
-		buffer.append("o_snentry  = ").append(o_snentry).append(NL);
-		buffer.append("o_sntext   = ").append(getSectionNumberForText()).append(NL);
-		buffer.append("o_sndata   = ").append(o_sndata).append(NL);
-		buffer.append("o_sntoc    = ").append(o_sntoc).append(NL);
-		buffer.append("o_snloader = ").append(o_snloader).append(NL);
-		buffer.append("o_snbss    = ").append(o_snbss).append(NL);
-		buffer.append("o_algntext = ").append(o_algntext).append(NL);
-		buffer.append("o_algndata = ").append(o_algndata).append(NL);
-		buffer.append("o_modtype  = ").append(o_modtype).append(NL);
-		buffer.append("o_cpuflag  = ").append(o_cpuflag).append(NL);
-		buffer.append("o_cputype  = ").append(o_cputype).append(NL);
-		buffer.append("o_maxstack = ").append(o_maxstack).append(NL);
-		buffer.append("o_maxdata  = ").append(o_maxdata).append(NL);
-		buffer.append("o_flags    = ").append(o_flags).append(NL);
-		buffer.append("o_debugger = ").append(o_debugger).append(NL);
-		buffer.append("o_sntdata  = ").append(o_sntdata).append(NL);
-		buffer.append("o_sntbss   = ").append(o_sntbss).append(NL);
-		return buffer.toString();
+		String buffer = "OPTIONAL HEADER VALUES" + NL +
+				"magic      = " + o_magic + NL +
+				"vstamp     = " + o_vstamp + NL +
+				"tsize      = " + o_tsize + NL +
+				"dsize      = " + o_dsize + NL +
+				"bsize      = " + o_bsize + NL +
+				"entry      = " + o_entry + NL +
+				"text_start = " + o_text_start + NL +
+				"data_start = " + o_data_start + NL +
+				"o_toc      = " + o_toc + NL +
+				"o_snentry  = " + o_snentry + NL +
+				"o_sntext   = " + getSectionNumberForText() + NL +
+				"o_sndata   = " + o_sndata + NL +
+				"o_sntoc    = " + o_sntoc + NL +
+				"o_snloader = " + o_snloader + NL +
+				"o_snbss    = " + o_snbss + NL +
+				"o_algntext = " + o_algntext + NL +
+				"o_algndata = " + o_algndata + NL +
+				"o_modtype  = " + o_modtype + NL +
+				"o_cpuflag  = " + o_cpuflag + NL +
+				"o_cputype  = " + o_cputype + NL +
+				"o_maxstack = " + o_maxstack + NL +
+				"o_maxdata  = " + o_maxdata + NL +
+				"o_flags    = " + o_flags + NL +
+				"o_debugger = " + o_debugger + NL +
+				"o_sntdata  = " + o_sntdata + NL +
+				"o_sntbss   = " + o_sntbss + NL;
+		return buffer;
 	}
 
 	/**

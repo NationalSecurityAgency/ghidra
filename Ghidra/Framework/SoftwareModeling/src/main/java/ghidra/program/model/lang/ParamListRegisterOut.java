@@ -17,9 +17,8 @@ package ghidra.program.model.lang;
 
 import java.util.ArrayList;
 
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.VoidDataType;
 
 /**
  * A list of resources describing possible storage locations for a function's return value,
@@ -28,17 +27,22 @@ import ghidra.program.model.listing.VariableStorage;
  * The assignment strategy for this class is to take the first storage location in the list
  * that fits for the given function signature's return data-type.
  */
-public class ParamListRegisterOut extends ParamListStandard {
+public class ParamListRegisterOut extends ParamListStandardOut {
 
 	@Override
-	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
-			boolean addAutoParams) {
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
-		VariableStorage store = assignAddress(prog, proto[0], status, false, false);
+		ParameterPieces store = new ParameterPieces();
 		res.add(store);
+		if (VoidDataType.isVoidDataType(proto.outtype)) {
+			store.type = proto.outtype;
+			return;		// Don't assign storage for VOID
+		}
+		assignAddress(proto.outtype, proto, -1, dtManager, status, store);
 	}
 
 }

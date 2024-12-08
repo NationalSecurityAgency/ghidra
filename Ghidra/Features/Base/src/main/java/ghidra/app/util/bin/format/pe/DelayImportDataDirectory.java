@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,11 +86,11 @@ public class DelayImportDataDirectory extends DataDirectory {
 
     @Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader)
+			NTHeader nt)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
     	monitor.setMessage(program.getName()+": delay import(s)...");
-		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
+		Address addr = PeUtils.getMarkupAddress(program, isBinary, nt, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
@@ -162,7 +162,9 @@ public class DelayImportDataDirectory extends DataDirectory {
 		try {
 			program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
 		}
-		catch (Exception e) {}
+		catch (Exception e) {
+			// do nothing
+		}
 	}
 
     private Address addr(AddressSpace space, boolean isBinary, 
@@ -228,13 +230,13 @@ public class DelayImportDataDirectory extends DataDirectory {
 			}
 			DataType dt;
 			if (thunk.isOrdinal() || thunk.getAddressOfData() == 0) {
-				dt = is64bit ? QWORD : DWORD;
+				dt = is64bit ? QWordDataType.dataType : DWordDataType.dataType;
 			}
 			else if (isIAT) {
 				dt = is64bit ? Pointer64DataType.dataType : Pointer32DataType.dataType;
 			}
 			else {
-				dt = is64bit ? IBO64 : IBO32;
+				dt = is64bit ? IBO64DataType.dataType : IBO32DataType.dataType;
 			}
 
 			Address thunkAddress = space.getAddress(thunkPtr);
@@ -243,17 +245,4 @@ public class DelayImportDataDirectory extends DataDirectory {
 			thunkPtr += thunk.getStructSize();
 		}
 	}
-
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
-    @Override
-    public DataType toDataType() throws DuplicateNameException, IOException {
-        StructureDataType struct = new StructureDataType(NAME, 0);
-        for (DelayImportDescriptor descriptor : descriptors) {
-			struct.add(descriptor.toDataType(), DelayImportDescriptor.NAME, null);
-		}
-        struct.setCategoryPath(new CategoryPath("/PE"));
-        return struct;
-    }
 }

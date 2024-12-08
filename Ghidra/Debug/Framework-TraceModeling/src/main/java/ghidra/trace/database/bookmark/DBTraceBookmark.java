@@ -24,11 +24,11 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -140,14 +140,14 @@ public class DBTraceBookmark extends AbstractDBTraceAddressSnapRangePropertyMapD
 			update(CATEGORY_COLUMN, COMMENT_COLUMN);
 		}
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBookmarkChangeType.CHANGED, space, this));
+			new TraceChangeRecord<>(TraceEvents.BOOKMARK_CHANGED, space, this));
 	}
 
 	@Override
 	public void delete() {
 		space.bookmarkMapSpace.deleteData(this);
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBookmarkChangeType.DELETED, space, this));
+			new TraceChangeRecord<>(TraceEvents.BOOKMARK_DELETED, space, this));
 	}
 
 	@Override

@@ -88,9 +88,10 @@ public class ColorEditor extends PropertyEditorSupport {
 	private void updateColor(Color newColor) {
 
 		// change the color to a darker value if the color being set is light
-		String colorString = WebColors.toString(ColorUtils.contrastForegroundColor(newColor));
+		String colorString =
+			WebColors.toString(ColorUtils.contrastForegroundColor(newColor), false);
 		previewLabel.setText(
-			"<HTML><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
+			"<html><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
 
 		previewLabel.setBackground(color);
 	}

@@ -29,19 +29,6 @@ f4 f4_compareLogic(f4 lhs, f4 rhs)
 	return lhs;
 }
 
-f8 f8_compareLogic(f8 lhs, f8 rhs)
-{
-	if (lhs < 0)
-		lhs += 2;
-	if (lhs > 0)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-
 /* Comparison operators */
 f4 f4_greaterThan(f4 lhs, f4 rhs)
 {

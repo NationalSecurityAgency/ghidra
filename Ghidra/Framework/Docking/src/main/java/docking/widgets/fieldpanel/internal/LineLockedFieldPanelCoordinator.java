@@ -55,26 +55,29 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 	/**
 	 * Call this method whenever you want to change the line numbers that are locked together 
 	 * for the associated field panels.
-	 * @param lockedLineNumbers the array of locked line numbers that are directly associated with
+	 * @param newLockedLines the array of locked line numbers that are directly associated with
 	 * the array of field panels.<BR>
 	 * Important: Make sure the line numbers are in the order that matches the field panels in the array.
 	 */
-	public void setLockedLines(BigInteger[] lockedLineNumbers) {
-		if (lockedLineNumbers.length != this.lockedLineNumbers.length) {
-			throw new AssertException("The number of lines(" + lockedLineNumbers.length +
-				") must exactly match the number of panels(" + this.lockedLineNumbers.length +
+	public void lockLines(BigInteger... newLockedLines) {
+		if (newLockedLines.length != lockedLineNumbers.length) {
+			throw new AssertException("The number of lines(" + newLockedLines.length +
+				") must exactly match the number of panels(" + lockedLineNumbers.length +
 				").");
 		}
-		for (int i = 0; i < lockedLineNumbers.length; i++) {
-			if (lockedLineNumbers[i] == null) {
-				lockedLineNumbers[i] = BigInteger.ZERO;
+		for (int i = 0; i < newLockedLines.length; i++) {
+			if (newLockedLines[i] == null) {
+				newLockedLines[i] = BigInteger.ZERO;
 			}
 		}
-		for (int i = 0; i < lockedLineNumbers.length; i++) {
-			if (!this.lockedLineNumbers[i].equals(lockedLineNumbers[i])) {
-				this.lockedLineNumbers[i] = lockedLineNumbers[i];
-			}
+		if (valuesChanging) {
+			return;
 		}
+		valuesChanging = true;
+		for (int i = 0; i < newLockedLines.length; i++) {
+			lockedLineNumbers[i] = newLockedLines[i];
+		}
+		valuesChanging = false;
 	}
 
 	/**

@@ -42,9 +42,13 @@ public final class JavaFileListHandler extends AbstractFileListFlavorHandler {
 
 	@Override
 	// This is for the DataFlavorHandler interface for handling OS files dropped onto a DataTree
-	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+	public boolean handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 		List<File> fileList = CollectionUtils.asList((List<?>) transferData, File.class);
+		if (fileList.isEmpty()) {
+			return false;
+		}
 		doImport(getDomainFolder(destinationNode), fileList, tool, dataTree);
+		return true;
 	}
 }

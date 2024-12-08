@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -101,8 +101,8 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public void setRecorder(Trace trace, TraceRecorder recorder) {
-		breaks.setRecorder(recorder);
+	public void setTarget(Trace trace, Target target) {
+		breaks.setTarget(target);
 	}
 
 	@Override
@@ -196,7 +196,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	public CompletableFuture<Void> enableForTrace(Trace trace) {
 		if (trace != breaks.getTrace()) {
 			// Ignore silently
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return enable();
 	}
@@ -205,7 +205,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	public CompletableFuture<Void> disableForTrace(Trace trace) {
 		if (trace != breaks.getTrace()) {
 			// Ignore silently
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return disable();
 	}
@@ -214,7 +214,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	public CompletableFuture<Void> deleteForTrace(Trace trace) {
 		if (trace != breaks.getTrace()) {
 			// Ignore silently
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return delete();
 	}

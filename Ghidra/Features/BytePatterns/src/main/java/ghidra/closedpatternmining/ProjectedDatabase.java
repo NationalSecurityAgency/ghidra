@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -171,7 +171,7 @@ public class ProjectedDatabase {
 
 				Integer count = frequentItemBag.get(globalItem);
 				if (count == null) {
-					frequentItemBag.put(globalItem, new Integer(fullSequence.getCount()));
+					frequentItemBag.put(globalItem, Integer.valueOf(fullSequence.getCount()));
 				}
 				else {
 					frequentItemBag.put(globalItem, count + fullSequence.getCount());
@@ -231,13 +231,13 @@ public class ProjectedDatabase {
 				String symbol = firstSequence.getSequenceAsString().substring(dittedPosition,
 					dittedPosition + 1);
 				//System.out.println("adding " + symbol + " at position " + dittedPosition);
-				positionsToSymbols.put(new Integer(dittedPosition), symbol);
+				positionsToSymbols.put(Integer.valueOf(dittedPosition), symbol);
 				dittedPosition++;
 			}
 			dittedPosition++;//advance past fixedPosition
 		}
 
-		//if all of the preceeding positions are filled, there can't be any backward
+		//if all of the preceding positions are filled, there can't be any backward
 		//extension items
 		if (positionsToSymbols.isEmpty()) {
 			return backwardExtensionItems;

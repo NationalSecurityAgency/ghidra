@@ -23,6 +23,10 @@ import ghidra.program.model.mem.MemBuffer;
  */
 public interface Array extends DataType {
 
+	// TODO: May need to handle both packed and non-packed arrays where packed would use
+	// DataType.getAlignedLength() while non-packed would not.  At present, arrays are 
+	// always are treated as packed using getAlignedLength.
+
 	public static final String ARRAY_LABEL_PREFIX = "ARRAY";
 
 	/**
@@ -111,8 +115,8 @@ public interface Array extends DataType {
 		ArrayStringable stringableElementType = ArrayStringable.getArrayStringable(getDataType());
 		String value =
 			(stringableElementType != null && stringableElementType.hasStringValue(settings))
-					? new StringDataInstance(stringableElementType, settings, buf, length,
-						true).getStringRepresentation()
+					? new StringDataInstance(stringableElementType, settings, buf, length, true)
+							.getStringRepresentation()
 					: null;
 		return (value != null) ? value : "";
 	}

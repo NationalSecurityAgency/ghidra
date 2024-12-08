@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -457,7 +456,7 @@ class BookmarkMerger extends AbstractListingMerger {
 			if ((bookmarkChoice == ASK_USER) && askUser && mergeManager != null) {
 				showMergePanel(listingPanel, bmuid.address, bmuid.bookmarkType,
 					bmuid.bookmarkCategory, monitor);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			else {
 				int optionToUse =

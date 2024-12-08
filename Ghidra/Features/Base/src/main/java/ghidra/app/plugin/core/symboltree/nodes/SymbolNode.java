@@ -94,6 +94,7 @@ public class SymbolNode extends SymbolTreeNode {
 	@Override
 	public void setNodeCut(boolean isCut) {
 		this.isCut = isCut;
+		fireNodeChanged();
 	}
 
 	@Override
@@ -223,7 +224,7 @@ public class SymbolNode extends SymbolTreeNode {
 
 		int transactionID = program.startTransaction("Rename Symbol");
 		try {
-			// The symbol node rename does not support moving symbols into the 
+			// The symbol node rename does not support moving symbols into the
 			// Global space since this implies a simple rename
 			Namespace namespace = createNewNamespace(symbolPath.getParent());
 			if (!namespace.isGlobal()) {
@@ -292,7 +293,7 @@ public class SymbolNode extends SymbolTreeNode {
 			return nameCompare;
 		}
 
-		// sort alphabetically first		
+		// sort alphabetically first
 		if (nameCompare != 0) {
 			return nameCompare;
 		}

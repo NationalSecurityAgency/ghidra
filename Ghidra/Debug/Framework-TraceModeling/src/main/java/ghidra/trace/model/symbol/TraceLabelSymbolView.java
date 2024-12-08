@@ -21,11 +21,39 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.InvalidInputException;
 
+/**
+ * The label symbol view.
+ */
 public interface TraceLabelSymbolView extends TraceSymbolWithLocationView<TraceLabelSymbol> {
-
+	/**
+	 * Add a new label symbol.
+	 * 
+	 * @param lifespan the lifespan of the symbol
+	 * @param thread the thread, if in register space
+	 * @param address the address of the label
+	 * @param name the name of the label
+	 * @param parent the parent namespace
+	 * @param source the source
+	 * @return the new label symbol
+	 * @throws InvalidInputException if the name is not valid
+	 */
 	TraceLabelSymbol add(Lifespan lifespan, TraceThread thread, Address address, String name,
 			TraceNamespaceSymbol parent, SourceType source) throws InvalidInputException;
 
+	/**
+	 * A shorthand for
+	 * {@link #add(Lifespan, TraceThread, Address, String, TraceNamespaceSymbol, SourceType)} where
+	 * lifespan is from the given snap on.
+	 * 
+	 * @param snap the starting snapshot key of the symbol
+	 * @param thread the thread, if in register space
+	 * @param address the address of the label
+	 * @param name the name of the label
+	 * @param parent the parent namespace
+	 * @param source the source
+	 * @return the new label symbol
+	 * @throws InvalidInputException if the name is not valid
+	 */
 	default TraceLabelSymbol create(long snap, TraceThread thread, Address address, String name,
 			TraceNamespaceSymbol parent, SourceType source) throws InvalidInputException {
 		return add(Lifespan.nowOn(snap), thread, address, name, parent, source);

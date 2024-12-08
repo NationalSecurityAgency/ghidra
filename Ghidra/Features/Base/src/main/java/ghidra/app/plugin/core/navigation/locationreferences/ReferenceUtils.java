@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -181,9 +181,8 @@ public final class ReferenceUtils {
 	 * @throws CancelledException if the monitor is cancelled.
 	 * @deprecated use {@link #findDataTypeFieldReferences(Accumulator, FieldMatcher, Program,
 	 * boolean, TaskMonitor)}.
-	 * @Deprecated(since = "10.2")
 	 */
-	@Deprecated
+	@Deprecated(since = "10.2")
 	public static void findDataTypeReferences(Accumulator<LocationReference> accumulator,
 			DataType dataType, String fieldName, Program program, TaskMonitor monitor)
 			throws CancelledException {
@@ -322,7 +321,7 @@ public final class ReferenceUtils {
 			findDataTypeMatchesOutsideOfListing(asSet, program, dataType, fieldMatcher, monitor);
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	private static Accumulator<LocationReference> asSet(
@@ -1041,7 +1040,7 @@ public final class ReferenceUtils {
 		Listing listing = program.getListing();
 		DataIterator dataIter = listing.getDefinedData(true);
 		while (dataIter.hasNext() && !monitor.isCancelled()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data data = dataIter.next();
 			getMatchingDataTypesReferencesFromDataAndSubData(accumulator, data, fieldMatcher,
@@ -1098,6 +1097,9 @@ public final class ReferenceUtils {
 		Enum enumm = (Enum) dt;
 		List<String> names = getEnumNames(data, enumm);
 		for (String name : names) {
+			if (!enumm.contains(name)) {
+				continue;
+			}
 			long value = enumm.getValue(name);
 			if (matcher.matches(name, (int) value)) {
 				return true;
@@ -1153,7 +1155,7 @@ public final class ReferenceUtils {
 
 		int numComponents = data.getNumComponents();
 		for (int i = 0; i < numComponents; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data subData = data.getComponent(i);
 			getMatchingDataTypesReferencesFromDataAndSubData(accumulator, subData, fieldMatcher,
@@ -1210,7 +1212,7 @@ public final class ReferenceUtils {
 		//
 
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function function = iterator.next();
 			Address entryPoint = function.getEntryPoint();
@@ -1344,7 +1346,7 @@ public final class ReferenceUtils {
 		AddressIterator addresses = referenceManager.getReferenceDestinationIterator(offcut, true);
 		Address codeUnitAddress = cu.getAddress();
 		while (addresses.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = addresses.next();
 			if (addr.equals(codeUnitAddress)) {
@@ -1399,7 +1401,7 @@ public final class ReferenceUtils {
 		}
 
 		for (Address thunkAddr : thunkAddrs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Reference ref = new ThunkReference(thunkAddr, func.getEntryPoint());
 			consumer.accept(new LocationReference(ref, false));

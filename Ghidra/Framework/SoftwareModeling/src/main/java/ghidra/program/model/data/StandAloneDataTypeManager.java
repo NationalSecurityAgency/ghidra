@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,18 @@ package ghidra.program.model.data;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
 import com.google.common.collect.ImmutableList;
 
 import db.*;
+import db.buffers.BufferMgr;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
+import ghidra.framework.data.OpenMode;
+import ghidra.framework.model.RuntimeIOException;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.DBStringMapAdapter;
 import ghidra.program.database.ProgramAddressFactory;
@@ -50,20 +53,33 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	private static final String LANGUAGE_ID = "Language ID";
 	private static final String COMPILER_SPEC_ID = "Compiler Spec ID";
 
+	private static final int NUM_UNDOS = 50;
+
+	private LinkedList<String> undoList = new LinkedList<>();
+	private LinkedList<String> redoList = new LinkedList<>();
+
 	private int transactionCount;
 	private Long transaction;
 	private boolean commitTransaction;
+	private String transactionName;
+
+	private boolean isImmutable;
 
 	private LanguageTranslator languageUpgradeTranslator;
 	private String programArchitectureSummary; // summary of expected program architecture
 
 	protected String name;
-	
+
+	public static enum ArchiveWarningLevel {
+		INFO, WARN, ERROR;
+	}
+
 	public static enum ArchiveWarning {
+
 		/**
 		 * {@link #NONE} indicates a normal archive condition
 		 */
-		NONE,
+		NONE(ArchiveWarningLevel.INFO),
 
 		/**
 		 * {@link #UPGRADED_LANGUAGE_VERSION} indicates an archive which has been open for update
@@ -72,7 +88,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * which involves significant {@link Register} changes.  Sharing an upgraded archive 
 		 * may impact others who do not have access to the updated {@link Language} module.
 		 */
-		UPGRADED_LANGUAGE_VERSION,
+		UPGRADED_LANGUAGE_VERSION(ArchiveWarningLevel.INFO),
 
 		// programArchitectureSummary must be set for the warnings below
 
@@ -82,7 +98,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * a problem being loaded.  The {@link FileDataTypeManager#getWarningDetail()} may provide
 		 * additional insight to the underlying cause. 
 		 */
-		LANGUAGE_NOT_FOUND,
+		LANGUAGE_NOT_FOUND(ArchiveWarningLevel.ERROR),
 
 		/**
 		 * {@link #COMPILER_SPEC_NOT_FOUND} indicates the {@link CompilerSpec}, 
@@ -91,7 +107,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * additional insight to the underlying cause.  This condition can only occur if the
 		 * required {@link Language} was found. 
 		 */
-		COMPILER_SPEC_NOT_FOUND,
+		COMPILER_SPEC_NOT_FOUND(ArchiveWarningLevel.ERROR),
 
 		/**
 		 * {@link #LANGUAGE_UPGRADE_REQURED} indicates an archive which has been open read-only
@@ -103,7 +119,27 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * who do not have access to the updated {@link Language} module and should be 
 		 * coordinated with others who may be affected.
 		 */
-		LANGUAGE_UPGRADE_REQURED,
+		LANGUAGE_UPGRADE_REQURED(ArchiveWarningLevel.WARN),
+
+		/**
+		 * {@link #DATA_ORG_CHANGED} indicates an archive which has been open read-only
+		 * requires an upgraded to adjust for changes in the associated data organization.
+		 */
+		DATA_ORG_CHANGED(ArchiveWarningLevel.WARN);
+
+		final ArchiveWarningLevel level;
+
+		ArchiveWarning(ArchiveWarningLevel level) {
+			this.level = level;
+		}
+
+		/**
+		 * Get the warning level
+		 * @return warning level
+		 */
+		public ArchiveWarningLevel level() {
+			return level;
+		}
 	}
 
 	private ArchiveWarning warning;
@@ -113,10 +149,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 * Constructor for new temporary data-type manager using the default DataOrganization.
 	 * Note that this manager does not support the save or saveAs operation.
 	 * @param rootName Name of the root category.
+	 * @throws RuntimeIOException if database error occurs during creation
 	 */
-	public StandAloneDataTypeManager(String rootName) {
+	public StandAloneDataTypeManager(String rootName) throws RuntimeIOException {
 		super(DataOrganizationImpl.getDefaultOrganization());
 		this.name = rootName;
+		initTransactionState();
 	}
 
 	/**
@@ -124,52 +162,70 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 * Note that this manager does not support the save or saveAs operation.
 	 * @param rootName Name of the root category.
 	 * @param dataOrganzation applicable data organization
+	 * @throws RuntimeIOException if database error occurs during creation
 	 */
-	public StandAloneDataTypeManager(String rootName, DataOrganization dataOrganzation) {
+	public StandAloneDataTypeManager(String rootName, DataOrganization dataOrganzation)
+			throws RuntimeIOException {
 		super(dataOrganzation);
 		this.name = rootName;
+		initTransactionState();
 	}
 
 	/**
 	 * Constructor for a data-type manager backed by a packed database file.
 	 * When opening for UPDATE an automatic upgrade will be performed if required.
 	 * <p>
-	 * <B>NOTE:</B> {@link #reportWarning()} should be invoked immediately after 
+	 * <B>NOTE:</B> {@link #logWarning()} should be invoked immediately after 
 	 * instantiating a {@link StandAloneDataTypeManager} for an existing database after 
 	 * {@link #getName()} and {@link #getPath()} can be invoked safely.  In addition, it 
 	 * may be appropriate to use {@link #getWarning() check for warnings} prior to use.
 	 * 
 	 * @param packedDbfile packed datatype archive file (i.e., *.gdt resource).
-	 * @param openMode open mode CREATE, READ_ONLY or UPDATE (see {@link DBConstants})
+	 * @param openMode open mode CREATE, READ_ONLY or UPDATE
+	 * @param monitor the progress monitor
 	 * @throws IOException a low-level IO error.  This exception may also be thrown
 	 * when a version error occurs (cause is VersionException).
+	 * @throws CancelledException if task cancelled
 	 */
-	protected StandAloneDataTypeManager(ResourceFile packedDbfile, int openMode)
-			throws IOException {
-		super(packedDbfile, openMode);
+	protected StandAloneDataTypeManager(ResourceFile packedDbfile, OpenMode openMode,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		super(packedDbfile, openMode, monitor);
+		initTransactionState();
 	}
 
 	/**
 	 * Constructor for a data-type manager using a specified DBHandle.
-	 * <p>
-	 * <B>NOTE:</B> {@link #reportWarning()} should be invoked immediately after 
+	 * <br>
+	 * <B>NOTE:</B> {@link #logWarning()} should be invoked immediately after 
 	 * instantiating a {@link StandAloneDataTypeManager} for an existing database after 
 	 * {@link #getName()} and {@link #getPath()} can be invoked safely.  In addition, it 
 	 * may be appropriate to use {@link #getWarning() check for warnings} prior to use.
 	 * 
 	 * @param handle open database  handle
-	 * @param openMode the program open mode
+	 * @param openMode open mode CREATE, READ_ONLY or UPDATE
 	 * @param errHandler the database I/O error handler
 	 * @param lock the program synchronization lock
 	 * @param monitor the progress monitor
-	 * @throws CancelledException if the user cancels an upgrade
+	 * @throws CancelledException if task cancelled
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database I/O error occurs.
 	 */
-	protected StandAloneDataTypeManager(DBHandle handle, int openMode, ErrorHandler errHandler,
+	protected StandAloneDataTypeManager(DBHandle handle, OpenMode openMode, ErrorHandler errHandler,
 			Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
 		super(handle, null, openMode, null, errHandler, lock, monitor);
+		if (openMode != OpenMode.CREATE && hasDataOrganizationChange(true)) {
+			handleDataOrganizationChange(openMode, monitor);
+		}
+		initTransactionState();
+	}
+
+	/**
+	 * Set instance as immutable by disabling use of transactions.  Attempts to start a transaction
+	 * will result in a {@link TerminatedTransactionException}.
+	 */
+	protected void setImmutable() {
+		isImmutable = true;
 	}
 
 	/**
@@ -193,51 +249,87 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	/**
+	 * Get a suitable warning message.  See {@link #getWarning()} for type and its severity level
+	 * {@link ArchiveWarning#level()}.
+	 * @param includeDetails if false simple message returned, otherwise more details are included.
+	 * @return warning message or null if {@link #getWarning()} is {@link ArchiveWarning#NONE}.
+	 */
+	public String getWarningMessage(boolean includeDetails) {
+		String msg = null;
+		switch (warning) {
+			case LANGUAGE_NOT_FOUND:
+				msg = "Language not found for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + warningDetail.getMessage();
+				}
+				break;
+			case COMPILER_SPEC_NOT_FOUND:
+				msg = "Compiler specification not found for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + warningDetail.getMessage();
+				}
+				break;
+			case LANGUAGE_UPGRADE_REQURED:
+				msg = "Language upgrade required for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + programArchitectureSummary;
+				}
+				break;
+			case UPGRADED_LANGUAGE_VERSION:
+				msg = "Upgraded program-architecture for Archive";
+				if (includeDetails) {
+					ProgramArchitecture arch = getProgramArchitecture();
+					LanguageDescription languageDescription =
+						arch.getLanguage().getLanguageDescription();
+					msg += " '" + getName() + "'\n   Language: " +
+						languageDescription.getLanguageID() + " Version " +
+						languageDescription.getVersion() + ".x" + ", CompilerSpec: " +
+						arch.getCompilerSpec().getCompilerSpecID();
+				}
+				break;
+			case DATA_ORG_CHANGED:
+				msg = "Data organization upgrade required for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + programArchitectureSummary;
+				}
+				break;
+			default:
+				break;
+		}
+		return msg;
+	}
+
+	/**
 	 * Due to the supression of error and warning conditions during instantiation this method should
 	 * be invoked at the end of instatiation when {@link #getName()} and {@link #getPath()} are
 	 * ready to be invoked safely.  Logging will be performed via {@link Msg}.
 	 */
-	protected void reportWarning() {
-		String msg;
-		switch (warning) {
-			case NONE:
-				break;
-			case LANGUAGE_NOT_FOUND:
-				msg = "Language not found for Archive '" + getName() + "': " +
-					warningDetail.getMessage();
+	protected void logWarning() {
+		String msg = getWarningMessage(true);
+		if (msg == null) {
+			return;
+		}
+		switch (warning.level) {
+			case ERROR:
 				Msg.error(this, msg);
 				break;
-			case COMPILER_SPEC_NOT_FOUND:
-				msg = "Compiler specification not found for Archive '" + getName() + "': " +
-					warningDetail.getMessage();
-				Msg.error(this, msg);
-				break;
-			case LANGUAGE_UPGRADE_REQURED:
-				msg = "Language upgrade required for Archive '" + getName() + "': " +
-					programArchitectureSummary;
+			case WARN:
 				Msg.warn(this, msg);
 				break;
-			case UPGRADED_LANGUAGE_VERSION:
-				ProgramArchitecture arch = getProgramArchitecture();
-				LanguageDescription languageDescription =
-					arch.getLanguage().getLanguageDescription();
-				msg =
-					"Upgraded program-architecture for Archive: '" + getName() +
-						"'\n   Language: " +
-						languageDescription.getLanguageID() + " Version " +
-						languageDescription.getVersion() + ".x" +
-						", CompilerSpec: " + arch.getCompilerSpec().getCompilerSpecID();
+			default:
 				Msg.info(this, msg);
+				break;
 		}
 
 	}
 
 	@Override
-	protected void initializeOtherAdapters(int openMode, TaskMonitor monitor)
+	protected void initializeOtherAdapters(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 
 		warning = ArchiveWarning.NONE;
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
+			saveDataOrganization(); // save default dataOrg
 			return; // optional program architecture is set after initialization is complete
 		}
 
@@ -275,8 +367,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		LanguageVersionException languageVersionExc = null;
 		try {
 			language = DefaultLanguageService.getLanguageService().getLanguage(languageId);
-			languageVersionExc =
-				LanguageVersionException.check(language, languageVersion, -1); // don't care about minor version
+			languageVersionExc = LanguageVersionException.check(language, languageVersion, -1); // don't care about minor version
 		}
 		catch (LanguageNotFoundException e) {
 			warning = ArchiveWarning.LANGUAGE_NOT_FOUND;
@@ -302,12 +393,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			languageUpgradeTranslator = languageVersionExc.getLanguageTranslator();
 
 			// language upgrade required
-			if (openMode == DBConstants.READ_ONLY) {
+			if (openMode == OpenMode.IMMUTABLE) {
 				// read-only mode - do not set program architecture - upgrade flag has been set
 				return;
 			}
 
-			if (openMode == DBConstants.UPDATE) {
+			if (openMode == OpenMode.UPDATE) {
 				throw languageVersionExc;
 			}
 
@@ -346,7 +437,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		final Language lang = language;
 		final CompilerSpec cspec = compilerSpec;
-		final AddressFactory addrFactory = new ProgramAddressFactory(lang, cspec);
+		final AddressFactory addrFactory = new ProgramAddressFactory(lang, cspec, s -> null);
 
 		super.setProgramArchitecture(new ProgramArchitecture() {
 
@@ -369,7 +460,15 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		if (variableStorageMgr != null) {
 			variableStorageMgr.setProgramArchitecture(getProgramArchitecture());
 		}
+	}
 
+	@Override
+	protected void handleDataOrganizationChange(OpenMode openMode, TaskMonitor monitor)
+			throws LanguageVersionException, CancelledException, IOException {
+		if (openMode == OpenMode.IMMUTABLE) {
+			warning = ArchiveWarning.DATA_ORG_CHANGED;
+		}
+		super.handleDataOrganizationChange(openMode, monitor);
 	}
 
 	/**
@@ -427,8 +526,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		if (variableStorageMgr == null) { // TODO: may re-use if translation performed
 			try {
-				variableStorageMgr = new VariableStorageManagerDB(dbHandle, null,
-					DBConstants.CREATE, errHandler, lock, TaskMonitor.DUMMY);
+				variableStorageMgr = new VariableStorageManagerDB(dbHandle, null, OpenMode.CREATE,
+					errHandler, lock, TaskMonitor.DUMMY);
 				variableStorageMgr.setProgramArchitecture(programArchitecture);
 			}
 			catch (VersionException | CancelledException e) {
@@ -464,7 +563,6 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		return warning == ArchiveWarning.LANGUAGE_NOT_FOUND ||
 			warning == ArchiveWarning.COMPILER_SPEC_NOT_FOUND;
 	}
-
 
 	/**
 	 * Clear the program architecture setting and all architecture-specific data from this archive.
@@ -566,13 +664,13 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		lock.acquire();
 		try {
-			
+
 			if (!isArchitectureChangeAllowed()) {
 				throw new UnsupportedOperationException(
 					"Program-architecture change not permitted");
 			}
-			
-			if (!dbHandle.canUpdate()) {
+
+			if (readOnlyMode) {
 				throw new ReadOnlyException("Read-only Archive: " + getName());
 			}
 
@@ -582,18 +680,18 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 					", CompilerSpec: " + compilerSpecId);
 
 			CompilerSpec compilerSpec = language.getCompilerSpecByID(compilerSpecId);
-			
+
 			// This type of datatype manager only uses VariableStorageManagerDB
 			VariableStorageManagerDB variableStorageMgr =
 				(VariableStorageManagerDB) getVariableStorageManager();
-			
+
 			int txId = startTransaction("Set Program Architecture");
 			try {
 				ProgramArchitectureTranslator translator = null;
-				
+
 				ProgramArchitecture oldArch = getProgramArchitecture();
 				if (oldArch != null || isProgramArchitectureMissing()) {
-					
+
 					if (updateOption == LanguageUpdateOption.CLEAR) {
 						deleteAllProgramArchitectureData(monitor);
 						variableStorageMgr = null;
@@ -616,7 +714,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 						if (VariableStorageManagerDB.exists(dbHandle)) {
 							try {
 								variableStorageMgr = new VariableStorageManagerDB(dbHandle, null,
-									DBConstants.UPDATE, errHandler, lock, monitor);
+									OpenMode.UPDATE, errHandler, lock, monitor);
 							}
 							catch (VersionException e) {
 								throw new IOException(
@@ -629,12 +727,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 							oldArch.getCompilerSpec().getCompilerSpecID(), language,
 							compilerSpecId);
 					}
-					
+
 					if (translator != null && variableStorageMgr != null) {
 						variableStorageMgr.setLanguage(translator, monitor);
 					}
 				}
-				
+
 				ProgramArchitecture programArchitecture = new ProgramArchitecture() {
 
 					@Override
@@ -702,8 +800,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		if (getProgramArchitecture() != null || isProgramArchitectureUpgradeRequired() ||
 			isProgramArchitectureMissing()) {
-				throw new UnsupportedOperationException(
-					"Program-architecture change not permitted with this method");
+			throw new UnsupportedOperationException(
+				"Program-architecture change not permitted with this method");
 		}
 
 		if (store) {
@@ -736,7 +834,11 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		defaultListener.categoryRenamed(this, CategoryPath.ROOT, CategoryPath.ROOT);
 	}
-	
+
+	protected void initTransactionState() {
+		clearUndo();
+	}
+
 	@Override
 	public Transaction openTransaction(String description) throws IllegalStateException {
 		return new Transaction() {
@@ -758,12 +860,177 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 	@Override
 	public synchronized int startTransaction(String description) {
+		if (isImmutable) {
+			throw new TerminatedTransactionException("Transaction not permitted: read-only");
+		}
 		if (transaction == null) {
 			transaction = dbHandle.startTransaction();
+			transactionName = description;
 			commitTransaction = true;
 		}
 		transactionCount++;
 		return transaction.intValue();
+	}
+
+	/**
+	 * Get the number of active transactions
+	 * @return number of active transactions
+	 */
+	protected int getTransactionCount() {
+		return transactionCount;
+	}
+
+	@Override
+	public void endTransaction(int transactionID, boolean commit) {
+		boolean restored = false;
+		synchronized (this) {
+			if (transaction == null) {
+				throw new IllegalStateException("No Transaction Open");
+			}
+			if (transaction.intValue() != transactionID) {
+				throw new IllegalArgumentException(
+					"Transaction id does not match current transaction");
+			}
+			if (!commit) {
+				commitTransaction = false;
+			}
+			if (--transactionCount == 0) {
+				try {
+					if (dbHandle.endTransaction(transaction.longValue(), commitTransaction)) {
+						redoList.clear();
+						undoList.addLast(transactionName);
+						if (undoList.size() > NUM_UNDOS) {
+							undoList.removeFirst();
+						}
+					}
+					else if (!commitTransaction) {
+						restored = true;
+					}
+					transaction = null;
+				}
+				catch (IOException e) {
+					dbError(e);
+				}
+			}
+		}
+		if (restored) {
+			invalidateCache();
+			notifyRestored();
+		}
+	}
+
+	public void undo() {
+		synchronized (this) {
+			if (!canUndo()) {
+				return;
+			}
+			try {
+				dbHandle.undo();
+				redoList.addLast(undoList.removeLast());
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+		}
+		invalidateCache();
+		notifyRestored();
+	}
+
+	public void redo() {
+		synchronized (this) {
+			if (!canRedo()) {
+				return;
+			}
+			try {
+				dbHandle.redo();
+				undoList.addLast(redoList.removeLast());
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+		}
+		invalidateCache();
+		notifyRestored();
+	}
+
+	/**
+	 * Clear undo/redo stack.
+	 * <br>
+	 * NOTE: It is important that this always be invoked following any save operation that 
+	 * compacts the checkpoints within the database {@link BufferMgr}.
+	 */
+	protected synchronized void clearUndo() {
+		undoList.clear();
+		redoList.clear();
+
+		// Flatten all checkpoints then restore undo stack size
+		dbHandle.setMaxUndos(0);
+		dbHandle.setMaxUndos(NUM_UNDOS);
+	}
+
+	/**
+	 * Determine if there is a transaction previously undone (see {@link #undo()}) that can be 
+	 * redone (see {@link #redo()}).
+	 * 
+	 * @return true if there is a transaction previously undone that can be redone, else false
+	 */
+	public synchronized boolean canRedo() {
+		return transaction == null && !redoList.isEmpty();
+	}
+
+	/**
+	 * Determine if there is a previous transaction that can be reverted/undone (see {@link #undo()}).
+	 * 
+	 * @return true if there is a previous transaction that can be reverted/undone, else false.
+	 */
+	public synchronized boolean canUndo() {
+		return transaction == null && !undoList.isEmpty();
+	}
+
+	/**
+	 * Get the transaction name that is available for {@link #redo()} (see {@link #canRedo()}).
+	 * @return transaction name that is available for {@link #redo()} or empty String.
+	 */
+	public synchronized String getRedoName() {
+		if (canRedo()) {
+			return redoList.getLast();
+		}
+		return "";
+	}
+
+	/**
+	 * Get the transaction name that is available for {@link #undo()} (see {@link #canUndo()}).
+	 * @return transaction name that is available for {@link #undo()} or empty String.
+	 */
+	public synchronized String getUndoName() {
+		if (canUndo()) {
+			return undoList.getLast();
+		}
+		return "";
+	}
+
+	/**
+	 * Get all transaction names that are available within the {@link #undo()} stack.
+	 * 
+	 * @return all transaction names that are available within the {@link #undo()} stack.
+	 */
+	public synchronized List<String> getAllUndoNames() {
+		if (canUndo()) {
+			return new ArrayList<>(undoList);
+		}
+		return List.of();
+	}
+
+	/**
+	 * Get all transaction names that are available within the {@link #redo()} stack.
+	 * 
+	 * @return all transaction names that are available within the {@link #redo()} stack.
+	 */
+	public synchronized List<String> getAllRedoNames() {
+		if (canRedo()) {
+			return new ArrayList<>(redoList);
+		}
+		return List.of();
 	}
 
 	@Override
@@ -772,39 +1039,23 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	@Override
-	public synchronized void endTransaction(int transactionID, boolean commit) {
-		if (transaction == null) {
-			throw new IllegalStateException("No Transaction Open");
-		}
-		if (transaction.intValue() != transactionID) {
-			throw new IllegalArgumentException("Transaction id does not match current transaction");
-		}
-		if (!commit) {
-			commitTransaction = false;
-		}
-		if (--transactionCount == 0) {
-			try {
-				dbHandle.endTransaction(transaction.longValue(), commitTransaction);
-				transaction = null;
-			}
-			catch (IOException e) {
-				dbError(e);
-			}
-		}
-	}
-
-	@Override
-	protected void replaceDataTypeIDs(long oldID, long newID) {
+	protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap) {
 		// do nothing
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor) {
+	protected void deleteDataTypesUsed(Set<Long> deletedIds) {
 		// do nothing
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
+		if (dbHandle.isTransactionActive()) {
+			Msg.error(this, "DTM closed with active transaction",
+				new RuntimeException("DTM closed with active transaction"));
+		}
+		undoList.clear();
+		redoList.clear();
 		if (!dbHandle.isClosed()) {
 			dbHandle.close();
 		}
@@ -833,7 +1084,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 	@Override
 	public ArchiveType getType() {
-		return ArchiveType.TEST;
+		return ArchiveType.TEMPORARY;
 	}
 
 	/**
@@ -850,7 +1101,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		monitor.setMessage("Clear custom storage use...");
 
 //		for (FunctionDefinition def : ImmutableList.copyOf(getAllFunctionDefinitions())) {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 //			monitor.incrementProgress(1);
 //
 //			// TODO: update function definition

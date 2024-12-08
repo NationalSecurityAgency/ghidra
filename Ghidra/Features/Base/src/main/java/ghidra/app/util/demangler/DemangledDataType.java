@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,6 +47,7 @@ public class DemangledDataType extends DemangledType {
 
 	public static final String ARR_NOTATION = "[]";
 	public static final String REF_NOTATION = "&";
+	public static final String RIGHT_REF_NOTATION = "&&";
 	public static final String PTR_NOTATION = "*";
 
 	public static final String VOLATILE = "volatile";
@@ -66,12 +67,14 @@ public class DemangledDataType extends DemangledType {
 	public final static String WCHAR_T = "wchar_t";
 	public final static String WCHAR16 = "char16_t";
 	public final static String WCHAR32 = "char32_t";
+	public final static String CHAR8_T = "char8_t";
 	public final static String SHORT = "short";
 	public final static String INT = "int";
 	public final static String INT0_T = "int0_t";
 	public final static String LONG = "long";
 	public final static String LONG_LONG = "long long";
 	public final static String FLOAT = "float";
+	public final static String FLOAT2 = "float2";
 	public final static String DOUBLE = "double";
 	public final static String INT8 = "__int8";
 	public final static String INT16 = "__int16";
@@ -92,15 +95,18 @@ public class DemangledDataType extends DemangledType {
 	private static final String UNSIGNED_LONG = "unsigned long";
 
 	public final static String[] PRIMITIVES =
-		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, SHORT, INT, INT0_T, LONG,
-			LONG_LONG, FLOAT, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
+		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, CHAR8_T, SHORT, INT, INT0_T, LONG,
+			LONG_LONG, FLOAT, FLOAT2, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
 
 	private int arrayDimensions = 0;
 	private boolean isClass;
 	private boolean isComplex;
 	private boolean isEnum;
 	private boolean isPointer64;
-	private boolean isReference;
+	// Cannot be both lref and rref.  Prior to C++11, we only had reference (& operator).
+	// This is now distinguished as left-value reference (l-value reference or lref), and there
+	// is now an additional right-value reference (r-value reference or rref) with the && operator.
+	private boolean isLValueReference;
 	private boolean isRValueReference;
 	private boolean isSigned;
 	private boolean isStruct;
@@ -208,13 +214,20 @@ public class DemangledDataType extends DemangledType {
 		}
 
 		int numPointers = getPointerLevels();
-		if (isReference()) {
-			numPointers++;
-		}
 
 		for (int i = 0; i < numPointers; ++i) {
 			dt = PointerDataType.getPointer(dt, dataTypeManager);
 		}
+
+		if (isLValueReference()) {
+			// Placeholder in prep for more lref work
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+		else if (isRValueReference()) {
+			// Placeholder in prep for more rref work
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+
 		return dt;
 	}
 
@@ -243,6 +256,9 @@ public class DemangledDataType extends DemangledType {
 		}
 		else if (WCHAR32.equals(name)) {
 			dt = WideChar32DataType.dataType;
+		}
+		else if (CHAR8_T.equals(name)) {
+			dt = UnsignedCharDataType.dataType;
 		}
 		else if (SHORT.equals(name)) {
 			if (isUnsigned()) {
@@ -281,6 +297,9 @@ public class DemangledDataType extends DemangledType {
 		}
 		else if (FLOAT.equals(name)) {
 			dt = FloatDataType.dataType;
+		}
+		else if (FLOAT2.equals(name)) {
+			dt = Float2DataType.dataType;
 		}
 		else if (FLOAT128.equals(name)) {
 			dt = new TypedefDataType(FLOAT128, Float16DataType.dataType);
@@ -463,7 +482,13 @@ public class DemangledDataType extends DemangledType {
 	}
 
 	public void setReference() {
-		isReference = true;
+		setLValueReference();
+	}
+
+	public void setLValueReference() {
+		isLValueReference = true;
+		// Cannot be both
+		isRValueReference = false;
 	}
 
 	/**
@@ -471,6 +496,8 @@ public class DemangledDataType extends DemangledType {
 	 */
 	public void setRValueReference() {
 		isRValueReference = true;
+		// Cannot be both
+		isLValueReference = false;
 	}
 
 	public void setSigned() {
@@ -550,7 +577,15 @@ public class DemangledDataType extends DemangledType {
 	}
 
 	public boolean isReference() {
-		return isReference;
+		return isLValueReference() || isRValueReference();
+	}
+
+	public boolean isLValueReference() {
+		return isLValueReference;
+	}
+
+	public boolean isRValueReference() {
+		return isRValueReference;
 	}
 
 	public boolean isSigned() {
@@ -697,11 +732,11 @@ public class DemangledDataType extends DemangledType {
 			buffer.append(SPACE + PTR_NOTATION);
 		}
 
-		if (isReference) {
+		if (isLValueReference) {
 			buffer.append(SPACE + REF_NOTATION);
-			if (isRValueReference) {
-				buffer.append(REF_NOTATION); // &&
-			}
+		}
+		else if (isRValueReference) {
+			buffer.append(SPACE + RIGHT_REF_NOTATION);
 		}
 
 		// the order of __ptr64 and __restrict can vary--with fuzzing...

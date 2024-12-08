@@ -30,6 +30,7 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
@@ -112,11 +113,15 @@ class EnumDB extends DataTypeDB implements Enum {
 		long minValue = valueMap.firstKey();
 		long maxValue = valueMap.lastKey();
 
+		if (maxValue > getMaxPossibleValue(length, true)) {
+			if (minValue < 0) {
+				return INVALID;
+			}
+			return UNSIGNED;
+		}
+
 		if (minValue < 0) {
 			return SIGNED;
-		}
-		if (maxValue > getMaxPossibleValue(length, true)) {
-			return UNSIGNED;
 		}
 
 		return NONE;		// we have no negatives and no large unsigned values
@@ -454,6 +459,11 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
 		lock.acquire();
 		try {
@@ -592,7 +602,7 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dt) {
+	protected boolean isEquivalent(DataType dt, DataTypeConflictHandler handler) {
 		if (dt == this) {
 			return true;
 		}
@@ -601,15 +611,26 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 
 		Enum enumm = (Enum) dt;
-		if (!DataTypeUtilities.equalsIgnoreConflict(getName(), enumm.getName()) ||
-			getLength() != enumm.getLength() || getCount() != enumm.getCount()) {
+		if (!DataTypeUtilities.equalsIgnoreConflict(getName(), enumm.getName())) {
 			return false;
 		}
 
-		if (!isEachValueEquivalent(enumm)) {
+		if (handler != null &&
+			ConflictResult.USE_EXISTING == handler.resolveConflict(enumm, this)) {
+			// treat this type as equivalent if existing type will be used
+			return true;
+		}
+
+		if (getLength() != enumm.getLength() || getCount() != enumm.getCount()) {
 			return false;
 		}
-		return true;
+
+		return isEachValueEquivalent(enumm);
+	}
+
+	@Override
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
 	}
 
 	private boolean isEachValueEquivalent(Enum enumm) {
@@ -870,9 +891,24 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
+	public EnumSignedState getSignedState() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			return signedState;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
 	public int getMinimumPossibleLength() {
 		lock.acquire();
 		try {
+			checkIsValid();
+			initializeIfNeeded();
 			if (valueMap.isEmpty()) {
 				return 1;
 			}

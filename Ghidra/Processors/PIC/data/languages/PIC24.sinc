@@ -91,7 +91,7 @@ define ram offset=0x34 size=1 [ PSVPAG ];  # Program Memory Visibility Page Addr
 define ram offset=0x36 size=2 [ RCOUNT ];  # Repeat counter
 define ram offset=0x38 size=2 [ DCOUNT ];  # 13 bits long                    DO Loop counter
 define ram offset=0x3A size=3 [ DOSTART ];
-define ram offset=0x3C size=3 [ DOEND ];
+define ram offset=0x3E size=3 [ DOEND ];
 @endif  
 
 define ram offset=0x44 size=2 [ CORCON ];  # Core Control Register
@@ -2051,7 +2051,7 @@ cond1: "gt" is  TOK_CCCC=0xC
                 { tmpBool:1 = ((!SRL_Z && SRL_N && SRL_OV) || (!SRL_Z && !SRL_N && !SRL_OV)); export tmpBool; }
 cond1: "gtu" is  TOK_CCCC=0xE { tmpBool:1 = SRL_C && !SRL_Z; export tmpBool; }
 cond1: "le" is  TOK_CCCC=0x4
-                { tmpBool:1 = (SRL_Z || (SRL_N && !SRL_OV) || (!SRL_N && SRL_OV)); export tmpBool; }
+                { tmpBool:1 = (SRL_Z || (SRL_N != SRL_OV)); export tmpBool; }
 cond1: "leu" is  TOK_CCCC=0x6 { tmpBool:1 = (!SRL_C || SRL_Z); export tmpBool; }
 cond1: "lt" is  TOK_CCCC=0x5 { tmpBool:1 = ((SRL_N && !SRL_OV) || (!SRL_N && SRL_OV)); export tmpBool; }
 cond1: "n" is  TOK_CCCC=0x3 { tmpBool:1 = (SRL_N); export tmpBool; }

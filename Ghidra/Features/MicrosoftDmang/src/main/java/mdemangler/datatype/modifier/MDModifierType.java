@@ -15,8 +15,6 @@
  */
 package mdemangler.datatype.modifier;
 
-import java.util.Objects;
-
 import mdemangler.*;
 import mdemangler.datatype.*;
 import mdemangler.datatype.extended.MDArrayReferencedType;
@@ -28,7 +26,7 @@ import mdemangler.functiontype.MDFunctionType;
  *  of the other types.
  */
 // TODO: 20160126: Maybe is should extend MDType which extends MDDT.
-public class MDModifierType extends MDDataType {
+public abstract class MDModifierType extends MDDataType {
 	public static final char SPACE = ' ';
 	private static final String CONST = "const";
 	private static final String VOLATILE = "volatile";
@@ -41,10 +39,6 @@ public class MDModifierType extends MDDataType {
 
 	protected Boolean hasCVMod = true; // 20160329
 	protected MDType refType;
-
-	// Other special types
-	// private boolean isArray;
-	protected String arrayString = "";
 
 	// private String modifierTypeName = "";
 
@@ -110,13 +104,8 @@ public class MDModifierType extends MDDataType {
 	// }
 
 	// @Override
-	public void setConst() {
-		isConst = true;
-	}
-
-	// @Override
-	public void clearConst() {
-		isConst = false;
+	public void setConst(boolean isConst) {
+		this.isConst = isConst;
 	}
 
 	// @Override
@@ -125,13 +114,8 @@ public class MDModifierType extends MDDataType {
 	}
 
 	// @Override
-	public void setVolatile() {
-		isVolatile = true;
-	}
-
-	// @Override
-	public void clearVolatile() {
-		isVolatile = false;
+	public void setVolatile(boolean isVolatile) {
+		this.isVolatile = isVolatile;
 	}
 
 	// @Override
@@ -160,7 +144,7 @@ public class MDModifierType extends MDDataType {
 	}
 
 	protected MDDataType parseReferencedType() throws MDException {
-		return MDDataTypeParser.parsePrimaryDataType(dmang, false);
+		return MDDataTypeParser.parseBasicDataType(dmang, false);
 	}
 
 	@Override
@@ -177,9 +161,9 @@ public class MDModifierType extends MDDataType {
 			refType.parse();
 			// 20160819 if (managedProperty == null ) {
 			// if (cvMod.isPointerType() || cvMod.isReferenceType()) {
-			// //20160819: might need to add more (carrot, percent)
+			// //20160819: might need to add more (caret, percent)
 			// if (cvMod.isFunctionPointerType() || cvMod.isReferenceType()) {
-			// //20160819: might need to add more (carrot, percent)
+			// //20160819: might need to add more (caret, percent)
 			// ((MDFunctionType) refType).setFromModifier();
 			// }
 			// 20160819 if (cvMod.isFunctionPointer()) {
@@ -214,54 +198,10 @@ public class MDModifierType extends MDDataType {
 		// 20170418 dmang.popContext();
 	}
 
-	protected void parseArrayProperty() throws MDException {
-		if (dmang.peek() == 'Y') {
-			dmang.parseInfoPush(0, "Array Property");
-			dmang.increment();
-			MDEncodedNumber n1 = new MDEncodedNumber(dmang);
-			n1.parse();
-			int num = n1.getValue().intValue();
-			String arrString = "";
-			while (num-- > 0) {
-				MDEncodedNumber n2 = new MDEncodedNumber(dmang);
-				n2.parse();
-				arrString = arrString + '[' + n2 + ']';
-			}
-			setArrayString(arrString);
-			dmang.parseInfoPop();
-		}
-	}
-
-	/**
-	 * This method will possibly be removed from this class when we
-	 *  determine how to only use it in MDArrayReference.  It is used
-	 *  to set the arrayString.
-	 *  @param arrayString -- null not permitted.
-	 */
-	public void setArrayString(String arrayString) {
-		this.arrayString = Objects.requireNonNull(arrayString);
-	}
-
-	public String getArrayString() {
-		return arrayString;
-	}
-
 	protected void insertCVMod(StringBuilder builder) {
 		cvMod.insert(builder);
 		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(builder); // 20170714
-	}
-
-	public void insertArrayString(StringBuilder builder) {
-		// This is from 'Y' optional prefix
-		// TODO: check if this should also apply to managed properties.
-		if (!arrayString.isEmpty()) {
-			if (!dmang.isEffectivelyEmpty(builder)) {
-				dmang.insertString(builder, "(");
-				dmang.appendString(builder, ")");
-			}
-			dmang.appendString(builder, getArrayString());
-		}
 	}
 
 	protected void insertReferredType(StringBuilder builder) {
@@ -383,6 +323,3 @@ public class MDModifierType extends MDDataType {
 		}
 	}
 }
-
-/******************************************************************************/
-/******************************************************************************/

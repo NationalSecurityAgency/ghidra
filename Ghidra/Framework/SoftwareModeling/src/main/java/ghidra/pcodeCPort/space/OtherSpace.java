@@ -15,9 +15,13 @@
  */
 package ghidra.pcodeCPort.space;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 import java.io.PrintStream;
 
 import ghidra.pcodeCPort.translate.Translate;
+import ghidra.program.model.pcode.Encoder;
 
 public class OtherSpace extends AddrSpace {
 
@@ -41,9 +45,9 @@ public class OtherSpace extends AddrSpace {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.print("<space_other");
-		save_basic_attributes(s);
-		s.println("/>");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SPACE_OTHER);
+		encode_basic_attributes(encoder);
+		encoder.closeElement(ELEM_SPACE_OTHER);
 	}
 }

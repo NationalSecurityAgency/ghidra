@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import ghidra.util.exception.AssertException;
  *
  * <p>
  * 2) Adds the auto-completion feature. As a user types in the field, the combo box suggest the
- * nearest matching entry in the combo box model.
+ * nearest matching entry in the combo box model. This is enabled by default.
  *
  * <p>
  * It also fixes the following bug:
@@ -70,6 +70,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	private PassThroughActionListener passThroughActionListener;
 	private PassThroughKeyListener passThroughKeyListener;
 	private PassThroughDocumentListener passThroughDocumentListener;
+	private DocumentListener documentListener;
 
 	/**
 	 * Default constructor.
@@ -109,8 +110,8 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	public void setUI(ComboBoxUI ui) {
 		super.setUI(ui);
 		// this gets called during construction and during theming changes.  It always
-		// creates a new editor and any listeners or documents set on the current editor are 
-		// lost.  So to combat this, we install the pass through listeners here instead of 
+		// creates a new editor and any listeners or documents set on the current editor are
+		// lost.  So to combat this, we install the pass through listeners here instead of
 		// in the init() method. We also reset the document if the client ever called the
 		// setDocument() method
 
@@ -337,8 +338,28 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 
 	@Override
 	public void requestFocus() {
-		JTextField textField = getTextField();
-		textField.requestFocus();
+		if (isEditable) {
+			JTextField textField = getTextField();
+			textField.requestFocus();
+		}
+		else {
+			super.requestFocus();
+		}
+
+	}
+
+	/**
+	 * This enables or disables auto completion. When on, the combobox will attempt to auto-fill
+	 * the input text box with drop-down items that start with the text entered. This behavior
+	 * may not be desirable when the drop-down list is more than just a list of previously typed
+	 * strings. Auto completion is on by default.
+	 * @param enable if true, auto completion is on, otherwise it is off.
+	 */
+	public void setAutoCompleteEnabled(boolean enable) {
+		removeDocumentListener(documentListener);
+		if (enable) {
+			addDocumentListener(documentListener);
+		}
 	}
 
 	private String matchHistory(String input) {
@@ -392,15 +413,15 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		if (getRenderer() instanceof JComponent) {
 			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
 		}
-		// add our internal listener to with all the others that the pass through listener will call
-		addDocumentListener(new MatchingItemsDocumentListener());
+		documentListener = new MatchingItemsDocumentListener();
+		addDocumentListener(documentListener);
 
 	}
 
 	private void installPassThroughListeners() {
 		JTextField textField = getTextField();
 
-		// this gets called during construction before our fields are initialized, so need to 
+		// this gets called during construction before our fields are initialized, so need to
 		// create them here
 		if (passThroughActionListener == null) {
 			passThroughActionListener = new PassThroughActionListener();
@@ -417,7 +438,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		textField.getDocument().addDocumentListener(passThroughDocumentListener);
 	}
 
-	private JTextField getTextField() {
+	public JTextField getTextField() {
 		Object object = getEditor().getEditorComponent();
 		if (object instanceof JTextField textField) {
 			return textField;
@@ -426,7 +447,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Listener on the editor's JTextField that then calls any registered action 
+	 * Listener on the editor's JTextField that then calls any registered action
 	 * listener on this combobox
 	 */
 	private class PassThroughActionListener implements ActionListener {
@@ -440,7 +461,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Listener on the editor's JTextField that then calls any registered editor key 
+	 * Listener on the editor's JTextField that then calls any registered editor key
 	 * listener on this combobox
 	 */
 	private class PassThroughKeyListener implements KeyListener {
@@ -468,7 +489,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Listener on the editor's JTextField's document that then calls any registered document 
+	 * Listener on the editor's JTextField's document that then calls any registered document
 	 * listener on this combobox
 	 */
 	private class PassThroughDocumentListener implements DocumentListener {

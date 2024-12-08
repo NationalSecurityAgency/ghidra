@@ -1,9 +1,10 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/PDB_SYMBOL_SERVER_URLS.pdburl||GHIDRA||||END|
-src/global/docs/ChangeHistory.html||GHIDRA||||END|
+src/global/docs/ChangeHistory.md||GHIDRA||||END|
 src/global/docs/UserAgreement.html||GHIDRA||||END|
-src/global/docs/WhatsNew.html||GHIDRA||||END|
+src/global/docs/WhatsNew.md||GHIDRA||||END|
 src/main/resources/UserAgreement.html||GHIDRA||||END|
 src/main/resources/defaultTools/CodeBrowser.tool||GHIDRA||||END|
 src/main/resources/splash.txt||GHIDRA||||END|

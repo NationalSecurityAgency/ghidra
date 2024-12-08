@@ -15,6 +15,7 @@
  */
 package ghidra.trace.database.target.visitors;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import ghidra.trace.model.Lifespan;
@@ -180,6 +181,7 @@ public enum TreeTraversal {
 	 */
 	public Stream<? extends TraceObjectValPath> walkValue(Visitor visitor,
 			TraceObjectValue value, Lifespan span, TraceObjectValPath path) {
+		Objects.requireNonNull(value);
 		Lifespan compSpan = visitor.composeSpan(span, value);
 		if (compSpan == null) {
 			return Stream.empty();

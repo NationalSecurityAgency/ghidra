@@ -108,49 +108,52 @@ public abstract class LocationDescriptor {
 
 		for (int i = 0; i < changeEvent.numRecords(); i++) {
 			DomainObjectChangeRecord domainObjectRecord = changeEvent.getChangeRecord(i);
-			int eventType = domainObjectRecord.getEventType();
-
-			switch (eventType) {
-				case ChangeManager.DOCR_MEMORY_BLOCK_MOVED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_REMOVED:
-					if (program.getMemory().contains(getHomeAddress())) {
+			EventType eventType = domainObjectRecord.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				checkForAddressChange(domainObjectRecord);
+				return true;
+			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case MEMORY_BLOCK_MOVED:
+					case MEMORY_BLOCK_REMOVED:
+						if (program.getMemory().contains(getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					case SYMBOL_ADDED:
+					case SYMBOL_RENAMED:
+					case SYMBOL_REMOVED:
 						checkForAddressChange(domainObjectRecord);
 						return true;
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-					checkForAddressChange(domainObjectRecord);
-					return true;
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-					ProgramChangeRecord changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					Reference ref = (Reference) changeRecord.getNewValue();
-					if (refersToAddress(ref, getHomeAddress())) {
-						checkForAddressChange(domainObjectRecord);
-						return true;
-					}
-					break;
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-					changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					ref = (Reference) changeRecord.getOldValue();
-					if (refersToAddress(ref, getHomeAddress())) {
-						checkForAddressChange(domainObjectRecord);
-						return true;
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_ASSOCIATION_ADDED:
-				case ChangeManager.DOCR_SYMBOL_ASSOCIATION_REMOVED:
-					changeRecord = (ProgramChangeRecord) domainObjectRecord;
-					ref = (Reference) changeRecord.getObject();
-					if (refersToAddress(ref, getHomeAddress())) {
-						checkForAddressChange(domainObjectRecord);
-						return true;
-					}
-					break;
-				case DomainObject.DO_OBJECT_RESTORED:
-					checkForAddressChange(domainObjectRecord);
-					return true;
+					case REFERENCE_ADDED:
+						ProgramChangeRecord changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						Reference ref = (Reference) changeRecord.getNewValue();
+						if (refersToAddress(ref, getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					case REFERENCE_REMOVED:
+						changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						ref = (Reference) changeRecord.getOldValue();
+						if (refersToAddress(ref, getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					case SYMBOL_ASSOCIATION_ADDED:
+					case SYMBOL_ASSOCIATION_REMOVED:
+						changeRecord = (ProgramChangeRecord) domainObjectRecord;
+						ref = (Reference) changeRecord.getObject();
+						if (refersToAddress(ref, getHomeAddress())) {
+							checkForAddressChange(domainObjectRecord);
+							return true;
+						}
+						break;
+					default:
+				}
 			}
 		}
 
@@ -173,8 +176,7 @@ public abstract class LocationDescriptor {
 			return removed;
 		}
 
-		int eventType = changeRecord.getEventType();
-		if (eventType == DomainObject.DO_OBJECT_RESTORED) {
+		if (changeRecord.getEventType() == DomainObjectEvent.RESTORED) {
 			// we cannot tell which addresses were effected, so the data *may* be stale
 			if (modelFreshnessListener != null) {
 				modelFreshnessListener.stateChanged(new ChangeEvent(this));

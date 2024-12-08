@@ -46,50 +46,28 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref;
-					ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
-					refMgr.delete(ref);
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
-					refMgr.delete(ref);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref;
+				ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
+				refMgr.delete(ref);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
+				refMgr.delete(ref);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref;
-					ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
-					refMgr.delete(ref);
-					ref = refMgr.getReference(addr(program, "0x1001aec"),
-						addr(program, "0x1001398"), 1);
-					refMgr.delete(ref);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref;
+				ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
+				refMgr.delete(ref);
+				ref = refMgr.getReference(addr(program, "0x1001aec"),
+					addr(program, "0x1001398"), 1);
+				refMgr.delete(ref);
 			}
 		});
 
@@ -116,54 +94,30 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 			// 01001a92: op0 to 01001370 DAT_01001370 DATA primary user
 			// 01001abb: op0 to 01001ac1 LAB_01001ac1 CONDITIONAL_JUMP primary
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
-					refMgr.delete(ref);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
+				refMgr.delete(ref);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
-					refMgr.delete(ref);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
+				refMgr.delete(ref);
 			}
 		});
 
@@ -190,54 +144,30 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 			// 01001a92: op0 to 01001370 DAT_01001370 DATA primary user
 			// 01001abb: op0 to 01001ac1 LAB_01001ac1 CONDITIONAL_JUMP primary
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
-					refMgr.delete(ref);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
+				refMgr.delete(ref);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
-					refMgr.delete(ref);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
+				refMgr.delete(ref);
 			}
 		});
 
@@ -264,60 +194,36 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 			// 01001a92: op0 to 01001370 DAT_01001370 DATA primary user
 			// 01001abb: op0 to 01001ac1 LAB_01001ac1 CONDITIONAL_JUMP primary
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.READ_WRITE);
-					assertEquals(RefType.READ_WRITE, ref.getReferenceType());
+				ref = refMgr.updateRefType(ref, RefType.READ_WRITE);
+				assertEquals(RefType.READ_WRITE, ref.getReferenceType());
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.WRITE);
-					assertEquals(RefType.WRITE, ref.getReferenceType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ref = refMgr.updateRefType(ref, RefType.WRITE);
+				assertEquals(RefType.WRITE, ref.getReferenceType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.WRITE);
-					assertEquals(RefType.WRITE, ref.getReferenceType());
+				ref = refMgr.updateRefType(ref, RefType.WRITE);
+				assertEquals(RefType.WRITE, ref.getReferenceType());
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.READ_WRITE);
-					assertEquals(RefType.READ_WRITE, ref.getReferenceType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ref = refMgr.updateRefType(ref, RefType.READ_WRITE);
+				assertEquals(RefType.READ_WRITE, ref.getReferenceType());
 			}
 		});
 
@@ -346,56 +252,32 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 			// 01001a92: op0 to 01001370 DAT_01001370 DATA primary user
 			// 01001abb: op0 to 01001ac1 LAB_01001ac1 CONDITIONAL_JUMP primary
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.READ_WRITE);
+				refMgr.updateRefType(ref, RefType.READ_WRITE);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.WRITE);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.updateRefType(ref, RefType.WRITE);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.WRITE);
+				refMgr.updateRefType(ref, RefType.WRITE);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.READ_WRITE);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.updateRefType(ref, RefType.READ_WRITE);
 			}
 		});
 
@@ -422,44 +304,20 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
 			}
 		});
 
@@ -481,46 +339,22 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.setPrimary(ref, false);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.setPrimary(ref, false);
 			}
 		});
 
@@ -552,53 +386,29 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref;
-					ref = refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.WRITE, SourceType.USER_DEFINED, -1);
-					ref = refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.setPrimary(ref, false);
-					ref = refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.READ, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref;
+				ref = refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.WRITE, SourceType.USER_DEFINED, -1);
+				ref = refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.setPrimary(ref, false);
+				ref = refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.READ, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -633,53 +443,29 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref;
-					ref = refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.WRITE, SourceType.USER_DEFINED, -1);
-					ref = refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.setPrimary(ref, false);
-					ref = refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.READ, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref;
+				ref = refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.WRITE, SourceType.USER_DEFINED, -1);
+				ref = refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.setPrimary(ref, false);
+				ref = refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.READ, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -715,52 +501,28 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002edd"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f6d"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x000000ff"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002edd"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f6d"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x000000ff"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -793,52 +555,28 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002ee2"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f49"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x00000064"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x1002eaf"),
-						addr(program, "0x1002edd"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, -1);
-					refMgr.addMemoryReference(addr(program, "0x1002f3e"),
-						addr(program, "0x1002f6d"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x1002f73"),
-						addr(program, "0x000000ff"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x1002eaf"),
+					addr(program, "0x1002edd"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, -1);
+				refMgr.addMemoryReference(addr(program, "0x1002f3e"),
+					addr(program, "0x1002f6d"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x1002f73"),
+					addr(program, "0x000000ff"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -870,58 +608,34 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 			// 01001a92: op0 to 01001370 DAT_01001370 DATA primary user
 			// 01001abb: op0 to 01001ac1 LAB_01001ac1 CONDITIONAL_JUMP primary
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
-					refMgr.delete(ref);
-					ref = refMgr.addMemoryReference(addr(program, "0x1001a92"),
-						addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
+				refMgr.delete(ref);
+				ref = refMgr.addMemoryReference(addr(program, "0x1001a92"),
+					addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
-					refMgr.delete(ref);
-					ref = refMgr.addMemoryReference(addr(program, "0x1001abb"),
-						addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
+				refMgr.delete(ref);
+				ref = refMgr.addMemoryReference(addr(program, "0x1001abb"),
+					addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -949,58 +663,34 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 			// 01001a92: op0 to 01001370 DAT_01001370 DATA primary user
 			// 01001abb: op0 to 01001ac1 LAB_01001ac1 CONDITIONAL_JUMP primary
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
-					refMgr.delete(ref);
-					ref = refMgr.addMemoryReference(addr(program, "0x1001a92"),
-						addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
+				refMgr.delete(ref);
+				ref = refMgr.addMemoryReference(addr(program, "0x1001a92"),
+					addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
-						addr(program, "0x1001370"), 0);
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x1001a92"),
+					addr(program, "0x1001370"), 0);
 //					refMgr.setPrimary(ref, false);
-					refMgr.updateRefType(ref, RefType.DATA_IND);
+				refMgr.updateRefType(ref, RefType.DATA_IND);
 
-					ref = refMgr.getReference(addr(program, "0x1001abb"),
-						addr(program, "0x1001ac1"), 0);
-					refMgr.delete(ref);
-					ref = refMgr.addMemoryReference(addr(program, "0x1001abb"),
-						addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ref = refMgr.getReference(addr(program, "0x1001abb"),
+					addr(program, "0x1001ac1"), 0);
+				refMgr.delete(ref);
+				ref = refMgr.addMemoryReference(addr(program, "0x1001abb"),
+					addr(program, "0x1002edd"), RefType.DATA, SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -1024,70 +714,35 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testMemRefChangeFallthroughPickLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x01002f49"),
-						addr(program, "0x01002f55"), RefType.READ_WRITE, SourceType.USER_DEFINED,
-						-1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+
 				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x01002f49"),
+					addr(program, "0x01002f55"), RefType.READ_WRITE, SourceType.USER_DEFINED, -1);
+					
 				assertNotNull(refMgr.getReference(addr(program, "0x01002f49"),
 					addr(program, "0x01002f55"), -1));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
-						addr(program, "0x01002f55"), -1);
-//					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.FALL_THROUGH);
-					assertEquals(RefType.FALL_THROUGH, ref.getReferenceType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
+					addr(program, "0x01002f55"), -1);
+//				refMgr.setPrimary(ref, false);
+				ref = refMgr.updateRefType(ref, RefType.FALL_THROUGH);
+				assertEquals(RefType.FALL_THROUGH, ref.getReferenceType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
-						addr(program, "0x01002f55"), -1);
-//					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.WRITE);
-					assertEquals(RefType.WRITE, ref.getReferenceType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
+					addr(program, "0x01002f55"), -1);
+//				refMgr.setPrimary(ref, false);
+				ref = refMgr.updateRefType(ref, RefType.WRITE);
+				assertEquals(RefType.WRITE, ref.getReferenceType());
 			}
 		});
 
@@ -1106,70 +761,35 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testMemRefChangeFallthroughPickMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x01002f49"),
-						addr(program, "0x01002f55"), RefType.READ_WRITE, SourceType.USER_DEFINED,
-						-1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x01002f49"),
+					addr(program, "0x01002f55"), RefType.READ_WRITE, SourceType.USER_DEFINED,
+					-1);
+				
 				assertNotNull(refMgr.getReference(addr(program, "0x01002f49"),
 					addr(program, "0x01002f55"), -1));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
-						addr(program, "0x01002f55"), -1);
-//					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.FALL_THROUGH);
-					assertEquals(RefType.FALL_THROUGH, ref.getReferenceType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
+					addr(program, "0x01002f55"), -1);
+//				refMgr.setPrimary(ref, false);
+				ref = refMgr.updateRefType(ref, RefType.FALL_THROUGH);
+				assertEquals(RefType.FALL_THROUGH, ref.getReferenceType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
-						addr(program, "0x01002f55"), -1);
-//					refMgr.setPrimary(ref, false);
-					ref = refMgr.updateRefType(ref, RefType.WRITE);
-					assertEquals(RefType.WRITE, ref.getReferenceType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference ref = refMgr.getReference(addr(program, "0x01002f49"),
+					addr(program, "0x01002f55"), -1);
+//				refMgr.setPrimary(ref, false);
+				ref = refMgr.updateRefType(ref, RefType.WRITE);
+				assertEquals(RefType.WRITE, ref.getReferenceType());
 			}
 		});
 
@@ -1188,69 +808,34 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testFallthroughConflictKeepChangedLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
-				try {
-					// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006436"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006436"));
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				assertNotNull(refMgr.getReference(addr(program, "0x01006421"),
 					addr(program, "0x01006436"), -1));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// Change override fallthrough by setting from 0x01006421 to 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006442"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change override fallthrough by setting from 0x01006421 to 0x01006421
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006442"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-//					// Remove default fallthrough for 0x01006421
-//					Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-//					inst.setFallThrough(null);
-//					commit = true;
+				// Remove default fallthrough for 0x01006421
+				Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
 
-					// Restore fallthrough by setting for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Restore fallthrough by setting for 0x01006421
+				inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
 			}
 		});
 
@@ -1270,69 +855,34 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testFallthroughConflictKeepRestoredDefaultMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
-				try {
-					// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006436"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006436"));
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				assertNotNull(refMgr.getReference(addr(program, "0x01006421"),
 					addr(program, "0x01006436"), -1));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// Change override fallthrough by setting from 0x01006421 to 0x01006442
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006442"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change override fallthrough by setting from 0x01006421 to 0x01006442
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006442"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-//					// Remove default fallthrough for 0x01006421
-//					Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-//					inst.setFallThrough(null);
-//					commit = true;
+				// Remove default fallthrough for 0x01006421
+				Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
 
-					// Restore fallthrough by setting for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Restore fallthrough by setting for 0x01006421
+				inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
 			}
 		});
 
@@ -1348,69 +898,34 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testFallthroughConflictKeepChangedMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
-				try {
-					// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006436"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006436"));
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				assertNotNull(refMgr.getReference(addr(program, "0x01006421"),
 					addr(program, "0x01006436"), -1));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-//					// Remove default fallthrough for 0x01006421
-//					Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-//					inst.setFallThrough(null);
-//					commit = true;
+				// Remove default fallthrough for 0x01006421
+				Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
 
-					// Restore fallthrough by setting for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Restore fallthrough by setting for 0x01006421
+				inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// Change override fallthrough by setting from 0x01006421 to 0x01006442
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006442"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change override fallthrough by setting from 0x01006421 to 0x01006442
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006442"));
 			}
 		});
 
@@ -1430,69 +945,34 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testFallthroughConflictKeepRestoredDefaultLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
-				try {
-					// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006436"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Override fallthrough (0x01006421 to 0x01006423) by setting from 0x01006421 to 0x01006436
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006436"));
+				
 				ReferenceManager refMgr = program.getReferenceManager();
 				assertNotNull(refMgr.getReference(addr(program, "0x01006421"),
 					addr(program, "0x01006436"), -1));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-//					// Remove default fallthrough for 0x01006421
-//					Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-//					inst.setFallThrough(null);
-//					commit = true;
+				// Remove default fallthrough for 0x01006421
+				Instruction inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
 
-					// Restore fallthrough by setting for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Restore fallthrough by setting for 0x01006421
+				inst.clearFallThroughOverride(); // default fallthrough is 0x01006423
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// Change override fallthrough by setting from 0x01006421 to 0x01006442
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x01006442"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change override fallthrough by setting from 0x01006421 to 0x01006442
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x01006442"));
 			}
 		});
 
@@ -1508,9 +988,6 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testRemoveDefaultFallthroughNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				Instruction inst =
@@ -1522,46 +999,24 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 				assertEquals(addr(program, "0x01006446"), inst.getFallThrough());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// Remove default fallthrough for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Remove default fallthrough for 0x01006421
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// Remove default fallthrough for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006443"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Remove default fallthrough for 0x01006421
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006443"));
+				inst.setFallThrough(null);
 			}
 		});
 
@@ -1580,9 +1035,6 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testOverrideFallthroughNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				Instruction inst =
@@ -1594,46 +1046,24 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 				assertEquals(addr(program, "0x01006446"), inst.getFallThrough());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// Override default fallthrough for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Override default fallthrough for 0x01006421
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// Override fallthrough for 0x01006421
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006443"));
-					inst.setFallThrough(addr(program, "0x0100644f"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Override fallthrough for 0x01006421
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006443"));
+				inst.setFallThrough(addr(program, "0x0100644f"));
 			}
 		});
 
@@ -1652,9 +1082,6 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testRemoveVsOverrideFallthroughKeepLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				Instruction inst;
@@ -1665,48 +1092,26 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 				assertEquals(addr(program, "0x01006435"), inst.getFallThrough());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					// override fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				// override fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// override fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// override fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 		});
 
@@ -1726,9 +1131,6 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testRemoveVsOverrideFallthroughKeepMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				Instruction inst =
@@ -1738,44 +1140,22 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 				assertEquals(addr(program, "0x01006435"), inst.getFallThrough());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction inst =
-						program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst =
+					program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 		});
 
@@ -1794,69 +1174,36 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testRemoveVsRestoreFallthroughKeepLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// override fallthroughs
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// override fallthroughs
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride();
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.clearFallThroughOverride();
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.clearFallThroughOverride();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.clearFallThroughOverride();
 			}
 		});
 
@@ -1875,69 +1222,36 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testRemoveVsRestoreFallthroughKeepMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// override fallthroughs
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// override fallthroughs
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride();
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.clearFallThroughOverride();
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.clearFallThroughOverride();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.clearFallThroughOverride();
 			}
 		});
 
@@ -1956,69 +1270,36 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testOverrideVsRestoreFallthroughKeepLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride();
-					// override fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.clearFallThroughOverride();
+				// override fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// override fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.clearFallThroughOverride();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// override fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.clearFallThroughOverride();
 			}
 		});
 
@@ -2037,69 +1318,36 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 	public void testOverrideVsRestoreFallthroughKeepMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// remove fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(null);
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// remove fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(null);
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(null);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.clearFallThroughOverride();
-					// override fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.setFallThrough(addr(program, "0x0100643d"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.clearFallThroughOverride();
+				// override fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.setFallThrough(addr(program, "0x0100643d"));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Instruction inst;
-					// override fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
-					inst.setFallThrough(addr(program, "0x0100642a"));
-					// restore fallthrough
-					inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
-					inst.clearFallThroughOverride();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Instruction inst;
+				// override fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x01006421"));
+				inst.setFallThrough(addr(program, "0x0100642a"));
+				// restore fallthrough
+				inst = program.getListing().getInstructionAt(addr(program, "0x0100642f"));
+				inst.clearFallThroughOverride();
 			}
 		});
 

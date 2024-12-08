@@ -22,6 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -47,10 +48,9 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	protected final DBCachedObjectIndex<String, DBTraceEquate> equatesByName;
 	protected final DBCachedObjectIndex<Long, DBTraceEquate> equatesByValue;
 
-	public DBTraceEquateManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
-			TaskMonitor monitor,
-			Language baseLanguage, DBTrace trace, DBTraceThreadManager threadManager)
-			throws VersionException, IOException {
+	public DBTraceEquateManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
+			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
+			DBTraceThreadManager threadManager) throws VersionException, IOException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
@@ -93,8 +93,7 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public DBTraceEquateSpace getEquateRegisterSpace(TraceThread thread,
-			boolean createIfAbsent) {
+	public DBTraceEquateSpace getEquateRegisterSpace(TraceThread thread, boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
@@ -111,8 +110,8 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	protected DBTraceEquateSpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceEquateSpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceEquateSpace(this, dbh, space, ent, thread);
 	}
 
@@ -193,8 +192,7 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	public Collection<? extends DBTraceEquate> getReferenced(long snap, Address address,
 			int operandIndex) {
 		return delegateRead(address.getAddressSpace(),
-			m -> m.getReferenced(snap, address, operandIndex),
-			Collections.emptyList());
+			m -> m.getReferenced(snap, address, operandIndex), Collections.emptyList());
 	}
 
 	@Override

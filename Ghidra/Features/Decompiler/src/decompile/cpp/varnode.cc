@@ -780,37 +780,104 @@ void Varnode::printRawHeritage(ostream &s,int4 depth) const
     s << endl;
 }
 
-/// If \b this is a constant, or is extended (INT_ZEXT,INT_SEXT) from a constant,
-/// the \e value of the constant is passed back and a non-negative integer is returned, either:
-///   - 0 for a normal constant Varnode
-///   - 1 for a zero extension (INT_ZEXT) of a normal constant
-///   - 2 for a sign extension (INT_SEXT) of a normal constant
-/// \param val is a reference to the constant value that is passed back
-/// \return the extension code (or -1 if \b this cannot be interpreted as a constant)
-int4 Varnode::isConstantExtended(uintb &val) const
+/// If \b this is a constant, or is extended (INT_ZEXT,INT_SEXT,PIECE) from a constant,
+/// the \e value of the constant (currently up to 128 bits) is passed back and \b true is returned.
+/// \param val will hold the 128-bit constant value
+/// \return \b true if a constant was recovered
+bool Varnode::isConstantExtended(uint8 *val) const
 
 {
   if (isConstant()) {
-    val = getOffset();
-    return 0;
+    val[0] = getOffset();
+    val[1] = 0;
+    return true;
   }
-  if (!isWritten()) return -1;
+  if (!isWritten() || size <= 8) return false;
+  if (size > 16) return false;		// Currently only up to 128-bit values
   OpCode opc = def->code();
   if (opc == CPUI_INT_ZEXT) {
     Varnode *vn0 = def->getIn(0);
     if (vn0->isConstant()) {
-      val = vn0->getOffset();
-      return 1;
+      val[0] = vn0->getOffset();
+      val[1] = 0;
+      return true;
     }
   }
   else if (opc == CPUI_INT_SEXT) {
     Varnode *vn0 = def->getIn(0);
     if (vn0->isConstant()) {
-      val = vn0->getOffset();
-      return 2;
+      val[0] = vn0->getOffset();
+      if (vn0->getSize() < 8)
+	val[0] = sign_extend(val[0], vn0->getSize(), size);
+      val[1] = (signbit_negative(val[0], 8)) ? 0xffffffffffffffffL : 0;
+      return true;
     }
   }
-  return -1;
+  else if (opc == CPUI_PIECE) {
+    Varnode *vnlo = def->getIn(1);
+    if (vnlo->isConstant()) {
+      val[0] = vnlo->getOffset();
+      Varnode *vnhi = def->getIn(0);
+      if (vnhi->isConstant()) {
+	val[1] = vnhi->getOffset();
+	if (vnlo->getSize() == 8)
+	  return true;
+	val[0] |= val[1] << 8*vnlo->getSize();
+	val[1] >>= 8*(8-vnlo->getSize());
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Recursively check if the Varnode is either:
+///   - Copied or extended from a constant
+///   - The result of arithmetic or logical operations on constants
+///   - Loaded from a pointer that is a constant
+///
+/// \param maxBinary is the maximum depth of binary operations to inspect (before giving up)
+/// \param maxLoad is the maximum number of CPUI_LOAD operations to allow in a sequence
+/// \return \b true if the Varnode (might) collapse to a constant
+bool Varnode::isEventualConstant(int4 maxBinary,int4 maxLoad) const
+
+{
+  const Varnode *curVn = this;
+  while(!curVn->isConstant()) {
+    if (!curVn->isWritten()) return false;
+    const PcodeOp *op = curVn->getDef();
+    switch(op->code()) {
+      case CPUI_LOAD:
+	if (maxLoad == 0) return false;
+	maxLoad -= 1;
+	curVn = op->getIn(1);
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_SUB:
+      case CPUI_INT_XOR:
+      case CPUI_INT_OR:
+      case CPUI_INT_AND:
+	if (maxBinary == 0) return false;
+	if (!op->getIn(0)->isEventualConstant(maxBinary-1,maxLoad))
+	  return false;
+	return op->getIn(1)->isEventualConstant(maxBinary-1,maxLoad);
+      case CPUI_INT_ZEXT:
+      case CPUI_INT_SEXT:
+      case CPUI_COPY:
+	curVn = op->getIn(0);
+	break;
+      case CPUI_INT_LEFT:
+      case CPUI_INT_RIGHT:
+      case CPUI_INT_SRIGHT:
+      case CPUI_INT_MULT:
+	if (!op->getIn(1)->isConstant()) return false;
+	curVn = op->getIn(0);
+	break;
+      default:
+	return false;
+    }
+  }
+  return true;
 }
 
 /// Make an initial determination of the Datatype of this Varnode. If a Datatype is already

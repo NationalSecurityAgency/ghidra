@@ -36,8 +36,8 @@ public class SleighLanguageDescription extends BasicLanguageDescription {
 	 * @param id the name of the language
 	 * @param description language description text
 	 * @param processor processor name/family
-	 * @param endian data endianess
-	 * @param instructionEndian instruction endianess
+	 * @param endian data endianness
+	 * @param instructionEndian instruction endianness
 	 * @param size processor size 
 	 * @param variant processor variant name
 	 * @param version the major version of the language.

@@ -25,6 +25,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.plugin.core.blockmodel.BlockModelServicePlugin;
@@ -113,7 +114,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private ActionContext getContext() {
 		ActionContext context = browser.getProvider().getActionContext(null);
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}

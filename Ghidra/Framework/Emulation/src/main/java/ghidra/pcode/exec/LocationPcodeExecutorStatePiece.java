@@ -45,7 +45,7 @@ public class LocationPcodeExecutorStatePiece
 	/**
 	 * Construct a "location" state piece
 	 * 
-	 * @param isBigEndian true if the control language is big endian
+	 * @param language the language of the machine
 	 */
 	public LocationPcodeExecutorStatePiece(Language language) {
 		this.language = language;

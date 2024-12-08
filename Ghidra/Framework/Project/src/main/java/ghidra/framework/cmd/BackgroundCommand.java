@@ -16,6 +16,7 @@
 package ghidra.framework.cmd;
 
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -26,8 +27,10 @@ import ghidra.util.task.TaskMonitor;
  * 
  * <p>This allows commands to make changes in the background so that the GUI is not frozen and the
  * user can still interact with the GUI.
+ * 
+ * @param <T> {@link DomainObject} implementation interface
  */
-public abstract class BackgroundCommand implements Command {
+public abstract class BackgroundCommand<T extends DomainObject> implements Command<T> {
 
 	private String name;
 	private boolean hasProgress;
@@ -47,7 +50,7 @@ public abstract class BackgroundCommand implements Command {
 	}
 
 	@Override
-	public final boolean applyTo(DomainObject obj) {
+	public final boolean applyTo(T obj) {
 		return applyTo(obj, TaskMonitor.DUMMY);
 	}
 
@@ -59,7 +62,7 @@ public abstract class BackgroundCommand implements Command {
 	 * @param monitor monitor to show progress of the command
 	 * @return true if the command applied successfully
 	 */
-	public abstract boolean applyTo(DomainObject obj, TaskMonitor monitor);
+	public abstract boolean applyTo(T obj, TaskMonitor monitor);
 
 // TODO: This should really throw CancelledException when canceled
 
@@ -125,5 +128,9 @@ public abstract class BackgroundCommand implements Command {
 	@Override
 	public String toString() {
 		return getName();
+	}
+
+	public void run(PluginTool tool, T obj) {
+		tool.executeBackgroundCommand(this, obj);
 	}
 }

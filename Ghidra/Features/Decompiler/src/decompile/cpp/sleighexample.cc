@@ -315,12 +315,12 @@ int main(int argc,char **argv)
   ContextInternal context;
 
   // Set up the assembler/pcode-translator
-  string sleighfilename = "specfiles/x86.sla";
+  istringstream sleighfilename("<sleigh>specfiles/x86.sla</sleigh>");
   Sleigh trans(&loader,&context);
 
   // Read sleigh file into DOM
   DocumentStorage docstorage;
-  Element *sleighroot = docstorage.openDocument(sleighfilename)->getRoot();
+  Element *sleighroot = docstorage.parseDocument(sleighfilename)->getRoot();
   docstorage.registerTag(sleighroot);
   trans.initialize(docstorage); // Initialize the translator
 
@@ -356,7 +356,7 @@ int main(int argc,char **argv)
 --# libraries
 --INCLUDES=-I./src
 --
---LNK=src/libsla.a
+--LNK=src/libsla.a -lz
 --
 --libsla.a:
 --	$(MAKE) -C src/ $@

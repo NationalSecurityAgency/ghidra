@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -28,9 +27,8 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
-public class ClearCmd extends BackgroundCommand {
+public class ClearCmd extends BackgroundCommand<Program> {
 	private static final int EVENT_LIMIT = 1000;
 
 	private AddressSetView view;
@@ -76,22 +74,22 @@ public class ClearCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
-		boolean wasEabled = obj.isSendingEvents();
+		boolean wasEabled = program.isSendingEvents();
 		try {
-			obj.setEventsEnabled(sendIndividualEvents);
-			return doApplyTo(obj, monitor);
+			program.setEventsEnabled(sendIndividualEvents);
+			return doApplyTo(program, monitor);
 		}
 		finally {
-			obj.setEventsEnabled(wasEabled);
+			program.setEventsEnabled(wasEabled);
 		}
 	}
 
-	private boolean doApplyTo(DomainObject obj, TaskMonitor monitor) {
+	private boolean doApplyTo(Program program, TaskMonitor monitor) {
 
 		try {
-			doApplyWithCancel(obj, monitor);
+			doApplyWithCancel(program, monitor);
 			monitor.setMessage("Clear completed");
 			return true;
 		}
@@ -100,14 +98,13 @@ public class ClearCmd extends BackgroundCommand {
 		}
 	}
 
-	private boolean doApplyWithCancel(DomainObject obj, TaskMonitor monitor)
+	private boolean doApplyWithCancel(Program program, TaskMonitor monitor)
 			throws CancelledException {
 
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
 
-		Program program = (Program) obj;
 		if (options == null) {
 			clearCode(program, view, monitor);
 			return true;
@@ -163,7 +160,7 @@ public class ClearCmd extends BackgroundCommand {
 			Address rangeMin = range.getMinAddress();
 			SymbolIterator symbolIter = symbolTable.getSymbolIterator(rangeMin, true);
 			while (symbolIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Symbol s = symbolIter.next();
 				if (s.getAddress().compareTo(range.getMaxAddress()) > 0) {
 					break; // done with range
@@ -201,7 +198,7 @@ public class ClearCmd extends BackgroundCommand {
 		int progress = 0;
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = iter.next();
 			listing.clearComments(range.getMinAddress(), range.getMaxAddress());
 			progress += range.getLength();
@@ -238,7 +235,7 @@ public class ClearCmd extends BackgroundCommand {
 		FunctionIterator iter = manager.getFunctions(clearView, true);
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = iter.next();
 			monitor.incrementProgress(1);
 			manager.removeFunction(func.getEntryPoint());
@@ -267,7 +264,7 @@ public class ClearCmd extends BackgroundCommand {
 		Iterator<Equate> iter = eqtbl.getEquates();
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Equate eq = iter.next();
 			EquateReference[] refs = eq.getReferences();
 
@@ -354,7 +351,7 @@ public class ClearCmd extends BackgroundCommand {
 	private void removeRegisters(ProgramContext pc, AddressRange range, TaskMonitor monitor)
 			throws CancelledException {
 		for (Register reg : pc.getRegistersWithValues()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (reg.isProcessorContext()) {
 				continue; // skip context register
@@ -372,7 +369,7 @@ public class ClearCmd extends BackgroundCommand {
 			Set<SourceType> sourceTypesToClear, TaskMonitor monitor) throws CancelledException {
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = iter.next();
 			Reference[] refs = refMgr.getReferencesFrom(addr);

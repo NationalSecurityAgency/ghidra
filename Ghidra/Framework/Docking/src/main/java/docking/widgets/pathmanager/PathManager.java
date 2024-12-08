@@ -30,7 +30,6 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import generic.util.Path;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.preferences.Preferences;
@@ -232,8 +231,7 @@ public class PathManager {
 				if (column == PathManagerModel.COLUMN_PATH) {
 					Path path = (Path) value;
 					if (!isValidPath(path)) {
-						renderer.setForeground(data.isSelected() ? Tables.FG_ERROR_SELECTED
-								: Tables.FG_ERROR_UNSELECTED);
+						renderer.setForeground(getErrorForegroundColor(data.isSelected()));
 					}
 				}
 				return renderer;
@@ -241,7 +239,6 @@ public class PathManager {
 		});
 
 		JScrollPane scrollPane = new JScrollPane(pathTable);
-		scrollPane.getViewport().setBackground(pathTable.getBackground());
 
 		ListSelectionModel selModel = pathTable.getSelectionModel();
 		selModel.addListSelectionListener(e -> {
@@ -312,9 +309,12 @@ public class PathManager {
 				}
 			});
 		}
-		String dir = Preferences.getProperty(preferenceForLastSelectedDir);
-		if (dir != null) {
-			fileChooser.setCurrentDirectory(new File(dir));
+		String dirPath = Preferences.getProperty(preferenceForLastSelectedDir);
+		if (dirPath != null) {
+			File dir = new File(dirPath);
+			if (dir.isDirectory()) {
+				fileChooser.setCurrentDirectory(dir);
+			}
 		}
 
 		List<File> files = fileChooser.getSelectedFiles();
@@ -386,7 +386,7 @@ public class PathManager {
 	}
 
 	/**
-	 * Restore paths from user Preferences using the specified keys.  
+	 * Restore paths from user Preferences using the specified keys.
 	 * If preferences have never been saved, the specified {@code defaultEnablePaths}
 	 * will be used.  Note: the encoded path list must have been stored
 	 * using the same keys using the {@link #savePathsToPreferences(String, String, Path[])}
@@ -405,7 +405,7 @@ public class PathManager {
 	}
 
 	/**
-	 * Restore paths from user Preferences using the specified keys.  
+	 * Restore paths from user Preferences using the specified keys.
 	 * If preferences have never been saved, the specified {@code defaultEnablePaths}
 	 * will be returned.  Note: the encoded path list must have been stored
 	 * using the same keys using the {@link #savePathsToPreferences(String, String, Path[])}
@@ -472,7 +472,7 @@ public class PathManager {
 
 	/**
 	 * Save the specified paths to the user Preferences using the specified keys.
-	 * Note: The encoded path Preferences are intended to be decoded by the 
+	 * Note: The encoded path Preferences are intended to be decoded by the
 	 * {@link #restoreFromPreferences(String, Path[], String)} and
 	 * {@link #getPathsFromPreferences(String, Path[], String)} methods.
 	 * @param enablePathKey preference key for storing enabled paths

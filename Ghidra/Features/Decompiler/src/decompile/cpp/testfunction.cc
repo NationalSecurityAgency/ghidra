@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,25 @@ void FunctionTestProperty::startTest(void) const
 
 {
   count = 0;
+  patnum = 0;
 }
 
 void FunctionTestProperty::processLine(const string &line) const
 
 {
-  if (std::regex_search(line,pattern))
-    count += 1;
+  if (std::regex_search(line,pattern[patnum])) {
+    patnum += 1;
+    if (patnum >= pattern.size()) {
+      count += 1;		// Full pattern has matched.  Count it.
+      patnum = 0;
+    }
+  }
+  else if (patnum > 0) {
+    patnum = 0;		// Abort current multi-line match, restart trying to match first line
+    if (std::regex_search(line,pattern[patnum])) {
+      patnum += 1;
+    }
+  }
 }
 
 bool FunctionTestProperty::endTest(void) const
@@ -44,7 +56,24 @@ void FunctionTestProperty::restoreXml(const Element *el)
   s1 >> minimumMatch;
   istringstream s2(el->getAttributeValue("max"));
   s2 >> maximumMatch;
-  pattern = std::regex(el->getContent());
+  string::size_type pos = 0;
+  const string &line(el->getContent());
+  do {
+    while(pos < line.size() && (line[pos] == ' ' || line[pos] == '\t'))	// Remove whitespace at front of pattern
+      pos += 1;
+    if (pos >= line.size())
+      break;
+   string::size_type nextpos = line.find('\n',pos);	// A newline in the pattern indicates a multi-line regex
+   string::size_type n;
+   if (nextpos == string::npos)
+     n = string::npos;			// If no (additional) newlines, take all remaining chars
+   else {
+     n = nextpos - pos;			// Create a line regex upto newline char
+     nextpos += 1;			// Skip newline when creating next line regex
+   }
+   pattern.emplace_back(line.substr(pos, n));	// Add a regex to list of lines to match
+   pos = nextpos;
+  } while(pos != string::npos);
 }
 
 void ConsoleCommands::readLine(string &line)
@@ -84,6 +113,24 @@ void FunctionTestCollection::clear(void)
   console->reset();
 }
 
+/// Remove any carriage return character as well.
+/// \param ref is the string to strip
+/// \return the stripped string
+string FunctionTestCollection::stripNewlines(const string &ref)
+
+{
+  string res;
+
+  for(int4 i=0;i<ref.size();++i) {
+    char c = ref[i];
+    if (c == '\r') continue;	// Remove carriage return
+    if (c == '\n')
+      c = ' ';			// Convert newline to space
+    res.push_back(c);
+  }
+  return res;
+}
+
 /// \param el is the root \<script> tag
 void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
@@ -93,7 +140,7 @@ void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
   for(iter=list.begin();iter!=list.end();++iter) {
     const Element *subel = *iter;
-    commands.push_back(subel->getContent());
+    commands.push_back(stripNewlines(subel->getContent()));
   }
 }
 
@@ -238,14 +285,14 @@ void FunctionTestCollection::restoreXml(DocumentStorage &store,const Element *el
       buildProgram(store);
     }
     else
-      throw IfaceParseError("Unknown tag in <decompiletest>: "+subel->getName());
+      throw IfaceParseError("Unknown tag in <decompilertest>: "+subel->getName());
   }
   if (!sawScript)
-    throw IfaceParseError("Did not see <script> tag in <decompiletest>");
+    throw IfaceParseError("Did not see <script> tag in <decompilertest>");
   if (!sawTests)
-    throw IfaceParseError("Did not see any <stringmatch> tags in <decompiletest>");
+    throw IfaceParseError("Did not see any <stringmatch> tags in <decompilertest>");
   if (!sawProgram)
-    throw IfaceParseError("No <binaryimage> tag in <decompiletest>");
+    throw IfaceParseError("No <binaryimage> tag in <decompilertest>");
 }
 
 /// Pull the script and tests from a comment in \<binaryimage>

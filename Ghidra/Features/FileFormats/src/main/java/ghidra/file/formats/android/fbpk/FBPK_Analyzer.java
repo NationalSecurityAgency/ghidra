@@ -73,7 +73,7 @@ public class FBPK_Analyzer extends FileFormatAnalyzer {
 			monitor.initialize(header.getPartitions().size());
 			monitor.setMessage("Marking up paritions...");
 			for (FBPK_Partition partition : header.getPartitions()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				partition.markup(program, address, monitor, log);
 				if (partition.getOffsetToNextPartitionTable() > 0) {

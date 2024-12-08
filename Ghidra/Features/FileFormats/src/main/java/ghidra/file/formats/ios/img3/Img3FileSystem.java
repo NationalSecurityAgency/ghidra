@@ -30,20 +30,15 @@ import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "img3", description = "iOS " +
 	Img3Constants.IMG3_SIGNATURE, factory = Img3FileSystemFactory.class)
-public class Img3FileSystem implements GFileSystem {
+public class Img3FileSystem extends AbstractFileSystem<DataTag> {
 
-	private FSRLRoot fsFSRL;
-	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
-	private FileSystemIndexHelper<DataTag> fsIndexHelper;
 	private ByteProvider provider;
-	private FileSystemService fsService;
 
 	public Img3FileSystem(FSRLRoot fsFSRL, ByteProvider provider, FileSystemService fsService,
 			TaskMonitor monitor) throws IOException {
-		this.fsFSRL = fsFSRL;
-		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsFSRL);
+		super(fsFSRL, fsService);
+
 		this.provider = provider;
-		this.fsService = fsService;
 
 		monitor.setMessage("Opening IMG3...");
 		Img3 header = new Img3(provider);
@@ -61,7 +56,7 @@ public class Img3FileSystem implements GFileSystem {
 
 			DataTag dataTag = tags.get(i);
 			String filename = getDataTagFilename(dataTag, i, tags.size() > 1);
-			fsIndexHelper.storeFileWithParent(filename, fsIndexHelper.getRootDir(), i, false,
+			fsIndex.storeFileWithParent(filename, fsIndex.getRootDir(), i, false,
 				dataTag.getTotalLength(), dataTag);
 		}
 	}
@@ -73,8 +68,8 @@ public class Img3FileSystem implements GFileSystem {
 
 	@Override
 	public void close() throws IOException {
-		fsRefManager.onClose();
-		fsIndexHelper.clear();
+		refManager.onClose();
+		fsIndex.clear();
 		if (provider != null) {
 			provider.close();
 			provider = null;
@@ -90,7 +85,7 @@ public class Img3FileSystem implements GFileSystem {
 				"Unable to decrypt IMG3 data because IMG3 crypto keys are specific to the container it is embedded in and this IMG3 was not in a container");
 		}
 
-		DataTag dataTag = fsIndexHelper.getMetadata(file);
+		DataTag dataTag = fsIndex.getMetadata(file);
 		if (dataTag == null) {
 			throw new IOException("Unknown file: " + file);
 		}
@@ -107,33 +102,8 @@ public class Img3FileSystem implements GFileSystem {
 	}
 
 	@Override
-	public List<GFile> getListing(GFile directory) {
-		return fsIndexHelper.getListing(directory);
-	}
-
-	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
-	}
-
-	@Override
 	public boolean isClosed() {
 		return provider == null;
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return fsRefManager;
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsIndexHelper.lookup(path);
 	}
 
 }

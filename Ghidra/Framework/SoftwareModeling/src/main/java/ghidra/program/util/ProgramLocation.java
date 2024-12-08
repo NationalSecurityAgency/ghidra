@@ -38,7 +38,7 @@ import ghidra.util.Msg;
  * is the character position within the display item specified by the row and column. Simple fields
  * like the address field and Mnemonic field will always have a row and column of 0.
  */
-public class ProgramLocation implements Comparable<ProgramLocation> {
+public class ProgramLocation implements Cloneable, Comparable<ProgramLocation> {
 
 	protected Program program;
 	protected Address addr;
@@ -461,15 +461,6 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Returns the character offset in the display item at the (row,col).
-	 *
-	 * @return the character offset in the display item at the (row,col).
-	 */
-	public int getCharOffset() {
-		return charOffset;
-	}
-
-	/**
 	 * Returns the column index of the display piece represented by this location. For most
 	 * locations, there is only one display item per row, in which case this value will be 0.
 	 * @return the column.
@@ -478,4 +469,39 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 		return col;
 	}
 
+	/**
+	 * Returns the character offset in the display item at the (row,col).
+	 *
+	 * @return the character offset in the display item at the (row,col).
+	 */
+	public int getCharOffset() {
+		return charOffset;
+	}
+
+	@Override
+	protected final Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
+
+	/**
+	 * Create a new translated copy of the specified {@link ProgramLocation} using the specified
+	 * {@link Program program}
+	 * @param loc original program location
+	 * @param program updated program
+	 * @param translatedAddress original loc address translated for using within specified program
+	 * @return translated program location
+	 */
+	public static ProgramLocation getTranslatedCopy(ProgramLocation loc, Program program,
+			Address translatedAddress) {
+		try {
+			ProgramLocation translatedLoc = (ProgramLocation) loc.clone();
+			translatedLoc.program = program;
+			translatedLoc.addr = translatedAddress;
+			return translatedLoc;
+		}
+		catch (CloneNotSupportedException e) {
+			throw new AssertionError(e);
+		}
+
+	}
 }

@@ -17,7 +17,9 @@ package ghidra.graph.exporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
+import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.dimacs.DIMACSExporter;
 import org.jgrapht.nio.dimacs.DIMACSFormat;
 import org.jgrapht.nio.dot.DOTExporter;
@@ -27,7 +29,6 @@ import ghidra.service.graph.*;
 public class DotGraphExporter extends AbstractAttributedGraphExporter {
 
 	protected DIMACSFormat dimacsFormat = DIMACSExporter.DEFAULT_DIMACS_FORMAT;
-
 
 	@Override
 	public void exportGraph(AttributedGraph graph, File file) throws IOException {
@@ -44,6 +45,20 @@ public class DotGraphExporter extends AbstractAttributedGraphExporter {
 		catch (Exception e) {
 			throw new IOException(e);
 		}
+	}
+
+	/**
+	 * DOT graphs use a special attribute call "label" which we call "Name", so when
+	 * exporting to DOT format, change the "Name" attribute to "label".
+	 */
+	@Override
+	protected Map<String, Attribute> getAttributes(Attributed attributed) {
+		Map<String, Attribute> attributes = super.getAttributes(attributed);
+		Attribute attribute = attributes.remove("Name");
+		if (attribute != null) {
+			attributes.put("label", attribute);
+		}
+		return attributes;
 	}
 
 	@Override

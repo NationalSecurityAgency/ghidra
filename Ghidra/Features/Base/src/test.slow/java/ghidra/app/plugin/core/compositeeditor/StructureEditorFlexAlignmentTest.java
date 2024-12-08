@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,13 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import static org.junit.Assert.*;
 
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 import org.junit.Test;
 
+import docking.widgets.OptionDialog;
+import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.data.StructureDBTest;
 import ghidra.program.model.data.*;
 
 public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTest {
@@ -88,7 +90,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertLength(2);
 		assertActualAlignment(1);
 
-		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		turnOnPacking();
 		assertIsPackingEnabled(true);
 		assertDefaultPacked();
 
@@ -113,7 +115,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		waitForSwing();
 
-		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		turnOnPacking();
 		assertIsPackingEnabled(true);
 		assertDefaultPacked();
 
@@ -125,7 +127,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
 		// It is important to note that a trailing flex array will align the same as any other component and
-		// is not guarenteed to fall at the end of the structure.
+		// is not guaranteed to fall at the end of the structure.
 		checkFlexArrayRow(2, 4, "ddw", DWordDataType.dataType, "", "");
 		checkBlankRow(3);
 		assertLength(8);
@@ -145,7 +147,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		waitForSwing();
 
-		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
+		turnOnPacking();
 		assertIsPackingEnabled(true);
 		assertDefaultPacked();
 
@@ -245,7 +247,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null, null);
+		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+			null);
 
 		JRadioButton byValuePackingButton =
 			(JRadioButton) findComponentByName(editorPanel, "Explicit Packing");
@@ -270,7 +273,9 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertActualAlignment(1);
 	}
 
-	////////////////////////////
+//=================================================================================================
+// Private Methods
+//=================================================================================================	
 
 	private void checkFlexArrayRow(int rowIndex, int offset, String mnemonic, DataType dataType,
 			String name, String comment) {
@@ -302,12 +307,26 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 	}
 
 	private DataTypeComponent addDataType(DataType dataType) {
-		return structureModel.viewComposite.add(dataType);
+		return structureModel.viewDTM.withTransaction("Add Test Component",
+			() -> structureModel.viewComposite.add(dataType));
 	}
 
-	private DataTypeComponent addFlexDataType(Structure struct, DataType dataType, String name, String comment) {
+	private DataTypeComponent addFlexDataType(Structure struct, DataType dataType, String name,
+			String comment) {
 		ArrayDataType a = new ArrayDataType(dataType, 0, 1);
+		if (struct instanceof DatabaseObject) {
+			DataTypeManager dtm = struct.getDataTypeManager();
+			return dtm.withTransaction("Add Flex Array", () -> struct.add(a, name, comment));
+		}
 		return struct.add(a, name, comment);
+	}
+
+	private void turnOnPacking() {
+		AbstractButton packingButton = findButtonByName(getPanel(), "Packing Enablement");
+		if (packingButton.isSelected()) {
+			return;
+		}
+		pressButton(packingButton, true);
 	}
 
 }

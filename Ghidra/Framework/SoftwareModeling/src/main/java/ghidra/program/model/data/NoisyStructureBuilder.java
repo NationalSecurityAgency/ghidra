@@ -31,6 +31,9 @@ import ghidra.program.model.pcode.PartialUnion;
  * In a conflict, less specific data-types are replaced.
  * After all information is collected a final Structure can be built by iterating over
  * the final field entries.
+ * 
+ * NOTE: No attempt has been made to utilize {@link DataType#getAlignedLength()} when considering
+ * component type lengths.
  */
 public class NoisyStructureBuilder {
 	private TreeMap<Long, DataType> offsetToDataTypeMap = new TreeMap<>();

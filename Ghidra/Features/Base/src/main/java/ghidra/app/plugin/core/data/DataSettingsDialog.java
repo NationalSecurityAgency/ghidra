@@ -143,7 +143,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 			}
 
 			while (!defClasses.isEmpty() && definedData.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				d = definedData.next();
 				removeMissingDefinitions(defClasses, defs,
 					d.getDataType().getSettingsDefinitions());
@@ -170,7 +170,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 			int fromIndex = from[from.length - 1];
 			int toIndex = to[to.length - 1];
 			for (int i = fromIndex; i <= toIndex; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				dataComp = parent.getComponent(i);
 				if (dataComp == null) {
 					break;
@@ -253,7 +253,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 			if (interiorSelection == null) {
 				DataIterator definedData = program.getListing().getDefinedData(selection, true);
 				while (definedData.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Data d = definedData.next();
 					applySettingsToData(dlg, d);
 					monitor.incrementProgress(d.getLength());
@@ -274,7 +274,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 
 			monitor.initialize(toIndex - fromIndex + 1);
 			for (int i = fromIndex; i <= toIndex; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				dataComp = parent.getComponent(i);
 				if (dataComp == null) {
 					break;

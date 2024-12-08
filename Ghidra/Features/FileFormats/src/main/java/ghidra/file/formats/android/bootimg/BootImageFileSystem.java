@@ -106,7 +106,7 @@ public class BootImageFileSystem extends GFileSystemBase {
 				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
 					"This is a second stage loader file. It appears unused at this time."));
 		}
-		return null;
+		return FileAttributes.EMPTY;
 	}
 
 	@Override

@@ -44,77 +44,46 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", getHexByteArray("96 02"));
-					createData(program, "0x100753c", new WordDataType()); // Add word
+				setBytes(program, "0x100753c", getHexByteArray("96 02"));
+				createData(program, "0x100753c", new WordDataType()); // Add word
 
-					setBytes(program, "0x100754e",
-						getHexByteArray("53 65 74 59 6f 75 72 53 74 75 66 66 00"));
-					createData(program, "0x100754e", new StringDataType()); // Add string "SetYourStuff"
+				setBytes(program, "0x100754e",
+					getHexByteArray("53 65 74 59 6f 75 72 53 74 75 66 66 00"));
+				createData(program, "0x100754e", new StringDataType()); // Add string "SetYourStuff"
 
-					setBytes(program, "0x1007568", getHexByteArray("12 00"));
-					createData(program, "0x1007568", new WordDataType()); // Add word
+				setBytes(program, "0x1007568", getHexByteArray("12 00"));
+				createData(program, "0x1007568", new WordDataType()); // Add word
 
-					setBytes(program, "0x1007578",
-						getHexByteArray("4c 6f 74 73 4f 66 53 74 75 66 66 54 6f 44 6f 00"));
-					createData(program, "0x1007578", new StringDataType()); // Add string "LotsOfStuffToDo"
+				setBytes(program, "0x1007578",
+					getHexByteArray("4c 6f 74 73 4f 66 53 74 75 66 66 54 6f 44 6f 00"));
+				createData(program, "0x1007578", new StringDataType()); // Add string "LotsOfStuffToDo"
 
-					setBytes(program, "0x1007598", getHexByteArray("78 00"));
-					createData(program, "0x1007598", new WordDataType()); // Add word
+				setBytes(program, "0x1007598", getHexByteArray("78 00"));
+				createData(program, "0x1007598", new WordDataType()); // Add word
 
-					setBytes(program, "0x100759a",
-						getHexByteArray("59 65 74 41 6e 6f 74 68 65 72 53 74 72 69 6e 67 3f 00"));
-					createData(program, "0x100759a", new StringDataType()); // Add string "YetAnotherString?"
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100759a",
+					getHexByteArray("59 65 74 41 6e 6f 74 68 65 72 53 74 72 69 6e 67 3f 00"));
+				createData(program, "0x100759a", new StringDataType()); // Add string "YetAnotherString?"
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
-					clear(program, "0x100754e", "0x100755a");
-					setBytes(program, "0x1007569", new byte[] { (byte) 0x95 });
-					clear(program, "0x1007578", "0x1007587");
-					setBytes(program, "0x1007598", new byte[] { (byte) 0x95 });
-					clear(program, "0x100759a", "0x10075ab");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
+				clear(program, "0x100754e", "0x100755a");
+				setBytes(program, "0x1007569", new byte[] { (byte) 0x95 });
+				clear(program, "0x1007578", "0x1007587");
+				setBytes(program, "0x1007598", new byte[] { (byte) 0x95 });
+				clear(program, "0x100759a", "0x10075ab");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					clear(program, "0x100753c", "0x100753d");
-					setBytes(program, "0x100754f", new byte[] { (byte) 0x95 });
-					clear(program, "0x1007568", "0x1007569");
-					setBytes(program, "0x100757a", new byte[] { (byte) 0x95 });
-					clear(program, "0x1007598", "0x1007599");
-					setBytes(program, "0x100759a", new byte[] { (byte) 0x95 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x100753c", "0x100753d");
+				setBytes(program, "0x100754f", new byte[] { (byte) 0x95 });
+				clear(program, "0x1007568", "0x1007569");
+				setBytes(program, "0x100757a", new byte[] { (byte) 0x95 });
+				clear(program, "0x1007598", "0x1007599");
+				setBytes(program, "0x100759a", new byte[] { (byte) 0x95 });
 			}
 		});
 
@@ -157,46 +126,25 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 @Test
     public void testByteEquateDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100d1ec", new byte[] { (byte) 0x54 });
-					setBytes(program, "0x100d1f8", new byte[] { (byte) 0x2a });
-					setBytes(program, "0x100d208", new byte[] { (byte) 0x60 });
-					setEquate(program, "C", 0x43L, "0x100d214", 0);
-					setEquate(program, "r", 0x72, "0x100d218", 0);
-					setEquate(program, "+", 0x2b, "0x100d21c", 0);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100d1ec", new byte[] { (byte) 0x54 });
+				setBytes(program, "0x100d1f8", new byte[] { (byte) 0x2a });
+				setBytes(program, "0x100d208", new byte[] { (byte) 0x60 });
+				setEquate(program, "C", 0x43L, "0x100d214", 0);
+				setEquate(program, "r", 0x72, "0x100d218", 0);
+				setEquate(program, "+", 0x2b, "0x100d21c", 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setEquate(program, "t", 0x74L, "0x100d1ec", 0);
-					setEquate(program, ".", 0x2eL, "0x100d1f8", 0);
-					setEquate(program, "n", 0x6eL, "0x100d208", 0);
-					setBytes(program, "0x100d214", new byte[] { (byte) 0x51 });
-					setBytes(program, "0x100d218", new byte[] { (byte) 0x62 });
-					setBytes(program, "0x100d21c", new byte[] { (byte) 0x2a });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setEquate(program, "t", 0x74L, "0x100d1ec", 0);
+				setEquate(program, ".", 0x2eL, "0x100d1f8", 0);
+				setEquate(program, "n", 0x6eL, "0x100d208", 0);
+				setBytes(program, "0x100d214", new byte[] { (byte) 0x51 });
+				setBytes(program, "0x100d218", new byte[] { (byte) 0x62 });
+				setBytes(program, "0x100d21c", new byte[] { (byte) 0x2a });
 			}
 		});
 
@@ -239,63 +187,40 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 @Test
     public void testCodeUnitEquateDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					clear(program, "0x1001bbd", "0x1001bc2");
-					disassemble(program, "0x1001bbe", "0x1001bc2");
+				clear(program, "0x1001bbd", "0x1001bc2");
+				disassemble(program, "0x1001bbe", "0x1001bc2");
 
-					clear(program, "0x1001c2b", "0x1001c33");
+				clear(program, "0x1001c2b", "0x1001c33");
 
-					clear(program, "0x1006654", "0x1006657");
-					createData(program, "0x1006654", new FloatDataType());
+				clear(program, "0x1006654", "0x1006657");
+				createData(program, "0x1006654", new FloatDataType());
 
-					setEquate(program, "stuff", 0x1194L, "0x1006674", 0);
+				setEquate(program, "stuff", 0x1194L, "0x1006674", 0);
 
-					setEquate(program, "1A7", 0x1a7L, "0x1006be2", 0);
+				setEquate(program, "1A7", 0x1a7L, "0x1006be2", 0);
 
-					setEquate(program, "1B0", 0x1b0L, "0x1007446", 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setEquate(program, "1B0", 0x1b0L, "0x1007446", 0);
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setEquate(program, "b7", 0xb7L, "0x1001bbd", 0);
+				setEquate(program, "b7", 0xb7L, "0x1001bbd", 0);
 
-					setEquate(program, "80", 0x80L, "0x1001c2b", 1);
+				setEquate(program, "80", 0x80L, "0x1001c2b", 1);
 
-					setEquate(program, "NegativeOne", 0xffffffffL, "0x1006654", 0);
+				setEquate(program, "NegativeOne", 0xffffffffL, "0x1006654", 0);
 
-					clear(program, "0x1006674", "0x1006677");
-					createData(program, "0x1006674", new FloatDataType());
+				clear(program, "0x1006674", "0x1006677");
+				createData(program, "0x1006674", new FloatDataType());
 
-					clear(program, "0x1006be2", "0x1006be3");
-					createData(program, "0x1006be2", new ArrayDataType(new ByteDataType(), 2, 1));
+				clear(program, "0x1006be2", "0x1006be3");
+				createData(program, "0x1006be2", new ArrayDataType(new ByteDataType(), 2, 1));
 
-					clear(program, "0x1007446", "0x1007447");
-					disassemble(program, "0x1007446", "0x1007447");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x1007446", "0x1007447");
+				disassemble(program, "0x1007446", "0x1007447");
 			}
 		});
 
@@ -338,17 +263,12 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 @Test
     public void testCodeUnitFunctionDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// TODO
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// TODO
@@ -384,17 +304,12 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 @Test
     public void testCodeUnitReferenceDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// TODO
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// TODO

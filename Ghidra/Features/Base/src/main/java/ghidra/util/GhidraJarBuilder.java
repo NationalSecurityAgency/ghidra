@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,10 @@ import generic.jar.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.*;
-import ghidra.framework.plugintool.dialog.ExtensionUtils;
-import ghidra.util.classfinder.ClassFinder;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
@@ -328,7 +327,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		Collections.sort(moduleList);
 
 		for (ApplicationModule module : moduleList) {
-			File srcDir = new File(module.getModuleDir(), "src");
+			File srcDir = new File(module.getModuleDir(), "lib");
 			File srcZipFileForModule = new File(srcDir, module.getName() + "-src.zip");
 			if (srcZipFileForModule.exists()) {
 				writeModuleSrcZipToOverallSrcZip(zip, srcZipFileForModule);
@@ -338,11 +337,16 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				wroteToZip |= writeZipRecursively(zip, srcDir.getAbsolutePath(), srcDir);
 			}
 		}
-		if (wroteToZip) {
+		if (!wroteToZip) {
 			System.out
 					.println("Can't create source zip!  Has source been downloaded and installed?");
-			// zip.close reports error if nothing has been written to it
+		}
+		try {
+			// zip.close may report error if nothing has been written to it
 			zip.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -617,7 +621,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			if (clazz == null) {
 				System.out.println("Couldn't load " + path);
 			}
-			else if (ClassFinder.isClassOfInterest(clazz)) {
+			else {
 				extensionPointClasses.add(clazz.getName());
 			}
 		}
@@ -704,7 +708,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 
 		public void close() throws IOException {
-			File tempFile = File.createTempFile("jarBuilder", "treeIDX");
+			File tempFile = Application.createTempFile("jarBuilder", "treeIDX");
 			classTree.trim();
 			classTree.saveFile(tempFile);
 			try {
@@ -717,9 +721,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			jarOut.close();
 		}
 
-		/**
-		 * Outputs an individual file to the jar.
-		 */
 		public void addFile(String jarPath, File file, ApplicationModule module)
 				throws IOException, CancelledException {
 			if (!file.exists()) {
@@ -767,7 +768,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				int numRead;
 
 				while ((numRead = in.read(bytes)) != -1) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					jarOut.write(bytes, 0, numRead);
 				}
 			}
@@ -801,7 +802,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			int numRead;
 
 			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				jarOut.write(bytes, 0, numRead);
 			}
 			in.close();
@@ -834,7 +835,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			zipOut.close();
 		}
 
-		/**
+		/*
 		 * Outputs an individual file to the jar.
 		 */
 		public void addFile(String zipPath, File file) throws IOException, CancelledException {
@@ -863,7 +864,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			int numRead;
 
 			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				zipOut.write(bytes, 0, numRead);
 			}
 			in.close();
@@ -893,7 +894,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			int numRead;
 
 			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				zipOut.write(bytes, 0, numRead);
 			}
 			in.close();
@@ -930,7 +931,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		System.exit(0);
 	}
 
-	/**
+	/*
 	 * Entry point for 'gradle buildGhidraJar'.
 	 */
 	public static void main(String[] args) throws IOException {

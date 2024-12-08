@@ -33,7 +33,7 @@ import ghidra.util.Swing;
 /**
  * Icon Table for Theme Dialog
  */
-public class ThemeIconTable extends JPanel implements ActionContextProvider {
+public class ThemeIconTable extends JPanel implements ActionContextProvider, ThemeTable {
 
 	private ThemeIconTableModel iconTableModel;
 	private IconValueEditor iconEditor = new IconValueEditor(this::iconValueChanged);
@@ -80,6 +80,17 @@ public class ThemeIconTable extends JPanel implements ActionContextProvider {
 		add(filterTable, BorderLayout.CENTER);
 	}
 
+	@Override
+	public void setShowSystemValues(boolean show) {
+		iconTableModel.setShowSystemValues(show);
+		reloadAll();
+	}
+
+	@Override
+	public boolean isShowingSystemValues() {
+		return iconTableModel.isShowingSystemValues();
+	}
+
 	void iconValueChanged(PropertyChangeEvent event) {
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
@@ -111,7 +122,7 @@ public class ThemeIconTable extends JPanel implements ActionContextProvider {
 			}
 			String id = currentValue.getId();
 			IconValue themeValue = iconTableModel.getThemeValue(id);
-			return new ThemeTableContext<Icon>(currentValue, themeValue);
+			return new ThemeTableContext<Icon>(currentValue, themeValue, this);
 		}
 		return null;
 	}

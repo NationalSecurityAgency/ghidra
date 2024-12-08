@@ -151,6 +151,11 @@ public abstract class AbstractPointerTypedefBuiltIn extends BuiltIn implements T
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return modelTypedef.getAlignedLength();
+	}
+
+	@Override
 	public DataType getDataType() {
 		return modelTypedef.getDataType();
 	}

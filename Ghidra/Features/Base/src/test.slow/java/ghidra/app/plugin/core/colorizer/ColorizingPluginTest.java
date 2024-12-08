@@ -27,6 +27,7 @@ import javax.swing.JButton;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.options.editor.GhidraColorChooser;
 import docking.widgets.EventTrigger;
@@ -635,7 +636,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private ActionContext getActionContext() {
 		ActionContext context = cb.getProvider().getActionContext(null);
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}

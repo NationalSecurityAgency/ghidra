@@ -1,0 +1,28 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      A contrived function with an indirect call that eventually collapses to a function
+      with an 8-byte return value.  Prior to collapse, there are likely to be 2 separate
+      pieces being read as output from the function.   After collapse these should get
+      concatenated and leave no shadow varnodes.
+  -->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e54883ec3048c7c34600100048
+895de84889f94889f7488b5de8ffd348
+8d59104889036631c0c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="deind26"/>
+<symbol space="ram" offset="0x100046" name="obtainPtr"/>
+</binaryimage>
+<script>
+  <com>parse line extern int2 deind26(int4 **ptr,char *nm);</com>
+  <com>parse line extern int4 *obtainPtr(char *nm);</com>
+  <com>lo fu deind26</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Deindirect Output #1" min="1" max="1">piVar1 = obtainPtr\(nm\);</stringmatch>
+<stringmatch name="Deindirect Output #2" min="1" max="1">return 0;</stringmatch>
+<stringmatch name="Deindirect Output #3" min="0" max="0">CONCAT</stringmatch>
+</decompilertest>

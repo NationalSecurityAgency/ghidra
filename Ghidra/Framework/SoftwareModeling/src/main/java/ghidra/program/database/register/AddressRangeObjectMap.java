@@ -74,7 +74,7 @@ public class AddressRangeObjectMap<T> {
 
 		Address fromEndAddr = fromAddr.add(length - 1);
 		for (AddressRange range : getAddressRangeIterator(fromAddr, fromEndAddr)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address minAddr = range.getMinAddress();
 			T value = getObject(minAddr);
@@ -89,7 +89,7 @@ public class AddressRangeObjectMap<T> {
 		}
 		clearRange(fromAddr, fromEndAddr);
 		for (AddressRange range : tmpMap.getAddressRangeIterator()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			T value = tmpMap.getObject(range.getMinAddress());
 			setObject(range.getMinAddress(), range.getMaxAddress(), value);
 		}

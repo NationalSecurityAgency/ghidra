@@ -89,31 +89,29 @@ public class TwoLevelHintsCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
 		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				ProgramFragment fragment = createFragment(api, baseAddress, parentModule);
-				Address addr = baseAddress.getNewAddress(getStartIndex());
-				api.createData(addr, toDataType());
+			ProgramFragment fragment = createFragment(api, baseAddress, parentModule);
+			Address addr = baseAddress.getNewAddress(getStartIndex());
+			api.createData(addr, toDataType());
 
-				Address hintStartAddress = baseAddress.add(getOffset());
-				Address hintAddress = hintStartAddress;
-				for (TwoLevelHint hint : hints) {
-					if (monitor.isCancelled()) {
-						return;
-					}
-					DataType hintDT = hint.toDataType();
-					api.createData(hintAddress, hintDT);
-					api.setPlateComment(hintAddress,
-						"Sub-image Index: 0x" + Integer.toHexString(hint.getSubImageIndex()) +
-							'\n' + "      TOC Index: 0x" +
-							Integer.toHexString(hint.getTableOfContentsIndex()));
-					hintAddress = hintAddress.add(hintDT.getLength());
+			Address hintStartAddress = baseAddress.add(getOffset());
+			Address hintAddress = hintStartAddress;
+			for (TwoLevelHint hint : hints) {
+				if (monitor.isCancelled()) {
+					return;
 				}
-				fragment.move(hintStartAddress, hintAddress.subtract(1));
+				DataType hintDT = hint.toDataType();
+				api.createData(hintAddress, hintDT);
+				api.setPlateComment(hintAddress,
+					"Sub-image Index: 0x" + Integer.toHexString(hint.getSubImageIndex()) +
+						'\n' + "      TOC Index: 0x" +
+						Integer.toHexString(hint.getTableOfContentsIndex()));
+				hintAddress = hintAddress.add(hintDT.getLength());
 			}
+			fragment.move(hintStartAddress, hintAddress.subtract(1));
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName() + " - " + e.getMessage());

@@ -24,6 +24,7 @@ import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -67,7 +68,6 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 
 		SymbolGTree tree = context.getSymbolTree();
 		GTreeNode root = tree.getViewRoot();
-		GTreeNode classesNode = root.getChild(SymbolCategory.CLASS_CATEGORY.getName());
 
 		Symbol symbol = ((SymbolNode) node).getSymbol();
 		Namespace namespace = (Namespace) symbol.getObject();
@@ -75,7 +75,15 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 			String name = namespace.getName();
 			convertToClass(program, namespace);
 			program.flushEvents();
-			context.getSymbolTree().startEditing(classesNode, name);
+
+			GTreeNode classesNode = root.getChild(SymbolCategory.CLASS_CATEGORY.getName());
+			if (classesNode != null) {
+				context.getSymbolTree().startEditing(classesNode, name);
+			}
+			else {
+				Msg.showInfo(this, null, "Classes Filtered Out of View",
+					"New class node is filtered out of view");
+			}
 		}
 	}
 

@@ -312,6 +312,6 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemblyCompat32_DEC_EAX() {
-		assertOneCompatRestExact("DEC EAX", "48", "09:00:00:00", 0x00400000, "DEC EAX");
+		assertOneCompatRestExact("DEC EAX", "48", "09:00:00:00:00:00:00:00", 0x00400000, "DEC EAX");
 	}
 }

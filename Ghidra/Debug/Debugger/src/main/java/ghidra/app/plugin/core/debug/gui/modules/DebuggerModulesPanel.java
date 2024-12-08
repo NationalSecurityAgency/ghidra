@@ -21,11 +21,14 @@ import javax.swing.event.ListSelectionEvent;
 
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.*;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueAttribute;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -81,6 +84,37 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 	}
 
+	private static class ModuleMappingColumn extends TraceValueKeyColumn {
+		@Override
+		public String getColumnName() {
+			return "Mapping";
+		}
+
+		@Override
+		public String getValue(ValueRow rowObject, Settings settings, Trace data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			if (data == null) {
+				return "";
+			}
+			ValueAttribute<AddressRange> attr =
+				rowObject.getAttribute(TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class);
+			if (attr == null) {
+				return "";
+			}
+			AddressRange range = attr.getValue();
+			if (range == null) {
+				return "";
+			}
+
+			// TODO: Cache this? Would flush on:
+			//    1. Mapping changes
+			//    2. Range/Life changes to this module
+			//    3. Snapshot navigation
+			return DebuggerStaticMappingUtils.computeMappedFiles(data, rowObject.currentSnap(),
+				range);
+		}
+	}
+
 	private static class ModulePathColumn extends TraceValueKeyColumn {
 		@Override
 		public String getColumnName() {
@@ -117,6 +151,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			descriptor.addVisibleColumn(new ModuleBaseColumn(), 1, true);
 			descriptor.addVisibleColumn(new ModuleMaxColumn());
 			descriptor.addVisibleColumn(new ModuleNameColumn());
+			descriptor.addVisibleColumn(new ModuleMappingColumn());
 			descriptor.addVisibleColumn(new ModuleLengthColumn());
 			return descriptor;
 		}
@@ -126,6 +161,9 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			DebuggerObjectActionContext ctx) {
 		Set<TraceModule> result = new HashSet<>();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
+			if (!value.isObject()) {
+				continue;
+			}
 			TraceObject child = value.getChild();
 			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
 			if (module != null) {
@@ -145,6 +183,9 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			DebuggerObjectActionContext ctx) {
 		Set<TraceSection> result = new HashSet<>();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
+			if (!value.isObject()) {
+				continue;
+			}
 			TraceObject child = value.getChild();
 			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
 			if (module != null) {
@@ -191,7 +232,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ModuleTableModel(plugin);
 	}
 

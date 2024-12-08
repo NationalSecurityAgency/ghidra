@@ -18,7 +18,9 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.math.BigInteger;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractArrayMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -26,108 +28,62 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractArrayMsType} types.
  */
-public class ArrayTypeApplier extends MsTypeApplier {
+public class ArrayTypeApplier extends MsDataTypeApplier {
 
-	private MsTypeApplier underlyingTypeApplier = null;
-	private boolean isFlexibleArray = false;
-
+	// Intended for: AbstractArrayMsType
 	/**
 	 * Constructor for the applicator that applies a "array" type, transforming it into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractArrayMsType} to processes.
+	 * Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
-	public ArrayTypeApplier(DefaultPdbApplicator applicator, AbstractArrayMsType msType) {
-		super(applicator, msType);
-	}
-
-	//==============================================================================================
-	boolean isFlexibleArray() {
-		return isFlexibleArray;
+	public ArrayTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	@Override
-	void deferredApply() throws PdbException, CancelledException {
-		// No work done here.  Just deferring resolve.
-	}
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
 
-	//==============================================================================================
-	@Override
-	BigInteger getSize() {
-		return ((AbstractArrayMsType) msType).getSize();
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		applyOrDeferForDependencies();
-	}
-
-	private void applyOrDeferForDependencies() {
-		AbstractArrayMsType type = (AbstractArrayMsType) msType;
-		underlyingTypeApplier = applicator.getTypeApplier(type.getElementTypeRecordNumber());
-		if (underlyingTypeApplier instanceof ModifierTypeApplier) {
-			underlyingTypeApplier =
-				((ModifierTypeApplier) underlyingTypeApplier).getModifiedTypeApplier();
-		}
-		underlyingTypeApplier = underlyingTypeApplier.getDependencyApplier();
-		applyType(type); // applying now, but resolve() might get deferred.
-	}
-
-//	private void recurseAddDependency(AbstractMsTypeApplier dependee)
-//			throws CancelledException, PdbException {
-//		if (dependee instanceof ModifierTypeApplier) {
-//			ModifierTypeApplier modifierApplier = (ModifierTypeApplier) dependee;
-//			recurseAddDependency(modifierApplier.getModifiedTypeApplier());
-//		}
-//		else if (dependee instanceof CompositeTypeApplier) {
-//			CompositeTypeApplier defApplier =
-//				((CompositeTypeApplier) dependee).getDefinitionApplier();
-//			if (defApplier != null) {
-//				applicator.addApplierDependency(this, defApplier);
-//			}
-//			else {
-//				applicator.addApplierDependency(this, dependee);
-//			}
-//			setDeferred();
-//		}
-//		else if (dependee instanceof ArrayTypeApplier) {
-//			applicator.addApplierDependency(this, dependee);
-//			setDeferred();
-//		}
-//		else if (dependee instanceof BitfieldTypeApplier) {
-//			int x =
-//				((AbstractBitfieldMsType) ((BitfieldTypeApplier) dependee).getMsType()).getElementTypeIndex();
-//			AbstractMsTypeApplier underlyingApplier = applicator.getTypeApplier(x);
-//			if (underlyingApplier instanceof EnumTypeApplier) {
-//				applicator.addApplierDependency(this, underlyingApplier);
-//				setDeferred();
-//			}
-//		}
-//		//We are assuming that bitfields on typedefs will not be defined.
-//	}
-//
-
-	private void applyType(AbstractArrayMsType type) {
-		applyArrayMsType((AbstractArrayMsType) msType);
-	}
-
-	private void applyArrayMsType(AbstractArrayMsType type) {
-		if (isApplied()) {
-			return;
+		AbstractArrayMsType arrayType = (AbstractArrayMsType) type;
+		// Doing pre-check on type first using the getDataTypeOrSchedule method.  The logic is
+		//  simpler here for Composites or Functions because we only have one dependency type,
+		//  so we are not doing a separate call to a pre-check method as there is in those appliers.
+		//  If type is not available, return false.
+		RecordNumber underlyingRecordNumber = arrayType.getElementTypeRecordNumber();
+		DataType underlyingDataType = applicator.getDataTypeOrSchedule(underlyingRecordNumber);
+		if (underlyingDataType == null) {
+			return false;
 		}
 
-		long longUnderlyingSize =
-			DefaultPdbApplicator.bigIntegerToLong(applicator, underlyingTypeApplier.getSize());
-		DataType underlyingDataType = underlyingTypeApplier.getDataType();
+		int numElements = calculateNumElements(arrayType, underlyingDataType);
+		if (numElements == -1) {
+			// There was a math calculation problem (probably have the wrong underlying type,
+			// which we still need to figure out; i.e., better composite mapper) so we
+			// will change the underlying type for now...
+			underlyingDataType = Undefined1DataType.dataType;
+			numElements = getSizeInt(arrayType); // array size (but divided by 1) is array size
+		}
+		DataType dataType = new ArrayDataType(underlyingDataType, numElements, -1,
+			applicator.getDataTypeManager());
+		applicator.putDataType(arrayType, dataType);
+		return true;
+	}
+
+	boolean isFlexibleArray(AbstractMsType type) {
+		return BigInteger.ZERO.equals(type.getSize());
+	}
+
+	private int calculateNumElements(AbstractArrayMsType type, DataType underlyingDataType) {
 
 		if (underlyingDataType == null) {
-			Long v = longUnderlyingSize;
-			underlyingDataType = Undefined.getUndefinedDataType(v.intValue());
-			String msg = "PDB Type index " + index + ":\n   Null underlying data type for " +
-				underlyingTypeApplier.getClass().getSimpleName() + ":\n      " +
-				underlyingTypeApplier + "\n   Using " + underlyingDataType;
+			// TODO: test and clean up... can this happen?
+			underlyingDataType = Undefined1DataType.dataType;
+			String msg = "PDB Type index " + type.getRecordNumber().getNumber() +
+				":\n   Null underlying data type for " + type.getClass().getSimpleName() +
+				":\n      " + type.getName() + "\n   Using " + underlyingDataType;
 			Msg.warn(this, msg);
 		}
+
+		long longUnderlyingSize = underlyingDataType.getLength();
 
 		if (longUnderlyingSize > Integer.MAX_VALUE) {
 			String msg = "PDB " + type.getClass().getSimpleName() + ": Underlying type too large " +
@@ -137,14 +93,10 @@ public class ArrayTypeApplier extends MsTypeApplier {
 			longUnderlyingSize = 1L;
 		}
 		else if (longUnderlyingSize == 0L) {
-			String msg = "PDB " + type.getClass().getSimpleName() +
-				": Zero-sized underlying type " + underlyingDataType.getName();
-			Msg.warn(this, msg);
-			underlyingDataType = Undefined1DataType.dataType;
 			longUnderlyingSize = 1L;
 		}
 
-		long longArraySize = getSizeLong();
+		long longArraySize = getSizeLong(type);
 		long longNumElements = longArraySize / longUnderlyingSize;
 
 		if (longNumElements > Integer.MAX_VALUE) {
@@ -163,31 +115,12 @@ public class ArrayTypeApplier extends MsTypeApplier {
 				longUnderlyingSize;
 			Msg.warn(this, msg);
 			// bad calculation.  Underlying type does not evenly fit into array total size.
-			underlyingDataType = Undefined1DataType.dataType;
-			longUnderlyingSize = 1L;
-			longNumElements = longArraySize;
+			return -1;
 		}
 
 		int numElements = (int) longNumElements;
 
-		ArrayDataType arrayDataType;
-
-		// TODO: Need to find way to pass errorComment on to encompassing composite or other
-		if (numElements == 0) {
-			// flexible array
-			arrayDataType = new ArrayDataType(underlyingDataType, 1, underlyingDataType.getLength(),
-				applicator.getDataTypeManager());
-			isFlexibleArray = true;
-		}
-		else {
-			arrayDataType = new ArrayDataType(underlyingDataType, numElements, -1,
-				applicator.getDataTypeManager());
-			isFlexibleArray = false;
-		}
-
-		setApplied();
-
-		dataType = arrayDataType;
+		return numElements;
 	}
 
 }

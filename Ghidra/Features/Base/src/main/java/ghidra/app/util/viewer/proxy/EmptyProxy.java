@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,10 @@
  */
 package ghidra.app.util.viewer.proxy;
 
+import ghidra.program.model.address.Address;
+
 /**
- * Used proxy a null value
+ * Used as proxy for a null value.
  */
 public class EmptyProxy extends ProxyObj<Object> {
 	public static final EmptyProxy EMPTY_PROXY = new EmptyProxy();
@@ -29,12 +30,13 @@ public class EmptyProxy extends ProxyObj<Object> {
 		super(null);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.proxy.ProxyObj#getObject()
-	 */
 	@Override
 	public Object getObject() {
 		return null;
 	}
 
+	@Override
+	public boolean contains(Address a) {
+		return false;
+	}
 }

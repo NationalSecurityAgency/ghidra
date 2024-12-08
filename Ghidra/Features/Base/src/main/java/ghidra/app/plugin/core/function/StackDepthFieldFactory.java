@@ -22,7 +22,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -44,13 +44,13 @@ public class StackDepthFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	private StackDepthFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private StackDepthFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel newModel, HighlightProvider highlightProvider,
+	public FieldFactory newInstance(FieldFormatModel newModel, ListingHighlightProvider highlightProvider,
 			ToolOptions toolDisplayOptions, ToolOptions fieldOptions) {
 		return new StackDepthFieldFactory(newModel, highlightProvider, toolDisplayOptions,
 			fieldOptions);

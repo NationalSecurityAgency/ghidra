@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.Msf;
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.datatype.microsoft.GUID;
@@ -30,7 +29,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents the the Windows PDB file.  This class is only suitable for reading; not
+ * This class represents the Windows PDB file.  This class is only suitable for reading; not
  *  for writing or modifying a PDB.
  *  <P>
  *  We have intended to implement according to the Microsoft PDB API (source); see the API for
@@ -149,7 +148,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		if (debugInfo != null) {
 			try {
 				// dbiAge and targetProcessor set during deserialization of new DBI header
-				debugInfo.deserialize(true);
+				debugInfo.initialize(true);
 			}
 			catch (CancelledException e) {
 				throw new AssertException(e); // unexpected
@@ -169,8 +168,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @throws PdbException upon error in processing components
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void deserialize()
-			throws IOException, PdbException, CancelledException {
+	public void deserialize() throws IOException, PdbException, CancelledException {
 		// msf should only be null for testing versions of PDB.
 		if (msf == null) {
 			return;
@@ -329,7 +327,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 			Class<T> typeClass) {
 		recordNumber = fixupTypeIndex(recordNumber, typeClass);
 		AbstractMsType msType =
-			getTPI(recordNumber.getCategory()).getRecord(recordNumber.getNumber());
+			getTPI(recordNumber.getCategory()).getRandomAccessRecord(recordNumber.getNumber());
 		if (!typeClass.isInstance(msType)) {
 			if (!recordNumber.isNoType()) {
 				PdbLog.logGetTypeClassMismatch(msType, typeClass);
@@ -471,11 +469,40 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
+	 * Developer mechanism to locate stream and offset within that stream that is associated with
+	 * the given absolute file offset
+	 * @param fileOffset the absolute file offset that we are trying to locate
+	 * @return the stream and offset or {@code null} if not located
+	 */
+	public StreamAndOffset getStreamOffsetForAbsoluteFileOffset(long fileOffset) {
+		if (msf instanceof AbstractMsf myMsf) {
+			return myMsf.getStreamOffsetForAbsoluteFileOffset(fileOffset);
+		}
+		return null;
+	}
+
+	/**
+	 * Developer mechanism to get a {@code PdbByteReader} for the particular stream, offset, and
+	 * length.
+	 * @param streamNumber the stream number
+	 * @param offset the offset in the stream
+	 * @param length the number of bytes to include from the stream
+	 * @return the reader
+	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon issue getting the stream for the PDB
+	 */
+	public PdbByteReader getDeveloperBytes(int streamNumber, int offset, int length)
+			throws CancelledException, IOException {
+		PdbByteReader reader = getReaderForStreamNumber(streamNumber, offset, length);
+		return reader;
+	}
+
+	/**
 	 * Check to see if this monitor has been canceled
 	 * @throws CancelledException if monitor has been cancelled
 	 */
-	public void checkCanceled() throws CancelledException {
-		getMonitor().checkCanceled();
+	public void checkCancelled() throws CancelledException {
+		getMonitor().checkCancelled();
 	}
 
 	/**
@@ -494,8 +521,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @throws PdbException upon error in processing components
 	 * @throws CancelledException upon user cancellation
 	 */
-	void deserializeSubstreams()
-			throws IOException, PdbException, CancelledException {
+	void deserializeSubstreams() throws IOException, PdbException, CancelledException {
 
 		if (substreamsDeserialized) {
 			return;
@@ -505,7 +531,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 		typeProgramInterface = tpiParser.parse(this);
 		if (typeProgramInterface != null) {
-			typeProgramInterface.deserialize();
+			typeProgramInterface.initialize();
 		}
 
 		boolean ipiStreamHasNoName = ItemProgramInterfaceParser.hackCheckNoNameForStream(nameTable);
@@ -514,7 +540,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 			ItemProgramInterfaceParser ipiParser = new ItemProgramInterfaceParser();
 			itemProgramInterface = ipiParser.parse(this);
 			if (itemProgramInterface != null) {
-				itemProgramInterface.deserialize();
+				itemProgramInterface.initialize();
 			}
 			//processDependencyIndexPairList();
 			//dumpDependencyGraph();
@@ -522,7 +548,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 		parseDBI();
 		if (debugInfo != null) {
-			debugInfo.deserialize(false);
+			debugInfo.initialize(false);
 		}
 
 		substreamsDeserialized = true;
@@ -594,16 +620,16 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @throws PdbException upon error parsing a field
 	 * @throws CancelledException upon user cancellation
 	 */
-	abstract void deserializeDirectory()
-			throws IOException, PdbException, CancelledException;
+	abstract void deserializeDirectory() throws IOException, PdbException, CancelledException;
 
 	/**
 	 * Dumps the PDB Directory to {@link Writer}.  This package-protected method is for
 	 *  debugging only.
 	 * @param writer {@link Writer}.
 	 * @throws IOException on issue writing to the {@link Writer}.
+	 * @throws CancelledException upon user cancellation
 	 */
-	public abstract void dumpDirectory(Writer writer) throws IOException;
+	public abstract void dumpDirectory(Writer writer) throws IOException, CancelledException;
 
 	//==============================================================================================
 	// Internal Data Methods
@@ -616,8 +642,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 *  inability to read required bytes
 	 * @throws CancelledException upon user cancellation
 	 */
-	protected PdbByteReader getDirectoryReader()
-			throws IOException, CancelledException {
+	protected PdbByteReader getDirectoryReader() throws IOException, CancelledException {
 		return getReaderForStreamNumber(PDB_DIRECTORY_STREAM_NUMBER, 0,
 			MsfStream.MAX_STREAM_LENGTH);
 	}
@@ -634,19 +659,17 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Dumps the Version Signature and Age.  This package-protected method is for debugging only
-	 * @return {@link String} of pretty output
+	 * Dumps the Version Signature and Age to Writer.  This package-protected method is for
+	 * debugging only
+	 * @param writer the writer
+	 * @throws IOException upon issue with writing to the writer
 	 */
-	protected String dumpVersionSignatureAge() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("DirectoryHeader---------------------------------------------");
-		builder.append("\nversionNumber: ");
-		builder.append(versionNumber);
-		builder.append("\nsignature: ");
-		builder.append(Integer.toHexString(signature));
-		builder.append("\nage: ");
-		builder.append(pdbAge);
-		return builder.toString();
+	protected void dumpVersionSignatureAge(Writer writer) throws IOException {
+		writer.write("DirectoryHeader---------------------------------------------");
+		writer.write("\nversionNumber: " + versionNumber);
+		writer.write("\nsignature: " + Integer.toHexString(signature));
+		writer.write("\nage: " + pdbAge);
+		writer.write("\nEnd DirectoryHeader-----------------------------------------");
 	}
 
 	/**
@@ -662,13 +685,13 @@ public abstract class AbstractPdb implements AutoCloseable {
 		nameTable.deserializeDirectory(reader);
 		// Read the parameters.
 		while (reader.hasMore()) {
-			getMonitor().checkCanceled();
+			checkCancelled();
 			int val = reader.parseInt();
 			parameters.add(val);
 		}
 		// Check the parameters for IDs
 		for (int param : parameters) {
-			getMonitor().checkCanceled();
+			checkCancelled();
 			if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}
@@ -685,27 +708,25 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Dumps the Parameters to a {@link String}.  This package-protected method is for
-	 *  debugging only
-	 * @return {@link String} of pretty output
+	 * Dumps the Parameters to Writer.  This package-protected method is for debugging only
+	 * @param writer the writer
+	 * @param monitor the task monitor
+	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected String dumpParameters() {
-		StringBuilder builder = new StringBuilder();
-		builder.append(nameTable.dump());
-		builder.append("\nParameters--------------------------------------------------\n");
+	protected void dumpParameters(Writer writer, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		nameTable.dump(writer, monitor);
+		writer.write("\nParameters--------------------------------------------------\n");
 		for (int i = 0; i < parameters.size(); i++) {
-			builder.append(String.format("parameter[%d]: 0x%08x %d\n", i, parameters.get(i),
+			writer.write(String.format("parameter[%d]: 0x%08x %d\n", i, parameters.get(i),
 				parameters.get(i)));
 		}
-		builder.append("Booleans----------------------------------------------------");
-		builder.append("\nminimalDebugInfo: ");
-		builder.append(minimalDebugInfo);
-		builder.append("\nnoTypeMerge: ");
-		builder.append(noTypeMerge);
-		builder.append("\nhasIdStream: ");
-		builder.append(hasIdStream);
-		builder.append("\n");
-		return builder.toString();
+		writer.write("Booleans----------------------------------------------------");
+		writer.write("\nminimalDebugInfo: " + minimalDebugInfo);
+		writer.write("\nnoTypeMerge: " + noTypeMerge);
+		writer.write("\nhasIdStream: " + hasIdStream);
+		writer.write("\n");
 	}
 
 	/**

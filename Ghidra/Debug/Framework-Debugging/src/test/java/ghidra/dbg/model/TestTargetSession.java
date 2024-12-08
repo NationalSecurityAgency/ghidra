@@ -91,6 +91,6 @@ public class TestTargetSession extends DefaultTargetModelRoot
 
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

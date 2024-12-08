@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +16,13 @@
 package ghidra.app.plugin.core.programtree;
 
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 
 import javax.swing.JComponent;
 
 import docking.*;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.ViewManagerService;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -35,13 +34,12 @@ import ghidra.util.HelpLocation;
 public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		implements ViewManagerService, ViewChangeListener {
 
-	private static final String OLD_NAME = "ProgramTreePlugin";
 	private static final String NAME = "Program Tree";
 
 	public static final String CURRENT_VIEW = "Current Viewname";
 
 	private ViewPanel viewPanel;
-	private ArrayList<ViewChangeListener> listeners;
+	private List<ViewChangeListener> listeners;
 	private Program currentProgram;
 	private String restoredViewName;
 
@@ -73,20 +71,20 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		String currentName = NAME;
 		ComponentProvider.registerProviderNameOwnerChange(intermediateName, currentOwner,
 			currentName, currentOwner);
+
+		addToTool();
 	}
 
 	void serviceAdded(ViewProviderService service) {
 		viewPanel.addView(service);
 		String viewName = service.getViewName();
 		if (viewName.equals(restoredViewName)) {
-			// state is being restored, so set the current view now
+			viewPanel.setCurrentView(restoredViewName);
 			restoredViewName = null;
-			viewPanel.setCurrentView(viewName);
 		}
 		else if (viewPanel.getNumberOfViews() == 1) {
-			viewName = viewPanel.getCurrentViewName();
-
 			// we only have one view, so force view map events to go out
+			viewName = viewPanel.getCurrentViewName();
 			viewPanel.setCurrentView(viewName);
 		}
 	}
@@ -117,8 +115,7 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 
 	@Override
 	public void viewChanged(AddressSetView addrSet) {
-		for (int i = 0; i < listeners.size(); i++) {
-			ViewChangeListener l = listeners.get(i);
+		for (ViewChangeListener l : listeners) {
 			l.viewChanged(addrSet);
 		}
 	}
@@ -145,23 +142,15 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 	}
 
 	void readDataState(SaveState saveState) {
-		if (saveState != null) {
-			restoredViewName = saveState.getString(CURRENT_VIEW, null);
-			if (viewPanel.setCurrentView(restoredViewName)) {
-				restoredViewName = null; // have the view
-			}
-			// else wait for serviceAdded to restore the view...
+		String savedCurrentView = saveState.getString(CURRENT_VIEW, null);
+		if (!viewPanel.setCurrentView(savedCurrentView)) {
+			// the view to has not yet been added from a call to serviceAdded(); save for later
+			restoredViewName = savedCurrentView;
 		}
 	}
 
-	Object getUndoRedoState(DomainObject domainObject) {
-		SaveState saveState = new SaveState();
-		writeDataState(saveState);
-		return saveState;
-	}
-
-	void restoreUndoRedoState(DomainObject domainObject, Object state) {
-		readDataState((SaveState) state);
+	void treeViewsRestored(Collection<TreeViewProvider> treeViews) {
+		viewPanel.treeViewsRestored(treeViews);
 	}
 
 	/**
@@ -198,11 +187,14 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		}
 
 		if (event != null) {
-			return new ProgramActionContext(this, currentProgram, viewPanel,
-				getActivePopupObject(event));
+			// this should be a ProgramNode or a tab
+			Object clickedObject = getActivePopupObject(event);
+			return new ProgramTreeActionContext(this, currentProgram, viewPanel, clickedObject);
 		}
 
-		return new ProgramActionContext(this, currentProgram, viewPanel, getFocusedContext());
+		// this should be a ProgramNode
+		Object focusedObject = getFocusedContext();
+		return new ProgramTreeActionContext(this, currentProgram, viewPanel, focusedObject);
 	}
 
 	private Object getFocusedContext() {
@@ -222,5 +214,4 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 	public void setCurrentProgram(Program program) {
 		currentProgram = program;
 	}
-
 }

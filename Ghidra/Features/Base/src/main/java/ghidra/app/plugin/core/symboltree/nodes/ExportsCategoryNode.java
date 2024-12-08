@@ -33,14 +33,17 @@ class ExportsCategoryNode extends SymbolCategoryNode {
 	private static final Icon CLOSED_FOLDER =
 		new GIcon("icon.plugin.symboltree.node.category.exports.closed");
 
-	ExportsCategoryNode(Program program) {
+	public ExportsCategoryNode(Program program) {
 		super(SymbolCategory.EXPORTS_CATEGORY, program);
 	}
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) {
-		List<GTreeNode> list = new ArrayList<>();
+		if (!isEnabled) {
+			return Collections.emptyList();
+		}
 
+		List<GTreeNode> list = new ArrayList<>();
 		List<Symbol> functionSymbolList = getExportSymbols();
 		for (Symbol symbol : functionSymbolList) {
 			list.add(SymbolNode.createNode(symbol, program));

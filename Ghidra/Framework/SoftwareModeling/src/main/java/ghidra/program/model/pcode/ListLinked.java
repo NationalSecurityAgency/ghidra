@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,7 @@
 package ghidra.program.model.pcode;
 
 import java.util.Iterator;
+
 /**
  * 
  *
@@ -31,64 +31,60 @@ public class ListLinked<T> {
 		public LinkedNode previousNode;
 		public LinkedNode nextNode;
 		public T data;
-		
-		LinkedNode(LinkedNode prev,LinkedNode nxt,T d) {
+
+		LinkedNode(LinkedNode prev, LinkedNode nxt, T d) {
 			previousNode = prev;
 			nextNode = nxt;
 			data = d;
 		}
 	}
 
-	private class LinkedIterator implements Iterator<T> {	
+	private class LinkedIterator implements Iterator<T> {
 		private LinkedNode curNode;			// Current node in the linked list being pointed at by this iterator
 
 		public LinkedIterator(LinkedNode cur) {
-			curNode = cur;	
-		}
-		
-		/* (non-Javadoc)
-	 	* @see java.util.Iterator#remove()
-	 	*/
-		public void remove() {
-			if (curNode.data == null) return;		// Should probably throw an exception here
-			curNode.nextNode.previousNode = curNode.previousNode;
-			curNode.previousNode.nextNode = curNode.nextNode;
-			curNode = curNode.previousNode;			
+			curNode = cur;
 		}
 
-		/* (non-Javadoc)
-	 	* @see java.util.Iterator#hasNext()
-	 	*/
+		@Override
+		public void remove() {
+			if (curNode.data == null) {
+				return;		// Should probably throw an exception here
+			}
+			curNode.nextNode.previousNode = curNode.previousNode;
+			curNode.previousNode.nextNode = curNode.nextNode;
+			curNode = curNode.previousNode;
+		}
+
+		@Override
 		public boolean hasNext() {
 			return (curNode.nextNode.data != null);
 		}
 
-		/* (non-Javadoc)
-	 	* @see java.util.Iterator#next()
-	 	*/
+		@Override
 		public T next() {
 			curNode = curNode.nextNode;
 			return curNode.data;
 		}
-		
+
 		public boolean hasPrevious() {
 			return (curNode.data != null);
 		}
-		
+
 		public Object previous() {
 			curNode = curNode.previousNode;
 			return curNode.nextNode.data;
 		}
 	}
-	
+
 	private LinkedNode terminal;				// The boundary of the linked list
-	
+
 	ListLinked() {
-		terminal = new LinkedNode(null,null,null);
+		terminal = new LinkedNode(null, null, null);
 		terminal.nextNode = terminal;
 		terminal.previousNode = terminal;				// Create empty list
 	}
-	
+
 	/**
 	 * Add object to end of the list, any existing iterators remain valid
 	 * 
@@ -96,11 +92,11 @@ public class ListLinked<T> {
 	 * @return Iterator to new object
 	 */
 	public Iterator<T> add(T o) {
-		LinkedNode newNode = new LinkedNode(terminal.previousNode,terminal,o);
+		LinkedNode newNode = new LinkedNode(terminal.previousNode, terminal, o);
 		terminal.previousNode.nextNode = newNode;
 		terminal.previousNode = newNode;
 		LinkedIterator iter = new LinkedIterator(newNode);
-		return iter;	
+		return iter;
 	}
 
 	/**
@@ -110,14 +106,14 @@ public class ListLinked<T> {
 	 * @param o    New object to add
 	 * @return		Iterator to new object
 	 */
-	public Iterator<T> insertAfter(Iterator<T> itr,T o) {		// Insert object AFTER object indicated by iter
+	public Iterator<T> insertAfter(Iterator<T> itr, T o) {		// Insert object AFTER object indicated by iter
 		LinkedNode cur = ((LinkedIterator) itr).curNode;
-		LinkedNode newNode = new LinkedNode(cur,cur.nextNode,o);
+		LinkedNode newNode = new LinkedNode(cur, cur.nextNode, o);
 		cur.nextNode.previousNode = newNode;
 		cur.nextNode = newNode;
 		return new LinkedIterator(newNode);
 	}
-	
+
 	/**
 	 * Insert new object BEFORE object pointed to by iterator, other Iterators remain valid
 	 * 
@@ -125,14 +121,14 @@ public class ListLinked<T> {
 	 * @param o   New object to add
 	 * @return      Iterator to new object
 	 */
-	public Iterator<T> insertBefore(Iterator<T> itr,T o) {	// Insert BEFORE iterator
-		LinkedNode cur = ((LinkedIterator)itr).curNode;
-		LinkedNode newNode = new LinkedNode(cur.previousNode,cur,o);
+	public Iterator<T> insertBefore(Iterator<T> itr, T o) {	// Insert BEFORE iterator
+		LinkedNode cur = ((LinkedIterator) itr).curNode;
+		LinkedNode newNode = new LinkedNode(cur.previousNode, cur, o);
 		cur.previousNode.nextNode = newNode;
 		cur.previousNode = newNode;
 		return new LinkedIterator(newNode);
 	}
-	
+
 	/**
 	 * Remove object from list indicated by Iterator, all iterators that point to objects other
 	 * than this one remain valid
@@ -140,8 +136,10 @@ public class ListLinked<T> {
 	 * @param itr   Iterator to object to be removed
 	 */
 	public void remove(Iterator<T> itr) {
-		LinkedNode cur = ((LinkedIterator)itr).curNode;
-		if (cur.data == null) return;		// Should probably throw an exception here
+		LinkedNode cur = ((LinkedIterator) itr).curNode;
+		if (cur.data == null) {
+			return;		// Should probably throw an exception here
+		}
 		cur.previousNode.nextNode = cur.nextNode;
 		cur.nextNode.previousNode = cur.previousNode;
 	}
@@ -151,9 +149,9 @@ public class ListLinked<T> {
 	 */
 	public Iterator<T> iterator() {
 		LinkedIterator iter = new LinkedIterator(terminal);			// Build starting iterator
-		return iter;	
+		return iter;
 	}
-	
+
 	/**
 	 * Get rid of all entries on the linked list.
 	 */
@@ -161,5 +159,18 @@ public class ListLinked<T> {
 		terminal.nextNode = terminal;
 		terminal.previousNode = terminal;			// Recreate empty list
 	}
-	
+
+	/**
+	 * @return the first element in the list (or null)
+	 */
+	public T first() {
+		return terminal.nextNode.data;
+	}
+
+	/**
+	 * @return the last element in the list (or null)
+	 */
+	public T last() {
+		return terminal.previousNode.data;
+	}
 }

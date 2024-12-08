@@ -19,9 +19,21 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
+/**
+ * The namespace symbol view.
+ */
 public interface TraceNamespaceSymbolView
 		extends TraceSymbolNoDuplicatesView<TraceNamespaceSymbol> {
-
+	/**
+	 * Add a new namespace symbol.
+	 * 
+	 * @param name the name of the namespace
+	 * @param parent the parent namespace
+	 * @param source the source
+	 * @return the new namespace symbol
+	 * @throws DuplicateNameException if the name is duplicated in the parent namespace
+	 * @throws InvalidInputException if the name is not valid
+	 */
 	TraceNamespaceSymbol add(String name, TraceNamespaceSymbol parent, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
 }

@@ -46,6 +46,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 		for (Window window : getAllWindows()) {
 			runSwing(window::dispose);
 		}
+		waitForSwing();
 	}
 
 	@Test
@@ -74,7 +75,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 		String newStatusText = "New Status Text";
 		SplashScreen.updateSplashScreenStatus(newStatusText);
 
-		String updatedText = statusLabel.getText().trim();
+		waitForSwing();
+		String updatedText = runSwing(() -> statusLabel.getText().trim());
 
 		assertEquals("The text of the label does not match the updated " + "text that was passed.",
 			newStatusText, updatedText);
@@ -95,11 +97,13 @@ public class SplashScreenTest extends AbstractDockingTest {
 		assertSpashScreenVisible(true);
 
 		// show a modal dialog with no parent (this will use the Splash Screen's parent)
-		showModalPasswordDialog(null);
+		DockingDialog dialog = showModalPasswordDialog(null);
 
 		// When the splash screen and the dialog share a parent, then the dialog should NOT
 		// cause the splash screen to go away
 		assertSpashScreenVisible(true);
+
+		close(dialog);
 	}
 
 	@Test
@@ -113,6 +117,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 		showModalPasswordDialog(frame);
 
 		ensureSplashScreenWillClose();
+
+		close(frame);
 	}
 
 //==================================================================================================
@@ -143,12 +149,11 @@ public class SplashScreenTest extends AbstractDockingTest {
 		}
 
 		Frame finalParent = parentFrame;
-		executeOnSwingWithoutBlocking(
-			() -> {
-				DockingDialog dialog =
-					DockingDialog.createDialog(finalParent, passwordDialog, finalParent);
-				dialog.setVisible(true);
-			});
+		executeOnSwingWithoutBlocking(() -> {
+			DockingDialog dialog =
+				DockingDialog.createDialog(finalParent, passwordDialog, finalParent);
+			dialog.setVisible(true);
+		});
 
 		JDialog dialog = waitForJDialog(dialogTitle);
 		assertNotNull(dialog);
@@ -159,7 +164,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 	private void showSplashScreen(final boolean makeVisible) {
 
 		if (makeVisible) {
-			SplashScreen splash = runSwing(() -> SplashScreen.showSplashScreen());
+			SplashScreen splash = SplashScreen.showNow();
 			assertNotNull("Failed showing splash screen", splash);
 			waitForSwing();
 			return;

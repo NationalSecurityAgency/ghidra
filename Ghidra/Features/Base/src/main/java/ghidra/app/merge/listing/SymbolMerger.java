@@ -399,7 +399,7 @@ class SymbolMerger extends AbstractListingMerger {
 			tempLatestChangeIDs.length);
 		Arrays.sort(this.latestChangeIDs);
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setProgress(monitor.getProgress() + 1);
 		getPrimariesAdded(this.myAddIDs, mySymTab, myPrimaryAddIDs, mySetPrimary);
 		getPrimariesAdded(this.latestAddIDs, latestSymTab, latestPrimaryAddIDs, latestSetPrimary);
@@ -419,7 +419,7 @@ class SymbolMerger extends AbstractListingMerger {
 		long[] uniqueIDs = new long[first.length];
 		int u = 0;
 		for (long element : first) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(monitor.getProgress() + 1);
 			boolean matched = false;
 			for (long element2 : second) {
@@ -639,7 +639,7 @@ class SymbolMerger extends AbstractListingMerger {
 		if (currentMonitor != monitor) {
 			currentMonitor = monitor;
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		setupSymbolChanges(monitor); // Creates ID arrays used by processing methods.
 
@@ -754,7 +754,7 @@ class SymbolMerger extends AbstractListingMerger {
 			monitor.initialize(list.size());
 			for (int i = 0; i < list.size(); i++) {
 				monitor.setProgress(i);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				long id = list.get(i);
 				Symbol resultSymbol = resultSymTab.getSymbol(id);
 				if (resultSymbol == null) {
@@ -790,7 +790,7 @@ class SymbolMerger extends AbstractListingMerger {
 		monitor.initialize(len);
 		for (int i = 0; i < len; i++) {
 			monitor.setProgress(i);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long id = myRemoveIDs[i];
 			Symbol originalSym = originalSymTab.getSymbol(id);
 			SymbolType originalType = originalSym.getSymbolType();
@@ -829,7 +829,7 @@ class SymbolMerger extends AbstractListingMerger {
 		monitor.initialize(len);
 		for (int i = 0; i < len; i++) {
 			monitor.setProgress(i);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			incrementProgress(1);
 			long id = myModifiedIDs[i];
 			Symbol mySym = mySymTab.getSymbol(id);
@@ -1027,7 +1027,7 @@ class SymbolMerger extends AbstractListingMerger {
 		monitor.initialize(len);
 		for (int i = 0; i < len; i++) {
 			monitor.setProgress(i);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			incrementProgress(1);
 			long id = myAnchorChangeIDs[i];
 			Symbol mySym = mySymTab.getSymbol(id);
@@ -1051,7 +1051,7 @@ class SymbolMerger extends AbstractListingMerger {
 		AddressIterator iter = mySetPrimary.getAddresses(true);
 		while (iter.hasNext()) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			incrementProgress(1);
 			Address addr = iter.next();
 			Symbol myPrimary = mySymTab.getPrimarySymbol(addr);
@@ -1092,7 +1092,7 @@ class SymbolMerger extends AbstractListingMerger {
 		int len = myAddIDs.length;
 		monitor.initialize(len);
 		for (int i = 0; i < len; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			incrementProgress(1);
 			monitor.incrementProgress(1);
 			long id = myAddIDs[i];
@@ -1205,7 +1205,7 @@ class SymbolMerger extends AbstractListingMerger {
 		MultiAddressIterator multiIter =
 			new MultiAddressIterator(new AddressIterator[] { originalIter, latestIter, myIter });
 		while (multiIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address[] addrs = multiIter.nextAddresses();
 			if (addrs[0] != null) {
 				if (addrs[1] == null || addrs[2] == null) {
@@ -1232,7 +1232,7 @@ class SymbolMerger extends AbstractListingMerger {
 		// Remove entry points if possible.
 		AddressIterator iter = removeEntryPts.getAddresses(true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = iter.next();
 			tempResultSymTab.removeExternalEntryPoint(addr);
 			incrementProgress(1);
@@ -1240,7 +1240,7 @@ class SymbolMerger extends AbstractListingMerger {
 		// Add entry points if possible.
 		iter = addEntryPts.getAddresses(true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = iter.next();
 			tempResultSymTab.addExternalEntryPoint(addr);
 			incrementProgress(1);
@@ -1515,18 +1515,18 @@ class SymbolMerger extends AbstractListingMerger {
 
 	public void merge(int progressMinimum, int progressMaximum, TaskMonitor monitor)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setProgress(0);
 		clearResolveInfo();
 		autoMerge(progressMinimum, progressMaximum, monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		mergeConflicts(monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		processDeferredRemoves(monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		infoBuf.append(getDeferredRemovesInfo());
 		infoBuf.append(getRenamedConflictsInfo());
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		showResolveInfo();
 	}
 
@@ -2919,15 +2919,15 @@ class SymbolMerger extends AbstractListingMerger {
 		private final static long serialVersionUID = 1;
 
 		public boolean add(long l) {
-			return super.add(new Long(l));
+			return super.add(Long.valueOf(l));
 		}
 
 		public boolean contains(long l) {
-			return super.contains(new Long(l));
+			return super.contains(Long.valueOf(l));
 		}
 
 		public boolean remove(long l) {
-			return super.remove(new Long(l));
+			return super.remove(Long.valueOf(l));
 		}
 	}
 

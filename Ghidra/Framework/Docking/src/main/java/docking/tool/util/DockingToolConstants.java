@@ -23,8 +23,7 @@ import docking.Tool;
 public interface DockingToolConstants {
 
 	/**
-	* Name of options for key bindings that map action name to a
-	* key stroke object.
-	*/
+	 * Name of options for key bindings that map action name to a key stroke or mouse binding.
+	 */
 	public final static String KEY_BINDINGS = "Key Bindings";
 }

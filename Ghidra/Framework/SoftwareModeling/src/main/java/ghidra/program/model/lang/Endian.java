@@ -28,14 +28,14 @@ public enum Endian {
 		this.shortName = shortName;
 	}
 
-	public static Endian toEndian(String endianess) {
-		if (endianess != null) {
-			if ((Endian.BIG.toString().equalsIgnoreCase(endianess)) ||
-				(Endian.BIG.toShortString().equalsIgnoreCase(endianess))) {
+	public static Endian toEndian(String endianness) {
+		if (endianness != null) {
+			if ((Endian.BIG.toString().equalsIgnoreCase(endianness)) ||
+				(Endian.BIG.toShortString().equalsIgnoreCase(endianness))) {
 				return Endian.BIG;
 			}
-			else if ((Endian.LITTLE.toString().equalsIgnoreCase(endianess)) ||
-				(Endian.LITTLE.toShortString().equalsIgnoreCase(endianess))) {
+			else if ((Endian.LITTLE.toString().equalsIgnoreCase(endianness)) ||
+				(Endian.LITTLE.toShortString().equalsIgnoreCase(endianness))) {
 				return Endian.LITTLE;
 			}
 			else {

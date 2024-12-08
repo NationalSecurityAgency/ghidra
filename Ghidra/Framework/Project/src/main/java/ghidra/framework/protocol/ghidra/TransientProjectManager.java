@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import ghidra.framework.Application;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.ProjectLocator;
@@ -71,8 +72,9 @@ public class TransientProjectManager {
 	}
 
 	private TransientProjectManager() {
-		Runtime.getRuntime().addShutdownHook(
-			new Thread((Runnable) () -> dispose(), "TransientProjectManager Shutdown Hook"));
+		Runtime.getRuntime()
+				.addShutdownHook(new Thread((Runnable) () -> dispose(),
+					"TransientProjectManager Shutdown Hook"));
 	}
 
 	/**
@@ -80,8 +82,6 @@ public class TransientProjectManager {
 	 * connections. WARNING: This method intended for testing only.
 	 */
 	public synchronized void dispose() {
-		// TODO: server handles may be shared with non-transient projects
-
 		TransientProjectData[] projectDataArray =
 			repositoryMap.values().toArray(new TransientProjectData[repositoryMap.size()]);
 		for (TransientProjectData projectData : projectDataArray) {
@@ -173,7 +173,7 @@ public class TransientProjectManager {
 	private TransientProjectData createTransientProject(RepositoryAdapter repository,
 			RepositoryInfo repositoryInfo) throws IOException {
 
-		File tmp = File.createTempFile("ghidraPrj", "");
+		File tmp = Application.createTempFile("ghidraPrj", "");
 		tmp.delete();
 
 		ProjectLocator tmpProjectLocation = new TransientProjectStorageLocator(

@@ -165,7 +165,7 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 					}
 				}
 				for (DomainFile currentDF : modifiedCheckedOutFiles) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					monitor.setMessage("Undoing Check Out " + currentDF.getName());
 					currentDF.undoCheckout(saveCopy);
 				}

@@ -67,7 +67,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param hint the hint text
 	 * @param required true, if the field should be marked as required
 	 * @param verifier input verifier, or null if none needed
@@ -76,9 +76,17 @@ public class HintTextField extends JTextField {
 		this.hint = hint;
 		this.required = required;
 		this.verifier = verifier;
+
 		addListeners();
-		setAttributes();
 		validateField();
+	}
+
+	/**
+	 * Sets the hint for this text field
+	 * @param hint the hint text
+	 */
+	public void setHint(String hint) {
+		this.hint = hint;
 	}
 
 	/**
@@ -129,6 +137,7 @@ public class HintTextField extends JTextField {
 
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setColor(Messages.HINT);
+		g2.setFont(g2.getFont().deriveFont(Font.ITALIC));
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		Dimension size = getSize();
@@ -141,7 +150,7 @@ public class HintTextField extends JTextField {
 	/**
 	 * Sets whether the field is required or not. If so, it will be rendered
 	 * differently to indicate that to the user.
-	 * 
+	 *
 	 * @param required true if required, false otherwise
 	 */
 	public void setRequired(boolean required) {
@@ -159,7 +168,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Returns true if the field contains valid input.
-	 * 
+	 *
 	 * @return true if valid, false otherwise
 	 */
 	public boolean isFieldValid() {
@@ -177,15 +186,7 @@ public class HintTextField extends JTextField {
 	}
 
 	/**
-	 * Sets font/color attributes for the field.
-	 */
-	private void setAttributes() {
-		setFont(getFont().deriveFont(Font.PLAIN));
-		setForeground(new GColor("color.fg.textfield.hint"));
-	}
-
-	/**
-	 * Checks the validity of the field and sets the appropriate 
+	 * Checks the validity of the field and sets the appropriate
 	 * field attributes.
 	 */
 	private void validateField() {

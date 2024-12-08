@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,7 +147,7 @@ public class TypesTest extends AbstractGenericTest {
 	// Below is just a small sampling of PrimitiveMsType variations.
 	@Test
 	public void testPrimitiveMsType0000() {
-		AbstractMsType type = pdb.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, 0x0000));
+		AbstractMsType type = pdb.getTypeRecord(RecordNumber.typeRecordNumber(0x0000));
 		assertEquals(type instanceof PrimitiveMsType, true);
 		String result = type.toString().trim();
 		assertEquals("T_NOTYPE", result);
@@ -155,7 +155,7 @@ public class TypesTest extends AbstractGenericTest {
 
 	@Test
 	public void testPrimitiveMsType0110() {
-		AbstractMsType type = pdb.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, 0x0110));
+		AbstractMsType type = pdb.getTypeRecord(RecordNumber.typeRecordNumber(0x0110));
 		assertEquals(type instanceof PrimitiveMsType, true);
 		String result = type.toString().trim();
 		assertEquals("signed char near*", result);
@@ -1536,7 +1536,6 @@ public class TypesTest extends AbstractGenericTest {
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:REGISTER: al, Type: DummyMsType, registerSymbolName][0:void]",
 			result);
-
 	}
 
 	@Test
@@ -1968,8 +1967,7 @@ public class TypesTest extends AbstractGenericTest {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OverloadedMethod16MsType.PDB_ID);
 		int count = ((AbstractMethodListMsType) pdb
-				.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, methodList16MsType1)))
-						.getListSize();
+				.getTypeRecord(RecordNumber.typeRecordNumber(methodList16MsType1))).getListSize();
 		writer.putUnsignedShort(count);
 		writer.putUnsignedShort(methodList16MsType1); // type index of MethodList16MsType
 		writer.putByteLengthPrefixedString("overloadedMethodName");
@@ -1988,8 +1986,7 @@ public class TypesTest extends AbstractGenericTest {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OverloadedMethodStMsType.PDB_ID);
 		int count = ((AbstractMethodListMsType) pdb
-				.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, methodList16MsType1)))
-						.getListSize();
+				.getTypeRecord(RecordNumber.typeRecordNumber(methodList16MsType1))).getListSize();
 		writer.putUnsignedShort(count);
 		writer.putInt(methodListMsType1); // type index of MethodListMsType
 		writer.putByteLengthPrefixedString("overloadedMethodName");
@@ -2008,8 +2005,7 @@ public class TypesTest extends AbstractGenericTest {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(OverloadedMethodMsType.PDB_ID);
 		int count = ((AbstractMethodListMsType) pdb
-				.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, methodList16MsType1)))
-						.getListSize();
+				.getTypeRecord(RecordNumber.typeRecordNumber(methodList16MsType1))).getListSize();
 		writer.putUnsignedShort(count);
 		writer.putInt(methodListMsType1); // type index of MethodListMsType
 		writer.putNullTerminatedString("overloadedMethodName");

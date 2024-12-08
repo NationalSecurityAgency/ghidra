@@ -87,7 +87,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			formatModelChanged(null);
 		}
 
-		// There are quite a few options that affect the display of the the layouts.  Flush
+		// There are quite a few options that affect the display of the layouts.  Flush
 		// the cache on any change, as it is simpler than tracking individual options.
 		layoutCache.clear();
 	}
@@ -263,7 +263,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 		else if (dt instanceof Structure) {
 			int offset = (int) address.subtract(parent.getMinAddress());
-			data = parent.getComponentAt(offset);
+			data = parent.getComponentContaining(offset);
 
 			// Need to handle filler in a special way.
 			if (data == null) {
@@ -281,7 +281,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 		else {
 			int offset = (int) address.subtract(parent.getMinAddress());
-			data = parent.getComponentAt(offset);
+			data = parent.getComponentContaining(offset);
 		}
 		if (data == null) {
 			return null;
@@ -514,17 +514,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	@Override
-	public void formatModelAdded(FieldFormatModel model) {
-		notifyModelSizeChanged();
-	}
-
-	@Override
 	public void formatModelChanged(FieldFormatModel model) {
-		notifyModelSizeChanged();
-	}
-
-	@Override
-	public void formatModelRemoved(FieldFormatModel model) {
 		notifyModelSizeChanged();
 	}
 

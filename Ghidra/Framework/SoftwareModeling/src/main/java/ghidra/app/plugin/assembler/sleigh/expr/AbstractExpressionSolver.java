@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
@@ -54,9 +53,9 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 	 * @return the resolution
 	 * @throws NeedsBackfillException if the expression refers to an undefined symbol
 	 */
-	public abstract AssemblyResolution solve(T exp, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException;
+	public abstract AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			T exp, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) throws NeedsBackfillException;
 
 	/**
 	 * Attempt to get a constant value for the expression

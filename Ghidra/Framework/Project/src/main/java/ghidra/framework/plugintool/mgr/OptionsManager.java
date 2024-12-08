@@ -23,6 +23,7 @@ import javax.swing.tree.TreePath;
 
 import org.jdom.Element;
 
+import docking.options.OptionsService;
 import docking.options.editor.OptionsDialog;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
@@ -30,7 +31,6 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -238,7 +238,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 			oldEditor.dispose();
 		}
 
-		keyBindingOptions.registerOptionsEditor(new KeyBindingOptionsEditor());
+		keyBindingOptions.registerOptionsEditor(() -> new KeyBindingOptionsEditor());
 		OptionsDialog dialog =
 			new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
 				null, true);
@@ -271,7 +271,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 		private KeyBindingsPanel panel;
 
 		KeyBindingOptionsEditor() {
-			panel = new KeyBindingsPanel(tool, getOptions(DockingToolConstants.KEY_BINDINGS));
+			panel = new KeyBindingsPanel(tool);
 		}
 
 		@Override

@@ -56,7 +56,7 @@ public class GTreeCollapseAllTask extends GTreeTask {
 		if (node.isLeaf()) {
 			return;
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		List<GTreeNode> allChildren = node.getChildren();
 		if (allChildren.size() == 0) {
 			return;
@@ -66,7 +66,7 @@ public class GTreeCollapseAllTask extends GTreeTask {
 			collapsePath(treePath, monitor);
 		}
 		for (GTreeNode child : allChildren) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			collapseNode(child, monitor);
 		}
 		monitor.incrementProgress(1);

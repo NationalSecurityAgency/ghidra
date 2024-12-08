@@ -49,7 +49,7 @@ public class ProgramInfo {
 	public String version;
 	/**The size of the addressing (eg, "32 bit"). @deprecated since version 2.1.*/
 	public String addressModel;
-	/**The endianess (eg, big or little).*/
+	/**The endianness (eg, big or little).*/
 	public String endian;
 	/**The absolute path of where the original executable was imported.*/
 	public String exePath;

@@ -48,7 +48,7 @@ public class RepackFid extends GhidraScript {
 		while(iterator.hasNext()) {								// Iterate through old records
 			DBRecord record = iterator.next();
 			newTable.putRecord(record);							// Copy as is into new table
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 	}

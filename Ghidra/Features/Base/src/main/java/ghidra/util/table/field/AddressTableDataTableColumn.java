@@ -15,8 +15,7 @@
  */
 package ghidra.util.table.field;
 
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
+import java.awt.Font;
 
 import ghidra.app.plugin.core.disassembler.AddressTable;
 import ghidra.docking.settings.Settings;
@@ -34,9 +33,10 @@ public class AddressTableDataTableColumn
 
 	private final GColumnRenderer<String> monospacedRenderer =
 		new AbstractGColumnRenderer<String>() {
+
 			@Override
-			protected void configureFont(JTable table, TableModel model, int column) {
-				setFont(getFixedWidthFont());
+			protected Font getDefaultFont() {
+				return fixedWidthFont;
 			}
 
 			@Override

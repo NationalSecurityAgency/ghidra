@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.DockingDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.dialogs.NumberInputDialog;
@@ -40,7 +40,6 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.plugin.core.stackeditor.StackEditorModel;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
-import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
@@ -320,7 +319,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName(),
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
-		runSwing(() -> action.actionPerformed(new ActionContext()), wait);
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()), wait);
 		waitForSwing();
 	}
 
@@ -370,6 +369,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	protected int getLength(int index) {
 		DataTypeComponent dtc = getComponent(index);
 		return (dtc != null) ? dtc.getLength() : -1;
+	}
+
+	protected DataType getDataType(Composite c, int index) {
+		DataTypeComponent dtc = c.getComponent(index);
+		return (dtc != null) ? dtc.getDataType() : null;
 	}
 
 	protected DataType getDataType(int index) {
@@ -470,6 +474,16 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		waitForSwing();
 	}
 
+	protected void downArrow() {
+		triggerActionKey(getTable(), 0, KeyEvent.VK_DOWN);
+		waitForSwing();
+	}
+
+	protected void downArrow(JComponent component) {
+		triggerActionKey(component, 0, KeyEvent.VK_DOWN);
+		waitForSwing();
+	}
+
 	protected void endKey() {
 		triggerActionKey(getKeyEventDestination(), 0, KeyEvent.VK_END);
 		waitForSwing();
@@ -481,20 +495,6 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 
 	protected void endTransaction(final boolean saveChanges) {
 		program.endTransaction(txId, saveChanges);
-	}
-
-	protected class RestoreListener implements DomainObjectListener {
-		@Override
-		public void domainObjectChanged(DomainObjectChangedEvent event) {
-			if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-				Object source = event.getSource();
-				if (source instanceof DataTypeManagerDomainObject) {
-					DataTypeManagerDomainObject restoredDomainObject =
-						(DataTypeManagerDomainObject) source;
-					provider.domainObjectRestored(restoredDomainObject);
-				}
-			}
-		}
 	}
 
 	protected class StatusListener extends CompositeEditorModelAdapter {

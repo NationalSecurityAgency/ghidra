@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,11 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.FunctionSupplierContext;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -102,6 +104,16 @@ public class CallTreePlugin extends ProgramPlugin {
 	}
 
 	@Override
+	public void readConfigState(SaveState saveState) {
+		primaryProvider.readConfigState(saveState);
+	}
+
+	@Override
+	public void writeConfigState(SaveState saveState) {
+		primaryProvider.writeConfigState(saveState);
+	}
+
+	@Override
 	protected void dispose() {
 		List<CallTreeProvider> copy = new ArrayList<>(providers);
 		for (CallTreeProvider provider : copy) {
@@ -126,23 +138,30 @@ public class CallTreePlugin extends ProgramPlugin {
 
 		// use the name of the provider so that the shared key binding data will get used
 		String actionName = "Static Function Call Trees";
-		showCallTreeFromMenuAction =
-			new DockingAction(actionName, getName()) {
-				@Override
-				public void actionPerformed(ActionContext context) {
-					showOrCreateNewCallTree(currentLocation);
+		showCallTreeFromMenuAction = new DockingAction(actionName, getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				showOrCreateNewCallTree(currentLocation);
+			}
+
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				if (context instanceof ListingActionContext) {
+					return true;
 				}
 
-				@Override
-				public boolean isAddToPopup(ActionContext context) {
-					return (context instanceof ListingActionContext);
+				if (context instanceof FunctionSupplierContext functionContext) {
+					return functionContext.hasFunctions();
 				}
-			};
+
+				return false;
+			}
+		};
 
 		showCallTreeFromMenuAction.setPopupMenuData(new MenuData(
 			new String[] { "References", "Show Call Trees" }, PROVIDER_ICON, "ShowReferencesTo"));
-		showCallTreeFromMenuAction.setHelpLocation(
-			new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
+		showCallTreeFromMenuAction
+				.setHelpLocation(new HelpLocation("CallTreePlugin", "Call_Tree_Plugin"));
 		showCallTreeFromMenuAction.setDescription("Shows the Function Call Trees window for the " +
 			"item under the cursor.  The new window will not change along with the Listing cursor.");
 		tool.addAction(showCallTreeFromMenuAction);
@@ -150,6 +169,10 @@ public class CallTreePlugin extends ProgramPlugin {
 
 	private void creatAndShowProvider() {
 		CallTreeProvider provider = new CallTreeProvider(this, false);
+
+		CallTreeOptions callTreeOptions = primaryProvider.getCallTreeOptions();
+		provider.setCallTreeOptions(callTreeOptions);
+
 		providers.add(provider);
 		provider.initialize(currentProgram, currentLocation);
 		tool.showComponentProvider(provider, true);

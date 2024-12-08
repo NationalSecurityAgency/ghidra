@@ -250,7 +250,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			TaskMonitor tMonitor) throws CancelledException {
 		Map<Function, Set<Address>> funcsToCalls = new HashMap<>();
 		for (Function func : program.getFunctionManager().getFunctionsNoStubs(true)) {
-			tMonitor.checkCanceled();
+			tMonitor.checkCancelled();
 			for (Instruction inst : program.getListing().getInstructions(func.getBody(), true)) {
 				if (tester.test(inst)) {
 					Set<Address> callSites = funcsToCalls.get(func);
@@ -281,7 +281,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		Register syscallReg = program.getLanguage().getRegister(syscallRegister);
 		for (Function func : funcsToCalls.keySet()) {
 			Address start = func.getEntryPoint();
-			ContextEvaluator eval = new ConstantPropagationContextEvaluator(true);
+			ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, true);
 			SymbolicPropogator symEval = new SymbolicPropogator(program);
 			symEval.flowConstants(start, func.getBody(), eval, true, tMonitor);
 			for (Address callSite : funcsToCalls.get(func)) {

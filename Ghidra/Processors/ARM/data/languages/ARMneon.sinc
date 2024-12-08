@@ -619,9 +619,9 @@ define pcodeop SHA1HashUpdateParity;
 	local op1 = Qd;
 	local op2 = Qn;
 	local op3 = Qm;
-	local op2lo:8 = op2(0);
-	local op1hi:8 = op1(8);
-	op2 = zext(op2lo << 64) | zext(op1hi);
+	local op2LowerHalf = zext(op2[0,64]) << 64;
+	local op1UpperHalf = zext(op1[64,64]);
+	op2 = op2LowerHalf | op1UpperHalf;
 	Qd = op1 ^ op2 ^ op3;
 }
 
@@ -637,15 +637,15 @@ define pcodeop SHA1HashUpdateParity;
 	local X = Qd;
 	local Y = Qm;
 	local Tm = X ^ (Y >> 32);
-	local t0:4 = Tm(0);
-	local t1:4 = Tm(4);
-	local t2:4 = Tm(8);
-	local t3:4 = Tm(12);
+	local t0:4 = Tm[0, 32];
+	local t1:4 = Tm[32, 32];
+	local t2:4 = Tm[64, 32];
+	local t3:4 = Tm[96, 32];
 	local W0:4 = (t0 << 1 | t0 >> 31);
 	local W1:4 = (t1 << 1 | t1 >> 31);
 	local W2:4 = (t2 << 1 | t2 >> 31);
 	local W3:4 = (t3 << 1 | t3 >> 31) ^ (t0 << 2 | t0 >> 30);
-	Qd = zext(W3 << 96) | zext(W2 << 64) | zext(W1 << 32) | zext(W0);
+	Qd = (zext(W3) << 96) | (zext(W2) << 64) | (zext(W1) << 32) | zext(W0);
 }
 
 #######
@@ -2507,24 +2507,24 @@ vdupSize2: 8	is c2222=1 & c0505=0	{ }
 vdupSize2: 16	is c2222=0 & c0505=1	{ }
 vdupSize2: 32	is c2222=0 & c0505=0	{ }
 
-vdupRd8: Rd	is Rd & c2222=1 & c0505=0
+vdupRd8: VRd	is VRd & c2222=1 & c0505=0
 {
 	val:8 = 0;
-	local tmpRd = Rd;
+	local tmpRd = VRd;
 	replicate1to8(tmpRd:1, val);
 	export val;
 }
-vdupRd8: Rd	is Rd & c2222=0 & c0505=1
+vdupRd8: VRd	is VRd & c2222=0 & c0505=1
 {
 	val:8 = 0;
-	local tmpRd = Rd;
+	local tmpRd = VRd;
 	replicate2to8(tmpRd:2, val);
 	export val;
 }
-vdupRd8: Rd	is Rd & c2222=0 & c0505=0
+vdupRd8: VRd	is VRd & c2222=0 & c0505=0
 {
 	val:8 = 0;
-	local tmpRd = Rd;
+	local tmpRd = VRd;
 	replicate4to8(tmpRd:4, val);
 	export val;
 }
@@ -2536,8 +2536,8 @@ vdupRd16: vdupRd8	is vdupRd8
 	export val; 
 }
 
-:vdup^COND^"."^vdupSize2 Dn,vdupRd8  is (( $(AMODE) & ARMcond=1 & c2327=0x1d &     c2021=0 &     c0811=11 &     c0606=0 &     c0004=0x10) |
-                                        ($(TMODE_E) &         thv_c2327=0x1d & thv_c2021=0 & thv_c0811=11 & thv_c0606=0 & thv_c0004=0x10 ) ) & COND & Dn & vdupSize2 & vdupRd8
+:vdup^COND^"."^vdupSize2 Dn,VRd  is (( $(AMODE) & ARMcond=1 & c2327=0x1d &     c2021=0 &     c0811=11 &     c0606=0 &     c0004=0x10) |
+                                        ($(TMODE_E) &         thv_c2327=0x1d & thv_c2021=0 & thv_c0811=11 & thv_c0606=0 & thv_c0004=0x10 ) ) & VRd & COND & Dn & vdupSize2 & vdupRd8
 {
 	build COND;
 	build vdupRd8;
@@ -2545,8 +2545,8 @@ vdupRd16: vdupRd8	is vdupRd8
 	Dn = vdupRd8;
 }
 
-:vdup^COND^"."^vdupSize2 Qn,vdupRd16  is (( $(AMODE) & ARMcond=1 & c2327=0x1d &     c2021=2 &     c0811=11 &     c0606=0 &     c0004=0x10) |
-                                         ($(TMODE_E) &         thv_c2327=0x1d & thv_c2021=2 & thv_c0811=11 & thv_c0606=0 & thv_c0004=0x10 ) ) & COND & Qn & vdupSize2 & vdupRd16
+:vdup^COND^"."^vdupSize2 Qn,VRd  is (( $(AMODE) & ARMcond=1 & c2327=0x1d &     c2021=2 &     c0811=11 &     c0606=0 &     c0004=0x10) |
+                                         ($(TMODE_E) &         thv_c2327=0x1d & thv_c2021=2 & thv_c0811=11 & thv_c0606=0 & thv_c0004=0x10 ) ) & VRd & COND & Qn & vdupSize2 & vdupRd16
 {
 	build COND;
 	build vdupRd16;

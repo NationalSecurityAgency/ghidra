@@ -159,9 +159,10 @@ public abstract class LocalFolderItem implements FolderItem {
 	File getDataDir() {
 		synchronized (fileSystem) {
 			// Use hidden DB directory
-			return new File(propertyFile.getFolder(), LocalFileSystem.HIDDEN_DIR_PREFIX +
-				LocalFileSystem.escapeHiddenDirPrefixChars(propertyFile.getStorageName()) +
-				DATA_DIR_EXTENSION);
+			return new File(propertyFile.getFolder(),
+				LocalFileSystem.HIDDEN_DIR_PREFIX +
+					LocalFileSystem.escapeHiddenDirPrefixChars(propertyFile.getStorageName()) +
+					DATA_DIR_EXTENSION);
 		}
 	}
 
@@ -187,8 +188,8 @@ public abstract class LocalFolderItem implements FolderItem {
 					throw new FileInUseException(getName() + " versioning error", e);
 				}
 				if (isCheckedOut) {
-					throw new FileInUseException(getName() + " version " + version +
-						" is checked out");
+					throw new FileInUseException(
+						getName() + " version " + version + " is checked out");
 				}
 			}
 			else if (!isVersioned && getCheckoutId() != DEFAULT_CHECKOUT_ID) {
@@ -373,7 +374,8 @@ public abstract class LocalFolderItem implements FolderItem {
 			}
 			finally {
 				if (!success) {
-					if (useDataDir && !dataDir.exists() && chkDir.exists() && propertyFile.exists()) {
+					if (useDataDir && !dataDir.exists() && chkDir.exists() &&
+						propertyFile.exists()) {
 						chkDir.renameTo(dataDir);
 					}
 				}
@@ -657,8 +659,7 @@ public abstract class LocalFolderItem implements FolderItem {
 		synchronized (fileSystem) {
 
 			ItemCheckoutStatus coStatus =
-				checkoutMgr.newCheckout(checkoutType, 
-						user, getCurrentVersion(), projectPath);
+				checkoutMgr.newCheckout(checkoutType, user, getCurrentVersion(), projectPath);
 			if (checkoutType != CheckoutType.NORMAL && coStatus != null && getFileID() == null) {
 				// Establish missing fileID for on exclusive checkout
 				resetFileID();
@@ -808,12 +809,18 @@ public abstract class LocalFolderItem implements FolderItem {
 			else if (fileType == DATABASE_FILE_TYPE) {
 				return new LocalDatabaseItem(fileSystem, propertyFile);
 			}
+			else {
+				log.error("Item has unknown content type: " +
+					new File(propertyFile.getFolder(), propertyFile.getStorageName()));
+			}
 		}
 		catch (FileNotFoundException e) {
-			log.error("Item may be corrupt due to missing file: " + propertyFile.getPath(), e);
+			log.error("Item may be corrupt due to missing file: " +
+				new File(propertyFile.getFolder(), propertyFile.getStorageName()), e);
 		}
 		catch (IOException e) {
-			log.error("Item may be corrupt: " + propertyFile.getPath(), e);
+			log.error("Item may be corrupt: " +
+				new File(propertyFile.getFolder(), propertyFile.getStorageName()), e);
 		}
 		return new UnknownFolderItem(fileSystem, propertyFile);
 	}

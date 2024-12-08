@@ -217,6 +217,9 @@ public class GTableHeader extends JTableHeader {
 		}
 
 		TableCellRenderer headerRenderer = column.getHeaderRenderer();
+		if (headerRenderer == null) {
+			return null;
+		}
 		Component component = headerRenderer.getTableCellRendererComponent(getTable(),
 			column.getHeaderValue(), false, false, 0, 0);
 		int prefWidth = component.getPreferredSize().width;

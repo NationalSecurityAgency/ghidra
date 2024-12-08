@@ -25,7 +25,7 @@ import javax.swing.border.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
@@ -44,7 +44,7 @@ import ghidra.util.layout.VerticalLayout;
 /**
  * Dialog used to a label or to edit an existing label.
  */
-public class AddEditDialog extends DialogComponentProvider {
+public class AddEditDialog extends ReusableDialogComponentProvider {
 	private static final int MAX_RETENTION = 10;
 	private PluginTool tool;
 	private TitledBorder nameBorder;
@@ -59,6 +59,8 @@ public class AddEditDialog extends DialogComponentProvider {
 	private Address addr;
 	private JCheckBox pinnedCheckBox;
 
+	private boolean isReusable = false; // most clients are not reusable
+
 	public AddEditDialog(String title, PluginTool tool) {
 		super(title, true, true, true, false);
 		this.tool = tool;
@@ -72,6 +74,30 @@ public class AddEditDialog extends DialogComponentProvider {
 		addCancelButton();
 
 		setDefaultButton(okButton);
+	}
+
+	/**
+	 * Signals that the client wishes to reuse the dialog instead of creating a new instance each
+	 * time the dialog is shown.  
+	 * <p>
+	 * When not reusable, closing this dialog will call {@link #dispose()}.
+	 * 
+	 * @param isReusable true when being reused
+	 */
+	public void setReusable(boolean isReusable) {
+		this.isReusable = isReusable;
+	}
+
+	@Override
+	public void close() {
+		if (isReusable) {
+			// call the default parent close, which does *not* call dispose
+			super.close();
+		}
+		else {
+			closeDialog();
+			dispose();
+		}
 	}
 
 	/**
@@ -111,10 +137,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 * @param targetProgram the program containing the symbol
 	 */
 	public void editLabel(Symbol targetSymbol, Program targetProgram) {
-		ComponentProvider componentProvider =
-			tool.getComponentProvider(PluginConstants.CODE_BROWSER);
-		JComponent component = componentProvider.getComponent();
-		editLabel(targetSymbol, targetProgram, component);
+		editLabel(targetSymbol, targetProgram, (Component) null);
 	}
 
 	/**
@@ -527,8 +550,8 @@ public class AddEditDialog extends DialogComponentProvider {
 			@Override
 			public Dimension getPreferredSize() {
 				Dimension size = super.getPreferredSize();
-				// change the preferred size to use the width determined by the # of columns in 
-				// combo box editor instead of the largest item in the combo box data model to 
+				// change the preferred size to use the width determined by the # of columns in
+				// combo box editor instead of the largest item in the combo box data model to
 				// prevent the dialog from growing huge when a large label gets added to its recent
 				// items
 				Dimension editorSize = getEditor().getEditorComponent().getPreferredSize();
@@ -607,7 +630,11 @@ public class AddEditDialog extends DialogComponentProvider {
 	}
 
 	private String getText() {
-		return labelNameChoices.getText();
+		String text = labelNameChoices.getText();
+		if (text != null) {
+			text = text.trim();
+		}
+		return text;
 	}
 
 	public class NamespaceWrapper {

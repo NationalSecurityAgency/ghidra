@@ -24,7 +24,6 @@ import ghidra.feature.vt.api.correlator.program.ExactMatchBytesProgramCorrelator
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -41,7 +40,6 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 	protected ArrayList<String> errors;
 
 	public AbstractCorrelatorTest() {
-		super();
 	}
 
 	protected abstract Program getSourceProgram();
@@ -54,20 +52,23 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 
 	@Before
 	public void setUp() throws Exception {
-
+		errors = new ArrayList<>();
 		env = new TestEnv();
 		sourceProgram = getSourceProgram();
 		destinationProgram = getDestinationProgram();
-		errors = new ArrayList<>();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(destinationProgram);
-		env.release(sourceProgram);
+		if (destinationProgram != null) {
+			env.release(destinationProgram);
+			destinationProgram = null;
+		}
+		if (sourceProgram != null) {
+			env.release(sourceProgram);
+			sourceProgram = null;
+		}
 		env.dispose();
-		sourceProgram = null;
-		destinationProgram = null;
 		env = null;
 
 		if (errors.size() > 0) {
@@ -81,13 +82,11 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 	protected void exerciseFunctionsForFactory(final VTProgramCorrelatorFactory factory,
 			AddressSetView sourceSetThatShouldBeFound) throws Exception {
 		String name = factory.getName();
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
+		VTSession session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
 		try {
 			int sessionTransaction = session.startTransaction(name);
 			try {
-				PluginTool serviceProvider = env.getTool();
 				VTAssociationManager manager = session.getAssociationManager();
 
 				AddressSetView sourceAddressSet =
@@ -98,8 +97,8 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 				VTOptions options;
 				VTProgramCorrelator correlator;
 				options = factory.createDefaultOptions();
-				correlator = factory.createCorrelator(serviceProvider, sourceProgram,
-					sourceAddressSet, destinationProgram, destinationAddressSet, options);
+				correlator = factory.createCorrelator(sourceProgram, sourceAddressSet,
+					destinationProgram, destinationAddressSet, options);
 				correlator.correlate(session, TaskMonitor.DUMMY);
 
 				FunctionManager functionManager = sourceProgram.getFunctionManager();
@@ -148,13 +147,11 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 	protected void exercisePreciseMatchesForFactory(VTProgramCorrelatorFactory factory,
 			Map<Address, Address> map) throws Exception {
 		String name = factory.getName();
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
+		VTSession session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
 		try {
 			int sessionTransaction = session.startTransaction(name);
 			try {
-				PluginTool serviceProvider = env.getTool();
 				VTAssociationManager manager = session.getAssociationManager();
 
 				AddressSetView sourceAddressSet =
@@ -165,8 +162,8 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 				VTOptions options;
 				VTProgramCorrelator correlator;
 				options = factory.createDefaultOptions();
-				correlator = factory.createCorrelator(serviceProvider, sourceProgram,
-					sourceAddressSet, destinationProgram, destinationAddressSet, options);
+				correlator = factory.createCorrelator(sourceProgram, sourceAddressSet,
+					destinationProgram, destinationAddressSet, options);
 				correlator.correlate(session, TaskMonitor.DUMMY);
 
 				HashMap<Address, Address> mapCopy = new HashMap<>(map);

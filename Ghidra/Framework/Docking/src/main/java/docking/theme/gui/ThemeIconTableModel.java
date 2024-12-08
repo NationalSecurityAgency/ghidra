@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package docking.theme.gui;
 
 import java.awt.Component;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import javax.swing.*;
@@ -40,11 +39,40 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
 	private GThemeValuesCache valuesProvider;
+	private boolean showSystemValues;
 
 	public ThemeIconTableModel(GThemeValuesCache valuesProvider) {
 		super(new ServiceProviderStub());
 		this.valuesProvider = valuesProvider;
 		load();
+	}
+
+	public void setShowSystemValues(boolean show) {
+		this.showSystemValues = show;
+	}
+
+	public boolean isShowingSystemValues() {
+		return showSystemValues;
+	}
+
+	protected void filter() {
+
+		List<IconValue> filtered = new ArrayList<>();
+
+		for (IconValue iconValue : icons) {
+			String id = iconValue.getId();
+			if (showSystemValues) {
+				filtered.add(iconValue);
+				continue;
+			}
+
+			if (!Gui.isSystemId(id)) {
+				filtered.add(iconValue);
+			}
+
+		}
+
+		icons = filtered;
 	}
 
 	/**
@@ -70,6 +98,8 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		icons = currentValues.getIcons();
 		themeValues = valuesProvider.getThemeValues();
 		defaultValues = valuesProvider.getDefaultValues();
+
+		filter();
 	}
 
 	@Override
@@ -186,7 +216,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private class ThemeIconRenderer extends AbstractGColumnRenderer<ResolvedIcon> {
 
 		public ThemeIconRenderer() {
-			setFont(Gui.getFont("font.monospaced"));
+			setFont(getFixedWidthFont());
 		}
 
 		@Override
@@ -242,6 +272,6 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		}
 	}
 
-	private record ResolvedIcon(String id, String refId, Icon icon) {/**/}
-
+	private record ResolvedIcon(String id, String refId, Icon icon) {
+	}
 }

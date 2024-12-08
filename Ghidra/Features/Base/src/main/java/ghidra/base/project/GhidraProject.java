@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,7 +128,7 @@ public class GhidraProject {
 	 *
 	 * @param projectDirPath the directory path to contain the new Ghidra project.
 	 * @param projectName the name of the project to be created.
-	 * @param temporary if true, deletes the the project when it is closed - useful for testing.
+	 * @param temporary if true, deletes the project when it is closed - useful for testing.
 	 * @return an open ghidra project.
 	 * @throws IOException if there was a problem accessing the project
 	 */
@@ -371,7 +371,7 @@ public class GhidraProject {
 			throw new IOException("Cancelled");
 		}
 		if (id >= 0) {
-			openPrograms.put(program, new Integer(program.startTransaction("")));
+			openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 		}
 	}
 
@@ -443,7 +443,7 @@ public class GhidraProject {
 		}
 		finally {
 			if (success || id >= 0) {
-				openPrograms.put(program, new Integer(program.startTransaction("")));
+				openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 			}
 		}
 
@@ -497,7 +497,7 @@ public class GhidraProject {
 		}
 		finally {
 			if (success || id >= 0) {
-				openPrograms.put(program, new Integer(program.startTransaction("")));
+				openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 			}
 		}
 	}
@@ -515,7 +515,7 @@ public class GhidraProject {
 			throw new IllegalStateException("Cannot checkpoint a read-only program");
 		}
 		program.endTransaction(id.intValue(), true);
-		openPrograms.put(program, new Integer(program.startTransaction("")));
+		openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 	}
 
 	/**
@@ -530,7 +530,7 @@ public class GhidraProject {
 			throw new IllegalStateException("Cannot rollback a read-only program");
 		}
 		program.endTransaction(id.intValue(), false);
-		openPrograms.put(program, new Integer(program.startTransaction("")));
+		openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 	}
 
 	/**

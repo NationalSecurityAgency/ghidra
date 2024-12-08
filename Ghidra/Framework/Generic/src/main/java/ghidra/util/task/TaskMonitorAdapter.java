@@ -24,6 +24,9 @@ import ghidra.util.exception.CancelledException;
  * <p>
  * This class supports cancelling and cancel listener notification.  Cancelling must be enabled
  * via {@link #setCancelEnabled(boolean)}.
+ * <p>
+ * Use {@link WrappingTaskMonitor} if you need to override an existing TaskMonitor 
+ * instance's behavior.
  */
 public class TaskMonitorAdapter implements TaskMonitor {
 
@@ -54,8 +57,16 @@ public class TaskMonitorAdapter implements TaskMonitor {
 		return cancelled;
 	}
 
+	@Deprecated(since = "10.3")
 	@Override
 	public void checkCanceled() throws CancelledException {
+		if (cancelled) {
+			throw new CancelledException();
+		}
+	}
+
+	@Override
+	public void checkCancelled() throws CancelledException {
 		if (cancelled) {
 			throw new CancelledException();
 		}

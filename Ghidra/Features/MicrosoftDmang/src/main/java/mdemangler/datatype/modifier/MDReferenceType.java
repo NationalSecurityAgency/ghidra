@@ -17,8 +17,6 @@ package mdemangler.datatype.modifier;
 
 import mdemangler.MDException;
 import mdemangler.MDMang;
-import mdemangler.datatype.MDDataType;
-import mdemangler.datatype.MDDataTypeParser;
 
 /**
  * This class represents a "reference" data type within a Microsoft mangled symbol.
@@ -30,20 +28,22 @@ public class MDReferenceType extends MDModifierType {
 //	private static final String modifierTypeName = "&";
 //	private static final String modifierTypeName = "& ";
 
-	public MDReferenceType(MDMang dmang) {
+	public MDReferenceType(MDMang dmang, boolean isHighest, boolean isConst, boolean isVolatile) {
 		super(dmang);
+		if (isHighest) {
+			setConst(isConst);
+			setVolatile(isVolatile);
+		}
+		else {
+			setConst(false);
+			setVolatile(false);
+		}
 		cvMod.setReferenceType(); // TODO: where should this go? remove constructor? 
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		// cvMod.setReferenceType();
 		super.parseInternal();
-	}
-
-	@Override
-	protected MDDataType parseReferencedType() throws MDException {
-		return MDDataTypeParser.parseBasicDataType(dmang, false);
 	}
 
 	@Override

@@ -52,7 +52,7 @@ ldst_imm: tmp is b_30=1 & b_24=0 & b_21=0 & b_15=0 & b_14=0          & b_12=0   
 
 ldst_wback: "" is b_23=0 & b_1620=0b00000 { }
 ldst_wback: ", #"^ldst_imm is b_23=1 & b_1620=0b11111 & Rn_GPR64xsp & ldst_imm { Rn_GPR64xsp = tmp_ldXn; }
-ldst_wback: ", "^Rm_GPR64 is b_23=1 & Rn_GPR64xsp & Rm_GPR64 { Rn_GPR64xsp = Rm_GPR64; }
+ldst_wback: ", "^Rm_GPR64 is b_23=1 & Rn_GPR64xsp & Rm_GPR64 { Rn_GPR64xsp = Rn_GPR64xsp + Rm_GPR64; }
 
 # C7.2.177 LD1 (multiple structures) page C7-2415 line 141110 MATCH x0c402000/mask=xbfff2000
 # C7.2.177 LD1 (multiple structures) page C7-2415 line 141110 MATCH x0cc02000/mask=xbfe02000

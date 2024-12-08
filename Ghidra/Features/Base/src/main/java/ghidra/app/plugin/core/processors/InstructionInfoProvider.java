@@ -91,6 +91,11 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		tool = null;
 	}
 
+	@Override
+	public void componentHidden() {
+		setProgram(null);
+	}
+
 	/**
 	 * Define the Main panel.
 	 *
@@ -130,6 +135,10 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	void setAddress(Address address) {
+		if (program == null) {
+			return;
+		}
+
 		Instruction instruction = getInstruction(address);
 		myAddr = instruction != null ? instruction.getMinAddress() : address;
 		SleighDebugLogger debug = null;

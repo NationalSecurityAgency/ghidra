@@ -28,22 +28,25 @@ import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema
 import ghidra.dbg.target.schema.TargetObjectSchema.*;
 
 public class XmlTargetObjectSchemaTest {
-	protected static final String SCHEMA_XML = "" +
-		"<context>\n" +
-		"    <schema name=\"root\" canonical=\"yes\" elementResync=\"NEVER\" attributeResync=\"ONCE\">\n" +
-		"        <interface name=\"Process\" />\n" +
-		"        <interface name=\"Interpreter\" />\n" +
-		"        <element index=\"reserved\" schema=\"VOID\" />\n" +
-		"        <element schema=\"down1\" />\n" +
-		"        <attribute name=\"some_int\" schema=\"INT\" />\n" +
-		"        <attribute name=\"some_object\" schema=\"OBJECT\" required=\"yes\" fixed=\"yes\" hidden=\"yes\" />\n" +
-		"        <attribute schema=\"ANY\" hidden=\"yes\" />\n" +
-		"    </schema>\n" +
-		"    <schema name=\"down1\" elementResync=\"ALWAYS\" attributeResync=\"ALWAYS\">\n" +
-		"        <element schema=\"OBJECT\" />\n" +
-		"        <attribute schema=\"VOID\" fixed=\"yes\" hidden=\"yes\" />\n" +
-		"    </schema>\n" +
-		"</context>";
+	protected static final String SCHEMA_XML =
+		// Do not line-wrap or serialize test will fail
+		"""
+				<context>
+				    <schema name="root" canonical="yes" elementResync="NEVER" attributeResync="ONCE">
+				        <interface name="Process" />
+				        <interface name="Interpreter" />
+				        <element index="reserved" schema="VOID" />
+				        <element schema="down1" />
+				        <attribute name="some_int" schema="INT" />
+				        <attribute name="some_object" schema="OBJECT" required="yes" fixed="yes" hidden="yes" />
+				        <attribute schema="ANY" hidden="yes" />
+				        <attribute-alias from="_int" to="some_int" />
+				    </schema>
+				    <schema name="down1" elementResync="ALWAYS" attributeResync="ALWAYS">
+				        <element schema="OBJECT" />
+				        <attribute schema="VOID" fixed="yes" hidden="yes" />
+				    </schema>
+				</context>"""; // Cannot have final final new-line or serialize test will fail
 
 	protected static final DefaultSchemaContext CTX = new DefaultSchemaContext();
 	protected static final SchemaName NAME_ROOT = new SchemaName("root");
@@ -59,6 +62,7 @@ public class XmlTargetObjectSchemaTest {
 				EnumerableTargetObjectSchema.INT.getName(), false, false, false), null)
 			.addAttributeSchema(new DefaultAttributeSchema("some_object",
 				EnumerableTargetObjectSchema.OBJECT.getName(), true, true, true), null)
+			.addAttributeAlias("_int", "some_int", null)
 			.setAttributeResyncMode(ResyncMode.ONCE)
 			.buildAndAdd();
 	protected static final TargetObjectSchema SCHEMA_DOWN1 = CTX.builder(NAME_DOWN1)

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import ghidra.trace.model.modules.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class DefaultModuleRecorder implements ManagedModuleRecorder {
 
 	private final DefaultTraceRecorder recorder;
@@ -89,7 +90,7 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 			return traceModule.addSection(path, section.getIndex(), traceRange);
 		}
 		catch (DuplicateNameException e) {
-			Msg.warn(this, path + " already recorded");
+			// Msg.warn(this, path + " already recorded");
 			return moduleManager.getLoadedSectionByPath(snap, path);
 		}
 	}
@@ -121,6 +122,27 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 		catch (DuplicateNameException e) {
 			Msg.error(this, "Could not record process module removed: " + e);
 		}
+	}
+
+	public void moduleChanged(TargetModule module, AddressRange traceRng) {
+		long snap = recorder.getSnap();
+		String path = module.getJoinedPath(".");
+		recorder.parTx.execute("Module " + path + " range updated", () -> {
+			doModuleChanged(snap, path, traceRng);
+		}, path);
+	}
+
+	protected void doModuleChanged(long snap, String path, AddressRange traceRng) {
+		TraceModule traceModule = moduleManager.getLoadedModuleByPath(snap, path);
+		if (traceModule == null) {
+			Msg.warn(this, "changed " + path + " is not in the trace");
+			return;
+		}
+		/**
+		 * Yes, this will modify the module's previous history, which technically could be
+		 * incorrect. The occasion should be rare, and the OBTR will handle it correctly.
+		 */
+		traceModule.setRange(traceRng);
 	}
 
 	@Override

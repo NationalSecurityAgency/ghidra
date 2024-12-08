@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.plugin.importer;
+
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -36,8 +38,9 @@ import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
-import docking.widgets.list.GListCellRenderer;
+import docking.widgets.list.GComboBoxCellRenderer;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
@@ -240,8 +243,7 @@ public class ImporterDialog extends DialogComponentProvider {
 			validateFormInput();
 		});
 
-		Font font = languageButton.getFont();
-		languageButton.setFont(font.deriveFont(Font.BOLD));
+		Gui.registerFont(languageButton, Font.BOLD);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(languageTextField, BorderLayout.CENTER);
@@ -252,19 +254,14 @@ public class ImporterDialog extends DialogComponentProvider {
 	private Component buildLoaderChooser() {
 		JPanel panel = new JPanel(new BorderLayout());
 
-		Set<Loader> set = new LinkedHashSet<>(); // maintain order
-		for (Loader loader : loaderMap.keySet()) {
-			if (isSupported(loader)) {
-				set.add(loader);
-			}
-		}
-		loaderComboBox = new GhidraComboBox<>(set);
+		Set<Loader> orderedLoaders = new LinkedHashSet<>(loaderMap.keySet()); // maintain order
+		loaderComboBox = new GhidraComboBox<>(orderedLoaders);
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.setEnterKeyForwarding(true);
 		loaderComboBox.setRenderer(
-			GListCellRenderer.createDefaultCellTextRenderer(loader -> loader.getName()));
+			GComboBoxCellRenderer.createDefaultTextRenderer(loader -> loader.getName()));
 
-		if (!set.isEmpty()) {
+		if (!orderedLoaders.isEmpty()) {
 			loaderComboBox.setSelectedIndex(0);
 		}
 
@@ -288,12 +285,6 @@ public class ImporterDialog extends DialogComponentProvider {
 		String s = LoaderService.getAllLoaderNames().stream().collect(Collectors.joining("\n"));
 		MultiLineMessageDialog.showModalMessageDialog(null, "Supported Formats", null, s,
 			MultiLineMessageDialog.PLAIN_MESSAGE);
-	}
-
-	protected boolean isSupported(Loader loader) {
-		// for full importing, all loaders are supported, but not true for addToProgram
-		// which will override this method
-		return true;
 	}
 
 	protected void selectedLoaderChanged() {
@@ -581,8 +572,8 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private void chooseProjectFolder() {
-		DataTreeDialog dataTreeDialog = new DataTreeDialog(getComponent(),
-			"Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+		DataTreeDialog dataTreeDialog =
+			new DataTreeDialog(getComponent(), "Choose a project folder", CHOOSE_FOLDER);
 		dataTreeDialog.setSelectedFolder(destinationFolder);
 		dataTreeDialog.showComponent();
 		DomainFolder folder = dataTreeDialog.getDomainFolder();

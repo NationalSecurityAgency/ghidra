@@ -139,7 +139,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 * Converts a relative virtual address (RVA) into a pointer.
 	
 	 * @param rva the relative virtual address
-	 * @return the pointer into binary image, 0 if not valid
+	 * @return the pointer into binary image, -1 if not valid
 	 */
 	public long rvaToPointer(long rva) {
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
@@ -147,6 +147,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 			long sectionVA = Integer.toUnsignedLong(section.getVirtualAddress());
 			long vSize = Integer.toUnsignedLong(section.getVirtualSize());
 			long rawPtr = Integer.toUnsignedLong(section.getPointerToRawData());
+			long rawSize = Integer.toUnsignedLong(section.getSizeOfRawData());
 
 			switch (layout) {
 				case MEMORY:
@@ -157,7 +158,15 @@ public class NTHeader implements StructConverter, OffsetValidator {
 						// NOTE: virtual size is used in the above check because it's already been
 						// adjusted for special-case scenarios when the sections were first 
 						// processed in FileHeader.java
-						return rva + rawPtr - sectionVA;
+						long ptr = rva + rawPtr - sectionVA;
+
+						// Make sure the pointer points to actual section file byte, rather than
+						// padding bytes
+						if (ptr >= rawPtr + rawSize) {
+							return -1;
+						}
+
+						return ptr;
 					}
 					break;
 			}

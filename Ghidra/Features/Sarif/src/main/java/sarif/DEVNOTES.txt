@@ -1,0 +1,16 @@
+Random notes:
+
+1. Symbols require a pre- and post-function pass, pre- to guarantee the correct naming of globals
+   including functions and libraries and post- to guarantee namespaces have already been created
+   for locals
+   
+2. Overlay spaces are currently flagged using artifactLocation::uri on Location; address spaces with different names
+   are flagged in "fullyQualifiedName".
+   
+3: "Location is used to convey addresses; "location" is used generally for non-address information, e.g. file::offset.
+
+Code differences from export/re-import:
+
+1. There may be missing parameter datatypes for parameters in a FunctionDefinition used inside a structure or union.
+
+2. Datatypes like "RTTIBaseDescriptor *32 _((image-base-relative)) *32 _((image-base-relative))" are not handled correctly.

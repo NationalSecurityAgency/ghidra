@@ -16,6 +16,7 @@
 package ghidra.util.datastruct;
 
 import java.lang.reflect.*;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -28,16 +29,21 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
  */
 public class PrivatelyQueuedListener<P> {
 
+	private ListenerErrorHandler errorHandler =
+		DataStructureErrorHandlerFactory.createListenerErrorHandler();
+
 	protected class ListenerHandler implements InvocationHandler {
-		private static final Method OBJECT_HASHCODE;
-		static {
+		private static final Method OBJECT_HASHCODE = initObjectHashCode();
+
+		private static Method initObjectHashCode() {
 			try {
-				OBJECT_HASHCODE = Object.class.getMethod("hashCode");
+				return Object.class.getMethod("hashCode");
 			}
 			catch (NoSuchMethodException | SecurityException e) {
 				throw new AssertionError(e);
 			}
 		}
+
 		protected final Class<P> iface;
 
 		public ListenerHandler(Class<P> iface) {
@@ -55,10 +61,10 @@ public class PrivatelyQueuedListener<P> {
 				}
 				catch (InvocationTargetException e) {
 					Throwable cause = e.getCause();
-					ListenerMap.reportError(out, cause);
+					errorHandler.handleError(out, cause);
 				}
 				catch (Throwable e) {
-					ListenerMap.reportError(out, e);
+					errorHandler.handleError(out, e);
 				}
 			});
 			return null; // Assumes void return type
@@ -75,7 +81,7 @@ public class PrivatelyQueuedListener<P> {
 
 	/**
 	 * Create a new privately-queued listener which will invoke the given "output" listener
-	 * 
+	 *
 	 * <p>
 	 * Invoking the listener methods of {@link #in} will cause that invocation to be queued and
 	 * eventually delivered to the given output listener. Note, as a result, it is assumed all
@@ -83,7 +89,7 @@ public class PrivatelyQueuedListener<P> {
 	 * the invocation to complete, which defeats the purpose of the private queue. The invocations
 	 * on {@link #in} will always return {@code null}, which will cause an exception if the return
 	 * type is a different primitive.
-	 * 
+	 *
 	 * @param iface the interface of the listener
 	 * @param executor the executor representing the processing queue
 	 * @param out the listener to receive the queued invocations
@@ -97,17 +103,17 @@ public class PrivatelyQueuedListener<P> {
 
 	/**
 	 * Create a new single-threaded privately-queued listener
-	 * 
-	 * @see {@link #PrivatelyQueuedListener(Class, Executor, Object)}
+	 *
 	 * @param iface the interface of the listener
 	 * @param threadNamePattern a pattern for naming the single thread
 	 * @param out the listener to receive the queued invocations
 	 */
 	public PrivatelyQueuedListener(Class<P> iface, String threadNamePattern, P out) {
-		this(iface,
-			Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
-					.namingPattern(threadNamePattern)
-					.build()),
-			out);
+		this(iface, Executors.newSingleThreadExecutor(
+			new BasicThreadFactory.Builder().namingPattern(threadNamePattern).build()), out);
+	}
+
+	public void setErrorHandler(ListenerErrorHandler errorHandler) {
+		this.errorHandler = Objects.requireNonNull(errorHandler);
 	}
 }

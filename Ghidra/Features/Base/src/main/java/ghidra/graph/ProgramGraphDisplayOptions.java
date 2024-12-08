@@ -21,6 +21,7 @@ import static ghidra.service.graph.VertexShape.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.GraphDisplayOptions;
 import ghidra.service.graph.VertexShape;
+import ghidra.util.HelpLocation;
 
 /** 
  * {@link GraphDisplayOptions} for {@link ProgramGraphType}
@@ -33,7 +34,8 @@ public class ProgramGraphDisplayOptions extends GraphDisplayOptions {
 	 * @param tool if non-null, will load values from tool options
 	 */
 	public ProgramGraphDisplayOptions(ProgramGraphType graphType, PluginTool tool) {
-		super(graphType, tool);
+		super(graphType, tool,
+			new HelpLocation("ProgramGraphPlugin", "Program Graphs Display Options"));
 	}
 
 	@Override

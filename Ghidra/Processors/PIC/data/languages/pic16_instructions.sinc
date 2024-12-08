@@ -10,7 +10,8 @@ define token instr16(16)
 	op12 =  (2,13)
 	op11 =	(3,13)
 	op9 =	(5,13)
-	op7 =   (7,13)
+	op8 = 	(6,13)
+	op7 = 	(7,13)
 	op6 =	(8,13)
 	op5 =	(9,13)
 	op4 =	(10,13)
@@ -24,8 +25,8 @@ define token instr16(16)
 	uf7 =	(4,6)
 	fsr = 	(2,2)
 	fsrk =	(6,6)
-	fregCore = (0,3)
 	k5 = 	(0,4)
+	k6 = 	(0,5)
 	k7 = 	(0,6)
 	k8 =	(0,7)
 	sk9 =   (0,8) signed
@@ -42,15 +43,7 @@ define context contextreg
 ;
 
 
-@if PROCESSOR == "PIC_16"
-attach variables [ fregCore ] [
-	INDF TMR0 PCL STATUS FSR PORTA PORTB PORTC PORTD PORTE PCLATH INTCON _ _ _ _
-];
-
-@elif PROCESSOR == "PIC_16F"
-attach variables [ fregCore ] [
-	INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	W	PCLATH	INTCON	_ _ _ _
-];
+@if PROCESSOR == "PIC_16F"
 
 attach names [IntConBits] [ IOCIF INTF TMR0IF IOCIE INTE TMR0IE PEIE GIE  ];
 
@@ -176,31 +169,45 @@ srcREG: fv		is uf7=0x7 & lf7  [fv = 0x70 + lf7; ]								{
 	 export *[DATA]:1 addr;
 }
 
+#   The registers listed here are explicitly defined as registers in sleigh.
+#   There are other registers but they are named in the .pspec file.
+#   The reason this is done is to have cross references created to certain registers, and to have
+#   only the registers that must be accessed directly in sleigh (e.g. PCL, FSR) defined in sleigh.
+#   Register explicitly defined in sleigh will not have xref's created to them.
+#   Registers named only in the .pspec file will have xref's to them in most cases.
+#
+#   Also, these registers ignore RP, or BSR which allow more registers to be in a different register bank.
+#
+#	PIC16 : INDF 	_ 		PCL 	STATUS 	FSR 	_		_		_		_ 	_	PCLATH	INTCON	_ _ _ _
+#	PIC16F: INDF0	INDF1	PCL		STATUS	FSR0L	FSR0H	FSR1L	FSR1H	BSR	W	PCLATH	INTCON	_ _ _ _
+
 # File register index (f7=0): INDF use implies indirect data access using FSR value and IRP bit in STATUS reg
 @if PROCESSOR == "PIC_16"
-srcREG: fregCore		is f7=0 & fregCore									{ 
+srcREG: INDF		is f7=0 & INDF								{ 
 	addr:2 = (zext(IRP) << 8) + zext(FSR);
 	export *[DATA]:1 addr; 
 }
-srcREG: fregCore		is f7=1	& fregCore								{ 
-     rpval:2 = zext(RP == 1) + zext(RP == 2);
-	 addr:2 = (zext(rpval) << 7) + 1;
-	 export *[DATA]:1 addr;
+srcREG: lf7		is f7=1	& lf7								{ 
+	rpval:2 = zext(RP == 1) + zext(RP == 3);
+    addr:2 = (zext(rpval) << 7) + 1;
+	export *[DATA]:1 addr;
 }
+
 @elif PROCESSOR == "PIC_16F"
-srcREG: fregCore		is f7=0 & fregCore									{ 
+
+srcREG: INDF0		is f7=0 & INDF0									{ 
 	addr:2 = FSR0;
 	export *[DATA]:1 addr; 
 }
 
-srcREG: fregCore		is f7=1 & fregCore									{ 
+srcREG: INDF1		is f7=1 & INDF1									{ 
 	addr:2 = FSR1;
 	export *[DATA]:1 addr; 
 }
 @endif
 
 # Special File Registers always mapped to Bank-0
-srcREG: fregCore	is f7=0x02 & fregCore {
+srcREG: PCL	is f7=0x02 & PCL {
 	# PCL and PCLATH must be latched
 	addr:2 = inst_start >> 1; # Compensate for CODE wordsize
 	PCL = addr:1;
@@ -208,17 +215,19 @@ srcREG: fregCore	is f7=0x02 & fregCore {
 	export PCL;
 }
 
-srcREG: fregCore		is f7=0x03 & fregCore				{ export fregCore; }
-srcREG: fregCore		is f7=0x04 & fregCore				{ export fregCore; }
-@if PROCESSOR == "PIC_16F"
-srcREG: fregCore		is f7=0x05 & fregCore				{ export fregCore; }
-srcREG: fregCore		is f7=0x06 & fregCore				{ export fregCore; }
-srcREG: fregCore		is f7=0x07 & fregCore				{ export fregCore; }
-srcREG: fregCore		is f7=0x08 & fregCore				{ export fregCore; }
-srcREG: fregCore		is f7=0x09 & fregCore				{ export fregCore; }
+srcREG: STATUS		is f7=0x03 & STATUS				{ export STATUS; }
+@if PROCESSOR == "PIC_16"
+srcREG: FSR		is f7=0x04 & FSR				{ export FSR; }
+@elif PROCESSOR == "PIC_16F"
+srcREG: FSR0L		is f7=0x04 & FSR0L				{ export FSR0L; }
+srcREG: FSR0H		is f7=0x05 & FSR0H				{ export FSR0H; }
+srcREG: FSR1L		is f7=0x06 & FSR1L				{ export FSR1L; }
+srcREG: FSR1H		is f7=0x07 & FSR1H				{ export FSR1H; }
+srcREG: BSR		is f7=0x08 & BSR				{ export BSR; }
+srcREG: W		is f7=0x09 & W				{ export W; }
 @endif
-srcREG: fregCore		is f7=0x0a & fregCore				{ export fregCore; }
-srcREG: fregCore		is f7=0x0b & fregCore				{ export fregCore; }
+srcREG: PCLATH		is f7=0x0a & PCLATH				{ export PCLATH; }
+srcREG: INTCON		is f7=0x0b & INTCON				{ export INTCON; }
 
 
 # Destination register (either srcREG or W)
@@ -228,7 +237,7 @@ destREG: "0"		is d=0									{ export W; }
 destREG: "1"		is d=1 & f7 & srcREG					{ export srcREG; }
 
 # Destination register: Special File Registers always mapped to Bank-0
-destREG: "1"		is d=1 & f7=0x02 & fregCore				{ export fregCore; } # PCL (special behavior reqd)
+destREG: "1"		is d=1 & f7=0x02			{ export PCL; } # PCL (special behavior reqd)
 
 # Destination operand representation (w: W register is destination; f: specified srcREG is destination)
 D: "w"		is d=0										{ }
@@ -236,13 +245,13 @@ D: "f"		is d=1										{ }
 
 # Absolute address generated from k11 and PCLATH<4:3>
 absAddr11: k11	is k11									{
-	addr:2 = ((zext(PCLATH) & 0x78) << 8) + k11;
+	addr:2 = ((zext(PCLATH) & 0x18) << 8) | k11;
 	export addr; 
 }
 
 @if PROCESSOR == "PIC_16F"
 
-# Absolute address generated from k11 and PCLATH<4:3>
+# Relative address
 relAddr9: addr	is sk9	[ addr = inst_next + sk9; ]								{
 	export *[CODE]:2 addr;
 }
@@ -257,7 +266,11 @@ imm8: "#"k8	is k8										{ export *[const]:1 k8; }
 imm7: "#"k7	is k7										{ export *[const]:1 k7; }
 
 # Immediate Data (Literal operation)
+imm6: "#"k6	is k6										{ export *[const]:1 k6; }
+
+# Immediate Data (Literal operation)
 imm5: "#"k5	is k5										{ export *[const]:1 k5; }
+
 @endif
 
 # Bit identifier
@@ -321,7 +334,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	tmp:1 = addr:1;
 	setAddFlags(tmp, W);
 	tmp = tmp + W;
-	addr = (zext(PCLATH) << 8) + zext(tmp);
+	addr = ((zext(PCLATH) & 0x1F) << 8) | zext(tmp);
 	PCL = tmp;
 	setResultFlags(tmp);
 	goto [addr];
@@ -359,7 +372,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	$(C) = $(C) | tc;
 	val = val + tmpC;
 	
-	addr = (zext(PCLATH) << 8) + zext(val);
+	addr = ((zext(PCLATH) & 0x1F) << 8) | zext(val);
 	PCL = val;
 	setResultFlags(val);
 	goto [addr];
@@ -751,7 +764,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :LSLF srcREG, D				is op6=0x35 & srcREG & D & destREG					{
 	#  --11 0101 dfff ffff
-	$(C) = (srcREG & 80) != 0;
+	$(C) = (srcREG & 0x80) != 0;
 	val:1 = srcREG << 1;
 	setResultFlags(val);
 	destREG = val;
@@ -787,8 +800,13 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 	BSR = imm5;
 }
 
+# Alternate variant in certain pic16f variants
+:MOVLB imm6			is op8=0x5 & imm6 {
+	BSR = imm6;
+}
+
 :MOVLP imm7				is op7=0x63 & imm7 {
-	PCLATH = imm7;
+	PCLATH = imm7 & 0x1F;
 }
 @endif
 
@@ -820,7 +838,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 	#  --00 0000 1fff ffff
 	#  0000 0000 1000 0010	->	MOVWF PCL
 	PCL = W;
-	addr:2 = (zext(PCLATH) << 8) + zext(PCL);
+	addr:2 = ((zext(PCLATH) & 0x1F) << 8) | zext(PCL);
 	goto [addr];
 }
 

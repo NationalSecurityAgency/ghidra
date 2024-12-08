@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -285,7 +285,8 @@ bool SplitVarnode::findWholeSplitToPieces(void)
     }
     if (subhi->code() != CPUI_SUBPIECE) return false;
     if (subhi->getIn(1)->getOffset() != wholesize - hi->getSize()) return false;
-    whole = subhi->getIn(0);
+    Varnode *putativeWhole = subhi->getIn(0);
+    if (putativeWhole->getSize() != wholesize) return false;
     if (!lo->isWritten()) return false;
     PcodeOp *sublo = lo->getDef();
     if (sublo->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
@@ -294,14 +295,11 @@ bool SplitVarnode::findWholeSplitToPieces(void)
       sublo = otherlo->getDef();
     }
     if (sublo->code() != CPUI_SUBPIECE) return false;
-    Varnode *res = sublo->getIn(0);
-    if (whole == (Varnode*)0)
-      whole = res;
-    else if (whole != res)
+    if (putativeWhole != sublo->getIn(0))
       return false;		// Doesn't match between pieces
     if (sublo->getIn(1)->getOffset() != 0)
       return false;
-    if (whole == (Varnode*)0) return false;
+    whole = putativeWhole;
   }
 
   if (whole->isWritten()) {
@@ -695,6 +693,14 @@ PcodeOp *SplitVarnode::findOutExist(void)
   return findEarliestSplitPoint();
 }
 
+/// If the logical whole is a constant and is too big to be represented internally return \b true.
+/// \return \b true if \b this is a constant and too big
+bool SplitVarnode::exceedsConstPrecision(void) const
+
+{
+  return isConstant() && (wholesize > sizeof(uintb));
+}
+
 /// \brief Check if the values in the given Varnodes differ by the given size
 ///
 /// Return \b true, if the (possibly dynamic) value represented by the given \b vn1 plus \b size1
@@ -787,10 +793,14 @@ bool SplitVarnode::isAddrTiedContiguous(Varnode *lo,Varnode *hi,Address &res)
   if (!hi->isAddrTied()) return false;
 
   // Make sure there is no explicit symbol that would prevent the pieces from being joined
-  SymbolEntry *entry = lo->getSymbolEntry();
-  if ((entry != (SymbolEntry *)0)&&(entry->getOffset()==0)) return false;
-  entry = hi->getSymbolEntry();
-  if ((entry != (SymbolEntry *)0)&&(entry->getOffset()==0)) return false;
+  SymbolEntry *entryLo = lo->getSymbolEntry();
+  SymbolEntry *entryHi = hi->getSymbolEntry();
+  if (entryLo != (SymbolEntry *)0 || entryHi != (SymbolEntry *)0) {
+    if (entryLo == (SymbolEntry *)0 || entryHi == (SymbolEntry *)0)
+      return false;		// One is marked with a symbol, the other is not
+    if (entryLo->getSymbol() != entryHi->getSymbol())
+      return false;		// They are part of different symbols
+  }
   AddrSpace *spc = lo->getSpace();
   if (spc != hi->getSpace()) return false;
   uintb looffset = lo->getOffset();
@@ -1114,9 +1124,6 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	break;
       case CPUI_INT_OR:
 	{
-	  Equal2Form equal2form;
-	  if (equal2form.applyRule(in,workop,workishi,data))
-	    return 1;
 	  LogicalForm logicalform;
 	  if (logicalform.applyRule(in,workop,workishi,data))
 	    return 1;
@@ -1124,9 +1131,6 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	break;
       case CPUI_INT_XOR:
 	{
-	  Equal2Form equal2form;
-	  if (equal2form.applyRule(in,workop,workishi,data))
-	    return 1;
 	  LogicalForm logicalform;
 	  if (logicalform.applyRule(in,workop,workishi,data))
 	    return 1;
@@ -1140,6 +1144,9 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	    return 1;
 	  Equal1Form equal1form;
 	  if (equal1form.applyRule(in,workop,workishi,data))
+	    return 1;
+	  Equal2Form equal2form;
+	  if (equal2form.applyRule(in,workop,workishi,data))
 	    return 1;
 	}
 	break;
@@ -1207,6 +1214,13 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 	{
 	  IndirectForm indform;
 	  if (indform.applyRule(in,workop,workishi,data))
+	    return 1;
+	}
+	break;
+      case CPUI_COPY:
+	if (workop->getOut()->isAddrForce()) {
+	  CopyForceForm copyform;
+	  if (copyform.applyRule(in, workop, workishi, data))
 	    return 1;
 	}
 	break;
@@ -1375,6 +1389,47 @@ void SplitVarnode::replaceIndirectOp(Funcdata &data,SplitVarnode &out,SplitVarno
   out.buildHiFromWhole(data);
 }
 
+/// \brief Rewrite the double precision version of a COPY to an address forced Varnode
+///
+/// This assumes that we have checked that the transformation is possible.  The logical input must already
+/// exist, and after this method is called, the logical output will also exist.  The original COPY pieces
+/// are explicitly destroyed.
+/// \param data is the function owning the COPYs
+/// \param addr is the storage address being COPYed
+/// \param in is the input to the COPYs
+/// \param copylo is the original least significant COPY
+/// \param copyhi is the original most significant COPY
+void SplitVarnode::replaceCopyForce(Funcdata &data,const Address &addr,SplitVarnode &in,PcodeOp *copylo,PcodeOp *copyhi)
+
+{
+  Varnode *inVn = in.getWhole();
+  bool returnForm = copyhi->isReturnCopy();
+  if (returnForm && inVn->getAddr() != addr) {
+    // Placeholder for global propagation past a RETURN needs an additional COPY
+    PcodeOp *otherPoint1 = copyhi->getIn(0)->getDef();
+    PcodeOp *otherPoint2 = copylo->getIn(0)->getDef();
+    // We know these are COPYs in the same basic block.  Compute the later one.
+    if (otherPoint1->getSeqNum().getOrder() < otherPoint2->getSeqNum().getOrder())
+      otherPoint1 = otherPoint2;
+    PcodeOp *otherCopy = data.newOp(1, otherPoint1->getAddr());
+    data.opSetOpcode(otherCopy, CPUI_COPY);
+    Varnode *vn = data.newVarnodeOut(in.getSize(), addr, otherCopy);
+    data.opSetInput(otherCopy,inVn,0);
+    data.opInsertBefore(otherCopy, otherPoint1);
+    inVn = vn;
+  }
+  PcodeOp *wholeCopy = data.newOp(1, copyhi->getAddr());
+  data.opSetOpcode(wholeCopy, CPUI_COPY);
+  Varnode *outVn = data.newVarnodeOut(in.getSize(), addr, wholeCopy);
+  outVn->setAddrForce();
+  if (returnForm)
+    data.markReturnCopy(wholeCopy);
+  data.opSetInput(wholeCopy,inVn,0);
+  data.opInsertBefore(wholeCopy, copyhi);
+  data.opDestroy(copyhi);	// Destroy the original COPYs.  Outputs have no descendants.
+  data.opDestroy(copylo);
+}
+
 bool AddForm::checkForCarry(PcodeOp *op)
 
 { // If -op- matches a CARRY construction based on lo1 (i.e. CARRY(x,lo1) )
@@ -1541,6 +1596,8 @@ bool AddForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data
     return false;
 
   indoub.initPartial(in.getSize(),lo2,hi2);
+  if (indoub.exceedsConstPrecision())
+    return false;
   outdoub.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
@@ -1634,6 +1691,8 @@ bool SubForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data
     return false;
 
   indoub.initPartial(in.getSize(),lo2,hi2);
+  if (indoub.exceedsConstPrecision())
+    return false;
   outdoub.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
@@ -1755,6 +1814,8 @@ bool LogicalForm::applyRule(SplitVarnode &i,PcodeOp *lop,bool workishi,Funcdata 
 
   outdoub.initPartial(in.getSize(),loop->getOut(),hiop->getOut());
   indoub.initPartial(in.getSize(),lo2,hi2);
+  if (indoub.exceedsConstPrecision())
+    return false;
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
     return false;
@@ -1815,6 +1876,8 @@ bool Equal1Form::applyRule(SplitVarnode &i,PcodeOp *hop,bool workishi,Funcdata &
 	++iter3;
 
 	in2.initPartial(in1.getSize(),lo2,hi2);
+	if (in2.exceedsConstPrecision())
+	  continue;
 	
 	if ((hibool->code() == CPUI_CBRANCH)&&(lobool->code()==CPUI_CBRANCH)) {
 	  // Branching form of the equal operation
@@ -1852,95 +1915,30 @@ bool Equal1Form::applyRule(SplitVarnode &i,PcodeOp *hop,bool workishi,Funcdata &
   return false;
 }
 
-bool Equal2Form::checkLoForm(void)
-
-{ // Assuming we have equal <- or <- xor <- hi1, verify if we have the full equal form
-  Varnode *orvnin = orop->getIn(1-orhislot);
-  if (orvnin == lo1) {		// lo2 is an implied 0
-    loxor = (PcodeOp *)0;
-    lo2 = (Varnode *)0;
-    return true;
-  }
-  if (!orvnin->isWritten()) return false;
-  loxor = orvnin->getDef();
-  if (loxor->code() != CPUI_INT_XOR) return false;
-  if (loxor->getIn(0) == lo1) {
-    lo2 = loxor->getIn(1);
-    return true;
-  }
-  else if (loxor->getIn(1) == lo1) {
-    lo2 = loxor->getIn(0);
-    return true;
-  }
-  return false;
-}
-
-bool Equal2Form::fillOutFromOr(Funcdata &data)
-
-{ // We have filled in either or <- xor <- hi1,  OR,  or <- hi1
-  // Now try to fill in the rest of the form
-  Varnode *outvn = orop->getOut();
-  list<PcodeOp *>::const_iterator iter,enditer;
-  iter = outvn->beginDescend();
-  enditer = outvn->endDescend();
-  while(iter != enditer) {
-    equalop = *iter;
-    ++iter;
-    if ((equalop->code() != CPUI_INT_EQUAL)&&(equalop->code() != CPUI_INT_NOTEQUAL)) continue;
-    if (!equalop->getIn(1)->isConstant()) continue;
-    if (equalop->getIn(1)->getOffset() != 0) continue;
-
-    if (!checkLoForm()) continue;
-    if (!replace(data)) continue;
-    return true;
-  }
-  return false;
-}
-
 bool Equal2Form::replace(Funcdata &data)
 
 {
-  if ((hi2==(Varnode *)0)&&(lo2==(Varnode *)0)) {
-    param2.initPartial(in.getSize(),0); // Double precis zero constant
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
-  }
-  if ((hi2==(Varnode *)0)&&(lo2->isConstant())) {
-    param2.initPartial(in.getSize(),lo2->getOffset());
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
-  }
-  if ((lo2==(Varnode *)0)&&(hi2->isConstant())) {
-    param2.initPartial(in.getSize(),hi2->getOffset() << 8*lo1->getSize());
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
-  }
-  if (lo2 == (Varnode *)0) {
-    // Equal to a zero extended and shifted var
-    return false;
-  }
-  if (hi2 == (Varnode *)0) {
-    // Equal to a zero extended var
-    return false;
-  }
   if (hi2->isConstant()&&lo2->isConstant()) {
     uintb val = hi2->getOffset();
     val <<= 8*lo1->getSize();
     val |= lo2->getOffset();
     param2.initPartial(in.getSize(),val);
-    return SplitVarnode::prepareBoolOp(in,param2,equalop);
+    return SplitVarnode::prepareBoolOp(in,param2,boolAndOr);
   }
   if (hi2->isConstant()||lo2->isConstant()) {
     // Some kind of mixed form
     return false;
   }
   param2.initPartial(in.getSize(),lo2,hi2);
-  return SplitVarnode::prepareBoolOp(in,param2,equalop);
+  return SplitVarnode::prepareBoolOp(in,param2,boolAndOr);
 }
 
 // Given a known double precis input, look for double precision compares of the form
 //   a == b,  a != b
 //
 // We look for
-//     res = ((hi1 ^ hi2) | (lo1 ^ lo2) == 0)
-//  where hi2 or lo2 may be zero, and optimized out
+//     res = (hi1 == hi2) && (lo1 == lo2) or
+//     res = (hi1 != hi2) || (lo1 != lo2)
 bool Equal2Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data)
 
 {
@@ -1949,37 +1947,37 @@ bool Equal2Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &d
   in = i;
   hi1 = in.getHi();
   lo1 = in.getLo();
-
-  if (op->code() == CPUI_INT_OR) {
-    orop = op;
-    orhislot = op->getSlot(hi1);
-    hixor = (PcodeOp *)0;
-    hi2 = (Varnode *)0;
-    if (fillOutFromOr(data)) {
-      SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
-      return true;
+  OpCode eqCode = op->code();
+  int4 hi1slot = op->getSlot(hi1);
+  hi2 = op->getIn(1-hi1slot);
+  Varnode *outvn = op->getOut();
+  list<PcodeOp *>::const_iterator iter,enditer;
+  iter = outvn->beginDescend();
+  enditer = outvn->endDescend();
+  while(iter != enditer) {
+    boolAndOr = *iter;
+    ++iter;
+    if (eqCode == CPUI_INT_EQUAL && boolAndOr->code() != CPUI_BOOL_AND) continue;
+    if (eqCode == CPUI_INT_NOTEQUAL && boolAndOr->code() != CPUI_BOOL_OR) continue;
+    int4 slot = boolAndOr->getSlot(outvn);
+    Varnode *othervn = boolAndOr->getIn(1-slot);
+    if (!othervn->isWritten()) continue;
+    PcodeOp *equalLo = othervn->getDef();
+    if (equalLo->code() != eqCode) continue;
+    if (equalLo->getIn(0) == lo1) {
+      lo2 = equalLo->getIn(1);
     }
-  }
-  else {			// We see an XOR
-    hixor = op;
-    xorhislot = hixor->getSlot(hi1);
-    hi2 = hixor->getIn(1-xorhislot);
-    Varnode *vn = op->getOut();
-    list<PcodeOp *>::const_iterator iter,enditer;
-    iter = vn->beginDescend();
-    enditer = vn->endDescend();
-    while(iter != enditer) {
-      orop = *iter;
-      ++iter;
-      if (orop->code() != CPUI_INT_OR) continue;
-      orhislot = orop->getSlot(vn);
-      if (fillOutFromOr(data)) {
-	SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
-	return true;
-      }
+    else if (equalLo->getIn(1) == lo1) {
+      lo2 = equalLo->getIn(0);
     }
+    else {
+      continue;
+    }
+    if (!replace(data)) continue;
+    if (param2.exceedsConstPrecision()) continue;
+    SplitVarnode::replaceBoolOp(data,boolAndOr,in,param2,eqCode);
+    return true;
   }
-
   return false;
 }
 
@@ -2018,6 +2016,8 @@ bool Equal3Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &d
     return false;
 
   SplitVarnode in2(in.getSize(),calc_mask(in.getSize()));	// Create the -1 value
+  if (in2.exceedsConstPrecision())
+    return false;
   if (!SplitVarnode::prepareBoolOp(in,in2,compareop)) return false;
   SplitVarnode::replaceBoolOp(data,compareop,in,in2,compareop->code());
   return true;
@@ -2481,6 +2481,8 @@ bool LessThreeWay::applyRule(SplitVarnode &i,PcodeOp *loop,bool workishi,Funcdat
   if (!mapFromLow(loop)) return false;
   bool res = testReplace();
   if (res) {
+    if (in2.exceedsConstPrecision())
+      return false;
     if (hislot==0)
       SplitVarnode::createBoolOp(data,hilessbool,in,in2,finalopc);
     else
@@ -2525,6 +2527,8 @@ bool LessConstForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata
   if (desc->code() != CPUI_CBRANCH) return false;
 
   constin.initPartial(in.getSize(),val);
+  if (constin.exceedsConstPrecision())
+    return false;
 
   if (inslot==0) {
     if (SplitVarnode::prepareBoolOp(in,constin,op)) {
@@ -2965,6 +2969,8 @@ bool MultForm::replace(Funcdata &data)
 { // We have matched a double precision multiply, now transform to logical variables
   outdoub.initPartial(in.getSize(),reslo,reshi);
   in2.initPartial(in.getSize(),lo2,hi2);
+  if (in2.exceedsConstPrecision())
+    return false;
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,in2);
   if (existop == (PcodeOp *)0)
     return false;
@@ -3093,6 +3099,12 @@ bool IndirectForm::verify(Varnode *h,Varnode *l,PcodeOp *ind)
     if (affector != PcodeOp::getOpFromConst(indlo->getIn(1)->getAddr())) continue;	// hi and lo must be affected by same op
     reslo = indlo->getOut();
     if (reslo->getSpace()->getType() == IPTR_INTERNAL) return false;		// Indirect must not be through a temporary
+    if (reslo->isAddrTied() || reshi->isAddrTied()) {
+      Address addr;
+      // If one piece is address tied, the other must be as well, and they must fit together as contiguous whole
+      if (!SplitVarnode::isAddrTiedContiguous(reslo, reshi, addr))
+	return false;
+    }
     return true;
   }
   return false;
@@ -3115,6 +3127,73 @@ bool IndirectForm::applyRule(SplitVarnode &i,PcodeOp *ind,bool workishi,Funcdata
   return true;
 }
 
+/// Starting with the input pieces, identify the matching COPYs and verify that they act as a single
+/// address forced COPY with no descendants.
+/// \param h is the most significant input piece
+/// \param l is the least significant input piece
+/// \param w is the preexisting logical whole
+/// \param cpy is the COPY of the most significant piece
+bool CopyForceForm::verify(Varnode *h,Varnode *l,Varnode *w,PcodeOp *cpy)
+
+{
+  if (w == (Varnode *)0)
+    return false;
+  copyhi = cpy;
+  if (copyhi->getIn(0) != h) return false;
+  reshi = copyhi->getOut();
+  if (!reshi->isAddrForce() || !reshi->hasNoDescend())
+    return false;
+  list<PcodeOp *>::const_iterator iter,enditer;
+  iter = l->beginDescend();
+  enditer = l->endDescend();
+  while(iter != enditer) {
+    copylo = *iter;
+    ++iter;
+    if (copylo->code() != CPUI_COPY || copylo->getParent() != copyhi->getParent())
+      continue;
+    reslo = copylo->getOut();
+    if (!reslo->isAddrForce() || !reslo->hasNoDescend())
+      continue;
+    if (!SplitVarnode::isAddrTiedContiguous(reslo, reshi, addrOut))	// Output MUST be contiguous addresses
+      continue;
+    if (copyhi->isReturnCopy()) {	// Special form has additional requirements
+      if (h->loneDescend() == (PcodeOp *)0)
+	continue;
+      if (l->loneDescend() == (PcodeOp *)0)
+	continue;
+      if (w->getAddr() != addrOut) {		// Input whole MUST also be the same address
+	// Unless there are addition COPYs from the same basic block
+	if (!h->isWritten() || !l->isWritten())
+	  continue;
+	PcodeOp *otherLo = l->getDef();
+	PcodeOp *otherHi = h->getDef();
+	if (otherLo->code() != CPUI_COPY || otherHi->code() != CPUI_COPY)
+	  continue;
+	if (otherLo->getParent() != otherHi->getParent())
+	  continue;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+/// \param i is the putative input to the COPYs
+/// \param cpy is a putative COPY
+/// \param workishi is \b true if the COPY is of the most significant piece
+/// \param data is the function
+bool CopyForceForm::applyRule(SplitVarnode &i,PcodeOp *cpy,bool workishi,Funcdata &data)
+
+{
+  if (!workishi) return false;
+  if (!i.hasBothPieces()) return false;
+  in = i;
+  if (!verify(in.getHi(),in.getLo(),in.getWhole(),cpy))
+    return false;
+  SplitVarnode::replaceCopyForce(data, addrOut, in, copylo, copyhi);
+  return true;
+}
+
 void RuleDoubleIn::reset(Funcdata &data)
 
 {
@@ -3132,13 +3211,17 @@ void RuleDoubleIn::getOpList(vector<uint4> &oplist) const
 /// If the given Varnode looks like the most significant piece, there is another SUBPIECE that looks
 /// like the least significant piece, and the whole is from an operation that produces a logical whole,
 /// then mark the Varnode (and its companion) as double precision pieces and return 1.
-/// \param data is the function owning the Varnode
 /// \param vn is the given Varnode
 /// \param subpieceOp is the SUBPIECE PcodeOp producing the Varnode
-int4 RuleDoubleIn::attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp)
+/// \return 1 if the pieces are marked, 0 otherwise
+int4 RuleDoubleIn::attemptMarking(Varnode *vn,PcodeOp *subpieceOp)
 
 {
   Varnode *whole = subpieceOp->getIn(0);
+  if (whole->isTypeLock()) {
+    if (!whole->getType()->isPrimitiveWhole())
+      return 0;		// Don't mark for double precision if not a primitive type
+  }
   int4 offset = (int4)subpieceOp->getIn(1)->getOffset();
   if (offset != vn->getSize()) return 0;
   if (offset * 2 != whole->getSize()) return 0;		// Truncate exactly half
@@ -3150,36 +3233,10 @@ int4 RuleDoubleIn::attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp
   }
   else {
     // Categorize opcodes as "producing a logical whole"
-    switch(whole->getDef()->code()) {
-      case CPUI_INT_ADD:
-	// Its hard to tell if the bit operators are really being used to act on the "logical whole"
-//      case CPUI_INT_AND:
-//      case CPUI_INT_OR:
-//      case CPUI_INT_XOR:
-//      case CPUI_INT_NEGATE:
-      case CPUI_INT_MULT:
-      case CPUI_INT_DIV:
-      case CPUI_INT_SDIV:
-      case CPUI_INT_REM:
-      case CPUI_INT_SREM:
-      case CPUI_INT_2COMP:
-      case CPUI_FLOAT_ADD:
-      case CPUI_FLOAT_DIV:
-      case CPUI_FLOAT_MULT:
-      case CPUI_FLOAT_SUB:
-      case CPUI_FLOAT_NEG:
-      case CPUI_FLOAT_ABS:
-      case CPUI_FLOAT_SQRT:
-      case CPUI_FLOAT_INT2FLOAT:
-      case CPUI_FLOAT_FLOAT2FLOAT:
-      case CPUI_FLOAT_TRUNC:
-      case CPUI_FLOAT_CEIL:
-      case CPUI_FLOAT_FLOOR:
-      case CPUI_FLOAT_ROUND:
-	break;
-      default:
-	return 0;
-    }
+    // Its hard to tell if a logical op is really being used to act on the "logical whole"
+    TypeOp *typeop = whole->getDef()->getOpcode();
+    if (!typeop->isArithmeticOp() && !typeop->isFloatingPointOp())
+      return 0;
   }
   Varnode *vnLo = (Varnode *)0;
   list<PcodeOp *>::const_iterator iter;
@@ -3200,11 +3257,11 @@ int4 RuleDoubleIn::attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp
 
 int4 RuleDoubleIn::applyOp(PcodeOp *op,Funcdata &data)
 
-{ // Try to push double precision object "down" one level from input
+{
   Varnode *outvn = op->getOut();
   if (!outvn->isPrecisLo()) {
     if (outvn->isPrecisHi()) return 0;
-    return attemptMarking(data, outvn, op);
+    return attemptMarking(outvn, op);
   }
   if (data.hasUnreachableBlocks()) return 0;
 
@@ -3218,6 +3275,82 @@ int4 RuleDoubleIn::applyOp(PcodeOp *op,Funcdata &data)
       return res;
   }
   return 0;
+}
+
+void RuleDoubleOut::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_PIECE);
+}
+
+/// \brief Determine if the given inputs to a PIECE should marked as double precision pieces
+///
+/// If the concatenation of the pieces is used as a logical whole by other ops, the two pieces
+/// are marked and 1 is returned.
+/// \param vnhi is the most significant input to the PIECE
+/// \param vnlo is the least significant input
+/// \param pieceOp is the op reading the pieces
+/// \return 1 if the pieces are marked, 0 otherwise
+int4 RuleDoubleOut::attemptMarking(Varnode *vnhi,Varnode *vnlo,PcodeOp *pieceOp)
+
+{
+  Varnode *whole = pieceOp->getOut();
+  if (whole->isTypeLock()) {
+    if (!whole->getType()->isPrimitiveWhole())
+      return 0;		// Don't mark for double precision if not a primitive type
+  }
+  if (vnhi->getSize() != vnlo->getSize())
+    return 0;
+
+  SymbolEntry *entryhi = vnhi->getSymbolEntry();
+  SymbolEntry *entrylo = vnlo->getSymbolEntry();
+  if (entryhi != (SymbolEntry *)0 || entrylo != (SymbolEntry *)0) {
+    if (entryhi == (SymbolEntry *)0 || entrylo == (SymbolEntry *)0)
+      return 0;		// One has a symbol, one doesn't
+    if (entryhi->getSymbol() != entrylo->getSymbol())
+      return 0;		// Not from the same symbol
+  }
+
+  bool isWhole = false;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=whole->beginDescend();iter!=whole->endDescend();++iter) {
+    TypeOp *typeop = (*iter)->getOpcode();
+    // Categorize op as "reading a logical whole"
+    if (typeop->isArithmeticOp() || typeop->isFloatingPointOp()) {
+      isWhole = true;
+      break;
+    }
+  }
+  if (!isWhole)
+    return 0;
+  vnhi->setPrecisHi();
+  vnlo->setPrecisLo();
+  return 1;
+}
+
+int4 RuleDoubleOut::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *vnhi= op->getIn(0);
+  Varnode *vnlo = op->getIn(1);
+
+  // Currently this only implements collapsing input varnodes read by CPUI_PIECE
+  // So we put the test for this particular case early
+  if (!vnhi->isInput() || !vnlo->isInput())
+    return 0;
+  if (!vnhi->isPersist() || !vnlo->isPersist())
+    return 0;
+
+  if (!vnhi->isPrecisHi() || !vnlo->isPrecisLo()) {
+    return attemptMarking(vnhi,vnlo,op);
+  }
+  if (data.hasUnreachableBlocks()) return 0;
+
+  Address addr;
+  if (!SplitVarnode::isAddrTiedContiguous(vnlo, vnhi, addr))
+    return 0;
+  data.combineInputVarnodes(vnhi,vnlo);
+  return 1;
 }
 
 /// \brief Scan for conflicts between two LOADs or STOREs that would prevent them from being combined
@@ -3316,9 +3449,23 @@ int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *piece1 = op->getIn(1);
   if (!piece0->isWritten()) return 0;
   if (!piece1->isWritten()) return 0;
-  if (piece0->getDef()->code() != CPUI_LOAD) return false;
-  if (piece1->getDef()->code() != CPUI_LOAD) return false;
-  if (!SplitVarnode::testContiguousPointers(piece0->getDef(),piece1->getDef(),loadlo,loadhi,spc))
+  PcodeOp *load1 = piece1->getDef();
+  if (load1->code() != CPUI_LOAD) return false;
+  PcodeOp *load0 = piece0->getDef();
+  OpCode opc = load0->code();
+  int4 offset = 0;
+  if (opc == CPUI_SUBPIECE) {
+    // Check for 2 LOADs but most significant part of most significant LOAD is discarded
+    if (load0->getIn(1)->getOffset() != 0) return false;
+    Varnode *vn0 = load0->getIn(0);
+    if (!vn0->isWritten()) return false;
+    offset = vn0->getSize() - piece0->getSize();
+    load0 = vn0->getDef();
+    opc = load0->code();
+  }
+  if (opc != CPUI_LOAD)
+    return false;
+  if (!SplitVarnode::testContiguousPointers(load0,load1,loadlo,loadhi,spc))
     return 0;
 
   size = piece0->getSize() + piece1->getSize();
@@ -3332,8 +3479,17 @@ int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetOpcode(newload,CPUI_LOAD);
   data.opSetInput(newload,spcvn,0);
   Varnode *addrvn = loadlo->getIn(1);
-  if (addrvn->isConstant())
-    addrvn = data.newConstant(addrvn->getSize(),addrvn->getOffset());
+  if (spc->isBigEndian() && offset != 0) {
+    // If the most significant part of LOAD is discarded, we need to add discard amount to pointer
+    PcodeOp *newadd = data.newOp(2,latest->getAddr());
+    Varnode *addout = data.newUniqueOut(addrvn->getSize(),newadd);
+    data.opSetOpcode(newadd,CPUI_INT_ADD);
+    data.opSetInput(newadd,addrvn,0);
+    data.opSetInput(newadd,data.newConstant(addrvn->getSize(), offset),1);
+    data.opInsertAfter(newadd,latest);
+    addrvn = addout;
+    latest = newadd;
+  }
   data.opSetInput(newload,addrvn,1);
   // We need to guarantee that -newload- reads -addrvn- after
   // it has been defined. So insert it after the latest.

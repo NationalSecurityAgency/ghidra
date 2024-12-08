@@ -15,149 +15,38 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractNestedTypeMsType} and {@link AbstractNestedTypeExtMsType} types.
  */
-public class NestedTypeApplier extends MsTypeApplier {
+public class NestedTypeApplier extends MsDataTypeComponentApplier {
 
-	private MsTypeApplier nestedTypeDefinitionApplier = null;
-
+	// Intended for: AbstractNestedTypeMsType or AbstractNestedTypeExtMsType
 	/**
 	 * Constructor for nested type applier
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
-	 * @param msType {@link AbstractNestedTypeMsType} or {@link AbstractNestedTypeExtMsType} to
-	 * process
 	 * @throws IllegalArgumentException upon invalid arguments
 	 */
-	public NestedTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
+	public NestedTypeApplier(DefaultPdbApplicator applicator)
 			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
-	}
-
-	@Override
-	BigInteger getSize() {
-		if (nestedTypeDefinitionApplier == null) {
-			return BigInteger.ZERO;
-		}
-		return nestedTypeDefinitionApplier.getSize();
-	}
-
-	/**
-	 * Returns the name of this nested type
-	 * @return name of the nested type
-	 */
-	String getTypeName() {
-		if (nestedTypeDefinitionApplier == null) {
-			return "";
-		}
-		return nestedTypeDefinitionApplier.getMsType().getName();
+		super(applicator);
 	}
 
 	/**
 	 * Returns the nested (member?) name for this nested type
+	 * @param type the PDB type being inspected
 	 * @return (member?) name for the nested type
 	 */
-	String getMemberName() {
-		if (nestedTypeDefinitionApplier == null) {
-			return "";
+	String getMemberName(AbstractMsType type) {
+
+		if (type instanceof AbstractNestedTypeMsType nested) {
+			return nested.getName();
 		}
-		if (msType instanceof AbstractNestedTypeMsType) {
-			return ((AbstractNestedTypeMsType) msType).getName();
+		else if (type instanceof AbstractNestedTypeExtMsType nestedExt) {
+			return nestedExt.getName();
 		}
-		return ((AbstractNestedTypeExtMsType) msType).getName();
-	}
-
-	MsTypeApplier getNestedTypeDefinitionApplier() {
-		return applicator.getTypeApplier(getNestedTypeDefinitionRecordNumber());
-	}
-
-	RecordNumber getNestedTypeDefinitionRecordNumber() {
-		if (msType instanceof AbstractNestedTypeMsType) {
-			return ((AbstractNestedTypeMsType) msType).getNestedTypeDefinitionRecordNumber();
-		}
-		return ((AbstractNestedTypeExtMsType) msType).getNestedTypeDefinitionRecordNumber();
-	}
-
-	/**
-	 * Indicates if there are attributes. Returns false if not "applied" yet
-	 * @return {@code true} if there are attributes
-	 */
-	boolean hasAttributes() {
-		if (nestedTypeDefinitionApplier == null) {
-			return false;
-		}
-		if (nestedTypeDefinitionApplier.getMsType() instanceof AbstractNestedTypeMsType) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Returns the attributes if they exist
-	 * @return the attributes or null if they do not exist
-	 */
-	ClassFieldMsAttributes getAttributes() {
-		AbstractMsType type = nestedTypeDefinitionApplier.getMsType();
-		if (type instanceof AbstractNestedTypeExtMsType) {
-			return ((AbstractNestedTypeExtMsType) type).getClassFieldAttributes();
-		}
-		return null;
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		if (msType instanceof AbstractNestedTypeMsType) {
-			dataType = applyNestedTypeMsType((AbstractNestedTypeMsType) msType);
-		}
-		else {
-			dataType = applyNestedTypeExtMsType((AbstractNestedTypeExtMsType) msType);
-		}
-	}
-
-	private DataType applyNestedTypeMsType(AbstractNestedTypeMsType type) {
-		nestedTypeDefinitionApplier =
-			applicator.getTypeApplier(type.getNestedTypeDefinitionRecordNumber());
-		return nestedTypeDefinitionApplier.getDataType();
-	}
-
-	private DataType applyNestedTypeExtMsType(AbstractNestedTypeExtMsType type) {
-		nestedTypeDefinitionApplier =
-			applicator.getTypeApplier(type.getNestedTypeDefinitionRecordNumber());
-		return nestedTypeDefinitionApplier.getDataType();
-	}
-
-//	ghDataTypeDB = applicator.resolve(dataType);
-
-//	boolean underlyingIsCycleBreakable() {
-//		// TODO: need to deal with InterfaceTypeApplier (will it be incorporated into
-//		// CompostieTypeapplier?) Is it in this list of places to break (i.e., can it contain)?
-//		return (modifiedTypeApplier != null &&
-//			(modifiedTypeApplier instanceof CompositeTypeApplier ||
-//				modifiedTypeApplier instanceof EnumTypeApplier));
-//	}
-
-	@Override
-	DataType getCycleBreakType() {
-		// hope to eliminate the null check if/when modifierTypeApplier is created at time of
-		// construction
-		//TODO: look into this
-		return dataType;
-//		if (modifiedTypeApplier == null) {
-//			return null;
-//		}
-//		return modifiedTypeApplier.getCycleBreakType(applicator);
-	}
-
-	MsTypeApplier getNestedTypeApplier() {
-		return nestedTypeDefinitionApplier;
+		return "";
 	}
 
 	private static AbstractMsType validateType(AbstractMsType type)

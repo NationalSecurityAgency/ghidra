@@ -21,7 +21,6 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.table.GTableCellRenderingData;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -127,8 +126,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 //==================================================================================================
 
 	private class ContextTableColumn
-			extends
-			AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
+			extends AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
 
 		private ContextCellRenderer renderer = new ContextCellRenderer();
 
@@ -189,8 +187,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			if (!StringUtils.isBlank(refType)) {
 				String trailingText = "";
 				if (rowObject.isOffcutReference()) {
-					setForeground(
-						isSelected ? Tables.FG_ERROR_SELECTED : Tables.FG_ERROR_UNSELECTED);
+					setForeground(getErrorForegroundColor(isSelected));
 					trailingText = OFFCUT_STRING;
 				}
 				return refType + trailingText;

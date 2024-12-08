@@ -33,8 +33,7 @@ public class ReloadSleighLanguage extends GhidraScript {
 			language.reloadLanguage(monitor);
 		}
 		catch (IOException e) {
-			Msg.showError(this, this.state.getParamPanel(), "Reload Sleigh Language Failed",
-				e.getMessage());
+			Msg.showError(this, null, "Reload Sleigh Language Failed", e.getMessage());
 			return;
 		}
 		currentProgram.setLanguage(language, null, true, monitor);

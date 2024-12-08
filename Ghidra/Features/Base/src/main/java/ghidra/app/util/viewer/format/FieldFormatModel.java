@@ -21,7 +21,7 @@ import org.jdom.Element;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.RowLayout;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -151,7 +151,7 @@ public class FieldFormatModel {
 	 * @param colIndex the position in the row for the new field.
 	 */
 	public void addFactory(FieldFactory factory, int rowIndex, int colIndex) {
-		HighlightProvider hsProvider = formatMgr.getFormatHighlightProvider();
+		ListingHighlightProvider hsProvider = formatMgr.getFormatHighlightProvider();
 		ToolOptions displayOptions = formatMgr.getDisplayOptions();
 		ToolOptions fieldOptions = formatMgr.getFieldOptions();
 		FieldFactory ff = factory.newInstance(this, hsProvider, displayOptions, fieldOptions);

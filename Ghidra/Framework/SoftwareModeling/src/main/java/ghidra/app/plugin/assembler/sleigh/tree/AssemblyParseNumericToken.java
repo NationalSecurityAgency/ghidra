@@ -84,9 +84,4 @@ public class AssemblyParseNumericToken extends AssemblyParseToken {
 	public long getNumericValue() {
 		return val;
 	}
-
-	@Override
-	public boolean isNumeric() {
-		return true;
-	}
 }

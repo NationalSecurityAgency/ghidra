@@ -198,7 +198,7 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 
 		Reference[] refs = currentSymbol.getReferences(monitor);
 		for (Reference ref : refs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			accumulator.add(ref);
 		}
 	}
@@ -213,7 +213,7 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 		}
 		InstructionIterator ii = getProgram().getListing().getInstructions(block, true);
 		while (ii.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instr = ii.next();
 			Reference[] references = instr.getReferencesFrom();
 			for (Reference reference : references) {

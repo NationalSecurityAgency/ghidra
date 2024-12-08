@@ -97,7 +97,7 @@ public class DateRangeConstraintEditorTest extends AbstractDockingTest {
 		setUpperText("01/12/1999");
 
 		runSwing(() -> editor.reset());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(originalLower, getText(lowerTextField));
 		assertEquals(originalUpper, getText(upperTextField));

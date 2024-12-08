@@ -320,21 +320,21 @@ simmed8: simm8  is simm8 { export *[const]:1 simm8; }
 
 immed16: imm16  is imm16  { export *[const]:2 imm16; }
 
-baop8: baop  is baop & baop=0 { export 0:1; }
-baop8: baop  is baop & baop=1 { export 0:1; }
+baop8: baop  is baop & baop=0 { local tmp:1 = 0:1; export tmp; }
+baop8: baop  is baop & baop=1 { local tmp:1 = 0:1; export tmp; }
 baop8: baop  is baop          { export baop; }
 
-waop16: waop  is waop & waop=0 { export 0:2; }
+waop16: waop  is waop & waop=0 { local tmp:2 = 0:2; export tmp; }
 waop16: waop  is waop          { export waop; }
 
-iwreg: iwreg7  is iwreg7 & iwreg7=0 { export 0:2; }
+iwreg: iwreg7  is iwreg7 & iwreg7=0 { local tmp:2 = 0:2; export tmp; }
 iwreg: iwreg7  is iwreg7            { export iwreg7; }
 
-breg: breg8  is breg8 & breg8=0 { export 0:1; }
-breg: breg8  is breg8 & breg8=1 { export 0:1; }
+breg: breg8  is breg8 & breg8=0 { local tmp:1 = 0:1; export tmp; }
+breg: breg8  is breg8 & breg8=1 { local tmp:1 = 0:1; export tmp; }
 breg: breg8  is breg8           { export breg8; }
 
-wreg: wreg8  is wreg8 & wreg8=0 { export 0:2; }
+wreg: wreg8  is wreg8 & wreg8=0 { local tmp:2 = 0:2; export tmp; }
 wreg: wreg8  is wreg8           { export wreg8; }
 
 # See reference manual pp. 29-30 and note 1 on page 113

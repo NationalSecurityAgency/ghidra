@@ -25,6 +25,7 @@ import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -46,11 +47,11 @@ abstract class ToAdapter implements RecordAdapter {
 	static final int REF_DATA_COL = 1;
 	static final int REF_LEVEL_COL = 2;
 
-	static ToAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static ToAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			ErrorHandler errHandler, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new ToAdapterV1(dbHandle, true, addrMap, errHandler);
 		}
 
@@ -62,11 +63,11 @@ abstract class ToAdapter implements RecordAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			ToAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap, errHandler);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, adapter, addrMap, errHandler, monitor);
 			}
 			return adapter;

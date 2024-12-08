@@ -32,6 +32,8 @@ import java.util.function.Consumer;
  * debouncer configured with a time window that contains all the events, only the final event in the
  * cluster will be processed. The cost of doing this is a waiting period, so event processing may be
  * less responsive, but will also be less frantic.
+ * 
+ * @param <T> the value type
  */
 public class AsyncDebouncer<T> {
 	protected final AsyncTimer timer;
@@ -99,7 +101,7 @@ public class AsyncDebouncer<T> {
 	 * This sets or resets the timer for the event window. The settled event will fire with the
 	 * given value after this waiting period, unless another contact event occurs first.
 	 * 
-	 * @param val
+	 * @param val the new value
 	 */
 	public synchronized void contact(T val) {
 		lastContact = val;
@@ -140,5 +142,17 @@ public class AsyncDebouncer<T> {
 			return CompletableFuture.completedFuture(lastContact);
 		}
 		return settled();
+	}
+
+	public static class Bypass<T> extends AsyncDebouncer<T> {
+		public Bypass() {
+			super(null, 0);
+		}
+
+		@Override
+		public synchronized void contact(T val) {
+			lastContact = val;
+			doSettled();
+		}
 	}
 }

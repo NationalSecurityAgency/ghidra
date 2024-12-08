@@ -15,7 +15,10 @@
  */
 package ghidra.feature.vt.gui.provider.markuptable;
 
+import static ghidra.feature.vt.api.impl.VTEvent.*;
 import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -32,15 +35,12 @@ import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
-import ghidra.app.util.viewer.listingpanel.*;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.app.util.viewer.listingpanel.ProgramLocationListener;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.gui.actions.*;
@@ -51,7 +51,9 @@ import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemsTableModel.AppliedDestinationAddressTableColumn;
 import ghidra.feature.vt.gui.util.*;
-import ghidra.framework.model.DomainObject;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
@@ -150,23 +152,24 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		markupItemsTablePanel.add(tablePanel, BorderLayout.CENTER);
 		markupItemsTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel =
-			new FunctionComparisonPanel(this, tool, (Function) null, (Function) null);
+		functionComparisonPanel = new FunctionComparisonPanel(tool, getName());
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.TITLE);
+		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (dualListingPanel != null) {
-			dualListingPanel.setLeftProgramLocationListener(new SourceProgramLocationListener());
-			dualListingPanel.setRightProgramLocationListener(
+
+			dualListingPanel.getListingPanel(LEFT)
+					.setProgramLocationListener(new SourceProgramLocationListener());
+			dualListingPanel.getListingPanel(RIGHT).setProgramLocationListener(
 				new DestinationProgramLocationListener());
 
 			sourceHighlightProvider = new VTDualListingHighlightProvider(controller, true);
 			destinationHighlightProvider = new VTDualListingHighlightProvider(controller, false);
 			dualListingPanel.addHighlightProviders(sourceHighlightProvider,
 				destinationHighlightProvider);
-			sourceHighlightProvider.setListingPanel(dualListingPanel.getLeftPanel());
-			destinationHighlightProvider.setListingPanel(dualListingPanel.getRightPanel());
+			sourceHighlightProvider.setListingPanel(dualListingPanel.getListingPanel(LEFT));
+			destinationHighlightProvider.setListingPanel(dualListingPanel.getListingPanel(RIGHT));
 
 			new VTDualListingDragNDropHandler(controller, dualListingPanel);
 		}
@@ -175,6 +178,9 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			functionComparisonPanel);
 		splitPane.setResizeWeight(0.4);
 		markupPanel.add(splitPane, BorderLayout.CENTER);
+
+		markupItemsTable.setAccessibleNamePrefix("Markup Items");
+
 		return markupPanel;
 	}
 
@@ -234,8 +240,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 				}
 
 				try {
-					// Need the following flag to prevent selection changing when selecting 
-					// in the markup table, if another of the same markup type exists with 
+					// Need the following flag to prevent selection changing when selecting
+					// in the markup table, if another of the same markup type exists with
 					// the same destination address.
 					processingMarkupItemSelected = true;
 
@@ -264,24 +270,24 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 						// Don't set source or destination if the location change was initiated by the dual listing.
 						if (!processingSourceLocationChange &&
 							!processingDestinationLocationChange) {
-							dualListingPanel.setLeftLocation(dualListingPanel.getLeftProgram(),
+							dualListingPanel.setLocation(LEFT, dualListingPanel.getProgram(LEFT),
 								markupItem.getSourceLocation());
-							dualListingPanel.setRightLocation(dualListingPanel.getRightProgram(),
+							dualListingPanel.setLocation(RIGHT, dualListingPanel.getProgram(RIGHT),
 								markupItem.getDestinationLocation());
 						}
 						else {
 							// Only adjust the side of the dual listing panel that didn't initiate this.
 							ProgramLocation sourceLocation = markupItem.getSourceLocation();
 							if (processingDestinationLocationChange && sourceLocation != null) {
-								dualListingPanel.setLeftLocation(dualListingPanel.getLeftProgram(),
-									sourceLocation);
+								dualListingPanel.setLocation(LEFT,
+									dualListingPanel.getProgram(LEFT), sourceLocation);
 							}
 
 							ProgramLocation destinationLocation =
 								markupItem.getDestinationLocation();
 							if (processingSourceLocationChange && destinationLocation != null) {
-								dualListingPanel.setRightLocation(
-									dualListingPanel.getRightProgram(), destinationLocation);
+								dualListingPanel.setLocation(RIGHT,
+									dualListingPanel.getProgram(RIGHT), destinationLocation);
 							}
 						}
 						dualListingPanel.updateListings(); // refresh the dual listing's background markup colors.
@@ -329,8 +335,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			if (filteredCount != unfilteredCount) {
 				buffy.append(" (of ")
 						.append(markupItemsTableModel.getUnfilteredRowCount())
-						.append(
-							')');
+						.append(')');
 			}
 
 			setSubTitle(buffy.toString());
@@ -343,7 +348,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 
 	/**
 	 * Displays or hides the function comparison panel within the markup items provider.
-	 * @param show true indicates to show the function comparison within the provider. 
+	 * @param show true indicates to show the function comparison within the provider.
 	 * Otherwise, hide it.
 	 */
 	private void showComparisonPanelWithinProvider(boolean show) {
@@ -359,10 +364,10 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 				splitPane.add(functionComparisonPanel);
 				markupPanel.add(splitPane, BorderLayout.CENTER);
 				if (dualListingPanel != null) {
-					dualListingPanel.setLeftProgramLocationListener(
-						new SourceProgramLocationListener());
-					dualListingPanel.setRightProgramLocationListener(
-						new DestinationProgramLocationListener());
+					dualListingPanel.getListingPanel(LEFT)
+							.setProgramLocationListener(new SourceProgramLocationListener());
+					dualListingPanel.getListingPanel(LEFT)
+							.setProgramLocationListener(new DestinationProgramLocationListener());
 				}
 
 				markupPanel.validate();
@@ -376,8 +381,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			if (contains) {
 				// Remove the split pane.
 				if (dualListingPanel != null) {
-					dualListingPanel.setLeftProgramLocationListener(null);
-					dualListingPanel.setRightProgramLocationListener(null);
+					dualListingPanel.getListingPanel(LEFT).setProgramLocationListener(null);
+					dualListingPanel.getListingPanel(RIGHT).setProgramLocationListener(null);
 				}
 				markupPanel.remove(splitPane);
 				splitPane.remove(functionComparisonPanel);
@@ -402,9 +407,13 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
 
 		ancillaryFilterButton = new JButton(FILTER_ICON);
-		ancillaryFilterButton.addActionListener(
-			e -> tool.showDialog(ancillaryFilterDialog, component));
+		ancillaryFilterButton
+				.addActionListener(e -> tool.showDialog(ancillaryFilterDialog, component));
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
+
+		String buttonNamePrefix = "Markup Items Table Filter";
+		ancillaryFilterButton.setName(buttonNamePrefix + " Button");
+		ancillaryFilterButton.getAccessibleContext().setAccessibleName(buttonNamePrefix);
 
 		parentPanel.add(ancillaryFilterButton, BorderLayout.EAST);
 
@@ -453,10 +462,10 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool t, ActionContext context) {
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (context.getComponentProvider() == this && dualListingPanel != null) {
-			ListingPanel sourcePanel = dualListingPanel.getLeftPanel();
+			ListingPanel sourcePanel = dualListingPanel.getListingPanel(LEFT);
 			return sourcePanel.getHeaderActions(getName());
 		}
 		return new ArrayList<>();
@@ -471,7 +480,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			List<VTMarkupItem> selectedItems = getSelectedMarkupItems();
 			VTMarkupItemContext vtMarkupItemContext = new VTMarkupItemContext(this, selectedItems);
 			if (functionComparisonPanel.isVisible()) {
-				CodeComparisonPanel<? extends FieldPanelCoordinator> displayedPanel =
+				CodeComparisonPanel displayedPanel =
 					functionComparisonPanel.getDisplayedPanel();
 				vtMarkupItemContext.setCodeComparisonPanel(displayedPanel);
 			}
@@ -620,7 +629,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			}
 		}
 		else {
-			functionComparisonPanel.loadFunctions(null, null);
+			functionComparisonPanel.clear();
 		}
 
 		if (sourceHighlightProvider != null) {
@@ -640,7 +649,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		int sourceLength = match.getSourceLength();
 		int destinationLength = match.getDestinationLength();
 
-		// We need to possibly adjust the source and destination start addresses to the beginning 
+		// We need to possibly adjust the source and destination start addresses to the beginning
 		// of the code units containing them or we won't display anything in the comparison panel.
 		VTSession session = association.getSession();
 		Program sourceProgram = session.getSourceProgram();
@@ -786,9 +795,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		if (!isVisible()) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_DESTINATION_CHANGED) ||
-			ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_STATUS_CHANGED)) {
+		if (ev.contains(RESTORED, MARKUP_ITEM_DESTINATION_CHANGED, MARKUP_ITEM_STATUS_CHANGED)) {
 
 			// FIXME The following block of code still doesn't clear the markup item cache when Reset Match occurs.
 			MatchInfo matchInfo = controller.getMatchInfo();
@@ -853,8 +860,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			int filteredCount = markupItemsTableModel.getRowCount();
 			int unfilteredCount = markupItemsTableModel.getUnfilteredRowCount();
 			int filteredOutCount = unfilteredCount - filteredCount;
-			ancillaryFilterButton.setToolTipText(
-				"More Filters - " + filteredOutCount + " item(s) hidden");
+			ancillaryFilterButton
+					.setToolTipText("More Filters - " + filteredOutCount + " item(s) hidden");
 		}
 		else {
 			ancillaryFilterButton.setToolTipText("More Filters - no active filters");
@@ -875,26 +882,26 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		}
 	}
 
-// pretty slick code to force a table to repaint before doing some long running task    
+// pretty slick code to force a table to repaint before doing some long running task
 //    private void forceTableToRepaintEmptyWhileLoading() {
-//        JScrollPane pane = (JScrollPane) component.getComponent( 0 );        
+//        JScrollPane pane = (JScrollPane) component.getComponent( 0 );
 //        Rectangle paneBounds = pane.getBounds();
 //        Insets insets = pane.getInsets();
 //        int paneWidth = paneBounds.width - (insets.left + insets.right);
-//        
+//
 //        // force the table to resize with no data
-//        Rectangle tableBounds = markupItemsTable.getBounds();        
+//        Rectangle tableBounds = markupItemsTable.getBounds();
 //        tableBounds.width = paneWidth;
 //        tableBounds.height = 0;
 //        markupItemsTable.setBounds( tableBounds );
 //        markupItemsTable.doLayout();
-//        
+//
 //        // force the view to resize with no data (hide the scrollbars)
 //        JViewport viewport = pane.getViewport();
 //        Rectangle viewportBounds = viewport.getBounds();
 //        viewportBounds.width = paneWidth;
-//        viewport.setBounds( viewportBounds );      
-//        
+//        viewport.setBounds( viewportBounds );
+//
 //        // force the view's header to resize with no data
 //        JViewport columnHeader = pane.getColumnHeader();
 //        Rectangle columnHeaderBounds = columnHeader.getBounds();
@@ -902,12 +909,12 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 //        columnHeader.setBounds( columnHeaderBounds );
 //
 //        component.doLayout();
-//        component.paintImmediately( component.getBounds() );    
+//        component.paintImmediately( component.getBounds() );
 //    }
 
 //==================================================================================================
 // FilterDialogModel Methods
-//==================================================================================================    
+//==================================================================================================
 
 	@Override
 	public void addFilter(Filter<VTMarkupItem> filter) {
@@ -916,7 +923,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		markupItemsTableModel.addFilter(filter);
 	}
 
-	/** 
+	/**
 	 * Forces a refilter, even though filtering operations may be disabled. The reload
 	 * is necessary since the model contents may have changed
 	 */
@@ -997,7 +1004,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Gets the function comparison panel component that possibly contains multiple different views 
+	 * Gets the function comparison panel component that possibly contains multiple different views
 	 * for comparing code such as a dual listing.
 	 * @return the function comparison panel
 	 */

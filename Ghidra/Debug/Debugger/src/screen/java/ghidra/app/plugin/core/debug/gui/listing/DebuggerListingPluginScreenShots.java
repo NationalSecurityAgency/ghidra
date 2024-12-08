@@ -25,6 +25,7 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
@@ -34,6 +35,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator {
@@ -114,6 +116,9 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 			regs.setValue(snap, new RegisterValue(tb.language.getProgramCounter(),
 				childLabel.getAddress().getOffsetAsBigInteger()));
 		}
+
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		root.createFile("echo", tb.trace, TaskMonitor.DUMMY);
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);

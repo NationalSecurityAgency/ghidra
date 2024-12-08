@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,11 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import static ghidra.feature.vt.api.impl.VTEvent.*;
 import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.*;
 import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static ghidra.framework.model.DomainObjectEvent.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,9 +32,14 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 import docking.*;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
+import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
+import docking.widgets.table.columnfilter.ColumnFilterManager;
 import docking.widgets.table.threaded.ThreadedTableModel;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import generic.theme.GIcon;
+import ghidra.app.services.FunctionComparisonService;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
@@ -42,10 +49,12 @@ import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.util.*;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.*;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
@@ -57,6 +66,8 @@ import help.HelpService;
 
 public class VTMatchTableProvider extends ComponentProviderAdapter
 		implements FilterDialogModel<VTMatch>, VTControllerListener {
+
+	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
 
 	private static final String TITLE = "Version Tracking Matches";
 	private static final String TABLE_SELECTION_STATE = "TABLE_SELECTION_STATE";
@@ -71,6 +82,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 	private AncillaryFilterDialogComponentProvider<VTMatch> ancillaryFilterDialog;
 	private JButton ancillaryFilterButton;
+	private ColumnFilterManager<VTMatch> columnFilterManager;
+	private VTColumnFilter vtColumnFilter;
 
 	private FilterIconFlashTimer<VTMatch> iconTimer;
 	private Set<Filter<VTMatch>> filters = new HashSet<>();
@@ -96,7 +109,6 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		setIcon(VersionTrackingPluginPackage.ICON);
 		setDefaultWindowPosition(WindowPosition.TOP);
 		createActions();
-
 		component = createComponent();
 
 		setVisible(true);
@@ -127,6 +139,40 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		addLocalAction(new CreateSelectionAction(controller));
 		tableSelectionStateAction = new MatchTableSelectionAction(this);
 		addLocalAction(tableSelectionStateAction);
+
+		new ActionBuilder("Compare Functions", getName()).popupMenuPath("Compare Functions")
+				.popupMenuGroup("Selection")
+				.popupMenuIcon(COMPARISON_ICON)
+				.keyBinding("shift c")
+				.sharedKeyBinding()
+				.description("Compares the Function(s) with its remote match")
+				.helpLocation(
+					new HelpLocation("VersionTrackingPlugin", "Match_Table_Compare_Functions"))
+				.withContext(VTMatchContext.class)
+				.enabledWhen(this::isValidFunctionComparison)
+				.onAction(this::compareFunctions)
+				.buildAndInstallLocal(this);
+	}
+
+	private boolean isValidFunctionComparison(VTMatchContext context) {
+		List<VTMatch> functionMatches = context.getFunctionMatches();
+		return !functionMatches.isEmpty();
+	}
+
+	private void compareFunctions(VTMatchContext c) {
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
+		List<VTMatch> matches = c.getFunctionMatches();
+
+		for (VTMatch match : matches) {
+			MatchInfo matchInfo = controller.getMatchInfo(match);
+
+			Function sourceFunction = matchInfo.getSourceFunction();
+			Function destinationFunction = matchInfo.getDestinationFunction();
+			model.addMatch(sourceFunction, destinationFunction);
+		}
+
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		service.createCustomComparison(model, null);
 	}
 
 	// callback method from the MatchTableSelectionAction
@@ -146,6 +192,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		updateFilterDisplay();
 
 		setTableSelecionState(saveState);
+
+		refilter();
 	}
 
 	private void setTableSelecionState(SaveState saveState) {
@@ -215,13 +263,13 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		matchesTable = createMatchesTable();
 		JPanel matchesTablePanel = new JPanel(new BorderLayout());
-
 		JPanel filterAreaPanel = createFilterArea();
 		matchesTablePanel.add(tablePanel, BorderLayout.CENTER);
 		matchesTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
-
 		JPanel parentPanel = new JPanel(new BorderLayout());
 		parentPanel.add(matchesTablePanel);
+
+		matchesTable.setAccessibleNamePrefix("Matches");
 
 		return parentPanel;
 	}
@@ -229,6 +277,10 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	private VTMatchTableModel createTableModel() {
 		matchesTableModel = new VTMatchTableModel(controller);
 		matchesTableModel.addTableModelListener(e -> {
+			if (matchesTable == null) {
+				return; // we've been disposed
+			}
+
 			int filteredCount = matchesTableModel.getRowCount();
 			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 
@@ -338,8 +390,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		JPanel innerPanel = new JPanel(new HorizontalLayout(4));
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
-		JComponent nameFilterPanel = createTextFilterPanel();
-		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
+		JComponent textFilterPanel = createTextFilterPanel();
+		parentPanel.add(textFilterPanel, BorderLayout.CENTER);
 		parentPanel.add(innerPanel, BorderLayout.EAST);
 
 		JComponent scoreFilterPanel = createScoreFilterPanel();
@@ -361,13 +413,33 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		helpService.registerHelp(parentPanel, filterHelpLocation);
 		helpService.registerHelp(ancillaryFilterButton, filterHelpLocation);
 
+		JButton columnFilterButton = createColumnFilterButton();
+		innerPanel.add(columnFilterButton);
+
 		innerPanel.add(ancillaryFilterButton);
 
 		return parentPanel;
 	}
 
+	private JButton createColumnFilterButton() {
+
+		String preferenceKey =
+			matchesTable.getPreferenceKey() + ColumnFilterManager.FILTER_EXTENSION;
+		columnFilterManager = new ColumnFilterManager<VTMatch>(matchesTable, matchesTableModel,
+			preferenceKey, this::updateColumnFilter);
+
+		vtColumnFilter = new VTColumnFilter(columnFilterManager.getCurrentFilter());
+		addFilter(vtColumnFilter);
+
+		return columnFilterManager.getConfigureButton();
+	}
+
+	private void updateColumnFilter() {
+		vtColumnFilter.setFilter(columnFilterManager.getCurrentFilter());
+		refilter();
+	}
+
 	private JComponent createTextFilterPanel() {
-//		MatchNameFilter nameFilterPanel = new MatchNameFilter(controller, matchesTable);
 		AllTextFilter<VTMatch> allTextFilter =
 			new AllTextFilter<>(controller, matchesTable, matchesTableModel);
 		allTextFilter.setName(TEXT_FILTER_NAME);
@@ -458,6 +530,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		}
 
 		ancillaryFilterDialog.dispose();
+
+		columnFilterManager.dispose();
 	}
 
 	@Override
@@ -483,8 +557,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(VTChangeManager.DOCR_VT_MATCH_SET_ADDED)) {// save some work
+		if (ev.contains(RESTORED, MATCH_SET_ADDED)) {// save some work
 			saveComplexSelectionUpdate();
 			reload();
 			return;
@@ -493,25 +566,25 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		boolean matchesContextChanged = false;
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			if (eventType == VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_ASSOCIATION_MARKUP_STATUS_CHANGED) {
+			if (eventType == ASSOCIATION_STATUS_CHANGED ||
+				eventType == VTEvent.ASSOCIATION_MARKUP_STATUS_CHANGED) {
 
 				updateWithoutFullReload();
 				matchesContextChanged = true;
 				saveComplexSelectionUpdate();
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_TAG_CHANGED) {
+			else if (eventType == VTEvent.MATCH_TAG_CHANGED) {
 				updateWithoutFullReload();
 				matchesContextChanged = true;
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_ADDED) {
+			else if (eventType == VTEvent.MATCH_ADDED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				matchesTableModel.addObject((VTMatch) vtRecord.getNewValue());
 				matchesContextChanged = true;
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_DELETED) {
+			else if (eventType == VTEvent.MATCH_DELETED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				matchesTableModel.removeObject((VTMatch) vtRecord.getObject());
 				matchesContextChanged = true;
@@ -595,12 +668,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 	@Override
 	public void optionsChanged(Options options) {
-		// implemented as ControllerListener.  Don't care about options changed right now.
+		// implemented as ControllerListener. Don't care about options changed right
+		// now.
 	}
 
 	@Override
 	public void markupItemSelected(VTMarkupItem markupItem) {
-		// Do nothing since the matches table doesn't need to respond to the mark-up that is selected.
+		// Do nothing since the matches table doesn't need to respond to the mark-up
+		// that is selected.
 	}
 
 	private void initializeOptions() {
@@ -697,15 +772,106 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				"should become ignored by applying a match.");
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.registerOptionsEditor(new ApplyMarkupPropertyEditor(controller));
+				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));
+
+		// Auto VT options
+
+		// put checkboxes to determine which correlators to run during auto VT
+		vtOptions.registerOption(CREATE_IMPLIED_MATCHES_OPTION, true, null,
+			"Create Implied Matches when AutoVT correlators apply function matches.");
+		vtOptions.registerOption(RUN_EXACT_DATA_OPTION, true, null,
+			"Run the Exact Data Correlator");
+		vtOptions.registerOption(RUN_EXACT_SYMBOL_OPTION, true, null,
+			"Run the Exact Symbol Correlator");
+		vtOptions.registerOption(RUN_EXACT_FUNCTION_BYTES_OPTION, true, null,
+			"Run the Exact Function Bytes Correlator");
+		vtOptions.registerOption(RUN_EXACT_FUNCTION_INST_OPTION, true, null,
+			"Run the Exact Function Instruction Bytes and Mnemonics Correlators");
+		vtOptions.registerOption(RUN_DUPE_FUNCTION_OPTION, true, null,
+			"Run the Duplicate Function Instruction Correlator");
+		vtOptions.registerOption(RUN_REF_CORRELATORS_OPTION, true, null,
+			"Run the Reference Correlators");
+
+		// set help for the sub categories
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_IMPLIED_MATCH_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_SYMBOL_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DATA_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_EXACT_FUNCTION_CORRELATORS)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_REFERENCE_CORRELATORS)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		// create sub options for each auto VT correlator
+		vtOptions.registerOption(APPLY_IMPLIED_MATCHES_OPTION, true, null,
+			"Apply implied matches if minimum vote count is met and maximum conflict count is not exceeded.");
+		vtOptions.registerOption(MIN_VOTES_OPTION, 2, null,
+			"The minimum number of votes needed to apply an implied match.");
+		vtOptions.registerOption(MAX_CONFLICTS_OPTION, 0, null,
+			"The maximum number of conflicts allowed to apply an implied match.");
+
+		vtOptions.registerOption(SYMBOL_CORRELATOR_MIN_LEN_OPTION, 3, null,
+			"Minimum Symbol Name Length of Auto Version Tracking Symbol Correlator");
+		vtOptions.getOptions(SYMBOL_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(DATA_CORRELATOR_MIN_LEN_OPTION, 5, null,
+			"Minimum Data Length of Auto Version Tracking Data Correlator");
+		vtOptions.getOptions(DATA_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
+		vtOptions.getOptions(FUNCTION_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
+		vtOptions.getOptions(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(REF_CORRELATOR_MIN_SCORE_OPTION, 0.95, null,
+			"Minimum Score of all Auto Version Tracking Reference Function Correlators (Data, Function, and Combined Function and Data)");
+		vtOptions.getOptions(REF_CORRELATOR_MIN_SCORE_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(REF_CORRELATOR_MIN_CONF_OPTION, 10.0, null,
+			"Minimum Confidence of all Auto Version Tracking Reference Function Correlator (Data, Function, and Combined Function and Data)");
+		vtOptions.getOptions(REF_CORRELATOR_MIN_CONF_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
 
 		HelpLocation applyOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Version_Tracking_Apply_Options");
 		HelpLocation applyMatchOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Match_Apply_Options");
+
+		HelpLocation autoVTHelpLocation =
+			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options");
 
 		vtOptions.setOptionsHelpLocation(applyOptionsHelpLocation);
 
@@ -714,6 +880,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
 				.setOptionsHelpLocation(applyMatchOptionsHelpLocation);
+
+		vtOptions.setOptionsHelpLocation(autoVTHelpLocation);
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME).setOptionsHelpLocation(autoVTHelpLocation);
 	}
 
 //==================================================================================================
@@ -728,8 +897,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Forces a refilter, even though filtering operations may be disabled. The reload
-	 * is necessary since the model contents may have changed
+	 * Forces a refilter, even though filtering operations may be disabled. The
+	 * reload is necessary since the model contents may have changed
 	 */
 	@Override
 	public void forceRefilter() {
@@ -791,20 +960,22 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * A class meant to override the default table selection behavior <b>in special situations</b>.
+	 * A class meant to override the default table selection behavior <b>in special
+	 * situations</b>.
 	 * <p>
-	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be filtered out
-	 * of the table.  The default SelectionManager does not restore the selection for that item,
-	 * as it knows that the item is gone.
+	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be
+	 * filtered out of the table. The default SelectionManager does not restore the
+	 * selection for that item, as it knows that the item is gone.
 	 * <p>
-	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be moved due to a
-	 * sort operation after the edit.
+	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be
+	 * moved due to a sort operation after the edit.
 	 * <p>
-	 * <u>Desired Behavior:</u> Have the selection restored to the previous location, even if the
-	 * item is moved or removed.
+	 * <u>Desired Behavior:</u> Have the selection restored to the previous
+	 * location, even if the item is moved or removed.
 	 * <p>
-	 * Creating this object will cancel the default behavior.  Calling <tt>restoreSelection</tt>
-	 * will set the new selection, depending upon the conditions described above.
+	 * Creating this object will cancel the default behavior. Calling
+	 * <tt>restoreSelection</tt> will set the new selection, depending upon the
+	 * conditions described above.
 	 */
 	private class SelectionOverrideMemento {
 		private final int row;
@@ -846,13 +1017,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			ListSelectionModel selectionModel = matchesTable.getSelectionModel();
 			int rowToSelect = row;
 			if (row > matchesTableModel.getRowCount()) {
-				// The model has shrunk.  Not sure what the best action is?
+				// The model has shrunk. Not sure what the best action is?
 				tryToSelectMatch(selectionModel);// this only works if we are tracking by match and not index
 				return;
 			}
 
 			// At this point the selection model may still believe that its selection is the
-			// value we are setting.  Calling clearSelection() will kick the model.  Without the
+			// value we are setting. Calling clearSelection() will kick the model. Without
+			// the
 			// kick, the setSelectionInterval() call we make may ultimately have no effect.
 			selectionModel.clearSelection();
 
@@ -889,8 +1061,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Override the built-in SelectionManager so that we can respond to the current table
-	 * selection mode.
+	 * Override the built-in SelectionManager so that we can respond to the current
+	 * table selection mode.
 	 */
 	private class VTMatchTableSelectionManager extends RowObjectSelectionManager<VTMatch> {
 		VTMatchTableSelectionManager(JTable table, AbstractSortedTableModel<VTMatch> tableModel) {
@@ -923,4 +1095,78 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			return list;
 		}
 	}
+
+	private class VTColumnFilter extends Filter<VTMatch> {
+
+		private ColumnBasedTableFilter<VTMatch> columnFilter;
+
+		VTColumnFilter(ColumnBasedTableFilter<VTMatch> columnFilter) {
+			this.columnFilter = columnFilter;
+		}
+
+		void setFilter(ColumnBasedTableFilter<VTMatch> columnFilter) {
+			this.columnFilter = columnFilter;
+		}
+
+		@Override
+		public boolean passesFilter(VTMatch t) {
+			if (columnFilter == null) {
+				return true;
+			}
+			return columnFilter.acceptsRow(t);
+		}
+
+		@Override
+		public FilterEditingStatus getFilterStatus() {
+			if (columnFilter == null || columnFilter.isEmpty()) {
+				return FilterEditingStatus.NONE;
+			}
+
+			return FilterEditingStatus.APPLIED;
+		}
+
+		@Override
+		public JComponent getComponent() {
+			// This filter is configured outside of the VT filter API
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public FilterShortcutState getFilterShortcutState() {
+			return FilterShortcutState.REQUIRES_CHECK;
+		}
+
+		@Override
+		public Filter<VTMatch> createCopy() {
+			return this; // does not currently support copying; should not be needed
+		}
+
+		@Override
+		public void readConfigState(SaveState saveState) {
+			// handled by the column filter manager
+		}
+
+		@Override
+		public void writeConfigState(SaveState saveState) {
+			// handled by the column filter manager
+		}
+
+		@Override
+		public boolean isSubFilterOf(Filter<VTMatch> otherFilter) {
+
+			Class<?> clazz = getClass();
+			Class<?> otherClazz = otherFilter.getClass();
+			if (!clazz.equals(otherClazz)) {
+				return false; // must be the same class
+			}
+
+			VTColumnFilter otherColumnFilter = (VTColumnFilter) otherFilter;
+			if (columnFilter == null && otherColumnFilter.columnFilter == null) {
+				return true;
+			}
+			return columnFilter.isSubFilterOf(otherColumnFilter.columnFilter);
+		}
+
+	}
+
 }

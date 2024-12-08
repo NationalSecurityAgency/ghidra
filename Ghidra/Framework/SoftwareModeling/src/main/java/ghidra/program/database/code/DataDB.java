@@ -129,6 +129,7 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	private void computeLength() {
+		// NOTE: Data intentionally does not use aligned-length
 		length = dataType.getLength();
 
 		// undefined will never change their size
@@ -364,6 +365,11 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public boolean isConstant() {
 		return hasMutability(MutabilitySettingsDefinition.CONSTANT);
+	}
+
+	@Override
+	public boolean isWritable() {
+		return hasMutability(MutabilitySettingsDefinition.WRITABLE);
 	}
 
 	@Override

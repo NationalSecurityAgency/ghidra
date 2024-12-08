@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -132,6 +132,7 @@ public class AsyncLazyValue<T> {
 	/**
 	 * Check if the value has been requested, but not yet completed
 	 * 
+	 * <p>
 	 * This will also return true if something is providing the value out of band.
 	 * 
 	 * @return true if {@link #request()} or {@link #provide()} has been called, but not completed
@@ -141,7 +142,7 @@ public class AsyncLazyValue<T> {
 	}
 
 	/**
-	 * Check the the value is available immediately
+	 * Check if the value is available immediately
 	 * 
 	 * @return true if {@link #request()} or {@link #provide()} has been called and completed.
 	 */

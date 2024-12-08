@@ -389,7 +389,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void createLabel(String addr, String name) {
@@ -404,7 +404,7 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private Address addr(String address) {
@@ -414,13 +414,13 @@ public class OperandFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest
 
 	private void setBooleanOption(final String name, final boolean value) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldOptions.setBoolean(name, value));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 
 	private void setIntOption(final String name, final int value) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldOptions.setInt(name, value));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 

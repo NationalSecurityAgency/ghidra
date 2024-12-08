@@ -16,7 +16,7 @@
 package ghidra.framework.data;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 import ghidra.framework.model.*;
 import ghidra.framework.model.TransactionInfo.Status;
@@ -27,10 +27,8 @@ import ghidra.util.datastruct.WeakSet;
 
 class DomainObjectTransactionManager extends AbstractTransactionManager {
 
-	private LinkedList<DomainObjectDBTransaction> undoList =
-		new LinkedList<>();
-	private LinkedList<DomainObjectDBTransaction> redoList =
-		new LinkedList<>();
+	private LinkedList<DomainObjectDBTransaction> undoList = new LinkedList<>();
+	private LinkedList<DomainObjectDBTransaction> redoList = new LinkedList<>();
 
 	private WeakSet<TransactionListener> transactionListeners =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
@@ -91,12 +89,10 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 			if (domainObj.changeSet != null) {
 				domainObj.changeSet.endTransaction(!rollback);
 			}
-			domainObj.clearCache(false);
-		}
-
-		domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
-		if (notify) {
-			notifyEndTransaction();
+			domainObj.domainObjectRestored();
+			if (notify) {
+				notifyEndTransaction();
+			}
 		}
 	}
 
@@ -180,13 +176,12 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 						domainObj.changeSet.endTransaction(false);
 					}
 				}
-				domainObj.clearCache(false);
+				domainObj.domainObjectRestored();
+				transaction.restoreToolStates(true);
+				transaction = null;
 				if (notify) {
 					notifyEndTransaction();
 				}
-				domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
-				transaction.restoreToolStates(true);
-				transaction = null;
 			}
 		}
 		catch (IOException e) {
@@ -242,6 +237,25 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	@Override
+	List<String> getAllUndoNames() {
+		return getDescriptions(undoList);
+	}
+
+	@Override
+	List<String> getAllRedoNames() {
+		return getDescriptions(redoList);
+	}
+
+	private List<String> getDescriptions(List<DomainObjectDBTransaction> list) {
+		List<String> descriptions = new ArrayList<>();
+		for (DomainObjectDBTransaction tx : list) {
+			descriptions.add(tx.getDescription());
+		}
+		Collections.reverse(descriptions);
+		return descriptions;
+	}
+
+	@Override
 	TransactionInfo getCurrentTransactionInfo() {
 		return transaction;
 	}
@@ -255,8 +269,8 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 			if (domainObj.changeSet != null) {
 				domainObj.changeSet.redo();
 			}
-			domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 			undoList.addLast(t);
+			domainObj.domainObjectRestored();
 			t.restoreToolStates(false);
 			if (notify) {
 				notifyUndoRedo();
@@ -273,9 +287,8 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 			if (domainObj.changeSet != null) {
 				domainObj.changeSet.undo();
 			}
-			domainObj.clearCache(false);
-			domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 			redoList.addLast(t);
+			domainObj.domainObjectRestored();
 			t.restoreToolStates(true);
 			if (notify) {
 				notifyUndoRedo();

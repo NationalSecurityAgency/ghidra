@@ -1,0 +1,88 @@
+<prototype name="__rustcall" extrapop="8" stackshift="8">
+    <input pointermax="8">
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM0_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM1_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM2_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM3_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM4_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM5_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM6_Qa"/>
+	</pentry>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM7_Qa"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="RDI"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="RSI"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="RDX"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="RCX"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="R8"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="R9"/>
+	</pentry>
+	<pentry minsize="1" maxsize="500" align="8">
+	    <addr offset="8" space="stack"/>
+	</pentry>
+	<rule>
+        <datatype name="any" minsize="9" maxsize="16" />
+        <join align="true"/>          <!-- Chunk from general purpose registers -->
+    </rule>
+    </input>
+    <output>
+	<pentry minsize="4" maxsize="8" metatype="float">
+	    <register name="XMM0_Qa"/>
+	</pentry>
+	<pentry minsize="1" maxsize="8">
+	    <register name="RAX"/>
+	</pentry>
+	<pentry minsize="9" maxsize="16">
+	    <addr space="join" piece1="RDX" piece2="RAX"/>
+	</pentry>
+    </output>
+    <killedbycall>
+	<register name="RAX"/>
+	<register name="RDX"/>
+	<register name="XMM0"/>
+    </killedbycall>
+    <unaffected>
+	<register name="RBX"/>
+	<register name="RSP"/>
+	<register name="RBP"/>
+	<register name="R12"/>
+	<register name="R13"/>
+	<register name="R14"/>
+	<register name="R15"/>
+	<register name="XMM6"/>
+	<register name="XMM7"/>
+	<register name="XMM8"/>
+	<register name="XMM9"/>
+	<register name="XMM10"/>
+	<register name="XMM11"/>
+	<register name="XMM12"/>
+	<register name="XMM13"/>
+	<register name="XMM14"/>
+	<register name="XMM15"/>
+    </unaffected>
+</prototype>

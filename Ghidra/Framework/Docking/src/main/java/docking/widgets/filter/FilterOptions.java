@@ -81,6 +81,7 @@ public class FilterOptions {
 
 	private final boolean caseSensitive;
 	private final boolean inverted;
+	private final boolean usePath;
 	private final TextFilterStrategy textFilterStrategy;
 	private final boolean allowGlobbing;
 	private final boolean multiTerm;
@@ -93,19 +94,19 @@ public class FilterOptions {
 
 	public FilterOptions(TextFilterStrategy textFilterStrategy, boolean allowGlobbing,
 			boolean caseSensitive, boolean inverted) {
-		this(textFilterStrategy, allowGlobbing, caseSensitive, inverted, false, DEFAULT_DELIMITER,
-			MultitermEvaluationMode.AND);
+		this(textFilterStrategy, allowGlobbing, caseSensitive, inverted, false, false,
+			DEFAULT_DELIMITER, MultitermEvaluationMode.AND);
 	}
 
 	public FilterOptions(TextFilterStrategy textFilterStrategy, boolean allowGlobbing,
 			boolean caseSensitive, boolean inverted, boolean multiTerm, char delimiterCharacter) {
-		this(textFilterStrategy, allowGlobbing, caseSensitive, inverted, multiTerm,
+		this(textFilterStrategy, allowGlobbing, caseSensitive, inverted, false, multiTerm,
 			delimiterCharacter, MultitermEvaluationMode.AND);
 	}
 
 	public FilterOptions(TextFilterStrategy textFilterStrategy, boolean allowGlobbing,
-			boolean caseSensitive, boolean inverted, boolean multiTerm, char delimiterCharacter,
-			MultitermEvaluationMode mode) {
+			boolean caseSensitive, boolean inverted, boolean usePath, boolean multiTerm,
+			char delimiterCharacter, MultitermEvaluationMode mode) {
 		if (textFilterStrategy == null) {
 			throw new NullPointerException("TextFilterStrategy Cannot be null");
 		}
@@ -119,6 +120,7 @@ public class FilterOptions {
 		this.allowGlobbing = allowGlobbing;
 		this.caseSensitive = caseSensitive;
 		this.inverted = inverted;
+		this.usePath = usePath;
 
 		this.multiTerm =
 			textFilterStrategy == TextFilterStrategy.REGULAR_EXPRESSION ? false : multiTerm;
@@ -134,6 +136,7 @@ public class FilterOptions {
 		boolean globbing = globValue == null ? true : Boolean.parseBoolean(globValue);
 		boolean caseSensitive = Boolean.parseBoolean(element.getAttributeValue("CASE_SENSITIVE"));
 		boolean inverted = Boolean.parseBoolean(element.getAttributeValue("INVERTED"));
+		boolean usePath = Boolean.parseBoolean(element.getAttributeValue("USE_PATH"));
 
 		boolean multiterm = Boolean.parseBoolean(element.getAttributeValue("MULTITERM"));
 		String delimiterCharacterStr = element.getAttributeValue("TERM_DELIMITER");
@@ -143,8 +146,8 @@ public class FilterOptions {
 
 		boolean andMode = Boolean.parseBoolean(element.getAttributeValue("AND_EVAL_MODE", "True"));
 
-		return new FilterOptions(textFilterStrategy, globbing, caseSensitive, inverted, multiterm,
-			delimiterCharacterStr.charAt(0),
+		return new FilterOptions(textFilterStrategy, globbing, caseSensitive, inverted, usePath,
+			multiterm, delimiterCharacterStr.charAt(0),
 			andMode ? MultitermEvaluationMode.AND : MultitermEvaluationMode.OR);
 	}
 
@@ -162,6 +165,7 @@ public class FilterOptions {
 		xmlElement.setAttribute("GLOBBING", Boolean.toString(allowGlobbing));
 		xmlElement.setAttribute("CASE_SENSITIVE", Boolean.toString(caseSensitive));
 		xmlElement.setAttribute("INVERTED", Boolean.toString(inverted));
+		xmlElement.setAttribute("USE_PATH", Boolean.toString(usePath));
 
 		xmlElement.setAttribute("MULTITERM", Boolean.toString(multiTerm));
 		xmlElement.setAttribute("TERM_DELIMITER", "" + delimitingCharacter);
@@ -182,6 +186,10 @@ public class FilterOptions {
 
 	public boolean isInverted() {
 		return inverted;
+	}
+
+	public boolean shouldUsePath() {
+		return usePath;
 	}
 
 	public TextFilterStrategy getTextFilterStrategy() {

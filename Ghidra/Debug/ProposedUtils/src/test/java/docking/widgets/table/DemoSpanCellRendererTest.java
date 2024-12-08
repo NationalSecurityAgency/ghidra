@@ -214,8 +214,9 @@ public class DemoSpanCellRendererTest extends AbstractGhidraHeadedIntegrationTes
 
 		TableColumn column = table.getColumnModel().getColumn(MyColumns.LIFESPAN.ordinal());
 		SpanTableCellRenderer<Integer> rangeRenderer = new SpanTableCellRenderer<>();
+		DynamicTableColumn<MyRow, ?, ?> col = model.getColumn(MyColumns.LIFESPAN.ordinal());
 		RangeCursorTableHeaderRenderer<Integer> headerRenderer =
-			new RangeCursorTableHeaderRenderer<>(0);
+			new RangeCursorTableHeaderRenderer<>(0, col);
 		column.setCellRenderer(rangeRenderer);
 		column.setHeaderRenderer(headerRenderer);
 

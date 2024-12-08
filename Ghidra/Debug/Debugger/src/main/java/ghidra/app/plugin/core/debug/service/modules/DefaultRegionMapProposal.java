@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import ghidra.app.services.RegionMapProposal;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;

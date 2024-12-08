@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
+import ghidra.framework.store.FileSystem;
 import ghidra.util.InvalidNameException;
 
 /**
@@ -43,7 +45,7 @@ public class GhidraURLWrappedContent {
 
 	private List<Object> consumers = new ArrayList<Object>();
 
-	private ProjectData projectData;
+	private DefaultProjectData projectData;
 	private Object refObject;
 
 	public GhidraURLWrappedContent(GhidraURLConnection c) {
@@ -82,6 +84,8 @@ public class GhidraURLWrappedContent {
 
 	/**
 	 * Close associated {@link ProjectData} when all consumers have released wrapped object.
+	 * Underlying project data instance may remain active until all open project files have been
+	 * released/closed.
 	 */
 	private void closeProjectData() {
 		if (projectData != null) {
@@ -91,8 +95,8 @@ public class GhidraURLWrappedContent {
 		refObject = null;
 	}
 
-	private DomainFolder getExplicitFolder(String folderPath) throws InvalidNameException,
-			IOException {
+	private DomainFolder getExplicitFolder(String folderPath)
+			throws InvalidNameException, IOException {
 		DomainFolder folder = projectData.getRootFolder();
 		for (String name : folderPath.substring(1).split("/")) {
 			DomainFolder subfolder = folder.getFolder(name);
@@ -110,7 +114,7 @@ public class GhidraURLWrappedContent {
 			return;
 		}
 
-		projectData = c.getProjectData();
+		projectData = (DefaultProjectData) c.getProjectData();
 
 		String folderItemName = c.getFolderItemName();
 		String folderPath = c.getFolderPath();
@@ -130,9 +134,8 @@ public class GhidraURLWrappedContent {
 			}
 		}
 		if (folder == null) {
-			// TODO: URL location not found
 			closeProjectData();
-			throw new FileNotFoundException("URL specifies unknown path: " + folderPath);
+			throw new FileNotFoundException("URL specifies unknown folder path: " + folderPath);
 		}
 
 		if (folderItemName == null) {
@@ -153,7 +156,12 @@ public class GhidraURLWrappedContent {
 		}
 
 		closeProjectData();
-		throw new FileNotFoundException("URL specifies unknown path: " + folderPath);
+		String path = folderPath;
+		if (!path.endsWith(FileSystem.SEPARATOR)) {
+			path += FileSystem.SEPARATOR;
+		}
+		path += folderItemName;
+		throw new FileNotFoundException("URL specifies unknown path: " + path);
 	}
 
 	/**

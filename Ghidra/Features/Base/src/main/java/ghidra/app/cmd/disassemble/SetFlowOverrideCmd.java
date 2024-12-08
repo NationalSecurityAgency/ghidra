@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.disassemble;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -26,7 +24,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Command for setting the fallthrough property on an instruction.
  */
-public class SetFlowOverrideCmd extends BackgroundCommand {
+public class SetFlowOverrideCmd extends BackgroundCommand<Program> {
 	Address instAddr;
 	AddressSetView set;
 	FlowOverride flowOverride;
@@ -60,9 +58,7 @@ public class SetFlowOverrideCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		if (set != null) {
 			int cnt = 0;
