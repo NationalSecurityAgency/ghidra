@@ -1,0 +1,30 @@
+$(SYMBOL): dest is topbit = 0 & v0 
+	[ dest = $(DEST_EXPR) (0 | v0) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 0 & v1 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 0 & v2 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 0 & v3 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 0 & v4 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 0 & v5 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 0 & v6 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 0 & v7 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 1 & v7; topbit = 0 & v8 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) | ( v8 << 56 )) ; ]
+{ $(EXPORT_EXPR) }
+$(SYMBOL): dest is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 1 & v7; topbit = 1 & v8; topbit = 0 & v9 
+	[ dest = $(DEST_EXPR) (0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) | ( v8 << 56 ) | ( v9 << 63 )) ; ]
+{ $(EXPORT_EXPR) }
