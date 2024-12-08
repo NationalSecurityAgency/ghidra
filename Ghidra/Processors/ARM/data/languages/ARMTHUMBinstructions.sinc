@@ -2858,9 +2858,11 @@ control: "control" 			is epsilon {}
   Rd0811 = zext((altStackMode << 1) | notPrivileged);
 }
 
-define pcodeop setMainStackPointerLimit;
+@endif
 
-msplim: "msplim" 		    is epsilon {}
+@if defined(CORTEX)
+
+define pcodeop setMainStackPointerLimit;
 
 :msr^ItCond msplim,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm=10 & msplim
 {
@@ -2869,8 +2871,6 @@ msplim: "msplim" 		    is epsilon {}
 }
 
 define pcodeop setProcStackPointerLimit;
-
-psplim: "psplim"            is epsilon {}
 
 :msr^ItCond psplim,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm=11 & psplim
 {
@@ -2894,7 +2894,7 @@ define pcodeop getProcessStackPointerLimit;
   Rd0811 = getProcessStackPointerLimit();
 }
 
-@endif
+@endif #CORTEX
 
 :mrs^ItCond Rd0811,cpsr 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=0 & cpsr
 {
