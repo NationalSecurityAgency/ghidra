@@ -159,6 +159,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
+	public DecompilerController getController() {
+		return controller;
+	}
+
 	public List<ClangLine> getLines() {
 		return layoutController.getLines();
 	}
