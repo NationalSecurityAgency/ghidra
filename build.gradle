@@ -49,7 +49,7 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 /***************************************************************************************
  * Identify supported Python command
  ***************************************************************************************/
-project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9']
+project.ext.SUPPORTED_PY_VERSIONS = ['3.13', '3.12', '3.11', '3.10', '3.9']
 project.ext.PYTHON3 = findPython3(true)
 project.ext.PYTHON_DEPS = new HashSet<String>()
 
