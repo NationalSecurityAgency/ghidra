@@ -197,7 +197,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		String mangled =
 			"_$s18SwiftDemanglerTest25testJunitFunctionAndTypes_6label2___________7label14____Si_SftSiz_s4Int8Vs5Int16Vs5Int32Vs5Int64VSus5UInt8Vs6UInt16Vs6UInt32Vs6UInt64VS2fS2dSSSaySiGSbSJtF";
 		String demangled =
-			"struct tuple2 default SwiftDemanglerTest::testJunitFunctionAndTypes(int *,__int8 label2,__int16,__int32,__int64,unsigned int,unsigned __int8,unsigned __int16,unsigned __int32,unsigned __int64,float,float,double,double label14,struct Swift::String,Swift::Array<int>[],bool,struct Swift::Character)";
+			"struct tuple2 default SwiftDemanglerTest::testJunitFunctionAndTypes(__int64 *,__int8 label2,__int16,__int32,__int64,unsigned __int64,unsigned __int8,unsigned __int16,unsigned __int32,unsigned __int64,float,float,double,double label14,struct Swift::String,Swift::Array<__int64>[],bool,struct Swift::Character)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -208,7 +208,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 			throw new AssertException("Demangled return type is not a structure");
 		}
 		assertEquals(struct.getFields().size(), 2);
-		assertEquals(struct.getFields().get(0).type().toString(), "int");
+		assertEquals(struct.getFields().get(0).type().toString(), "__int64");
 		assertEquals(struct.getFields().get(1).type().toString(), "float");
 	}
 
@@ -241,7 +241,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest11MyStructureV6label1ACSi_tcfC";
 		String demangled =
-			"struct SwiftDemanglerTest::MyStructure default SwiftDemanglerTest::MyStructure::init(int label1)";
+			"struct SwiftDemanglerTest::MyStructure default SwiftDemanglerTest::MyStructure::init(__int64 label1)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -285,7 +285,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest11MyStructureV8myMethod6label16label2S2i_SitF";
 		String demangled =
-			"int default SwiftDemanglerTest::MyStructure::myMethod(int label1,int label2,struct SwiftDemanglerTest::MyStructure)";
+			"__int64 default SwiftDemanglerTest::MyStructure::myMethod(__int64 label1,__int64 label2,struct SwiftDemanglerTest::MyStructure)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -311,7 +311,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest11MyStructureV1zSivg";
 		String demangled =
-			"int default SwiftDemanglerTest::MyStructure::get_z(struct SwiftDemanglerTest::MyStructure)";
+			"__int64 default SwiftDemanglerTest::MyStructure::get_z(struct SwiftDemanglerTest::MyStructure)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -336,7 +336,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		SwiftDemanglerTest.MyStructure.z.setter : Swift.Int
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest11MyStructureV1zSivs";
-		String demangled = "__thiscall SwiftDemanglerTest::MyStructure::set_z(int)";
+		String demangled = "__thiscall SwiftDemanglerTest::MyStructure::set_z(__int64)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -370,7 +370,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest11MyStructureVyS2icig";
 		String demangled =
-			"int default SwiftDemanglerTest::MyStructure::get_subscript(int,struct SwiftDemanglerTest::MyStructure)";
+			"__int64 default SwiftDemanglerTest::MyStructure::get_subscript(__int64,struct SwiftDemanglerTest::MyStructure)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -403,7 +403,8 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		SwiftDemanglerTest.MyStructure.subscript.setter : (Swift.Int) -> Swift.Int
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest11MyStructureVyS2icis";
-		String demangled = "int __thiscall SwiftDemanglerTest::MyStructure::set_subscript(int)";
+		String demangled =
+			"__int64 __thiscall SwiftDemanglerTest::MyStructure::set_subscript(__int64)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -461,7 +462,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest7MyClassC6label1ACSi_tcfC";
 		String demangled =
-			"class SwiftDemanglerTest::MyClass * __thiscall SwiftDemanglerTest::MyClass::__allocating_init(int label1)";
+			"class SwiftDemanglerTest::MyClass * __thiscall SwiftDemanglerTest::MyClass::__allocating_init(__int64 label1)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -498,7 +499,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest7MyClassC6label1ACSi_tcfc";
 		String demangled =
-			"class SwiftDemanglerTest::MyClass * __thiscall SwiftDemanglerTest::MyClass::init(int label1)";
+			"class SwiftDemanglerTest::MyClass * __thiscall SwiftDemanglerTest::MyClass::init(__int64 label1)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -542,7 +543,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest7MyClassC8myMethod6label16label2S2i_SitF";
 		String demangled =
-			"int __thiscall SwiftDemanglerTest::MyClass::myMethod(int label1,int label2)";
+			"__int64 __thiscall SwiftDemanglerTest::MyClass::myMethod(__int64 label1,__int64 label2)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -568,7 +569,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest7MyClassC1zSivg";
 		String demangled =
-			"int __thiscall SwiftDemanglerTest::MyClass::get_z(class SwiftDemanglerTest::MyClass *)";
+			"__int64 __thiscall SwiftDemanglerTest::MyClass::get_z(class SwiftDemanglerTest::MyClass *)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -593,7 +594,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		SwiftDemanglerTest.MyClass.z.setter : Swift.Int
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest7MyClassC1zSivs";
-		String demangled = "__thiscall SwiftDemanglerTest::MyClass::set_z(int)";
+		String demangled = "__thiscall SwiftDemanglerTest::MyClass::set_z(__int64)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -618,7 +619,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		SwiftDemanglerTest.MyClass.z.modify : Swift.Int
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest7MyClassC1zSivM";
-		String demangled = "__thiscall SwiftDemanglerTest::MyClass::modify_z(int)";
+		String demangled = "__thiscall SwiftDemanglerTest::MyClass::modify_z(__int64)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
@@ -695,7 +696,7 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 		**********************************************************************/
 		String mangled = "_$s18SwiftDemanglerTest16MyAssociatedEnumO8myMethod6label1ACSi_tF";
 		String demangled =
-			"struct SwiftDemanglerTest::MyAssociatedEnum default SwiftDemanglerTest::MyAssociatedEnum::myMethod(int label1,struct SwiftDemanglerTest::MyAssociatedEnum,undefined)";
+			"struct SwiftDemanglerTest::MyAssociatedEnum default SwiftDemanglerTest::MyAssociatedEnum::myMethod(__int64 label1,struct SwiftDemanglerTest::MyAssociatedEnum,undefined)";
 
 		if (!(demangler.demangle(mangled) instanceof DemangledFunction function)) {
 			throw new AssertException("Demangled object is not a function");
