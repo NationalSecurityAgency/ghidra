@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.clear;
 
+import static ghidra.app.plugin.core.clear.ClearOptions.ClearType.*;
+
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
@@ -226,22 +228,16 @@ public class ClearPlugin extends Plugin {
 	}
 
 	private void clearCodeBytes(ListingActionContext context) {
-		ClearOptions opts = new ClearOptions();
+		ClearOptions options = new ClearOptions(false);
 
-		opts.setClearCode(true);
-		opts.setClearSymbols(false);
-		opts.setClearComments(false);
-		opts.setClearProperties(false);
-		opts.setClearFunctions(false);
-		opts.setClearRegisters(false);
-		opts.setClearEquates(false);
-		opts.setClearUserReferences(true);
-		opts.setClearAnalysisReferences(true);
-		opts.setClearImportReferences(true);
-		opts.setClearDefaultReferences(false);
-		opts.setClearBookmarks(false);
+		options.setShouldClear(INSTRUCTIONS, true);
+		options.setShouldClear(DATA, true);
+		options.setShouldClear(USER_REFERENCES, true);
+		options.setShouldClear(ANALYSIS_REFERENCES, true);
+		options.setShouldClear(IMPORT_REFERENCES, true);
+		options.setShouldClear(DEFAULT_REFERENCES, true);
 
-		clear(opts, context);
+		clear(options, context);
 
 	}
 

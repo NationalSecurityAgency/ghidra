@@ -1,261 +1,327 @@
 <!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
-<html>
-<head>
-  <title>Clear Code Bytes</title>
-  <meta http-equiv="content-type"
- content="text/html; charset=windows-1252">
-  <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
-</head>
-<body>
-<h1><a name="Clear_Code_Bytes"></a>Clear</h1>
-<h2>Clear Code Bytes</h2>
-<blockquote>
-  <p>Clear Code Bytes reverts <a
- href="help/topics/DisassemblerPlugin/Disassembly.htm">disassembled</a>
-instructions and <a href="help/topics/DataPlugin/Data.htm"> defined data</a> to
-their undefined state. It can also be used to clear the components of
-an applied structure directly from the browser.<br>
-  </p>
-</blockquote>
-<blockquote>
-  <p>To Clear a single instruction,</p>
-  <blockquote>
-    <ol type="1">
-      <li>Position the cursor on a defined instruction or data code unit</li>
-      <li>From the right-mouse pop-up menu over the Code Browser
-window, select <i> Clear Code Bytes</i><br>
-Alternately: press the 'C' key</li>
-    </ol>
-  </blockquote>
-  <p>To Clear an area,</p>
-  <blockquote>
-    <ol type="1">
-      <li>Select the defined code units (data and instructions)</li>
-      <li>From the right-mouse pop-up menu over the Code Browser
-window, select <i> Clear Code Bytes</i><br>
-Alternately: press the 'C' key</li>
-    </ol>
-  </blockquote>
-  <p>To Clear components of a structure directly in the browser,</p>
-  <blockquote>
-    <ol type="1">
-      <li>Select the structure elements in the open structure</li>
-      <li>From the right-mouse pop-up menu over the Code Browser
-window, select <i> Clear Code Bytes</i><br>
-Alternately: press the 'C' key</li>
-      <br>
-    </ol>
-  </blockquote>
-  <p> <img src="help/shared/note.png" x-maintain-ratio="TRUE"
- border="0"> Clearing bytes inside a structure
-from the CodeBrowser, changes the definition of the structure and will
-affect all occurences of the structure. </p>
-</blockquote>
-<h2><a name="Clear_With_Options"></a>Clear With Options</h2>
-<blockquote>
-  <p><i>Clear With Options</i> more selectively clears information
-defined in the program. While <i>Clear Code Bytes</i> only clears code
-units and their associated data, Clear With Options can selectively
-remove additional information, e.g., symbols, references, functions,
-etc.</p>
-  <p>The <i>Clear</i> dialog has check boxes for each type of
-information that can be cleared. If the checkbox is selected, that item
-will be removed everywhere within the selection when the OK button is
-pressed.</p>
-</blockquote>
-<div style="text-align: center;"><img alt=""
- src="images/ClearWithOptions.png"><br>
-</div>
-<blockquote>
-  <p>To Clear With Options,</p>
-  <ol>
-    <ol>
-      <li>Create a selection in the Code Browser containing instruction
-and/or defined data to be cleared.</li>
-      <li>From the right-mouse pop-up menu over the Code Browser
-window, select<i> Clear With Options...</i></li>
-      <li>De-selected the check boxes from the items that should not be
-cleared.</li>
-      <li>Click <i> OK</i>.</li>
-    </ol>
-  </ol>
-  <blockquote>
-    <p> <i><img src="help/shared/note.png" x-maintain-ratio="TRUE"
- border="0"> </i>You can undo clearing of code
-units if it has an undesired effect.</p>
-  </blockquote>
-</blockquote>
-<blockquote>
-  <p>The following paragraphs describe each option.</p>
-  <h3>Symbols</h3>
-  <blockquote>
-    <p>Any User defined <a href="help/topics/SymbolTablePlugin/symbol_table.htm">
-symbol</a> in the program. Automatically generated symbols won't be
-cleared if references still exist to the symbol's defined address.</p>
-	<blockquote>
-      <p> <img src="help/shared/note.png" x-maintain-ratio="TRUE"
- border="0"> This option will <b>not</b> clear function names. To delete these you must 
- select the <a href=#functions>functions</a> option. </p>
-    </blockquote>
-  </blockquote>
-  <h3>Comments</h3>
-  <blockquote>
-    <p>Clears Pre, Post, End of Line (EOL), Plate <a
- href="help/topics/CommentsPlugin/Comments.htm">comments</a>. It will not clear
-comments on functions or function variables.</p>
-    <blockquote>
-      <p> <img src="help/shared/note.png" x-maintain-ratio="TRUE"
- border="0"> This option will <b>not</b> clear
-repeatable or automatic comments. To delete those comments you must
-delete the associated reference. </p>
-    </blockquote>
-  </blockquote>
-  <h3>Properties</h3>
-  <blockquote>
-    <p>Properties are placed at addresses in a program by plugins to
-store information. This information is usually only understood by the
-plugin that placed it there or other cooperating plugins.</p>
-    <p><img src="help/shared/tip.png" border="0">
-Select the <a href="help/topics/PropertyManagerPlugin/Property_Viewer.htm">properties</a>
-icon (<img src="images/document-properties.png" border="0">
-) on the tool bar to display all the properties that are currently in
-the program.</p>
-  </blockquote>
-  <h3>Code</h3>
-  <blockquote>
-    <p>Data and Instructions are cleared.</p>
-  </blockquote>
-  <h3>User-defined References</h3>
-  <blockquote>
-    <p>Any references added by the user are cleared.</p>
-  </blockquote>
-  <h3>Analysis References</h3>
-  <blockquote>
-    <p>Any references created by analysis tasks are cleared.</p>
-  </blockquote>
-  <h3>Import References</h3>
-  <blockquote>
-    <p>Any references created during the import process are cleared,
-    such as calls to external library functions.</p>
-  </blockquote>
-  <h3>Default References</h3>
-  <blockquote>
-    <p>References automatically created by Ghidra during
-disassembly are cleared. This includes references to stack
-variables within the body of a function.</p>
-  </blockquote>
-  <h3><a name="functions">Functions</a></h3>
-  <blockquote>
-    <p>Defined functions are cleared, including comments and any
-defined variables. Any references to stack variables within the body of
-the function will be cleared as well.</p>
-  </blockquote>
-  <h3>Registers</h3>
-  <blockquote>
-    <p>Registers within the selection with a defined value will be
-cleared and set to undefined. Registers can be set to a value using Set
-Register Values.</p>
-  </blockquote>
-  <h3>Equates</h3>
-  <blockquote>
-    <p>Instructions with Scalar Operands set to display an alternate
-string with an <a href="help/topics/EquatePlugin/Equates.htm">Equate</a> are
-cleared.</p>
-  </blockquote>
-  <h3>Bookmarks </h3>
-  <blockquote>
-    <p>All types of <a href="help/topics/BookmarkPlugin/Bookmarks.htm">Bookmarks</a>
-are cleared.<br>
-    </p>
-  </blockquote>
-</blockquote>
-<h2><a name="Clear_Flow_and_Repair"></a>Clear Flow and Repair</h2>
-<blockquote>
-  <p><i>Clear Flow and Repair</i> is intended to be used to clear and
-optionally repair code which was produced in error. The duration of
-this action
-will vary depending on the extent of the instruction flow. If good code
-with extensive flow is encountered, the action may take a long time to
-complete. If the flow analysis is lengthy, a task dialog will be
-displayed
-with a <i>Cancel </i>button. The <i>Cancel </i>button may be
-pressed
-to terminate the action. </p>
-  <blockquote>
-    <p><img src="help/shared/note.png" alt="Note" border="0"> You can undo clearing of code units
-if it has an undesired effect</p>
-  </blockquote>
-  <p>The <i>Clear Flow</i> options dialog has check boxes to control
-its
-behavior. Pressing the <i>OK </i>button will begin the clear process
-using
-the selected options. </p>
-</blockquote>
-<table x-use-null-cells="" width="100%">
-  <tbody>
-    <tr>
-      <td align="center" width="100%"> <img src="images/ClearFlow.png"
- alt=""> <br>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<blockquote>
-  <p>To Clear instructions produced by an invalid fall-through or bad
-code produced by a data reference:</p>
-  <ol>
-    <ol>
-      <li>Click on the first bad instruction</li>
-      <li>From the right-mouse pop-up menu over the Code Browser
-window, select<i> Clear Flow and Repair...</i></li>
-      <li>Choose the desired <i>Clear Flow Options</i>.</li>
-      <li>Click <i> OK</i>.</li>
-    </ol>
-  </ol>
-  <p>To Clear instructions referenced by one or more pointers :</p>
-  <ol>
-    <ol>
-      <li>Select all pointer data units</li>
-      <li>From the right-mouse pop-up menu over the Code Browser
-window, select<i> Clear Flow and Repair...</i></li>
-      <li>Choose the desired <i>Clear Flow Options</i>.</li>
-      <li>Click <i> OK</i>.</li>
-    </ol>
-  </ol>
-  <p>Note that clearing pointer referenced code will also clear all
-computed flow references to the address(es) referenced by the selected
-pointer(s).<br>
-  </p>
-  <p>The following paragraphs describe each option.</p>
-  <h3>Clear Symbols</h3>
-  <blockquote>
-    <p>All non-default <a href="help/topics/SymbolTablePlugin/symbol_table.htm">symbols</a>
-at cleared code unit locations will be removed. <br>
-    </p>
-  </blockquote>
-  <h3>Clear Data</h3>
-  <blockquote>
-    <p>All data whoose only references were from cleared code unit
-locations will also be cleared.</p>
-  </blockquote>
-  <h3>Repair</h3>
-  <blockquote>
-    <p>Following the clearing of the flow, attempt to repair the
-disassembly of references into the cleared region.</p>
-  </blockquote>
-</blockquote>
-<p class="providedbyplugin"><br>
-Provided By: <i> ClearPlugin</i></p>
-<p class="relatedtopic">Related Topics:</p>
-<ul>
-  <li><a href="help/topics/DisassemblerPlugin/Disassembly.htm">Disassembly</a></li>
-  <li><a href="help/topics/ImporterPlugin/importer.htm">Importing Files</a></li>
-  <li><a href="help/topics/PropertyManagerPlugin/Property_Viewer.htm">Property
-Viewer</a></li>
-</ul>
-<br>
-<br>
-<br>
-<br>
-</body>
-</html>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Clear Code Bytes</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Clear_Code_Bytes"></A>Clear</H1>
+
+    <H2>Clear Code Bytes</H2>
+
+    <BLOCKQUOTE>
+      <P>Clear Code Bytes reverts <A href=
+      "help/topics/DisassemblerPlugin/Disassembly.htm">disassembled</A> instructions and <A href=
+      "help/topics/DataPlugin/Data.htm">defined data</A> to their undefined state. It can also be
+      used to clear the components of an applied structure directly from the browser.<BR>
+      </P>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>To Clear a single instruction,</P>
+
+      <BLOCKQUOTE>
+        <OL type="1">
+          <LI>Position the cursor on a defined instruction or data code unit</LI>
+
+          <LI>From the right-mouse pop-up menu over the Code Browser window, select <I>Clear Code
+          Bytes</I><BR>
+          Alternately: press the 'C' key</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <P>To Clear an area,</P>
+
+      <BLOCKQUOTE>
+        <OL type="1">
+          <LI>Select the defined code units (data and instructions)</LI>
+
+          <LI>From the right-mouse pop-up menu over the Code Browser window, select <I>Clear Code
+          Bytes</I><BR>
+          Alternately: press the 'C' key</LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <P>To Clear components of a structure directly in the browser,</P>
+
+      <BLOCKQUOTE>
+        <OL type="1">
+          <LI>Select the structure elements in the open structure</LI>
+
+          <LI>From the right-mouse pop-up menu over the Code Browser window, select <I>Clear Code
+          Bytes</I><BR>
+          Alternately: press the 'C' key</LI>
+
+          <LI style="list-style: none"><BR>
+          </LI>
+        </OL>
+      </BLOCKQUOTE>
+
+      <P><IMG alt="" src="help/shared/note.png" x-maintain-ratio="TRUE" border="0"> Clearing bytes
+      inside a structure from the CodeBrowser, changes the definition of the structure and will
+      affect all occurences of the structure.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Clear_With_Options"></A>Clear With Options</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Clear With Options</I> more selectively clears information defined in the program.
+      While <I>Clear Code Bytes</I> only clears instructions and data, Clear With
+      Options can selectively choose either instructions or data and additionally can remove
+      other program information, e.g., symbols, references, functions, etc.</P>
+
+      <P>The <I>Clear</I> dialog has check boxes for each type of information that can be cleared.
+      If the check box is selected, that item will be removed everywhere within the selection when
+      the OK button is pressed.</P>
+    </BLOCKQUOTE>
+
+    <DIV style="text-align: center;">
+      <IMG alt="" src="images/ClearWithOptions.png"><BR>
+    </DIV>
+
+    <BLOCKQUOTE>
+      <P>To Clear With Options,</P>
+
+      <DIV style="margin-left: 2em">
+        <OL>
+          <LI>Create a selection in the Code Browser containing instruction and/or defined data to
+          be cleared.</LI>
+
+          <LI>From the right-mouse pop-up menu over the Code Browser window, select <I>Clear With
+          Options...</I></LI>
+
+          <LI>De-selected the check boxes from the items that should not be cleared.</LI>
+
+          <LI>Click <I>OK</I>.</LI>
+        </OL>
+      </DIV>
+
+      <BLOCKQUOTE>
+        <P><I><IMG alt="" src="help/shared/note.png" x-maintain-ratio="TRUE" border="0"></I> You
+        can undo clearing of code units if it has an undesired effect.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <BLOCKQUOTE>
+      <P>The following paragraphs describe each option.</P>
+
+      <H3>Symbols</H3>
+
+      <BLOCKQUOTE>
+        <P>Any User defined <A href="help/topics/SymbolTablePlugin/symbol_table.htm">symbol</A> in
+        the program. Automatically generated symbols won't be cleared if references still exist to
+        the symbol's defined address.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG alt="" src="help/shared/note.png" x-maintain-ratio="TRUE" border="0"> This option
+          will <B>not</B> clear function names. To delete these you must select the <A href=
+          "#functions">functions</A> option.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Comments</H3>
+
+      <BLOCKQUOTE>
+        <P>Clears Pre, Post, End of Line (EOL), Plate <A href=
+        "help/topics/CommentsPlugin/Comments.htm">comments</A>. It will not clear comments on
+        functions or function variables.</P>
+
+        <BLOCKQUOTE>
+          <P><IMG alt="" src="help/shared/note.png" x-maintain-ratio="TRUE" border="0"> This option
+          will <B>not</B> clear repeatable or automatic comments. To delete those comments you must
+          delete the associated reference.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H3>Properties</H3>
+
+      <BLOCKQUOTE>
+        <P>Properties are placed at addresses in a program by plugins to store information. This
+        information is usually only understood by the plugin that placed it there or other
+        cooperating plugins.</P>
+
+        <P><IMG alt="" src="help/shared/tip.png" border="0"> Select the <A href=
+        "help/topics/PropertyManagerPlugin/Property_Viewer.htm">properties</A> icon (<IMG alt=""
+        src="images/document-properties.png" border="0"> ) on the tool bar to display all the
+        properties that are currently in the program.</P>
+      </BLOCKQUOTE>
+
+      <H3>Instructions</H3>
+
+      <BLOCKQUOTE>
+        <P>Instructions are cleared.</P>
+      </BLOCKQUOTE>
+
+      <H3>Data</H3>
+
+      <BLOCKQUOTE>
+        <P>Defined Data elements are cleared.</P>
+      </BLOCKQUOTE>
+
+      <H3>User-defined References</H3>
+
+      <BLOCKQUOTE>
+        <P>Any references added by the user are cleared.</P>
+      </BLOCKQUOTE>
+
+      <H3>Analysis References</H3>
+
+      <BLOCKQUOTE>
+        <P>Any references created by analysis tasks are cleared.</P>
+      </BLOCKQUOTE>
+
+      <H3>Import References</H3>
+
+      <BLOCKQUOTE>
+        <P>Any references created during the import process are cleared, such as calls to external
+        library functions.</P>
+      </BLOCKQUOTE>
+
+      <H3>Default References</H3>
+
+      <BLOCKQUOTE>
+        <P>References automatically created by Ghidra during disassembly are cleared. This includes
+        references to stack variables within the body of a function.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="functions">Functions</A></H3>
+
+      <BLOCKQUOTE>
+        <P>Defined functions are cleared, including comments and any defined variables. Any
+        references to stack variables within the body of the function will be cleared as well.</P>
+      </BLOCKQUOTE>
+
+      <H3>Registers</H3>
+
+      <BLOCKQUOTE>
+        <P>Registers within the selection with a defined value will be cleared and set to
+        undefined. Registers can be set to a value using Set Register Values.</P>
+      </BLOCKQUOTE>
+
+      <H3>Equates</H3>
+
+      <BLOCKQUOTE>
+        <P>Instructions with Scalar Operands set to display an alternate string with an <A href=
+        "help/topics/EquatePlugin/Equates.htm">Equate</A> are cleared.</P>
+      </BLOCKQUOTE>
+
+      <H3>Bookmarks</H3>
+
+      <BLOCKQUOTE>
+        <P>All types of <A href="help/topics/BookmarkPlugin/Bookmarks.htm">Bookmarks</A> are
+        cleared.<BR>
+        </P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="Clear_Flow_and_Repair"></A>Clear Flow and Repair</H2>
+
+    <BLOCKQUOTE>
+      <P><I>Clear Flow and Repair</I> is intended to be used to clear and optionally repair code
+      which was produced in error. The duration of this action will vary depending on the extent of
+      the instruction flow. If good code with extensive flow is encountered, the action may take a
+      long time to complete. If the flow analysis is lengthy, a task dialog will be displayed with
+      a <I>Cancel</I> button. The <I>Cancel</I> button may be pressed to terminate the action.</P>
+
+      <BLOCKQUOTE>
+        <P><IMG src="help/shared/note.png" alt="Note" border="0"> You can undo clearing of code
+        units if it has an undesired effect</P>
+      </BLOCKQUOTE>
+
+      <P>The <I>Clear Flow</I> options dialog has check boxes to control its behavior. Pressing the
+      <I>OK</I> button will begin the clear process using the selected options.</P>
+    </BLOCKQUOTE>
+
+    <TABLE x-use-null-cells="" width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG src="images/ClearFlow.png" alt=""><BR>
+          </TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <BLOCKQUOTE>
+      <P>To Clear instructions produced by an invalid fall-through or bad code produced by a data
+      reference:</P>
+
+      <DIV style="margin-left: 2em">
+        <OL>
+          <LI>Click on the first bad instruction</LI>
+
+          <LI>From the right-mouse pop-up menu over the Code Browser window, select <I>Clear Flow
+          and Repair...</I></LI>
+
+          <LI>Choose the desired <I>Clear Flow Options</I>.</LI>
+
+          <LI>Click <I>OK</I>.</LI>
+        </OL>
+      </DIV>
+
+      <P>To Clear instructions referenced by one or more pointers :</P>
+
+      <DIV style="margin-left: 2em">
+        <OL>
+          <LI>Select all pointer data units</LI>
+
+          <LI>From the right-mouse pop-up menu over the Code Browser window, select <I>Clear Flow
+          and Repair...</I></LI>
+
+          <LI>Choose the desired <I>Clear Flow Options</I>.</LI>
+
+          <LI>Click <I>OK</I>.</LI>
+        </OL>
+      </DIV>
+
+      <P>Note that clearing pointer referenced code will also clear all computed flow references to
+      the address(es) referenced by the selected pointer(s).<BR>
+      </P>
+
+      <P>The following paragraphs describe each option.</P>
+
+      <H3>Clear Symbols</H3>
+
+      <BLOCKQUOTE>
+        <P>All non-default <A href="help/topics/SymbolTablePlugin/symbol_table.htm">symbols</A> at
+        cleared code unit locations will be removed.<BR>
+        </P>
+      </BLOCKQUOTE>
+
+      <H3>Clear Data</H3>
+
+      <BLOCKQUOTE>
+        <P>All data whoose only references were from cleared code unit locations will also be
+        cleared.</P>
+      </BLOCKQUOTE>
+
+      <H3>Repair</H3>
+
+      <BLOCKQUOTE>
+        <P>Following the clearing of the flow, attempt to repair the disassembly of references into
+        the cleared region.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P class="providedbyplugin"><BR>
+    Provided By: <I>ClearPlugin</I></P>
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/DisassemblerPlugin/Disassembly.htm">Disassembly</A></LI>
+
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Importing Files</A></LI>
+
+      <LI><A href="help/topics/PropertyManagerPlugin/Property_Viewer.htm">Property Viewer</A></LI>
+    </UL><BR>
+    <BR>
+    <BR>
+    <BR>
+  </BODY>
+</HTML>
