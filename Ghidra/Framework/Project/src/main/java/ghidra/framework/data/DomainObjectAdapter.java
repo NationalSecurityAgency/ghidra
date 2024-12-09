@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,9 +86,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	 * @param consumer the object that created this domain object
 	 */
 	protected DomainObjectAdapter(String name, int timeInterval, Object consumer) {
-		if (consumer == null) {
-			throw new IllegalArgumentException("Consumer must not be null");
-		}
+		Objects.requireNonNull(consumer, "Consumer must not be null");
 		this.name = name;
 		docs = new DomainObjectChangeSupport(this, timeInterval, lock);
 		consumers = new ArrayList<Object>();
@@ -359,7 +357,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	@Override
 	public boolean addConsumer(Object consumer) {
-		Objects.requireNonNull(consumer);
+		Objects.requireNonNull(consumer, "Consumer must not be null");
 
 		synchronized (consumers) {
 			if (isClosed()) {
