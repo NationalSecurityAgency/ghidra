@@ -68,6 +68,8 @@ public class ResponseUpdate extends QueryResponseRecord {
 				SpecXmlUtils.encodeUnsignedInteger(func.getExecutableRecord().getXrefIndex()));
 			fwrite.append("\" name=\"");
 			SpecXmlUtils.xmlEscapeWriter(fwrite, func.getFunctionName());
+			fwrite.append("\" spaceid=\"");
+			fwrite.append(SpecXmlUtils.encodeSignedInteger(func.getSpaceID()));
 			fwrite.append("\" addr=\"");
 			fwrite.append(SpecXmlUtils.encodeUnsignedInteger(func.getAddress()));
 			fwrite.append("\">\n");
@@ -91,10 +93,11 @@ public class ResponseUpdate extends QueryResponseRecord {
 			}
 			else if (el.getName().equals("badfunc")) {
 				int id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
+				int spaceid = SpecXmlUtils.decodeInt(el.getAttribute("spaceid"));
 				long address = SpecXmlUtils.decodeLong(el.getAttribute("addr"));
 				ExecutableRecord exe = exeMap.get(id);
 				FunctionDescription func =
-					manage.findFunction(el.getAttribute("name"), address, exe);
+					manage.findFunction(el.getAttribute("name"), spaceid, address, exe);
 				badfunc.add(func);
 			}
 			parser.end();

@@ -132,13 +132,13 @@ public class BSimSearchPluginTest extends AbstractBSimPluginTest {
 		// create some canned data
 		ResponseNearest response = new ResponseNearest(null);
 		response.result.add(new TestSimilarityResult("queryFunction", "exec1", "matchFunction1",
-			01001100, 0.9d, 15.0d));
+			0, 01001100, 0.9d, 15.0d));
 		response.result.add(new TestSimilarityResult("queryFunction", "exec2", "matchFunction2",
-			01001100, 0.9d, 15.0d));
+			0, 01001100, 0.9d, 15.0d));
 		response.result.add(new TestSimilarityResult("queryFunction", "exec1", "matchFunction3",
-			01001100, 0.9d, 15.0d));
+			0, 01001100, 0.9d, 15.0d));
 		response.result.add(new TestSimilarityResult("queryFunction", "exec1", "matchFunction4",
-			01001100, 0.9d, 15.0d));
+			0, 01001100, 0.9d, 15.0d));
 
 		database.setQueryResponse(response); // set a valid response to be returned on query
 		database.setCanInitialize(true); // initialize may be called--this is OK

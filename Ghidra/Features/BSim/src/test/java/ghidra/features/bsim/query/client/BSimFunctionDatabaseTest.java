@@ -73,11 +73,11 @@ public class BSimFunctionDatabaseTest extends AbstractGhidraHeadlessIntegrationT
 			// Create a list of function descriptions; we'll loop over all of these, 
 			// trying to query each one in turn.
 			List<FunctionDescription> descs = new ArrayList<>();
-			FunctionDescription desc1 = new FunctionDescription(erec, "d1", 0x10100);
-			FunctionDescription desc2 = new FunctionDescription(erec, "d2", 0x10200);
-			FunctionDescription desc3 = new FunctionDescription(erec, "d3", 0x10300);
-			FunctionDescription desc4 = new FunctionDescription(erec, "d4", 0x10400);
-			FunctionDescription desc5 = new FunctionDescription(erec, "d5", 0x10500);
+			FunctionDescription desc1 = new FunctionDescription(erec, "d1", 0, 0x10100);
+			FunctionDescription desc2 = new FunctionDescription(erec, "d2", 0, 0x10200);
+			FunctionDescription desc3 = new FunctionDescription(erec, "d3", 0, 0x10300);
+			FunctionDescription desc4 = new FunctionDescription(erec, "d4", 0, 0x10400);
+			FunctionDescription desc5 = new FunctionDescription(erec, "d5", 0, 0x10500);
 
 			// Now create 2 different LSH vectors. Make them slightly different so 
 			// we should treat them as distinct vectors. (Note that we already have tests

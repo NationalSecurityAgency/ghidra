@@ -78,7 +78,7 @@ public class SimilarityResult implements Iterable<SimilarityNote> {
 		DescriptionManager rmanage, boolean transsig) throws LSHException {
 		ExecutableRecord erec = qmanage.findExecutable(op2.basefunc.getExecutableRecord().getMd5());
 		basefunc =
-			qmanage.findFunction(op2.basefunc.getFunctionName(), op2.basefunc.getAddress(), erec);
+			qmanage.findFunction(op2.basefunc.getFunctionName(), op2.basefunc.getSpaceID(), op2.basefunc.getAddress(), erec);
 		totalcount = op2.totalcount;
 		notes = new ArrayList<SimilarityNote>();
 		for (SimilarityNote item : op2.notes) {
@@ -94,6 +94,7 @@ public class SimilarityResult implements Iterable<SimilarityNote> {
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id",
 			basefunc.getExecutableRecord().getXrefIndex());
 		SpecXmlUtils.xmlEscapeAttribute(buf, "name", basefunc.getFunctionName());
+		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "spaceid", basefunc.getSpaceID());
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "addr", basefunc.getAddress());
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "total", totalcount);
 		buf.append(">\n");
@@ -113,8 +114,9 @@ public class SimilarityResult implements Iterable<SimilarityNote> {
 		XmlElement el = parser.start("simres");
 		int id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
 		ExecutableRecord exe = qMap.get(id);
+		int spaceid = SpecXmlUtils.decodeInt(el.getAttribute("spaceid"));
 		long address = SpecXmlUtils.decodeLong(el.getAttribute("addr"));
-		basefunc = qmanage.findFunction(el.getAttribute("name"), address, exe);
+		basefunc = qmanage.findFunction(el.getAttribute("name"), spaceid, address, exe);
 		totalcount = SpecXmlUtils.decodeInt(el.getAttribute("total"));
 		while (parser.peek().isStart()) {
 			SimilarityNote newnote = new SimilarityNote();

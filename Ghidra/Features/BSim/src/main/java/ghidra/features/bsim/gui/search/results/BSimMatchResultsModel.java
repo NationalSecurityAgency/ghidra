@@ -34,6 +34,7 @@ import ghidra.features.bsim.query.description.FunctionDescription;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
@@ -195,8 +196,11 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 	 * @return the entry point address of the function (if it exists), or just the address within the default space
 	 */
 	public static Address recoverAddress(FunctionDescription desc, Program prog) {
-		Address address =
-			prog.getAddressFactory().getDefaultAddressSpace().getAddress(desc.getAddress());
+		AddressSpace space = prog.getAddressFactory().getAddressSpace(desc.getSpaceID());
+		if (space == null) {
+			space = prog.getAddressFactory().getDefaultAddressSpace();
+		}
+		Address address = space.getAddress(desc.getAddress());
 		// Verify that we got the right function
 		Function func = prog.getFunctionManager().getFunctionAt(address);
 		if (func != null) {

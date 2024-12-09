@@ -40,6 +40,7 @@ public class CallgraphEntry implements Comparable<CallgraphEntry> {
 		StringBuilder buf = new StringBuilder();
 		buf.append("<call");
 		SpecXmlUtils.xmlEscapeAttribute(buf, "dest", dest.getFunctionName());
+		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "spaceid", dest.getSpaceID());
 		if (dest.getAddress() != -1) {
 			SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "addr", dest.getAddress());
 		}
@@ -78,6 +79,7 @@ public class CallgraphEntry implements Comparable<CallgraphEntry> {
 		XmlElement el = parser.start("call");
 		String destnm = el.getAttribute("dest");
 		long address = -1;			// Default if no "addr" attribute present
+		int spaceid = SpecXmlUtils.decodeInt(el.getAttribute("addr"));
 		String addrString = el.getAttribute("addr");
 		if (addrString != null) {
 			address = SpecXmlUtils.decodeLong(addrString);
@@ -107,18 +109,18 @@ public class CallgraphEntry implements Comparable<CallgraphEntry> {
 			} while(parser.peek().isStart());
 			if (md5 == null) {
 				ExecutableRecord destexe = man.newExecutableLibrary(dest_enm,dest_arch,null);
-				FunctionDescription destfunc = man.newFunctionDescription(destnm, address, destexe);
+				FunctionDescription destfunc = man.newFunctionDescription(destnm, spaceid, address, destexe);
 				man.makeCallgraphLink(src, destfunc, val);
 			}
 			else {
 				ExecutableRecord destexe = man.newExecutableRecord(md5, dest_enm, dest_cnm, dest_arch, null, srcexe.getRepository(), srcexe.getPath(), null);
-				FunctionDescription destfunc = man.newFunctionDescription(destnm, address, destexe);
+				FunctionDescription destfunc = man.newFunctionDescription(destnm, spaceid, address, destexe);
 				man.makeCallgraphLink(src, destfunc, val);
 			}
 		}
 		else {	// Assume dest is in same executable as src
 			FunctionDescription destfunc =
-				man.newFunctionDescription(destnm, address, src.getExecutableRecord());
+				man.newFunctionDescription(destnm, spaceid, address, src.getExecutableRecord());
 			man.makeCallgraphLink(src, destfunc, val);
 		}
 		parser.end();

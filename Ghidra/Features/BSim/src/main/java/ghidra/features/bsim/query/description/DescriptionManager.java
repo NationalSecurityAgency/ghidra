@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import generic.lsh.vector.LSHVector;
 import generic.lsh.vector.LSHVectorFactory;
 import ghidra.features.bsim.query.LSHException;
+import ghidra.program.model.address.Address;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -196,11 +197,12 @@ public class DescriptionManager {
 	 * @param fnm is the name of the new function
 	 * @param address is the address (offset) of the function
 	 * @param erec is the executable containing the function
+	 * @param spaceid the id of the address space containing the function
 	 * @return the new FunctionDescription
 	 */
-	public FunctionDescription newFunctionDescription(String fnm, long address,
+	public FunctionDescription newFunctionDescription(String fnm, int spaceid, long address,
 			ExecutableRecord erec) {
-		FunctionDescription newfunc = new FunctionDescription(erec, fnm, address);
+		FunctionDescription newfunc = new FunctionDescription(erec, fnm, spaceid, address);
 		if (!funcrec.add(newfunc)) {
 			newfunc = funcrec.floor(newfunc);
 		}
@@ -311,7 +313,7 @@ public class DescriptionManager {
 			throws LSHException {
 		ExecutableRecord erec = transferExecutable(fdesc.getExecutableRecord());
 		FunctionDescription res =
-			newFunctionDescription(fdesc.getFunctionName(), fdesc.getAddress(), erec);
+			newFunctionDescription(fdesc.getFunctionName(),fdesc.getSpaceID(), fdesc.getAddress(), erec);
 		res.setVectorId(fdesc.getVectorId());
 		res.setFlags(fdesc.getFlags());
 		SignatureRecord srec = fdesc.getSignatureRecord();
@@ -436,9 +438,9 @@ public class DescriptionManager {
 	 * @return the FunctionDescription
 	 * @throws LSHException if a matching function does not exist
 	 */
-	public FunctionDescription findFunction(String fname, long address, ExecutableRecord exe)
+	public FunctionDescription findFunction(String fname, int spaceid, long address, ExecutableRecord exe)
 			throws LSHException {
-		FunctionDescription fdesc = new FunctionDescription(exe, fname, address);
+		FunctionDescription fdesc = new FunctionDescription(exe, fname, spaceid, address);
 
 		FunctionDescription res = funcrec.floor(fdesc);
 		if (res == null || (!res.equals(fdesc))) {
@@ -455,7 +457,7 @@ public class DescriptionManager {
 	 * @return a FunctionDescription or null 
 	 */
 	public FunctionDescription findFunctionByName(String fname, ExecutableRecord exe) {
-		FunctionDescription fdesc = new FunctionDescription(exe, fname, 0);
+		FunctionDescription fdesc = new FunctionDescription(exe, fname, 0, 0);
 		FunctionDescription res = funcrec.ceiling(fdesc);
 		if (res == null || !fname.equals(res.getFunctionName()) ||
 			!res.getExecutableRecord().equals(exe)) {
@@ -472,9 +474,9 @@ public class DescriptionManager {
 	 * @param exe - the executable (possibly) containing the function
 	 * @return a FunctionDescription or null
 	 */
-	public FunctionDescription containsDescription(String fname, long address,
+	public FunctionDescription containsDescription(String fname, Address address,
 			ExecutableRecord exe) {
-		FunctionDescription fdesc = new FunctionDescription(exe, fname, address);
+		FunctionDescription fdesc = new FunctionDescription(exe, fname, address.getAddressSpace().getSpaceID(), address.getOffset());
 		FunctionDescription res = funcrec.floor(fdesc);
 		if (res == null || (!res.equals(fdesc))) {
 			return null;
@@ -493,7 +495,7 @@ public class DescriptionManager {
 		if (startexe == null) {
 			return null;
 		}
-		FunctionDescription startfunc = new FunctionDescription(startexe, "", 0);
+		FunctionDescription startfunc = new FunctionDescription(startexe, "", 0, 0);
 		startfunc = funcrec.ceiling(startfunc);
 		if (startfunc == null) { // No functions in exe or after
 			startfunc = funcrec.last();
@@ -501,7 +503,7 @@ public class DescriptionManager {
 		}
 		FunctionDescription endfunc = null;
 		if (endexe != null) {
-			endfunc = new FunctionDescription(endexe, "", 0);
+			endfunc = new FunctionDescription(endexe, "", 0, 0);
 			endfunc = funcrec.ceiling(endfunc);
 		}
 		if (endfunc == null) {
