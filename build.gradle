@@ -49,7 +49,6 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 /***************************************************************************************
  * Identify supported Python command
  ***************************************************************************************/
-project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9']
 project.ext.PYTHON3 = findPython3(true)
 project.ext.PYTHON_DEPS = new HashSet<String>()
 
@@ -219,12 +218,21 @@ def checkPip(List<String> pyCmd, boolean shouldPrint) {
 }
 
 def findPython3(boolean shouldPrint) {
-	def pyCmds = SUPPORTED_PY_VERSIONS.collectMany { [["python$it"], ["py", "-$it"]] }
-	pyCmds += [['py'], ['python3'], ['python']]
+	def supportedVersions = "${PYTHON_SUPPORTED}".split(",").collect {
+		try {
+			GradleVersion.version(it.trim()).getVersion() // use GradleVersion to validate version format
+		}
+		catch (IllegalArgumentException e) {
+			throw new GradleException("Invalid supported Python version list specified in application.properties.\n" + e.message);
+		}	
+	}
+
+	def pyCmds = supportedVersions.collectMany { [["python$it"], ["py", "-$it"]] }
+	pyCmds += [['python3'], ['python'], ['py']]
 	for (pyCmd in pyCmds) {	
 		def pyVer = checkPythonVersion(pyCmd)
 		def pyExe = getPythonExecutable(pyCmd)
-		if (pyVer in SUPPORTED_PY_VERSIONS) {
+		if (pyVer in supportedVersions) {
 			if (shouldPrint) {
 				println("Python3 command: ${pyCmd} (${pyVer}, ${pyExe})")
 			}
@@ -234,7 +242,7 @@ def findPython3(boolean shouldPrint) {
 	}
 
 	if (shouldPrint) {
-		println("Warning: Supported Python ${SUPPORTED_PY_VERSIONS} not found (required for build)")
+		println("Warning: Supported Python [${PYTHON_SUPPORTED}] not found (required for build)")
 	}
 	
 	// Don't fail until task execution. Just retun null, which can be gracefully handled later.
