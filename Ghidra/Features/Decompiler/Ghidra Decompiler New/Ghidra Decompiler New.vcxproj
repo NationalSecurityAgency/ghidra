@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\decompile\cpp\action.cc" />
+    <ClCompile Include="..\src\decompile\cpp\address.cc" />
+    <ClCompile Include="..\src\decompile\cpp\architecture.cc" />
+    <ClCompile Include="..\src\decompile\cpp\block.cc" />
+    <ClCompile Include="..\src\decompile\cpp\blockaction.cc" />
+    <ClCompile Include="..\src\decompile\cpp\capability.cc" />
+    <ClCompile Include="..\src\decompile\cpp\cast.cc" />
+    <ClCompile Include="..\src\decompile\cpp\comment.cc" />
+    <ClCompile Include="..\src\decompile\cpp\comment_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\condexe.cc" />
+    <ClCompile Include="..\src\decompile\cpp\constseq.cc" />
+    <ClCompile Include="..\src\decompile\cpp\coreaction.cc" />
+    <ClCompile Include="..\src\decompile\cpp\cover.cc" />
+    <ClCompile Include="..\src\decompile\cpp\cpool.cc" />
+    <ClCompile Include="..\src\decompile\cpp\cpool_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\crc32.cc" />
+    <ClCompile Include="..\src\decompile\cpp\database.cc" />
+    <ClCompile Include="..\src\decompile\cpp\database_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\double.cc" />
+    <ClCompile Include="..\src\decompile\cpp\dynamic.cc" />
+    <ClCompile Include="..\src\decompile\cpp\emulate.cc" />
+    <ClCompile Include="..\src\decompile\cpp\emulateutil.cc" />
+    <ClCompile Include="..\src\decompile\cpp\float.cc" />
+    <ClCompile Include="..\src\decompile\cpp\flow.cc" />
+    <ClCompile Include="..\src\decompile\cpp\fspec.cc" />
+    <ClCompile Include="..\src\decompile\cpp\funcdata.cc" />
+    <ClCompile Include="..\src\decompile\cpp\funcdata_block.cc" />
+    <ClCompile Include="..\src\decompile\cpp\funcdata_op.cc" />
+    <ClCompile Include="..\src\decompile\cpp\funcdata_varnode.cc" />
+    <ClCompile Include="..\src\decompile\cpp\ghidra_arch.cc" />
+    <ClCompile Include="..\src\decompile\cpp\ghidra_context.cc" />
+    <ClCompile Include="..\src\decompile\cpp\ghidra_process.cc" />
+    <ClCompile Include="..\src\decompile\cpp\ghidra_translate.cc" />
+    <ClCompile Include="..\src\decompile\cpp\globalcontext.cc" />
+    <ClCompile Include="..\src\decompile\cpp\graph.cc" />
+    <ClCompile Include="..\src\decompile\cpp\heritage.cc" />
+    <ClCompile Include="..\src\decompile\cpp\inject_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\jumptable.cc" />
+    <ClCompile Include="..\src\decompile\cpp\loadimage.cc" />
+    <ClCompile Include="..\src\decompile\cpp\loadimage_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\marshal.cc" />
+    <ClCompile Include="..\src\decompile\cpp\memstate.cc" />
+    <ClCompile Include="..\src\decompile\cpp\merge.cc" />
+    <ClCompile Include="..\src\decompile\cpp\modelrules.cc" />
+    <ClCompile Include="..\src\decompile\cpp\multiprecision.cc" />
+    <ClCompile Include="..\src\decompile\cpp\op.cc" />
+    <ClCompile Include="..\src\decompile\cpp\opbehavior.cc" />
+    <ClCompile Include="..\src\decompile\cpp\opcodes.cc" />
+    <ClCompile Include="..\src\decompile\cpp\options.cc" />
+    <ClCompile Include="..\src\decompile\cpp\override.cc" />
+    <ClCompile Include="..\src\decompile\cpp\paramid.cc" />
+    <ClCompile Include="..\src\decompile\cpp\pcodeinject.cc" />
+    <ClCompile Include="..\src\decompile\cpp\pcoderaw.cc" />
+    <ClCompile Include="..\src\decompile\cpp\prefersplit.cc" />
+    <ClCompile Include="..\src\decompile\cpp\prettyprint.cc" />
+    <ClCompile Include="..\src\decompile\cpp\printc.cc" />
+    <ClCompile Include="..\src\decompile\cpp\printjava.cc" />
+    <ClCompile Include="..\src\decompile\cpp\printlanguage.cc" />
+    <ClCompile Include="..\src\decompile\cpp\rangeutil.cc" />
+    <ClCompile Include="..\src\decompile\cpp\ruleaction.cc" />
+    <ClCompile Include="..\src\decompile\cpp\signature.cc" />
+    <ClCompile Include="..\src\decompile\cpp\signature_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\space.cc" />
+    <ClCompile Include="..\src\decompile\cpp\stringmanage.cc" />
+    <ClCompile Include="..\src\decompile\cpp\string_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\subflow.cc" />
+    <ClCompile Include="..\src\decompile\cpp\transform.cc" />
+    <ClCompile Include="..\src\decompile\cpp\translate.cc" />
+    <ClCompile Include="..\src\decompile\cpp\type.cc" />
+    <ClCompile Include="..\src\decompile\cpp\typegrp_ghidra.cc" />
+    <ClCompile Include="..\src\decompile\cpp\typeop.cc" />
+    <ClCompile Include="..\src\decompile\cpp\unionresolve.cc" />
+    <ClCompile Include="..\src\decompile\cpp\userop.cc" />
+    <ClCompile Include="..\src\decompile\cpp\variable.cc" />
+    <ClCompile Include="..\src\decompile\cpp\varmap.cc" />
+    <ClCompile Include="..\src\decompile\cpp\varnode.cc" />
+    <ClCompile Include="..\src\decompile\cpp\xml.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\decompile\cpp\action.hh" />
+    <ClInclude Include="..\src\decompile\cpp\address.hh" />
+    <ClInclude Include="..\src\decompile\cpp\architecture.hh" />
+    <ClInclude Include="..\src\decompile\cpp\block.hh" />
+    <ClInclude Include="..\src\decompile\cpp\blockaction.hh" />
+    <ClInclude Include="..\src\decompile\cpp\capability.hh" />
+    <ClInclude Include="..\src\decompile\cpp\cast.hh" />
+    <ClInclude Include="..\src\decompile\cpp\comment.hh" />
+    <ClInclude Include="..\src\decompile\cpp\comment_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\condexe.hh" />
+    <ClInclude Include="..\src\decompile\cpp\constseq.hh" />
+    <ClInclude Include="..\src\decompile\cpp\coreaction.hh" />
+    <ClInclude Include="..\src\decompile\cpp\cover.hh" />
+    <ClInclude Include="..\src\decompile\cpp\cpool.hh" />
+    <ClInclude Include="..\src\decompile\cpp\cpool_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\crc32.hh" />
+    <ClInclude Include="..\src\decompile\cpp\database.hh" />
+    <ClInclude Include="..\src\decompile\cpp\database_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\double.hh" />
+    <ClInclude Include="..\src\decompile\cpp\dynamic.hh" />
+    <ClInclude Include="..\src\decompile\cpp\emulate.hh" />
+    <ClInclude Include="..\src\decompile\cpp\emulateutil.hh" />
+    <ClInclude Include="..\src\decompile\cpp\float.hh" />
+    <ClInclude Include="..\src\decompile\cpp\flow.hh" />
+    <ClInclude Include="..\src\decompile\cpp\fspec.hh" />
+    <ClInclude Include="..\src\decompile\cpp\funcdata.hh" />
+    <ClInclude Include="..\src\decompile\cpp\ghidra_arch.hh" />
+    <ClInclude Include="..\src\decompile\cpp\ghidra_context.hh" />
+    <ClInclude Include="..\src\decompile\cpp\ghidra_process.hh" />
+    <ClInclude Include="..\src\decompile\cpp\ghidra_translate.hh" />
+    <ClInclude Include="..\src\decompile\cpp\globalcontext.hh" />
+    <ClInclude Include="..\src\decompile\cpp\graph.hh" />
+    <ClInclude Include="..\src\decompile\cpp\heritage.hh" />
+    <ClInclude Include="..\src\decompile\cpp\inject_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\jumptable.hh" />
+    <ClInclude Include="..\src\decompile\cpp\loadimage.hh" />
+    <ClInclude Include="..\src\decompile\cpp\loadimage_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\marshal.hh" />
+    <ClInclude Include="..\src\decompile\cpp\memstate.hh" />
+    <ClInclude Include="..\src\decompile\cpp\merge.hh" />
+    <ClInclude Include="..\src\decompile\cpp\modelrules.hh" />
+    <ClInclude Include="..\src\decompile\cpp\multiprecision.hh" />
+    <ClInclude Include="..\src\decompile\cpp\op.hh" />
+    <ClInclude Include="..\src\decompile\cpp\opbehavior.hh" />
+    <ClInclude Include="..\src\decompile\cpp\opcodes.hh" />
+    <ClInclude Include="..\src\decompile\cpp\options.hh" />
+    <ClInclude Include="..\src\decompile\cpp\override.hh" />
+    <ClInclude Include="..\src\decompile\cpp\paramid.hh" />
+    <ClInclude Include="..\src\decompile\cpp\pcodeinject.hh" />
+    <ClInclude Include="..\src\decompile\cpp\pcoderaw.hh" />
+    <ClInclude Include="..\src\decompile\cpp\prefersplit.hh" />
+    <ClInclude Include="..\src\decompile\cpp\prettyprint.hh" />
+    <ClInclude Include="..\src\decompile\cpp\printc.hh" />
+    <ClInclude Include="..\src\decompile\cpp\printjava.hh" />
+    <ClInclude Include="..\src\decompile\cpp\printlanguage.hh" />
+    <ClInclude Include="..\src\decompile\cpp\rangeutil.hh" />
+    <ClInclude Include="..\src\decompile\cpp\ruleaction.hh" />
+    <ClInclude Include="..\src\decompile\cpp\signature.hh" />
+    <ClInclude Include="..\src\decompile\cpp\signature_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\space.hh" />
+    <ClInclude Include="..\src\decompile\cpp\stringmanage.hh" />
+    <ClInclude Include="..\src\decompile\cpp\string_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\subflow.hh" />
+    <ClInclude Include="..\src\decompile\cpp\transform.hh" />
+    <ClInclude Include="..\src\decompile\cpp\translate.hh" />
+    <ClInclude Include="..\src\decompile\cpp\type.hh" />
+    <ClInclude Include="..\src\decompile\cpp\typegrp_ghidra.hh" />
+    <ClInclude Include="..\src\decompile\cpp\typeop.hh" />
+    <ClInclude Include="..\src\decompile\cpp\unionresolve.hh" />
+    <ClInclude Include="..\src\decompile\cpp\userop.hh" />
+    <ClInclude Include="..\src\decompile\cpp\variable.hh" />
+    <ClInclude Include="..\src\decompile\cpp\varmap.hh" />
+    <ClInclude Include="..\src\decompile\cpp\varnode.hh" />
+    <ClInclude Include="..\src\decompile\cpp\xml.hh" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f8fb6e02-1abf-45e2-a7d9-2a5ff53b3670}</ProjectGuid>
+    <RootNamespace>GhidraDecompilerNew</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level1</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <DisableSpecificWarnings>4703;4146</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
