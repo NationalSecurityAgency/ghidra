@@ -77,10 +77,10 @@ public class ClearCmd extends BackgroundCommand<Program> {
 		this.options = options;
 		this.sendIndividualEvents = sendIndividualEvents;
 
-		if (options == null) {
-			options = new ClearOptions(false);
-			options.setShouldClear(INSTRUCTIONS, true);
-			options.setShouldClear(DATA, true);
+		if (this.options == null) {
+			this.options = new ClearOptions(false);
+			this.options.setShouldClear(INSTRUCTIONS, true);
+			this.options.setShouldClear(DATA, true);
 		}
 	}
 
