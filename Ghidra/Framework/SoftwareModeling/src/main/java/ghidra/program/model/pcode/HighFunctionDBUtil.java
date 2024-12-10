@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -737,6 +737,27 @@ public class HighFunctionDBUtil {
 			return null;
 		}
 		return datsym;
+	}
+
+	/**
+	 * If there is a call to a function at the given address, and the function takes variable arguments,
+	 * return the index of the first variable argument. Return -1 otherwise.
+	 * @param program is the Program
+	 * @param addr is the given address of the call
+	 * @return the index of the first variable argument or -1
+	 */
+	public static int getFirstVarArg(Program program, Address addr) {
+		for (Reference ref : program.getReferenceManager().getReferencesFrom(addr)) {
+			if (ref.isPrimary() && ref.getReferenceType().isCall()) {
+				Address callDestAddr = ref.getToAddress();
+				Function func = program.getFunctionManager().getFunctionAt(callDestAddr);
+				if (func != null && func.hasVarArgs()) {
+					return func.getParameterCount();
+				}
+				break;
+			}
+		}
+		return -1;
 	}
 
 	/**

@@ -3433,6 +3433,10 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
     addressesdetermined = false;
 
   uint4 elemId = decoder.openElement(ELEM_INTERNALLIST);
+  uint4 firstId = decoder.getNextAttributeId();
+  if (firstId == ATTRIB_FIRST) {
+    proto.firstVarArgSlot = decoder.readSignedInteger();
+  }
   for(;;) { // This is only the input params
     uint4 subId = decoder.openElement();		// <retparam> or <param>
     if (subId == 0) break;

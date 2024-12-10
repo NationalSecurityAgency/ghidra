@@ -681,7 +681,7 @@ public class PcodeDataTypeManager {
 		encoder.writeSignedInteger(ATTRIB_SIZE, 1);		// Force size of 1
 		CompilerSpec cspec = program.getCompilerSpec();
 		FunctionPrototype fproto = new FunctionPrototype(type, cspec, voidInputIsVarargs);
-		fproto.encodePrototype(encoder, this);
+		fproto.encodePrototype(encoder, this, -1);
 		encoder.closeElement(ELEM_TYPE);
 	}
 
