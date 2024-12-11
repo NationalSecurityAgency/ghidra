@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class ClipboardPlugin extends ProgramPlugin
 
 	public static final String GROUP_NAME = "Clipboard";
 	public static final String TOOLBAR_GROUP_NAME = "ZClipboard";
-	private static final String REMOVE_QUOTES_OPTION = "Copy Strings Without Quotes";
+	static final String REMOVE_QUOTES_OPTION = "Copy Strings Without Quotes";
 
 	//The provider that owns the clipboard content
 	private ClipboardContentProviderService clipboardOwnerProvider;
