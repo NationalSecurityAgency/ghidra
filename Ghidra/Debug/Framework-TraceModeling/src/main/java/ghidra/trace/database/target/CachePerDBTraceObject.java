@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,8 +62,6 @@ public class CachePerDBTraceObject {
 	}
 
 	private static final int MAX_CACHE_KEYS = 200;
-	private static final int MAX_VALUES_PER_KEY = 20;
-	private static final int MAX_VALUES_ANY_KEY = 4000;
 	private static final int EXPANSION = 10;
 
 	private record CachedLifespanValues<K>(Lifespan span,

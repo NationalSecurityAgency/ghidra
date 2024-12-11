@@ -243,18 +243,6 @@ def refresh_processes(node: sch.Schema('ProcessContainer')):
         commands.ghidra_trace_put_processes()
 
 
-@REGISTRY.method(action='refresh', display='Refresh Breakpoint Locations')
-def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
-    """
-    Refresh the breakpoint locations for the process.
-
-    In the course of refreshing the locations, the breakpoint list will also be
-    refreshed.
-    """
-    with commands.open_tracked_tx('Refresh Breakpoint Locations'):
-        commands.ghidra_trace_put_breakpoints()
-
-
 @REGISTRY.method(action='refresh', display='Refresh Environment')
 def refresh_environment(node: sch.Schema('Environment')):
     """Refresh the environment descriptors (arch, os, endian)."""

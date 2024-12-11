@@ -37,7 +37,6 @@ import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider.WatchDataS
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.DebuggerControlService;
-import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.Settings;
@@ -81,8 +80,6 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 	protected Register r0;
 	protected Register r1;
 	protected TraceObjectThread thread;
-
-	protected TestTargetRegisterBankInThread bank;
 
 	@Before
 	public void setUpWatchesProviderTest() throws Exception {

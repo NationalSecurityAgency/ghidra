@@ -25,12 +25,10 @@ import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -40,6 +38,8 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.path.PathPattern;
 
 public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
@@ -88,7 +88,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Available[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertThat(list.size(), greaterThan(2));
@@ -116,7 +116,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Processes[].Breakpoints[]"))
+							PathFilter.parse("Processes[].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -155,7 +155,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				List<TraceObjectValue> procBreakVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Processes[].Breakpoints[]"))
+							PathFilter.parse("Processes[].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -199,7 +199,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Processes[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Processes[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertEquals(1, list.size());
@@ -269,7 +269,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Processes[].Threads[].Stack[]"))
+							PathFilter.parse("Processes[].Threads[].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertTrue(list.size() > 1);
@@ -363,7 +363,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				txPut(conn, "threads");
 
 				PathPattern pattern =
-					PathPredicates.parse("Processes[].Threads[]").getSingletonPattern();
+					PathFilter.parse("Processes[].Threads[]").getSingletonPattern();
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0), pattern)
 						.map(p -> p.getDestination(null))
@@ -373,7 +373,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				for (TraceObject t : list) {
 					activateThread.invoke(Map.of("thread", t));
 					String out = conn.executeCapture("print(util.dbg.get_thread())").strip();
-					List<String> indices = pattern.matchKeys(t.getCanonicalPath().getKeyList());
+					List<String> indices = pattern.matchKeys(t.getCanonicalPath(), true);
 					assertEquals("%s".formatted(indices.get(1)), out);
 				}
 			}

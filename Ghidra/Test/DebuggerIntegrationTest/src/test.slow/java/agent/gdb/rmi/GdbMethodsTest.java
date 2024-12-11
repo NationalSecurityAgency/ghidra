@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,15 +30,13 @@ import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Float10DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -50,6 +48,8 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.path.PathPattern;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
@@ -93,7 +93,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Available[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertThat(list.size(), greaterThan(2));
@@ -126,7 +126,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				List<TraceObjectValue> infBreakLocVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Inferiors[1].Breakpoints[]"))
+							PathFilter.parse("Inferiors[1].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -181,7 +181,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				List<TraceObjectValue> infBreakLocVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Inferiors[1].Breakpoints[]"))
+							PathFilter.parse("Inferiors[1].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -226,7 +226,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Inferiors[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Inferiors[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertEquals(2, list.size());
@@ -304,7 +304,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Inferiors[1].Threads[1].Stack[]"))
+							PathFilter.parse("Inferiors[1].Threads[1].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertThat(list.size(), greaterThan(2));
@@ -423,7 +423,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Inferiors[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Inferiors[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertEquals(2, list.size());
@@ -457,7 +457,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				PathPattern pattern =
-					PathPredicates.parse("Inferiors[].Threads[]").getSingletonPattern();
+					PathFilter.parse("Inferiors[].Threads[]").getSingletonPattern();
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0), pattern)
 						.map(p -> p.getDestination(null))
@@ -467,7 +467,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				for (TraceObject t : list) {
 					activateThread.invoke(Map.of("thread", t));
 					String out = conn.executeCapture("thread");
-					List<String> indices = pattern.matchKeys(t.getCanonicalPath().getKeyList());
+					List<String> indices = pattern.matchKeys(t.getCanonicalPath(), true);
 					assertThat(out, containsString(
 						"Current thread is %s.%s".formatted(indices.get(0), indices.get(1))));
 				}
@@ -494,7 +494,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Inferiors[1].Threads[1].Stack[]"))
+							PathFilter.parse("Inferiors[1].Threads[1].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertThat(list.size(), greaterThan(2));

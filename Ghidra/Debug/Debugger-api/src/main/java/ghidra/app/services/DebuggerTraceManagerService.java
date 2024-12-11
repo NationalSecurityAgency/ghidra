@@ -28,7 +28,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.TriConsumer;
@@ -467,14 +467,14 @@ public interface DebuggerTraceManagerService {
 	 * @param path the path
 	 * @return the best coordinates
 	 */
-	DebuggerCoordinates resolvePath(TraceObjectKeyPath path);
+	DebuggerCoordinates resolvePath(KeyPath path);
 
 	/**
 	 * Activate the given canonical object path
 	 * 
 	 * @param path the desired path
 	 */
-	default void activatePath(TraceObjectKeyPath path) {
+	default void activatePath(KeyPath path) {
 		activate(resolvePath(path));
 	}
 

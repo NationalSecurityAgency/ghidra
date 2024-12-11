@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@ import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import ghidra.dbg.target.TargetObject;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.NumericUtilities;
 
@@ -114,7 +114,7 @@ public interface DisplaysObjectValues {
 
 	default String getObjectType(TraceObjectValue edge) {
 		TraceObject object = edge.getChild();
-		return object.getTargetSchema().getName().toString();
+		return object.getSchema().getName().toString();
 	}
 
 	default String getObjectLinkToolTip(TraceObjectValue edge) {
@@ -132,7 +132,7 @@ public interface DisplaysObjectValues {
 	default String getObjectDisplay(TraceObjectValue edge) {
 		TraceObject object = edge.getChild();
 		TraceObjectValue displayAttr =
-			object.getAttribute(getSnap(), TargetObject.DISPLAY_ATTRIBUTE_NAME);
+			object.getAttribute(getSnap(), TraceObjectInterface.KEY_DISPLAY);
 		if (displayAttr != null) {
 			return displayAttr.getValue().toString();
 		}

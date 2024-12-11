@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package ghidra.trace.database.breakpoint;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.DBTraceObject;
@@ -30,7 +28,10 @@ import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.iface.TraceObjectTogglable;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
@@ -40,7 +41,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectBreakpointSpec
 		implements TraceObjectBreakpointSpec, DBTraceObjectInterface {
-	private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
+	private static final Map<TraceObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
 
 	private final DBTraceObject object;
 	private final Set<String> keys;
@@ -49,11 +50,11 @@ public class DBTraceObjectBreakpointSpec
 
 	public DBTraceObjectBreakpointSpec(DBTraceObject object) {
 		this.object = object;
-		TargetObjectSchema schema = object.getTargetSchema();
+		TraceObjectSchema schema = object.getSchema();
 		synchronized (KEYS_BY_SCHEMA) {
 			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
-				s -> Set.of(schema.checkAliasedAttribute(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME),
-					schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME)));
+				s -> Set.of(schema.checkAliasedAttribute(TraceObjectBreakpointSpec.KEY_KINDS),
+					schema.checkAliasedAttribute(TraceObjectTogglable.KEY_ENABLED)));
 		}
 	}
 
@@ -70,14 +71,14 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public void setName(String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+			object.setValue(getLifespan(), TraceObjectInterface.KEY_DISPLAY, name);
 		}
 	}
 
 	@Override
 	public String getName() {
 		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-			TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+			TraceObjectInterface.KEY_DISPLAY, String.class, "");
 	}
 
 	@Override
@@ -136,7 +137,7 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public void setEnabled(boolean enabled) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME,
+			object.setValue(getLifespan(), TraceObjectTogglable.KEY_ENABLED,
 				enabled ? true : null);
 		}
 	}
@@ -144,7 +145,7 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public boolean isEnabled(long snap) {
 		return TraceObjectInterfaceUtils.getValue(object, snap,
-			TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, Boolean.class, false);
+			TraceObjectTogglable.KEY_ENABLED, Boolean.class, false);
 	}
 
 	@Override
@@ -152,7 +153,7 @@ public class DBTraceObjectBreakpointSpec
 		// TODO: More efficient encoding
 		// TODO: Target-Trace mapping is implied by encoded name. Seems bad.
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(lifespan, TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME,
+			object.setValue(lifespan, TraceObjectBreakpointSpec.KEY_KINDS,
 				TraceBreakpointKindSet.encode(kinds));
 			this.kinds = TraceBreakpointKindSet.copyOf(kinds);
 		}
@@ -168,7 +169,7 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public Set<TraceBreakpointKind> getKinds() {
 		String kindsStr = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-			TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME, String.class, null);
+			TraceObjectBreakpointSpec.KEY_KINDS, String.class, null);
 		if (kindsStr == null) {
 			return kinds;
 		}
@@ -184,7 +185,7 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public String getExpression() {
 		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-			TargetBreakpointSpec.EXPRESSION_ATTRIBUTE_NAME, String.class, null);
+			TraceObjectBreakpointSpec.KEY_EXPRESSION, String.class, null);
 	}
 
 	@Override

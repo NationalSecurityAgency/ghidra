@@ -40,10 +40,6 @@ import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePl
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.*;
-import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -66,7 +62,11 @@ import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.iface.TraceObjectEnvironment;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -174,15 +174,15 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			DBTraceObject env =
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Environment"));
-			assertEquals(ctx.getSchema(new SchemaName("Environment")), env.getTargetSchema());
+				objects.createObject(KeyPath.parse("Targets[0].Environment"));
+			assertEquals(ctx.getSchema(new SchemaName("Environment")), env.getSchema());
 			Lifespan zeroOn = Lifespan.nowOn(0);
 			env.insert(zeroOn, ConflictResolution.DENY);
-			env.setAttribute(zeroOn, TargetEnvironment.DEBUGGER_ATTRIBUTE_NAME, "test");
-			env.setAttribute(zeroOn, TargetEnvironment.ARCH_ATTRIBUTE_NAME, arch);
+			env.setAttribute(zeroOn, TraceObjectEnvironment.KEY_DEBUGGER, "test");
+			env.setAttribute(zeroOn, TraceObjectEnvironment.KEY_ARCH, arch);
 
 			DBTraceObject objBinText =
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Memory[bin:.text]"));
+				objects.createObject(KeyPath.parse("Targets[0].Memory[bin:.text]"));
 			TraceObjectMemoryRegion binText =
 				objBinText.queryInterface(TraceObjectMemoryRegion.class);
 			binText.addFlags(zeroOn, Set.of(TraceMemoryFlag.EXECUTE));
@@ -193,17 +193,17 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			if (pcInStack) {
 				DBTraceObject objFrame = objects
-						.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
+						.createObject(KeyPath.parse("Targets[0].Threads[0].Stack[0]"));
 				objFrame.insert(zeroOn, ConflictResolution.DENY);
 				TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
 				frame.setProgramCounter(zeroOn, tb.addr(offset));
 			}
 			else {
 				objects.createObject(
-					TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+					KeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
 						.insert(zeroOn, ConflictResolution.DENY);
 				TraceObjectThread thread = objects
-						.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Targets[0].Threads[0]"))
+						.getObjectByCanonicalPath(KeyPath.parse("Targets[0].Threads[0]"))
 						.queryInterface(TraceObjectThread.class);
 				traceManager.activateThread(thread);
 				DBTraceMemorySpace regs =
@@ -218,7 +218,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertEquals(bytes.remaining(), memory.putBytes(0, tb.addr(offset), bytes));
 		}
 		TraceObjectThread thread =
-			objects.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Targets[0].Threads[0]"))
+			objects.getObjectByCanonicalPath(KeyPath.parse("Targets[0].Threads[0]"))
 					.queryInterface(TraceObjectThread.class);
 		traceManager.activateThread(thread);
 		return thread;
@@ -484,7 +484,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager()
 					.createObject(
-						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+						KeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
 					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			DBTraceMemorySpace regs = Objects.requireNonNull(
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true));
@@ -519,7 +519,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager()
 					.createObject(
-						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+						KeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
 					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			DBTraceMemorySpace regs = Objects.requireNonNull(
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true));

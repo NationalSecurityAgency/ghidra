@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.math.BigInteger;
 
 import ghidra.pcode.exec.ConcretionError;
 import ghidra.pcode.exec.PcodeArithmetic;
-import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.program.model.lang.Endian;
 import ghidra.trace.model.memory.TraceMemoryState;
 
@@ -32,8 +31,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
  * that it can compute the "state" of a Sleigh expression's value. It essentially works like a
  * rudimentary taint analyzer: If any part of any input to the expression in tainted, i.e., not
  * {@link TraceMemoryState#KNOWN}, then the result is {@link TraceMemoryState#UNKNOWN}. This is best
- * exemplified in
- * {@link #binaryOp(BinaryOpBehavior, int, int, TraceMemoryState, int, TraceMemoryState)}.
+ * exemplified in {@link #binaryOp(int, int, int, TraceMemoryState, int, TraceMemoryState)}.
  */
 public enum TraceMemoryStatePcodeArithmetic implements PcodeArithmetic<TraceMemoryState> {
 	/** The singleton instance */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,8 @@ import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
@@ -89,9 +90,10 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * NOTE: If the IDs match, then the symbols are considered equal, regardless of their other
-	 * attributes. This mechanic seems required to support the whole "placeholder" idea. See
-	 * {@link SymbolTable#createSymbolPlaceholder(Address, long)}.
+	 * attributes. This mechanic seems required to support the whole "placeholder" idea. TODO: The
+	 * "placeholder" thing may no longer be applicable.
 	 */
 	@Override
 	public boolean equals(Object obj) {
