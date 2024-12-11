@@ -95,9 +95,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/BSim")
 	],
 	[
-		name: "PyDev 6.3.1.zip",
-		url: "https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip",
-		sha256: "4d81fe9d8afe7665b8ea20844d3f5107f446742927c59973eade4f29809b0699",
+		name: "PyDev 9.3.0.zip",
+		url: "https://sourceforge.net/projects/pydev/files/pydev/PyDev%209.3.0/PyDev%209.3.0.zip",
+		sha256: "45398edf2adb56078a80bc88a919941578f0c0b363efbdd011bfd158a99b112e",
 		destination: file("${DEPS_DIR}/GhidraDev")
 	],
 	[
