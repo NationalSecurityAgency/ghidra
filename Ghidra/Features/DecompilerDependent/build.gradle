@@ -26,6 +26,8 @@ eclipse.project.name = 'Features DecompilerDependent'
 dependencies {
 	api project(':Base')
 	api project(':Decompiler')
+	api project(':Sarif')
+	api "com.contrastsecurity.sarif:java-sarif-2.1-modified"
 }
 
 
