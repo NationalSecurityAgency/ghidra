@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,6 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.Unique;
-import generic.test.rule.Repeated;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.assembler.*;
@@ -1073,8 +1072,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	public record HoverLocation(ProgramLocation pLoc, FieldLocation fLoc, Field field,
-			ClangToken token) {
-	}
+			ClangToken token) {}
 
 	public static <T extends ProgramLocation> HoverLocation findLocation(ListingPanel panel,
 			Address address, Class<T> locType, Predicate<T> predicate) {

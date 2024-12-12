@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.util.PathPredicates;
-import ghidra.debug.api.model.DebuggerMappingOpinion;
 import ghidra.program.model.lang.Endian;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;

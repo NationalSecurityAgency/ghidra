@@ -24,6 +24,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1199,6 +1200,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	public AutoReadMemorySpec getAutoReadMemorySpec() {
 		return readsMemTrait.getAutoSpec();
+	}
+
+	/* testing */
+	CompletableFuture<?> getLastAutoRead() {
+		return readsMemTrait.getLastRead();
 	}
 
 	public void doAutoSyncCursorIntoStatic(ProgramLocation location) {

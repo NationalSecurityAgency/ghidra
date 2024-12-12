@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import docking.ActionContext;
@@ -38,6 +39,7 @@ import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.TraceDomainObjectListener;
@@ -164,6 +166,9 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	protected AddressSetView visible;
 
+	protected final Object lock = new Object();
+	protected volatile CompletableFuture<?> lastRead;
+
 	public DebuggerReadsMemoryTrait(PluginTool tool, Plugin plugin, ComponentProvider provider) {
 		this.tool = tool;
 		this.plugin = plugin;
@@ -205,6 +210,9 @@ public abstract class DebuggerReadsMemoryTrait {
 			removeOldTraceListener();
 		}
 		current = coordinates;
+		if (actionRefreshSelected != null) {
+			actionRefreshSelected.updateEnabled(null);
+		}
 		if (doTraceListener) {
 			addNewTraceListener();
 		}
@@ -228,14 +236,20 @@ public abstract class DebuggerReadsMemoryTrait {
 			return;
 		}
 		AddressSet visible = new AddressSet(this.visible);
-		autoSpec.getEffective(current).readMemory(tool, current, visible).thenAccept(b -> {
-			if (b) {
-				memoryWasRead(visible);
-			}
-		}).exceptionally(ex -> {
-			Msg.error(this, "Could not auto-read memory: " + ex);
-			return null;
-		});
+
+		synchronized (lock) {
+			lastRead = autoSpec.getEffective(current)
+					.readMemory(tool, current, visible)
+					.thenAccept(b -> {
+						if (b) {
+							memoryWasRead(visible);
+						}
+					})
+					.exceptionally(ex -> {
+						Msg.error(this, "Could not auto-read memory: " + ex);
+						return null;
+					});
+		}
 	}
 
 	public MultiStateDockingAction<AutoReadMemorySpec> installAutoReadAction() {
@@ -296,8 +310,17 @@ public abstract class DebuggerReadsMemoryTrait {
 	}
 
 	/* testing */
+	@Internal
 	public AddressSetView getVisible() {
 		return visible;
+	}
+
+	/* testing */
+	@Internal
+	public CompletableFuture<?> getLastRead() {
+		synchronized (lock) {
+			return lastRead;
+		}
 	}
 
 	protected abstract AddressSetView getSelection();
