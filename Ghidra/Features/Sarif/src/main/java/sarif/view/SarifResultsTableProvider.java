@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,7 @@
 package sarif.view;
 
 import java.awt.BorderLayout;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -28,22 +25,22 @@ import docking.ComponentProvider;
 import docking.action.DockingAction;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.service.graph.AttributedVertex;
 import ghidra.util.table.GhidraFilterTable;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import sarif.SarifController;
 import sarif.handlers.SarifResultHandler;
-import sarif.model.SarifColumnKey;
-import sarif.model.SarifDataFrame;
-import sarif.model.SarifResultsTableModelFactory;
+import sarif.model.*;
 import sarif.model.SarifResultsTableModelFactory.SarifResultsTableModel;
 
 /**
  * Show the SARIF result as a table and build possible actions on the table
  *
  */
-public class SarifResultsTableProvider extends ComponentProvider  {
+public class SarifResultsTableProvider extends ComponentProvider {
 
 	private JComponent component;
 	public SarifResultsTableModel model;
@@ -52,7 +49,8 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 	private Plugin plugin;
 	private SarifController controller;
 
-	public SarifResultsTableProvider(String description, Plugin plugin, SarifController controller, SarifDataFrame df) {
+	public SarifResultsTableProvider(String description, Plugin plugin, SarifController controller,
+			SarifDataFrame df) {
 		super(plugin.getTool(), controller.getProgram().getName(), plugin.getName());
 		this.plugin = plugin;
 		this.controller = controller;
@@ -60,7 +58,9 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 		SarifResultsTableModelFactory factory = new SarifResultsTableModelFactory(df.getColumns());
 		this.model = factory.createModel(description, plugin.getTool(), program, df);
 		this.component = buildPanel();
-		filterTable.getTable().getSelectionModel().addListSelectionListener(e -> plugin.getTool().contextChanged(this));
+		filterTable.getTable()
+				.getSelectionModel()
+				.addListSelectionListener(e -> plugin.getTool().contextChanged(this));
 		this.createActions();
 		this.setTransient();
 	}
@@ -68,7 +68,7 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 	private JComponent buildPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		filterTable = new GhidraFilterTable<>(this.model);
-		GhidraTable table = (GhidraTable) filterTable.getTable();
+		GhidraTable table = filterTable.getTable();
 
 		GoToService goToService = this.getTool().getService(GoToService.class);
 		table.installNavigation(plugin.getTool(), goToService.getDefaultNavigatable());
@@ -76,17 +76,18 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 		panel.add(filterTable);
 		return panel;
 	}
-	
+
 	public void dispose() {
 		filterTable.dispose();
 		closeComponent();
 	}
 
+	@Override
 	public void closeComponent() {
 		super.closeComponent();
 		getController().removeProvider(this);
 	}
-	
+
 	@Override
 	public JComponent getComponent() {
 		return component;
@@ -99,8 +100,8 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 	 * can be performed
 	 */
 	public void createActions() {
-		DockingAction selectionAction = new MakeProgramSelectionAction(this.plugin,
-				(GhidraTable) filterTable.getTable());
+		DockingAction selectionAction =
+			new MakeProgramSelectionAction(this.plugin, filterTable.getTable());
 		this.addLocalAction(selectionAction);
 		Set<SarifResultHandler> resultHandlers = controller.getSarifResultHandlers();
 		List<SarifColumnKey> columns = model.getDataFrame().getColumns();
@@ -113,11 +114,10 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 				if (handler.getActionName() != null) {
 					this.addLocalAction(handler.createAction(this));
 				}
-			}		
+			}
 		}
 	}
-	
-	
+
 	public int getIndex(String key) {
 		List<SarifColumnKey> columns = model.getDataFrame().getColumns();
 		for (SarifColumnKey c : columns) {
@@ -135,9 +135,34 @@ public class SarifResultsTableProvider extends ComponentProvider  {
 	public Map<String, Object> getRow(int x) {
 		return model.getRowObject(x);
 	}
-	
+
 	public SarifController getController() {
 		return controller;
+	}
+
+	public SarifDataFrame getDataFrame() {
+		return model.getDataFrame();
+	}
+
+	public void setSelection(Set<AttributedVertex> vertices) {
+		for (AttributedVertex vertex : vertices) {
+			Map<String, String> attributes = vertex.getAttributes();
+			if (attributes.containsKey("Address")) {
+				String addrStr = attributes.get("Address");
+				String name = attributes.get("name");
+				for (int i = 0; i < model.getRowCount(); i++) {
+					Address address = model.getAddress(i);
+					if (address != null && address.toString(true).equals(addrStr)) {
+						Map<String, Object> rowObject = model.getRowObject(i);
+						String objName = (String) rowObject.get("name");
+						if (name.equals(objName)) {
+							filterTable.getTable().selectRow(i);
+							filterTable.getTable().scrollToSelectedRow();
+						}
+					}
+				}
+			}
+		}
 	}
 
 }
