@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
@@ -54,22 +55,24 @@ public class DefaultWatchRow implements WatchRow {
 
 	private final DebuggerWatchesProvider provider;
 
+	private final Object lock = new Object();
+
 	private String expression;
 	private String typePath;
 	private DataType dataType;
 	private SettingsImpl settings = new SettingsImpl();
 	private SavedSettings savedSettings = new SavedSettings(settings);
 
-	private PcodeExpression compiled;
-	private TraceMemoryState state;
-	private Address address;
-	private Symbol symbol;
-	private AddressSetView reads;
-	private byte[] value;
-	private byte[] prevValue; // Value at previous coordinates
-	private String valueString;
-	private Object valueObj;
-	private Throwable error = null;
+	private volatile PcodeExpression compiled;
+	private volatile TraceMemoryState state;
+	private volatile Address address;
+	private volatile Symbol symbol;
+	private volatile AddressSetView reads;
+	private volatile byte[] value;
+	private volatile byte[] prevValue; // Value at previous coordinates
+	private volatile String valueString;
+	private volatile Object valueObj;
+	private volatile Throwable error = null;
 
 	public DefaultWatchRow(DebuggerWatchesProvider provider, String expression) {
 		this.provider = provider;
@@ -77,13 +80,15 @@ public class DefaultWatchRow implements WatchRow {
 	}
 
 	protected void blank() {
-		state = null;
-		address = null;
-		symbol = null;
-		reads = null;
-		value = null;
-		valueString = null;
-		valueObj = null;
+		synchronized (lock) {
+			state = null;
+			address = null;
+			symbol = null;
+			reads = null;
+			value = null;
+			valueString = null;
+			valueObj = null;
+		}
 	}
 
 	protected void recompile() {
@@ -106,38 +111,52 @@ public class DefaultWatchRow implements WatchRow {
 	}
 
 	protected void reevaluate() {
-		blank();
-		PcodeExecutor<WatchValue> executor = provider.asyncWatchExecutor;
-		PcodeExecutor<byte[]> prevExec = provider.prevValueExecutor;
-		if (executor == null) {
-			provider.contextChanged();
-			return;
-		}
-		CompletableFuture.runAsync(() -> {
-			recompile();
-			if (compiled == null) {
+		PcodeExecutor<WatchValue> executor;
+		PcodeExecutor<byte[]> prevExec;
+		final String expression;
+		synchronized (lock) {
+			blank();
+			executor = provider.asyncWatchExecutor;
+			prevExec = provider.prevValueExecutor;
+			if (executor == null) {
 				provider.contextChanged();
 				return;
 			}
-
+			expression = this.expression;
+		}
+		CompletableFuture.runAsync(() -> {
+			synchronized (lock) {
+				recompile();
+				if (compiled == null) {
+					return;
+				}
+			}
+			// Do not accidentally hang the Swing thread on evaluation
 			WatchValue fullValue = compiled.evaluate(executor);
-			prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
+			byte[] prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
+			synchronized (lock) {
+				if (executor != provider.asyncWatchExecutor) {
+					return;
+				}
+				if (!Objects.equals(expression, this.expression)) {
+					return;
+				}
+				TracePlatform platform = provider.current.getPlatform();
+				this.prevValue = prevValue;
+				value = fullValue.bytes().bytes();
+				error = null;
+				state = fullValue.state();
+				// TODO: Optional column for guest address?
+				address = platform.mapGuestToHost(fullValue.address());
+				symbol = computeSymbol();
+				// reads piece uses trace access to translate to host/overlay already
+				reads = fullValue.reads();
 
-			TracePlatform platform = provider.current.getPlatform();
-			value = fullValue.bytes().bytes();
-			error = null;
-			state = fullValue.state();
-			// TODO: Optional column for guest address?
-			address = platform.mapGuestToHost(fullValue.address());
-			symbol = computeSymbol();
-			// reads piece uses trace access to translate to host/overlay already
-			reads = fullValue.reads();
-
-			valueObj = parseAsDataTypeObj();
-			valueString = parseAsDataTypeStr();
+				valueObj = parseAsDataTypeObj();
+				valueString = parseAsDataTypeStr();
+			}
 		}, provider.workQueue).exceptionally(e -> {
 			error = e;
-			provider.contextChanged();
 			return null;
 		}).thenRunAsync(() -> {
 			provider.watchTableModel.fireTableDataChanged();
@@ -172,13 +191,15 @@ public class DefaultWatchRow implements WatchRow {
 
 	@Override
 	public void setExpression(String expression) {
-		if (!Objects.equals(this.expression, expression)) {
-			prevValue = null;
-			// NB. Allow fall-through so user can re-evaluate via nop edit.
+		synchronized (lock) {
+			if (!Objects.equals(this.expression, expression)) {
+				prevValue = null;
+				// NB. Allow fall-through so user can re-evaluate via nop edit.
+			}
+			this.expression = expression;
+			this.compiled = null;
+			reevaluate();
 		}
-		this.expression = expression;
-		this.compiled = null;
-		reevaluate();
 	}
 
 	@Override
@@ -219,35 +240,39 @@ public class DefaultWatchRow implements WatchRow {
 
 	@Override
 	public void setDataType(DataType dataType) {
-		if (dataType instanceof Pointer ptrType && address != null &&
-			address.isRegisterAddress()) {
-			/**
-			 * NOTE: This will not catch it if the expression cannot be evaluated. When it can later
-			 * be evaluated, no check is performed.
-			 * 
-			 * TODO: This should be for the current platform. These don't depend on the trace's code
-			 * storage, so it should be easier to implement. Still, I'll wait to tackle that all at
-			 * once.
-			 */
-			AddressSpace space =
-				provider.current.getTrace().getBaseAddressFactory().getDefaultAddressSpace();
-			DataTypeManager dtm = ptrType.getDataTypeManager();
-			dataType =
-				new PointerTypedef(null, ptrType.getDataType(), ptrType.getLength(), dtm, space);
-			if (dtm != null) {
-				try (Transaction tid = dtm.openTransaction("Resolve data type")) {
-					dataType = dtm.resolve(dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
+		synchronized (lock) {
+			if (dataType instanceof Pointer ptrType && address != null &&
+				address.isRegisterAddress()) {
+				/**
+				 * NOTE: This will not catch it if the expression cannot be evaluated. When it can
+				 * later be evaluated, no check is performed.
+				 * 
+				 * TODO: This should be for the current platform. These don't depend on the trace's
+				 * code storage, so it should be easier to implement. Still, I'll wait to tackle
+				 * that all at once.
+				 */
+				AddressSpace space =
+					provider.current.getTrace().getBaseAddressFactory().getDefaultAddressSpace();
+				DataTypeManager dtm = ptrType.getDataTypeManager();
+				dataType =
+					new PointerTypedef(null, ptrType.getDataType(), ptrType.getLength(), dtm,
+						space);
+				if (dtm != null) {
+					try (Transaction tid = dtm.openTransaction("Resolve data type")) {
+						dataType = dtm.resolve(dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
+					}
 				}
 			}
-		}
-		this.typePath = dataType == null ? null : dataType.getPathName();
-		this.dataType = dataType;
-		settings.setDefaultSettings(dataType == null ? null : dataType.getDefaultSettings());
-		valueString = parseAsDataTypeStr();
-		valueObj = parseAsDataTypeObj();
-		provider.contextChanged();
-		if (dataType != null) {
-			savedSettings.read(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+			this.typePath = dataType == null ? null : dataType.getPathName();
+			this.dataType = dataType;
+			settings.setDefaultSettings(dataType == null ? null : dataType.getDefaultSettings());
+			valueString = parseAsDataTypeStr();
+			valueObj = parseAsDataTypeObj();
+			provider.contextChanged();
+			if (dataType != null) {
+				savedSettings.read(dataType.getSettingsDefinitions(),
+					dataType.getDefaultSettings());
+			}
 		}
 	}
 
@@ -272,52 +297,63 @@ public class DefaultWatchRow implements WatchRow {
 
 	@Override
 	public void settingsChanged() {
-		if (dataType != null) {
-			savedSettings.write(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		synchronized (lock) {
+			if (dataType != null) {
+				savedSettings.write(dataType.getSettingsDefinitions(),
+					dataType.getDefaultSettings());
+			}
+			valueString = parseAsDataTypeStr();
 		}
-		valueString = parseAsDataTypeStr();
 		provider.watchTableModel.fireTableDataChanged();
 	}
 
 	@Override
 	public Address getAddress() {
-		return address;
+		synchronized (lock) {
+			return address;
+		}
 	}
 
 	@Override
 	public AddressRange getRange() {
-		if (address == null || value == null) {
-			return null;
-		}
-		if (address.isConstantAddress()) {
-			return new AddressRangeImpl(address, address);
-		}
-		try {
-			return new AddressRangeImpl(address, value.length);
-		}
-		catch (AddressOverflowException e) {
-			throw new AssertionError(e);
+		synchronized (lock) {
+			if (address == null || value == null) {
+				return null;
+			}
+			if (address.isConstantAddress()) {
+				return new AddressRangeImpl(address, address);
+			}
+			try {
+				return new AddressRangeImpl(address, value.length);
+			}
+			catch (AddressOverflowException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 
 	@Override
 	public String getRawValueString() {
-		if (value == null || provider.language == null) {
-			return "??";
+		synchronized (lock) {
+			byte[] value = this.value;
+			Language language = provider.language;
+			if (value == null || language == null) {
+				return "??";
+			}
+			if (address == null || !address.getAddressSpace().isMemorySpace()) {
+				BigInteger asBigInt = Utils.bytesToBigInteger(value, value.length,
+					provider.language.isBigEndian(), false);
+				return "0x" + asBigInt.toString(16);
+			}
+			if (value.length > TRUNCATE_BYTES_LENGTH) {
+				// TODO: I'd like this not to affect the actual value, just the display
+				//   esp., since this will be the "value" when starting to edit.
+				return "{ " +
+					NumericUtilities.convertBytesToString(value, 0, TRUNCATE_BYTES_LENGTH, " ") +
+					" ... }";
+			}
+			return "{ " + NumericUtilities.convertBytesToString(value, " ") + " }";
 		}
-		if (address == null || !address.getAddressSpace().isMemorySpace()) {
-			BigInteger asBigInt = Utils.bytesToBigInteger(value, value.length,
-				provider.language.isBigEndian(), false);
-			return "0x" + asBigInt.toString(16);
-		}
-		if (value.length > TRUNCATE_BYTES_LENGTH) {
-			// TODO: I'd like this not to affect the actual value, just the display
-			//   esp., since this will be the "value" when starting to edit.
-			return "{ " +
-				NumericUtilities.convertBytesToString(value, 0, TRUNCATE_BYTES_LENGTH, " ") +
-				" ... }";
-		}
-		return "{ " + NumericUtilities.convertBytesToString(value, " ") + " }";
 	}
 
 	/**
@@ -327,46 +363,61 @@ public class DefaultWatchRow implements WatchRow {
 	 */
 	@Override
 	public AddressSetView getReads() {
-		return reads;
+		synchronized (lock) {
+			return reads;
+		}
 	}
 
 	public TraceMemoryState getState() {
-		return state;
+		synchronized (lock) {
+			return state;
+		}
 	}
 
 	@Override
 	public byte[] getValue() {
-		return value;
+		synchronized (lock) {
+			return value;
+		}
 	}
 
 	@Override
 	public String getValueString() {
-		return valueString;
+		synchronized (lock) {
+			return valueString;
+		}
 	}
 
 	@Override
 	public Object getValueObject() {
-		return valueObj;
+		synchronized (lock) {
+			return valueObj;
+		}
 	}
 
 	@Override
 	public boolean isRawValueEditable() {
-		if (!provider.isEditsEnabled()) {
-			return false;
+		synchronized (lock) {
+			if (!provider.isEditsEnabled()) {
+				return false;
+			}
+			if (address == null) {
+				return false;
+			}
+			DebuggerControlService controlService = provider.controlService;
+			if (controlService == null) {
+				return false;
+			}
+			StateEditor editor = controlService.createStateEditor(provider.current);
+			return editor.isVariableEditable(address, getValueLength());
 		}
-		if (address == null) {
-			return false;
-		}
-		DebuggerControlService controlService = provider.controlService;
-		if (controlService == null) {
-			return false;
-		}
-		StateEditor editor = controlService.createStateEditor(provider.current);
-		return editor.isVariableEditable(address, getValueLength());
 	}
 
 	@Override
 	public void setRawValueString(String valueString) {
+		if (!isRawValueEditable()) {
+			throw new IllegalStateException("Watch is not editable");
+		}
 		valueString = valueString.trim();
 		if (valueString.startsWith("{")) {
 			if (!valueString.endsWith("}")) {
@@ -398,61 +449,70 @@ public class DefaultWatchRow implements WatchRow {
 	}
 
 	public void setRawValueBytes(byte[] bytes) {
-		if (address == null) {
-			throw new IllegalStateException("Cannot write to watch variable without an address");
+		synchronized (lock) {
+			if (address == null) {
+				throw new IllegalStateException(
+					"Cannot write to watch variable without an address");
+			}
+			if (bytes.length > value.length) {
+				throw new IllegalArgumentException("Byte arrays cannot exceed length of variable");
+			}
+			if (bytes.length < value.length) {
+				byte[] fillOld = Arrays.copyOf(value, value.length);
+				System.arraycopy(bytes, 0, fillOld, 0, bytes.length);
+				bytes = fillOld;
+			}
+			DebuggerControlService controlService = provider.controlService;
+			if (controlService == null) {
+				throw new AssertionError("No control service");
+			}
+			StateEditor editor = controlService.createStateEditor(provider.current);
+			editor.setVariable(address, bytes).exceptionally(ex -> {
+				Msg.showError(this, null, "Write Failed",
+					"Could not modify watch value (on target)", ex);
+				return null;
+			});
 		}
-		if (bytes.length > value.length) {
-			throw new IllegalArgumentException("Byte arrays cannot exceed length of variable");
-		}
-		if (bytes.length < value.length) {
-			byte[] fillOld = Arrays.copyOf(value, value.length);
-			System.arraycopy(bytes, 0, fillOld, 0, bytes.length);
-			bytes = fillOld;
-		}
-		DebuggerControlService controlService = provider.controlService;
-		if (controlService == null) {
-			throw new AssertionError("No control service");
-		}
-		StateEditor editor = controlService.createStateEditor(provider.current);
-		editor.setVariable(address, bytes).exceptionally(ex -> {
-			Msg.showError(this, null, "Write Failed",
-				"Could not modify watch value (on target)", ex);
-			return null;
-		});
 	}
 
 	@Override
 	public void setValueString(String valueString) {
-		if (dataType == null || value == null) {
-			// isValueEditable should have been false
-			provider.getTool().setStatusInfo("Watch no value or no data type", true);
-			return;
-		}
-		try {
-			byte[] encoded = dataType.encodeRepresentation(valueString,
-				new ByteMemBufferImpl(address, value, provider.language.isBigEndian()),
-				SettingsImpl.NO_SETTINGS, value.length);
-			setRawValueBytes(encoded);
-		}
-		catch (DataTypeEncodeException e) {
-			provider.getTool().setStatusInfo(e.getMessage(), true);
+		synchronized (lock) {
+			if (dataType == null || value == null) {
+				// isValueEditable should have been false
+				provider.getTool().setStatusInfo("Watch no value or no data type", true);
+				return;
+			}
+			try {
+				byte[] encoded = dataType.encodeRepresentation(valueString,
+					new ByteMemBufferImpl(address, value, provider.language.isBigEndian()),
+					SettingsImpl.NO_SETTINGS, value.length);
+				setRawValueBytes(encoded);
+			}
+			catch (DataTypeEncodeException e) {
+				provider.getTool().setStatusInfo(e.getMessage(), true);
+			}
 		}
 	}
 
 	@Override
 	public boolean isValueEditable() {
-		if (!isRawValueEditable()) {
-			return false;
+		synchronized (lock) {
+			if (!isRawValueEditable()) {
+				return false;
+			}
+			if (dataType == null) {
+				return false;
+			}
+			return dataType.isEncodable();
 		}
-		if (dataType == null) {
-			return false;
-		}
-		return dataType.isEncodable();
 	}
 
 	@Override
 	public int getValueLength() {
-		return value == null ? 0 : value.length;
+		synchronized (lock) {
+			return value == null ? 0 : value.length;
+		}
 	}
 
 	protected Symbol computeSymbol() {
@@ -496,7 +556,9 @@ public class DefaultWatchRow implements WatchRow {
 
 	@Override
 	public Symbol getSymbol() {
-		return symbol;
+		synchronized (lock) {
+			return symbol;
+		}
 	}
 
 	@Override
@@ -518,15 +580,19 @@ public class DefaultWatchRow implements WatchRow {
 
 	@Override
 	public boolean isKnown() {
-		return state == TraceMemoryState.KNOWN;
+		synchronized (lock) {
+			return state == TraceMemoryState.KNOWN;
+		}
 	}
 
 	@Override
 	public boolean isChanged() {
-		if (prevValue == null) {
-			return false;
+		synchronized (lock) {
+			if (prevValue == null) {
+				return false;
+			}
+			return !Arrays.equals(value, prevValue);
 		}
-		return !Arrays.equals(value, prevValue);
 	}
 
 	protected void writeConfigState(SaveState saveState) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -251,21 +251,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			changed.add(current.getView().getMemory());
-			changeDebouncer.contact(null);
+			addChanged(current.getView().getMemory());
 		}
 
 		private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
 			if (space.getThread() == current.getThread() || space.getThread() == null) {
-				changed.add(range.getRange());
-				changeDebouncer.contact(null);
+				addChanged(range.getRange());
 			}
 		}
 
 		private void stateChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
 			if (space.getThread() == current.getThread() || space.getThread() == null) {
-				changed.add(range.getRange());
-				changeDebouncer.contact(null);
+				addChanged(range.getRange());
 			}
 		}
 	}
@@ -391,6 +388,28 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		contextChanged();
 
 		changeDebouncer.addListener(__ -> doCheckDepsAndReevaluate());
+	}
+
+	private void addChanged(AddressSetView toAdd) {
+		synchronized (changed) {
+			changed.add(toAdd);
+			changeDebouncer.contact(null);
+		}
+	}
+
+	private void addChanged(AddressRange toAdd) {
+		synchronized (changed) {
+			changed.add(toAdd);
+			changeDebouncer.contact(null);
+		}
+	}
+
+	private AddressSetView clearChanged(boolean get) {
+		synchronized (changed) {
+			AddressSetView result = get ? new AddressSet(changed) : null;
+			changed.clear();
+			return result;
+		}
 	}
 
 	@Override
@@ -914,6 +933,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	public synchronized void doCheckDepsAndReevaluate() {
+		AddressSetView changed = clearChanged(true);
 		if (asyncWatchExecutor == null) {
 			return;
 		}
@@ -930,10 +950,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 				row.reevaluate();
 			}
 		}
-		changed.clear();
 	}
 
 	public void reevaluate() {
+		clearChanged(false);
 		if (asyncWatchExecutor == null) {
 			return;
 		}
@@ -941,7 +961,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			row.reevaluate();
 		}
-		changed.clear();
 	}
 
 	public void writeConfigState(SaveState saveState) {
@@ -983,7 +1002,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	public void waitEvaluate(int timeoutMs) {
 		try {
-			CompletableFuture.runAsync(() -> {
+			changeDebouncer.stable().thenRunAsync(() -> {
 			}, workQueue).get(timeoutMs, TimeUnit.MILLISECONDS);
 		}
 		catch (ExecutionException | InterruptedException | TimeoutException e) {

@@ -760,7 +760,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return getLanguage(langID).getCompilerSpecByID(new CompilerSpecID(compID));
 	}
 
-	public void createObjectsProcessAndThreads() {
+	public TraceObjectThread createObjectsProcessAndThreads() {
 		DBTraceObjectManager objs = trace.getObjectManager();
 		TraceObjectKeyPath pathProc1 = TraceObjectKeyPath.parse("Processes[1]");
 		TraceObject proc1 = objs.createObject(pathProc1);
@@ -772,6 +772,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		t2.insert(zeroOn, ConflictResolution.DENY);
 
 		proc1.setAttribute(zeroOn, "_state", TargetExecutionState.STOPPED.name());
+
+		return t1.queryInterface(TraceObjectThread.class);
 	}
 
 	public void createObjectsFramesAndRegs(TraceObjectThread thread, Lifespan lifespan,

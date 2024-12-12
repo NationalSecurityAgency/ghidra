@@ -24,8 +24,8 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.service.MockTarget;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
-import ghidra.app.plugin.core.debug.service.control.MockTarget;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;

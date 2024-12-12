@@ -664,7 +664,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				trace = connection.waitForTrace(getTimeoutMillis());
 				traceManager.openTrace(trace);
 				traceManager.activate(traceManager.resolveTrace(trace),
-					ActivationCause.START_RECORDING);
+					ActivationCause.TARGET_UPDATED);
 				monitor.increment();
 
 				waitForModuleMapping(monitor, connection, trace);

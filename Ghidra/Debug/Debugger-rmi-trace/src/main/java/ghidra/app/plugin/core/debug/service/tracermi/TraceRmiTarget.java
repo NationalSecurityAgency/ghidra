@@ -334,10 +334,12 @@ public class TraceRmiTarget extends AbstractTarget {
 			ActionName.STEP_OUT.equals(name) ||
 			ActionName.STEP_OVER.equals(name) ||
 			ActionName.STEP_SKIP.equals(name)) {
-			return () -> whenState(obj, state -> state != null && (state.isStopped() || state.isUnknown()));
+			return () -> whenState(obj,
+				state -> state != null && (state.isStopped() || state.isUnknown()));
 		}
 		else if (ActionName.INTERRUPT.equals(name)) {
-			return () -> whenState(obj, state -> state == null || state.isRunning() || state.isUnknown());
+			return () -> whenState(obj,
+				state -> state == null || state.isRunning() || state.isUnknown());
 		}
 		else if (ActionName.KILL.equals(name)) {
 			return () -> whenState(obj, state -> state == null || !state.isTerminated());
@@ -1211,13 +1213,13 @@ public class TraceRmiTarget extends AbstractTarget {
 				.thenApply(__ -> null);
 	}
 
-	protected boolean isMemorySpaceValid(AddressSpace space) {
-		return trace.getBaseAddressFactory().getAddressSpace(space.getSpaceID()) == space;
+	protected boolean isMemorySpaceValid(TracePlatform platform, AddressSpace space) {
+		return platform.getAddressFactory().getAddressSpace(space.getSpaceID()) == space;
 	}
 
 	protected boolean isRegisterValid(TracePlatform platform, TraceThread thread, int frame,
 			Address address, int length) {
-		if (!isMemorySpaceValid(address.getAddressSpace())) {
+		if (!isMemorySpaceValid(platform, address.getAddressSpace())) {
 			return false;
 		}
 		Register register =
@@ -1239,7 +1241,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	public boolean isVariableExists(TracePlatform platform, TraceThread thread, int frame,
 			Address address, int length) {
 		if (address.isMemoryAddress()) {
-			return isMemorySpaceValid(address.getAddressSpace());
+			return isMemorySpaceValid(platform, address.getAddressSpace());
 		}
 		if (address.isRegisterAddress()) {
 			return isRegisterValid(platform, thread, frame, address, length);

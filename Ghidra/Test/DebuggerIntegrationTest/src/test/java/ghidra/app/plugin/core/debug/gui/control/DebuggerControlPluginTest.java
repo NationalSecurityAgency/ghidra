@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,6 @@ import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPluginTestHelper;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
@@ -51,18 +50,12 @@ import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.dbg.model.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.model.DebuggerTargetTraceMapper;
-import ghidra.debug.api.model.TraceRecorder;
 import ghidra.pcode.exec.SuspendedPcodeExecutionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ShortDataType;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Lifespan;
@@ -97,204 +90,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		emulationService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 		controlPlugin = addPlugin(tool, DebuggerControlPlugin.class);
-
-		mb = new TestDebuggerModelBuilder() {
-			@Override
-			protected TestDebuggerObjectModel newModel(String typeHint) {
-				commands.clear();
-				return new TestDebuggerObjectModel(typeHint) {
-					@Override
-					protected TestTargetThread newTestTargetThread(
-							TestTargetThreadContainer container, int tid) {
-						return new TestTargetThread(container, tid) {
-							{
-								setState(TargetExecutionState.STOPPED);
-							}
-
-							@Override
-							public CompletableFuture<Void> resume() {
-								commands.add("resume");
-								setState(TargetExecutionState.RUNNING);
-								return super.resume();
-							}
-
-							@Override
-							public CompletableFuture<Void> interrupt() {
-								commands.add("interrupt");
-								setState(TargetExecutionState.STOPPED);
-								return super.interrupt();
-							}
-
-							@Override
-							public CompletableFuture<Void> kill() {
-								commands.add("kill");
-								setState(TargetExecutionState.TERMINATED);
-								return super.kill();
-							}
-
-							@Override
-							public CompletableFuture<Void> step(TargetStepKind kind) {
-								commands.add("step(" + kind + ")");
-								setState(TargetExecutionState.RUNNING);
-								setState(TargetExecutionState.STOPPED);
-								return super.step(kind);
-							}
-						};
-					}
-
-					@Override
-					public CompletableFuture<Void> close() {
-						commands.add("close");
-						return super.close();
-					}
-				};
-			}
-		};
-	}
-
-	@Override
-	protected DebuggerTargetTraceMapper createTargetTraceMapper(TargetObject target)
-			throws Exception {
-		return new ObjectBasedDebuggerTargetTraceMapper(target,
-			new LanguageID("DATA:BE:64:default"), new CompilerSpecID("pointer64"), Set.of());
-	}
-
-	@Override
-	protected TraceRecorder recordAndWaitSync() throws Throwable {
-		TraceRecorder recorder = super.recordAndWaitSync();
-		useTrace(recorder.getTrace());
-		return recorder;
-	}
-
-	@Override
-	protected TargetObject chooseTarget() {
-		return mb.testModel.session;
-	}
-
-	@Test
-	public void testRecorderTargetResumeAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction actionTargetResume = controlPlugin.actionTargetResume;
-		assertInTool(actionTargetResume);
-		performEnabledAction(null, actionTargetResume, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("resume"), commands);
-		waitForSwing();
-		assertFalse(actionTargetResume.isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetInterruptAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction actionTargetInterrupt = controlPlugin.actionTargetInterrupt;
-		assertInTool(actionTargetInterrupt);
-		assertFalse(actionTargetInterrupt.isEnabled());
-		waitOn(mb.testThread1.resume());
-		waitRecorder(recorder);
-		commands.clear();
-		waitForSwing();
-
-		performEnabledAction(null, actionTargetInterrupt, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("interrupt"), commands);
-		waitForSwing();
-		assertFalse(actionTargetInterrupt.isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetKillAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction actionTargetKill = controlPlugin.actionTargetKill;
-		assertInTool(actionTargetKill);
-		performEnabledAction(null, actionTargetKill, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("kill"), commands);
-		waitForSwing();
-		assertFalse(actionTargetKill.isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetDisconnectAction() throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		DockingAction actionTargetDisconnect = controlPlugin.actionTargetDisconnect;
-		assertInTool(actionTargetDisconnect);
-		performEnabledAction(null, actionTargetDisconnect, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("close"), commands);
-		waitForSwing();
-		waitForPass(() -> assertFalse(actionTargetDisconnect.isEnabled()));
-	}
-
-	protected void runTestRecorderTargetStepAction(Supplier<DockingAction> actionSupplier,
-			TargetStepKind expected) throws Throwable {
-		createTestModel();
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitOn(recorder.requestFocus(mb.testThread1));
-		waitRecorder(recorder);
-		waitForSwing();
-
-		DockingAction action = actionSupplier.get();
-		assertInTool(action);
-		performEnabledAction(null, action, true);
-		waitForTasks();
-		waitRecorder(recorder);
-		assertEquals(List.of("step(" + expected + ")"), commands);
-		waitForSwing();
-		assertTrue(actionSupplier.get().isEnabled());
-	}
-
-	@Test
-	public void testRecorderTargetStepIntoAction() throws Throwable {
-		runTestRecorderTargetStepAction(() -> controlPlugin.actionTargetStepInto,
-			TargetStepKind.INTO);
-	}
-
-	@Test
-	public void testRecorderTargetStepOverAction() throws Throwable {
-		runTestRecorderTargetStepAction(() -> controlPlugin.actionTargetStepOver,
-			TargetStepKind.OVER);
-	}
-
-	@Test
-	public void testRecorderTargetStepOutAction() throws Throwable {
-		runTestRecorderTargetStepAction(() -> controlPlugin.actionTargetStepOut,
-			TargetStepKind.FINISH);
 	}
 
 	protected TraceObject setUpRmiTarget() throws Throwable {

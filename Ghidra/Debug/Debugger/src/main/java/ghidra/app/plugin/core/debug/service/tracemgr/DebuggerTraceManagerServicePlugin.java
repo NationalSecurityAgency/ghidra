@@ -222,12 +222,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 		@Override
 		public void targetWithdrawn(Target target) {
+			Swing.runLater(() -> updateCurrentTarget());
 			boolean save = isSaveTracesByDefault();
 			CompletableFuture<Void> flush = save
 					? waitUnlockedDebounced(target)
 					: AsyncUtils.nil();
 			flush.thenRunAsync(() -> {
-				updateCurrentTarget();
 				if (!isAutoCloseOnTerminate()) {
 					return;
 				}
@@ -561,13 +561,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
 		newCurrent = fillInTarget(newCurrent.getTrace(), newCurrent);
 		newCurrent = fillInPlatform(newCurrent);
-		if (cause == ActivationCause.START_RECORDING || cause == ActivationCause.FOLLOW_PRESENT) {
+		if (cause == ActivationCause.TARGET_UPDATED || cause == ActivationCause.FOLLOW_PRESENT) {
 			Target target = newCurrent.getTarget();
 			if (target != null) {
 				newCurrent = newCurrent.snap(target.getSnap());
 			}
 		}
-		newCurrent = validateCoordiantes(newCurrent, cause);
+		newCurrent = validateCoordinates(newCurrent, cause);
 		if (newCurrent == null || !doSetCurrent(newCurrent)) {
 			return null;
 		}
@@ -589,7 +589,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return controlService == null ? ControlMode.DEFAULT : controlService.getCurrentMode(trace);
 	}
 
-	private DebuggerCoordinates validateCoordiantes(DebuggerCoordinates coordinates,
+	private DebuggerCoordinates validateCoordinates(DebuggerCoordinates coordinates,
 			ActivationCause cause) {
 		ControlMode mode = getEffectiveControlMode(coordinates.getTrace());
 		return mode.validateCoordinates(tool, coordinates, cause);
@@ -633,11 +633,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void updateCurrentTarget() {
 		Target target = computeTarget(current.getTrace());
-		if (target == null) {
+		if (target == null && current.getTarget() == null) {
 			return;
 		}
 		DebuggerCoordinates toActivate = current.target(target);
-		activate(toActivate, ActivationCause.FOLLOW_PRESENT);
+		activate(toActivate, ActivationCause.TARGET_UPDATED);
 	}
 
 	@Override
@@ -1123,8 +1123,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 
-		if (cause == ActivationCause.FOLLOW_PRESENT) {
-			if (!isFollowsPresent(newTrace)) {
+		if (cause == ActivationCause.FOLLOW_PRESENT || cause == ActivationCause.TARGET_UPDATED) {
+			if (!isFollowsPresent(newTrace) && cause == ActivationCause.FOLLOW_PRESENT) {
 				return AsyncUtils.nil();
 			}
 			if (current.getTrace() != newTrace) {
