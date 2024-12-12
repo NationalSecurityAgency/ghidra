@@ -31,6 +31,7 @@ import ghidra.features.bsim.query.client.tables.CachedStatement;
 import ghidra.features.bsim.query.client.tables.SQLStringTable;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.protocol.*;
+import ghidra.util.Msg;
 
 /**
  * Defines the BSim {@link FunctionDatabase} backed by a PostgreSQL database.
@@ -200,9 +201,6 @@ public final class PostgresFunctionDatabase
 			st.executeUpdate(createdbstring);
 			postgresDs.initializeFrom(defaultDs);
 		}
-		finally {
-			defaultDs.dispose();
-		}
 	}
 
 	@Override
@@ -241,6 +239,64 @@ public final class PostgresFunctionDatabase
 		}
 		catch (final SQLException err) {
 			throw new SQLException("Could not create database: " + err.getMessage());
+		}
+	}
+
+	@Override
+	protected void dropDatabase() throws SQLException {
+
+		if (getStatus() == Status.Busy || postgresDs.getActiveConnections() != 0) {
+			throw new SQLException("database in use");
+		}
+
+		BSimServerInfo serverInfo = postgresDs.getServerInfo();
+		BSimServerInfo defaultServerInfo =
+			new BSimServerInfo(DBType.postgres, serverInfo.getUserInfo(),
+				serverInfo.getServerName(), serverInfo.getPort(), DEFAULT_DATABASE_NAME);
+
+		BSimPostgresDataSource defaultDs =
+			BSimPostgresDBConnectionManager.getDataSource(defaultServerInfo);
+		if (getStatus() == Status.Ready) {
+			defaultDs.initializeFrom(postgresDs);
+		}
+
+		close(); // close this instance
+
+		try (Connection defaultDb = defaultDs.getConnection();
+				Statement defaultSt = defaultDb.createStatement()) {
+			try (ResultSet rs = defaultSt.executeQuery(
+				"SELECT 1 FROM pg_database WHERE datname='" + serverInfo.getDBName() + "'")) {
+				if (!rs.next()) {
+					return; // database does not exist
+				}
+			}
+
+			// Connect to database and examine schema
+			HashSet<String> tableNames = new HashSet<>();
+			postgresDs.initializeFrom(defaultDs);
+			try (Connection c = initConnection(); Statement st = c.createStatement()) {
+				try (ResultSet rs = st.executeQuery(
+					"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name")) {
+					while (rs.next()) {
+						tableNames.add(rs.getString(1));
+					}
+				}
+			}
+
+			// Spot check for a few BSim table names that always exist
+			if (!tableNames.contains("keyvaluetable") || !tableNames.contains("desctable") ||
+				!tableNames.contains("weighttable")) {
+				throw new SQLException("attempted to drop non-BSim database");
+			}
+
+			postgresDs.dispose(); // disconnect before dropping database
+
+			Msg.info(this, "Dropping BSim postgresql database: " + serverInfo);
+			defaultSt.executeUpdate("DROP DATABASE \"" + serverInfo.getDBName() + '"');
+		}
+		finally {
+			// ensure 
+			postgresDs.initializeFrom(defaultDs);
 		}
 	}
 

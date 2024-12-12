@@ -186,7 +186,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 	 * @throws SQLException if error occurs obtaining connection
 	 */
 	protected Connection initConnection() throws SQLException {
-		if (db == null) {
+		if (db == null || db.isClosed()) {
 			db = ds.getConnection();
 		}
 		return db;
@@ -434,6 +434,12 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			throw new SQLException("Could not create database: " + err.getMessage());
 		}
 	}
+
+	/**
+	 * Drop this database
+	 * @throws SQLException if a database error occured
+	 */
+	abstract protected void dropDatabase() throws SQLException;
 
 	protected void setConnectionOnTables(Connection db) {
 
@@ -1201,8 +1207,8 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			}
 			else if (msg.contains("authentication failed") ||
 				msg.contains("requires a valid client certificate")) {
-				lasterror =
-					new BSimError(ErrorCategory.Authentication, "Could not authenticate with database");
+				lasterror = new BSimError(ErrorCategory.Authentication,
+					"Could not authenticate with database");
 			}
 			else if (msg.contains("does not exist") && !msg.contains(" role ")) {
 				lasterror = new BSimError(ErrorCategory.Nodatabase, cause.getMessage());
@@ -1572,6 +1578,9 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 		else if (query instanceof QueryExeCount q) {
 			fdbQueryExeCount(q);
 		}
+		else if (query instanceof DropDatabase q) {
+			fdbDatabaseDrop(q);
+		}
 		else if (query instanceof CreateDatabase q) {
 			fdbDatabaseCreate(q);
 		}
@@ -1622,7 +1631,8 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 
 		lasterror = null;
 		try {
-			if (!(query instanceof CreateDatabase) && !initialize()) {
+			if (!(query instanceof CreateDatabase) && !(query instanceof DropDatabase) &&
+				!initialize()) {
 				lasterror = new BSimError(ErrorCategory.Nodatabase, "The database does not exist");
 				return null;
 			}
@@ -2084,6 +2094,29 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 		response.manage.generateFunctionIdMap(funcmap);
 		for (FunctionDescription element : response.correspond) {
 			fillinChildren(element, response.manage, funcmap);
+		}
+	}
+
+	private void fdbDatabaseDrop(DropDatabase query) throws LSHException {
+		ResponseDropDatabase response = query.getResponse();
+		if (query.databaseName == null) {
+			throw new LSHException("Missing databaseName for drop database");
+		}
+		if (!query.databaseName.equals(ds.getServerInfo().getDBName())) {
+			throw new UnsupportedOperationException("drop database name must match");
+		}
+		response.dropSuccessful = true;		// Response parameters assuming success
+		response.errorMessage = null;
+		try {
+			dropDatabase();
+		}
+		catch (SQLException e) {
+			String msg = e.getMessage();
+			if (msg.indexOf("database \"" + query.databaseName + "\" does not exist") > 0) {
+				return; // missing database
+			}
+			response.dropSuccessful = false;
+			response.errorMessage = e.getMessage();
 		}
 	}
 
