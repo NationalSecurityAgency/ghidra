@@ -35,7 +35,7 @@ import generic.theme.GIcon;
 import ghidra.features.bsim.gui.BSimServerManager;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
@@ -175,7 +175,7 @@ public class BSimServerDialog extends DialogComponentProvider {
 		try (FunctionDatabase db = BSimClientFactory.buildClient(serverInfo, true)) {
 			if (!db.initialize()) {
 				// TODO: Need standardized error handler
-				Error lastError = db.getLastError();
+				BSimError lastError = db.getLastError();
 				if (lastError.category != ErrorCategory.AuthenticationCancelled) {
 					Msg.showError(this, getComponent(), "BSim DB Connection Failed",
 						lastError.message);
@@ -195,7 +195,7 @@ public class BSimServerDialog extends DialogComponentProvider {
 				return; // password dialog entry cancelled by user
 			}
 
-			String resp = db.changePassword(db.getUserName(), pwd);
+			String resp = db.changePassword(pwd);
 			if (resp == null) {
 				Msg.showInfo(this, getComponent(), "Password Changed",
 					"BSim DB password successfully changed");

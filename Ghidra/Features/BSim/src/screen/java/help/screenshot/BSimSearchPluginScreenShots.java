@@ -20,8 +20,10 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.action.DockingActionIf;
+import docking.widgets.textfield.GFormattedTextField;
 import ghidra.app.services.ProgramManager;
 import ghidra.features.bsim.gui.*;
 import ghidra.features.bsim.gui.overview.BSimOverviewProvider;
@@ -90,9 +92,11 @@ public class BSimSearchPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testManageServersDialog() {
-		addTestServer(new BSimServerInfo(DBType.postgres, "100.50.123.5", 123, "testDB"));
-		addTestServer(new BSimServerInfo(DBType.postgres, "100.50.123.5", 134, "anotherDB"));
-		addTestServer(new BSimServerInfo(DBType.file, "100.50.123.5", 134, "/bsim/database1"));
+		addTestServer(
+			new BSimServerInfo(DBType.postgres, "mylogin", "100.50.123.5", 123, "testDB"));
+		addTestServer(
+			new BSimServerInfo(DBType.postgres, "mylogin", "100.50.123.5", 134, "anotherDB"));
+		addTestServer(new BSimServerInfo("/bsim/database1"));
 
 		DockingActionIf action = getAction(plugin, "Manage BSim Servers");
 		performAction(action, false);
@@ -106,7 +110,11 @@ public class BSimSearchPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testAddServerDialog() {
 		CreateBsimServerInfoDialog dialog = new CreateBsimServerInfoDialog();
 		runSwingLater(() -> DockingWindowManager.showDialog(dialog));
-		waitForSwing();
+		DialogComponentProvider entryDialog = waitForDialogComponent("Add BSim Server");
+		GFormattedTextField userField =
+			(GFormattedTextField) findComponentByName(entryDialog, "User");
+		userField.setText("mylogin");
+		userField.setDefaultValue("mylogin");
 		captureDialog(dialog);
 		dialog.close();
 	}

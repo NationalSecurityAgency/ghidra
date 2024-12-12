@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,6 @@ public class ElasticConnection {
 
 	protected String hostURL;				// http://hostname:port
 	protected String httpURLbase;			// Main URL to elasticsearch
-	private HttpURLConnection connection = null;
-	private Writer writer;
 	private int lastResponseCode;
 
 	public ElasticConnection(String url, String repo) {
@@ -41,59 +39,11 @@ public class ElasticConnection {
 	}
 
 	public void close() {
-		if (connection != null) {
-			connection.disconnect();
-		}
+		// nothing to do - http connections do not persist
 	}
 
 	public boolean lastRequestSuccessful() {
 		return (lastResponseCode >= 200) && (lastResponseCode < 300);
-	}
-
-	/**
-	 * Start a new request to the elastic server.  This establishes the OutputStream for writing the body of the request
-	 * @param command is the type of command
-	 * @param path is the overarching index/type/<command> path
-	 * @throws IOException for problems with the socket
-	 */
-	public void startHttpRequest(String command, String path) throws IOException {
-		URL httpURL = new URL(httpURLbase + path);
-		connection = (HttpURLConnection) httpURL.openConnection();
-		connection.setRequestMethod(command);
-		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setDoOutput(true);
-		writer = new OutputStreamWriter(connection.getOutputStream());
-	}
-
-	public void startHttpBulkRequest(String bulkCommand) throws IOException {
-		URL httpURL = new URL(hostURL + bulkCommand);
-		connection = (HttpURLConnection) httpURL.openConnection();
-		connection.setRequestMethod(POST);
-		connection.setRequestProperty("Content-Type", "application/x-ndjson");
-		connection.setDoOutput(true);
-		writer = new OutputStreamWriter(connection.getOutputStream());
-	}
-
-	public void startHttpRawRequest(String command, String path) throws IOException {
-		URL httpURL = new URL(hostURL + path);
-		connection = (HttpURLConnection) httpURL.openConnection();
-		connection.setRequestMethod(command);
-		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setDoOutput(true);
-		writer = new OutputStreamWriter(connection.getOutputStream());
-	}
-
-	/**
-	 * Start a request with no input body, URI only
-	 * @param command is the command to issue
-	 * @param path is the overarching request path: index/...
-	 * @throws IOException for problems with the socket
-	 */
-	public void startHttpURICommand(String command, String path) throws IOException {
-		URL httpURL = new URL(httpURLbase + path);
-		connection = (HttpURLConnection) httpURL.openConnection();
-		connection.setRequestMethod(command);
-		connection.setDoOutput(true);
 	}
 
 	/**
@@ -103,15 +53,21 @@ public class ElasticConnection {
 	 * @throws IOException for problems with the socket
 	 * @throws ParseException for JSON parse errors
 	 */
-	private JSONObject grabResponse() throws IOException, ParseException {
+	private JSONObject grabResponse(HttpURLConnection connection)
+			throws IOException, ParseException {
 		JSONParser parser = new JSONParser();
-		Reader reader;
+		InputStream in;
 		if (lastRequestSuccessful()) {
-			reader = new InputStreamReader(connection.getInputStream());
+			in = connection.getInputStream();
 		}
 		else {
-			reader = new InputStreamReader(connection.getErrorStream());
+			in = connection.getErrorStream();
 		}
+		if (in == null) {
+			// Connection error occurred
+			throw new IOException(connection.getResponseMessage());
+		}
+		Reader reader = new InputStreamReader(in);
 		JSONObject jsonObject = (JSONObject) parser.parse(reader);
 		return jsonObject;
 	}
@@ -156,12 +112,18 @@ public class ElasticConnection {
 	 */
 	public JSONObject executeRawStatement(String command, String path, String body)
 			throws ElasticException {
+		HttpURLConnection connection = null;
 		try {
-			startHttpRawRequest(command, path);
-			writer.write(body);
-			writer.close();
+			URL httpURL = new URL(hostURL + path);
+			connection = (HttpURLConnection) httpURL.openConnection();
+			connection.setRequestMethod(command);
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setDoOutput(true);
+			try (Writer writer = new OutputStreamWriter(connection.getOutputStream())) {
+				writer.write(body);
+			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse();
+			JSONObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -172,6 +134,11 @@ public class ElasticConnection {
 		}
 		catch (ParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
 		}
 
 	}
@@ -185,12 +152,18 @@ public class ElasticConnection {
 	 */
 	public void executeStatementNoResponse(String command, String path, String body)
 			throws ElasticException {
+		HttpURLConnection connection = null;
 		try {
-			startHttpRequest(command, path);
-			writer.write(body);
-			writer.close();
+			URL httpURL = new URL(httpURLbase + path);
+			connection = (HttpURLConnection) httpURL.openConnection();
+			connection.setRequestMethod(command);
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setDoOutput(true);
+			try (Writer writer = new OutputStreamWriter(connection.getOutputStream())) {
+				writer.write(body);
+			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse();
+			JSONObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -200,6 +173,11 @@ public class ElasticConnection {
 		}
 		catch (ParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
 		}
 	}
 
@@ -213,12 +191,18 @@ public class ElasticConnection {
 	 */
 	public JSONObject executeStatement(String command, String path, String body)
 			throws ElasticException {
+		HttpURLConnection connection = null;
 		try {
-			startHttpRequest(command, path);
-			writer.write(body);
-			writer.close();
+			URL httpURL = new URL(httpURLbase + path);
+			connection = (HttpURLConnection) httpURL.openConnection();
+			connection.setRequestMethod(command);
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setDoOutput(true);
+			try (Writer writer = new OutputStreamWriter(connection.getOutputStream())) {
+				writer.write(body);
+			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse();
+			JSONObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -229,6 +213,11 @@ public class ElasticConnection {
 		}
 		catch (ParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
 		}
 	}
 
@@ -243,12 +232,18 @@ public class ElasticConnection {
 	 */
 	public JSONObject executeStatementExpectFailure(String command, String path, String body)
 			throws ElasticException {
+		HttpURLConnection connection = null;
 		try {
-			startHttpRequest(command, path);
-			writer.write(body);
-			writer.close();
+			URL httpURL = new URL(httpURLbase + path);
+			connection = (HttpURLConnection) httpURL.openConnection();
+			connection.setRequestMethod(command);
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setDoOutput(true);
+			try (Writer writer = new OutputStreamWriter(connection.getOutputStream())) {
+				writer.write(body);
+			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse();
+			JSONObject resp = grabResponse(connection);
 			return resp;
 		}
 		catch (IOException e) {
@@ -256,6 +251,11 @@ public class ElasticConnection {
 		}
 		catch (ParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
 		}
 	}
 
@@ -268,12 +268,18 @@ public class ElasticConnection {
 	 * @throws ElasticException for any problems with the connection
 	 */
 	public JSONObject executeBulk(String path, String body) throws ElasticException {
+		HttpURLConnection connection = null;
 		try {
-			startHttpBulkRequest(path);
-			writer.write(body);
-			writer.close();
+			URL httpURL = new URL(hostURL + path);
+			connection = (HttpURLConnection) httpURL.openConnection();
+			connection.setRequestMethod(POST);
+			connection.setRequestProperty("Content-Type", "application/x-ndjson");
+			connection.setDoOutput(true);
+			try (Writer writer = new OutputStreamWriter(connection.getOutputStream())) {
+				writer.write(body);
+			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse();
+			JSONObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -284,14 +290,23 @@ public class ElasticConnection {
 		}
 		catch (ParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
 		}
 	}
 
 	public JSONObject executeURIOnly(String command, String path) throws ElasticException {
+		HttpURLConnection connection = null;
 		try {
-			startHttpURICommand(command, path);
+			URL httpURL = new URL(httpURLbase + path);
+			connection = (HttpURLConnection) httpURL.openConnection();
+			connection.setRequestMethod(command);
+			connection.setDoOutput(true);
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse();
+			JSONObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -302,6 +317,11 @@ public class ElasticConnection {
 		}
 		catch (ParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
 		}
 	}
 }

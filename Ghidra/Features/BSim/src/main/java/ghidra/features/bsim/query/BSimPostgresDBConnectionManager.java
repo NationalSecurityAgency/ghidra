@@ -25,7 +25,6 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.apache.commons.lang3.StringUtils;
 
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.ConnectionType;
@@ -283,10 +282,12 @@ public class BSimPostgresDBConnectionManager {
 		 */
 		private Connection connect() throws SQLException, CancelledException {
 
-			String userName = bds.getUsername();
-			bds.setUsername(StringUtils.isBlank(userName) ? ClientUtil.getUserName() : userName);
-			bds.setPassword(null);
-			connectionType = ConnectionType.SSL_No_Authentication;
+			String loginError = null;
+
+			serverInfo.setUserInfo(bds);
+
+			connectionType = serverInfo.hasPassword() ? ConnectionType.SSL_Password_Authentication
+					: ConnectionType.SSL_No_Authentication;
 			try {
 				// Specify SSL connection properties
 				setSSLProperties();
@@ -299,6 +300,10 @@ public class BSimPostgresDBConnectionManager {
 				if (e.getMessage().contains("password-based authentication") ||
 					e.getMessage().contains("SCRAM-based") ||
 					e.getMessage().contains("password authentication failed")) {
+					if (serverInfo.hasPassword()) {
+						loginError = "Access denied: " + serverInfo;
+						Msg.error(this, loginError);
+					}
 					// Use Ghidra's authentication infrastructure
 					connectionType = ConnectionType.SSL_Password_Authentication; // Try again with a password
 					// fallthru to second attempt at getConnection
@@ -319,7 +324,6 @@ public class BSimPostgresDBConnectionManager {
 					" idle=" + bds.getNumIdle());
 			}
 
-			String loginError = null;
 			while (true) {
 				ClientAuthenticator clientAuthenticator = null;
 				if (connectionType == ConnectionType.SSL_Password_Authentication) {
@@ -327,9 +331,11 @@ public class BSimPostgresDBConnectionManager {
 					if (clientAuthenticator == null) { // Make sure authenticator is registered
 						throw new SQLException("No registered authenticator");
 					}
-					NameCallback nameCb = new NameCallback("User ID:");
-					nameCb.setName(bds.getUsername());
-					PasswordCallback passCb = new PasswordCallback("Password:", false);
+					NameCallback nameCb = new NameCallback("User ID:", bds.getUsername());
+					if (!serverInfo.hasDefaultLogin()) {
+						nameCb.setName(bds.getUsername());
+					}
+					PasswordCallback passCb = new PasswordCallback(" ", false); // force use of default prompting
 					try {
 						if (!clientAuthenticator.processPasswordCallbacks(
 							"BSim Database Authentication", "BSim Database Server",
@@ -338,9 +344,8 @@ public class BSimPostgresDBConnectionManager {
 						}
 						bds.setPassword(new String(passCb.getPassword()));
 						// User may have specified new username, or this may return NULL
-						userName = nameCb.getName();
-						if (!StringUtils.isBlank(userName)) {
-							bds.setUsername(userName);
+						if (serverInfo.hasDefaultLogin()) {
+							bds.setUsername(nameCb.getName());
 						}
 					}
 					finally {
