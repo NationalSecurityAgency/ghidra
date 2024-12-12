@@ -78,7 +78,7 @@ public class RowSegmentList<E> {
 	 */
 	public void assignOffsets() {
 		// sorts the row edge segments from top to bottom
-		Collections.sort(edgeSegments);
+		sort();
 
 		Map<Integer, RowSegmentList<E>> offsetMap =
 			LazyMap.lazyMap(new HashMap<>(), k -> new RowSegmentList<E>(0));
@@ -86,6 +86,28 @@ public class RowSegmentList<E> {
 			RowSegment<E> segment = edgeSegments.get(i);
 			assignOffset(offsetMap, segment);
 		}
+	}
+
+	private void sort() {
+		if (isUniformFlow()) {
+			Collections.sort(edgeSegments, (s1, s2) -> s1.compareToUsingFlows(s2));
+		}
+		else {
+			Collections.sort(edgeSegments, (s1, s2) -> s1.compareToIgnoreFlows(s2));
+		}
+	}
+
+	private boolean isUniformFlow() {
+		if (edgeSegments.isEmpty()) {
+			return true;
+		}
+		boolean firstSegmentIsFlowingLeft = edgeSegments.get(0).isFlowingLeft();
+		for (RowSegment<E> rowSegment : edgeSegments) {
+			if (rowSegment.isFlowingLeft() != firstSegmentIsFlowingLeft) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	protected void assignOffset(Map<Integer, RowSegmentList<E>> offsetMap, RowSegment<E> segment) {
