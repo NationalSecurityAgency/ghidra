@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,17 +31,18 @@ import ghidra.app.util.ByteCopier.ProgrammingByteStringTransferable;
 import ghidra.app.util.ClipboardType;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.util.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.DummyTool;
 import ghidra.util.NumericUtilities;
@@ -59,17 +60,22 @@ public class CodeBrowserClipboardProviderTest extends AbstractGhidraHeadedIntegr
 		program = createProgram();
 		PluginTool tool = new DummyTool() {
 			@Override
-			public boolean execute(Command command, DomainObject obj) {
+			public <T extends DomainObject> boolean execute(Command<T> command, T obj) {
 				boolean result = command.applyTo(obj);
 				if (!result) {
 					throw new AssertException("Failed to write bytes");
 				}
 				return true;
 			}
-		};
 
+			@Override
+			public ToolOptions getOptions(String categoryName) {
+				return new ToolOptions("Test");
+			}
+		};
 		clipboardProvider = new CodeBrowserClipboardProvider(tool, null);
 		clipboardProvider.setProgram(program);
+
 	}
 
 	private Program createProgram() throws Exception {
@@ -109,7 +115,119 @@ public class CodeBrowserClipboardProviderTest extends AbstractGhidraHeadedIntegr
 		builder.setBytes("0x0100418c", "ff 15 08 10 00 01");
 		builder.disassemble("0x0100418c", 6);
 
-		return builder.getProgram();
+		// create some data with numbers, strings  to test copy special for "data"
+		builder.createMemory("test", "0x02000000", 400);
+
+		// create some pointers to numbers and strings  to test copy special for "referenced data"
+		builder.setBytes("0x02000000", "00, 01, 02, 03, 04, 05, 61, 62, 63, 0");
+
+		// create some data with numbers and strings that will go inside a structure
+		builder.setBytes("0x02000000", "00, 01, 02, 03, 04, 05, 61, 62, 63, 0");
+
+		builder.setBytes("0x02000100", "02, 00, 00, 04, 02, 00, 00, 06");
+		builder.setBytes("0x02000200", "00, 01, 02, 61, 62, 63, 0");
+		builder.applyDataType("0x02000000", new ByteDataType());
+		builder.applyDataType("0x02000001", new ByteDataType());
+		builder.applyDataType("0x02000002", new ByteDataType());
+		builder.applyDataType("0x02000003", new ByteDataType());
+		builder.applyDataType("0x02000004", new ByteDataType());
+		builder.applyDataType("0x02000005", new ByteDataType());
+		builder.applyDataType("0x02000006", new StringDataType());
+		builder.applyDataType("0x02000100", new PointerDataType(new ByteDataType()));
+		builder.applyDataType("0x02000104", new PointerDataType(new StringDataType()));
+
+		// create a structure to test interior data selection
+		StructureDataType struct = new StructureDataType("struct_for_data", 0);
+		struct.add(new ByteDataType());
+		struct.add(new ByteDataType());
+		struct.add(new ByteDataType());
+		struct.add(new StringDataType(), 4);
+		builder.applyDataType("0x02000200", struct);
+
+		// We would like to test copying of source byte offset values. To do so, we need to create
+		// a memory block that has source byte offset information.
+		FileBytes fileBytes = builder.createFileBytes(100);
+		builder.createMemory("filebytes", "0x03000100", fileBytes, 100);
+		program = builder.getProgram();
+		return program;
+	}
+
+	@Test
+	public void testCopySpecialFileOffsets() throws Exception {
+		clipboardProvider.setLocation(location("0x03000113"));
+		ClipboardType type = CodeBrowserClipboardProvider.BYTE_SOURCE_OFFSET_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		String data = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("13", data);
+	}
+	@Test
+	public void testCopySpecialBlockOffsets() throws Exception {
+		clipboardProvider.setLocation(location("0x02000012"));
+		ClipboardType type = CodeBrowserClipboardProvider.BLOCK_OFFSET_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		String data = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("12", data);
+	}
+	@Test
+	public void testCopySpecialFunctionOffsets() throws Exception {
+		//  function address = "0x010023f5";
+		clipboardProvider.setLocation(location("0x010023f9"));
+		ClipboardType type = CodeBrowserClipboardProvider.FUNCTION_OFFSET_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		String data = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("4", data);
+	}
+	@Test
+	public void testCopySpecialImageBaseOffsets() throws Exception {
+		clipboardProvider.setLocation(location("0x0100"));
+		ClipboardType type = CodeBrowserClipboardProvider.IMAGEBASE_OFFSET_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		String data = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("100", data);
+	}
+
+	@Test
+	public void testCopySpecialData() throws Exception {
+		clipboardProvider.setSelection(selection("0x02000000", 10));
+
+		ClipboardType type = CodeBrowserClipboardProvider.GHIDRA_DATA_TEXT_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		StringTransferable st = (StringTransferable) transferable;
+		String data = (String) st.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("0h\n1h\n2h\n3h\n4h\n5h\n\"abc\"", data);
+	}
+
+	@Test
+	public void testCopySpecialDataInterior() throws Exception {
+		//builder.setBytes("0x02000200", "00, 01, 02, 61, 62, 63, 0");		
+
+		ProgramSelection interiorSelection =
+			makeInteriorSelection("0x02000201", "0x02000203", 1, 3);
+		clipboardProvider.setSelection(interiorSelection);
+
+		ClipboardType type = CodeBrowserClipboardProvider.GHIDRA_DATA_TEXT_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		StringTransferable st = (StringTransferable) transferable;
+		String data = (String) st.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("1h\n2h\n\"abc\"", data);
+	}
+
+	@Test
+	public void testCopySpecialReferencedData() throws Exception {
+		clipboardProvider.setSelection(selection("0x02000100", 8));
+
+		ClipboardType type = CodeBrowserClipboardProvider.GHIDRA_DEREFERENCED_DATA_TEXT_TYPE;
+		Transferable transferable = clipboardProvider.copySpecial(type, TaskMonitor.DUMMY);
+		assertThat(transferable, instanceOf(StringTransferable.class));
+		StringTransferable st = (StringTransferable) transferable;
+		String data = (String) st.getTransferData(DataFlavor.stringFlavor);
+		assertEquals("4h\n\"abc\"", data);
 	}
 
 	@Test
@@ -273,4 +391,19 @@ public class CodeBrowserClipboardProviderTest extends AbstractGhidraHeadedIntegr
 	private ProgramLocation location(String addressString) {
 		return new ProgramLocation(program, addr(addressString));
 	}
+
+	private ProgramSelection makeInteriorSelection(String startAddr, String endAddr, int index1,
+			int index2) {
+		Address start = addr(startAddr);
+		Address end = addr(endAddr);
+		AddressFieldLocation startLocation =
+			new AddressFieldLocation(program, start, new int[] { index1 }, start.toString(), 0);
+		AddressFieldLocation endLocation =
+			new AddressFieldLocation(program, end, new int[] { index2 }, end.toString(), 0);
+		InteriorSelection interiorSelection =
+			new InteriorSelection(startLocation, endLocation, start, end);
+		return new ProgramSelection(interiorSelection);
+
+	}
+
 }

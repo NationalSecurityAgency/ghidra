@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.program.database;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
@@ -291,6 +293,14 @@ public class ProgramBuilder {
 
 	public MemoryBlock createMemory(String name, String address, int size, String comment) {
 		return createMemory(name, address, size, comment, (byte) 0);
+	}
+
+	public MemoryBlock createMemory(String name, String address, FileBytes fileBytes, int size) {
+		return tx(() -> {
+			Address startAddress = addr(address);
+			Memory memory = program.getMemory();
+			return memory.createInitializedBlock(name, startAddress, fileBytes, 0, size, false);
+		});
 	}
 
 	public MemoryBlock createMemory(String name, String address, int size, String comment,
@@ -1085,6 +1095,22 @@ public class ProgramBuilder {
 
 	public void setChanged(boolean changed) {
 		program.setChanged(changed);
+	}
+
+	public FileBytes createFileBytes(int size) throws Exception {
+		byte[] bytes = new byte[size];
+		for (int i = 0; i < size; i++) {
+			bytes[i] = (byte) i;
+		}
+
+		return tx(() -> {
+			FileBytes fileBytes =
+				program.getMemory()
+						.createFileBytes("test", 0, size, new ByteArrayInputStream(bytes),
+							TaskMonitor.DUMMY);
+
+			return fileBytes;
+		});
 	}
 
 	private <E extends Exception> void tx(ExceptionalCallback<E> c) {
