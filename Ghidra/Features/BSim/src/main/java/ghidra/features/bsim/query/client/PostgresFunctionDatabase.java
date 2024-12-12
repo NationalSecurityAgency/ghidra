@@ -190,8 +190,9 @@ public final class PostgresFunctionDatabase
 	@Override
 	protected void generateRawDatabase() throws SQLException {
 		BSimServerInfo serverInfo = postgresDs.getServerInfo();
-		BSimServerInfo defaultServerInfo = new BSimServerInfo(DBType.postgres,
-			serverInfo.getServerName(), serverInfo.getPort(), DEFAULT_DATABASE_NAME);
+		BSimServerInfo defaultServerInfo =
+			new BSimServerInfo(DBType.postgres, serverInfo.getUserInfo(),
+				serverInfo.getServerName(), serverInfo.getPort(), DEFAULT_DATABASE_NAME);
 		String createdbstring = "CREATE DATABASE \"" + serverInfo.getDBName() + '"';
 		BSimPostgresDataSource defaultDs =
 			BSimPostgresDBConnectionManager.getDataSource(defaultServerInfo);
@@ -500,14 +501,6 @@ public final class PostgresFunctionDatabase
 	@Override
 	public String getUserName() {
 		return postgresDs.getUserName();
-	}
-
-	@Override
-	public void setUserName(String userName) {
-		if (postgresDs.getStatus() == Status.Ready) {
-			throw new IllegalStateException("Connection has already been established");
-		}
-		postgresDs.setPreferredUserName(userName);
 	}
 
 	@Override
