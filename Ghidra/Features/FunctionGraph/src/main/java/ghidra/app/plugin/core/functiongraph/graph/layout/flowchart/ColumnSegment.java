@@ -27,7 +27,7 @@ import ghidra.graph.viewer.layout.GridPoint;
  *
  * @param <E> The edge type
  */
-public class ColumnSegment<E> extends EdgeSegment<E> implements Comparable<ColumnSegment<E>> {
+public class ColumnSegment<E> extends EdgeSegment<E> {
 
 	// specifies the orientation of the row attached to this segment (either top or bottom)
 	enum RowOrientation {
@@ -93,12 +93,11 @@ public class ColumnSegment<E> extends EdgeSegment<E> implements Comparable<Colum
 		return points.get(pointIndex + 1).row;
 	}
 
-	@Override
-	public int compareTo(ColumnSegment<E> other) {
-		// To make the comparison reversible and transitive, it is important that we are
-		// consistent in the order we compare segments. We arbitrarily chose to always compare
-		// the order by following the shape of the top and only considering the shape on the bottom
-		// if the tops are equal.
+	public int compareToIgnoreFlows(ColumnSegment<E> other) {
+		// When comparing edge segments that have mixed flow directions, we arbitrarily chose to
+		// always compare the order by following the shape of the top and only considering the shape
+		// on the bottom if the tops are equal. This needs to be consistent so that the comparison
+		// is transitive and reversible.
 		//
 		// NOTE: Segments are compared by following the next or previous segments until one of the
 		// segments definitively determines the order. When comparing segments in a particular
@@ -107,8 +106,42 @@ public class ColumnSegment<E> extends EdgeSegment<E> implements Comparable<Colum
 		// use the appropriate direction comparison so that it will follow that direction until
 		// it finds a difference or it simply returns 0, in which case the original to
 		// compareTo can then try the other direction. As a consequence of this, the basic obvious
-		// comparison of the grid columns first had to be moved into both the compareTops and the
-		// compareBottoms.
+		// comparison of first comparing the grid column's index had to be moved into both the
+		// compareTops and the compareBottoms.
+
+		int result = compareTops(other);
+		if (result == 0) {
+			result = compareBottoms(other);
+		}
+		return result;
+	}
+
+	public int compareToUsingFlows(ColumnSegment<E> other) {
+		// When comparing segments that flow in the same direction, we prefer to compare previous
+		// edges first and if they are equal, we compare follow-on edges. This yields better
+		// results (less edge crossings) for some edge cases because it allows all the segments
+		// in an edge to compare consistently in the same direction which is not guaranteed in 
+		// the ignore flow case. However, this comparison can only be used for sorting when all
+		// the segments in a list flow in the same direction. Otherwise the comparison is not
+		// transitive, which could result in breaking the sort algorithm.
+
+		// NOTE: Segments are compared by following the next or previous segments until one of the
+		// segments definitively determines the order. When comparing segments in a particular
+		// direction, is is important not to directly call the compareTo methods as that could result
+		// in an infinite loop. Instead, when comparing in a particular direction, just directly
+		// use the appropriate direction comparison so that it will follow that direction until
+		// it finds a difference or it simply returns 0, in which case the original 
+		// compareTo can then try the other direction. As a consequence of this, the basic obvious
+		// comparison of first comparing the grid column's index had to be moved into both the
+		// compareTops and the compareBottoms.
+
+		if (isFlowingUpwards()) {
+			int result = compareBottoms(other);
+			if (result == 0) {
+				result = compareTops(other);
+			}
+			return result;
+		}
 
 		int result = compareTops(other);
 		if (result == 0) {
@@ -306,11 +339,11 @@ public class ColumnSegment<E> extends EdgeSegment<E> implements Comparable<Colum
 	}
 
 	private RowSegment<E> getTopRowSegment() {
-		return flowsUp() ? next : previous;
+		return isFlowingUpwards() ? next : previous;
 	}
 
 	private RowSegment<E> getBottomRowSegment() {
-		return flowsUp() ? previous : next;
+		return isFlowingUpwards() ? previous : next;
 	}
 
 	private RowOrientation getOrientationForTopRow() {
@@ -318,7 +351,8 @@ public class ColumnSegment<E> extends EdgeSegment<E> implements Comparable<Colum
 			return RowOrientation.TERMINAL;
 		}
 		RowSegment<E> topRowSegment = getTopRowSegment();
-		int topRowOtherCol = flowsUp() ? topRowSegment.getEndCol() : topRowSegment.getStartCol();
+		int topRowOtherCol =
+			isFlowingUpwards() ? topRowSegment.getEndCol() : topRowSegment.getStartCol();
 		return topRowOtherCol < getCol() ? RowOrientation.LEFT : RowOrientation.RIGHT;
 	}
 
@@ -328,11 +362,11 @@ public class ColumnSegment<E> extends EdgeSegment<E> implements Comparable<Colum
 		}
 		RowSegment<E> bottomRowSegment = getBottomRowSegment();
 		int bottomRowOtherCol =
-			flowsUp() ? bottomRowSegment.getStartCol() : bottomRowSegment.getEndCol();
+			isFlowingUpwards() ? bottomRowSegment.getStartCol() : bottomRowSegment.getEndCol();
 		return bottomRowOtherCol < getCol() ? RowOrientation.LEFT : RowOrientation.RIGHT;
 	}
 
-	private boolean flowsUp() {
+	public boolean isFlowingUpwards() {
 		return getStartRow() > getEndRow();
 	}
 
