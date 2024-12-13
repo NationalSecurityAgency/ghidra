@@ -1113,7 +1113,7 @@ public class ProgramBuilder {
 		});
 	}
 
-	private <E extends Exception> void tx(ExceptionalCallback<E> c) {
+	public <E extends Exception> void tx(ExceptionalCallback<E> c) {
 		startTransaction();
 		boolean commit = true;
 		try {
@@ -1128,7 +1128,7 @@ public class ProgramBuilder {
 		}
 	}
 
-	private <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
+	public <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
 		startTransaction();
 		boolean commit = true;
 		try {
@@ -1143,7 +1143,7 @@ public class ProgramBuilder {
 		}
 	}
 
-	private interface ExceptionalSupplier<R, E extends Exception> {
+	public interface ExceptionalSupplier<R, E extends Exception> {
 		public R get() throws E;
 	}
 }
