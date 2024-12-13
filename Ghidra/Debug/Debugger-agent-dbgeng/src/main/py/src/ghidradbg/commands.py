@@ -1340,7 +1340,8 @@ def put_frames():
         path = STACK_PATTERN.format(procnum=nproc, tnum=nthrd)
         (values, keys) = create_generic(path)
         STATE.trace.proxy_object_path(path).retain_values(keys)
-        return
+        # NB: some flavors of dbgmodel lack Attributes, so we grab Instruction Offset regardless
+        #return
 
     mapper = STATE.trace.memory_mapper
     keys = []
@@ -1353,19 +1354,20 @@ def put_frames():
         base, offset_inst = mapper.map(nproc, f.InstructionOffset)
         if base != offset_inst.space:
             STATE.trace.create_overlay_space(base, offset_inst.space)
-        base, offset_stack = mapper.map(nproc, f.StackOffset)
-        if base != offset_stack.space:
-            STATE.trace.create_overlay_space(base, offset_stack.space)
-        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
-        if base != offset_ret.space:
-            STATE.trace.create_overlay_space(base, offset_ret.space)
-        base, offset_frame = mapper.map(nproc, f.FrameOffset)
-        if base != offset_frame.space:
-            STATE.trace.create_overlay_space(base, offset_frame.space)
         fobj.set_value('Instruction Offset', offset_inst)
-        fobj.set_value('Stack Offset', offset_stack)
-        fobj.set_value('Return Offset', offset_ret)
-        fobj.set_value('Frame Offset', offset_frame)
+        if not util.dbg.use_generics:
+	        base, offset_stack = mapper.map(nproc, f.StackOffset)
+	        if base != offset_stack.space:
+	            STATE.trace.create_overlay_space(base, offset_stack.space)
+	        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
+	        if base != offset_ret.space:
+	            STATE.trace.create_overlay_space(base, offset_ret.space)
+	        base, offset_frame = mapper.map(nproc, f.FrameOffset)
+	        if base != offset_frame.space:
+	            STATE.trace.create_overlay_space(base, offset_frame.space)
+	        fobj.set_value('Stack Offset', offset_stack)
+	        fobj.set_value('Return Offset', offset_ret)
+	        fobj.set_value('Frame Offset', offset_frame)
         fobj.set_value('_display', "#{} {}".format(
             f.FrameNumber, offset_inst.offset))
         fobj.insert()
