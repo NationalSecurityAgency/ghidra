@@ -818,6 +818,7 @@ public class DecompilerUtils {
 
 		StringBuilder commentBuilder = new StringBuilder();
 		for (; i < alltoks.size(); ++i) {
+
 			ClangToken tok = (ClangToken) alltoks.get(i);
 			if (tok.getCollapsedToken()) {
 				continue;

@@ -20,7 +20,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -33,6 +33,7 @@ import generic.stl.Pair;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 /**
  * The built-in provider for the Decompiler's line number margin
@@ -118,7 +119,7 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		int y = e.getY() - insets.top;
 		int x = e.getX() - insets.left;
 
-        if (x >= getWidth() - getFontMetrics(getFont()).stringWidth(" ") * 2 - insets.right) {
+		if (x >= getWidth() - getFontMetrics(getFont()).stringWidth(" ") * 2 - insets.right) {
 			decompilerPanel.arrowClickAction(y);
 			repaint();
 		}
@@ -136,19 +137,17 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
 		int arrowSize = ascent / 2;
-		List<Pair<BigInteger, Boolean>> linesIndexes = decompilerPanel.getLinesIndexesWithOpeningBraces();
-		int ind = 0;
+		Map<Integer, Boolean> linesIndexes = decompilerPanel.getLinesWithOpeningBraces();
+
 
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
 			String text = i.add(BigInteger.ONE).toString();
 			GraphicsUtils.drawString(this, g, text, leftEdge, pixmap.getPixel(i) + ascent);
-			if (linesIndexes.size() <= ind) {
-				continue;
-			}
-			if (Objects.equals(linesIndexes.get(ind).first, i)) {
+
+			if (linesIndexes.containsKey(i.intValue())) {
 				int y = pixmap.getPixel(i) + ascent;
 				g.setColor(Color.GRAY);
-				if (linesIndexes.get(ind).second) {
+				if (linesIndexes.get(i.intValue())) {
 					y -= arrowSize / 2;
 					g.drawLine(rightEdge, y, rightEdge - arrowSize / 2, y - arrowSize / 2);
 					g.drawLine(rightEdge, y, rightEdge - arrowSize / 2, y + arrowSize / 2);
@@ -157,7 +156,6 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 					g.drawLine(rightEdge, y, rightEdge + arrowSize / 2, y - arrowSize / 2);
 				}
 				g.setColor(Color.BLACK);
-				++ind;
 			}
 		}
 	}

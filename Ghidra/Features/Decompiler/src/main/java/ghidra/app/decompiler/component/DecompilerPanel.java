@@ -37,7 +37,6 @@ import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
-import generic.stl.Pair;
 import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
@@ -56,9 +55,6 @@ import ghidra.util.*;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 
-
-import javax.swing.KeyStroke;
-import java.awt.event.KeyEvent;
 
 /**
  * Class to handle the display of a decompiled function
@@ -771,6 +767,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (!decompileData.hasDecompileResults()) {
 			return;
 		}
+
 		int clickCount = ev.getClickCount();
 		int buttonState = ev.getButton();
 		if (buttonState == MouseEvent.BUTTON1) {
@@ -861,20 +858,20 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return false;
 	}
 
-	public List<Pair<BigInteger, Boolean>> getLinesIndexesWithOpeningBraces() {
-		List<Pair<BigInteger, Boolean>> lineNumbers = new ArrayList<>();
+	public Map<Integer, Boolean> getLinesWithOpeningBraces() {
+		Map<Integer, Boolean> lineNumbers = new HashMap<>();
 		List<ClangLine> lines = getLines();
 
-        for (int i = 0; i < lines.size(); i++) {
-            List<ClangToken> lineTokens = lines.get(i).getAllTokens();
-            for (ClangToken token : lineTokens) {
-                if (token.getText().contains("{") && token instanceof ClangSyntaxToken) {
+		for (int i = 0; i < lines.size(); i++) {
+			List<ClangToken> lineTokens = lines.get(i).getAllTokens();
+			for (ClangToken token : lineTokens) {
+				if (token.getText().contains("{") && token instanceof ClangSyntaxToken) {
 					List<ClangNode> list = new ArrayList<>();
 					token.Parent().flatten(list);
-					lineNumbers.add(new Pair<>(BigInteger.valueOf(i), isBlockCollapsed((ClangSyntaxToken) token)));
-                }
-            }
-        }
+					lineNumbers.put(i, isBlockCollapsed((ClangSyntaxToken) token));
+				}
+			}
+		}
 		return lineNumbers;
 	}
 
