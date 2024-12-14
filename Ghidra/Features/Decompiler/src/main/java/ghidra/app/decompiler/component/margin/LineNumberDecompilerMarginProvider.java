@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
@@ -29,11 +28,9 @@ import docking.util.GraphicsUtils;
 import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
-import generic.stl.Pair;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
 
 /**
  * The built-in provider for the Decompiler's line number margin
@@ -47,7 +44,7 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 
 	public LineNumberDecompilerMarginProvider(DecompilerPanel decompilerPanel) {
 		this.decompilerPanel = decompilerPanel;
-        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+		setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -130,8 +127,8 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		super.paint(g);
 
 		Insets insets = getInsets();
-		int leftEdge = insets.left;
 		int rightEdge = getWidth() - insets.right - getFontMetrics(getFont()).stringWidth(" ");
+		int leftEdge = insets.left;
 		Rectangle visible = getVisibleRect();
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
