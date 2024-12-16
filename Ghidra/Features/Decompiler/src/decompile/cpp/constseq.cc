@@ -289,7 +289,7 @@ Varnode *StringSequence::constructTypedPointer(PcodeOp *insertPoint)
   spacePtr = data.newUniqueOut(spacePtr->getSize(), ptrsub);
   data.opInsertBefore(ptrsub, insertPoint);
   TypePointer *curType = types->getTypePointerStripArray(spacePtr->getSize(), baseType, spc->getWordSize());
-  spacePtr->updateType(curType, false, false);
+  spacePtr->updateType(curType);
   int8 curOff = rootAddr.getOffset() - entry->getFirst();
   while(baseType != charType) {
     int4 elSize = -1;
@@ -321,7 +321,7 @@ Varnode *StringSequence::constructTypedPointer(PcodeOp *insertPoint)
     spacePtr = data.newUniqueOut(spacePtr->getSize(), ptrsub);
     data.opInsertBefore(ptrsub, insertPoint);
     curType = types->getTypePointerStripArray(spacePtr->getSize(), baseType, spc->getWordSize());
-    spacePtr->updateType(curType, false, false);
+    spacePtr->updateType(curType);
     curOff = newOff;
   }
   if (curOff != 0) {
@@ -333,7 +333,7 @@ Varnode *StringSequence::constructTypedPointer(PcodeOp *insertPoint)
     spacePtr = data.newUniqueOut(spacePtr->getSize(), addOp);
     data.opInsertBefore(addOp, insertPoint);
     curType = types->getTypePointer(spacePtr->getSize(), charType, spc->getWordSize());
-    spacePtr->updateType(curType, false, false);
+    spacePtr->updateType(curType);
   }
   return spacePtr;
 }
@@ -365,7 +365,7 @@ PcodeOp *StringSequence::buildStringCopy(void)
   data.opSetInput(copyOp, destPtr, 1);
   data.opSetInput(copyOp, srcPtr, 2);
   Varnode *lenVn = data.newConstant(4,index);
-  lenVn->updateType(copyOp->inputTypeLocal(3), false, false);
+  lenVn->updateType(copyOp->inputTypeLocal(3));
   data.opSetInput(copyOp, lenVn, 3);
   data.opInsertBefore(copyOp, insertPoint);
   return copyOp;
@@ -717,14 +717,14 @@ PcodeOp *HeapSequence::buildStringCopy(void)
 	data.opSetInput(addOp, indexVn, 0);
 	data.opSetInput(addOp, nonConstAdds[i],1);
 	indexVn = data.newUniqueOut(indexVn->getSize(), addOp);
-	indexVn->updateType(intType, false, false);
+	indexVn->updateType(intType);
 	data.opInsertBefore(addOp, insertPoint);
       }
     }
     if (baseOffset != 0) {				// Add in any non-zero constant
       uint8 numEl = baseOffset / charType->getAlignSize();
       Varnode *cvn = data.newConstant(basePointer->getSize(), numEl);
-      cvn->updateType(intType, false, false);
+      cvn->updateType(intType);
       if (indexVn == (Varnode *)0)
 	indexVn = cvn;
       else {
@@ -733,7 +733,7 @@ PcodeOp *HeapSequence::buildStringCopy(void)
 	data.opSetInput(addOp, indexVn, 0);
 	data.opSetInput(addOp, cvn,1);
 	indexVn = data.newUniqueOut(indexVn->getSize(), addOp);
-	indexVn->updateType(intType, false, false);
+	indexVn->updateType(intType);
 	data.opInsertBefore(addOp, insertPoint);
       }
     }
@@ -743,7 +743,7 @@ PcodeOp *HeapSequence::buildStringCopy(void)
     data.opSetInput(ptrAdd,basePointer,0);
     data.opSetInput(ptrAdd,indexVn,1);
     data.opSetInput(ptrAdd,data.newConstant(basePointer->getSize(), charType->getAlignSize()),2);
-    destPtr->updateType(charPtrType, false, false);
+    destPtr->updateType(charPtrType);
     data.opInsertBefore(ptrAdd, insertPoint);
   }
   int4 index;
@@ -755,7 +755,7 @@ PcodeOp *HeapSequence::buildStringCopy(void)
   data.opSetInput(copyOp, destPtr, 1);
   data.opSetInput(copyOp, srcPtr, 2);
   Varnode *lenVn = data.newConstant(4,index);
-  lenVn->updateType(copyOp->inputTypeLocal(3), false, false);
+  lenVn->updateType(copyOp->inputTypeLocal(3));
   data.opSetInput(copyOp, lenVn, 3);
   data.opInsertBefore(copyOp, insertPoint);
   return copyOp;

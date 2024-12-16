@@ -2552,7 +2552,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       }
     }
     else if (outHighResolve->getMetatype() != TYPE_PTR) {	// If implied varnode has an atomic (non-pointer) type
-      outvn->updateType(tokenct,false,false); // Ignore it in favor of the token type
+      outvn->updateType(tokenct); // Ignore it in favor of the token type
       outHighResolve = outvn->getHighTypeDefFacing();
     }
     else if (tokenct->getMetatype() == TYPE_PTR) { // If the token is a pointer AND implied varnode is pointer
@@ -2560,7 +2560,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       type_metatype meta = outct->getMetatype();
       // Preserve implied pointer if it points to a composite
       if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT)&&(meta!=TYPE_UNION)) {
-	outvn->updateType(tokenct,false,false); // Otherwise ignore it in favor of the token type
+	outvn->updateType(tokenct); // Otherwise ignore it in favor of the token type
 	outHighResolve = outvn->getHighTypeDefFacing();
       }
     }
@@ -2578,7 +2578,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   }
 				// Generate the cast op
   vn = data.newUnique(outvn->getSize());
-  vn->updateType(tokenct,false,false);
+  vn->updateType(tokenct);
   vn->setImplied();
   newop = data.newOp((opc != CPUI_CAST) ? 2 : 1,op->getAddr());
 #ifdef CPUI_STATISTICS
@@ -2618,7 +2618,7 @@ PcodeOp *ActionSetCasts::insertPtrsubZero(PcodeOp *op,int4 slot,Datatype *ct,Fun
   Varnode *vn = op->getIn(slot);
   PcodeOp *newop = data.newOp(2,op->getAddr());
   Varnode *vnout = data.newUniqueOut(vn->getSize(), newop);
-  vnout->updateType(ct,false,false);
+  vnout->updateType(ct);
   vnout->setImplied();
   data.opSetOpcode(newop, CPUI_PTRSUB);
   data.opSetInput(newop,vn,0);
@@ -2658,7 +2658,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
   if (vn->isWritten() && (vn->getDef()->code() == CPUI_CAST)) {
     if (vn->isImplied()) {
       if (vn->loneDescend() == op) {
-	vn->updateType(ct,false,false);
+	vn->updateType(ct);
 	if (vn->getType()==ct)
 	  return 1;
       }
@@ -2670,7 +2670,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     }
   }
   else if (vn->isConstant()) {
-    vn->updateType(ct,false,false);
+    vn->updateType(ct);
     if (vn->getType() == ct)
       return 1;
   }
@@ -2686,7 +2686,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
   }
   newop = data.newOp(1,op->getAddr());
   vnout = data.newUniqueOut(vnin->getSize(),newop);
-  vnout->updateType(ct,false,false);
+  vnout->updateType(ct);
   vnout->setImplied();
 #ifdef CPUI_STATISTICS
   data.getArch()->stats->countCast();
@@ -4898,7 +4898,7 @@ bool ActionInferTypes::writeBack(Funcdata &data)
     if (vn->isAnnotation()) continue;
     if ((!vn->isWritten())&&(vn->hasNoDescend())) continue;
     ct = vn->getTempType();
-    if (vn->updateType(ct,false,false))
+    if (vn->updateType(ct))
       change = true;
   }
   return change;
