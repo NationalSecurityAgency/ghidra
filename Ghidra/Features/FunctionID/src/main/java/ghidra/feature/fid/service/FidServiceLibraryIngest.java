@@ -49,6 +49,7 @@ class FidServiceLibraryIngest {
 	private Predicate<Pair<Function, FidHashQuad>> functionFilter;
 	private LanguageID languageId; // Language for everything in this library
 	private List<LibraryRecord> linkLibraries;
+	private boolean disableNamespaceStripping;
 	private TaskMonitor monitor;
 
 	private LibraryRecord library = null; // Database record of the library we are creating
@@ -176,11 +177,13 @@ class FidServiceLibraryIngest {
 	 * @param languageId the Ghidra language id to filter programs by
 	 * @param linkLibraries the list of libraries to use for unresolved symbols
 	 * @param monitor a task monitor
+	 * @param disableNamespaceStripping boolean to disable namespace stripping
 	 */
 	public FidServiceLibraryIngest(FidDB fidDb, FidService service, String libraryFamilyName,
 			String libraryVersion, String libraryVariant, List<DomainFile> programFiles,
 			Predicate<Pair<Function, FidHashQuad>> functionFilter, LanguageID languageId,
-			List<LibraryRecord> linkLibraries, TaskMonitor monitor) {
+			List<LibraryRecord> linkLibraries, TaskMonitor monitor,
+			boolean disableNamespaceStripping) {
 		this.fidDb = fidDb;
 		this.service = service;
 		this.libraryFamilyName = libraryFamilyName;
@@ -191,6 +194,7 @@ class FidServiceLibraryIngest {
 		this.languageId = languageId;
 		this.linkLibraries = linkLibraries;
 		this.monitor = monitor;
+		this.disableNamespaceStripping = disableNamespaceStripping;
 		if (languageId == null) {
 			throw new IllegalArgumentException("LanugageID can't be null"); // null used to be allowed, so add special check
 		}
@@ -240,7 +244,7 @@ class FidServiceLibraryIngest {
 					result = new FidPopulateResult(library);
 				}
 
-				populateLibraryFromProgram(program);
+				populateLibraryFromProgram(program, disableNamespaceStripping);
 			}
 			finally {
 				if (program != null) {
@@ -261,16 +265,18 @@ class FidServiceLibraryIngest {
 	 * Processes a single program, adding it to the library.
 	 * @param result the populate result
 	 * @param program the program
+	 * @param disableNamespaceStripping boolean to disable namespace stripping
 	 * @throws CancelledException if the user cancels
 	 */
-	private void populateLibraryFromProgram(Program program) throws CancelledException {
+	private void populateLibraryFromProgram(Program program, boolean disableNamespaceStripping)
+			throws CancelledException {
 
 		FidHasher hasher = service.getHasher(program);
 		ArrayList<Function> theFunctions = new ArrayList<>();
 		Map<Function, FunctionRow> recordMap = new HashMap<>();
 
 		// 1) hash all the functions, create function rows for them
-		hashAllTheFunctions(program, hasher, theFunctions, recordMap);
+		hashAllTheFunctions(program, hasher, theFunctions, recordMap, disableNamespaceStripping);
 
 		// 3) add all the forward (child) call relatives
 		for (Entry<Function, FunctionRow> entry : recordMap.entrySet()) {
@@ -328,10 +334,12 @@ class FidServiceLibraryIngest {
 	 * @param hasher the FID hasher
 	 * @param theFunctions the functions
 	 * @param recordMap the map of function to function records
+	 * @param disableNamespaceStripping boolean to disable namespace stripping
 	 * @throws CancelledException if the user cancels
 	 */
 	private void hashAllTheFunctions(Program program, FidHasher hasher,
-			ArrayList<Function> theFunctions, Map<Function, FunctionRow> recordMap)
+			ArrayList<Function> theFunctions, Map<Function, FunctionRow> recordMap,
+			boolean disableNamespaceStripping)
 			throws CancelledException {
 		DomainFile domainFile = program.getDomainFile();
 		FunctionManager functionManager = program.getFunctionManager();
@@ -351,7 +359,7 @@ class FidServiceLibraryIngest {
 				exclude(domainFile, function, FidPopulateResult.Disposition.NO_DEFINED_SYMBOL);
 			}
 			else {
-				name = function.getSymbol().getName();
+				name = function.getSymbol().getName(disableNamespaceStripping);
 			}
 
 			FidHashQuad hashQuad = null;
