@@ -290,6 +290,35 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 	}
 
+	protected class ForListingClipboardProvider extends CodeBrowserClipboardProvider {
+		protected ForListingClipboardProvider() {
+			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this);
+		}
+
+		@Override
+		public boolean isValidContext(ActionContext context) {
+			if (!(context instanceof DebuggerListingActionContext)) {
+				return false;
+			}
+			return context.getComponentProvider() == componentProvider;
+		}
+
+		@Override
+		public boolean canPaste(DataFlavor[] availableFlavors) {
+			if (controlService == null) {
+				return false;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return false;
+			}
+			if (!controlService.getCurrentMode(trace).canEdit(current)) {
+				return false;
+			}
+			return super.canPaste(availableFlavors);
+		}
+	}
+
 	private final DebuggerListingPlugin plugin;
 
 	//@AutoServiceConsumed via method
@@ -773,30 +802,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	protected CodeBrowserClipboardProvider newClipboardProvider() {
-		return new CodeBrowserClipboardProvider(tool, this) {
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				if (!(context instanceof DebuggerListingActionContext)) {
-					return false;
-				}
-				return context.getComponentProvider() == componentProvider;
-			}
-
-			@Override
-			public boolean canPaste(DataFlavor[] availableFlavors) {
-				if (controlService == null) {
-					return false;
-				}
-				Trace trace = current.getTrace();
-				if (trace == null) {
-					return false;
-				}
-				if (!controlService.getCurrentMode(trace).canEdit(current)) {
-					return false;
-				}
-				return super.canPaste(availableFlavors);
-			}
-		};
+		return new ForListingClipboardProvider();
 	}
 
 	protected void createActions() {
