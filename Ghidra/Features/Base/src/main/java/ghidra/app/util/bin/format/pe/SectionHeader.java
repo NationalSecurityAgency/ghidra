@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,8 +175,10 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 * Align on 8192-byte boundary.
 	 */
 	public final static int IMAGE_SCN_ALIGN_8192BYTES = 0x00E00000;
-//  Unused                                                       = 0x00F00000;
-//  public final static int IMAGE_SCN_ALIGN_MASK                 = 0x00F00000;
+	/**
+	 * Mask for alignment flags
+	 */
+	public final static int IMAGE_SCN_ALIGN_MASK = 0x00F00000;
 	/**
 	 * Section contains extended relocations.
 	 */
