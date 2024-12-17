@@ -888,7 +888,11 @@ def activate(path=None):
             if nthrd is None:
                 path = PROCESS_PATTERN.format(procnum=nproc)
             else:
-                path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                frame = util.selected_frame()
+                if frame is None:
+                	path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                else:
+                	path = FRAME_PATTERN.format(procnum=nproc, tnum=nthrd, level=frame)
     trace.proxy_object_path(path).activate()
 
 
