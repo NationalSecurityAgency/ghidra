@@ -4456,7 +4456,7 @@ vmlDmA: Dm_4^"["^thv_M5^"]"	is TMode=1 & thv_c2021=2 & Dm_4 & thv_M5											{
 	tmp2:8 = Qm(8);
 	tmp1 = ~ tmp1;
 	tmp2 = ~ tmp2;
-	Qd = (zext(tmp1) << 8) | zext(tmp2);
+	Qd = (zext(tmp2) << 64) | zext(tmp1);
 }
 
 define pcodeop FloatVectorNeg;
