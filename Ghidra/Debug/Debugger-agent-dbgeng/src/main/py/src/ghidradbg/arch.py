@@ -38,6 +38,7 @@ data64_compiler_map = {
 x86_compiler_map = {
     'windows': 'windows',
     'Cygwin': 'windows',
+    'default': 'windows',
 }
 
 default_compiler_map = {

@@ -238,6 +238,7 @@ class GhidraDbg(object):
                      ]:
             setattr(self, name, self.eng_thread(getattr(base, name)))
             self.IS_KERNEL = False
+            self.IS_EXDI = False
 
     def _new_base(self):
         self._protected_base = AllDbg()
@@ -455,6 +456,8 @@ def get_breakpoints():
 @dbg.eng_thread
 def selected_process():
     try:
+        if is_exdi():
+            return 0
         if is_kernel():
             do = dbg._base._systems.GetCurrentProcessDataOffset()
             id = c_ulong()
@@ -472,6 +475,8 @@ def selected_process():
 @dbg.eng_thread
 def selected_process_space():
     try:
+        if is_exdi():
+            return 0
         if is_kernel():
             return dbg._base._systems.GetCurrentProcessDataOffset()
         return selected_process()
@@ -759,6 +764,8 @@ def split_path(pathString):
     segs = pathString.split(".")
     for s in segs:
         if s.endswith("]"):
+            if "[" not in s:
+                print(f"Missing terminator: {s}")
             index = s.index("[")
             list.append(s[:index])
             list.append(s[index:])
@@ -907,3 +914,9 @@ def set_kernel(value):
     
 def is_kernel():
     return dbg.IS_KERNEL
+
+def set_exdi(value):
+    dbg.IS_EXDI = value
+    
+def is_exdi():
+    return dbg.IS_EXDI
