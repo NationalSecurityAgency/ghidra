@@ -48,6 +48,7 @@ public class DiffApplyTestAdapter extends DiffTestAdapter {
 	JComboBox<?> bookmarkApplyCB;
 	JComboBox<?> propertiesApplyCB;
 	JComboBox<?> functionTagApplyCB;
+	JComboBox<?> sourceMapApplyCB;
 
 	public DiffApplyTestAdapter() {
 		super();
@@ -222,6 +223,8 @@ public class DiffApplyTestAdapter extends DiffTestAdapter {
 			(JComboBox<?>) findComponentByName(settingsPanel, "Properties Diff Apply CB");
 		functionTagApplyCB =
 			(JComboBox<?>) findComponentByName(settingsPanel, "Function Tags Diff Apply CB");
+		sourceMapApplyCB =
+			(JComboBox<?>) findComponentByName(settingsPanel, "Source Map Diff Apply CB");
 	}
 
 	void checkDiffSelection(AddressSetView addrSet) {
