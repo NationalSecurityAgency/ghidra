@@ -32,6 +32,7 @@ from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
+from .exdi import exdi_commands, exdi_methods
 
 PAGE_SIZE = 4096
 
@@ -209,7 +210,10 @@ def start_trace(name):
     STATE.trace.register_mapper = arch.compute_register_mapper(language)
 
     parent = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    schema_fn = os.path.join(parent, 'schema.xml')
+    if util.is_exdi():
+        schema_fn = os.path.join(parent, 'schema_exdi.xml')
+    else:
+        schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     using_dbgmodel = os.getenv('OPT_USE_DBGMODEL') == "true"
@@ -314,17 +318,19 @@ def ghidra_trace_attach(pid=None, attach_flags='0', initial_break=True, timeout=
 
 
 @util.dbg.eng_thread
-def ghidra_trace_attach_kernel(command=None, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+def ghidra_trace_attach_kernel(command=None, flags=DbgEng.DEBUG_ATTACH_KERNEL_CONNECTION, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
     """
     Create a session.
     """
 
     dbg = util.dbg._base
     util.set_kernel(True)
+    if flags == 2:
+        util.set_exdi(True)
     if initial_break:
         dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
     if command != None:
-        dbg._client.AttachKernel(command)
+        dbg._client.AttachKernel(command, flags=int(flags))
     if start_trace:
         ghidra_trace_start(command)
 
@@ -592,7 +598,10 @@ def putreg():
     for i in range(0, len(regs)):
         name = regs._reg.GetDescription(i)[0]
         try:
-            value = regs._get_register_by_index(i)
+        	value = regs._get_register_by_index(i)
+        except Exception:
+        	value = 0
+        try:
             values.append(mapper.map_value(nproc, name, value))
             robj.set_value(name, hex(value))
         except Exception:
