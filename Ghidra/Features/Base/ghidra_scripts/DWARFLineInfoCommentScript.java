@@ -4,16 +4,18 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Adds DWARF source file line number info to the current binary
+// Adds DWARF source file line number info to the current binary as EOL comments.
+// Note that you can run this script on a program that has already been analyzed by the
+// DWARF analyzer.
 //@category DWARF
 import java.io.IOException;
 import java.util.List;
@@ -29,7 +31,7 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
-public class DWARFLineInfoScript extends GhidraScript {
+public class DWARFLineInfoCommentScript extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		DWARFSectionProvider dsp =

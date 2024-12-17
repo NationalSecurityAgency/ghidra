@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ import ghidra.program.database.properties.DBPropertyMapManager;
 import ghidra.program.database.references.ReferenceDBManager;
 import ghidra.program.database.register.ProgramRegisterContextDB;
 import ghidra.program.database.reloc.RelocationManager;
+import ghidra.program.database.sourcemap.SourceFileManagerDB;
 import ghidra.program.database.symbol.*;
 import ghidra.program.database.util.AddressSetPropertyMapDB;
 import ghidra.program.model.address.*;
@@ -112,8 +113,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            unused flag bits.
 	 * 19-Oct-2023 - version 28   Revised overlay address space table and eliminated min/max.
 	 *                            Multiple blocks are permitted within a single overlay space.
+	 * 13-Dec-2024 - version 29   Added source file manager.                          
 	 */
-	static final int DB_VERSION = 28;
+	static final int DB_VERSION = 29;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -184,8 +186,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final int PROPERTY_MGR = 11;
 	private static final int TREE_MGR = 12;
 	private static final int RELOC_MGR = 13;
+	private static final int SOURCE_FILE_MGR = 14;
 
-	private static final int NUM_MANAGERS = 14;
+	private static final int NUM_MANAGERS = 15;
 
 	private ManagerDB[] managers = new ManagerDB[NUM_MANAGERS];
 	private OldFunctionManager oldFunctionMgr;
@@ -611,6 +614,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	@Override
 	public RelocationManager getRelocationTable() {
 		return (RelocationManager) managers[RELOC_MGR];
+	}
+
+	@Override
+	public SourceFileManagerDB getSourceFileManager() {
+		return (SourceFileManagerDB) managers[SOURCE_FILE_MGR];
 	}
 
 	@Override
@@ -1788,6 +1796,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		try {
 			managers[CONTEXT_MGR] = new ProgramRegisterContextDB(dbh, this, language, compilerSpec,
 				addrMap, lock, openMode, (CodeManager) managers[CODE_MGR], monitor);
+		}
+		catch (VersionException e) {
+			versionExc = e.combine(versionExc);
+		}
+
+		try {
+			managers[SOURCE_FILE_MGR] =
+				new SourceFileManagerDB(dbh, addrMap, openMode, lock, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
