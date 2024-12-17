@@ -103,6 +103,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	JCheckBox functionCB;
 	JCheckBox bookmarkCB;
 	JCheckBox propertiesCB;
+	JCheckBox sourceMapCB;
 
 	JCheckBox limitToSelectionCB;
 	JTextArea limitText;
@@ -1072,6 +1073,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		functionCB = (JCheckBox) findComponentByName(win, "FunctionsDiffCB");
 		bookmarkCB = (JCheckBox) findComponentByName(win, "BookmarksDiffCB");
 		propertiesCB = (JCheckBox) findComponentByName(win, "PropertiesDiffCB");
+		sourceMapCB = (JCheckBox) findComponentByName(win, "SourceMapDiffCB");
 
 		limitToSelectionCB = (JCheckBox) findComponentByName(win, "LimitToSelectionDiffCB");
 		limitText = (JTextArea) findComponentByName(win, "AddressTextArea");
@@ -1079,7 +1081,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	void setAllTypes(boolean select) {
 		setCheckBoxes(select, new JCheckBox[] { programContextCB, byteCB, codeUnitCB, refCB,
-			commentCB, labelCB, functionCB, bookmarkCB, propertiesCB });
+			commentCB, labelCB, functionCB, bookmarkCB, propertiesCB, sourceMapCB });
 	}
 
 	void topOfFile(final FieldPanel fp) {
