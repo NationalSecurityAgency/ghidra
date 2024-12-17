@@ -443,6 +443,16 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       if (!createLink(rop,rvn->mask<<sa,-1,outvn)) return false;
       hcount += 1;
       break;
+    case CPUI_INT_DIV:
+    case CPUI_INT_REM:
+      if ((rvn->mask & 1)==0) return false;	// Logical value must be least sig bits
+      if ((bitsize & 7)!=0) return false;	// Must be a whole number of bytes
+      if (!op->getIn(0)->isZeroExtended(flowsize)) return false;
+      if (!op->getIn(1)->isZeroExtended(flowsize)) return false;
+      rop = createOpDown(op->code(),2,op,rvn,slot);
+      if (!createLink(rop,rvn->mask,-1,outvn)) return false;
+      hcount += 1;
+      break;
     case CPUI_INT_ADD:
       if ((rvn->mask & 1)==0)
 	return false;		// Cannot account for carry
@@ -767,6 +777,16 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
       if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
       if (!createLink(rop,rvn->mask,1,op->getIn(1))) return false;
     }
+    return true;
+  case CPUI_INT_DIV:
+  case CPUI_INT_REM:
+    if ((rvn->mask & 1) == 0) return false;
+    if ((bitsize & 7)!=0) return false;	// Must be a whole number of bytes
+    if (!op->getIn(0)->isZeroExtended(flowsize)) return false;
+    if (!op->getIn(1)->isZeroExtended(flowsize)) return false;
+    rop = createOp(op->code(),2,rvn);
+    if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
+    if (!createLink(rop,rvn->mask,1,op->getIn(1))) return false;
     return true;
   case CPUI_SUBPIECE:
     sa = (int4)op->getIn(1)->getOffset() * 8;

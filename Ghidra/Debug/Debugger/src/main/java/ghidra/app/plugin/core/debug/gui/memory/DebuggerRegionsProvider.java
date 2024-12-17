@@ -467,7 +467,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		if (current.getTrace() == null) {
 			return;
 		}
-		addRegionDialog.show(tool, current.getTrace(), current.getSnap());
+		addRegionDialog.show(tool, current);
 	}
 
 	private void activatedDeleteRegions(ActionContext ctx) {

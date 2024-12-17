@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,38 @@
  */
 package ghidra.app.plugin.core.debug.gui;
 
-import java.util.Set;
+import static org.junit.Assert.assertEquals;
+
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.*;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.target.ActionName;
+import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.util.NumericUtilities;
 
 public class AbstractGhidraHeadedDebuggerIntegrationTest
 		extends AbstractGhidraHeadedDebuggerTest {
@@ -129,6 +147,10 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 
 	protected TestRemoteMethod rmiMethodExecute;
 
+	protected TestRemoteMethod rmiMethodActivateProcess;
+	protected TestRemoteMethod rmiMethodActivateThread;
+	protected TestRemoteMethod rmiMethodActivateFrame;
+
 	protected TestRemoteMethod rmiMethodResume;
 	protected TestRemoteMethod rmiMethodInterrupt;
 	protected TestRemoteMethod rmiMethodKill;
@@ -151,7 +173,17 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 	protected TestRemoteMethod rmiMethodWriteMem;
 
 	protected void createRmiConnection() {
-		rmiCx = new TestTraceRmiConnection();
+		rmiCx = new TestTraceRmiConnection() {
+			@Override
+			protected DebuggerTraceManagerService getTraceManager() {
+				return traceManager;
+			}
+
+			@Override
+			protected DebuggerControlService getControlService() {
+				return tool.getService(DebuggerControlService.class);
+			}
+		};
 	}
 
 	protected void addExecuteMethod() {
@@ -163,6 +195,36 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 				"To String", "Capture output to string"));
 
 		rmiCx.getMethods().add(rmiMethodExecute);
+	}
+
+	protected void addActivateMethods() {
+		rmiMethodActivateProcess =
+			new TestRemoteMethod("activate_process", ActionName.ACTIVATE, "Activate Process",
+				"Activate a process", EnumerableTargetObjectSchema.VOID,
+				new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
+					"The process to activate"));
+
+		rmiMethodActivateThread =
+			new TestRemoteMethod("activate_thread", ActionName.ACTIVATE, "Activate Thread",
+				"Activate a thread", EnumerableTargetObjectSchema.VOID,
+				new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
+					"The thread to activate"));
+
+		rmiMethodActivateFrame =
+			new TestRemoteMethod("activate_frame", ActionName.ACTIVATE, "Activate Frame",
+				"Activate a frame", EnumerableTargetObjectSchema.VOID,
+				new TestRemoteParameter("frame", new SchemaName("Frame"), true, null, "Frame",
+					"The frame to activate"));
+
+		rmiCx.getMethods().add(rmiMethodActivateProcess);
+		rmiCx.getMethods().add(rmiMethodActivateThread);
+		rmiCx.getMethods().add(rmiMethodActivateFrame);
+	}
+
+	protected boolean activationMethodsQueuesEmpty() {
+		return rmiMethodActivateProcess.argQueue().isEmpty() &&
+			rmiMethodActivateThread.argQueue().isEmpty() &&
+			rmiMethodActivateFrame.argQueue().isEmpty();
 	}
 
 	protected void addControlMethods() {
@@ -286,6 +348,26 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 		reg.add(rmiMethodWriteReg);
 	}
 
+	protected void handleReadRegsInvocation(TraceObject container, Callable<Object> action)
+			throws Throwable {
+		Map<String, Object> args = rmiMethodReadRegs.expect();
+		rmiMethodReadRegs.result(action.call());
+		assertEquals(Map.ofEntries(
+			Map.entry("container", container)),
+			args);
+	}
+
+	protected void handleWriteRegInvocation(TraceObjectStackFrame frame, String name, long value)
+			throws Throwable {
+		Map<String, Object> args = rmiMethodWriteReg.expect();
+		rmiMethodWriteReg.result(null);
+		assertEquals(Set.of("frame", "name", "value"), args.keySet());
+		assertEquals(frame.getObject(), args.get("frame"));
+		assertEquals(name, args.get("name"));
+		byte[] bytes = (byte[]) args.get("value");
+		assertEquals(value, Utils.bytesToLong(bytes, bytes.length, true));
+	}
+
 	protected void addMemoryMethods() {
 		rmiMethodReadMem = new TestRemoteMethod("read_mem", ActionName.READ_MEM, "Read Memory",
 			"Read memory", EnumerableTargetObjectSchema.VOID,
@@ -320,6 +402,84 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 		regionText.insert(lifespan, ConflictResolution.DENY);
 
 		return regionText;
+	}
+
+	protected void handleReadMemInvocation(TraceObject process, AddressRange range,
+			Callable<Object> action) throws Exception {
+		assertEquals(Map.ofEntries(
+			Map.entry("process", process),
+			Map.entry("range", range)),
+			rmiMethodReadMem.expect());
+		rmiMethodReadMem.result(action.call());
+	}
+
+	protected void handleReadMemInvocation(TraceObject process, AddressRange range)
+			throws Exception {
+		handleReadMemInvocation(process, range, () -> {
+			try (Transaction tx = tb.startTransaction()) {
+				tb.trace.getMemoryManager().setState(0, range, TraceMemoryState.KNOWN);
+			}
+			return null;
+		});
+	}
+
+	protected void flushMemoryReadInvocations(Supplier<CompletableFuture<?>> taskSupplier,
+			TraceObject process, AddressRange range) throws Exception {
+		while (!taskSupplier.get().isDone()) {
+			while (!rmiMethodReadMem.argQueue().isEmpty()) {
+				handleReadMemInvocation(process, range, () -> null);
+			}
+		}
+	}
+
+	protected void handleAtLeastOneMemReadInv(Supplier<CompletableFuture<?>> taskSupplier,
+			TraceObject process, AddressRange range) throws Exception {
+		handleReadMemInvocation(process, range);
+		flushMemoryReadInvocations(taskSupplier, process, range);
+	}
+
+	public record Bytes(byte[] bytes) {
+		public static Object wrapMaybe(Object v) {
+			return switch (v) {
+				case byte[] b -> new Bytes(b);
+				default -> v;
+			};
+		}
+
+		public static Map<String, Object> wrapVals(Map<String, Object> map) {
+			return map.entrySet()
+					.stream()
+					.collect(Collectors.toMap(Entry::getKey, e -> Bytes.wrapMaybe(e.getValue())));
+		}
+
+		public Bytes(int... values) {
+			this(ArrayUtils.toPrimitive(
+				IntStream.of(values).mapToObj(i -> (byte) i).toArray(Byte[]::new)));
+		}
+
+		@Override
+		public final boolean equals(Object o) {
+			return o instanceof Bytes that && Arrays.equals(this.bytes, that.bytes);
+		}
+
+		@Override
+		public String toString() {
+			return "Bytes[" + NumericUtilities.convertBytesToString(bytes) + "]";
+		}
+
+		public ByteBuffer buf() {
+			return ByteBuffer.wrap(bytes);
+		}
+	}
+
+	protected void handleWriteMemInvocation(TraceObject process, Address start, Bytes data)
+			throws Exception {
+		assertEquals(Map.ofEntries(
+			Map.entry("process", tb.obj("Processes[1]")),
+			Map.entry("start", start),
+			Map.entry("data", data)),
+			Bytes.wrapVals(rmiMethodWriteMem.expect()));
+		rmiMethodWriteMem.result(null);
 	}
 
 	protected TraceObject ensureBreakpointContainer(TraceObjectManager objs) {

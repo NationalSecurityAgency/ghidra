@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.swing.Icon;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
-import ghidra.app.plugin.core.debug.service.model.record.RecorderUtils;
 import ghidra.app.plugin.core.debug.utils.AbstractMappedMemoryBytesVisitor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -35,27 +33,38 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
 
-public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
-	public static final String CONFIG_NAME = "2_LOAD_EMULATOR";
-
-	@Override
-	public boolean equals(Object obj) {
-		return this.getClass() == obj.getClass();
-	}
+enum LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
+	INSTANCE;
 
 	@Override
 	public String getConfigName() {
-		return CONFIG_NAME;
+		return null;
 	}
 
 	@Override
 	public String getMenuName() {
-		return AutoReadMemoryAction.NAME_LOAD_EMU;
+		return null;
 	}
 
 	@Override
 	public Icon getMenuIcon() {
-		return AutoReadMemoryAction.ICON_LOAD_EMU;
+		return null;
+	}
+
+	protected AddressSetView quantize(int blockBits, AddressSetView set) {
+		if (blockBits == 1) {
+			return set;
+		}
+		long blockMask = -1L << blockBits;
+		AddressSet result = new AddressSet();
+		// Not terribly efficient, but this is one range most of the time
+		for (AddressRange range : set) {
+			AddressSpace space = range.getAddressSpace();
+			Address min = space.getAddress(range.getMinAddress().getOffset() & blockMask);
+			Address max = space.getAddress(range.getMaxAddress().getOffset() | ~blockMask);
+			result.add(new AddressRangeImpl(min, max));
+		}
+		return result;
 	}
 
 	@Override
@@ -73,7 +82,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 			return CompletableFuture.completedFuture(false);
 		}
 		TraceMemoryManager mm = trace.getMemoryManager();
-		AddressSet toRead = new AddressSet(RecorderUtils.INSTANCE.quantize(12, visible));
+		AddressSet toRead = new AddressSet(quantize(12, visible));
 		for (Lifespan span : coordinates.getView().getViewport().getOrderedSpans()) {
 			AddressSetView alreadyKnown =
 				mm.getAddressesWithState(span.lmin(), visible, s -> s == TraceMemoryState.KNOWN);

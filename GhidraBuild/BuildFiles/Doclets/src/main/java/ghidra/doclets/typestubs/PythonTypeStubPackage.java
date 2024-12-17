@@ -15,20 +15,10 @@
  */
 package ghidra.doclets.typestubs;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.*;
 
 /**
  * {@link PythonTypeStubElement} for a package<p/>
@@ -100,6 +90,16 @@ final class PythonTypeStubPackage extends PythonTypeStubElement<PackageElement> 
 		getPath().mkdirs();
 		File stub = new File(path, "__init__.pyi");
 		try (PrintWriter printer = new PrintWriter(new FileWriter(stub))) {
+			process(printer, "");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		File pypredefDir = new File(doclet.getDestDir().getParentFile(), "pypredef");
+		File pypredefFile = new File(pypredefDir, packageName + ".pypredef");
+		pypredefDir.mkdirs();
+		try (PrintWriter printer = new PrintWriter(new FileWriter(pypredefFile))) {
 			process(printer, "");
 		}
 		catch (IOException e) {

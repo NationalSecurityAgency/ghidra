@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,8 @@ public class UserSearchUtilsTest {
 
 	@Test
 	public void testContainsWithPatternWithOnlyWildCardCaseInsensitive() {
-		Pattern pattern = UserSearchUtils.createContainsPattern("*", true, Pattern.CASE_INSENSITIVE);
+		Pattern pattern =
+			UserSearchUtils.createContainsPattern("*", true, Pattern.CASE_INSENSITIVE);
 
 		assertTrue(pattern.matcher("bb").matches());
 		assertTrue(pattern.matcher("boxb").matches());
@@ -77,6 +78,7 @@ public class UserSearchUtilsTest {
 		assertTrue(pattern.matcher("xbob").matches());
 		assertTrue(pattern.matcher("xxbobxx").matches());
 	}
+
 	@Test
 	public void testCreateContainsPatternWithSingleCharhWildCard() {
 		Pattern pattern = UserSearchUtils.createContainsPattern("b?b", true, CASE_SENSITIVE);
@@ -117,7 +119,7 @@ public class UserSearchUtilsTest {
 
 	@Test
 	public void testCreateContainsPatternWildCardAtEnd() {
-		Pattern pattern = UserSearchUtils.createContainsPattern("*bob", true, CASE_SENSITIVE);
+		Pattern pattern = UserSearchUtils.createContainsPattern("bob*", true, CASE_SENSITIVE);
 
 		assertFalse(pattern.matcher("b").matches());
 		assertFalse(pattern.matcher("bb").matches());
@@ -129,7 +131,24 @@ public class UserSearchUtilsTest {
 	}
 
 	@Test
-    public void testStartsPatternNoWildCards() {
+	public void testCreateContainsPattern_NoWildcard_EscapedRegexCharacter() {
+
+		// 
+		// This is a regression test for a bug that was found when the user typed an escaped regex
+		// character into the search string.  The utils will escape regex characters, so there is no 
+		// need to do this unless you need to find a literal string containing "\["
+		// 
+
+		Pattern pattern = UserSearchUtils.createContainsPattern("\\[bob", true, CASE_SENSITIVE);
+
+		assertFalse(pattern.matcher("b").matches());
+		assertFalse(pattern.matcher("bb").matches());
+		assertTrue(pattern.matcher("\\[bob").matches());
+		assertTrue(pattern.matcher("foo\\[bob").matches());
+	}
+
+	@Test
+	public void testStartsPatternNoWildCards() {
 		Pattern pattern = UserSearchUtils.createStartsWithPattern("bob", true, CASE_SENSITIVE);
 
 		assertFalse(pattern.matcher("bb").matches());
@@ -140,7 +159,7 @@ public class UserSearchUtilsTest {
 	}
 
 	@Test
-    public void testStartsPatternNoWildCardsCaseSensitive() {
+	public void testStartsPatternNoWildCardsCaseSensitive() {
 		Pattern pattern = UserSearchUtils.createStartsWithPattern("boB", true, CASE_SENSITIVE);
 
 		assertFalse(pattern.matcher("bb").matches());
@@ -155,7 +174,8 @@ public class UserSearchUtilsTest {
 
 	@Test
 	public void testCreateStartsWithPatternWithOnlyWildCardCaseInsensitive() {
-		Pattern pattern = UserSearchUtils.createStartsWithPattern("*", true, Pattern.CASE_INSENSITIVE);
+		Pattern pattern =
+			UserSearchUtils.createStartsWithPattern("*", true, Pattern.CASE_INSENSITIVE);
 
 		assertTrue(pattern.matcher("bb").matches());
 		assertTrue(pattern.matcher("boxb").matches());
@@ -163,6 +183,7 @@ public class UserSearchUtilsTest {
 		assertTrue(pattern.matcher("xbob").matches());
 		assertTrue(pattern.matcher("xxbobxx").matches());
 	}
+
 	@Test
 	public void testCreateStartsWithPatternWithOnlyWildCardCaseSensitive() {
 		// Note: case sensitivity should not matter
@@ -174,7 +195,7 @@ public class UserSearchUtilsTest {
 		assertTrue(pattern.matcher("xbob").matches());
 		assertTrue(pattern.matcher("xxbobxx").matches());
 	}
-	
+
 	@Test
 	public void testCreateStartsWithPatternWithSingleCharhWildCard() {
 		Pattern pattern = UserSearchUtils.createStartsWithPattern("b?b", true, CASE_SENSITIVE);
@@ -449,7 +470,8 @@ public class UserSearchUtilsTest {
 	public void testEscapeSomeRegexCharacters() {
 		// RegEx Special Chars: ^.$()[]+&{}*?
 		char[] toIgnore = { '(', ')' };
-		String escaped = UserSearchUtils.escapeSomeRegexCharacters("start^.$()[]+&{}*?end", toIgnore);
+		String escaped =
+			UserSearchUtils.escapeSomeRegexCharacters("start^.$()[]+&{}*?end", toIgnore);
 
 		assertEquals("start\\^\\.\\$()\\[\\]\\+\\&\\{\\}\\*\\?end", escaped);
 

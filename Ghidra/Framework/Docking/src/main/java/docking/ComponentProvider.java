@@ -146,7 +146,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *        {@link #getContextType()}
 	 */
 	public ComponentProvider(Tool tool, String name, String owner, Class<?> contextType) {
-		this.dockingTool = tool;
+		this.dockingTool = Objects.requireNonNull(tool);
 		this.name = name;
 		this.owner = owner;
 		this.title = name;
@@ -1076,6 +1076,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private class ShowProviderAction extends DockingAction {
 
+		/** Number of milliseconds to track user requests */
+		private static final int TIME_WINDOW = 2000;
+		private SortedSet<Long> clickTimes = new TreeSet<>();
+
 		ShowProviderAction(boolean supportsKeyBindings) {
 			super(name, owner,
 				supportsKeyBindings ? KeyBindingType.SHARED : KeyBindingType.UNSUPPORTED);
@@ -1100,19 +1104,37 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
-			if (isShowing()) {
+			boolean isFrustrated = isFrustrated();
+			boolean isFocused = isFocused();
+			if (isFocused && !isFrustrated) {
+				// the user has decided to hide this component and is not madly clicking
 				setVisible(false);
 				return;
 			}
 
-			DockingWindowManager myDwm = DockingWindowManager.getInstance(getComponent());
-			if (myDwm == null) {
-				// this can happen when the tool loses focus
-				dockingTool.showComponentProvider(ComponentProvider.this, true);
-				return;
-			}
+			boolean emphasize = getComponent().isShowing() && isFrustrated;
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
+			myDwm.showComponent(ComponentProvider.this, true, emphasize);
+		}
 
-			myDwm.showComponent(ComponentProvider.this, true, true);
+		private boolean isFrustrated() {
+			long time = System.currentTimeMillis();
+			clickTimes.add(time);
+
+			// grab all click times within the time window
+			long secondsAgo = time - TIME_WINDOW;
+			SortedSet<Long> recentClicks = clickTimes.tailSet(secondsAgo);
+			clickTimes.retainAll(recentClicks); // drop old click times
+			int clickCount = recentClicks.size();
+			return clickCount > 2; // rapid clicking within the time window
+		}
+
+		private boolean isFocused() {
+			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+			Component focusOwner = kfm.getFocusOwner();
+			JComponent myComponent = getComponent();
+			return focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, myComponent);
 		}
 
 		@Override

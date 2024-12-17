@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class FunctionDatabaseProxy implements FunctionDatabase {
 	private DatabaseInformation info;
 	private LSHVectorFactory vectorFactory;
 	private URL httpURL;
-	private Error lasterror;
+	private BSimError lasterror;
 	private Status status;
 	private boolean isinit;
 	private XmlErrorHandler xmlErrorHandler;
@@ -84,11 +84,6 @@ public class FunctionDatabaseProxy implements FunctionDatabase {
 	}
 
 	@Override
-	public void setUserName(String userName) {
-		// Not currently implemented
-	}
-
-	@Override
 	public LSHVectorFactory getLSHVectorFactory() {
 		return vectorFactory;
 	}
@@ -123,7 +118,8 @@ public class FunctionDatabaseProxy implements FunctionDatabase {
 		}
 		if (httpURL == null) {
 			status = Status.Error;
-			lasterror = new FunctionDatabase.Error(ErrorCategory.Initialization, "MalformedURL");
+			lasterror =
+				new FunctionDatabase.BSimError(ErrorCategory.Initialization, "MalformedURL");
 			return false;
 		}
 		QueryInfo queryInfo = new QueryInfo();
@@ -145,7 +141,7 @@ public class FunctionDatabaseProxy implements FunctionDatabase {
 	}
 
 	@Override
-	public Error getLastError() {
+	public BSimError getLastError() {
 		return lasterror;
 	}
 
@@ -168,7 +164,8 @@ public class FunctionDatabaseProxy implements FunctionDatabase {
 				ResponseError respError = new ResponseError();
 				respError.restoreXml(parser, vectorFactory);
 				parser.dispose();
-				lasterror = new FunctionDatabase.Error(ErrorCategory.Fatal, respError.errorMessage);
+				lasterror =
+					new FunctionDatabase.BSimError(ErrorCategory.Fatal, respError.errorMessage);
 				query.clearResponse();
 				return null;
 			}
@@ -184,7 +181,7 @@ public class FunctionDatabaseProxy implements FunctionDatabase {
 			return response;
 		}
 		catch (Exception ex) {
-			lasterror = new FunctionDatabase.Error(ErrorCategory.Connection, ex.getMessage());
+			lasterror = new FunctionDatabase.BSimError(ErrorCategory.Connection, ex.getMessage());
 			status = Status.Error;
 			query.clearResponse();
 			return null;

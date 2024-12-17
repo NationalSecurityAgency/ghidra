@@ -15,6 +15,8 @@
  */
 package ghidra.program.flatapi;
 
+import static ghidra.app.plugin.core.clear.ClearOptions.ClearType.*;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -295,19 +297,48 @@ public class FlatProgramAPI {
 			boolean equates, boolean userReferences, boolean analysisReferences,
 			boolean importReferences, boolean defaultReferences, boolean bookmarks) {
 
+		return this.clearListing(set, code, code, symbols, comments, properties, functions,
+			registers, equates, userReferences, analysisReferences, importReferences,
+			defaultReferences, bookmarks);
+	}
+
+	/**
+	 * Clears the listing in the specified address set.
+	 * @param set  the address set where to clear
+	 * @param instructions true if instructions should be cleared
+	 * @param data true if defined data should be cleared
+	 * @param symbols true if symbols should be cleared
+	 * @param comments true if comments should be cleared
+	 * @param properties true if properties should be cleared
+	 * @param functions true if functions should be cleared
+	 * @param registers true if registers should be cleared
+	 * @param equates true if equates should be cleared
+	 * @param userReferences true if user references should be cleared
+	 * @param analysisReferences true if analysis references should be cleared
+	 * @param importReferences true if import references should be cleared
+	 * @param defaultReferences true if default references should be cleared
+	 * @param bookmarks true if bookmarks should be cleared
+	 * @return true if the address set was successfully cleared
+	 */
+	public final boolean clearListing(AddressSetView set, boolean instructions,
+			boolean data, boolean symbols, boolean comments, boolean properties, boolean functions,
+			boolean registers, boolean equates, boolean userReferences, boolean analysisReferences,
+			boolean importReferences, boolean defaultReferences, boolean bookmarks) {
+
 		ClearOptions options = new ClearOptions();
-		options.setClearCode(code);
-		options.setClearSymbols(symbols);
-		options.setClearComments(comments);
-		options.setClearProperties(properties);
-		options.setClearFunctions(functions);
-		options.setClearRegisters(registers);
-		options.setClearEquates(equates);
-		options.setClearUserReferences(userReferences);
-		options.setClearAnalysisReferences(analysisReferences);
-		options.setClearImportReferences(importReferences);
-		options.setClearDefaultReferences(defaultReferences);
-		options.setClearBookmarks(bookmarks);
+		options.setShouldClear(INSTRUCTIONS, instructions);
+		options.setShouldClear(DATA, data);
+		options.setShouldClear(SYMBOLS, symbols);
+		options.setShouldClear(COMMENTS, comments);
+		options.setShouldClear(PROPERTIES, properties);
+		options.setShouldClear(FUNCTIONS, functions);
+		options.setShouldClear(REGISTERS, registers);
+		options.setShouldClear(EQUATES, equates);
+		options.setShouldClear(USER_REFERENCES, userReferences);
+		options.setShouldClear(ANALYSIS_REFERENCES, analysisReferences);
+		options.setShouldClear(IMPORT_REFERENCES, importReferences);
+		options.setShouldClear(DEFAULT_REFERENCES, defaultReferences);
+		options.setShouldClear(BOOKMARKS, bookmarks);
 
 		ClearCmd cmd = new ClearCmd(set, options);
 		return cmd.applyTo(currentProgram, monitor);

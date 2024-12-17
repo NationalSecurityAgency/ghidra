@@ -16,9 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 
@@ -30,6 +28,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
 
+@Deprecated(forRemoval = true, since = "11.3")
 public class DebuggerMethodInvocationDialog
 		extends AbstractDebuggerParameterDialog<ParameterDescription<?>> {
 

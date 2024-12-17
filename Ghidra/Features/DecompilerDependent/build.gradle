@@ -26,6 +26,7 @@ eclipse.project.name = 'Features DecompilerDependent'
 dependencies {
 	api project(':Base')
 	api project(':Decompiler')
+	api project(':Sarif')
 }
 
 

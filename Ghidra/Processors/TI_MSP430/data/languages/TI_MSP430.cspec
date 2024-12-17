@@ -44,6 +44,11 @@
           <addr space="stack" offset="2"/>
         </pentry>
         <rule>
+          <datatype name="any"/>
+          <varargs first="-1"/>
+          <goto_stack/>
+        </rule>
+        <rule>
           <datatype name="struct" minsize="1"/>
           <convert_to_ptr/>
         </rule>

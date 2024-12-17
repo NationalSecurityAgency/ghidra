@@ -134,7 +134,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		decompilerOptions = new DecompileOptions();
 		initializeDecompilerOptions();
-		controller = new DecompilerController(this, decompilerOptions, clipboardProvider);
+		controller =
+			new DecompilerController(getTool(), this, decompilerOptions, clipboardProvider);
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 
 		// TODO move the hl controller into the panel

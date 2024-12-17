@@ -539,9 +539,9 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		Class<? extends TargetObject> targetIf = TraceObjectInterfaceUtils.toTargetIf(iface);
 		TargetObjectSchema schema = rootSchema.getSuccessorSchema(keyList);
 		if (!schema.getInterfaces().contains(targetIf)) {
-			throw new IllegalStateException(
-				"Schema " + schema + " at " + PathUtils.toString(keyList) +
-					" does not provide interface " + iface.getSimpleName());
+			throw new BadSchemaException(
+				"Schema " + schema + " at '" + PathUtils.toString(keyList) +
+					"' does not provide interface " + iface.getSimpleName());
 		}
 		DBTraceObject obj = createObject(TraceObjectKeyPath.of(keyList));
 		return obj.queryInterface(iface);

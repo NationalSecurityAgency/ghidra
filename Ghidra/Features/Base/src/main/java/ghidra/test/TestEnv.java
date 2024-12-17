@@ -834,7 +834,7 @@ public class TestEnv {
 		AbstractGuiTest.runSwing(() -> {
 			tool = launchDefaultTool();
 			ProgramManager pm = tool.getService(ProgramManager.class);
-			pm.openProgram(program.getDomainFile());
+			pm.openProgram(program);
 		});
 
 		if (tool == null) {

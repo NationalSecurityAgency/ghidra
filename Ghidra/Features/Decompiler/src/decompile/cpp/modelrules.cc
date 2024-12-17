@@ -412,13 +412,22 @@ bool VarargsFilter::filter(const PrototypePieces &proto,int4 pos) const
 
 {
   if (proto.firstVarArgSlot < 0) return false;
-  return (pos >= proto.firstVarArgSlot);
+  pos -= proto.firstVarArgSlot;
+  return (pos >= firstPos && pos <= lastPos);
 }
 
 void VarargsFilter::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_VARARGS);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_FIRST)
+      firstPos = decoder.readSignedInteger();
+    else if (attribId == ATTRIB_LAST)
+      lastPos = decoder.readSignedInteger();
+  }
   decoder.closeElement(elemId);
 }
 

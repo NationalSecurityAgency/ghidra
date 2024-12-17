@@ -29,8 +29,8 @@ import javax.swing.*;
 import org.apache.commons.collections4.map.LazyMap;
 import org.jdom.Element;
 
-import docking.action.ActionContextProvider;
-import docking.action.DockingActionIf;
+import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.*;
 import docking.widgets.PasswordDialog;
 import generic.util.WindowUtilities;
@@ -84,7 +84,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private PlaceholderManager placeholderManager;
 	private LRUSet<ComponentPlaceholder> lastFocusedPlaceholders = new LRUSet<>(20);
 
-	private ActivatedInfo activatedInfo = new ActivatedInfo();
 	private ComponentPlaceholder focusedPlaceholder;
 	private ComponentPlaceholder nextFocusedPlaceholder;
 	private ComponentProvider defaultProvider;
@@ -504,7 +503,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns true if the specified provider's component is visible
+	 * Returns true if the specified provider's component is or soon will be visible.
 	 *
 	 * @param provider component provider
 	 * @return true if the specified provider's component is visible
@@ -512,7 +511,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	public boolean isVisible(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
-			return placeholder.isShowing();
+			return placeholder.isActive();
 		}
 		return false;
 	}
@@ -830,7 +829,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		if (!placeholder.isShowing()) {
+		if (!placeholder.isActive()) {
 			showComponent(placeholder, true, false);
 		}
 
@@ -947,7 +946,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		if (visibleState == placeholder.isShowing()) {
+		if (visibleState == placeholder.isActive()) {
 			if (visibleState) {
 				movePlaceholderToFront(placeholder, shouldEmphasize);
 				setNextFocusPlaceholder(placeholder);
@@ -959,7 +958,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		placeholder.show(visibleState);
 
 		if (visibleState) {
-			movePlaceholderToFront(placeholder, false);
+			movePlaceholderToFront(placeholder, shouldEmphasize);
 			if (placeholder.getNode() == null) {
 				root.addToNewWindow(placeholder);
 			}
@@ -978,12 +977,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	private void movePlaceholderToFront(ComponentPlaceholder placeholder, boolean emphasisze) {
 		placeholder.toFront();
-
-		if (emphasisze) {
-			activatedInfo.activated(placeholder);
-		}
-
 		toFront(root.getWindow(placeholder));
+		if (emphasisze) {
+			placeholder.emphasize();
+		}
 	}
 
 	/**
@@ -1447,10 +1444,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 			focusedPlaceholder.setSelected(false);
 		}
-
-		// Activating placeholders is done to help users find widgets hiding in plain sight.
-		// Assume that the user is no longer seeking a provider if they are clicking around.
-		activatedInfo.clear();
 
 		focusedPlaceholder = placeholder;
 
@@ -2333,6 +2326,51 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		dockableComponent.showContextMenu(popupContext);
 	}
 
+	/**
+	 * Called by the framework during startup to register actions that are shared throughout the 
+	 * tool.  See {@link SharedActionRegistry}.
+	 * @param tool the tool
+	 * @param toolActions the class to which the actions should be added
+	 * @param owner the shared action owner
+	 */
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
+
+		// An action to close the provider on Escape if the provider is the last in the window. This 
+		// allows users to close transient providers (like search results) easily. 
+		DockingAction closeAction = new ActionBuilder("Close Window for Last Provider", owner)
+				.sharedKeyBinding()
+				.keyBinding("ESCAPE")
+				.enabledWhen(c -> {
+					ComponentProvider provider = getComponentProviderForContext(c);
+					if (provider == null) {
+						return false;
+					}
+					Tool t = provider.getTool();
+					DockingWindowManager dwm = t.getWindowManager();
+					return dwm.isLastProviderInDetachedWindow(provider);
+				})
+				.onAction(c -> {
+					ComponentProvider provider = getComponentProviderForContext(c);
+					provider.closeComponent();
+				})
+				.build();
+		toolActions.addGlobalAction(closeAction);
+	}
+
+	private static ComponentProvider getComponentProviderForContext(ActionContext context) {
+		ComponentProvider provider = context.getComponentProvider();
+		if (provider != null) {
+			return provider;
+		}
+
+		// Some context providers do not specify the provider when creating a contexts	
+		DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
+		if (dwm == null) {
+			return null; // this can happen sometimes in test environments
+		}
+		return dwm.getActiveComponentProvider();
+	}
+
 	public void contextChanged(ComponentProvider provider) {
 		// if provider is specified, update its local menu and tool bar actions
 		if (provider != null) {
@@ -2518,39 +2556,4 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		});
 
 	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	/**
-	 * A class that tracks placeholders that are activated (brought to the front). If a placeholder
-	 * is activated too frequently, this class will emphasize that window, under the assumption that
-	 * the user doesn't see the window.
-	 */
-	private class ActivatedInfo {
-
-		private long lastCalledTimestamp;
-		private ComponentPlaceholder lastActivatedPlaceholder;
-
-		void activated(ComponentPlaceholder placeholder) {
-			if (lastActivatedPlaceholder == placeholder) {
-				// repeat call--see if it was quickly called again (a sign of confusion/frustration)
-				long elapsedTime = System.currentTimeMillis() - lastCalledTimestamp;
-				if (elapsedTime < 3000) { // somewhat arbitrary time window
-					placeholder.emphasize();
-				}
-			}
-			else {
-				this.lastActivatedPlaceholder = placeholder;
-			}
-			lastCalledTimestamp = System.currentTimeMillis();
-		}
-
-		void clear() {
-			lastActivatedPlaceholder = null;
-			lastCalledTimestamp = 0;
-		}
-	}
-
 }

@@ -25,7 +25,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
@@ -89,8 +89,7 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 		List<String> cats = parseCSV(exeCatCSV);
 
 		File dbFile = new File(dbDir, databaseName);
-		BSimServerInfo serverInfo =
-			new BSimServerInfo(DBType.file, null, 0, dbFile.getAbsolutePath());
+		BSimServerInfo serverInfo = new BSimServerInfo(dbFile.getAbsolutePath());
 
 		BSimH2FileDataSource existingBDS =
 			BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
@@ -118,7 +117,7 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 				req.tag_name = tag;
 				ResponseInfo resp = req.execute(h2Database);
 				if (resp == null) {
-					Error lastError = h2Database.getLastError();
+					BSimError lastError = h2Database.getLastError();
 					throw new LSHException(lastError.message);
 				}
 			}
@@ -128,7 +127,7 @@ public class CreateH2BSimDatabaseScript extends GhidraScript {
 				req.type_name = cat;
 				ResponseInfo resp = req.execute(h2Database);
 				if (resp == null) {
-					Error lastError = h2Database.getLastError();
+					BSimError lastError = h2Database.getLastError();
 					throw new LSHException(lastError.message);
 				}
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,6 @@ import org.junit.Test;
 
 import docking.test.AbstractDockingTest;
 import docking.widgets.label.GDLabel;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.test.DummyTool;
 
 public class DockingWindowManagerTest extends AbstractDockingTest {
@@ -597,12 +596,12 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		}
 	}
 
-	class MyProvider extends ComponentProviderAdapter {
+	private class MyProvider extends ComponentProvider {
 		JLabel label = new GDLabel();
 
 		public MyProvider(String owner, String name, String group, String title,
 				WindowPosition defaultWindowPosition) {
-			super(null, name, owner);
+			super(DockingWindowManagerTest.this.tool, name, owner);
 			setWindowGroup(group);
 			setDefaultWindowPosition(defaultWindowPosition);
 			setTitle(title);

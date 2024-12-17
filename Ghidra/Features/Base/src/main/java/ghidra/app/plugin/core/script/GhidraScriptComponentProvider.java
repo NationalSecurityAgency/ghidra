@@ -927,6 +927,20 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		plugin.tryToEditFileInEclipse(script);
 	}
 
+	void editScriptVSCode() {
+		ResourceFile script = getSelectedScript();
+		if (script == null) {
+			plugin.getTool().setStatusInfo("Script is null.");
+			return;
+		}
+		if (!script.exists()) {
+			plugin.getTool().setStatusInfo("Script " + script.getName() + " does not exist.");
+			return;
+		}
+
+		plugin.tryToEditFileInVSCode(script);
+	}
+
 	GhidraScriptEditorComponentProvider editScriptInGhidra(ResourceFile script) {
 		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
 		if (editor == null) {

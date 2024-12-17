@@ -195,6 +195,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 				if (format != null) {
 					format.addLayouts(list, 0, new DataProxy(this, program, d));
 				}
+				indexSize = d.getLength();
 			}
 			dataList = null;
 		}

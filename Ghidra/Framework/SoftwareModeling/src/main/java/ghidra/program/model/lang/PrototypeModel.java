@@ -248,6 +248,10 @@ public class PrototypeModel {
 	 * i.e. {@link AutoParameterType#RETURN_STORAGE_PTR}, this routine will not pass back
 	 * the storage location of the pointer, but will typically pass
 	 * back the location of the normal return register which holds a copy of the pointer.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
+	 * or zero-length datatype.
+	 * 
 	 * @param dataType first parameter dataType or null for an undefined type.
 	 * @param program is the Program
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
@@ -284,10 +288,22 @@ public class PrototypeModel {
 	 * Get the preferred parameter location for a new parameter which will appended
 	 * to the end of an existing set of params.  If existing parameters use custom
 	 * storage, this method should not be used.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
+	 * zero-length datatype, or any subsequent parameter following such a parameter.
+	 * <br>
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
+	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
+	 * method.  Parameter storage allocation may be affected by the return datatype
+	 * specified (e.g., hidden return storage parameter).
+	 *  
 	 * @param params existing set parameters to which the next parameter will
-	 * be appended. (may be null)
+	 * be appended (may be null). Element-0 corresponds to the return datatype. 
 	 * @param dataType dataType associated with next parameter location or null
-	 * for a default undefined type.
+	 * for a default undefined type.  If null the speculative first parameter storage
+	 * is returned. 
 	 * @param program is the Program
 	 * @return next parameter location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
@@ -301,9 +317,24 @@ public class PrototypeModel {
 	 * Get the preferred parameter location for a specified index,
 	 * which will be added/inserted within the set of existing function params.
 	 * If existing parameters use custom storage, this method should not be used.
-	 * @param argIndex is the index
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype,
+	 * zero-length datatype, or any subsequent parameter following such a parameter.
+	 * <br>
+	 * Warning: The use of this method with a null {@code params} argument, or incorrect
+	 * datatypes, is highly discouraged since it will produce inaccurate results.
+	 * It is recommended that a complete function signature be used in
+	 * conjunction with the {@link #getStorageLocations(Program, DataType[], boolean)}
+	 * method.  Parameter storage allocation may be affected by the return datatype
+	 * specified (e.g., hidden return storage parameter).
+	 *  
+	 * @param argIndex is the index (0: return storage, 1..n: parameter storage)
 	 * @param params existing set parameters to which the parameter specified by
-	 * argIndex will be added/inserted be appended (may be null).
+	 * argIndex will be added/inserted be appended. Element-0 corresponds to the return
+	 * datatype. Parameter elements prior to the argIndex are required for an accurate 
+	 * storage determination to be made.  Any preceeding parameters not specified will be assumed 
+	 * as a 1-byte integer type which could cause an erroneous storage result to be returned.  
+	 * A null params list will cause all preceeding params to be assumed in a similar fashion.
 	 * @param dataType dataType associated with next parameter location or null
 	 * for a default undefined type.
 	 * @param program is the Program
@@ -327,7 +358,7 @@ public class PrototypeModel {
 				arr[i + 1] = params[i].getDataType();			// Copy in current types if we have them
 			}
 			else {
-				arr[i + 1] = DataType.DEFAULT;				// Otherwise assume default (integer) type
+				arr[i + 1] = Undefined1DataType.dataType;		// Otherwise assume 1-byte (integer) type
 			}
 		}
 		arr[argIndex + 1] = dataType;
@@ -405,6 +436,10 @@ public class PrototypeModel {
 	 * input parameters, if needed.  In this case, the dataTypes array should not include explicit entries for
 	 * these parameters.  If addAutoParams is false, the dataTypes array is assumed to already contain explicit
 	 * entries for any of these parameters.
+	 * <br>
+	 * Note: storage will not be assigned to the {@link DataType#DEFAULT default undefined} datatype
+	 * or zero-length datatypes or any subsequent parameter following such a parameter.
+	 * 
 	 * @param program is the Program
 	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
 	 * i.e., minimum array length is 1)

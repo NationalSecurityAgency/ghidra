@@ -21,8 +21,8 @@ import json
 from pathlib import Path
 import zipfile
 
-from java.lang import Class
-from java.io import PrintWriter
+from java.lang import Class # type:ignore @UnresolvedImport
+from java.io import PrintWriter # type:ignore @UnresolvedImport
 from jpype import JMethod, JObject, JClass
 
 from ghidra.framework import Application
@@ -85,7 +85,7 @@ class _Helper:
                     with zipfile.ZipFile(javadoc_zip, "r") as docs:
                         with docs.open(json_path) as f:
                             jsondoc = json.load(f)
-            except (IOError, KeyError) as e:
+            except (IOError, KeyError):
                 pass
             return jsondoc
 

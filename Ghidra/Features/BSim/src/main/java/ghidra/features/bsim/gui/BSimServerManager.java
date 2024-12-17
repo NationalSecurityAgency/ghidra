@@ -77,10 +77,11 @@ public class BSimServerManager {
 			String dbTypeName = properties.getString("DBType", null);
 			DBType dbType = DBType.valueOf(dbTypeName);
 			String name = properties.getString("Name", null);
+			String user = properties.getString("User", null);
 			String host = properties.getString("Host", null);
 			int port = properties.getInt("Port", 0);
 			if (dbType != null && name != null) {
-				BSimServerInfo info = new BSimServerInfo(dbType, host, port, name);
+				BSimServerInfo info = new BSimServerInfo(dbType, user, host, port, name);
 				return info;
 			}
 			Msg.showError(this, null, "Error reading Bsim Server File",
@@ -97,6 +98,10 @@ public class BSimServerManager {
 		GProperties properties = new GProperties("BSimServerInfo");
 		properties.putString("DBType", info.getDBType().name());
 		properties.putString("Name", info.getDBName());
+		if (!info.hasDefaultLogin()) {
+			// save specified username - but not password
+			properties.putString("User", info.getUserName());
+		}
 		properties.putString("Host", info.getServerName());
 		properties.putInt("Port", info.getPort());
 

@@ -101,7 +101,7 @@ class InferiorState(object):
                 except gdb.MemoryError as e:
                     print(f"Couldn't record page with PC: {e}")
                 try:
-                    commands.putmem("$sp", "1", from_tty=False)
+                    commands.putmem("$sp-1", "2", from_tty=False)
                 except gdb.MemoryError as e:
                     print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)

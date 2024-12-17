@@ -35,7 +35,7 @@ import ghidra.app.util.headless.HeadlessOptions;
 import ghidra.features.bsim.gui.filters.ExecutableCategoryBSimFilterType;
 import ghidra.features.bsim.gui.filters.HasNamedChildBSimFilterType;
 import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.client.tables.ExeTable.ExeTableOrderColumn;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.ingest.BSimLaunchable;
@@ -264,7 +264,7 @@ public class BSimServerTest {
 
 	private static void testForError(QueryResponseRecord response) throws LSHException {
 		if (response == null) {
-			Error lastError = client.getLastError();
+			BSimError lastError = client.getLastError();
 			if (lastError == null) {
 				throw new LSHException("Unknown error");
 			}

@@ -24,7 +24,7 @@ import org.junit.*;
 
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
 import ghidra.features.bsim.query.protocol.CreateDatabase;
@@ -68,7 +68,7 @@ public class BSimH2DatabaseManagerTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private BSimServerInfo getBsimServerInfo(String name) {
-		return new BSimServerInfo(DBType.file, null, -1, getDbName(name));
+		return new BSimServerInfo(getDbName(name));
 	}
 
 	private BSimServerInfo createDatabase(String databaseName) {
@@ -103,7 +103,7 @@ public class BSimH2DatabaseManagerTest extends AbstractGhidraHeadedIntegrationTe
 			ResponseInfo response = command.execute(h2Database);
 			if (response == null) {
 				if (expectedError != null) {
-					Error lastError = h2Database.getLastError();
+					BSimError lastError = h2Database.getLastError();
 					assertNotNull(lastError);
 					assertTrue(lastError.message.contains(expectedError));
 				}
@@ -186,7 +186,7 @@ public class BSimH2DatabaseManagerTest extends AbstractGhidraHeadedIntegrationTe
 		BSimServerInfo serverInfo = getBsimServerInfo("test");
 		try (FunctionDatabase fdb = serverInfo.getFunctionDatabase(false)) {
 			assertFalse(fdb.initialize());
-			Error lastError = fdb.getLastError();
+			BSimError lastError = fdb.getLastError();
 			assertNotNull(lastError);
 			assertTrue(lastError.message.startsWith("Database does not exist: "));
 		}

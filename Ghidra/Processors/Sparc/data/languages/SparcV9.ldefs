@@ -15,6 +15,7 @@
     <external_name tool="gnu" name="sparc:v9b"/>
     <external_name tool="IDA-PRO" name="sparcb" />
     <external_name tool="qemu" name="qemu-sparc"/>
+    <external_name tool="qemu_system" name="qemu-system-sparc"/>
   </language>
   <language processor="Sparc"
             endian="big"
@@ -30,6 +31,7 @@
     <external_name tool="gnu" name="sparc:v9b"/>
     <external_name tool="IDA-PRO" name="sparcb" />
     <external_name tool="qemu" name="qemu-sparc64"/>
+    <external_name tool="qemu_system" name="qemu-system-sparc64"/>
     <external_name tool="DWARF.register.mapping.file" name="Sparc.dwarf"/>
   </language>
 </language_definitions>

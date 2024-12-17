@@ -80,6 +80,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	/**
 	 * Returns the ListingLayoutModel for the i'th program.
 	 * @param index the index of program for which to return a listing model
+	 * @return the the ListingLayoutModel for the i'th program.
 	 */
 	public ListingModel getAlignedModel(int index) {
 		return alignedModels[index];
@@ -124,7 +125,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 				hasLayout |= layouts[i] != null;
 			}
 			if (hasLayout) {
-				ml = new MultiLayout(layouts, formatMgr, emptyFactory);
+				ml = new MultiLayout(layouts, emptyFactory);
 			}
 			else {
 				ml = new MultiLayout();

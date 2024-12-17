@@ -107,6 +107,15 @@ public class DockableHeader extends GenericHeader
 		super.setSelected(hasFocus);
 	}
 
+	@Override
+	public void dispose() {
+		if (focusAnimator != null) {
+			focusAnimator.stop();
+			focusAnimator = null;
+		}
+		super.dispose();
+	}
+
 	void installRenameAction(MouseListener listener) {
 		titlePanel.installRenameAction(listener);
 	}

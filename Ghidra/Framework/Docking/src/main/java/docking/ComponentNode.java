@@ -167,7 +167,7 @@ class ComponentNode extends Node {
 	void add(ComponentPlaceholder placeholder) {
 		windowPlaceholders.add(placeholder);
 		placeholder.setNode(this);
-		if (placeholder.isShowing()) {
+		if (placeholder.isActive()) {
 			top = placeholder;
 			invalidate();
 		}
@@ -185,7 +185,7 @@ class ComponentNode extends Node {
 			return;   // this node has been disconnected.
 		}
 
-		if (placeholder.isShowing()) {
+		if (placeholder.isActive()) {
 			if (top == placeholder) {
 				top = null;
 			}
@@ -212,7 +212,7 @@ class ComponentNode extends Node {
 	 * @param keepEmptyPlaceholder flag indicating to keep a placeholder placeholder object.
 	 */
 	void remove(ComponentPlaceholder placeholder, boolean keepEmptyPlaceholder) {
-		if (placeholder.isShowing()) {
+		if (placeholder.isActive()) {
 			placeholder.show(false);
 			if (top == placeholder) {
 				top = null;
@@ -241,9 +241,7 @@ class ComponentNode extends Node {
 		Iterator<ComponentPlaceholder> it = list.iterator();
 		while (it.hasNext()) {
 			ComponentPlaceholder placeholder = it.next();
-			if (placeholder.isShowing()) {
-				placeholder.close();
-			}
+			placeholder.close();
 		}
 	}
 
@@ -404,7 +402,7 @@ class ComponentNode extends Node {
 	@Override
 	void populateActiveComponents(List<ComponentPlaceholder> list) {
 		for (ComponentPlaceholder placeholder : windowPlaceholders) {
-			if (placeholder.isShowing()) {
+			if (placeholder.isActive()) {
 				list.add(placeholder);
 			}
 		}
@@ -508,7 +506,7 @@ class ComponentNode extends Node {
 			elem.setAttribute("NAME", placeholder.getName());
 			elem.setAttribute("OWNER", placeholder.getOwner());
 			elem.setAttribute("TITLE", placeholder.getTitle());
-			elem.setAttribute("ACTIVE", "" + placeholder.isShowing());
+			elem.setAttribute("ACTIVE", "" + placeholder.isActive());
 			elem.setAttribute("GROUP", placeholder.getGroup());
 			elem.setAttribute("INSTANCE_ID", Long.toString(placeholder.getInstanceID()));
 			root.addContent(elem);
@@ -516,13 +514,10 @@ class ComponentNode extends Node {
 		return root;
 	}
 
-	//
-	// Tabbed pane listener methods
-	//
 	@Override
 	boolean contains(ComponentPlaceholder placeholder) {
 		for (ComponentPlaceholder ph : windowPlaceholders) {
-			if (ph.isShowing() && ph.equals(placeholder)) {
+			if (ph.isActive() && ph.equals(placeholder)) {
 				return true;
 			}
 		}

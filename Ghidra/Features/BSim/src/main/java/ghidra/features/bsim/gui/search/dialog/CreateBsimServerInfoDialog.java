@@ -16,12 +16,17 @@
 package ghidra.features.bsim.gui.search.dialog;
 
 import java.awt.*;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.File;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
+import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.DefaultFormatter;
+import javax.swing.text.DefaultFormatterFactory;
 
 import docking.DialogComponentProvider;
 import docking.widgets.OptionDialog;
@@ -29,8 +34,11 @@ import docking.widgets.button.BrowseButton;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.textfield.GFormattedTextField;
+import docking.widgets.textfield.GFormattedTextField.Status;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
+import ghidra.framework.client.ClientUtil;
 import ghidra.util.HelpLocation;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -45,6 +53,15 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 	private static final String POSTGRES = "Postgres";
 	private static final String ELASTIC = "Elastic";
 	private static final String FILE_H2 = "File";
+
+	private static final AbstractFormatterFactory FORMATTER_FACTORY =
+		new DefaultFormatterFactory(new DefaultFormatter() {
+			@Override
+			public Object stringToValue(String text) {
+				return text;
+			}
+		});
+
 	private GRadioButton postgresButton;
 	private GRadioButton elasticButton;
 	private GRadioButton fileButton;
@@ -68,14 +85,8 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation("BSimSearchPlugin", "Add_Server_Definition_Dialog"));
 	}
 
-	public BSimServerInfo getBsimServerInfo() {
+	BSimServerInfo getBsimServerInfo() {
 		return result;
-	}
-
-	@Override
-	public void setHelpLocation(HelpLocation helpLocation) {
-		// TODO Auto-generated method stub
-		super.setHelpLocation(helpLocation);
 	}
 
 	@Override
@@ -88,7 +99,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		}
 	}
 
-	public boolean acceptServer(BSimServerInfo serverInfo) {
+	private boolean acceptServer(BSimServerInfo serverInfo) {
 		// FIXME: Use task to correct dialog parenting issue caused by password prompt
 		String errorMessage = null;
 		try (FunctionDatabase database = BSimClientFactory.buildClient(serverInfo, true)) {
@@ -159,6 +170,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		if (postgresButton.isSelected()) {
 			cardLayout.show(cardPanel, POSTGRES);
 			activePanel = postgresPanel;
+
 		}
 		else if (elasticButton.isSelected()) {
 			cardLayout.show(cardPanel, ELASTIC);
@@ -195,8 +207,9 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 	}
 
 	private class DbPanel extends ServerPanel {
-		private JTextField nameField;
-		private JTextField hostField;
+		private GFormattedTextField nameField;
+		private GFormattedTextField userField;
+		private GFormattedTextField hostField;
 		private JTextField portField;
 		private DBType type;
 
@@ -204,12 +217,20 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 			super(new PairLayout(10, 10));
 			this.type = type;
 
-			nameField = new NotifyingTextField();
-			hostField = new NotifyingTextField();
-			portField =
-				new NotifyingTextField(Integer.toString(BSimServerInfo.DEFAULT_POSTGRES_PORT));
+			createDBNameField();
+			createUserField();
+			createHostField();
+			int defaultPort = -1;
+			if (type == BSimServerInfo.DBType.postgres) {
+				defaultPort = BSimServerInfo.DEFAULT_POSTGRES_PORT;
+			}
+			else if (type == BSimServerInfo.DBType.elastic) {
+				defaultPort = BSimServerInfo.DEFAULT_ELASTIC_PORT;
+			}
+			portField = new NotifyingTextField(Integer.toString(defaultPort));
 
 			JLabel nameLabel = new JLabel("DB Name:", SwingConstants.RIGHT);
+			JLabel userLabel = new JLabel("User (optional):", SwingConstants.RIGHT);
 			JLabel hostLabel = new JLabel("Host:", SwingConstants.RIGHT);
 			JLabel portLabel = new JLabel("Port:", SwingConstants.RIGHT);
 			nameLabel.setLabelFor(nameField);
@@ -218,21 +239,197 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 
 			add(nameLabel);
 			add(nameField);
+			add(userLabel);
+			add(userField);
 			add(hostLabel);
 			add(hostField);
 			add(portLabel);
 			add(portField);
 		}
 
+		private void setStatus(String msg) {
+			CreateBsimServerInfoDialog.this.setStatusText(msg);
+		}
+
+		private void createDBNameField() {
+
+			nameField = new GFormattedTextField(FORMATTER_FACTORY, "");
+			nameField.setName("Name");
+			nameField.setText("");
+			nameField.setDefaultValue("");
+			nameField.setIsError(true);
+			nameField.setEditable(true);
+
+			nameField.setInputVerifier(new InputVerifier() {
+				@Override
+				public boolean verify(JComponent input) {
+					setStatus("");
+					String dbName = nameField.getText().trim();
+					if (dbName.length() == 0) {
+						setStatus("");
+						return false;
+					}
+					// Naming restrictions based upon PostgreSQL and its allowance of unicode chars
+					for (int i = 0; i < dbName.length(); i++) {
+						char c = dbName.charAt(i);
+						if (Character.isLetter(c)) {
+							continue;
+						}
+						if (i == 0 || (!Character.isDigit(c) && c != '_')) {
+							setStatus("Unsupported database name");
+							return false;
+						}
+					}
+					return true;
+				}
+
+				@Override
+				public boolean shouldYieldFocus(JComponent source, JComponent target) {
+					return true;
+				}
+			});
+
+			nameField.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+						e.consume();
+						nameField.setText("");
+						nameField.setDefaultValue("");
+						nameField.setIsError(true);
+					}
+					checkForValidDialog();
+				}
+			});
+
+			nameField.addTextEntryStatusListener(f -> checkForValidDialog());
+		}
+
+		private static final String HOSTNAME_IP_REGEX =
+			"^[a-zA-Z0-9]+(\\-[a-zA-Z0-9]+)*(\\.[a-zA-Z0-9]+(\\-[a-zA-Z0-9]+)*)*$";
+		private static final Pattern HOSTNAME_IP_PATTERN = Pattern.compile(HOSTNAME_IP_REGEX);
+
+		private void createHostField() {
+
+			hostField = new GFormattedTextField(FORMATTER_FACTORY, "");
+			hostField.setName("Host");
+			hostField.setText("");
+			hostField.setDefaultValue("");
+			hostField.setIsError(true);
+			hostField.setEditable(true);
+
+			hostField.setInputVerifier(new InputVerifier() {
+				@Override
+				public boolean verify(JComponent input) {
+					setStatus("");
+					String hostname = hostField.getText().trim();
+					if (hostname.length() == 0) {
+						setStatus("");
+						return false;
+					}
+					Matcher hostMatch = HOSTNAME_IP_PATTERN.matcher(hostname);
+					if (!hostMatch.matches()) {
+						setStatus("Unsupported host name or IP address");
+						return false;
+					}
+					return true;
+				}
+
+				@Override
+				public boolean shouldYieldFocus(JComponent source, JComponent target) {
+					return true;
+				}
+			});
+
+			hostField.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+						e.consume();
+						hostField.setText("");
+						hostField.setDefaultValue("");
+						hostField.setIsError(true);
+					}
+					checkForValidDialog();
+				}
+			});
+
+			hostField.addTextEntryStatusListener(f -> checkForValidDialog());
+		}
+
+		// NOTE: Username pattern based on PostgreSQL restrictions
+		private static final String USERNAME_REGEX = "^[a-zA-Z_][a-zA-Z0-9_$]*$";
+		private static final Pattern USERNAME_PATTERN = Pattern.compile(USERNAME_REGEX);
+
+		private void createUserField() {
+
+			userField = new GFormattedTextField(FORMATTER_FACTORY, "");
+			userField.setName("User");
+			userField.setText("");
+			userField.setDefaultValue("");
+			userField.setEditable(true);
+
+			userField.setInputVerifier(new InputVerifier() {
+				@Override
+				public boolean verify(JComponent input) {
+					setStatus("");
+					String username = userField.getText().trim();
+					if (username.length() == 0) {
+						setStatus("");
+						return true;
+					}
+					Matcher userMatch = USERNAME_PATTERN.matcher(username);
+					if (!userMatch.matches()) {
+						setStatus("Unsupported database user name");
+						return false;
+					}
+					return true;
+				}
+
+				@Override
+				public boolean shouldYieldFocus(JComponent source, JComponent target) {
+					return true;
+				}
+			});
+
+			userField.addKeyListener(new KeyAdapter() {
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+						e.consume();
+						userField.setText("");
+						userField.setDefaultValue("");
+						userField.setIsError(false);
+					}
+					checkForValidDialog();
+				}
+			});
+
+			userField.addTextEntryStatusListener(f -> checkForValidDialog());
+		}
+
 		@Override
 		BSimServerInfo getServerInfo() {
+			if (nameField.getTextEntryStatus() == Status.INVALID ||
+				userField.getTextEntryStatus() == Status.INVALID ||
+				hostField.getTextEntryStatus() == Status.INVALID) {
+				return null;
+			}
+
+			String user = userField.getText().trim();
+			if (ClientUtil.getUserName().equals(user)) {
+				user = null;
+			}
+
 			String name = nameField.getText().trim();
 			String host = hostField.getText().trim();
+
 			int port = getPort(portField.getText().trim());
 			if (name.isBlank() || host.isBlank() || port < 0) {
 				return null;
 			}
-			return new BSimServerInfo(type, host, port, name);
+
+			return new BSimServerInfo(type, user, host, port, name);
 		}
 	}
 
@@ -291,7 +488,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 			if (file.isDirectory()) {
 				return null;
 			}
-			return new BSimServerInfo(DBType.file, null, -1, path);
+			return new BSimServerInfo(path);
 		}
 	}
 
@@ -303,24 +500,24 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		public NotifyingTextField(String initialText) {
 			super(20);
 			setText(initialText);
-			getDocument().addDocumentListener(new DocumentListener() {
+			getDocument().addDocumentListener(new MyFieldListener());
+		}
+	}
 
-				@Override
-				public void insertUpdate(DocumentEvent e) {
-					checkForValidDialog();
-				}
+	class MyFieldListener implements DocumentListener {
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			checkForValidDialog();
+		}
 
-				@Override
-				public void removeUpdate(DocumentEvent e) {
-					checkForValidDialog();
-				}
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			checkForValidDialog();
+		}
 
-				@Override
-				public void changedUpdate(DocumentEvent e) {
-					checkForValidDialog();
-				}
-
-			});
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			checkForValidDialog();
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
 package ghidra.features.bsim.query.ingest;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -29,9 +28,8 @@ import org.xml.sax.SAXException;
 import generic.lsh.vector.LSHVectorFactory;
 import ghidra.app.decompiler.DecompileException;
 import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
-import ghidra.features.bsim.query.FunctionDatabase.Status;
 import ghidra.features.bsim.query.client.Configuration;
 import ghidra.features.bsim.query.client.tables.ExeTable.ExeTableOrderColumn;
 import ghidra.features.bsim.query.description.*;
@@ -52,7 +50,6 @@ public class BulkSignatures implements AutoCloseable {
 	// FIXME: May need to use Msg.showError for popup messages in GUI workbench case
 
 	private final BSimServerInfo bsimServerInfo; // may be null
-	private final String connectingUserName;
 
 	private FunctionDatabase querydb;
 
@@ -61,14 +58,36 @@ public class BulkSignatures implements AutoCloseable {
 	 * @param bsimServerInfo the BSim database server info.  May be {@code null} if use limited to
 	 * signature and update generation only (based upon configuration template).
 	 * @param connectingUserName user name to use for BSim server authentication.  May be null if
-	 * not required or default should be used (see {@link ClientUtil#getUserName()}).
-	 * @throws MalformedURLException if the given URL string cannot be parsed
+	 * not required or default should be used (see {@link ClientUtil#getUserName()}).  If specified
+	 * a new {@link BSimServerInfo} instance will be created with the user information set.  This
+	 * argument is ignored if DB user specified by {@code bsimServerInfo}.
 	 */
-	public BulkSignatures(BSimServerInfo bsimServerInfo, String connectingUserName)
-			throws MalformedURLException {
+	public BulkSignatures(BSimServerInfo bsimServerInfo, String connectingUserName) {
+		if (bsimServerInfo != null && !StringUtils.isBlank(connectingUserName)) {
+			if (!bsimServerInfo.hasDefaultLogin()) {
+				String username = bsimServerInfo.getUserName();
+				if (!username.equals(connectingUserName)) {
+					Msg.warn(this, "BSim DB server info specifies user '" + username +
+						"'.  Ignoring user name option: '" + connectingUserName + "'");
+				}
+			}
+			else {
+				bsimServerInfo = new BSimServerInfo(bsimServerInfo.getDBType(), connectingUserName,
+					bsimServerInfo.getServerName(), bsimServerInfo.getPort(),
+					bsimServerInfo.getDBName());
+			}
+		}
 		this.bsimServerInfo = bsimServerInfo;
-		this.connectingUserName =
-			connectingUserName != null ? connectingUserName : ClientUtil.getUserName();
+	}
+
+	/**
+	 * Constructor
+	 * @param bsimServerInfo the BSim database server info.  May be {@code null} if use limited to
+	 * signature and update generation only (based upon configuration template).  If specified, 
+	 * this object will convey the connecting user name.
+	 */
+	public BulkSignatures(BSimServerInfo bsimServerInfo) {
+		this.bsimServerInfo = bsimServerInfo;
 	}
 
 	private void checkBSimServerOperation() {
@@ -93,9 +112,6 @@ public class BulkSignatures implements AutoCloseable {
 		checkBSimServerOperation();
 
 		querydb = BSimClientFactory.buildClient(bsimServerInfo, async);
-		if (querydb.getStatus() == Status.Unconnected) { // may have previously connected
-			querydb.setUserName(connectingUserName);
-		}
 
 		if (!querydb.initialize()) {
 			throw new IOException(querydb.getLastError().message);
@@ -103,7 +119,7 @@ public class BulkSignatures implements AutoCloseable {
 
 		DatabaseInformation info = querydb.getInfo();
 		if (info == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			if (lastError != null && lastError.category == ErrorCategory.Nodatabase) {
 				throw new IOException(lastError.message);
 			}
@@ -190,7 +206,7 @@ public class BulkSignatures implements AutoCloseable {
 				continue;
 			}
 			if (insertreq.execute(querydb) == null) {
-				Error lastError = querydb.getLastError();
+				BSimError lastError = querydb.getLastError();
 				if ((lastError.category == ErrorCategory.Format) ||
 					(lastError.category == ErrorCategory.Nonfatal)) {
 					Msg.warn(this, file.getName() + ": " + lastError.message);
@@ -216,7 +232,7 @@ public class BulkSignatures implements AutoCloseable {
 			loadSignatureXml(file, update.manage);
 			ResponseUpdate respup = update.execute(querydb);
 			if (respup == null) {
-				Error lastError = querydb.getLastError();
+				BSimError lastError = querydb.getLastError();
 				if ((lastError.category == ErrorCategory.Format) ||
 					(lastError.category == ErrorCategory.Nonfatal)) {
 					Msg.warn(this, file.getName() + ": " + lastError.message);
@@ -400,9 +416,6 @@ public class BulkSignatures implements AutoCloseable {
 		checkBSimServerOperation();
 
 		querydb = BSimClientFactory.buildClient(bsimServerInfo, true);
-		if (querydb.getStatus() == Status.Unconnected) { // may have previously connected
-			querydb.setUserName(connectingUserName);
-		}
 
 		// TODO: Should this output differ for command-line vs workbench? debug only?
 		try {
@@ -533,7 +546,7 @@ public class BulkSignatures implements AutoCloseable {
 		establishQueryServerConnection(true);
 		ResponseDelete respdel = query.execute(querydb);
 		if (respdel == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Could not perform delete: " + lastError.message);
 		}
 
@@ -561,7 +574,7 @@ public class BulkSignatures implements AutoCloseable {
 		query.doRebuild = false;
 		ResponseAdjustIndex response = query.execute(querydb);
 		if (response == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Could not drop index: " + lastError.message);
 		}
 		String dbDetail = "for database " + info.databasename + " (" + bsimServerInfo + ")";
@@ -590,7 +603,7 @@ public class BulkSignatures implements AutoCloseable {
 		System.out.println("Starting rebuild ...");
 		ResponseAdjustIndex response = query.execute(querydb);
 		if (response == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Could not rebuild index: " + lastError.message);
 		}
 		String dbDetail = "for database " + info.databasename + " (" + bsimServerInfo + ")";
@@ -617,7 +630,7 @@ public class BulkSignatures implements AutoCloseable {
 		PrewarmRequest request = new PrewarmRequest();
 		ResponsePrewarm response = request.execute(querydb);
 		if (response == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Prewarm failed: " + lastError.message);
 		}
 		String dbDetail = "for database " + info.databasename + " (" + bsimServerInfo + ")";
@@ -662,7 +675,7 @@ public class BulkSignatures implements AutoCloseable {
 
 		ResponseExe response = exeQuery.execute(querydb);
 		if (response == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Could not perform getexeinfo: " + lastError.message);
 		}
 
@@ -735,7 +748,7 @@ public class BulkSignatures implements AutoCloseable {
 		req.description = description;
 		ResponseInfo resp = req.execute(querydb);
 		if (resp == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Could not change metadata: " + lastError.message);
 		}
 		info = resp.info;
@@ -764,7 +777,7 @@ public class BulkSignatures implements AutoCloseable {
 
 		ResponseInfo resp = req.execute(querydb);
 		if (resp == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException("Could not install new category: " + lastError.message);
 		}
 		info = resp.info;
@@ -798,7 +811,7 @@ public class BulkSignatures implements AutoCloseable {
 		req.tag_name = dequoteString(tagName);
 		ResponseInfo resp = req.execute(querydb);
 		if (resp == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException(lastError.message);
 		}
 		info = resp.info;
@@ -859,7 +872,7 @@ public class BulkSignatures implements AutoCloseable {
 			while (count != 0) {
 				ResponsePair responsePair = query.execute(querydb);
 				if (responsePair == null) {
-					Error lastError = querydb.getLastError();
+					BSimError lastError = querydb.getLastError();
 					throw new LSHException(lastError.message);
 				}
 				for (PairNote note : responsePair.notes) {
@@ -893,7 +906,7 @@ public class BulkSignatures implements AutoCloseable {
 		establishQueryServerConnection(true);
 		ResponseName resp = query.execute(querydb);
 		if (resp == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException(lastError.message);
 		}
 		resp.printRaw(outStream, querydb.getLSHVectorFactory(), 0);
@@ -941,7 +954,7 @@ public class BulkSignatures implements AutoCloseable {
 		query.fillinCallgraph = info.trackcallgraph;
 		ResponseName responseName = query.execute(querydb);
 		if (responseName == null) {
-			Error lastError = querydb.getLastError();
+			BSimError lastError = querydb.getLastError();
 			throw new LSHException(lastError.message);
 		}
 		if (!responseName.uniqueexecutable) {

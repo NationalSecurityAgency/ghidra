@@ -30,7 +30,7 @@ public class JdiClientThread extends Thread {
 	private final JdiArguments arguments;
 
 	private JdiManagerImpl manager;
-	private JdiManager jdiManager;
+	private JdiConnector connector;
 
 	public JdiClientThread(Map<String, String> env) {
 		this.env = env;
@@ -41,15 +41,15 @@ public class JdiClientThread extends Thread {
 	public void run() {
 		try {
 			manager = new JdiManagerImpl();
-			jdiManager = new JdiManager(manager, env);
+			connector = new JdiConnector(manager, env);
 
 			Connector cx = arguments.getConnector(manager.getVirtualMachineManager());
 
 			Map<String, Argument> args = cx.defaultArguments();
 			arguments.putArguments(args);
 			if (manager.addVM(cx, args) != null) {
-				jdiManager.getCommands().ghidraTraceSyncEnable();
-				jdiManager.getHooks().vmStarted(null, Causes.UNCLAIMED);
+				connector.getCommands().ghidraTraceSyncEnable();
+				connector.getHooks().vmStarted(null, Causes.UNCLAIMED);
 			}
 			else {
 				// Nothing. addVM should already have reported the error.
@@ -60,11 +60,11 @@ public class JdiClientThread extends Thread {
 		}
 	}
 
-	public JdiManager mgr() {
-		return jdiManager;
+	public JdiConnector connector() {
+		return connector;
 	}
 
 	public JdiCommands cmds() {
-		return jdiManager.getCommands();
+		return connector.getCommands();
 	}
 }

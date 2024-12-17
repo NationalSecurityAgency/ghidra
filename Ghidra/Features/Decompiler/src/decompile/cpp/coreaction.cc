@@ -5472,6 +5472,8 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleSlessToLess("analysis") );
 	actprop->addRule( new RuleZextSless("analysis") );
 	actprop->addRule( new RuleBitUndistribute("analysis") );
+	actprop->addRule( new RuleBooleanUndistribute("analysis") );
+	actprop->addRule( new RuleBooleanDedup("analysis") );
 	actprop->addRule( new RuleBoolZext("analysis") );
 	actprop->addRule( new RuleBooleanNegate("analysis") );
 	actprop->addRule( new RuleLogic2Bool("analysis") );

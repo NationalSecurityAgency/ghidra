@@ -38,7 +38,7 @@
 # postgresql build.  Please refer to the following web page for 
 # software dependencies:
 #
-#   https://www.postgresql.org/docs/current/install-requirements.html
+#   https://www.postgresql.org/docs/15/install-requirements.html
 #
 # Or for Linux specific package dependencies, see:
 #

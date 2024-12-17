@@ -309,8 +309,8 @@ public class UserSearchUtils {
 		if (allowGlobbing) {
 
 			// Note: Order is important! (due to how escape characters added and checked)
-			escaped = escapeEscapeCharacters(input);
-			escaped = escapeNonGlobbingRegexCharacters(input);
+			escaped = escapeEscapeCharacters(escaped);
+			escaped = escapeNonGlobbingRegexCharacters(escaped);
 			escaped = convertGlobbingCharactersToRegex(escaped);
 		}
 		else {

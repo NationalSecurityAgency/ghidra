@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -413,14 +413,25 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 		if (program != currentProgram) {
 			return;
 		}
-		Listing listing = currentProgram.getListing();
-		CodeUnit currCU = listing.getCodeUnitContaining(address);
-		if (currCU == null) {
+		CodeUnit cu = getLowestLevelCodeUnit(program, address);
+		if (cu == null) {
 			return;
 		}
 		boolean hasSelection = currentSelection != null && !currentSelection.isEmpty();
-		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
+		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, cu, hasSelection);
 		tool.showDialog(createDialog);
+	}
+
+	CodeUnit getLowestLevelCodeUnit(Program program, Address address) {
+		Listing listing = program.getListing();
+		CodeUnit cu = listing.getCodeUnitContaining(address);
+		if (cu instanceof Data data) {
+			Data subData = data.getPrimitiveAt((int) address.subtract(cu.getMinAddress()));
+			if (subData != null) {
+				return subData;
+			}
+		}
+		return cu;
 	}
 
 	/**
@@ -433,7 +444,7 @@ public class BookmarkPlugin extends ProgramPlugin implements PopupActionProvider
 	 */
 	public void setNote(Address addr, String category, String comment) {
 
-		CompoundCmd cmd = new CompoundCmd("Set Note Bookmark");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Set Note Bookmark");
 
 		if (addr != null) {
 			// Add address specified within bookmark

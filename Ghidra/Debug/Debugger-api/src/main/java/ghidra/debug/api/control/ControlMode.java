@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,7 +126,7 @@ public enum ControlMode {
 				return false;
 			}
 			Target target = coordinates.getTarget();
-			return target.isVariableExists(coordinates.getPlatform(),
+			return target.isVariableExists(platformFor(coordinates, address),
 				coordinates.getThread(), coordinates.getFrame(), address, length);
 		}
 
@@ -142,8 +142,8 @@ public enum ControlMode {
 				return CompletableFuture
 						.failedFuture(new MemoryAccessException("View is not the present"));
 			}
-			return target.writeVariableAsync(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getFrame(), address, data);
+			return target.writeVariableAsync(platformFor(coordinates, address),
+				coordinates.getThread(), coordinates.getFrame(), address, data);
 		}
 
 		@Override
@@ -228,7 +228,7 @@ public enum ControlMode {
 		public CompletableFuture<Void> setVariable(PluginTool tool,
 				DebuggerCoordinates coordinates, Address guestAddress, byte[] data) {
 			Trace trace = coordinates.getTrace();
-			TracePlatform platform = coordinates.getPlatform();
+			TracePlatform platform = platformFor(coordinates, guestAddress);
 			long snap = coordinates.getViewSnap();
 			Address hostAddress = platform.mapGuestToHost(guestAddress);
 			if (hostAddress == null) {
@@ -406,6 +406,14 @@ public enum ControlMode {
 			return null;
 		}
 		return coordinates;
+	}
+
+	protected TracePlatform platformFor(DebuggerCoordinates coordinates, Address address) {
+		if (address.isRegisterAddress()) {
+			return coordinates.getPlatform();
+		}
+		// This seems odd, but the memory UI components are displaying *host* addresses.
+		return coordinates.getTrace().getPlatformManager().getHostPlatform();
 	}
 
 	/**

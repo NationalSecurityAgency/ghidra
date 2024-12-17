@@ -1,0 +1,329 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Decompiler Window</title>
+<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="Decompiler.html" title="Decompiler">
+<link rel="up" href="Decompiler.html" title="Decompiler">
+<link rel="prev" href="DecompilerOptions.html" title="Decompiler Options">
+</head>
+<body><div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="DecompilerTaint"></a>Decompiler Taint Operations</h1></div></div></div>
+  
+  <p>
+	Taint-tracking is the ability to capture the flow of data through a program by following transfers
+	from one variable to another. Often, this involves specifying where the data originates (a source)
+	and which endpoints are of interest (sinks).  In Ghidra, taint-tracking leverages external engines
+	which rely on the SSA-nature of Ghidra's PCode to describe varnode-to-varnode flows.
+  </p>
+  <p>
+    Taint-tracking is a four-step process. First, the PCode underlying the target program must be exported
+	to a directory for subsequent "indexing". Second, the program is indexed creating an index database. 
+	These are one-time actions and need only be re-executed when you change programs or modify the target
+	program's PCode in a substantive way. Given a database, any number of queries may be processed using 
+	the index. Step three, making a query generally includes marking sources and sinks, and then executing 
+	the query. Last, the results of the query may be selectively re-applied as markup on the decompilation/disassembly.
+  </p>
+  <p>
+    The first two steps are activated in the menus under <b>Tools &rarr; Source-Sink</b>. Their options
+    are accessible via <b>Edit &rarr; Tool Options</b> under <b>Options/Decompiler/Taint</b>. The third step is controlled by
+    the pop-up menus (or associated keyboard actions) and the toolbar items within the Decompiler window.
+	Pop-up menus on the results table control how the results are applied.
+
+  </p>
+
+  <div class="section">
+  <div class="titlepage"><div><div><h2 class="title" style="clear: both">
+  <a name="InitActions"></a>Initialization Actions (Tools &rarr; Source-Sink)</h2></div></div></div>
+  
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="DeleteIndex"></a>Delete Facts and Index</h3></div></div></div>   
+    <p>
+      Deletes any pre-existing data (facts and database) from the directories specified under
+    Taint Options.
+    </p>
+  </div>
+
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="ExportFacts"></a>Export PCode Facts</h3></div></div></div>  
+    <p>
+      Run an engine-specific ghidra script to export the PCode for the current program as a set
+	  of ASCII fact files to be consumed by the engine.  (For CTADL, our default engine, this
+	  script is ExportPCodeForCTADL.java.)
+    </p>
+  </div>
+
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="InitializeIndex"></a>Initialize Program Index</h3></div></div></div>   
+    <p>
+      Converts the directory of PCode facts into an indexed database for future queries.
+    </p>
+  </div>
+
+  <div class="sect2">
+  <div class="titlepage"><div><div><h3 class="title">
+  <a name="ReexportFacts"></a>Re-export Function Facts</h3></div></div></div>   
+    <p>
+      Updates the existing fact set for the current function, which may be useful if the
+	  decompilation has been improved during the course of analysis. (Does require re-indexing
+	  the database.)
+    </p>
+  </div>
+
+  <div class="section">
+  <div class="titlepage"><div><div><h2 class="title" style="clear: both">
+  <a name="TaintOptions"></a>Tool Options (Options/Decompiler/Taint)</h2></div></div></div>
+    
+    <p>
+      These options govern the locations for various elements of the taint engine.
+    </p>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintExecutionEngine"></a>Directories.Engine</h3></div></div></div>   
+	  <p>
+		Path to the executable responsible for the taint engine logic.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintFactDirectory"></a>Directories.Facts</h3></div></div></div>   
+	  <p>
+		Directory where PCode facts will be written.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintOutputDirectory"></a>Directories.Output</h3></div></div></div>   
+	  <p>
+		Directory where database index and queries will be written.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintQueryFile"></a>Query.Current Query</h3></div></div></div>   
+	  <p>
+		The file containing the most recent query.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintIndexDatabase"></a>Query.Index</h3></div></div></div>   
+	  <p>
+		Name of the file that contains the database produced by the "Index" operation.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintTokenColor"></a>Highlight Color</h3></div></div></div>   
+	  <p>
+		The color used for taint highlights in the decompiler.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintTokenStyle"></a>Highlight Style</h3></div></div></div>   
+	  <p>
+		"All", "Labels", or "Default".
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintOutputFormat"></a>Output Format</h3></div></div></div>   
+	  <p>
+		Currently always "sarif+all".
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintAllAccess"></a>Use all access paths</h3></div></div></div>   
+	  <p>
+		Use all access paths for sink/source variables.
+	  </p>
+	</div>
+
+	<div class="section">
+	<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+	<a name="DecompilerMenuActions"></a>Decompiler Pop-up Menu and Keyboard Actions</h2></div></div></div>
+	  
+	  <p>
+		The following actions appear in the <b>Taint</b> sub-menu of the Decompiler's context menu,
+	    accessed by right-clicking a token. The pop-up menu is context sensitive and
+	    the type of token in particular determines what actions are available.
+	    The token clicked provides a local context for the action and may be used to pinpoint the exact
+	    variable or operation affected.
+	  </p>
+	
+	<div class="sect2">		
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintSource"></a>Source</h3></div></div></div>  
+	  <p>
+	    Mark the selected varnode as a taint source.
+	  </p>
+	</div>
+	  
+	<div class="sect2">		
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintSourceSymbol"></a>Source (Symbol)</h3></div></div></div>  
+	  <p>
+	    Mark the symbol associated with the selected varnode as a taint source.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintSink"></a>Sink</h3></div></div></div>
+	  <p>
+	    Mark the selected varnode as a taint sink (i.e. the endpoint).
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintSinkSymbol"></a>Sink (Symbol)</h3></div></div></div>
+	  <p>
+	    Mark the symbol associated with the selected varnode as a taint sink.
+	  </p>
+	</div>
+	
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintGate"></a>Gate</h3></div></div></div>  
+	  <p>
+	    Mark the selected varnode as a gate (i.e. taint will not pass through this node).
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintClear"></a>Clear</h3></div></div></div>	  
+	  <p>
+	    Remove the source, sink, and gate markers, and existing taint.
+	  </p>
+	</div>
+
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintSliceTree"></a>Slice Tree</h3></div></div></div>	  
+	  <p>
+	    Launch a call-tree style viewer for the slices for the selected token.
+	  </p>
+	</div>
+
+	<div class="section">
+	<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+	<a name="DecompilerToolbarActions"></a>Decompiler Toolbar Actions</h2></div></div></div>
+	  
+	  <p>
+	    These actions apply after the source and sinks have been chosen.
+	  </p>
+
+	<div class="sect2">		
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintQuery"></a>Run taint query</h3></div></div></div>  
+	  <p>
+	    Uses the defined source, sinks, and gates to compose and execute a query. Input
+		may include parameters, stack variables, variables associated with registers, or
+		"dynamic" variables. Queries require an index database generated from PCode.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintDefaultQuery"></a>Run default taint query</h3></div></div></div>
+	  <p>
+	    Use pre-defined sources and sinks to execute the engine's default query. 
+		(Ignores the sources and sinks specified by the user and tries to apply whatever
+		the engine considers the de-facto set of sources/sinks - which may be undefined
+		for a given target.)
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintCustomQuery"></a>Run custom taint query</h3></div></div></div>
+	  <p>
+	    Executes the query referenced in option without rebuilding it based on sources, sinks, etc.
+		Unedited, this will re-execute the last query, but the file can be modified by hand to reflect
+		any query you're interested in.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintLoadSarif"></a>Load SARIF file</h3></div></div></div>  
+	  <p>
+	    Loads a raw SARIF file into the results table.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintShowLabels"></a>Show label table</h3></div></div></div>	  
+	  <p>
+	    Displays the current set of source, sink, and gate markers.
+	  </p>
+	</div>
+
+	<div class="section">
+	<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+	<a name="ResultMenuActions"></a>Results Pop-up Menu</h2></div></div></div>
+	  
+	  <p>
+	    These actions appear in the context menu of the Query Results table and transfer the selected results to the decompiler/disassembly.
+	  </p>
+	
+	<div class="sect2">		
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintAddToProgram"></a>Add To Program</h3></div></div></div>  
+	  <p>
+	    Applies SARIF results to the current progam generically, based on the current set of handlers.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintApplyByVarnode"></a>Apply taint</h3></div></div></div>  
+	  <p>
+		Highlight the varnodes which have been tainted.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintClearResults"></a>Clear taint</h3></div></div></div>  
+	  <p>
+		Clear taint matching the selected rows from the Decompiler listing.
+	  </p>
+	</div>
+	  
+	<div class="sect2">
+	<div class="titlepage"><div><div><h3 class="title">
+	<a name="TaintSelection"></a>Make Selection</h3></div></div></div>	  
+	  <p>
+	    Create a selection from the selected addresses.
+	  </p>
+	</div>
+
+</div>
+  
+</dl></div>
+    </div>
+  
+
+</div></body>
+</html>

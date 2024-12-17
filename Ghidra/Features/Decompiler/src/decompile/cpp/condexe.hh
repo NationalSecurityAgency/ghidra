@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,21 +26,9 @@ namespace ghidra {
 ///
 /// This class determines if two CBRANCHs share the same condition.  It also determines if the conditions
 /// are complements of each other, and/or they are shared along only one path.
-///
-/// Traverse (upto a specific depth) the two boolean expressions consisting of BOOL_AND, BOOL_OR, and
-/// BOOL_XOR operations.  Leaf operators in the expression can be other operators with boolean output (INT_LESS,
-/// INT_SLESS, etc.).
 class BooleanExpressionMatch {
-  enum {
-    same = 1,			///< Pair always hold the same value
-    complementary = 2,		///< Pair always hold complementary values
-    uncorrelated = 3		///< Pair values are uncorrelated
-  };
   static const int4 maxDepth;	///< Maximum depth to trace a boolean expression
   bool matchflip;		///< True if the compared CBRANCH keys on the opposite boolean value of the root
-  static bool sameOpComplement(PcodeOp *bin1op, PcodeOp *bin2op);
-  static bool varnodeSame(Varnode *a,Varnode *b);
-  static int4 evaluate(Varnode *vn1,Varnode *vn2,int4 depth);
 public:
   bool verifyCondition(PcodeOp *op, PcodeOp *iop);	///< Perform the correlation test on two CBRANCH operations
   int4 getMultiSlot(void) const { return -1; }	///< Get the MULTIEQUAL slot in the critical path

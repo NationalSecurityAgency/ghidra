@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -171,9 +171,8 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 		Address entryPoint = function.getEntryPoint();
 		FGVertex vertex = getVertex(jungGraph, entryPoint);
-		Integer row = gridLocations.row(vertex);
-		Integer col = gridLocations.col(vertex);
-		if (row != 0 || col != 0) {
+		GridPoint gridPoint = gridLocations.gridPoint(vertex);
+		if (gridPoint.row != 0 && gridPoint.col != 0) {
 			Msg.debug(this, "Function graph has entry point not at top of layout: " + entryPoint);
 		}
 
@@ -338,7 +337,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		int startColumn = Math.min(start.columnIndex, end.columnIndex);
 		int endColumn = Math.max(start.columnIndex, end.columnIndex);
 
-		Column rightmostLoopColumn = layoutToGridMap.col(rightmostLoopVertex);
+		Column<FGVertex> rightmostLoopColumn = layoutToGridMap.col(rightmostLoopVertex);
 		endColumn = Math.max(endColumn, rightmostLoopColumn.index);
 
 		// Look for any vertices that are no part of the loop, but are placed inside
@@ -351,8 +350,8 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// place the right x position to the right of the rightmost vertex, not
 		// extending past the next column
 		FGVertex rightmostVertex = getRightmostVertex(interlopers);
-		Column rightmostColumn = layoutToGridMap.col(rightmostVertex);
-		Column nextColumn = layoutToGridMap.nextColumn(rightmostColumn);
+		Column<FGVertex> rightmostColumn = layoutToGridMap.col(rightmostVertex);
+		Column<FGVertex> nextColumn = layoutToGridMap.nextColumn(rightmostColumn);
 		Vertex2d rightmostV2d = vertex2dFactory.get(rightmostVertex);
 
 		// the padding used for these two lines is somewhat arbitrary and may be changed
@@ -646,7 +645,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		}
 		else {
 			// going up we swing out to the right; grab the column that is out to the right
-			Column rightColumn = vertex2dFactory.getColumn(edgeX);
+			Column<FGVertex> rightColumn = vertex2dFactory.getColumn(edgeX);
 			endColumn = rightColumn.index;
 		}
 
@@ -855,7 +854,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 	}
 
 	@Override
-	protected Point2D getVertexLocation(FGVertex v, Column col, Row<FGVertex> row,
+	protected Point2D getVertexLocation(FGVertex v, Column<FGVertex> col, Row<FGVertex> row,
 			Rectangle bounds) {
 		return getCenteredVertexLocation(v, col, row, bounds);
 	}
@@ -1128,7 +1127,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			this.edgeOffset = edgeOffset;
 		}
 
-		Column getColumn(double x) {
+		Column<FGVertex> getColumn(double x) {
 			return layoutToGridMap.getColumnContaining((int) x);
 		}
 
@@ -1163,7 +1162,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 		private FGVertex v;
 		private Row<FGVertex> row;
-		private Column column;
+		private Column<FGVertex> column;
 		private int rowIndex;
 		private int columnIndex;
 		private Point2D center; // center point of vertex shape

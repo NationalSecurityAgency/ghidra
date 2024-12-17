@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,7 @@ import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.modules.TraceModule;
 
@@ -73,8 +72,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 	// TODO: Note language and prefer those from the same processor?
 	// Will get difficult with new OBTR, since I'd need a platform
 	// There's also the WoW64 issue....
-	protected record IndexEntry(String name, String dfID, NameSource source) {
-	}
+	protected record IndexEntry(String name, String dfID, NameSource source) {}
 
 	protected class ModuleChangeListener
 			implements DomainObjectListener, DomainObjectClosedListener {
@@ -383,7 +381,11 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 
 	public DomainFile getBestMatch(TraceModule module, Program currentProgram,
 			Collection<IndexEntry> entries) {
-		return getBestMatch(module.getBase().getAddressSpace(), module, currentProgram, entries);
+		Address base = module.getBase();
+		AddressSpace space = base == null
+				? module.getTrace().getBaseAddressFactory().getDefaultAddressSpace()
+				: base.getAddressSpace();
+		return getBestMatch(space, module, currentProgram, entries);
 	}
 
 	public List<IndexEntry> getBestEntries(TraceModule module) {

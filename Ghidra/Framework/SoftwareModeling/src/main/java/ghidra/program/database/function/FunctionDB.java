@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2470,16 +2470,6 @@ public class FunctionDB extends DatabaseObject implements Function {
 				return thunkedFunction.getSignatureSource();
 			}
 
-			// Force DEFAULT source if any param has unassigned storage
-			if (!getReturn().isValid()) {
-				return SourceType.DEFAULT;
-			}
-			for (Parameter param : getParameters()) {
-				if (!param.isValid()) {
-					return SourceType.DEFAULT;
-				}
-			}
-
 			return getStoredSignatureSource();
 		}
 		finally {
@@ -2717,58 +2707,54 @@ public class FunctionDB extends DatabaseObject implements Function {
 	@Override
 	public Set<Function> getCallingFunctions(TaskMonitor monitor) {
 		monitor = TaskMonitor.dummyIfNull(monitor);
-		Set<Function> set = new HashSet<>();
+		Set<Function> callers = new HashSet<>();
 		ReferenceIterator iter = program.getReferenceManager().getReferencesTo(getEntryPoint());
+
 		while (iter.hasNext()) {
 			if (monitor.isCancelled()) {
-				return set;
+				break;
 			}
 			Reference reference = iter.next();
+			if (!reference.getReferenceType().isCall()) {
+				continue;
+			}
 			Address fromAddress = reference.getFromAddress();
 			Function callerFunction = manager.getFunctionContaining(fromAddress);
 			if (callerFunction != null) {
-				set.add(callerFunction);
+				callers.add(callerFunction);
 			}
 		}
-		return set;
+		return callers;
 	}
 
 	@Override
 	public Set<Function> getCalledFunctions(TaskMonitor monitor) {
 		monitor = TaskMonitor.dummyIfNull(monitor);
-		Set<Function> set = new HashSet<>();
-		Set<Reference> references = getReferencesFromBody(monitor);
-		for (Reference reference : references) {
-			if (monitor.isCancelled()) {
-				return set;
-			}
-			Address toAddress = reference.getToAddress();
-			Function calledFunction = manager.getFunctionAt(toAddress);
-			if (calledFunction != null) {
-				set.add(calledFunction);
-			}
-		}
-		return set;
-	}
+		Set<Function> callees = new HashSet<>();
+		ReferenceManager refManager = program.getReferenceManager();
+		AddressRangeIterator rangeIter = getBody().getAddressRanges();
 
-	private Set<Reference> getReferencesFromBody(TaskMonitor monitor) {
-		Set<Reference> set = new HashSet<>();
-		ReferenceManager referenceManager = program.getReferenceManager();
-		AddressSetView addresses = getBody();
-		AddressIterator addressIterator = addresses.getAddresses(true);
-		while (addressIterator.hasNext()) {
-			if (monitor.isCancelled()) {
-				return set;
-			}
-			Address address = addressIterator.next();
-			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
-			if (referencesFrom != null) {
-				for (Reference reference : referencesFrom) {
-					set.add(reference);
+		while (rangeIter.hasNext()) {
+			AddressRange range = rangeIter.next();
+			ReferenceIterator refIter = refManager.getReferenceIterator(range.getMinAddress());
+			while (refIter.hasNext()) {
+				if (monitor.isCancelled()) {
+					return callees;
+				}
+				Reference ref = refIter.next();
+				if (!range.contains(ref.getFromAddress())) {
+					break; // exhausted all addresses in the AddressRange, check next AddressRange
+				}
+				if (!ref.getReferenceType().isCall()) {
+					continue; // reference is not a call, check next reference
+				}
+				Function callee = manager.getFunctionAt(ref.getToAddress());
+				if (callee != null) {  // sanity check
+					callees.add(callee);
 				}
 			}
 		}
-		return set;
+		return callees;
 	}
 
 	@Override

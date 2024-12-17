@@ -15,6 +15,7 @@
     <external_name tool="gnu" name="xtensa"/>
     <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
     <external_name tool="qemu" name="qemu-xtensa"/>
+    <external_name tool="qemu_system" name="qemu-system-xtensa"/>
   </language>
   <language processor="Xtensa"
             endian="big"
@@ -30,5 +31,6 @@
     <external_name tool="gnu" name="xtensa"/>
     <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
     <external_name tool="qemu" name="qemu-xtensaeb"/>
+    <external_name tool="qemu_system" name="qemu-system-xtensaeb"/>
   </language>
 </language_definitions>

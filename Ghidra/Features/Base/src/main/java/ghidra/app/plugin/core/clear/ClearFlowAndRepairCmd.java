@@ -20,6 +20,7 @@ import java.util.*;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.plugin.core.clear.ClearOptions.ClearType;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.disassemble.Disassembler;
@@ -203,7 +204,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 			clearSet.delete(protectedSet);
 
 			ClearOptions opts = new ClearOptions(true);
-			opts.setClearSymbols(clearLabels);
+			opts.setShouldClear(ClearType.SYMBOLS, clearLabels);
 
 			ClearCmd clear = new ClearCmd(clearSet, opts);
 			clear.applyTo(program, monitor);
@@ -318,7 +319,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand<Program> {
 						continue; // don't add to clear set
 					}
 					// if defined data is anything other than Undefined1,2... or a pointer
-					if (data.isDefined() && !(data.getDataType() instanceof Undefined) && !(data.isPointer())) {
+					if (data.isDefined() && !(data.getDataType() instanceof Undefined) &&
+						!(data.isPointer())) {
 						continue; // don't add to clear set
 					}
 				}

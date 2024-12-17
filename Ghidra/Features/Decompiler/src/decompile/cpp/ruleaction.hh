@@ -547,6 +547,28 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleBooleanUndistribute : public Rule {
+  static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &rightFlip);
+public:
+  RuleBooleanUndistribute(const string &g) : Rule(g, 0, "booleanundistribute") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleBooleanUndistribute(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleBooleanDedup : public Rule {
+  static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &isFlip);
+public:
+  RuleBooleanDedup(const string &g) : Rule(g, 0, "booleandedup") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleBooleanDedup(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleBooleanNegate : public Rule {
 public:
   RuleBooleanNegate(const string &g) : Rule(g, 0, "booleannegate") {}	///< Constructor
@@ -1394,23 +1416,10 @@ public:
 };
 
 class RuleConditionalMove : public Rule {
-  /// \brief Class for categorizing and rebuilding a boolean expression
-  class BoolExpress {
-    int4 optype;		///< 0=constant 1=unary 2=binary
-    OpCode opc;			///< OpCode constructing the boolean value
-    PcodeOp *op;		///< PcodeOp constructing the boolean value
-    uintb val;			///< Value (if boolean is constant)
-    Varnode *in0;		///< First input
-    Varnode *in1;		///< Second input
-    bool mustreconstruct; 	///< Must make a copy of final boolean operation
-  public:
-    bool isConstant(void) const { return (optype==0); }	///< Return \b true if boolean is a constant
-    uintb getVal(void) const { return val; }		///< Get the constant boolean value
-    bool initialize(Varnode *vn);			///< Initialize based on output Varnode
-    bool evaluatePropagation(FlowBlock *root,FlowBlock *branch);	///< Can this expression be propagated
-    Varnode *constructBool(PcodeOp *insertop,Funcdata &data);	///< Construct the expression after the merge
-  };
-  static Varnode *constructNegate(Varnode *vn,PcodeOp *op,Funcdata &data);
+  static Varnode *checkBoolean(Varnode *vn);			///< Check for boolean expression
+  static bool gatherExpression(Varnode *vn,vector<PcodeOp *> &ops,FlowBlock *root,FlowBlock *branch);
+  static Varnode *constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data);	///< Construct the expression after the merge
+  static bool compareOp(PcodeOp *op0,PcodeOp *op1) { return op0->getSeqNum().getOrder() < op1->getSeqNum().getOrder(); }
 public:
   RuleConditionalMove(const string &g) : Rule( g, 0, "conditionalmove") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

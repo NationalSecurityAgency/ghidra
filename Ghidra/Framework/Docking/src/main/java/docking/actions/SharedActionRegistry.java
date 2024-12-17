@@ -15,8 +15,7 @@
  */
 package docking.actions;
 
-import docking.DialogComponentProvider;
-import docking.Tool;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
@@ -41,5 +40,7 @@ public class SharedActionRegistry {
 		GTree.createSharedActions(tool, toolActions, ToolConstants.SHARED_OWNER);
 
 		DialogComponentProvider.createSharedActions(tool, toolActions, ToolConstants.SHARED_OWNER);
+
+		DockingWindowManager.createSharedActions(tool, toolActions, ToolConstants.SHARED_OWNER);
 	}
 }

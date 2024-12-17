@@ -23,8 +23,7 @@ import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.protorules.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
@@ -85,6 +84,7 @@ public class ParamListStandard implements ParamList {
 	 */
 	public int assignAddressFallback(StorageClass resource, DataType tp, boolean matchExact,
 			int[] status, ParameterPieces param) {
+
 		for (ParamEntry element : entry) {
 			int grp = element.getGroup();
 			if (status[grp] < 0) {
@@ -131,6 +131,12 @@ public class ParamListStandard implements ParamList {
 
 	{
 		if (dt.isZeroLength()) {
+			return AssignAction.NO_ASSIGNMENT;
+		}
+		if (dt == DataType.DEFAULT) {
+			return AssignAction.NO_ASSIGNMENT;
+		}
+		if (dt instanceof TypeDef td && td.getBaseDataType() == DataType.DEFAULT) {
 			return AssignAction.NO_ASSIGNMENT;
 		}
 		for (ModelRule modelRule : modelRules) {

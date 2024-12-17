@@ -60,8 +60,8 @@ public class MarkdownToHtml {
 				.build();
 
 		// Create output directory (if necessary)
-		File inFile = new File(args[0]);
-		File outFile = new File(args[1]);
+		File inFile = new File(args[0]).getCanonicalFile();
+		File outFile = new File(args[1]).getCanonicalFile();
 		if (!outFile.getParentFile().isDirectory() && !outFile.getParentFile().mkdirs()) {
 			throw new Exception("Failed to create: " + outFile.getParent());
 		}
