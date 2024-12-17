@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramMergeFilter;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 /**
  * Manages the options for the Diff apply settings.
@@ -396,6 +397,8 @@ class DiffApplySettingsOptionManager {
 				return ProgramMergeFilter.SYMBOLS;
 			case FUNCTION_TAGS:
 				return ProgramMergeFilter.FUNCTION_TAGS;
+			case SOURCE_MAP:
+				return ProgramMergeFilter.SOURCE_MAP;
 			default:
 				return 0;
 		}
@@ -436,6 +439,8 @@ class DiffApplySettingsOptionManager {
 				return OPTION_SYMBOLS;
 			case FUNCTION_TAGS:
 				return OPTION_FUNCTION_TAGS;
+			case SOURCE_MAP:
+				return OPTION_SOURCE_MAP;
 			default:
 				return null;
 		}
@@ -520,6 +525,7 @@ class DiffApplySettingsOptionManager {
 	private REPLACE_CHOICE convertTypeToReplaceEnum(ProgramMergeFilter defaultApplyFilter,
 			int type) {
 		int filter = defaultApplyFilter.getFilter(type);
+		Msg.info(this, "type: " + Integer.toHexString(filter) + " filter: " + filter);
 		return REPLACE_CHOICE.values()[filter];
 	}
 
