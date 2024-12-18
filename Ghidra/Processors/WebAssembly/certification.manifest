@@ -1,0 +1,20 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/WebAssembly/help.html||GHIDRA||||END|
+src/main/help/help/topics/WebAssembly/help.md||GHIDRA||||END|
+data/languages/BasicOps.sinc||GHIDRA||||END|
+data/languages/Leb128.sinc||GHIDRA||||END|
+data/languages/Leb128_opc2.sinc||GHIDRA||||END|
+data/languages/Leb128_opc2_1b.sinc||GHIDRA||||END|
+data/languages/Leb128_opc2_2b.sinc||GHIDRA||||END|
+data/languages/Leb128_u32.sinc||GHIDRA||||END|
+data/languages/VectorOps.sinc||GHIDRA||||END|
+data/languages/WebAssembly-pos-stack.cspec||GHIDRA||||END|
+data/languages/WebAssembly.cspec||GHIDRA||||END|
+data/languages/WebAssembly.dwarf||GHIDRA||||END|
+data/languages/WebAssembly.ldefs||GHIDRA||||END|
+data/languages/WebAssembly.opinion||GHIDRA||||END|
+data/languages/WebAssembly.pspec||GHIDRA||||END|
+data/languages/WebAssembly.sinc||GHIDRA||||END|
+data/languages/WebAssembly.slaspec||GHIDRA||||END|

@@ -1,0 +1,60 @@
+ULeb128: val is topbit = 0 & v0 
+	[ val = 0 | v0 ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 0 & v1 
+	[ val = 0 | v0 | ( v1 << 7 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 0 & v2 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 0 & v3 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 0 & v4 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 0 & v5 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 0 & v6 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 0 & v7 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 1 & v7; topbit = 0 & v8 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) | ( v8 << 56 ) ; ]
+{ export *[const]:8 val; }
+ULeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 1 & v7; topbit = 1 & v8; topbit = 0 & v9 
+	[ val = 0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) | ( v8 << 56 ) | ( v9 << 63 ) ; ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 0 & v0 
+	[ val = ((0 | v0 ) ^ (1 << 6)) - (1 << 6); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 0 & v1 
+	[ val = ((0 | v0 | ( v1 << 7 ) ) ^ (1 << 13)) - (1 << 13); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 0 & v2 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) ) ^ (1 << 20)) - (1 << 20); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 0 & v3 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) ) ^ (1 << 27)) - (1 << 27); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 0 & v4 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) ) ^ (1 << 34)) - (1 << 34); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 0 & v5 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) ) ^ (1 << 41)) - (1 << 41); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 0 & v6 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) ) ^ (1 << 48)) - (1 << 48); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 0 & v7 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) ) ^ (1 << 55)) - (1 << 55); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 1 & v7; topbit = 0 & v8 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) | ( v8 << 56 ) ) ^ (1 << 62)) - (1 << 62); ]
+{ export *[const]:8 val; }
+SLeb128: val is topbit = 1 & v0; topbit = 1 & v1; topbit = 1 & v2; topbit = 1 & v3; topbit = 1 & v4; topbit = 1 & v5; topbit = 1 & v6; topbit = 1 & v7; topbit = 1 & v8; topbit = 0 & v9 
+	[ val = ((0 | v0 | ( v1 << 7 ) | ( v2 << 14 ) | ( v3 << 21 ) | ( v4 << 28 ) | ( v5 << 35 ) | ( v6 << 42 ) | ( v7 << 49 ) | ( v8 << 56 ) | ( v9 << 63 ) ) ^ 0) - 0; ]
+{ export *[const]:8 val; }
