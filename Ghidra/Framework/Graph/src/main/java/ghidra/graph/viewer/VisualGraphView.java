@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.ScalingControl;
 import generic.theme.Gui;
 import ghidra.graph.VisualGraph;
+import ghidra.graph.viewer.GraphComponent.SatellitePosition;
 import ghidra.graph.viewer.event.mouse.VertexTooltipProvider;
 import ghidra.graph.viewer.event.mouse.VisualGraphMousePlugin;
 import ghidra.graph.viewer.layout.LayoutProvider;
@@ -124,6 +125,7 @@ public class VisualGraphView<V extends VisualVertex,
 
 	protected LayoutProvider<V, E, G> layoutProvider;
 	private final ScalingControl scaler = new VisualGraphScalingControl();
+	private SatellitePosition satellitePosition = SatellitePosition.LOWER_RIGHT;
 
 	public VisualGraphView() {
 		build();
@@ -263,6 +265,7 @@ public class VisualGraphView<V extends VisualVertex,
 			undockedSatelliteContentPanel.add(graphComponent.getSatelliteContentComponent());
 			undockedSatelliteContentPanel.validate();
 		}
+		graphComponent.setSatellitePosition(satellitePosition);
 	}
 
 	/*
@@ -419,6 +422,17 @@ public class VisualGraphView<V extends VisualVertex,
 			undockedSatelliteContentPanel.add(graphComponent.getSatelliteContentComponent());
 			undockedSatelliteContentPanel.validate();
 		}
+	}
+
+	public void setSatellitePosition(SatellitePosition position) {
+		satellitePosition = position;
+		if (graphComponent != null) {
+			graphComponent.setSatellitePosition(position);
+		}
+	}
+
+	public SatellitePosition getSatellitePosition() {
+		return satellitePosition;
 	}
 
 	/**

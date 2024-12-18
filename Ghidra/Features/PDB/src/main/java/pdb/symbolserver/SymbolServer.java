@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package pdb.symbolserver;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -29,6 +28,27 @@ import ghidra.util.task.TaskMonitor;
  * 
  */
 public interface SymbolServer {
+	/**
+	 * Optional add-on interface for {@link SymbolServer}s that flag server types as requiring a
+	 * valid context object to be queried for {@link SymbolServer#isValid(TaskMonitor)}
+	 */
+	interface StatusRequiresContext {
+		// empty
+	}
+
+	/**
+	 * Optional add-on interface for {@link SymbolServer}s that allow their trusted-ness value to
+	 * be modified.
+	 */
+	public interface MutableTrust {
+
+		/**
+		 * Sets the trusted attribute of this symbol server.
+		 * 
+		 * @param isTrusted boolean flag, if true this symbolserver will be marked as trusted
+		 */
+		void setTrusted(boolean isTrusted);
+	}
 
 	/**
 	 * Name of the symbol server, suitable to use as the identity of this instance,
@@ -54,6 +74,16 @@ public interface SymbolServer {
 	 * @return boolean true if symbol server is working
 	 */
 	boolean isValid(TaskMonitor monitor);
+
+	/**
+	 * Returns true if this {@link SymbolServer} is 'trusted', meaning
+	 * it can be searched without security issues / warning the user.
+	 * 
+	 * @return boolean true if this symbolserver is trusted, false if untrusted 
+	 */
+	default boolean isTrusted() {
+		return true;
+	}
 
 	/**
 	 * Returns true if the raw filename exists in the symbol server.
@@ -103,10 +133,13 @@ public interface SymbolServer {
 	String getFileLocation(String filename);
 
 	/**
-	 * Returns true if this {@link SymbolServer} is 'local', meaning
-	 * it can be searched without security issues / warning the user.
+	 * Returns the number of configured symbol servers that are considered 'untrusted'.
 	 * 
-	 * @return boolean true if this symbolserver is 'local', false if remote 
+	 * @param symbolServers list of {@link SymbolServer}s
+	 * @return number of untrusted symbol servers
 	 */
-	boolean isLocal();
+	static int getUntrustedCount(Collection<SymbolServer> symbolServers) {
+		return (int) symbolServers.stream().filter(ss -> !ss.isTrusted()).count();
+	}
+
 }

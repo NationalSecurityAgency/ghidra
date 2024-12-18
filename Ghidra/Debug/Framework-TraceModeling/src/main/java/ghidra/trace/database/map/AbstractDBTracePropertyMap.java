@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.map.AbstractDBTracePropertyMap.DBTraceSaveablePropertyMapEntry;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.thread.DBTraceThreadManager;
@@ -399,16 +398,16 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			if (value == null) {
 				return null;
 			}
-			try {
-				ByteArrayOutputStream os = new ByteArrayOutputStream();
-				ObjectStorage objStorage =
-					new ObjectStorageStreamAdapter(new ObjectOutputStream(os));
+
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			try (ObjectOutputStream objStream = new ObjectOutputStream(os)) {
+				ObjectStorage objStorage = new ObjectStorageStreamAdapter(objStream);
 				value.save(objStorage);
-				return os.toByteArray();
 			}
 			catch (IOException e) {
 				throw new AssertionError(e); // For a ByteArrayOutputStream?
 			}
+			return os.toByteArray();
 		}
 
 		@Override

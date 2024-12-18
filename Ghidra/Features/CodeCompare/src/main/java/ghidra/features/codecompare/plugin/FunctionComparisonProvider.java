@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -291,15 +291,15 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 		navigateToAction = new ToggleActionBuilder("Navigate to Selected Function",
 			plugin.getName())
-				.description(HTMLUtilities.toHTML("Toggle <b>On</b> means to navigate to " +
-					"whatever function is selected in the comparison panel, when focus changes" +
-					" or a new function is selected."))
-				.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate_To_Function"))
-				.toolBarIcon(NAV_FUNCTION_ICON)
-				.onAction(c -> maybeGoToActiveFunction())
-				.buildAndInstallLocal(this);
+					.description(HTMLUtilities.toHTML("Toggle <b>On</b> means to navigate to " +
+						"whatever function is selected in the comparison panel, when focus changes" +
+						" or a new function is selected."))
+					.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate_To_Function"))
+					.toolBarIcon(NAV_FUNCTION_ICON)
+					.onAction(c -> maybeGoToActiveFunction())
+					.buildAndInstallLocal(this);
 
-		if (model instanceof DefaultFunctionComparisonModel) {
+		if (model instanceof AnyToAnyFunctionComparisonModel) {
 			createDefaultModelActions();
 		}
 	}
@@ -313,7 +313,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 				.popupMenuGroup(ADD_COMPARISON_GROUP)
 				.toolBarIcon(ADD_TO_COMPARISON_ICON)
 				.toolBarGroup(ADD_COMPARISON_GROUP)
-				.enabledWhen(c -> model instanceof DefaultFunctionComparisonModel)
+				.enabledWhen(c -> model instanceof AnyToAnyFunctionComparisonModel)
 				.onAction(c -> addFunctions())
 				.buildAndInstallLocal(this);
 
@@ -335,7 +335,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		List<Function> functions =
 			rows.stream().map(row -> row.getFunction()).collect(Collectors.toList());
 
-		if (model instanceof DefaultFunctionComparisonModel defaultModel) {
+		if (model instanceof AnyToAnyFunctionComparisonModel defaultModel) {
 			defaultModel.addFunctions(functions);
 		}
 
@@ -387,5 +387,30 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		closeListener.call();
 		closeListener = Callback.dummy();
 		functionComparisonPanel.dispose();
+	}
+
+	@Override
+	public void componentActivated() {
+		plugin.providerActivated(this);
+	}
+
+	/**
+	 * Returns true if this provider is using the {@link AnyToAnyFunctionComparisonModel} which
+	 * allows adding functions. The other model ({@link MatchedFunctionComparisonModel} ) only 
+	 * allows functions to be added in matched pairs.
+	 * @return true if this provider supports adding functions to the comparison
+	 */
+	public boolean supportsAddingFunctions() {
+		return model instanceof AnyToAnyFunctionComparisonModel;
+	}
+
+	/**
+	 * Adds functions to the comparison model if the model supports it.
+	 * @param functions the functions to add to the comparison
+	 */
+	public void addFunctions(Collection<Function> functions) {
+		if (model instanceof AnyToAnyFunctionComparisonModel anyToAnyModel) {
+			anyToAnyModel.addFunctions(functions);
+		}
 	}
 }

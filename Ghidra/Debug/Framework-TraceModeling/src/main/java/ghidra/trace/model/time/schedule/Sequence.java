@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -240,7 +241,7 @@ public class Sequence implements Comparable<Sequence> {
 	}
 
 	/**
-	 * Richly compare to sequences
+	 * Richly compare two sequences
 	 * 
 	 * <p>
 	 * The result indicates not only which is "less" or "greater" than the other, but also indicates
@@ -355,6 +356,14 @@ public class Sequence implements Comparable<Sequence> {
 		return count;
 	}
 
+	public long totalSkipCount() {
+		long count = 0;
+		for (Step step : steps) {
+			count += step.getSkipCount();
+		}
+		return count;
+	}
+
 	/**
 	 * Compute to total number of patches specified
 	 * 
@@ -439,5 +448,26 @@ public class Sequence implements Comparable<Sequence> {
 			thread = step.getThread(tm, eventThread);
 		}
 		return thread;
+	}
+
+	/**
+	 * Check if the first instruction step is actually to finish an incomplete instruction.
+	 * 
+	 * @param thread the thread whose instruction to potentially finish
+	 * @param machine a machine bound to the trace whose current state reflects the given position
+	 * @return if a finish was performed, this sequence with one initial step removed, i.e., a
+	 *         sequence representing the steps remaining
+	 */
+	Sequence checkFinish(TraceThread thread, PcodeMachine<?> machine) {
+		PcodeThread<?> emuThread = machine.getThread(thread.getPath(), true);
+		if (emuThread.getFrame() == null) {
+			return this;
+		}
+		Sequence result = new Sequence(new ArrayList<>(steps));
+		emuThread.finishInstruction();
+		if (result.steps.get(0).rewind(1) == 0) {
+			result.steps.remove(0);
+		}
+		return result;
 	}
 }

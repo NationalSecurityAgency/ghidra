@@ -428,6 +428,19 @@
 				Only demangle symbols that follow known compiler mangling patterns. 
 				Leaving this option off may cause non-mangled symbols to get demangled.
 				</TD>				
+			</TR><TR>
+				<TD>Use Standard Text Replacements
+				</TD>
+				<TD>
+				Use text simplifications in demangled output, for example to use standard c++ 
+				typedefs. Using this option will produce shorter demangled output in some cases.
+				<P>
+				The simplifications are defined in 
+				<CODE>Ghidra/Features/GnuDemangler/data/default.gnu.demangler.replacements.txt</CODE>
+				This file can be edited.  Also new files can be added with more simplifications.
+				Each new file must end with <CODE>.gnu.demangler.replacements.txt</CODE> and must 
+				reside inside of a module's <CODE>data</CODE> directory.
+				</TD>				
 			</TR>		
 		</TABLE>
 		</P>
@@ -485,6 +498,38 @@
 		</BLOCKQUOTE>
 
         <P STYLE="margin-top: 30px;"><U>Started By:</U> New defined functions</P>
+        
+		<BR>
+		<BR>
+      	<P><A name="Microsoft_Demangler_Options">
+		<B>The Microsoft Demangler</B></H4> adds the following analysis option:
+		
+		<BLOCKQUOTE>
+			<P>
+			<U><B>C-Style Symbol Interpretation</B></U> -
+				This option is used to help direct processing of certain C-style symbols that
+				could have C-style interpretations.  The Microsoft C-Style mangling scheme
+				permits a simple encoding of some functions, to include calling convention
+				and number of bytes in the arguments list.  This is mainly for 32-bit programs,
+				but the convention is also used for at least one calling convention for 64-bit
+				programs.  When a symbol can be interpreted as both a C-style function and as
+				some other C++-style object, this option controls which is chosen.
+				<P> The choices are:
+				<UL>
+					<LI><B>FUNCTION</B>: the C-style function type is produced</LI>
+					<LI><B>NON_FUNCTION</B>: the C++-style object is produced</LI>
+					<LI><B>FUNCTION_IF_EXISTS</B>: the C-style function type is produced if
+					a function already exists at the program address</LI>
+				</UL>
+				</P>
+			<P><IMG alt="" src="help/shared/warning.png"> The user should generally not change this
+			option except for trying to debug the results of this new scheme.  This option may
+			be removed in a future release.
+			</P>
+		</P>
+		</BLOCKQUOTE>
+
+        
       </BLOCKQUOTE>
 
       <H3><A name="Auto_Analysis_Option_Byte"></A>Entry Point Analyzer</H3>

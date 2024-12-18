@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -884,8 +884,11 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 	private void addLengthOverrideFallthroughRef() {
 		if (isLengthOverridden() && !isFallThroughOverridden()) {
 			// length-override always uses default fall-through address
-			refMgr.addMemoryReference(address, getDefaultFallThrough(), RefType.FALL_THROUGH,
+			Address defaultFallThrough = getDefaultFallThrough();
+			if (defaultFallThrough != null) {
+				refMgr.addMemoryReference(address, defaultFallThrough, RefType.FALL_THROUGH,
 				SourceType.USER_DEFINED, Reference.MNEMONIC);
+			}
 		}
 	}
 

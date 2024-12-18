@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,7 @@ public abstract class DebuggerGoToTrait {
 	/**
 	 * @see DebuggerGoToTrait#goTo(String, String)
 	 */
-	public record GoToResult(Address address, Boolean success) {
-	}
+	public record GoToResult(Address address, Boolean success) {}
 
 	protected DockingAction action;
 
@@ -74,7 +73,7 @@ public abstract class DebuggerGoToTrait {
 	private void activatedGoTo(ActionContext context) {
 		DebuggerGoToDialog goToDialog = new DebuggerGoToDialog(this);
 		TracePlatform platform = current.getPlatform();
-		goToDialog.show((SleighLanguage) platform.getLanguage(), getDefaultInput());
+		goToDialog.show(platform.getAddressFactory(), getDefaultInput());
 	}
 
 	/**

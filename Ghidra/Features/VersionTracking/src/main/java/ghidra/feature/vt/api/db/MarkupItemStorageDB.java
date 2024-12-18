@@ -135,7 +135,7 @@ public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemSto
 		try {
 			MarkupItemStorage storage = new MarkupItemStorageImpl(getAssociation(), getMarkupType(),
 				getSourceAddress(), getDestinationAddress(), getDestinationAddressSource());
-			associationManager.removeMarkupRecord(record);
+			associationManager.removeMarkupRecord(record.getKey());
 			return storage;
 		}
 		finally {
@@ -144,7 +144,8 @@ public class MarkupItemStorageDB extends DatabaseObject implements MarkupItemSto
 	}
 
 	@Override
-	public MarkupItemStorage setDestinationAddress(Address destinationAddress, String addressSource) {
+	public MarkupItemStorage setDestinationAddress(Address destinationAddress,
+			String addressSource) {
 		if (destinationAddress == null) {
 			destinationAddress = Address.NO_ADDRESS;
 		}

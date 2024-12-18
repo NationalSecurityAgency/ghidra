@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,21 +24,27 @@ import mdemangler.functiontype.MDFunctionType;
  */
 public class MDVFAdjustor extends MDMemberFunctionInfo {
 
+	private MDEncodedNumber adjustment;
+
 	// Comment from wiki page: This kind of thunk (G,H,O,P,W,X) function is always virtual, and
 	// used to represent the logical "this" adjustor property, which means an offset to the
 	// true "this" value in some multiple inheritance situations.
 	public MDVFAdjustor(MDMang dmang) {
 		super(dmang);
 		mdtype = new MDFunctionType(dmang);
+		adjustment = new MDEncodedNumber(dmang);
 		setVirtual();
 		setThunk();
 	}
 
 	@Override
+	public String getModifier() {
+		return "`adjustor{" + adjustment + "}' ";
+	}
+
+	@Override
 	protected void parseInternal() throws MDException {
-		MDEncodedNumber adjustment = new MDEncodedNumber(dmang);
 		adjustment.parse();
-		nameModifier = "`adjustor{" + adjustment + "}' ";
 		super.parseInternal(); // TODO evaluate whether parseInternal() or parse.
 	}
 }

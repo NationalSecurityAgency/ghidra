@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import ghidra.features.bsim.query.protocol.*;
  * 
  */
 public final class PostgresFunctionDatabase
-	extends AbstractSQLFunctionDatabase<WeightedLSHCosineVectorFactory> {
+		extends AbstractSQLFunctionDatabase<WeightedLSHCosineVectorFactory> {
 
 	// NOTE: Previously named ColumnDatabase
 
@@ -101,7 +101,7 @@ public final class PostgresFunctionDatabase
 	}
 
 	private void changePassword(Connection c, String username, char[] newPassword)
-		throws SQLException {
+			throws SQLException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("ALTER ROLE \"");
 		buffer.append(username);
@@ -158,7 +158,7 @@ public final class PostgresFunctionDatabase
 	 */
 	private void serverLoadWeights(Connection db) throws SQLException {
 		try (Statement st = db.createStatement();
-			ResultSet rs = st.executeQuery("SELECT lsh_load()")) {
+				ResultSet rs = st.executeQuery("SELECT lsh_load()")) {
 			while (rs.next()) {
 				// int val = rs.getInt(1);
 			}
@@ -171,13 +171,16 @@ public final class PostgresFunctionDatabase
 		Connection db = initConnection();
 		serverLoadWeights(db);
 
-		if (asynchronous) {
-			try (Statement st = db.createStatement()) {
-				// Tell server to do asynchronous commits. This speeds up large
-				// ingests with a (slight) danger of
-				// losing the most recent commits if the server crashes (NOTE:
-				// database integrity should still be recoverable)
-				st.executeUpdate("SET LOCAL synchronous_commit TO OFF");
+		try (Statement st = db.createStatement()) {
+			// Tell server to do asynchronous commits. This speeds up large
+			// ingests with a (slight) danger of
+			// losing the most recent commits if the server crashes (NOTE:
+			// database integrity should still be recoverable)
+			if (asynchronous) {
+				st.executeUpdate("SET SESSION synchronous_commit TO OFF");
+			}
+			else {
+				st.executeUpdate("SET SESSION synchronous_commit to ON");
 			}
 		}
 
@@ -187,8 +190,9 @@ public final class PostgresFunctionDatabase
 	@Override
 	protected void generateRawDatabase() throws SQLException {
 		BSimServerInfo serverInfo = postgresDs.getServerInfo();
-		BSimServerInfo defaultServerInfo = new BSimServerInfo(DBType.postgres,
-			serverInfo.getServerName(), serverInfo.getPort(), DEFAULT_DATABASE_NAME);
+		BSimServerInfo defaultServerInfo =
+			new BSimServerInfo(DBType.postgres, serverInfo.getUserInfo(),
+				serverInfo.getServerName(), serverInfo.getPort(), DEFAULT_DATABASE_NAME);
 		String createdbstring = "CREATE DATABASE \"" + serverInfo.getDBName() + '"';
 		BSimPostgresDataSource defaultDs =
 			BSimPostgresDBConnectionManager.getDataSource(defaultServerInfo);
@@ -223,12 +227,15 @@ public final class PostgresFunctionDatabase
 
 				serverLoadWeights(db);
 
+				// Tell server to do asynchronous commits. This speeds up large
+				// ingests with a (slight) danger of
+				// losing the most recent commits if the server crashes (NOTE:
+				// database integrity should still be recoverable)
 				if (asynchronous) {
-					// Tell server to do asynchronous commits. This speeds up large
-					// ingests with a (slight) danger of
-					// losing the most recent commits if the server crashes (NOTE:
-					// database integrity should still be recoverable)
-					st.executeUpdate("SET LOCAL synchronous_commit TO OFF");
+					st.executeUpdate("SET SESSION synchronous_commit TO OFF");
+				}
+				else {
+					st.executeUpdate("SET SESSION synchronous_commit to ON");
 				}
 			}
 		}
@@ -253,7 +260,7 @@ public final class PostgresFunctionDatabase
 	 */
 	private void rebuildIndex(Connection c) throws SQLException {
 		try (Statement st = c.createStatement();
-			ResultSet rs = st.executeQuery("SELECT lsh_reload()")) {
+				ResultSet rs = st.executeQuery("SELECT lsh_reload()")) {
 			st.execute("SET maintenance_work_mem TO '2GB'");
 			st.execute(
 				"CREATE INDEX vectable_vec_idx ON vectable USING gin (vec gin_lshvector_ops)");
@@ -275,7 +282,7 @@ public final class PostgresFunctionDatabase
 	 * @throws SQLException if there is a problem creating or executing the query
 	 */
 	private int preWarm(Connection c, int mainIndex, int secondaryIndex, int vectors)
-		throws SQLException {
+			throws SQLException {
 		try (Statement st = c.createStatement()) {
 			// Try to load the entire main index into the PostgreSQL cache
 			int res = -1;
@@ -386,8 +393,8 @@ public final class PostgresFunctionDatabase
 	 * @throws SQLException if there is a problem creating or executing the query
 	 */
 	@Override
-	protected int queryNearestVector(List<VectorResult> resultset, LSHVector vec,
-		double simthresh, double sigthresh, int max) throws SQLException {
+	protected int queryNearestVector(List<VectorResult> resultset, LSHVector vec, double simthresh,
+			double sigthresh, int max) throws SQLException {
 		PreparedStatement s =
 			selectNearestVectorStatement.prepareIfNeeded(() -> initConnection().prepareStatement(
 				"WITH const(cvec) AS (VALUES( lshvector_in( CAST( ? AS cstring) ) ) )," +
@@ -469,7 +476,7 @@ public final class PostgresFunctionDatabase
 	@Override
 	protected VectorResult queryVectorId(long id) throws SQLException {
 		PreparedStatement s = selectVectorByRowIdStatement.prepareIfNeeded(() -> initConnection()
-			.prepareStatement("SELECT id,count,vec FROM vectable WHERE id = ?"));
+				.prepareStatement("SELECT id,count,vec FROM vectable WHERE id = ?"));
 		s.setLong(1, id);
 		try (ResultSet rs = s.executeQuery()) {
 			if (!rs.next()) {
@@ -497,16 +504,8 @@ public final class PostgresFunctionDatabase
 	}
 
 	@Override
-	public void setUserName(String userName) {
-		if (postgresDs.getStatus() == Status.Ready) {
-			throw new IllegalStateException("Connection has already been established");
-		}
-		postgresDs.setPreferredUserName(userName);
-	}
-
-	@Override
 	public QueryResponseRecord doQuery(BSimQuery<?> query, Connection c)
-		throws SQLException, LSHException, DatabaseNonFatalException {
+			throws SQLException, LSHException, DatabaseNonFatalException {
 
 		if (query instanceof PrewarmRequest q) {
 			fdbPrewarm(q, c);

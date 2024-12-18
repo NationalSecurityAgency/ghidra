@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from contextlib import contextmanager
 import functools
@@ -26,7 +26,7 @@ import time
 try:
     import psutil
 except ImportError:
-    print(f"Unable to import 'psutil' - check that it has been installed")
+    print("Unable to import 'psutil' - check that it has been installed")
 
 from ghidratrace import sch
 from ghidratrace.client import Client, Address, AddressRange, TraceObject
@@ -1867,6 +1867,8 @@ def put_frames():
         fobj.set_value('Function', str(f.GetFunctionName()))
         fobj.set_value('_display', util.get_description(f))
         fobj.insert()
+        robj = STATE.trace.create_object(fpath+".Registers")
+        robj.insert()
     STATE.trace.proxy_object_path(STACK_PATTERN.format(
         procnum=proc.GetProcessID(), tnum=t.GetThreadID())).retain_values(keys)
 

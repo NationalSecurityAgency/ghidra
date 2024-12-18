@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <global>
+    <range space="RAM"/>
+  </global>
+  <stackpointer register="SP" space="RAM"/>
+   <default_proto>
+      <prototype name="__stdcall" extrapop="4" stackshift="4">
+	<input>
+			<pentry maxsize="2" minsize="1">
+              <register name="R0"/>
+            </pentry>
+            <pentry maxsize="500" minsize="1" align="4"> <!-- TODO: Alignment should be 2, waiting for decompiler change -->
+              <addr space="stack" offset="4"/>
+            </pentry>
+	</input>
+	<output>
+            <pentry maxsize="4" minsize="1">
+              <register name="R2R0"/>
+            </pentry>
+	</output>
+	<unaffected>
+          <register name="SP"/>
+          <register name="FB"/>
+          <register name="SB"/>
+          <register name="FLG"/>
+	</unaffected>
+      </prototype>
+    </default_proto>
+</compiler_spec>

@@ -5,7 +5,7 @@
             endian="big"
             size="32"
             variant="default"
-            version="1.4"
+            version="1.5"
             slafile="SparcV9_32.sla"
             processorspec="SparcV9.pspec"
             manualindexfile="../manuals/Sparc.idx"
@@ -15,12 +15,13 @@
     <external_name tool="gnu" name="sparc:v9b"/>
     <external_name tool="IDA-PRO" name="sparcb" />
     <external_name tool="qemu" name="qemu-sparc"/>
+    <external_name tool="qemu_system" name="qemu-system-sparc"/>
   </language>
   <language processor="Sparc"
             endian="big"
             size="64"
             variant="default"
-            version="1.4"
+            version="1.5"
             slafile="SparcV9_64.sla"
             processorspec="SparcV9.pspec"
             manualindexfile="../manuals/Sparc.idx"
@@ -30,6 +31,7 @@
     <external_name tool="gnu" name="sparc:v9b"/>
     <external_name tool="IDA-PRO" name="sparcb" />
     <external_name tool="qemu" name="qemu-sparc64"/>
+    <external_name tool="qemu_system" name="qemu-system-sparc64"/>
     <external_name tool="DWARF.register.mapping.file" name="Sparc.dwarf"/>
   </language>
 </language_definitions>

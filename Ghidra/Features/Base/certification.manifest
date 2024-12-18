@@ -1,7 +1,9 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Copyright Distribution Permitted
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: FAMFAMFAM Mini Icons - Public Domain
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: MIT
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
@@ -12,7 +14,9 @@
 .launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
 .launch/Headless.launch||GHIDRA||||END|
+.launch/JShell.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/GolangFunctionsThatDoNotReturn||GHIDRA||||END|
@@ -379,6 +383,7 @@ src/main/help/help/topics/LanguageProviderPlugin/Languages.htm||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/Languages.png||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/PCodeDisplay.png||GHIDRA||||END|
 src/main/help/help/topics/LanguageProviderPlugin/images/Warning.png||GHIDRA||||END|
+src/main/help/help/topics/LibreTranslatePlugin/LibreTranslatePlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/Location_References.html||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/images/LabelReferencesSample.png||GHIDRA||||END|
 src/main/help/help/topics/LocationReferencesPlugin/images/ReferencesToDialog.png||GHIDRA||||END|
@@ -507,8 +512,10 @@ src/main/help/help/topics/RuntimeInfoPlugin/RuntimeInfo.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/The_Scalar_Table.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Search/Instruction_Mnemonic_Search.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Query_Results_Dialog.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Regular_Expressions.htm||GHIDRA||||END|
+src/main/help/help/topics/Search/Search_Formats.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Instruction_Patterns.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Memory.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Program_Text.htm||GHIDRA||||END|
@@ -519,6 +526,9 @@ src/main/help/help/topics/Search/Searching.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/images/DirectReferences.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/EncodedStringsDialog_advancedoptions.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/EncodedStringsDialog_initial.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/MemorySearchProvider.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/MemorySearchProviderWithOptionsOn.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/MemorySearchProviderWithScanPanelOn.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/MultipleSelectionError.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/QueryResultsSearch.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchForAddressTables.png||GHIDRA||||END|
@@ -535,11 +545,7 @@ src/main/help/help/topics/Search/images/SearchInstructionsIncludeOperands.png||G
 src/main/help/help/topics/Search/images/SearchInstructionsIncludeOperandsNoConsts.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionsManualSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchLimitExceeded.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryBinary.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryDecimal.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryHex.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchMemoryRegex.png||GHIDRA||||END|
-src/main/help/help/topics/Search/images/SearchMemoryString.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchText.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/StringSearchResults.png||GHIDRA||||END|
@@ -602,6 +608,7 @@ src/main/help/help/topics/Trees/images/FilterOptions.png||GHIDRA||||END|
 src/main/help/help/topics/Trees/images/TableColumnFilter.png||GHIDRA||||END|
 src/main/help/help/topics/Trees/images/TableColumnFilterAfterFilterApplied.png||GHIDRA||||END|
 src/main/help/help/topics/Trees/images/TableColumnFilterDialog.png||GHIDRA||||END|
+src/main/help/help/topics/VSCodeIntegration/VSCodeIntegration.htm||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/ValidateProgram.html||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/images/ValidateProgram.png||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/images/ValidateProgramDone.png||GHIDRA||||END|
@@ -828,6 +835,7 @@ src/main/resources/images/hexData.png||GHIDRA||||END|
 src/main/resources/images/house.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/hoverOff.gif||GHIDRA||||END|
 src/main/resources/images/hoverOn.gif||GHIDRA||||END|
+src/main/resources/images/icon_link.gif||FAMFAMFAM Mini Icons - Public Domain|||famfamfam mini icon set|END|
 src/main/resources/images/imported_bookmark.gif||GHIDRA||||END|
 src/main/resources/images/katomic.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/key.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
@@ -861,12 +869,17 @@ src/main/resources/images/openFolderInView.png||Modified Nuvola Icons - LGPL 2.1
 src/main/resources/images/openFolderLabels.png||Modified Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/openFolderNamespaces.dark.png||GHIDRA||||END|
 src/main/resources/images/openFolderNamespaces.png||Modified Nuvola Icons - LGPL 2.1||||END|
+src/main/resources/images/oxygen/16x16/application-javascript.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-pdf.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/application-x-ar.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-x-bzip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/application-x-desktop.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-x-java-archive.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/application-x-shellscript.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/application-x-subrip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/bookmarks.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/games-config-background.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/image-x-generic.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/insert-table.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/insert-text.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/multimedia-player-apple-ipod.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
@@ -875,6 +888,7 @@ src/main/resources/images/oxygen/16x16/text-x-c++src.png||Oxygen Icons - LGPL 3.
 src/main/resources/images/oxygen/16x16/text-x-chdr.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/text-x-csharp.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/text-x-pascal.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen/16x16/text-x-python.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/package.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/package_development.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/package_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -918,6 +932,12 @@ src/main/resources/images/unlock.gif||GHIDRA||||END|
 src/main/resources/images/verticalSplit.png||GHIDRA||||END|
 src/main/resources/images/view-sort-ascending.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/view-sort-descending.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/view_bottom.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/view_left_right.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/view_top_bottom.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/viewmag+.png||Crystal Clear Icons - LGPL 2.1||||END|
+src/main/resources/images/viewmag.png||GHIDRA||||END|
+src/main/resources/images/vscode.png||MIT||||END|
 src/main/resources/images/window.png||GHIDRA||||END|
 src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/x-office-document-template.png||Tango Icons - Public Domain|||tango icon set|END|

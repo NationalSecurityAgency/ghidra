@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -412,13 +412,22 @@ bool VarargsFilter::filter(const PrototypePieces &proto,int4 pos) const
 
 {
   if (proto.firstVarArgSlot < 0) return false;
-  return (pos >= proto.firstVarArgSlot);
+  pos -= proto.firstVarArgSlot;
+  return (pos >= firstPos && pos <= lastPos);
 }
 
 void VarargsFilter::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_VARARGS);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_FIRST)
+      firstPos = decoder.readSignedInteger();
+    else if (attribId == ATTRIB_LAST)
+      lastPos = decoder.readSignedInteger();
+  }
   decoder.closeElement(elemId);
 }
 
@@ -689,6 +698,7 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
   vector<int4> tmpStatus = status;
   vector<VarnodeData> pieces;
   int4 sizeLeft = dt->getSize();
+  int4 align = dt->getAlignment();
   list<ParamEntry>::const_iterator iter = firstIter;
   list<ParamEntry>::const_iterator endIter = resource->getEntry().end();
   if (enforceAlignment) {
@@ -699,7 +709,6 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
         break;		// Reached end of resource list
       if (entry.getType() == resourceType && entry.getAllGroups().size() == 1) {	// Single register
 	if (tmpStatus[entry.getGroup()] == 0) {		// Not consumed
-	  int4 align = dt->getAlignment();
 	  int4 regSize = entry.getSize();
 	  if (align <= regSize || (resourcesConsumed % align) == 0)
 	    break;
@@ -720,19 +729,20 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
     if (tmpStatus[entry.getGroup()] != 0)
       continue;		// Already consumed
     int4 trialSize = entry.getSize();
-    Address addr = entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize,1);
+    Address addr = entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize,align);
     tmpStatus[entry.getGroup()] = -1;	// Consume the register
     pieces.push_back(VarnodeData());
     pieces.back().space = addr.getSpace();
     pieces.back().offset = addr.getOffset();
     pieces.back().size = trialSize;
     sizeLeft -= trialSize;
+    align = 1;		// Treat remaining partial pieces as having no alignment requirement
   }
   if (sizeLeft > 0) {				// Have to use stack to get enough bytes
     if (!consumeFromStack)
       return fail;
     int4 grp = stackEntry->getGroup();
-    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,1);	// Consume all the space we need
+    Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,align);	// Consume all the space we need
     if (addr.isInvalid())
       return fail;
     pieces.push_back(VarnodeData());
@@ -840,6 +850,9 @@ void MultiSlotAssign::decode(Decoder &decoder)
     }
     else if (attribId == ATTRIB_ALIGN) {
       enforceAlignment = decoder.readBool();
+    }
+    else if (attribId == ATTRIB_STACKSPILL) {
+      consumeFromStack = decoder.readBool();
     }
   }
   decoder.closeElement(elemId);

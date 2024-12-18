@@ -33,7 +33,6 @@ import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.theme.*;
-import ghidra.framework.main.AppInfo;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.FixedSizeStack;
@@ -59,8 +58,9 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private FixedSizeStack<UndoableEdit> undoStack = new FixedSizeStack<>(MAX_UNDO_REDO_SIZE);
 	private FixedSizeStack<UndoableEdit> redoStack = new FixedSizeStack<>(MAX_UNDO_REDO_SIZE);
 
-	TextEditorComponentProvider(String textFileName, String text) {
-		super(AppInfo.getFrontEndTool(), TITLE, "TextEditorComponentProvider");
+	public TextEditorComponentProvider(FileSystemBrowserPlugin plugin, String textFileName,
+			String text) {
+		super(plugin.getTool(), TITLE, "TextEditorComponentProvider");
 		this.textFileName = textFileName;
 		initialize(text);
 	}

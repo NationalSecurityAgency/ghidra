@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,6 +103,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	JCheckBox functionCB;
 	JCheckBox bookmarkCB;
 	JCheckBox propertiesCB;
+	JCheckBox sourceMapCB;
 
 	JCheckBox limitToSelectionCB;
 	JTextArea limitText;
@@ -111,7 +112,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	ProgramTreePlugin pt;
 	ComponentProvider programTreeProvider;
-	DockingActionIf replaceView;
+	DockingActionIf setView;
 	DockingActionIf goToView;
 	DockingActionIf removeView;
 
@@ -484,8 +485,8 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		pt = env.getPlugin(ProgramTreePlugin.class);
-		showProgramTree();
-		replaceView = getAction(pt, "Replace View");
+		programTreeProvider = showProvider(tool, "Program Tree");
+		setView = getAction(pt, "Set View");
 		goToView = getAction(pt, "Go To start of folder/fragment in View");
 		removeView = getAction(pt, "Remove folder/fragment from View");
 
@@ -501,17 +502,32 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws Exception {
 
 		Window win = getWindow("Select Other Program");
 		if (win != null) {
 			pressButton(win, "Cancel");
 		}
 
+		closeDiff();
+
 		env.dispose();
 	}
 
+	protected void setView() {
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(setView, context, true);
+	}
+
+	protected boolean isDiffActive() {
+		return runSwing(() -> diffPlugin.isDiffActive());
+	}
+
 	void closeDiff() throws Exception {
+
+		if (!isDiffActive()) {
+			return;
+		}
 
 		closeDiffByAction();
 		DialogComponentProvider dialogProvider = waitForDialogComponent("Close Diff Session");
@@ -1057,6 +1073,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		functionCB = (JCheckBox) findComponentByName(win, "FunctionsDiffCB");
 		bookmarkCB = (JCheckBox) findComponentByName(win, "BookmarksDiffCB");
 		propertiesCB = (JCheckBox) findComponentByName(win, "PropertiesDiffCB");
+		sourceMapCB = (JCheckBox) findComponentByName(win, "SourceMapDiffCB");
 
 		limitToSelectionCB = (JCheckBox) findComponentByName(win, "LimitToSelectionDiffCB");
 		limitText = (JTextArea) findComponentByName(win, "AddressTextArea");
@@ -1064,7 +1081,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	void setAllTypes(boolean select) {
 		setCheckBoxes(select, new JCheckBox[] { programContextCB, byteCB, codeUnitCB, refCB,
-			commentCB, labelCB, functionCB, bookmarkCB, propertiesCB });
+			commentCB, labelCB, functionCB, bookmarkCB, propertiesCB, sourceMapCB });
 	}
 
 	void topOfFile(final FieldPanel fp) {
@@ -1132,13 +1149,6 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail(message);
 		}
 		assertEquals(expectedSelection, currentSelection);
-	}
-
-	private void showProgramTree() {
-
-		ProgramTreePlugin ptree = env.getPlugin(ProgramTreePlugin.class);
-		programTreeProvider = (ComponentProvider) getInstanceField("viewProvider", ptree);
-		tool.showComponentProvider(programTreeProvider, true);
 	}
 
 	JTree getProgramTree() {

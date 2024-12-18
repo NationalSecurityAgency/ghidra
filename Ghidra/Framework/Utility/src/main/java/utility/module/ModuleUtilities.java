@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,7 +165,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches for modules in a given collection of module root directories.
 	 *
-	 * @param appRootDirs The collection of application root directories associated with the the given
+	 * @param appRootDirs The collection of application root directories associated with the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
 	 * @return The discovered modules as a map (mapping module name to module for convenience).
@@ -180,7 +180,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches for modules in a given collection of module root directories.
 	 *
-	 * @param appRootDirs The collection of application root directories associated with the the given
+	 * @param appRootDirs The collection of application root directories associated with the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
 	 * @param moduleFilter a predicate used to filter modules; a given module will not be included

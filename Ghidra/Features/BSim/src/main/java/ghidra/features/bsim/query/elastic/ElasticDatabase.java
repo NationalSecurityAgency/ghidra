@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,14 +60,13 @@ public class ElasticDatabase implements FunctionDatabase {
 	public static final int MAX_VECTOR_BULK = 200;			// Maximum vectors ingested in one bulk request
 
 	private ElasticConnection connection;		// Low-level connection to the database
-	private String userName = null;				// User name for server authentication
 	private ConnectionType connectionType = ConnectionType.Unencrypted_No_Authentication;
 	private DatabaseInformation info;			// Information about the active database
 	private Base64VectorFactory vectorFactory;	// factory used to create BSim feature vectors
 	private final BSimServerInfo serverInfo;    // NOTE: does not reflect the use of http vs https
 	private final String baseURL;						// Base URL for connecting to elasticsearch, i.e. http://hostname:9200
 	private final String repository;					// Name of the repository, prefix to all elasticsearch indices
-	private Error lastError;					// Info on error caused by last action taken on this interface (null if no error)
+	private BSimError lastError;					// Info on error caused by last action taken on this interface (null if no error)
 	private Status status;						// status of the connection
 	private boolean initialized;				// true if the connection has been successfully initialized
 
@@ -2022,8 +2021,8 @@ public class ElasticDatabase implements FunctionDatabase {
 			throw new MalformedURLException("URL path must indicate the repository only");
 		}
 		repository = path.substring(1);
-		this.serverInfo =
-			new BSimServerInfo(DBType.elastic, baseURL.getHost(), baseURL.getPort(), repository);
+		this.serverInfo = new BSimServerInfo(DBType.elastic, null, baseURL.getHost(),
+			baseURL.getPort(), repository);
 		this.baseURL = fullURL.substring(0, fullURL.length() - path.length());
 
 		lastError = null;
@@ -2398,15 +2397,7 @@ public class ElasticDatabase implements FunctionDatabase {
 
 	@Override
 	public String getUserName() {
-		if (userName != null) {
-			return userName;
-		}
-		return ClientUtil.getUserName();
-	}
-
-	@Override
-	public void setUserName(String userName) {
-		this.userName = userName;
+		return serverInfo.getUserName();
 	}
 
 	@Override
@@ -2450,14 +2441,14 @@ public class ElasticDatabase implements FunctionDatabase {
 			vectorFactory.set(config.weightfactory, config.idflookup, config.info.settings);
 		}
 		catch (ElasticException err) {
-			lastError = new Error(ErrorCategory.Initialization,
+			lastError = new BSimError(ErrorCategory.Initialization,
 				"Database error on initialization: " + err.getMessage());
 			status = Status.Error;
 			return false;
 		}
 		catch (NoDatabaseException err) {
 			info = null;
-			lastError = new Error(ErrorCategory.Nodatabase,
+			lastError = new BSimError(ErrorCategory.Nodatabase,
 				"Database has not been created yet: " + err.getMessage());
 			initialized = true;
 			status = Status.Ready;
@@ -2480,14 +2471,14 @@ public class ElasticDatabase implements FunctionDatabase {
 	}
 
 	@Override
-	public Error getLastError() {
+	public BSimError getLastError() {
 		return lastError;
 	}
 
 	@Override
 	public QueryResponseRecord query(BSimQuery<?> query) {
 		if ((!isInitialized()) && (!(query instanceof CreateDatabase))) {
-			lastError = new Error(ErrorCategory.Nodatabase, "The database does not exist");
+			lastError = new BSimError(ErrorCategory.Nodatabase, "The database does not exist");
 			return null;
 		}
 		lastError = null;
@@ -2554,22 +2545,22 @@ public class ElasticDatabase implements FunctionDatabase {
 				fdbPasswordChange((PasswordChange) query);
 			}
 			else {
-				lastError = new Error(ErrorCategory.Fatal, "Unknown query type");
+				lastError = new BSimError(ErrorCategory.Fatal, "Unknown query type");
 				query.clearResponse();
 			}
 		}
 		catch (DatabaseNonFatalException err) {
-			lastError = new Error(ErrorCategory.Nonfatal,
+			lastError = new BSimError(ErrorCategory.Nonfatal,
 				"Skipping -" + query.getName() + "- : " + err.getMessage());
 			query.clearResponse();
 		}
 		catch (LSHException err) {
-			lastError = new Error(ErrorCategory.Fatal,
+			lastError = new BSimError(ErrorCategory.Fatal,
 				"Fatal error during -" + query.getName() + "- : " + err.getMessage());
 			query.clearResponse();
 		}
 		catch (ElasticException err) {
-			lastError = new Error(ErrorCategory.Fatal,
+			lastError = new BSimError(ErrorCategory.Fatal,
 				"Elastic error during -" + query.getName() + "- : " + err.getMessage());
 			query.clearResponse();
 		}

@@ -17,7 +17,6 @@ package ghidra.program.model.symbol;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -137,7 +136,7 @@ public class SymbolUtilities {
 
 	/**
 	 * Check for invalid characters
-	 * (space, colon, asterisk, plus, bracket)
+	 * (space or unprintable ascii below 0x20)
 	 * in labels.
 	 *
 	 * @param str the string to be checked for invalid characters.

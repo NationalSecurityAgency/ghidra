@@ -20,6 +20,7 @@ import java.util.*;
 import docking.options.OptionsService;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
+import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.framework.options.ToolOptions;
@@ -50,7 +51,8 @@ public class DecompilerUtils {
 		}
 		if (service != null) {
 			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
+			ToolOptions fieldOptions = service.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
+			options.grabFromToolAndProgram(fieldOptions, opt, program);
 		}
 		else {
 			options.grabFromProgram(program);

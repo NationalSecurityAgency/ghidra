@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,8 +78,9 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	}
 
 	/**
-	 * Returns the the ListingLayoutModel for the i'th program.
+	 * Returns the ListingLayoutModel for the i'th program.
 	 * @param index the index of program for which to return a listing model
+	 * @return the the ListingLayoutModel for the i'th program.
 	 */
 	public ListingModel getAlignedModel(int index) {
 		return alignedModels[index];
@@ -124,7 +125,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 				hasLayout |= layouts[i] != null;
 			}
 			if (hasLayout) {
-				ml = new MultiLayout(layouts, formatMgr, emptyFactory);
+				ml = new MultiLayout(layouts, emptyFactory);
 			}
 			else {
 				ml = new MultiLayout();

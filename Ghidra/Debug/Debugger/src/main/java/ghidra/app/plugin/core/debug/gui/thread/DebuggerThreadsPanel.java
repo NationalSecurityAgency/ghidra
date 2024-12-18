@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -347,13 +347,19 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		List<String> seedPath = object.getCanonicalPath().getKeyList();
 		List<String> processPath = rootSchema.searchForAncestor(TargetProcess.class, seedPath);
 		if (processPath != null) {
-			return successorThreads(rootSchema, processPath);
+			ModelQuery result =  successorThreads(rootSchema, processPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
 		List<String> containerPath =
 			rootSchema.searchForSuitableContainer(TargetThread.class, seedPath);
 
 		if (containerPath != null) {
-			return successorThreads(rootSchema, containerPath);
+			ModelQuery result =  successorThreads(rootSchema, containerPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
 		return successorThreads(rootSchema, List.of());
 	}

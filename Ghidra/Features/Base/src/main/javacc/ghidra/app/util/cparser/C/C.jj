@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,6 +83,7 @@ package ghidra.app.util.cparser.C;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.InvalidNameException;
@@ -656,24 +657,42 @@ public class CParser {
    * @param funcDT function data type to qualify
    */
     private void applyFunctionQualifiers(Declaration dec, FunctionDefinition funcDT) {
-        List<Integer> qualifierList = dec.getQualifiers();
-        if (qualifierList.contains(NORETURN) ) {
-            funcDT.setNoReturn(true);
-        }
-        // TODO: switch to setting calling convention by string identifier
-        for (Integer qualifier : qualifierList) {
-                switch (qualifier) {
-                    case CDECL:
-                            funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
-                            break;
-                    case STDCALL:
-                            funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
-                            break;
-                    case FASTCALL:
-                            funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
-                            break;
-                }
-        }
+		List<Integer> qualifierList = dec.getQualifiers();
+		if (qualifierList.contains(NORETURN)) {
+			funcDT.setNoReturn(true);
+		}
+
+		String convention = null;
+		for (Integer qualifier : qualifierList) {
+			switch (qualifier) {
+				case CDECL:
+					convention = CompilerSpec.CALLING_CONVENTION_cdecl;
+					break;
+				case STDCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_stdcall;
+					break;
+				case FASTCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_fastcall;
+					break;
+				case VECTORCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_vectorcall;
+					break;
+				case RUSTCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_rustcall;
+					break;
+				case PASCALCALL:
+					convention = CompilerSpec.CALLING_CONVENTION_pascal;
+					break;
+			}
+		}
+		if (convention != null) {
+			try {
+				funcDT.setCallingConvention(convention);
+			}
+			catch (InvalidInputException e) {
+				// should not happen
+			}
+		}
     }
     
     private Integer getConstantValue (Object obj, int defaultValue) {
@@ -1164,8 +1183,6 @@ TOKEN :
     |
     <CONST : ( [ "_" ] )* "const">
     |
-    <CDECL : ( [ "_" ] )+ "cdecl"> 
-    |
     <DECLSPEC : "__declspec">
     |
     <PRAGMA : "#" "pragma"> {parenNesting=-1; SwitchTo(PRAGMALINE); }
@@ -1174,9 +1191,17 @@ TOKEN :
     | 
     <READABLETO : "__readableTo">
     |
+    <CDECL : ( [ "_" ] )+ "cdecl"> 
+    |
     <STDCALL : ( [ "_" ] )+ "stdcall"> 
     |
     <FASTCALL : ( [ "_" ] )+ "fastcall"> 
+    |
+    <VECTORCALL : ( [ "_" ] )+ "vectorcall"> 
+    |
+    <RUSTCALL : ( [ "_" ] )+ "rustcall">
+    |
+    <PASCALCALL : ( [ "_" ] )+ "pascal">
     |
     <NORETURN : "_Noreturn" >
     |
@@ -1799,6 +1824,9 @@ Declaration TypeQualifier(Declaration dec) : {}
       <FAR> |
       <STDCALL> { dec.addQualifier(STDCALL); } |
       <FASTCALL> { dec.addQualifier(FASTCALL); } |
+      <VECTORCALL> { dec.addQualifier(VECTORCALL); } |
+      <RUSTCALL> { dec.addQualifier(RUSTCALL); } |
+      <PASCALCALL> { dec.addQualifier(PASCALCALL); } |
       <NORETURN> { dec.addQualifier(NORETURN); } |
       <W64> |
       <PTR64> |

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -319,7 +319,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void initPackedDatabase(ResourceFile packedDBfile, OpenMode openMode,
 			TaskMonitor monitor) throws CancelledException, IOException {
-		long txId = dbHandle.startTransaction();
+		Long txId = dbHandle.startTransaction();
 		try {
 			init(openMode, monitor);
 
@@ -337,6 +337,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		catch (VersionException e) {
 			if (openMode == OpenMode.UPDATE && e.isUpgradable()) {
+				// Try again with UPGRADE mode
+				dbHandle.endTransaction(txId, true);
+				txId = null;
 				initPackedDatabase(packedDBfile, OpenMode.UPGRADE, monitor);
 			}
 			else {
@@ -345,7 +348,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 		}
 		finally {
-			dbHandle.endTransaction(txId, true);
+			if (txId != null) {
+				dbHandle.endTransaction(txId, true);
+			}
 		}
 	}
 
@@ -1688,8 +1693,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// (preference is given to similar kind of datatype when checking existing conflict types)
 		DataType existingDataType = findDataTypeSameLocation(dataType);
 		if (existingDataType == null) {
-			return createDataType(dataType, getUnusedConflictName(dataType), sourceArchive,
-				currentHandler);
+			// create non-existing datatype - keep original name unless it is already used
+			String name = dataType.getName();
+			if (getDataType(dataType.getCategoryPath(), name) != null) {
+				name = getUnusedConflictName(dataType);
+			}
+			return createDataType(dataType, name, sourceArchive, currentHandler);
 		}
 
 		// So we have a dataType with the same path and name, but not equivalent, so use
@@ -2305,7 +2314,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (id <= 0) { // removal of certain special types not permitted
 			return false;
 		}
-		idsToDelete.add(Long.valueOf(id));
+		idsToDelete.add(id);
 		removeQueuedDataTypes();
 		return true;
 	}
@@ -3125,8 +3134,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			structDB.doReplaceWith(struct, false);
 
-			// doReplaceWith may have updated the last change time so set it back to what we want.
-			structDB.setLastChangeTime(struct.getLastChangeTime());
+			// doReplaceWith may have updated the last change time so set it back to what we want
+			// without triggering change notification
+			structDB.doSetLastChangeTime(struct.getLastChangeTime());
 
 			return structDB;
 		}
@@ -3193,8 +3203,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			unionDB.doReplaceWith(union, false);
 
-			// doReplaceWith updated the last change time so set it back to what we want.
-			unionDB.setLastChangeTime(union.getLastChangeTime());
+			// doReplaceWith may have updated the last change time so set it back to what we want
+			// without triggering change notification
+			unionDB.doSetLastChangeTime(union.getLastChangeTime());
 
 			return unionDB;
 		}
@@ -3712,7 +3723,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	void removeParentChildRecord(long parentID, long childID) {
+	protected void removeParentChildRecord(long parentID, long childID) {
 
 		if (isBulkRemoving) {
 			// we are in the process of bulk removing the given child; no need to call
@@ -3726,6 +3737,26 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		catch (IOException e) {
 			dbError(e);
 		}
+	}
+
+	protected Set<Long> getChildIds(long parentID) {
+		try {
+			return parentChildAdapter.getChildIds(parentID);
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		return Set.of();
+	}
+
+	protected boolean hasParent(long childID) {
+		try {
+			return parentChildAdapter.hasParent(childID);
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		return false;
 	}
 
 	List<DataType> getParentDataTypes(long dataTypeId) {

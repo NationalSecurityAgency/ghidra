@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,25 +145,7 @@ public class SymbolicPropogator {
 
 		this.evaluator = eval;
 
-		AddressSpace defaultDataSpace = program.getLanguage().getDefaultDataSpace();
-		AddressSpace defaultSpace = program.getLanguage().getDefaultSpace();
-		defaultSpacesAreTheSame = defaultSpace.equals(defaultDataSpace);
-
-		AddressSpace defaultAddrSpace = program.getAddressFactory().getDefaultAddressSpace();
-
-		// Only make reference if other reference or symbol exists
-		memorySpaces = new ArrayList<>();
-		for (AddressSpace space : program.getAddressFactory().getAddressSpaces()) {
-			if (!space.isLoadedMemorySpace()) {
-				continue;
-			}
-			if (space == defaultAddrSpace) {
-				memorySpaces.add(0, space); // default space is always at index 0
-			}
-			else {
-				memorySpaces.add(space);
-			}
-		}
+		initValidAddressSpaces();
 
 		// if assuming, make a copy of programContext
 		savedProgramContext = programContext;
@@ -204,6 +186,44 @@ public class SymbolicPropogator {
 		readExecutableAddress = context.readExecutableCode();
 
 		return bodyDone;
+	}
+
+	/**
+	 * Initialize address spaces to be used for a potential reference with an unknown space.
+	 */
+	private void initValidAddressSpaces() {
+		AddressSpace defaultDataSpace = program.getLanguage().getDefaultDataSpace();
+		AddressSpace defaultSpace = program.getLanguage().getDefaultSpace();
+		defaultSpacesAreTheSame = defaultSpace.equals(defaultDataSpace);
+
+		AddressSpace defaultAddrSpace = program.getAddressFactory().getDefaultAddressSpace();
+
+		// Only make reference if other reference or symbol exists
+		memorySpaces = new ArrayList<>();
+		for (AddressSpace space : program.getAddressFactory().getAddressSpaces()) {
+			if (!space.isLoadedMemorySpace()) {
+				continue;
+			}
+
+			// only default or defaultData based overlay spaces added
+			if (space.isOverlaySpace()) {
+				OverlayAddressSpace ovSpace = (OverlayAddressSpace) space;
+				AddressSpace baseSpace = ovSpace.getPhysicalSpace();
+				if (!( baseSpace.equals(defaultDataSpace) || baseSpace.equals(defaultSpace) ) ) {
+					continue;
+				}
+			}
+			else if (!( space.equals(defaultDataSpace) || space.equals(defaultSpace) ) ) {
+				continue;
+			}
+
+			if (space.equals(defaultAddrSpace)) {
+				memorySpaces.add(0, space); // default space is always at index 0
+			}
+			else {
+				memorySpaces.add(space);
+			}
+		}
 	}
 
 	/**
@@ -594,6 +614,7 @@ public class SymbolicPropogator {
 						//       FLOW end will probably work correctly, but....
 						//
 						vContext.flowStart(minInstrAddress, maxAddr);
+						retAddr = null;
 					}
 				}
 
@@ -2307,7 +2328,8 @@ public class SymbolicPropogator {
 		AddressSpace instrSpace = instruction.getMinAddress().getAddressSpace();
 
 		// Find likely preferred target space
-		// 1. only non-overlay space is default space, or
+		// 1. only non-overlay spaces are defaultSpace of defaultDataSpace,
+		//    or overlay spaces with base space of defaultSpace or defaultDataSpace
 		// 2. presence of destination symbol/reference at only one of many possible targets
 
 		// if this instruction is in an overlay space overlaying the default space, change the default space

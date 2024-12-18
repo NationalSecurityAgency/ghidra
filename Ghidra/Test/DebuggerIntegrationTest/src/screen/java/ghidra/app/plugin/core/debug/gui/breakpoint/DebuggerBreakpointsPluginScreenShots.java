@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import static ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest.waitForPass;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 import java.util.List;
 import java.util.Set;
@@ -25,9 +24,8 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
-import generic.Unique;
+import ghidra.app.plugin.core.debug.service.MockTarget;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
-import ghidra.app.plugin.core.debug.service.control.MockTarget;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
@@ -35,10 +33,7 @@ import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
-import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
-import ghidra.dbg.target.TargetTogglable;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.async.AsyncTestUtils;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramBuilder;
@@ -49,15 +44,13 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenerator
-		implements DebuggerModelTestUtils {
+		implements AsyncTestUtils {
 
 	DebuggerTargetService targetService;
 	DebuggerStaticMappingService mappingService;

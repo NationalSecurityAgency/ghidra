@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.graph.featurette;
+
+import static ghidra.graph.viewer.GraphComponent.SatellitePosition.*;
 
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
@@ -29,6 +31,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.VisualGraphComponentProvider;
 import ghidra.graph.viewer.*;
+import ghidra.graph.viewer.GraphComponent.SatellitePosition;
 import ghidra.graph.viewer.actions.*;
 import ghidra.util.HelpLocation;
 
@@ -56,9 +59,14 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 
 	private static final String DISPLAY_SATELLITE = "DISPLAY_SATELLITE";
 	private static final String DOCK_SATELLITE = "DOCK_SATELLITE";
+	private static final String DOCK_SATELLITE_POSITION = "DOCK_SATELLITE_POSITION";
 
 	private ToggleDockingAction toggleSatelliteAction;
 	private ToggleDockingAction dockSatelliteAction;
+	private ToggleDockingAction upperLeftAction;
+	private ToggleDockingAction upperRightAction;
+	private ToggleDockingAction lowerLeftAction;
+	private ToggleDockingAction lowerRightAction;
 
 	private Tool tool;
 	private VisualGraphView<?, ?, ?> view;
@@ -75,6 +83,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 	public void writeConfigState(SaveState saveState) {
 		saveState.putBoolean(DOCK_SATELLITE, dockSatelliteAction.isSelected());
 		saveState.putBoolean(DISPLAY_SATELLITE, toggleSatelliteAction.isSelected());
+		saveState.putString(DOCK_SATELLITE_POSITION, view.getSatellitePosition().toString());
 	}
 
 	@Override
@@ -90,6 +99,25 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		boolean showSatellite = saveState.getBoolean(DISPLAY_SATELLITE, true);
 		toggleSatelliteAction.setSelected(showSatellite);
 		view.setSatelliteVisible(showSatellite);
+
+		String positionString = saveState.getString(DOCK_SATELLITE_POSITION, LOWER_RIGHT.name());
+		SatellitePosition position = SatellitePosition.valueOf(positionString);
+		view.setSatellitePosition(position);
+		deselectAllSatellitePositions();
+		switch (position) {
+			case LOWER_LEFT:
+				lowerLeftAction.setSelected(true);
+				break;
+			case LOWER_RIGHT:
+				lowerRightAction.setSelected(true);
+				break;
+			case UPPER_LEFT:
+				upperLeftAction.setSelected(true);
+				break;
+			case UPPER_RIGHT:
+				upperRightAction.setSelected(true);
+				break;
+		}
 	}
 
 	@Override
@@ -185,9 +213,20 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		dockSatelliteAction.setHelpLocation(
 			new HelpLocation("FunctionCallGraphPlugin", "Satellite_View"));
 
-		// Note: this is not a local action, since it should appear in satellite and the main view
+		upperLeftAction = new SatellitePositionAction("Upper Left", UPPER_LEFT, provider);
+		upperRightAction = new SatellitePositionAction("Upper Right", UPPER_RIGHT, provider);
+		lowerLeftAction = new SatellitePositionAction("Lower Left", LOWER_LEFT, provider);
+		lowerRightAction = new SatellitePositionAction("Lower Right", LOWER_RIGHT, provider);
+		lowerRightAction.setSelected(true);
+
+		// Note: these are not local actions, since they should appear in satellite and the main view
 		tool.addAction(toggleSatelliteAction);
 		tool.addAction(dockSatelliteAction);
+		tool.addAction(upperLeftAction);
+		tool.addAction(upperRightAction);
+		tool.addAction(lowerLeftAction);
+		tool.addAction(lowerRightAction);
+
 	}
 
 	@Override
@@ -195,6 +234,13 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		if (satelliteProvider != null) {
 			satelliteProvider.removeFromTool();
 		}
+	}
+
+	public void deselectAllSatellitePositions() {
+		upperLeftAction.setSelected(false);
+		upperRightAction.setSelected(false);
+		lowerLeftAction.setSelected(false);
+		lowerRightAction.setSelected(false);
 	}
 
 	// only remove the provider if the user had docked the satellite
@@ -299,4 +345,43 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 			}
 		}
 	}
+
+	private class SatellitePositionAction extends ToggleDockingAction {
+
+		private SatellitePosition position;
+		private ComponentProvider provider;
+
+		public SatellitePositionAction(String name, SatellitePosition posiiton,
+				ComponentProvider provider) {
+			super(name, owner);
+			this.position = posiiton;
+			this.provider = provider;
+			setPopupMenuData(new MenuData(new String[] { "Docked Satellite Position", name }));
+			setHelpLocation(new HelpLocation("FunctionCallGraphPlugin", "Satellite_Location"));
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			deselectAllSatellitePositions();
+			setSelected(true);
+			view.setSatellitePosition(position);
+		}
+
+		@Override
+		public boolean isAddToPopup(ActionContext context) {
+			ComponentProvider componentProvider = context.getComponentProvider();
+			if (componentProvider != provider && componentProvider != satelliteProvider) {
+				// appear in satellite and the main provider
+				return false;
+			}
+
+			if (context instanceof VisualGraphActionContext vgContext) {
+				return vgContext.shouldShowSatelliteActions();
+			}
+
+			return false;
+		}
+
+	}
+
 }

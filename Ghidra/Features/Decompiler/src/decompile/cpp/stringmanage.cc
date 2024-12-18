@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -399,8 +399,12 @@ int4 StringManager::getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4
   }
   else
     return -1;
-  if (codepoint >= 0xd800 && codepoint <= 0xdfff)
-    return -1;		// Reserved for surrogates, invalid codepoints
+  if (codepoint >= 0xd800) {
+    if (codepoint > 0x10ffff)	// Bigger than maximum codepoint
+      return -1;
+    if (codepoint <= 0xdfff)
+      return -1;		// Reserved for surrogates, invalid codepoints
+  }
   skip = sk;
   return codepoint;
 }

@@ -69,7 +69,6 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB destinationProgram;
 	private VTPlugin plugin;
 
-	// TODO: debug
 	private DomainObjectListenerRecorder eventRecorder = new DomainObjectListenerRecorder();
 
 	@Before

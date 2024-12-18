@@ -3,6 +3,7 @@
 ##MODULE IP: BSD-3-PSUTIL
 DEVNOTES.txt||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html||GHIDRA||||END|

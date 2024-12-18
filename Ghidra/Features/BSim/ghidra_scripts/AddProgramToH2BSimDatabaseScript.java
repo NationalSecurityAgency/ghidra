@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.description.DescriptionManager;
@@ -71,22 +71,16 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 		askValues("Select Database File", null, values);
 
 		File h2DbFile = values.getFile(DATABASE);
+		BSimServerInfo serverInfo = new BSimServerInfo(h2DbFile.getAbsolutePath());
 
-		FunctionDatabase h2Database = null;
-		try {
-			BSimServerInfo serverInfo =
-				new BSimServerInfo(DBType.file, null, 0, h2DbFile.getAbsolutePath());
-			h2Database = BSimClientFactory.buildClient(serverInfo, false);
-			BSimH2FileDataSource bds =
-				BSimH2FileDBConnectionManager.getDataSourceIfExists(h2Database.getServerInfo());
-			if (bds == null) {
-				popup(h2DbFile.getAbsolutePath() + " is not an H2 database file");
-				return;
-			}
-			if (bds.getActiveConnections() > 0) {
-				popup("There is an existing connection to the database.");
-				return;
-			}
+		BSimH2FileDataSource existingBDS =
+			BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
+		if (existingBDS != null && existingBDS.getActiveConnections() > 0) {
+			popup("There is an existing connection to the database.");
+			return;
+		}
+
+		try (FunctionDatabase h2Database = BSimClientFactory.buildClient(serverInfo, false)) {
 
 			h2Database.initialize();
 			DatabaseInformation dbInfo = h2Database.getInfo();
@@ -134,7 +128,7 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				InsertRequest insertreq = new InsertRequest();
 				insertreq.manage = manager;
 				if (insertreq.execute(h2Database) == null) {
-					Error lastError = h2Database.getLastError();
+					BSimError lastError = h2Database.getLastError();
 					if ((lastError.category == ErrorCategory.Format) ||
 						(lastError.category == ErrorCategory.Nonfatal)) {
 						Msg.showWarn(this, null, "Skipping Insert",
@@ -169,11 +163,13 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 		}
 		finally {
-			if (h2Database != null) {
-				h2Database.close();
+			if (existingBDS == null) {
+				// Dispose database source if it did not previously exist
 				BSimH2FileDataSource bds =
-					BSimH2FileDBConnectionManager.getDataSourceIfExists(h2Database.getServerInfo());
-				bds.dispose();
+					BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
+				if (bds != null) {
+					bds.dispose();
+				}
 			}
 		}
 	}

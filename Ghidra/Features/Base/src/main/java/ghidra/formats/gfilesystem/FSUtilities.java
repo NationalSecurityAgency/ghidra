@@ -20,6 +20,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -31,6 +33,7 @@ import org.apache.commons.io.FilenameUtils;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.fileinfo.FileType;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
@@ -400,9 +403,7 @@ public class FSUtilities {
 	public static String getFileMD5(File f, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try (FileInputStream fis = new FileInputStream(f)) {
-			monitor.initialize(f.length());
-			monitor.setMessage("Hashing file: " + f.getName());
-			return getMD5(fis, monitor);
+			return getMD5(fis, f.getName(), f.length(), monitor);
 		}
 	}
 
@@ -418,9 +419,7 @@ public class FSUtilities {
 	public static String getMD5(ByteProvider provider, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try (InputStream is = provider.getInputStream(0)) {
-			monitor.initialize(provider.length());
-			monitor.setMessage("Hashing file: " + provider.getName());
-			return getMD5(is, monitor);
+			return getMD5(is, provider.getName(), provider.length(), monitor);
 		}
 	}
 
@@ -428,21 +427,39 @@ public class FSUtilities {
 	 * Calculate the hash of an {@link InputStream}.
 	 * 
 	 * @param is {@link InputStream}
+	 * @param name of the inputstream
+	 * @param expectedLength the length of the inputstream
 	 * @param monitor {@link TaskMonitor} to update
 	 * @return md5 as a hex encoded string, never null
 	 * @throws IOException if error
 	 * @throws CancelledException if cancelled
 	 */
-	public static String getMD5(InputStream is, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	public static String getMD5(InputStream is, String name, long expectedLength,
+			TaskMonitor monitor) throws IOException, CancelledException {
 		try {
+			long startms = System.currentTimeMillis();
+			long prevElapsed = startms;
+
+			monitor.initialize(expectedLength, "Hashing %s".formatted(name));
+
 			MessageDigest messageDigest = MessageDigest.getInstance(HashUtilities.MD5_ALGORITHM);
-			byte[] buf = new byte[16 * 1024];
+			int bufSize = (int) Math.max(1024, Math.min(expectedLength, 1024 * 1024));
+			byte[] buf = new byte[bufSize];
 			int bytesRead;
+			long totalBytesRead = 0;
 			while ((bytesRead = is.read(buf)) >= 0) {
 				messageDigest.update(buf, 0, bytesRead);
-				monitor.incrementProgress(bytesRead);
-				monitor.checkCancelled();
+				totalBytesRead += bytesRead;
+				monitor.increment(bytesRead);
+
+				long now = System.currentTimeMillis();
+				if (now - prevElapsed > 5000 /*5 seconds*/ && totalBytesRead > bufSize) {
+					prevElapsed = now;
+					long elapsed = now - startms;
+					long rate = (long) (totalBytesRead / (elapsed / 1000f));
+					monitor.setMessage(
+						"Hashing %s %s/s".formatted(name, FileUtilities.formatLength(rate)));
+				}
 			}
 			return NumericUtilities.convertBytesToString(messageDigest.digest());
 		}
@@ -587,4 +604,50 @@ public class FSUtilities {
 				e);
 		}
 	}
+
+	public static boolean isSymlink(File f) {
+		try {
+			return f != null && Files.isSymbolicLink(f.toPath());
+		}
+		catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Returns the destination of a symlink, or null if not a symlink or other error
+	 * 
+	 * @param f {@link File} that is a symlink
+	 * @return destination path string of the symlink, or null if not symlink
+	 */
+	public static String readSymlink(File f) {
+		try {
+			Path symlink = Files.readSymbolicLink(f.toPath());
+			return symlink.toString();
+		}
+		catch (Throwable th) {
+			// ignore and return null
+		}
+		return null;
+	}
+
+	public static FileType getFileType(File f) {
+		try {
+			Path p = f.toPath();
+			if (Files.isSymbolicLink(p)) {
+				return FileType.SYMBOLIC_LINK;
+			}
+			if (Files.isDirectory(p)) {
+				return FileType.DIRECTORY;
+			}
+			if (Files.isRegularFile(p)) {
+				return FileType.FILE;
+			}
+		}
+		catch (IllegalArgumentException e) {
+			// fall thru
+		}
+		return FileType.UNKNOWN;
+	}
+
 }

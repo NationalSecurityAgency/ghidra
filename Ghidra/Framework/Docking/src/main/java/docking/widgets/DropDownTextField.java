@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,79 +175,6 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	protected JComponent getPreviewPaneComponent() {
 		return previewLabel;
-	}
-
-	// overridden to grab the Escape and enter key events before our parent window gets them
-	@Override
-	protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-
-		if (handleEscapeKey(ks, e, condition, pressed)) {
-			return true;
-		}
-
-		if (handleEnterKey(ks, e, condition, pressed)) {
-			return true;
-		}
-		return super.processKeyBinding(ks, e, condition, pressed);
-	}
-
-	private boolean handleEscapeKey(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-		if ((condition == JComponent.WHEN_FOCUSED) && (ks.getKeyCode() == KeyEvent.VK_ESCAPE)) {
-
-			if (getMatchingWindow().isShowing()) {
-				hideMatchingWindow();
-				e.consume();
-				return true;
-			}
-			else if (pressed) {
-				// do not return after this call so that the event will continue to be processed
-				fireEditingCancelled();
-			}
-		}
-
-		return false;
-	}
-
-	private boolean handleEnterKey(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-		if ((condition != JComponent.WHEN_FOCUSED) || (ks.getKeyCode() != KeyEvent.VK_ENTER)) {
-			return false; // enter key not pressed!
-		}
-
-		if (ignoreEnterKeyPress) {
-			return false;
-		}
-
-		// O.K., if we are consuming key presses, then we only want to do so when the selection
-		// window is showing.  This will close the selection window and not send the Enter event up
-		// to our parent component.
-		boolean listShowing = isMatchingListShowing();
-		if (consumeEnterKeyPress) {
-			if (listShowing) {
-				setTextFromListOnEnterPress();
-				validateChosenItemAgainstText(true);
-				e.consume();
-				return true; // don't let our parent see the event
-			}
-			else if (pressed) {
-				validateChosenItemAgainstText(false);
-				fireEditingStopped();
-			}
-
-			// Return false, even though 'consumeEnterKeyPress' is set, so that our
-			// parent can process the event.
-			return false;
-		}
-
-		// When we aren't consuming Enter key presses, then we just take the user's selection
-		// and signal that editing is finished, while letting our parent component handle the event
-		if (pressed) {
-			setTextFromListOnEnterPress();
-			validateChosenItemAgainstText(listShowing);
-			fireEditingStopped();
-			return true;
-		}
-
-		return false;
 	}
 
 	private void validateChosenItemAgainstText(boolean isListShowing) {
@@ -671,7 +598,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	/**
 	 * Returns the user's selection or null if the user has not made a selection.
 	 * <p>
-	 * Note: the the value returned from this method may not match the text in the field in the
+	 * Note: the value returned from this method may not match the text in the field in the
 	 * case that the user has selected a value and then typed some text.
 	 *
 	 * @return the user's selection or null if the user has not made a selection.
@@ -884,60 +811,115 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 												 KeyEvent.VK_KP_DOWN)) {
 			//@formatter:on
 
-				if (!getMatchingWindow().isShowing()) {
-					updateDisplayContents(getText());
-					event.consume();
-				}
-				else { // update the window if it is showing
-					if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_KP_UP) {
-						decrementListSelection();
-					}
-					else {
-						incrementListSelection();
-					}
-					event.consume();
-					setTextFromSelectedListItemAndKeepMatchingWindowOpen();
-				}
+				handleArrowKey(event);
+			}
+			else if (keyCode == KeyEvent.VK_ENTER) {
+				handleEnterKey(event);
+			}
+			else if (keyCode == KeyEvent.VK_ESCAPE) {
+				handleEscapeKey(event);
 			}
 
 			setToolTipText(getToolTipText());
 		}
 
-		private void incrementListSelection() {
-			int index = list.getSelectedIndex();
-			int listSize = list.getModel().getSize();
-
-			if (index < 0) { // no selection
-				index = 0;
+		private void handleEscapeKey(KeyEvent event) {
+			if (getMatchingWindow().isShowing()) {
+				hideMatchingWindow();
 			}
-			else if (index == listSize - 1) { // last element selected - wrap
-				index = 0;
+			else {
+				fireEditingCancelled();
 			}
-			else { // just increment
-				index++;
-			}
-
-			list.setSelectedIndex(index);
-			list.ensureIndexIsVisible(index);
+			event.consume();
 		}
 
-		private void decrementListSelection() {
-			int index = list.getSelectedIndex();
-			int listSize = list.getModel().getSize();
+		private void handleEnterKey(KeyEvent event) {
 
-			if (index < 0) { // no selection
-				index = 0;
-			}
-			else if (index == 0) { // first element - wrap
-				index = listSize - 1;
-			}
-			else { // just decrement
-				index--;
+			if (ignoreEnterKeyPress) {
+				return;
 			}
 
-			list.setSelectedIndex(index);
-			list.ensureIndexIsVisible(index);
+			// O.K., if we are consuming key presses, then we only want to do so when the selection
+			// window is showing.  This will close the selection window and not send the Enter event up
+			// to our parent component.
+			boolean listShowing = isMatchingListShowing();
+			if (consumeEnterKeyPress) {
+				if (listShowing) {
+					setTextFromListOnEnterPress();
+					validateChosenItemAgainstText(true);
+					event.consume();
+					return; // don't let our parent see the event
+				}
+
+				validateChosenItemAgainstText(false);
+				fireEditingStopped();
+
+				// Even though 'consumeEnterKeyPress' is set, do not consume the event so that our
+				// parent can process the event.
+				return;
+			}
+
+			// When we aren't consuming Enter key presses, then just take the user's selection and 
+			// signal that editing is finished, while letting our parent component handle the event
+			setTextFromListOnEnterPress();
+			validateChosenItemAgainstText(listShowing);
+			fireEditingStopped();
 		}
+	}
+
+	private void handleArrowKey(KeyEvent event) {
+
+		int keyCode = event.getKeyCode();
+		if (!getMatchingWindow().isShowing()) {
+			updateDisplayContents(getText());
+			event.consume();
+		}
+		else { // update the window if it is showing
+			if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_KP_UP) {
+				decrementListSelection();
+			}
+			else {
+				incrementListSelection();
+			}
+			event.consume();
+			setTextFromSelectedListItemAndKeepMatchingWindowOpen();
+		}
+	}
+
+	private void incrementListSelection() {
+		int index = list.getSelectedIndex();
+		int listSize = list.getModel().getSize();
+
+		if (index < 0) { // no selection
+			index = 0;
+		}
+		else if (index == listSize - 1) { // last element selected - wrap
+			index = 0;
+		}
+		else { // just increment
+			index++;
+		}
+
+		list.setSelectedIndex(index);
+		list.ensureIndexIsVisible(index);
+	}
+
+	private void decrementListSelection() {
+		int index = list.getSelectedIndex();
+		int listSize = list.getModel().getSize();
+
+		if (index < 0) { // no selection
+			index = 0;
+		}
+		else if (index == 0) { // first element - wrap
+			index = listSize - 1;
+		}
+		else { // just decrement
+			index--;
+		}
+
+		list.setSelectedIndex(index);
+		list.ensureIndexIsVisible(index);
 	}
 
 	// we know the cast is safe because we put the items in the list

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.datamgr.editor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EventObject;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -33,12 +34,8 @@ import docking.widgets.textfield.GValidatedTextField;
 import docking.widgets.textfield.GValidatedTextField.LongField.LongValidator;
 import docking.widgets.textfield.GValidatedTextField.ValidationFailedException;
 import docking.widgets.textfield.GValidatedTextField.ValidationMessageListener;
-import generic.theme.Gui;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.DataTypeArchive;
-import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
 
@@ -103,20 +100,15 @@ class EnumEditorPanel extends JPanel {
 
 		// invoke later because the key press on the table causes the selection to change
 		Swing.runLater(() -> {
-			try {
-				if (table.isEditing()) {
-					return; // don't change the selection if a new edit is in progress
-				}
-
-				int row = tableModel.getRow(name);
-				if (row >= 0 && row < tableModel.getRowCount()) {
-					table.setRowSelectionInterval(row, row);
-					Rectangle rect = table.getCellRect(row, 0, false);
-					table.scrollRectToVisible(rect);
-				}
+			if (table.isEditing()) {
+				return; // don't change the selection if a new edit is in progress
 			}
-			catch (NoSuchElementException e) {
-				// ignore
+
+			int row = tableModel.getRow(name);
+			if (row >= 0 && row < tableModel.getRowCount()) {
+				table.setRowSelectionInterval(row, row);
+				Rectangle rect = table.getCellRect(row, 0, false);
+				table.scrollRectToVisible(rect);
 			}
 		});
 	}
@@ -504,6 +496,26 @@ class EnumEditorPanel extends JPanel {
 		EnumEntry enumEntry = tableModel.getRowObject(row);
 		return enumEntry.getName();
 	}
+
+	private void edit(int row, int col) {
+		scrollToCell(row, col);
+		table.setRowSelectionInterval(row, row);
+		table.editCellAt(row, col);
+	}
+
+	private void scrollToCell(int row, int col) {
+		if (table.getAutoscrolls()) {
+			Rectangle cellRect = table.getCellRect(row, col, false);
+			if (cellRect != null) {
+				table.scrollRectToVisible(cellRect);
+			}
+		}
+	}
+
+	private int getRow(EnumEntry entry) {
+		return tableModel.getRowIndex(entry);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -582,61 +594,111 @@ class EnumEditorPanel extends JPanel {
 					return;
 				}
 
-				int row = table.getEditingRow();
-				int col = table.getEditingColumn();
-				int rowCount = table.getRowCount();
-				int columnCount = table.getColumnCount();
-				int keycode = e.getKeyCode();
-				switch (keycode) {
-					case KeyEvent.VK_TAB:
-						if (e.isShiftDown()) {
-							if (--col < 0) {
-								col = columnCount - 1;
-								if (--row < 0) {
-									row = rowCount - 1;
-									col = columnCount - 1;
-								}
-							}
-						}
-						else {
-							if (++col == columnCount) {
-								col = 0;
-
-								if (++row == rowCount) {
-									row = 0;
-								}
-							}
-						}
-						break;
-					case KeyEvent.VK_DOWN:
-						if (++row == rowCount) {
-							row = 0;
-						}
-						break;
-					case KeyEvent.VK_UP:
-						if (--row < 0) {
-							row = rowCount - 1;
-						}
-						break;
-					default:
-						return;
+				int code = e.getKeyCode();
+				boolean moveEdit =
+					code == KeyEvent.VK_TAB || code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN;
+				if (!moveEdit) {
+					return;
 				}
 
 				e.consume();
 
-				scrollToCell(row, col);
-				table.setRowSelectionInterval(row, row);
-				table.editCellAt(row, col);
+				int row = table.getEditingRow();
+				int col = table.getEditingColumn();
+
+				// 
+				// The user has attempted to edit a new cell while there is an edit in progress. The
+				// table may get re-sorted when this happens, as the current edit may get committed, 
+				// which can affect the table's sort.  In this case, we need to find where the 
+				// currently edited cell is moved to so that we can correctly move to the user's 
+				// requested cell, which is relative to the current cell being edited.
+				//
+				EnumEntry editedEntry = tableModel.getRowObject(row);
+
+				TableCellEditor editor = table.getCellEditor();
+				editor.stopCellEditing();
+
+				CellEditRequest cellEditRequest =
+					new CellEditRequest(EnumEditorPanel.this, editedEntry, col, e);
+				Swing.runLater(cellEditRequest);
 			}
 		};
 
-		private void scrollToCell(int row, int col) {
-			if (table.getAutoscrolls()) {
-				Rectangle cellRect = table.getCellRect(row, col, false);
-				if (cellRect != null) {
-					table.scrollRectToVisible(cellRect);
+		private record CellEditRequest(EnumEditorPanel editorPanel, EnumEntry editedEntry,
+				int editCol, KeyEvent e) implements Runnable {
+
+			@Override
+			public void run() {
+
+				JTable table = editorPanel.table;
+
+				// note: this lookup works because equals() is *not* overridden and any edits are
+				// applied to the object in memory so that the default '==' lookup works.
+				int row = editorPanel.getRow(editedEntry);
+				int col = editCol;
+				int rowCount = table.getRowCount();
+				switch (e.getKeyCode()) {
+					case KeyEvent.VK_TAB:
+						boolean forward = !e.isShiftDown();
+						editNextCell(table, forward, row, col);
+						return;
+					case KeyEvent.VK_DOWN:
+						if (++row == rowCount) {
+							row = 0;
+						}
+						editorPanel.edit(row, col);
+						return;
+					case KeyEvent.VK_UP:
+						if (--row < 0) {
+							row = rowCount - 1;
+						}
+						editorPanel.edit(row, col);
+						return;
+					default:
+						return;
 				}
+
 			}
+
+			private void editNextCell(JTable table, boolean forward, int row, int col) {
+
+				int columnCount = table.getColumnCount();
+				int rowCount = table.getRowCount();
+				if (forward) {
+
+					int nextRow = row;
+					int nextCol = col + 1;
+					if (nextCol == columnCount) {
+
+						// wrap to the next row
+						nextCol = 0;
+						nextRow++;
+						if (nextRow == rowCount) {
+							// wrap to the first row
+							nextRow = 0;
+						}
+					}
+
+					editorPanel.edit(nextRow, nextCol);
+					return;
+				}
+
+				// going backward
+				int nextRow = row;
+				int nextCol = col - 1;
+				if (nextCol < 0) {
+					nextCol = columnCount - 1;
+
+					nextRow--;
+					if (nextRow < 0) {
+						nextRow = rowCount - 1;
+						nextCol = columnCount - 1;
+					}
+				}
+
+				editorPanel.edit(nextRow, nextCol);
+			}
+
 		}
 	}
 
@@ -670,7 +732,7 @@ class EnumEditorPanel extends JPanel {
 
 	private class EnumValueRenderer extends GTableCellRenderer {
 		EnumValueRenderer() {
-			setFont(Gui.getFont("font.monospaced"));
+			setFont(getFixedWidthFont());
 		}
 
 		@Override

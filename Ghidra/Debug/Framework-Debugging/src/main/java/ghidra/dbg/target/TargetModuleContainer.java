@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,10 @@ import ghidra.lifecycle.Experimental;
  * modules, but it doesn't technically have to be. If we don't eventually go forward with synthetic
  * modules, then we could remove this interface altogether. A client searching for the module
  * container should use {@link TargetObjectSchema#searchForCanonicalContainer(Class)}.
+ * 
+ * @deprecated Will be removed in 11.3. Portions may be refactored into trace object database.
  */
+@Deprecated(forRemoval = true, since = "11.2")
 @DebuggerTargetObjectIface("ModuleContainer")
 public interface TargetModuleContainer extends TargetObject {
 

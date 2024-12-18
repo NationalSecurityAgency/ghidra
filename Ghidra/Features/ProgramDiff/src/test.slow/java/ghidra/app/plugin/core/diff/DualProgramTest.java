@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.Test;
 
-import docking.DefaultActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.fieldpanel.LayoutModel;
 import ghidra.app.cmd.label.AddLabelCmd;
@@ -36,6 +35,7 @@ import ghidra.app.services.ProgramManager;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 
 public class DualProgramTest extends DiffTestAdapter {
@@ -76,7 +76,7 @@ public class DualProgramTest extends DiffTestAdapter {
 	}
 
 	@Test
-	public void testEscapeOpenSecondProgram() throws Exception {
+	public void testOpenSecondProgram_Escape() throws Exception {
 
 		restoreProgram(diffTestP2);
 		loadProgram(diffTestP1);
@@ -230,9 +230,6 @@ public class DualProgramTest extends DiffTestAdapter {
 		ProgramDB otherProgram = otherBuilder.getProgram();
 		otherBuilder.createMemory(".stuff", "0x1004000", 0x300);
 
-		Window win;
-		Component comp;
-		//InfoWindow.showSplashScreen(); 
 		showTool(frontEndTool);
 		env.showTool();
 
@@ -241,9 +238,9 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		launchDiffByAction();
 		waitForSwing();
-		win = waitForWindow("Select Other Program");
+		Window win = waitForWindow("Select Other Program");
 		assertNotNull(win);
-		comp = getComponentOfType(win, JComboBox.class);
+		Component comp = getComponentOfType(win, JComboBox.class);
 		assertNotNull(comp);
 
 		JTree tree = findComponent(win, JTree.class);
@@ -349,7 +346,7 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		// Modify the active program.
 		setLocation("100f3ff");
-		CompoundCmd cmd = new CompoundCmd("test");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("test");
 		cmd.add(new AddLabelCmd(addr("100f3ff"), "TestLabel", false, SourceType.USER_DEFINED));
 		cmd.add(
 			new AddLabelCmd(addr("100f3ff"), "AnotherTestLabel", false, SourceType.USER_DEFINED));
@@ -375,7 +372,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		performAction(replaceView, true);
+		setView();
 		topOfFile(fp1);
 		assertEquals(addr("00000100"), cb.getCurrentAddress());
 		bottomOfFile(fp1);
@@ -387,7 +384,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, ".data");
-		performAction(replaceView, true);
+		setView();
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
 		bottomOfFile(fp1);
@@ -399,10 +396,11 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, ".data");
-		performAction(replaceView, true);
+		setView();
 		selectTreeNodeByText(tree, ".rsrc");
 
-		performAction(goToView, true);
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(goToView, context, true);
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -415,7 +413,8 @@ public class DualProgramTest extends DiffTestAdapter {
 		openSecondProgram(diffTestP1, diffTestP2);
 		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		performAction(removeView, true);
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(removeView, context, true);
 		topOfFile(fp1);
 		assertNull(cb.getCurrentAddress());
 		bottomOfFile(fp1);

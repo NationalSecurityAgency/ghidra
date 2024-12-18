@@ -15,14 +15,14 @@
  */
 package ghidra.feature.vt.api.impl;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 import ghidra.feature.vt.api.db.*;
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.api.main.VTMarkupItemStatus;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-
-import java.util.*;
 
 public class MarkupItemManagerImpl {
 
@@ -70,7 +70,7 @@ public class MarkupItemManagerImpl {
 		return Collections.unmodifiableList(markupItems);
 	}
 
-	protected List<VTMarkupItem> createMarkupItems(TaskMonitor monitor) throws CancelledException {
+	private List<VTMarkupItem> createMarkupItems(TaskMonitor monitor) throws CancelledException {
 
 		Collection<VTMarkupItem> generatedMarkupItems = getGeneratedMarkupItems(monitor);
 		Collection<VTMarkupItem> databaseMarkupItems = getStoredMarkupItems(monitor);
@@ -104,18 +104,6 @@ public class MarkupItemManagerImpl {
 		return false;
 	}
 
-	private Collection<VTMarkupItem> getStoredMarkupItems(TaskMonitor monitor)
-			throws CancelledException {
-		AssociationDatabaseManager associationDBM = association.getAssociationManagerDB();
-		Collection<MarkupItemStorageDB> appliedMarkupItems =
-			associationDBM.getAppliedMarkupItems(monitor, association);
-		List<VTMarkupItem> list = new ArrayList<VTMarkupItem>();
-		for (MarkupItemStorageDB markupItemStorageDB : appliedMarkupItems) {
-			list.add(new MarkupItemImpl(markupItemStorageDB));
-		}
-		return list;
-	}
-
 	private List<VTMarkupItem> replaceGeneratedMarkupItemsWithDBMarkupItems(
 			Collection<VTMarkupItem> generatedMarkupItems,
 			Collection<VTMarkupItem> databaseMarkupItems) {
@@ -142,8 +130,45 @@ public class MarkupItemManagerImpl {
 			markupItem.getSourceAddress().toString(true);
 	}
 
-	public void clearCache() {
+	// synchronized due to write of 'markupItems'
+	public synchronized void clearCache() {
 		markupItems = EMPTY_LIST;
+	}
+
+	private Collection<VTMarkupItem> getStoredMarkupItems(TaskMonitor monitor)
+			throws CancelledException {
+		AssociationDatabaseManager associationDBM = association.getAssociationManagerDB();
+		Collection<MarkupItemStorageDB> appliedMarkupItems =
+			associationDBM.getAppliedMarkupItems(monitor, association);
+		List<VTMarkupItem> list = new ArrayList<VTMarkupItem>();
+		for (MarkupItemStorageDB markupItemStorageDB : appliedMarkupItems) {
+			list.add(new MarkupItemImpl(markupItemStorageDB));
+		}
+		return list;
+	}
+
+	// synchronized to match getMarkupItems() so we do not have other clients loading items while
+	// we are processing them
+	public synchronized void removeMarkupItems() {
+
+		List<VTMarkupItem> items;
+		try {
+			items = getMarkupItems(TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			return; // can't happen with DUMMY
+		}
+
+		List<MarkupItemImpl> impls = items.stream()
+				.map(item -> (MarkupItemImpl) item)
+				.filter(impl -> impl.isStoredInDB())
+				.collect(Collectors.toList());
+
+		AssociationDatabaseManager associationDbm = association.getAssociationManagerDB();
+		associationDbm.removeStoredMarkupItems(impls);
+
+		// signal that markup item info has changed and must be reloaded when next needed
+		clearCache();
 	}
 
 }

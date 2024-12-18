@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,6 +174,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		createAndApplyClassStructures(recoveredClasses);
+
+		// fix purecall vfunction definitions
+		fixupPurecallFunctionDefs();
 
 		if (!isPDBLoaded) {
 			// create better vftable labels for multi vftable classes
@@ -866,7 +869,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			// Get class name from class vftable is in
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
-
+			if (classNamespace.isGlobal()) {
+				Msg.warn(this, "ClassHierarchyDescriptor at " + classHierarchyDescriptorAddress +
+					" is unexpectedly in the Global namespace so processing cannot continue for " +
+					"this class");
+				continue;
+			}
 			// get the data type category associated with the given class namespace
 			Category category = getDataTypeCategory(classNamespace);
 
@@ -2001,16 +2009,16 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			for (RecoveredClass ancestor : ancestors) {
 				monitor.checkCancelled();
 
-				List<RecoveredClass> decendentList = ancestorToCommonChild.get(ancestor);
-				if (decendentList == null) {
-					List<RecoveredClass> newDecendentList = new ArrayList<RecoveredClass>();
-					newDecendentList.add(parentClass);
-					ancestorToCommonChild.put(ancestor, newDecendentList);
+				List<RecoveredClass> descendantList = ancestorToCommonChild.get(ancestor);
+				if (descendantList == null) {
+					List<RecoveredClass> newDescendantList = new ArrayList<RecoveredClass>();
+					newDescendantList.add(parentClass);
+					ancestorToCommonChild.put(ancestor, newDescendantList);
 				}
 				else {
-					if (!decendentList.contains(parentClass)) {
-						decendentList.add(parentClass);
-						ancestorToCommonChild.replace(ancestor, decendentList);
+					if (!descendantList.contains(parentClass)) {
+						descendantList.add(parentClass);
+						ancestorToCommonChild.replace(ancestor, descendantList);
 					}
 				}
 			}
@@ -2446,7 +2454,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		Map<RecoveredClass, Integer> parentOffsetMap = getBaseClassOffsetMap(recoveredClass);
 
-		return parentOffsetMap.get(virtualParentClasses.get(0));
+		if (parentOffsetMap != null) {
+			return parentOffsetMap.get(virtualParentClasses.get(0));
+		}
+
+		return null;
 
 	}
 
@@ -2657,8 +2669,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				if (numAddressRanges == 1) {
 					fixupContiguousDeletingDestructorSymbols(function);
 					processedFunctions.add(function);
+					continue;
 				}
-				else if (numAddressRanges == 2) {
+				if (numAddressRanges == 2) {
 					// else fixup split dd function 
 					Function scalarDeletingDestructor = createSplitDeletingDestructorFunction(body);
 					if (scalarDeletingDestructor == null) {
@@ -2669,7 +2682,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					fixupSplitDeletingDestructorSymbols(function, scalarDeletingDestructor);
 					processedFunctions.add(function);
 				}
-				// else if > 2 do nothing - not sure how to handle or even if they exist
+				// if > 2 do nothing - not sure how to handle or even if they exist
 			}
 		}
 	}

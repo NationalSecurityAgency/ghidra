@@ -95,7 +95,7 @@ public class ZipFileSystemBuiltin extends AbstractFileSystem<ZipEntry> {
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		ZipEntry zipEntry = fsIndex.getMetadata(file);
 		if (zipEntry == null) {
-			return null;
+			return FileAttributes.EMPTY;
 		}
 		FileAttributes result = new FileAttributes();
 

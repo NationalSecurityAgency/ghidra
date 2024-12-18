@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from concurrent.futures import Future, ThreadPoolExecutor
 import re
@@ -196,8 +196,10 @@ def execute(cmd: str, to_string: bool=False):
         exec("{}".format(cmd), shared_globals)
 
 
-@REGISTRY.method
-def evaluate(expr: str):
+@REGISTRY.method(action='evaluate', display='Evaluate')
+def evaluate(
+	session: sch.Schema('Session'),
+ 	expr: ParamDesc(str, display='Expr')):
     """Execute a CLI command."""
     return str(eval("{}".format(expr), shared_globals))
 
@@ -311,40 +313,51 @@ def remove_process(process: sch.Schema('Process')):
     dbg().detach()
 
 
-@REGISTRY.method(action='connect')
-def target(process: sch.Schema('Process'), spec: str):
+@REGISTRY.method(action='connect', display='Connect')
+@util.dbg.eng_thread
+def target(
+	session: sch.Schema('Session'), 
+	cmd: ParamDesc(str, display='Command')):
     """Connect to a target machine or process."""
-    find_proc_by_obj(process)
-    dbg().attach(spec)
+    dbg().attach_kernel(cmd)
 
 
-@REGISTRY.method(action='attach')
+@REGISTRY.method(action='attach', display='Attach')
+@util.dbg.eng_thread
 def attach_obj(target: sch.Schema('Attachable')):
     """Attach the process to the given target."""
     pid = find_availpid_by_obj(target)
     dbg().attach(pid)
 
 
-@REGISTRY.method(action='attach')
-def attach_pid(pid: int):
+@REGISTRY.method(action='attach', display='Attach by pid')
+@util.dbg.eng_thread
+def attach_pid(
+	session: sch.Schema('Session'), 
+	pid: ParamDesc(str, display='PID')):
     """Attach the process to the given target."""
-    dbg().attach(pid)
+    dbg().attach_proc(int(pid))
 
 
-@REGISTRY.method(action='attach')
-def attach_name(process: sch.Schema('Process'), name: str):
+@REGISTRY.method(action='attach', display='Attach by name')
+@util.dbg.eng_thread
+def attach_name(
+	session: sch.Schema('Session'), 
+	name: ParamDesc(str, display='Name')):
     """Attach the process to the given target."""
-    dbg().atach(name)
+    dbg().attach_proc(name)
 
 
-@REGISTRY.method
+@REGISTRY.method(action='detach', display='Detach')
+@util.dbg.eng_thread
 def detach(process: sch.Schema('Process')):
     """Detach the process's target."""
     dbg().detach()
 
 
-@REGISTRY.method(action='launch')
+@REGISTRY.method(action='launch', display='Launch')
 def launch_loader(
+		session: sch.Schema('Session'),
         file: ParamDesc(str, display='File'),
         args: ParamDesc(str, display='Arguments')=''):
     """
@@ -356,11 +369,13 @@ def launch_loader(
     commands.ghidra_trace_create(command=file, start_trace=False)
 
 
-@REGISTRY.method(action='launch')
+@REGISTRY.method(action='launch', display='LaunchEx')
 def launch(
-        timeout: ParamDesc(int, display='Timeout'),
+		session: sch.Schema('Session'),
         file: ParamDesc(str, display='File'),
-        args: ParamDesc(str, display='Arguments')=''):
+        args: ParamDesc(str, display='Arguments')='',
+        initial_break: ParamDesc(bool, display='Initial Break')=True,
+        timeout: ParamDesc(int, display='Timeout')=-1):
     """
     Run a native process with the given command line.
     """
@@ -368,7 +383,7 @@ def launch(
     if args != None:
         command += " "+args
     commands.ghidra_trace_create(
-        command, initial_break=False, timeout=timeout, start_trace=False)
+        command, initial_break=initial_break, timeout=timeout, start_trace=False)
 
 
 @REGISTRY.method
@@ -413,7 +428,7 @@ def step_out(thread: sch.Schema('Thread')):
     hooks.on_stop()
 
 
-@REGISTRY.method(action='step_to')
+@REGISTRY.method(action='step_to', display='Step To')
 def step_to(thread: sch.Schema('Thread'), address: Address, max=None):
     """Continue execution up to the given address."""
     find_thread_by_obj(thread)

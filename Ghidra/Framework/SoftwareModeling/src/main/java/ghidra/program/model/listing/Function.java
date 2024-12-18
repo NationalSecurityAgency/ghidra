@@ -111,7 +111,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Returns the current call-fixup name set on this instruction or null if one has not been set
-	 * @return the name
+	 * @return the call fixup name or null
 	 */
 	public String getCallFixup();
 

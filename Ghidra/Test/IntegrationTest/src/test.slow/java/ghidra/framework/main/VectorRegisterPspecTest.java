@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,6 +29,7 @@ import ghidra.program.model.listing.Program;
 public class VectorRegisterPspecTest extends AbstractGenericTest {
 	private Program testProgram;
 
+	private static final int ZMM_BIT_SIZE = 512;
 	private static final int YMM_BIT_SIZE = 256;
 	private static final int XMM_BIT_SIZE = 128;
 	private static final int VSX_BIT_SIZE = 128;
@@ -53,7 +54,10 @@ public class VectorRegisterPspecTest extends AbstractGenericTest {
 			Register vectorReg = vectorRegs.get(i);
 			assertTrue(vectorRegs.get(i).isVectorRegister());
 			assertEquals(intelVectorRegisterNames[i], vectorReg.getName());
-			if (vectorReg.getName().startsWith("Y")) {
+			if (vectorReg.getName().startsWith("Z")) {
+				assertEquals(ZMM_BIT_SIZE, vectorReg.getBitLength());
+			}
+			else if (vectorReg.getName().startsWith("Y")) {
 				assertEquals(YMM_BIT_SIZE, vectorReg.getBitLength());
 			}
 			else {
@@ -82,7 +86,10 @@ public class VectorRegisterPspecTest extends AbstractGenericTest {
 			Register vectorReg = vectorRegs.get(i);
 			assertTrue(vectorReg.isVectorRegister());
 			assertEquals(intelVectorRegisterNames[i], vectorReg.getName());
-			if (vectorReg.getName().startsWith("Y")) {
+			if (vectorReg.getName().startsWith("Z")) {
+				assertEquals(ZMM_BIT_SIZE, vectorReg.getBitLength());
+			}
+			else if (vectorReg.getName().startsWith("Y")) {
 				assertEquals(YMM_BIT_SIZE, vectorReg.getBitLength());
 			}
 			else {
@@ -215,12 +222,15 @@ public class VectorRegisterPspecTest extends AbstractGenericTest {
 	}
 
 	private String[] getIntelVectorRegisterNames() {
-		String[] vectorRegs = new String[32];
-		for (int i = 0; i < 16; i++) {
-			vectorRegs[i] = "YMM" + Integer.toString(i);
+		String[] vectorRegs = new String[96];
+		for (int i = 0; i < 32; i++) {
+			vectorRegs[i] = "ZMM" + Integer.toString(i);
 		}
-		for (int i = 16; i < 32; i++) {
-			vectorRegs[i] = "XMM" + Integer.toString(i - 16);
+		for (int i = 32; i < 64; i++) {
+			vectorRegs[i] = "YMM" + Integer.toString(i - 32);
+		}
+		for (int i = 64; i < 96; i++) {
+			vectorRegs[i] = "XMM" + Integer.toString(i - 64);
 		}
 		return vectorRegs;
 	}

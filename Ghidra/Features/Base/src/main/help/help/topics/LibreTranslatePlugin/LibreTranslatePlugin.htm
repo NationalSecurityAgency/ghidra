@@ -1,0 +1,78 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>LibreTranslate Plugin</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><a name="LibreTranslatePlugin"></a>LibreTranslate Plugin</H1>
+
+	<P>This plugin adds a string translation service that will appear in the <b>Translate</b>
+	menu of a string data instance.  The <b>Translate</b> menu will appear in the right-click
+	context menu of data items that are strings.</P>
+	
+	<P>LibreTranslate (currently hosted at libretranslate.com) is an independant project that
+	provides an open source translation package that can be self-hosted.</P>
+	
+	<P>This plugin queries a LibreTranslate server via HTTP to translate each specified string into
+	a target language.  The results of that translation will be determined by the LibreTranslate
+	server.</P> 
+	
+	<P>A LibreTranslate server can be installed locally by following the instructions provided
+	on LibreTranslate's website, and then this plugin can connect to it via a URL such as
+	<b>http://localhost:5000/</b> (when configured with suggested defaults).</P>
+	 
+	<P>It is also possible to use someone else's LibreTranslate server, and typically they
+	will issue an API key that will authorize the user to connect.</P>
+
+    <P>When a string has been translated, the translated value will be shown in place of
+    the original value, bracketed with <b>&#x00BB;chevrons&#x00AB;</b></P>
+    
+	<h2><a name="Configuration"></a>Configuration</h2>
+	<P>See
+		<b>Edit <IMG src="help/shared/arrow.gif" alt="-&gt;" border="0">
+		Tool Options <IMG src="help/shared/arrow.gif" alt="-&gt;" border="0">
+		Strings | LibreTranslate</b>
+	</P>
+	<blockquote>
+	    <UL>
+			<LI><b>URL</b> - required.  Example: <b>http://localhost:5000/</b>
+				(if self hosted and following suggested values)</LI>
+			<LI><b>API Key</b> - a unique key that authorizes you to connect to the LibreTranslate
+				server.  Can be blank if api keys are not required.</LI>
+			<LI><b>Source Language</b> - either "auto" or "prompt"</LI>
+			<LI><b>Target Language</b> - the language code (as defined by LibreTranslate) that
+				strings should be translated into.  This defaults to "en" (English).</LI>
+			<LI><b>Batch Size</b> - the maximum number of strings to include in a single request
+				to the LibreTranslate server.</LI>
+			<LI><b>HTTP Timeout</b> - the maximum number of milliseconds to wait for the
+				LibreTranslate HTTP server to respond to a request.</LI>
+			<LI><b>HTTP Timeout [per string]</b> - an additional number of milliseconds,
+				per string in each request, to wait for the LibreTranslate HTTP server to 
+				respond.</LI>
+		</UL>
+	</blockquote>
+	    
+	
+	<P class="providedbyplugin">Provided by: <I>LibreTranslate Plugin</I></P>
+	
+    <P class="relatedtopic">Related Topics:</P>
+    <UL>
+      <LI><P class="relatedtopic"><A href="help/topics/CodeBrowserPlugin/CodeBrowser.htm">Code Browser</A></P></LI>
+      <LI><P class="relatedtopic"><A href="help/topics/ViewStringsPlugin/ViewStringsPlugin.htm">View Defined Strings</A></P></LI>
+	  <LI><P class="relatedtopic"><A href="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm">Translate Strings Plugin</A></P></LI>
+	  <LI><P class="relatedtopic"><A href="help/topics/Search/Search_for_Strings.htm#Encoded_Strings_Dialog">Search For Encoded Strings</A></P></LI>
+    </UL>	
+	
+	<br>
+	<br>
+	<br>
+	
+  </BODY>
+</HTML>

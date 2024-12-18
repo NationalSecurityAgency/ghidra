@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,8 +49,8 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 /***************************************************************************************
  * Identify supported Python command
  ***************************************************************************************/
-project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
-project.ext.PYTHON3 = findPython3()
+project.ext.PYTHON3 = findPython3(true)
+project.ext.PYTHON_DEPS = new HashSet<String>()
 
 /*********************************************************************************
  *  Define the location of bin repo
@@ -78,7 +78,6 @@ if (flatRepo.isDirectory()) {
 		repositories {
 			mavenLocal()
 			mavenCentral()
-			jcenter()
 			flatDir name: "flat", dirs:["$flatRepo"]
 		}
 	}
@@ -110,6 +109,7 @@ apply from: 'gradle/root/distribution.gradle' // adds zip tasks
 apply from: 'gradle/root/usage.gradle'        // adds task documentation
 apply from: "gradle/root/svg.gradle"          // adds task to process svg files
 apply from: "gradle/root/jacoco.gradle"       // adds tasks for java code coverage
+apply from: "gradle/root/venv.gradle"         // adds tasks python virtual environments
 
 
 apply plugin: 'base'
@@ -158,66 +158,95 @@ def checkGradleVersion() {
  * Although warnings may be produced no exception is thrown since python only required
  * for specific build tasks and is not required for prepdev
  *********************************************************************************/
-def checkPythonVersion(String pyCmd) {
+def checkPythonVersion(List<String> pyCmd) {
 	try {
 		def stdout = new ByteArrayOutputStream()
 		exec {
-			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
+			commandLine pyCmd
+			args "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
 			standardOutput = stdout
 			errorOutput = OutputStream.nullOutputStream()
 		}
-		def version = "$stdout".strip()
-		return version
+		return "$stdout".strip()
 	}
 	catch (Exception e) {
 		return "ABSENT"
 	}
 }
 
-def checkPip(String pyCmd) {
+def getPythonExecutable(List<String> pyCmd) {
 	try {
 		def stdout = new ByteArrayOutputStream()
 		exec {
-			commandLine pyCmd, "-c", "import pip; print(pip.__version__)"
+			commandLine pyCmd
+			args "-c", "import sys; print(sys.executable)"
+			standardOutput = stdout
+			errorOutput = OutputStream.nullOutputStream()
+		}
+		return "$stdout".strip()
+	}
+	catch (Exception e) {
+		return "ABSENT"
+	}
+}
+
+def checkPip(List<String> pyCmd, boolean shouldPrint) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd
+			args "-c", "import pip; print(pip.__version__)"
 			standardOutput = stdout
 			errorOutput = OutputStream.nullOutputStream()
 		}
 		def version = "$stdout".strip();
-		if (version.length() == 0) {
-			println("Warning: Python3 pip not installed (required for build)")
-		}
-		else {
-			println("Python3 pip version: ${version}")
+		if (shouldPrint) {
+			if (version.length() == 0) {
+				println("Warning: Python3 pip not installed (required for build)")
+			}
+			else {
+				println("Python3 pip version: ${version}")
+			}
 		}
 		return version
 	}
 	catch (Exception e) {
-		println("Warning: Python3 pip not installed (required for build)")
+		if (shouldPrint) {
+			println("Warning: Python3 pip not installed (required for build)")
+		}
 	}
 }
 
-def findPython3() {
-	for (pyCmd in ['py', 'python3', 'python']) {
+def findPython3(boolean shouldPrint) {
+	def supportedVersions = "${PYTHON_SUPPORTED}".split(",").collect {
+		try {
+			GradleVersion.version(it.trim()).getVersion() // use GradleVersion to validate version format
+		}
+		catch (IllegalArgumentException e) {
+			throw new GradleException("Invalid supported Python version list specified in application.properties.\n" + e.message);
+		}	
+	}
+
+	def pyCmds = supportedVersions.collectMany { [["python$it"], ["py", "-$it"]] }
+	pyCmds += [['python3'], ['python'], ['py']]
+	for (pyCmd in pyCmds) {	
 		def pyVer = checkPythonVersion(pyCmd)
-		if (pyVer in SUPPORTED_PY_VERSIONS) {
-			println("Python3 command:  ${pyCmd} (version ${pyVer})")
-			checkPip(pyCmd)
+		def pyExe = getPythonExecutable(pyCmd)
+		if (pyVer in supportedVersions) {
+			if (shouldPrint) {
+				println("Python3 command: ${pyCmd} (${pyVer}, ${pyExe})")
+			}
+			checkPip(pyCmd, shouldPrint)
 			return pyCmd
 		}
 	}
-	for (pyVer in SUPPORTED_PY_VERSIONS) {
-		def pyCmd = "python${pyVer}"
-		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
-			println("Python3 command:  ${pyCmd}")
-			checkPip(pyCmd)
-			return pyCmd
-		}
+
+	if (shouldPrint) {
+		println("Warning: Supported Python [${PYTHON_SUPPORTED}] not found (required for build)")
 	}
-	// Don't fail until task execution. Just let "python3" fail.
-	// Force use of non-existent python3.7 instead of unsupported python version
-	// which should fail if a python build is performed.
-	println("Warning: Python3 command not found (required for build)")
-	return 'python3.7'
+	
+	// Don't fail until task execution. Just retun null, which can be gracefully handled later.
+	return null
 }
 
 /******************************************************************************************

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,7 +92,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 
 	protected final VF vectorFactory;	// Factory used to generate LSHVector objects
 
-	private Error lasterror;
+	private BSimError lasterror;
 	private Status status;
 	private boolean isinit;
 
@@ -1121,11 +1121,6 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 	}
 
 	@Override
-	public void setUserName(String userName) {
-		// ignore
-	}
-
-	@Override
 	public LSHVectorFactory getLSHVectorFactory() {
 		return vectorFactory;
 	}
@@ -1155,7 +1150,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 	}
 
 	@Override
-	public Error getLastError() {
+	public BSimError getLastError() {
 		return lasterror;
 	}
 
@@ -1188,7 +1183,7 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 		}
 		catch (CancelledSQLException e) {
 			status = Status.Error;
-			lasterror = new Error(ErrorCategory.AuthenticationCancelled,
+			lasterror = new BSimError(ErrorCategory.AuthenticationCancelled,
 				"Authentication cancelled by user");
 			return false;
 		}
@@ -1201,19 +1196,19 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 			}
 			String msg = cause.getMessage();
 			if (msg.contains("already in use:")) {
-				lasterror = new Error(ErrorCategory.Initialization,
+				lasterror = new BSimError(ErrorCategory.Initialization,
 					"Database already in use by another process");
 			}
 			else if (msg.contains("authentication failed") ||
 				msg.contains("requires a valid client certificate")) {
 				lasterror =
-					new Error(ErrorCategory.Authentication, "Could not authenticate with database");
+					new BSimError(ErrorCategory.Authentication, "Could not authenticate with database");
 			}
 			else if (msg.contains("does not exist") && !msg.contains(" role ")) {
-				lasterror = new Error(ErrorCategory.Nodatabase, cause.getMessage());
+				lasterror = new BSimError(ErrorCategory.Nodatabase, cause.getMessage());
 			}
 			else {
-				lasterror = new Error(ErrorCategory.Initialization,
+				lasterror = new BSimError(ErrorCategory.Initialization,
 					"Database error on initialization: " + cause.getMessage());
 			}
 			return false;
@@ -1628,29 +1623,29 @@ public abstract class AbstractSQLFunctionDatabase<VF extends LSHVectorFactory>
 		lasterror = null;
 		try {
 			if (!(query instanceof CreateDatabase) && !initialize()) {
-				lasterror = new Error(ErrorCategory.Nodatabase, "The database does not exist");
+				lasterror = new BSimError(ErrorCategory.Nodatabase, "The database does not exist");
 				return null;
 			}
 
 			query.buildResponseTemplate();
 			QueryResponseRecord response = doQuery(query, db);
 			if (response == null) {
-				lasterror = new Error(ErrorCategory.Fatal, "Unknown query type");
+				lasterror = new BSimError(ErrorCategory.Fatal, "Unknown query type");
 				query.clearResponse();
 			}
 		}
 		catch (DatabaseNonFatalException err) {
-			lasterror = new Error(ErrorCategory.Nonfatal,
+			lasterror = new BSimError(ErrorCategory.Nonfatal,
 				"Skipping -" + query.getName() + "- : " + err.getMessage());
 			query.clearResponse();
 		}
 		catch (LSHException err) {
-			lasterror = new Error(ErrorCategory.Fatal,
+			lasterror = new BSimError(ErrorCategory.Fatal,
 				"Fatal error during -" + query.getName() + "- : " + err.getMessage());
 			query.clearResponse();
 		}
 		catch (SQLException err) {
-			lasterror = new Error(ErrorCategory.Fatal,
+			lasterror = new BSimError(ErrorCategory.Fatal,
 				"SQL error during -" + query.getName() + "- : " + err.getMessage());
 			query.clearResponse();
 		}

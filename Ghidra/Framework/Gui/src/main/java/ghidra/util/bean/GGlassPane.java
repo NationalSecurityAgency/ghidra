@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,6 +69,7 @@ public class GGlassPane extends JComponent {
 	 * @param painter the painter to add
 	 */
 	public void addPainter(GGlassPanePainter painter) {
+		painters.remove(painter);
 		painters.add(painter);
 		repaint();
 	}
@@ -99,6 +100,7 @@ public class GGlassPane extends JComponent {
 
 	/**
 	 * Sets the busy state of all glass panes created in the VM.
+	 * @param isBusy the busy state of all glass panes created in the VM.
 	 */
 	public static void setAllGlassPanesBusy(boolean isBusy) {
 		for (GGlassPane glassPane : systemGlassPanes) {
@@ -108,6 +110,7 @@ public class GGlassPane extends JComponent {
 
 	/**
 	 * Returns true if this glass pane is blocking user input.
+	 * @return true if this glass pane is blocking user input.
 	 */
 	public boolean isBusy() {
 		return isBusy;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,8 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.CharBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -34,8 +35,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.FileImporterService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.opinion.LoaderMap;
-import ghidra.app.util.opinion.LoaderService;
+import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
@@ -88,9 +88,11 @@ public class ImporterPlugin extends Plugin
 	private DockingAction importAction;
 	private DockingAction importSelectionAction;
 	private DockingAction addToProgramAction;
+	private DockingAction loadLibrariesAction;
 	private GhidraFileChooser chooser;
 	private FrontEndService frontEndService;
 	private DockingAction batchImportAction;
+	private FileSystemService fsService;
 
 	public ImporterPlugin(PluginTool tool) {
 		super(tool);
@@ -114,6 +116,7 @@ public class ImporterPlugin extends Plugin
 		setupImportAction();
 		setupImportSelectionAction();
 		setupAddToProgramAction();
+		setupLoadLibrariesAction();
 		setupBatchImportAction();
 	}
 
@@ -148,7 +151,27 @@ public class ImporterPlugin extends Plugin
 			Program currentProgram = pape.getActiveProgram();
 			importSelectionAction.setEnabled(currentProgram != null);
 			addToProgramAction.setEnabled(currentProgram != null);
+			loadLibrariesAction.setEnabled(shouldEnableLoadLibraries(currentProgram));
 		}
+	}
+
+	private boolean shouldEnableLoadLibraries(Program program) {
+		if (program == null) {
+			return false;
+		}
+		ByteProvider provider = ImporterUtilities.getProvider(program);
+		if (provider == null) {
+			return false;
+		}
+		LoadSpec loadSpec = ImporterUtilities.getLoadSpec(provider, program);
+		if (loadSpec == null) {
+			return false;
+		}
+		return loadSpec.getLoader()
+				.getDefaultOptions(provider, loadSpec, null, false)
+				.stream()
+				.anyMatch(e -> e.getName()
+						.equals(AbstractLibrarySupportLoader.LOAD_ONLY_LIBRARIES_OPTION_NAME));
 	}
 
 	@Override
@@ -163,20 +186,9 @@ public class ImporterPlugin extends Plugin
 			return;
 		}
 
-		BatchImportDialog.showAndImport(tool, null, files2FSRLs(files), destFolder,
+		List<FSRL> fsrls = files.stream().map(f -> fsService().getLocalFSRL(f)).toList();
+		BatchImportDialog.showAndImport(tool, null, fsrls, destFolder,
 			getTool().getService(ProgramManager.class));
-	}
-
-	private List<FSRL> files2FSRLs(List<File> files) {
-		if (files == null) {
-			return Collections.emptyList();
-		}
-
-		List<FSRL> result = new ArrayList<>(files.size());
-		for (File f : files) {
-			result.add(FileSystemService.getInstance().getLocalFSRL(f));
-		}
-		return result;
 	}
 
 	@Override
@@ -190,7 +202,7 @@ public class ImporterPlugin extends Plugin
 			return;
 		}
 
-		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
+		FSRL fsrl = fsService().getLocalFSRL(file);
 		ProgramManager manager = tool.getService(ProgramManager.class);
 		ImporterUtilities.showImportDialog(tool, manager, fsrl, folder, null);
 	}
@@ -301,7 +313,6 @@ public class ImporterPlugin extends Plugin
 		if (addToProgramAction != null) {
 			addToProgramAction.setEnabled(false);
 		}
-		ProgramMappingService.clear();
 	}
 
 	@Override
@@ -315,8 +326,6 @@ public class ImporterPlugin extends Plugin
 		if (addToProgramAction != null) {
 			addToProgramAction.setEnabled(false);
 		}
-
-		ProgramMappingService.clear();
 	}
 
 	private void setupImportAction() {
@@ -410,6 +419,27 @@ public class ImporterPlugin extends Plugin
 		}
 	}
 
+	private void setupLoadLibrariesAction() {
+		String title = "Load Libraries";
+
+		loadLibrariesAction = new DockingAction(title, this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				doLoadLibraries();
+			}
+		};
+		loadLibrariesAction.setMenuBarData(new MenuData(new String[] { "&File", title + "..." },
+			null, IMPORT_MENU_GROUP, MenuData.NO_MNEMONIC, "zzz"));
+		loadLibrariesAction.setDescription(IMPORTER_PLUGIN_DESC);
+		loadLibrariesAction.setEnabled(false);
+
+		// Load libraries makes no sense in the front end tool, but we create it so that the
+		// loadLibrariesAction won't be null and we would have to check that in other places.
+		if (!(tool instanceof FrontEndTool)) {
+			tool.addAction(loadLibrariesAction);
+		}
+	}
+
 	private static DomainFolder getFolderFromContext(ActionContext context) {
 		Object contextObj = context.getContextObject();
 		if (contextObj instanceof DomainFolderNode) {
@@ -483,11 +513,20 @@ public class ImporterPlugin extends Plugin
 		ProgramManager manager = tool.getService(ProgramManager.class);
 		Program program = manager.getCurrentProgram();
 
-		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
+		FSRL fsrl = fsService().getLocalFSRL(file);
 		TaskLauncher.launchModal("Show Add To Program Dialog", monitor -> {
 			ImporterUtilities.showAddToProgramDialog(fsrl, program, tool, monitor);
 		});
 
+	}
+
+	private void doLoadLibraries() {
+		ProgramManager manager = tool.getService(ProgramManager.class);
+		Program program = manager.getCurrentProgram();
+
+		TaskLauncher.launchModal("Show Load Libraries Dialog", monitor -> {
+			ImporterUtilities.showLoadLibrariesDialog(program, tool, manager, monitor);
+		});
 	}
 
 	protected void doImportSelectionAction(Program program, ProgramSelection selection) {
@@ -504,12 +543,11 @@ public class ImporterPlugin extends Plugin
 
 		try {
 			Memory memory = program.getMemory();
-			FileSystemService fsService = FileSystemService.getInstance();
 
 			// create a tmp ByteProvider that contains the bytes from the selected region
 			FileCacheEntry tmpFile;
 			try (FileCacheEntryBuilder tmpFileBuilder =
-				fsService.createTempFile(range.getLength())) {
+				fsService().createTempFile(range.getLength())) {
 				byte[] bytes = new byte[(int) range.getLength()];
 				memory.getBytes(range.getMinAddress(), bytes);
 				tmpFileBuilder.write(bytes);
@@ -520,7 +558,7 @@ public class ImporterPlugin extends Plugin
 			String rangeName =
 				block.getName() + "[" + range.getMinAddress() + "," + range.getMaxAddress() + "]";
 			ByteProvider bp =
-				fsService.getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
+				fsService().getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp);
 
 			ImporterDialog importerDialog = new ImporterDialog(tool,
@@ -533,5 +571,13 @@ public class ImporterPlugin extends Plugin
 		catch (MemoryAccessException e) {
 			Msg.showError(this, null, "Memory Access Error Occurred", e.getMessage(), e);
 		}
+	}
+
+	private FileSystemService fsService() {
+		// use a delayed initialization so we don't force the FileSystemService to initialize
+		if (fsService == null) {
+			fsService = FileSystemService.getInstance();
+		}
+		return fsService;
 	}
 }

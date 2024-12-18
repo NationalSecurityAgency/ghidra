@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,10 +37,10 @@ import ghidra.util.task.TaskMonitor;
  *   The LSDA is comprised of:
  *   <ul>
  *   <li>A header that describes the bounds of exception handling support and encoding
- *     modes for values found later in the LSDA table
+ *     modes for values found later in the LSDA table</li>
  *   <li>A call site table that describes each location a 'throws' occurs and where
- *     a corresponding catch block resides, and the actions to take.
- *   <li>An action table, that describes what the runtime needs to do during unwind
+ *     a corresponding catch block resides, and the actions to take.</li>
+ *   <li>An action table, that describes what the runtime needs to do during unwind</li>
  *   </ul>
  * <p>  
  * The structures modeled here are described in detail in the C++ ABI.

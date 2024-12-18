@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,10 +34,13 @@ AttributeId ATTRIB_PIECE = AttributeId("piece",94);	// Open slots 94-102
 void AddrSpace::calcScaleMask(void)
 
 {
-  pointerLowerBound = (addressSize < 3) ? 0x100: 0x1000;
   highest = calc_mask(addressSize); // Maximum address
   highest = highest * wordsize + (wordsize-1); // Maximum byte address
+  pointerLowerBound = 0;
   pointerUpperBound = highest;
+  uintb bufferSize = (addressSize < 3) ? 0x100 : 0x1000;
+  pointerLowerBound += bufferSize;
+  pointerUpperBound -= bufferSize;
 }
 
 /// Initialize an address space with its basic attributes

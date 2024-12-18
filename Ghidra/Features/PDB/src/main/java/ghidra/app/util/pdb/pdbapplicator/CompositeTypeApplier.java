@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,8 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb.DefaultCompositeMember;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.app.util.pdb.pdbapplicator.ClassFieldAttributes.Access;
+import ghidra.app.util.pdb.classtype.Access;
+import ghidra.app.util.pdb.classtype.ClassFieldAttributes;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -82,19 +83,25 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			myApplicator.predefineClass(fixedSymbolPath);
 			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), size,
 				myApplicator.getDataTypeManager());
-			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType =
+				new CppCompositeType(myApplicator.getRootPdbCategory(), fixedSymbolPath,
+					myComposite, mangledName);
 			myClassType.setClass();
 		}
 		else if (compositeMsType instanceof AbstractStructureMsType) {
 			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), size,
 				myApplicator.getDataTypeManager());
-			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType =
+				new CppCompositeType(myApplicator.getRootPdbCategory(), fixedSymbolPath,
+					myComposite, mangledName);
 			myClassType.setStruct();
 		}
 		else if (compositeMsType instanceof AbstractUnionMsType) {
 			myComposite = new UnionDataType(categoryPath, fixedSymbolPath.getName(),
 				myApplicator.getDataTypeManager());
-			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType =
+				new CppCompositeType(myApplicator.getRootPdbCategory(), fixedSymbolPath,
+					myComposite, mangledName);
 			myClassType.setUnion();
 		}
 		else { // InterfaceMsType
@@ -142,6 +149,16 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		boolean isClass = (type instanceof AbstractClassMsType);
 		int size = getSizeInt(type);
 		clearComponents(composite);
+		if (!lists.methods().isEmpty()) {
+			// See applyCpp where we store sp in CppCompositeType so we don't have to determine
+			//  this again (including possible demangling)... need a place to store this or
+			//  make sure our CppCompositeType (or its replacement) can be the union solution as
+			//  well.  Note that the namespace convention of making a Class namespace is what
+			//  allows the "this" pointer to be a pointer to the appropriate container type (even
+			//  though this is a "union").
+			SymbolPath sp = getFixedSymbolPath(type);
+			applicator.predefineClass(sp);
+		}
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
 		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
@@ -159,6 +176,10 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		Composite composite = combo.dt();
 		CppCompositeType classType = combo.ct();
 		clearComponents(composite);
+		if (!lists.bases().isEmpty() || !lists.methods().isEmpty()) {
+			SymbolPath sp = classType.getSymbolPath();
+			applicator.predefineClass(sp);
+		}
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
 		addClassTypeBaseClasses(composite, classType, lists.bases(), type);
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
@@ -169,7 +190,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			// we do it here.  Set breakpoint here to investigate.
 		}
 		classType.createLayout(applicator.getPdbApplicatorOptions().getCompositeLayout(),
-			applicator.getVbtManager(), applicator.getCancelOnlyWrappingMonitor());
+			applicator.getVxtManager(), applicator.getCancelOnlyWrappingMonitor());
 	}
 
 	//==============================================================================================
@@ -210,9 +231,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			throws PdbException, CancelledException {
 
 		AbstractCompositeMsType cType = (AbstractCompositeMsType) type;
-		ClassFieldAttributes.Access defaultAccess =
-			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
-					: ClassFieldAttributes.Access.PUBLIC;
+		Access defaultAccess = (type instanceof AbstractClassMsType) ? Access.PRIVATE
+				: Access.PUBLIC;
 
 		for (AbstractMsType baseType : msBases) {
 			applicator.checkCancelled();
@@ -320,9 +340,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	private void addMembers(Composite composite, CppCompositeType myClassType,
 			List<AbstractMemberMsType> msMembers, AbstractCompositeMsType type,
 			List<DefaultPdbUniversalMember> myMembers) throws CancelledException, PdbException {
-		ClassFieldAttributes.Access defaultAccess =
-			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
-					: ClassFieldAttributes.Access.PUBLIC;
+		Access defaultAccess =
+			(type instanceof AbstractClassMsType) ? Access.PRIVATE : Access.PUBLIC;
 		for (int index = 0; index < msMembers.size(); index++) {
 			applicator.checkCancelled();
 			AbstractMemberMsType memberType = msMembers.get(index);

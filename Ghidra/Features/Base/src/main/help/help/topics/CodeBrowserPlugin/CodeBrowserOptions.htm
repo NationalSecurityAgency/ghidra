@@ -584,15 +584,61 @@
       <BLOCKQUOTE>
         <P>The File Offset field shows the filename and file offset of the original imported byte
         value for the given address.  If the address's byte was not derived from an imported binary 
-        file, or file offset tracking is not supported by the binary file's importer, a value of 
-        "N/A" is shown.</P>
-        <P><B>Show Filename -</B> Option to prefix the file offset with the source filename.  This
+        file, or file offset tracking is not supported by the binary file's importer, no offset is
+        shown.</P>
+        <P><B>Show Name -</B> Option to prefix the file offset with the source filename.  This
         is useful if more than one binary file has been imported into a program.</P>
-        <P><B>Show Numbers In Hex -</B> Option to display the file offset in hexadecimal rather than
+        <P><B>Use Hex -</B> Option to display the file offset in hexadecimal rather than 
         decimal.</P>
         <P><IMG src="help/shared/note.png" border="0">The File Offset field is disabled by default.
         To enable the field, see the <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field
         </A> section.
+        </P>
+        
+      </BLOCKQUOTE>
+      
+      <H3><A name="Function_Offset_Field"></A>Function Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The Function Offset field shows the function name and function offset of the
+        the given address.  If the address is not in a function, no offset is shown.</P>
+        <P><B>Show Name -</B> Option to prefix the function offset with the function name.</P>
+        <P><B>Use Hex -</B> Option to display the function offset in hexadecimal rather than 
+        decimal.</P>
+        <P><IMG src="help/shared/note.png" border="0">The Function Offset field is disabled by 
+        default. To enable the field, see the
+        <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field</A> section.
+        </P>
+        
+      </BLOCKQUOTE>
+      
+      <H3><A name="Imagebase_Offset_Field"></A>Imagebase Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The Imagebase Offset field shows the imagebase offset of the given address. If the 
+        address and the imagebase are in different address spaces, no offset is shown.</P>
+        <P><B>Show Name -</B> Option to prefix the imagebase offset with "imagebase".</P>
+        <P><B>Use Hex -</B> Option to display the imagebase offset in hexadecimal rather than 
+        decimal.</P>
+        <P><IMG src="help/shared/note.png" border="0">The Imagebase Offset field is disabled by 
+        default. To enable the field, see the
+        <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field</A> section.
+        </P>
+        
+      </BLOCKQUOTE>
+      
+      <H3><A name="MemoryBlock_Offset_Field"></A>MemoryBlock Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The MemoryBlock Offset field shows the memory block name and memory block offset of the
+        given address.</P>
+        <P><B>Show Name -</B> Option to prefix the memory block offset with the memory block 
+        name.</P>
+        <P><B>Use Hex -</B> Option to display the memory block offset in hexadecimal rather than 
+        decimal.</P>
+        <P><IMG src="help/shared/note.png" border="0">The MemoryBlock Offset field is disabled by 
+        default. To enable the field, see the
+        <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field</A> section.
         </P>
         
       </BLOCKQUOTE>
@@ -947,7 +993,7 @@
         Option to display the raw PCode directly in the Code Browser (i.e., detailed varnode 
         specifications are provided).</P>
 
-        <P><B>Maximum Lines to Display -</B> The maximum number of lines used to display PCode. Any
+        <P><B>Maximum Lines to Display</B> - The maximum number of lines used to display PCode. Any
         additional lines of PCode will not be shown.</P>
       </BLOCKQUOTE>
 
@@ -962,6 +1008,24 @@
 
         <P><B>Selection Color</B> - Set the Browser <A href=
         "CodeBrowser.htm#Selection">Selection</A> color.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Source_Map_Field"></A>Source Map Field</H3>
+      <BLOCKQUOTE>
+        <P><B>Show Filename Only</B> -
+        If selected, only the file name will be shown in the Listing field (rather than the full 
+        path).</P>
+
+        <P><B>Show Source Info at Every Address</B> - If selected, source map information will be 
+        displayed for each address in the Listing. Otherwise the source information for a given
+        source map entry will only be displayed at the minimum address of the corresponding  
+        range.</P>
+        
+        <P><B>Maximum Number of Source Map Entries to Display</B> - Maximum number of source
+        map entries to display per address.</P>
+        
+        <P><B>Show Identifier</B> - If selected, the source file identifier (md5, sha1,...) will
+        be shown in the Listing.  Note that a source file might not have an identifier.</P>
       </BLOCKQUOTE>
       
       <H3><A name="Template_Display_Options"></A>Template Display Options</H3>

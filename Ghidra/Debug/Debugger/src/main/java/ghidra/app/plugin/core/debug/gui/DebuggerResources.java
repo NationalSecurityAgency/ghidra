@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,17 +41,14 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPlugin;
 import ghidra.app.plugin.core.debug.gui.model.DebuggerModelPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingPlugin;
-import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperPlugin;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersPlugin;
 import ghidra.app.plugin.core.debug.gui.stack.DebuggerStackPlugin;
-import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.async.AsyncUtils;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.database.ProgramContentHandler;
@@ -228,11 +225,6 @@ public interface DebuggerResources {
 	HelpLocation HELP_PROVIDER_REGISTERS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerRegistersPlugin.class), HELP_ANCHOR_PLUGIN);
 
-	String TITLE_PROVIDER_TARGETS = "Debugger Targets";
-	Icon ICON_PROVIDER_TARGETS = ICON_CONNECTION; // TODO: Same icon as action
-	HelpLocation HELP_PROVIDER_TARGETS = new HelpLocation(
-		PluginUtils.getPluginNameFromClass(DebuggerTargetsPlugin.class), HELP_ANCHOR_PLUGIN);
-
 	String TITLE_PROVIDER_STACK = "Stack";
 	Icon ICON_PROVIDER_STACK = ICON_STACK;
 	HelpLocation HELP_PROVIDER_STACK = new HelpLocation(
@@ -248,11 +240,6 @@ public interface DebuggerResources {
 	HelpLocation HELP_PROVIDER_TIME = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerTimePlugin.class), HELP_ANCHOR_PLUGIN);
 
-	String TITLE_PROVIDER_OBJECTS = "Objects";
-	Icon ICON_PROVIDER_OBJECTS = new GIcon("icon.debugger.provider.objects");
-	HelpLocation HELP_PROVIDER_OBJECTS = new HelpLocation(
-		PluginUtils.getPluginNameFromClass(DebuggerObjectsPlugin.class), HELP_ANCHOR_PLUGIN);
-
 	String TITLE_PROVIDER_MODEL = "Model"; // TODO: An icon
 	Icon ICON_PROVIDER_MODEL = new GIcon("icon.debugger.provider.model");
 	HelpLocation HELP_PROVIDER_MODEL = new HelpLocation(
@@ -262,8 +249,6 @@ public interface DebuggerResources {
 	Icon ICON_PROVIDER_WATCHES = ICON_AUTOREAD; // TODO: Another icon?
 	HelpLocation HELP_PROVIDER_WATCHES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerWatchesPlugin.class), HELP_ANCHOR_PLUGIN);
-
-	String TITLE_PROVIDER_INTERPRETER = "Interpreter";
 
 	String BOOKMARK_CATEGORY_MEMORY_READ_ERROR = "Debugger Memory Read Error";
 
@@ -429,24 +414,6 @@ public interface DebuggerResources {
 		Icon ICON = ICON_DEBUGGER;
 		String GROUP = GROUP_GENERAL;
 		String HELP_ANCHOR = "debug_program";
-
-		static <T> MultiStateActionBuilder<T> buttonBuilder(Plugin owner, Plugin helpOwner) {
-			return new MultiStateActionBuilder<T>(NAME, owner.getName())
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
-		}
-
-		static ActionBuilder menuBuilder(DebuggerProgramLaunchOffer offer, Plugin owner,
-				Plugin helpOwner) {
-			return new ActionBuilder(offer.getConfigName(), owner.getName())
-					.description(offer.getButtonTitle())
-					.menuPath(DebuggerPluginPackage.NAME, offer.getMenuParentTitle(),
-						offer.getMenuTitle())
-					.menuIcon(offer.getIcon())
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
-		}
 	}
 
 	abstract class AbstractQuickLaunchAction extends DockingAction {
@@ -838,13 +805,11 @@ public interface DebuggerResources {
 
 		String NAME_VIS_RO_ONCE = "Read Visible Memory, RO Once";
 		String NAME_VISIBLE = "Read Visible Memory";
-		String NAME_LOAD_EMU = "Load Emulator from Programs";
 		String NAME_NONE = "Do Not Read Memory";
 
 		// TODO: Separate icon for each
 		Icon ICON_VIS_RO_ONCE = ICON_AUTOREAD;
 		Icon ICON_VISIBLE = ICON_AUTOREAD;
-		Icon ICON_LOAD_EMU = ICON_EMULATE;
 		Icon ICON_NONE = ICON_DELETE;
 
 		static <T> MultiStateActionBuilder<T> builder(Plugin owner) {

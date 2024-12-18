@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,25 +157,6 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 		assertEquals(script.toAddr(0x1006428), results[0]);
 		assertEquals(script.toAddr(0x100642d), results[1]);
 		assertEquals(script.toAddr(0x1006453), results[2]);
-
-	}
-
-	@Test
-	public void testFindBytesAcrossGap() throws Exception {
-		GhidraScript script = getScript();
-
-		AddressSet set = new AddressSet();
-
-		//Match charAt 0x010064db, 0x010064df 
-		set.addRange(script.toAddr(0x10064d5), script.toAddr(0x010064db));
-		set.addRange(script.toAddr(0x010064df), script.toAddr(0x010064e3));
-
-		String byteString = "\\x51\\x52";
-
-		Address[] results = script.findBytes(set, byteString, 20, 1, true);
-
-		assertEquals(1, results.length);
-		assertEquals(script.toAddr(0x010064db), results[0]);
 
 	}
 

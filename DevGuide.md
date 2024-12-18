@@ -32,7 +32,7 @@ authors' names directly in the source code, so it is discouraged.
 Download non-Maven Central dependencies.  This creates a `dependencies` directory in the repository
 root.
 ```
-gradle -I gradle/support/fetchDependencies.gradle init
+gradle -I gradle/support/fetchDependencies.gradle
 ```
 
 Download Maven Central dependencies and setup the repository for development.  By default, these 
@@ -97,7 +97,7 @@ Sometimes you may want to move the Ghidra repository to an offline network and d
 These are the recommended steps to ensure that you not only move the source repository, but all 
 downloaded dependencies as well:
 
-1. `gradle -I gradle/support/fetchDependencies.gradle init`
+1. `gradle -I gradle/support/fetchDependencies.gradle`
 2. `gradle -g dependencies/gradle prepdev`
 3. Move ghidra directory to different system
 4. `gradle -g dependencies/gradle buildGhidra` (on offline system)
@@ -122,7 +122,7 @@ Import the newly generated GhidraDev projects into an Eclipse that supports this
 __Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's 
 preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
 
-See [GhidraDevPlugin/build_README.txt](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt)
+See [Building GhidraDev](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md#building)
 for instructions on how to build the GhidraDev plugin.
 
 ## Running tests

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,19 +213,19 @@ class RootNode extends WindowNode {
 		}
 	}
 
-	void add(ComponentPlaceholder info) {
-		add(info, (Point) null);
+	void addToNewWindow(ComponentPlaceholder placeholder) {
+		addToNewWindow(placeholder, (Point) null);
 	}
 
 	/**
 	 * Creates a new sub-window for the given component a positions it at the given location.
 	 * 
-	 * @param info the component to be put in its own window.
+	 * @param placeholder the component to be put in its own window.
 	 * @param loc the location for the new window.
 	 */
-	void add(ComponentPlaceholder info, Point loc) {
+	void addToNewWindow(ComponentPlaceholder placeholder, Point loc) {
 		ComponentNode node = new ComponentNode(winMgr);
-		info.setNode(node);
+		placeholder.setNode(node);
 		node.parent = this;
 		DetachedWindowNode windowNode =
 			new DetachedWindowNode(winMgr, this, node, dropTargetFactory);
@@ -233,18 +233,18 @@ class RootNode extends WindowNode {
 			windowNode.setInitialLocation(loc.x, loc.y);
 		}
 		detachedWindows.add(windowNode);
-		info.getNode().add(info);
-		info.requestFocus();
+		placeholder.getNode().add(placeholder);
+		placeholder.requestFocusWhenReady();
 		notifyWindowAdded(windowNode);
 	}
 
-	void add(ComponentPlaceholder info, WindowPosition initialPosition) {
+	void add(ComponentPlaceholder placeholder, WindowPosition initialPosition) {
 		if (initialPosition == WindowPosition.WINDOW) {
-			add(info);
+			addToNewWindow(placeholder);
 			return;
 		}
 		ComponentNode node = new ComponentNode(winMgr);
-		info.setNode(node);
+		placeholder.setNode(node);
 		if (child == null) {
 			node.parent = this;
 			child = node;
@@ -266,7 +266,7 @@ class RootNode extends WindowNode {
 			}
 			child.parent = this;
 		}
-		info.getNode().add(info);
+		placeholder.getNode().add(placeholder);
 	}
 
 	/**
@@ -633,6 +633,11 @@ class RootNode extends WindowNode {
 
 	public Window getMainWindow() {
 		return windowWrapper.getWindow();
+	}
+
+	@Override
+	int getComponentCount() {
+		return child.getComponentCount();
 	}
 
 //==================================================================================================

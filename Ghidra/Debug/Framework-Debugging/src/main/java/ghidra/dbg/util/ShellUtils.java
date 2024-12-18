@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,11 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated This will be moved/refactored. In general, it will still exist, but things depending
+ *             on it are now back on shifting sand.
+ */
+@Deprecated(since = "11.2")
 public class ShellUtils {
 	enum State {
 		NORMAL, NORMAL_ESCAPE, DQUOTE, DQUOTE_ESCAPE, SQUOTE, SQUOTE_ESCAPE;
@@ -127,31 +132,25 @@ public class ShellUtils {
 		if (args.isEmpty()) {
 			return "";
 		}
-		StringBuilder line = new StringBuilder(args.get(0));
+		StringBuilder line = new StringBuilder(generateArgument(args.get(0)));
 		for (int i = 1; i < args.size(); i++) {
 			String a = args.get(i);
-			if (a.contains(" ")) {
-				if (a.contains("\"")) {
-					if (a.contains("'")) {
-						line.append(" \"");
-						line.append(a.replace("\"", "\\\""));
-						line.append("\"");
-						continue;
-					}
-					line.append(" '");
-					line.append(a);
-					line.append("'");
-					continue;
-				}
-				line.append(" \"");
-				line.append(a);
-				line.append("\"");
-				continue;
-			}
-			line.append(" ");
-			line.append(a);
+			line.append(" " + generateArgument(a));
 		}
 		return line.toString();
+	}
+
+	public static String generateArgument(String a) {
+		if (a.contains(" ")) {
+			if (a.contains("\"")) {
+				if (a.contains("'")) {
+					return "\"" + a.replace("\"", "\\\"") +  "\"";
+				}
+				return "'" + a + "'";
+			}
+			return "\"" + a + "\"";
+		}
+		return a;
 	}
 
 	public static String generateEnvBlock(Map<String, String> env) {

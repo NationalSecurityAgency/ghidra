@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,9 +44,10 @@ public abstract class SwiftNode {
 	 *   0)
 	 * @param mangled The mangled string associated with this {@link SwiftNode}
 	 * @param originalDemangled The natively demangled string
+	 * @param is64bit Whether or not the mangled string is from a 64-bit program
 	 */
 	public record NodeProperties(SwiftDemangledNodeKind kind, String text, String index,
-			int depth, String mangled, String originalDemangled) {}
+			int depth, String mangled, String originalDemangled, boolean is64bit) {}
 
 	/**
 	 * Gets a new {@link SwiftNode} with the given with the given {@link NodeProperties}

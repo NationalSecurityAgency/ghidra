@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,10 @@ import java.awt.Component;
 import java.awt.event.*;
 import java.beans.PropertyEditor;
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.function.Function;
 
-import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.framework.options.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.MathUtilities;
-import ghidra.util.Msg;
-import ghidra.util.classfinder.ClassSearcher;
 
 public enum MiscellaneousUtils {
 	;
@@ -38,8 +33,9 @@ public enum MiscellaneousUtils {
 	 * Obtain a swing component which may be used to edit the property.
 	 * 
 	 * <p>
-	 * This has been shamelessly stolen from {@link EditorState#getEditorComponent()}, which seems
-	 * entangled with Ghidra's whole options system. I think this portion could be factored out.
+	 * This has was originally stolen from {@link EditorState#getEditorComponent()}, which seems
+	 * entangled with Ghidra's whole options system. Can that be factored out? Since then, the two
+	 * have drifted apart.
 	 * 
 	 * @param editor the editor for which to obtain an interactive component for editing
 	 * @return the component
@@ -58,16 +54,11 @@ public enum MiscellaneousUtils {
 			return new PropertyText(editor);
 		}
 
-		Class<? extends PropertyEditor> clazz = editor.getClass();
-		String clazzName = clazz.getSimpleName();
-		if (clazzName.startsWith("String")) {
-			// Most likely some kind of string editor with a null value.  Just use a string 
-			// property and let the value be empty.
-			return new PropertyText(editor);
-		}
-
-		throw new IllegalStateException(
-			"Ghidra does not know how to use PropertyEditor: " + editor.getClass().getName());
+		/**
+		 * TODO: Would be nice to know the actual type, but alas! Just default to a PropertyText and
+		 * hope all goes well.
+		 */
+		return new PropertyText(editor);
 	}
 
 	public static void rigFocusAndEnter(Component c, Runnable runnable) {
@@ -85,23 +76,6 @@ public enum MiscellaneousUtils {
 				}
 			}
 		});
-	}
-
-	public static <T> void collectUniqueInstances(Class<T> cls, Map<String, T> map,
-			Function<T, String> keyFunc) {
-		// This is wasteful. Existing instances will be re-instantiated and thrown away
-		for (T t : ClassSearcher.getInstances(cls)) {
-			String key = keyFunc.apply(t);
-			T exists = map.get(key);
-			if (exists != null) {
-				if (exists.getClass().equals(t.getClass())) {
-					continue;
-				}
-				Msg.error(LocationTrackingSpec.class,
-					cls.getSimpleName() + " conflict over key: " + key);
-			}
-			map.put(key, t);
-		}
 	}
 
 	public static long lengthMin(long a, long b) {

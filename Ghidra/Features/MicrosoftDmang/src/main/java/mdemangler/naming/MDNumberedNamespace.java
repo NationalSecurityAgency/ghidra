@@ -22,22 +22,29 @@ import mdemangler.*;
  *  Microsoft mangled symbol.
  */
 public class MDNumberedNamespace extends MDParsableItem {
-	private String name;
+	private MDEncodedNumber num;
 
 	public MDNumberedNamespace(MDMang dmang) {
 		super(dmang);
 	}
 
+	public MDEncodedNumber getNumber() {
+		return num;
+	}
+
+	public String getName() {
+		return "`" + num + "'";
+	}
+
 	@Override
 	protected void parseInternal() throws MDException {
-		MDEncodedNumber num = new MDEncodedNumber(dmang);
+		num = new MDEncodedNumber(dmang);
 		num.parse();
-		name = "`" + num + "'";
 	}
 
 	@Override
 	public void insert(StringBuilder builder) {
-		dmang.insertString(builder, name);
+		dmang.insertString(builder, getName());
 	}
 }
 

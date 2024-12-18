@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public abstract class PdbDebugInfo {
 	/**
 	 * These are Section Contribution Versions (SCV) 6.00 and 14.00.  We are building to the MSFT
 	 *  API.  They have chosen to mix in some magic along the way for these--perhaps to ensure that
-	 *  the the value will be a large unsigned 32-bit or a negative 32-bit.  We store the value
+	 *  the value will be a large unsigned 32-bit or a negative 32-bit.  We store the value
 	 *  in a java long, so that we can maintain the signed-ness of the values, if necessary.  MSFT
 	 *  is probably trying to prevent these values from being mimicked by data in the versions
 	 *  prior to v 6.00.
@@ -344,6 +344,7 @@ public abstract class PdbDebugInfo {
 		// DebugInfo and if the above part (test for SVC600 and SVC1400 would
 		// be the override method for PdbNewDebugInfo.
 		else {
+			substreamReader.reset(); // version number was not a real field
 			while (substreamReader.hasMore()) {
 				pdb.checkCancelled();
 				SectionContribution sectionContribution = new SectionContribution400();

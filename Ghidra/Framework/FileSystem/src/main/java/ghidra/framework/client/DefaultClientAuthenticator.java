@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,11 @@
 package ghidra.framework.client;
 
 import java.awt.Component;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
+import java.net.*;
 
 import javax.security.auth.callback.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.DockingWindowManager;
 import docking.widgets.*;
@@ -35,23 +36,63 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 	private Authenticator authenticator = new Authenticator() {
 		@Override
 		protected PasswordAuthentication getPasswordAuthentication() {
-			Msg.debug(this, "PasswordAuthentication requested for " + getRequestingURL());
-			NameCallback nameCb = null;
-			if (!"NO_NAME".equals(getRequestingScheme())) {
-				nameCb = new NameCallback("Name: ", ClientUtil.getUserName());
+
+			String serverName = getRequestingHost();
+			URL requestingURL = getRequestingURL();
+
+			String pwd = null;
+			String userName = ClientUtil.getUserName();
+			boolean useDefaultUser = true;
+
+			if (requestingURL != null) {
+				String userInfo = requestingURL.getUserInfo();
+				if (userInfo != null) {
+					// Use user info from URL
+					int pwdSep = userInfo.indexOf(':');
+					if (pwdSep < 0) {
+						userName = userInfo;
+						useDefaultUser = false;
+					}
+					else {
+						pwd = userInfo.substring(pwdSep + 1);
+						if (pwdSep != 0) {
+							userName = userInfo.substring(0, pwdSep);
+							useDefaultUser = false;
+						}
+					}
+				}
+
+				URL minimalURL = DefaultClientAuthenticator.getMinimalURL(requestingURL);
+				if (minimalURL != null) {
+					serverName = minimalURL.toExternalForm();
+				}
 			}
+
+			Msg.debug(this, "PasswordAuthentication requested for " + serverName);
+
+			if (pwd != null) {
+				// Requesting URL specified password
+				return new PasswordAuthentication(userName,	pwd.toCharArray());
+			}
+			
+			NameCallback nameCb = new NameCallback("Name: ", userName);
+			if (!useDefaultUser) {
+				// Prevent modification of user name by password prompting
+				nameCb.setName(userName);
+			}
+
+			// Prompt for password
 			String prompt = getRequestingPrompt();
-			if (prompt == null) {
-				prompt = "Password:";
+			if (StringUtils.isBlank(prompt) || "security".equals(prompt)) {
+				prompt = "Password:"; // assume dialog will show user name via nameCb
 			}
 			PasswordCallback passCb = new PasswordCallback(prompt, false);
 			try {
 				ServerPasswordPrompt pp = new ServerPasswordPrompt("Connection Authentication",
-					"Server", getRequestingHost(), nameCb, passCb, null, null, null);
+					"Server", serverName, nameCb, passCb, null, null, null);
 				SystemUtilities.runSwingNow(pp);
 				if (pp.okWasPressed()) {
-					return new PasswordAuthentication(nameCb != null ? nameCb.getName() : null,
-						passCb.getPassword());
+					return new PasswordAuthentication(nameCb.getName(),	passCb.getPassword());
 				}
 			}
 			finally {
@@ -60,6 +101,21 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 			return null;
 		}
 	};
+
+	/**
+	 * Produce minimal URL (i.e., protocol, host and port)
+	 * @param url request URL
+	 * @return minimal URL
+	 */
+	public static URL getMinimalURL(URL url) {
+		try {
+			return new URL(url, "/");
+		}
+		catch (MalformedURLException e) {
+			// ignore
+		}
+		return null;
+	}
 
 	@Override
 	public Authenticator getAuthenticator() {
@@ -165,10 +221,25 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 				choicePrompt = choiceCb.getPrompt();
 				choices = choiceCb.getChoices();
 			}
-			PasswordDialog pwdDialog =
-				new PasswordDialog(title, serverType, serverName, passCb.getPrompt(),
-					nameCb != null ? nameCb.getPrompt() : null, getDefaultUserName(), choicePrompt,
-					choices, getDefaultChoice(), anonymousCb != null);
+
+			String defaultUserName = null;
+			String namePrompt = null;
+			if (nameCb != null) {
+				defaultUserName = nameCb.getName();
+				if (defaultUserName == null) {
+					// Name entry only permitted with name callback where name has not be pre-set
+					defaultUserName = nameCb.getDefaultName();
+					namePrompt = nameCb.getPrompt();
+				}
+			}
+			if (defaultUserName == null) {
+				defaultUserName = getDefaultUserName();
+			}
+
+			PasswordDialog pwdDialog = new PasswordDialog(title, serverType, serverName,
+				passCb.getPrompt(), namePrompt, defaultUserName, choicePrompt, choices,
+				getDefaultChoice(), anonymousCb != null);
+
 			if (errorMsg != null) {
 				pwdDialog.setErrorText(errorMsg);
 			}

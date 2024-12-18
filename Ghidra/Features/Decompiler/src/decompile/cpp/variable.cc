@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -297,6 +297,27 @@ void HighVariable::transferPiece(HighVariable *tv2)
   tv2->highflags &= ~(uint4)(intersectdirty | extendcoverdirty);
 }
 
+/// Except in specific circumstances, convert \b type into its stripped form.
+void HighVariable::stripType(void) const
+
+{
+  if (!type->hasStripped())
+    return;
+  if (type->getMetatype() == TYPE_PARTIALUNION) {
+    if (symbol != (Symbol *)0 && symboloffset != -1) {
+	type_metatype meta = symbol->getType()->getMetatype();
+	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
+	  type = type->getStripped();			// strip the partial union
+    }
+  }
+  else if (type->isEnumType()) {
+    if (inst.size() != 1 || !inst[0]->isConstant())	// Only preserve partial enum on a constant
+      type = type->getStripped();
+  }
+  else
+    type = type->getStripped();
+}
+
 /// Only update if the cover is marked as \e dirty.
 /// Merge the covers of all Varnode instances.
 void HighVariable::updateInternalCover(void) const
@@ -386,17 +407,7 @@ void HighVariable::updateType(void) const
   vn = getTypeRepresentative();
 
   type = vn->getType();
-  if (type->hasStripped()) {
-    if (type->getMetatype() == TYPE_PARTIALUNION) {
-      if (symbol != (Symbol *)0 && symboloffset != -1) {
-	type_metatype meta = symbol->getType()->getMetatype();
-	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
-	  type = type->getStripped();			// strip the partial union
-      }
-    }
-    else
-      type = type->getStripped();
-  }
+  stripType();
 				// Update lock flags
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
@@ -549,17 +560,7 @@ void HighVariable::finalizeDatatype(TypeFactory *typeFactory)
   if (tp == (Datatype *)0 || tp->getMetatype() == TYPE_UNKNOWN)
     return;
   type = tp;
-  if (type->hasStripped()) {
-    if (type->getMetatype() == TYPE_PARTIALUNION) {
-      if (symboloffset != -1) {
-	type_metatype meta = symbol->getType()->getMetatype();
-	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
-	  type = type->getStripped();			// strip the partial union
-      }
-    }
-    else
-      type = type->getStripped();
-  }
+  stripType();
   highflags |= type_finalized;
 }
 
@@ -845,7 +846,7 @@ void HighVariable::encode(Encoder &encoder) const
     if (symboloffset >= 0)
       encoder.writeSignedInteger(ATTRIB_OFFSET, symboloffset);
   }
-  getType()->encode(encoder);
+  getType()->encodeRef(encoder);
   for(int4 j=0;j<inst.size();++j) {
     encoder.openElement(ELEM_ADDR);
     encoder.writeUnsignedInteger(ATTRIB_REF, inst[j]->getCreateIndex());

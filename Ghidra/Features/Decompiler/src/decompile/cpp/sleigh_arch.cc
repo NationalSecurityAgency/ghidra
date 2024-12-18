@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ ElementId ELEM_DESCRIPTION = ElementId("description",233);
 ElementId ELEM_LANGUAGE = ElementId("language",234);
 ElementId ELEM_LANGUAGE_DEFINITIONS = ElementId("language_definitions",235);
 
-map<int4,Sleigh *> SleighArchitecture::translators;
+map<int4,Sleigh> SleighArchitecture::translators;
 vector<LanguageDescription> SleighArchitecture::description;
 
 FileManage SleighArchitecture::specpaths; // Global specfile manager
@@ -174,17 +174,16 @@ bool SleighArchitecture::isTranslateReused(void)
 Translate *SleighArchitecture::buildTranslator(DocumentStorage &store)
 
 {				// Build a sleigh translator
-  map<int4,Sleigh *>::const_iterator iter;
-  Sleigh *sleigh;
+  map<int4,Sleigh>::iterator iter;
+
   iter = translators.find(languageindex);
   if (iter != translators.end()) {
-    sleigh = (*iter).second;
-    sleigh->reset(loader,context);
-    return sleigh;
+    iter->second.reset(loader, context);
+    return &iter->second;
   }
-  sleigh = new Sleigh(loader,context);
-  translators[languageindex] = sleigh;
-  return sleigh;
+  pair<map<int4,Sleigh>::iterator,bool> res;
+  res = translators.emplace(piecewise_construct,forward_as_tuple(languageindex),forward_as_tuple(loader,context));
+  return &(*res.first).second;
 }
 
 PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
@@ -267,28 +266,36 @@ void SleighArchitecture::buildSymbols(DocumentStorage &store)
 
 {
   const Element *symtag = store.getTag(ELEM_DEFAULT_SYMBOLS.getName());
-  if (symtag == (const Element *)0) return;
-  XmlDecode decoder(this,symtag);
+  if (symtag == (const Element*) 0)
+    return;
+  XmlDecode decoder(this, symtag);
   uint4 el = decoder.openElement(ELEM_DEFAULT_SYMBOLS);
-  while(decoder.peekElement() != 0) {
+  Address lastAddr(Address::m_minimal);
+  int4 lastSize = -1;
+  while (decoder.peekElement() != 0) {
     uint4 subel = decoder.openElement(ELEM_SYMBOL);
     Address addr;
     string name;
+    string description;
     int4 size = 0;
     int4 volatileState = -1;
-    for(;;) {
+    for (;;) {
       uint4 attribId = decoder.getNextAttributeId();
-      if (attribId == 0) break;
+      if (attribId == 0)
+        break;
       if (attribId == ATTRIB_NAME)
-	name = decoder.readString();
+        name = decoder.readString();
       else if (attribId == ATTRIB_ADDRESS) {
-	addr = parseAddressSimple(decoder.readString());
-      }
-      else if (attribId == ATTRIB_VOLATILE) {
-	volatileState = decoder.readBool() ? 1 : 0;
-      }
-      else if (attribId == ATTRIB_SIZE)
-	size = decoder.readSignedInteger();
+        string addrStr = decoder.readString();
+        if (addrStr == "next" && lastSize != -1) {
+          addr = lastAddr + lastSize;
+        } else {
+          addr = parseAddressSimple(addrStr);
+        }
+      } else if (attribId == ATTRIB_VOLATILE) {
+        volatileState = decoder.readBool() ? 1 : 0;
+      } else if (attribId == ATTRIB_SIZE)
+        size = decoder.readSignedInteger();
     }
     decoder.closeElement(subel);
     if (name.size() == 0)
@@ -298,15 +305,17 @@ void SleighArchitecture::buildSymbols(DocumentStorage &store)
     if (size == 0)
       size = addr.getSpace()->getWordSize();
     if (volatileState >= 0) {
-      Range range(addr.getSpace(),addr.getOffset(),addr.getOffset() + (size-1));
+      Range range(addr.getSpace(), addr.getOffset(), addr.getOffset() + (size - 1));
       if (volatileState == 0)
-	symboltab->clearPropertyRange(Varnode::volatil, range);
+        symboltab->clearPropertyRange(Varnode::volatil, range);
       else
-	symboltab->setPropertyRange(Varnode::volatil, range);
+        symboltab->setPropertyRange(Varnode::volatil, range);
     }
     Datatype *ct = types->getBase(size, TYPE_UNKNOWN);
     Address usepoint;
     symboltab->getGlobalScope()->addSymbol(name, ct, addr, usepoint);
+    lastAddr = addr;
+    lastSize = size;
   }
   decoder.closeElement(el);
 }
@@ -617,10 +626,6 @@ const vector<LanguageDescription> &SleighArchitecture::getDescriptions(void)
 void SleighArchitecture::shutdown(void)
 
 {
-  if (translators.empty()) return;	// Already cleared
-  for(map<int4,Sleigh *>::const_iterator iter=translators.begin();iter!=translators.end();++iter)
-    delete (*iter).second;
-  translators.clear();
   // description.clear();  // static vector is destroyed by the normal exit handler
 }
 

@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import redirect_stdout
@@ -140,8 +140,12 @@ def find_thread_by_regs_obj(object):
     return find_thread_by_pattern(REGS_PATTERN0, object, "a RegisterValueContainer")
 
 
+@util.dbg.eng_thread
 def find_frame_by_level(level):
-    return dbg().backtrace_list()[level]
+    for f in util.dbg._base.backtrace_list():
+        if f.FrameNumber == level:
+        	return f
+    #return dbg().backtrace_list()[level]
 
 
 def find_frame_by_pattern(pattern, object, err_msg):
@@ -199,9 +203,11 @@ def execute(cmd: str, to_string: bool=False):
         exec(cmd, shared_globals)
 
 
-@REGISTRY.method
+@REGISTRY.method(action='evaluate', display='Evaluate')
 # @util.dbg.eng_thread
-def evaluate(expr: str):
+def evaluate(
+	session: sch.Schema('Session'),
+ 	expr: ParamDesc(str, display='Expr')):
     """Evaluate a Python3 expression."""
     return str(eval(expr, shared_globals))
 
@@ -267,13 +273,16 @@ def refresh_threads(node: sch.Schema('ThreadContainer')):
 def refresh_stack(node: sch.Schema('Stack')):
     """Refresh the backtrace for the thread."""
     tnum = find_thread_by_stack_obj(node)
+    util.reset_frames()
     with commands.open_tracked_tx('Refresh Stack'):
         commands.ghidra_trace_put_frames()
+    with commands.open_tracked_tx('Refresh Registers'):
+        commands.ghidra_trace_putreg()
 
 
 @REGISTRY.method(action='refresh', display='Refresh Registers')
 def refresh_registers(node: sch.Schema('RegisterValueContainer')):
-    """Refresh the register values for the frame."""
+    """Refresh the register values for the selected frame"""
     tnum = find_thread_by_regs_obj(node)
     with commands.open_tracked_tx('Refresh Registers'):
         commands.ghidra_trace_putreg()
@@ -312,7 +321,12 @@ def activate_thread(thread: sch.Schema('Thread')):
 @REGISTRY.method(action='activate')
 def activate_frame(frame: sch.Schema('StackFrame')):
     """Select the frame."""
-    find_frame_by_obj(frame)
+    f = find_frame_by_obj(frame)
+    util.select_frame(f.FrameNumber)
+    with commands.open_tracked_tx('Refresh Stack'):
+        commands.ghidra_trace_put_frames()
+    with commands.open_tracked_tx('Refresh Registers'):
+        commands.ghidra_trace_putreg()
 
 
 @REGISTRY.method(action='delete')
@@ -323,15 +337,16 @@ def remove_process(process: sch.Schema('Process')):
     dbg().detach_proc()
 
 
-@REGISTRY.method(action='connect')
+@REGISTRY.method(action='connect', display='Connect')
 @util.dbg.eng_thread
-def target(process: sch.Schema('Process'), spec: str):
+def target(
+	session: sch.Schema('Session'), 
+	cmd: ParamDesc(str, display='Command')):
     """Connect to a target machine or process."""
-    find_proc_by_obj(process)
-    dbg().attach_kernel(spec)
+    dbg().attach_kernel(cmd)
 
 
-@REGISTRY.method(action='attach')
+@REGISTRY.method(action='attach', display='Attach')
 @util.dbg.eng_thread
 def attach_obj(target: sch.Schema('Attachable')):
     """Attach the process to the given target."""
@@ -339,29 +354,34 @@ def attach_obj(target: sch.Schema('Attachable')):
     dbg().attach_proc(pid)
 
 
-@REGISTRY.method(action='attach')
+@REGISTRY.method(action='attach', display='Attach by pid')
 @util.dbg.eng_thread
-def attach_pid(pid: int):
+def attach_pid(
+	session: sch.Schema('Session'), 
+	pid: ParamDesc(str, display='PID')):
     """Attach the process to the given target."""
-    dbg().attach_proc(pid)
+    dbg().attach_proc(int(pid))
 
 
-@REGISTRY.method(action='attach')
+@REGISTRY.method(action='attach', display='Attach by name')
 @util.dbg.eng_thread
-def attach_name(process: sch.Schema('Process'), name: str):
+def attach_name(
+	session: sch.Schema('Session'), 
+	name: ParamDesc(str, display='Name')):
     """Attach the process to the given target."""
     dbg().attach_proc(name)
 
 
-@REGISTRY.method
+@REGISTRY.method(action='detach', display='Detach')
 @util.dbg.eng_thread
 def detach(process: sch.Schema('Process')):
     """Detach the process's target."""
     dbg().detach_proc()
 
 
-@REGISTRY.method(action='launch')
+@REGISTRY.method(action='launch', display='Launch')
 def launch_loader(
+		session: sch.Schema('Session'),
         file: ParamDesc(str, display='File'),
         args: ParamDesc(str, display='Arguments')=''):
     """
@@ -373,8 +393,9 @@ def launch_loader(
     commands.ghidra_trace_create(command=file, start_trace=False)
 
 
-@REGISTRY.method(action='launch')
+@REGISTRY.method(action='launch', display='LaunchEx')
 def launch(
+		session: sch.Schema('Session'),
         file: ParamDesc(str, display='File'),
         args: ParamDesc(str, display='Arguments')='',
         initial_break: ParamDesc(bool, display='Initial Break')=True,
@@ -431,7 +452,7 @@ def step_out(thread: sch.Schema('Thread')):
     util.dbg.run_async(lambda: dbg().stepout())
 
 
-@REGISTRY.method(action='step_to')
+@REGISTRY.method(action='step_to', display='Step To')
 def step_to(thread: sch.Schema('Thread'), address: Address, max=None):
     """Continue execution up to the given address."""
     find_thread_by_obj(thread)

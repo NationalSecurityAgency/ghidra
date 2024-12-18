@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -225,8 +225,8 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	 * <p>
 	 * The information that can be recovered about arguments is limited to:
 	 * <ul>
-	 * 	<li>the size of the argument
-	 * 	<li>general grouping (eg. grouping of arg values as a structure or array)
+	 * 	<li>the size of the argument</li>
+	 * 	<li>general grouping (eg. grouping of arg values as a structure or array)</li>
 	 * </ul>
 	 * Return value information is unknown and always represented as an "undefined" data type.
 	 * 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,9 +45,12 @@ public class DBHandle {
 	private WeakSet<DBListener> listenerList = WeakDataStructureFactory.createCopyOnReadWeakSet();
 
 	private long lastTransactionID;
-	private boolean txStarted = false;
+	private volatile boolean txStarted = false;
+
 	private boolean waitingForNewTransaction = false;
 	private boolean reloadInProgress = false;
+
+	private volatile boolean cachedChangedState;
 
 	private long checkpointNum;
 	private long lastRecoverySnapshotId;
@@ -528,8 +531,23 @@ public class DBHandle {
 		}
 		finally {
 			txStarted = false;
+			cacheChangedState();
 		}
 		return false;
+	}
+
+	private void cacheChangedState() {
+		cachedChangedState = bufferMgr != null && bufferMgr.isChanged();
+	}
+
+	/**
+	 * Provides a means of detecting changes to the underlying database buffers 
+	 * during a transaction.
+	 * 
+	 * @return current modification count
+	 */
+	public long getModCount() {
+		return bufferMgr.getModCount();
 	}
 
 	/**
@@ -563,6 +581,7 @@ public class DBHandle {
 			bufferMgr.setDBVersionedSourceFile(bf);
 			++checkpointNum;
 			reloadTables();
+			cacheChangedState();
 		}
 		notifyDbRestored();
 	}
@@ -617,6 +636,7 @@ public class DBHandle {
 			if (canUndo() && bufferMgr.undo(true)) {
 				++checkpointNum;
 				reloadTables();
+				cacheChangedState();
 				success = true;
 			}
 		}
@@ -662,6 +682,7 @@ public class DBHandle {
 			if (canRedo() && bufferMgr.redo()) {
 				++checkpointNum;
 				reloadTables();
+				cacheChangedState();
 				success = true;
 			}
 		}
@@ -679,6 +700,7 @@ public class DBHandle {
 	 */
 	public synchronized void setMaxUndos(int maxUndos) {
 		bufferMgr.setMaxUndos(maxUndos);
+		cacheChangedState();
 	}
 
 	/**
@@ -722,24 +744,30 @@ public class DBHandle {
 	 * @param keepRecoveryData true if existing recovery data should be retained or false to remove
 	 * any recovery data
 	 */
-	public void close(boolean keepRecoveryData) {
+	public synchronized void close(boolean keepRecoveryData) {
 
 		closeScratchPad();
 
-		// use copy of bufferMgr to be thread-safe
-		BufferMgr mgr = bufferMgr;
-		if (mgr != null) {
-			notifyDbClosed();
-			mgr.dispose(keepRecoveryData);
+		synchronized (this) {
+			if (bufferMgr == null) {
+				return;
+			}
+			bufferMgr.dispose(keepRecoveryData);
 			bufferMgr = null;
+			cachedChangedState = false;
 		}
+
+		notifyDbClosed();
 	}
 
 	/**
+	 * Determine if the underlying database has changed.
+	 * NOTE: The returned value reflects a cached state assuming all underlaying database 
+	 * transactions, saving, etc. are facilitated by this handle object.
 	 * @return true if unsaved changes have been made.
 	 */
-	public synchronized boolean isChanged() {
-		return bufferMgr != null && bufferMgr.isChanged();
+	public boolean isChanged() {
+		return cachedChangedState;
 	}
 
 	/**
@@ -764,19 +792,26 @@ public class DBHandle {
 
 //TODO: Does not throw ReadOnlyException - should it?
 
+		checkIsClosed();
+
 		if (txStarted) {
 			throw new AssertException("Can't save during transaction");
 		}
 
-		long txId = startTransaction();
 		try {
-			masterTable.flush();
+			long txId = startTransaction();
+			try {
+				masterTable.flush();
+			}
+			finally {
+				endTransaction(txId, true); // saved file may be corrupt on IOException
+			}
+
+			bufferMgr.save(comment, changeSet, monitor);
 		}
 		finally {
-			endTransaction(txId, true); // saved file may be corrupt on IOException
+			cacheChangedState();
 		}
-
-		bufferMgr.save(comment, changeSet, monitor);
 	}
 
 	/**
@@ -793,29 +828,36 @@ public class DBHandle {
 	public synchronized void saveAs(BufferFile outFile, boolean associateWithNewFile,
 			TaskMonitor monitor) throws IOException, CancelledException {
 
+		checkIsClosed();
+
 		if (txStarted) {
 			throw new AssertException("Can't save during transaction");
 		}
 
-		long txId = startTransaction();
-		boolean addedTx = false;
 		try {
-			// About to create copy of existing file - assign new databaseId
-			if (bufferMgr.getSourceFile() != null) {
-				initDatabaseId();
+			long txId = startTransaction();
+			boolean addedTx = false;
+			try {
+				// About to create copy of existing file - assign new databaseId
+				if (bufferMgr.getSourceFile() != null) {
+					initDatabaseId();
+				}
+				masterTable.flush();
 			}
-			masterTable.flush();
+			finally {
+				addedTx = endTransaction(txId, true); // saved file may be corrupt on IOException
+			}
+
+			bufferMgr.saveAs(outFile, associateWithNewFile, monitor);
+
+			if (addedTx && !associateWithNewFile) {
+				// Restore state and original databaseId
+				undo();
+				readDatabaseId();
+			}
 		}
 		finally {
-			addedTx = endTransaction(txId, true); // saved file may be corrupt on IOException
-		}
-
-		bufferMgr.saveAs(outFile, associateWithNewFile, monitor);
-
-		if (addedTx && !associateWithNewFile) {
-			// Restore state and original databaseId
-			undo();
-			readDatabaseId();
+			cacheChangedState();
 		}
 	}
 
@@ -839,25 +881,32 @@ public class DBHandle {
 			boolean associateWithNewFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
+		checkIsClosed();
+
 		if (txStarted) {
 			throw new IllegalStateException("Can't save during transaction");
 		}
 
-		long txId = startTransaction();
 		try {
-			if (newDatabaseId == null) {
-				initDatabaseId();
+			long txId = startTransaction();
+			try {
+				if (newDatabaseId == null) {
+					initDatabaseId();
+				}
+				else if (databaseId != newDatabaseId.longValue()) {
+					setDatabaseId(newDatabaseId);
+				}
+				masterTable.flush();
 			}
-			else if (databaseId != newDatabaseId.longValue()) {
-				setDatabaseId(newDatabaseId);
+			finally {
+				endTransaction(txId, true); // saved file may be corrupt on IOException
 			}
-			masterTable.flush();
+
+			bufferMgr.saveAs(outFile, associateWithNewFile, monitor);
 		}
 		finally {
-			endTransaction(txId, true); // saved file may be corrupt on IOException
+			cacheChangedState();
 		}
-
-		bufferMgr.saveAs(outFile, associateWithNewFile, monitor);
 	}
 
 	/**
@@ -881,19 +930,24 @@ public class DBHandle {
 			throw new DuplicateFileException("File already exists: " + file);
 		}
 
-		LocalBufferFile outFile = new LocalBufferFile(file, bufferMgr.getBufferSize());
-		boolean success = false;
 		try {
-			saveAs(outFile, associateWithNewFile, monitor);
-			success = true;
+			LocalBufferFile outFile = new LocalBufferFile(file, bufferMgr.getBufferSize());
+			boolean success = false;
+			try {
+				saveAs(outFile, associateWithNewFile, monitor);
+				success = true;
+			}
+			finally {
+				if (!success) {
+					outFile.delete();
+				}
+				else if (!associateWithNewFile) {
+					outFile.dispose();
+				}
+			}
 		}
 		finally {
-			if (!success) {
-				outFile.delete();
-			}
-			else if (!associateWithNewFile) {
-				outFile.dispose();
-			}
+			cacheChangedState();
 		}
 	}
 
@@ -906,7 +960,7 @@ public class DBHandle {
 	 * @return Buffer the newly created buffer
 	 * @throws IOException if an I/O error occurs while creating the buffer.
 	 */
-	public DBBuffer createBuffer(int length) throws IOException {
+	public synchronized DBBuffer createBuffer(int length) throws IOException {
 		checkTransaction();
 		return new DBBuffer(this, new ChainedBuffer(length, true, bufferMgr));
 	}
@@ -921,7 +975,7 @@ public class DBHandle {
 	 * @return Buffer the newly created buffer
 	 * @throws IOException if an I/O error occurs while creating the buffer.
 	 */
-	public DBBuffer createBuffer(DBBuffer shadowBuffer) throws IOException {
+	public synchronized DBBuffer createBuffer(DBBuffer shadowBuffer) throws IOException {
 		checkTransaction();
 		return new DBBuffer(this,
 			new ChainedBuffer(shadowBuffer.length(), true, shadowBuffer.buf, 0, bufferMgr));
@@ -935,7 +989,7 @@ public class DBHandle {
 	 * @return Buffer the buffer associated with the given id.
 	 * @throws IOException if an I/O error occurs while getting the buffer.
 	 */
-	public DBBuffer getBuffer(int id) throws IOException {
+	public synchronized DBBuffer getBuffer(int id) throws IOException {
 		checkIsClosed();
 		return new DBBuffer(this, new ChainedBuffer(bufferMgr, id));
 	}
@@ -951,7 +1005,7 @@ public class DBHandle {
 	 * @return Buffer the buffer associated with the given id.
 	 * @throws IOException if an I/O error occurs while getting the buffer.
 	 */
-	public DBBuffer getBuffer(int id, DBBuffer shadowBuffer) throws IOException {
+	public synchronized DBBuffer getBuffer(int id, DBBuffer shadowBuffer) throws IOException {
 		checkIsClosed();
 		return new DBBuffer(this, new ChainedBuffer(bufferMgr, id, shadowBuffer.buf, 0));
 	}

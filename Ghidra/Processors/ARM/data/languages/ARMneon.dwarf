@@ -10,5 +10,11 @@
 		<register_mapping dwarf="64" ghidra="s0" auto_count="32"/> <!-- s0..s31 -->
 	</register_mappings>
 	<call_frame_cfa value="0"/>
-	<use_formal_parameter_storage/>
+	<!--
+		In the past, this flag has been present in this file but was not correctly implemented in
+		the DWARF analyzer.  The DWARF analyzer now respects this flag, and also has the
+		"Ignore Parameter Storage Info" toggle option to enable the same feature.
+		This flag is being left disabled to match recent DWARF analyzer behavior.
+		<use_formal_parameter_storage/>
+	-->
 </dwarf>

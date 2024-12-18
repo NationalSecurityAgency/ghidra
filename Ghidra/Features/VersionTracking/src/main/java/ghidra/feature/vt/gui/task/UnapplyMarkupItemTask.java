@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.AddressCorrelation;
+import ghidra.program.util.AddressCorrelationRange;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -42,7 +42,7 @@ public class UnapplyMarkupItemTask extends VtTask {
 				"Unexpected condition - VTSession is not a DB object!");
 		}
 	}
-	
+
 	@Override
 	protected boolean shouldSuspendSessionEvents() {
 		return markupItems.size() > 20;
@@ -90,11 +90,11 @@ public class UnapplyMarkupItemTask extends VtTask {
 		Address destinationAddress = null;
 		String source = null;
 		if (correlation != null) {
-			AddressRange range =
+			AddressCorrelationRange range =
 				correlation.getCorrelatedDestinationRange(markupItem.getSourceAddress(), monitor);
 			if (range != null) {
 				destinationAddress = range.getMinAddress();
-				source = correlation.getName();
+				source = range.getCorrelatorName();
 			}
 		}
 

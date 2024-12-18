@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -449,6 +449,18 @@ void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
   if (high != (HighVariable *)0) {
     high->setSymbolReference(entry->getSymbol(), off);
   }
+}
+
+/// \param ct is the Datatype to change to
+/// \return \b true if the Datatype changed
+bool Varnode::updateType(Datatype *ct)
+
+{
+  if (type == ct || isTypeLock()) return false;
+  type = ct;
+  if (high != (HighVariable *)0)
+    high->typeDirty();
+  return true;
 }
 
 /// Change the Datatype and lock state associated with this Varnode if various conditions are met
@@ -940,6 +952,22 @@ bool Varnode::isBooleanValue(bool useAnnotation) const
   return false;
 }
 
+/// If we can prove that the upper bits of \b this are zero, return \b true.
+/// \param baseSize is the maximum number of least significant bytes that are allowed to be non-zero
+/// \return \b true if all the most significant bytes are zero
+bool Varnode::isZeroExtended(int4 baseSize) const
+
+{
+  if (baseSize >= size) return false;
+  if (size > sizeof(uintb)) {
+    if (!isWritten()) return false;
+    if (def->code() != CPUI_INT_ZEXT) return false;
+    if (def->getIn(0)->getSize() > baseSize) return false;
+    return true;
+  }
+  uintb mask = nzm >> 8*baseSize;
+  return (mask == 0);
+}
 
 /// Make a local determination if \b this and \b op2 hold the same value. We check if
 /// there is a common ancester for which both \b this and \b op2 are created from a direct

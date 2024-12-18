@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,7 +142,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 		// example
 		// dword ptr param, EAX
-		String searchText = "param";
+		String searchText = "local_";
 		SearchOptions options = new SearchOptions(searchText, false, true, false);
 		searcher =
 			new ListingDisplaySearcher(tool, program, startLoc, null, options, TaskMonitor.DUMMY);
@@ -163,7 +163,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 		// example
 		// dword ptr param, EAX
-		String searchText = "param";
+		String searchText = "local_";
 		SearchOptions options = new SearchOptions(searchText, false, false, false);
 
 		searcher =
@@ -187,17 +187,21 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 		// example
 		// dword ptr param, EAX
-		SearchOptions options = new SearchOptions("param", false, false, false, false, true, true,
+		SearchOptions options = new SearchOptions("local_", false, false, false, false, true, true,
 			false, false, false, true, false, false);
 		searcher =
 			new ListingDisplaySearcher(tool, program, startLoc, null, options, TaskMonitor.DUMMY);
 
 		//set up list of answers
 		ArrayList<Address> startList = new ArrayList<>();
-		startList.add(addr(0x0100416c));
-		startList.add(addr(0x01004186));
-		startList.add(addr(0x01004189));
-		startList.add(addr(0x0100419c));
+		startList.add(addr(0x01004162));
+		startList.add(addr(0x01004169));
+		startList.add(addr(0x0100416f));
+		startList.add(addr(0x01004178));
+		startList.add(addr(0x0100417c));
+		startList.add(addr(0x01004180));
+		startList.add(addr(0x01004196));
+		startList.add(addr(0x010041a1));
 
 		//check that the text is found there in the correct field
 		checkTextFound(startList, OperandFieldLocation.class);
@@ -268,11 +272,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		int transactionID = program.startTransaction("test");
 		try {
 			DataType dt = program.getDataTypeManager()
-					.addDataType(struct,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			floatDt = program.getDataTypeManager()
-					.addDataType(new FloatDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new FloatDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			listing.createData(addr(0x0100689b), dt);
 			listing.createData(addr(0x0100688c), floatDt);
 			listing.createData(addr(0x01006890), floatDt);
@@ -347,11 +349,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		int transactionID = program.startTransaction("test");
 		try {
 			DataType dt = program.getDataTypeManager()
-					.addDataType(struct,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			floatDt = program.getDataTypeManager()
-					.addDataType(new FloatDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new FloatDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			listing.createData(addr(0x0100689b), dt);
 			listing.createData(addr(0x0100688c), floatDt);
 			listing.createData(addr(0x01006890), floatDt);
@@ -437,11 +437,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		int transactionID = program.startTransaction("test");
 		try {
 			DataType dt = program.getDataTypeManager()
-					.addDataType(struct,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			floatDt = program.getDataTypeManager()
-					.addDataType(new FloatDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new FloatDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			listing.createData(addr(0x0100689b), dt);
 			listing.createData(addr(0x0100688c), floatDt);
 			listing.createData(addr(0x01006890), floatDt);

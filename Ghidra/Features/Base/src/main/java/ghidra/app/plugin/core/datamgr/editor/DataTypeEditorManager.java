@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,7 +123,7 @@ public class DataTypeEditorManager implements EditorListener {
 	}
 
 	/**
-	 * Displays a data type editor for editing the given Structure. If the structure is is already 
+	 * Displays a data type editor for editing the given Structure. If the structure is already 
 	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
 	 * displayed.
 	 * @param structure the structure.

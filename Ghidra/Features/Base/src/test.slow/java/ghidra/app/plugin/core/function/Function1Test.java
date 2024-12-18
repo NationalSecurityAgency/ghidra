@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.plugin.core.highlight.SetHighlightPlugin;
+import ghidra.app.plugin.core.instructionsearch.model.InstructionSearchData.UpdateType;
 import ghidra.app.plugin.core.navigation.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.AddEditDialog;
@@ -52,6 +53,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
@@ -594,6 +596,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("double entry(void)", function.getPrototypeString(false, false));
 
 		doCycleAction(floatCycleAction);
+		assertEquals("longdouble entry(void)", function.getPrototypeString(false, false));
+
+		doCycleAction(floatCycleAction);
 		assertEquals("float entry(void)", function.getPrototypeString(false, false));
 	}
 
@@ -630,6 +635,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -698,6 +706,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -773,6 +784,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -872,6 +886,9 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		doCycleAction(floatCycleAction);
 		assertEquals("double", cb.getCurrentFieldText());
+
+		doCycleAction(floatCycleAction);
+		assertEquals("longdouble", cb.getCurrentFieldText());
 
 		doCycleAction(floatCycleAction);
 		assertEquals("float", cb.getCurrentFieldText());
@@ -1271,9 +1288,19 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 		Function f = createFunctionAtEntry();
+		// Test requires a size-constrained register variable edit 
+		program.withTransaction("Update Signature",
+			() -> f.updateFunction(null, null, FunctionUpdateType.CUSTOM_STORAGE, true,
+				SourceType.ANALYSIS, new ParameterImpl("test", Undefined4DataType.dataType,
+					program.getRegister("EBX"), program)));
 		setCustomParameterStorage(f, true);
 
-		assertTrue(cb.goToField(addr("0x1006420"), "Variable Type", 0, 0));
+		waitForSwing();
+
+		// Set location to param_1 datatype field
+		assertTrue(cb.goToField(addr("0x1006420"), "Variable Type", 1, 0, 0));
+
+		waitForSwing();
 
 		performAction(chooseDataType, cb.getProvider(), false);
 		DataTypeSelectionDialog dialog = waitForDialogComponent(DataTypeSelectionDialog.class);
@@ -1442,7 +1469,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		editComment = getAction(fp, "Edit Variable Comment");
 		deleteComment = getAction(fp, "Delete Function Variable Comment");
 		byteCycleAction = getAction(fp, "Cycle: byte,word,dword,qword");
-		floatCycleAction = getAction(fp, "Cycle: float,double");
+		floatCycleAction = getAction(fp, "Cycle: float,double,longdouble");
 		createArray = getAction(fp, "Define Array");
 		createPointer = getAction(fp, "Define pointer");
 		clearFunctionReturnTypeAction = getAction(fp, "Clear Function Return Type");

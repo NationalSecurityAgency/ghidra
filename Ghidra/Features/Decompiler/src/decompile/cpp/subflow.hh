@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@
 #ifndef __SUBFLOW_HH__
 #define __SUBFLOW_HH__
 
-#include "funcdata.hh"
+#include "ruleaction.hh"
+#include "transform.hh"
 
 namespace ghidra {
 
@@ -70,7 +71,8 @@ class SubvariableFlow {
       compare_patch,		///< Turn compare op inputs into logical values
       parameter_patch,		///< Convert a CALL/CALLIND/RETURN/BRANCHIND parameter into logical value
       extension_patch,		///< Convert op into something that copies/extends logical value, adding zero bits
-      push_patch		///< Convert an operator output to the logical value
+      push_patch,		///< Convert an operator output to the logical value
+      int2float_patch		///< Zero extend logical value into FLOAT_INT2FLOAT operator
     };
     patchtype type;		///< The type of \b this patch
     PcodeOp *patchOp;		///< Op being affected
@@ -101,6 +103,7 @@ class SubvariableFlow {
   bool tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn);
   bool trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn);
+  bool tryInt2FloatPull(PcodeOp *op,ReplaceVarnode *rvn);
   bool traceForward(ReplaceVarnode *rvn);	///< Trace the logical data-flow forward for the given subgraph variable
   bool traceBackward(ReplaceVarnode *rvn);	///< Trace the logical data-flow backward for the given subgraph variable
   bool traceForwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow forward assuming sign-extensions
@@ -126,6 +129,89 @@ public:
   void doReplacement(void);		///< Perform the discovered transform, making logical values explicit
 };
 
+/// \brief Perform SubVariableFlow analysis triggered by INT_AND
+class RuleSubvarAnd : public Rule {
+public:
+  RuleSubvarAnd(const string &g) : Rule( g, 0, "subvar_and") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubvarAnd(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Perform SubVariableFlow analysis triggered by SUBPIECE
+class RuleSubvarSubpiece : public Rule {
+public:
+  RuleSubvarSubpiece(const string &g) : Rule( g, 0, "subvar_subpiece") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubvarSubpiece(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Perform SubvariableFlow analysis triggered by testing of a single bit
+///
+/// Given a comparison (INT_EQUAL or INT_NOTEEQUAL_ to a constant,
+/// check that input has only 1 bit that can possibly be non-zero
+/// and that the constant is testing this.  This then triggers
+/// the full SubvariableFlow analysis.
+class RuleSubvarCompZero : public Rule {
+public:
+  RuleSubvarCompZero(const string &g) : Rule( g, 0, "subvar_compzero") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubvarCompZero(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Perform SubvariableFlow analysis triggered by INT_RIGHT
+///
+/// If the INT_RIGHT input has only 1 bit that can possibly be non-zero
+/// and it is getting shifted into the least significant bit position,
+/// trigger the full SubvariableFlow analysis.
+class RuleSubvarShift : public Rule {
+public:
+  RuleSubvarShift(const string &g) : Rule( g, 0, "subvar_shift") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubvarShift(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Perform SubvariableFlow analysis triggered by INT_ZEXT
+class RuleSubvarZext : public Rule {
+public:
+  RuleSubvarZext(const string &g) : Rule( g, 0, "subvar_zext") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubvarZext(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Perform SubvariableFlow analysis triggered by INT_SEXT
+class RuleSubvarSext : public Rule {
+  int4 isaggressive;			///< Is it guaranteed the root is a sub-variable needing to be trimmed
+public:
+  RuleSubvarSext(const string &g) : Rule( g, 0, "subvar_sext") { isaggressive = false; }	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubvarSext(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  virtual void reset(Funcdata &data);
+};
+
 /// \brief Class for splitting up Varnodes that hold 2 logical variables
 ///
 /// Starting from a \e root Varnode provided to the constructor, \b this class looks for data-flow
@@ -143,6 +229,22 @@ class SplitFlow : public TransformManager {
 public:
   SplitFlow(Funcdata *f,Varnode *root,int4 lowSize);	///< Constructor
   bool doTrace(void);			///< Trace split through data-flow, constructing transform
+};
+
+/// \brief Try to detect and split artificially joined Varnodes
+///
+/// Look for SUBPIECE coming from a PIECE that has come through INDIRECTs and/or MULTIEQUAL
+/// Then: check if the input to SUBPIECE can be viewed as two independent pieces
+/// If so:  split the pieces into independent data-flows
+class RuleSplitFlow : public Rule {
+public:
+  RuleSplitFlow(const string &g) : Rule( g, 0, "splitflow") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitFlow(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
 /// \brief Split a p-code COPY, LOAD, or STORE op based on underlying composite data-type
@@ -173,9 +275,10 @@ class SplitDatatype {
     Varnode *firstPointer;		///< Direct pointer input for LOAD or STORE
     Varnode *pointer;			///< The root pointer
     int4 baseOffset;			///< Offset of the LOAD or STORE relative to root pointer
-    bool backUpPointer(void);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
+    bool backUpPointer(Datatype *impliedBase);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
   public:
     bool find(PcodeOp *op,Datatype *valueType);	///< Locate root pointer for underlying LOAD or STORE
+    void duplicateToTemp(Funcdata &data,PcodeOp *followOp);	///< COPY the root varnode into a temp register
     void freePointerChain(Funcdata &data);	///< Remove unused pointer calculations
   };
   Funcdata &data;			///< The containing function
@@ -183,6 +286,7 @@ class SplitDatatype {
   vector<Component> dataTypePieces;	///< Sequence of all data-type pairs being copied
   bool splitStructures;			///< Whether or not structures should be split
   bool splitArrays;			///< Whether or not arrays should be split
+  bool isLoadStore;			///< True if trying to split LOAD or STORE
   Datatype *getComponent(Datatype *ct,int4 offset,bool &isHole);
   int4 categorizeDatatype(Datatype *ct);	///< Categorize if and how data-type should be split
   bool testDatatypeCompatibility(Datatype *inBase,Datatype *outBase,bool inConstant);
@@ -204,16 +308,75 @@ public:
   static Datatype *getValueDatatype(PcodeOp *loadStore,int4 size,TypeFactory *tlst);
 };
 
+/// \brief Split COPY ops based on TypePartialStruct
+///
+/// If more than one logical component of a structure or array is copied at once,
+/// rewrite the COPY operator as multiple COPYs.
+class RuleSplitCopy : public Rule {
+public:
+  RuleSplitCopy(const string &g) : Rule( g, 0, "splitcopy") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitCopy(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Split LOAD ops based on TypePartialStruct
+///
+/// If more than one logical component of a structure or array is loaded at once,
+/// rewrite the LOAD operator as multiple LOADs.
+class RuleSplitLoad : public Rule {
+public:
+  RuleSplitLoad(const string &g) : Rule( g, 0, "splitload") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitLoad(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+/// \brief Split STORE ops based on TypePartialStruct
+///
+/// If more than one logical component of a structure or array is stored at once,
+/// rewrite the STORE operator as multiple STOREs.
+class RuleSplitStore : public Rule {
+public:
+  RuleSplitStore(const string &g) : Rule( g, 0, "splitstore") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitStore(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 /// \brief Class for tracing changes of precision in floating point variables
 ///
 /// It follows the flow of a logical lower precision value stored in higher precision locations
 /// and then rewrites the data-flow in terms of the lower precision, eliminating the
 /// precision conversions.
 class SubfloatFlow : public TransformManager {
+  /// \brief Internal state for walking floating-point data-flow and computing precision
+  class State {
+  public:
+    PcodeOp *op;		///< Operation being traversed
+    int4 slot;			///< Input edge being traversed
+    int4 maxPrecision;		///< Maximum precision traversed through inputs so far
+    State(PcodeOp *o) {
+      op = o; slot = 0; maxPrecision = 0; }	///< Constructor
+    /// \brief Accumulate precision coming in from an input Varnode to \b this node
+    void incorporateInputSize(int4 sz) { maxPrecision = (maxPrecision < sz) ? sz : maxPrecision; }
+  };
   int4 precision;		///< Number of bytes of precision in the logical flow
   int4 terminatorCount;		///< Number of terminating nodes reachable via the root
   const FloatFormat *format;	///< The floating-point format of the logical value
   vector<TransformVar *> worklist;	///< Current list of placeholders that still need to be traced
+  map<PcodeOp *,int4> maxPrecisionMap;	///< Maximum precision flowing into a particular floating-point op
+  int4 maxPrecision(Varnode *vn);	///< Calculate maximum floating-point precision reaching a given Varnode
+  bool exceedsPrecision(PcodeOp *op);	///< Determine if the given op exceeds our \b precision
   TransformVar *setReplacement(Varnode *vn);
   bool traceForward(TransformVar *rvn);
   bool traceBackward(TransformVar *rvn);
@@ -222,6 +385,18 @@ public:
   SubfloatFlow(Funcdata *f,Varnode *root,int4 prec);
   virtual bool preserveAddress(Varnode *vn,int4 bitSize,int4 lsbOffset) const;
   bool doTrace(void);		///< Trace logical value as far as possible
+};
+
+/// \brief Perform SubfloatFlow analysis triggered by FLOAT_FLOAT2FLOAT
+class RuleSubfloatConvert : public Rule {
+public:
+  RuleSubfloatConvert(const string &g) : Rule( g, 0, "subfloat_convert") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSubfloatConvert(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
 /// \brief Class for splitting data-flow on \e laned registers
@@ -248,9 +423,12 @@ class LaneDivide : public TransformManager {
   void buildBinaryOp(OpCode opc,PcodeOp *op,TransformVar *in0Vars,TransformVar *in1Vars,TransformVar *outVars,int4 numLanes);
   bool buildPiece(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildMultiequal(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildIndirect(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes);
   bool buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool buildRightShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildLeftShift(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
+  bool buildZext(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 skipLanes);
   bool traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool traceBackward(TransformVar *rvn,int4 numLanes,int4 skipLanes);
   bool processNextWork(void);		///< Process the next Varnode on the work list

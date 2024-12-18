@@ -5,6 +5,7 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/debugger.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
@@ -25,7 +26,6 @@ src/main/help/help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.ht
 src/main/help/help/topics/DebuggerCopyActionsPlugin/images/DebuggerCopyIntoProgramDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerDisassemblerPlugin/DebuggerDisassemblerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html||GHIDRA||||END|
-src/main/help/help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerGoToDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/images/DebuggerListingPlugin.png||GHIDRA||||END|
@@ -35,15 +35,10 @@ src/main/help/help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html||GHID
 src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModelPlugin/images/DebuggerModelPlugin.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModuleMapProposalDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModulesPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerSectionMapProposalDialog.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerBreakpointDialog.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerMethodInvocationDialog_ForLaunch.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerObjectsPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/images/DebuggerPcodeStepperPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html||GHIDRA||||END|
@@ -59,9 +54,6 @@ src/main/help/help/topics/DebuggerStackPlugin/images/DebuggerStackPlugin.png||GH
 src/main/help/help/topics/DebuggerStackPlugin/images/DebuggerStackUnwindInListing.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStaticMappingPlugin/images/DebuggerStaticMappingPlugin.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html||GHIDRA||||END|
-src/main/help/help/topics/DebuggerTargetsPlugin/images/DebuggerConnectDialog.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerTargetsPlugin/images/DebuggerTargetsPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/images/DebuggerThreadsPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html||GHIDRA||||END|

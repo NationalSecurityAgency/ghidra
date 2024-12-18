@@ -16,21 +16,14 @@
 package ghidra.file.formats.android.bootimg;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
-import ghidra.formats.gfilesystem.GFile;
-import ghidra.formats.gfilesystem.GFileImpl;
-import ghidra.formats.gfilesystem.GFileSystemBase;
+import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
-import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
-import ghidra.formats.gfilesystem.fileinfo.FileAttributeType;
-import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -121,7 +114,7 @@ public class VendorBootImageFileSystem extends GFileSystemBase {
 				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
 					"This is a DTB file. It appears unused at this time."));
 		}
-		return null;
+		return FileAttributes.EMPTY;
 	}
 
 	@Override

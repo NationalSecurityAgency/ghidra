@@ -355,7 +355,12 @@
     <interleave>
       <optional>
         <element name="varargs">
-          <empty/>
+          <optional>
+            <attribute name="first"/>
+          </optional>
+          <optional>
+            <attribute name="last"/>
+          </optional>
         </element>
       </optional>
       <optional>
@@ -395,6 +400,9 @@
         </optional>
         <optional>
           <attribute name="storage"/>
+        </optional>
+        <optional>
+          <attribute name="stackspill"/>
         </optional>
       </element>
       <element name="hidden_return">

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +63,7 @@ public:
 class PcodeOp {
   friend class BlockBasic; // Just insert_before, insert_after, setOrder
   friend class Funcdata;
+  friend class CloneBlockOps;
   friend class PcodeOpBank;
   friend class VarnodeBank;    // Only uses setInput
 public:
@@ -90,7 +91,7 @@ public:
     binary = 0x10000,		///< Evaluate as binary expression
     special = 0x20000,		///< Cannot be evaluated (without special processing)
     ternary = 0x40000,		///< Evaluate as ternary operator (or higher)
-    no_copy_propagation = 0x80000,	///< Op does not allow COPY propagation through its inputs
+    return_copy = 0x80000,	///< Special form of COPY op for holding global values to (past) the end of the function
     nonprinting = 0x100000,	///< Op should not be directly printed as source
     halt = 0x200000,		///< instruction causes processor or process to halt
     badinstruction = 0x400000,	///< placeholder for bad instruction data
@@ -218,8 +219,7 @@ public:
   void setHoldOutput(void) { addlflags |= hold_output; }	///< Prevent output from being removed as dead code
   bool isPartialRoot(void) const { return ((addlflags&concat_root)!=0); }	///< Output is root of CONCAT tree
   void setPartialRoot(void) { addlflags |= concat_root; }	///< Mark \b this as root of CONCAT tree
-  bool stopsCopyPropagation(void) const { return ((flags&no_copy_propagation)!=0); }	///< Does \b this allow COPY propagation
-  void setStopCopyPropagation(void) { flags |= no_copy_propagation; }	///< Stop COPY propagation through inputs
+  bool isReturnCopy(void) const { return ((flags&return_copy)!=0); }	///< Is \b this a \e return form COPY
   bool noIndirectCollapse(void) const { return ((addlflags & no_indirect_collapse)!=0); }	///< Check if INDIRECT collapse is possible
   void setNoIndirectCollapse(void) { addlflags |= no_indirect_collapse; }	///< Prevent collapse of INDIRECT
   bool isStoreUnmapped(void) const { return ((addlflags & store_unmapped)!=0); }	///< Is STORE location supposed to be unmapped
@@ -365,6 +365,23 @@ public:
 extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);
 extern bool functionalEquality(Varnode *vn1,Varnode *vn2);
 extern bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth);
+
+/// \brief Static methods for determining if two boolean expressions are the \b same or \b complementary
+///
+/// Traverse (upto a specific depth) the two boolean expressions consisting of BOOL_AND, BOOL_OR, and
+/// BOOL_XOR operations.  Leaf operators in the expression can be other operators with boolean output (INT_LESS,
+/// INT_SLESS, etc.).
+class BooleanMatch {
+  static bool sameOpComplement(PcodeOp *bin1op, PcodeOp *bin2op);
+  static bool varnodeSame(Varnode *a,Varnode *b);
+public:
+  enum {
+    same = 1,			///< Pair always hold the same value
+    complementary = 2,		///< Pair always hold complementary values
+    uncorrelated = 3		///< Pair values are uncorrelated
+  };
+  static int4 evaluate(Varnode *vn1,Varnode *vn2,int4 depth);
+};
 
 /// Compare PcodeOps (as pointers) first, then slot
 /// \param op2 is the other edge to compare with \b this

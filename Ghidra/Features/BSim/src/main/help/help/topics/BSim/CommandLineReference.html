@@ -41,6 +41,7 @@
 <CODE class="computeroutput">
     bsim_ctl start           &lt;/datadir-path&gt; [--auth|-a&nbsp;pki|password|trust] [--noLocalAuth] [--cafile&nbsp;&lt;/cacert-path&gt;] [--dn&nbsp;"&lt;distinguished-name&gt;"]
     bsim_ctl stop            &lt;/datadir-path&gt; [--force]
+    bsim_ctl status          &lt;/datadir-path&gt;
     bsim_ctl adduser         &lt;/datadir-path&gt; &lt;username&gt; [--dn&nbsp;"&lt;distinguished-name&gt;"]
     bsim_ctl dropuser        &lt;/datadir-path&gt; &lt;username&gt;
     bsim_ctl resetpassword   &lt;username&gt;
@@ -136,6 +137,13 @@
                 immediately.</P>
               </DD>
 
+              <DT><SPAN class="term"><SPAN class="bold"><STRONG>status</STRONG></SPAN></SPAN></DT>
+
+              <DD>
+                <P>Retrieves the status of a PostgreSQL server (running/down). The path to the
+                actively used data directory must be provided.</P>
+              </DD>
+
               <DT><SPAN class="term"><SPAN class="bold"><STRONG>adduser</STRONG></SPAN></SPAN></DT>
 
               <DD>
@@ -184,6 +192,13 @@
                 "command"><STRONG>--noLocalAuth</STRONG></SPAN> causes local connections to require
                 authentication. This command does not affect the presence or absence of passwords
                 or Distinguished Names for existing users.</P>
+				
+				<P><SPAN class="command"><STRONG>--cafile&nbsp;</STRONG></SPAN><SPAN class=
+				"emphasis"><EM>&lt;/cafile-path&gt;</EM></SPAN> - specifies an absolute path to a
+				certificate authority file and is required for <SPAN class=
+				"command"><STRONG>--auth&nbsp;pki</STRONG></SPAN>. This file should contain the
+				certificates the PostgreSQL server will use to authenticate in PEM format
+				concatenated together.</P>
 
                 <P><SPAN class="command"><STRONG>--dn&nbsp;</STRONG></SPAN><SPAN class=
                 "emphasis"><EM>&lt;distinguished-name&gt;</EM></SPAN> - specifies the Distinguished Name for the admin
@@ -311,7 +326,12 @@
               <DD>
                 <P>Creates a new empty repository. A URL and configuration template (<SPAN class=
                 "bold"><STRONG>config_template</STRONG></SPAN>) is required. The new database name
-                is taken from the path element of the URL.</P>
+                is taken from the path element of the URL.  See <A class="xref" href=
+                "DatabaseConfiguration.html#CreateDatabase" title="Creating a Database">&ldquo;Creating a
+                Database&rdquo;</A> for more details and discussion on configuration template use.  
+                See <A class="xref" href="DatabaseConfiguration.html#DatabaseTemplates" 
+                title="Creating Database Templates">&ldquo;Creating Database Templates&ldquo;</A>
+                if a standard template will not suffice.</P>
 
                 <P>Supported configuration templates (<SPAN class=
                 "bold"><STRONG>config_template</STRONG></SPAN>) are defined within the Ghidra
@@ -777,21 +797,21 @@
               <TD>PostgreSQL</TD>
 
               <TD><CODE class=
-              "computeroutput">postgresql://&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
+              "computeroutput">postgresql://[&lt;username&gt;@]&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
             </TR>
 
             <TR>
               <TD>Elasticsearch</TD>
 
               <TD><CODE class=
-              "computeroutput">https://&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
+              "computeroutput">https://[&lt;username&gt;@]&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
             </TR>
 
             <TR>
               <TD>Elasticsearch</TD>
 
               <TD><CODE class=
-              "computeroutput">elastic://&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
+              "computeroutput">elastic://[&lt;username&gt;@]&lt;hostname&gt;[:&lt;port&gt;]/&lt;dbname&gt;</CODE></TD>
             </TR>
 
             <TR>
@@ -804,6 +824,24 @@
         </DIV>
 
         <P>The use of the <EM>https</EM> and <EM>elastic</EM> is equivalent.</P>
+        
+        <P><IMG border="0" src="help/shared/tip.png" alt="Tip: ">The inclusion of a 
+		<CODE class="computeroutput">&lt;username&gt;</CODE> within a BSim URL
+        supercedes the concurrent use of the <SPAN class="command"><STRONG>--user</STRONG></SPAN> 
+        option which can still be used to control login to the Ghidra Server.  When a 
+        <CODE class="computeroutput">&lt;username&gt;</CODE> has been specified within a BSim URL
+        a <CODE class="computeroutput">&lt;password&gt;</CODE> may be included if neccessary, 
+        albeit highly discouraged (e.g., 
+        <CODE class="computeroutput">postgresql://username:password@hostname/dbname</CODE>).
+        The password is appended to the username with a colon (':') separator and has limitations
+        on the characters which may be used.</P>
+        
+        <P><IMG border="0" src="images/warning.help.png" alt="Warning: ">Inclusion of a user 
+		<CODE class="computeroutput">&lt;password&gt;</CODE> within a BSim URL is highly 
+        discouraged and only intended for use within restricted environments since the URL entry will persist
+        within the system process table and possibly within system log files.  This may be useful
+        in controlled situations where console password prompts cannot be handled.  Handling
+        the password prompt is preferred.</P>
 
         <P>For local <EM>file</EM> URLs, the absolute path the H2 database <EM>*.mv.db</EM> file
         must be specified without the <EM>*.mv.db</EM> extension. Only the '/' character should be

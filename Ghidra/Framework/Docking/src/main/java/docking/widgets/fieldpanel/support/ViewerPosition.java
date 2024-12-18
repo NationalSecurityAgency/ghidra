@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class ViewerPosition implements Serializable {
 	 * @param index the index of the layout displayed at the top of the screen.
 	 * @param xOffset The horizontal scroll position (NOT CURRENTLY USED)
 	 * @param yOffset the vertical position of the layout at the top of the screen.
-	 * If the the layout is totally visible, then the yOffset will be 0. Otherwise,
+	 * If the layout is totally visible, then the yOffset will be 0. Otherwise,
 	 * it will be &lt; 0 indicating that it begins above the top of the screen.
 	 */
     public ViewerPosition(BigInteger index, int xOffset, int yOffset) {

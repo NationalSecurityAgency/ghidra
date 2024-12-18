@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.util;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,10 +30,13 @@ import util.CollectionUtils;
 public final class NumericUtilities {
 	public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("ffffffffffffffff", 16);
 	public static final BigInteger MAX_SIGNED_LONG = new BigInteger("7fffffffffffffff", 16);
+	public static final BigInteger MAX_UNSIGNED_INT = new BigInteger("ffffffff", 16);
 	public static final long MAX_UNSIGNED_INT32_AS_LONG = 0xffffffffL;
 
 	private final static String HEX_PREFIX_X = "0X";
 	private final static String HEX_PREFIX_x = "0x";
+	private final static String BIN_PREFIX = "0B";
+	private final static String OCT_PREFIX = "0";
 
 	private final static Set<Class<? extends Number>> INTEGER_TYPES = new HashSet<>();
 	static {
@@ -62,7 +66,9 @@ public final class NumericUtilities {
 	 * 
 	 * @param numStr the number string
 	 * @return the long value or 0
+	 * @deprecated use {@link #parseLong(String)} instead
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public static long parseNumber(String numStr) {
 		return parseNumber(numStr, Long.valueOf(0));
 	}
@@ -73,7 +79,9 @@ public final class NumericUtilities {
 	 * @param s the string to parse
 	 * @param defaultValue the default value to use if the string cannot be parsed
 	 * @return the long value
+	 * @deprecated use {@link #parseLong(String, long)} instead
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public static Long parseNumber(String s, Long defaultValue) {
 		s = (s == null ? "" : s.trim());
 		if (s.length() == 0) {
@@ -98,45 +106,153 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Parses the given string as a numeric value, detecting whether or not it begins with a hex
-	 * prefix, and if not, parses as a long int value.
+	 * Parses the given decimal/hex string as an {@code int} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
 	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank or has too many digits 
+	 * @return the parsed {@code int} value
+	 * @throws NumberFormatException if the string does not represent a valid {@code int} value 
 	 */
-	public static long parseLong(String s) {
-		String origStr = s;
-		long value = 0;
-		long sign = 1;
+	public static int parseInt(String s) throws NumberFormatException {
+		return parseHelper(s, false, BigInteger::intValue, MAX_UNSIGNED_INT);
+	}
 
-		s = (s == null ? "" : s.trim());
-		if (s.length() == 0) {
-			return value;
+	/**
+	 * Parses the given decimal/hex string as an {@code int} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @param defaultValue the default value to return if the string does not represent a valid
+	 *   {@code int} value
+	 * @return the parsed {@code int} value or the {@code defaultValue} if the string does not 
+	 *   represent a valid {@code int} value
+	 */
+	public static int parseInt(String s, int defaultValue) {
+		try {
+			return parseInt(s);
 		}
-		if (s.startsWith("-")) {
-			sign = -1;
+		catch (NumberFormatException e) {
+			return defaultValue;
+		}
+	}
+
+	/**
+	 * Parses the given decimal/hex string as an {@code long} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @return the parsed {@code long} value
+	 * @throws NumberFormatException if the string does not represent a valid {@code long} value 
+	 */
+	public static long parseLong(String s) throws NumberFormatException {
+		return parseHelper(s, false, BigInteger::longValue, MAX_UNSIGNED_LONG);
+	}
+
+	/**
+	 * Parses the given decimal/hex string as an {@code long} value. This method allows values with
+	 * the top bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @param defaultValue the default value to return if the string does not represent a valid
+	 *   {@code long} value
+	 * @return the parsed {@code long} value or the {@code defaultValue} if the string does not
+	 *   represent a valid {@code long} value
+	 */
+	public static long parseLong(String s, long defaultValue) {
+		try {
+			return parseLong(s);
+		}
+		catch (NumberFormatException e) {
+			return defaultValue;
+		}
+	}
+
+	/**
+	 * Parses the given hex string as a {@code long} value.
+	 * <p>
+	 * Note: The string is treated as hex regardless of whether or not it contains the {@code 0x}
+	 * prefix.
+	 * 
+	 * @param s the string to parse
+	 * @return the parsed {@code long} value
+	 * @throws NumberFormatException if the string does not represent a valid value
+	 */
+	public static long parseHexLong(String s) throws NumberFormatException {
+		return parseHelper(s, true, BigInteger::longValue, MAX_UNSIGNED_LONG);
+	}
+
+	/**
+	 * Parses the given hex string as a {@link BigInteger} value.
+	 * <p>
+	 * Note: The string is treated as hex regardless of whether or not it contains the {@code 0x}
+	 * prefix.
+	 * 
+	 * @param s the string to parse
+	 * @return the parsed {@link BigInteger} value
+	 * @throws NumberFormatException if the string does not represent a valid value
+	 * @deprecated use {@link #parseHexLong(String)} instead
+	 */
+	@Deprecated(since = "11.3", forRemoval = true)
+	public static BigInteger parseHexBigInteger(String s) throws NumberFormatException {
+		return parseHelper(s, true, Function.identity(), MAX_UNSIGNED_LONG);
+	}
+
+	/**
+	 * Parses the given decimal/hex string as a custom type. This method allows values with the top 
+	 * bit set to be implicitly parsed as negative values.
+	 * 
+	 * @param s the string to parse
+	 * @param forceHex true if the string to parse should be treated as hex, even if it doesn't 
+	 *   start with {@code 0x}; otherwise, false;
+	 * @param func a {@link Function} used to convert the parsed {@link BigInteger} to a custom type
+	 * @param max the maximum value that can be used to represent the type of value being parsed if
+	 *   it were treated as unsigned
+	 * @param <T> The type of value being parsed
+	 * @return the parsed value
+	 * @throws NumberFormatException if the string does not represent a valid value
+	 */
+	private static <T> T parseHelper(String s, boolean forceHex, Function<BigInteger, T> func,
+			BigInteger max) throws NumberFormatException {
+		String origStr = s;
+
+		// Trim the string, and throw exception if it's null/empty
+		s = (s == null ? "" : s.trim());
+		if (s.isEmpty()) {
+			throw new NumberFormatException("String to parse is empty");
+		}
+
+		// Chop off the optional sign character of the string, we'll add it back later
+		String sign = "";
+		if (s.startsWith("-") || s.startsWith("+")) {
+			sign = s.substring(0, 1);
 			s = s.substring(1);
 		}
-		int radix = 10;
 
-		if (s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X)) {
-			if (s.length() > 18) {
-				throw new NumberFormatException(s + " has too many digits.");
-			}
+		// Process the radix
+		boolean hexPrefix = s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X);
+		int radix = forceHex || hexPrefix ? 16 : 10;
+		if (hexPrefix) {
 			s = s.substring(2);
-			radix = 16;
 		}
-		if (s.length() == 0) {
-			return 0;
+
+		// Make sure next character is not + or - (protects against things like "0x-ffff")
+		if (!s.isEmpty() && (s.charAt(0) == '-' || s.charAt(0) == '+')) {
+			throw new NumberFormatException("Cannot parse " + origStr);
 		}
+
+		// Try to convert the string to the desired type
 		try {
-			BigInteger bi = new BigInteger(s, radix);
-			return bi.longValue() * sign;
+
+			// Check size
+			if (new BigInteger(s, radix).compareTo(max) > 0) {
+				throw new NumberFormatException(s + " exceeds maximum data type size.");
+			}
+
+			return func.apply(new BigInteger(sign + s, radix));
 		}
 		catch (NumberFormatException e) {
 			// A little hacky, but the message should be complete and report the original string
-			NumberFormatException e2 =
-				new NumberFormatException("Cannot parse long from " + origStr);
+			NumberFormatException e2 = new NumberFormatException("Cannot parse " + origStr);
 			e2.setStackTrace(e.getStackTrace());
 			throw e2;
 		}
@@ -145,45 +261,47 @@ public final class NumericUtilities {
 		}
 	}
 
-	/**
-	 * Parses the given string as a hex long value, detecting whether or not it begins with a hex
-	 * prefix, and if not, parses as a long int value.
-	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank
-	 */
-	public static long parseHexLong(String s) {
-		return parseHexBigInteger(s).longValue();
+	private static BigInteger decodeMagnitude(int p, String s) {
+		// Special case, so it doesn't get chewed by octal parser
+		if ("0".equals(s)) {
+			return BigInteger.ZERO;
+		}
+		if (s.regionMatches(true, p, HEX_PREFIX_X, 0, HEX_PREFIX_X.length())) {
+			return new BigInteger(s.substring(p + HEX_PREFIX_X.length()), 16);
+		}
+		if (s.regionMatches(true, p, BIN_PREFIX, 0, BIN_PREFIX.length())) {
+			return new BigInteger(s.substring(p + BIN_PREFIX.length()), 2);
+		}
+		// Check last, because prefix is shortest.
+		if (s.regionMatches(true, p, OCT_PREFIX, 0, OCT_PREFIX.length())) {
+			return new BigInteger(s.substring(p + OCT_PREFIX.length()), 8);
+		}
+		return new BigInteger(s.substring(p), 10);
 	}
 
 	/**
-	 * Parses the given hex string as a BigIntge value, detecting whether or not it begins with a 
-	 * hex prefix, and if not, parses as a long int value.
+	 * Decode a big integer in hex, binary, octal, or decimal, based on the prefix 0x, 0b, or 0.
+	 * 
+	 * <p>
+	 * This checks for the presence of a case-insensitive prefix. 0x denotes hex, 0b denotes binary,
+	 * 0 denotes octal. If no prefix is given, decimal is assumed. A sign +/- may immediately
+	 * precede the prefix. If no sign is given, a positive value is assumed.
+	 * 
 	 * @param s the string to parse
-	 * @return the long value
-	 * @throws NumberFormatException if the string is blank
+	 * @return the decoded value
 	 */
-	public static BigInteger parseHexBigInteger(String s) {
-
-		s = (s == null ? "" : s.trim());
-		if (s.length() == 0) {
-			throw new NumberFormatException(s + " no digits.");
-		}
-
+	public static BigInteger decodeBigInteger(String s) {
+		int p = 0;
 		boolean negative = false;
-		if (s.startsWith("-")) {
+		if (s.startsWith("+")) {
+			p = 1;
+		}
+		else if (s.startsWith("-")) {
+			p = 1;
 			negative = true;
-			s = s.substring(1);
 		}
-
-		if (s.startsWith(HEX_PREFIX_x) || s.startsWith(HEX_PREFIX_X)) {
-			s = s.substring(2);
-		}
-
-		if (negative) {
-			s = "-" + s;
-		}
-		return new BigInteger(s, 16);
+		BigInteger mag = decodeMagnitude(p, s);
+		return negative ? mag.negate() : mag;
 	}
 
 	/**
@@ -220,7 +338,7 @@ public final class NumericUtilities {
 	 * @return the string
 	 */
 	public final static String toSignedHexString(long value) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		if (value < 0) {
 			buf.append("-");
 		}

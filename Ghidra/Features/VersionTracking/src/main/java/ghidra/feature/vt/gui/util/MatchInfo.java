@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,8 +147,8 @@ public class MatchInfo {
 		return markupItemsCache.get(monitor);
 	}
 
-	private void setDefaultDestination(VTMarkupItem markupItem,
-			AddressCorrelation addressTranslator, TaskMonitor monitor) throws CancelledException {
+	private void setDefaultDestination(VTMarkupItem markupItem, AddressCorrelation correlation,
+			TaskMonitor monitor) throws CancelledException {
 
 		Address destinationAddress = getDestinationAddress(markupItem);
 		Address sourceAddress = markupItem.getSourceAddress();
@@ -158,12 +158,12 @@ public class MatchInfo {
 		}
 
 		String destinationAddressSource = null;
-		if (addressTranslator != null) {
-			AddressRange correlatedDestinationRange =
-				addressTranslator.getCorrelatedDestinationRange(sourceAddress, monitor);
-			if (correlatedDestinationRange != null) {
-				destinationAddress = correlatedDestinationRange.getMinAddress();
-				destinationAddressSource = addressTranslator.getName();
+		if (correlation != null) {
+			AddressCorrelationRange range =
+				correlation.getCorrelatedDestinationRange(sourceAddress, monitor);
+			if (range != null) {
+				destinationAddress = range.getMinAddress();
+				destinationAddressSource = range.getCorrelatorName();
 			}
 		}
 
@@ -204,22 +204,23 @@ public class MatchInfo {
 			return null;
 		}
 
-		AddressCorrelation addressTranslator = getAddressTranslator(correlatorMgr);
-		if (addressTranslator == null) {
+		AddressCorrelation correlation = getAddressTranslator(correlatorMgr);
+		if (correlation == null) {
 			return null;
 		}
-		AddressRange correlatedDestinationRange = null;
+
+		AddressCorrelationRange range = null;
 		try {
-			correlatedDestinationRange =
-				addressTranslator.getCorrelatedDestinationRange(sourceAddress, TaskMonitor.DUMMY);
+			range = correlation.getCorrelatedDestinationRange(sourceAddress, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// check for null below
 		}
-		if (correlatedDestinationRange == null) {
+
+		if (range == null) {
 			return null;
 		}
-		return correlatedDestinationRange.getMinAddress();
+		return range.getMinAddress();
 	}
 
 	public VTMarkupItem getCurrentMarkupForLocation(ProgramLocation programLocation,

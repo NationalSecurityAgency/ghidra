@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
 			program = new ProgramDB(dbh, OpenMode.IMMUTABLE, monitor, consumer);
-			getProgramChangeSet(program, bf);
+			loadProgramChangeSet(program, bf);
 			success = true;
 			return program;
 		}
@@ -130,7 +130,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 			dbh = new DBHandle(bf);
 			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			program = new ProgramDB(dbh, openMode, monitor, consumer);
-			getProgramChangeSet(program, bf);
+			loadProgramChangeSet(program, bf);
 			program.setProgramUserData(new ProgramUserDataDB(program));
 			success = true;
 			return program;
@@ -184,7 +184,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			program = new ProgramDB(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
-				getProgramChangeSet(program, bf);
+				loadProgramChangeSet(program, bf);
 			}
 			if (recover) {
 				recoverChangeSet(program, dbh);
@@ -255,9 +255,11 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		}
 	}
 
-	private ProgramDBChangeSet getProgramChangeSet(ProgramDB program, ManagedBufferFile bf)
+	private ProgramDBChangeSet loadProgramChangeSet(ProgramDB program, ManagedBufferFile bf)
 			throws IOException {
 		ProgramDBChangeSet changeSet = (ProgramDBChangeSet) program.getChangeSet();
+		changeSet.clearAll();
+
 		BufferFile cf = bf.getNextChangeDataFile(true);
 		DBHandle cfh = null;
 		while (cf != null) {
@@ -292,7 +294,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
 			program = new ProgramDB(dbh, OpenMode.IMMUTABLE, null, this);
-			return getProgramChangeSet(program, bf);
+			return loadProgramChangeSet(program, bf);
 		}
 		catch (VersionException | IOException e) {
 			throw e;
@@ -374,7 +376,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		}
 		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
 		program.getDBHandle().setDBVersionedSourceFile(bf);
-		getProgramChangeSet(program, bf);
+		loadProgramChangeSet(program, bf);
 	}
 
 }

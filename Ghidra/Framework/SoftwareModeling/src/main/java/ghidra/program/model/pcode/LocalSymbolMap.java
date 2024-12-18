@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -210,11 +210,12 @@ public class LocalSymbolMap {
 		pcaddr = pcaddr.subtractWrap(1);
 
 		List<HighSymbol> paramList = new ArrayList<>();
+		boolean internalInvalid = false;
 		for (int i = 0; i < p.length; ++i) {
 			Parameter var = p[i];
 			if (!var.isValid()) {
-				// TODO: exclude parameters which don't have valid storage ??
-				continue;
+				internalInvalid = true;
+				break;
 			}
 			DataType dt = var.getDataType();
 			String name = var.getName();
@@ -242,6 +243,12 @@ public class LocalSymbolMap {
 			}
 			paramSymbol.setNameLock(namelock);
 			paramSymbol.setTypeLock(lock);
+		}
+		if (internalInvalid) {
+			// Can only send down a partial prototype.  Let decompiler try to recover the whole.
+			for (HighSymbol paramSymbol : paramList) {
+				paramSymbol.setTypeLock(false);
+			}
 		}
 
 		paramSymbols = new HighSymbol[paramList.size()];

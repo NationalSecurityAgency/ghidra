@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,15 @@ public interface GhidraFileChooserModel {
 	 * @return desktop directory
 	 */
 	public File getDesktopDirectory();
+
+	/**
+	 * Returns the user's downloads directory, as defined by their operating system and/or their windowing environment, or
+	 * null if there is no downloads directory.<p>
+	 * Example: "/home/the_user/Downloads" or "c:/Users/the_user/Downloads"
+	 * 
+	 * @return downloads directory
+	 */
+	public File getDownloadsDirectory();
 
 	/**
 	 * Returns a list of the root drives/directories.

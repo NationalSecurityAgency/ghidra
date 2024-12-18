@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,7 @@ package sarif;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,23 +28,11 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionException;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.AbstractProgramLoader;
-import ghidra.app.util.opinion.LoadException;
-import ghidra.app.util.opinion.LoadSpec;
-import ghidra.app.util.opinion.Loaded;
-import ghidra.app.util.opinion.LoaderTier;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.CompilerSpecDescription;
-import ghidra.program.model.lang.CompilerSpecNotFoundException;
-import ghidra.program.model.lang.Endian;
-import ghidra.program.model.lang.ExternalLanguageCompilerSpecQuery;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageCompilerSpecPair;
-import ghidra.program.model.lang.LanguageDescription;
-import ghidra.program.model.lang.LanguageNotFoundException;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -88,7 +74,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		//
 		getLanguageService();
 
-		ParseResult result = parse(provider);
+		ParseResult result = parse(provider, new MessageLog());
 
 		ProgramInfo info = result.lastInfo;
 		if (info == null) {
@@ -199,7 +185,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		CompilerSpec importerCompilerSpec =
 			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
 
-		ParseResult result = parse(provider);
+		ParseResult result = parse(provider, log);
 
 		Address imageBase = null;
 		if (result.lastInfo.imageBase != null) {
@@ -230,7 +216,7 @@ public class SarifLoader extends AbstractProgramLoader {
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
 			throws IOException, LoadException, CancelledException {
 		File file = provider.getFile();
-		doImport(new ProgramSarifMgr(prog, file), options, log, prog, monitor, true);
+		doImport(new ProgramSarifMgr(prog, file, log), options, log, prog, monitor, true);
 	}
 
 	private boolean doImportWork(final ProgramSarifMgr mgr, final List<Option> options,
@@ -238,9 +224,7 @@ public class SarifLoader extends AbstractProgramLoader {
 			final boolean isAddToProgram) throws LoadException {
 		boolean success = true;
 		try {
-			SarifProgramOptions sarifOptions = mgr.getOptions();
-			sarifOptions.setOptions(options);
-			sarifOptions.setAddToProgram(isAddToProgram);
+			mgr.setOptions(options, isAddToProgram);
 			mgr.read(prog, monitor);
 			success = true;
 		}
@@ -311,9 +295,9 @@ public class SarifLoader extends AbstractProgramLoader {
 		}
 	}
 
-	private ParseResult parse(ByteProvider provider) throws IOException {
+	private ParseResult parse(ByteProvider provider, MessageLog log) throws IOException {
 		try {
-			ProgramSarifMgr lastSarifMgr = new ProgramSarifMgr(provider);
+			ProgramSarifMgr lastSarifMgr = new ProgramSarifMgr(provider, log);
 			ProgramInfo lastInfo = lastSarifMgr.getProgramInfo();
 			return new ParseResult(lastSarifMgr, lastInfo);
 		}

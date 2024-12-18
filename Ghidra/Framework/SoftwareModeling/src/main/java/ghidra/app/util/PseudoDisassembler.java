@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -361,10 +361,10 @@ public class PseudoDisassembler {
 	/**
 	 * Check that this entry point leads to valid code:
 	 * <ul>
-	 * <li> May have multiple entries into the body of the code.
-	 * <li>The intent is that it be valid code, not nice code.
-	 * <li>Hit no bad instructions.
-	 * <li>It should return.
+	 * <li> May have multiple entries into the body of the code.</li>
+	 * <li>The intent is that it be valid code, not nice code.</li>
+	 * <li>Hit no bad instructions.</li>
+	 * <li>It should return.</li>
 	 * </ul>
 	 * @param entryPoint
 	 * @return true if the entry point leads to valid code
@@ -377,10 +377,10 @@ public class PseudoDisassembler {
 	/**
 	 * Check that this entry point leads to valid code:
 	 * <ul>
-	 * <li> May have multiple entries into the body of the code.
-	 * <li>The intent is that it be valid code, not nice code.
-	 * <li>Hit no bad instructions.
-	 * <li>It should return.
+	 * <li> May have multiple entries into the body of the code.</li>
+	 * <li>The intent is that it be valid code, not nice code.</li>
+	 * <li>Hit no bad instructions.</li>
+	 * <li>It should return.</li>
 	 * </ul>
 	 * 
 	 * @param entryPoint location to test for valid code

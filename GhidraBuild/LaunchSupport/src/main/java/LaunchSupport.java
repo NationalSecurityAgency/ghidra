@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -196,7 +196,7 @@ public class LaunchSupport {
 
 	/**
 	 * Handles interacting with the user to choose a Java home directory to use for the launch.  
-	 * If a valid Java home directory was successfully determined, it is saved to the the user's
+	 * If a valid Java home directory was successfully determined, it is saved to the user's
 	 * Java home save file, and an exit code that indicates success is returned.
 	 * 
 	 * @param javaConfig The Java configuration that defines what we support.  

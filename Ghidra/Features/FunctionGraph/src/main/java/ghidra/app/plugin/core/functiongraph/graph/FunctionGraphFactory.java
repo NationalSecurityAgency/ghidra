@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -184,7 +184,7 @@ public class FunctionGraphFactory {
 	private static String layoutGraph(Function function, FGController controller,
 			FunctionGraph functionGraph, TaskMonitor monitor) throws CancelledException {
 
-		if (!performSwingThreadRequiredWork(functionGraph)) {
+		if (!performSwingThreadRequiredWork(functionGraph, monitor)) {
 			return null;// shouldn't happen
 		}
 
@@ -214,19 +214,21 @@ public class FunctionGraphFactory {
 			"\" (try another layout)";
 	}
 
-	private static boolean performSwingThreadRequiredWork(FunctionGraph functionGraph) {
-		final Collection<FGVertex> vertices = functionGraph.getVertices();
-		try {
-			SystemUtilities.runSwingNow(() -> {
-				for (FGVertex v : vertices) {
-					v.getComponent();
-				}
-			});
-			return true;
+	private static boolean performSwingThreadRequiredWork(FunctionGraph functionGraph,
+			TaskMonitor monitor) throws CancelledException {
+
+		Collection<FGVertex> vertices = functionGraph.getVertices();
+		monitor.initialize(vertices.size(), "Building vertex components");
+		for (FGVertex v : vertices) {
+			monitor.increment();
+			try {
+				Swing.runNow(v::getComponent);
+			}
+			catch (Exception e) {
+				return false;
+			}
 		}
-		catch (Exception e) {
-			return false;
-		}
+		return true;
 	}
 
 	private static boolean isEntry(CodeBlock codeBlock) {

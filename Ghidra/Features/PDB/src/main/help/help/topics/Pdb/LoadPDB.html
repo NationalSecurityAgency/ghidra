@@ -126,7 +126,10 @@
 					See <A href="#OneLevel_SymbolDirectory">level 1</A>/<A href="#TwoLevel_SymbolDirectory">level 2</A> or 
 					<A href="#Unorganized_SymbolDirectory">unorganized</A> directory descriptions.</LI>
 					<LI><B>URL</B> - allows the user to enter a HTTP or HTTPS URL to a web-based symbol server.</LI>
-					<LI><B>Program's Import Location</B> - automatically references the directory from which the program was imported.</LI>
+					<LI><B>Program's Import Location</B> - automatically references the directory from 
+					which the program was imported. This option first searches for the 'official'
+					PDB filename embedded in the program's metadata.  If not found, it searches
+					for other PDB files that match variations of the program's filename.</LI>
 					<LI><B>Import _NT_SYMBOL_PATH</B> - parses the current value of the <code>_NT_SYMBOL_PATH</code> system environment variable to extract
 					URLs and symbol directory locations to be added to the Ghidra configuration.  If no environment value is present,
 					the user can paste their own value into the text field.</LI>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,9 +79,10 @@ public class SwiftDemangledTree {
 	 * 
 	 * @param nativeDemangler The Swift native demangler
 	 * @param mangled The mangled string
+	 * @param is64bit Whether or not the mangled string is from a 64-bit program
 	 * @throws DemangledException If there was an issue demangling
 	 */
-	public SwiftDemangledTree(SwiftNativeDemangler nativeDemangler, String mangled)
+	public SwiftDemangledTree(SwiftNativeDemangler nativeDemangler, String mangled, boolean is64bit)
 			throws DemangledException {
 		SwiftNativeDemangledOutput demangledOutput;
 		try {
@@ -100,12 +101,12 @@ public class SwiftDemangledTree {
 			SwiftNode node;
 			try {
 				NodeProperties properties = new NodeProperties(SwiftDemangledNodeKind.valueOf(kind),
-					text, index, depth, mangled, demangledString);
+					text, index, depth, mangled, demangledString, is64bit);
 				node = SwiftNode.get(properties);
 			}
 			catch (IllegalArgumentException e) {
 				NodeProperties properties = new NodeProperties(SwiftDemangledNodeKind.Unsupported,
-					text, index, depth, mangled, demangledString);
+					text, index, depth, mangled, demangledString, is64bit);
 				node = new SwiftUnsupportedNode(kind, properties);
 			}
 			if (node.getDepth() == 0) {

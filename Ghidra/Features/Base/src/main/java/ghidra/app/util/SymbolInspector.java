@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,10 +40,7 @@ import ghidra.program.model.symbol.*;
 public class SymbolInspector implements OptionsChangeListener {
 
 	private Component repaintComp;
-	private Program program;
 	private ToolOptions optionsObject;
-	private Listing listing;
-	private Memory memory;
 	private Map<String, Object> cache = new HashMap<>();
 
 	/**
@@ -82,35 +79,6 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Associates a program with this symbol inspector
-	 * @param p the program for inspecting symbols
-	 */
-	public void setProgram(Program p) {
-		if (program == p) {
-			return;
-		}
-
-		if (program != null) {
-			this.program = null;
-			this.listing = null;
-			this.memory = null;
-		}
-		if (p != null) {
-			this.program = p;
-			this.listing = p.getListing();
-			this.memory = p.getMemory();
-		}
-	}
-
-	/**
-	 * Returns the program in use by this inspector; may be null;
-	 * @return the program in use by this inspector; may be null;
-	 */
-	public Program getProgram() {
-		return program;
-	}
-
-	/**
 	 * Call this when you are done with this inspector and will not use it again.
 	 * Cleans up listeners, etc.
 	 */
@@ -120,7 +88,25 @@ public class SymbolInspector implements OptionsChangeListener {
 			optionsObject = null;
 		}
 		repaintComp = null;
-		setProgram(null);
+	}
+
+	/**
+	 * Does nothing
+	 * @param p the program
+	 * @deprecated this method does nothing
+	 */
+	@Deprecated(since = "11.3", forRemoval = true)
+	public void setProgram(Program p) {
+		// do nothing
+	}
+
+	/**
+	 * {@return null}
+	 * @deprecated returns null
+	 */
+	@Deprecated(since = "11.3", forRemoval = true)
+	public Program getProgram() {
+		return null;
 	}
 
 	/**
@@ -129,6 +115,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	 * @return boolean true if symbol is bad
 	 */
 	public boolean isBadReferenceSymbol(Symbol s) {
+		Memory memory = getMemory(s);
 		if (memory == null) {
 			return true;
 		}
@@ -149,6 +136,7 @@ public class SymbolInspector implements OptionsChangeListener {
 			return false;
 		}
 		Address addr = s.getAddress();
+		Listing listing = getListing(s);
 		Data data = listing.getDataContaining(addr);
 		return (data != null);
 	}
@@ -162,6 +150,7 @@ public class SymbolInspector implements OptionsChangeListener {
 		if (isBadReferenceSymbol(s)) {
 			return false;
 		}
+		Program program = s.getProgram();
 		ReferenceManager refMgr = program.getReferenceManager();
 		return !refMgr.hasReferencesTo(s.getAddress());
 	}
@@ -225,6 +214,7 @@ public class SymbolInspector implements OptionsChangeListener {
 			return false;
 		}
 		Address addr = s.getAddress();
+		Listing listing = getListing(s);
 		Instruction instr = listing.getInstructionContaining(addr);
 		return (instr != null);
 	}
@@ -265,6 +255,7 @@ public class SymbolInspector implements OptionsChangeListener {
 			return false;
 		}
 		Address addr = s.getAddress();
+		Listing listing = getListing(s);
 		CodeUnit cu = listing.getCodeUnitContaining(addr);
 		if (cu != null && cu.getLength() > 1) {
 			return cu.getMinAddress().compareTo(addr) < 0;
@@ -322,6 +313,25 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
+	 * Gets the color and style used to render the given reference.  Calling this method is
+	 * faster than calling {@link #getColor(Symbol)} and {@link #getStyle(Symbol)}
+	 * separately.
+	 * 
+	 * @param p the program
+	 * @param r the reference
+	 * @return the color and style
+	 */
+	public ColorAndStyle getColorAndStyle(Program p, Reference r) {
+		ScreenElement se = getScreenElement(p, r);
+		if (se == null) {
+			return null;
+		}
+		Color color = getColor(se);
+		int style = getStyle(se);
+		return new ColorAndStyle(color, style);
+	}
+
+	/**
 	 * Get the color used to render the given symbol.
 	 * @param s symbol to inspect
 	 * @return Color for the symbol
@@ -341,7 +351,7 @@ public class SymbolInspector implements OptionsChangeListener {
 
 	/**
 	 * Get the ScreenElement corresponding to the type of the symbol
-	 * @param s symbol to inspect
+	 * @param s the symbol to inspect
 	 * @return the screen element
 	 */
 	public ScreenElement getScreenElement(Symbol s) {
@@ -366,7 +376,8 @@ public class SymbolInspector implements OptionsChangeListener {
 			return OptionsGui.LABELS_UNREFD;
 		}
 		else if (isFunctionSymbol(s)) {
-			return OptionsGui.FUN_NAME;
+			Function f = (Function) s.getObject();
+			return getFunctionScreenElement(f);
 		}
 		else if (isVariableSymbol(s)) {
 			if (s.getSymbolType() == SymbolType.PARAMETER) {
@@ -388,6 +399,21 @@ public class SymbolInspector implements OptionsChangeListener {
 		return null;
 	}
 
+	/**
+	 * Get the ScreenElement corresponding to the type of the reference.
+	 * @param p the program
+	 * @param r the reference to inspect
+	 * @return the screen element
+	 */
+	public ScreenElement getScreenElement(Program p, Reference r) {
+		if (r.isExternalReference()) {
+			ExternalLocation extLoc = ((ExternalReference) r).getExternalLocation();
+			String libName = extLoc.getLibraryName();
+			return getExternalPathScreenElement(p, libName);
+		}
+		return null;
+	}
+
 	public Color getOffcutSymbolColor() {
 		return getColor(OptionsGui.XREF_OFFCUT);
 	}
@@ -400,12 +426,60 @@ public class SymbolInspector implements OptionsChangeListener {
 // Private Methods
 //==================================================================================================
 
-	private ScreenElement getExternalScreenElement(Symbol s) {
-		String path = program.getExternalManager().getExternalLibraryPath(getExternalName(s));
-		if (path != null && path.length() > 0) {
-			return OptionsGui.EXT_REF_RESOLVED;
+	private Listing getListing(Symbol s) {
+		Program p = s.getProgram();
+		if (p != null) {
+			return p.getListing();
 		}
-		return OptionsGui.BAD_REF_ADDR;
+		return null; // not sure if this can happen
+	}
+
+	private Memory getMemory(Symbol s) {
+		Program p = s.getProgram();
+		if (p != null) {
+			return p.getMemory();
+		}
+		return null; // not sure if this can happen
+	}
+
+	private ScreenElement getExternalScreenElement(Symbol s) {
+
+		Program p = s.getProgram();
+		String libName = getExternalName(s);
+		return getExternalPathScreenElement(p, libName);
+	}
+
+	private ScreenElement getExternalPathScreenElement(Program p, String libName) {
+
+		ExternalManager externalManager = p.getExternalManager();
+		if (Library.UNKNOWN.equals(libName)) {
+			return OptionsGui.EXT_REF_UNRESOLVED;
+		}
+
+		String path = externalManager.getExternalLibraryPath(libName);
+		if (path == null || path.length() == 0) {
+			return OptionsGui.EXT_REF_UNRESOLVED;
+		}
+		return OptionsGui.EXT_REF_RESOLVED;
+	}
+
+	private ScreenElement getFunctionScreenElement(Function function) {
+		if (function == null || !function.isThunk()) {
+			return OptionsGui.FUN_NAME;
+		}
+
+		// override function name color for external thunks which are not linked
+		Function thunkedFunction = function.getThunkedFunction(true);
+		if (thunkedFunction == null) {
+			return OptionsGui.EXT_REF_UNRESOLVED;
+		}
+		else if (thunkedFunction.isExternal()) {
+			ExternalLocation location = thunkedFunction.getExternalLocation();
+			String libName = location.getLibraryName();
+			return getExternalPathScreenElement(function.getProgram(), libName);
+		}
+
+		return OptionsGui.FUN_NAME;
 	}
 
 	private String getExternalName(Symbol s) {

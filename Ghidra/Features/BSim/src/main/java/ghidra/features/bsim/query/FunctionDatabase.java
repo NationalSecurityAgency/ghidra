@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,11 +83,11 @@ public interface FunctionDatabase extends AutoCloseable {
 		}
 	}
 
-	public static class Error { // Error structure returned by getLastError
+	public static class BSimError { // Error structure returned by getLastError
 		public ErrorCategory category;
 		public String message;
 
-		public Error(ErrorCategory cat, String msg) {
+		public BSimError(ErrorCategory cat, String msg) {
 			category = cat;
 			message = msg;
 		}
@@ -118,12 +118,11 @@ public interface FunctionDatabase extends AutoCloseable {
 	/**
 	 * Issue password change request to the server.
 	 * The method {@link #isPasswordChangeAllowed()} must be invoked first to ensure that
-	 * the user password may be changed.
-	 * @param username to change
+	 * the user password may be changed. 
 	 * @param newPassword is password data
 	 * @return null if change was successful, or the error message
 	 */
-	public default String changePassword(String username, char[] newPassword) {
+	public default String changePassword(char[] newPassword) {
 		if (getStatus() != Status.Ready) {
 			return "Connection not established";
 		}
@@ -132,7 +131,7 @@ public interface FunctionDatabase extends AutoCloseable {
 		}
 		PasswordChange passwordChange = new PasswordChange();
 		try {
-			passwordChange.username = username;
+			passwordChange.username = getUserName();
 			passwordChange.newPassword = newPassword;
 			ResponsePassword response = passwordChange.execute(this);
 			if (!response.changeSuccessful) {
@@ -159,14 +158,6 @@ public interface FunctionDatabase extends AutoCloseable {
 	 * @return username (being used to establish connection)
 	 */
 	public String getUserName();
-
-	/**
-	 * Set a specific user name for connection.  Must be called before connection is initialized.
-	 * If this method is not called, connection will use user name of process
-	 * 
-	 * @param userName the user name
-	 */
-	public void setUserName(String userName);
 
 	/**
 	 * @return factory the database is using to create LSHVector objects
@@ -216,7 +207,7 @@ public interface FunctionDatabase extends AutoCloseable {
 	 * If the last query failed to produce a response, use this method to recover the error message
 	 * @return a String describing the error
 	 */
-	public Error getLastError();
+	public BSimError getLastError();
 
 	/**
 	 * Send a query to the database.  The response is returned as a QueryResponseRecord.
@@ -239,7 +230,15 @@ public interface FunctionDatabase extends AutoCloseable {
 		if (res == 3) {
 			throw new LSHException("Query signature data has no setting information");
 		}
-		throw new LSHException("Query signature data does not match database");
+		throw new LSHException("Query signature data " +
+			getFormattedVersion(manage.getMajorVersion(), manage.getMinorVersion(),
+				manage.getSettings()) +
+			" does not match database " +
+			getFormattedVersion(info.major, info.minor, info.settings));
+	}
+
+	private static String getFormattedVersion(int maj, int min, int settings) {
+		return String.format("%d.%d:0x%02x", maj, min, settings);
 	}
 
 	public static boolean checkSettingsForInsert(DescriptionManager manage,
@@ -262,8 +261,11 @@ public interface FunctionDatabase extends AutoCloseable {
 		if (res == 3) {
 			throw new LSHException("Trying to insert signature data with no setting information");
 		}
-		throw new LSHException(
-			"Trying to insert signature data with settings that don't match database");
+		throw new LSHException("Trying to insert signature data " +
+			getFormattedVersion(manage.getMajorVersion(), manage.getMinorVersion(),
+				manage.getSettings()) +
+			" with settings that don't match database " +
+			getFormattedVersion(info.major, info.minor, info.settings));
 	}
 
 	public static String constructFatalError(int flags, ExecutableRecord newrec,

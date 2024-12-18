@@ -104,7 +104,7 @@
               extension, provided as part of the Ghidra installation. Prebuilt servers, like those
               provided as OS distribution packages, will not work as is with BSim. For users on Linux
               and macOS, the Ghidra installation provides a script, <CODE>make-postgres.sh</CODE>,
-              in the module directory <CODE>Ghidra/Features/BSim</CODE> that builds both the PostgreSQL
+              in the module directory <CODE>Ghidra/Features/BSim/support</CODE> that builds both the PostgreSQL
               server and the BSim extension from source and prepares the installation for use with
               Ghidra.  If not already included in the Ghidra installation, the source distribution
               file, currently <CODE>postgresql-15.3.tar.gz</CODE>, can be obtained from the PostgreSQL
@@ -127,7 +127,7 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/postgresql-15.3.tar.gz
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/support/postgresql-15.3.tar.gz
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -138,7 +138,7 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">cd $(ROOT)/Ghidra/Features/BSim
+                  <TD><CODE class="computeroutput">cd $(ROOT)/Ghidra/Features/BSim/support
 		  </CODE></TD>
                 </TR>
                 <TR>
@@ -155,7 +155,7 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">https://www.postgresql.org/docs/current/install-requirements.html
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/docs/15/install-requirements.html
 		  </CODE></TD>
                 </TR>
               </TABLE>
@@ -170,13 +170,13 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
 		<TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/linux64/postgresql
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/linux_x86_64/postgresql
                       OR</CODE></TD>
 		</TR>
 		
 		<TR>
                   <TD><CODE class=
-			    "computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/osx64/postgresql</CODE></TD>
+			    "computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/mac_x86_64/postgresql</CODE></TD>
 		</TR>
               </TABLE>
             </DIV>
@@ -395,12 +395,12 @@
             <DIV class="informalexample">
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser <SPAN class=
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser /path/to/datadir <SPAN class=
                   "emphasis"><EM>username</EM></SPAN></CODE></TD>
                 </TR>
 
                 <TR>
-                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser <SPAN class=
+                  <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser /path/to/datadir <SPAN class=
                   "emphasis"><EM>username</EM></SPAN> --dn&nbsp;"C=US,ST=MD,CN=Firstname User"</CODE></TD>
                 </TR>
               </TABLE>
@@ -527,6 +527,34 @@
             that are different from the standard PostgreSQL defaults. To provide site specific
             configuration, changes should be made to the normal PostgreSQL configuration files.</P>
           </DIV>
+          
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostgresFirewall"></A>PostgreSQL Firewall Considerations</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+			<P>Remote client access to the PostgreSQL server may have network firewalls 
+			which must be considered and properly configured to allow network access.
+			Both dedicated network firewalls and OS-level firewalls must be considered.</P>
+			
+			<P>Firewall configurations are beyond the scope of this document, however for simple
+			single-node installations on Linux the <CODE class="computeroutput">firewall-cmd</CODE>
+			may be used to allow incoming connections to the appropriate port (TCP port 5432 is the 
+			default for PostgreSQL).  This does not consider network firewall devices which may
+			also impact connectivity.</P>
+			
+			<PRE><CODE class&nbsp;"computeroutput">
+    sudo firewall-cmd --permanent --add-port=5432/tcp && sudo firewall-cmd --reload
+			</CODE></PRE>
+			
+			<P>NOTE: The above Linux firewall command assumes the <CODE class="computeroutput">firewalld</CODE>
+			package has been installed on the system.</P>
+			
+          </DIV>
         </DIV>
 
         <DIV class="sect2">
@@ -562,13 +590,22 @@
 
             <P>In order to make use of Elasticsearch with BSim, the database administrator must
             install the <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> plug-in as part of the
-            Elasticsearch deployment. The plug-in is available in the Ghidra add-on named <SPAN
-            class="emphasis"><EM>BSimElasticPlugin</EM></SPAN>, which unpacks into a standard
-            Ghidra installation. The file <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> is a
-            standard Elasticsearch plug-in that must be installed on every node of the cluster
+            Elasticsearch deployment. The plug-in is available in the Ghidra extension named <SPAN
+            class="emphasis"><EM>BSimElasticPlugin</EM></SPAN> 
+            (<CODE class="computeroutput">&lt;ghidra-install-dir&gt;/Extensions/Ghidra/ghidra_11.2.1_U_20241105_BSimElasticPlugin.zip</CODE>).
+            The extension may be unzipped to a temporary location or use Ghidra's Install Extensions
+            capability which will unpack it into the users platform-specific config directory
+            indicated in the detail view of the Install Extensions window.  The extension is not
+            used directly by Ghidra and is only needed for the 
+            <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> elasticsearch plug-in
+            which must be installed on every node of the cluster
             before a BSim repository can be created. The description below shows how to enable
             the BSim plug-in for a single node, but this will need to be repeated for any
             additional nodes.</P>
+            
+            <P><IMG border="0" src="help/shared/tip.png" alt="Tip: ">Refer to the <I>README.md</I> 
+            file within the unpacked extension for important plugin details.  The plugin file 
+            stipulates a specific elasticsearch version and may require an adjustment and repack.</P>
 
             <P>Assuming the add-on has been unpacked, the plug-in can be installed to a single node
             using the <SPAN class="emphasis"><EM>elasticsearch-plugin</EM></SPAN> command in the
@@ -579,7 +616,7 @@
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
                   <TD><CODE class="computeroutput">bin/elasticsearch-plugin install
-                  file:///path/to/ghidra/Ghidra/contrib/BSimElasticPlugin/data/lsh.zip</CODE></TD>
+                  file:///path/to/ghidra/extension/BSimElasticPlugin/data/lsh.zip</CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
@@ -610,7 +647,7 @@
               </DIV>
             </DIV>
 
-            <P>The open Elasticsearch distribution starts with up with password authentication
+            <P>The open Elasticsearch distribution starts with password authentication
             enabled by default.  When a node is started up for the first time, as described above, an
             <SPAN class="bold"><STRONG>elastic</STRONG></SPAN> user is created with a randomly
             generated password that is reported, once, to the console. For a toy deployment, it may
@@ -665,6 +702,34 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
             class="xref" href="CommandLineReference.html#URLs">&ldquo;Ghidra and BSim
             URLs&rdquo;</A> for additional information about URLs.</P>
           </DIV>
+          
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="ElasticFirewall"></A>Elasticsearch Firewall Considerations</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+			<P>Remote client access to the Elasticsearch server/cluster may have network firewalls 
+			which must be considered and properly configured to allow network access.
+			Both dedicated network firewalls and OS-level firewalls must be considered.</P>
+			
+			<P>Firewall configurations are beyond the scope of this document, however for simple
+			single-node installations on Linux the <CODE class="computeroutput">firewall-cmd</CODE>
+			may be used to allow incoming connections to the appropriate port (TCP port 9200 is the 
+			default for elasticsearch).  This does not consider network firewall devices which may
+			also impact connectivity.</P>
+			
+			<PRE><CODE class&nbsp;"computeroutput">
+    sudo firewall-cmd --permanent --add-port=9200/tcp && sudo firewall-cmd --reload
+			</CODE></PRE>
+			
+			<P>NOTE: The above Linux firewall command assumes the <CODE class="computeroutput">firewalld</CODE>
+			package has been installed on the system.</P>
+			
+          </DIV>
         </DIV>
       </DIV>
 
@@ -672,8 +737,7 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
         <DIV class="titlepage">
           <DIV>
             <DIV>
-              <H2 class="title" style="clear: both"><A name="CreateDatabase"></A>Creating a
-              Database</H2>
+              <H2 class="title" style="clear: both"><A name="CreateDatabase"></A>Creating a Database</H2>
             </DIV>
           </DIV>
         </DIV>

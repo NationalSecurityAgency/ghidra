@@ -1,3 +1,10 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/decompiler.dependent.theme.properties||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/DecompilerTaint/DecompilerTaint.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilerTextFinderPlugin/Decompiler_Text_Finder.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilerTextFinderPlugin/images/DecompilerTextFinderDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DecompilerTextFinderPlugin/images/DecompilerTextFinderResultsTable.png||GHIDRA||||END|

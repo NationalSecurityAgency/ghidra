@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -171,6 +171,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		if (!editUseEnabled && composite != null) {
 			allocationByteSize = composite.getLength();
 		}
+		setBounds(0, 0, getPreferredWidth(), getPreferredHeight());
+		invalidate();
 		init(null);
 	}
 
@@ -315,8 +317,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	 * (allocation unit size is determine by current {@link #allocationByteSize}).
 	 */
 	void refresh(int bitSize, int bitOffset) {
-		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
 		updatePreferredSize();
+		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
 		repaint();
 	}
 
@@ -333,8 +335,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	void refresh(int byteSize, int byteOffset, int bitSize, int bitOffset) {
 		this.allocationByteOffset = byteOffset;
 		this.allocationByteSize = byteSize;
-		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
 		updatePreferredSize();
+		bitFieldAllocation = new BitFieldAllocation(bitSize, bitOffset);
 		repaint();
 	}
 
@@ -458,7 +460,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		repaint();
 	}
 
-	void applyBitField(DataType baseDataType, String fieldName, String fieldComment,
+	DataTypeComponent applyBitField(DataType baseDataType, String fieldName, String fieldComment,
 			boolean deleteConflicts, CompositeChangeListener listener) {
 		if (!editUseEnabled) {
 			throw new IllegalStateException("component not constructed for edit use");
@@ -517,9 +519,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 			if (listener != null) {
 				listener.componentChanged(dtc.getOrdinal());
 			}
+			return dtc;
 		}
 		catch (ArrayIndexOutOfBoundsException | InvalidDataTypeException e) {
-			Msg.error(this, "Unexpected bitfield apply error", e);
+			Msg.showError(this, this, "Unexpected bitfield apply error", e);
+			return null;
 		}
 		finally {
 			editMode = EditMode.NONE;

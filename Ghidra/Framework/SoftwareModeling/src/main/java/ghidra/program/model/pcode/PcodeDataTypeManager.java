@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -278,6 +278,13 @@ public class PcodeDataTypeManager {
 			decoder.closeElement(el);
 			return new PartialUnion(progDataTypes, dt, offset, size);
 		}
+		else if (meta.equals("partenum")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+//			int offset = (int) decoder.readSignedInteger(ATTRIB_OFFSET);
+//			DataType dt = decodeDataType(decoder);
+			decoder.closeElementSkipping(el);
+			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
+		}
 		else {	// We typically reach here if the decompiler invents a new type
 				// probably an unknown with a non-standard size
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
@@ -541,15 +548,14 @@ public class PcodeDataTypeManager {
 	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
 		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		String metatype = type.isSigned() ? "int" : "uint";
-		long[] keys = type.getValues();
+		String metatype = type.isSigned() ? "enum_int" : "enum_uint";
+		String[] names = type.getNames();
 		encoder.writeString(ATTRIB_METATYPE, metatype);
 		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
-		encoder.writeBool(ATTRIB_ENUM, true);
-		for (long key : keys) {
+		for (String name : names) {
 			encoder.openElement(ELEM_VAL);
-			encoder.writeString(ATTRIB_NAME, type.getName(key));
-			encoder.writeSignedInteger(ATTRIB_VALUE, key);
+			encoder.writeString(ATTRIB_NAME, name);
+			encoder.writeSignedInteger(ATTRIB_VALUE, type.getValue(name));
 			encoder.closeElement(ELEM_VAL);
 		}
 		encoder.closeElement(ELEM_TYPE);
@@ -675,7 +681,7 @@ public class PcodeDataTypeManager {
 		encoder.writeSignedInteger(ATTRIB_SIZE, 1);		// Force size of 1
 		CompilerSpec cspec = program.getCompilerSpec();
 		FunctionPrototype fproto = new FunctionPrototype(type, cspec, voidInputIsVarargs);
-		fproto.encodePrototype(encoder, this);
+		fproto.encodePrototype(encoder, this, -1);
 		encoder.closeElement(ELEM_TYPE);
 	}
 
@@ -799,12 +805,12 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode a Structure to the stream that has its size reported as zero.
+	 * Encode a Structure/Union to the stream without listing its fields
 	 * @param encoder is the stream encoder
 	 * @param type data type to encode
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encodeCompositeZeroSizePlaceholder(Encoder encoder, DataType type)
+	public void encodeCompositePlaceholder(Encoder encoder, DataType type)
 			throws IOException {
 		String metaString;
 		if (type instanceof Structure) {
@@ -820,14 +826,16 @@ public class PcodeDataTypeManager {
 		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
 		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
 		encoder.writeString(ATTRIB_METATYPE, metaString);
-		encoder.writeSignedInteger(ATTRIB_SIZE, 0);
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
+		encoder.writeBool(ATTRIB_INCOMPLETE, true);
 		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
 	 * Encode a TypeDef data-type to the stream.  Generally this sends
-	 * a \<def> element with a \<typeref> reference to the underlying data-type being typedefed,
-	 * but we check for Settings on the TypeDef object that can indicate
+	 * a {@code <def>} element with a {@code <typeref>} reference to the underlying data-type being
+	 * typedefed, but we check for Settings on the TypeDef object that can indicate
 	 * specialty data-types with their own encodings.
 	 * @param encoder is the stream encoder
 	 * @param type is the TypeDef to build the XML for
@@ -1145,10 +1153,7 @@ public class PcodeDataTypeManager {
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);
 		coreBuiltin = new HashMap<Long, TypeMap>();
-		TypeMap type = new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false,
-			DEFAULT_DECOMPILER_ID);
-		coreBuiltin.put(type.id, type);
-		type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
+		TypeMap type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
 			builtInDataTypes);
 		coreBuiltin.put(type.id, type);
 

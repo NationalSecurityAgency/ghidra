@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,8 @@ import ghidra.util.task.TaskMonitorAdapter;
 public class StructureDBTest extends AbstractGenericTest {
 
 	private StructureDB struct;
-	private DataTypeManagerDB dataMgr;
+	private StandAloneDataTypeManager dataMgr;
+	private int txId;
 
 	@Before
 	public void setUp() throws Exception {
@@ -42,7 +43,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		// default data organization is little-endian
 		// default BitFieldPackingImpl uses gcc conventions with type alignment enabled
 
-		dataMgr.startTransaction("Test");
+		txId = dataMgr.startTransaction("Test");
 
 		struct = createStructure("Test", 0);
 		struct.add(new ByteDataType(), "field1", "Comment1");
@@ -50,6 +51,14 @@ public class StructureDBTest extends AbstractGenericTest {
 		struct.add(new DWordDataType(), "field3", null);
 		struct.add(new ByteDataType(), "field4", "Comment4");
 
+	}
+
+	@After
+	public void tearDown() {
+		if (dataMgr != null) {
+			dataMgr.endTransaction(txId, true);
+			dataMgr.close();
+		}
 	}
 
 	private void transitionToBigEndian() {
@@ -1440,9 +1449,81 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(dtc1, barStruct.getComponent(6));
 
 	}
+	
+	@Test
+	public void testSetLength() {
+
+		assertEquals(8, struct.getLength());
+		assertEquals(4, struct.getNumComponents());
+		assertEquals(4, struct.getNumDefinedComponents());
+		
+		struct.setLength(20);
+		assertEquals(20, struct.getLength());
+		assertEquals(16, struct.getNumComponents());
+		assertEquals(4, struct.getNumDefinedComponents());
+		
+		// new length is offcut within 3rd component at offset 0x3 which should get cleared
+		struct.setLength(4);
+		assertEquals(4, struct.getLength());
+		assertEquals(3, struct.getNumComponents());
+		assertEquals(2, struct.getNumDefinedComponents());
+		
+		// Maximum length supported by GUI editor is ~Integer.MAX_VALUE/10
+		int len = Integer.MAX_VALUE / 10;
+		struct.setLength(len);
+		assertEquals(len, struct.getLength());
+		assertEquals(len - 1, struct.getNumComponents());
+		assertEquals(2, struct.getNumDefinedComponents());
+		
+		len /= 2;
+		struct.replaceAtOffset(len-2, WordDataType.dataType, -1, "x", null); // will be preserved below
+		struct.replaceAtOffset(len+2, WordDataType.dataType, -1, "y", null); // will be cleared below
+		struct.setLength(len);
+		assertEquals(len, struct.getLength());
+		assertEquals(len - 2, struct.getNumComponents());
+		assertEquals(3, struct.getNumDefinedComponents());
+	}
 
 	@Test
-	public void testDeleteMany() throws InvalidDataTypeException {
+	public void testDeleteMany() {
+
+		struct.growStructure(20);
+		struct.insertAtOffset(12, WordDataType.dataType, -1, "A", null);
+		struct.insertAtOffset(16, WordDataType.dataType, -1, "B", null);
+
+		assertEquals(32, struct.getLength());
+		assertEquals(26, struct.getNumComponents());
+		assertEquals(6, struct.getNumDefinedComponents());
+
+		struct.delete(Sets.newHashSet(1, 4, 5));
+
+		assertEquals(28, struct.getLength());
+		assertEquals(23, struct.getNumComponents());
+		assertEquals(5, struct.getNumDefinedComponents());
+
+		DataTypeComponent[] comps = struct.getDefinedComponents();
+		assertEquals(WordDataType.class, comps[3].getDataType().getClass());
+		assertEquals(5, comps[3].getOrdinal());
+		assertEquals(8, comps[3].getOffset());
+
+		// Verify that records were properly updated by comitting and performing an undo/redo
+		dataMgr.endTransaction(txId, true);
+		dataMgr.undo();
+		dataMgr.redo();
+		txId = dataMgr.startTransaction("Continue Test");
+
+		assertEquals(28, struct.getLength());
+		assertEquals(23, struct.getNumComponents());
+		assertEquals(5, struct.getNumDefinedComponents());
+
+		comps = struct.getDefinedComponents();
+		assertEquals(WordDataType.class, comps[3].getDataType().getClass());
+		assertEquals(5, comps[3].getOrdinal());
+		assertEquals(8, comps[3].getOffset());
+	}
+
+	@Test
+	public void testDeleteManyBF() throws InvalidDataTypeException {
 
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 		struct.insertBitFieldAt(2, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");

@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 import functools
 import time
@@ -33,11 +33,10 @@ GhidraHookPrefix()
 
 
 class HookState(object):
-    __slots__ = ('installed', 'mem_catchpoint', 'batch', 'skip_continue', 'in_break_w_cont')
+    __slots__ = ('installed', 'batch', 'skip_continue', 'in_break_w_cont')
 
     def __init__(self):
         self.installed = False
-        self.mem_catchpoint = None
         self.batch = None
         self.skip_continue = False
         self.in_break_w_cont = False
@@ -64,7 +63,7 @@ class InferiorState(object):
     def __init__(self):
         self.first = True
         # For things we can detect changes to between stops
-        self.regions = False
+        self.regions = []
         self.modules = False
         self.threads = False
         self.breaks = False
@@ -99,21 +98,18 @@ class InferiorState(object):
                     frame, util.get_register_descs(frame.architecture(), 'general'))
                 try:
                     commands.putmem("$pc", "1", from_tty=False)
-                except MemoryError as e:
+                except gdb.MemoryError as e:
                     print(f"Couldn't record page with PC: {e}")
                 try:
-                    commands.putmem("$sp", "1", from_tty=False)
-                except MemoryError as e:
+                    commands.putmem("$sp-1", "2", from_tty=False)
+                except gdb.MemoryError as e:
                     print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
         # NB: These commands (put_modules/put_regions) will fail if the process is running
-        if first or self.regions or self.threads or self.modules:
-            # Sections, memory syscalls, or stack allocations
-            commands.put_modules()
-            self.modules = False
-            commands.put_regions()
-            self.regions = False
-        elif first or self.modules:
+        regions_changed, regions = util.REGION_INFO_READER.have_changed(self.regions)
+        if regions_changed:
+            self.regions = commands.put_regions(regions)
+        if first or self.modules:
             commands.put_modules()
             self.modules = False
         if first or self.breaks:
@@ -253,14 +249,6 @@ def on_frame_selected():
 
 
 @log_errors
-def on_syscall_memory():
-    inf = gdb.selected_inferior()
-    if inf.num not in INF_STATES:
-        return
-    INF_STATES[inf.num].regions = True
-
-
-@log_errors
 def on_memory_changed(event):
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
@@ -287,11 +275,17 @@ def on_register_changed(event):
     # For now, just record the lot
     HOOK_STATE.ensure_batch()
     with trace.open_tx("Register {} changed".format(event.regnum)):
-        commands.putreg(event.frame, util.get_register_descs(event.frame.architecture()))
+        commands.putreg(event.frame, util.get_register_descs(
+            event.frame.architecture()))
 
 
 @log_errors
 def on_cont(event):
+    if gdb.selected_thread() is None:
+        # thread-based state computed in record_continued will
+        # fail in some versions of gdb because the current_thread is None
+        # and gdb fails to test for None before switching
+        return
     if (HOOK_STATE.check_skip_continue()):
         return
     inf = gdb.selected_inferior()
@@ -311,7 +305,7 @@ def check_for_continue(event):
         if HOOK_STATE.in_break_w_cont:
             return True
         for brk in event.breakpoints:
-            if hasattr(brk, 'commands'):
+            if hasattr(brk, 'commands') and brk.commands is not None:
                 for cmd in brk.commands:
                     if cmd == 'c' or cmd.startswith('cont'):
                         HOOK_STATE.in_break_w_cont = True
@@ -319,12 +313,9 @@ def check_for_continue(event):
     HOOK_STATE.in_break_w_cont = False
     return False
 
-    
+
 @log_errors
 def on_stop(event):
-    if hasattr(event, 'breakpoints') and HOOK_STATE.mem_catchpoint in event.breakpoints:
-        HOOK_STATE.skip_continue = True
-        return
     if check_for_continue(event):
         HOOK_STATE.skip_continue = True
         return
@@ -416,8 +407,6 @@ def on_breakpoint_created(b):
 
 @log_errors
 def on_breakpoint_modified(b):
-    if b == HOOK_STATE.mem_catchpoint:
-        return
     inf = gdb.selected_inferior()
     notify_others_breaks(inf)
     if inf.num not in INF_STATES:
@@ -464,20 +453,6 @@ def on_breakpoint_deleted(b):
 @log_errors
 def on_before_prompt():
     HOOK_STATE.end_batch()
-
-
-# This will be called by a catchpoint
-class GhidraTraceEventMemoryCommand(gdb.Command):
-
-    def __init__(self):
-        super().__init__('hooks-ghidra event-memory', gdb.COMMAND_NONE)
-
-    def invoke(self, argument, from_tty):
-        self.dont_repeat()
-        on_syscall_memory()
-
-
-GhidraTraceEventMemoryCommand()
 
 
 def cmd_hook(name):
@@ -556,21 +531,6 @@ def install_hooks():
     # Respond to user-driven state changes: (Not target-driven)
     gdb.events.memory_changed.connect(on_memory_changed)
     gdb.events.register_changed.connect(on_register_changed)
-    # Respond to target-driven memory map changes:
-    # group:memory is actually a bit broad, but will probably port better
-    # One alternative is to name all syscalls that cause a change....
-    # Ones we could probably omit:
-    #     msync,
-    #         (Deals in syncing file-backed pages to disk.)
-    #     mlock, munlock, mlockall, munlockall, mincore, madvise,
-    #         (Deal in paging. Doesn't affect valid addresses.)
-    #     mbind, get_mempolicy, set_mempolicy, migrate_pages, move_pages
-    #         (All NUMA stuff)
-    #
-    if HOOK_STATE.mem_catchpoint is not None:
-        HOOK_STATE.mem_catchpoint.enabled = True
-    else:
-        HOOK_STATE.mem_catchpoint = util.MEM_CATCHPOINT_SETTER.install_catchpoint()
 
     gdb.events.cont.connect(on_cont)
     gdb.events.stop.connect(on_stop)
@@ -605,7 +565,6 @@ def remove_hooks():
 
     gdb.events.memory_changed.disconnect(on_memory_changed)
     gdb.events.register_changed.disconnect(on_register_changed)
-    HOOK_STATE.mem_catchpoint.enabled = False
 
     gdb.events.cont.disconnect(on_cont)
     gdb.events.stop.disconnect(on_stop)

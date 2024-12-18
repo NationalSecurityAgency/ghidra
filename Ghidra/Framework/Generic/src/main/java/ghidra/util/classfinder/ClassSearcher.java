@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeListener;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -176,7 +174,7 @@ public class ClassSearcher {
 		}
 
 		List<Class<? extends T>> list = new ArrayList<>();
-		for (ClassFileInfo info : extensionPointSuffixToInfoMap.get(suffix)) {
+		for (ClassFileInfo info : extensionPointSuffixToInfoMap.getOrDefault(suffix, Set.of())) {
 
 			if (falsePositiveCache.contains(info)) {
 				continue;
@@ -491,22 +489,9 @@ public class ClassSearcher {
 		// jar files will *not* be on the standard classpath, but instead will be on CP_EXT.
 		//
 		List<String> rawPaths = new ArrayList<>();
-		getPropertyPaths(GhidraClassLoader.CP, rawPaths);
-		getPropertyPaths(GhidraClassLoader.CP_EXT, rawPaths);
+		rawPaths.addAll(GhidraClassLoader.getClasspath(GhidraClassLoader.CP));
+		rawPaths.addAll(GhidraClassLoader.getClasspath(GhidraClassLoader.CP_EXT));
 		return canonicalizePaths(rawPaths);
-	}
-
-	private static void getPropertyPaths(String property, List<String> results) {
-		String paths = System.getProperty(property);
-		log.trace("Paths in {}: {}", property, paths);
-		if (StringUtils.isBlank(paths)) {
-			return;
-		}
-
-		StringTokenizer st = new StringTokenizer(paths, File.pathSeparator);
-		while (st.hasMoreTokens()) {
-			results.add(st.nextToken());
-		}
 	}
 
 	private static List<String> canonicalizePaths(Collection<String> paths) {
@@ -575,7 +560,18 @@ public class ClassSearcher {
 		for (ResourceFile moduleRoot : moduleRootDirectories) {
 			ResourceFile file = new ResourceFile(moduleRoot, "data/ExtensionPoint.manifest");
 			if (file.exists()) {
-				extensionPointSuffixes.addAll(FileUtilities.getLinesQuietly(file));
+				for (String line : FileUtilities.getLinesQuietly(file)) {
+					line = line.trim();
+					try {
+						Pattern.compile(line);
+						extensionPointSuffixes.add(line);
+					}
+					catch (PatternSyntaxException e) {
+						throw new AssertException(
+							"Error parsing extension point suffix '%s' found in '%s'"
+									.formatted(line, file));
+					}
+				}
 			}
 		}
 

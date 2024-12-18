@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,38 +39,58 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	private final static char[] BADPASSWORD = "".toCharArray();
 
 	private static Object sshPrivateKey;
-	private static String userID = ClientUtil.getUserName(); // default username
+	private static String defaultUserName = ClientUtil.getUserName();
 	private static boolean passwordPromptAllowed;
 
 	private Authenticator authenticator = new Authenticator() {
 		@Override
 		protected PasswordAuthentication getPasswordAuthentication() {
-			Msg.debug(this, "PasswordAuthentication requested for " + getRequestingURL());
-			String usage = null;
-			String prompt = getRequestingPrompt();
-			if ("security".equals(prompt)) {
-				prompt = null; // squash generic "security" prompt
+			
+			if (defaultUserName == null) {
+				throw new IllegalStateException("Default user name is unknown");
 			}
-			URL requestingURL = getRequestingURL();
+
+			String serverName = getRequestingHost();
+			URL requestingURL = getRequestingURL(); // may be null
+
+			String pwd = null;
+			String userName = defaultUserName;
+
 			if (requestingURL != null) {
-				URL minimalURL = null;
-				try {
-					minimalURL = new URL(requestingURL, "/");
+				String userInfo = requestingURL.getUserInfo();
+				if (userInfo != null) {
+					// Use user info from URL
+					int pwdSep = userInfo.indexOf(':');
+					if (pwdSep < 0) {
+						userName = userInfo;
+					}
+					else {
+						pwd = userInfo.substring(pwdSep + 1);
+						if (pwdSep != 0) {
+							userName = userInfo.substring(0, pwdSep);
+						}
+					}
 				}
-				catch (MalformedURLException e) {
-					// ignore
+
+				URL minimalURL = DefaultClientAuthenticator.getMinimalURL(requestingURL);
+				if (minimalURL != null) {
+					serverName = minimalURL.toExternalForm();
 				}
-				usage = "Access password requested for " +
-					(minimalURL != null ? minimalURL.toExternalForm()
-							: requestingURL.getAuthority());
-				prompt = "Password:";
 			}
-			if (prompt == null) {
-				// Assume Ghidra Server access
-				String host = getRequestingHost();
-				prompt = (host != null ? (host + " ") : "") + "(" + userID + ") Password:";
+			
+			Msg.debug(this, "PasswordAuthentication requested for " + serverName);
+
+			if (pwd != null) {
+				// Requesting URL specified password
+				return new PasswordAuthentication(userName, pwd.toCharArray());
 			}
-			return new PasswordAuthentication(userID, getPassword(usage, prompt));
+
+			String usage = "Access password requested for " + serverName;
+			String prompt = getRequestingPrompt();
+			if (StringUtils.isBlank(prompt) || "security".equals(prompt)) {
+				prompt = "Password for " + userName +":";
+			}
+			return new PasswordAuthentication(userName, getPassword(usage, prompt));
 		}
 	};
 
@@ -85,7 +105,8 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	/**
 	 * Install headless client authenticator for Ghidra Server
 	 * @param username optional username to be used with a Ghidra Server which
-	 * allows username to be specified
+	 * allows username to be specified.  If null, {@link ClientUtil#getUserName()} 
+	 * will be used.
 	 * @param keystorePath optional PKI or SSH keystore path.  May also be specified
 	 * as resource path for SSH key.
 	 * @param allowPasswordPrompt if true the user may be prompted for passwords
@@ -97,7 +118,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			boolean allowPasswordPrompt) throws IOException {
 		passwordPromptAllowed = allowPasswordPrompt;
 		if (username != null) {
-			userID = username;
+			defaultUserName = username;
 		}
 
 		// clear existing key store settings
@@ -175,7 +196,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 				passwordPrompt += "\n";
 			}
 
-			if (prompt == null) {
+			if (StringUtils.isBlank(prompt)) {
 				prompt = "Password:";
 			}
 
@@ -233,17 +254,39 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			anonymousCb.setAnonymousAccessRequested(true);
 			return true;
 		}
+		
+		if (defaultUserName == null) {
+			throw new IllegalStateException("Default user name is unknown");
+		}
+		
 		if (choiceCb != null) {
 			choiceCb.setSelectedIndex(1);
 		}
-		if (nameCb != null && userID != null) {
-			nameCb.setName(userID);
+		
+		String userName = null;
+		if (nameCb != null) {
+			userName = nameCb.getName();
+			if (userName == null) {
+				userName = nameCb.getDefaultName();
+			}
 		}
+		if (userName == null) {
+			userName = defaultUserName;
+		}
+
+		if (nameCb != null) {
+			nameCb.setName(defaultUserName);
+		}
+
 		String usage = null;
 		if (serverName != null) {
 			usage = serverType + ": " + serverName;
 		}
-		char[] password = getPassword(usage, passCb.getPrompt());
+		
+		// Ignore prompt specified by passCb
+		String prompt = "Password for " + userName +":";
+		
+		char[] password = getPassword(usage, prompt);
 		passCb.setPassword(password);
 		return password != null;
 	}
@@ -278,7 +321,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			return false;
 		}
 		if (nameCb != null) {
-			nameCb.setName(userID);
+			nameCb.setName(defaultUserName);
 		}
 		try {
 			sshCb.sign(sshPrivateKey);

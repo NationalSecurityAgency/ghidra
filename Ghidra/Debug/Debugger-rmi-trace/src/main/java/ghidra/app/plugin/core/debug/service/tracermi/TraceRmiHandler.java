@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,6 @@ import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
@@ -43,7 +42,6 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
-import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
@@ -54,7 +52,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.rmi.trace.TraceRmi.*;
-import ghidra.rmi.trace.TraceRmi.Compiler;
 import ghidra.rmi.trace.TraceRmi.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Lifespan;
@@ -68,8 +65,8 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
-public class TraceRmiHandler implements TraceRmiConnection {
-	public static final String VERSION = "11.1";
+public class TraceRmiHandler extends AbstractTraceRmiConnection {
+	public static final String VERSION = "11.2";
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -129,11 +126,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 	}
 
-	protected record Tid(DoId doId, int txId) {
-	}
+	protected record Tid(DoId doId, int txId) {}
 
-	protected record OpenTx(Tid txId, Transaction tx, boolean undoable) {
-	}
+	protected record OpenTx(Tid txId, Transaction tx, boolean undoable) {}
 
 	protected class OpenTraceMap {
 		private final Map<DoId, OpenTrace> byId = new HashMap<>();
@@ -191,6 +186,21 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					.collect(Collectors.toUnmodifiableList());
 		}
 
+		/**
+		 * Call only for cleanup. Cannot be re-used after this
+		 * 
+		 * @return the open traces that were removed
+		 */
+		public synchronized List<OpenTrace> clearAll() {
+			List<OpenTrace> all = List.copyOf(byId.values());
+			byId.clear();
+			byTrace.clear();
+			for (OpenTrace open : all) {
+				plugin.withdrawTarget(open.target);
+			}
+			return all;
+		}
+
 		public CompletableFuture<OpenTrace> getFirstAsync() {
 			return first;
 		}
@@ -232,6 +242,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		this.plugin = plugin;
 		plugin.addHandler(this);
 		this.socket = socket;
+		if (socket == null) {
+			throw new RuntimeException("Socket cannot be null");
+		}
 		this.in = socket.getInputStream();
 		this.out = socket.getOutputStream();
 
@@ -276,14 +289,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		terminateTerminals();
 
 		socket.close();
-		while (!openTxes.isEmpty()) {
-			Tid nextKey = openTxes.keySet().iterator().next();
-			OpenTx open = openTxes.remove(nextKey);
-			open.tx.close();
+		synchronized (openTxes) {
+			while (!openTxes.isEmpty()) {
+				Tid nextKey = openTxes.keySet().iterator().next();
+				OpenTx open = openTxes.remove(nextKey);
+				open.tx.close();
+			}
 		}
-		while (!openTraces.isEmpty()) {
-			DoId nextKey = openTraces.idSet().iterator().next();
-			OpenTrace open = openTraces.removeById(nextKey);
+
+		for (OpenTrace open : openTraces.clearAll()) {
 			if (traceManager == null || traceManager.isSaveTracesByDefault()) {
 				try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
 					open.trace.save("Save on Disconnect", monitor);
@@ -388,7 +402,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected static void sendDelimited(OutputStream out, RootMessage msg, long dbgSeq)
 			throws IOException {
-		ByteBuffer buf = ByteBuffer.allocate(4);
+		ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
 		buf.putInt(msg.getSerializedSize());
 		out.write(buf.array());
 		msg.writeTo(out);
@@ -432,12 +446,13 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return true;
 		}
 		catch (IOException e) {
-			Msg.error(this, "Cannot send reply", e);
+			Msg.error(this, "Cannot send reply: " + e);
 			return false;
 		}
 	}
 
 	public void receiveLoop() {
+		boolean canSend = true;
 		try {
 			while (true) {
 				RootMessage req = receive();
@@ -452,8 +467,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					continue;
 				}
 
-				if (!send(rep)) {
-					return;
+				/**
+				 * The likely cause of this failing is that the remote end has closed the socket.
+				 * However, we don't return, because there may be commands still in the queue, and
+				 * we should process them until we reach the end of input. This will ensure clients
+				 * that brazenly send a bunch of commands and then disconnect before receiving the
+				 * replies will have their commands processed, even if unsuccessfully.
+				 */
+				if (canSend) {
+					canSend = send(rep);
 				}
 			}
 		}
@@ -613,7 +635,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected Tid requireAvailableTid(Tid tid) {
-		OpenTx tx = openTxes.get(tid);
+		OpenTx tx;
+		synchronized (openTxes) {
+			tx = openTxes.get(tid);
+		}
 		if (tx != null) {
 			throw new TxIdInUseError();
 		}
@@ -790,42 +815,25 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return makeArgument(ent.getKey(), ent.getValue());
 	}
 
-	protected boolean followsPresent(Trace trace) {
-		DebuggerControlService controlService = this.controlService;
-		if (controlService == null) {
-			return true;
-		}
-		return controlService.getCurrentMode(trace).followsPresent();
+	@Override
+	protected DebuggerTraceManagerService getTraceManager() {
+		return this.traceManager;
+	}
+
+	@Override
+	protected DebuggerControlService getControlService() {
+		return this.controlService;
+	}
+
+	@Override
+	protected boolean ownsTrace(Trace trace) {
+		return openTraces.getByTrace(trace) != null;
 	}
 
 	protected ReplyActivate handleActivate(RequestActivate req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		TraceObject object = open.getObject(req.getObject(), false);
-		DebuggerCoordinates coords = traceManager.getCurrent();
-		if (coords.getTrace() != open.trace) {
-			coords = DebuggerCoordinates.NOWHERE;
-		}
-		if (open.lastSnapshot != null && followsPresent(open.trace)) {
-			coords = coords.snap(open.lastSnapshot.getKey());
-		}
-		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
-		Swing.runLater(() -> {
-			DebuggerTraceManagerService traceManager = this.traceManager;
-			if (traceManager == null) {
-				// Can happen during tear down.
-				return;
-			}
-			if (!traceManager.getOpenTraces().contains(open.trace)) {
-				traceManager.openTrace(open.trace);
-				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
-			}
-			else {
-				Trace currentTrace = traceManager.getCurrentTrace();
-				if (currentTrace == null || openTraces.getByTrace(currentTrace) != null) {
-					traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
-				}
-			}
-		});
+		doActivate(object, open.trace, open.lastSnapshot);
 		return ReplyActivate.getDefaultInstance();
 	}
 
@@ -867,6 +875,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			throws InvalidNameException, IOException, CancelledException {
 		DomainFolder traces = getOrCreateNewTracesFolder();
 		List<String> path = sanitizePath(req.getPath().getPath());
+		if (path.isEmpty()) {
+			throw new IllegalArgumentException("CreateTrace: path (name) cannot be empty");
+		}
 		DomainFolder folder = createFolders(traces, path.subList(0, path.size() - 1));
 		CompilerSpec cs = requireCompilerSpec(req.getLanguage(), req.getCompiler());
 		DBTrace trace = new DBTrace(path.get(path.size() - 1), cs, this);
@@ -946,7 +957,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected ReplyEndTx handleEndTx(RequestEndTx req) {
-		OpenTx tx = openTxes.remove(new Tid(new DoId(req.getOid()), req.getTxid().getId()));
+		OpenTx tx;
+		synchronized (openTxes) {
+			tx = openTxes.remove(new Tid(new DoId(req.getOid()), req.getTxid().getId()));
+		}
 		if (tx == null) {
 			throw new InvalidTxIdError(req.getTxid().getId());
 		}
@@ -1159,7 +1173,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		@SuppressWarnings("resource")
 		OpenTx tx =
 			new OpenTx(tid, open.trace.openTransaction(req.getDescription()), req.getUndoable());
-		openTxes.put(tx.txId, tx);
+		synchronized (openTxes) {
+			openTxes.put(tx.txId, tx);
+		}
 		return ReplyStartTx.getDefaultInstance();
 	}
 

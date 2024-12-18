@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,12 @@
 package docking.widgets;
 
 import java.awt.*;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
+import javax.swing.plaf.LabelUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -28,6 +30,7 @@ import docking.widgets.label.GDHtmlLabel;
 import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.GThemeDefaults.Colors.Tables;
+import generic.theme.laf.FontChangeListener;
 import ghidra.util.Msg;
 import util.CollectionUtils;
 import utilities.util.reflection.ReflectionUtilities;
@@ -41,15 +44,19 @@ import utilities.util.reflection.ReflectionUtilities;
  * The preferred method to change the font used by this renderer is {@link #setBaseFontId(String)}.
  * If you would like this renderer to use a monospaced font, then, as an alternative to creating a
  * font ID, you can instead override {@link #getDefaultFont()} to return this
- * class's {@link #fixedWidthFont}.  Also, the fixed width font of this class is based on the
+ * class's {@link #fixedWidthFont}.  
+ * 
+ * Also, the fixed width font of this class is based on the
  * default font set when calling {@link #setBaseFontId(String)}, so it stays up-to-date with theme
  * changes.
  */
-public abstract class AbstractGCellRenderer extends GDHtmlLabel {
+public abstract class AbstractGCellRenderer extends GDHtmlLabel implements FontChangeListener {
+
 	private static final Color BACKGROUND_COLOR = new GColor("color.bg.table.row");
 	private static final Color ALT_BACKGROUND_COLOR = new GColor("color.bg.table.row.alt");
 
-	private static final String BASE_FONT_ID = "font.table.base";
+	private static final String DEFAULT_BASE_FONT_ID = "font.table.base";
+	private static final String MONOSPACED_FONT_ID = "font.table.fixed.width";
 
 	/** Allows the user to disable alternating row colors on JLists and JTables */
 	private static final String DISABLE_ALTERNATING_ROW_COLORS_PROPERTY =
@@ -61,8 +68,10 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		return !Boolean.getBoolean(DISABLE_ALTERNATING_ROW_COLORS_PROPERTY);
 	}
 
-	protected final Border focusBorder;
-	protected final Border noFocusBorder;
+	protected Border focusBorder;
+	protected Border noFocusBorder;
+	protected String baseFontId;
+	protected String fixedWidthFontId;
 	protected Font defaultFont;
 	protected Font fixedWidthFont;
 	protected Font boldFont;
@@ -73,7 +82,8 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 
 	public AbstractGCellRenderer() {
 
-		setBaseFontId(BASE_FONT_ID);
+		setBaseFontId(DEFAULT_BASE_FONT_ID);
+		setFixedWidthFontId(MONOSPACED_FONT_ID);
 
 		noFocusBorder = BorderFactory.createEmptyBorder(0, 5, 0, 5);
 		Border innerBorder = BorderFactory.createEmptyBorder(0, 4, 0, 4);
@@ -135,23 +145,77 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	 * @see Gui#registerFont(Component, String)
 	 */
 	public void setBaseFontId(String fontId) {
+		if (baseFontId != null) {
+			Gui.unRegisterFont(this, baseFontId);
+		}
+
 		Font f = Gui.getFont(fontId);
+		updateDefaultFont(f);
+
+		baseFontId = fontId;
+		Gui.registerFont(this, baseFontId);
+	}
+
+	/**
+	 * Sets this renderer's fixed width theme font id.  
+	 * @param fontId the font id
+	 * @see Gui#registerFont(Component, String)
+	 */
+	public void setFixedWidthFontId(String fontId) {
+		if (fixedWidthFontId != null) {
+			Gui.unRegisterFont(this, fixedWidthFontId);
+		}
+
+		Font f = Gui.getFont(fontId);
+		fixedWidthFont = f;
+
+		fixedWidthFontId = fontId;
+		Gui.registerFont(this, fixedWidthFontId);
+	}
+
+	private void updateDefaultFont(Font f) {
+		if (Objects.equals(f, defaultFont)) {
+			return;
+		}
+
 		defaultFont = f;
-		fixedWidthFont = new Font("monospaced", f.getStyle(), f.getSize());
 		boldFont = f.deriveFont(Font.BOLD);
 		italicFont = f.deriveFont(Font.ITALIC);
+	}
 
-		Gui.registerFont(this, fontId);
+	@Override
+	public void setUI(LabelUI ui) {
+
+		super.setUI(ui);
+
+		if (baseFontId == null) {
+			return; // initializing
+		}
+
+		Font font = Gui.getFont(baseFontId);
+		updateDefaultFont(font);
+
+		font = Gui.getFont(fixedWidthFontId);
+		fixedWidthFont = font;
+	}
+
+	@Override
+	public void fontChanged(String fontId, Font f) {
+		if (fontId.equals(baseFontId)) {
+			updateDefaultFont(f);
+		}
+		else if (fontId.equals(fixedWidthFontId)) {
+			fixedWidthFont = f;
+		}
 	}
 
 	@Override
 	public void setFont(Font f) {
 		super.setFont(f);
-
 		checkForInvalidSetFont(f);
 	}
 
-	private void checkForInvalidSetFont(Font f) {
+	protected void checkForInvalidSetFont(Font f) {
 		//
 		// Due to the nature of how setFont() is typically used (external client setup vs internal
 		// rendering), we created setBaseFontId() to allow external clients to set the base font in

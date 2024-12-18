@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 package docking;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -49,17 +49,17 @@ import utilities.util.reflection.ReflectionUtilities;
  * <p>
  * This also provides several useful convenience methods:
  * <ul>
- *  <li>{@link #addLocalAction(DockingActionIf)}
- *  <li>{@link #addToTool()}
- *  <li>{@link #setVisible(boolean)}
- *  <li>{@link #setTitle(String)}
- *  <li>{@link #setIcon(Icon)}
+ *  <li>{@link #addLocalAction(DockingActionIf)}</li>
+ *  <li>{@link #addToTool()}</li>
+ *  <li>{@link #setVisible(boolean)}</li>
+ *  <li>{@link #setTitle(String)}</li>
+ *  <li>{@link #setIcon(Icon)}</li>
  * </ul>
  * <p>
  * There are a handful of stub methods that can be overridden as desired:
  * <ul>
- *  <li>{@link #componentActivated()} and {@link #componentDeactived()}
- *  <li>{@link #componentHidden()} and {@link #componentShown()}
+ *  <li>{@link #componentActivated()} and {@link #componentDeactived()}</li>
+ *  <li>{@link #componentHidden()} and {@link #componentShown()}</li>
  * </ul>
  *
  * <p>
@@ -88,9 +88,13 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	protected Tool dockingTool;
 	private String name;
 	private final String owner;
+
 	private String title;
 	private String subTitle;
 	private String tabText;
+	private String customTitle;
+	private String customTabText;
+	private String customSubTitle;
 
 	private Set<DockingActionIf> actionSet = new LinkedHashSet<>();
 
@@ -119,6 +123,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private ThemeListener themeListener = this::themeChanged;
 
+	private HierarchyListener hierarchyListener;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -140,7 +146,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *        {@link #getContextType()}
 	 */
 	public ComponentProvider(Tool tool, String name, String owner, Class<?> contextType) {
-		this.dockingTool = tool;
+		this.dockingTool = Objects.requireNonNull(tool);
 		this.name = name;
 		this.owner = owner;
 		this.title = name;
@@ -149,7 +155,24 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		recordInception();
 
 		Gui.addThemeListener(themeListener);
+
 	}
+
+	// gets this provider's component to install it into GUI hierarchy
+	JComponent doGetComponent() {
+		JComponent component = getComponent();
+		if (hierarchyListener == null) {
+			hierarchyListener = new ComponentProviderHierachyListener();
+			component.addHierarchyListener(hierarchyListener);
+		}
+		return component;
+	}
+
+	/**
+	 * Returns the component to be displayed
+	 * @return the component to be displayed
+	 */
+	public abstract JComponent getComponent();
 
 	/**
 	 * Returns the action used to show this provider
@@ -194,12 +217,6 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the component to be displayed
-	 * @return the component to be displayed
-	 */
-	public abstract JComponent getComponent();
-
-	/**
 	 * A method that allows children to set the <code>instanceID</code> to a desired value (useful for
 	 * restoring saved IDs).
 	 * <p>
@@ -231,6 +248,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return;
 		}
 
+		// this call is needed to bring tabbed providers to the front
+		toFront();
 		if (defaultFocusComponent != null) {
 			DockingWindowManager.requestFocus(defaultFocusComponent);
 			return;
@@ -389,6 +408,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Returns true if this provider is visible and is showing.  See {@link Component#isShowing()}.
+	 * @return true if this provider is visible and is showing.
+	 */
+	public boolean isShowing() {
+		return isVisible() && getComponent().isShowing();
+	}
+
+	/**
 	 * Convenience method to indicate if this provider is the active provider (has focus)
 	 * @return true if this provider is active.
 	 */
@@ -438,9 +465,23 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Notifies the provider that the component is being shown.
+	 * Notifies the provider that the component is being shown.   This method will be called as the
+	 * component hierarchy is being created, which means that this provider may not actually be 
+	 * visible to the user at the time of this call.
+	 * @see #componentMadeDisplayable()
 	 */
 	public void componentShown() {
+		// subclasses implement as needed
+	}
+
+	/**
+	 * Notifies the provider that the component has been made displayable.  When this method is 
+	 * called, the component is part of the visible GUI hierarchy.  This is in contrast to 
+	 * {@link #componentShown()}, which is called when the provider is part of the Docking 
+	 * framework's hierarchy, but not necessarily visible to the user.
+	 * @see #componentShown()
+	 */
+	public void componentMadeDisplayable() {
 		// subclasses implement as needed
 	}
 
@@ -549,6 +590,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param title the title string to use.
 	 */
 	public void setTitle(String title) {
+		if (customTitle != null) {
+			return;
+		}
+
 		this.title = title;
 		if (isInTool()) {
 			dockingTool.updateTitle(this);
@@ -561,6 +606,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param subTitle the sub-title string to use.
 	 */
 	public void setSubTitle(String subTitle) {
+		if (customSubTitle != null) {
+			return;
+		}
+
 		this.subTitle = subTitle;
 		if (isInTool()) {
 			dockingTool.updateTitle(this);
@@ -572,7 +621,56 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param tabText the tab text.
 	 */
 	public void setTabText(String tabText) {
+		if (customTabText != null) {
+			return;
+		}
+
 		this.tabText = tabText;
+		if (isInTool()) {
+			dockingTool.updateTitle(this);
+		}
+	}
+
+	/**
+	 * The new custom title.  Setting the title here prevents future calls to 
+	 * {@link #setTitle(String)} from having any effect.   This is done to preserve the custom 
+	 * title. 
+	 * @param title the title
+	 */
+	public void setCustomTitle(String title) {
+		this.customTitle = title;
+		this.title = title;
+		if (isInTool()) {
+			dockingTool.updateTitle(this);
+		}
+	}
+
+	/**
+	 * The new custom tab text.  Setting the text here prevents future calls to 
+	 * {@link #setTabText(String)} from having any effect.   This is done to preserve the custom 
+	 * tab text. 
+	 * @param tabText the text
+	 */
+	public void setCustomTabText(String tabText) {
+		this.customTabText = tabText;
+		this.tabText = tabText;
+		if (isInTool()) {
+			dockingTool.updateTitle(this);
+		}
+	}
+
+	/**
+	 * The new custom sub-title.  Setting the sub-title here prevents future calls to 
+	 * {@link #setSubTitle(String)} from having any effect.   This is done to preserve the custom 
+	 * sub-title. 
+	 * @param subTitle the sub-title
+	 */
+	public void setCustomSubTitle(String subTitle) {
+		this.customSubTitle = subTitle;
+		this.subTitle = subTitle;
+		if (isInTool()) {
+			dockingTool.updateTitle(this);
+		}
 	}
 
 	/**
@@ -957,7 +1055,30 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return "owner=" + oldOwner + "name=" + oldName;
 	}
 
+	private class ComponentProviderHierachyListener implements HierarchyListener {
+
+		@Override
+		public void hierarchyChanged(HierarchyEvent e) {
+			long changeFlags = e.getChangeFlags();
+			if (HierarchyEvent.DISPLAYABILITY_CHANGED != (changeFlags &
+				HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+				return;
+			}
+
+			// check for the first time we are put together
+			Component component = e.getChanged();
+			boolean isDisplayable = component.isDisplayable();
+			if (isDisplayable) {
+				componentMadeDisplayable();
+			}
+		}
+	}
+
 	private class ShowProviderAction extends DockingAction {
+
+		/** Number of milliseconds to track user requests */
+		private static final int TIME_WINDOW = 2000;
+		private SortedSet<Long> clickTimes = new TreeSet<>();
 
 		ShowProviderAction(boolean supportsKeyBindings) {
 			super(name, owner,
@@ -983,14 +1104,37 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
-			DockingWindowManager myDwm = DockingWindowManager.getInstance(getComponent());
-			if (myDwm == null) {
-				// this can happen when the tool loses focus
-				dockingTool.showComponentProvider(ComponentProvider.this, true);
+			boolean isFrustrated = isFrustrated();
+			boolean isFocused = isFocused();
+			if (isFocused && !isFrustrated) {
+				// the user has decided to hide this component and is not madly clicking
+				setVisible(false);
 				return;
 			}
 
-			myDwm.showComponent(ComponentProvider.this, true, true);
+			boolean emphasize = getComponent().isShowing() && isFrustrated;
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
+			myDwm.showComponent(ComponentProvider.this, true, emphasize);
+		}
+
+		private boolean isFrustrated() {
+			long time = System.currentTimeMillis();
+			clickTimes.add(time);
+
+			// grab all click times within the time window
+			long secondsAgo = time - TIME_WINDOW;
+			SortedSet<Long> recentClicks = clickTimes.tailSet(secondsAgo);
+			clickTimes.retainAll(recentClicks); // drop old click times
+			int clickCount = recentClicks.size();
+			return clickCount > 2; // rapid clicking within the time window
+		}
+
+		private boolean isFocused() {
+			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+			Component focusOwner = kfm.getFocusOwner();
+			JComponent myComponent = getComponent();
+			return focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, myComponent);
 		}
 
 		@Override

@@ -903,7 +903,7 @@ ada_demangle (const char *mangled, int option ATTRIBUTE_UNUSED)
     goto unknown;
 
   /* Most of the demangling will trivially remove chars.  Operator names
-     may add one char but because they are always preceeded by '__' which is
+     may add one char but because they are always preceded by '__' which is
      replaced by '.', they eventually never expand the size.
      A few special names such as '___elabs' add a few chars (at most 7), but
      they occur only once.  */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,20 +29,18 @@ import javax.swing.tree.TreePath;
 
 import org.junit.Test;
 
-import docking.DefaultActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.tab.GTabPanel;
 import ghidra.app.cmd.data.CreateDataCmd;
-import ghidra.app.events.ProgramLocationPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
 import ghidra.app.util.viewer.field.OpenCloseField;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.WordDataType;
@@ -208,8 +206,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(nextDiff);
 		assertTrue(nextDiff.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1004c61")), program));
+		goTo(tool, program, "1004c61");
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -230,8 +227,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(nextDiff);
 		assertTrue(nextDiff.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("100f3ff")), program));
+		goTo(tool, program, "100f3ff");
 		assertEquals(addr("100f3ff"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -252,8 +248,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(nextDiff);
 		assertTrue(nextDiff.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1004c61")), program));
+		goTo(tool, program, "1004c61");
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -263,8 +258,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertEquals(cb.getCurrentSelection(),
 			new ProgramSelection(addr("100415a"), addr("100415a")));
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1002055")), program));
+		goTo(tool, program, "1002055");
 		assertEquals(addr("1002055"), getDiffAddress());
 
 		invokeLater(prevDiff);
@@ -284,8 +278,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(diffDetails);
 		assertTrue(diffDetails.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1004c61")), program));
+		goTo(tool, program, "1004c61");
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
@@ -335,8 +328,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(diffDetails);
 		assertTrue(diffDetails.isEnabled());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("100")), program));
+		goTo(tool, program, "100");
 		assertEquals(addr("100"), getDiffAddress());
 		invokeLater(diffDetails);
 
@@ -353,11 +345,8 @@ public class DiffTest extends DiffTestAdapter {
 		assertTrue(info.indexOf("Bookmark Diffs") == -1);
 		assertEquals(addr("100"), getDiffAddress());
 
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1001014")), program));
+		goTo(tool, program, "1001014");
 		assertEquals(addr("1001014"), getDiffAddress());
-		invokeLater(diffDetails);
-		waitForSwing();
 		assertEquals(true, isDiffDetailsDisplayed());
 
 		// Check where there are no differences
@@ -406,10 +395,8 @@ public class DiffTest extends DiffTestAdapter {
 		diffAs.addRange(addr("1002304"), addr("1002304"));
 		diffAs.addRange(addr("1002306"), addr("1002306"));
 
-		tool.firePluginEvent(
-			new ProgramSelectionPluginEvent("test", new ProgramSelection(as), program));
-		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
-			new ProgramLocation(program, addr("1001000")), program));
+		makeSelection(tool, program, as);
+		goTo(tool, program, "1001000");
 		assertTrue(setPgm2Selection.isEnabled());
 
 		invokeLater(setPgm2Selection);
@@ -428,7 +415,7 @@ public class DiffTest extends DiffTestAdapter {
 
 		// Replace view with .data
 		selectTreeNodeByText(tree, ".data");
-		invokeAndWait(replaceView);
+		setView();
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
 		bottomOfFile(fp1);
@@ -436,7 +423,7 @@ public class DiffTest extends DiffTestAdapter {
 
 		// Replace with program view
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		invokeAndWait(replaceView);
+		setView();
 		topOfFile(fp1);
 		assertEquals(addr("100"), cb.getCurrentAddress());
 		bottomOfFile(fp1);
@@ -455,8 +442,7 @@ public class DiffTest extends DiffTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
-
-		runSwing(() -> replaceView.actionPerformed(new DefaultActionContext()));
+		setView();
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -482,11 +468,11 @@ public class DiffTest extends DiffTestAdapter {
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> replaceView.actionPerformed(new DefaultActionContext()));
+		runSwing(() -> setView.actionPerformed(programTreeProvider.getActionContext(null)));
 
 		selectTreeNodeByText(tree, ".rsrc");
 
-		runSwing(() -> goToView.actionPerformed(new DefaultActionContext()));
+		runSwing(() -> goToView.actionPerformed(programTreeProvider.getActionContext(null)));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -550,7 +536,8 @@ public class DiffTest extends DiffTestAdapter {
 		openDiff(diffTestP1, diffTestP2);
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, "DiffTestPgm1");
-		performAction(removeView, true);
+		ActionContext context = runSwing(() -> programTreeProvider.getActionContext(null));
+		performAction(removeView, context, true);
 		AddressSet viewSet = new AddressSet();
 		assertEquals(viewSet, cb.getView());
 		topOfFile(fp1);
@@ -824,27 +811,31 @@ public class DiffTest extends DiffTestAdapter {
 
 		Data data = diffTestP1.getListing().getDataAt(addr("0x00000106"));
 		ListingModel listingModel = cb.getListingModel();
-		cb.goToField(addr("0x00000106"), "+", 0, 0);
+		goTo(addr("0x00000106"), "+");
 		assertTrue(cb.getCurrentField() instanceof OpenCloseField);
 		assertFalse("Array is not closed as expected.", listingModel.isOpen(data));
-		cb.goToField(addr("0x00000120"), "Address", 0, 0);
+		goTo(addr("0x00000120"), "Address");
 		assertEquals("00000120", cb.getCurrentFieldText());
-		cb.goToField(addr("0x00000106"), "Address", 0, 0);
+		goTo(addr("0x00000106"), "Address");
 		assertEquals("00000106", cb.getCurrentFieldText());
 
-		cb.goToField(addr("0x00000106"), "+", 0, 0);
+		goTo(addr("0x00000106"), "+");
 		click(cb, 1);
 		waitForSwing();
 		assertTrue("Array failed to open.", listingModel.isOpen(data));
 
-		cb.goToField(addr("0x00000106"), "+", 0, 0);
+		goTo(addr("0x00000106"), "+");
 		click(cb, 1);
 		waitForSwing();
-		cb.goToField(addr("0x00000120"), "Address", 0, 0);
-		cb.goToField(addr("0x00000106"), "Address", 0, 0);
+		goTo(addr("0x00000120"), "Address");
+		goTo(addr("0x00000106"), "Address");
 		assertEquals("00000106", cb.getCurrentFieldText());
 		assertFalse("Array failed to close.", listingModel.isOpen(data));
+	}
 
+	private void goTo(Address a, String fieldName) {
+		cb.goToField(a, fieldName, 0, 0);
+		waitForSwing();
 	}
 
 //==================================================================================================

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,10 +62,9 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	 * only happens during tests and one-off main methods that are not part of a
 	 * running tool.
 	 *
-	 * @param componentProvider the dialog content for this dialog
 	 * @return the hidden frame
 	 */
-	private static JFrame createHiddenParentFrame(DialogComponentProvider componentProvider) {
+	private static JFrame createHiddenParentFrame() {
 
 		//
 		// Note: we expect to only get here when there is no parent window found.  This usually
@@ -118,7 +117,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	private DockingDialog(DialogComponentProvider comp, Component centeredOnComponent) {
-		super(createHiddenParentFrame(comp), comp.getTitle(), comp.isModal());
+		super(createHiddenParentFrame(), comp.getTitle(), comp.isModal());
 		init(comp);
 		initializeLocationAndSize(centeredOnComponent);
 	}
@@ -211,7 +210,11 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 
 			@Override
 			public void windowOpened(WindowEvent e) {
-				component.dialogShown();
+				Tool tool = null;
+				if (owningWindowManager != null) {
+					tool = owningWindowManager.getTool();
+				}
+				component.dialogShown(tool);
 			}
 
 			@Override
@@ -297,6 +300,15 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 
 	DialogComponentProvider getComponent() {
 		return component;
+	}
+
+	/**
+	 * Returns true if the given provider is the provider owned by this dialog.
+	 * @param dcp the provider to check
+	 * @return true if the given provider is the provider owned by this dialog
+	 */
+	public boolean containsProvider(DialogComponentProvider dcp) {
+		return component == dcp;
 	}
 
 	/**

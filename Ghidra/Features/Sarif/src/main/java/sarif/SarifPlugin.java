@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import com.google.gson.JsonSyntaxException;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.theme.GIcon;
 import ghidra.MiscellaneousPluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -40,7 +41,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.bean.opteditor.OptionsVetoException;
-import resources.ResourceManager;
 import sarif.io.SarifGsonIO;
 import sarif.io.SarifIO;
 
@@ -50,16 +50,17 @@ import sarif.io.SarifIO;
 	packageName = MiscellaneousPluginPackage.NAME,
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Sarif Plugin.",
-	description = "SARIF parsing and visualization plugin."
+	description = "SARIF parsing and visualization plugin.",
+	servicesProvided = { SarifService.class }
 )
 //@formatter:on
 
 /**
- * A {@link ProgramPlugin} for reading in sarif files 
+ * A {@link ProgramPlugin} for reading in sarif files
  */
-public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener {
+public class SarifPlugin extends ProgramPlugin implements SarifService, OptionsChangeListener {
 	public static final String NAME = "Sarif";
-	public static final Icon SARIF_ICON = ResourceManager.loadImage("images/peach_16.png");
+	public static final Icon SARIF_ICON = new GIcon("icon.plugin.bookmark.type.note");
 
 	private Map<Program, SarifController> sarifControllers;
 	private SarifIO io;
@@ -128,6 +129,29 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 		}
 	}
 
+	@Override
+	public SarifSchema210 readSarif(File sarifFile) throws JsonSyntaxException, IOException {
+		return io.readSarif(sarifFile);
+	}
+
+	@Override
+	public SarifSchema210 readSarif(String sarif) throws JsonSyntaxException, IOException {
+		return io.readSarif(sarif);
+	}
+
+	public SarifController getController() {
+		currentProgram = getCurrentProgram();
+		if (currentProgram != null) {
+			if (!sarifControllers.containsKey(currentProgram)) {
+				SarifController controller = new SarifController(currentProgram, this);
+				sarifControllers.put(currentProgram, controller);
+			}
+			return sarifControllers.get(currentProgram);
+		}
+		Msg.showError(this, tool.getActiveWindow(), "File parse error", "No current program");
+		return null;
+	}
+
 	/**
 	 * Ultimately both selections end up calling this to actually show something on
 	 * the Ghidra gui
@@ -136,17 +160,16 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 	 * @param sarif
 	 */
 	public void showSarif(String logName, SarifSchema210 sarif) {
-		currentProgram = getCurrentProgram();
-		if (currentProgram != null) {
-			if (!sarifControllers.containsKey(currentProgram)) {
-				SarifController controller = new SarifController(currentProgram, this);
-				sarifControllers.put(currentProgram, controller);
-			}
-			SarifController currentController = sarifControllers.get(currentProgram);
-			if (currentController != null) {
+		SarifController currentController = getController();
+		if (currentController != null) {
+			if (sarif != null) {
 				currentController.showTable(logName, sarif);
-				return;
 			}
+			else {
+				Msg.showError(this, tool.getActiveWindow(), "File parse error",
+					"No SARIF generated - check directories");
+			}
+			return;
 		}
 		Msg.showError(this, tool.getActiveWindow(), "File parse error", "No current program");
 	}
@@ -162,7 +185,7 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 	private void createActions() {
 		//@formatter:off
 		new ActionBuilder("Read", getName())
-			.menuPath("Sarif", "Read File")
+			.menuPath("Tools", "Sarif", "Read File")
 			.menuGroup("sarif", "1")
 			.helpLocation(new HelpLocation("Sarif", "Using_SARIF_Files"))
 			.enabledWhen(ctx -> getCurrentProgram() != null)
@@ -187,7 +210,8 @@ public class SarifPlugin extends ProgramPlugin implements OptionsChangeListener 
 
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) throws OptionsVetoException {
+			Object newValue)
+			throws OptionsVetoException {
 
 		Options sarifOptions = options.getOptions(NAME);
 		loadOptions(sarifOptions);

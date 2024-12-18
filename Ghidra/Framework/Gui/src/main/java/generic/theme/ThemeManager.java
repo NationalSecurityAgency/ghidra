@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,13 +41,13 @@ import utility.function.Callback;
  * The basic idea is that all the colors, fonts, and icons used in an application should be
  * accessed indirectly via an "id" string. Then the actual color, font, or icon can be changed
  * without changing the source code. The default mapping of the id strings to a value is defined
- * in <name>.theme.properties files which are dynamically discovered by searching the module's
+ * in {@code <name>.theme.properties} files which are dynamically discovered by searching the module's
  * data directory. Also, these files can optionally define a dark default value for an id which
  * would replace the standard default value in the event that the current theme specifies that it
  * is a dark theme. Themes are used to specify the application's {@link LookAndFeel}, whether or
  * not it is dark, and any customized values for colors, fonts, or icons. There are several
  * "built-in" themes, one for each supported {@link LookAndFeel}, but additional themes can
- * be defined and stored in the users application home directory as a <name>.theme file.
+ * be defined and stored in the users application home directory as a {@code <name>.theme} file.
  * <P>
  * Clients that just need to access the colors, fonts, and icons from the theme can use the
  * convenience methods in the {@link Gui} class.  Clients that need to directly manipulate the
@@ -222,7 +222,7 @@ public abstract class ThemeManager {
 	/**
 	 * Sets the current {@link LookAndFeel}. This is used by theme editors to allow users to
 	 * see the effects of changing LookAndFeels when configuring a theme. Setting this different
-	 * from the activeTheme's LookAndFeel setting means the the current theme is in an unsaved
+	 * from the activeTheme's LookAndFeel setting means that the current theme is in an unsaved
 	 * state and causes the {@link #hasThemeChanges()} method to return true.
 	 * @param lafType the {@link LafType} to set the LookAndFeel to
 	 * @param useDarkDefaults true if the application should used dark defaults with this
@@ -490,11 +490,30 @@ public abstract class ThemeManager {
 
 	/**
 	 * Returns true if the given UI object is using the Aqua Look and Feel.
-	 * @param UI the UI to examine.
+	 * @param UI the UI to examine.  (This parameter is ignored)
 	 * @return true if the UI is using Aqua
+	 * @deprecated use {@link #isUsingAquaUI()}
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public boolean isUsingAquaUI(ComponentUI UI) {
 		return getLookAndFeelType() == LafType.MAC;
+	}
+
+	/**
+	 * Returns true if the current UI is using the Aqua Look and Feel.
+	 * @return true if the UI is using Aqua
+	 */
+	public boolean isUsingAquaUI() {
+		return getLookAndFeelType() == LafType.MAC;
+	}
+
+	/**
+	 * Returns true if the current UI is the FlatLaf Dark or FlatLaf Light Look and Feel.
+	 * @return true if the current UI is the FlatLaf Dark or FlatLaf Light Look and Feel 
+	 */
+	public boolean isUsingFlatUI() {
+		return getLookAndFeelType() == LafType.FLAT_DARK ||
+			getLookAndFeelType() == LafType.FLAT_LIGHT;
 	}
 
 	/**
@@ -593,6 +612,16 @@ public abstract class ThemeManager {
 	}
 
 	/**
+	 * Removes the component and font id binding made in a previous call to 
+	 * {@link #registerFont(Component, String)}.
+	 * @param component the component to remove
+	 * @param fontId the id of the font previously registered
+	 */
+	public void unRegisterFont(JComponent component, String fontId) {
+		// do nothing
+	}
+
+	/**
 	 * Returns true if the current theme use dark default values.
 	 * @return true if the current theme use dark default values.
 	 */
@@ -606,16 +635,11 @@ public abstract class ThemeManager {
 	 */
 	public static GTheme getDefaultTheme() {
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
-		switch (OS) {
-			case MAC_OS_X:
-				return new MacTheme();
-			case WINDOWS:
-				return new WindowsTheme();
-			case LINUX:
-			case UNSUPPORTED:
-			default:
-				return new NimbusTheme();
-		}
+		return switch (OS) {
+			case MAC_OS_X -> new MacTheme();
+			case WINDOWS -> new WindowsTheme();
+			default -> new FlatLightTheme();
+		};
 	}
 
 	/**

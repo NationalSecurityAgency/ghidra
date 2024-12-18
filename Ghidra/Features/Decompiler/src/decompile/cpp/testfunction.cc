@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,6 +113,24 @@ void FunctionTestCollection::clear(void)
   console->reset();
 }
 
+/// Remove any carriage return character as well.
+/// \param ref is the string to strip
+/// \return the stripped string
+string FunctionTestCollection::stripNewlines(const string &ref)
+
+{
+  string res;
+
+  for(int4 i=0;i<ref.size();++i) {
+    char c = ref[i];
+    if (c == '\r') continue;	// Remove carriage return
+    if (c == '\n')
+      c = ' ';			// Convert newline to space
+    res.push_back(c);
+  }
+  return res;
+}
+
 /// \param el is the root \<script> tag
 void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
@@ -122,7 +140,7 @@ void FunctionTestCollection::restoreXmlCommands(const Element *el)
 
   for(iter=list.begin();iter!=list.end();++iter) {
     const Element *subel = *iter;
-    commands.push_back(subel->getContent());
+    commands.push_back(stripNewlines(subel->getContent()));
   }
 }
 
@@ -267,14 +285,14 @@ void FunctionTestCollection::restoreXml(DocumentStorage &store,const Element *el
       buildProgram(store);
     }
     else
-      throw IfaceParseError("Unknown tag in <decompiletest>: "+subel->getName());
+      throw IfaceParseError("Unknown tag in <decompilertest>: "+subel->getName());
   }
   if (!sawScript)
-    throw IfaceParseError("Did not see <script> tag in <decompiletest>");
+    throw IfaceParseError("Did not see <script> tag in <decompilertest>");
   if (!sawTests)
-    throw IfaceParseError("Did not see any <stringmatch> tags in <decompiletest>");
+    throw IfaceParseError("Did not see any <stringmatch> tags in <decompilertest>");
   if (!sawProgram)
-    throw IfaceParseError("No <binaryimage> tag in <decompiletest>");
+    throw IfaceParseError("No <binaryimage> tag in <decompilertest>");
 }
 
 /// Pull the script and tests from a comment in \<binaryimage>

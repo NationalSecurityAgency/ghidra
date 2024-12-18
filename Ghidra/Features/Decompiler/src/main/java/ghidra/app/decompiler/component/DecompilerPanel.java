@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -159,6 +159,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
+	public DecompilerController getController() {
+		return controller;
+	}
+
 	public List<ClangLine> getLines() {
 		return layoutController.getLines();
 	}
@@ -243,14 +247,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void toggleMiddleMouseHighlight(FieldLocation location, Field field) {
 		ClangToken token = ((ClangTextField) field).getToken(location);
-		ColorProvider cp = new MiddleMouseColorProvider();
-		NameTokenMatcher matcher = new NameTokenMatcher(token.getText(), cp);
 
 		ActiveMiddleMouse previousMiddleMouse = activeMiddleMouse;
 		activeMiddleMouse = null;
 
 		if (previousMiddleMouse != null) {
-
 			// middle mousing always clears the last middle-mouse highlight
 			previousMiddleMouse.clear();
 
@@ -260,8 +261,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 		}
 
-		DecompilerHighlighter newMiddleMouseHighlighter = createHighlighter(matcher);
-		ActiveMiddleMouse newMiddleMouse = new ActiveMiddleMouse(token, newMiddleMouseHighlighter);
+		ActiveMiddleMouse newMiddleMouse = new ActiveMiddleMouse(token.getText());
 		newMiddleMouse.apply();
 		activeMiddleMouse = newMiddleMouse;
 	}
@@ -337,7 +337,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * This function is used to alert the panel that a token was renamed. If the token being renamed
-	 * had a secondary highlight, we must re-apply the highlight to the new token.
+	 * had a middle-mouse or secondary highlight, we must re-apply the highlights to the new token.
 	 *
 	 * <p>
 	 * This is not needed for highlighter service highlights, since they get called again to
@@ -350,17 +350,35 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * @param newName the new name of the token
 	 */
 	public void tokenRenamed(ClangToken token, String newName) {
+		repairMiddleMouseSelectionForRename(token, newName);
+		repairSecondarySelectionForRename(token, newName);
+	}
 
+	private void repairSecondarySelectionForRename(ClangToken token, String newName) {
 		Color hlColor = highlightController.getSecondaryHighlight(token);
 		if (hlColor == null) {
 			return; // not highlighted
 		}
 
-		// remove the old highlighter
 		highlightController.removeSecondaryHighlights(token);
 
+		// Add the new highlighter when we have rebuilt the token
 		controller.doWhenNotBusy(() -> {
 			addSecondaryHighlight(newName, t -> hlColor);
+		});
+	}
+
+	private void repairMiddleMouseSelectionForRename(ClangToken token, String newName) {
+		if (activeMiddleMouse == null || !activeMiddleMouse.matches(token)) {
+			return;
+		}
+
+		activeMiddleMouse.clear();
+		activeMiddleMouse = new ActiveMiddleMouse(newName);
+
+		// Apply the new middle-mouse highlighter when we have rebuilt the token
+		controller.doWhenNotBusy(() -> {
+			activeMiddleMouse.apply();
 		});
 	}
 
@@ -1400,24 +1418,23 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 */
 	private class ActiveMiddleMouse {
 
-		private ClangToken token;
+		private String tokenText;
 		private DecompilerHighlighter highlighter;
 
-		ActiveMiddleMouse(ClangToken token, DecompilerHighlighter highlighter) {
-			this.token = token;
-			this.highlighter = highlighter;
+		ActiveMiddleMouse(String tokenText) {
+			this.tokenText = tokenText;
+
+			ColorProvider cp = new MiddleMouseColorProvider();
+			NameTokenMatcher matcher = new NameTokenMatcher(tokenText, cp);
+			this.highlighter = createHighlighter(matcher);
 		}
 
 		TokenHighlights getHighlights() {
 			return highlightController.getHighlighterHighlights(highlighter);
 		}
 
-		DecompilerHighlighter getHighlighter() {
-			return highlighter;
-		}
-
 		boolean matches(ClangToken other) {
-			return token.getText().equals(other.getText());
+			return tokenText.equals(other.getText());
 		}
 
 		void clear() {
@@ -1430,7 +1447,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		@Override
 		public String toString() {
-			return "Middle Mouse Token " + token;
+			return "Middle Mouse Token " + tokenText;
 		}
 	}
 

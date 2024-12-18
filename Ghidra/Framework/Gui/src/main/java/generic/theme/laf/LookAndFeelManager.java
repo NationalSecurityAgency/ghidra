@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,15 +237,39 @@ public abstract class LookAndFeelManager {
 		register.addComponent(component, fontStyle);
 	}
 
+	/**
+	 * Removes the given component and id binding from this class.
+	 * @param component the component to remove
+	 * @param fontId the id used when originally registered
+	 * @see #registerFont(Component, String)
+	 */
+	public void unRegisterFont(JComponent component, String fontId) {
+		componentToIdMap.remove(component);
+
+		ComponentFontRegistry registry = fontRegistryMap.get(fontId);
+		if (registry != null) {
+			registry.removeComponent(component);
+		}
+	}
+
 	private void checkForAlreadyRegistered(Component component, String newFontId) {
 		String existingFontId = componentToIdMap.get(component);
-		if (existingFontId != null) {
-			Msg.warn(this, """
-					Component has a Font ID registered more than once. \
-					Previously registered ID: '%s'.  Newly registered ID: '%s'.
-						""".formatted(existingFontId, newFontId),
-				ReflectionUtilities.createJavaFilteredThrowable());
+		if (existingFontId == null) {
+			return; // never registered before
 		}
+
+		if (component instanceof FontChangeListener) {
+			// Special Case: this allows clients to control how they listen to font changes.  We 
+			// have guilty knowledge that some clients will use one listener to listen to multiple
+			// font ids, so don't print a warning for this case.
+			return;
+		}
+
+		Msg.warn(this, """
+				Component has a Font ID registered more than once. \
+				Previously registered ID: '%s'.  Newly registered ID: '%s'.
+					""".formatted(existingFontId, newFontId),
+			ReflectionUtilities.createJavaFilteredThrowable());
 	}
 
 	private Font toUiResource(Font font) {
@@ -397,9 +421,7 @@ public abstract class LookAndFeelManager {
 		UIDefaults defaults = UIManager.getDefaults();
 
 		Set<Entry<Object, Object>> set = defaults.entrySet();
-		Iterator<Entry<Object, Object>> iterator = set.iterator();
-		while (iterator.hasNext()) {
-			Entry<Object, Object> entry = iterator.next();
+		for (Entry<Object, Object> entry : set) {
 			Object key = entry.getKey();
 
 			if (key.toString().toLowerCase().indexOf("font") != -1) {
@@ -440,5 +462,4 @@ public abstract class LookAndFeelManager {
 		}
 		return colorKeys;
 	}
-
 }

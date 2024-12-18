@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import javax.swing.*;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.GTable;
 import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
@@ -30,11 +31,13 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import help.Help;
 import help.HelpService;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Editor provider for a Composite Data Type.
@@ -161,10 +164,14 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		closeComponent(false);
+	}
+
+	void closeComponent(boolean force) {
 		if (editorModel != null && editorModel.editingField) {
 			editorModel.endFieldEditing();
 		}
-		if (saveChanges(true) != 0) {
+		if (force || saveChanges(true) != 0) {
 			super.closeComponent();
 			dispose();
 		}
@@ -261,10 +268,6 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return editorModel.hasChanges();
 	}
 
-	public void dataTypeManagerRestored() {
-		editorPanel.dataTypeManagerRestored();
-	}
-
 	@Override
 	public void show() {
 		tool.showComponentProvider(this, true);
@@ -334,8 +337,41 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	}
 
 	protected void registerHelp(Object object, String anchor) {
+		String inception = recordHelpInception();
 		HelpService help = Help.getHelpService();
-		help.registerHelp(object, new HelpLocation(getHelpTopic(), getHelpName() + "_" + anchor));
+		String fullAnchor = getHelpName() + "_" + anchor;
+		help.registerHelp(object, new HelpLocation(getHelpTopic(), fullAnchor, inception));
 	}
 
+	private String recordHelpInception() {
+		if (!SystemUtilities.isInDevelopmentMode()) {
+			return "";
+		}
+		return getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
+	}
+
+	protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
+		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan("registerHelp");
+		return t.getStackTrace()[0].toString();
+	}
+
+	protected void requestTableFocus() {
+
+		JTable table = editorPanel.getTable();
+		if (!table.isEditing()) {
+			table.requestFocus();
+			return;
+		}
+
+		if (table instanceof GTable gTable) {
+			gTable.requestTableEditorFocus();
+		}
+		else {
+			table.getEditorComponent().requestFocus();
+		}
+	}
+
+	protected void closeDependentEditors() {
+		// do nothing by default
+	}
 }

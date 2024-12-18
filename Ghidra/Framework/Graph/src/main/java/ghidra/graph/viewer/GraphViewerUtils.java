@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,11 +48,11 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  * 
  * <ul>
  * 	<li>Layout Space - the layout contains Point2D objects that represent positions of the
- *                     vertices. 
+ *                     vertices. </li>
  *  <li>Graph Space - the space where the Layout points are transformed as the view is moved 
- *                    around the screen (e.g., as the user pans)
+ *                    around the screen (e.g., as the user pans)</li>
  *  <li>View Space - the coordinate system of Java 2D rendering; scaling (zooming) transformations
- *                   are applied at this layer
+ *                   are applied at this layer</li>
  * </ul>
  * 
  * <P> Note: vertex relative means that the value is from inside the vertex, or the vertex's

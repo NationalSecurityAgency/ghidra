@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -134,7 +134,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		decompilerOptions = new DecompileOptions();
 		initializeDecompilerOptions();
-		controller = new DecompilerController(this, decompilerOptions, clipboardProvider);
+		controller =
+			new DecompilerController(getTool(), this, decompilerOptions, clipboardProvider);
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 
 		// TODO move the hl controller into the panel
@@ -1062,7 +1063,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		//
 		// Search
 		//
-		String searchGroup = "comment2 - Search Group";
+		String searchGroup = "Comment2 - Search Group";
 		subGroupPosition = 0; // reset for the next group
 
 		FindAction findAction = new FindAction();

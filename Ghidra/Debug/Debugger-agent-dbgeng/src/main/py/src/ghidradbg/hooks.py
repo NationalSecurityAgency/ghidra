@@ -1,19 +1,18 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
-from _ctypes_test import func
 import functools
 import sys
 import threading
@@ -28,6 +27,7 @@ from pybag.dbgeng.callbacks import EventHandler
 from pybag.dbgeng.idebugbreakpoint import DebugBreakpoint
 
 from . import commands, util
+from .exdi import exdi_commands
 
 
 ALL_EVENTS = 0xFFFF
@@ -66,6 +66,8 @@ class ProcessState(object):
         if first:
             if util.is_kernel():
                 commands.create_generic("Sessions")
+            if util.is_exdi() and util.dbg.use_generics is False:
+                commands.create_generic("Sessions[0].ExdiProcesses")
             commands.put_processes()
             commands.put_environment()
             commands.put_threads()
@@ -78,8 +80,8 @@ class ProcessState(object):
                 commands.putreg()
                 commands.putmem('0x{:x}'.format(util.get_pc()),
                                 "1", display_result=False)
-                commands.putmem('0x{:x}'.format(util.get_sp()),
-                                "1", display_result=False)
+                commands.putmem('0x{:x}'.format(util.get_sp()-1),
+                                "2", display_result=False)
                 commands.put_frames()
                 self.visited.add(thread)
             frame = util.selected_frame()
@@ -87,9 +89,13 @@ class ProcessState(object):
             if first or hashable_frame not in self.visited:
                 self.visited.add(hashable_frame)
         if first or self.regions:
+            if util.is_exdi():
+                exdi_commands.put_regions_exdi(commands.STATE)
             commands.put_regions()
             self.regions = False
         if first or self.modules:
+            if util.is_exdi():
+                exdi_commands.put_kmodules_exdi(commands.STATE)
             commands.put_modules()
             self.modules = False
         if first or self.breaks:

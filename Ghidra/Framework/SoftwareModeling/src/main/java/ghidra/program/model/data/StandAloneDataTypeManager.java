@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -836,7 +836,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	protected void initTransactionState() {
-		dbHandle.setMaxUndos(NUM_UNDOS);
+		clearUndo();
 	}
 
 	@Override
@@ -870,6 +870,14 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		}
 		transactionCount++;
 		return transaction.intValue();
+	}
+
+	/**
+	 * Get the number of active transactions
+	 * @return number of active transactions
+	 */
+	protected int getTransactionCount() {
+		return transactionCount;
 	}
 
 	@Override
@@ -906,6 +914,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			}
 		}
 		if (restored) {
+			invalidateCache();
 			notifyRestored();
 		}
 	}
@@ -953,6 +962,10 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	protected synchronized void clearUndo() {
 		undoList.clear();
 		redoList.clear();
+
+		// Flatten all checkpoints then restore undo stack size
+		dbHandle.setMaxUndos(0);
+		dbHandle.setMaxUndos(NUM_UNDOS);
 	}
 
 	/**
@@ -1037,7 +1050,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 	@Override
 	public synchronized void close() {
-		clearUndo();
+		if (dbHandle.isTransactionActive()) {
+			Msg.error(this, "DTM closed with active transaction",
+				new RuntimeException("DTM closed with active transaction"));
+		}
+		undoList.clear();
+		redoList.clear();
 		if (!dbHandle.isClosed()) {
 			dbHandle.close();
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TestTraceRmiLaunchOpin
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
+import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
@@ -182,7 +183,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 
 		TestTraceRmiLaunchOffer offer =
 			Unique.assertOne(filter(api.getLaunchOffers(), TestTraceRmiLaunchOffer.class));
-		offer.saveLauncherArgs(Map.of("image", "/test/image"));
+		offer.saveLauncherArgs(Map.of("image", ValStr.str("/test/image")));
 
 		assertEquals(List.of(offer), api.getSavedLaunchOffers());
 	}
@@ -191,7 +192,7 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 	public void testLaunchCustomCommandLine() throws Throwable {
 		TestTraceRmiLaunchOffer offer =
 			Unique.assertOne(filter(api.getLaunchOffers(), TestTraceRmiLaunchOffer.class));
-		offer.saveLauncherArgs(Map.of("image", "/test/image"));
+		offer.saveLauncherArgs(Map.of("image", ValStr.str("/test/image")));
 
 		LaunchResult result = api.launch(monitor);
 		assertEquals("Test launcher cannot launch /test/image", result.exception().getMessage());

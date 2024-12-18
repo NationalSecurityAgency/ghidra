@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,7 @@ package docking.widgets;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -31,6 +30,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
+import util.CollectionUtils;
 
 /**
  * A generic window intended to be used as a temporary window to show information.  This window is
@@ -52,8 +52,7 @@ public class PopupWindow {
 	}
 
 	private static final PopupWindowPlacer DEFAULT_WINDOW_PLACER =
-		new PopupWindowPlacerBuilder()
-				.rightEdge(Location.BOTTOM)
+		new PopupWindowPlacerBuilder().rightEdge(Location.BOTTOM)
 				.leftEdge(Location.BOTTOM)
 				.bottomEdge(Location.RIGHT)
 				.topEdge(Location.CENTER)
@@ -61,7 +60,10 @@ public class PopupWindow {
 				.throwsAssertException()
 				.build();
 
-	/** Area where user can mouse without hiding the window (in screen coordinates) */
+	/** 
+	 * Area where user can mouse without hiding the window (in screen coordinates).  A.K.A., the
+	 * mouse neutral zone.
+	 */
 	private Rectangle mouseMovementArea;
 	private JWindow popup;
 	private Component sourceComponent;
@@ -237,9 +239,50 @@ public class PopupWindow {
 			popupWindowPlacer == null ? DEFAULT_WINDOW_PLACER : popupWindowPlacer;
 	}
 
-	public void showOffsetPopup(MouseEvent e, Rectangle keepVisibleSize, boolean forceShow) {
+	public void showOffsetPopup(MouseEvent e, Rectangle keepVisibleArea, boolean forceShow) {
 		if (forceShow || DockingUtils.isTipWindowEnabled()) {
-			doShowPopup(e, keepVisibleSize, popupWindowPlacer);
+			PopupSource popupSource = new PopupSource(e, keepVisibleArea);
+			doShowPopup(popupSource);
+		}
+	}
+
+	/**
+	 * Shows this popup window unless popups are disabled as reported by 
+	 * {@link DockingUtils#isTipWindowEnabled()}.  If {@code forceShow} is true, then the popup 
+	 * will be shown regardless of the state returned by {@link DockingUtils#isTipWindowEnabled()}.
+	 * @param e the event
+	 * @param forceShow true to show the popup even popups are disabled application-wide
+	 */
+	public void showPopup(MouseEvent e, boolean forceShow) {
+		if (forceShow || DockingUtils.isTipWindowEnabled()) {
+			PopupSource popupSource = new PopupSource(e);
+			doShowPopup(popupSource);
+		}
+	}
+
+	/**
+	 * Shows this popup window unless popups are disabled as reported by 
+	 * {@link DockingUtils#isTipWindowEnabled()}.  If {@code forceShow} is true, then the popup 
+	 * will be shown regardless of the state returned by {@link DockingUtils#isTipWindowEnabled()}.
+	 * <P>
+	 * Note: the component passed in is the component to which the {@code location} the location 
+	 * belongs.   In the example below, the component used to get the location is to the component
+	 * passed to this method.  This is because the location is relative to the parent's coordinate
+	 * space.  Thus, when calling this method, make sure to use the correct component.
+	 * <PRE>
+	 * Point location = textField.getLocation(); // this is relative to the text field's parent
+	 * Component parent = textField.getParent();
+	 * PopupWindow.showPopup(parent, location, true);
+	 * </PRE>
+	 * 
+	 * @param component the component whose coordinate space the location belongs
+	 * @param location the location to show the popup
+	 * @param forceShow true to show the popup even popups are disabled application-wide
+	 */
+	public void showPopup(Component component, Point location, boolean forceShow) {
+		if (forceShow || DockingUtils.isTipWindowEnabled()) {
+			PopupSource popupSource = new PopupSource(component, location, null);
+			doShowPopup(popupSource);
 		}
 	}
 
@@ -253,34 +296,32 @@ public class PopupWindow {
 	}
 
 	/**
-	 * Shows this popup window unless popups are disabled as reported by 
-	 * {@link DockingUtils#isTipWindowEnabled()}.  If {@code forceShow} is true, then the popup 
-	 * will be shown regardless of the state returned by {@link DockingUtils#isTipWindowEnabled()}.
-	 * @param e the event
-	 * @param forceShow true to show the popup even popups are disabled application-wide
+	 * Shows the popup window.  This will hide any existing popup windows, adjusts the new popup
+	 * to avoid covering the keep visible area and then shows the popup.
+	 * 
+	 * @param popupSource the popup source that contains info about the source of the popup, such
+	 * as the component, a mouse event and any area to keep visible.
 	 */
-	public void showPopup(MouseEvent e, boolean forceShow) {
-		if (forceShow || DockingUtils.isTipWindowEnabled()) {
-			doShowPopup(e, null, popupWindowPlacer);
-		}
-	}
+	private void doShowPopup(PopupSource popupSource) {
 
-	private void doShowPopup(MouseEvent e, Rectangle keepVisibleSize, PopupWindowPlacer placer) {
 		hideAllWindows();
 
-		sourceComponent = e.getComponent();
+		sourceComponent = popupSource.getSource();
 		sourceComponent.addMouseListener(sourceMouseListener);
 		sourceComponent.addMouseMotionListener(sourceMouseMotionListener);
 
-		Dimension popupDimension = popup.getSize();
-		ensureSize(popupDimension);
+		Dimension popupSize = popup.getSize();
+		ensureSize(popupSize);
 
-		Rectangle keepVisibleArea = createKeepVisibleArea(e, keepVisibleSize);
+		//
+		// Creates a rectangle that contains both given rectangles entirely and includes padding.
+		// The padding allows users to mouse over the edge of the hovered area without triggering 
+		// the popup to close.
+		//
+		Rectangle visibleArea = popupSource.getScreenKeepVisibleArea();
 		Rectangle screenBounds = WindowUtilities.getVisibleScreenBounds().getBounds();
-		Rectangle placement = placer.getPlacement(popupDimension, keepVisibleArea, screenBounds);
-		mouseMovementArea = createMovementArea(placement, keepVisibleArea);
-
-		installDebugPainter(e);
+		Rectangle placement = popupWindowPlacer.getPlacement(popupSize, visibleArea, screenBounds);
+		mouseMovementArea = placement.union(visibleArea);
 
 		popup.setBounds(placement);
 		popup.setVisible(true);
@@ -290,26 +331,7 @@ public class PopupWindow {
 		VISIBLE_POPUPS.add(new WeakReference<>(this));
 	}
 
-	private Rectangle createKeepVisibleArea(MouseEvent e, Rectangle keepVisibleAea) {
-
-		Rectangle newArea;
-		if (keepVisibleAea == null) {
-			Point point = new Point(e.getPoint());
-			newArea = new Rectangle(point);
-			newArea.grow(X_PADDING, Y_PADDING); // pad to avoid placing the popup too close 
-		}
-		else {
-			newArea = new Rectangle(keepVisibleAea);
-		}
-
-		Point point = newArea.getLocation();
-		SwingUtilities.convertPointToScreen(point, sourceComponent);
-		newArea.setLocation(point);
-
-		return newArea;
-	}
-
-	private void ensureSize(Dimension popupDimension) {
+	private static void ensureSize(Dimension popupDimension) {
 		Dimension screenDimension = WindowUtilities.getVisibleScreenBounds().getBounds().getSize();
 
 		if (screenDimension.width < popupDimension.width) {
@@ -321,67 +343,121 @@ public class PopupWindow {
 		}
 	}
 
-	/**
-	 * Creates a rectangle that contains both given rectangles entirely and includes padding.
-	 * The padding allows users to mouse over the edge of the hovered area without triggering the
-	 * popup to close.
-	 */
-	private Rectangle createMovementArea(Rectangle popupBounds, Rectangle hoverRectangle) {
-		Rectangle result = popupBounds.union(hoverRectangle);
-		return result;
-	}
-
-	private void installDebugPainter(MouseEvent e) {
-//		GGlassPane glassPane = GGlassPane.getGlassPane(sourceComponent);
-//		ShapeDebugPainter painter = new ShapeDebugPainter(e, null, neutralMotionZone);
-//		painters.forEach(p -> glassPane.removePainter(p));
-//
-//		glassPane.addPainter(painter);
-//		painters.add(painter);
-	}
-
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	// for debug
-//	private static List<GGlassPanePainter> painters = new ArrayList<>();
+	/**
+	 * A class that holds info related to the source of a hover request.  This is used to position
+	 * the popup window that will be shown.
+	 */
+	private class PopupSource {
 
-	/** Paints shapes used by this class (useful for debugging) */
-	@SuppressWarnings("unused")
-	// enabled as needed
-	private class ShapeDebugPainter implements GGlassPanePainter {
+		private Component source;
+		private Rectangle screenKeepVisibleArea;
+		private Point location;
 
-		private MouseEvent sourceEvent;
-		private Rectangle bounds;
-
-		ShapeDebugPainter(MouseEvent sourceEvent, Rectangle bounds) {
-			this.sourceEvent = sourceEvent;
-			this.bounds = bounds;
+		PopupSource(MouseEvent e) {
+			this(e, null);
 		}
 
-		@Override
-		public void paint(GGlassPane glassPane, Graphics g) {
+		PopupSource(MouseEvent e, Rectangle keepVisibleArea) {
+			this(e.getComponent(), e.getPoint(), keepVisibleArea);
+		}
 
-			// bounds of the popup and the mouse neutral zone
-			if (bounds != null) {
-				Rectangle r = bounds;
-				Point p = new Point(r.getLocation());
-				SwingUtilities.convertPointFromScreen(p, glassPane);
+		PopupSource(Component source, Point location, Rectangle keepVisibleArea) {
 
-				Color c = Palette.LAVENDER;
-				g.setColor(c);
-				g.fillRect(p.x, p.y, r.width, r.height);
+			if (CollectionUtils.isAllNull(location, keepVisibleArea)) {
+				throw new NullPointerException("Both location and keepVisibleArea cannot be null");
+			}
+			if (keepVisibleArea == null) {
+				keepVisibleArea = new Rectangle(location, new Dimension(0, 0));
+			}
+			this.location = location;
+			this.source = source;
+			this.screenKeepVisibleArea = createScreenKeepVisibleArea(location, keepVisibleArea);
+
+			installDebugPainter(keepVisibleArea);
+		}
+
+		Component getSource() {
+			return source;
+		}
+
+		Rectangle getScreenKeepVisibleArea() {
+			return screenKeepVisibleArea;
+		}
+
+		private Rectangle createScreenKeepVisibleArea(Point p, Rectangle keepVisibleAea) {
+
+			Rectangle newArea = keepVisibleAea;
+			if (keepVisibleAea == null) {
+				Point point = new Point(p);
+				newArea = new Rectangle(point);
+				newArea.grow(X_PADDING, Y_PADDING); // pad to avoid placing the popup too close 
 			}
 
-			// show where the user hovered
-			if (sourceEvent != null) {
-				Point p = sourceEvent.getPoint();
-				p = SwingUtilities.convertPoint(sourceEvent.getComponent(), p.x, p.y, glassPane);
-				g.setColor(Palette.RED);
-				int offset = 10;
-				g.fillRect(p.x - offset, p.y - offset, (offset * 2), (offset * 2));
+			return createScreenKeepVisibleArea(newArea);
+		}
+
+		private Rectangle createScreenKeepVisibleArea(Rectangle keepVisibleAea) {
+
+			Objects.requireNonNull(keepVisibleAea);
+
+			Rectangle newArea = new Rectangle(keepVisibleAea);
+			Point point = newArea.getLocation();
+			SwingUtilities.convertPointToScreen(point, source);
+			newArea.setLocation(point);
+			return newArea;
+		}
+
+		// for debug
+		private void installDebugPainter(Rectangle keepVisibleArea) {
+
+//			GGlassPane glassPane = GGlassPane.getGlassPane(source);
+//			for (GGlassPanePainter p : painters) {
+//				glassPane.removePainter(p);
+//			}
+//			ShapeDebugPainter painter = new ShapeDebugPainter();
+//
+//			glassPane.addPainter(painter);
+//			painters.add(painter);
+		}
+
+		@SuppressWarnings("unused")
+		private static List<GGlassPanePainter> painters = new ArrayList<>();
+
+		/** Paints shapes used by this class (useful for debugging) */
+		@SuppressWarnings("unused") // enabled as needed
+		private class ShapeDebugPainter implements GGlassPanePainter {
+
+			@Override
+			public void paint(GGlassPane glassPane, Graphics g) {
+
+				int alpha = 150;
+
+				// bounds of the popup and the mouse neutral zone
+				if (mouseMovementArea != null) {
+					Rectangle r = mouseMovementArea;
+					Point p = new Point(r.getLocation());
+					SwingUtilities.convertPointFromScreen(p, glassPane);
+
+					Color c = Palette.LAVENDER.withAlpha(alpha);
+					g.setColor(c);
+					g.fillRect(p.x, p.y, r.width, r.height);
+				}
+
+				// show where the user hovered
+				if (location != null) {
+					Point p = new Point(location);
+					p = SwingUtilities.convertPoint(source, p.x, p.y, glassPane);
+
+					g.setColor(Palette.RED.withAlpha(alpha));
+					int offset = 10;
+					g.fillRect(p.x - offset, p.y - offset, (offset * 2), (offset * 2));
+				}
 			}
 		}
 	}
+
 }

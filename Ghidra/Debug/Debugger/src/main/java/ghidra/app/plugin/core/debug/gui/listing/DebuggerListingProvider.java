@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,8 +52,7 @@ import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand.Reqs;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
-import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.OpenProgramAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
@@ -76,6 +76,8 @@ import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.debug.api.modules.DebuggerMissingModuleActionContext;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.features.base.memsearch.bytesource.AddressableByteSource;
+import ghidra.features.base.memsearch.bytesource.EmptyByteSource;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -285,6 +287,35 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				return;
 			}
 			disassemblyDebouncer.contact(loc.getByteAddress());
+		}
+	}
+
+	protected class ForListingClipboardProvider extends CodeBrowserClipboardProvider {
+		protected ForListingClipboardProvider() {
+			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this);
+		}
+
+		@Override
+		public boolean isValidContext(ActionContext context) {
+			if (!(context instanceof DebuggerListingActionContext)) {
+				return false;
+			}
+			return context.getComponentProvider() == componentProvider;
+		}
+
+		@Override
+		public boolean canPaste(DataFlavor[] availableFlavors) {
+			if (controlService == null) {
+				return false;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return false;
+			}
+			if (!controlService.getCurrentMode(trace).canEdit(current)) {
+				return false;
+			}
+			return super.canPaste(availableFlavors);
 		}
 	}
 
@@ -771,30 +802,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	protected CodeBrowserClipboardProvider newClipboardProvider() {
-		return new CodeBrowserClipboardProvider(tool, this) {
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				if (!(context instanceof DebuggerListingActionContext)) {
-					return false;
-				}
-				return context.getComponentProvider() == componentProvider;
-			}
-
-			@Override
-			public boolean canPaste(DataFlavor[] availableFlavors) {
-				if (controlService == null) {
-					return false;
-				}
-				Trace trace = current.getTrace();
-				if (trace == null) {
-					return false;
-				}
-				if (!controlService.getCurrentMode(trace).canEdit(current)) {
-					return false;
-				}
-				return super.canPaste(availableFlavors);
-			}
-		};
+		return new ForListingClipboardProvider();
 	}
 
 	protected void createActions() {
@@ -1200,6 +1208,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		return readsMemTrait.getAutoSpec();
 	}
 
+	/* testing */
+	CompletableFuture<?> getLastAutoRead() {
+		return readsMemTrait.getLastRead();
+	}
+
 	public void doAutoSyncCursorIntoStatic(ProgramLocation location) {
 		syncTrait.doAutoSyncCursorIntoStatic(location);
 	}
@@ -1357,5 +1370,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					.getFieldPanel()
 					.setViewerPosition(vp.getIndex(), vp.getXOffset(), vp.getYOffset());
 		});
+	}
+
+	@Override
+	public AddressableByteSource getByteSource() {
+		if (current == DebuggerCoordinates.NOWHERE) {
+			return EmptyByteSource.INSTANCE;
+		}
+		return new DebuggerByteSource(tool, current.getView(), current.getTarget(), readsMemTrait);
 	}
 }

@@ -163,19 +163,8 @@ This will map the program into a new trace.
 Technically, it is not actually loaded into an emulator, yet, because Ghidra allocates and caches emulators as needed.
 Instead, what you have is a single-snapshot trace without a live target.
 The initial state is snapshot 0, and emulation is started by navigating to a schedule, just like in extrapolation.
-You might be unnerved by the apparently empty and stale Dynamic listing:
 
-![Stale listing upon starting pure emulation](images/Emulation_LazyStaleListing.png)
-
-This is perhaps more a matter of preference, but by default, Ghidra will only populate the Dynamic listing with state initialized by the emulator itself.
-When the emulator reads, it will "read through" uninitialized state by reading the mapped program image instead.
-This spares the loader from having to copy a potentially large program image into the emulator.
-In general, you should refer to the Static listing when following the program counter.
-If you see contents in the Dynamic listing following the program counter, then you are probably dealing with self-modifying code.
-
-**NOTE**: If you prefer to see the Dynamic listing initialized with the program image, you may select **Load Emulator from Program** from the **Auto-Read** drop-down button in the Dynamic Listing.
-The loading is still done lazily as each page is viewed in the listing pane.
-You will want to change this back when debugging a live target!
+![Listing upon starting pure emulation](images/Emulation_InitialListing.png)
 
 Because we can easily step back and forth as well as navigate to arbitrary points in time, emulation should feel relatively free of risk; however, the point about stubbing dependencies will become apparent.
 If you feel the need to start over, there are two methods:

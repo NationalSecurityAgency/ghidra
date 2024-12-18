@@ -43,7 +43,7 @@ public interface GIconProvider {
 	 * @throws IOException if problem reading or converting image.
 	 * @throws CancelledException if user cancels.
 	 */
-	public Icon getIcon(GFile file, TaskMonitor monitor) throws IOException, CancelledException;
+	Icon getIcon(GFile file, TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
 	 * Helper static method that will get an Icon from a data file.
@@ -54,11 +54,11 @@ public interface GIconProvider {
 	 * file couldn't be converted into an image.
 	 * @throws CancelledException if the user cancels.
 	 */
-	public static Icon getIconForFile(GFile file, TaskMonitor monitor) throws CancelledException {
+	static Icon getIconForFile(GFile file, TaskMonitor monitor) throws CancelledException {
 		try {
 			GFileSystem fs = file.getFilesystem();
-			if (fs instanceof GIconProvider) {
-				return ((GIconProvider) fs).getIcon(file, monitor);
+			if (fs instanceof GIconProvider iconProviderFS) {
+				return iconProviderFS.getIcon(file, monitor);
 			}
 
 			try (InputStream is = file.getFilesystem().getInputStream(file, monitor)) {

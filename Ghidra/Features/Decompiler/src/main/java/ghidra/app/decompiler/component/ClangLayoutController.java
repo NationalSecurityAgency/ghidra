@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,14 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.decompiler.*;
+import ghidra.app.util.SymbolInspector;
 import ghidra.app.util.viewer.field.CommentUtils;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.util.UndefinedFunction;
 
 /**
  * Control the GUI layout for displaying tokenized C code
@@ -39,8 +43,9 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 	private int maxWidth;
 	private int indentWidth;
-	private DecompileOptions options;
+	private SymbolInspector symbolInspector;
 	private DecompilerPanel decompilerPanel;
+	private DecompileOptions options;
 	private ClangTokenGroup docroot; // Root of displayed document
 	private Field[] fieldList; // Array of fields comprising layout
 	private FontMetrics metrics;
@@ -61,6 +66,10 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		this.hlFactory = hlFactory;
 		listeners = new ArrayList<>();
 		buildLayouts(null, null, null, false);
+
+		DecompilerController controller = decompilerPanel.getController();
+		ServiceProvider serviceProvider = controller.getServiceProvider();
+		symbolInspector = new SymbolInspector(serviceProvider, decompilerPanel);
 	}
 
 	public List<ClangLine> getLines() {
@@ -173,7 +182,8 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		int columnPosition = 0;
 		for (int i = 0; i < tokens.size(); ++i) {
 			ClangToken token = tokens.get(i);
-			Color color = syntaxColor[token.getSyntaxType()];
+			Color color = getTokenColor(token);
+
 			if (token instanceof ClangCommentToken) {
 				AttributedString prototype = new AttributedString("prototype", color, metrics);
 				Program program = decompilerPanel.getProgram();
@@ -190,6 +200,21 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		return elements;
 	}
 
+	private Color getTokenColor(ClangToken token) {
+
+		Color tokenColor = syntaxColor[token.getSyntaxType()];
+		if (token instanceof ClangFuncNameToken clangFunctionToken) {
+			Program program = decompilerPanel.getProgram();
+			Function function = DecompilerUtils.getFunction(program, clangFunctionToken);
+			if (function == null || function instanceof UndefinedFunction) {
+				return null;
+			}
+			Symbol symbol = function.getSymbol();
+			return symbolInspector.getColor(symbol);
+		}
+		return tokenColor;
+	}
+
 	/**
 	 * Update to the current Decompiler display options
 	 */
@@ -198,8 +223,8 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	private void updateOptions() {
 		syntaxColor[ClangToken.KEYWORD_COLOR] = options.getKeywordColor();
 		syntaxColor[ClangToken.TYPE_COLOR] = options.getTypeColor();
-		syntaxColor[ClangToken.FUNCTION_COLOR] = options.getFunctionColor();
 		syntaxColor[ClangToken.COMMENT_COLOR] = options.getCommentColor();
+		syntaxColor[ClangToken.FUNCTION_COLOR] = null; // not used by the UI
 		syntaxColor[ClangToken.VARIABLE_COLOR] = options.getVariableColor();
 		syntaxColor[ClangToken.CONST_COLOR] = options.getConstantColor();
 		syntaxColor[ClangToken.PARAMETER_COLOR] = options.getParameterColor();

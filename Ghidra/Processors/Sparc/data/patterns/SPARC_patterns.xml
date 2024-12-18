@@ -2,34 +2,40 @@
   <patternpairs totalbits="32" postbits="16">
     <prepatterns>
       <data>0x81f00000 </data> <!-- done -->
-      <data>0x81c7e008 0x........ </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c7e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RET :  delayslot filler -->
-      <data>0x81c3e008 0x........ </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81c3e008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETL :  delayslot filler -->
-      <data>0x81cfe008 0x........ </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
-      <data>0x81cfe008 0x........ 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 </data> <!-- RETURN :  delayslot filler -->
+      <data>0x81c7e008 0x........ </data> <!-- RET :  delayslot -->
+      <data>0x81c7e008 0x........ 0000000. 0x000000 </data> <!-- RET :  delayslot filler/nop -->
+      <data>0x81c3e008 0x........ </data> <!-- RETL :  delayslot -->
+      <data>0x81c3e008 0x........ 0000000. 0x000000 </data> <!-- RETL :  delayslot filler/nop -->
+      <data>0x81cfe008 0x........ </data> <!-- RETURN :  delayslot -->
+      <data>0x81cfe008 0x........ 0000000. 0x000000 </data> <!-- RETURN :  delayslot filler/nop -->
+      <data>0x10 101..... 0x.... 0x........ </data> <!-- BA -label :  delayslot -->
+      <data>0x10 101..... 0x.... 0x........ 0000000. 0x000000 </data> <!-- BA -label :  delayslot filler/nop -->
+      <data>0x30 101..... 0x.... </data> <!-- BA,A -label (no delayslot)-->
+      <data>0x30 101..... 0x.... 0000000. 0x000000 </data> <!-- BA,A -label (no delayslot):  filler/nop -->
+      <data>01...... 0x...... 10.....1 11101... 0x.... </data> <!-- CALL label; RESTORE :  filler/nop -->
+      <data>01...... 0x...... 10.....1 11101... 0x.... 0000000. 0x000000 </data> <!-- CALL label; RESTORE :  filler/nop -->
+      <data>01...... 0x...... 0x9E 00010... 0x.... </data> <!-- CALL label; OR rs1,rs2,o7 :  filler/nop -->
+      <data>01...... 0x...... 0x9E 00010... 0x.... 0000000. 0x000000 </data> <!-- CALL label; OR rs1,rs2,o7 :  filler/nop -->
+      <data>0000000. 0x000000 0000000. 0x000000 </data> <!-- filler/nop -->
     </prepatterns>
     <postpatterns>
       <data>10011101 11100011 10111... ........</data>             <!-- save sp, xx, sp -->
       <funcstart/>
     </postpatterns>
   </patternpairs>
+  
+  <pattern>
+     <data> 0x81 0xc3 0xe0 0x08 0xae 0x03 0xc0 0x17 </data> <!-- retl ;  _add o7,l7,l7 -->
+     <funcstart label="__sparc_get_pc_thunk.l7" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0x81 0xc3 0xe0 0x08 0x82 0x03 0xc0 0x01 </data> <!-- retl ;  _add o7,g1,g1 -->
+     <funcstart label="__sparc_get_pc_thunk.g1" validcode="function"/>
+  </pattern>
+  
+  <pattern>
+     <data> 0x81 0xc3 0xe0 0x08 0x90 0x02 0x00 0x0f </data> <!-- retl ;  _add o0,o7,o0 -->
+     <funcstart label="__sparc_get_pc_thunk.o0" validcode="function"/>
+  </pattern>
  </patternlist>

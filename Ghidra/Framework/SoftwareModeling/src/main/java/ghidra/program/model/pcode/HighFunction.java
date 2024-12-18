@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,6 +50,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private GlobalSymbolMap globalSymbols;
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
+	private Address entryPoint;
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
@@ -64,6 +65,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		this.language = language;
 		this.compilerSpec = compilerSpec;
 		AddressSpace stackSpace = function.getProgram().getAddressFactory().getStackSpace();
+		entryPoint = function.getEntryPoint();
 		localSymbols = new LocalSymbolMap(this, stackSpace);
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
@@ -87,7 +89,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		if (func instanceof FunctionDB) {
 			return func.getSymbol().getID();
 		}
-		return func.getProgram().getSymbolTable().getDynamicSymbolID(func.getEntryPoint());
+		return func.getProgram().getSymbolTable().getDynamicSymbolID(entryPoint);
 	}
 
 	/**
@@ -255,7 +257,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			}
 			if (subel == ELEM_ADDR.id()) {
 				Address addr = AddressXML.decode(decoder);
-				if (!func.getEntryPoint().equals(addr)) {
+				if (!entryPoint.equals(addr)) {
 					throw new DecoderException("Mismatched address in function tag");
 				}
 			}
@@ -300,7 +302,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private void decodeJumpTableList(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_JUMPTABLELIST);
 		while (decoder.peekElement() != 0) {
-			JumpTable table = new JumpTable(func.getEntryPoint().getAddressSpace());
+			JumpTable table = new JumpTable(entryPoint.getAddressSpace());
 			table.decode(decoder);
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {
@@ -318,10 +320,10 @@ public class HighFunction extends PcodeSyntaxTree {
 			pcaddr = rep.getPCAddress();
 			if (pcaddr == Address.NO_ADDRESS) {
 				try {
-					pcaddr = func.getEntryPoint().add(-1);
+					pcaddr = entryPoint.add(-1);
 				}
 				catch (AddressOutOfBoundsException e) {
-					pcaddr = func.getEntryPoint();
+					pcaddr = entryPoint;
 				}
 			}
 		}
@@ -446,13 +448,13 @@ public class HighFunction extends PcodeSyntaxTree {
 			encoder.writeBool(ATTRIB_NORETURN, true);
 		}
 		if (entryPoint == null) {
-			AddressXML.encode(encoder, func.getEntryPoint());
+			AddressXML.encode(encoder, this.entryPoint);
 		}
 		else {
 			AddressXML.encode(encoder, entryPoint);		// Address is forced on XML
 		}
 		localSymbols.encodeLocalDb(encoder, namespace, getDataTypeManager().getNameTransformer());
-		proto.encodePrototype(encoder, getDataTypeManager());
+		proto.encodePrototype(encoder, getDataTypeManager(), -1);
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
 			encoder.openElement(ELEM_JUMPTABLELIST);
 			for (JumpTable jumpTable : jumpTables) {
@@ -464,13 +466,15 @@ public class HighFunction extends PcodeSyntaxTree {
 		if (hasOverrideTag) {
 			encoder.openElement(ELEM_OVERRIDE);
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
+			Program prog = func.getProgram();
 			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
+				int firstVarArg = HighFunctionDBUtil.getFirstVarArg(prog, addr);
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
 				encoder.openElement(ELEM_PROTOOVERRIDE);
 				AddressXML.encode(encoder, addr);
-				fproto.encodePrototype(encoder, dtmanage);
+				fproto.encodePrototype(encoder, dtmanage, firstVarArg);
 				encoder.closeElement(ELEM_PROTOOVERRIDE);
 			}
 			encoder.closeElement(ELEM_OVERRIDE);

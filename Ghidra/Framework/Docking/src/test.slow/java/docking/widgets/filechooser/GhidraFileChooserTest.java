@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,6 +50,8 @@ import docking.test.AbstractDockingTest;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.SpyDropDownWindowVisibilityListener;
 import docking.widgets.table.*;
+import docking.widgets.textfield.GFormattedTextField;
+import docking.widgets.textfield.GFormattedTextField.Status;
 import generic.concurrent.ConcurrentQ;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
@@ -367,7 +369,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// a string long enough to make the pick unique, in case there are similarly named files
 		String filenameText = prefix.substring(0, 13);
-		typeTextForTextField(filenameText);
+		typeTextForFilenameTextField(filenameText);
 		triggerEnter(getFilenameTextField());
 
 // the following code should be put back if we move to the Enter key press simply closing the
@@ -802,7 +804,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		setFilenameFieldText("");// clear any text so that we can trigger the matching window
 		String desktopText = "test";
-		typeTextForTextField(desktopText);
+		typeTextForFilenameTextField(desktopText);
 
 		assertDropDownWindowIsShowing(true);
 
@@ -1976,6 +1978,70 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertChooserPreference(key, null);
 	}
 
+	@Test
+	public void testEditPath_Directory() throws Exception {
+
+		TestFiles files = createMixedDirectory();
+		File dir = files.randomDir();
+		setPathFieldText(dir.getAbsolutePath());
+
+		triggerEnter(getPathTextField());
+		waitForChooser();
+
+		File currentDir = getCurrentDirectory();
+		assertEquals(dir, currentDir);
+	}
+
+	@Test
+	public void testEditPath_File() throws Exception {
+		TestFiles files = createMixedDirectory();
+		File file = files.randomFile();
+		setPathFieldText(file.getAbsolutePath());
+
+		triggerEnter(getPathTextField());
+		waitForChooser();
+
+		File currentDir = getCurrentDirectory();
+		File parent = file.getParentFile();
+		assertEquals(parent, currentDir);
+
+		File selectedFile = getSelectedFile();
+		assertEquals(file, selectedFile);
+	}
+
+	@Test
+	public void testEditPath_InvalidPath_Enter() throws Exception {
+
+		File startDir = getCurrentDirectory();
+
+		setPathFieldText("/some/fake/path");
+		triggerEnter(getPathTextField());
+		waitForChooser();
+
+		assertPathFieldIsInvalid();
+
+		// no change
+		File currentDir = getCurrentDirectory();
+		assertEquals(startDir, currentDir);
+	}
+
+	@Test
+	public void testEditPath_InvalidPath_Escape() throws Exception {
+
+		File startDir = getCurrentDirectory();
+
+		setPathFieldText("/some/fake/path");
+		assertPathFieldIsInvalid();
+
+		triggerEscape(getPathTextField());
+		waitForChooser();
+		assertPathFieldIsUnchanged();
+
+		// no change
+		File currentDir = getCurrentDirectory();
+		assertEquals(startDir, currentDir);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -2348,7 +2414,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		}
 	}
 
-	private void typeTextForTextField(String text) {
+	private void typeTextForFilenameTextField(String text) {
 		JTextField textField = getFilenameTextField();
 		triggerText(textField, text);
 		waitForSwing();
@@ -2375,11 +2441,20 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		}
 	}
 
-	private void setFilenameFieldText(final String text) {
-		final JTextField textField = getFilenameTextField();
+	private void setFilenameFieldText(String text) {
+		JTextField textField = getFilenameTextField();
+		runSwing(() -> textField.requestFocusInWindow());
+		runSwing(() -> textField.setText(text));
+	}
+
+	private void setPathFieldText(String text) {
+		GFormattedTextField textField = getPathTextField();
 		runSwing(() -> textField.requestFocusInWindow());
 
-		runSwing(() -> textField.setText(text));
+		// note: we cannot call textField.setText() here, as that is overridden to make the new 
+		// text the default value, which affects our test for textField.isChanged().
+		triggerText(textField, text);
+		waitForSwing();
 	}
 
 	private String getFilenameFieldText() {
@@ -2391,6 +2466,10 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		DropDownSelectionTextField<?> textField =
 			(DropDownSelectionTextField<?>) getInstanceField("filenameTextField", chooser);
 		return textField;
+	}
+
+	private GFormattedTextField getPathTextField() {
+		return (GFormattedTextField) findComponentByName(chooser, "Path");
 	}
 
 	private void show() throws Exception {
@@ -2741,6 +2820,18 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		debugChooser();
 		fail("File chooser does not in its list have file: " + expected);
+	}
+
+	private void assertPathFieldIsInvalid() {
+		GFormattedTextField textField = getPathTextField();
+		Status status = runSwing(() -> textField.getTextEntryStatus());
+		assertEquals(Status.INVALID, status);
+	}
+
+	private void assertPathFieldIsUnchanged() {
+		GFormattedTextField textField = getPathTextField();
+		Status status = runSwing(() -> textField.getTextEntryStatus());
+		assertEquals(Status.UNCHANGED, status);
 	}
 
 	private void assertChooserHidden() {

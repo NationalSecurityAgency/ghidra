@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -202,7 +202,7 @@ public abstract class DockingAction implements DockingActionIf {
 	 * If the client wants the action on all windows, then they can call {@link #shouldAddToAllWindows}
 	 * <P>
 	 * If the client wants the action to be on a window only when the window can produce
-	 * a certain context type, the the client should call
+	 * a certain context type, then the client should call
 	 * {@link #addToWindowWhen(Class)}
 	 * <P>
 	 * Otherwise, by default, the action will only be on the main window.
@@ -253,7 +253,7 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Signals the the help system that this action does not need a help entry.   Some actions
+	 * Signals the help system that this action does not need a help entry.   Some actions
 	 * are so obvious that they do not require help, such as an action that renames a file.
 	 * <p>
 	 * The method should be sparsely used, as most actions should provide help.
@@ -350,7 +350,6 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
-
 		if (!supportsKeyBinding(newKeyBindingData)) {
 			return;
 		}
@@ -363,6 +362,11 @@ public abstract class DockingAction implements DockingActionIf {
 		}
 
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+	// this allows framework classes to directly set the default value
+	protected void setDefaultKeyBindingData(KeyBindingData kbd) {
+		defaultKeyBindingData = kbd;
 	}
 
 	private boolean supportsKeyBinding(KeyBindingData kbData) {
@@ -501,11 +505,17 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// menu path
 		if (menuBarData != null) {
-			buffer.append("        MENU PATH:           ").append(
-				menuBarData.getMenuPathAsString());
+			buffer.append("        MENU PATH:           ")
+					.append(menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
+
+			String menuSubGroup = menuBarData.getMenuSubGroup();
+			if (menuSubGroup != null) {
+				buffer.append("        MENU SUB-GROUP:        ").append(menuSubGroup);
+				buffer.append('\n');
+			}
 
 			String parentGroup = menuBarData.getParentMenuGroup();
 			if (parentGroup != null) {
@@ -528,8 +538,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// popup menu path
 		if (popupMenuData != null) {
-			buffer.append("        POPUP PATH:         ").append(
-				popupMenuData.getMenuPathAsString());
+			buffer.append("        POPUP PATH:         ")
+					.append(popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -679,7 +689,7 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * Sets the ActionContext class for when this action should be added to a window
 	 * <P>
-	 * If this is set, the the action will only be added to windows that have providers
+	 * If this is set, then the action will only be added to windows that have providers
 	 * that can produce an ActionContext that is appropriate for this action.
 	 * <P>
 	 * @param addToWindowContextClass the ActionContext class required to be producible by a

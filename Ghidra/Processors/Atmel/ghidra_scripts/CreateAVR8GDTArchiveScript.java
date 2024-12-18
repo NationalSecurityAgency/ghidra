@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,7 @@ import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
-import ghidra.app.util.cparser.CPP.DefineTable;
-import ghidra.app.util.cparser.CPP.ParseException;
-import ghidra.app.util.cparser.CPP.PreProcessor;
+import ghidra.app.util.cparser.CPP.*;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.util.AddressEvaluator;
@@ -127,7 +125,8 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 
 		File f = getArchiveFile(dataTypeFile);
 
-		FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(f);
+		FileDataTypeManager dtMgr =
+			FileDataTypeManager.createFileArchive(f, "avr8:LE:16:atmega256", "gcc");
 
 		// Parse each processor variant as an individual parse that gets added to the data
 		// type manager.  If all header files were parsed at once, there are conflicting
@@ -178,7 +177,7 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 		String args[] = Arrays.append(orig_args, "-D__AVR_" + procName + "__");
 
 		CParseResults results = CParserUtils.parseHeaderFiles(openTypes, filenames, args, dtMgr,
-			"avr8:LE:16:atmega256", "gcc", monitor);
+			monitor);
 
 		Msg.info(this, results.getFormattedParseMessage(null));
 

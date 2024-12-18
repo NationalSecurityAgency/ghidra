@@ -28,6 +28,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.reloc.RelocationTable;
+import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
@@ -148,6 +149,14 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @return the bookmark manager
 	 */
 	public BookmarkManager getBookmarkManager();
+
+	/**
+	 * Returns the program's {@link SourceFileManager}.
+	 * @return the source file manager
+	 */
+	default public SourceFileManager getSourceFileManager() {
+		return SourceFileManager.DUMMY;
+	}
 
 	/**
 	 * Gets the default pointer size in bytes as it may be stored within the program listing.
@@ -535,4 +544,5 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	 * @return unique program ID
 	 */
 	public long getUniqueProgramID();
+
 }

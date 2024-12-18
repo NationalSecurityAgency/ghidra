@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,6 +51,7 @@ import java.util.List;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.MangledContext;
 import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
@@ -139,7 +140,9 @@ public class VxWorksSymTab_6_1 extends GhidraScript {
 				String symDemangledName = null;
 				try {
 					// if successful, symDemangledName will be non-NULL
-					symDemangledName = demangler.demangle(symName).getSignature(false);
+					MangledContext mangledContext = demangler.createMangledContext(symDemangledName,
+						null, currentProgram, symNameAddr);
+					symDemangledName = demangler.demangle(mangledContext).getSignature(false);
 				}
 				catch (DemangledException e) {
 					// if symName wasn't a mangled name, silently continue

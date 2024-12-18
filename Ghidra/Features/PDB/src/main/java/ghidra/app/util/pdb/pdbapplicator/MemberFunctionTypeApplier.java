@@ -99,6 +99,9 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 		if (!(applier instanceof CompositeTypeApplier compApplier)) {
 			return;
 		}
+		// 20240709: found example of "this" pointer of method that referenced a composite that
+		//  did not have any base classes or methods.  So we want to make sure we take the
+		//  opportunity here to promote the namespace to a class.
 		SymbolPath sp = compApplier.getFixedSymbolPath(msComposite);
 		applicator.predefineClass(sp);
 	}

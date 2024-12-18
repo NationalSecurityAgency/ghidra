@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,17 @@ package ghidra.util.timer;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import generic.timer.GhidraTimerFactory;
 import ghidra.util.Msg;
 
 /**
  * A class to schedule {@link Runnable}s to run after some delay, optionally repeating.  This class
  * uses a {@link Timer} internally to schedule work.   Clients of this class are given a monitor
  * that allows them to check on the state of the runnable, as well as to cancel the runnable.
+ * <P>
+ * Note: The callback will be called on the {@link Timer}'s thread.
+ * <P>
+ * See also {@link GhidraTimerFactory}
  */
 public class GTimer {
 	private static Timer timer;

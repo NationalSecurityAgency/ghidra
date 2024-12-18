@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,6 +96,43 @@ int4 LocationMap::findPass(const Address &addr) const
   if (-1!=addr.overlap(0,(*iter).first,(*iter).second.size))
     return (*iter).second.pass;
   return -1;
+}
+
+/// Addresses fed to this method must already be sorted.  If the given range intersects the last range in
+/// the list, the last range is extended to cover it.  Otherwise the range is added as a new element to the
+/// end of the list.  The given boolean properties are associated with any new element.  If an old element is
+/// extended, any new boolean properties are ORed into the old element's properties.
+/// \param addr is the starting address of the given range
+/// \param size is the number of bytes in the given range
+/// \param fl are the given boolean properties to associate with the range
+void TaskList::add(Address addr,int4 size,uint4 fl)
+
+{
+  if (!tasklist.empty()) {
+    MemRange &entry(tasklist.back());
+    int4 over = addr.overlap(0,entry.addr,entry.size);
+    if (over >= 0) {
+      int4 relsize = size + over;
+      if (relsize > entry.size)
+	entry.size = relsize;
+      entry.flags |= fl;
+      return;
+    }
+  }
+  tasklist.emplace_back(addr,size,fl);
+}
+
+/// This can be used to add a range anywhere in the list, but the new range must already be disjoint
+/// from ranges in the list.
+/// \param pos is the position in the list before which the new range will be inserted
+/// \param addr is the starting address of the new range
+/// \param size is the number of bytes in the new range
+/// \param fl is the boolean properties to be associated with the new range
+/// \return an iterator to the new range
+TaskList::iterator TaskList::insert(iterator pos,Address addr,int4 size,uint4 fl)
+
+{
+  return tasklist.emplace(pos,addr,size,fl);
 }
 
 /// Any basic blocks currently in \b this queue are removed. Space is
@@ -194,13 +231,13 @@ void Heritage::clearInfoList(void)
     (*iter).reset();
 }
 
-/// \brief Remove deprecated CPUI_MULTIEQUAL or CPUI_INDIRECT ops, preparing to re-heritage
+/// \brief Remove deprecated CPUI_MULTIEQUAL, CPUI_INDIRECT, or CPUI_COPY ops, preparing to re-heritage
 ///
 /// If a previous Varnode was heritaged through a MULTIEQUAL or INDIRECT op, but now
 /// a larger range containing the Varnode is being heritaged, we throw away the op,
 /// letting the data-flow for the new larger range determine the data-flow for the
 /// old Varnode.  The original Varnode is redefined as the output of a SUBPIECE
-/// of a larger free Varnode.
+/// of a larger free Varnode.  Return form COPYs are simply removed, in preparation for a larger COPY.
 /// \param remove is the list of Varnodes written by MULTIEQUAL or INDIRECT
 /// \param addr is the start of the larger range
 /// \param size is the size of the range
@@ -233,12 +270,17 @@ void Heritage::removeRevisitedMarkers(const vector<Varnode *> &remove,const Addr
       else
 	pos = targetOp->getBasicIter();
       ++pos;		// Insert SUBPIECE after target of INDIRECT
+      vn->clearAddrForce();	// Replacement INDIRECT will hold the address
     }
-    else {
+    else if (op->code() == CPUI_MULTIEQUAL) {
       pos = op->getBasicIter();	// Insert SUBPIECE after all MULTIEQUALs in block
       ++pos;
       while(pos != bl->endOp() && (*pos)->code() == CPUI_MULTIEQUAL)
 	++pos;
+    }
+    else {			// Remove return form COPY
+      fd->opUnlink(op);
+      continue;
     }
     int4 offset = vn->overlap(addr,size);
     fd->opUninsert(op);
@@ -256,48 +298,50 @@ void Heritage::removeRevisitedMarkers(const vector<Varnode *> &remove,const Addr
 
 /// \brief Collect free reads, writes, and inputs in the given address range
 ///
-/// \param addr is the starting address of the range
-/// \param size is the number of bytes in the range
+/// \param memrange is the given address range
 /// \param read will hold any read Varnodes in the range
 /// \param write will hold any written Varnodes
 /// \param input will hold any input Varnodes
 /// \param remove will hold any PcodeOps that need to be removed
 /// \return the maximum size of a write
-int4 Heritage::collect(Address addr,int4 size,
-		      vector<Varnode *> &read,vector<Varnode *> &write,
-		      vector<Varnode *> &input,vector<Varnode *> &remove) const
-
+int4 Heritage::collect(MemRange &memrange,vector<Varnode *> &read,vector<Varnode *> &write,
+		       vector<Varnode *> &input,vector<Varnode *> &remove) const
 {
-  Varnode *vn;
-  VarnodeLocSet::const_iterator viter = fd->beginLoc(addr);
+  read.clear();
+  write.clear();
+  input.clear();
+  remove.clear();
   VarnodeLocSet::const_iterator enditer;
-  uintb start = addr.getOffset();
-  addr = addr + size;
-  if (addr.getOffset() < start) {	// Wraparound
-    Address tmp(addr.getSpace(),addr.getSpace()->getHighest());
+  uintb start = memrange.addr.getOffset();
+  Address endaddr = memrange.addr + memrange.size;
+  if (endaddr.getOffset() < start) {	// Wraparound
+    Address tmp(endaddr.getSpace(),endaddr.getSpace()->getHighest());
     enditer = fd->endLoc(tmp);
   }
   else
-    enditer = fd->beginLoc(addr);
+    enditer = fd->beginLoc(endaddr);
   int4 maxsize = 0;
-  while( viter != enditer ) {
-    vn = *viter;
+  for(VarnodeLocSet::const_iterator viter = fd->beginLoc(memrange.addr); viter != enditer; ++viter) {
+    Varnode *vn = *viter;
     if (!vn->isWriteMask()) {
       if (vn->isWritten()) {
-	if (vn->getSize() < size && vn->getDef()->isMarker())
-	  remove.push_back(vn);
-	else {
-	  if (vn->getSize() > maxsize) // Look for maximum write size
-	    maxsize = vn->getSize();
-	  write.push_back(vn);
+	PcodeOp *op = vn->getDef();
+	if (op->isMarker() || op->isReturnCopy()) {	// Evidence of previous heritage in this range
+	  if (vn->getSize() < memrange.size) {
+	    remove.push_back(vn);
+	    continue;
+	  }
+	  memrange.clearProperty(MemRange::new_addresses);	// Previous pass covered everything
 	}
+	if (vn->getSize() > maxsize) // Look for maximum write size
+	  maxsize = vn->getSize();
+	write.push_back(vn);
       }
       else if ((!vn->isHeritageKnown())&&(!vn->hasNoDescend()))
 	read.push_back(vn);
       else if (vn->isInput())
 	input.push_back(vn);
     }
-    ++viter;
   }
   return maxsize;
 }
@@ -1101,15 +1145,15 @@ void Heritage::reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
 /// The traditional phi-node placement and renaming algorithms don't expect
 /// variable pairs where there is partial overlap. For the given address range,
 /// we make all the free Varnode sizes look uniform by adding PIECE and SUBPIECE
-/// ops. We also add INDIRECT ops, so that we can ignore indirect effects
-/// of LOAD/STORE/CALL ops.
+/// ops. If enabled, we also add INDIRECT ops, so that renaming takes into account
+/// indirect effects of LOAD/STORE/CALL ops.
 /// \param addr is the starting address of the given range
 /// \param size is the number of bytes in the given range
-/// \param guardPerformed is true if a guard has been previously performed on the range
+/// \param addIndirects is true if a guard has been previously performed on the range
 /// \param read is the set of Varnode values reading from the range
 /// \param write is the set of written Varnodes in the range
 /// \param inputvars is the set of Varnodes in the range already marked as input
-void Heritage::guard(const Address &addr,int4 size,bool guardPerformed,
+void Heritage::guard(const Address &addr,int4 size,bool addIndirects,
 		     vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars)
 
 {
@@ -1141,7 +1185,7 @@ void Heritage::guard(const Address &addr,int4 size,bool guardPerformed,
   // free for an address that has already been guarded before.
   // Because INDIRECTs for a single CALL or STORE really issue simultaneously, having multiple INDIRECT guards
   // for the same address confuses the renaming algorithm, so we don't add guards if we've added them before.
-  if (!guardPerformed) {
+  if (addIndirects) {
     fl = 0;
     // Query for generic properties of address (use empty usepoint)
     fd->getScopeLocal()->queryProperties(addr,size,Address(),fl);
@@ -1639,7 +1683,7 @@ void Heritage::guardReturns(uint4 fl,const Address &addr,int4 size,vector<Varnod
     vn->setAddrForce();
     vn->setActiveHeritage();
     fd->opSetOpcode(copyop,CPUI_COPY);
-    copyop->setStopCopyPropagation();
+    fd->markReturnCopy(copyop);
     Varnode *invn = fd->newVarnode(size,addr);
     invn->setActiveHeritage();
     fd->opSetInput(copyop,invn,0);
@@ -1656,9 +1700,8 @@ void Heritage::guardReturns(uint4 fl,const Address &addr,int4 size,vector<Varnod
 /// Varnode.
 /// \param refine is the refinement array
 /// \param addr is the starting address of the given range
-/// \param size is the number of bytes in the range
 /// \param vnlist is the list of Varnodes to add to the array
-void Heritage::buildRefinement(vector<int4> &refine,const Address &addr,int4 size,const vector<Varnode *> &vnlist)
+void Heritage::buildRefinement(vector<int4> &refine,const Address &addr,const vector<Varnode *> &vnlist)
 
 {
   for(uint4 i=0;i<vnlist.size();++i) {
@@ -1838,20 +1881,21 @@ void Heritage::remove13Refinement(vector<int4> &refine)
 /// \brief Find the common refinement of all reads and writes in the address range
 ///
 /// Split the reads and writes so they match the refinement.
-/// \param addr is the first address in the range
-/// \param size is the number of bytes in the range
+/// \param memiter points to the address range to be refined
 /// \param readvars is all \e free Varnodes overlapping the address range
 /// \param writevars is all written Varnodes overlapping the address range
 /// \param inputvars is all known input Varnodes overlapping the address range
 /// \return \b true if there is a non-trivial refinement
-bool Heritage::refinement(const Address &addr,int4 size,const vector<Varnode *> &readvars,const vector<Varnode *> &writevars,const vector<Varnode *> &inputvars)
-
+TaskList::iterator Heritage::refinement(TaskList::iterator memiter,const vector<Varnode *> &readvars,
+					const vector<Varnode *> &writevars,const vector<Varnode *> &inputvars)
 {
-  if (size > 1024) return false;
+  int4 size = (*memiter).size;
+  if (size > 1024) return disjoint.end();
+  Address addr = (*memiter).addr;
   vector<int4> refine(size+1,0);
-  buildRefinement(refine,addr,size,readvars);
-  buildRefinement(refine,addr,size,writevars);
-  buildRefinement(refine,addr,size,inputvars);
+  buildRefinement(refine,addr,readvars);
+  buildRefinement(refine,addr,writevars);
+  buildRefinement(refine,addr,inputvars);
   int4 lastpos = 0;
   for(int4 curpos=1;curpos < size;++curpos) { // Convert boundary points to partition sizes
     if (refine[curpos] != 0) {
@@ -1859,7 +1903,7 @@ bool Heritage::refinement(const Address &addr,int4 size,const vector<Varnode *> 
       lastpos = curpos;
     }
   }
-  if (lastpos == 0) return false; // No non-trivial refinements
+  if (lastpos == 0) return disjoint.end(); // No non-trivial refinements
   refine[lastpos] = size-lastpos;
   remove13Refinement(refine);
   vector<Varnode *> newvn;
@@ -1871,22 +1915,26 @@ bool Heritage::refinement(const Address &addr,int4 size,const vector<Varnode *> 
     refineInput(inputvars[i],addr,refine,newvn);
 
   // Alter the disjoint cover (both locally and globally) to reflect our refinement
-  LocationMap::iterator iter = disjoint.find(addr);
-  int4 addrPass = (*iter).second.pass;
-  disjoint.erase(iter);
-  iter = globaldisjoint.find(addr);
+  uint4 flags = (*memiter).flags;
+  memiter = disjoint.erase(memiter);
+  LocationMap::iterator iter = globaldisjoint.find(addr);
+  int4 curPass = (*iter).second.pass;
   globaldisjoint.erase(iter);
-  Address curaddr = addr;
   int4 cut = 0;
+  int4 sz = refine[cut];
   int4 intersect;
+  TaskList::iterator resiter = disjoint.insert(memiter,addr,sz,flags);
+  globaldisjoint.add(addr,sz,curPass,intersect);
+  cut += sz;
+  addr = addr + sz;
   while(cut < size) {
-    int4 sz = refine[cut];
-    disjoint.add(curaddr,sz,addrPass,intersect);
-    globaldisjoint.add(curaddr,sz,addrPass,intersect);
+    sz = refine[cut];
+    disjoint.insert(memiter,addr,sz,flags);
+    globaldisjoint.add(addr,sz,curPass,intersect);
     cut += sz;
-    curaddr = curaddr + sz;
+    addr = addr + sz;
   }
-  return true;
+  return resiter;
 }
 
 /// \brief Make sure existing inputs for the given range fill it entirely
@@ -2549,52 +2597,43 @@ void Heritage::rename(void)
 void Heritage::placeMultiequals(void)
 
 {
-  LocationMap::iterator iter;
+  TaskList::iterator iter;
   vector<Varnode *> readvars;
   vector<Varnode *> writevars;
   vector<Varnode *> inputvars;
   vector<Varnode *> removevars;
 
   for(iter=disjoint.begin();iter!=disjoint.end();++iter) { 
-    Address addr = (*iter).first;
-    int4 size = (*iter).second.size;
-    bool guardPerformed = (*iter).second.pass < pass;
-    readvars.clear();
-    writevars.clear();
-    inputvars.clear();
-    removevars.clear();
-    int4 max = collect(addr,size,readvars,writevars,inputvars,removevars); // Collect reads/writes
-    if ((size > 4)&&(max < size)) {
-      if (refinement(addr,size,readvars,writevars,inputvars)) {
-	iter = disjoint.find(addr);
-	size =(*iter).second.size;
-	readvars.clear();
-	writevars.clear();
-	inputvars.clear();
-	removevars.clear();
-	collect(addr,size,readvars,writevars,inputvars,removevars);
+    int4 max = collect(*iter,readvars,writevars,inputvars,removevars); // Collect reads/writes
+    if ((*iter).size > 4 && max < (*iter).size) {
+      TaskList::iterator refiter = refinement(iter,readvars,writevars,inputvars);
+      if (refiter != disjoint.end()) {
+	iter = refiter;
+	collect(*iter,readvars,writevars,inputvars,removevars);
       }
     }
+    const MemRange &memrange(*iter);
+    int4 size = memrange.size;
     if (readvars.empty()) {
       if (writevars.empty() && inputvars.empty()) {
 	continue;
       }
-      if (addr.getSpace()->getType() == IPTR_INTERNAL || guardPerformed)
+      if (memrange.addr.getSpace()->getType() == IPTR_INTERNAL || memrange.oldAddresses())
 	continue;
     }
     if (!removevars.empty())
-      removeRevisitedMarkers(removevars, addr, size);
-    guardInput(addr,size,inputvars);
-    guard(addr,size,guardPerformed,readvars,writevars,inputvars);
+      removeRevisitedMarkers(removevars, memrange.addr, size);
+    guardInput(memrange.addr,size,inputvars);
+    guard(memrange.addr,size,memrange.newAddresses(),readvars,writevars,inputvars);
     calcMultiequals(writevars); // Calculate where MULTIEQUALs go
     for(int4 i=0;i<merge.size();++i) {
       BlockBasic *bl = (BlockBasic *) merge[i];
       PcodeOp *multiop = fd->newOp(bl->sizeIn(),bl->getStart());
-      Varnode *vnout = fd->newVarnodeOut(size,addr,multiop);
+      Varnode *vnout = fd->newVarnodeOut(size,memrange.addr,multiop);
       vnout->setActiveHeritage();
       fd->opSetOpcode(multiop,CPUI_MULTIEQUAL); // Create each MULTIEQUAL
       for(int4 j=0;j<bl->sizeIn();++j) {
-	Varnode *vnin = fd->newVarnode(size,addr);
+	Varnode *vnin = fd->newVarnode(size,memrange.addr);
 	fd->opSetInput(multiop,vnin,j);
       }
       fd->opInsertBegin(multiop,bl);	// Insert at beginning of block
@@ -2666,7 +2705,7 @@ void Heritage::heritage(void)
       int4 prev = 0;
       LocationMap::iterator liter = globaldisjoint.add(vn->getAddr(),vn->getSize(),pass,prev);
       if (prev == 0)		// All new location being heritaged, or intersecting with something new
-	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
+	disjoint.add((*liter).first,(*liter).second.size,MemRange::new_addresses);
       else if (prev==2) { // If completely contained in range from previous pass
 	if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to 
 	if (vn->hasNoDescend()) continue;
@@ -2675,10 +2714,10 @@ void Heritage::heritage(void)
 	  bumpDeadcodeDelay(vn->getSpace());
 	  warnvn = vn;
 	}
-	disjoint.add((*liter).first,(*liter).second.size,(*liter).second.pass,prev);
+	disjoint.add((*liter).first,(*liter).second.size,MemRange::old_addresses);
       }
       else {	// Partially contained in old range, but may contain new stuff
-	disjoint.add((*liter).first,(*liter).second.size,(*liter).second.pass,prev);
+	disjoint.add((*liter).first,(*liter).second.size,MemRange::old_addresses | MemRange::new_addresses);
 	if ((!needwarning)&&(info->deadremoved>0)&&!fd->isJumptableRecoveryOn()) {
 	  // TODO: We should check if this varnode is tiled by previously heritaged ranges
 	  if (vn->isHeritageKnown()) continue;		// Assume that it is tiled and produced by merging

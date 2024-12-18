@@ -1,7 +1,12 @@
 ##VERSION: 2.0
 ##MODULE IP: JSch License
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/debugger-launchers/local-gdb.bat||GHIDRA||||END|
+data/debugger-launchers/qemu-sys-gdb.bat||GHIDRA||||END|
+data/debugger-launchers/remote-gdb.bat||GHIDRA||||END|
+data/debugger-launchers/ssh-gdb.bat||GHIDRA||||END|
+data/debugger-launchers/ssh-gdbserver.bat||GHIDRA||||END|
 data/scripts/fallback_info_proc_mappings.gdb||GHIDRA||||END|
 data/scripts/fallback_maintenance_info_sections.gdb||GHIDRA||||END|
 data/scripts/getpid-linux-i386.gdb||GHIDRA||||END|

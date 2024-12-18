@@ -15,11 +15,13 @@
  */
 package ghidra.feature.vt.gui.task;
 
-import java.util.List;
+import java.util.*;
 
+import docking.widgets.OptionDialog;
 import ghidra.feature.vt.api.db.VTMatchSetDB;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.api.main.VTSession;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -38,26 +40,75 @@ public class RemoveMatchTask extends VtTask {
 		return true;
 	}
 
-	private boolean removeMatches(TaskMonitor monitor) throws CancelledException {
+	private void removeMatches(TaskMonitor monitor) throws CancelledException {
+
 		monitor.setMessage("Removing matches");
-		monitor.initialize(matches.size());
-		boolean failed = false;
-		for (VTMatch match : matches) {
+		int n = matches.size();
+		monitor.initialize(n);
+
+		//
+		// First remove all matches that will not require user prompting (those that are not 
+		// accepted or they are not the last match for a shared association).
+		// 
+		List<VTMatch> list = new ArrayList<>(matches); // create a mutable list
+		Iterator<VTMatch> it = list.iterator();
+		while (it.hasNext()) {
 			monitor.checkCancelled();
+			VTMatch match = it.next();
 			VTMatchSetDB matchSet = (VTMatchSetDB) match.getMatchSet();
-			boolean matchRemoved = matchSet.removeMatch(match);
-			if (!matchRemoved) {
-				failed = true;
+			if (matchSet.removeMatch(match)) {
+				it.remove();
 			}
 			monitor.incrementProgress(1);
 		}
 
-		monitor.setProgress(matches.size());
-		if (failed) {
-			reportError("One or more of your matches could not be removed." +
-				"\nNote: You can't remove a match if it is currently accepted.");
+		if (list.isEmpty()) {
+			return;
 		}
-		return true;
+
+		//
+		// Now we have to ask the user if they wish to remove applied matches.
+		// 
+		int delta = n - list.size();
+
+		//@formatter:off
+		String message = """
+			Deleted %d of %d matches.
+			
+			The remaining %d matches are ACCEPTED.  Do you wish to delete these matches and
+			leave any applied destination program markup in place?
+			(Press F1 to see more help details)
+			""".formatted(delta, n, list.size());
+		//@formatter:on
+
+		RemoveMatchDialog dialog = new RemoveMatchDialog(message);
+		if (!dialog.promptToDelete()) {
+			return;
+		}
+
+		it = list.iterator();
+		while (it.hasNext()) {
+			monitor.checkCancelled();
+			VTMatch match = it.next();
+			VTMatchSetDB matchSet = (VTMatchSetDB) match.getMatchSet();
+			matchSet.deleteMatch(match);
+			it.remove();
+			monitor.incrementProgress(1);
+		}
 	}
 
+	private class RemoveMatchDialog extends OptionDialog {
+
+		RemoveMatchDialog(String message) {
+			super("Delete ACCEPTED Matches?", message, "Delete Accepted Matches", "Finish",
+				OptionDialog.QUESTION_MESSAGE, null, false);
+
+			setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Remove_Match"));
+		}
+
+		boolean promptToDelete() {
+			int choice = super.show();
+			return choice == OptionDialog.OPTION_ONE; // "Delete Accepted Matches"
+		}
+	}
 }

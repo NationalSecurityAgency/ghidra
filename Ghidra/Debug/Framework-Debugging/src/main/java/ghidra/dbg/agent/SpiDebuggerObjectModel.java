@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 
+@Deprecated(forRemoval = true, since = "11.2")
 public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 
 	@Override
@@ -64,9 +65,10 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 				break;
 			case REFRESH_WHEN_ABSENT:
 			default:
-				CompletableFuture<?> futureChild0 = obj.fetchChild(key);		
+				CompletableFuture<?> futureChild0 = obj.fetchChild(key);
 				futureChild = futureChild0.thenCompose(c -> {
-					return c == null ? fetchFreshChild(obj, key) : CompletableFuture.completedFuture(c);
+					return c == null ? fetchFreshChild(obj, key)
+							: CompletableFuture.completedFuture(c);
 				});
 				break;
 		}
@@ -99,7 +101,8 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 	}
 
 	@Override
-	public default CompletableFuture<?> fetchModelValue(List<String> path, RefreshBehavior refresh) {
+	public default CompletableFuture<?> fetchModelValue(List<String> path,
+			RefreshBehavior refresh) {
 		return fetchModelRoot().thenCompose(root -> {
 			return fetchSuccessorValue(root, path, refresh, true);
 		});
@@ -116,7 +119,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 			return CompletableFuture.completedFuture(obj);
 		}
 		String key = path.get(0);
-		CompletableFuture<?> futureChild = obj.fetchChild(key);		
+		CompletableFuture<?> futureChild = obj.fetchChild(key);
 		CompletableFuture<?> ffutureChild = futureChild.thenCompose(c -> {
 			return c == null ? fetchFreshChild(obj, key) : CompletableFuture.completedFuture(c);
 		});

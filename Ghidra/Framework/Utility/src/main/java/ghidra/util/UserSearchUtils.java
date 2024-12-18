@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,10 +82,10 @@ public class UserSearchUtils {
 	 * <b>Note: </b>This method <b>will</b> escape regular expression
 	 * characters, such as:
 	 * <ul>
-	 * <li>?
-	 * <li>.
-	 * <li>$
-	 * <li>...and many others
+	 * <li>?</li>
+	 * <li>.</li>
+	 * <li>$</li>
+	 * <li>...and many others</li>
 	 * </ul>
 	 * Thus, this method is not meant to <b>accept</b> regular expressions, but
 	 * rather <b>generates</b> regular expressions.
@@ -305,11 +305,12 @@ public class UserSearchUtils {
 	 */
 	private static String convertUserInputToRegex(String input, boolean allowGlobbing) {
 
-		// Note: Order is important! (due to how escape characters added and checked)
-		String escaped = escapeEscapeCharacters(input);
-
+		String escaped = input;
 		if (allowGlobbing) {
-			escaped = escapeSomeRegexCharacters(escaped, GLOB_CHARACTERS);
+
+			// Note: Order is important! (due to how escape characters added and checked)
+			escaped = escapeEscapeCharacters(escaped);
+			escaped = escapeNonGlobbingRegexCharacters(escaped);
 			escaped = convertGlobbingCharactersToRegex(escaped);
 		}
 		else {
@@ -377,6 +378,15 @@ public class UserSearchUtils {
 	}
 
 	/**
+	 * Escapes all special regex characters except globbing chars (*?)
+	 * @param input the string to sanitize
+	 * @return a new string with all non-globing regex characters escaped.
+	 */
+	public static String escapeNonGlobbingRegexCharacters(String input) {
+		return escapeSomeRegexCharacters(input, GLOB_CHARACTERS);
+	}
+
+	/**
 	 * Escapes all regex characters with the '\' character, except for those in the given exclusion 
 	 * array.
 	 *
@@ -384,7 +394,7 @@ public class UserSearchUtils {
 	 * @param doNotEscape an array of characters that should not be escaped
 	 * @return A new regex string with special characters escaped.
 	 */
-	// note: 'package' for testing
+	// package for testing
 	static String escapeSomeRegexCharacters(String input, char[] doNotEscape) {
 		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < input.length(); i++) {

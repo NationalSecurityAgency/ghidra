@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 import code
 from contextlib import contextmanager
@@ -32,7 +32,7 @@ from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
-from .dbgeng.idebugclient5 import *
+from .exdi import exdi_commands, exdi_methods
 
 PAGE_SIZE = 4096
 
@@ -210,7 +210,10 @@ def start_trace(name):
     STATE.trace.register_mapper = arch.compute_register_mapper(language)
 
     parent = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    schema_fn = os.path.join(parent, 'schema.xml')
+    if util.is_exdi():
+        schema_fn = os.path.join(parent, 'schema_exdi.xml')
+    else:
+        schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     using_dbgmodel = os.getenv('OPT_USE_DBGMODEL') == "true"
@@ -298,17 +301,36 @@ def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0
 
 
 @util.dbg.eng_thread
-def ghidra_trace_attach_kernel(command=None, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+def ghidra_trace_attach(pid=None, attach_flags='0', initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+    """
+    Create a session by attaching.
+    """
+
+    dbg = util.dbg._base
+    if initial_break:
+        dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
+    if attach_flags == None:
+        attach_flags = '0'
+    if pid != None:
+        dbg._client.AttachProcess(int(pid,0), int(attach_flags,0))
+    if start_trace:
+        ghidra_trace_start("pid_"+pid)
+
+
+@util.dbg.eng_thread
+def ghidra_trace_attach_kernel(command=None, flags=DbgEng.DEBUG_ATTACH_KERNEL_CONNECTION, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
     """
     Create a session.
     """
 
     dbg = util.dbg._base
     util.set_kernel(True)
+    if flags == 2:
+        util.set_exdi(True)
     if initial_break:
         dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
     if command != None:
-        dbg._client.AttachKernel(command)
+        dbg._client.AttachKernel(command, flags=int(flags))
     if start_trace:
         ghidra_trace_start(command)
 
@@ -575,7 +597,10 @@ def putreg():
     regs = util.dbg._base.reg
     for i in range(0, len(regs)):
         name = regs._reg.GetDescription(i)[0]
-        value = regs._get_register_by_index(i)
+        try:
+        	value = regs._get_register_by_index(i)
+        except Exception:
+        	value = 0
         try:
             values.append(mapper.map_value(nproc, name, value))
             robj.set_value(name, hex(value))
@@ -872,7 +897,11 @@ def activate(path=None):
             if nthrd is None:
                 path = PROCESS_PATTERN.format(procnum=nproc)
             else:
-                path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                frame = util.selected_frame()
+                if frame is None:
+                	path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                else:
+                	path = FRAME_PATTERN.format(procnum=nproc, tnum=nthrd, level=frame)
     trace.proxy_object_path(path).activate()
 
 
@@ -1324,7 +1353,8 @@ def put_frames():
         path = STACK_PATTERN.format(procnum=nproc, tnum=nthrd)
         (values, keys) = create_generic(path)
         STATE.trace.proxy_object_path(path).retain_values(keys)
-        return
+        # NB: some flavors of dbgmodel lack Attributes, so we grab Instruction Offset regardless
+        #return
 
     mapper = STATE.trace.memory_mapper
     keys = []
@@ -1337,19 +1367,20 @@ def put_frames():
         base, offset_inst = mapper.map(nproc, f.InstructionOffset)
         if base != offset_inst.space:
             STATE.trace.create_overlay_space(base, offset_inst.space)
-        base, offset_stack = mapper.map(nproc, f.StackOffset)
-        if base != offset_stack.space:
-            STATE.trace.create_overlay_space(base, offset_stack.space)
-        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
-        if base != offset_ret.space:
-            STATE.trace.create_overlay_space(base, offset_ret.space)
-        base, offset_frame = mapper.map(nproc, f.FrameOffset)
-        if base != offset_frame.space:
-            STATE.trace.create_overlay_space(base, offset_frame.space)
         fobj.set_value('Instruction Offset', offset_inst)
-        fobj.set_value('Stack Offset', offset_stack)
-        fobj.set_value('Return Offset', offset_ret)
-        fobj.set_value('Frame Offset', offset_frame)
+        if not util.dbg.use_generics:
+	        base, offset_stack = mapper.map(nproc, f.StackOffset)
+	        if base != offset_stack.space:
+	            STATE.trace.create_overlay_space(base, offset_stack.space)
+	        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
+	        if base != offset_ret.space:
+	            STATE.trace.create_overlay_space(base, offset_ret.space)
+	        base, offset_frame = mapper.map(nproc, f.FrameOffset)
+	        if base != offset_frame.space:
+	            STATE.trace.create_overlay_space(base, offset_frame.space)
+	        fobj.set_value('Stack Offset', offset_stack)
+	        fobj.set_value('Return Offset', offset_ret)
+	        fobj.set_value('Frame Offset', offset_frame)
         fobj.set_value('_display', "#{} {}".format(
             f.FrameNumber, offset_inst.offset))
         fobj.insert()
@@ -1397,14 +1428,14 @@ def update_by_container(np, keyval, obj):
     if np.endswith("Frames"):
         mo = util.get_object(obj.path)
         map = util.get_attributes(mo)
-        attr = map["Attributes"]
-        if attr is None:
-            return
-        map = util.get_attributes(attr)        
-        pc = util.get_value(map["InstructionOffset"])
-        (pc_base, pc_addr) = map_address(pc)
-        obj.set_value('Instruction Offset', pc_addr)
-        key = '#{:x} 0x{:x}'.format(index, pc)
+        if 'Attributes' in map:
+            attr = map["Attributes"]
+            if attr is not None:
+                map = util.get_attributes(attr)        
+                pc = util.get_value(map["InstructionOffset"])
+                (pc_base, pc_addr) = map_address(pc)
+                obj.set_value('Instruction Offset', pc_addr)
+                key = '#{:x} 0x{:x}'.format(index, pc)
     if np.endswith("Modules"):
         create_generic(obj.path)
         mo = util.get_object(obj.path)

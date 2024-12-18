@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ eclipse.project {
 
 ext.findPyDep = { name ->
     File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
-    File inRepo = file("${BIN_REPO}/${getGhidraRelativePath(project)}/${name}")
+    File inRepo = file("${BIN_REPO}/ExternalPyWheels/${name}")
     if (inDeps.exists()) {
         return inDeps
     }
@@ -42,18 +42,21 @@ task assemblePyPackage(type: Copy) {
 }
 
 task buildPyPackage {
+	dependsOn assemblePyPackage
 	ext.dist = { file("build/pypkg/dist") }
 	inputs.files(assemblePyPackage)
 	outputs.dir(dist)
 
 	doLast {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+	
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		exec {
 			workingDir { "build/pypkg" }
-			commandLine	rootProject.PYTHON3, "-m", "pip"
-			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
-			args "-f", setuptools
-			args "."
+			commandLine rootProject.PYTHON3
+			args "-m", "pip", "wheel", "-w", "dist/", "--no-index", "--no-deps", "-f", setuptools, "."
 		}
 	}
 }
@@ -69,13 +72,16 @@ rootProject.assembleDistribution {
 		exclude '**/*.pyc'
 		exclude '**/*.pyo'
 		exclude '**/__pycache__/**'
-		exclude 'dist/*.tar.gz'
+		exclude '**/.pytest_cache'
+		exclude '**/*.egg-info'
+		exclude 'build'
 		into { zipPath + "/pypkg" }
 	}
 }
 
 ext.distributePyDep = { name ->
     File dep = findPyDep(name)
+    PYTHON_DEPS.add(dep)
     def zipPath = getZipPath(project) 
     rootProject.assembleDistribution {
         into ("${zipPath}/pypkg/dist") {

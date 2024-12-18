@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,13 @@ import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
+import docking.widgets.list.GComboBoxCellRenderer;
 import ghidra.features.base.codecompare.model.FunctionComparisonModel;
 import ghidra.features.base.codecompare.model.FunctionComparisonModelListener;
 import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
 import ghidra.features.base.codecompare.panel.FunctionComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.util.datastruct.Duo;
 import ghidra.util.datastruct.Duo.Side;
@@ -209,7 +211,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel
 	 * Cell renderer for combo boxes that changes the default display to show
 	 * both the function name and the program it comes from
 	 */
-	private class FunctionListCellRenderer extends DefaultListCellRenderer {
+	private class FunctionListCellRenderer extends GComboBoxCellRenderer<Object> {
 
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -227,7 +229,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel
 
 			String functionName = f.getName();
 			String functionPathToProgram = f.getProgram().getDomainFile().getPathname();
-			String functionAddress = f.getBody().getMinAddress().toString();
+			Address functionAddress = f.getEntryPoint();
 			String text = functionName + "@" + functionAddress + " (" + functionPathToProgram + ")";
 
 			return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -56,9 +57,9 @@ class ProgramTreePanel extends JPanel implements ChangeListener {
 		initialize();
 
 		// Disable tree expand/collapse on double-click. 
-		if (tree != null) {
-			tree.setToggleClickCount(0);
-		}
+		tree.setToggleClickCount(0);
+
+		tree.addTreeSelectionListener(e -> plugin.contextChanged());
 	}
 
 	// ChangeListener interface method
@@ -160,10 +161,9 @@ class ProgramTreePanel extends JPanel implements ChangeListener {
 	 * Get the currently viewed group paths.
 	 */
 	GroupView getGroupView() {
-		ArrayList<TreePath> viewList = tree.getViewList();
+		List<TreePath> viewList = tree.getViewList();
 		ArrayList<GroupPath> list = new ArrayList<GroupPath>();
-		for (int i = 0; i < viewList.size(); i++) {
-			TreePath p = viewList.get(i);
+		for (TreePath p : viewList) {
 			ProgramNode node = (ProgramNode) p.getLastPathComponent();
 			GroupPath gp = node.getGroupPath();
 			if (gp != null) {
@@ -191,7 +191,7 @@ class ProgramTreePanel extends JPanel implements ChangeListener {
 	}
 
 	ProgramNode prepareSelectionForPopup(MouseEvent event) {
-		return tree.prepareSelectionForPopup(event);
+		return tree.adjustSelectionForPopup(event);
 	}
 
 	GroupPath[] getViewedGroups() {

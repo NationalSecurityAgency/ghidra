@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	private DockingActionIf action;
 
 	private JPanel defaultPanel;
-	private KeyEntryTextField keyEntryField;
+	private KeyEntryPanel keyEntryPanel;
 	private JTextPane collisionPane;
 	private StyledDocument doc;
 
@@ -83,8 +83,8 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 		StyledDocument document = pane.getStyledDocument();
 		try {
-			document.insertString(0, "To add or change a key binding, type any key combination.\n" +
-				"To remove a key binding, press <Enter> or <Backspace>.", null);
+			document.insertString(0, "To add or change a key binding, type any key combination",
+				null);
 		}
 		catch (BadLocationException e1) {
 			// shouldn't be possible
@@ -100,7 +100,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		labelPanel.add(pane);
 		labelPanel.add(Box.createHorizontalStrut(5));
 
-		keyEntryField = new KeyEntryTextField(20, keyStroke -> {
+		keyEntryPanel = new KeyEntryPanel(20, keyStroke -> {
 			okButton.setEnabled(true);
 			updateCollisionPane(keyStroke);
 		});
@@ -109,12 +109,12 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		defaultPanel.setBorder(BorderFactory.createLoweredBevelBorder());
 		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		p.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-		p.add(keyEntryField);
+		p.add(keyEntryPanel);
 		KeyStroke keyBinding = action.getKeyBinding();
 		if (keyBinding != null) {
-			keyEntryField.setText(KeyBindingUtils.parseKeyStroke(keyBinding));
+			keyEntryPanel.setKeyStroke(keyBinding);
 		}
-		setFocusComponent(keyEntryField);
+		setFocusComponent(keyEntryPanel);
 		defaultPanel.add(p, BorderLayout.CENTER);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
@@ -144,7 +144,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	 * @param ks the keystroke to set
 	 */
 	public void setKeyStroke(KeyStroke ks) {
-		keyEntryField.setKeyStroke(ks);
+		keyEntryPanel.setKeyStroke(ks);
 		updateCollisionPane(ks);
 	}
 
@@ -155,7 +155,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		KeyStroke newKs = keyEntryField.getKeyStroke();
+		KeyStroke newKs = keyEntryPanel.getKeyStroke();
 		String errorMessage = toolActions.validateActionKeyBinding(action, newKs);
 		if (errorMessage != null) {
 			setStatusText(errorMessage);

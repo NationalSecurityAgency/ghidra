@@ -212,11 +212,11 @@ import sys
 print(sys.version)
 ```
 
-Suppose they get `3.8.10`.
-They'd then take the major and minor numbers to invoke `python3.8` directly:
+Suppose they get `3.9.19`.
+They'd then take the major and minor numbers to invoke `python3.9` directly:
 
 ```bash
-python3.8 -m pip install ...
+python3.9 -m pip install ...
 ```
 
 A fancy way to just have gdb print the python command for you is:

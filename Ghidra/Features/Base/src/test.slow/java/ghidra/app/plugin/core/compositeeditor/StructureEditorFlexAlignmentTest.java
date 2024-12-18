@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import javax.swing.*;
 import org.junit.Test;
 
 import docking.widgets.OptionDialog;
+import ghidra.program.database.DatabaseObject;
+import ghidra.program.database.data.StructureDBTest;
 import ghidra.program.model.data.*;
 
 public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTest {
@@ -305,12 +307,17 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 	}
 
 	private DataTypeComponent addDataType(DataType dataType) {
-		return structureModel.viewComposite.add(dataType);
+		return structureModel.viewDTM.withTransaction("Add Test Component",
+			() -> structureModel.viewComposite.add(dataType));
 	}
 
 	private DataTypeComponent addFlexDataType(Structure struct, DataType dataType, String name,
 			String comment) {
 		ArrayDataType a = new ArrayDataType(dataType, 0, 1);
+		if (struct instanceof DatabaseObject) {
+			DataTypeManager dtm = struct.getDataTypeManager();
+			return dtm.withTransaction("Add Flex Array", () -> struct.add(a, name, comment));
+		}
 		return struct.add(a, name, comment);
 	}
 
@@ -319,11 +326,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		if (packingButton.isSelected()) {
 			return;
 		}
-
-		pressButton(packingButton, false);
-		OptionDialog confirmDialog = waitForDialogComponent(OptionDialog.class);
-		pressButtonByText(confirmDialog, "Yes");
-		waitForSwing();
+		pressButton(packingButton, true);
 	}
 
 }

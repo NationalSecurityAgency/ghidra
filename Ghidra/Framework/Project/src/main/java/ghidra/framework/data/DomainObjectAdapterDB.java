@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 
 	protected static final int NUM_UNDOS = 50;
 
-	protected DBHandle dbh;
+	protected final DBHandle dbh;
 
 	protected DomainObjectDBChangeSet changeSet;
 
@@ -81,6 +81,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 	 */
 	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, Object consumer) {
 		super(name, timeInterval, consumer);
+		Objects.requireNonNull(dbh, "DBHandle must not be null");
 		this.dbh = dbh;
 		options = new OptionsDB(this);
 		transactionMgr = new DomainObjectTransactionManager(this);

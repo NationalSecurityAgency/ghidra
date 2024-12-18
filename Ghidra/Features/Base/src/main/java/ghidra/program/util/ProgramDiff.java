@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,16 @@ import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
+import org.apache.commons.collections4.CollectionUtils;
 import ghidra.program.database.properties.UnsupportedMapDB;
+import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.ProgramBasedDataTypeManager;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.sourcemap.SourceFileManager;
+import ghidra.program.model.sourcemap.SourceMapEntry;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
@@ -484,10 +486,8 @@ public class ProgramDiff {
 	synchronized public AddressSetView getDifferences(ProgramDiffFilter filter, TaskMonitor monitor)
 			throws CancelledException {
 		cancelled = false;
-		if (monitor == null) {
-			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitor.DUMMY;
-		}
+
+		monitor = TaskMonitor.dummyIfNull(monitor);
 
 		if (!filterChanged && ((filter != null) && (filter.equals(this.pdf)))) {
 			return diffsToReturn;
@@ -500,6 +500,7 @@ public class ProgramDiff {
 		// Create any required address sets.
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
+
 			// Are we interested in this difference type?
 			if (pdf.getFilter(element)) {
 				Integer key = element;
@@ -985,6 +986,11 @@ public class ProgramDiff {
 				monitorMsg = "Checking Function Tag Differences";
 				monitor.setMessage(monitorMsg);
 				as = getFunctionTagDifferences(checkAddressSet, monitor);
+				break;
+			case ProgramDiffFilter.SOURCE_MAP_DIFFS:
+				monitorMsg = "Checking Source Map Differences";
+				monitor.setMessage(monitorMsg);
+				as = getSourceMapDifferences(checkAddressSet, monitor);
 				break;
 		}
 		if (as != null) {
@@ -1567,6 +1573,199 @@ public class ProgramDiff {
 		FunctionIterator iter2 = program2.getListing().getFunctions(addressSet2, true);
 		FunctionTagComparator c = new FunctionTagComparator();
 		return c.getObjectDiffs(iter1, iter2, monitor);
+	}
+
+	/**
+	 * Determines the source map differences for the addresses in {@code addressSet}.  Source map
+	 * entries which intersect but are not contained within {@code addressSet} are ignored.
+	 * The returned {@link AddressSet} consists of the minimum addresses of all of the differing
+	 * source map entries.  This method does not check for differences between non-mapped 
+	 * {@link SourceFile}s. 
+	 * 
+	 * @param addressSet addresses to check for differences (from program1)
+	 * @param monitor task monitor
+	 * @return minimum addresses of differing ranges
+	 * @throws CancelledException if user cancels
+	 */
+	private AddressSet getSourceMapDifferences(AddressSetView addressSet, TaskMonitor monitor)
+			throws CancelledException {
+		SourceFileManager p1Manager = program1.getSourceFileManager();
+		SourceFileManager p2Manager = program2.getSourceFileManager();
+
+		List<SourceFile> p1Sources = program1.getSourceFileManager().getMappedSourceFiles();
+		List<SourceFile> p2Sources = program2.getSourceFileManager().getMappedSourceFiles();
+
+		Collection<SourceFile> differingPaths = CollectionUtils.disjunction(p1Sources, p2Sources);
+
+		Collection<SourceFile> p1Only = CollectionUtils.intersection(p1Sources, differingPaths);
+		Collection<SourceFile> p2Only = CollectionUtils.intersection(p2Sources, differingPaths);
+
+		AddressSet differences =
+			processDifferingSourceFiles(addressSet, p1Only, p2Only, p1Manager, p2Manager, monitor);
+
+		// now consider the mapping info for the source files the programs have in common
+		Collection<SourceFile> commonSources = CollectionUtils.intersection(p1Sources, p2Sources);
+
+		// first check the entries in program1
+		// only need to check an address once, even if there are multiple entries based at it
+		AddressSet p1CheckedAddresses = new AddressSet();
+		AddressSet p2CheckedAddresses = new AddressSet();
+
+		for (SourceFile common : commonSources) {
+			for (SourceMapEntry p1Entry : p1Manager.getSourceMapEntries(common)) {
+				monitor.checkCancelled();
+				Address p1Base = p1Entry.getBaseAddress();
+				if (p1CheckedAddresses.contains(p1Base)) {
+					continue;
+				}
+
+				Address p2Base = SimpleDiffUtility.getCompatibleAddress(program1, p1Base, program2);
+				if (p2Base == null) {
+					p1CheckedAddresses.add(p1Base);
+					continue;
+				}
+
+				long p1Length = p1Entry.getLength();
+				if (p1Length != 0) {
+					Address p1End = p1Base.add(p1Length - 1);
+					if (!addressSet.contains(p1Base, p1End)) {
+						if (addressSet.intersects(p1Base, p1End)) {
+							logSkippedEntry(p1Entry, program1);
+						}
+						continue;
+					}
+				}
+				p1CheckedAddresses.add(p1Base);
+				p2CheckedAddresses.add(p2Base);
+				List<SourceMapEntry> p1Entries = p1Manager.getSourceMapEntries(p1Base);
+				List<SourceMapEntry> p2Entries = p2Manager.getSourceMapEntries(p2Base);
+				if (p1Entries.size() != p2Entries.size()) {
+					differences.add(p1Base);
+					continue;
+				}
+				for (SourceMapEntry e1 : p1Entries) {
+					if (Collections.binarySearch(p2Entries, e1) < 0) {
+						differences.add(p1Base);
+						break;
+					}
+				}
+			}
+		}
+
+		AddressSet unmatchedP2Addrs =
+			findUnmatchedP2Addrs(addressSet, p2CheckedAddresses, commonSources, monitor);
+		differences.add(unmatchedP2Addrs);
+
+		return differences;
+
+	}
+
+	// look for addresses in program2 that have entries where the corresponding
+	// address in program1 does not have any entries
+	private AddressSet findUnmatchedP2Addrs(AddressSetView addressSet,
+			AddressSet p2CheckedAddresses, Collection<SourceFile> commonSources,
+			TaskMonitor monitor) throws CancelledException {
+		AddressSet results = new AddressSet();
+		SourceFileManager p2Manager = program2.getSourceFileManager();
+		for (SourceFile p2Source : commonSources) {
+			for (SourceMapEntry p2Entry : p2Manager.getSourceMapEntries(p2Source)) {
+				monitor.checkCancelled();
+				Address p2Base = p2Entry.getBaseAddress();
+				if (p2CheckedAddresses.contains(p2Base)) {
+					continue;
+				}
+				Address p1Base = SimpleDiffUtility.getCompatibleAddress(program2, p2Base, program1);
+				p2CheckedAddresses.add(p2Base);
+				if (p1Base == null) {
+					continue;
+				}
+				if (!addressSet.contains(p1Base)) {
+					continue;
+				}
+				List<SourceMapEntry> p1Entries =
+					program1.getSourceFileManager().getSourceMapEntries(p1Base);
+				boolean p1BaseAlreadyChecked = false;
+				for (SourceMapEntry p1Entry : p1Entries) {
+					if (p1Entry.getBaseAddress().equals(p1Base)) {
+						p1BaseAlreadyChecked = true;
+						break;
+					}
+				}
+				if (!p1BaseAlreadyChecked) {
+					results.add(p1Base);
+				}
+			}
+		}
+		return results;
+	}
+
+	// process SourceFiles with mapping info in exactly one program
+	// any associated SourceMapEntry must be a difference
+	// so just check that the range is part of addressSet
+	private AddressSet processDifferingSourceFiles(AddressSetView addressSet,
+			Collection<SourceFile> p1Only, Collection<SourceFile> p2Only,
+			SourceFileManager p1Manager, SourceFileManager p2Manager, TaskMonitor monitor)
+			throws CancelledException {
+		AddressSet result = new AddressSet();
+
+		for (SourceFile p1Source : p1Only) {
+			List<SourceMapEntry> p1Entries = p1Manager.getSourceMapEntries(p1Source);
+			for (SourceMapEntry p1Entry : p1Entries) {
+				monitor.checkCancelled();
+				Address p1Base = p1Entry.getBaseAddress();
+				if (p1Entry.getLength() == 0) {
+					if (addressSet.contains(p1Base)) {
+						result.add(p1Base);
+					}
+					continue;
+				}
+				Address p1End = p1Base.add(p1Entry.getLength() - 1);
+				if (addressSet.contains(p1Base, p1End)) {
+					result.add(p1Base);
+					continue;
+				}
+				if (addressSet.intersects(p1Base, p1End)) {
+					logSkippedEntry(p1Entry, program1);
+				}
+			}
+		}
+
+		for (SourceFile p2Source : p2Only) {
+			List<SourceMapEntry> p2Entries = p2Manager.getSourceMapEntries(p2Source);
+			for (SourceMapEntry p2Entry : p2Entries) {
+				monitor.checkCancelled();
+				Address p2Base = p2Entry.getBaseAddress();
+				Address p1Base = SimpleDiffUtility.getCompatibleAddress(program2, p2Base, program1);
+				if (p1Base == null) {
+					continue;
+				}
+				long p2Length = p2Entry.getLength();
+				if (p2Length == 0) {
+					if (addressSet.contains(p1Base)) {
+						result.add(p1Base);
+					}
+					continue;
+				}
+				Address p2End = p2Base.add(p2Length - 1);
+				Address p1End = SimpleDiffUtility.getCompatibleAddress(program2, p2End, program1);
+				if (p1End == null) {
+					continue;
+				}
+				if (addressSet.contains(p1Base, p1End)) {
+					result.add(p1Base);
+					continue;
+				}
+				if (addressSet.intersects(p1Base, p1End)) {
+					logSkippedEntry(p2Entry, program2);
+				}
+			}
+		}
+		return result;
+	}
+
+	private void logSkippedEntry(SourceMapEntry entry, Program program) {
+		Msg.warn(this,
+			"Skipping source map entry " + entry.toString() + " in program " + program.getName());
 	}
 
 	/** 

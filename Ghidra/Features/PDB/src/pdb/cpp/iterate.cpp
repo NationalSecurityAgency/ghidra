@@ -322,9 +322,11 @@ void dumpFunctionLines( IDiaSymbol& symbol, IDiaSession& session )
 		pLine->get_lineNumber( &start );
 		DWORD end = 0;
 		pLine->get_lineNumberEnd( &end );
+		DWORD range_length = 0;
+		pLine->get_length( &range_length );
 
-		printf("%S<line_number source_file=\"%ws\" start=\"%d\" end=\"%d\" addr=\"0x%x\" /> \n",
-					indent(12).c_str(), escapeXmlEntities(wsSourceFileName).c_str(), start, end, addr);
+		printf("%S<line_number source_file=\"%ws\" start=\"%d\" end=\"%d\" addr=\"0x%x\" length=\"%d\" /> \n",
+					indent(12).c_str(), escapeXmlEntities(wsSourceFileName).c_str(), start, end, addr, range_length);
 	}
 }
 
