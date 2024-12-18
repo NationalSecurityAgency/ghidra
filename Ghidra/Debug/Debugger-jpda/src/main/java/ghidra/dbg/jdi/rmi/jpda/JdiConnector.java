@@ -24,9 +24,9 @@ import ghidra.app.plugin.core.debug.client.tracermi.*;
 import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceMethod;
 import ghidra.dbg.jdi.manager.impl.DebugStatus;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
-import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
+import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.util.Msg;
 
 public class JdiConnector {
@@ -92,7 +92,7 @@ public class JdiConnector {
 	private final Map<ReferenceType, AddressRange> cpAddressRangeByClass = new HashMap<>();
 
 	private final Map<String, DebugStatus> returnStatusMap = new HashMap<>();
-	final TargetObjectSchema rootSchema;
+	final TraceObjectSchema rootSchema;
 	private Map<String, String> env;
 
 	public JdiConnector(JdiManagerImpl manager, Map<String, String> env) {
@@ -166,7 +166,7 @@ public class JdiConnector {
 		 * TODO: The return type should be reflected from the method; however, none of the parameter
 		 * collection routines currently use the return type, so just use ANY for now.
 		 */
-		TargetObjectSchema schema = EnumerableTargetObjectSchema.ANY;
+		TraceObjectSchema schema = PrimitiveTraceObjectSchema.ANY;
 		RmiRemoteMethod method = new RmiRemoteMethod(rootSchema.getContext(), name, action, display,
 			description, schema, methods, m);
 		remoteMethodRegistry.putMethod(name, method);

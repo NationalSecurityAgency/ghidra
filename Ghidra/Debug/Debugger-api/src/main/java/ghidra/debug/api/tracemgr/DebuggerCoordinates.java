@@ -21,7 +21,6 @@ import java.util.*;
 import org.jdom.Element;
 
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.dbg.target.TargetObject;
 import ghidra.debug.api.target.Target;
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
@@ -35,7 +34,7 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -98,7 +97,7 @@ public class DebuggerCoordinates {
 	private final TraceProgramView view;
 	private final TraceSchedule time;
 	private final Integer frame;
-	private final TraceObjectKeyPath path;
+	private final KeyPath path;
 
 	private final int hash;
 
@@ -107,7 +106,7 @@ public class DebuggerCoordinates {
 	private TraceObject registerContainer;
 
 	DebuggerCoordinates(Trace trace, TracePlatform platform, Target target, TraceThread thread,
-			TraceProgramView view, TraceSchedule time, Integer frame, TraceObjectKeyPath path) {
+			TraceProgramView view, TraceSchedule time, Integer frame, KeyPath path) {
 		this.trace = trace;
 		this.platform = platform;
 		this.target = target;
@@ -182,13 +181,13 @@ public class DebuggerCoordinates {
 		return resolveThread(trace, TraceSchedule.ZERO);
 	}
 
-	private static TraceObjectKeyPath resolvePath(Trace trace, TraceThread thread, Integer frame,
+	private static KeyPath resolvePath(Trace trace, TraceThread thread, Integer frame,
 			TraceSchedule time) {
-		TraceObjectKeyPath path = resolvePath(thread, frame, time);
+		KeyPath path = resolvePath(thread, frame, time);
 		if (path != null) {
 			return path;
 		}
-		return TraceObjectKeyPath.of();
+		return KeyPath.of();
 	}
 
 	private static TraceProgramView resolveView(Trace trace, TraceSchedule time) {
@@ -214,7 +213,7 @@ public class DebuggerCoordinates {
 			TraceProgramView newView = resolveView(newTrace);
 			TraceSchedule newTime = null; // Allow later resolution
 			Integer newFrame = resolveFrame(newThread, newTime);
-			TraceObjectKeyPath newPath = resolvePath(newTrace, newThread, newFrame, newTime);
+			KeyPath newPath = resolvePath(newTrace, newThread, newFrame, newTime);
 			return new DebuggerCoordinates(newTrace, newPlatform, null, newThread, newView, newTime,
 				newFrame, newPath);
 		}
@@ -248,7 +247,7 @@ public class DebuggerCoordinates {
 		return resolveFrame(target, target.getFocus());
 	}
 
-	private static TraceObjectKeyPath resolvePath(Target target, TraceThread thread,
+	private static KeyPath resolvePath(Target target, TraceThread thread,
 			Integer frame, TraceSchedule time) {
 		if (target.getSnap() != time.getSnap() || !target.isSupportsFocus()) {
 			return resolvePath(target.getTrace(), thread, frame, time);
@@ -273,7 +272,7 @@ public class DebuggerCoordinates {
 			TraceProgramView newView = resolveView(newTrace);
 			TraceSchedule newTime = null; // Allow later resolution
 			Integer newFrame = resolveFrame(newThread, newTime);
-			TraceObjectKeyPath newPath = resolvePath(newTrace, newThread, newFrame, newTime);
+			KeyPath newPath = resolvePath(newTrace, newThread, newFrame, newTime);
 			return new DebuggerCoordinates(newTrace, newPlatform, null, newThread, newView, newTime,
 				newFrame, newPath);
 		}
@@ -300,8 +299,8 @@ public class DebuggerCoordinates {
 		TraceThread newThread = thread != null ? thread : resolveThread(newTarget, newTime);
 		TraceProgramView newView = view != null ? view : resolveView(newTrace, newTime);
 		Integer newFrame = frame != null ? frame : resolveFrame(newTarget, newThread, newTime);
-		TraceObjectKeyPath threadOrFramePath = resolvePath(newTarget, newThread, newFrame, newTime);
-		TraceObjectKeyPath newPath = choose(path, threadOrFramePath);
+		KeyPath threadOrFramePath = resolvePath(newTarget, newThread, newFrame, newTime);
+		KeyPath newPath = choose(path, threadOrFramePath);
 		return new DebuggerCoordinates(newTrace, newPlatform, newTarget, newThread, newView,
 			newTime, newFrame, newPath);
 	}
@@ -313,7 +312,7 @@ public class DebuggerCoordinates {
 		return thread(trace.getThreadManager().getThread(thread.getKey()));
 	}
 
-	private static TraceObjectKeyPath resolvePath(TraceThread thread, Integer frameLevel,
+	private static KeyPath resolvePath(TraceThread thread, Integer frameLevel,
 			TraceSchedule time) {
 		if (thread instanceof TraceObjectThread tot) {
 			TraceObject objThread = tot.getObject();
@@ -340,8 +339,8 @@ public class DebuggerCoordinates {
 		return null;
 	}
 
-	private static TraceObjectKeyPath choose(TraceObjectKeyPath curPath,
-			TraceObjectKeyPath newPath) {
+	private static KeyPath choose(KeyPath curPath,
+			KeyPath newPath) {
 		if (curPath == null) {
 			return newPath;
 		}
@@ -371,8 +370,8 @@ public class DebuggerCoordinates {
 		// Yes, override frame with 0 on thread changes, unless target says otherwise
 		Integer newFrame = resolveFrame(target, newThread, newTime);
 		// Yes, forced frame change may also force object change
-		TraceObjectKeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
-		TraceObjectKeyPath newPath = choose(path, threadOrFramePath);
+		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
+		KeyPath newPath = choose(path, threadOrFramePath);
 		return new DebuggerCoordinates(newTrace, newPlatform, target, newThread, newView, newTime,
 			newFrame, newPath);
 	}
@@ -412,8 +411,8 @@ public class DebuggerCoordinates {
 				: resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
-		TraceObjectKeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
-		TraceObjectKeyPath newPath = choose(path, threadOrFramePath);
+		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
+		KeyPath newPath = choose(path, threadOrFramePath);
 		return new DebuggerCoordinates(trace, platform, target, newThread, view, newTime,
 			newFrame, newPath);
 	}
@@ -425,8 +424,8 @@ public class DebuggerCoordinates {
 		if (Objects.equals(frame, newFrame)) {
 			return this;
 		}
-		TraceObjectKeyPath threadOrFramePath = resolvePath(thread, newFrame, getTime());
-		TraceObjectKeyPath newPath = choose(path, threadOrFramePath);
+		KeyPath threadOrFramePath = resolvePath(thread, newFrame, getTime());
+		KeyPath newPath = choose(path, threadOrFramePath);
 		return new DebuggerCoordinates(trace, platform, target, thread, view, time, newFrame,
 			newPath);
 	}
@@ -480,7 +479,7 @@ public class DebuggerCoordinates {
 		return time(resolveTime(newView)).replaceView(newView);
 	}
 
-	private static TraceThread resolveThread(Trace trace, TraceObjectKeyPath path) {
+	private static TraceThread resolveThread(Trace trace, KeyPath path) {
 		TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
 		if (object == null) {
 			return null;
@@ -490,7 +489,7 @@ public class DebuggerCoordinates {
 				.orElse(null);
 	}
 
-	private static Integer resolveFrame(Trace trace, TraceObjectKeyPath path) {
+	private static Integer resolveFrame(Trace trace, KeyPath path) {
 		TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
 		if (object == null) {
 			return null;
@@ -502,7 +501,7 @@ public class DebuggerCoordinates {
 		return frame == null ? null : frame.getLevel();
 	}
 
-	public DebuggerCoordinates path(TraceObjectKeyPath newPath) {
+	public DebuggerCoordinates path(KeyPath newPath) {
 		if (trace == null && newPath == null) {
 			return NOWHERE;
 		}
@@ -524,7 +523,7 @@ public class DebuggerCoordinates {
 			newFrame, newPath);
 	}
 
-	public DebuggerCoordinates pathNonCanonical(TraceObjectKeyPath newPath) {
+	public DebuggerCoordinates pathNonCanonical(KeyPath newPath) {
 		if (trace == null && newPath == null) {
 			return NOWHERE;
 		}
@@ -549,17 +548,13 @@ public class DebuggerCoordinates {
 		throw new IllegalArgumentException("No such object at path " + newPath);
 	}
 
-	protected static TraceThread resolveThread(Target target, TraceObjectKeyPath objectPath) {
+	protected static TraceThread resolveThread(Target target, KeyPath objectPath) {
 		return target.getThreadForSuccessor(objectPath);
 	}
 
-	protected static Integer resolveFrame(Target target, TraceObjectKeyPath objectPath) {
+	protected static Integer resolveFrame(Target target, KeyPath objectPath) {
 		TraceStackFrame frame = target.getStackFrameForSuccessor(objectPath);
 		return frame == null ? null : frame.getLevel();
-	}
-
-	public DebuggerCoordinates object(TargetObject targetObject) {
-		return path(TraceObjectKeyPath.of(targetObject.getPath()));
 	}
 
 	public DebuggerCoordinates object(TraceObject newObject) {
@@ -604,7 +599,7 @@ public class DebuggerCoordinates {
 		return frame == null ? 0 : frame;
 	}
 
-	public TraceObjectKeyPath getPath() {
+	public KeyPath getPath() {
 		return path;
 	}
 
@@ -626,7 +621,7 @@ public class DebuggerCoordinates {
 		if (registerContainer != null) {
 			return registerContainer;
 		}
-		return registerContainer = getObject().queryRegisterContainer(getFrame());
+		return registerContainer = getObject().findRegisterContainer(getFrame());
 	}
 
 	public synchronized long getViewSnap() {
@@ -761,7 +756,7 @@ public class DebuggerCoordinates {
 		if (trace != null && coordState.hasValue(KEY_OBJ_PATH)) {
 			String pathString = coordState.getString(KEY_OBJ_PATH, "");
 			try {
-				TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathString);
+				KeyPath path = KeyPath.parse(pathString);
 				object = trace.getObjectManager().getObjectByCanonicalPath(path);
 			}
 			catch (Exception e) {

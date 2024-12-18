@@ -36,7 +36,6 @@ import ghidra.app.plugin.core.terminal.TerminalListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.util.ShellUtils;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.action.AutoMapSpec;
 import ghidra.debug.api.modules.DebuggerMissingProgramActionContext;

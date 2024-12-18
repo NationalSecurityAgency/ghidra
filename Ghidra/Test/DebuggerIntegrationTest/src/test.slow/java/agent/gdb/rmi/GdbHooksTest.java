@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,15 +28,14 @@ import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.time.TraceSnapshot;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
@@ -91,15 +90,15 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 		if (object == null) {
 			return null;
 		}
-		PathPattern pat = PathPredicates.parse(pattern).getSingletonPattern();
+		PathPattern pat = PathFilter.parse(pattern).getSingletonPattern();
 		if (pat.countWildcards() != 1) {
 			throw new IllegalArgumentException("Exactly one wildcard required");
 		}
-		List<String> path = object.getCanonicalPath().getKeyList();
+		KeyPath path = object.getCanonicalPath();
 		if (path.size() < pat.asPath().size()) {
 			return null;
 		}
-		List<String> matched = pat.matchKeys(path.subList(0, pat.asPath().size()));
+		List<String> matched = pat.matchKeys(path, false);
 		if (matched == null) {
 			return null;
 		}
@@ -353,7 +352,7 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("continue");
-			waitState(1, () -> lastSnap(conn), TargetExecutionState.TERMINATED);
+			waitState(1, () -> lastSnap(conn), TraceExecutionState.TERMINATED);
 			/**
 			 * Termination does not clear objfiles. Not until we run a new target.
 			 */

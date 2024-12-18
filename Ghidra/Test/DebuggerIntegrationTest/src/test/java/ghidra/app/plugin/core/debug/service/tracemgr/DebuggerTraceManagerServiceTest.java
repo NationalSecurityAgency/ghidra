@@ -28,9 +28,6 @@ import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.DebuggerControlService;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -40,7 +37,10 @@ import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -238,7 +238,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 			DBTraceObjectManager objectManager = tb.trace.getObjectManager();
 			objectManager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 			objThread0 =
-				objectManager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
+				objectManager.createObject(KeyPath.parse("Targets[0].Threads[0]"));
 		}
 		// Manager listens for the root-created event to activate it. Wait for it to clear.
 		waitForDomainObject(tb.trace);

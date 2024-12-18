@@ -27,8 +27,6 @@ import org.jdom.JDOMException;
 import com.google.protobuf.ByteString;
 
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.rmi.trace.TraceRmi;
@@ -36,6 +34,8 @@ import ghidra.rmi.trace.TraceRmi.*;
 import ghidra.rmi.trace.TraceRmi.Language;
 import ghidra.rmi.trace.TraceRmi.Value.Builder;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 
@@ -83,7 +83,7 @@ public class RmiClient {
 	private static RmiMethodRegistry methodRegistry;
 	private Deque<RequestResult> requests = new LinkedList<>();
 
-	public static TargetObjectSchema loadSchema(String resourceName, String rootName) {
+	public static TraceObjectSchema loadSchema(String resourceName, String rootName) {
 		XmlSchemaContext schemaContext;
 
 		try {
@@ -820,7 +820,7 @@ public class RmiClient {
 		}
 	}
 
-	public TargetObjectSchema getSchema(String schema) {
+	public TraceObjectSchema getSchema(String schema) {
 		return schemaContext.getSchema(new SchemaName(schema));
 	}
 

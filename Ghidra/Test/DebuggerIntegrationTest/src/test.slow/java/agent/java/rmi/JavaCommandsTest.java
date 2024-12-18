@@ -30,7 +30,6 @@ import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.model.DomainFile;
@@ -43,6 +42,8 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
@@ -393,7 +394,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
-						PathPredicates.parse("VMs[].Threads[main].Stack[0].Registers"))
+						PathFilter.parse("VMs[].Threads[main].Stack[0].Registers"))
 					.map(p -> p.getLastEntry())
 					.toList();
 			TraceObjectValue tobj = regVals.get(0);
@@ -426,7 +427,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
-						PathPredicates.parse("VMs[].Threads[main].Stack[0].Registers"))
+						PathFilter.parse("VMs[].Threads[main].Stack[0].Registers"))
 					.map(p -> p.getLastEntry())
 					.toList();
 			TraceObjectValue tobj = regVals.get(0);
@@ -453,7 +454,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1].Bob"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1].Bob"));
 			assertNotNull(object);
 			assertEquals(4L, object.getKey());
 		}
@@ -476,7 +477,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1].Bob"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1].Bob"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.nowOn(0), life);
@@ -502,7 +503,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.span(0, 1), life);
@@ -528,7 +529,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = getLastSnapshot().getKey();
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			TraceObjectValue test = object.getValue(snap, "test");
 			return test == null ? null : (T) test.getValue();
@@ -628,7 +629,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = getLastSnapshot().getKey();
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("VMs"));
+					.getObjectByCanonicalPath(KeyPath.parse("VMs"));
 			assertNotNull(object);
 			TraceObjectValue value = object.getValue(snap, "test");
 			Address address = (Address) value.getValue();
@@ -656,13 +657,13 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = getLastSnapshot().getKey();
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("VMs"));
+					.getObjectByCanonicalPath(KeyPath.parse("VMs"));
 			assertNotNull(object);
 			TraceObjectValue value = object.getValue(snap, "test");
 			TraceObject ret = (TraceObject) value.getValue();
 			TraceObject orig = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(
-						TraceObjectKeyPath.parse("VMs[OpenJDK 64-Bit Server VM].Threads[main]"));
+						KeyPath.parse("VMs[OpenJDK 64-Bit Server VM].Threads[main]"));
 			assertNotNull(ret);
 			assertEquals(orig, ret);
 		}
@@ -688,7 +689,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/Test")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			assertEquals(Map.ofEntries(
 				Map.entry("[1]", Lifespan.nowOn(0)),
@@ -722,7 +723,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/jdi/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			assertEquals("Test.Objects[1]", extractOutSection(out, "---GetObject---"));
 		}
@@ -850,7 +851,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = getLastSnapshot().getKey();
 			Collection<TraceObject> vms = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(snap), PathPredicates.parse("VMs[]"))
+					.getValuePaths(Lifespan.at(snap), PathFilter.parse("VMs[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertEquals(1, vms.size());
@@ -872,7 +873,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = getLastSnapshot().getKey();
 			Collection<TraceObject> processes = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(snap), PathPredicates.parse("VMs[].Processes"))
+					.getValuePaths(Lifespan.at(snap), PathFilter.parse("VMs[].Processes"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertEquals(1, processes.size());
@@ -944,7 +945,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			long snap = getLastSnapshot().getKey();
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
-						PathPredicates.parse("VMs[].Threads[main].Stack[]"))
+						PathFilter.parse("VMs[].Threads[main].Stack[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertEquals(1, stack.size());
@@ -987,7 +988,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> events = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
-						PathPredicates.parse("VMs[].Events[]"))
+						PathFilter.parse("VMs[].Events[]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1013,7 +1014,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> breaks = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
-						PathPredicates.parse("VMs[].Breakpoints[]"))
+						PathFilter.parse("VMs[].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1047,7 +1048,7 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 			long snap = getLastSnapshot().getKey();
 			List<TraceObjectValue> breaks = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(snap),
-						PathPredicates.parse("VMs[].Breakpoints[]"))
+						PathFilter.parse("VMs[].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();

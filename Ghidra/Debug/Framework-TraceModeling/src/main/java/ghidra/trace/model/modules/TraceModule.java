@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public interface TraceModule extends TraceUniqueObject {
 	/**
 	 * Get the trace containing this module
 	 * 
-	 * @return
+	 * @return the trace
 	 */
 	Trace getTrace();
 
@@ -60,6 +60,10 @@ public interface TraceModule extends TraceUniqueObject {
 	 * Add a section having the same full and short names
 	 * 
 	 * @see #addSection(String, String, AddressRange)
+	 * @param sectionPath the "full name" of the section
+	 * @param range the range of memory into which the section is loaded
+	 * @return the new section
+	 * @throws DuplicateNameException if a section with the given name already exists in this module
 	 */
 	default TraceSection addSection(String sectionPath, AddressRange range)
 			throws DuplicateNameException {
@@ -74,7 +78,7 @@ public interface TraceModule extends TraceUniqueObject {
 	 * display on the screen. This is not likely the file system path of the module's image. Rather,
 	 * it's typically the path of the module in the target debugger's object model.
 	 * 
-	 * @return
+	 * @return the path
 	 */
 	String getPath();
 
@@ -183,7 +187,7 @@ public interface TraceModule extends TraceUniqueObject {
 	/**
 	 * Get the lifespan of this module
 	 * 
-	 * @return
+	 * @return the lifespan
 	 */
 	Lifespan getLifespan();
 
@@ -192,6 +196,8 @@ public interface TraceModule extends TraceUniqueObject {
 	 * 
 	 * @param loadedSnap the loaded snap, or {@link Long#MIN_VALUE} for "since the beginning of
 	 *            time"
+	 * @throws DuplicateNameException if the lifespan adjustment would cause it to collide with
+	 *             another module with the same name
 	 */
 	void setLoadedSnap(long loadedSnap) throws DuplicateNameException;
 
@@ -206,6 +212,8 @@ public interface TraceModule extends TraceUniqueObject {
 	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param unloadedSnap the unloaded snap, or {@link Long#MAX_VALUE} for "to the end of time"
+	 * @throws DuplicateNameException if the lifespan adjustment would cause it to collide with
+	 *             another module with the same name
 	 */
 	void setUnloadedSnap(long unloadedSnap) throws DuplicateNameException;
 

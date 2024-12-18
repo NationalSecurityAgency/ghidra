@@ -61,7 +61,7 @@ import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.RunManager;
@@ -109,8 +109,8 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 	protected void placeBreakpoint(long index, Address dynAddr, boolean enabled) {
 		try (Transaction tx = tb.startTransaction()) {
-			TraceObjectKeyPath pathSpec =
-				TraceObjectKeyPath.parse("Processes[1].Breakpoints").index(index);
+			KeyPath pathSpec =
+				KeyPath.parse("Processes[1].Breakpoints").index(index);
 			DBTraceObject objBptSpec = tb.trace.getObjectManager().createObject(pathSpec);
 			DBTraceObject objBptLoc = tb.trace.getObjectManager().createObject(pathSpec.index(1));
 			objBptLoc.setAttribute(Lifespan.nowOn(0), "Range",

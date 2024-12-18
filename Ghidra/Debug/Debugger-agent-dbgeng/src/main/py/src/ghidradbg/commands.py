@@ -32,7 +32,8 @@ from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
-from .exdi import exdi_commands, exdi_methods
+if util.is_exdi():
+	from .exdi import exdi_commands, exdi_methods
 
 PAGE_SIZE = 4096
 

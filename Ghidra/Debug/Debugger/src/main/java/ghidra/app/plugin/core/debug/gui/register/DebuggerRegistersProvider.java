@@ -49,7 +49,6 @@ import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
-import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.*;
@@ -1318,7 +1317,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	private void reportError(String title, String message, Throwable ex) {
 		plugin.getTool().setStatusInfo(message + ": " + ex.getMessage());
-		if (title != null && !(ex instanceof DebuggerModelAccessException)) {
+		if (title != null) {
 			Msg.showError(this, getComponent(), title, message, ex);
 		}
 		else if (consoleService != null) {

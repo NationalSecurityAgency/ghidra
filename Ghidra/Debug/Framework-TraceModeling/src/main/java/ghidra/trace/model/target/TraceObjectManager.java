@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,13 @@ package ghidra.trace.model.target;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 /**
  * A store of objects observed over time in a trace
@@ -49,7 +49,7 @@ public interface TraceObjectManager {
 	 * @param schema the schema
 	 * @return the new object
 	 */
-	TraceObjectValue createRootObject(TargetObjectSchema schema);
+	TraceObjectValue createRootObject(TraceObjectSchema schema);
 
 	/**
 	 * Create (or get) an object with the given canonical path
@@ -57,18 +57,14 @@ public interface TraceObjectManager {
 	 * @param path the object's canonical path
 	 * @return the new object
 	 */
-	TraceObject createObject(TraceObjectKeyPath path);
+	TraceObject createObject(KeyPath path);
 
 	/**
 	 * Get the schema of the root object
 	 * 
-	 * <p>
-	 * NOTE: The interface classes specified by the schema are those for {@link TargetObject}. The
-	 * interfaces in the database are different, and not all may have an analog.
-	 * 
 	 * @return the schema
 	 */
-	TargetObjectSchema getRootSchema();
+	TraceObjectSchema getRootSchema();
 
 	/**
 	 * Get the root object, if it has been created
@@ -91,7 +87,7 @@ public interface TraceObjectManager {
 	 * @param path the canonical path of the desired objects
 	 * @return the collection of objects
 	 */
-	TraceObject getObjectByCanonicalPath(TraceObjectKeyPath path);
+	TraceObject getObjectByCanonicalPath(KeyPath path);
 
 	/**
 	 * Get objects in the database having the given path intersecting the given span
@@ -101,7 +97,7 @@ public interface TraceObjectManager {
 	 * @return the iterable of objects
 	 */
 	Stream<? extends TraceObject> getObjectsByPath(Lifespan span,
-			TraceObjectKeyPath path);
+			KeyPath path);
 
 	/**
 	 * Get value entries in the database matching the given predicates intersecting the given span
@@ -118,7 +114,7 @@ public interface TraceObjectManager {
 	 * @return an iterator over the matching objects
 	 */
 	Stream<? extends TraceObjectValPath> getValuePaths(Lifespan span,
-			PathPredicates predicates);
+			PathFilter predicates);
 
 	/**
 	 * Get all the objects in the database
@@ -169,11 +165,11 @@ public interface TraceObjectManager {
 	 * 
 	 * @param <I> the type of the desired interface
 	 * @param span the span that desired objects must intersect
-	 * @param ifClass the class of the desired interface
+	 * @param iface the class of the desired interface
 	 * @return the collection of all instances of the given interface
 	 */
 	<I extends TraceObjectInterface> Stream<I> queryAllInterface(Lifespan span,
-			Class<I> ifClass);
+			Class<I> iface);
 
 	/**
 	 * For maintenance, remove all disconnected objects
@@ -189,9 +185,8 @@ public interface TraceObjectManager {
 	 * 
 	 * <p>
 	 * This is the only mechanism to modify the schema. This should almost never be necessary,
-	 * because a {@link DebuggerObjectModel} should provide its immutable schema immediately.
-	 * Nevertheless, the database permits schema modification, but requires that the entire model be
-	 * replaced.
+	 * because a connector should provide its immutable schema immediately. Nevertheless, the
+	 * database permits schema modification, but requires that the entire model be replaced.
 	 */
 	void clear();
 }

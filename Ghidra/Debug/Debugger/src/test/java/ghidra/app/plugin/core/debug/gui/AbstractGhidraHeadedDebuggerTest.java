@@ -51,8 +51,6 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.action.LocationTrackingSpecFactory;
 import ghidra.docking.settings.SettingsImpl;
@@ -68,6 +66,8 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.InvalidNameException;
 import ghidra.util.NumericUtilities;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
@@ -76,6 +76,39 @@ import ghidra.util.task.ConsoleTaskMonitor;
 
 public abstract class AbstractGhidraHeadedDebuggerTest
 		extends AbstractGhidraHeadedIntegrationTest implements AsyncTestUtils {
+
+	/**
+	 * Any test that uses staticall-initialized variables with any real complexity runs the risk of
+	 * invoking the logger before said logger has been initialized. The abstract test case is
+	 * responsible for initializing it, and it affords its subclasses the opportunity to override
+	 * things like the application layout and configuration. Thus, we cannot initialize the
+	 * application in the static initializer here. What will happen, then, is the logger will be
+	 * partially initialized, and the XML config files refer to system properties that will not have
+	 * been set yet. This manifests in strange files being created in the tests' working
+	 * directories, e.g., <code>${sys:logFilename}</code>.
+	 * 
+	 * <p>
+	 * A cheap hack to avoid this issue is to just initialize those system properties to some temp
+	 * file. Once the logging system is initialized, the variables will be overwritten by the
+	 * application config and the logger re- and fully-initialized. For what it's worth, the logging
+	 * config for the test case is going to be a file in a temp directory, anyway. As long as it's
+	 * cleaned up by the JVM or the OS, we should be happy. I just want to ensure they're not
+	 * showing up in git commits.
+	 * 
+	 * <p>
+	 * TODO: Should this hack be moved up into the super classes of the Ghidra Test framework?
+	 */
+	static {
+		try {
+			System.setProperty("logFilename",
+				Files.createTempFile("ghidraTest", ".log").toString());
+			System.setProperty("scriptLogFilename",
+				Files.createTempFile("ghidraTestScript", ".log").toString());
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
+	}
 
 	public static final String LANGID_TOYBE64 = "Toy:BE:64:default";
 

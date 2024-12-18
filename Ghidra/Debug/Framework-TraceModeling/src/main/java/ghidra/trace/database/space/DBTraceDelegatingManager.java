@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -241,6 +241,7 @@ public interface DBTraceDelegatingManager<M> {
 	 * @param spaces the delegates
 	 * @param func an address set getter for each delegate
 	 * @return the unioned results
+	 * @throws E if {@code func} throws and exception
 	 */
 	default <E extends Throwable> AddressSetView delegateAddressSet(
 			Iterable<M> spaces, ExcFunction<M, AddressSetView, E> func) throws E {
