@@ -5717,6 +5717,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   distributeOp = (PcodeOp *)0;
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
   isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
+  inspectedMultiequals = false;
 }
 
 /// \brief Given an offset into the base data-type and array hints find sub-component being referenced
@@ -6294,9 +6295,15 @@ bool AddTreeState::apply(void)
   if (isDegenerate)
     return buildDegenerate();
   spanAddTree(baseOp,1);
+  if (!preventDistribution && distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+    clear();
+    preventDistribution = true;
+    spanAddTree(baseOp,1);
+  }
   if (!valid) return false;		// Were there any show stoppers
   if (multiple.empty() && !multiequalsToInspect.empty() && size != 0) {
     if (inspectMultiequals()) {
+      inspectedMultiequals = true;
       clear();
       spanAddTree(baseOp,1);
     }
@@ -6306,7 +6313,29 @@ bool AddTreeState::apply(void)
     preventDistribution = true;
     spanAddTree(baseOp,1);
   }
+  if (!valid) return false;
   calcSubtype();
+  if (!valid) {
+    if (!preventDistribution && distributeOp != (PcodeOp *)0) {
+      clear();
+      preventDistribution = true;
+      spanAddTree(baseOp,1);
+      if (valid) {
+        calcSubtype();
+      }
+    }
+    if (!valid && !inspectedMultiequals
+          && !multiequalsToInspect.empty() && size != 0) {
+      if (inspectMultiequals()) {
+        inspectedMultiequals = true;
+        clear();
+        spanAddTree(baseOp,1);
+        if (valid) {
+          calcSubtype();
+        }
+      }
+    }
+  }
   if (!valid) return false;
   while(valid && distributeOp != (PcodeOp *)0) {
     if (!data.distributeIntMultAdd(distributeOp)) {
