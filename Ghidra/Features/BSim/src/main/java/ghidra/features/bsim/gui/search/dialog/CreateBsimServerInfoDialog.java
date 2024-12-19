@@ -220,6 +220,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 			createDBNameField();
 			createUserField();
 			createHostField();
+
 			int defaultPort = -1;
 			if (type == BSimServerInfo.DBType.postgres) {
 				defaultPort = BSimServerInfo.DEFAULT_POSTGRES_PORT;
