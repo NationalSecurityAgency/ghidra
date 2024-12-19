@@ -19,6 +19,7 @@ import java.io.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
@@ -39,9 +40,20 @@ public class DummyProc implements AutoCloseable {
 			// just try next strategy
 		}
 
+		List<ResourceFile> mods = Stream.concat(Application.getApplicationRootDirectories()
+				.stream()
+				.map(ar -> new ResourceFile(ar, "Test/DebuggerIntegrationTest")),
+			Application.getModuleRootDirectories().stream())
+				.toList();
+
 		// Try the build/exe/<cmd>/ and build/exe/<cmd>/<platform>/ directory
 		try {
-			for (ResourceFile modRoot : Application.getModuleRootDirectories()) {
+			for (ResourceFile modRoot : mods) {
+				ResourceFile osExe = new ResourceFile(modRoot,
+					"build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" + cmd);
+				if (osExe.exists() && osExe.getFile(false).canExecute()) {
+					return osExe.getAbsolutePath();
+				}
 				ResourceFile exe = new ResourceFile(modRoot, "build/exe/" + cmd + "/" + cmd);
 				if (exe.exists() && exe.getFile(false).canExecute()) {
 					return exe.getAbsolutePath();
@@ -53,8 +65,8 @@ public class DummyProc implements AutoCloseable {
 					return platformExe.getAbsolutePath();
 				}
 				platformExe = new ResourceFile(modRoot,
-						"build/exe/" + cmd + "/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" +
-							cmd + ".exe");
+					"build/exe/" + cmd + "/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" +
+						cmd + ".exe");
 				if (platformExe.exists() && platformExe.getFile(false).canExecute()) {
 					return platformExe.getAbsolutePath();
 				}
