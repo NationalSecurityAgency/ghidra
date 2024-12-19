@@ -169,7 +169,6 @@ OFF_M16SP: val(sp) 					is ext_is_ext=0 & m16_iu8_imm & sp [ val = m16_iu8_imm <
 EXT_FRAME: val						is ext_value_frame=0 & m16_svrs_frame=0 [val = 128; ] {export *[const]:2 val;}
 EXT_FRAME: val						is ext_value_frame & m16_svrs_frame [val = ((ext_value_frame << 4) | m16_svrs_frame) << 3;] {export *[const]:2 val;}
 
-REGRS_STAT:							is ext_value_areg {}
 REGRS_STAT:	",a3"					is (ext_value_areg=1 | ext_value_areg=5 | ext_value_areg=9 |ext_value_areg=0xd) {
  	tsp = tsp-4;
 	MemSrcCast(a3,tsp);
