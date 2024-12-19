@@ -82,7 +82,7 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 		this.vals.put(INST_START, at.getAddressableWordOffset());
 		this.tree = tree;
 		this.grammar = tree.getGrammar();
-		this.context = context.fillMask();
+		this.context = context;
 		this.ctxGraph = ctxGraph;
 	}
 
@@ -270,9 +270,9 @@ public abstract class AbstractAssemblyTreeResolver<RP extends AssemblyResolvedPa
 	 * @return the results that pass. Those that do not are replaced with errors.
 	 */
 	protected AssemblyResolutionResults filterByDisassembly(AssemblyResolutionResults temp) {
-		AssemblyDefaultContext asmCtx = new AssemblyDefaultContext(lang);
-		asmCtx.setContextRegister(context);
 		return temp.apply(factory, rp -> {
+			AssemblyDefaultContext asmCtx = new AssemblyDefaultContext(lang);
+			asmCtx.setContextRegister(rp.getContext());
 			MemBuffer buf =
 				new ByteMemBufferImpl(at, rp.getInstruction().getVals(), lang.isBigEndian());
 			try {

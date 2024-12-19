@@ -16,6 +16,7 @@
 package ghidra.asm.wild;
 
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -90,12 +91,19 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		// 0x00000004: nop
 		// 0x00000008: restore 0x1b8,ra,s0-s1
 		// 0x0000000c: nop
+		// 0x00000010: restore 0x38,ra,s0-s1
 		mipsProgramBuilder.setBytes("0x00000000",
-			"0c 00 00 08 00 00 00 00 f0 30 64 77 00 00 00 00");
+			"0c 00 00 08 00 00 00 00 f0 30 64 77 00 00 00 00 64 77");
 		// This line sets the binary at addresses 0x8-0xc to be MIPS 16 (e.g. the
 		// restore instruction above)
-		mipsProgramBuilder.setRegisterValue("ISA_MODE", "0x8", "0xc", 1);
-		mipsProgramBuilder.disassemble("0x00000000", 0x10);
+		mipsProgramBuilder.setRegisterValue("ISA_MODE", "0x8", "0x12", 1);
+		// We're cheating (slightly), since a transient context variable should never be set globally
+		// Disables ^instruction parse phase responsible for 32-bit extensions
+		mipsProgramBuilder.setRegisterValue("ext_done", "0x10", "0x12", 1);
+		mipsProgramBuilder.disassemble("0x00000000", 0x12);
+
+		// Sets the binary at address 0x100-0x10c to be MIPS (not MIPS16)
+		mipsProgramBuilder.setRegisterValue("ISA_MODE", "0x100", "0x10c", 0);
 		var mipsProgram = mipsProgramBuilder.getProgram();
 		mips = (SleighLanguage) mipsProgram.getLanguage();
 		WildSleighAssemblerBuilder mipsBuilder = new WildSleighAssemblerBuilder(mips);
@@ -449,14 +457,17 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 	}
 
 	@Test
-	public void testRestore_mips() throws Exception {
+	public void testRestoreExtended_mips16() throws Exception {
 		mips();
 		Collection<AssemblyParseResult> parses = asmMips.parseLine("restore 0x1b8,ra,s0-s1");
 		AssemblyParseResult[] allResults = parses.stream()
 				.filter(p -> !p.isError())
 				.toArray(AssemblyParseResult[]::new);
 
-		var allValidEncodings = new ArrayList<String>();
+		var allValidEncodings = new HashSet<String>();
+
+		// The restore instruction is only valid when ISA_MODE is equal to one (MIPS16)
+		// Based on the operands, we should only get the 32-bit encodings
 		Address addr8 = mips.getAddressFactory().getDefaultAddressSpace().getAddress(8);
 
 		for (AssemblyParseResult r : allResults) {
@@ -466,6 +477,56 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 
 		assertThat(allValidEncodings, hasItem("f0:30:64:77"));
+		assertThat(allValidEncodings, not(hasItem("64:77")));
+	}
+
+	@Test
+	public void testRestore_mips16() throws Exception {
+		mips();
+		Collection<AssemblyParseResult> parses = asmMips.parseLine("restore 0x38,ra,s0-s1");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidEncodings = new HashSet<String>();
+
+		// The restore instruction is only valid when ISA_MODE is equal to one (MIPS16)
+		// Notice ext_done is also set to one at the address we provide
+		// Based on the operands and context, we should only get the 16-bit encodings
+		Address addr10 = mips.getAddressFactory().getDefaultAddressSpace().getAddress(0x10);
+
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmMips.resolveTree(r, addr10);
+			dumpResults(results);
+			allValidEncodings.addAll(getInstructionValuesHex(results));
+		}
+
+		assertThat(allValidEncodings, hasItem("64:77"));
+		assertThat(allValidEncodings, not(hasItem("f0:0c:64:77")));
+	}
+
+	@Test
+	public void testRestoreAll_mips16() throws Exception {
+		mips();
+		Collection<AssemblyParseResult> parses = asmMips.parseLine("restore 0x38,ra,s0-s1");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidEncodings = new HashSet<String>();
+
+		// The restore instruction is only valid when ISA_MODE is equal to one (MIPS16)
+		// Based on the operands, we should get 32-bit and 16-bit encodings
+		Address addr8 = mips.getAddressFactory().getDefaultAddressSpace().getAddress(8);
+
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmMips.resolveTree(r, addr8);
+			dumpResults(results);
+			allValidEncodings.addAll(getInstructionValuesHex(results));
+		}
+
+		assertThat(allValidEncodings, hasItem("f0:0c:64:77"));
+		assertThat(allValidEncodings, hasItem("64:77"));
 	}
 
 	@Test
@@ -484,12 +545,18 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 			allValidResults.addAll(getValidResults(results));
 		}
 
-		// I expect at least an encoding like 0xf0306477 (see "testRestore_mips" test)
+		// I expect at least an encoding like 0x6477 (see "testRestoreAll_mips16" test)
 		assertFalse(allValidResults.isEmpty());
 	}
 
+	/**
+	 * Tests assembling a MIPS 'lw' instruction in MIPS (not MIPS16)
+	 * 
+	 * This test is similar to {@link #testLw_mips16_32()} except it DOES constrain context such
+	 * that we do NOT get MIPS16 encodings.
+	 */
 	@Test
-	public void testLw_mips() throws Exception {
+	public void testLw_mips32() throws Exception {
 		mips();
 		Collection<AssemblyParseResult> parses = asmMips.parseLine("lw `Q1`,0x0(a0)");
 		AssemblyParseResult[] allResults = parses.stream()
@@ -517,6 +584,53 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 
 		assertEquals(32, allValidEncodings.size());
+	}
+
+	/**
+	 * Tests assembling a MIPS 'lw' instruction in MIPS and MIPS16
+	 * 
+	 * This test is similar to {@link #testLw_mips32()} except the address we assemble at has a
+	 * non-constrained context so we get both MIPS and MIPS16 encodings.
+	 */
+	@Test
+	public void testLw_mips16_32() throws Exception {
+		mips();
+		Collection<AssemblyParseResult> parses = asmMips.parseLine("lw `Q1`,0x0(a0)");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidEncodings = new HashSet<String>();
+		// Note here, be sure to go past both the mips16 code at the start of our fake
+		// program and the mips32 at 0x100-0x10c
+		Address addr0 = mips.getAddressFactory().getDefaultAddressSpace().getAddress(0x110);
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmMips.resolveTree(r, addr0);
+			dumpResults(results);
+			allValidEncodings.addAll(getInstructionValuesHex(results));
+		}
+
+		// Build all 32 mips32 encodings (one per target register, Q1) and verify they're in
+		// the results
+		byte[] expected = NumericUtilities.convertStringToBytes("8c800000");
+		for (var i = 1; i < 32; i++) {
+			expected[1] = (byte) (0x80 + i);
+			String expectedHex = NumericUtilities.convertBytesToString(expected, ":");
+			assertTrue("Expected to have " + expectedHex + " as an encoding",
+				allValidEncodings.contains(expectedHex));
+		}
+		
+		// Build all 8 mips16 encodings (one per target register, Q1) and verify they're in
+		// the results
+		expected = NumericUtilities.convertStringToBytes("9c00");
+		for (var i = 1; i < 8; i++) {
+			expected[1] = (byte) (0x20 * i);
+			String expectedHex = NumericUtilities.convertBytesToString(expected, ":");
+			assertTrue("Expected to have " + expectedHex + " as an encoding",
+				allValidEncodings.contains(expectedHex));
+		}
+
+		assertEquals(40, allValidEncodings.size());
 	}
 
 	@Test
