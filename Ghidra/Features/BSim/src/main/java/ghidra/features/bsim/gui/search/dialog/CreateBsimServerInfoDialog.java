@@ -206,8 +206,14 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 
 			nameField = new NotifyingTextField();
 			hostField = new NotifyingTextField();
-			portField =
-				new NotifyingTextField(Integer.toString(BSimServerInfo.DEFAULT_POSTGRES_PORT));
+			int defaultPort = -1;
+			if (type == BSimServerInfo.DBType.postgres) {
+				defaultPort = BSimServerInfo.DEFAULT_POSTGRES_PORT;
+			}
+			else if (type == BSimServerInfo.DBType.elastic) {
+				defaultPort = BSimServerInfo.DEFAULT_ELASTIC_PORT;
+			}
+			portField = new NotifyingTextField(Integer.toString(defaultPort));
 
 			JLabel nameLabel = new JLabel("DB Name:", SwingConstants.RIGHT);
 			JLabel hostLabel = new JLabel("Host:", SwingConstants.RIGHT);

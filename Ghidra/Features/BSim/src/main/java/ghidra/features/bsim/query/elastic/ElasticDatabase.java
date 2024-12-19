@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1144,6 +1144,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			String exeId, DescriptionManager manager, int maxDocuments) throws ElasticException {
 		long total;
 		long start = 0;
+		long count = 0;
 		do {
 			int limit = MAX_FUNCTION_WINDOW;
 			if (maxDocuments != 0 && maxDocuments - start < limit) {
@@ -1162,6 +1163,7 @@ public class ElasticDatabase implements FunctionDatabase {
 				doc = (JSONObject) element;
 				FunctionDescription funcDesc = convertDescriptionRow(doc, exeRecord, manager, null);
 				listFunctions.add(funcDesc);
+				++count;
 			}
 			if (hitsarray.size() == 0) {
 				break;			// Shouldn't need this, but just in case
@@ -1169,7 +1171,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			JSONArray sort = (JSONArray) doc.get("sort");
 			start = (Long) sort.get(0);					// Sort value for last entry, for passing as search_after parameter			
 		}
-		while (total > start);
+		while (total > count);
 		return (int) total;
 	}
 
@@ -1766,7 +1768,6 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append(
 				"{ \"script\": { \"inline\": \"if ((ctx._source.count -= params.count) <=0) { ctx.op = \\\"delete\\\" }\", ");
 			buffer.append("\"params\": { \"count\": ").append(entry.count).append("} } }\n");
-			maxVectors -= 1;
 		}
 		JSONObject resp = connection.executeBulk("/_bulk", buffer.toString());
 		JSONArray items = (JSONArray) resp.get("items");
