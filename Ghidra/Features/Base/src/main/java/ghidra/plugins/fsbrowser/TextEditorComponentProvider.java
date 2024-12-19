@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 	public TextEditorComponentProvider(FileSystemBrowserPlugin plugin, String textFileName,
 			String text) {
-		super(plugin.getTool(), TITLE, "TextEditorComponentProvider");
+		super(plugin.getTool(), TITLE, plugin.getName());
 		this.textFileName = textFileName;
 		initialize(text);
 	}
@@ -134,7 +134,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void createActions() {
-		undoAction = new DockingAction("Undo", getName()) {
+		undoAction = new DockingAction("Undo", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				undo();
@@ -150,7 +150,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		undoAction.setKeyBindingData(new KeyBindingData("ctrl z"));
 		addLocalAction(undoAction);
 
-		redoAction = new DockingAction("Redo", getName()) {
+		redoAction = new DockingAction("Redo", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				redo();
@@ -166,7 +166,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		redoAction.setKeyBindingData(new KeyBindingData("ctrl shift z"));
 		addLocalAction(redoAction);
 
-		saveAction = new DockingAction("Save File", getName()) {
+		saveAction = new DockingAction("Save File", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				save();
@@ -182,7 +182,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		saveAction.setKeyBindingData(new KeyBindingData("ctrl-s"));
 		addLocalAction(saveAction);
 
-		saveAsAction = new DockingAction("Save File As", getName()) {
+		saveAsAction = new DockingAction("Save File As", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				saveAs();
@@ -192,7 +192,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		saveAsAction.setToolBarData(new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
 		addLocalAction(saveAsAction);
 
-		fontAction = new DockingAction("Select Font", getName()) {
+		fontAction = new DockingAction("Select Font", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				doSelectFont();
