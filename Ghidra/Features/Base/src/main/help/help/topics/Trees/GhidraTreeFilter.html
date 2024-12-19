@@ -5,13 +5,13 @@
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Ghidra Tree Filters</TITLE>
+    <TITLE>Ghidra Tree and Table Filters</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
-    <H1><A name="Filters" id="Filters"></A>Ghidra Tree and Table Filters</H1>
+    <H1><A name="Filters"></A>Ghidra Tree and Table Filters</H1>
 
     <BLOCKQUOTE>
       <P>Most trees and tables in Ghidra support filtering and have a text filter located at the
@@ -40,9 +40,39 @@
         actually it is also using some other related text for the match, such as a node
         description.</P>
       </BLOCKQUOTE>
+	  
+	  <BLOCKQUOTE>
+          <P><IMG alt="" src="help/shared/tip.png">While focus is in the filter you can press the 
+		  up and down arrow keys to change focus to the tree or table.  This allows you to enter 
+		  a filter and arrow through the results without using the mouse.   To get back to the
+		  filter easily, press the <A HREF="#Activate_Filter">activate filter</A> action (the 
+	      default key binding is <CODE>Ctrl-F</CODE>) to transfer focus back to the filter.</P>
+        </BLOCKQUOTE>
     </BLOCKQUOTE><BR>
      <BR>
-     
+
+		
+	<H2><A name="Activate_Filter"></A>Activate Filter</H2>
+		<BLOCKQUOTE>
+	      <P>
+		  The <B>Activate Filter</B> action will transfer focus to the filter field when you are 
+		  using the tree or table.  If the filter is not visible, it will first be made visible.
+		  The default key binding for this action is <CODE>Ctrl-F</CODE>.
+		  </P>
+		</BLOCKQUOTE>
+	
+	
+	<H2><A name="Toggle_Filter"></A>Toggle Filter</H2>
+		<BLOCKQUOTE>
+	      <P>
+		  The <B>Toggle Filter</B> action will hide and show the filter field of the tree or table.
+		  To use this action you must first assign it a key binding from the tool options.
+		  </P>
+		</BLOCKQUOTE>
+		
+			  
+	
+	   
 
     <H2>Clear Filter</H2>
 
