@@ -111,6 +111,110 @@ task testSpecimenLinux_x86_64 {
 	}
 }
 
+task testSpecimenMac_arm_64 {
+	dependsOn 'expCloneExitMac_arm_64Executable'
+	dependsOn 'expPrintMac_arm_64Executable'
+	dependsOn 'expReadMac_arm_64Executable'
+}
+
+// TODO: testSpecimenMac_x86_64 (Intel)
+//   will likely need to codesign them to grant debugee-entitlement
+
+model {
+	components {
+		expCreateProcess(NativeExecutableSpec) {
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expCreateThreadExit(NativeExecutableSpec) {
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expCreateThreadSpin(NativeExecutableSpec) {
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expCloneExec(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+		}
+		expCloneExit(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "mac_arm_64"
+		}
+		expCloneSpin(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+		}
+		expFork(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+		}
+		expPrint(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+			targetPlatform "mac_arm_64"
+		}
+		expRead(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			targetPlatform "mac_arm_64"
+		}
+		expSpin(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expRegisters(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expStack(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expTraceableSleep(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+		}
+	}
+
+	binaries {
+		withType(NativeExecutableBinarySpec) {
+			if (toolChain in Gcc) {
+				cCompiler.args("-std=c99")
+				linker.args("-lpthread")
+				linker.args("-lutil")
+			}
+			if (toolChain in VisualCpp) {
+				cppCompiler.define("VS_PROJECT")
+				// NB. No /SUBSYSTEM:CONSOLE
+				// that creates a subprocess
+				linker.args("/SUBSYSTEM:windows", "/DYNAMICBASE", "/NXCOMPAT")
+				linker.args("shell32.lib");
+			}
+			if (isWindows(targetPlatform.name)) {
+				cppCompiler.define("WIN32")
+				cCompiler.define("WIN32")
+
+				cppCompiler.define("_WINDOWS")
+				cCompiler.define("_WINDOWS")
+
+				cppCompiler.define("UNICODE")
+				cCompiler.define("_UNICODE")
+
+				cppCompiler.define("_UNICODE")
+				cCompiler.define("UNICODE")
+			}
+		}
+	}
+}
+
 integrationTest {
 	dependsOn { project(':Debugger-rmi-trace').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
