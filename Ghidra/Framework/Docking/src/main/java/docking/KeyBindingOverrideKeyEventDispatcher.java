@@ -25,8 +25,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
-import docking.action.DockingActionIf;
-import docking.action.MultipleKeyAction;
+import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.menu.keys.MenuKeyProcessor;
 import ghidra.util.bean.GGlassPane;
@@ -246,12 +245,22 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false; // no actions; not a valid key stroke for this dialog
 		}
 		for (DockingActionIf action : actions) {
-			if (!provider.isDialogKeyBindingAction(action)) {
+			if (!isAllowedDialogAction(provider, action)) {
 				return false;
 			}
 		}
 
 		return true; // all actions belong to the active dialog; this is a valid action
+	}
+
+	private boolean isAllowedDialogAction(DialogComponentProvider provider,
+			DockingActionIf action) {
+
+		if (action instanceof ComponentBasedDockingAction) {
+			return true; // these actions work on low-level components, which may live in dialogs
+		}
+
+		return provider.isDialogKeyBindingAction(action);
 	}
 
 	private boolean isSettingKeyBindings(KeyEvent event) {

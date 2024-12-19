@@ -17,10 +17,13 @@ package docking.widgets.table;
 
 import static org.junit.Assert.*;
 
+import java.awt.BorderLayout;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 
+import org.jdom.Element;
 import org.junit.*;
 
 import docking.*;
@@ -38,23 +41,32 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 	private GhidraTable table;
 	private GTableFilterPanel<DirData> filterPanel;
 	private DockingWindowManager winMgr;
-
-	public GhidraTableFilterTest() {
-		super();
-	}
+	private DummyTool tool;
+	private TestTableComponentProvider provider;
 
 	@Before
 	public void setUp() throws Exception {
-		model = new TestDataModel("filterTestDirList.txt");
-		table = new GhidraTable(model);
-		filterPanel = new GTableFilterPanel<>(table, model);
-		filteredModel = filterPanel.getTableFilterModel();
-		table.setAutoLookupColumn(4);
 
-		DummyTool tool = new DummyTool();
+		tool = new DummyTool();
 		winMgr = new DockingWindowManager(tool, null);
-		winMgr.addComponent(new TestTableComponentProvider(tool));
 		winMgr.setVisible(true);
+
+		buildTable();
+	}
+
+	private void buildTable() throws Exception {
+
+		runSwingWithException(() -> {
+			model = new TestDataModel("filterTestDirList.txt");
+			table = new GhidraTable(model);
+			filterPanel = new GTableFilterPanel<>(table, model);
+			filteredModel = filterPanel.getTableFilterModel();
+			table.setAutoLookupColumn(4);
+			provider = new TestTableComponentProvider(tool);
+		});
+
+		winMgr.addComponent(provider);
+		waitForSwing();
 	}
 
 	@After
@@ -65,7 +77,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testContains() {
-		setFilterOptions(TextFilterStrategy.CONTAINS, false);
+		setFilterOptions(TextFilterStrategy.CONTAINS);
 		// no filter text - make sure all 5 nodes are there
 		assertEquals(TOTAL_TABLE_ROWS, filteredModel.getRowCount());
 
@@ -147,7 +159,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testStartsWith() {
-		setFilterOptions(TextFilterStrategy.STARTS_WITH, false);
+		setFilterOptions(TextFilterStrategy.STARTS_WITH);
 
 		assertEquals(TOTAL_TABLE_ROWS, filteredModel.getRowCount());
 
@@ -183,7 +195,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testExactMatch() {
-		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
+		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
 		assertEquals(TOTAL_TABLE_ROWS, filteredModel.getRowCount());
 
 		setFilterText("ABC");
@@ -215,7 +227,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRegExMatch() {
-		setFilterOptions(TextFilterStrategy.REGULAR_EXPRESSION, false);
+		setFilterOptions(TextFilterStrategy.REGULAR_EXPRESSION);
 
 		assertEquals(TOTAL_TABLE_ROWS, filteredModel.getRowCount());
 
@@ -246,17 +258,17 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSwitchFilterTypes() {
-		setFilterOptions(TextFilterStrategy.STARTS_WITH, false);
+		setFilterOptions(TextFilterStrategy.STARTS_WITH);
 		setFilterText("ABC");
 		checkContainsName("ABC");
 		checkContainsName("ABCX");
 		assertEquals(2, filteredModel.getRowCount());
 
-		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
+		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
 		checkContainsName("ABC");
 		assertEquals(1, filteredModel.getRowCount());
 
-		setFilterOptions(TextFilterStrategy.CONTAINS, false);
+		setFilterOptions(TextFilterStrategy.CONTAINS);
 		assertEquals(4, filteredModel.getRowCount());
 		checkContainsName("ABC");
 		checkContainsName("XABC");
@@ -266,27 +278,39 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testSavingSelectedFilterType() {
-		waitForSwing();
-		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY, false);
+	public void testFilterPersistence() throws Exception {
+
+		// default configuration
+		assertFilterOptions(TextFilterStrategy.CONTAINS);
+
+		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
+		setFilterText("ABC");
+		setFilterText("ABC");
+
+		setFilterOptions(TextFilterStrategy.STARTS_WITH);
 		setFilterText("ABC");
 		checkContainsName("ABC");
-		assertEquals(1, filteredModel.getRowCount());
+		checkContainsName("ABCX");
 
-		Object originalValue = getInstanceField("uniquePreferenceKey", filterPanel);
+		// close and reopen the table to verify that the new tree uses the last used filter
+		triggerSaveAndReload();
 
-		setUniqueKey("XYZ");
-
-		setFilterOptions(TextFilterStrategy.STARTS_WITH, false);
+		assertFilterOptions(TextFilterStrategy.STARTS_WITH);
+		setFilterText("ABC");
 		checkContainsName("ABC");
 		checkContainsName("ABCX");
-		assertEquals(2, filteredModel.getRowCount());
 
-		setUniqueKey(originalValue);
-		restorePreferences();
+		// put back, test, and then make sure the updated filter is restored
+		setFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
+		setFilterText("ABC");
 		checkContainsName("ABC");
-		assertEquals(1, filteredModel.getRowCount());
 
+		// close and reopen the table to verify that the new tree uses the last used filter
+		triggerSaveAndReload();
+
+		assertFilterOptions(TextFilterStrategy.MATCHES_EXACTLY);
+		setFilterText("ABC");
+		checkContainsName("ABC");
 	}
 
 	@Test
@@ -368,22 +392,42 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, filteredModel.getRowCount());
 	}
 
-	private void setUniqueKey(final Object value) {
-		runSwing(() -> setInstanceField("uniquePreferenceKey", filterPanel, value));
+//=================================================================================================
+// Private Methods
+//=================================================================================================	
 
+	private void triggerSaveAndReload() throws Exception {
+
+		// trigger the window manager to save the table filter preferences to xml
+		Element xml = new Element("TOOL");
+		winMgr.saveToXML(xml);
+
+		runSwing(() -> {
+			winMgr.removeComponent(provider);
+			filterPanel.dispose();
+		});
+
+		// put the state back in the window manager
+		winMgr.restoreFromXML(xml);
+
+		// load the new table and let it pull the preferences from the window manager
+		buildTable();
 	}
 
-	private void restorePreferences() {
-		runSwing(() -> {
-			Class<?>[] classes = new Class[] { DockingWindowManager.class };
-			Object[] objs = new Object[] { winMgr };
-			invokeInstanceMethod("loadFilterPreference", filterPanel, classes, objs);
-		});
-		waitForSwing();
+	private void assertFilterOptions(TextFilterStrategy expectedStrategy) {
+		FilterOptions filterOptions = runSwing(() -> filterPanel.getFilterOptions());
+		TextFilterStrategy actualStrategy = filterOptions.getTextFilterStrategy();
+		assertEquals(expectedStrategy, actualStrategy);
+	}
+
+	private void setFilterOptions(TextFilterStrategy filterStrategy) {
+		setFilterOptions(filterStrategy, false);
 	}
 
 	private void setFilterOptions(TextFilterStrategy filterStrategy, boolean inverted) {
-		filterPanel.setFilterOptions(new FilterOptions(filterStrategy, false, false, inverted));
+		runSwing(() -> {
+			filterPanel.setFilterOptions(new FilterOptions(filterStrategy, false, false, inverted));
+		});
 		waitForSwing();
 	}
 
@@ -422,15 +466,21 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private class TestTableComponentProvider extends ComponentProvider {
 
+		private JPanel panel;
+
 		public TestTableComponentProvider(DummyTool tool) {
 			super(tool, "Test", "Test");
 			setDefaultWindowPosition(WindowPosition.STACK);
 			setTabText("Test");
+
+			panel = new JPanel(new BorderLayout());
+			panel.add(table, BorderLayout.CENTER);
+			panel.add(filterPanel, BorderLayout.SOUTH);
 		}
 
 		@Override
 		public JComponent getComponent() {
-			return table;
+			return panel;
 		}
 
 		@Override
