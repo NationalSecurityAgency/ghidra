@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
-import generic.theme.GColor;
-import generic.theme.Gui;
+import generic.theme.*;
 import ghidra.app.plugin.core.terminal.TerminalFinder.RegexTerminalFinder;
 import ghidra.app.plugin.core.terminal.TerminalFinder.TextTerminalFinder;
 import ghidra.app.plugin.core.terminal.vt.*;
@@ -56,10 +55,30 @@ import ghidra.util.Msg;
  * most sense to declare the various {@link GColor}s here.
  */
 public class TerminalPanel extends JPanel implements FieldLocationListener, FieldSelectionListener,
-		LayoutListener, AnsiColorResolver {
+		LayoutListener, AnsiColorResolver, ThemeListener {
 	protected static final int MAX_TITLE_STACK_SIZE = 20;
 
 	protected static final String DEFAULT_FONT_ID = "font.plugin.terminal";
+	protected static final String DEFAULT_FRAKTUR_FONT_ID = "font.plugin.terminal.fraktur";
+	protected static final String DEFAULT_ITALIC_FONT_ID = "font.plugin.terminal.italic";
+	protected static final String DIM_FONT_ID = "font.plugin.terminal.dim";
+	protected static final String DIM_FRAKTUR_FONT_ID = "font.plugin.terminal.dim.fraktur";
+	protected static final String DIM_ITALIC_FONT_ID = "font.plugin.terminal.dim.italic";
+	protected static final String BRIGHT_FONT_ID = "font.plugin.terminal.bright";
+	protected static final String BRIGHT_FRAKTUR_FONT_ID = "font.plugin.terminal.bright.fraktur";
+	protected static final String BRIGHT_ITALIC_FONT_ID = "font.plugin.terminal.bright.italic";
+
+	protected static final Set<String> ALL_FONT_IDS = Set.of(
+		DEFAULT_FONT_ID,
+		DEFAULT_FRAKTUR_FONT_ID,
+		DEFAULT_ITALIC_FONT_ID,
+		DIM_FONT_ID,
+		DIM_FRAKTUR_FONT_ID,
+		DIM_ITALIC_FONT_ID,
+		BRIGHT_FONT_ID,
+		BRIGHT_FRAKTUR_FONT_ID,
+		BRIGHT_ITALIC_FONT_ID);
+
 	protected static final GColor COLOR_BACKGROUND = new GColor("color.bg.plugin.terminal");
 	protected static final GColor COLOR_FOREGROUND = new GColor("color.fg.plugin.terminal");
 	protected static final GColor COLOR_CURSOR_FOCUSED =
@@ -84,6 +103,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		new GColor("color.fg.plugin.terminal.normal.cyan");
 	protected static final GColor COLOR_7_WHITE =
 		new GColor("color.fg.plugin.terminal.normal.white");
+
 	protected static final GColor COLOR_0_BRIGHT_BLACK =
 		new GColor("color.fg.plugin.terminal.bright.black");
 	protected static final GColor COLOR_1_BRIGHT_RED =
@@ -100,6 +120,23 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		new GColor("color.fg.plugin.terminal.bright.cyan");
 	protected static final GColor COLOR_7_BRIGHT_WHITE =
 		new GColor("color.fg.plugin.terminal.bright.white");
+
+	protected static final GColor COLOR_0_DIM_BLACK =
+		new GColor("color.fg.plugin.terminal.dim.black");
+	protected static final GColor COLOR_1_DIM_RED =
+		new GColor("color.fg.plugin.terminal.dim.red");
+	protected static final GColor COLOR_2_DIM_GREEN =
+		new GColor("color.fg.plugin.terminal.dim.green");
+	protected static final GColor COLOR_3_DIM_YELLOW =
+		new GColor("color.fg.plugin.terminal.dim.yellow");
+	protected static final GColor COLOR_4_DIM_BLUE =
+		new GColor("color.fg.plugin.terminal.dim.blue");
+	protected static final GColor COLOR_5_DIM_MAGENTA =
+		new GColor("color.fg.plugin.terminal.dim.magenta");
+	protected static final GColor COLOR_6_DIM_CYAN =
+		new GColor("color.fg.plugin.terminal.dim.cyan");
+	protected static final GColor COLOR_7_DIM_WHITE =
+		new GColor("color.fg.plugin.terminal.dim.white");
 
 	protected static final int[] CUBE_STEPS = {
 		0, 95, 135, 175, 215, 255
@@ -129,6 +166,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		}
 	}
 
+	protected float fontSizeAdjustment = 0;
 	protected FontMetrics metrics;
 	protected final TerminalLayoutModel model;
 	protected final TerminalFieldPanel fieldPanel;
@@ -153,6 +191,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		this.provider = provider;
 		clipboardProvider = new TerminalClipboardProvider(provider);
 		Gui.registerFont(this, DEFAULT_FONT_ID);
+		Gui.addThemeListener(this);
 		this.metrics = getFontMetrics(getFont());
 		this.model = new TerminalLayoutModel(this, charset, metrics, this);
 		this.fieldPanel = new TerminalFieldPanel(model);
@@ -347,12 +386,56 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	}
 
 	@Override
+	public void themeChanged(ThemeEvent event) {
+		if (event.isLookAndFeelChanged()) {
+			setFont(Gui.getFont(DEFAULT_FONT_ID));
+		}
+		if (event.isFontChanged(DEFAULT_FONT_ID)) {
+			setFont(Gui.getFont(DEFAULT_FONT_ID));
+		}
+		else if (ALL_FONT_IDS.stream().anyMatch(event::isFontChanged)) {
+			if (model != null) {
+				model.modelChanged();
+			}
+		}
+	}
+
+	protected void updateFontMetrics() {
+		Font font = getFont();
+		float size = font.getSize2D();
+		fontSizeAdjustment = Math.max(-size + 1, fontSizeAdjustment);
+		font = font.deriveFont(size + fontSizeAdjustment);
+		metrics = getFontMetrics(font);
+		if (model != null) {
+			model.setFontMetrics(metrics, fontSizeAdjustment);
+		}
+		if (!fixedSize) {
+			resizeTerminalToWindow();
+		}
+		if (model != null) {
+			model.modelChanged();
+		}
+	}
+
+	@Override
 	public void setFont(Font font) {
 		super.setFont(font);
-		this.metrics = getFontMetrics(font);
-		if (model != null) {
-			model.setFontMetrics(this.metrics);
-		}
+		updateFontMetrics();
+	}
+
+	protected void increaseFontSize() {
+		fontSizeAdjustment++;
+		updateFontMetrics();
+	}
+
+	protected void decreaseFontSize() {
+		fontSizeAdjustment--;
+		updateFontMetrics();
+	}
+
+	protected void resetFontSize() {
+		fontSizeAdjustment = 0;
+		updateFontMetrics();
 	}
 
 	public TerminalFieldPanel getFieldPanel() {
@@ -424,29 +507,42 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		model.processInput(buffer);
 	}
 
-	protected Color resolveDefaultColor(WhichGround ground, boolean reverseVideo) {
-		if (ground == WhichGround.BACKGROUND) {
-			if (reverseVideo) {
-				return COLOR_FOREGROUND;
-			}
-			return null; // background is already drawn
+	protected Color resolveDefaultColor(WhichGround ground, ReverseVideo reverse,
+			Intensity intensity) {
+		Color color = switch (reverse) {
+			case NORMAL -> switch (ground) {
+				case FOREGROUND -> COLOR_FOREGROUND;
+				case BACKGROUND -> null; // background is already drawn 
+			};
+			case REVERSED -> switch (ground) {
+				case FOREGROUND -> COLOR_BACKGROUND;
+				case BACKGROUND -> COLOR_FOREGROUND;
+			};
+		};
+		if (color == null) {
+			return null;
 		}
-		if (reverseVideo) {
-			return COLOR_BACKGROUND;
-		}
-		return COLOR_FOREGROUND;
+		return switch (intensity) {
+			case NORMAL -> color;
+			case BOLD -> color.brighter();
+			case DIM -> color.darker();
+		};
 	}
 
-	protected Color resolveStandardColor(AnsiStandardColor standard) {
-		return switch (standard) {
-			case BLACK -> COLOR_0_BLACK;
-			case RED -> COLOR_1_RED;
-			case GREEN -> COLOR_2_GREEN;
-			case YELLOW -> COLOR_3_YELLOW;
-			case BLUE -> COLOR_4_BLUE;
-			case MAGENTA -> COLOR_5_MAGENTA;
-			case CYAN -> COLOR_6_CYAN;
-			case WHITE -> COLOR_7_WHITE;
+	protected Color resolveStandardColor(AnsiStandardColor standard, Intensity intensity) {
+		return switch (intensity) {
+			case BOLD -> resolveIntenseColor(standard.intense);
+			case DIM -> resolveDimColor(standard.dim);
+			case NORMAL -> switch (standard) {
+				case BLACK -> COLOR_0_BLACK;
+				case RED -> COLOR_1_RED;
+				case GREEN -> COLOR_2_GREEN;
+				case YELLOW -> COLOR_3_YELLOW;
+				case BLUE -> COLOR_4_BLUE;
+				case MAGENTA -> COLOR_5_MAGENTA;
+				case CYAN -> COLOR_6_CYAN;
+				case WHITE -> COLOR_7_WHITE;
+			};
 		};
 	}
 
@@ -460,6 +556,19 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 			case MAGENTA -> COLOR_5_BRIGHT_MAGENTA;
 			case CYAN -> COLOR_6_BRIGHT_CYAN;
 			case WHITE -> COLOR_7_BRIGHT_WHITE;
+		};
+	}
+
+	protected Color resolveDimColor(AnsiDimColor intense) {
+		return switch (intense) {
+			case BLACK -> COLOR_0_DIM_BLACK;
+			case RED -> COLOR_1_DIM_RED;
+			case GREEN -> COLOR_2_DIM_GREEN;
+			case YELLOW -> COLOR_3_DIM_YELLOW;
+			case BLUE -> COLOR_4_DIM_BLUE;
+			case MAGENTA -> COLOR_5_DIM_MAGENTA;
+			case CYAN -> COLOR_6_DIM_CYAN;
+			case WHITE -> COLOR_7_DIM_WHITE;
 		};
 	}
 
@@ -478,12 +587,12 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	@Override
 	public Color resolveColor(AnsiColor color, WhichGround ground, Intensity intensity,
-			boolean reverseVideo) {
+			ReverseVideo reverse) {
 		if (color == AnsiDefaultColor.INSTANCE) {
-			return resolveDefaultColor(ground, reverseVideo);
+			return resolveDefaultColor(ground, reverse, intensity);
 		}
 		if (color instanceof AnsiStandardColor standard) {
-			return resolveStandardColor(standard);
+			return resolveStandardColor(standard, intensity);
 		}
 		if (color instanceof AnsiIntenseColor intense) {
 			return resolveIntenseColor(intense);
@@ -560,6 +669,8 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	}
 
 	public void dispose() {
+		Gui.unRegisterFont(this, DEFAULT_FONT_ID);
+		Gui.removeThemeListener(this);
 		if (this.clipboardService != null) {
 			clipboardService.deRegisterClipboardContentProvider(clipboardProvider);
 		}
@@ -663,6 +774,10 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	}
 
 	protected void resizeTerminalToWindow() {
+		if (scroller == null) {
+			// Some callback during construction
+			return;
+		}
 		Rectangle bounds = scroller.getViewportBorderBounds();
 		int cols = bounds.width / metrics.charWidth('M');
 		int rows = bounds.height / metrics.getHeight();
