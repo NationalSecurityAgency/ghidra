@@ -74,7 +74,10 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 		ProgramBuilder armProgramBuilder = new ProgramBuilder("arm_le_test", "ARM:LE:32:v8");
 		armProgramBuilder.setBytes(String.format("0x%08X", 0x0),
-			"00 00 a0 e1 00 00 a0 e1 00 00 a0 e1 fb ff ff eb 00 00 a0 e1");
+			"00 00 a0 e1 00 00 a0 e1 00 00 a0 e1 fb ff ff eb 00 00 a0 e1 01 10 81 e0 49 18");
+		// This line sets the binary at addresses 0x18-0x1A to be ARM Thumb
+		armProgramBuilder.setRegisterValue("TMode", "0x18", "0x1A", 1);
+		armProgramBuilder.disassemble("0x00000000", 0x1A);
 		Program armProgram = armProgramBuilder.getProgram();
 		arm = (SleighLanguage) armProgram.getLanguage();
 		WildSleighAssemblerBuilder builderArm = new WildSleighAssemblerBuilder(arm);
@@ -94,7 +97,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		// 0x00000010: restore 0x38,ra,s0-s1
 		mipsProgramBuilder.setBytes("0x00000000",
 			"0c 00 00 08 00 00 00 00 f0 30 64 77 00 00 00 00 64 77");
-		// This line sets the binary at addresses 0x8-0xc to be MIPS 16 (e.g. the
+		// This line sets the binary at addresses 0x8-0x12 to be MIPS 16 (e.g. the
 		// restore instruction above)
 		mipsProgramBuilder.setRegisterValue("ISA_MODE", "0x8", "0x12", 1);
 		// We're cheating (slightly), since a transient context variable should never be set globally
@@ -431,8 +434,8 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 			dumpResults(results);
 			allValidEncodings.addAll(getInstructionValuesHex(results));
 		}
-
-		assertTrue("Expect to have one valid encoding", allValidEncodings.size() == 1);
+		// In this case, wildcard assembler now returns identical encodings with different contexts
+		assertTrue("Expect to have at least one valid encoding", allValidEncodings.size() > 0);
 		assertTrue("Expect to have 02:1c:41:e2 as an encoding",
 			allValidEncodings.contains("02:1c:41:e2"));
 	}
@@ -454,6 +457,75 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 
 		assertTrue("Expect to have multiple valid encodings", allValidEncodings.size() > 0);
+	}
+
+	@Test
+	public void testAdd_arm() throws Exception {
+		arm();
+		Collection<AssemblyParseResult> parses = asmArm.parseLine("add r1,r1,r1");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidEncodings = new ArrayList<String>();
+
+		// Based on the context, we should only get the 32-bit encoding(s)
+		Address addr14 = arm.getAddressFactory().getDefaultAddressSpace().getAddress(0x14);
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmArm.resolveTree(r, addr14);
+			dumpResults(results);
+			allValidEncodings.addAll(getInstructionValuesHex(results));
+		}
+
+		assertThat(allValidEncodings, hasItem("01:10:81:e0"));
+		assertThat(allValidEncodings, not(hasItem("49:18")));
+	}
+
+	@Test
+	public void testAdd_armThumb() throws Exception {
+		arm();
+		Collection<AssemblyParseResult> parses = asmArm.parseLine("add r1,r1,r1");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidEncodings = new ArrayList<String>();
+
+		// Based on the context, we should only get the 16-bit encoding(s)
+		Address addr18 = arm.getAddressFactory().getDefaultAddressSpace().getAddress(0x18);
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmArm.resolveTree(r, addr18);
+			dumpResults(results);
+			allValidEncodings.addAll(getInstructionValuesHex(results));
+		}
+
+		assertThat(allValidEncodings, hasItem("49:18"));
+		assertThat(allValidEncodings, not(hasItem("01:10:81:e0")));
+	}
+
+	@Test
+	public void testAdd_armAll() throws Exception {
+		arm();
+		Collection<AssemblyParseResult> parses = asmArm.parseLine("add r1,r1,r1");
+		AssemblyParseResult[] allResults = parses.stream()
+				.filter(p -> !p.isError())
+				.toArray(AssemblyParseResult[]::new);
+
+		var allValidEncodings = new ArrayList<String>();
+
+		// Based on the context, we should get the 32-bit and 16-bit encodings
+		Address addr14 = arm.getAddressFactory().getDefaultAddressSpace().getAddress(0x14);
+		AssemblyPatternBlock unspecifiedCtx =
+			AssemblyPatternBlock.fromLength(arm.getContextBaseRegister().getNumBytes());
+
+		for (AssemblyParseResult r : allResults) {
+			AssemblyResolutionResults results = asmArm.resolveTree(r, addr14, unspecifiedCtx);
+			dumpResults(results);
+			allValidEncodings.addAll(getInstructionValuesHex(results));
+		}
+
+		assertThat(allValidEncodings, hasItem("01:10:81:e0"));
+		assertThat(allValidEncodings, hasItem("49:18"));
 	}
 
 	@Test
@@ -619,7 +691,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 			assertTrue("Expected to have " + expectedHex + " as an encoding",
 				allValidEncodings.contains(expectedHex));
 		}
-		
+
 		// Build all 8 mips16 encodings (one per target register, Q1) and verify they're in
 		// the results
 		expected = NumericUtilities.convertStringToBytes("9c00");
@@ -630,7 +702,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 				allValidEncodings.contains(expectedHex));
 		}
 
-		assertEquals(40, allValidEncodings.size());
+		assertEquals(48, allValidEncodings.size());
 	}
 
 	@Test

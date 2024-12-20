@@ -38,6 +38,13 @@ public interface AssemblyResolvedPatterns extends AssemblyResolution {
 	AssemblyPatternBlock getContext();
 
 	/**
+	 * Set the context block
+	 * 
+	 * @param ctx the new context block
+	 */
+	void setContext(AssemblyPatternBlock ctx);
+
+	/**
 	 * Get the length of the instruction encoding
 	 * 
 	 * <p>
