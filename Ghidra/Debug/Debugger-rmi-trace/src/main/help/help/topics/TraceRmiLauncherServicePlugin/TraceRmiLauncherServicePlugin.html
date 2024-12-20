@@ -90,6 +90,21 @@
     selected, then this selects nothing, so that pressing the keystroke twice is effectively
     "Select None."</P>
 
+    <H3><A name="increase_font_size"></A>Increase Font Size</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-PLUS</B>.
+    It increases the font size for this terminal.</P>
+
+    <H3><A name="decrease_font_size"></A>Decrease Font Size</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-MINUS</B>. It
+    decreases the font size for this terminal.</P>
+
+    <H3><A name="reset_font_size"></A>Reset Font Size</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-0</B>. It resets
+    the font size for this terminal according to the theme's configuration'.</P>
+
     <H3><A name="terminate"></A>Terminate</H3>
 
     <P>This action is accessed using the local drop-down menu. It will terminate the Terminal's
@@ -873,41 +888,45 @@ bdcedit /dbgsettings NET HOSTIP:IP PORT:54321 KEY:1.1.1.1
 
     <UL>
       <LI><B>Type</B>: The type of kernel connection, either "Remote", "Local", or "EXDI".
-      "Remote", the most common type, indicates two-machine debugging over various
-      possible connection media, e.g. Ethernet, serial, USB, etc. "Local" is used for limited
-      introspection into the target on which the debugger is running.  "EXDI" is arguably
-      the most exotic type - it essentially simulates the normal "Remote" connection using
-      the gdb Remote Serial Protocol.  It can be used when connecting to gdbstubs in 
-      platforms, such as QEMU, VMWare, Trace32, etc.</LI>
+      "Remote", the most common type, indicates two-machine debugging over various possible
+      connection media, e.g. Ethernet, serial, USB, etc. "Local" is used for limited introspection
+      into the target on which the debugger is running. "EXDI" is arguably the most exotic type -
+      it essentially simulates the normal "Remote" connection using the gdb Remote Serial Protocol.
+      It can be used when connecting to gdbstubs in platforms, such as QEMU, VMWare, Trace32,
+      etc.</LI>
     </UL>
 
-	<H4>EXDI</H4>
-	
-	    <P>Setup for EXDI connections is fairly complicated and difficult to get correct.
-	    The argument string typically should be something like:</P>
-	     <UL style='list-style-type: none'>
-	      <LI>
-	<PRE>
-	 exdi:CLSID={29f9906e-9dbe-4d4b-b0fb-6acf7fb6d014},Kd=Guess,DataBreaks=Exdi
-	 </PRE>
-	      </LI>
-	    </UL>
-	    <P>The CLSID here should match the CLSID in the <B>exdiConfigData.xml</B> file in the debugger architectural directory.  If windbg has been
-	    run using EXDI at some point, there will also be an entry in the System Registry for this CLSID.  The InprocServer32 subentry
-	    for this CLSID in the Registry should point to a copy of ExdiGdbSrv.dll, typically the one in the same directory. This DLL
-	    must reside somewhere that the debugger has permission to load from, i.e.  not in the WindowsApps directory tree.
-	    The <B>exdiConfigData</B> file should be configured for the target you're using. We heavily recommend using <B>displayCommPackets==yes</B>,
-	    as many of the tasks take considerable time, and this is the only indicator of progress.
-	    </P>
+    <H4>EXDI</H4>
 
-	    <P>The <B>Kd=Guess</B> parameter causes the underlying engine to scan memory for the kernel's base address, which will probably not
-	    be provided by the gdbstub. (<B>Kd=NtBaseAddr</B> is also a valid option, as is eliminating the parameter, but, currently, we have no
-	    idea how to point the configuration at a correct value. Using this option will cause the load to spin pointlessly.)  If you can,
-	    we highly recommend breaking the target near the base address, as the search proceeds down through memory starting at the current
-	    program counter.  If the difference between the PC and the base address is large, the loading process will punt before useful 
-	    values are detected. If anyone understand how to extend this search (or knows how to set the base address to sidestep the scan),
-	    we would really love some guidance.
-	    </P>
+    <P>Setup for EXDI connections is fairly complicated and difficult to get correct. The argument
+    string typically should be something like:</P>
+
+    <UL style='list-style-type: none'>
+      <LI>
+<PRE>
+exdi:CLSID={29f9906e-9dbe-4d4b-b0fb-6acf7fb6d014},Kd=Guess,DataBreaks=Exdi
+</PRE>
+      </LI>
+    </UL>
+
+    <P>The CLSID here should match the CLSID in the <B>exdiConfigData.xml</B> file in the debugger
+    architectural directory. If windbg has been run using EXDI at some point, there will also be an
+    entry in the System Registry for this CLSID. The InprocServer32 subentry for this CLSID in the
+    Registry should point to a copy of ExdiGdbSrv.dll, typically the one in the same directory.
+    This DLL must reside somewhere that the debugger has permission to load from, i.e. not in the
+    WindowsApps directory tree. The <B>exdiConfigData</B> file should be configured for the target
+    you're using. We heavily recommend using <B>displayCommPackets==yes</B>, as many of the tasks
+    take considerable time, and this is the only indicator of progress.</P>
+
+    <P>The <B>Kd=Guess</B> parameter causes the underlying engine to scan memory for the kernel's
+    base address, which will probably not be provided by the gdbstub. (<B>Kd=NtBaseAddr</B> is also
+    a valid option, as is eliminating the parameter, but, currently, we have no idea how to point
+    the configuration at a correct value. Using this option will cause the load to spin
+    pointlessly.) If you can, we highly recommend breaking the target near the base address, as the
+    search proceeds down through memory starting at the current program counter. If the difference
+    between the PC and the base address is large, the loading process will punt before useful
+    values are detected. If anyone understand how to extend this search (or knows how to set the
+    base address to sidestep the scan), we would really love some guidance.</P>
 
     <H3><A name="dbgeng_ttd"></A>TTD (Time-Travel Debugging)</H3>
 
