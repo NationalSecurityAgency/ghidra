@@ -25,7 +25,8 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import db.Transaction;
@@ -731,7 +732,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 		runSwing(() -> tb.trace.getProgramView().getMemory().setForceFullView(true));
 
-		goToDyn(tb.addr(0x55550000));
+		goToDyn(tb.addr(0x55550800));
 		runSwing(() -> listingProvider.setAutoReadMemorySpec(spec));
 
 		handleReadMemInvocation(process, tb.range(0x55550000, 0x55550fff));
@@ -742,13 +743,11 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 	}
 
 	@Test
-	@Ignore("Until GP-5180")
 	public void testAutoReadMemoryVisROOnceReadsWithForceFullView() throws Throwable {
 		runTestAutoReadMemoryReadsWithForceFullView(readVisROOnce);
 	}
 
 	@Test
-	@Ignore("Until GP-5180")
 	public void testAutoReadMemoryVisibleReadsWithForceFullView() throws Throwable {
 		runTestAutoReadMemoryReadsWithForceFullView(readVisible);
 	}
