@@ -3952,7 +3952,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			AddressArrayTableModel model = new AddressArrayTableModel(getScriptName(),
 				state.getTool(), currentProgram, addresses);
 			TableComponentProvider<Address> tableProvider =
-				table.showTableWithMarkers(title + " " + model.getName(), "GhidraScript", model,
+				table.showTableWithMarkers(title + " " + model.getName(), "Addresses", model,
 					Palette.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
 		};
@@ -3970,7 +3970,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			AddressSetTableModel model =
 				new AddressSetTableModel(title, state.getTool(), currentProgram, addresses, null);
 			TableComponentProvider<Address> tableProvider = table.showTableWithMarkers(title,
-				"GhidraScript", model, Palette.GREEN, null, "Script Results", null);
+				"Addresses", model, Palette.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
 		});
 	}

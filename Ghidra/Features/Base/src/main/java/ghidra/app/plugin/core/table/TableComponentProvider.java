@@ -160,6 +160,13 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private void createActions(Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
+
+		// The name of this provider is specified by the clients of the service and it is expected 
+		// to be something like 'Search Results'.  The title is also from the client and is expected
+		// to be something like 'Search Text "foo"'
+		table.setAccessibleNamePrefix(getName());
+		table.getAccessibleContext().setAccessibleDescription("Provider title: " + getTitle());
+
 		if (navigatable != null) {
 			selectAction =
 				new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);

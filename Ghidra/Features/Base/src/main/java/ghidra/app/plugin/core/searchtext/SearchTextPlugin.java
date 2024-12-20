@@ -335,13 +335,15 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private TableComponentProvider<ProgramLocation> getTableResultsProvider(
 			GhidraProgramTableModel<ProgramLocation> model, Program searchProgram,
 			TableService query, String matchType, String searchString) {
+		String tableType = "Search Results";
 		if (navigatable.supportsMarkers()) {
 			return query.showTableWithMarkers(
-				"Search Text - \"" + searchString + "\"  [" + matchType + "]", "Search", model,
+				"Search Text - \"" + searchString + "\"  [" + matchType + "]", tableType,
+				model,
 				SearchConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
 		}
 		return query.showTable("Search Text - \"" + searchString + "\"  [" + matchType + "]",
-			"Search", model, "Search", navigatable);
+			tableType, model, "Search", navigatable);
 	}
 
 	@Override
