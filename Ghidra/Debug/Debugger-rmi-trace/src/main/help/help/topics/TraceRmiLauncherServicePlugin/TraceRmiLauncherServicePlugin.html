@@ -636,7 +636,7 @@ gdb-remote [host]:[port]
       <LI><B>Port</B>: The TCP port of the target stub.</LI>
 
       <LI><B>Architecture</B> (optional): If the stub does not describe its architecture to LLDB,
-      you must set it before connecting. This is passed as is to "<TT>setting set
+      you must set it before connecting. This is passed as is to "<TT>settings set
       target.default-arch ...</TT>" immediately before the "<TT>gdb-remote ...</TT>" command.</LI>
 
       <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
@@ -682,7 +682,7 @@ perl -i -pe 's/(?<=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
 	      <LI><B>Host</B>: The host IP of the target kernel.</LI>
 
 	      <LI><B>Architecture</B> (optional): If the kernel does not describe its architecture to LLDB,
-	      you must set it before connecting. This is passed as is to "<TT>setting set
+	      you must set it before connecting. This is passed as is to "<TT>settings set
 	      target.default-arch ...</TT>" immediately before the "<TT>kdp-remote ...</TT>" command.</LI>
 
 	      <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
