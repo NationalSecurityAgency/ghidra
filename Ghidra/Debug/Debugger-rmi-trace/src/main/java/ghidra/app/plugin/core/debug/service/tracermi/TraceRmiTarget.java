@@ -976,6 +976,15 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected TraceObject getProcessForSpace(AddressSpace space) {
+		List<TraceObjectProcess> processes = trace.getObjectManager()
+				.queryAllInterface(Lifespan.at(getSnap()), TraceObjectProcess.class)
+				.toList();
+		if (processes.size() == 1) {
+			return processes.get(0).getObject();
+		}
+		if (processes.isEmpty()) {
+			return null;
+		}
 		for (TraceMemoryRegion region : trace.getMemoryManager()
 				.getRegionsIntersecting(
 					Lifespan.at(getSnap()),
