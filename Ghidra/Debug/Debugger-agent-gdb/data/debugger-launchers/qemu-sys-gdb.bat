@@ -11,11 +11,14 @@
 ::@menu-group cross
 ::@icon icon.debugger
 ::@help TraceRmiLauncherServicePlugin#gdb_qemu
+::@enum Endian:str auto big little
 ::@env OPT_TARGET_IMG:file!="" "Image" "The target binary executable image"
 ::@env GHIDRA_LANG_EXTTOOL_qemu_system:file="" "QEMU command" "The path to qemu-system for the target architecture."
 ::@env QEMU_GDB:int=1234 "QEMU Port" "Port for gdb connection to qemu"
 ::@env OPT_EXTRA_QEMU_ARGS:str="" "Extra qemu arguments" "Extra arguments to pass to qemu. Use with care."
 ::@env OPT_GDB_PATH:file="gdb-multiarch" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+::@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
+::@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 ::@env OPT_EXTRA_TTY:bool=false "QEMU TTY" "Provide a separate terminal emulator for qemu."
 
 @echo off
@@ -32,9 +35,9 @@ IF EXIST %GHIDRA_HOME%\ghidra\.git (
 set PYTHONPATH=%PYTHONPATH1%;%PYTHONPATH0%;%PYTHONPATH%
 
 IF "%OPT_EXTRA_TTY%"=="true" (
-  start "qemu" "%GHIDRA_LANG_EXTTOOL_qemu%" %OPT_EXTRA_QEMU_ARGS% -gdb tcp::%QEMU_GDB% -S "%OPT_TARGET_IMG%"
+  start "qemu" "%GHIDRA_LANG_EXTTOOL_qemu_system%" %OPT_EXTRA_QEMU_ARGS% -gdb tcp::%QEMU_GDB% -S "%OPT_TARGET_IMG%"
 ) ELSE (
-  start /B "qemu" "%GHIDRA_LANG_EXTTOOL_qemu%" %OPT_EXTRA_QEMU_ARGS% -gdb tcp::%QEMU_GDB% -S "%OPT_TARGET_IMG%"
+  start /B "qemu" "%GHIDRA_LANG_EXTTOOL_qemu_system%" %OPT_EXTRA_QEMU_ARGS% -gdb tcp::%QEMU_GDB% -S "%OPT_TARGET_IMG%"
 )
 
 :: Give QEMU a moment to open the socket
@@ -46,6 +49,8 @@ powershell -nop -c "& {sleep -m 100}"
   -ex "set confirm off" ^
   -ex "show version" ^
   -ex "python import ghidragdb" ^
+   ex "set architecture %OPT_ARCH%" ^
+   ex "set endian %OPT_ENDIAN%" ^
   -ex "target exec '%OPT_TARGET_IMG%'" ^
   -ex "ghidra trace connect '%GHIDRA_TRACE_RMI_ADDR%'" ^
   -ex "ghidra trace start" ^
