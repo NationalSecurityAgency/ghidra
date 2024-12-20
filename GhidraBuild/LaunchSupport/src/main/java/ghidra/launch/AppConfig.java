@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,23 @@ package ghidra.launch;
 
 import java.io.*;
 import java.text.ParseException;
-import java.util.Properties;
+import java.util.*;
 
 import ghidra.launch.JavaFinder.JavaFilter;
 
 /**
- * Class to determine and represent a required Java configuration, including minimum and maximum 
- * supported versions, compiler compliance level, etc.
+ * Class to determine and represent a required application configuration, including minimum and 
+ * maximum supported Java versions, compiler compliance level, etc.
  */
-public class JavaConfig {
+public class AppConfig {
 
 	private static final String LAUNCH_PROPERTIES_NAME = "launch.properties";
 	private static final String JAVA_HOME_SAVE_NAME = "java_home.save";
+	private static final String PYTHON_COMMAND_SAVE_NAME = "python_command.save";
 
 	private LaunchProperties launchProperties;
 	private File javaHomeSaveFile;
+	private File pythonCommandSaveFile;
 
 	private String applicationName; // example: Ghidra
 	private String applicationVersion; // example: 9.0.1
@@ -42,43 +44,43 @@ public class JavaConfig {
 	private String compilerComplianceLevel;
 
 	/**
-	 * Creates a new Java configuration for the given installation.
+	 * Creates a new application configuration for the given installation.
 	 * 
 	 * @param installDir The installation directory.
 	 * @throws FileNotFoundException if a required file was not found. 
 	 * @throws IOException if there was a problem reading a required file.
 	 * @throws ParseException if there was a problem parsing a required file.
 	 */
-	public JavaConfig(File installDir) throws FileNotFoundException, IOException, ParseException {
+	public AppConfig(File installDir) throws FileNotFoundException, IOException, ParseException {
 		initApplicationProperties(installDir);
 		initLaunchProperties(installDir);
-		initJavaHomeSaveFile(installDir);
+		javaHomeSaveFile = getSaveFile(installDir, JAVA_HOME_SAVE_NAME);
+		pythonCommandSaveFile = getSaveFile(installDir, PYTHON_COMMAND_SAVE_NAME);
 	}
 
 	/**
-	 * Gets the launch properties associated with this Java configuration.  Certain aspects of the
-	 * Java configuration are stored in the launch properties.
+	 * Gets the launch properties associated with this application configuration.
 	 * 
-	 * @return The launch properties associated with this Java configuration.  Could be null if
-	 *   this Java configuration does not use launch properties.
+	 * @return The launch properties associated with this application configuration.  Could be null 
+	 *   if this application configuration does not use launch properties.
 	 */
 	public LaunchProperties getLaunchProperties() {
 		return launchProperties;
 	}
 
 	/**
-	 * Gets the Java configuration's minimum supported major Java version.
+	 * Gets the application configuration's minimum supported major Java version.
 	 *  
-	 * @return The Java configuration's minimum supported major Java version.
+	 * @return The application configuration's minimum supported major Java version.
 	 */
 	public int getMinSupportedJava() {
 		return minSupportedJava;
 	}
 
 	/**
-	 * Gets the Java configuration's maximum supported major Java version.
+	 * Gets the application configuration's maximum supported major Java version.
 	 *  
-	 * @return The Java configuration's maximum supported major Java version.  If there is no
+	 * @return The application configuration's maximum supported major Java version.  If there is no
 	 *   restriction, the value will be 0.
 	 */
 	public int getMaxSupportedJava() {
@@ -86,20 +88,20 @@ public class JavaConfig {
 	}
 
 	/**
-	 * Gets the Java configuration's supported Java architecture.  All supported Java 
+	 * Gets the application configuration's supported Java architecture.  All supported Java 
 	 * configurations must have an architecture of <code>64</code>.
 	 * 
-	 * @return The Java configuration's supported Java architecture (64).  
+	 * @return The application configuration's supported Java architecture (64).  
 	 */
 	public int getSupportedArchitecture() {
 		return 64;
 	}
 
 	/**
-	 * Gets the Java configuration's compiler compliance level that was used to build the 
-	 * associated installation.
+	 * Gets the application configuration's Java compiler compliance level that was used to build 
+	 * the associated installation.
 	 * 
-	 * @return The Java configuration's compiler compliance level.
+	 * @return The application configuration's compiler compliance level.
 	 */
 	public String getCompilerComplianceLevel() {
 		return compilerComplianceLevel;
@@ -115,8 +117,11 @@ public class JavaConfig {
 	public File getSavedJavaHome() throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(javaHomeSaveFile))) {
 			String line = reader.readLine().trim();
-			if (line != null && !line.isEmpty()) {
-				return new File(line);
+			if (line != null) {
+				line = line.trim();
+				if (!line.isEmpty()) {
+					return new File(line);
+				}
 			}
 		}
 		catch (FileNotFoundException e) {
@@ -148,12 +153,12 @@ public class JavaConfig {
 	}
 
 	/**
-	 * Tests to see if the given directory is a supported Java home directory for this Java
+	 * Tests to see if the given directory is a supported Java home directory for this application
 	 * configuration.
 	 * 
 	 * @param dir The directory to test.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we support.
-	 * @return True if the given directory is a supported Java home directory for this Java
+	 * @return True if the given directory is a supported Java home directory for this application
 	 *   configuration.
 	 */
 	public boolean isSupportedJavaHomeDir(File dir, JavaFilter javaFilter) {
@@ -166,10 +171,10 @@ public class JavaConfig {
 	}
 
 	/**
-	 * Tests to see if the given Java version is supported by this Java launch configuration.
+	 * Tests to see if the given Java version is supported by this application configuration.
 	 * 
 	 * @param javaVersion The java version to check.
-	 * @return True if the given Java version is supported by this Java launch configuration.
+	 * @return True if the given Java version is supported by this application configuration.
 	 */
 	public boolean isJavaVersionSupported(JavaVersion javaVersion) {
 		if (javaVersion.getArchitecture() != getSupportedArchitecture()) {
@@ -231,6 +236,30 @@ public class JavaConfig {
 		}
 
 		return runAndGetJavaVersion(javaExecutable);
+	}
+
+	/**
+	 * Gets the Python command from the user's Python command save file.
+	 * 
+	 * @return The Python command from the user's Python command save file, or null if the file
+	 *   does not exist or is empty.
+	 * @throws IOException if there was a problem reading the Python command save file.
+	 */
+	public List<String> getSavedPythonCommand() throws IOException {
+		List<String> command = new ArrayList<>();
+		try (BufferedReader reader = new BufferedReader(new FileReader(pythonCommandSaveFile))) {
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				if (!line.isEmpty()) {
+					command.add(line);
+				}
+			}
+			return command;
+		}
+		catch (FileNotFoundException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -354,13 +383,13 @@ public class JavaConfig {
 	}
 
 	/**
-	 * Initializes the Java home save file.
+	 * Gets the given "save file".
 	 *  
 	 * @param installDir The Ghidra installation directory.  This is the directory that has the
 	 *   "Ghidra" subdirectory in it.
 	 * @throws FileNotFoundException if the user's home directory was not found.
 	 */
-	private void initJavaHomeSaveFile(File installDir) throws FileNotFoundException {
+	private File getSaveFile(File installDir, String saveFileName) throws FileNotFoundException {
 		boolean isDev = new File(installDir, "build.gradle").isFile();
 		String appName = applicationName.replaceAll("\\s", "").toLowerCase();
 
@@ -385,16 +414,14 @@ public class JavaConfig {
 		// Handle legacy application layout
 		if (applicationLayoutVersion.equals("1")) {
 			userSettingsDir = new File(userHomeDir, "." + appName + "/." + userSettingsDirName);
-			javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
-			return;
+			return new File(userSettingsDir, saveFileName);
 		}
 
 		// Look for XDG environment variable
 		String xdgConfigHomeDirStr = System.getenv("XDG_CONFIG_HOME");
 		if (xdgConfigHomeDirStr != null && !xdgConfigHomeDirStr.isEmpty()) {
 			userSettingsDir = new File(xdgConfigHomeDirStr, appName + "/" + userSettingsDirName);
-			javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
-			return;
+			return new File(userSettingsDir, saveFileName);
 		}
 
 		// Look in current user settings directory
@@ -420,7 +447,7 @@ public class JavaConfig {
 					"Failed to find the user settings directory: Unsupported operating system.");
 		}
 
-		javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
+		return new File(userSettingsDir, saveFileName);
 	}
 
 	/**

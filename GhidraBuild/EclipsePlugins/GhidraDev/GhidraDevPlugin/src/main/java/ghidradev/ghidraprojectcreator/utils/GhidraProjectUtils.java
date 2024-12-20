@@ -36,9 +36,10 @@ import org.eclipse.ui.part.FileEditorInput;
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.GModule;
-import ghidra.launch.JavaConfig;
+import ghidra.launch.AppConfig;
 import ghidradev.Activator;
 import ghidradev.EclipseMessageUtils;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 import utility.module.ModuleUtilities;
 
 /**
@@ -262,8 +263,7 @@ public class GhidraProjectUtils {
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
 	 * @param ghidraLayout The Ghidra layout to link the project to.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.
 	 * @param monitor The progress monitor to use during project creation.
 	 * @return The created project.
 	 * @throws IOException If there was a file-related problem with creating the project.
@@ -272,12 +272,12 @@ public class GhidraProjectUtils {
 	 */
 	public static IJavaProject createEmptyGhidraProject(String projectName, File projectDir,
 			boolean createRunConfig, String runConfigMemory, GhidraApplicationLayout ghidraLayout,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			ProjectPythonInterpreter pythonInterpreter, IProgressMonitor monitor)
 			throws IOException, ParseException, CoreException {
 
 		// Get Ghidra's Java configuration
-		JavaConfig javaConfig =
-			new JavaConfig(ghidraLayout.getApplicationInstallationDir().getFile(false));
+		AppConfig appConfig =
+			new AppConfig(ghidraLayout.getApplicationInstallationDir().getFile(false));
 
 		// Make new Java project
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -299,7 +299,7 @@ public class GhidraProjectUtils {
 		javaProject.setRawClasspath(new IClasspathEntry[0], monitor);
 
 		// Configure Java compiler for the project
-		configureJavaCompiler(javaProject, javaConfig);
+		configureJavaCompiler(javaProject, appConfig);
 
 		// Setup default bin folder
 		IFolder binFolder = project.getFolder("bin/default");
@@ -310,7 +310,7 @@ public class GhidraProjectUtils {
 			monitor);
 
 		// Link in Ghidra to the project
-		linkGhidraToProject(javaProject, ghidraLayout, javaConfig, jythonInterpreterName, monitor);
+		linkGhidraToProject(javaProject, ghidraLayout, appConfig, pythonInterpreter, monitor);
 
 		// Create run configuration (if necessary)
 		if (createRunConfig) {
@@ -338,23 +338,22 @@ public class GhidraProjectUtils {
 	 * 
 	 * @param javaProject The Java project to link.
 	 * @param ghidraLayout The Ghidra layout to link the project to.
-	 * @param javaConfig Ghidra's Java configuration.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param appConfig Ghidra's application configuration.
+	 * @param pythonInterpreter The Python interpreter to use.
 	 * @param monitor The progress monitor used during link.
 	 * @throws IOException If there was a file-related problem with linking in Ghidra.
 	 * @throws CoreException If there was an Eclipse-related problem with linking in Ghidra.
 	 */
 	public static void linkGhidraToProject(IJavaProject javaProject,
-			GhidraApplicationLayout ghidraLayout, JavaConfig javaConfig,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			GhidraApplicationLayout ghidraLayout, AppConfig appConfig,
+			ProjectPythonInterpreter pythonInterpreter, IProgressMonitor monitor)
 			throws CoreException, IOException {
 
 		// Gets the Ghidra installation directory to link to from the Ghidra layout
 		File ghidraInstallDir = ghidraLayout.getApplicationInstallationDir().getFile(false);
 
 		// Get the Java VM used to launch the Ghidra to link to
-		IVMInstall vm = getGhidraVm(javaConfig);
+		IVMInstall vm = getGhidraVm(appConfig);
 		IPath vmPath =
 			new Path(JavaRuntime.JRE_CONTAINER).append(vm.getVMInstallType().getId()).append(
 				vm.getName());
@@ -457,15 +456,13 @@ public class GhidraProjectUtils {
 		GhidraModuleUtils.writeAntProperties(javaProject.getProject(), ghidraLayout);
 
 		// Setup Python for the project
-		if (PyDevUtils.isSupportedPyDevInstalled()) {
-			try {
-				PyDevUtils.setupPythonForProject(javaProject, libraryClasspathEntries,
-					jythonInterpreterName, monitor);
-			}
-			catch (OperationNotSupportedException e) {
-				EclipseMessageUtils.showErrorDialog("PyDev error",
-					"Failed to setup Python for the project.  PyDev version is not supported.");
-			}
+		try {
+			PyDevUtils.setupPythonForProject(javaProject, libraryClasspathEntries,
+				pythonInterpreter, monitor);
+		}
+		catch (OperationNotSupportedException e) {
+			EclipseMessageUtils.showErrorDialog("PyDev error",
+				"Failed to setup Python for the project.  PyDev version is not supported.");
 		}
 	}
 
@@ -559,14 +556,14 @@ public class GhidraProjectUtils {
 	/**
 	 * Gets the required VM used to build and run the Ghidra defined by the given layout.
 	 * 
-	 * @param javaConfig Ghidra's Java configuration.
+	 * @param appConfig Ghidra's application configuration.
 	 * @return The required VM used to build and run the Ghidra defined by the given layout.
 	 * @throws IOException If there was a file-related problem with getting the VM.
 	 * @throws CoreException If there was an Eclipse-related problem with creating the project.
 	 */
-	private static IVMInstall getGhidraVm(JavaConfig javaConfig) throws IOException, CoreException {
+	private static IVMInstall getGhidraVm(AppConfig appConfig) throws IOException, CoreException {
 
-		File requiredJavaHomeDir = javaConfig.getSavedJavaHome(); // safe to assume it's valid
+		File requiredJavaHomeDir = appConfig.getSavedJavaHome(); // safe to assume it's valid
 
 		// First look for a matching VM in Eclipse's existing list.
 		// NOTE: Mac has its own VM type, so be sure to check it for VM matches too.
@@ -617,19 +614,19 @@ public class GhidraProjectUtils {
 	 * Configures the default Java compiler behavior for the given java project.
 	 * 
 	 * @param jp The Java project to configure.
-	 * @param javaConfig Ghidra's Java configuration.
+	 * @param appConfig Ghidra's application configuration.
 	 */
-	private static void configureJavaCompiler(IJavaProject jp, JavaConfig javaConfig) {
+	private static void configureJavaCompiler(IJavaProject jp, AppConfig appConfig) {
 
 		final String WARNING = JavaCore.WARNING;
 		final String IGNORE = JavaCore.IGNORE;
 		final String ERROR = JavaCore.ERROR;
 
 		// Compliance
-		jp.setOption(JavaCore.COMPILER_SOURCE, javaConfig.getCompilerComplianceLevel());
-		jp.setOption(JavaCore.COMPILER_COMPLIANCE, javaConfig.getCompilerComplianceLevel());
+		jp.setOption(JavaCore.COMPILER_SOURCE, appConfig.getCompilerComplianceLevel());
+		jp.setOption(JavaCore.COMPILER_COMPLIANCE, appConfig.getCompilerComplianceLevel());
 		jp.setOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM,
-			javaConfig.getCompilerComplianceLevel());
+			appConfig.getCompilerComplianceLevel());
 
 		// Code style
 		jp.setOption(JavaCore.COMPILER_PB_STATIC_ACCESS_RECEIVER, WARNING);
