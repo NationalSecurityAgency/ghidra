@@ -560,6 +560,7 @@ src/main/help/help/topics/ShowInstructionInfoPlugin/images/RawInstructionDisplay
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/ShowInstructionInfo.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/UnableToLaunch.png||GHIDRA||||END|
 src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||||END|
+src/main/help/help/topics/SourceFilesTablePlugin/SourceFilesTable.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/StackEditor.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/NumElementsPrompt.png||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/StackEditor.png||GHIDRA||||END|
