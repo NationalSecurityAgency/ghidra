@@ -337,7 +337,18 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			coordinatesActivated(current.reFindThread());
+			/**
+			 * It's possible an "undo" or other transaction rollback will cause the current thread
+			 * to be replaced by another object. If that's the case, we need to adjust our
+			 * coordinates.
+			 * 
+			 * If that adjustment does not otherwise cause the table to update, we have to fire that
+			 * event, since the register values may have changed, esp., if this "restored" event is
+			 * the result of many events being coalesced.
+			 */
+			if (!coordinatesActivated(current.reFindThread())) {
+				regsTableModel.fireTableDataChanged();
+			}
 		}
 
 		private void registerValueChanged(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -803,10 +814,16 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		addNewTraceListener();
 	}
 
-	public void coordinatesActivated(DebuggerCoordinates coordinates) {
+	/**
+	 * Notify this provider of new coordinates
+	 * 
+	 * @param coordinates the new coordinates
+	 * @return true if the new coordinates caused the table to update
+	 */
+	public boolean coordinatesActivated(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;
-			return;
+			return false;
 		}
 
 		previous = current;
@@ -820,6 +837,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		recomputeViewKnown();
 		loadRegistersAndValues();
 		contextChanged();
+		return true;
 	}
 
 	protected void traceClosed(Trace trace) {
