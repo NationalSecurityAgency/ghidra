@@ -583,7 +583,10 @@ def putreg():
         STATE.trace.create_overlay_space('register', rpath)
         path = USER_REGS_PATTERN.format(procnum=nproc, tnum=nthrd)
         (values, keys) = create_generic(path)
-        return {'missing': STATE.trace.put_registers(rpath, values)}
+        nframe = util.selected_frame()
+        # NB: We're going to update the Register View for non-zero stack frames
+        if nframe == 0:
+        	return {'missing': STATE.trace.put_registers(rpath, values)}
 
     nproc = util.selected_process()
     if nproc < 0:
@@ -604,7 +607,8 @@ def putreg():
         	value = 0
         try:
             values.append(mapper.map_value(nproc, name, value))
-            robj.set_value(name, hex(value))
+            if util.dbg.use_generics is False:
+            	robj.set_value(name, hex(value))
         except Exception:
             pass
     return {'missing': STATE.trace.put_registers(space, values)}
