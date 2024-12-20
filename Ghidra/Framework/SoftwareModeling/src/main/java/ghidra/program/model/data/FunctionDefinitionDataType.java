@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -188,17 +188,9 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		}
 
 		if (GenericCallingConvention
-				.getGenericCallingConvention(conventionName) != GenericCallingConvention.unknown) {
-			ProgramArchitecture arch = dataMgr != null ? dataMgr.getProgramArchitecture() : null;
-			if (arch != null) {
-				CompilerSpec compilerSpec = arch.getCompilerSpec();
-				PrototypeModel callingConvention =
-					compilerSpec.getCallingConvention(conventionName);
-				if (callingConvention == null) {
-					throw new InvalidInputException(
-						"Invalid calling convention name: " + conventionName);
-				}
-			}
+				.getGenericCallingConvention(conventionName) == GenericCallingConvention.unknown &&
+			!dataMgr.getKnownCallingConventionNames().contains(name)) {
+			throw new InvalidInputException("Unknown calling convention name: " + conventionName);
 		}
 
 		this.callingConventionName = conventionName;

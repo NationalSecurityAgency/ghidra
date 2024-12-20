@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,9 @@ import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.FunctionRenameOption;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionSignature;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -148,7 +146,7 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 	@Override
 	protected boolean applyChanges() throws CancelledException {
 		// create the command
-		Command command = createCommand();
+		Command<Program> command = createCommand();
 
 		if (command == null) {
 			return false;
@@ -164,9 +162,9 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 		return true;
 	}
 
-	private Command createCommand() throws CancelledException {
+	private Command<Program> createCommand() throws CancelledException {
 
-		Command cmd = null;
+		Command<Program> cmd = null;
 		if (isSignatureChanged() || isCallingConventionChanged() ||
 			(function.getSignatureSource() == SourceType.DEFAULT)) {
 
@@ -179,20 +177,20 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 				FunctionRenameOption.RENAME);
 		}
 
-		CompoundCmd compoundCommand = new CompoundCmd("Update Function Signature");
+		CompoundCmd<Program> compoundCommand = new CompoundCmd<>("Update Function Signature");
 
-		compoundCommand.add(new Command() {
+		compoundCommand.add(new Command<Program>() {
 			String errMsg = null;
 
 			@Override
-			public boolean applyTo(DomainObject obj) {
+			public boolean applyTo(Program p) {
 				try {
 					String conventionName = getCallingConvention();
 					function.setCallingConvention(conventionName);
 					return true;
 				}
 				catch (InvalidInputException e) {
-					errMsg = "Invalid calling convention. " + e.getMessage();
+					errMsg = e.getMessage();
 					Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 					return false;
 				}
@@ -209,9 +207,9 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 			}
 		});
 		if (allowInLine) {
-			compoundCommand.add(new Command() {
+			compoundCommand.add(new Command<Program>() {
 				@Override
-				public boolean applyTo(DomainObject obj) {
+				public boolean applyTo(Program p) {
 					function.setInline(isInlineSelected());
 					return true;
 				}
@@ -228,9 +226,9 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 			});
 		}
 		if (allowNoReturn) {
-			compoundCommand.add(new Command() {
+			compoundCommand.add(new Command<Program>() {
 				@Override
-				public boolean applyTo(DomainObject obj) {
+				public boolean applyTo(Program p) {
 					function.setNoReturn(hasNoReturnSelected());
 					return true;
 				}
@@ -247,9 +245,9 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 			});
 		}
 		if (allowCallFixup) {
-			compoundCommand.add(new Command() {
+			compoundCommand.add(new Command<Program>() {
 				@Override
-				public boolean applyTo(DomainObject obj) {
+				public boolean applyTo(Program p) {
 					function.setCallFixup(getCallFixupSelection());
 					return true;
 				}
