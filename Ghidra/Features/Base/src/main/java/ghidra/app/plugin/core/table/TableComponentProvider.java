@@ -181,7 +181,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectionNavigationAction
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
-		externalGotoAction = new DockingAction("Go to External Location", getName()) {
+		externalGotoAction = new DockingAction("Go to External Location", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				gotoExternalAddress(getSelectedExternalAddress());
