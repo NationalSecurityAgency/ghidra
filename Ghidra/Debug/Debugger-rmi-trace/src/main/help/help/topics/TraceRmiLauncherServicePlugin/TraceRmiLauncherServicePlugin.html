@@ -635,12 +635,58 @@ gdb-remote [host]:[port]
 
       <LI><B>Port</B>: The TCP port of the target stub.</LI>
 
-      <LI><B>Architecture</B> (optional): If the stub does not describe its architecture to GDB,
-      you must set it before connecting. This is passed as is to "<TT>setting set
+      <LI><B>Architecture</B> (optional): If the stub does not describe its architecture to LLDB,
+      you must set it before connecting. This is passed as is to "<TT>settings set
       target.default-arch ...</TT>" immediately before the "<TT>gdb-remote ...</TT>" command.</LI>
 
       <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
     </UL>
+
+	    <H3><A name="lldb_kernel"></A>Kernel LLDB</H3>
+
+	    <P>This launcher connects to macos kernels booted in debug-mode using
+	    <TT>lldb</TT>. Essentially, it just starts <TT>lldb</TT> and then enters</P>
+
+	    <UL style="list-style-type: none">
+	      <LI>
+<PRE>
+kdp-remote [host]
+</PRE>
+	      </LI>
+	    </UL>
+
+	    <P>It is best to test this command outside of Ghidra to be sure everything is
+	    compatible before using this launcher. This launcher does not require an image, nor does it
+	    create your target. Thus, it can be used without a current program.</P>
+
+	    <H4>Setup</H4>
+
+	    <P>On your local system, follow the steps given in <A href="#lldb_setup">LLDB Setup</A>.
+		Before connecting to the target kernel, you must force an NMI on the target to ready the connection.
+		On actual hardware, this is typically achieved by some button sequence, e.g. <B>L/R-Options + Power</B>
+		or <B>Command+Option+Control+Shift+Esc</B>. In a VM, you may have to pause the VM and modify its state.
+		For example, by cd'ing to the VM's container and issuing the command:
+		</P>
+		
+		    <UL style="list-style-type: none">
+		      <LI>
+<PRE>
+perl -i -pe 's/(?<=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
+</PRE>
+		      </LI>
+		    </UL>
+
+	    <H4>Options</H4>
+
+	    <UL>
+	      <LI><B>Host</B>: The host IP of the target kernel.</LI>
+
+	      <LI><B>Architecture</B> (optional): If the kernel does not describe its architecture to LLDB,
+	      you must set it before connecting. This is passed as is to "<TT>settings set
+	      target.default-arch ...</TT>" immediately before the "<TT>kdp-remote ...</TT>" command.</LI>
+
+	      <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
+	    </UL>
 
     <H2>Stock Windows Debugger (WinDbg) Launchers</H2>
 
