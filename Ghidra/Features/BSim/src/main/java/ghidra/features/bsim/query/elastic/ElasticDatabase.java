@@ -23,8 +23,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+
+import com.google.gson.*;
 
 import generic.lsh.vector.*;
 import ghidra.features.bsim.gui.filters.FunctionTagBSimFilterType;
@@ -35,6 +35,7 @@ import ghidra.features.bsim.query.client.tables.ExeTable.ExeTableOrderColumn;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.protocol.*;
 import ghidra.framework.client.ClientUtil;
+import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 
 /**
@@ -70,6 +71,55 @@ public class ElasticDatabase implements FunctionDatabase {
 	private Status status;						// status of the connection
 	private boolean initialized;				// true if the connection has been successfully initialized
 
+	public static String escape(String s) {
+		final int len = s.length();
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < len; i++) {
+			char ch = s.charAt(i);
+			switch (ch) {
+				case '"':
+					sb.append("\\\"");
+					break;
+				case '\\':
+					sb.append("\\\\");
+					break;
+				case '\b':
+					sb.append("\\b");
+					break;
+				case '\f':
+					sb.append("\\f");
+					break;
+				case '\n':
+					sb.append("\\n");
+					break;
+				case '\r':
+					sb.append("\\r");
+					break;
+				case '\t':
+					sb.append("\\t");
+					break;
+				case '/':
+					sb.append("\\/");
+					break;
+				default:
+					//Reference: http://www.unicode.org/versions/Unicode5.1.0/
+					if ((ch >= '\u0000' && ch <= '\u001F') || (ch >= '\u007F' && ch <= '\u009F') ||
+						(ch >= '\u2000' && ch <= '\u20FF')) {
+						String ss = Integer.toHexString(ch);
+						sb.append("\\u");
+						for (int k = 0; k < 4 - ss.length(); k++) {
+							sb.append('0');
+						}
+						sb.append(ss.toUpperCase());
+					}
+					else {
+						sb.append(ch);
+					}
+			}
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * Append a list of CategoryRecords as (part of) a JSON document to a StringBuilder
 	 * Used as part of constructing JSON serialization of ExecutableRecords
@@ -90,9 +140,7 @@ public class ElasticDatabase implements FunctionDatabase {
 				buffer.append('\"');
 				// Append type/value pair as concatendated strings separated by a TAB.
 				// When sorting as strings, this should give the same order as sorted CategoryRecords
-				buffer.append(catrec.getType())
-						.append("\\t")
-						.append(JSONObject.escape(catrec.getCategory()));
+				buffer.append(catrec.getType()).append("\\t").append(escape(catrec.getCategory()));
 				buffer.append('\"');
 			}
 		}
@@ -110,9 +158,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			throws ElasticException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("{ \"md5\": \"").append(exeRecord.getMd5()).append("\", ");
-		builder.append("\"name_exec\": \"")
-				.append(JSONObject.escape(exeRecord.getNameExec()))
-				.append("\", ");
+		builder.append("\"name_exec\": \"").append(escape(exeRecord.getNameExec())).append("\", ");
 		builder.append("\"architecture\": \"").append(exeRecord.getArchitecture()).append("\", ");
 		builder.append("\"name_compiler\": \"").append(exeRecord.getNameCompiler()).append("\", ");
 		builder.append("\"ingest_date\": ").append(exeRecord.getDate().getTime()).append(", ");
@@ -121,16 +167,14 @@ public class ElasticDatabase implements FunctionDatabase {
 		}
 		else {
 			builder.append("\"repository\": \"")
-					.append(JSONObject.escape(exeRecord.getRepository()))
+					.append(escape(exeRecord.getRepository()))
 					.append("\", ");
 		}
 		if (exeRecord.getPath() == null) {
 			builder.append("\"path\": null");
 		}
 		else {
-			builder.append("\"path\": \"")
-					.append(JSONObject.escape(exeRecord.getPath()))
-					.append("\"");
+			builder.append("\"path\": \"").append(escape(exeRecord.getPath())).append("\"");
 		}
 		List<CategoryRecord> catrecs = exeRecord.getAllCategories();
 		if (catrecs != null) {
@@ -142,15 +186,15 @@ public class ElasticDatabase implements FunctionDatabase {
 		pathbuilder.append("executable/_doc/");
 		pathbuilder.append(exeId);
 		pathbuilder.append("?op_type=create");		// Do "create" operation, so we fail if document already exists
-		JSONObject resp = connection.executeStatementExpectFailure(ElasticConnection.PUT,
+		JsonObject resp = connection.executeStatementExpectFailure(ElasticConnection.PUT,
 			pathbuilder.toString(), builder.toString());
-		JSONObject error = (JSONObject) resp.get("error");
+		JsonObject error = (JsonObject) resp.get("error");
 		if (error != null) {
-			String type = (String) error.get("type");
+			String type = error.get("type").getAsString();
 			if (type.startsWith("version_conflict")) {
 				return false;			// Document already inserted
 			}
-			String reason = (String) error.get("reason");
+			String reason = ElasticConnection.convertToString(error.get("reason"));
 			throw new ElasticException(reason);
 		}
 		return true;
@@ -222,7 +266,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			builder.append("\", \"routing\": \"");
 			builder.append(exeId).append("\"}}\n");
 			builder.append("{ \"name_func\": \"");
-			builder.append(JSONObject.escape(desc.getFunctionName()));
+			builder.append(escape(desc.getFunctionName()));
 			SignatureRecord sigRec = desc.getSignatureRecord();
 			long vecid = 0;
 			if (sigRec != null) {
@@ -266,21 +310,21 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return null or the "hit" portion of the response corresponding to the matching document
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONObject queryMd5ExeMatch(String md5) throws ElasticException {
+	private JsonObject queryMd5ExeMatch(String md5) throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append(
 			"{ \"size\": 1, \"query\": { \"bool\": { \"filter\": { \"term\": { \"md5\": \"");
 		buffer.append(md5).append("\" } } } } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject hits = (JSONObject) resp.get("hits");
-		JSONObject totalRec = (JSONObject) hits.get("total");
-		long total = (Long) totalRec.get("value");
+		JsonObject hits = (JsonObject) resp.get("hits");
+		JsonObject totalRec = (JsonObject) hits.get("total");
+		long total = totalRec.get("value").getAsLong();
 		if (total == 0) {
 			return null;
 		}
-		JSONArray hitsArray = (JSONArray) hits.get("hits");
-		return (JSONObject) hitsArray.get(0);
+		JsonArray hitsArray = (JsonArray) hits.get("hits");
+		return (JsonObject) hitsArray.get(0);
 	}
 
 	/**
@@ -291,7 +335,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return a list of JSON function documents
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONArray queryFuncNameMatch(String exeId, String functionName, int maxDocuments)
+	private JsonArray queryFuncNameMatch(String exeId, String functionName, int maxDocuments)
 			throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"size\": ").append(maxDocuments);
@@ -301,21 +345,21 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("      \"must\": {");
 		buffer.append("        \"term\": {");
 		buffer.append("          \"name_func\": \"");
-		buffer.append(JSONObject.escape(functionName));
+		buffer.append(escape(functionName));
 		buffer.append("\"} },");
 		buffer.append("      \"filter\": {");
 		buffer.append("        \"parent_id\": {");
 		buffer.append("          \"type\": \"function\",");
 		buffer.append("          \"id\": \"").append(exeId);
 		buffer.append("\"} } } } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject baseHits = (JSONObject) resp.get("hits");
-		Object hitsArray = baseHits.get("hits");
-		if (hitsArray == null) {
-			return new JSONArray();
+		JsonObject baseHits = (JsonObject) resp.get("hits");
+		JsonElement hitsArray = baseHits.get("hits");
+		if (hitsArray instanceof JsonArray a) {
+			return a;
 		}
-		return (JSONArray) hitsArray;
+		return new JsonArray();
 	}
 
 	/**
@@ -329,7 +373,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return the JSON function document or null if none match
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONObject queryFuncNameAddress(String exeId, String functionName, long address)
+	private JsonObject queryFuncNameAddress(String exeId, String functionName, long address)
 			throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"_source\": { \"excludes\": [ \"childid\" ] }");
@@ -338,7 +382,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("      \"must\": {");
 		buffer.append("        \"term\": {");
 		buffer.append("          \"name_func\": \"");
-		buffer.append(JSONObject.escape(functionName));
+		buffer.append(escape(functionName));
 		buffer.append("\"},");
 		buffer.append("        \"term\": {");
 		buffer.append("           \"addr\": ").append(address);
@@ -348,16 +392,16 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("          \"type\": \"function\",");
 		buffer.append("          \"id\": \"").append(exeId);
 		buffer.append("\"} } } } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject baseHits = (JSONObject) resp.get("hits");
-		JSONObject totalRec = (JSONObject) baseHits.get("total");
-		long total = (Long) totalRec.get("value");
+		JsonObject baseHits = (JsonObject) resp.get("hits");
+		JsonObject totalRec = (JsonObject) baseHits.get("total");
+		long total = totalRec.get("value").getAsLong();
 		if (total != 1) {
 			return null;
 		}
-		JSONArray hitsArray = (JSONArray) baseHits.get("hits");
-		return (JSONObject) hitsArray.get(0);
+		JsonArray hitsArray = (JsonArray) baseHits.get("hits");
+		return (JsonObject) hitsArray.get(0);
 	}
 
 	/**
@@ -372,7 +416,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	private ExecutableRecord findSingleExecutable(ExeSpecifier specifier,
 			DescriptionManager manager) throws LSHException, ElasticException {
 		if (specifier.exemd5 != null && specifier.exemd5.length() != 0) {
-			JSONObject row = queryMd5ExeMatch(specifier.exemd5);
+			JsonObject row = queryMd5ExeMatch(specifier.exemd5);
 			if (row == null) {
 				return null;
 			}
@@ -438,7 +482,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("}}, ");
 		if (searchAfter != null) {
 			buffer.append("\"search_after\": [ \"");
-			buffer.append(JSONObject.escape(searchAfter));
+			buffer.append(escape(searchAfter));
 			buffer.append("\"], ");
 		}
 		if (md5Order) {
@@ -447,12 +491,12 @@ public class ElasticDatabase implements FunctionDatabase {
 		else {
 			buffer.append("\"sort\": [ { \"name_exec\": \"asc\" } ] }");
 		}
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject baseHits = (JSONObject) resp.get("hits");
-		JSONArray hitsArray = (JSONArray) baseHits.get("hits");
-		for (Object element : hitsArray) {
-			JSONObject exerow = (JSONObject) element;
+		JsonObject baseHits = (JsonObject) resp.get("hits");
+		JsonArray hitsArray = (JsonArray) baseHits.get("hits");
+		for (JsonElement element : hitsArray) {
+			JsonObject exerow = (JsonObject) element;
 			ExecutableRecord exeRecord = makeExecutableRecord(manager, exerow);
 			exeList.add(exeRecord);
 		}
@@ -476,9 +520,9 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append(filter);
 		}
 		buffer.append("}}}");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_count",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_count",
 			buffer.toString());
-		Long res = (Long) resp.get("count");
+		Long res = resp.get("count").getAsLong();
 		return res.intValue();
 	}
 
@@ -501,7 +545,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("  \"bool\": {");
 		buffer.append("      \"must\": {");
 		buffer.append("        \"term\": { \"name_exec\": \"")
-				.append(JSONObject.escape(exeName))
+				.append(escape(exeName))
 				.append("\" } }");
 		if (!StringUtils.isEmpty(arch) || !StringUtils.isEmpty(compilerName)) {
 			buffer.append(",   \"filter\": {");
@@ -535,16 +579,16 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append("}}}}");
 		}
 		buffer.append("} } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject baseHits = (JSONObject) resp.get("hits");
-		JSONObject totalRec = (JSONObject) baseHits.get("total");
-		long total = (Long) totalRec.get("value");
+		JsonObject baseHits = (JsonObject) resp.get("hits");
+		JsonObject totalRec = (JsonObject) baseHits.get("total");
+		long total = totalRec.get("value").getAsLong();
 		if (total != 1) {
 			return null;		// Either no results, or not unique
 		}
-		JSONArray hitsArray = (JSONArray) baseHits.get("hits");
-		JSONObject exerow = (JSONObject) hitsArray.get(0);
+		JsonArray hitsArray = (JsonArray) baseHits.get("hits");
+		JsonObject exerow = (JsonObject) hitsArray.get(0);
 		ExecutableRecord exerec = makeExecutableRecord(manager, exerow);
 		return exerec;
 	}
@@ -585,25 +629,25 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append('\"');
 		}
 		buffer.append(" ] }");
-		JSONObject resp =
+		JsonObject resp =
 			connection.executeStatement(ElasticConnection.GET, "meta/_mget", buffer.toString());
-		JSONArray docs = (JSONArray) resp.get("docs");
+		JsonArray docs = (JsonArray) resp.get("docs");
 		for (int i = 0; i < maxDocuments; ++i) {
 			if (!iter2.hasNext()) {
 				break;
 			}
 			vecRes = iter2.next();
-			JSONObject oneResp = (JSONObject) docs.get(i);
-			String matchId = (String) oneResp.get("_id");
+			JsonObject oneResp = (JsonObject) docs.get(i);
+			String matchId = oneResp.get("_id").getAsString();
 			long matchIdVal = Base64Lite.decodeLongBase64(matchId);
-			JSONObject source = (JSONObject) oneResp.get("_source");
-			if (source == null) {
-				throw new ElasticException("meta document does not exist for id=" + matchId);
-			}
 			if (matchIdVal != vecRes.vectorid) {
 				throw new ElasticException("Mismatch in metaid");
 			}
-			long count = (Long) source.get("count");
+			JsonElement source = oneResp.get("_source");
+			if (ElasticConnection.isNull(source)) {
+				throw new ElasticException("meta document does not exist for id=" + matchId);
+			}
+			long count = ((JsonObject) source).get("count").getAsLong();
 			totalCount += count;
 			vecRes.hitcount = (int) count;
 		}
@@ -643,26 +687,27 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append('\"');
 		}
 		buffer.append(" ] }");
-		JSONObject resp =
+		JsonObject resp =
 			connection.executeStatement(ElasticConnection.GET, "vector/_mget", buffer.toString());
-		JSONArray docs = (JSONArray) resp.get("docs");
+		JsonArray docs = (JsonArray) resp.get("docs");
 		char[] vectorDecodeBuffer = Base64VectorFactory.allocateBuffer();
 		for (int i = 0; i < maxDocuments; ++i) {
 			if (!iter2.hasNext()) {
 				break;
 			}
 			vecRes = iter2.next();
-			JSONObject oneResp = (JSONObject) docs.get(i);
-			String matchId = (String) oneResp.get("_id");
+			JsonObject oneResp = (JsonObject) docs.get(i);
+			String matchId = oneResp.get("_id").getAsString();
 			long matchIdVal = Base64Lite.decodeLongBase64(matchId);
-			JSONObject source = (JSONObject) oneResp.get("_source");
-			if (source == null) {
-				throw new ElasticException("vector document does not exist for id=" + matchId);
-			}
 			if (matchIdVal != vecRes.vectorid) {
 				throw new ElasticException("Mismatch in vectorid");
 			}
-			StringReader reader = new StringReader((String) source.get("features"));
+			JsonElement source = oneResp.get("_source");
+			if (ElasticConnection.isNull(source)) {
+				throw new ElasticException("vector document does not exist for id=" + matchId);
+			}
+			StringReader reader =
+				new StringReader(((JsonObject) source).get("features").getAsString());
 			try {
 				vecRes.vec = vectorFactory.restoreVectorFromBase64(reader, vectorDecodeBuffer);
 			}
@@ -728,7 +773,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return list of matching functions as JSON documents
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONArray queryVectorIdMatch(long vectorId, String filter, int maxDocuments)
+	private JsonArray queryVectorIdMatch(long vectorId, String filter, int maxDocuments)
 			throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"size\": ").append(maxDocuments);
@@ -743,15 +788,15 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append(filter);
 		}
 		buffer.append("} } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject baseHits = (JSONObject) resp.get("hits");
-		JSONObject totalRec = (JSONObject) baseHits.get("total");
-		long total = (Long) totalRec.get("value");
+		JsonObject baseHits = (JsonObject) resp.get("hits");
+		JsonObject totalRec = (JsonObject) baseHits.get("total");
+		long total = totalRec.get("value").getAsLong();
 		if (total == 0) {
-			return new JSONArray();
+			return new JsonArray();
 		}
-		JSONArray hitsArray = (JSONArray) baseHits.get("hits");
+		JsonArray hitsArray = (JsonArray) baseHits.get("hits");
 		return hitsArray;
 	}
 
@@ -798,30 +843,30 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("\",          \"simthresh\": ").append(similarityThreshold);
 		buffer.append(",            \"sigthresh\": ").append(significanceThreshold);
 		buffer.append(" } } } } ] } } }");
-		JSONObject resp =
+		JsonObject resp =
 			connection.executeStatement(ElasticConnection.GET, "vector/_search", buffer.toString());
-		JSONObject baseHits = (JSONObject) resp.get("hits");
+		JsonObject baseHits = (JsonObject) resp.get("hits");
 		if (baseHits == null) {
 			throw new ElasticException("Could not find hits document");
 		}
-		JSONObject totalRec = (JSONObject) baseHits.get("total");
-		long numHits = (Long) totalRec.get("value");
+		JsonObject totalRec = (JsonObject) baseHits.get("total");
+		long numHits = totalRec.get("value").getAsLong();
 		if (numHits == 0) {
 			return 0;
 		}
-		JSONArray hitsArray = (JSONArray) baseHits.get("hits");
+		JsonArray hitsArray = (JsonArray) baseHits.get("hits");
 		char[] decodeBuffer = Base64VectorFactory.allocateBuffer();
 		VectorCompare vecCompare = new VectorCompare();
 		try {
 			int returnedHits = hitsArray.size();
 			for (int i = 0; i < returnedHits; ++i) {
-				JSONObject mainHit = (JSONObject) hitsArray.get(i);
+				JsonObject mainHit = (JsonObject) hitsArray.get(i);
 				VectorResult vecRes = new VectorResult();
-				vecRes.vectorid = Base64Lite.decodeLongBase64((String) mainHit.get("_id"));
+				vecRes.vectorid = Base64Lite.decodeLongBase64(mainHit.get("_id").getAsString());
 				vecRes.hitcount = -1;		// Cannot fill in at this time
-				vecRes.sim = (Double) mainHit.get("_score");
-				JSONObject source = (JSONObject) mainHit.get("_source");
-				StringReader reader = new StringReader((String) source.get("features"));
+				vecRes.sim = mainHit.get("_score").getAsDouble();
+				JsonObject source = (JsonObject) mainHit.get("_source");
+				StringReader reader = new StringReader(source.get("features").getAsString());
 				vecRes.vec = vectorFactory.restoreVectorFromBase64(reader, decodeBuffer);
 				vector.compareCounts(vecRes.vec, vecCompare);
 				vecCompare.dotproduct = vecRes.sim * vector.getLength() * vecRes.vec.getLength();
@@ -899,7 +944,7 @@ public class ElasticDatabase implements FunctionDatabase {
 				break;
 			}
 			final SignatureRecord srec = manager.newSignature(dresult.vec, dresult.hitcount);
-			JSONArray descres;
+			JsonArray descres;
 			descres = queryVectorIdMatch(dresult.vectorid, filter, query.max - count);
 			if (descres == null) {
 				throw new ElasticException(
@@ -1003,10 +1048,10 @@ public class ElasticDatabase implements FunctionDatabase {
 			queryAllFunc(listFunctions, exeRecord, exeId, manager, maxFunctions);
 		}
 		else {
-			JSONArray hitsarray = queryFuncNameMatch(exeId, functionName, maxFunctions);
-			JSONObject doc = null;
-			for (Object element : hitsarray) {
-				doc = (JSONObject) element;
+			JsonArray hitsarray = queryFuncNameMatch(exeId, functionName, maxFunctions);
+			JsonObject doc = null;
+			for (JsonElement element : hitsarray) {
+				doc = (JsonObject) element;
 				FunctionDescription funcDesc = convertDescriptionRow(doc, exeRecord, manager, null);
 				listFunctions.add(funcDesc);
 			}
@@ -1032,7 +1077,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			throws ElasticException {
 		RowKeyElastic eKey = (RowKeyElastic) exeRecord.getRowId();
 		String exeId = eKey.generateExeIdString();
-		JSONObject doc = queryFuncNameAddress(exeId, functionName, address);
+		JsonObject doc = queryFuncNameAddress(exeId, functionName, address);
 		if (doc == null) {
 			return null;
 		}
@@ -1077,25 +1122,25 @@ public class ElasticDatabase implements FunctionDatabase {
 				break;
 			}
 		}
-		JSONObject bulkobj = connection.executeBulk(path, buffer.toString());
-		JSONArray responses = (JSONArray) bulkobj.get("responses");
+		JsonObject bulkobj = connection.executeBulk(path, buffer.toString());
+		JsonArray responses = (JsonArray) bulkobj.get("responses");
 		for (int i = 0; i < count; ++i) {
-			JSONObject subquery = (JSONObject) responses.get(i);
-			JSONObject hits = (JSONObject) subquery.get("hits");
-			if (hits == null) {
+			JsonObject subquery = (JsonObject) responses.get(i);
+			JsonElement hits = subquery.get("hits");
+			if (ElasticConnection.isNull(hits)) {
 				throw new ElasticException("Multi-search for exe records failed");
 			}
-			JSONObject totalRec = (JSONObject) hits.get("total");
-			long total = (Long) totalRec.get("value");
+			JsonObject totalRec = (JsonObject) ((JsonObject) hits).get("total");
+			long total = totalRec.get("value").getAsLong();
 			if (total != 1) {
 				throw new ElasticException("Could not recover unique executable via id");
 			}
 		}
 		for (int i = 0; i < count; ++i) {
-			JSONObject subquery = (JSONObject) responses.get(i);
-			JSONObject hits = (JSONObject) subquery.get("hits");
-			JSONArray hitsArray = (JSONArray) hits.get("hits");
-			hits = (JSONObject) hitsArray.get(0);
+			JsonObject subquery = (JsonObject) responses.get(i);
+			JsonObject hits = (JsonObject) subquery.get("hits");
+			JsonArray hitsArray = (JsonArray) hits.get("hits");
+			hits = (JsonObject) hitsArray.get(0);
 			ExecutableRecord newExe = makeExecutableRecord(manager, hits);
 			RowKey rowKey = iter2.next();
 			manager.cacheExecutableByRow(newExe, rowKey);
@@ -1111,7 +1156,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return the JSON response object
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONObject queryFunctionsOfExeId(String exeId, long maxDocuments, long start)
+	private JsonObject queryFunctionsOfExeId(String exeId, long maxDocuments, long start)
 			throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"size\": ").append(maxDocuments);
@@ -1146,20 +1191,20 @@ public class ElasticDatabase implements FunctionDatabase {
 		long count = 0;
 		do {
 			int limit = MAX_FUNCTION_WINDOW;
-			if (maxDocuments != 0 && maxDocuments - start < limit) {
-				limit = (int) (maxDocuments - start);
+			if (maxDocuments != 0 && maxDocuments - count < limit) {
+				limit = (int) (maxDocuments - count);
 			}
-			JSONObject resp = queryFunctionsOfExeId(exeId, limit, start);
-			JSONObject hits = (JSONObject) resp.get("hits");
-			JSONObject totalRec = (JSONObject) hits.get("total");
-			total = (Long) totalRec.get("value");
+			JsonObject resp = queryFunctionsOfExeId(exeId, limit, start);
+			JsonObject hits = (JsonObject) resp.get("hits");
+			JsonObject totalRec = (JsonObject) hits.get("total");
+			total = totalRec.get("value").getAsLong();
 			if (maxDocuments != 0 && maxDocuments < total) {
 				total = maxDocuments;
 			}
-			JSONArray hitsarray = (JSONArray) hits.get("hits");
-			JSONObject doc = null;
-			for (Object element : hitsarray) {
-				doc = (JSONObject) element;
+			JsonArray hitsarray = (JsonArray) hits.get("hits");
+			JsonObject doc = null;
+			for (JsonElement element : hitsarray) {
+				doc = (JsonObject) element;
 				FunctionDescription funcDesc = convertDescriptionRow(doc, exeRecord, manager, null);
 				listFunctions.add(funcDesc);
 				++count;
@@ -1167,8 +1212,8 @@ public class ElasticDatabase implements FunctionDatabase {
 			if (hitsarray.size() == 0) {
 				break;			// Shouldn't need this, but just in case
 			}
-			JSONArray sort = (JSONArray) doc.get("sort");
-			start = (Long) sort.get(0);					// Sort value for last entry, for passing as search_after parameter			
+			JsonArray sort = (JsonArray) doc.get("sort");
+			start = sort.get(0).getAsLong();	// Sort value for last entry, for passing as search_after parameter			
 		}
 		while (total > count);
 		return (int) total;
@@ -1201,7 +1246,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			if (rec.function_name) {
 				needscomma = true;
 				buffer.append("\"name_func\": \"")
-						.append(JSONObject.escape(rec.update.getFunctionName()))
+						.append(escape(rec.update.getFunctionName()))
 						.append('\"');
 			}
 			if (rec.flags) {
@@ -1230,7 +1275,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		if (updateRecord.name_exec) {
 			needscomma = true;
 			buffer.append("\"name_exec\": \"")
-					.append(JSONObject.escape(updateRecord.update.getNameExec()))
+					.append(escape(updateRecord.update.getNameExec()))
 					.append('\"');
 		}
 		if (updateRecord.architecture) {
@@ -1313,7 +1358,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 */
 	private int updateExecutable(DescriptionManager manager, ExecutableRecord exeRecord,
 			List<FunctionDescription> badFunctions) throws ElasticException, LSHException {
-		JSONObject row = queryMd5ExeMatch(exeRecord.getMd5());
+		JsonObject row = queryMd5ExeMatch(exeRecord.getMd5());
 		if (row == null) {
 			return -1; // Indicate that we couldn't find the executable
 		}
@@ -1361,14 +1406,14 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @param source is the exe document
 	 * @return the list of CategoryRecords
 	 */
-	private static List<CategoryRecord> makeCategoryList(JSONObject source) {
-		JSONArray catArray = (JSONArray) source.get("execategory");
+	private static List<CategoryRecord> makeCategoryList(JsonObject source) {
+		JsonArray catArray = (JsonArray) source.get("execategory");
 		if (catArray == null || catArray.size() == 0) {
 			return null;
 		}
 		List<CategoryRecord> res = new ArrayList<>();
-		for (Object element : catArray) {
-			String concat = (String) element;
+		for (JsonElement element : catArray) {
+			String concat = element.getAsString();
 			int pos = concat.indexOf('\t');
 			if (pos > 0) {
 				String type = concat.substring(0, pos);
@@ -1386,25 +1431,25 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @param hit is the "hit" document, which should have an "_id" and "_source" property.
 	 * @return the new ExecutableRecord parsed from the document
 	 */
-	private static ExecutableRecord makeExecutableRecordTemp(JSONObject hit) {
-		RowKeyElastic eKey = RowKeyElastic.parseExeIdString((String) hit.get("_id"));
-		JSONObject source = (JSONObject) hit.get("_source");
-		String md5 = (String) source.get("md5");
-		String exename = (String) source.get("name_exec");
-		String arch = (String) source.get("architecture");
+	private static ExecutableRecord makeExecutableRecordTemp(JsonObject hit) {
+		RowKeyElastic eKey = RowKeyElastic.parseExeIdString(hit.get("_id").getAsString());
+		JsonObject source = (JsonObject) hit.get("_source");
+		String md5 = ElasticConnection.convertToString(source.get("md5"));
+		String exename = ElasticConnection.convertToString(source.get("name_exec"));
+		String arch = ElasticConnection.convertToString(source.get("architecture"));
 		ExecutableRecord exeres;
 		if (ExecutableRecord.isLibraryHash(md5)) {
 			exeres = new ExecutableRecord(exename, arch, eKey);
 		}
 		else {
-			String cname = (String) source.get("name_compiler");
-			String repo = (String) source.get("repository");
+			String cname = ElasticConnection.convertToString(source.get("name_compiler"));
+			String repo = ElasticConnection.convertToString(source.get("repository"));
 			String path = null;
 			if (repo != null) {
-				path = (String) source.get("path");
+				path = ElasticConnection.convertToString(source.get("path"));
 			}
 			List<CategoryRecord> catrecs = makeCategoryList(source);
-			long milli = (Long) source.get("ingest_date");
+			long milli = source.get("ingest_date").getAsLong();
 			exeres = new ExecutableRecord(md5, exename, cname, arch, new Date(milli), catrecs, eKey,
 				repo, path);
 		}
@@ -1418,27 +1463,27 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return the new ExecutableRecord parsed from the document
 	 * @throws LSHException if the container already contains executable with different metadata
 	 */
-	private static ExecutableRecord makeExecutableRecord(DescriptionManager manager, JSONObject hit)
+	private static ExecutableRecord makeExecutableRecord(DescriptionManager manager, JsonObject hit)
 			throws LSHException {
-		RowKeyElastic eKey = RowKeyElastic.parseExeIdString((String) hit.get("_id"));
-		JSONObject source = (JSONObject) hit.get("_source");
-		String md5 = (String) source.get("md5");
-		String exename = (String) source.get("name_exec");
-		String arch = (String) source.get("architecture");
+		RowKeyElastic eKey = RowKeyElastic.parseExeIdString(hit.get("_id").getAsString());
+		JsonObject source = (JsonObject) hit.get("_source");
+		String md5 = ElasticConnection.convertToString(source.get("md5"));
+		String exename = ElasticConnection.convertToString(source.get("name_exec"));
+		String arch = ElasticConnection.convertToString(source.get("architecture"));
 
 		ExecutableRecord exerec;
 		if (ExecutableRecord.isLibraryHash(md5)) {
 			exerec = manager.newExecutableLibrary(exename, arch, eKey);
 		}
 		else {
-			String cname = (String) source.get("name_compiler");
-			String repo = (String) source.get("repository");
+			String cname = ElasticConnection.convertToString(source.get("name_compiler"));
+			String repo = ElasticConnection.convertToString(source.get("repository"));
 			String path = null;
 			if (repo != null) {
-				path = (String) source.get("path");
+				path = ElasticConnection.convertToString(source.get("path"));
 			}
 			List<CategoryRecord> catrecs = makeCategoryList(source);
-			long milli = (Long) source.get("ingest_date");
+			long milli = source.get("ingest_date").getAsLong();
 			Date date = new Date(milli);
 			exerec = manager.newExecutableRecord(md5, exename, cname, arch, date, repo, path, eKey);
 			if (catrecs != null) {
@@ -1457,14 +1502,14 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @param sigRecord is the (optional) SignatureRecord to attach to the new function
 	 * @return the new FunctionDescription
 	 */
-	private static FunctionDescription convertDescriptionRow(JSONObject hit,
+	private static FunctionDescription convertDescriptionRow(JsonObject hit,
 			ExecutableRecord exeRecord, DescriptionManager manager, SignatureRecord sigRecord) {
-		RowKey rowid = RowKeyElastic.parseFunctionId((String) hit.get("_id"));
-		JSONObject source = (JSONObject) hit.get("_source");
-		String func_name = (String) source.get("name_func");
-		long addr = (Long) source.get("addr");
-		int flags = ((Long) source.get("flags")).intValue();
-		long id_sig = Base64Lite.decodeLongBase64((String) source.get("id_signature"));
+		RowKey rowid = RowKeyElastic.parseFunctionId(hit.get("_id").getAsString());
+		JsonObject source = (JsonObject) hit.get("_source");
+		String func_name = source.get("name_func").getAsString();
+		long addr = source.get("addr").getAsLong();
+		int flags = (int) source.get("flags").getAsLong();
+		long id_sig = Base64Lite.decodeLongBase64(source.get("id_signature").getAsString());
 		FunctionDescription fres = manager.newFunctionDescription(func_name, addr, exeRecord);
 		manager.setFunctionDescriptionId(fres, rowid);
 		manager.setFunctionDescriptionFlags(fres, flags);
@@ -1491,7 +1536,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @throws ElasticException for communication problems with the server
 	 * @throws LSHException for problems adding new records to the container
 	 */
-	protected void convertDescriptionRows(SimilarityResult similarityResult, JSONArray descRows,
+	protected void convertDescriptionRows(SimilarityResult similarityResult, JsonArray descRows,
 			VectorResult vectorResult, DescriptionManager manager, SignatureRecord sigRecord)
 			throws ElasticException, LSHException {
 		if (descRows.size() == 0) {
@@ -1501,11 +1546,11 @@ public class ElasticDatabase implements FunctionDatabase {
 		Set<RowKeyElastic> parents = new TreeSet<>();
 		RowKeyElastic eKey;
 		String exeid;
-		for (Object descRow : descRows) {
-			JSONObject hit = (JSONObject) descRow;
-			JSONObject source = (JSONObject) hit.get("_source");
-			JSONObject joinfield = (JSONObject) source.get("join_field");
-			exeid = (String) joinfield.get("parent");
+		for (JsonElement descRow : descRows) {
+			JsonObject hit = (JsonObject) descRow;
+			JsonObject source = (JsonObject) hit.get("_source");
+			JsonObject joinfield = (JsonObject) source.get("join_field");
+			exeid = joinfield.get("parent").getAsString();
 			eKey = RowKeyElastic.parseExeIdString(exeid);
 			parentIds.add(eKey);
 			if (manager.findExecutableByRow(eKey) == null) {
@@ -1518,7 +1563,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			queryExecutableRecordById(manager, iter1, iter2, 100);
 		}
 
-		JSONObject currow = (JSONObject) descRows.get(0);
+		JsonObject currow = (JsonObject) descRows.get(0);
 		eKey = parentIds.get(0);
 		ExecutableRecord curexe = manager.findExecutableByRow(eKey);
 		FunctionDescription fres = convertDescriptionRow(currow, curexe, manager, sigRecord);
@@ -1526,7 +1571,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			similarityResult.addNote(fres, vectorResult.sim, vectorResult.signif);
 		}
 		for (int i = 1; i < descRows.size(); ++i) {
-			currow = (JSONObject) descRows.get(i);
+			currow = (JsonObject) descRows.get(i);
 			eKey = parentIds.get(i);
 			curexe = manager.findExecutableByRow(eKey);
 			fres = convertDescriptionRow(currow, curexe, manager, sigRecord);
@@ -1576,7 +1621,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		String exeId = eKey.generateExeIdString();
 
 		if (!insertExecutableRecord(exeRecord, exeId)) {	// Try to insert the executable
-			JSONObject exeObj = queryMd5ExeMatch(exeRecord.getMd5());
+			JsonObject exeObj = queryMd5ExeMatch(exeRecord.getMd5());
 			if (exeObj != null) {		// Try to retrieve the previous version
 				ExecutableRecord oldrec = makeExecutableRecordTemp(exeObj);
 				int cmp = oldrec.compareMetadata(exeRecord);
@@ -1668,11 +1713,11 @@ public class ElasticDatabase implements FunctionDatabase {
 		String body =
 			"{ \"script\": { \"inline\": \"ctx._source.iid += params.bulk_size\", \"params\": { \"bulk_size\": " +
 				Integer.toString(amount) + "}}}";
-		JSONObject resp = connection.executeStatement(ElasticConnection.POST,
+		JsonObject resp = connection.executeStatement(ElasticConnection.POST,
 			"configuration/_update/1?_source=iid&retry_on_conflict=5", body);
-		JSONObject get = (JSONObject) resp.get("get");
-		JSONObject fields = (JSONObject) get.get("_source");
-		long res = (Long) fields.get("iid");
+		JsonObject get = (JsonObject) resp.get("get");
+		JsonObject fields = (JsonObject) get.get("_source");
+		long res = fields.get("iid").getAsLong();
 		return res - amount;
 	}
 
@@ -1716,28 +1761,29 @@ public class ElasticDatabase implements FunctionDatabase {
 			}
 		}
 		while (iter.hasNext());
-		JSONObject resp = connection.executeBulk("/_bulk", buffer.toString());
-		if ((Boolean) resp.get("errors")) {
-			JSONArray items = (JSONArray) resp.get("items");
-			for (Object item2 : items) {
-				JSONObject item = (JSONObject) item2;
-				JSONObject create = (JSONObject) item.get("create");
-				JSONObject error = null;
+		JsonObject resp = connection.executeBulk("/_bulk", buffer.toString());
+		if (resp.get("errors").getAsBoolean()) {
+			JsonArray items = (JsonArray) resp.get("items");
+			for (JsonElement elem : items) {
+				JsonObject item = (JsonObject) elem;
+				JsonObject create = (JsonObject) item.get("create");
+				JsonObject error = null;
 				if (create != null) {
-					error = (JSONObject) create.get("error");
+					error = (JsonObject) create.get("error");
 					if (error != null) {
-						String type = (String) error.get("type");
+						String type = error.get("type").getAsString();
 						if (type.startsWith("version_conflict")) {
 							continue;			// Normal error, meaning document already exists
 						}
 					}
 				}
 				else {
-					JSONObject update = (JSONObject) item.get("update");
-					error = (JSONObject) update.get("error");
+					JsonObject update = (JsonObject) item.get("update");
+					error = (JsonObject) update.get("error");
 				}
 				if (error != null) {
-					throw new ElasticException((String) error.get("reason"));
+					throw new ElasticException(
+						ElasticConnection.convertToString(error.get("reason")));
 				}
 			}
 		}
@@ -1768,20 +1814,20 @@ public class ElasticDatabase implements FunctionDatabase {
 				"{ \"script\": { \"inline\": \"if ((ctx._source.count -= params.count) <=0) { ctx.op = \\\"delete\\\" }\", ");
 			buffer.append("\"params\": { \"count\": ").append(entry.count).append("} } }\n");
 		}
-		JSONObject resp = connection.executeBulk("/_bulk", buffer.toString());
-		JSONArray items = (JSONArray) resp.get("items");
+		JsonObject resp = connection.executeBulk("/_bulk", buffer.toString());
+		JsonArray items = (JsonArray) resp.get("items");
 		for (int i = 0; i < maxVectors; ++i) {
 			if (!iter2.hasNext()) {
 				break;
 			}
 			IdHistogram entry = iter2.next();
-			JSONObject item = (JSONObject) items.get(i);
-			JSONObject update = (JSONObject) item.get("update");
-			long id = Base64Lite.decodeLongBase64((String) update.get("_id"));
+			JsonObject item = (JsonObject) items.get(i);
+			JsonObject update = (JsonObject) item.get("update");
+			long id = Base64Lite.decodeLongBase64(update.get("_id").getAsString());
 			if (id != entry.id) {
 				throw new ElasticException("Mismatch in decrementVectorCounters");
 			}
-			if ("deleted".equals(update.get("result"))) {
+			if ("deleted".equals(ElasticConnection.convertToString(update.get("result")))) {
 				deleteList.add(entry);				// Mark this vector for full deletion
 			}
 		}
@@ -1811,8 +1857,8 @@ public class ElasticDatabase implements FunctionDatabase {
 			maxVectors -= 1;
 		}
 		while (iter.hasNext() && maxVectors > 0);
-		JSONObject resp = connection.executeBulk("/_bulk", buffer.toString());
-		if ((Boolean) resp.get("errors")) {
+		JsonObject resp = connection.executeBulk("/_bulk", buffer.toString());
+		if (resp.get("errors").getAsBoolean()) {
 			throw new ElasticException("Error during vector deletion");
 		}
 	}
@@ -1829,9 +1875,9 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("  \"parent_id\": {");
 		buffer.append("    \"type\": \"function\",");
 		buffer.append("    \"id\": \"").append(exeId).append("\" } } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.POST,
+		JsonObject resp = connection.executeStatement(ElasticConnection.POST,
 			"executable/_delete_by_query", buffer.toString());
-		long numDocs = (Long) resp.get("deleted");
+		long numDocs = resp.get("deleted").getAsLong();
 		connection.executeURIOnly(ElasticConnection.DELETE, "executable/_doc/" + exeId);
 		return (int) numDocs;
 	}
@@ -1886,14 +1932,14 @@ public class ElasticDatabase implements FunctionDatabase {
 			builder.append(refreshRateInSecs).append('s');
 		}
 		builder.append("\" } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.PUT, index + "/_settings",
+		JsonObject resp = connection.executeStatement(ElasticConnection.PUT, index + "/_settings",
 			builder.toString());
-		Boolean ack = (Boolean) resp.get("acknowledged");
-		if (ack == null) {
+		JsonElement ack = resp.get("acknowledged");
+		if (ElasticConnection.isNull(ack)) {
 			throw new ElasticException(
 				"Unknown response trying to adjust number_of_replicas and refresh_interval");
 		}
-		if (!ack) {
+		if (!ack.getAsBoolean()) {
 			throw new ElasticException("Cluster did not accept settings for index: " + index);
 		}
 	}
@@ -2048,7 +2094,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	private Map<String, String> readKeyValues() throws ElasticException, NoDatabaseException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"size\": 500, \"query\": { \"match_all\": {} } }");
-		JSONObject resp;
+		JsonObject resp;
 		try {
 			resp = connection.executeStatement(ElasticConnection.GET, "configuration/_search",
 				buffer.toString());
@@ -2059,26 +2105,26 @@ public class ElasticDatabase implements FunctionDatabase {
 			}
 			throw ex;
 		}
-		JSONObject baseHits = (JSONObject) resp.get("hits");
+		JsonObject baseHits = (JsonObject) resp.get("hits");
 		long total = 0;
 		if (baseHits != null) {
-			JSONObject totalRec = (JSONObject) baseHits.get("total");
-			total = (Long) totalRec.get("value");
+			JsonObject totalRec = (JsonObject) baseHits.get("total");
+			total = totalRec.get("value").getAsLong();
 		}
 		if (total <= 1) {
 			throw new ElasticException("Unrecoverable error: Could not find configuration");
 		}
 		HashMap<String, String> res = new HashMap<>();
-		JSONArray hits = (JSONArray) baseHits.get("hits");
-		for (Object hit2 : hits) {
-			JSONObject hit = (JSONObject) hit2;
-			String key = (String) hit.get("_id");
-			JSONObject source = (JSONObject) hit.get("_source");
-			Object value = source.get("value");
-			if (value == null) {
+		JsonArray hits = (JsonArray) baseHits.get("hits");
+		for (JsonElement hit2 : hits) {
+			JsonObject hit = (JsonObject) hit2;
+			String key = hit.get("_id").getAsString();
+			JsonObject source = (JsonObject) hit.get("_source");
+			JsonElement value = source.get("value");
+			if (ElasticConnection.isNull(value)) {
 				continue;		// This might be the "sequence" document
 			}
-			res.put(key, (String) value);
+			res.put(key, value.getAsString());
 		}
 		return res;
 	}
@@ -2313,7 +2359,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	{
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{ \"password\": \"");
-		buffer.append(JSONObject.escape(String.valueOf(password)));
+		buffer.append(escape(String.valueOf(password)));
 		buffer.append("\" }");
 		StringBuilder path = new StringBuilder();
 		path.append("/_security/user/_password");	// Ignore the username, change for "current" user
@@ -2339,7 +2385,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		vectorFactory = new Base64VectorFactory();
 		config.weightfactory = new WeightFactory();
 		config.idflookup = new IDFLookup();
-		JSONObject res;
+		JsonObject res;
 		try {
 			res = connection.executeURIOnly(ElasticConnection.GET, "vector/_settings");
 		}
@@ -2349,14 +2395,13 @@ public class ElasticDatabase implements FunctionDatabase {
 			}
 			throw ex;
 		}
-		JSONObject repo = (JSONObject) res.get(repository + "_vector");
-		JSONObject settings = (JSONObject) repo.get("settings");
-		JSONObject index = (JSONObject) settings.get("index");
-		JSONObject analysis = (JSONObject) index.get("analysis");
-		JSONObject tokenizer = (JSONObject) analysis.get("tokenizer");
+		JsonObject repo = (JsonObject) res.get(repository + "_vector");
+		JsonObject settings = (JsonObject) repo.get("settings");
+		JsonObject index = (JsonObject) settings.get("index");
+		JsonObject analysis = (JsonObject) index.get("analysis");
+		JsonObject tokenizer = (JsonObject) analysis.get("tokenizer");
 		String tokenizerName = null;
-		for (Object obj : tokenizer.keySet()) {
-			String key = (String) obj;
+		for (String key : tokenizer.keySet()) {
 			if (key.startsWith("lsh_")) {
 				tokenizerName = key;
 				break;
@@ -2365,8 +2410,8 @@ public class ElasticDatabase implements FunctionDatabase {
 		if (tokenizerName == null) {
 			throw new ElasticException("Missing tokenizer configuration");
 		}
-		JSONObject tokenizerSettings = (JSONObject) tokenizer.get(tokenizerName);
-		String idfWeights = (String) tokenizerSettings.get(ElasticUtilities.LSH_WEIGHTS);
+		JsonObject tokenizerSettings = (JsonObject) tokenizer.get(tokenizerName);
+		String idfWeights = tokenizerSettings.get(ElasticUtilities.LSH_WEIGHTS).getAsString();
 		String[] split = idfWeights.split(" ");
 		double[] weightArray = new double[split.length];
 		if (weightArray.length != config.weightfactory.getSize()) {
@@ -2377,7 +2422,7 @@ public class ElasticDatabase implements FunctionDatabase {
 		}
 		config.weightfactory.set(weightArray);
 
-		String lookup = (String) tokenizerSettings.get(ElasticUtilities.IDF_CONFIG);
+		String lookup = tokenizerSettings.get(ElasticUtilities.IDF_CONFIG).getAsString();
 		split = lookup.split(" ");
 		int[] lookupArray = new int[split.length];
 		for (int i = 0; i < lookupArray.length; ++i) {
@@ -2462,10 +2507,7 @@ public class ElasticDatabase implements FunctionDatabase {
 
 	@Override
 	public void close() {
-		if (connection != null) {
-			connection.close();
-			connection = null;
-		}
+		connection = null;
 		status = Status.Unconnected;
 		initialized = false;
 		info = null;
@@ -2478,7 +2520,8 @@ public class ElasticDatabase implements FunctionDatabase {
 
 	@Override
 	public QueryResponseRecord query(BSimQuery<?> query) {
-		if ((!isInitialized()) && (!(query instanceof CreateDatabase))) {
+		if ((!isInitialized()) && !(query instanceof CreateDatabase) &&
+			!(query instanceof DropDatabase)) {
 			lastError = new BSimError(ErrorCategory.Nodatabase, "The database does not exist");
 			return null;
 		}
@@ -2505,6 +2548,9 @@ public class ElasticDatabase implements FunctionDatabase {
 			}
 			else if (query instanceof QueryExeCount) {
 				fdbQueryExeCount((QueryExeCount) query);
+			}
+			else if (query instanceof DropDatabase q) {
+				fdbDatabaseDrop(q);
 			}
 			else if (query instanceof CreateDatabase) {
 				fdbDatabaseCreate((CreateDatabase) query);
@@ -2590,6 +2636,36 @@ public class ElasticDatabase implements FunctionDatabase {
 		initialized = true;
 	}
 
+	private void dropDatabase() throws ElasticException {
+
+		ElasticConnection c = connection;
+		if (c != null) {
+			close();
+		}
+		else {
+			c = new ElasticConnection(baseURL, repository);
+		}
+
+		Msg.info(this, "Dropping BSim Elasticsearch database: " + serverInfo);
+
+		dropIndex(c, "configuration");
+		dropIndex(c, "executable");
+		dropIndex(c, "vector");
+		dropIndex(c, "meta");
+	}
+
+	private static void dropIndex(ElasticConnection c, String indexName) throws ElasticException {
+		try {
+			c.executeURIOnly(ElasticConnection.DELETE, indexName);
+		}
+		catch (ElasticException e) {
+			if (e.getMessage().contains("no such index")) {
+				return; // ignore
+			}
+			throw e;
+		}
+	}
+
 	/**
 	 * Given the name of an executable library, its architecture, and a function name,
 	 * return the id of the document describing this specific function.
@@ -2603,13 +2679,13 @@ public class ElasticDatabase implements FunctionDatabase {
 	public String recoverExternalFunctionId(String exeName, String funcName, String arch)
 			throws ElasticException {
 		String md5 = ExecutableRecord.calcLibraryMd5Placeholder(exeName, arch);
-		JSONObject row = queryMd5ExeMatch(md5);
+		JsonObject row = queryMd5ExeMatch(md5);
 		if (row == null) {
 			throw new ElasticException(
 				"Could not resolve filter specifying executable: " + exeName);
 		}
-		String exeId = (String) row.get("_id");
-		JSONArray descres = queryFuncNameMatch(exeId, funcName, 2);
+		String exeId = row.get("_id").getAsString();
+		JsonArray descres = queryFuncNameMatch(exeId, funcName, 2);
 		if (1 != descres.size()) {
 			throw new ElasticException(
 				"Could not resolve filter specifying function: [" + exeName + "]" + funcName);
@@ -2706,7 +2782,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			buffer.append("{ \"wildcard\" : {");
 			buffer.append(" \"name_exec\" : {");
 			buffer.append(" \"value\" : \"*");
-			buffer.append(JSONObject.escape(filterExeName));
+			buffer.append(escape(filterExeName));
 			buffer.append("*\" }}}");
 			placedFirst = true;
 		}
@@ -3226,7 +3302,7 @@ public class ElasticDatabase implements FunctionDatabase {
 				break;
 			}
 			SignatureRecord srec = manager.newSignature(vecResult.vec, vecResult.hitcount);
-			JSONArray descres;
+			JsonArray descres;
 			descres = queryVectorIdMatch(vecResult.vectorid, filter, query.max - count);
 			if (descres == null) {
 				throw new ElasticException(
@@ -3258,7 +3334,7 @@ public class ElasticDatabase implements FunctionDatabase {
 			DescriptionManager manager = new DescriptionManager();
 			ExecutableRecord erec = null;
 			if (spec.exemd5.length() != 0) {
-				JSONObject row = queryMd5ExeMatch(spec.exemd5);
+				JsonObject row = queryMd5ExeMatch(spec.exemd5);
 				if (row != null) {
 					erec = makeExecutableRecord(manager, row);
 				}
@@ -3317,6 +3393,22 @@ public class ElasticDatabase implements FunctionDatabase {
 		}
 	}
 
+	private void fdbDatabaseDrop(DropDatabase query) throws LSHException {
+		ResponseDropDatabase response = query.getResponse();
+		if (!serverInfo.getDBName().equals(query.databaseName)) {
+			throw new LSHException("Invalid databaseName name");
+		}
+		response.dropSuccessful = true;		// Response parameters assuming success
+		response.errorMessage = null;
+		try {
+			dropDatabase();
+		}
+		catch (ElasticException e) {
+			response.dropSuccessful = false;
+			response.errorMessage = e.getMessage();
+		}
+	}
+
 	/**
 	 * Entry point for the Elasticsearch version of PasswordChange command.
 	 * @param query is command parameters
@@ -3357,19 +3449,19 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("{ \"query\": { \"ids\": { \"values\": [ \"");
 		buffer.append(rowId);
 		buffer.append("\" ] } } }");
-		JSONObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
+		JsonObject resp = connection.executeStatement(ElasticConnection.GET, "executable/_search",
 			buffer.toString());
-		JSONObject hits = (JSONObject) resp.get("hits");
-		JSONObject totalRec = (JSONObject) hits.get("total");
-		long total = (Long) totalRec.get("value");
+		JsonObject hits = (JsonObject) resp.get("hits");
+		JsonObject totalRec = (JsonObject) hits.get("total");
+		long total = totalRec.get("value").getAsLong();
 		if (total == 0) {
 			throw new ElasticException("No function documents matching id=" + rowId);
 		}
-		JSONArray hitsArray = (JSONArray) hits.get("hits");
-		JSONObject row = (JSONObject) hitsArray.get(0);
-		JSONObject source = (JSONObject) row.get("_source");
-		JSONObject joinfield = (JSONObject) source.get("join_field");
-		String exeId = (String) joinfield.get("parent");
+		JsonArray hitsArray = (JsonArray) hits.get("hits");
+		JsonObject row = (JsonObject) hitsArray.get(0);
+		JsonObject source = (JsonObject) row.get("_source");
+		JsonObject joinfield = (JsonObject) source.get("join_field");
+		String exeId = joinfield.get("parent").getAsString();
 		RowKeyElastic eKey = RowKeyElastic.parseExeIdString(exeId);
 		ExecutableRecord exeRec = manager.findExecutableByRow(eKey);
 		if (exeRec == null) {
@@ -3387,7 +3479,7 @@ public class ElasticDatabase implements FunctionDatabase {
 	 * @return the child document ids as an array of JSON strings
 	 * @throws ElasticException for communication problems with the server
 	 */
-	private JSONArray queryCallgraphRows(FunctionDescription funcRecord) throws ElasticException {
+	private JsonArray queryCallgraphRows(FunctionDescription funcRecord) throws ElasticException {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("executable/_doc/");
 		RowKeyElastic eKey = (RowKeyElastic) funcRecord.getExecutableRecord().getRowId();
@@ -3395,9 +3487,9 @@ public class ElasticDatabase implements FunctionDatabase {
 		buffer.append("?routing=");
 		buffer.append(eKey.generateExeIdString());
 		buffer.append("&_source_includes=childid");
-		JSONObject resp = connection.executeURIOnly(ElasticConnection.GET, buffer.toString());
-		JSONObject source = (JSONObject) resp.get("_source");
-		JSONArray childid = (JSONArray) source.get("childid");
+		JsonObject resp = connection.executeURIOnly(ElasticConnection.GET, buffer.toString());
+		JsonObject source = (JsonObject) resp.get("_source");
+		JsonArray childid = (JsonArray) source.get("childid");
 		return childid;
 	}
 
@@ -3417,12 +3509,12 @@ public class ElasticDatabase implements FunctionDatabase {
 			throw new ElasticException(
 				"Elasticsearch database does not have callgraph information enabled");
 		}
-		JSONArray callids = queryCallgraphRows(funcRecord);
+		JsonArray callids = queryCallgraphRows(funcRecord);
 		if (callids == null) {
 			return;		// field is not present, meaning children are not present
 		}
-		for (Object callid : callids) {
-			String funcId = (String) callid;
+		for (JsonElement callid : callids) {
+			String funcId = callid.getAsString();
 			RowKeyElastic eKey = RowKeyElastic.parseFunctionId(funcId);
 			FunctionDescription fdesc = functionMap.get(eKey);
 			if (fdesc == null) {

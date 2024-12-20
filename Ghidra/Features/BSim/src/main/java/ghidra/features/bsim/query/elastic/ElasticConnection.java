@@ -19,9 +19,9 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.*;
+
+import ghidra.util.Msg;
 
 public class ElasticConnection {
 	public static final String POST = "POST";
@@ -38,24 +38,51 @@ public class ElasticConnection {
 		httpURLbase = url + '/' + repo + '_';
 	}
 
-	public void close() {
-		// nothing to do - http connections do not persist
-	}
-
 	public boolean lastRequestSuccessful() {
 		return (lastResponseCode >= 200) && (lastResponseCode < 300);
 	}
 
 	/**
-	 * Assuming the writer has been closed and connection.getResponseCode() is called
-	 * placing the value in lastResponseCode, read the response and parse into a JSONObject
-	 * @return the JSONObject
-	 * @throws IOException for problems with the socket
-	 * @throws ParseException for JSON parse errors
+	 * Get String held by a JsonElement, allowing for a null object.
+	 * @param element is the JsonElement or null
+	 * @return the underlying String or null
 	 */
-	private JSONObject grabResponse(HttpURLConnection connection)
-			throws IOException, ParseException {
-		JSONParser parser = new JSONParser();
+	static String convertToString(JsonElement element) {
+		if (isNull(element)) {
+			return null;
+		}
+		return element.getAsString();
+	}
+
+	/**
+	 * Get String held by a JsonElement, allowing for a null object.
+	 * @param element is the JsonElement or null
+	 * @param defaultStr default string to be returned if element or string is null
+	 * @return the underlying String or defaultStr if null
+	 */
+	static String convertToString(JsonElement element, String defaultStr) {
+		String str = convertToString(element);
+		return str != null ? str : defaultStr;
+	}
+
+	/**
+	 * Check element for null value
+	 * @param element json element
+	 * @return true if null else false
+	 */
+	static boolean isNull(JsonElement element) {
+		return (element == null || element instanceof JsonNull);
+	}
+
+	/**
+	 * Assuming the writer has been closed and connection.getResponseCode() is called
+	 * placing the value in lastResponseCode, read the response and parse into a JsonObject
+	 * @return the JsonObject
+	 * @throws IOException for problems with the socket
+	 * @throws JsonParseException for JSON parse errors
+	 */
+	private JsonObject grabResponse(HttpURLConnection connection)
+			throws IOException, JsonParseException {
 		InputStream in;
 		if (lastRequestSuccessful()) {
 			in = connection.getInputStream();
@@ -68,7 +95,7 @@ public class ElasticConnection {
 			throw new IOException(connection.getResponseMessage());
 		}
 		Reader reader = new InputStreamReader(in);
-		JSONObject jsonObject = (JSONObject) parser.parse(reader);
+		JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
 		return jsonObject;
 	}
 
@@ -78,27 +105,74 @@ public class ElasticConnection {
 	 * @param resp is the parsed error document
 	 * @return the exception String
 	 */
-	private String parseErrorJSON(JSONObject resp) {
+	private static String parseErrorJSON(JsonObject resp) {
 		Object errorObj = resp.get("error");
-		if (errorObj == null) {
-			return "Unknown error format";
-		}
 		if (errorObj instanceof String) {
 			return (String) errorObj;
 		}
-		if (!(errorObj instanceof JSONObject)) {
+		if (!(errorObj instanceof JsonObject err)) {
 			return "Unknown error format";
 		}
-		JSONObject jsonObj = (JSONObject) errorObj;
-		String typeString = (String) jsonObj.get("type");
-		String reasonString = (String) jsonObj.get("reason");
-		if (typeString == null) {
-			typeString = "Unknown Error";
+
+		String typeString = convertToString(err.get("type"), "Unknown Error");
+		if (typeString.endsWith("_exception")) {
+			// Log elastic exception root cause to assist debug
+			String errorDetail = parseErrorCause(err);
+			if (errorDetail.length() != 0) {
+				Msg.error(ElasticConnection.class, "Elasticsearch exception: " + errorDetail);
+			}
 		}
-		if (reasonString == null) {
-			reasonString = "Unknown reason";
-		}
+
+		String reasonString = convertToString(err.get("reason"), "Unknown Reason");
 		return typeString + " : " + reasonString;
+	}
+
+	private static StringBuilder conditionalNewLine(StringBuilder buf) {
+		if (!buf.isEmpty()) {
+			buf.append("\n");
+		}
+		return buf;
+	}
+
+	private static String parseErrorCause(JsonObject error) {
+
+		StringBuilder buf = new StringBuilder();
+
+		JsonElement reason = error.get("reason");
+
+		String typeString = convertToString(error.get("type"));
+		if (typeString != null) {
+			String reasonString = convertToString(reason); // "reason" is string when "type" is present
+			String errorStr = typeString + " : " + reasonString;
+			conditionalNewLine(buf).append(errorStr);
+		}
+
+		JsonElement scriptStack = error.get("script_stack");
+		if (scriptStack instanceof JsonArray scriptStackArray) {
+			scriptStackArray
+					.forEach(e -> conditionalNewLine(buf).append("   ").append(convertToString(e)));
+		}
+
+		JsonElement causedBy = error.get("caused_by");
+		if (causedBy instanceof JsonObject causedByObject) {
+			conditionalNewLine(buf).append("   ").append(parseErrorCause(causedByObject));
+		}
+
+		JsonElement failedShards = error.get("failed_shards");
+		if (failedShards instanceof JsonArray failedShardsArray) {
+			for (JsonElement failedShardElement : failedShardsArray) {
+				JsonObject failedShard = (JsonObject) failedShardElement;
+				String indexStr = convertToString(failedShard.get("index"));
+				conditionalNewLine(buf).append("   Failed shard index: ").append(indexStr);
+				conditionalNewLine(buf).append("   ").append(parseErrorCause(failedShard));
+			}
+		}
+
+		if (reason instanceof JsonObject reasonObject) {
+			conditionalNewLine(buf).append(parseErrorCause(reasonObject));
+		}
+
+		return buf.toString();
 	}
 
 	/**
@@ -107,10 +181,10 @@ public class ElasticConnection {
 	 * @param command is the type of command
 	 * @param path is the specific URL path receiving the command
 	 * @param body is JSON document describing the command
-	 * @return the response as parsed JSONObject
+	 * @return the response as parsed JsonObject
 	 * @throws ElasticException for any problems with the connection
 	 */
-	public JSONObject executeRawStatement(String command, String path, String body)
+	public JsonObject executeRawStatement(String command, String path, String body)
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
@@ -123,7 +197,7 @@ public class ElasticConnection {
 				writer.write(body);
 			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse(connection);
+			JsonObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -132,7 +206,7 @@ public class ElasticConnection {
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
 		}
-		catch (ParseException e) {
+		catch (JsonParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
 		}
 		finally {
@@ -163,7 +237,7 @@ public class ElasticConnection {
 				writer.write(body);
 			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse(connection);
+			JsonObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -171,7 +245,7 @@ public class ElasticConnection {
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
 		}
-		catch (ParseException e) {
+		catch (JsonParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
 		}
 		finally {
@@ -186,10 +260,10 @@ public class ElasticConnection {
 	 * @param command is the type of command
 	 * @param path is the overarching index/type/<command>
 	 * @param body is JSON document describing the request
-	 * @return the parsed response as a JSONObject
+	 * @return the parsed response as a JsonObject
 	 * @throws ElasticException for any problems with the connection
 	 */
-	public JSONObject executeStatement(String command, String path, String body)
+	public JsonObject executeStatement(String command, String path, String body)
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
@@ -202,7 +276,7 @@ public class ElasticConnection {
 				writer.write(body);
 			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse(connection);
+			JsonObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -211,7 +285,7 @@ public class ElasticConnection {
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
 		}
-		catch (ParseException e) {
+		catch (JsonParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
 		}
 		finally {
@@ -227,10 +301,10 @@ public class ElasticConnection {
 	 * @param command is the type of command
 	 * @param path is the overarching index/type/<command>
 	 * @param body is JSON document describing the request
-	 * @return the parsed response as a JSONObject
+	 * @return the parsed response as a JsonObject
 	 * @throws ElasticException for any problems with the connection
 	 */
-	public JSONObject executeStatementExpectFailure(String command, String path, String body)
+	public JsonObject executeStatementExpectFailure(String command, String path, String body)
 			throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
@@ -243,13 +317,13 @@ public class ElasticConnection {
 				writer.write(body);
 			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse(connection);
+			JsonObject resp = grabResponse(connection);
 			return resp;
 		}
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
 		}
-		catch (ParseException e) {
+		catch (JsonParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
 		}
 		finally {
@@ -264,10 +338,10 @@ public class ElasticConnection {
 	 * and is structured slightly differently from other commands.
 	 * @param path is the specific URL path receiving the bulk command
 	 * @param body is structured list of JSON commands and source
-	 * @return the response as parsed JSONObject
+	 * @return the response as parsed JsonObject
 	 * @throws ElasticException for any problems with the connection
 	 */
-	public JSONObject executeBulk(String path, String body) throws ElasticException {
+	public JsonObject executeBulk(String path, String body) throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
 			URL httpURL = new URL(hostURL + path);
@@ -279,7 +353,7 @@ public class ElasticConnection {
 				writer.write(body);
 			}
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse(connection);
+			JsonObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -288,7 +362,7 @@ public class ElasticConnection {
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
 		}
-		catch (ParseException e) {
+		catch (JsonParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
 		}
 		finally {
@@ -298,7 +372,7 @@ public class ElasticConnection {
 		}
 	}
 
-	public JSONObject executeURIOnly(String command, String path) throws ElasticException {
+	public JsonObject executeURIOnly(String command, String path) throws ElasticException {
 		HttpURLConnection connection = null;
 		try {
 			URL httpURL = new URL(httpURLbase + path);
@@ -306,7 +380,7 @@ public class ElasticConnection {
 			connection.setRequestMethod(command);
 			connection.setDoOutput(true);
 			lastResponseCode = connection.getResponseCode();
-			JSONObject resp = grabResponse(connection);
+			JsonObject resp = grabResponse(connection);
 			if (!lastRequestSuccessful()) {
 				throw new ElasticException(parseErrorJSON(resp));
 			}
@@ -315,7 +389,7 @@ public class ElasticConnection {
 		catch (IOException e) {
 			throw new ElasticException("Error sending request: " + e.getMessage());
 		}
-		catch (ParseException e) {
+		catch (JsonParseException e) {
 			throw new ElasticException("Error parsing response: " + e.getMessage());
 		}
 		finally {

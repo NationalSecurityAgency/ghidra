@@ -23,7 +23,6 @@ import java.util.*;
 import org.junit.*;
 
 import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.BSimServerInfo.DBType;
 import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
