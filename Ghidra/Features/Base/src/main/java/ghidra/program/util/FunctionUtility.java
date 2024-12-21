@@ -381,16 +381,17 @@ public class FunctionUtility {
 			return sourceConv;
 		}
 		boolean applyConventionName = sameLanguageAndCompilerSpec;
-		if (applyConventionName) {
+		String callingConvention = sourceFunction.getCallingConventionName();
+		if (applyConventionName &&
+			!CompilerSpec.CALLING_CONVENTION_default.equals(callingConvention)) {
 			DataTypeManager dtMgr = destinationFunction.getProgram().getDataTypeManager();
-			String name = destinationFunction.getCallingConventionName();
-			if (GenericCallingConvention
-					.getGenericCallingConvention(name) == GenericCallingConvention.unknown &&
-				!dtMgr.getKnownCallingConventionNames().contains(name)) {
+			if (GenericCallingConvention.getGenericCallingConvention(
+				callingConvention) == GenericCallingConvention.unknown &&
+				!dtMgr.getKnownCallingConventionNames().contains(callingConvention)) {
 				applyConventionName = false;
 			}
 		}
-		return applyConventionName ? sourceFunction.getCallingConventionName()
+		return applyConventionName ? callingConvention
 				: destinationFunction.getCallingConventionName();
 	}
 
