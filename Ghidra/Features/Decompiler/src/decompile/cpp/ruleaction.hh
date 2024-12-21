@@ -70,6 +70,7 @@ class AddTreeState {
   bool inspectedMultiequals;
   bool hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const;
   bool checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
+  bool checkMultTermPiece(Varnode *vn,PcodeOp *op,uint8 treeCoeff,uintb constval,Varnode *vnterm);
   bool checkTerm(Varnode *vn,uint8 treeCoeff);			///< Accumulate details of given term and continue tree traversal
   bool spanAddTree(PcodeOp *op,uint8 treeCoeff);		///< Walk the given sub-tree accumulating details
   void calcSubtype(void);		///< Calculate final sub-type offset

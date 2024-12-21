@@ -6074,44 +6074,48 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff)
 {
   Varnode *vnconst = op->getIn(1);
   Varnode *vnterm = op->getIn(0);
-  uint8 val;
 
   if (vnterm->isFree()) {
     valid = false;
     return false;
   }
   if (vnconst->isConstant()) {
-    val = (vnconst->getOffset() * treeCoeff) & ptrmask;
-    intb sval = sign_extend(val, vn->getSize() * 8 - 1);
-    intb rem = (size == 0) ? sval : sval % size;
-    if (rem != 0) {
-      if ((val >= size) && (size != 0)) {
-	valid = false; // Size is too big: pointer type must be wrong
-	return false;
-      }
-      if (!preventDistribution) {
-	if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
-	  if (distributeOp == (PcodeOp *)0)
-	    distributeOp = op;
-	  return spanAddTree(vnterm->getDef(), val);
-	}
-      }
-      uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
-      if (vncoeff > biggestNonMultCoeff)
-	biggestNonMultCoeff = vncoeff;
-      return true;
-    }
-    else {
-      if (treeCoeff != 1)
-	isDistributeUsed = true;
-      multiple.push_back(vnterm);
-      coeff.push_back(sval);
-      return false;
-    }
+    return checkMultTermPiece(vn, op, treeCoeff, vnconst->getOffset(), vnterm);
   }
   if (treeCoeff > biggestNonMultCoeff)
     biggestNonMultCoeff = treeCoeff;
   return true;
+}
+
+bool AddTreeState::checkMultTermPiece(Varnode *vn,PcodeOp *op,uint8 treeCoeff,uintb constval,Varnode *vnterm)
+{
+  uint8 val = (constval * treeCoeff) & ptrmask;
+  intb sval = sign_extend(val, vn->getSize() * 8 - 1);
+  intb rem = (size == 0) ? sval : sval % size;
+  if (rem != 0) {
+    if ((val >= size) && (size != 0)) {
+      valid = false; // Size is too big: pointer type must be wrong
+      return false;
+    }
+    if (!preventDistribution) {
+      if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
+        if (distributeOp == (PcodeOp *)0)
+          distributeOp = op;
+        return spanAddTree(vnterm->getDef(), val);
+      }
+    }
+    uint4 vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
+    if (vncoeff > biggestNonMultCoeff)
+      biggestNonMultCoeff = vncoeff;
+    return true;
+  }
+  else {
+    if (treeCoeff != 1)
+      isDistributeUsed = true;
+    multiple.push_back(vnterm);
+    coeff.push_back(sval);
+    return false;
+  }
 }
 
 /// If the given Varnode is a constant or multiplicative term, update
@@ -6156,6 +6160,14 @@ bool AddTreeState::checkTerm(Varnode *vn,uint8 treeCoeff)
     }
     if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
       return checkMultTerm(vn, def, treeCoeff);
+    if (def->code() == CPUI_INT_LEFT) {
+      Varnode *shiftLeftByPtr = def->getIn(1);
+      if (shiftLeftByPtr->isConstant()) {
+        uintb shiftLeftBy = shiftLeftByPtr->getOffset();
+        if (shiftLeftBy != shiftLeftByPtr->getSize() * 8 - 1)
+          return checkMultTermPiece(vn, def, treeCoeff, 1ULL << shiftLeftBy, def->getIn(0));
+      }
+    }
     if (treeCoeff == 1 && def->code() == CPUI_MULTIEQUAL)
       multiequalsToInspect.push_back(vn);
   }
@@ -6258,13 +6270,22 @@ bool AddTreeState::inspectMultiequals(void) {
     int4 op1Size = 0;
     intb op1Val = 0;
     int op1ReplacementSlot = 0;
-    if (op1->code() == CPUI_INT_MULT) {
+    if (op1->code() == CPUI_INT_MULT || op1->code() == CPUI_INT_LEFT) {
       Varnode *multTerm = op1->getIn(0);
       if (multTerm->isFree()) continue;
       Varnode *multConst = op1->getIn(1);
       if (!multConst->isConstant()) continue;
       uintb multval = multConst->getOffset() & ptrmask;
-      intb multsval = sign_extend(multval, in1->getSize() * 8 - 1);
+      intb multsval;
+      if (op1->code() == CPUI_INT_LEFT) {
+        if (multval == multConst->getSize() * 8 - 1) {
+          continue;
+        }
+        multval = 1ULL << multval;
+        multsval = multval;
+      } else {
+        multsval = sign_extend(multval, in1->getSize() * 8 - 1);
+      }
       op1Val = multsval;
       op1ReplacementSlot = 1;
       op1Size = multConst->getSize();
@@ -7121,7 +7142,7 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
   multiplier = 0;
   int8 submultiplier;
   if (vn->isConstant())
-    return vn->getOffset();
+    return sign_extend(vn->getOffset(), vn->getSize() * 8 - 1);
   if (!vn->isWritten())
     return 0;
   maxLevel -= 1;
@@ -7131,10 +7152,12 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
   OpCode opc = op->code();
   int8 retval = 0;
   if (opc == CPUI_INT_ADD) {
-    retval += getConstOffsetBack(op->getIn(0),submultiplier,maxLevel);
+    Varnode *opIn0 = op->getIn(0);
+    retval += getConstOffsetBack(opIn0,submultiplier,maxLevel);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
-    retval += getConstOffsetBack(op->getIn(1), submultiplier, maxLevel);
+    Varnode *opIn1 = op->getIn(1);
+    retval += getConstOffsetBack(opIn1, submultiplier, maxLevel);
     if (submultiplier > multiplier)
       multiplier = submultiplier;
   }
@@ -7142,8 +7165,22 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLev
     Varnode *cvn = op->getIn(1);
     if (!cvn->isConstant()) return 0;
     multiplier = cvn->getOffset();
-    getConstOffsetBack(op->getIn(0), submultiplier, maxLevel);
-    if (submultiplier > 0)
+    intb multiplier_s = sign_extend(multiplier, cvn->getSize() * 8 - 1);
+    if (multiplier_s < 0) multiplier = -multiplier_s;
+    Varnode *opIn0 = op->getIn(0);
+    getConstOffsetBack(opIn0, submultiplier, maxLevel);
+    if (submultiplier != 0)
+      multiplier *= submultiplier;		// Only contribute to the multiplier
+  }
+  else if (opc == CPUI_INT_LEFT) {
+    Varnode *cvn = op->getIn(1);
+    if (!cvn->isConstant()) return 0;
+    uintb constval = cvn->getOffset();
+    if (constval == 0 || constval == cvn->getSize() * 8 - 1) return 0;
+    multiplier = 1ULL << constval;
+    Varnode *opIn0 = op->getIn(0);
+    getConstOffsetBack(opIn0, submultiplier, maxLevel);
+    if (submultiplier != 0)
       multiplier *= submultiplier;		// Only contribute to the multiplier
   }
   return retval;
