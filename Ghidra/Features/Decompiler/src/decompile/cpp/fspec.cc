@@ -2805,8 +2805,45 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
     // We assume here that the output models are the same, but we don't check
     if (extrapop != model->extrapop)
       extrapop = ProtoModel::extrapop_unknown;
-    if ((injectUponEntry != model->injectUponEntry)||(injectUponReturn != model->injectUponReturn))
-      throw LowlevelError("Cannot merge prototype models with different inject ids");
+    //this criterion only allows both to be -1 since impossible to load identical IDs!
+    if ((injectUponEntry != model->injectUponEntry) || (injectUponReturn != model->injectUponReturn)) {
+      bool bDiff = false;
+      InjectPayload* ip1 = nullptr;
+      InjectPayload* ip2 = nullptr;
+      if (injectUponEntry != model->injectUponEntry) {
+        bDiff = ((injectUponEntry == -1) || (model->injectUponEntry == -1));
+        if (!bDiff) {
+          ip1 = glb->pcodeinjectlib->getPayload(injectUponEntry);
+          ip2 = glb->pcodeinjectlib->getPayload(injectUponEntry);
+        }
+      } else {
+        bDiff = ((injectUponReturn == -1) || (model->injectUponReturn == -1));
+        if (!bDiff) {
+          ip1 = glb->pcodeinjectlib->getPayload(injectUponReturn);
+          ip2 = glb->pcodeinjectlib->getPayload(injectUponReturn);
+        }
+      }
+      if (!bDiff) {
+        bDiff = ip1->getParamShift() != ip2->getParamShift() ||
+          ip1->isDynamic() != ip2->isDynamic() ||
+          ip1->sizeInput() != ip2->sizeInput() || ip1->sizeOutput() != ip2->sizeOutput();
+      }
+      if (!bDiff) {
+        for (int i = 0; i < ip1->sizeInput(); i++) {
+          if (ip1->getInput(i).getName() != ip2->getInput(i).getName() ||
+            ip1->getInput(i).getSize() != ip2->getInput(i).getSize()) {
+            bDiff = true; break;
+          }
+        }
+        for (int i = 0; i < ip1->sizeOutput(); i++) {
+          if (ip1->getOutput(i).getName() != ip2->getOutput(i).getName() ||
+            ip1->getOutput(i).getSize() != ip2->getOutput(i).getSize()) {
+            bDiff = true; break;
+          }
+        }
+      }
+      if (bDiff) throw LowlevelError("Cannot merge prototype models with different injections");
+    }
     intersectEffects(model->effectlist);
     intersectRegisters(likelytrash,model->likelytrash);
     intersectRegisters(internalstorage,model->internalstorage);
