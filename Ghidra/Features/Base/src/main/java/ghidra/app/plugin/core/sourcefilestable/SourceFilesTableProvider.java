@@ -170,7 +170,7 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 		if (source == transformsTable.getTable()) {
 			return new TransformTableActionContext();
 		}
-		return new DefaultActionContext();
+		return null;
 	}
 
 	private void buildMainPanel() {
