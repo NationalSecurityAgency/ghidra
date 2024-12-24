@@ -8,7 +8,7 @@
             version="2.0"
             slafile="8051.sla"
             processorspec="8051.pspec"
-		manualindexfile="../manuals/8051.idx"
+			manualindexfile="../manuals/8051.idx"
             id="8051:BE:16:default">
     <description>8051 Microcontroller Family</description>
     <compiler name="default" spec="8051.cspec" id="default"/>
@@ -22,11 +22,11 @@
             version="2.0"
             slafile="8051.sla"
             processorspec="8051.pspec"
-		manualindexfile="../manuals/8051.idx"
+			manualindexfile="../manuals/8051.idx"
             id="8051:BE:16:cip-51">
     <description>Silicon Labs CIP-51 Microcontroller Family</description>
     <compiler name="default" spec="8051.cspec" id="default"/>
-<!--<compiler name="Keil Cx51" spec="cx51.cspec" id="Cx51"> -->
+	<compiler name="Keil Cx51" spec="keil-cx51.cspec" id="Cx51"/>
 <!--<compiler name="Archimedes" spec="8051_archimedes.cspec" id="Archimedes"/> -->
     <external_name tool="IDA-PRO" name="8051"/>
   </language>
