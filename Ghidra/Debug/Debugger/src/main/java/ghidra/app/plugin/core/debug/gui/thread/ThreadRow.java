@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,13 +19,11 @@ import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.action.PCLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
@@ -120,7 +118,7 @@ public class ThreadRow {
 		if (target == null) {
 			return ThreadState.ALIVE;
 		}
-		TargetExecutionState state = target.getThreadExecutionState(thread);
+		TraceExecutionState state = target.getThreadExecutionState(thread);
 		if (state == null) {
 			return ThreadState.UNKNOWN;
 		}

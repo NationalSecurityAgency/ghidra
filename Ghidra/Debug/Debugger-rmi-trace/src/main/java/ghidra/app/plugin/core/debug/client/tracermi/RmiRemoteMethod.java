@@ -18,10 +18,9 @@ package ghidra.app.plugin.core.debug.client.tracermi;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.trace.model.target.iface.TraceObjectMethod.ParameterDescription;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 
 public class RmiRemoteMethod {
 
@@ -31,12 +30,12 @@ public class RmiRemoteMethod {
 	private String display;
 	private String description;
 	private RmiRemoteMethodParameter[] params;
-	private TargetObjectSchema schema;
+	private TraceObjectSchema schema;
 	private RmiMethods instance;
 	private Method m;
 
 	public RmiRemoteMethod(SchemaContext schemaContext, String name, String action, String display,
-			String description, TargetObjectSchema schema, RmiMethods instance, Method m) {
+			String description, TraceObjectSchema schema, RmiMethods instance, Method m) {
 		this.schemaContext = schemaContext;
 		this.name = name;
 		this.action = action;
@@ -49,10 +48,10 @@ public class RmiRemoteMethod {
 
 		int i = 0;
 		for (Parameter p : m.getParameters()) {
-			ParameterDescription<?> desc = TargetMethod.ParameterDescription.annotated(p);
-			TargetObjectSchema pschema;
+			ParameterDescription<?> desc = ParameterDescription.annotated(p);
+			TraceObjectSchema pschema;
 			if (desc.type != RmiTraceObject.class) {
-				pschema = EnumerableTargetObjectSchema.schemaForPrimitive(desc.type);
+				pschema = PrimitiveTraceObjectSchema.schemaForPrimitive(desc.type);
 			}
 			else {
 				pschema = schemaContext.getSchema(new SchemaName(desc.schema));
@@ -86,7 +85,7 @@ public class RmiRemoteMethod {
 		return m;
 	}
 
-	public TargetObjectSchema getSchema() {
+	public TraceObjectSchema getSchema() {
 		return schema;
 	}
 

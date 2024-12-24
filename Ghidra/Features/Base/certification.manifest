@@ -3,6 +3,7 @@
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: FAMFAMFAM Mini Icons - Public Domain
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: MIT
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
@@ -559,6 +560,7 @@ src/main/help/help/topics/ShowInstructionInfoPlugin/images/RawInstructionDisplay
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/ShowInstructionInfo.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/UnableToLaunch.png||GHIDRA||||END|
 src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||||END|
+src/main/help/help/topics/SourceFilesTablePlugin/SourceFilesTable.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/StackEditor.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/NumElementsPrompt.png||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/StackEditor.png||GHIDRA||||END|
@@ -834,6 +836,7 @@ src/main/resources/images/hexData.png||GHIDRA||||END|
 src/main/resources/images/house.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/hoverOff.gif||GHIDRA||||END|
 src/main/resources/images/hoverOn.gif||GHIDRA||||END|
+src/main/resources/images/icon_link.gif||FAMFAMFAM Mini Icons - Public Domain|||famfamfam mini icon set|END|
 src/main/resources/images/imported_bookmark.gif||GHIDRA||||END|
 src/main/resources/images/katomic.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/key.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
@@ -896,6 +899,7 @@ src/main/resources/images/pencil16.png||GHIDRA||||END|
 src/main/resources/images/pin.png||GHIDRA||||END|
 src/main/resources/images/play_again.png||GHIDRA||||END|
 src/main/resources/images/preferences-system.png||Tango Icons - Public Domain|||tango|END|
+src/main/resources/images/python.png||GHIDRA||||END|
 src/main/resources/images/question_zero.png||GHIDRA||||END|
 src/main/resources/images/red-cross.png||GHIDRA||||END|
 src/main/resources/images/redQuestionMark.png||GHIDRA||||END|

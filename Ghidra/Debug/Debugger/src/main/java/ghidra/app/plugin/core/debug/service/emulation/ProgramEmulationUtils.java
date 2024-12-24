@@ -27,10 +27,6 @@ import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.util.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -42,8 +38,13 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
@@ -72,8 +73,6 @@ public class ProgramEmulationUtils {
 			    </schema>
 			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='NEVER'>
-			        <interface name='BreakpointSpecContainer' />
-			        <interface name='BreakpointLocationContainer' />
 			        <element schema='Breakpoint' />
 			    </schema>
 			    <schema name='Breakpoint' elementResync='NEVER' attributeResync='NEVER'>
@@ -123,7 +122,7 @@ public class ProgramEmulationUtils {
 			</context>
 			""";
 	public static final SchemaContext EMU_CTX;
-	public static final TargetObjectSchema EMU_SESSION_SCHEMA;
+	public static final TraceObjectSchema EMU_SESSION_SCHEMA;
 	static {
 		try {
 			EMU_CTX = XmlSchemaContext.deserialize(EMU_CTX_XML);
@@ -234,9 +233,10 @@ public class ProgramEmulationUtils {
 
 				// NB. No need to populate as module.
 				// UI will sync from mapping, so it's obvious where the cursor is.
-				String path = PathUtils.toString(patRegion
+				String path = patRegion
 						.applyKeys(block.getStart() + "-" + modName + ":" + block.getName())
-						.getSingletonPath());
+						.getSingletonPath()
+						.toString();
 				trace.getMemoryManager()
 						.createRegion(path, snapshot.getKey(), range, getRegionFlags(block));
 			}
@@ -270,8 +270,8 @@ public class ProgramEmulationUtils {
 		// N.B. Bytes will be loaded lazily
 	}
 
-	public static PathPattern computePattern(TargetObjectSchema root, Trace trace,
-			Class<? extends TargetObject> iface) {
+	public static PathPattern computePattern(TraceObjectSchema root, Trace trace,
+			Class<? extends TraceObjectInterface> iface) {
 		PathMatcher matcher = root.searchFor(iface, true);
 		PathPattern pattern = matcher.getSingletonPattern();
 		if (pattern == null || pattern.countWildcards() != 1) {
@@ -282,19 +282,19 @@ public class ProgramEmulationUtils {
 	}
 
 	public static PathPattern computePatternRegion(Trace trace) {
-		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema root = trace.getObjectManager().getRootSchema();
 		if (root == null) {
-			return new PathPattern(PathUtils.parse("Memory[]"));
+			return PathFilter.parse("Memory[]");
 		}
-		return computePattern(root, trace, TargetMemoryRegion.class);
+		return computePattern(root, trace, TraceObjectMemoryRegion.class);
 	}
 
 	public static PathPattern computePatternThread(Trace trace) {
-		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema root = trace.getObjectManager().getRootSchema();
 		if (root == null) {
-			return new PathPattern(PathUtils.parse("Threads[]"));
+			return PathFilter.parse("Threads[]");
 		}
-		return computePattern(root, trace, TargetThread.class);
+		return computePattern(root, trace, TraceObjectThread.class);
 	}
 
 	/**
@@ -312,13 +312,13 @@ public class ProgramEmulationUtils {
 		PathPattern patThread = computePatternThread(trace);
 		long next = tm.getAllThreads().size();
 		String path;
-		while (!tm.getThreadsByPath(path =
-			PathUtils.toString(patThread.applyKeys(Long.toString(next)).getSingletonPath()))
+		while (!tm.getThreadsByPath(
+			path = patThread.applyKeys(Long.toString(next)).getSingletonPath().toString())
 				.isEmpty()) {
 			next++;
 		}
 		try {
-			return tm.createThread(path, "[" + next + "]", snap);
+			return tm.createThread(path, KeyPath.makeIndex(next), snap);
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertionError(e);
@@ -341,15 +341,14 @@ public class ProgramEmulationUtils {
 		TraceMemoryManager memory = trace.getMemoryManager();
 		if (thread instanceof TraceObjectThread ot) {
 			TraceObject object = ot.getObject();
-			PathPredicates regsMatcher = object.getRoot()
-					.getTargetSchema()
-					.searchForRegisterContainer(0, object.getCanonicalPath().getKeyList());
-			if (regsMatcher.isEmpty()) {
+			PathFilter regsFilter = object.getRoot()
+					.getSchema()
+					.searchForRegisterContainer(0, object.getCanonicalPath());
+			if (regsFilter.isNone()) {
 				throw new IllegalArgumentException("Cannot create register container");
 			}
-			for (PathPattern regsPattern : regsMatcher.getPatterns()) {
-				trace.getObjectManager()
-						.createObject(TraceObjectKeyPath.of(regsPattern.getSingletonPath()));
+			for (PathPattern regsPattern : regsFilter.getPatterns()) {
+				trace.getObjectManager().createObject(regsPattern.getSingletonPath());
 				break;
 			}
 		}
@@ -448,12 +447,10 @@ public class ProgramEmulationUtils {
 		}
 
 		PathPattern patRegion = computePatternRegion(trace);
-		String threadName = PathUtils.isIndex(thread.getName())
-				? PathUtils.parseIndex(thread.getName())
-				: thread.getName();
-		String path = PathUtils.toString(
-			patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
-					.getSingletonPath());
+		String threadName = KeyPath.parseIfIndex(thread.getName());
+		String path = patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
+				.getSingletonPath()
+				.toString();
 		TraceMemoryManager mm = trace.getMemoryManager();
 		try {
 			return mm.createRegion(path, snap, alloc,
@@ -512,9 +509,9 @@ public class ProgramEmulationUtils {
 			return alloc;
 		}
 		PathPattern patRegion = computePatternRegion(trace);
-		String path = PathUtils.toString(
-			patRegion.applyKeys(stackBlock.getStart() + "-STACK")
-					.getSingletonPath());
+		String path = patRegion.applyKeys(stackBlock.getStart() + "-STACK")
+				.getSingletonPath()
+				.toString();
 		TraceMemoryManager mm = trace.getMemoryManager();
 		try {
 			return mm.createRegion(path, snap, alloc,
@@ -584,12 +581,11 @@ public class ProgramEmulationUtils {
 			for (AddressRange candidate : left) {
 				if (Long.compareUnsigned(candidate.getLength(), size) >= 0) {
 					AddressRange alloc = new AddressRangeImpl(candidate.getMinAddress(), size);
-					String threadName = PathUtils.isIndex(thread.getName())
-							? PathUtils.parseIndex(thread.getName())
-							: thread.getName();
-					String path = PathUtils.toString(
-						patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
-								.getSingletonPath());
+					String threadName = KeyPath.parseIfIndex(thread.getName());
+					String path = patRegion
+							.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
+							.getSingletonPath()
+							.toString();
 					return mm.createRegion(path, snap, alloc,
 						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
 				}
@@ -606,13 +602,13 @@ public class ProgramEmulationUtils {
 		TraceObjectManager om = trace.getObjectManager();
 		om.createRootObject(EMU_SESSION_SCHEMA);
 
-		om.createObject(TraceObjectKeyPath.parse("Breakpoints"))
+		om.createObject(KeyPath.parse("Breakpoints"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
-		om.createObject(TraceObjectKeyPath.parse("Memory"))
+		om.createObject(KeyPath.parse("Memory"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
-		om.createObject(TraceObjectKeyPath.parse("Modules"))
+		om.createObject(KeyPath.parse("Modules"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
-		om.createObject(TraceObjectKeyPath.parse("Threads"))
+		om.createObject(KeyPath.parse("Threads"))
 				.insert(Lifespan.ALL, ConflictResolution.DENY);
 	}
 

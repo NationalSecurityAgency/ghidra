@@ -147,7 +147,11 @@ public enum ProgramEvent implements EventType {
 	CODE_UNIT_USER_DATA_CHANGED,		// user data has changed for some code unit
 	USER_DATA_CHANGED,					// general user data has changed at some address
 
-	RELOCATION_ADDED;					// a relocation entry was added
+	RELOCATION_ADDED,					// a relocation entry was added
+
+	SOURCE_FILE_ADDED,                  // a source file was added
+	SOURCE_FILE_REMOVED,                // a source file was removed
+	SOURCE_MAP_CHANGED;                 // source map information was changed
 
 	private final int id = DomainObjectEventIdGenerator.next();
 

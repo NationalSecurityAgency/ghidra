@@ -464,7 +464,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	private ScreenElement getFunctionScreenElement(Function function) {
-		if (!function.isThunk()) {
+		if (function == null || !function.isThunk()) {
 			return OptionsGui.FUN_NAME;
 		}
 

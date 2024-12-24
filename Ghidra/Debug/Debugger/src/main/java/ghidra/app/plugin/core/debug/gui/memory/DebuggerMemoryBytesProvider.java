@@ -22,6 +22,7 @@ import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import javax.swing.*;
 
@@ -674,5 +675,10 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			return EmptyByteSource.INSTANCE;
 		}
 		return new DebuggerByteSource(tool, current.getView(), current.getTarget(), readsMemTrait);
+	}
+
+	/* testing */
+	CompletableFuture<?> getLastAutoRead() {
+		return readsMemTrait.getLastRead();
 	}
 }

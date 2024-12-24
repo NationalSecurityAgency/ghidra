@@ -1427,6 +1427,8 @@ def put_frames():
         f = f.older()
         level += 1
         fobj.insert()
+        robj = STATE.trace.create_object(fpath+".Registers")
+        robj.insert()
     STATE.trace.proxy_object_path(STACK_PATTERN.format(
         infnum=inf.num, tnum=t.num)).retain_values(keys)
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,15 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.Objects;
 
 import org.junit.Test;
 
 import db.Transaction;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.pcode.utils.Utils;
 import ghidra.program.model.data.DoubleDataType;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
@@ -49,30 +49,12 @@ public class DebuggerRmiRegistersProviderTest extends AbstractDebuggerRegistersP
 		return Objects.requireNonNull(tb.obj("Processes[1]"));
 	}
 
-	protected void handleReadRegsInvocation(TraceObject container) throws Throwable {
-		Map<String, Object> args = rmiMethodReadRegs.expect();
-		rmiMethodReadRegs.result(null);
-		assertEquals(Map.ofEntries(
-			Map.entry("container", container)),
-			args);
-	}
-
-	protected void handleWriteRegInvocation(TraceObjectStackFrame frame, String name, long value)
-			throws Throwable {
-		Map<String, Object> args = rmiMethodWriteReg.expect();
-		rmiMethodWriteReg.result(null);
-		assertEquals(Set.of("frame", "name", "value"), args.keySet());
-		assertEquals(frame.getObject(), args.get("frame"));
-		assertEquals("r0", args.get("name"));
-		assertEquals(value, Utils.bytesToLong((byte[]) args.get("value"), 8, true));
-	}
-
 	@Test
 	public void testReadLiveValuesOnActivate() throws Throwable {
 		setUpRmiTarget();
 		waitForSwing();
 
-		handleReadRegsInvocation(tb.obj("Processes[1].Threads[1].Stack[0].Registers"));
+		handleReadRegsInvocation(tb.obj("Processes[1].Threads[1].Stack[0].Registers"), () -> null);
 	}
 
 	@Test

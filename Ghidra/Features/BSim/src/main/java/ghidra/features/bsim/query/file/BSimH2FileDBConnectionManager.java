@@ -172,7 +172,7 @@ public class BSimH2FileDBConnectionManager {
 
 			dispose();
 
-			if (dbf.isFile()) {
+			if (!dbf.isFile()) {
 				return true;
 			}
 
@@ -286,6 +286,9 @@ public class BSimH2FileDBConnectionManager {
 		public synchronized Connection getConnection() throws SQLException {
 
 			if (successfulConnection) {
+				if (bds.isClosed()) {
+					bds.restart();
+				}
 				return bds.getConnection();
 			}
 
@@ -317,6 +320,9 @@ public class BSimH2FileDBConnectionManager {
 		 * @throws SQLException if connection or authentication error occurs 
 		 */
 		private Connection connect() throws SQLException {
+			if (bds.isClosed()) {
+				bds.restart();
+			}
 			Connection c = bds.getConnection();
 			successfulConnection = true;
 			return c;

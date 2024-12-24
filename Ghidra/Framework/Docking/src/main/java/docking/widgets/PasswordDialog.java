@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,8 @@ public class PasswordDialog extends DialogComponentProvider {
 	private JPasswordField passwordField;
 	private JComboBox<String> choiceCB;
 	private JCheckBox anonymousAccess;
-	boolean okPressed = false;
+	private boolean okPressed = false;
+	private String defaultUserID;
 
 	/**
 	 * Construct a new PasswordDialog.
@@ -47,7 +48,7 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @param serverName name of server or keystore pathname
 	 * @param passPrompt password prompt to show in the dialog; may be null, in which case
 	 * "Password:" is displayed next to the password field
-	 * @param namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
+	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param defaultUserID default name when prompting for a name
 	 * @param choicePrompt namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param choices array of choices to present if choicePrompt is not null
@@ -55,9 +56,9 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @param includeAnonymousOption true signals to add a checkbox to request anonymous login
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
-			String namePrompt, String defaultUserID, String choicePrompt, String[] choices,
+			String userIdPrompt, String defaultUserID, String choicePrompt, String[] choices,
 			int defaultChoice, boolean includeAnonymousOption) {
-		this(title, serverType, serverName, passPrompt, namePrompt, defaultUserID);
+		this(title, serverType, serverName, passPrompt, userIdPrompt, defaultUserID);
 		if (choicePrompt != null) {
 			workPanel.add(new GLabel(choicePrompt));
 			choiceCB = new GComboBox<>(choices);
@@ -94,12 +95,12 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @param serverName name of server or keystore pathname
 	 * @param passPrompt password prompt to show in the dialog; may be null, in which case
 	 * "Password:" is displayed next to the password field
-	 * @param namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
+	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param defaultUserID default name when prompting for a name
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
-			String namePrompt, String defaultUserID) {
-		this(title, serverType, serverName, passPrompt, namePrompt, defaultUserID, true);
+			String userIdPrompt, String defaultUserID) {
+		this(title, serverType, serverName, passPrompt, userIdPrompt, defaultUserID, true);
 	}
 
 	/**
@@ -109,14 +110,17 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @param serverName name of server or keystore pathname
 	 * @param passPrompt password prompt to show in the dialog; may be null, in which case
 	 * "Password:" is displayed next to the password field
-	 * @param namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
+	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param defaultUserID default name when prompting for a name
 	 * @param hasMessages true if the client will set messages on this dialog.  If true, the 
 	 *        dialog's minimum size will be increased
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
-			String namePrompt, String defaultUserID, boolean hasMessages) {
+			String userIdPrompt, String defaultUserID, boolean hasMessages) {
 		super(title, true);
+
+		this.defaultUserID = defaultUserID;
+
 		setRememberSize(false);
 		setTransient(true);
 
@@ -132,8 +136,8 @@ public class PasswordDialog extends DialogComponentProvider {
 			workPanel.add(new GLabel(serverName));
 		}
 
-		if (namePrompt != null) {
-			workPanel.add(new GLabel(namePrompt));
+		if (userIdPrompt != null) {
+			workPanel.add(new GLabel(userIdPrompt));
 			nameField = new JTextField(defaultUserID, 16);
 			nameField.setName("NAME-ENTRY-COMPONENT");
 			workPanel.add(nameField);
@@ -237,11 +241,11 @@ public class PasswordDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Return the user ID entered in the password field
-	 * @return the user ID entered in the password field
+	 * Return the user ID / Name entered in the password field
+	 * @return the user ID / Name entered in the password field
 	 */
 	public String getUserID() {
-		return nameField != null ? nameField.getText().trim() : null;
+		return nameField != null ? nameField.getText().trim() : defaultUserID;
 	}
 
 	/**

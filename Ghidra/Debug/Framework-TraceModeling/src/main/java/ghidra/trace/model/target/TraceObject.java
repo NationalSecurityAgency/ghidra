@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,26 +16,128 @@
 package ghidra.trace.model.target;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Stream;
 
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
+import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.LifeSet;
+import ghidra.trace.model.memory.*;
+import ghidra.trace.model.modules.TraceObjectModule;
+import ghidra.trace.model.target.iface.*;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.thread.TraceObjectProcess;
+import ghidra.trace.model.thread.TraceObjectThread;
 
 /**
- * The trace record of an observed {@link TargetObject}
+ * A record of a target object in a debugger
  * 
  * <p>
- * See {@link TargetObject} for information about how objects and the model schema are related in a
- * debugger model. This trace object records a target object and a subset of its children into the
- * database with additional timing information. For objects implementing specific
- * {@link TargetObject} interfaces, a corresponding {@link TraceObjectInterface} can be retrieved.
- * In many cases, such interfaces are just wrappers.
+ * This object supports querying for and obtaining the interfaces which constitute what the object
+ * is and define how the client may interact with it. The object may also have children, e.g., a
+ * process should likely have threads.
+ * 
+ * <p>
+ * This interface is the focal point of the "debug target model." A debugger may present itself as
+ * an arbitrary directory of "target objects." The root object is typically the debugger's session,
+ * and one its attributes is a collection for its attached targets. These objects, including the
+ * root object, may implement any number of interfaces extending {@link TraceObjectInterface}. These
+ * interfaces comprise the type and behavior of the object. An object's children comprise its
+ * elements (for collection-like objects) and attributes. Every object in the directory has a path.
+ * Each element ("key") in the path identifies an index (if the child is an element) or a name (if
+ * the child is an attribute). It is the implementation's responsibility to ensure each object's
+ * path correctly identifies that same object in the model directory. The root has the empty path.
+ * Every object must have a unique path; thus, every object must have a unique key among its
+ * sibling.
+ * 
+ * <p>
+ * The objects are arranged in a directory with links permitted. Links come in the form of
+ * object-valued attributes or elements where the path does not match the object value's path. Thus,
+ * the overall structure remains a tree, but by resolving links, the model may be treated as a
+ * directed graph, likely containing cycles.
+ * 
+ * <p>
+ * The implementation must guarantee that distinct {@link TraceObject}s from the same model do not
+ * share the same path. That is, checking for object identity is sufficient to check that two
+ * variables refer to the same object.
+ * 
+ * <p>
+ * Various conventions govern where the client/user should search to obtain a given interface in the
+ * context of some target object. For example, if the user is interacting with a thread, and wishes
+ * to access that thread's memory, it needs to follow a given search order to find the appropriate
+ * target object(s), if they exist, implementing the desired interface. See
+ * {@link TraceObjectSchema#searchForSuitable(TraceObjectSchema, KeyPath)} for details. In summary,
+ * the order is:
+ * 
+ * <ol>
+ * <li><b>The object itself:</b> Test if the context target object supports the desired interface.
+ * If it does, take it.</li>
+ * <li><b>Aggregate objects:</b> If the object is marked with {@link TraceObjectAggregate}, collect
+ * all attributes supporting the desired interface. If there are any, take them. This step is
+ * applied recursively if any child attribute is also marked with {@link TraceObjectAggregate}.</li>
+ * <li><b>Ancestry:</b> Apply these same steps to the object's (canonical) parent, recursively.</li>
+ * </ol>
+ * 
+ * <p>
+ * For some situations, exactly one object is required. In that case, take the first obtained by
+ * applying the above rules. In other situations, multiple objects may be acceptable. Again, apply
+ * the rules until a sufficient collection of objects is obtained. If an object is in conflict with
+ * another, take the first encountered. This situation may be appropriate if, e.g., multiple target
+ * memories present disjoint regions. There should not be conflicts among sibling. If there are,
+ * then either the model or the query is not sound. The order siblings considered should not matter.
+ * 
+ * <p>
+ * This relatively free structure and corresponding conventions allow for debuggers to present a
+ * model which closely reflects the structure of its session. For example, the following structure
+ * may be presented by a user-space debugger for a desktop operating system:
+ * 
+ * <ul>
+ * <li>"Session" : {@link TraceObject}</li>
+ * <ul>
+ * <li>"Process 789" : {@link TraceObjectProcess}, {@link TraceObjectAggregate}</li>
+ * <ul>
+ * <li>"Threads" : {@link TraceObject}</li>
+ * <ul>
+ * <li>"Thread 1" : {@link TraceObjectThread}, {@link TraceObjectExecutionStateful},
+ * {@link TraceObjectAggregate}</li>
+ * <ul>
+ * <li>"Registers" : {@link TraceObjectRegisterContainer}</li>
+ * <ul>
+ * <li>"r1" : {@link TraceObjectRegister}</li>
+ * <li>...</li>
+ * </ul>
+ * </ul>
+ * <li>...more threads</li>
+ * </ul>
+ * <li>"Memory" : {@link TraceObjectMemory}</li>
+ * <ul>
+ * <li>"[0x00400000:0x00401234]" : {@link TraceObjectMemoryRegion}</li>
+ * <li>...more regions</li>
+ * </ul>
+ * <li>"Modules" : {@link TraceObject}</li>
+ * <ul>
+ * <li>"/usr/bin/echo" : {@link TraceObjectModule}</li>
+ * <ul>
+ * <li>".text" : {@link TraceObjectSection}</li>
+ * <li>...more sections</li>
+ * </ul>
+ * <li>...more modules</li>
+ * </ul>
+ * </ul>
+ * <li>"Environment": {@link TraceObjectEnvironment}</li>
+ * <ul>
+ * <li>"Process 321" : {@link TraceObject}</li>
+ * <li>...more processes</li>
+ * </ul>
+ * </ul>
+ * </ul>
+ * 
+ * <p>
+ * Note that this interface does not provide target-related operations, but only a means of
+ * modifying the database. The target connector, if this trace is still "live," should have a handle
+ * to this same trace and so can update the records as events occur in the debugger session and keep
+ * the target state up to date. Commands for manipulating the target and/or session itself are
+ * provided by that connector.
  */
 public interface TraceObject extends TraceUniqueObject {
 	String EXTRA_INTERFACES_ATTRIBUTE_NAME = "_extra_ifs";
@@ -66,7 +168,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @return the path
 	 */
-	TraceObjectKeyPath getCanonicalPath();
+	KeyPath getCanonicalPath();
 
 	/**
 	 * Get all ranges of this object's life
@@ -199,10 +301,10 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Request the specified interface provided by this object
 	 * 
 	 * @param <I> the type of the interface
-	 * @param ifClass the class of the interface
+	 * @param iface the class of the interface
 	 * @return the interface, or null if not provided
 	 */
-	<I extends TraceObjectInterface> I queryInterface(Class<I> ifClass);
+	<I extends TraceObjectInterface> I queryInterface(Class<I> iface);
 
 	/**
 	 * Get all values intersecting the given span and whose child is this object
@@ -323,56 +425,56 @@ public interface TraceObject extends TraceUniqueObject {
 	TraceObjectValue getAttribute(long snap, String name);
 
 	/**
-	 * Stream all ancestor values of this object matching the given predicates, intersecting the
-	 * given span
+	 * Stream all ancestor values of this object matching the given filter, intersecting the given
+	 * span
 	 * 
 	 * <p>
-	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * Aliased keys are excluded. The filter should be formulated to use the aliases' target
 	 * attributes.
 	 * 
 	 * @param span a span which values along the path must intersect
-	 * @param rootPredicates the predicates for matching path keys, relative to the root
+	 * @param rootFilter the filter for matching path keys, relative to the root
 	 * @return the stream of matching paths to values
 	 */
 	Stream<? extends TraceObjectValPath> getAncestorsRoot(Lifespan span,
-			PathPredicates rootPredicates);
+			PathFilter rootFilter);
 
 	/**
-	 * Stream all ancestor values of this object matching the given predicates, intersecting the
-	 * given span
+	 * Stream all ancestor values of this object matching the given filter, intersecting the given
+	 * span
 	 * 
 	 * <p>
-	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * Aliased keys are excluded. The filter should be formulated to use the aliases' target
 	 * attributes.
 	 * 
 	 * @param span a span which values along the path must intersect
-	 * @param relativePredicates the predicates for matching path keys, relative to this object
+	 * @param relativeFilter the filter for matching path keys, relative to this object
 	 * @return the stream of matching paths to values
 	 */
 	Stream<? extends TraceObjectValPath> getAncestors(Lifespan span,
-			PathPredicates relativePredicates);
+			PathFilter relativeFilter);
 
 	/**
-	 * Stream all successor values of this object matching the given predicates, intersecting the
-	 * given span
+	 * Stream all successor values of this object matching the given filter, intersecting the given
+	 * span
 	 * 
 	 * <p>
-	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * Aliased keys are excluded. The filter should be formulated to use the aliases' target
 	 * attributes.
 	 * 
 	 * @param span a span which values along the path must intersect
-	 * @param relativePredicates the predicates for matching path keys, relative to this object
+	 * @param relativeFilter the filter for matching path keys, relative to this object
 	 * @return the stream of matching paths to values
 	 */
 	Stream<? extends TraceObjectValPath> getSuccessors(Lifespan span,
-			PathPredicates relativePredicates);
+			PathFilter relativeFilter);
 
 	/**
 	 * Stream all successor values of this object at the given relative path, intersecting the given
 	 * span, ordered by time.
 	 * 
 	 * <p>
-	 * Aliased keys are excluded. The predicates should be formulated to use the aliases' target
+	 * Aliased keys are excluded. The filter should be formulated to use the aliases' target
 	 * attributes.
 	 * 
 	 * @param span the span which values along the path must intersect
@@ -381,21 +483,20 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return the stream of value paths
 	 */
 	Stream<? extends TraceObjectValPath> getOrderedSuccessors(Lifespan span,
-			TraceObjectKeyPath relativePath, boolean forward);
+			KeyPath relativePath, boolean forward);
 
 	/**
-	 * Stream all canonical successor values of this object matching the given predicates
+	 * Stream all canonical successor values of this object matching the given filter
 	 * 
 	 * <p>
 	 * If an object has a disjoint life, i.e., multiple canonical parents, then only the
 	 * least-recent of those is traversed. Aliased keys are excluded; those can't be canonical
 	 * anyway.
 	 * 
-	 * @param relativePredicates predicates on the relative path from this object to desired
-	 *            successors
+	 * @param relativeFilter filter on the relative path from this object to desired successors
 	 * @return the stream of value paths
 	 */
-	Stream<? extends TraceObjectValPath> getCanonicalSuccessors(PathPredicates relativePredicates);
+	Stream<? extends TraceObjectValPath> getCanonicalSuccessors(PathFilter relativeFilter);
 
 	/**
 	 * Set a value for the given lifespan
@@ -468,79 +569,80 @@ public interface TraceObject extends TraceUniqueObject {
 	TraceObjectValue setElement(Lifespan lifespan, long index, Object value);
 
 	/**
-	 * Get the (target) schema for this object
+	 * Get the schema for this object
 	 * 
 	 * @return the schema
 	 */
-	TargetObjectSchema getTargetSchema();
+	TraceObjectSchema getSchema();
 
 	/**
-	 * Search for ancestors having the given target interface
+	 * Search for ancestors having the given interface
 	 * 
 	 * @param span the span which the found objects must intersect
-	 * @param targetIf the interface class
+	 * @param iface the interface class
 	 * @return the stream of found paths to values
 	 */
-	Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Lifespan span,
-			Class<? extends TargetObject> targetIf);
+	Stream<? extends TraceObjectValPath> findAncestorsInterface(Lifespan span,
+			Class<? extends TraceObjectInterface> iface);
 
 	/**
-	 * Search for ancestors providing the given interface and retrieve those interfaces
+	 * Search for ancestors having the given interface and retrieve those interfaces
 	 * 
 	 * @param <I> the interface type
 	 * @param span the span which the found objects must intersect
-	 * @param ifClass the interface class
+	 * @param iface the interface class
 	 * @return the stream of interfaces
 	 */
 	<I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Lifespan span,
-			Class<I> ifClass);
+			Class<I> iface);
 
 	/**
-	 * Search for ancestors on the canonical path having the given target interface
+	 * Search for ancestors on the canonical path having the given interface
 	 * 
 	 * <p>
 	 * The object may not yet be inserted at its canonical path.
 	 * 
-	 * @param targetIf the interface class
+	 * @param iface the interface class
 	 * @return the stream of objects
 	 */
-	Stream<? extends TraceObject> queryCanonicalAncestorsTargetInterface(
-			Class<? extends TargetObject> targetIf);
+	Stream<? extends TraceObject> findCanonicalAncestorsInterface(
+			Class<? extends TraceObjectInterface> iface);
 
 	/**
-	 * Search for ancestors on the canonical path providing the given interface
+	 * Search for ancestors on the canonical path having the given interface and retrieve those
+	 * interfaces
 	 * 
 	 * <p>
 	 * The object may not yet be inserted at its canonical path.
 	 * 
 	 * @param <I> the interface type
-	 * @param ifClass the interface class
+	 * @param iface the interface class
 	 * @return the stream of interfaces
 	 */
-	<I extends TraceObjectInterface> Stream<I> queryCanonicalAncestorsInterface(Class<I> ifClass);
+	<I extends TraceObjectInterface> Stream<I> queryCanonicalAncestorsInterface(Class<I> iface);
 
 	/**
-	 * Search for successors providing the given target interface
+	 * Search for successors having the given interface
 	 * 
 	 * @param span the span which the found paths must intersect
-	 * @param targetIf the target interface class
+	 * @param iface the interface class
 	 * @param requireCanonical if the objects must be found within their canonical container
 	 * @return the stream of found paths to values
 	 */
-	Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Lifespan span,
-			Class<? extends TargetObject> targetIf, boolean requireCanonical);
+	Stream<? extends TraceObjectValPath> findSuccessorsInterface(Lifespan span,
+			Class<? extends TraceObjectInterface> iface, boolean requireCanonical);
 
 	/**
-	 * Search for successors providing the given interface and retrieve those interfaces
+	 * Search for successors having the given interface and retrieve those interfaces
 	 * 
 	 * @param <I> the interface type
 	 * @param span the span which the found objects must intersect
-	 * @param ifClass the interface class
+	 * @param iface the interface class
 	 * @param requireCanonical if the objects must be found within their canonical container
 	 * @return the stream of interfaces
 	 */
 	<I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Lifespan span,
-			Class<I> ifClass, boolean requireCanonical);
+			Class<I> iface, boolean requireCanonical);
 
 	/**
 	 * Delete this object along with parent and child value entries referring to it
@@ -569,7 +671,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return true if a method
 	 */
 	default boolean isMethod(long snap) {
-		if (getTargetSchema().getInterfaces().contains(TargetMethod.class)) {
+		if (getSchema().getInterfaces().contains(TraceObjectMethod.class)) {
 			return true;
 		}
 		TraceObjectValue extras = getAttribute(snap, TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME);
@@ -589,25 +691,39 @@ public interface TraceObject extends TraceUniqueObject {
 	}
 
 	/**
-	 * Search for a suitable object having the given target interface
+	 * Search for a suitable object having the given interface
 	 * 
 	 * <p>
 	 * This operates by examining the schema for a unique suitable path, without regard to
 	 * lifespans. If needed, the caller should inspect the object's life.
 	 * 
-	 * @param targetIf the target interface
+	 * @param iface the interface
 	 * @return the suitable object, or null if not found
 	 */
-	default TraceObject querySuitableTargetInterface(Class<? extends TargetObject> targetIf) {
-		if (targetIf == TargetObject.class) {
+	default TraceObject findSuitableInterface(Class<? extends TraceObjectInterface> iface) {
+		if (iface == TraceObjectInterface.class) {
 			return this;
 		}
-		List<String> path = getRoot().getTargetSchema()
-				.searchForSuitable(targetIf, getCanonicalPath().getKeyList());
+		KeyPath path = getRoot().getSchema().searchForSuitable(iface, getCanonicalPath());
 		if (path == null) {
 			return null;
 		}
-		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
+		return getTrace().getObjectManager().getObjectByCanonicalPath(path);
+	}
+
+	/**
+	 * Search for a suitable canonical container of the given interface
+	 * 
+	 * @param iface the interface
+	 * @return the container, or null if not found
+	 */
+	default TraceObject findSuitableContainerInterface(
+			Class<? extends TraceObjectInterface> iface) {
+		KeyPath path = getRoot().getSchema().searchForSuitableContainer(iface, getCanonicalPath());
+		if (path == null) {
+			return null;
+		}
+		return getTrace().getObjectManager().getObjectByCanonicalPath(path);
 	}
 
 	/**
@@ -620,29 +736,27 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param schema the schema
 	 * @return the suitable object, or null if not found
 	 */
-	default TraceObject querySuitableSchema(TargetObjectSchema schema) {
-		List<String> path = getRoot().getTargetSchema()
-				.searchForSuitable(schema, getCanonicalPath().getKeyList());
+	default TraceObject findSuitableSchema(TraceObjectSchema schema) {
+		KeyPath path = getRoot().getSchema().searchForSuitable(schema, getCanonicalPath());
 		if (path == null) {
 			return null;
 		}
-		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
+		return getTrace().getObjectManager().getObjectByCanonicalPath(path);
 	}
 
 	/**
 	 * Search for a suitable register container
 	 * 
-	 * @see TargetObjectSchema#searchForRegisterContainer(int, List)
+	 * @see TraceObjectSchema#searchForRegisterContainer(int, KeyPath)
 	 * @param frameLevel the frame level. Must be 0 if not applicable
 	 * @return the register container, or null
 	 */
-	default TraceObject queryRegisterContainer(int frameLevel) {
-		PathPredicates regsMatcher = getRoot().getTargetSchema()
-				.searchForRegisterContainer(frameLevel, getCanonicalPath().getKeyList());
+	default TraceObject findRegisterContainer(int frameLevel) {
+		PathFilter regsMatcher =
+			getRoot().getSchema().searchForRegisterContainer(frameLevel, getCanonicalPath());
 		for (PathPattern regsPattern : regsMatcher.getPatterns()) {
 			TraceObject regsObj = getTrace().getObjectManager()
-					.getObjectByCanonicalPath(
-						TraceObjectKeyPath.of(regsPattern.getSingletonPath()));
+					.getObjectByCanonicalPath(regsPattern.getSingletonPath());
 			if (regsObj != null) {
 				return regsObj;
 			}
@@ -657,21 +771,21 @@ public interface TraceObject extends TraceUniqueObject {
 	 * This searches for the conventional stateful object defining this object's execution state. If
 	 * such an object does not exist, null is returned. If one does exist, then its execution state
 	 * at the given snap is returned. If that state is null, it is assumed
-	 * {@link TargetExecutionState#INACTIVE}.
+	 * {@link TraceExecutionState#INACTIVE}.
 	 * 
 	 * @param snap the snap
 	 * @return the state or null
 	 */
-	default TargetExecutionState getExecutionState(long snap) {
-		TraceObject stateful = querySuitableTargetInterface(TargetExecutionStateful.class);
+	default TraceExecutionState getExecutionState(long snap) {
+		TraceObject stateful = findSuitableInterface(TraceObjectExecutionStateful.class);
 		if (stateful == null) {
 			return null;
 		}
 		TraceObjectValue stateVal =
-			stateful.getAttribute(snap, TargetExecutionStateful.STATE_ATTRIBUTE_NAME);
+			stateful.getAttribute(snap, TraceObjectExecutionStateful.KEY_STATE);
 		if (stateVal == null) {
-			return TargetExecutionState.INACTIVE;
+			return TraceExecutionState.INACTIVE;
 		}
-		return TargetExecutionState.valueOf((String) stateVal.getValue());
+		return TraceExecutionState.valueOf((String) stateVal.getValue());
 	}
 }

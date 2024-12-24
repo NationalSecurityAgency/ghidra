@@ -21,9 +21,16 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.Module;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.store.LockException;
+import ghidra.program.database.sourcemap.SourceFile;
+import ghidra.program.database.sourcemap.SourceFileIdType;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.util.Msg;
+import ghidra.util.SourceFileUtils;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -38,7 +45,7 @@ public class PdbSourceLinesApplicator {
 
 	private Map<Address, Integer> functionLengthByAddress;
 
-//	private SourceFileManager manager;
+	private SourceFileManager manager;
 
 	//==============================================================================================
 	/**
@@ -56,7 +63,7 @@ public class PdbSourceLinesApplicator {
 
 		functionLengthByAddress = new HashMap<>();
 
-		//manager = program.getSourceFileManager();
+		manager = program.getSourceFileManager();
 	}
 
 	//==============================================================================================
@@ -338,13 +345,39 @@ public class PdbSourceLinesApplicator {
 	}
 
 	//==============================================================================================
-	// Temporary mock class
-	private static class SourceFile {
-		// Empty
-	}
-
+	// Processing in the section is geared toward C13 records processing.  Have not evaluated its
+	//  usefulness for C11 records
+	/**
+	 * Finds or creates a SourceFile for our checksum and file ID for C13 processing
+	 * @param fileChecksums the set of FileChecksumC13Sections for this module
+	 * @param fileId the file ID found in the source line records
+	 * @return the source file
+	 */
 	private SourceFile getSourceFile(FileChecksumsC13Section fileChecksums, int fileId) {
-		return new SourceFile();
+
+		// Note: fileId is an offset into the checksum table, so we have them stored in a map.
+		C13FileChecksum checksumInfo = fileChecksums.getFileChecksumByOffset(fileId);
+
+		Long offsetFilename = checksumInfo.getOffsetFilename();
+		String filename = pdb.getNameStringFromOffset(offsetFilename.intValue());
+		SourceFileIdType idType = switch (checksumInfo.getChecksumTypeValue()) {
+			case 0 -> SourceFileIdType.NONE;
+			case 1 -> SourceFileIdType.MD5;
+			case 2 -> SourceFileIdType.SHA1;
+			case 3 -> SourceFileIdType.SHA256;
+			default -> SourceFileIdType.UNKNOWN;
+		};
+		byte[] identifier = checksumInfo.getChecksumBytes();
+
+		SourceFile sourceFile =
+			SourceFileUtils.getSourceFileFromPathString(filename, idType, identifier);
+		try {
+			manager.addSourceFile(sourceFile);
+		}
+		catch (LockException e) {
+			throw new AssertionError("LockException after exclusive access verified!");
+		}
+		return sourceFile;
 	}
 
 	//==============================================================================================
@@ -363,16 +396,21 @@ public class PdbSourceLinesApplicator {
 			return;
 		}
 
-//		try {
-//			manager.addSourceMapEntry(sourceFile, start, address, length);
-//		}
-//		catch (LockException e) {
-//			throw new AssertException("LockException after exclusive access verified!");
-//		}
-//		catch (AddressOverflowException e) {
-//			log.appendMsg("PDB", "AddressOverflow for source map info: %s, %d, %s, %d"
-//					.formatted(sourceFile.getPath(), start, address.toString(), length));
-//		}
+		try {
+			manager.addSourceMapEntry(sourceFile, start, address, length);
+		}
+		catch (LockException e) {
+			throw new AssertException("LockException after exclusive access verified!");
+		}
+		catch (AddressOverflowException e) {
+			log.appendMsg("PDB", "AddressOverflow for source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
+		}
+		catch (IllegalArgumentException e) {
+			// thrown by SourceFileManager.addSourceMapEntry if the new entry conflicts
+			// with an existing entry or if sourceFile is not associated with manager
+			log.appendMsg("PDB", e.getMessage());
+		}
 	}
 
 }

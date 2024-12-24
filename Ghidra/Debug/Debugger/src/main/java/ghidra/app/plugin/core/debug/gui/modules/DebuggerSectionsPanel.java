@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,9 +25,6 @@ import docking.widgets.table.TableFilter;
 import ghidra.app.plugin.core.debug.gui.model.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.PathUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -36,16 +32,20 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.modules.TraceObjectModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.thread.TraceObjectProcess;
 
 public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceObjectSection> {
 
 	private static class SectionStartColumn extends AbstractTraceValueObjectAddressColumn {
 
 		public SectionStartColumn() {
-			super(TargetSection.RANGE_ATTRIBUTE_NAME);
+			super(TraceObjectSection.KEY_RANGE);
 		}
 
 		@Override
@@ -61,7 +61,7 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 
 	private static class SectionEndColumn extends AbstractTraceValueObjectAddressColumn {
 		public SectionEndColumn() {
-			super(TargetSection.RANGE_ATTRIBUTE_NAME);
+			super(TraceObjectSection.KEY_RANGE);
 		}
 
 		@Override
@@ -84,11 +84,7 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 		@Override
 		public String getValue(ValueRow rowObject, Settings settings, Trace data,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			String key = rowObject.getValue().getEntryKey();
-			if (PathUtils.isIndex(key)) {
-				return PathUtils.parseIndex(key);
-			}
-			return key;
+			return KeyPath.parseIfIndex(rowObject.getValue().getEntryKey());
 		}
 	}
 
@@ -125,7 +121,7 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 						return "";
 					}
 					TraceObjectValue nameEntry = module.getAttribute(row.currentSnap(),
-						TargetModule.MODULE_NAME_ATTRIBUTE_NAME);
+						TraceObjectModule.KEY_MODULE_NAME);
 					if (nameEntry == null) {
 						return "";
 					}
@@ -137,7 +133,7 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 
 	private static class SectionLengthColumn extends AbstractTraceValueObjectLengthColumn {
 		public SectionLengthColumn() {
-			super(TargetSection.RANGE_ATTRIBUTE_NAME);
+			super(TraceObjectSection.KEY_RANGE);
 		}
 
 		@Override
@@ -166,21 +162,20 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 
 	private static TraceObject getModule(ValueRow row) {
 		TraceObjectValue moduleEntry =
-			row.getAttributeEntry(TargetSection.MODULE_ATTRIBUTE_NAME);
+			row.getAttributeEntry(TraceObjectSection.KEY_MODULE);
 		if (moduleEntry != null && moduleEntry.isObject()) {
 			return moduleEntry.getChild();
 		}
 		return row.getValue()
 				.getChild()
-				.queryCanonicalAncestorsTargetInterface(TargetModule.class)
+				.findCanonicalAncestorsInterface(TraceObjectModule.class)
 				.findFirst()
 				.orElse(null);
 	}
 
-	protected static ModelQuery successorSections(TargetObjectSchema rootSchema,
-			List<String> path) {
-		TargetObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TargetSection.class, path, true));
+	protected static ModelQuery successorSections(TraceObjectSchema rootSchema, KeyPath path) {
+		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
+		return new ModelQuery(schema.searchFor(TraceObjectSection.class, path, true));
 	}
 
 	private class SectionsBySelectedModulesTableFilter implements TableFilter<ValueRow> {
@@ -217,20 +212,26 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 
 	@Override
 	protected ModelQuery computeQuery(TraceObject object) {
-		TargetObjectSchema rootSchema = object.getRoot().getTargetSchema();
-		List<String> seedPath = object.getCanonicalPath().getKeyList();
-		List<String> processPath = rootSchema.searchForAncestor(TargetProcess.class, seedPath);
+		TraceObjectSchema rootSchema = object.getRoot().getSchema();
+		KeyPath seedPath = object.getCanonicalPath();
+		KeyPath processPath = rootSchema.searchForAncestor(TraceObjectProcess.class, seedPath);
 		if (processPath != null) {
-			return successorSections(rootSchema, processPath);
+			ModelQuery result =  successorSections(rootSchema, processPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
 		// Yes, anchor on the *module* container when searching for sections
-		List<String> containerPath =
-			rootSchema.searchForSuitableContainer(TargetModule.class, seedPath);
+		KeyPath containerPath =
+			rootSchema.searchForSuitableContainer(TraceObjectModule.class, seedPath);
 
 		if (containerPath != null) {
-			return successorSections(rootSchema, containerPath);
+			ModelQuery result =  successorSections(rootSchema, containerPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		return successorSections(rootSchema, List.of());
+		return successorSections(rootSchema, KeyPath.ROOT);
 	}
 
 	public void setFilteredBySelectedModules(boolean filtered) {

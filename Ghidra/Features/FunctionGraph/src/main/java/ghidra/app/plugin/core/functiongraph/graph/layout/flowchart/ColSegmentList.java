@@ -116,7 +116,7 @@ public class ColSegmentList<E> {
 
 	private void assignOffsets(ColSegmentList<E> group) {
 		// First sort the column segments in a left to right ordering.
-		Collections.sort(group.edgeSegments);
+		group.sort();
 
 		// Column segments are extend both to the right and left of the grid line, so first
 		// find a starting edge to assign to 0 and then work in both directions giving offsets
@@ -136,6 +136,28 @@ public class ColSegmentList<E> {
 				segment.setOffset(segment.getOffset() + adjustment);
 			}
 		}
+	}
+
+	private void sort() {
+		if (isUniformFlow()) {
+			Collections.sort(edgeSegments, (s1, s2) -> s1.compareToUsingFlows(s2));
+		}
+		else {
+			Collections.sort(edgeSegments, (s1, s2) -> s1.compareToIgnoreFlows(s2));
+		}
+	}
+
+	private boolean isUniformFlow() {
+		if (edgeSegments.isEmpty()) {
+			return true;
+		}
+		boolean firstSegmentIsUpwardFlowing = edgeSegments.get(0).isFlowingUpwards();
+		for (ColumnSegment<E> columnSegment : edgeSegments) {
+			if (columnSegment.isFlowingUpwards() != firstSegmentIsUpwardFlowing) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void assignOffsets(ColSegmentList<E> group, int center) {

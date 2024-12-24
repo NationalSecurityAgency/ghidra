@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,13 +33,6 @@ import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.dbg.target.TargetStackFrame;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -50,8 +43,14 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
@@ -169,9 +168,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	}
 
 	protected TraceObjectThread addThread(int n) {
-		PathPattern threadPattern = new PathPattern(PathUtils.parse("Processes[1].Threads[]"));
-		TraceObjectKeyPath threadPath =
-			TraceObjectKeyPath.of(threadPattern.applyIntKeys(n).getSingletonPath());
+		PathPattern threadPattern = PathFilter.parse("Processes[1].Threads[]");
+		KeyPath threadPath = threadPattern.applyIntKeys(n).getSingletonPath();
 		try (Transaction tx = tb.startTransaction()) {
 			return Objects.requireNonNull(tb.trace.getObjectManager()
 					.createObject(threadPath)
@@ -182,7 +180,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	}
 
 	protected TraceObjectStack addStack(TraceObjectThread thread) {
-		TraceObjectKeyPath stackPath = thread.getObject().getCanonicalPath().extend("Stack");
+		KeyPath stackPath = thread.getObject().getCanonicalPath().extend("Stack");
 		try (Transaction tx = tb.startTransaction()) {
 			return Objects.requireNonNull(tb.trace.getObjectManager()
 					.createObject(stackPath)
@@ -197,14 +195,14 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	}
 
 	protected void addStackFrames(TraceObjectStack stack, int count) {
-		TraceObjectKeyPath stackPath = stack.getObject().getCanonicalPath();
+		KeyPath stackPath = stack.getObject().getCanonicalPath();
 		TraceObjectManager om = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
 			for (int i = 0; i < count; i++) {
 				TraceObject frame = om.createObject(stackPath.index(i))
 						.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 						.getDestination(null);
-				frame.setAttribute(Lifespan.nowOn(0), TargetStackFrame.PC_ATTRIBUTE_NAME,
+				frame.setAttribute(Lifespan.nowOn(0), TraceObjectStackFrame.KEY_PC,
 					tb.addr(0x00400100 + 0x100 * i));
 			}
 		}
@@ -233,7 +231,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 				.getColumnByNameAndType(tableModel, table, "Function", ValueProperty.class)
 				.column();
 
-		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));
+		assertEquals(KeyPath.makeKey(KeyPath.makeIndex(level)), rowColVal(row, levelCol));
 		assertEquals(pcVal, rowColVal(row, pcCol));
 		assertEquals(func, rowColVal(row, funcCol));
 	}
@@ -334,7 +332,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 			assertTableSize(15);
 			List<ValueRow> allItems = stackProvider.panel.getAllItems();
 			for (int i = 0; i < 15; i++) {
-				assertEquals(PathUtils.makeKey(PathUtils.makeIndex(i)), allItems.get(i).getKey());
+				assertEquals(KeyPath.makeKey(KeyPath.makeIndex(i)), allItems.get(i).getKey());
 			}
 		});
 	}
@@ -358,7 +356,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					.createObject(stack.getObject().getCanonicalPath().index(2))
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null);
-			frame2.setAttribute(Lifespan.nowOn(0), TargetStackFrame.PC_ATTRIBUTE_NAME,
+			frame2.setAttribute(Lifespan.nowOn(0), TraceObjectStackFrame.KEY_PC,
 				tb.addr(0x00400300));
 		}
 		waitForDomainObject(tb.trace);
@@ -583,12 +581,12 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		try (Transaction tx = tb.startTransaction()) {
 			TraceObjectMemoryRegion region = Objects.requireNonNull(tb.trace.getObjectManager()
-					.createObject(TraceObjectKeyPath.parse("Processes[1].Memory[bin:.text]"))
+					.createObject(KeyPath.parse("Processes[1].Memory[bin:.text]"))
 					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
 					.getDestination(null)
 					.queryInterface(TraceObjectMemoryRegion.class));
 			region.getObject()
-					.setAttribute(Lifespan.nowOn(0), TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
+					.setAttribute(Lifespan.nowOn(0), TraceObjectMemoryRegion.KEY_RANGE,
 						tb.drng(0x00400000, 0x00400fff));
 
 			TraceLocation dloc =

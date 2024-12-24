@@ -107,8 +107,6 @@ public class DecompilerTextFinderPlugin extends ProgramPlugin {
 
 		String searchText = searchDialog.getSearchText();
 		boolean isRegex = searchDialog.isRegex();
-		String title = "Decompiler Search Text - '" + searchText + "'";
-		String tableTypeName = "Decompiler Search";
 		DecompilerTextFinderTableModel model =
 			new DecompilerTextFinderTableModel(tool, program, searchText, isRegex);
 		if (searchDialog.isSearchSelection()) {
@@ -120,6 +118,8 @@ public class DecompilerTextFinderPlugin extends ProgramPlugin {
 
 		Color markerColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 		Icon markerIcon = new GIcon("icon.base.search.marker");
+		String title = "Decompiler Search Text - '" + searchText + "'";
+		String tableTypeName = "Decompiler Search Results";
 		String windowSubMenu = "Search";
 		TableService tableService = tool.getService(TableService.class);
 		TableComponentProvider<TextMatch> provider = tableService.showTableWithMarkers(title,

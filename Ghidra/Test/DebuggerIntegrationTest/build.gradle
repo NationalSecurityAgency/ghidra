@@ -15,6 +15,7 @@
  */
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = '_Debugger Integration Test'
 
@@ -26,11 +27,11 @@ eclipse.project.name = '_Debugger Integration Test'
 // There are tests in this module that require resources in Base:test. This
 // is a on-off type of situation so just add to the resources source set here.
 sourceSets {
-   integrationTest {
-     resources {
-       srcDirs += [project(':Base').sourceSets.test.resources]
-     }
-   }
+	integrationTest {
+		resources {
+			srcDirs += [project(':Base').sourceSets.test.resources]
+		}
+	}
 }
 
 processIntegrationTestResources {
@@ -67,7 +68,6 @@ dependencies {
 	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
-	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger-rmi-trace', configuration: 'testArtifacts')
 }
@@ -81,6 +81,140 @@ ext.addExports([
 	'java.desktop/sun.java2d=ALL-UNNAMED'
 ])
 
+task testSpecimenWin_x86_64 {
+	dependsOn 'expCreateProcessWin_x86_64Executable'
+	dependsOn 'expCreateThreadExitWin_x86_64Executable'
+	//dependsOn 'expCreateThreadSpinWin_x86_64Executable'
+	dependsOn 'expPrintWin_x86_64Executable'
+	//dependsOn 'expSpinWin_x86_64Executable'
+	dependsOn 'expRegistersWin_x86_64Executable'
+	dependsOn 'expStackWin_x86_64Executable'
+}
+
+task testSpecimenLinux_x86_64 {
+	dependsOn 'expCloneExecExecutable'//Linux_x86_64Executable'
+	dependsOn 'expCloneExitLinux_x86_64Executable'
+	//dependsOn 'expCloneSpinExecutable'//Linux_x86_64Executable'
+	dependsOn 'expForkExecutable'//Linux_x86_64Executable'
+	dependsOn 'expPrintLinux_x86_64Executable'
+	dependsOn 'expReadLinux_x86_64Executable'
+	dependsOn 'expSpinLinux_x86_64Executable'
+	dependsOn 'expRegistersLinux_x86_64Executable'
+	dependsOn 'expStackLinux_x86_64Executable'
+	dependsOn 'expTraceableSleepExecutable'//Linux_x86_64Executable'
+
+	doLast {
+		exec {
+			workingDir "build/os/linux_x86_64"
+			commandLine "strip", "-o", "expSpin.stripped", "expSpin"
+		}
+	}
+}
+
+task testSpecimenMac_arm_64 {
+	dependsOn 'expCloneExitMac_arm_64Executable'
+	dependsOn 'expPrintMac_arm_64Executable'
+	dependsOn 'expReadMac_arm_64Executable'
+}
+
+// TODO: testSpecimenMac_x86_64 (Intel)
+//   will likely need to codesign them to grant debugee-entitlement
+
+model {
+	components {
+		expCreateProcess(NativeExecutableSpec) {
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expCreateThreadExit(NativeExecutableSpec) {
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expCreateThreadSpin(NativeExecutableSpec) {
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expCloneExec(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+		}
+		expCloneExit(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "mac_arm_64"
+		}
+		expCloneSpin(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+		}
+		expFork(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+		}
+		expPrint(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+			targetPlatform "mac_arm_64"
+		}
+		expRead(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			targetPlatform "mac_arm_64"
+		}
+		expSpin(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expRegisters(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expStack(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "win_x86_64"
+			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expTraceableSleep(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+		}
+	}
+
+	binaries {
+		withType(NativeExecutableBinarySpec) {
+			if (toolChain in Gcc) {
+				cCompiler.args("-std=c99")
+				linker.args("-lpthread")
+				linker.args("-lutil")
+			}
+			if (toolChain in VisualCpp) {
+				cppCompiler.define("VS_PROJECT")
+				// NB. No /SUBSYSTEM:CONSOLE
+				// that creates a subprocess
+				linker.args("/SUBSYSTEM:windows", "/DYNAMICBASE", "/NXCOMPAT")
+				linker.args("shell32.lib");
+			}
+			if (isWindows(targetPlatform.name)) {
+				cppCompiler.define("WIN32")
+				cCompiler.define("WIN32")
+
+				cppCompiler.define("_WINDOWS")
+				cCompiler.define("_WINDOWS")
+
+				cppCompiler.define("UNICODE")
+				cCompiler.define("_UNICODE")
+
+				cppCompiler.define("_UNICODE")
+				cCompiler.define("UNICODE")
+			}
+		}
+	}
+}
+
 integrationTest {
 	dependsOn { project(':Debugger-rmi-trace').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
@@ -88,12 +222,12 @@ integrationTest {
 	dependsOn { project(':Debugger-agent-dbgeng').assemblePyPackage }
 
 	if ("linux_x86_64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenLinux_x86_64")
+		dependsOn("testSpecimenLinux_x86_64")
 	}
 	if ("mac_x86_64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenMac_x86_64")
+		dependsOn("testSpecimenMac_x86_64")
 	}
 	if ("win_x86_64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenWin_x86_64")
+		dependsOn("testSpecimenWin_x86_64")
 	}
 }

@@ -24,14 +24,13 @@ import javax.swing.JLabel;
 
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerParameterDialog;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget.Missing;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.RemoteParameter;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.SchemaContext;
 
 public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialog<RemoteParameter> {
 
@@ -84,11 +83,7 @@ public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialo
 
 	@Override
 	protected Class<?> parameterType(RemoteParameter parameter) {
-		Class<?> type = ctx.getSchema(parameter.type()).getType();
-		if (TargetObject.class.isAssignableFrom(type)) {
-			return TraceObject.class;
-		}
-		return type;
+		return ctx.getSchema(parameter.type()).getType();
 	}
 
 	@Override

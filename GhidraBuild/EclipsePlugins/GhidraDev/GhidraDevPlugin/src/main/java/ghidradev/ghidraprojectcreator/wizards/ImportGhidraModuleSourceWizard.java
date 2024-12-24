@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,7 @@ import org.eclipse.ui.IWorkbench;
 import ghidra.GhidraApplicationLayout;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraModuleUtils;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 import ghidradev.ghidraprojectcreator.wizards.pages.*;
 import utilities.util.FileUtilities;
 
@@ -76,11 +77,11 @@ public class ImportGhidraModuleSourceWizard extends Wizard implements IImportWiz
 		String projectName = projectPage.getProjectName();
 		boolean createRunConfig = projectPage.shouldCreateRunConfig();
 		String runConfigMemory = projectPage.getRunConfigMemory();
-		String jythonInterpreterName = pythonPage.getJythonInterpreterName();
+		ProjectPythonInterpreter pythonInterpreter = pythonPage.getProjectPythonInterpreter();
 		try {
 			getContainer().run(true, false,
 				monitor -> importModuleSource(ghidraInstallDir, projectName, moduleSourceDir,
-					createRunConfig, runConfigMemory, jythonInterpreterName, monitor));
+					createRunConfig, runConfigMemory, pythonInterpreter, monitor));
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -102,14 +103,14 @@ public class ImportGhidraModuleSourceWizard extends Wizard implements IImportWiz
 	 * @param moduleSourceDir The module source directory to import.
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.
 	 * @param monitor The monitor to use during project creation.
 	 * @throws InvocationTargetException if an error occurred during project creation.
 	 */
 	private void importModuleSource(File ghidraInstallDir, String projectName, File moduleSourceDir,
-			boolean createRunConfig, String runConfigMemory, String jythonInterpreterName,
-			IProgressMonitor monitor) throws InvocationTargetException {
+			boolean createRunConfig, String runConfigMemory,
+			ProjectPythonInterpreter pythonInterpreter, IProgressMonitor monitor)
+			throws InvocationTargetException {
 		try {
 			info("Importing " + projectName + " at " + moduleSourceDir);
 			monitor.beginTask("Importing " + projectName, 2);
@@ -118,7 +119,7 @@ public class ImportGhidraModuleSourceWizard extends Wizard implements IImportWiz
 			monitor.worked(1);
 
 			GhidraModuleUtils.importGhidraModuleSource(projectName, moduleSourceDir,
-				createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
+				createRunConfig, runConfigMemory, ghidraLayout, pythonInterpreter, monitor);
 			monitor.worked(1);
 
 			info("Finished importing " + projectName);

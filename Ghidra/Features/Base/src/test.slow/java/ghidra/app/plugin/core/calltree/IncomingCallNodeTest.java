@@ -25,10 +25,11 @@ import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.task.TaskMonitor;
-import utility.function.ExceptionalCallback;
 
 public class IncomingCallNodeTest extends AbstractGenericTest {
 
@@ -67,7 +68,8 @@ public class IncomingCallNodeTest extends AbstractGenericTest {
 		callTreeOptions = callTreeOptions.withRecurseDepth(5);
 		callTreeOptions = callTreeOptions.withFilterThunks(hideThunks);
 		node1 =
-			new IncomingCallNode(program, firstCalledFunction, calledFromAddress, callTreeOptions);
+			new IncomingCallNode(program, firstCalledFunction, calledFromAddress, true,
+				callTreeOptions);
 
 	}
 
@@ -161,7 +163,7 @@ public class IncomingCallNodeTest extends AbstractGenericTest {
 		String thunkAddress = "0x1050";
 		Function thunkFunction =
 			builder.createEmptyFunction("Thunk_Function_1050", thunkAddress, 10, DataType.DEFAULT);
-		tx(() -> {
+		builder.tx(() -> {
 			thunkFunction.setThunkedFunction(thunkedFunction);
 		});
 
@@ -173,21 +175,47 @@ public class IncomingCallNodeTest extends AbstractGenericTest {
 		builder.createMemoryCallReference("0x1200", thunkAddress);
 	}
 
-	private <E extends Exception> void tx(ExceptionalCallback<E> c) {
-		int txId = program.startTransaction("Test - Function in Transaction");
-		boolean commit = true;
-		try {
-			c.call();
-			program.flushEvents();
-		}
-		catch (Exception e) {
-			commit = false;
-			failWithException("Exception modifying program '" + program.getName() + "'", e);
-		}
-		finally {
-			program.endTransaction(txId, commit);
-		}
+	@Test
+	public void testGenerateChildren_MultipleReferences_SameSource_SameRemoteFunction()
+			throws Exception {
+
+		//
+		// This is testing when more than 1 reference exists at an address to the same function.
+		// We have code that will ensure that call references are preferred over other reference 
+		// types, creating one node for the call reference.
+		//
+
+		String toAddress = "0x1000";
+		Function calledFunction =
+			builder.createEmptyFunction("Function_1000", toAddress, 1, new VoidDataType());
+		builder.addBytesFallthrough(firstCalledFunctionAddress);
+		builder.disassemble(firstCalledFunctionAddress, 2);
+
+		// create non-call read reference
+		builder.createMemoryReference(firstCalledFunctionAddress, toAddress, RefType.READ,
+			SourceType.USER_DEFINED);
+
+		// create call reference at a different op index so both references can co-exist
+		builder.tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Reference ref =
+				refManager.addMemoryReference(addr(firstCalledFunctionAddress), addr(toAddress),
+					RefType.UNCONDITIONAL_CALL, SourceType.USER_DEFINED, 1);
+			return ref;
+		});
+
+		IncomingCallNode calledNode = new IncomingCallNode(program, calledFunction, addr(toAddress),
+			true, new CallTreeOptions());
+
+		List<GTreeNode> children = calledNode.generateChildren(TaskMonitor.DUMMY);
+		assertEquals(1, children.size());
+		IncomingCallNode outgoingNode = (IncomingCallNode) children.get(0);
+		assertTrue(outgoingNode.isCallReference());
 	}
+
+//=================================================================================================
+// Private Methods
+//=================================================================================================	
 
 	private Address addr(String addrString) {
 		return builder.addr(addrString);

@@ -13,6 +13,7 @@ GhidraDevPlugin/icons/GhidraIcon16_bw.png||GHIDRA||||END|
 GhidraDevPlugin/icons/brick_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/brick_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/folder_link.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+GhidraDevPlugin/icons/python.png||GHIDRA||||END|
 GhidraDevPlugin/icons/script_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/icons/script_code_red.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 GhidraDevPlugin/plugin.xml||GHIDRA||||END|

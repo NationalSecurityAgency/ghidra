@@ -30,13 +30,6 @@ import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.async.*;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.schema.*;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.util.PathMatcher;
-import ghidra.dbg.util.PathPredicates;
-import ghidra.dbg.util.PathPredicates.Align;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
@@ -48,17 +41,20 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.*;
-import ghidra.trace.model.thread.TraceObjectThread;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.target.iface.*;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.path.PathFilter.Align;
+import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.thread.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
@@ -110,16 +106,16 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	@Override
-	public TargetExecutionState getThreadExecutionState(TraceThread thread) {
+	public TraceExecutionState getThreadExecutionState(TraceThread thread) {
 		if (!(thread instanceof TraceObjectThread tot)) {
 			Msg.error(this, "Non-object thread with Trace RMI!");
-			return TargetExecutionState.ALIVE;
+			return TraceExecutionState.ALIVE;
 		}
 		return tot.getObject().getExecutionState(getSnap());
 	}
 
 	@Override
-	public TraceThread getThreadForSuccessor(TraceObjectKeyPath path) {
+	public TraceThread getThreadForSuccessor(KeyPath path) {
 		TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
 		if (object == null) {
 			return null;
@@ -130,7 +126,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	@Override
-	public TraceStackFrame getStackFrameForSuccessor(TraceObjectKeyPath path) {
+	public TraceStackFrame getStackFrameForSuccessor(KeyPath path) {
 		TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
 		if (object == null) {
 			return null;
@@ -203,15 +199,15 @@ public class TraceRmiTarget extends AbstractTarget {
 			return null;
 		}
 		TraceObjectValue attrEnabled =
-			object.getAttribute(getSnap(), TargetTogglable.ENABLED_ATTRIBUTE_NAME);
+			object.getAttribute(getSnap(), TraceObjectTogglable.KEY_ENABLED);
 		boolean enabled = attrEnabled != null && attrEnabled.getValue() instanceof Boolean b && b;
 		return !enabled;
 	}
 
 	protected Object findArgumentForSchema(ActionName action, ActionContext context,
-			TargetObjectSchema schema, boolean allowContextObject, boolean allowCoordsObject,
+			TraceObjectSchema schema, boolean allowContextObject, boolean allowCoordsObject,
 			boolean allowSuitableObject) {
-		if (schema instanceof EnumerableTargetObjectSchema prim) {
+		if (schema instanceof PrimitiveTraceObjectSchema prim) {
 			return switch (prim) {
 				case OBJECT -> findObject(context, allowContextObject, allowCoordsObject);
 				case ADDRESS -> findAddress(context);
@@ -225,9 +221,9 @@ public class TraceRmiTarget extends AbstractTarget {
 			return null;
 		}
 		if (allowSuitableObject) {
-			return object.querySuitableSchema(schema);
+			return object.findSuitableSchema(schema);
 		}
-		if (object.getTargetSchema() == schema) {
+		if (object.getSchema() == schema) {
 			return object;
 		}
 		return null;
@@ -246,7 +242,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.trace(this, "No root schema, yet: " + trace);
 			return null;
 		}
-		TargetObjectSchema schema = ctx.getSchemaOrNull(type);
+		TraceObjectSchema schema = ctx.getSchemaOrNull(type);
 		if (schema == null) {
 			Msg.error(this, "Schema " + type + " not in trace! " + trace);
 			return null;
@@ -275,19 +271,19 @@ public class TraceRmiTarget extends AbstractTarget {
 		return args;
 	}
 
-	private TargetExecutionState getStateOf(TraceObject object) {
+	private TraceExecutionState getStateOf(TraceObject object) {
 		try {
 			return object.getExecutionState(getSnap());
 		}
 		catch (NoSuchElementException e) {
-			return TargetExecutionState.TERMINATED;
+			return TraceExecutionState.TERMINATED;
 		}
 	}
 
 	private boolean whenState(TraceObject object,
-			Predicate<TargetExecutionState> predicate) {
+			Predicate<TraceExecutionState> predicate) {
 		try {
-			TargetExecutionState state = getStateOf(object);
+			TraceExecutionState state = getStateOf(object);
 			return state == null || predicate.test(state);
 		}
 		catch (Exception e) {
@@ -300,7 +296,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		long score = 0;
 		for (Object o : args.values()) {
 			if (o instanceof TraceObject obj) {
-				score += obj.getCanonicalPath().getKeyList().size();
+				score += obj.getCanonicalPath().size();
 			}
 		}
 		return score;
@@ -315,7 +311,8 @@ public class TraceRmiTarget extends AbstractTarget {
 		RemoteParameter firstParam = method.parameters()
 				.values()
 				.stream()
-				.filter(p -> TargetObject.class.isAssignableFrom(ctx.getSchema(p.type()).getType()))
+				.filter(
+					p -> TraceObjectInterfaceUtils.isTraceObject(ctx.getSchema(p.type()).getType()))
 				.findFirst()
 				.orElse(null);
 		if (firstParam == null) {
@@ -334,10 +331,12 @@ public class TraceRmiTarget extends AbstractTarget {
 			ActionName.STEP_OUT.equals(name) ||
 			ActionName.STEP_OVER.equals(name) ||
 			ActionName.STEP_SKIP.equals(name)) {
-			return () -> whenState(obj, state -> state != null && (state.isStopped() || state.isUnknown()));
+			return () -> whenState(obj,
+				state -> state != null && (state.isStopped() || state.isUnknown()));
 		}
 		else if (ActionName.INTERRUPT.equals(name)) {
-			return () -> whenState(obj, state -> state == null || state.isRunning() || state.isUnknown());
+			return () -> whenState(obj,
+				state -> state == null || state.isRunning() || state.isUnknown());
 		}
 		else if (ActionName.KILL.equals(name)) {
 			return () -> whenState(obj, state -> state == null || !state.isTerminated());
@@ -403,7 +402,7 @@ public class TraceRmiTarget extends AbstractTarget {
 				.values()
 				.stream()
 				.filter(p -> {
-					TargetObjectSchema schema = ctx.getSchemaOrNull(p.type());
+					TraceObjectSchema schema = ctx.getSchemaOrNull(p.type());
 					if (schema == null) {
 						Msg.error(this,
 							"Method " + method + " refers to invalid schema name: " + p.type());
@@ -487,22 +486,22 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public boolean isSupportsFocus() {
-		TargetObjectSchema schema = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema schema = trace.getObjectManager().getRootSchema();
 		if (schema == null) {
 			Msg.trace(this, "Checked for focus support before root schema is available");
 			return false;
 		}
 		return schema
 				.getInterfaces()
-				.contains(TargetFocusScope.class) &&
+				.contains(TraceObjectFocusScope.class) &&
 			!connection.getMethods().getByAction(ActionName.ACTIVATE).isEmpty();
 	}
 
 	@Override
-	public TraceObjectKeyPath getFocus() {
+	public KeyPath getFocus() {
 		TraceObjectValue focusVal = trace.getObjectManager()
 				.getRootObject()
-				.getAttribute(getSnap(), TargetFocusScope.FOCUS_ATTRIBUTE_NAME);
+				.getAttribute(getSnap(), TraceObjectFocusScope.KEY_FOCUS);
 		if (focusVal == null || !focusVal.isObject()) {
 			return null;
 		}
@@ -550,17 +549,17 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected static boolean typeMatches(RemoteMethod method, RemoteParameter param,
 			SchemaContext ctx, Class<?> type) {
-		TargetObjectSchema sch = ctx.getSchemaOrNull(param.type());
+		TraceObjectSchema sch = ctx.getSchemaOrNull(param.type());
 		if (sch == null) {
 			throw new RuntimeException(
 				"The parameter '%s' of method '%s' refers to a non-existent schema '%s'"
 						.formatted(param.name(), method.name(), param.type()));
 		}
-		if (type == TargetObject.class) {
+		if (type == TraceObject.class) {
 			// The method cannot impose any further restriction. It must accept any object.
-			return sch == EnumerableTargetObjectSchema.OBJECT;
+			return sch == PrimitiveTraceObjectSchema.OBJECT;
 		}
-		else if (TargetObject.class.isAssignableFrom(type)) {
+		else if (TraceObjectInterface.class.isAssignableFrom(type)) {
 			return sch.getInterfaces().contains(type);
 		}
 		else {
@@ -649,14 +648,13 @@ public class TraceRmiTarget extends AbstractTarget {
 			return matchers(hasFocusTime, hasFocusSnap, hasFocus);
 		}
 
-		static List<ActivateMatcher> makeBySpecificity(TargetObjectSchema rootSchema,
-				TraceObjectKeyPath path) {
+		static List<ActivateMatcher> makeBySpecificity(TraceObjectSchema rootSchema,
+				KeyPath path) {
 			List<ActivateMatcher> result = new ArrayList<>();
-			List<String> keyList = path.getKeyList();
-			result.addAll(makeAllFor((keyList.size() + 1) * 3,
-				new TypeParamSpec("focus", TargetObject.class)));
-			List<TargetObjectSchema> schemas = rootSchema.getSuccessorSchemas(keyList);
-			for (int i = keyList.size(); i > 0; i--) { // Inclusive on both ends
+			result.addAll(makeAllFor((path.size() + 1) * 3,
+				new TypeParamSpec("focus", TraceObject.class)));
+			List<TraceObjectSchema> schemas = rootSchema.getSuccessorSchemas(path);
+			for (int i = path.size(); i > 0; i--) { // Inclusive on both ends
 				result.addAll(
 					makeAllFor(i * 3, new SchemaParamSpec("focus", schemas.get(i).getName())));
 			}
@@ -673,7 +671,7 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	record ReadMemMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final ReadMemMatcher HAS_PROC_RANGE = new ReadMemMatcher(2, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("range", AddressRange.class)));
 		static final ReadMemMatcher HAS_RANGE = new ReadMemMatcher(1, List.of(
 			new TypeParamSpec("range", AddressRange.class)));
@@ -682,7 +680,7 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	record WriteMemMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final WriteMemMatcher HAS_PROC_START_DATA = new WriteMemMatcher(2, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("start", Address.class),
 			new TypeParamSpec("data", byte[].class)));
 		static final WriteMemMatcher HAS_START_DATA = new WriteMemMatcher(1, List.of(
@@ -693,45 +691,43 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	record ReadRegsMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final ReadRegsMatcher HAS_CONTAINER = new ReadRegsMatcher(3, List.of(
-			new TypeParamSpec("container", TargetRegisterContainer.class)));
-		static final ReadRegsMatcher HAS_BANK = new ReadRegsMatcher(2, List.of(
-			new TypeParamSpec("bank", TargetRegisterBank.class)));
+			new TypeParamSpec("container", TraceObjectRegisterContainer.class)));
 		static final ReadRegsMatcher HAS_REGISTER = new ReadRegsMatcher(1, List.of(
-			new TypeParamSpec("register", TargetRegister.class)));
-		static final List<ReadRegsMatcher> ALL = matchers(HAS_CONTAINER, HAS_BANK, HAS_REGISTER);
+			new TypeParamSpec("register", TraceObjectRegister.class)));
+		static final List<ReadRegsMatcher> ALL = matchers(HAS_CONTAINER, HAS_REGISTER);
 	}
 
 	record WriteRegMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final WriteRegMatcher HAS_FRAME_NAME_VALUE = new WriteRegMatcher(3, List.of(
-			new TypeParamSpec("frame", TargetStackFrame.class),
+			new TypeParamSpec("frame", TraceObjectStackFrame.class),
 			new TypeParamSpec("name", String.class),
 			new TypeParamSpec("value", byte[].class)));
 		static final WriteRegMatcher HAS_THREAD_NAME_VALUE = new WriteRegMatcher(2, List.of(
-			new TypeParamSpec("thread", TargetThread.class),
+			new TypeParamSpec("thread", TraceObjectThread.class),
 			new TypeParamSpec("name", String.class),
 			new TypeParamSpec("value", byte[].class)));
 		static final WriteRegMatcher HAS_REG_VALUE = new WriteRegMatcher(1, List.of(
-			new TypeParamSpec("register", TargetRegister.class),
+			new TypeParamSpec("register", TraceObjectRegister.class),
 			new TypeParamSpec("value", byte[].class)));
 		static final List<WriteRegMatcher> ALL = matchers(HAS_FRAME_NAME_VALUE, HAS_REG_VALUE);
 	}
 
 	record BreakExecMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final BreakExecMatcher HAS_PROC_ADDR_COND_CMDS = new BreakExecMatcher(8, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("address", Address.class),
 			new NameParamSpec("condition", String.class),
 			new NameParamSpec("commands", String.class)));
 		static final BreakExecMatcher HAS_PROC_ADDR_COND = new BreakExecMatcher(7, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("address", Address.class),
 			new NameParamSpec("condition", String.class)));
 		static final BreakExecMatcher HAS_PROC_ADDR_CMDS = new BreakExecMatcher(6, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("address", Address.class),
 			new NameParamSpec("commands", String.class)));
 		static final BreakExecMatcher HAS_PROC_ADDR = new BreakExecMatcher(5, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("address", Address.class)));
 		static final BreakExecMatcher HAS_ADDR_COND_CMDS = new BreakExecMatcher(4, List.of(
 			new TypeParamSpec("address", Address.class),
@@ -753,20 +749,20 @@ public class TraceRmiTarget extends AbstractTarget {
 	// TODO: Probably need a better way to deal with optional requirements
 	record BreakAccMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final BreakAccMatcher HAS_PROC_RNG_COND_CMDS = new BreakAccMatcher(8, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("range", AddressRange.class),
 			new NameParamSpec("condition", String.class),
 			new NameParamSpec("commands", String.class)));
 		static final BreakAccMatcher HAS_PROC_RNG_COND = new BreakAccMatcher(7, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("range", AddressRange.class),
 			new NameParamSpec("condition", String.class)));
 		static final BreakAccMatcher HAS_PROC_RNG_CMDS = new BreakAccMatcher(6, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("range", AddressRange.class),
 			new NameParamSpec("commands", String.class)));
 		static final BreakAccMatcher HAS_PROC_RNG = new BreakAccMatcher(5, List.of(
-			new TypeParamSpec("process", TargetProcess.class),
+			new TypeParamSpec("process", TraceObjectProcess.class),
 			new TypeParamSpec("range", AddressRange.class)));
 		static final BreakAccMatcher HAS_RNG_COND_CMDS = new BreakAccMatcher(4, List.of(
 			new TypeParamSpec("range", AddressRange.class),
@@ -787,19 +783,19 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	record DelBreakMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final DelBreakMatcher HAS_LOC = new DelBreakMatcher(2, List.of(
-			new TypeParamSpec("location", TargetBreakpointLocation.class)));
+			new TypeParamSpec("location", TraceObjectBreakpointLocation.class)));
 		static final DelBreakMatcher HAS_SPEC = new DelBreakMatcher(1, List.of(
-			new TypeParamSpec("specification", TargetBreakpointSpec.class)));
+			new TypeParamSpec("specification", TraceObjectBreakpointSpec.class)));
 		static final List<DelBreakMatcher> ALL = matchers(HAS_LOC, HAS_SPEC);
 		static final List<DelBreakMatcher> SPEC = matchers(HAS_SPEC);
 	}
 
 	record ToggleBreakMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final ToggleBreakMatcher HAS_LOC = new ToggleBreakMatcher(2, List.of(
-			new TypeParamSpec("location", TargetBreakpointLocation.class),
+			new TypeParamSpec("location", TraceObjectBreakpointLocation.class),
 			new TypeParamSpec("enabled", Boolean.class)));
 		static final ToggleBreakMatcher HAS_SPEC = new ToggleBreakMatcher(1, List.of(
-			new TypeParamSpec("specification", TargetBreakpointSpec.class),
+			new TypeParamSpec("specification", TraceObjectBreakpointSpec.class),
 			new TypeParamSpec("enabled", Boolean.class)));
 		static final List<ToggleBreakMatcher> ALL = matchers(HAS_LOC, HAS_SPEC);
 		static final List<ToggleBreakMatcher> SPEC = matchers(HAS_SPEC);
@@ -926,7 +922,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			return AsyncUtils.nil();
 		}
 
-		SchemaName name = object.getTargetSchema().getName();
+		SchemaName name = object.getSchema().getName();
 		MatchedMethod activate = matches.getBest("activate_" + name, ActionName.ACTIVATE,
 			() -> ActivateMatcher.makeBySpecificity(trace.getObjectManager().getRootSchema(),
 				object.getCanonicalPath()));
@@ -937,7 +933,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		Map<String, Object> args = new HashMap<>();
 		RemoteParameter paramFocus = activate.params.get("focus");
 		args.put(paramFocus.name(),
-			object.querySuitableSchema(getSchemaContext().getSchema(paramFocus.type())));
+			object.findSuitableSchema(getSchemaContext().getSchema(paramFocus.type())));
 		RemoteParameter paramTime = activate.params.get("time");
 		if (paramTime != null) {
 			args.put(paramTime.name(), coords.getTime().toString());
@@ -972,7 +968,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected SchemaContext getSchemaContext() {
-		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return null;
 		}
@@ -980,12 +976,21 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected TraceObject getProcessForSpace(AddressSpace space) {
+		List<TraceObjectProcess> processes = trace.getObjectManager()
+				.queryAllInterface(Lifespan.at(getSnap()), TraceObjectProcess.class)
+				.toList();
+		if (processes.size() == 1) {
+			return processes.get(0).getObject();
+		}
+		if (processes.isEmpty()) {
+			return null;
+		}
 		for (TraceMemoryRegion region : trace.getMemoryManager()
 				.getRegionsIntersecting(
 					Lifespan.at(getSnap()),
 					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()))) {
 			TraceObject obj = ((TraceObjectMemoryRegion) region).getObject();
-			return obj.queryCanonicalAncestorsTargetInterface(TargetProcess.class)
+			return obj.findCanonicalAncestorsInterface(TraceObjectProcess.class)
 					.findFirst()
 					.orElse(null);
 		}
@@ -1090,7 +1095,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.error(this, "Non-object trace with TraceRmi!");
 			return AsyncUtils.nil();
 		}
-		TraceObject container = tot.getObject().queryRegisterContainer(frame);
+		TraceObject container = tot.getObject().findRegisterContainer(frame);
 		if (container == null) {
 			Msg.error(this,
 				"Cannot find register container for thread,frame: " + thread + "," + frame);
@@ -1108,25 +1113,11 @@ public class TraceRmiTarget extends AbstractTarget {
 			keys.add("[" + lower + "]");
 		}
 		Set<TraceObject> regs = container
-				.querySuccessorsTargetInterface(Lifespan.at(getSnap()), TargetRegister.class,
+				.findSuccessorsInterface(Lifespan.at(getSnap()), TraceObjectRegister.class,
 					true)
 				.filter(p -> keys.contains(p.getLastEntry().getEntryKey().toLowerCase()))
 				.map(r -> r.getDestination(null))
 				.collect(Collectors.toSet());
-		RemoteParameter paramBank = readRegs.params.get("bank");
-		if (paramBank != null) {
-			Set<TraceObject> banks = regs.stream()
-					.flatMap(r -> r.queryCanonicalAncestorsTargetInterface(TargetRegisterBank.class)
-							.findFirst()
-							.stream())
-					.collect(Collectors.toSet());
-			AsyncFence fence = new AsyncFence();
-			banks.stream().forEach(b -> {
-				fence.include(requestCaches.readRegs(b, readRegs.method, Map.of(
-					paramBank.name(), b)));
-			});
-			return fence.ready();
-		}
 		RemoteParameter paramRegister = readRegs.params.get("register");
 		if (paramRegister != null) {
 			AsyncFence fence = new AsyncFence();
@@ -1140,17 +1131,18 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected TraceObject findRegisterObject(TraceObjectThread thread, int frame, String name) {
-		TraceObject container = thread.getObject().queryRegisterContainer(frame);
+		TraceObject container = thread.getObject().findRegisterContainer(frame);
 		if (container == null) {
 			Msg.error(this, "No register container for thread=" + thread + ",frame=" + frame);
 			return null;
 		}
-		PathMatcher matcher = container.getTargetSchema().searchFor(TargetRegister.class, true);
-		PathPredicates pred = matcher.applyKeys(Align.RIGHT, name)
+		PathMatcher matcher =
+			container.getSchema().searchFor(TraceObjectRegister.class, true);
+		PathFilter filter = matcher.applyKeys(Align.RIGHT, name)
 				.or(matcher.applyKeys(Align.RIGHT, name.toLowerCase()))
 				.or(matcher.applyKeys(Align.RIGHT, name.toUpperCase()));
 		TraceObjectValPath regValPath =
-			container.getCanonicalSuccessors(pred).findFirst().orElse(null);
+			container.getCanonicalSuccessors(filter).findFirst().orElse(null);
 		if (regValPath == null) {
 			Msg.error(this, "Cannot find register object for " + name + " in " + container);
 			return null;
@@ -1211,13 +1203,13 @@ public class TraceRmiTarget extends AbstractTarget {
 				.thenApply(__ -> null);
 	}
 
-	protected boolean isMemorySpaceValid(AddressSpace space) {
-		return trace.getBaseAddressFactory().getAddressSpace(space.getSpaceID()) == space;
+	protected boolean isMemorySpaceValid(TracePlatform platform, AddressSpace space) {
+		return platform.getAddressFactory().getAddressSpace(space.getSpaceID()) == space;
 	}
 
 	protected boolean isRegisterValid(TracePlatform platform, TraceThread thread, int frame,
 			Address address, int length) {
-		if (!isMemorySpaceValid(address.getAddressSpace())) {
+		if (!isMemorySpaceValid(platform, address.getAddressSpace())) {
 			return false;
 		}
 		Register register =
@@ -1239,7 +1231,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	public boolean isVariableExists(TracePlatform platform, TraceThread thread, int frame,
 			Address address, int length) {
 		if (address.isMemoryAddress()) {
-			return isMemorySpaceValid(address.getAddressSpace());
+			return isMemorySpaceValid(platform, address.getAddressSpace());
 		}
 		if (address.isRegisterAddress()) {
 			return isRegisterValid(platform, thread, frame, address, length);

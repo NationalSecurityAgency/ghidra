@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,6 +167,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	protected DockingAction actionFindPrevious;
 	protected DockingAction actionSelectAll;
 	protected DockingAction actionTerminate;
+	protected DockingAction actionIncreaseSize;
+	protected DockingAction actionDecreaseSize;
+	protected DockingAction actionResetSize;
 
 	private boolean terminated = false;
 
@@ -262,6 +265,28 @@ public class TerminalProvider extends ComponentProviderAdapter {
 				.helpLocation(new HelpLocation(helpPlugin.getName(), "select_all"))
 				.onAction(this::activatedSelectAll)
 				.buildAndInstallLocal(this);
+		actionIncreaseSize = new ActionBuilder("Increase Font Size", plugin.getName())
+				.menuPath("Increase Font Size")
+				.menuGroup("View")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS,
+					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "increase_font_size"))
+				.onAction(this::activatedIncreaseFontSize)
+				.buildAndInstallLocal(this);
+		actionDecreaseSize = new ActionBuilder("Decrease Font Size", plugin.getName())
+				.menuPath("Decrease Font Size")
+				.menuGroup("View")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "decrease_font_size"))
+				.onAction(this::activatedDecreaseFontSize)
+				.buildAndInstallLocal(this);
+		actionResetSize = new ActionBuilder("Reset Font Size", plugin.getName())
+				.menuPath("Reset Font Size")
+				.menuGroup("View")
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK))
+				.helpLocation(new HelpLocation(helpPlugin.getName(), "decrease_font_size"))
+				.onAction(this::activatedResetFontSize)
+				.buildAndInstallLocal(this);
 	}
 
 	protected void activatedFind(ActionContext ctx) {
@@ -327,6 +352,18 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			sel.clear();
 		}
 		panel.getFieldPanel().setSelection(sel, EventTrigger.GUI_ACTION);
+	}
+
+	protected void activatedIncreaseFontSize(ActionContext ctx) {
+		panel.increaseFontSize();
+	}
+
+	protected void activatedDecreaseFontSize(ActionContext ctx) {
+		panel.decreaseFontSize();
+	}
+
+	protected void activatedResetFontSize(ActionContext ctx) {
+		panel.resetFontSize();
 	}
 
 	/**

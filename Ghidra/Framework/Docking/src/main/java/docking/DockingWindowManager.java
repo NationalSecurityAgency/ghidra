@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 
@@ -90,7 +91,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private static Component pendingRequestFocusComponent;
 
 	private Map<String, ComponentProvider> providerNameCache = new HashMap<>();
-	private Map<String, PreferenceState> preferenceStateMap = new HashMap<>();
+	private Map<String, Supplier<PreferenceState>> preferenceStateMap = new HashMap<>();
 	private ActionToGuiMapper actionToGuiMapper;
 
 	private WeakSet<PopupActionProvider> popupActionProviders =
@@ -909,6 +910,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		removeInstance(this);
 		root = null;
 		lastActiveWindow = null;
+
+		preferenceStateMap.clear();
 	}
 
 	void showComponent(ComponentProvider provider, boolean visibleState, boolean shouldEmphasize) {
@@ -1638,12 +1641,17 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private Element savePreferencesToXML() {
+
 		Element toolPreferencesElement = new Element(TOOL_PREFERENCES_XML_NAME);
 
-		Set<Entry<String, PreferenceState>> entrySet = preferenceStateMap.entrySet();
-		for (Entry<String, PreferenceState> entry : entrySet) {
+		Set<Entry<String, Supplier<PreferenceState>>> entrySet = preferenceStateMap.entrySet();
+		for (Entry<String, Supplier<PreferenceState>> entry : entrySet) {
 			String key = entry.getKey();
-			PreferenceState state = entry.getValue();
+			Supplier<PreferenceState> supplier = entry.getValue();
+			PreferenceState state = supplier.get();
+			if (state == null) {
+				continue;
+			}
 			Element preferenceElement = state.saveToXml();
 			preferenceElement.setAttribute("NAME", key);
 			toolPreferencesElement.addContent(preferenceElement);
@@ -1663,7 +1671,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		for (Object name : children) {
 			Element preferencesElement = (Element) name;
 			preferenceStateMap.put(preferencesElement.getAttribute("NAME").getValue(),
-				new PreferenceState(preferencesElement));
+				() -> new PreferenceState(preferencesElement));
 		}
 	}
 
@@ -1681,7 +1689,23 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			throw new IllegalArgumentException("Key is null!");
 		}
 
-		preferenceStateMap.put(key, state);
+		preferenceStateMap.put(key, () -> state);
+	}
+
+	/**
+	 * Registers a supplier of the preference state for the given key.  Using this method allows the
+	 * window manager to query the supplier when the tool is saved.  Clients can then decide whether
+	 * they have any state that needs saving at that time.
+	 * 
+	 * @param key the key with which to store the preferences.
+	 * @param supplier the supplier of the state object to store.
+	 */
+	public void registerPreferenceStateSupplier(String key, Supplier<PreferenceState> supplier) {
+		if (key == null) {
+			throw new IllegalArgumentException("Key is null!");
+		}
+
+		preferenceStateMap.put(key, supplier);
 	}
 
 	/**
@@ -1693,7 +1717,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @see #putPreferenceState(String, PreferenceState)
 	 */
 	public PreferenceState getPreferenceState(String key) {
-		return preferenceStateMap.get(key);
+		Supplier<PreferenceState> supplier = preferenceStateMap.get(key);
+		if (supplier != null) {
+			return supplier.get();
+		}
+		return null;
 	}
 
 	/**
@@ -1702,6 +1730,20 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param key the key to the preference state to be removed
 	 */
 	public void removePreferenceState(String key) {
+		preferenceStateMap.remove(key);
+	}
+
+	/**
+	 * Removes the supplier of the preference state for the given key.  
+	 * 
+	 * @param key the key with which to store the preferences.
+	 * @see #registerPreferenceStateSupplier(String, Supplier)
+	 */
+	public void removePreferenceStateSupplier(String key) {
+		if (key == null) {
+			throw new IllegalArgumentException("Key is null!");
+		}
+
 		preferenceStateMap.remove(key);
 	}
 
@@ -2531,8 +2573,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		component.addHierarchyListener(new HierarchyListener() {
 			@Override
 			public void hierarchyChanged(HierarchyEvent e) {
-				long changeFlags = e.getChangeFlags();
 
+				long changeFlags = e.getChangeFlags();
 				if (HierarchyEvent.DISPLAYABILITY_CHANGED != (changeFlags &
 					HierarchyEvent.DISPLAYABILITY_CHANGED)) {
 					return;
@@ -2554,6 +2596,5 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				listener.componentLoaded(dwm, provider);
 			}
 		});
-
 	}
 }

@@ -27,7 +27,6 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
@@ -51,6 +50,7 @@ import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -1452,13 +1452,13 @@ public interface FlatDebuggerAPI {
 			return createContext(objThread.getObject());
 		}
 		return new DebuggerSingleObjectPathActionContext(
-			TraceObjectKeyPath.parse(thread.getPath()));
+			KeyPath.parse(thread.getPath()));
 	}
 
 	default ActionContext createContext(Trace trace) {
 		DebuggerCoordinates coords = getTraceManager().getCurrentFor(trace);
 		if (coords == null) {
-			return new DebuggerSingleObjectPathActionContext(TraceObjectKeyPath.of());
+			return new DebuggerSingleObjectPathActionContext(KeyPath.of());
 		}
 		if (coords.getObject() != null) {
 			return createContext(coords.getObject());
@@ -1466,7 +1466,7 @@ public interface FlatDebuggerAPI {
 		if (coords.getPath() != null) {
 			return new DebuggerSingleObjectPathActionContext(coords.getPath());
 		}
-		return new DebuggerSingleObjectPathActionContext(TraceObjectKeyPath.of());
+		return new DebuggerSingleObjectPathActionContext(KeyPath.of());
 	}
 
 	default ActionEntry findAction(Target target, ActionName action, ActionContext context) {
@@ -1688,25 +1688,25 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * If the trace does not have a live target, it is considered
-	 * {@link TargetExecutionState#TERMINATED} (even if the trace <em>never</em> technically had a
+	 * {@link TraceExecutionState#TERMINATED} (even if the trace <em>never</em> technically had a
 	 * live target.) Otherwise, this gets the state of that live target. <b>NOTE:</b> This does not
 	 * consider the current snap. It only considers a live target in the present.
 	 * 
 	 * @param trace the trace
 	 * @return the trace's execution state
 	 */
-	default TargetExecutionState getExecutionState(Trace trace) {
+	default TraceExecutionState getExecutionState(Trace trace) {
 		Target target = getTargetService().getTarget(trace);
 		if (target == null) {
-			return TargetExecutionState.TERMINATED;
+			return TraceExecutionState.TERMINATED;
 		}
 		// Use resume action's enablement as a proxy for state
 		// This should work for recorder or rmi targets
 		ActionEntry action = findAction(target, ActionName.RESUME, createContext(trace));
 		if (action == null) {
-			return TargetExecutionState.ALIVE;
+			return TraceExecutionState.ALIVE;
 		}
-		return action.isEnabled() ? TargetExecutionState.STOPPED : TargetExecutionState.RUNNING;
+		return action.isEnabled() ? TraceExecutionState.STOPPED : TraceExecutionState.RUNNING;
 	}
 
 	/**
@@ -1714,7 +1714,7 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * If the thread does not have a corresponding live target thread, it is considered
-	 * {@link TargetExecutionState#TERMINATED} (even if the thread <em>never</em> technically had a
+	 * {@link TraceExecutionState#TERMINATED} (even if the thread <em>never</em> technically had a
 	 * live target thread.) Otherwise, this gets the state of that live target thread. <b>NOTE:</b>
 	 * This does not consider the current snap. It only considers a live target thread in the
 	 * present. In other words, if the user rewinds trace history to a point where the thread was
@@ -1725,10 +1725,10 @@ public interface FlatDebuggerAPI {
 	 * @param thread
 	 * @return the thread's execution state
 	 */
-	default TargetExecutionState getExecutionState(TraceThread thread) {
+	default TraceExecutionState getExecutionState(TraceThread thread) {
 		DebuggerCoordinates coords = getTraceManager().getCurrentFor(thread.getTrace());
 		if (!coords.isAlive()) {
-			return TargetExecutionState.TERMINATED;
+			return TraceExecutionState.TERMINATED;
 		}
 		return coords.getTarget().getThreadExecutionState(thread);
 	}

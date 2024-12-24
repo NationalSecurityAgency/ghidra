@@ -44,12 +44,6 @@ import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapSecti
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServiceTestAccess;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -60,10 +54,16 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceObjectModule;
 import ghidra.trace.model.modules.TraceStaticMapping;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
@@ -139,32 +139,33 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	protected void addRegionsFromModules() throws Exception {
-		PathPattern regionPattern = new PathPattern(PathUtils.parse("Processes[1].Memory[]"));
+		PathPattern regionPattern = PathFilter.parse("Processes[1].Memory[]");
 		TraceObjectManager om = tb.trace.getObjectManager();
 		try (Transaction tx = tb.startTransaction()) {
 			TraceObject root = om.getRootObject();
 			for (TraceObject module : (Iterable<TraceObject>) () -> root
-					.querySuccessorsTargetInterface(Lifespan.at(0), TargetModule.class, true)
+					.findSuccessorsInterface(Lifespan.at(0), TraceObjectModule.class, true)
 					.map(p -> p.getDestination(root))
 					.iterator()) {
 				String moduleName = module.getCanonicalPath().index();
 				Lifespan span = module.getLife().bound();
 				for (TraceObject section : (Iterable<TraceObject>) () -> module
-						.querySuccessorsTargetInterface(Lifespan.at(0), TargetSection.class, true)
+						.findSuccessorsInterface(Lifespan.at(0), TraceObjectSection.class,
+							true)
 						.map(p -> p.getDestination(root))
 						.iterator()) {
 					String sectionName = section.getCanonicalPath().index();
-					TraceObject region = om.createObject(TraceObjectKeyPath
-							.of(regionPattern.applyKeys(moduleName + ":" + sectionName)
-									.getSingletonPath()))
+					TraceObject region = om
+							.createObject(regionPattern.applyKeys(moduleName + ":" + sectionName)
+									.getSingletonPath())
 							.insert(span, ConflictResolution.TRUNCATE)
 							.getDestination(root);
-					region.setAttribute(span, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
-						section.getAttribute(0, TargetSection.RANGE_ATTRIBUTE_NAME).getValue());
-					region.setAttribute(span, TargetMemoryRegion.READABLE_ATTRIBUTE_NAME, true);
-					region.setAttribute(span, TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME,
+					region.setAttribute(span, TraceObjectMemoryRegion.KEY_RANGE,
+						section.getAttribute(0, TraceObjectSection.KEY_RANGE).getValue());
+					region.setAttribute(span, TraceObjectMemoryRegion.KEY_READABLE, true);
+					region.setAttribute(span, TraceObjectMemoryRegion.KEY_WRITABLE,
 						".data".equals(sectionName));
-					region.setAttribute(span, TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME,
+					region.setAttribute(span, TraceObjectMemoryRegion.KEY_EXECUTABLE,
 						".text".equals(sectionName));
 				}
 			}
@@ -172,15 +173,15 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	protected TraceObjectModule addModule(String name, AddressRange range, Lifespan span) {
-		PathPattern modulePattern = new PathPattern(PathUtils.parse("Processes[1].Modules[]"));
+		PathPattern modulePattern = PathFilter.parse("Processes[1].Modules[]");
 		TraceObjectManager om = tb.trace.getObjectManager();
 		TraceObjectModule module = Objects.requireNonNull(
-			om.createObject(TraceObjectKeyPath.of(modulePattern.applyKeys(name).getSingletonPath()))
+			om.createObject(modulePattern.applyKeys(name).getSingletonPath())
 					.insert(span, ConflictResolution.TRUNCATE)
 					.getDestination(null)
 					.queryInterface(TraceObjectModule.class));
-		module.getObject().setAttribute(span, TargetModule.MODULE_NAME_ATTRIBUTE_NAME, name);
-		module.getObject().setAttribute(span, TargetModule.RANGE_ATTRIBUTE_NAME, range);
+		module.getObject().setAttribute(span, TraceObjectModule.KEY_MODULE_NAME, name);
+		module.getObject().setAttribute(span, TraceObjectModule.KEY_RANGE, range);
 		return module;
 	}
 
@@ -194,7 +195,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 				.insert(span, ConflictResolution.TRUNCATE)
 				.getDestination(null)
 				.queryInterface(TraceObjectSection.class));
-		section.getObject().setAttribute(span, TargetSection.RANGE_ATTRIBUTE_NAME, range);
+		section.getObject().setAttribute(span, TraceObjectSection.KEY_RANGE, range);
 		return section;
 	}
 
@@ -717,7 +718,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		for (ValueRow row : visibleSections()) {
 			assertEquals(modExe.getObject(), row.getValue()
 					.getChild()
-					.queryCanonicalAncestorsTargetInterface(TargetModule.class)
+					.findCanonicalAncestorsInterface(TraceObjectModule.class)
 					.findFirst()
 					.orElse(null));
 		}

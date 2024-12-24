@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -152,7 +152,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		markupItemsTablePanel.add(tablePanel, BorderLayout.CENTER);
 		markupItemsTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel = new FunctionComparisonPanel(tool, getName());
+		functionComparisonPanel = new FunctionComparisonPanel(tool, getOwner());
 		addSpecificCodeComparisonActions();
 		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
@@ -161,8 +161,9 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 
 			dualListingPanel.getListingPanel(LEFT)
 					.setProgramLocationListener(new SourceProgramLocationListener());
-			dualListingPanel.getListingPanel(RIGHT).setProgramLocationListener(
-				new DestinationProgramLocationListener());
+			dualListingPanel.getListingPanel(RIGHT)
+					.setProgramLocationListener(
+						new DestinationProgramLocationListener());
 
 			sourceHighlightProvider = new VTDualListingHighlightProvider(controller, true);
 			destinationHighlightProvider = new VTDualListingHighlightProvider(controller, false);
@@ -466,7 +467,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (context.getComponentProvider() == this && dualListingPanel != null) {
 			ListingPanel sourcePanel = dualListingPanel.getListingPanel(LEFT);
-			return sourcePanel.getHeaderActions(getName());
+			return sourcePanel.getHeaderActions(getOwner());
 		}
 		return new ArrayList<>();
 	}

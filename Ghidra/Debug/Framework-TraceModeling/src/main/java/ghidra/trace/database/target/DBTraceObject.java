@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,42 +18,26 @@ package ghidra.trace.database.target;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import db.DBRecord;
 import db.StringField;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.*;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointLocation;
-import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointSpec;
-import ghidra.trace.database.memory.DBTraceObjectMemoryRegion;
-import ghidra.trace.database.memory.DBTraceObjectRegister;
-import ghidra.trace.database.module.*;
-import ghidra.trace.database.stack.DBTraceObjectStack;
-import ghidra.trace.database.stack.DBTraceObjectStackFrame;
 import ghidra.trace.database.target.CachePerDBTraceObject.Cached;
 import ghidra.trace.database.target.DBTraceObjectValue.ValueLifespanSetter;
 import ghidra.trace.database.target.ValueSpace.EntryKeyDimension;
 import ghidra.trace.database.target.ValueSpace.SnapDimension;
 import ghidra.trace.database.target.visitors.*;
 import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
-import ghidra.trace.database.thread.DBTraceObjectThread;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.*;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointSpec;
-import ghidra.trace.model.memory.TraceObjectMemoryRegion;
-import ghidra.trace.model.memory.TraceObjectRegister;
-import ghidra.trace.model.modules.TraceObjectModule;
-import ghidra.trace.model.stack.TraceObjectStack;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.*;
-import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInterfaceFactory.Constructor;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
@@ -65,43 +49,24 @@ import ghidra.util.database.annot.*;
 public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	protected static final String TABLE_NAME = "Objects";
 
-	protected static <T extends TraceObjectInterface> //
-	Map.Entry<Class<? extends T>, Function<DBTraceObject, ? extends T>> safeEntry(
-			Class<T> cls, Function<DBTraceObject, ? extends T> ctor) {
-		return Map.entry(cls, ctor);
-	}
-
-	protected static final Map<Class<? extends TraceObjectInterface>, //
-			Function<DBTraceObject, ? extends TraceObjectInterface>> CTORS = Map.ofEntries(
-				safeEntry(TraceObjectThread.class, DBTraceObjectThread::new),
-				safeEntry(TraceObjectMemoryRegion.class, DBTraceObjectMemoryRegion::new),
-				safeEntry(TraceObjectModule.class, DBTraceObjectModule::new),
-				safeEntry(TraceObjectSection.class, DBTraceObjectSection::new),
-				safeEntry(TraceObjectBreakpointSpec.class, DBTraceObjectBreakpointSpec::new),
-				safeEntry(TraceObjectBreakpointLocation.class,
-					DBTraceObjectBreakpointLocation::new),
-				safeEntry(TraceObjectStack.class, DBTraceObjectStack::new),
-				safeEntry(TraceObjectStackFrame.class, DBTraceObjectStackFrame::new),
-				safeEntry(TraceObjectRegister.class, DBTraceObjectRegister::new));
-
 	protected static final class ObjectPathDBFieldCodec
-			extends AbstractDBFieldCodec<TraceObjectKeyPath, DBAnnotatedObject, StringField> {
+			extends AbstractDBFieldCodec<KeyPath, DBAnnotatedObject, StringField> {
 
 		public ObjectPathDBFieldCodec(Class<DBAnnotatedObject> objectType, Field field,
 				int column) {
-			super(TraceObjectKeyPath.class, objectType, StringField.class, field, column);
+			super(KeyPath.class, objectType, StringField.class, field, column);
 		}
 
-		protected String encode(TraceObjectKeyPath value) {
+		protected String encode(KeyPath value) {
 			return value == null ? null : value.toString();
 		}
 
-		protected TraceObjectKeyPath decode(String path) {
-			return TraceObjectKeyPath.parse(path);
+		protected KeyPath decode(String path) {
+			return KeyPath.parse(path);
 		}
 
 		@Override
-		public void store(TraceObjectKeyPath value, StringField f) {
+		public void store(KeyPath value, StringField f) {
 			f.setString(encode(value));
 		}
 
@@ -128,11 +93,11 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		column = PATH_COLUMN_NAME,
 		codec = ObjectPathDBFieldCodec.class,
 		indexed = true)
-	private TraceObjectKeyPath path;
+	private KeyPath path;
 
 	protected final DBTraceObjectManager manager;
 
-	private TargetObjectSchema targetSchema;
+	private TraceObjectSchema schema;
 	private Map<Class<? extends TraceObjectInterface>, TraceObjectInterface> ifaces;
 
 	private final CachePerDBTraceObject cache = new CachePerDBTraceObject();
@@ -163,16 +128,13 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		if (ifaces != null) {
 			return;
 		}
-		Set<Class<? extends TargetObject>> targetIfaces = getTargetSchema().getInterfaces();
-		ifaces = CTORS.entrySet()
-				.stream()
-				.filter(
-					e -> targetIfaces.contains(TraceObjectInterfaceUtils.toTargetIf(e.getKey())))
-				.collect(
-					Collectors.toUnmodifiableMap(e -> e.getKey(), e -> e.getValue().apply(this)));
+		ifaces = TraceObjectInterfaceUtils.streamConstructors(getSchema())
+				.collect(Collectors.toUnmodifiableMap(
+					Constructor::iface,
+					c -> c.ctor().apply(this)));
 	}
 
-	protected void set(TraceObjectKeyPath path) {
+	protected void set(KeyPath path) {
 		this.path = path;
 		update(PATH_COLUMN);
 
@@ -194,7 +156,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public TraceObjectKeyPath getCanonicalPath() {
+	public KeyPath getCanonicalPath() {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return path;
 		}
@@ -334,11 +296,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Collection<Class<? extends TraceObjectInterface>> getInterfaces() {
-		Set<Class<? extends TargetObject>> targetIfs = getTargetSchema().getInterfaces();
-		return CTORS.keySet()
-				.stream()
-				.filter(iface -> targetIfs.contains(TraceObjectInterfaceUtils.toTargetIf(iface)))
-				.collect(Collectors.toSet());
+		return getSchema().getInterfaces();
 	}
 
 	@Override
@@ -420,7 +378,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Collection<DBTraceObjectValue> getElements(Lifespan lifespan) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return streamValuesR(lifespan)
-					.filter(v -> PathUtils.isIndex(v.getEntryKey()))
+					.filter(v -> KeyPath.isIndex(v.getEntryKey()))
 					.toList();
 		}
 	}
@@ -429,7 +387,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Collection<DBTraceObjectValue> getAttributes(Lifespan lifespan) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return streamValuesR(lifespan)
-					.filter(v -> PathUtils.isName(v.getEntryKey()))
+					.filter(v -> KeyPath.isName(v.getEntryKey()))
 					.toList();
 		}
 	}
@@ -492,7 +450,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	@Override
 	public Collection<? extends DBTraceObjectValue> getValues(Lifespan span, String key) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			String k = getTargetSchema().checkAliasedAttribute(key);
+			String k = getSchema().checkAliasedAttribute(key);
 			return streamValuesR(span, k, true).toList();
 		}
 	}
@@ -524,7 +482,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	@Override
 	public DBTraceObjectValue getValue(long snap, String key) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			String k = getTargetSchema().checkAliasedAttribute(key);
+			String k = getSchema().checkAliasedAttribute(key);
 			return getValueR(snap, k);
 		}
 	}
@@ -533,7 +491,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Stream<DBTraceObjectValue> getOrderedValues(Lifespan span, String key,
 			boolean forward) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			String k = getTargetSchema().checkAliasedAttribute(key);
+			String k = getSchema().checkAliasedAttribute(key);
 			// Locking issue if we stream lazily. Capture to list with lock
 			return streamValuesR(span, k, forward).toList().stream();
 		}
@@ -541,17 +499,17 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public DBTraceObjectValue getElement(long snap, String index) {
-		return getValue(snap, PathUtils.makeKey(index));
+		return getValue(snap, KeyPath.makeKey(index));
 	}
 
 	@Override
 	public DBTraceObjectValue getElement(long snap, long index) {
-		return getElement(snap, PathUtils.makeIndex(index));
+		return getElement(snap, KeyPath.makeIndex(index));
 	}
 
 	@Override
 	public TraceObjectValue getAttribute(long snap, String name) {
-		if (!PathUtils.isName(name)) {
+		if (!KeyPath.isName(name)) {
 			throw new IllegalArgumentException("name cannot be an index");
 		}
 		return getValue(snap, name);
@@ -566,11 +524,11 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getAncestors(Lifespan span,
-			PathPredicates relativePredicates) {
+			PathFilter relativeFilter) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			Stream<? extends TraceObjectValPath> ancestors =
-				doStreamVisitor(span, new AncestorsRelativeVisitor(relativePredicates));
-			if (relativePredicates.matches(List.of())) {
+				doStreamVisitor(span, new AncestorsRelativeVisitor(relativeFilter));
+			if (relativeFilter.matches(KeyPath.ROOT)) {
 				return Stream.concat(Stream.of(DBTraceObjectValPath.of()), ancestors);
 			}
 			return ancestors;
@@ -579,19 +537,19 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getAncestorsRoot(
-			Lifespan span, PathPredicates rootPredicates) {
+			Lifespan span, PathFilter rootFilter) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			return doStreamVisitor(span, new AncestorsRootVisitor(rootPredicates));
+			return doStreamVisitor(span, new AncestorsRootVisitor(rootFilter));
 		}
 	}
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getSuccessors(
-			Lifespan span, PathPredicates relativePredicates) {
+			Lifespan span, PathFilter relativeFilter) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			Stream<? extends TraceObjectValPath> succcessors =
-				doStreamVisitor(span, new SuccessorsRelativeVisitor(relativePredicates));
-			if (relativePredicates.matches(List.of())) {
+				doStreamVisitor(span, new SuccessorsRelativeVisitor(relativeFilter));
+			if (relativeFilter.matches(KeyPath.ROOT)) {
 				// Pre-cat the empty path (not the empty stream)
 				return Stream.concat(Stream.of(DBTraceObjectValPath.of()), succcessors);
 			}
@@ -601,7 +559,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getOrderedSuccessors(Lifespan span,
-			TraceObjectKeyPath relativePath, boolean forward) {
+			KeyPath relativePath, boolean forward) {
 		DBTraceObjectValPath empty = DBTraceObjectValPath.of();
 		try (LockHold hold = manager.trace.lockRead()) {
 			if (relativePath.isRoot()) {
@@ -615,11 +573,11 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getCanonicalSuccessors(
-			PathPredicates relativePredicates) {
+			PathFilter relativeFilter) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			Stream<? extends TraceObjectValPath> successors = doStreamVisitor(Lifespan.ALL,
-				new CanonicalSuccessorsRelativeVisitor(relativePredicates));
-			if (relativePredicates.matches(List.of())) {
+				new CanonicalSuccessorsRelativeVisitor(relativeFilter));
+			if (relativeFilter.matches(KeyPath.ROOT)) {
 				// Pre-cat the empty path (not the empty stream)
 				return Stream.concat(Stream.of(DBTraceObjectValPath.of()), successors);
 			}
@@ -638,7 +596,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			if (isDeleted()) {
 				throw new IllegalStateException("Cannot set value on deleted object.");
 			}
-			String k = getTargetSchema().checkAliasedAttribute(key);
+			String k = getSchema().checkAliasedAttribute(key);
 			if (resolution == ConflictResolution.DENY) {
 				doCheckConflicts(lifespan, k, value);
 			}
@@ -694,7 +652,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public TraceObjectValue setAttribute(Lifespan lifespan, String name, Object value) {
-		if (!PathUtils.isName(name)) {
+		if (!KeyPath.isName(name)) {
 			throw new IllegalArgumentException("Attribute name must not be an index");
 		}
 		return setValue(lifespan, name, value);
@@ -702,41 +660,41 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public TraceObjectValue setElement(Lifespan lifespan, String index, Object value) {
-		return setValue(lifespan, PathUtils.makeKey(index), value);
+		return setValue(lifespan, KeyPath.makeKey(index), value);
 	}
 
 	@Override
 	public TraceObjectValue setElement(Lifespan lifespan, long index, Object value) {
-		return setElement(lifespan, PathUtils.makeIndex(index), value);
+		return setElement(lifespan, KeyPath.makeIndex(index), value);
 	}
 
 	@Override
-	public TargetObjectSchema getTargetSchema() {
+	public TraceObjectSchema getSchema() {
 		// NOTE: No need to synchronize. Schema is immutable.
-		if (targetSchema == null) {
-			targetSchema = manager.rootSchema.getSuccessorSchema(path.getKeyList());
+		if (schema == null) {
+			schema = manager.rootSchema.getSuccessorSchema(path);
 		}
-		return targetSchema;
+		return schema;
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Lifespan span,
-			Class<? extends TargetObject> targetIf) {
+	public Stream<? extends TraceObjectValPath> findAncestorsInterface(Lifespan span,
+			Class<? extends TraceObjectInterface> iface) {
 		// This is a sort of meet-in-the-middle. The type search must originate from the root
-		PathMatcher matcher = getManager().getRootSchema().searchFor(targetIf, false);
+		PathMatcher matcher = getManager().getRootSchema().searchFor(iface, false);
 		return getAncestorsRoot(span, matcher);
 	}
 
 	@Override
 	public <I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Lifespan span,
-			Class<I> ifClass) {
-		return queryAncestorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass))
-				.map(p -> p.getSource(this).queryInterface(ifClass));
+			Class<I> iface) {
+		return findAncestorsInterface(span, iface)
+				.map(p -> p.getSource(this).queryInterface(iface));
 	}
 
-	public TraceObject queryOrCreateCanonicalAncestorTargetInterface(
-			Class<? extends TargetObject> targetIf) {
-		PathMatcher matcher = getManager().getRootSchema().searchFor(targetIf, false);
+	public TraceObject findOrCreateCanonicalAncestorInterface(
+			Class<? extends TraceObjectInterface> iface) {
+		PathMatcher matcher = getManager().getRootSchema().searchFor(iface, false);
 		return path.streamMatchingAncestry(matcher)
 				.limit(1)
 				.map(kp -> manager.createObject(kp))
@@ -745,16 +703,15 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	public <I extends TraceObjectInterface> I queryOrCreateCanonicalAncestorInterface(
-			Class<I> ifClass) {
-		return queryOrCreateCanonicalAncestorTargetInterface(
-			TraceObjectInterfaceUtils.toTargetIf(ifClass)).queryInterface(ifClass);
+			Class<I> iface) {
+		return findOrCreateCanonicalAncestorInterface(iface).queryInterface(iface);
 	}
 
 	@Override
-	public Stream<? extends TraceObject> queryCanonicalAncestorsTargetInterface(
-			Class<? extends TargetObject> targetIf) {
+	public Stream<? extends TraceObject> findCanonicalAncestorsInterface(
+			Class<? extends TraceObjectInterface> iface) {
 		// This is a sort of meet-in-the-middle. The type search must originate from the root
-		PathMatcher matcher = getManager().getRootSchema().searchFor(targetIf, false);
+		PathMatcher matcher = getManager().getRootSchema().searchFor(iface, false);
 		try (LockHold hold = manager.trace.lockRead()) {
 			return path.streamMatchingAncestry(matcher)
 					.map(kp -> manager.getObjectByCanonicalPath(kp));
@@ -763,37 +720,36 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public <I extends TraceObjectInterface> Stream<I> queryCanonicalAncestorsInterface(
-			Class<I> ifClass) {
-		return queryCanonicalAncestorsTargetInterface(TraceObjectInterfaceUtils.toTargetIf(ifClass))
-				.map(o -> o.queryInterface(ifClass));
+			Class<I> iface) {
+		return findCanonicalAncestorsInterface(iface).map(o -> o.queryInterface(iface));
 	}
 
 	// TODO: Post filter until GP-1301
 	private boolean isActuallyInterface(TraceObjectValPath path,
-			Class<? extends TargetObject> targetIf) {
+			Class<? extends TraceObjectInterface> iface) {
 		TraceObjectValue lastEntry = path.getLastEntry();
 		if (lastEntry == null) {
 			// TODO: This assumes the client will call getDestination(this)
-			return this.getTargetSchema().getInterfaces().contains(targetIf);
+			return this.getSchema().getInterfaces().contains(iface);
 		}
 		if (!lastEntry.isObject()) {
 			return false;
 		}
-		return lastEntry.getChild().getTargetSchema().getInterfaces().contains(targetIf);
+		return lastEntry.getChild().getSchema().getInterfaces().contains(iface);
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Lifespan span,
-			Class<? extends TargetObject> targetIf, boolean requireCanonical) {
-		PathMatcher matcher = getTargetSchema().searchFor(targetIf, requireCanonical);
-		return getSuccessors(span, matcher).filter(p -> isActuallyInterface(p, targetIf));
+	public Stream<? extends TraceObjectValPath> findSuccessorsInterface(Lifespan span,
+			Class<? extends TraceObjectInterface> iface, boolean requireCanonical) {
+		PathMatcher matcher = getSchema().searchFor(iface, requireCanonical);
+		return getSuccessors(span, matcher).filter(p -> isActuallyInterface(p, iface));
 	}
 
 	@Override
 	public <I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Lifespan span,
-			Class<I> ifClass, boolean requireCanonical) {
-		return querySuccessorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass),
-			requireCanonical).map(p -> p.getDestination(this).queryInterface(ifClass));
+			Class<I> iface, boolean requireCanonical) {
+		return findSuccessorsInterface(span, iface, requireCanonical)
+				.map(p -> p.getDestination(this).queryInterface(iface));
 	}
 
 	protected void doDelete() {

@@ -116,10 +116,11 @@ public class ImporterDialog extends DialogComponentProvider {
 		this.suggestedDestinationPath = suggestedDestinationPath;
 
 		if (FileSystemService.getInstance().isLocal(fsrl)) {
-			// only save the imported file's path if its a local filesystem path that
-			// will be valid when used later.  FSRL paths that drill into container files
-			// aren't widely supported yet.
 			Preferences.setProperty(Preferences.LAST_IMPORT_FILE, fsrl.getPath());
+		}
+		else if (fsrl.getFS().getContainer() != null) {
+			Preferences.setProperty(Preferences.LAST_IMPORT_FILE,
+				fsrl.getFS().getContainer().getPath());
 		}
 
 		addWorkPanel(buildWorkPanel());

@@ -22,7 +22,7 @@ import com.sun.jdi.connect.AttachingConnector;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.Connector.Argument;
 
-import ghidra.dbg.util.ShellUtils;
+import ghidra.pty.ShellUtils;
 
 public class JdiArguments {
 	enum Mode {

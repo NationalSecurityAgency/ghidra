@@ -167,7 +167,9 @@
         <setEntry value="com.google.guava.failureaccess@default:default"/>
         <setEntry value="com.google.guava@default:default"/>
         <setEntry value="com.ibm.icu@default:default"/>
-        <setEntry value="com.python.pydev.analysis*6.3.1.201802272029@default:default"/>
+        <setEntry value="com.python.pydev.analysis*9.3.0.202203051235@default:default"/>
+        <setEntry value="com.python.pydev.debug*9.3.0.202203051235@default:default"/>
+        <setEntry value="com.python.pydev.refactoring*9.3.0.202203051235@default:default"/>
         <setEntry value="com.sun.el.javax.el@default:default"/>
         <setEntry value="com.sun.jna.platform@default:default"/>
         <setEntry value="com.sun.jna@default:default"/>
@@ -176,7 +178,6 @@
         <setEntry value="jakarta.inject.jakarta.inject-api*1.0.5@default:default"/>
         <setEntry value="jakarta.inject.jakarta.inject-api*2.0.1@default:default"/>
         <setEntry value="jakarta.servlet-api@default:default"/>
-        <setEntry value="javax.xml@default:default"/>
         <setEntry value="jaxen@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@default:default"/>
         <setEntry value="org.apache.batik.constants@default:default"/>
@@ -202,6 +203,8 @@
         <setEntry value="org.apache.xml.resolver@default:default"/>
         <setEntry value="org.apache.xml.serializer@default:default"/>
         <setEntry value="org.apache.xmlgraphics@default:default"/>
+        <setEntry value="org.commonmark-gfm-tables@default:default"/>
+        <setEntry value="org.commonmark@default:default"/>
         <setEntry value="org.eclipse.ant.core@default:default"/>
         <setEntry value="org.eclipse.buildship.compat@default:default"/>
         <setEntry value="org.eclipse.buildship.core@default:default"/>
@@ -296,7 +299,7 @@
         <setEntry value="org.eclipse.help.base@default:default"/>
         <setEntry value="org.eclipse.help.ui@default:default"/>
         <setEntry value="org.eclipse.help@default:default"/>
-        <setEntry value="org.eclipse.jdt.annotation*2.3.0.v20240111-2306@default:default"/>
+        <setEntry value="org.eclipse.jdt.annotation@default:default"/>
         <setEntry value="org.eclipse.jdt.core.compiler.batch@default:default"/>
         <setEntry value="org.eclipse.jdt.core.manipulation@default:default"/>
         <setEntry value="org.eclipse.jdt.core@default:default"/>
@@ -308,10 +311,11 @@
         <setEntry value="org.eclipse.jdt.launching@default:default"/>
         <setEntry value="org.eclipse.jdt.ui@default:default"/>
         <setEntry value="org.eclipse.jem.util@default:default"/>
+        <setEntry value="org.eclipse.jetty.ee10.servlet@default:default"/>
+        <setEntry value="org.eclipse.jetty.ee10.webapp@default:default"/>
         <setEntry value="org.eclipse.jetty.ee8.security@default:default"/>
         <setEntry value="org.eclipse.jetty.ee8.server@default:default"/>
         <setEntry value="org.eclipse.jetty.ee8.servlet@default:default"/>
-        <setEntry value="org.eclipse.jetty.ee8.webapp@default:default"/>
         <setEntry value="org.eclipse.jetty.ee@default:default"/>
         <setEntry value="org.eclipse.jetty.http@default:default"/>
         <setEntry value="org.eclipse.jetty.io@default:default"/>
@@ -414,14 +418,19 @@
         <setEntry value="org.osgi.util.position@default:default"/>
         <setEntry value="org.osgi.util.promise@default:default"/>
         <setEntry value="org.osgi.util.xml@default:default"/>
-        <setEntry value="org.python.pydev*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.ast*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.core*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.jython*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.parser*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.shared_core*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.shared_interactive_console*6.3.1.201802272029@default:default"/>
-        <setEntry value="org.python.pydev.shared_ui*6.3.1.201802272029@default:default"/>
+        <setEntry value="org.python.pydev*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.ast*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.core*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.customizations*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.debug*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.django*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.help*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.jython*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.parser*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.refactoring*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.shared_core*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.shared_interactive_console*9.3.0.202203051235@default:default"/>
+        <setEntry value="org.python.pydev.shared_ui*9.3.0.202203051235@default:default"/>
         <setEntry value="org.sat4j.core@default:default"/>
         <setEntry value="org.sat4j.pb@default:default"/>
         <setEntry value="org.tukaani.xz@default:default"/>
@@ -430,7 +439,7 @@
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="ghidra.ghidradev@default:default"/>
     </setAttribute>
-    <booleanAttribute key="show_selected_only" value="true"/>
+    <booleanAttribute key="show_selected_only" value="false"/>
     <booleanAttribute key="tracing" value="false"/>
     <booleanAttribute key="useCustomFeatures" value="false"/>
     <booleanAttribute key="useDefaultConfig" value="true"/>

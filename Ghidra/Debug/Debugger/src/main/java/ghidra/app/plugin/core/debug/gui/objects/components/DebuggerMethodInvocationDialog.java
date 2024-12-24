@@ -21,12 +21,12 @@ import java.util.Set;
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerParameterDialog;
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.debug.api.ValStr;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.trace.model.target.iface.TraceObjectMethod;
+import ghidra.trace.model.target.iface.TraceObjectMethod.ParameterDescription;
 
 @Deprecated(forRemoval = true, since = "11.3")
 public class DebuggerMethodInvocationDialog
@@ -71,7 +71,7 @@ public class DebuggerMethodInvocationDialog
 	protected Map<String, ValStr<?>> validateArguments(
 			Map<String, ParameterDescription<?>> parameters, Map<String, ValStr<?>> arguments) {
 		Map<String, ?> args = ValStr.toPlainMap(arguments);
-		return ValStr.fromPlainMap(TargetMethod.validateArguments(parameters, args, false));
+		return ValStr.fromPlainMap(TraceObjectMethod.validateArguments(parameters, args, false));
 	}
 
 	@Override

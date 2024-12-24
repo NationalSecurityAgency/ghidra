@@ -25,6 +25,7 @@ import docking.widgets.table.ObjectSelectedListener;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -33,9 +34,9 @@ import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
-import resources.ResourceManager;
 import sarif.handlers.SarifResultHandler;
 import sarif.handlers.SarifRunHandler;
+import sarif.handlers.run.SarifGraphRunHandler;
 import sarif.managers.ProgramSarifMgr;
 import sarif.model.SarifDataFrame;
 import sarif.view.ImageArtifactDisplay;
@@ -56,6 +57,9 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 	private Set<SarifResultsTableProvider> providers = new HashSet<>();
 	public Set<ImageArtifactDisplay> artifacts = new HashSet<>();
 	public Set<GraphDisplay> graphs = new HashSet<>();
+
+	private Class<? extends SarifGraphRunHandler> defaultGraphHandler = SarifGraphRunHandler.class;
+	private boolean useOverlays;
 
 	public Set<SarifResultHandler> getSarifResultHandlers() {
 		Set<SarifResultHandler> set = new HashSet<>();
@@ -107,7 +111,8 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 
 	public void showTable(String logName, SarifSchema210 sarif) {
 		SarifDataFrame df = new SarifDataFrame(sarif, this, false);
-		SarifResultsTableProvider provider = new SarifResultsTableProvider(logName, this.plugin, this, df);
+		SarifResultsTableProvider provider =
+			new SarifResultsTableProvider(logName, getPlugin(), this, df);
 		provider.filterTable.addSelectionListener(this);
 		provider.addToTool();
 		provider.setVisible(true);
@@ -118,8 +123,9 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 	}
 
 	public void showImage(String key, BufferedImage img) {
-		if (plugin.displayArtifacts()) {
-			ImageArtifactDisplay display = new ImageArtifactDisplay(plugin.getTool(), key, "Sarif Parse", img);
+		if (getPlugin().displayArtifacts()) {
+			ImageArtifactDisplay display =
+				new ImageArtifactDisplay(getPlugin().getTool(), key, "Sarif Parse", img);
 			display.setVisible(true);
 			artifacts.add(display);
 		}
@@ -127,17 +133,22 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 
 	public void showGraph(AttributedGraph graph) {
 		try {
-			GraphDisplayBroker service = this.plugin.getTool().getService(GraphDisplayBroker.class);
-			boolean append = plugin.appendToGraph();
+			PluginTool tool = this.getPlugin().getTool();
+			GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
+			boolean append = getPlugin().appendToGraph();
 			GraphDisplay display = service.getDefaultGraphDisplay(append, null);
 			GraphDisplayOptions graphOptions = new GraphDisplayOptions(new EmptyGraphType());
-			graphOptions.setMaxNodeCount(plugin.getGraphSize());
+			graphOptions.setMaxNodeCount(getPlugin().getGraphSize());
 
-			if (plugin.displayGraphs()) {
+			if (getPlugin().displayGraphs()) {
 				display.setGraph(graph, graphOptions, graph.getDescription(), append, null);
+				SarifGraphDisplayListener listener =
+					new SarifGraphDisplayListener(this, display, graph);
+				display.setGraphDisplayListener(listener);
 				graphs.add(display);
 			}
-		} catch (GraphException | CancelledException e) {
+		}
+		catch (GraphException | CancelledException e) {
 			Msg.error(this, "showGraph failed " + e.getMessage());
 		}
 	}
@@ -145,37 +156,27 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 	/**
 	 * If a results has "listing/<something>" in a SARIF result, this handles
 	 * defining our custom API for those
-	 *
-	 * @param log
-	 * @param result
-	 * @param key
-	 * @param value
 	 */
-	public void handleListingAction(Result result, String key, Object value) {
-		List<Address> addrs = getListingAddresses(result);
+	public void handleListingAction(Run run, Result result, String key, Object value) {
+		List<Address> addrs = getListingAddresses(run, result);
 		for (Address addr : addrs) {
 			switch (key) {
-			case "comment":
-				/* @formatter:off
-				 *  docs/GhidraAPI_javadoc/api/constant-values.html#ghidra.program.model.listing.CodeUnit
-				 *  EOL_COMMENT 0
-				 *  PRE_COMMENT 1
-				 *  POST_COMMENT 2
-				 *  PLATE_COMMENT 3
-				 *  REPEATABLE_COMMENT 4
-				 * @formatter:on
-				 */
-				String comment = (String) value;
-				getProgram().getListing().setComment(addr, CodeUnit.PLATE_COMMENT, comment);
-				break;
-			case "highlight":
-				Color color = Color.decode((String) value);
-				coloringService.setBackgroundColor(addr, addr, color);
-				break;
-			case "bookmark":
-				String bookmark = (String) value;
-				getProgram().getBookmarkManager().setBookmark(addr, "Sarif", result.getRuleId(), bookmark);
-				break;
+				case "comment":
+					/*
+					 * {@link program.model.listing.CodeUnit}
+					 */
+					String comment = (String) value;
+					getProgram().getListing().setComment(addr, CodeUnit.PLATE_COMMENT, comment);
+					break;
+				case "highlight":
+					Color color = Color.decode((String) value);
+					coloringService.setBackgroundColor(addr, addr, color);
+					break;
+				case "bookmark":
+					String bookmark = (String) value;
+					getProgram().getBookmarkManager()
+							.setBookmark(addr, "Sarif", result.getRuleId(), bookmark);
+					break;
 			}
 		}
 	}
@@ -190,16 +191,13 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 
 	/**
 	 * Get listing addresses associated with a result
-	 *
-	 * @param result
-	 * @return
 	 */
-	public List<Address> getListingAddresses(Result result) {
+	public List<Address> getListingAddresses(Run run, Result result) {
 		List<Address> addrs = new ArrayList<>();
 		if (result.getLocations() != null && result.getLocations().size() > 0) {
 			List<Location> locations = result.getLocations();
 			for (Location loc : locations) {
-				Address addr = locationToAddress(loc);
+				Address addr = locationToAddress(run, loc);
 				if (addr != null) {
 					addrs.add(addr);
 				}
@@ -208,8 +206,27 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 		return addrs;
 	}
 
-	public Address locationToAddress(Location location) {
-		return SarifUtils.locationToAddress(location, program);
+	public Address locationToAddress(Run run, Location loc) {
+		return SarifUtils.locationToAddress(loc, program, useOverlays);
+	}
+
+	/**
+	 * Pull the text information from a State object
+	 * @param stateKey
+	 * @return The text value or empty string if key not found.
+	 */
+	public String getStateText(State state, String stateKey) {
+		String result = "";
+
+		Map<String, MultiformatMessageString> state_mappings = state.getAdditionalProperties();
+
+		for (Map.Entry<String, MultiformatMessageString> pair : state_mappings.entrySet()) {
+			if (pair.getKey().equalsIgnoreCase(stateKey)) {
+				result = pair.getValue().getText();
+				break;
+			}
+		}
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -218,7 +235,7 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 		if (row != null) {
 			if (row.containsKey("CodeFlows")) {
 				for (List<Address> flow : (List<List<Address>>) row.get("CodeFlows")) {
-					this.plugin.makeSelection(flow);
+					this.getPlugin().makeSelection(flow);
 				}
 			}
 			if (row.containsKey("Graphs")) {
@@ -244,7 +261,30 @@ public class SarifController implements ObjectSelectedListener<Map<String, Objec
 	public void setProgram(Program program) {
 		this.program = program;
 		this.bookmarkManager = program.getBookmarkManager();
-		bookmarkManager.defineType("Sarif", ResourceManager.loadImage("images/peach_16.png"), Color.pink, 0);
+		bookmarkManager.defineType("Sarif", SarifPlugin.SARIF_ICON, Color.pink, 0);
+	}
+
+	public SarifPlugin getPlugin() {
+		return plugin;
+	}
+
+	public void setSelection(Set<AttributedVertex> vertices) {
+		for (SarifResultsTableProvider provider : providers) {
+			provider.setSelection(vertices);
+		}
+	}
+
+	public Class<? extends SarifGraphRunHandler> getDefaultGraphHander() {
+		return defaultGraphHandler;
+	}
+
+	@SuppressWarnings("unchecked")
+	public void setDefaultGraphHander(Class<? extends SarifGraphRunHandler> clazz) {
+		defaultGraphHandler = clazz;
+	}
+
+	public void setUseOverlays(boolean useOverlays) {
+		this.useOverlays = useOverlays;
 	}
 
 }

@@ -167,6 +167,15 @@
         <LI><B>Byte String (No Spaces)</B> <A name="ByteString_NoSpaces"></A> - This is the same as
         the Byte String format, except there are no delimiting spaces between bytes.</LI>
 
+		<LI><B>Data</B> - Copies a the values of all the selected data objects to the clipboard as
+		text. This option ignores any compound data objects such as structures, unions, or arrays.
+		You can copy data from structures, but you must first open them and select the elements you
+		want to copy as a string.</LI>
+
+		<LI><B>Dereferenced Data</B> - Copies the values of all data pointed to by the selected  
+		pointers. The contents will be copied to the clipboard as text. If the pointed to data is a
+		compound data object such as a structure or array, it is ignored.</LI>
+
 		<LI><B>Python Byte String</B> - Copies the bytes into the Python byte string format, for
 		example: <CODE>b'\x41\xec\x49\x89'</CODE>.</LI>
 		

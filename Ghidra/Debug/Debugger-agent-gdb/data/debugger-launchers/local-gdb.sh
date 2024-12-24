@@ -27,11 +27,13 @@
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb
 #@enum StartCmd:str run start starti
+#@enum Endian:str auto big little
 #@arg :file "Image" "The target binary executable image, empty for no target"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
 #@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
+#@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 #@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 
@@ -63,6 +65,7 @@ then
     -ex "show version" \
     -ex "python import ghidragdb" \
     -ex "set architecture $OPT_ARCH" \
+    -ex "set endian $OPT_ENDIAN" \
     -ex "set inferior-tty $TTY_TARGET" \
     -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
     -ex "ghidra trace start" \
@@ -77,6 +80,7 @@ else
     -ex "show version" \
     -ex "python import ghidragdb" \
     -ex "set architecture $OPT_ARCH" \
+    -ex "set endian $OPT_ENDIAN" \
     -ex "file \"$target_image\"" \
     -ex "set args $target_args" \
     -ex "set inferior-tty $TTY_TARGET" \

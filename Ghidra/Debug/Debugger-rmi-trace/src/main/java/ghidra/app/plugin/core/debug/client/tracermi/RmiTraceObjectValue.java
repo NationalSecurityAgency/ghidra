@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.client.tracermi;
 
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 public record RmiTraceObjectValue(RmiTraceObject parent, Lifespan span, String key, Object value,
-		TargetObjectSchema schema) {}
+		TraceObjectSchema schema) {}

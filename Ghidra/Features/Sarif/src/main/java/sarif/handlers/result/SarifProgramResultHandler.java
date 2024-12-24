@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,16 +16,10 @@
 package sarif.handlers.result;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
-import com.contrastsecurity.sarif.Location;
-import com.contrastsecurity.sarif.PropertyBag;
-import com.contrastsecurity.sarif.Result;
-import com.contrastsecurity.sarif.Run;
+import com.contrastsecurity.sarif.*;
 
 import ghidra.program.util.ProgramTask;
 import ghidra.util.task.TaskMonitor;
@@ -35,16 +29,18 @@ import sarif.managers.ProgramSarifMgr;
 import sarif.model.SarifDataFrame;
 import sarif.view.SarifResultsTableProvider;
 
-public class SarifProgramResultHandler extends SarifResultHandler  {
-	
+public class SarifProgramResultHandler extends SarifResultHandler {
+
+	@Override
 	public String getKey() {
 		return "Message";
 	}
 
+	@Override
 	public void handle(SarifDataFrame df, Run run, Result result, Map<String, Object> map) {
 		this.df = df;
 		this.controller = df.getController();
-		
+
 		this.run = run;
 		this.result = result;
 		map.put(getKey(), result.getMessage().getText());
@@ -62,13 +58,13 @@ public class SarifProgramResultHandler extends SarifResultHandler  {
 			}
 		}
 	}
-	
+
 	@Override
 	protected Object parse() {
 		// UNUSED
 		return null;
 	}
-		
+
 	@Override
 	public String getActionName() {
 		return "Add To Program";
@@ -78,7 +74,7 @@ public class SarifProgramResultHandler extends SarifResultHandler  {
 	public ProgramTask getTask(SarifResultsTableProvider provider) {
 		return new CommitToProgramTask(provider);
 	}
-	
+
 	private class CommitToProgramTask extends ProgramTask {
 
 		private SarifResultsTableProvider provider;
@@ -90,7 +86,7 @@ public class SarifProgramResultHandler extends SarifResultHandler  {
 			this.programMgr = provider.getController().getProgramSarifMgr();
 			programMgr.addManagers();
 		}
-		
+
 		protected void doRun(TaskMonitor monitor) {
 			int[] selected = provider.filterTable.getTable().getSelectedRows();
 			Map<String, List<Map<String, Object>>> results = new HashMap<>();
@@ -106,7 +102,8 @@ public class SarifProgramResultHandler extends SarifResultHandler  {
 			}
 			try {
 				programMgr.readResults(monitor, (SarifProgramOptions) null, results);
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				throw new RuntimeException("Read failed");
 			}
 		}

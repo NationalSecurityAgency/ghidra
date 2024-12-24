@@ -54,7 +54,7 @@ public class DWARFProgram implements Closeable {
 	public static final CategoryPath DWARF_ROOT_CATPATH = CategoryPath.ROOT.extend(DWARF_ROOT_NAME);
 	public static final CategoryPath UNCAT_CATPATH = DWARF_ROOT_CATPATH.extend("_UNCATEGORIZED_");
 
-	private static final String DWARF_BOOKMARK_CAT = "DWARF";
+	public static final String DWARF_BOOKMARK_CAT = "DWARF";
 	private static final int NAME_HASH_REPLACEMENT_SIZE = 8 + 2 + 2;
 	private static final String ELLIPSES_STR = "...";
 	protected static final EnumSet<DWARFAttribute> REF_ATTRS =
