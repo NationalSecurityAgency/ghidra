@@ -451,6 +451,18 @@ void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
   }
 }
 
+/// \param ct is the Datatype to change to
+/// \return \b true if the Datatype changed
+bool Varnode::updateType(Datatype *ct)
+
+{
+  if (type == ct || isTypeLock()) return false;
+  type = ct;
+  if (high != (HighVariable *)0)
+    high->typeDirty();
+  return true;
+}
+
 /// Change the Datatype and lock state associated with this Varnode if various conditions are met
 ///    - Don't change a previously locked Datatype (unless \b override flag is \b true)
 ///    - Don't consider an \b undefined type to be locked

@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.awt.Font;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.*;
@@ -27,15 +26,15 @@ import docking.ReusableDialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
 import docking.widgets.model.GSpanField;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
-import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
@@ -155,17 +154,17 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 	}
 
 	protected String computeDefaultPath(DebuggerCoordinates current) {
-		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return "";
 		}
-		List<String> suitable = rootSchema.searchForSuitableContainer(TargetMemoryRegion.class,
-			current.getPath().getKeyList());
+		KeyPath suitable = rootSchema.searchForSuitableContainer(TraceObjectMemoryRegion.class,
+			current.getPath());
 		if (suitable == null) {
 			return "";
 		}
 
-		return TraceObjectKeyPath.of(suitable).index("New").toString();
+		return suitable.index("New").toString();
 	}
 
 	protected void setValues(DebuggerCoordinates current) {

@@ -32,8 +32,6 @@ import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.Application;
@@ -42,6 +40,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.Float10DataType;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -50,6 +49,8 @@ import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
@@ -546,7 +547,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String created = extractOutSection(out, "---Id---");
 			long id = Long.parseLong(created.split("id=")[1].split(",")[0]);
@@ -571,7 +572,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.nowOn(0), life);
@@ -597,7 +598,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.at(0), life);
@@ -626,7 +627,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/expPrint")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			TraceObjectValue value = object.getValue(0, "test");
 			return value == null ? null : (T) value.getValue();
@@ -786,7 +787,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			assertEquals(Map.ofEntries(
 				Map.entry("[1]", Lifespan.nowOn(0)),
@@ -817,7 +818,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String getObject = extractOutSection(out, "---GetObject---");
 			assertEquals("%d\tTest.Objects[1]".formatted(object.getKey()), getObject);
@@ -982,7 +983,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> inferiors = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(0), PathPredicates.parse("Inferiors[]"))
+					.getValuePaths(Lifespan.at(0), PathFilter.parse("Inferiors[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertEquals(2, inferiors.size());
@@ -1005,7 +1006,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> available = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(0), PathPredicates.parse("Available[]"))
+					.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertThat(available.size(), greaterThan(2));
@@ -1035,7 +1036,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> infBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Inferiors[1].Breakpoints[]"))
+						PathFilter.parse("Inferiors[1].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1177,7 +1178,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Inferiors[1].Threads[1].Stack[]"))
+						PathFilter.parse("Inferiors[1].Threads[1].Stack[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertThat(stack.size(), greaterThan(2));

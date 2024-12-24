@@ -30,6 +30,7 @@ import org.eclipse.ltk.core.refactoring.*;
 
 import ghidra.GhidraApplicationLayout;
 import ghidra.util.exception.CancelledException;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 import utilities.util.FileUtilities;
 
 /**
@@ -89,7 +90,7 @@ public class GhidraModuleUtils {
 	 */
 	public static IJavaProject createGhidraModuleProject(String projectName, File projectDir,
 			boolean createRunConfig, String runConfigMemory, GhidraApplicationLayout ghidraLayout,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			ProjectPythonInterpreter jythonInterpreterName, IProgressMonitor monitor)
 			throws IOException, ParseException, CoreException {
 
 		// Create empty Ghidra project
@@ -227,8 +228,7 @@ public class GhidraModuleUtils {
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
 	 * @param ghidraLayout The Ghidra layout to link the project to.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.
 	 * @param monitor The progress monitor to use during project creation.
 	 * @return The imported project.
 	 * @throws IOException If there was a file-related problem with creating the project.
@@ -237,13 +237,13 @@ public class GhidraModuleUtils {
 	 */
 	public static IJavaProject importGhidraModuleSource(String projectName, File moduleSourceDir,
 			boolean createRunConfig, String runConfigMemory, GhidraApplicationLayout ghidraLayout,
-			String jythonInterpreterName, IProgressMonitor monitor)
+			ProjectPythonInterpreter pythonInterpreter, IProgressMonitor monitor)
 			throws IOException, ParseException, CoreException {
 
 		// Create empty Ghidra project
 		IJavaProject javaProject =
 			GhidraProjectUtils.createEmptyGhidraProject(projectName, moduleSourceDir,
-				createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
+				createRunConfig, runConfigMemory, ghidraLayout, pythonInterpreter, monitor);
 		IProject project = javaProject.getProject();
 
 		// Set default output location

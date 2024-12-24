@@ -28,6 +28,7 @@
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb_ssh
 #@enum StartCmd:str run start starti
+#@enum Endian:str auto big little
 #@arg :str "Image" "The target binary executable image on the remote system"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_SSH_PATH:file!="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
@@ -37,6 +38,7 @@
 #@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb on the remote system. Omit the full path to resolve using the system PATH."
 #@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
+#@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
 target_image="$1"
 shift
@@ -51,6 +53,7 @@ then
     -ex 'show version' \
     -ex 'python import ghidragdb' \
     -ex 'set architecture $OPT_ARCH' \
+    -ex 'set endian $OPT_ENDIAN' \
     -ex 'ghidra trace connect \"localhost:$OPT_REMOTE_PORT\"' \
     -ex 'ghidra trace start' \
     -ex 'ghidra trace sync-enable' \
@@ -64,6 +67,7 @@ else
     -ex 'show version' \
     -ex 'python import ghidragdb' \
     -ex 'set architecture $OPT_ARCH' \
+    -ex 'set endian $OPT_ENDIAN' \
     -ex 'file \"$target_image\"' \
     -ex 'set args $target_args' \
     -ex 'ghidra trace connect \"localhost:$OPT_REMOTE_PORT\"' \

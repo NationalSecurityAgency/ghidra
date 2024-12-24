@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,7 +100,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 
 	void createActions() {
 		HelpLocation helpLocation = new HelpLocation("RegisterPlugin", "tool_buttons");
-		deleteRegisterValuesAction = new DockingAction("Delete Register Value Ranges", getName()) {
+		deleteRegisterValuesAction = new DockingAction("Delete Register Value Ranges", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				values.deleteSelectedRanges();
@@ -114,7 +114,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		deleteRegisterValuesAction.setHelpLocation(helpLocation);
 		tool.addLocalAction(this, deleteRegisterValuesAction);
 
-		selectRegisterValuesAction = new DockingAction("Select Register Value Ranges", getName()) {
+		selectRegisterValuesAction = new DockingAction("Select Register Value Ranges", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				values.selectedRanges();
@@ -129,7 +129,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, selectRegisterValuesAction);
 
 		showDefaultRegisterValuesAction =
-			new ToggleDockingAction("Show default register values", getName()) {
+			new ToggleDockingAction("Show default register values", getOwner()) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					values.setShowDefaultValues(showDefaultRegisterValuesAction.isSelected());
@@ -144,7 +144,7 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 				.setHelpLocation(new HelpLocation("RegisterPlugin", "menu_actions"));
 		tool.addLocalAction(this, showDefaultRegisterValuesAction);
 
-		filterRegistersAction = new ToggleDockingAction("Filter Registers", getName()) {
+		filterRegistersAction = new ToggleDockingAction("Filter Registers", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				tree.setFiltered(filterRegistersAction.isSelected());
@@ -157,12 +157,13 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		filterRegistersAction.setHelpLocation(helpLocation);
 		tool.addLocalAction(this, filterRegistersAction);
 
-		followLocationToggleAction = new ToggleDockingAction("Follow location changes", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				followLocation = followLocationToggleAction.isSelected();
-			}
-		};
+		followLocationToggleAction =
+			new ToggleDockingAction("Follow location changes", getOwner()) {
+				@Override
+				public void actionPerformed(ActionContext context) {
+					followLocation = followLocationToggleAction.isSelected();
+				}
+			};
 		followLocationToggleAction.setEnabled(true);
 		followLocationToggleAction.setHelpLocation(helpLocation);
 		followLocationToggleAction.setToolBarData(new ToolBarData(RECV_LOCATION_ICON, "NavAction"));

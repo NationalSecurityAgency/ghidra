@@ -40,7 +40,7 @@ public class EdgeSegmentTest {
 	private TestVertex v3 = v(3);
 	private TestVertex v4 = v(4);
 	private TestEdge e12 = e(v1, v2);
-	private TestEdge e13 = e(v1, v2);
+	private TestEdge e13 = e(v1, v3);
 	private TestEdge e14 = e(v1, v4);
 	private TestEdge e23 = e(v2, v3);
 	private TestEdge e24 = e(v2, v4);
@@ -342,7 +342,7 @@ public class EdgeSegmentTest {
 		GridPoint p = p(0, 0);
 
 		ColumnSegment<TestEdge> up1_left = endSegment(e13, p, UP, LEFT, UP);
-		ColumnSegment<TestEdge> up2_left = segment(e23, p, UP_2, LEFT, UP);
+		ColumnSegment<TestEdge> up2_left = endSegment(e23, p, UP_2, LEFT, UP);
 
 		assertLessThan(up1_left, up2_left);
 		assertGreaterThan(up2_left, up1_left);
@@ -354,7 +354,7 @@ public class EdgeSegmentTest {
 		GridPoint p = p(0, 0);
 
 		ColumnSegment<TestEdge> up1_right = endSegment(e13, p, UP, RIGHT, UP);
-		ColumnSegment<TestEdge> up2_right = segment(e23, p, UP_2, RIGHT, UP);
+		ColumnSegment<TestEdge> up2_right = endSegment(e23, p, UP_2, RIGHT, UP);
 
 		assertLessThan(up2_right, up1_right);
 		assertGreaterThan(up1_right, up2_right);
@@ -891,36 +891,32 @@ public class EdgeSegmentTest {
 
 	}
 
-	private void assertCompareEquals(ColumnSegment<TestEdge> s1, ColumnSegment<TestEdge> s2) {
-		int result = s1.compareTo(s2);
-		if (result != 0) {
-			fail("Expected comparsion to be equals, but compareTo was " + result);
-		}
-	}
-
 	private void assertLessThan(ColumnSegment<TestEdge> s1, ColumnSegment<TestEdge> s2) {
-		int result = s1.compareTo(s2);
+		boolean sameFlow = s1.isFlowingUpwards() == s1.isFlowingUpwards();
+		int result = sameFlow ? s1.compareToUsingFlows(s2) : s1.compareToIgnoreFlows(s2);
 		if (result >= 0) {
 			fail("Expected comparsion to be less than, but compareTo was " + result);
 		}
 	}
 
 	private void assertGreaterThan(RowSegment<TestEdge> s1, RowSegment<TestEdge> s2) {
-		int result = s1.compareTo(s2);
+		boolean sameFlow = s1.isFlowingLeft() == s1.isFlowingLeft();
+		int result = sameFlow ? s1.compareToUsingFlows(s2) : s1.compareToIgnoreFlows(s2);
 		if (result <= 0) {
 			fail("Expected comparsion to be greater than, but compareTo was " + result);
 		}
 	}
 
 	private void assertLessThan(RowSegment<TestEdge> s1, RowSegment<TestEdge> s2) {
-		int result = s1.compareTo(s2);
+		int result = s1.compareToUsingFlows(s2);
 		if (result >= 0) {
 			fail("Expected comparsion to be less than, but compareTo was " + result);
 		}
 	}
 
 	private void assertGreaterThan(ColumnSegment<TestEdge> s1, ColumnSegment<TestEdge> s2) {
-		int result = s1.compareTo(s2);
+		boolean sameFlow = s1.isFlowingUpwards() == s1.isFlowingUpwards();
+		int result = sameFlow ? s1.compareToUsingFlows(s2) : s1.compareToIgnoreFlows(s2);
 		if (result <= 0) {
 			fail("Expected comparsion to be greater than, but compareTo was " + result);
 		}
@@ -976,7 +972,7 @@ public class EdgeSegmentTest {
 	}
 
 	private TestEdge e(TestVertex vertex1, TestVertex vertex2) {
-		return new TestEdge(v1, v2);
+		return new TestEdge(vertex1, vertex2);
 	}
 
 }

@@ -1,11 +1,5 @@
 <context>
 	<schema name="LldbSession" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="Access" />
-		<interface name="Attacher" />
-		<interface name="Interpreter" />
-		<interface name="Interruptible" />
-		<interface name="Launcher" />
-		<interface name="ActiveScope" />
 		<interface name="EventScope" />
 		<interface name="FocusScope" />
 		<interface name="Aggregate" />
@@ -26,7 +20,6 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="BreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="BreakpointSpecContainer" />
 		<element schema="BreakpointSpec" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
@@ -37,25 +30,22 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="AvailableContainer" canonical="yes" elementResync="ALWAYS" attributeResync="NEVER">
-		<interface name="Configurable" />
 		<element schema="Attachable" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="ProcessContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="Configurable" />
 		<element schema="Process" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="BreakpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="BreakpointSpec" />
-		<interface name="Deletable" />
 		<interface name="Togglable" />
 		<element schema="BreakpointLocation" />
 		<attribute name="Expression" schema="STRING" required="yes" hidden="yes" />
 		<attribute-alias from="_expression" to="Expression" />
-		<attribute name="Kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
+		<attribute name="Kinds" schema="STRING" required="yes" hidden="yes" />
 		<attribute-alias from="_kinds" to="Kinds" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
@@ -72,11 +62,10 @@
 	</schema>
 	<schema name="WatchpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="BreakpointSpec" />
-		<interface name="Deletable" />
 		<interface name="Togglable" />
 		<attribute name="Expression" schema="STRING" required="yes" hidden="yes" />
 		<attribute-alias from="_expression" to="Expression" />
-		<attribute name="Kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
+		<attribute name="Kinds" schema="STRING" required="yes" hidden="yes" />
 		<attribute-alias from="_kinds" to="Kinds" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
@@ -90,7 +79,6 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="Attachable" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="Attachable" />
 		<element schema="VOID" />
 		<attribute name="PID" schema="LONG" />
 		<attribute-alias from="_pid" to="PID" />
@@ -103,14 +91,6 @@
 		<interface name="Process" />
 		<interface name="Aggregate" />
 		<interface name="ExecutionStateful" />
-		<interface name="Attacher" />
-		<interface name="Deletable" />
-		<interface name="Detachable" />
-		<interface name="Killable" />
-		<interface name="Launcher" />
-		<interface name="Resumable" />
-		<interface name="Steppable" />
-		<interface name="Interruptible" />
 		<element schema="VOID" />
 		<attribute name="Threads" schema="ThreadContainer" required="yes" fixed="yes" />
 		<attribute name="Breakpoints" schema="BreakpointLocationContainer" required="yes" fixed="yes" />
@@ -124,7 +104,6 @@
 		<attribute-alias from="_pid" to="PID" />
 		<attribute name="State" schema="EXECUTION_STATE" required="yes" hidden="yes" />
 		<attribute-alias from="_state" to="State" />
-		<attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" hidden="yes" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_short_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
@@ -146,7 +125,6 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="ModuleContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
-		<interface name="ModuleContainer" />
 		<element schema="Module" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
@@ -168,30 +146,19 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="BreakpointLocationContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="BreakpointLocationContainer" />
 		<element schema="BreakpointLocation" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="ThreadContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="Configurable" />
 		<element schema="Thread" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
-	</schema>
-	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="Method" />
-		<element schema="VOID" />
-		<attribute name="_display" schema="STRING" required="yes" fixed="yes" hidden="yes" />
-		<attribute name="_return_type" schema="TYPE" required="yes" fixed="yes" hidden="yes" />
-		<attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" fixed="yes" hidden="yes" />
-		<attribute schema="VOID" fixed="yes" hidden="yes" />
 	</schema>
 	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Activatable" />
 		<interface name="Thread" />
 		<interface name="ExecutionStateful" />
-		<interface name="Steppable" />
 		<interface name="Aggregate" />
 		<element schema="VOID" />
 		<attribute name="Stack" schema="Stack" required="yes" fixed="yes" />
@@ -203,7 +170,6 @@
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_short_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="Advance" schema="Method" required="yes" fixed="yes" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="Module" elementResync="NEVER" attributeResync="NEVER">
@@ -234,7 +200,6 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="SectionContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="SectionContainer" />
 		<element schema="Section" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
@@ -246,13 +211,11 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="SymbolContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
-		<interface name="SymbolNamespace" />
 		<element schema="Symbol" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="Symbol" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="Symbol" />
 		<element schema="VOID" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
@@ -286,7 +249,6 @@
 	</schema>
 	<schema name="RegisterValueContainer" attributeResync="ONCE">
 		<interface name="RegisterContainer" />
-		<interface name="RegisterBank" />
 		<attribute name="General Purpose Registers" schema="RegisterBank" />
 		<attribute name="Floating Point Registers" schema="RegisterBank" />
 		<attribute name="Advanced Vector Extensions" schema="RegisterBank" />
@@ -298,7 +260,6 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="RegisterBank" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
-		<interface name="RegisterBank" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>

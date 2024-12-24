@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,6 +115,9 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * Obtain a "memory" space bound to the register address space for frame 0 of a given thread
 	 * 
 	 * @see #getMemoryRegisterSpace(TraceThread, int, boolean)
+	 * @param thread the given thread
+	 * @param createIfAbsent true to create the space if it's not already present
+	 * @return the space, or {@code null} if absent and not created
 	 */
 	TraceMemorySpace getMemoryRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
@@ -126,6 +129,9 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * the given frame. Nor, if the frame is moved, will this space move with it.
 	 * 
 	 * @see #getMemoryRegisterSpace(TraceThread, int, boolean)
+	 * @param frame the stack frame
+	 * @param createIfAbsent true to create the space if it's not already present
+	 * @return the space, or {@code null} if absent and not created
 	 */
 	TraceMemorySpace getMemoryRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
 

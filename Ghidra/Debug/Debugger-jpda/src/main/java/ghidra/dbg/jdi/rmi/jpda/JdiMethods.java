@@ -25,10 +25,10 @@ import com.sun.jdi.request.*;
 
 import ghidra.app.plugin.core.debug.client.tracermi.*;
 import ghidra.app.plugin.core.debug.client.tracermi.RmiMethodRegistry.TraceMethod;
-import ghidra.dbg.target.TargetMethod.Param;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.rmi.trace.TraceRmi.MemoryState;
+import ghidra.trace.model.target.iface.TraceObjectMethod.Param;
 import ghidra.util.Msg;
 
 public class JdiMethods implements RmiMethods {
@@ -343,7 +343,7 @@ public class JdiMethods implements RmiMethods {
 				name = "find") String targetClass) {
 		return find_class(obj, targetClass);
 	}
-	
+
 	@TraceMethod(display = "Load class")
 	public boolean find_class(
 			@Param(
@@ -377,10 +377,12 @@ public class JdiMethods implements RmiMethods {
 
 	@TraceMethod(display = "Refresh reference types")
 	public void refresh_canonical_reference_types(
-			@Param(schema = "CanonicalReferenceTypeContainer", name = "container") RmiTraceObject obj) {
+			@Param(
+				schema = "CanonicalReferenceTypeContainer",
+				name = "container") RmiTraceObject obj) {
 		refresh_reference_types(obj);
 	}
-	
+
 	/**
 	 * NB. Did not assign action="refresh" because this method is expensive. Assigning that action
 	 * name will cause the UI to do it upon expanding the node, which we <em>do not</em> want.

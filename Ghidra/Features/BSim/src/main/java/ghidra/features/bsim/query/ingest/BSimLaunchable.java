@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,8 @@ package ghidra.features.bsim.query.ingest;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,10 +33,8 @@ import ghidra.features.bsim.query.protocol.QueryName;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.HeadlessClientAuthenticator;
-import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.net.SSLContextInitializer;
-import ghidra.program.database.ProgramDB;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
@@ -334,10 +333,6 @@ public class BSimLaunchable implements GhidraLaunchable {
 				}
 				optionValueMap.put(option, params[i]);
 			}
-		}
-		String connectingUserName = optionValueMap.get(USER_OPTION);
-		if (connectingUserName == null) {
-			connectingUserName = optionValueMap.put(USER_OPTION, ClientUtil.getUserName());
 		}
 		return subParams;
 	}
@@ -981,9 +976,9 @@ public class BSimLaunchable implements GhidraLaunchable {
 			"    <config_template> - large_32 | medium_32 | medium_64 | medium_cpool | medium_nosize \n" +
 			"\n" +
 			"BSim URL Forms (bsimURL):\n" +
-			"    postgresql://<hostname>[:<port>]/<dbname>\n" +
-			"    elastic://<hostname>[:<port>]/<dbname>\n" +
-			"    https://<hostname>[:<port>]/<dbname>\n" +
+			"    postgresql://[username@]<hostname>[:<port>]/<dbname>\n" +
+			"    elastic://[username@]<hostname>[:<port>]/<dbname>\n" +
+			"    https://[username@]<hostname>[:<port>]/<dbname>\n" +
 			"    file:/[<local-dirpath>/]<dbname>\n" +
 			"\n" +
 			"Ghidra URL Forms (ghidraURL):\n" +
@@ -1010,7 +1005,13 @@ public class BSimLaunchable implements GhidraLaunchable {
 			run(params);
 		}
 		catch (MalformedURLException e) {
-			Msg.error(this, "Invalid URL specified: " + e.getMessage());
+			String msg = e.getMessage();
+			if (msg == null) {
+				e.printStackTrace();
+			}
+			else {
+				Msg.error(this, "Invalid URL specified: " + msg);
+			}
 			System.exit(22); // EINVAL
 		}
 		catch (IllegalArgumentException e) {
@@ -1019,7 +1020,13 @@ public class BSimLaunchable implements GhidraLaunchable {
 			System.exit(22); // EINVAL
 		}
 		catch (Exception e) {
-			Msg.error(this, e.getMessage());
+			String msg = e.getMessage();
+			if (msg == null) {
+				e.printStackTrace();
+			}
+			else {
+				Msg.error(this, msg);
+			}
 			System.exit(1); // Misc Error
 		}
 	}
@@ -1059,7 +1066,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 		// Use BSim log config to ensure we get desired console output
 		System.setProperty(LoggingInitialization.LOG4J2_CONFIGURATION_PROPERTY,
-			BSIM_LOGGING_CONFIGURATION_FILE); 
+			BSIM_LOGGING_CONFIGURATION_FILE);
 
 		ApplicationConfiguration config;
 		switch (type) {
@@ -1084,6 +1091,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 		ghidra.framework.protocol.ghidra.Handler.registerHandler();
 		ghidra.features.bsim.query.postgresql.Handler.registerHandler();
 
+		if (connectingUserName == null) {
+			// Force default login name
+			connectingUserName = ClientUtil.getUserName();
+		}
 		HeadlessClientAuthenticator.installHeadlessClientAuthenticator(connectingUserName, certPath,
 			true);
 	}

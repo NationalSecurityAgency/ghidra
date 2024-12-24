@@ -101,15 +101,16 @@ enum type_metatype {
 /// Specializations of the core meta-types.  Each enumeration is associated with a specific #type_metatype.
 /// Ordering is important: The lower the number, the more \b specific the data-type, affecting propagation.
 enum sub_metatype {
-  SUB_VOID = 22,		///< Compare as a TYPE_VOID
-  SUB_SPACEBASE = 21,		///< Compare as a TYPE_SPACEBASE
-  SUB_UNKNOWN = 20,		///< Compare as a TYPE_UNKNOWN
-  SUB_PARTIALSTRUCT = 19,	///< Compare as TYPE_PARTIALSTRUCT
-  SUB_INT_CHAR = 18,		///< Signed 1-byte character, sub-type of TYPE_INT
-  SUB_UINT_CHAR = 17,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
-  SUB_INT_PLAIN = 16,		///< Compare as a plain TYPE_INT
-  SUB_UINT_PLAIN = 15,		///< Compare as a plain TYPE_UINT
-  SUB_INT_ENUM = 14,		///< Signed enum, sub-type of TYPE_INT
+  SUB_VOID = 23,		///< Compare as a TYPE_VOID
+  SUB_SPACEBASE = 22,		///< Compare as a TYPE_SPACEBASE
+  SUB_UNKNOWN = 21,		///< Compare as a TYPE_UNKNOWN
+  SUB_PARTIALSTRUCT = 20,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_INT_CHAR = 19,		///< Signed 1-byte character, sub-type of TYPE_INT
+  SUB_UINT_CHAR = 18,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
+  SUB_INT_PLAIN = 17,		///< Compare as a plain TYPE_INT
+  SUB_UINT_PLAIN = 16,		///< Compare as a plain TYPE_UINT
+  SUB_INT_ENUM = 15,		///< Signed enum, sub-type of TYPE_INT
+  SUB_UINT_PARTIALENUM = 14,	///< Unsigned partial enum, sub-type of TYPE_UINT
   SUB_UINT_ENUM = 13,		///< Unsigned enum, sub-type of TYPE_UINT
   SUB_INT_UNICODE = 12,		///< Signed wide character, sub-type of TYPE_INT
   SUB_UINT_UNICODE = 11,	///< Unsigned wide character, sub-type of TYPE_UINT

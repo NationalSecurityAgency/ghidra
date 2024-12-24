@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.functiongraph.graph.layout.flowchart;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.graph.graphs.LabelTestVertex;
 import ghidra.graph.support.TestVisualGraph;
 import ghidra.util.exception.CancelledException;
 
@@ -259,6 +260,114 @@ public class FlowChartLayoutTest extends AbstractFlowChartLayoutTest {
 				.colSegment(down(1), offset(1))
 				.rowSegment(right(1), offset(0))
 				.colSegment(down(1), offset(-3)));
+	}
+
+	@Test
+	public void testGraphThatBenefitsFromComparingEdgesUsingFlow() throws CancelledException {
+		LabelTestVertex X = v('X');
+		LabelTestVertex Y = v('Y');
+		LabelTestVertex Z = v('Z');
+		LabelTestVertex W = v('W');
+
+		edge(A, B);
+		edge(A, C);
+		edge(A, D);
+		edge(B, K);
+		edge(K, J);
+		edge(D, F);
+		edge(G, I);
+		edge(D, E);
+		edge(E, G);
+		edge(F, Z);
+		edge(F, H);
+		edge(E, I);
+		edge(J, W);
+		edge(W, X);
+		edge(W, Y);
+		edge(W, Z);
+
+		applyLayout();
+
+//		showGraph();
+
+		assertVertices("""
+				.........
+				.....A...
+				.........
+				...B.C.D.
+				.........
+				...K..E.F
+				.........
+				...J..G.H
+				.........
+				...W..I..
+				.........
+				.X.Y.Z...
+				""");
+
+		assertEdge(e(A, B)
+				.colSegment(down(1), offset(-2))
+				.rowSegment(left(2), offset(0))
+				.colSegment(down(1), offset(0)));
+
+		assertEdge(e(A, C)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(A, D)
+				.colSegment(down(1), offset(2))
+				.rowSegment(right(2), offset(0))
+				.colSegment(down(1), offset(0)));
+
+		assertEdge(e(B, K)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(K, J)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(J, W)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(W, X)
+				.colSegment(down(1), offset(-2))
+				.rowSegment(left(2), offset(0))
+				.colSegment(down(1), offset(0)));
+
+		assertEdge(e(W, Y)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(W, Z)
+				.colSegment(down(1), offset(2))
+				.rowSegment(right(2), offset(0))
+				.colSegment(down(1), offset(-1)));
+
+		assertEdge(e(D, E)
+				.colSegment(down(1), offset(-1))
+				.rowSegment(left(1), offset(0))
+				.colSegment(down(1), offset(0)));
+
+		assertEdge(e(D, F)
+				.colSegment(down(1), offset(1))
+				.rowSegment(right(1), offset(0))
+				.colSegment(down(1), offset(0)));
+
+		assertEdge(e(E, I)
+				.colSegment(down(1), offset(-2))
+				.rowSegment(left(1), offset(0))
+				.colSegment(down(2), offset(-1))
+				.rowSegment(right(1), offset(0))
+				.colSegment(down(1), offset(-2)));
+
+		assertEdge(e(E, G)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(F, H)
+				.colSegment(down(2), offset(0)));
+
+		assertEdge(e(F, Z)
+				.colSegment(down(1), offset(-2))
+				.rowSegment(left(3), offset(2))
+				.colSegment(down(5), offset(1)));
+
 	}
 
 }

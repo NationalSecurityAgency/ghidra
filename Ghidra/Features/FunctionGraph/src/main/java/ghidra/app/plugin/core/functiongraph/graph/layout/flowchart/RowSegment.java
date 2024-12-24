@@ -27,7 +27,7 @@ import ghidra.graph.viewer.layout.GridPoint;
  *
  * @param <E> The edge type
  */
-public class RowSegment<E> extends EdgeSegment<E> implements Comparable<RowSegment<E>> {
+public class RowSegment<E> extends EdgeSegment<E> {
 	// specifies the orientation of the column attached to this segment (either left or right)
 	enum ColumnOrientation {
 		UP,		// the attached column extends upwards from this row		 
@@ -90,8 +90,55 @@ public class RowSegment<E> extends EdgeSegment<E> implements Comparable<RowSegme
 		return Math.max(getStartCol(), getEndCol());
 	}
 
-	@Override
-	public int compareTo(RowSegment<E> other) {
+	// When comparing edge segments that have mixed flow directions, we arbitrarily chose to
+	// always compare the order by following the shape of the left and only considering the shape
+	// on the right if the lefts are equal. This needs to be consistent so that the comparison
+	// is transitive and reversible.
+	//
+	// NOTE: Segments are compared by following the next or previous segments until one of the
+	// segments definitively determines the order. When comparing segments in a particular
+	// direction, is is important not to directly call the compareTo methods as that could result
+	// in an infinite loop. Instead, when comparing in a particular direction, just directly
+	// use the appropriate direction comparison so that it will follow that direction until
+	// it finds a difference or it simply returns 0, in which case the original to
+	// compareTo can then try the other direction. As a consequence of this, the basic obvious
+	// comparison of first comparing the grid row's index had to be moved into both the
+	// compareLefts and the compareRights.
+
+	public int compareToIgnoreFlows(RowSegment<E> other) {
+		int result = compareLefts(other);
+		if (result == 0) {
+			result = compareRights(other);
+		}
+		return result;
+	}
+
+	// When comparing segments that flow in the same direction, we prefer to compare previous
+	// edges first and if they are equal, we compare follow-on edges. This yields better
+	// results (less edge crossings) for some edge cases because it allows all the segments
+	// in an edge to compare consistently in the same direction which is not guaranteed in 
+	// the ignore flow case. However, this comparison can only be used for sorting when all
+	// the segments in a list flow in the same direction. Otherwise the comparison is not
+	// transitive, which could result in breaking the sort algorithm.
+
+	// NOTE: Segments are compared by following the next or previous segments until one of the
+	// segments definitively determines the order. When comparing segments in a particular
+	// direction, is is important not to directly call the compareTo methods as that could result
+	// in an infinite loop. Instead, when comparing in a particular direction, just directly
+	// use the appropriate direction comparison so that it will follow that direction until
+	// it finds a difference or it simply returns 0, in which case the original to
+	// compareTo can then try the other direction.As a consequence of this, the basic obvious
+	// comparison of first comparing the grid row's index had to be moved into both the
+	// compareLefts and the compareRights.
+	public int compareToUsingFlows(RowSegment<E> other) {
+		if (isFlowingLeft()) {
+			int result = compareRights(other);
+			if (result == 0) {
+				result = compareLefts(other);
+			}
+			return result;
+		}
+
 		int result = compareLefts(other);
 		if (result == 0) {
 			result = compareRights(other);
@@ -229,25 +276,26 @@ public class RowSegment<E> extends EdgeSegment<E> implements Comparable<RowSegme
 
 	private ColumnOrientation getOrientationForLeftColumn() {
 		ColumnSegment<E> leftSegment = getLeftColSegment();
-		int leftColOtherRow = flowsLeft() ? leftSegment.getEndRow() : leftSegment.getStartRow();
+		int leftColOtherRow = isFlowingLeft() ? leftSegment.getEndRow() : leftSegment.getStartRow();
 		return leftColOtherRow < getRow() ? ColumnOrientation.UP : ColumnOrientation.DOWN;
 	}
 
 	private ColumnOrientation getOrientationForRightColumn() {
 		ColumnSegment<E> rightSegment = getRightColSegment();
-		int rightColOtherRow = flowsLeft() ? rightSegment.getStartRow() : rightSegment.getEndRow();
+		int rightColOtherRow =
+			isFlowingLeft() ? rightSegment.getStartRow() : rightSegment.getEndRow();
 		return rightColOtherRow < getRow() ? ColumnOrientation.UP : ColumnOrientation.DOWN;
 	}
 
 	private ColumnSegment<E> getLeftColSegment() {
-		return flowsLeft() ? next : previous;
+		return isFlowingLeft() ? next : previous;
 	}
 
 	private ColumnSegment<E> getRightColSegment() {
-		return flowsLeft() ? previous : next;
+		return isFlowingLeft() ? previous : next;
 	}
 
-	private boolean flowsLeft() {
+	boolean isFlowingLeft() {
 		return getStartCol() > getEndCol();
 	}
 

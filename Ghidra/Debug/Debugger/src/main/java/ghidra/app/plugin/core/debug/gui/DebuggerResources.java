@@ -49,7 +49,6 @@ import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.async.AsyncUtils;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.database.ProgramContentHandler;
@@ -415,24 +414,6 @@ public interface DebuggerResources {
 		Icon ICON = ICON_DEBUGGER;
 		String GROUP = GROUP_GENERAL;
 		String HELP_ANCHOR = "debug_program";
-
-		static <T> MultiStateActionBuilder<T> buttonBuilder(Plugin owner, Plugin helpOwner) {
-			return new MultiStateActionBuilder<T>(NAME, owner.getName())
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
-		}
-
-		static ActionBuilder menuBuilder(DebuggerProgramLaunchOffer offer, Plugin owner,
-				Plugin helpOwner) {
-			return new ActionBuilder(offer.getConfigName(), owner.getName())
-					.description(offer.getButtonTitle())
-					.menuPath(DebuggerPluginPackage.NAME, offer.getMenuParentTitle(),
-						offer.getMenuTitle())
-					.menuIcon(offer.getIcon())
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
-		}
 	}
 
 	abstract class AbstractQuickLaunchAction extends DockingAction {

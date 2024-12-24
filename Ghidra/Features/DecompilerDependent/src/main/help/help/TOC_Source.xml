@@ -53,4 +53,10 @@
             target="help/topics/DecompilerTextFinderPlugin/Decompiler_Text_Finder.html" />
 
   </tocref>
+  <tocref id="Decompiler">
+    <tocdef id="DecompilerTaint"
+            text="Decompiler Taint" 
+            target="help/topics/DecompilerTaint/DecompilerTaint.html" />
+
+  </tocref>
 </tocroot>

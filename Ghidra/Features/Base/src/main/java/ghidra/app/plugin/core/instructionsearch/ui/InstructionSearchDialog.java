@@ -535,8 +535,9 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 
 			model.setSelectionSize(matchSize);
 			TableComponentProvider<Address> tableProvider =
-				table.showTableWithMarkers(title + " " + model.getName(), "InstructionSearch",
-					model, BG_COLOR_MARKERS, null, "Instruction Search Results", null);
+				table.showTableWithMarkers(title + " " + model.getName(),
+					"Instruction Search Results", model, BG_COLOR_MARKERS, null,
+					"Search", null);
 			tableProvider.installRemoveItemsAction();
 		};
 		SystemUtilities.runSwingLater(runnable);

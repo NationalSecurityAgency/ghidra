@@ -140,8 +140,12 @@ def find_thread_by_regs_obj(object):
     return find_thread_by_pattern(REGS_PATTERN0, object, "a RegisterValueContainer")
 
 
+@util.dbg.eng_thread
 def find_frame_by_level(level):
-    return dbg().backtrace_list()[level]
+    for f in util.dbg._base.backtrace_list():
+        if f.FrameNumber == level:
+        	return f
+    #return dbg().backtrace_list()[level]
 
 
 def find_frame_by_pattern(pattern, object, err_msg):
@@ -239,18 +243,6 @@ def refresh_processes(node: sch.Schema('ProcessContainer')):
         commands.ghidra_trace_put_processes()
 
 
-@REGISTRY.method(action='refresh', display='Refresh Breakpoint Locations')
-def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
-    """
-    Refresh the breakpoint locations for the process.
-
-    In the course of refreshing the locations, the breakpoint list will also be
-    refreshed.
-    """
-    with commands.open_tracked_tx('Refresh Breakpoint Locations'):
-        commands.ghidra_trace_put_breakpoints()
-
-
 @REGISTRY.method(action='refresh', display='Refresh Environment')
 def refresh_environment(node: sch.Schema('Environment')):
     """Refresh the environment descriptors (arch, os, endian)."""
@@ -269,13 +261,16 @@ def refresh_threads(node: sch.Schema('ThreadContainer')):
 def refresh_stack(node: sch.Schema('Stack')):
     """Refresh the backtrace for the thread."""
     tnum = find_thread_by_stack_obj(node)
+    util.reset_frames()
     with commands.open_tracked_tx('Refresh Stack'):
         commands.ghidra_trace_put_frames()
+    with commands.open_tracked_tx('Refresh Registers'):
+        commands.ghidra_trace_putreg()
 
 
 @REGISTRY.method(action='refresh', display='Refresh Registers')
 def refresh_registers(node: sch.Schema('RegisterValueContainer')):
-    """Refresh the register values for the frame."""
+    """Refresh the register values for the selected frame"""
     tnum = find_thread_by_regs_obj(node)
     with commands.open_tracked_tx('Refresh Registers'):
         commands.ghidra_trace_putreg()
@@ -314,7 +309,12 @@ def activate_thread(thread: sch.Schema('Thread')):
 @REGISTRY.method(action='activate')
 def activate_frame(frame: sch.Schema('StackFrame')):
     """Select the frame."""
-    find_frame_by_obj(frame)
+    f = find_frame_by_obj(frame)
+    util.select_frame(f.FrameNumber)
+    with commands.open_tracked_tx('Refresh Stack'):
+        commands.ghidra_trace_put_frames()
+    with commands.open_tracked_tx('Refresh Registers'):
+        commands.ghidra_trace_putreg()
 
 
 @REGISTRY.method(action='delete')

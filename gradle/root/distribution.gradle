@@ -432,6 +432,9 @@ task assembleDistribution (type: Copy) {
 	from ("${ROOT_PROJECT_DIR}/build/typestubs/src") {
 		into 'docs/ghidra_stubs/typestubs'
 	}
+	from ("${ROOT_PROJECT_DIR}/build/typestubs/pypredef") {
+		into 'docs/ghidra_stubs/pypredef'
+	}
 	from (createGhidraStubsWheel) {
 		into 'docs/ghidra_stubs'
 	}

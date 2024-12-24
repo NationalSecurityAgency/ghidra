@@ -28,9 +28,6 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProviderTest;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -44,7 +41,10 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.util.Msg;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
@@ -684,7 +684,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			DBTraceObjectManager objects = tb.trace.getObjectManager();
 			objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			objModBash =
-				objects.createObject(TraceObjectKeyPath.parse("Processes[1].Modules[/bin/bash]"));
+				objects.createObject(KeyPath.parse("Processes[1].Modules[/bin/bash]"));
 			objModBash.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 		}
 

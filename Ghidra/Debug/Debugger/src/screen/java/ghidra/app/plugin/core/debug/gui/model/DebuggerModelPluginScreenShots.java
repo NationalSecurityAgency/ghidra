@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,6 @@ import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
-import ghidra.dbg.target.TargetEventScope;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManager;
@@ -37,6 +33,10 @@ import ghidra.trace.database.target.DBTraceObjectValue;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.iface.TraceObjectEventScope;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerModelPluginScreenShots extends GhidraScreenShotGenerator {
@@ -61,8 +61,6 @@ public class DebuggerModelPluginScreenShots extends GhidraScreenShotGenerator {
 					<attribute name="Modules" schema="ModuleContainer" />
 				</schema>
 				<schema name="BreakpointContainer" canonical="yes">
-					<interface name="BreakpointSpecContainer" />
-					<interface name="BreakpointLocationContainer" />
 					<element schema="Breakpoint" />
 				</schema>
 				<schema name="Breakpoint">
@@ -98,7 +96,10 @@ public class DebuggerModelPluginScreenShots extends GhidraScreenShotGenerator {
 					<attribute-alias from="_pc" to="PC" />
 				</schema>
 				<schema name="ModuleContainer" canonical="yes">
-					<interface name="ModuleContainer" />
+					<element schema="Module" />
+				</schema>
+				<schema name="Module">
+					<interface name="Module" />
 				</schema>
 			</context>""";
 	public static final SchemaContext CTX;
@@ -179,7 +180,7 @@ public class DebuggerModelPluginScreenShots extends GhidraScreenShotGenerator {
 						proc.child("Modules");
 					}
 				}
-				root.value(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME, l.thread);
+				root.value(TraceObjectEventScope.KEY_EVENT_THREAD, l.thread);
 			}
 
 			traceManager.openTrace(tb.trace);

@@ -50,6 +50,12 @@ public class GhidraLaunchUtils {
 	public static final String HEADLESS_LAUNCH = "GhidraHeadlessLaunchConfigurationType";
 
 	/**
+	 * Launch configuration ID for a PyGhidra GUI launch. Must match corresponding value in 
+	 * plugin.xml.
+	 */
+	public static final String PYGHIDRA_GUI_LAUNCH = "PyGhidraGuiLaunchConfigurationType";
+
+	/**
 	 * Program arguments that will get passed to the launched Ghidra.  These will be appended
 	 * to the required program arguments that are required to launch Ghidra, which are hidden
 	 * from the user.

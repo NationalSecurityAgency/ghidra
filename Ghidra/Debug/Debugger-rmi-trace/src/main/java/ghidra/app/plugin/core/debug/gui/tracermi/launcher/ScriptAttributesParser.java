@@ -27,12 +27,12 @@ import javax.swing.Icon;
 
 import generic.theme.GIcon;
 import generic.theme.Gui;
-import ghidra.dbg.util.ShellUtils;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.LaunchParameter;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.AutoConfigState.PathIsDir;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
+import ghidra.pty.ShellUtils;
 import ghidra.util.*;
 
 /**

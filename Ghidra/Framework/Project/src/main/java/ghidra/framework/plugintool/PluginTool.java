@@ -1544,6 +1544,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return isConfigurable;
 	}
 
+	/**
+	 * This method will be deleted.  Preference state should be managed with the 
+	 * {@link DockingWindowManager}.
+	 * @param name the name
+	 * @deprecated use the {@link DockingWindowManager}
+	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	public void removePreferenceState(String name) {
 		winMgr.removePreferenceState(name);
 	}

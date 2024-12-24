@@ -25,6 +25,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.event.*;
 import javax.swing.table.TableColumnModel;
 
+import org.jdom.Attribute;
 import org.jdom.Element;
 
 import docking.DockingWindowManager;
@@ -112,12 +113,17 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	private FilterTextField filterField;
 	private FilterListener filterListener = new GTableFilterListener();
 
-	private FilterOptions filterOptions = new FilterOptions();
+	private static final FilterOptions DEFAULT_OPTIONS = new FilterOptions();
+	private FilterOptions filterOptions = DEFAULT_OPTIONS;
 	private TableTextFilterFactory<ROW_OBJECT> filterFactory =
 		new DefaultTableTextFilterFactory<>(filterOptions);
 	private RowFilterTransformer<ROW_OBJECT> transformer;
 	private TableFilter<ROW_OBJECT> secondaryTableFilter;
 	private EmptyBorderButton filterStateButton;
+
+	// This tracks whether the filter has been configured to be part of the display, whether by the
+	// user or via the API.
+	private boolean isFilterDisplayed = true;
 
 	private ColumnFilterManager<ROW_OBJECT> columnFilterManager;
 
@@ -231,41 +237,76 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		table.addPropertyChangeListener(badProgrammingPropertyChangeListener);
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			(windowManager, provider) -> loadFilterPreference(windowManager));
+			(windowManager, provider) -> componentLoaded(windowManager));
+
+		if (table instanceof GTable gTable) {
+			gTable.setTableFilterPanel(this);
+		}
 	}
 
-	private void loadFilterPreference(DockingWindowManager dockingWindowManager) {
-		if (dockingWindowManager != null) {
-			PreferenceState preferenceState =
-				dockingWindowManager.getPreferenceState(uniquePreferenceKey);
-			if (preferenceState != null) {
-				Element xmlElement = preferenceState.getXmlElement(FILTER_STATE);
-				restoreFromXML(xmlElement);
+	private void componentLoaded(DockingWindowManager windowManager) {
+
+		if (windowManager == null) {
+			return;
+		}
+
+		// 
+		// We have just been loaded into the UI.  The window manager has the current preference 
+		// state if any has been saved.  First, load any saved state into this class.
+		// 
+		PreferenceState preferenceState =
+			windowManager.getPreferenceState(uniquePreferenceKey);
+		loadFromPreferenceState(preferenceState);
+
+		//
+		// Next, register a preference state supplier so that we will get asked for our current 
+		// state when the tool is saved.  When asked for our state, we will make the decision as to
+		// whether or not we have anything to save.  There is no need to remove our supplier later, 
+		// as it will be disposed when the tool is closed.
+		// 
+		windowManager.registerPreferenceStateSupplier(uniquePreferenceKey,
+			() -> createPreferenceState());
+	}
+
+	private void loadFromPreferenceState(PreferenceState preferenceState) {
+		if (preferenceState == null) {
+			return;
+		}
+
+		Element element = preferenceState.getXmlElement(FILTER_STATE);
+		if (element == null) {
+			return;
+		}
+
+		filterOptions = FilterOptions.restoreFromXML(element);
+		updateFilterFactory();
+
+		Attribute attribute = element.getAttribute("IS_SHOWING");
+		if (attribute != null) { // null when loading old settings
+			boolean shouldBeDisplayed = Boolean.parseBoolean(attribute.getValue());
+			if (shouldBeDisplayed != isFilterDisplayed) {
+				doToggleVisibility();
 			}
 		}
+
+		filterUpdater.updateLater();
 	}
 
-	private void doSaveState() {
+	private PreferenceState createPreferenceState() {
+
+		if (isDefaultFilterOptions()) {
+			return null;
+		}
+
 		PreferenceState preferenceState = new PreferenceState();
-		preferenceState.putXmlElement(FILTER_STATE, saveToXML());
-
-		DockingWindowManager dockingWindowManager = DockingWindowManager.getInstance(table);
-		if (dockingWindowManager != null) {
-			dockingWindowManager.putPreferenceState(uniquePreferenceKey, preferenceState);
-		}
+		Element xmlElement = filterOptions.toXML();
+		xmlElement.setAttribute("IS_SHOWING", Boolean.toString(isFilterDisplayed));
+		preferenceState.putXmlElement(FILTER_STATE, xmlElement);
+		return preferenceState;
 	}
 
-	private Element saveToXML() {
-		return filterOptions.toXML();
-	}
-
-	private void restoreFromXML(Element xmlElement) {
-		if (xmlElement != null) {
-			this.filterOptions = FilterOptions.restoreFromXML(xmlElement);
-			updateFilterFactory();
-			filterUpdater.updateLater();
-
-		}
+	private boolean isDefaultFilterOptions() {
+		return isFilterDisplayed && DEFAULT_OPTIONS.equals(filterOptions);
 	}
 
 	protected TableFilter<ROW_OBJECT> getCombinedTableFilter(TableFilter<ROW_OBJECT> filter1,
@@ -343,7 +384,51 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		this.filterOptions = filterOptions;
 		updateFilterFactory();
 		filterUpdater.updateLater();
-		doSaveState();
+	}
+
+	/**
+	 * Returns the filter options used by the filter factory of this class.
+	 * @return the filter options used by the filter factory of this class.
+	 */
+	public FilterOptions getFilterOptions() {
+		return filterOptions;
+	}
+
+	/**
+	 * Activates this filter by showing it, if not visible, and then requesting focus in the filter
+	 * text field. 
+	 */
+	public void activate() {
+		if (!isFilterDisplayed) {
+			setVisible(true);
+			isFilterDisplayed = true;
+		}
+
+		requestFocus();
+	}
+
+	/**
+	 * Changes the visibility of this filter panel, make it not visible it if showing, showing it if
+	 * not visible. 
+	 */
+	public void toggleVisibility() {
+		doToggleVisibility();
+		if (isFilterDisplayed) {
+			requestFocus();
+		}
+	}
+
+	private void doToggleVisibility() {
+		if (isFilterDisplayed) {
+			setFilterText(""); // clear the filter when not showing to avoid confusing the user
+			setVisible(false);
+			isFilterDisplayed = false;
+			return;
+		}
+
+		// make filter displayed and maybe focus it
+		setVisible(true);
+		isFilterDisplayed = true;
 	}
 
 	private void buildPanel(String filterLabel) {
@@ -371,7 +456,6 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		helpService.registerHelp(filterStateButton, helpLocation);
 		helpService.registerHelp(searchLabel, helpLocation);
 		helpService.registerHelp(filterField, helpLocation);
-
 	}
 
 	private JComponent buildFilterStateButton() {
@@ -459,6 +543,12 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	}
 
 	public void dispose() {
+
+		DockingWindowManager dwm = DockingWindowManager.getInstance(this);
+		if (dwm != null) {
+			dwm.removePreferenceStateSupplier(uniquePreferenceKey);
+		}
+
 		// Unusual Code Alert: we have to remove this particular listener due to a memory leak.
 		// Removing the listener or null-ing out the reference both allow us to be garbage
 		// collected.  If we do neither, then we are not collected for some strange reason (even

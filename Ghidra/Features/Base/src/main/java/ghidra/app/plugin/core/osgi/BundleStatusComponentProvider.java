@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,7 +133,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private void addBundlesAction(String actionName, String description, Icon icon,
 			Runnable runnable) {
 
-		new ActionBuilder(actionName, this.getName()).popupMenuPath(description)
+		new ActionBuilder(actionName, getOwner()).popupMenuPath(description)
 				.popupMenuIcon(icon)
 				.popupMenuGroup(BUNDLE_GROUP)
 				.description(description)
@@ -145,7 +145,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 	private void createActions() {
 		Icon icon = Icons.REFRESH_ICON;
-		new ActionBuilder("RefreshBundles", this.getName()).popupMenuPath("Refresh all")
+		new ActionBuilder("RefreshBundles", getOwner())
+				.popupMenuPath("Refresh all")
 				.popupMenuIcon(icon)
 				.popupMenuGroup(BUNDLE_LIST_GROUP)
 				.toolBarIcon(icon)
@@ -164,7 +165,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			this::doCleanBundleBuildCaches);
 
 		icon = Icons.ADD_ICON;
-		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add bundle(s)")
+		new ActionBuilder("AddBundles", getOwner())
+				.popupMenuPath("Add bundle(s)")
 				.popupMenuIcon(icon)
 				.popupMenuGroup(BUNDLE_LIST_GROUP)
 				.toolBarIcon(icon)
@@ -174,7 +176,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				.buildAndInstallLocal(this);
 
 		icon = Icons.DELETE_ICON;
-		new ActionBuilder("RemoveBundles", this.getName())
+		new ActionBuilder("RemoveBundles", getOwner())
 				.popupMenuPath("Remove selected bundle(s)")
 				.popupMenuIcon(icon)
 				.popupMenuGroup(BUNDLE_LIST_GROUP)

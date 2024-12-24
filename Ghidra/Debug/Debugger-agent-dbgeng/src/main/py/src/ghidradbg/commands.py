@@ -32,6 +32,8 @@ from pybag.dbgeng.win32.kernel32 import STILL_ACTIVE
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
+if util.is_exdi():
+	from .exdi import exdi_commands, exdi_methods
 
 PAGE_SIZE = 4096
 
@@ -209,7 +211,10 @@ def start_trace(name):
     STATE.trace.register_mapper = arch.compute_register_mapper(language)
 
     parent = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    schema_fn = os.path.join(parent, 'schema.xml')
+    if util.is_exdi():
+        schema_fn = os.path.join(parent, 'schema_exdi.xml')
+    else:
+        schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     using_dbgmodel = os.getenv('OPT_USE_DBGMODEL') == "true"
@@ -314,17 +319,19 @@ def ghidra_trace_attach(pid=None, attach_flags='0', initial_break=True, timeout=
 
 
 @util.dbg.eng_thread
-def ghidra_trace_attach_kernel(command=None, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+def ghidra_trace_attach_kernel(command=None, flags=DbgEng.DEBUG_ATTACH_KERNEL_CONNECTION, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
     """
     Create a session.
     """
 
     dbg = util.dbg._base
     util.set_kernel(True)
+    if flags == 2:
+        util.set_exdi(True)
     if initial_break:
         dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
     if command != None:
-        dbg._client.AttachKernel(command)
+        dbg._client.AttachKernel(command, flags=int(flags))
     if start_trace:
         ghidra_trace_start(command)
 
@@ -576,7 +583,10 @@ def putreg():
         STATE.trace.create_overlay_space('register', rpath)
         path = USER_REGS_PATTERN.format(procnum=nproc, tnum=nthrd)
         (values, keys) = create_generic(path)
-        return {'missing': STATE.trace.put_registers(rpath, values)}
+        nframe = util.selected_frame()
+        # NB: We're going to update the Register View for non-zero stack frames
+        if nframe == 0:
+        	return {'missing': STATE.trace.put_registers(rpath, values)}
 
     nproc = util.selected_process()
     if nproc < 0:
@@ -592,9 +602,13 @@ def putreg():
     for i in range(0, len(regs)):
         name = regs._reg.GetDescription(i)[0]
         try:
-            value = regs._get_register_by_index(i)
+        	value = regs._get_register_by_index(i)
+        except Exception:
+        	value = 0
+        try:
             values.append(mapper.map_value(nproc, name, value))
-            robj.set_value(name, hex(value))
+            if util.dbg.use_generics is False:
+            	robj.set_value(name, hex(value))
         except Exception:
             pass
     return {'missing': STATE.trace.put_registers(space, values)}
@@ -888,7 +902,11 @@ def activate(path=None):
             if nthrd is None:
                 path = PROCESS_PATTERN.format(procnum=nproc)
             else:
-                path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                frame = util.selected_frame()
+                if frame is None:
+                	path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                else:
+                	path = FRAME_PATTERN.format(procnum=nproc, tnum=nthrd, level=frame)
     trace.proxy_object_path(path).activate()
 
 
@@ -1340,7 +1358,8 @@ def put_frames():
         path = STACK_PATTERN.format(procnum=nproc, tnum=nthrd)
         (values, keys) = create_generic(path)
         STATE.trace.proxy_object_path(path).retain_values(keys)
-        return
+        # NB: some flavors of dbgmodel lack Attributes, so we grab Instruction Offset regardless
+        #return
 
     mapper = STATE.trace.memory_mapper
     keys = []
@@ -1353,19 +1372,20 @@ def put_frames():
         base, offset_inst = mapper.map(nproc, f.InstructionOffset)
         if base != offset_inst.space:
             STATE.trace.create_overlay_space(base, offset_inst.space)
-        base, offset_stack = mapper.map(nproc, f.StackOffset)
-        if base != offset_stack.space:
-            STATE.trace.create_overlay_space(base, offset_stack.space)
-        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
-        if base != offset_ret.space:
-            STATE.trace.create_overlay_space(base, offset_ret.space)
-        base, offset_frame = mapper.map(nproc, f.FrameOffset)
-        if base != offset_frame.space:
-            STATE.trace.create_overlay_space(base, offset_frame.space)
         fobj.set_value('Instruction Offset', offset_inst)
-        fobj.set_value('Stack Offset', offset_stack)
-        fobj.set_value('Return Offset', offset_ret)
-        fobj.set_value('Frame Offset', offset_frame)
+        if not util.dbg.use_generics:
+	        base, offset_stack = mapper.map(nproc, f.StackOffset)
+	        if base != offset_stack.space:
+	            STATE.trace.create_overlay_space(base, offset_stack.space)
+	        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
+	        if base != offset_ret.space:
+	            STATE.trace.create_overlay_space(base, offset_ret.space)
+	        base, offset_frame = mapper.map(nproc, f.FrameOffset)
+	        if base != offset_frame.space:
+	            STATE.trace.create_overlay_space(base, offset_frame.space)
+	        fobj.set_value('Stack Offset', offset_stack)
+	        fobj.set_value('Return Offset', offset_ret)
+	        fobj.set_value('Frame Offset', offset_frame)
         fobj.set_value('_display', "#{} {}".format(
             f.FrameNumber, offset_inst.offset))
         fobj.insert()

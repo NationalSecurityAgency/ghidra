@@ -565,7 +565,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
     newVal &= calc_mask(offVn->getSize());
     Varnode *newOffVn = newConstant(offVn->getSize(), newVal);
     if (finalize)
-      newOffVn->updateType(offVn->getTypeReadFacing(op), false, false);
+      newOffVn->updateType(offVn->getTypeReadFacing(op));
     opSetInput(op,newOffVn,1);
     return;
   }
@@ -573,7 +573,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
   opSetOpcode(multOp,CPUI_INT_MULT);
   Varnode *addVn = newUniqueOut(offVn->getSize(),multOp);
   if (finalize) {
-    addVn->updateType(multVn->getType(), false, false);
+    addVn->updateType(multVn->getType());
     addVn->setImplied();
   }
   opSetInput(multOp,offVn,0);

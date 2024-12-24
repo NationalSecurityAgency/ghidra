@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldRange;
 import ghidra.app.plugin.core.terminal.vt.*;
+import ghidra.app.plugin.core.terminal.vt.AnsiColorResolver.ReverseVideo;
 import ghidra.app.plugin.core.terminal.vt.VtCharset.G;
 import ghidra.util.*;
 
@@ -65,6 +66,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	// Rendering properties
 	protected FontMetrics metrics;
+	protected float fontSizeAdjustment;
 	protected final AnsiColorResolver colors;
 
 	protected final ArrayList<LayoutModelListener> listeners = new ArrayList<>();
@@ -103,6 +105,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	 * @param panel the panel to receive commands from the model's VT/ANSI parser
 	 * @param charset the charset for decoding bytes to characters
 	 * @param metrics font metrics for the monospaced terminal font
+	 * @param fontSizeAdjustment the font size adjustment
 	 * @param colors a resolver for ANSI colors
 	 */
 	public TerminalLayoutModel(TerminalPanel panel, Charset charset, FontMetrics metrics,
@@ -202,7 +205,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	}
 
 	protected TerminalLayout newLayout(VtLine line) {
-		return new TerminalLayout(line, metrics, colors);
+		return new TerminalLayout(line, metrics, fontSizeAdjustment, colors);
 	}
 
 	protected void buildLayouts() {
@@ -371,7 +374,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	}
 
 	@Override
-	public void handleReverseVideo(boolean reverse) {
+	public void handleReverseVideo(ReverseVideo reverse) {
 		buffer.setAttributes(buffer.getAttributes().reverseVideo(reverse));
 	}
 
@@ -412,7 +415,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	@Override
 	public void handleAutoWrapMode(boolean en) {
-		System.err.println("TODO: handleAutoWrapMode: " + en);
+		Msg.trace(this, "TODO: handleAutoWrapMode: " + en);
 	}
 
 	@Override
@@ -641,7 +644,9 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		}
 	}
 
-	public void setFontMetrics(FontMetrics metrics2) {
+	public void setFontMetrics(FontMetrics metrics, float fontSizeAdjustment) {
+		this.metrics = metrics;
+		this.fontSizeAdjustment = fontSizeAdjustment;
 		layouts.clear();
 		layoutCache.clear();
 		buildLayouts();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,10 @@ import java.util.Comparator;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
-import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.path.KeyPath.KeyComparator;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueKeyColumn extends AbstractDynamicTableColumn<ValueRow, String, Trace> {
@@ -46,6 +46,6 @@ public class TraceValueKeyColumn extends AbstractDynamicTableColumn<ValueRow, St
 
 	@Override
 	public Comparator<String> getComparator() {
-		return TargetObjectKeyComparator.CHILD;
+		return KeyComparator.CHILD;
 	}
 }

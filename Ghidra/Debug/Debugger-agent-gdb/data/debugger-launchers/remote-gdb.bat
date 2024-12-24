@@ -10,11 +10,13 @@
 ::@icon icon.debugger
 ::@help TraceRmiLauncherServicePlugin#gdb_remote
 ::@enum TargetType:str remote extended-remote
+::@enum Endian:str auto big little
 ::@env OPT_TARGET_TYPE:TargetType="remote" "Target" "The type of remote target"
 ::@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 ::@env OPT_PORT:int=9999 "Port" "The host's listening port"
-::@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
 ::@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+::@env OPT_ARCH:str="auto" "Architecture" "Target architecture override"
+::@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
 @echo off
 set PYTHONPATH0=%GHIDRA_HOME%\Ghidra\Debug\Debugger-agent-gdb\pypkg\src
@@ -35,7 +37,8 @@ set PYTHONPATH=%PYTHONPATH1%;%PYTHONPATH0%;%PYTHONPATH%
   -ex "set confirm off" ^
   -ex "show version" ^
   -ex "python import ghidragdb" ^
-  -ex "set arch %OPT_ARCH%" ^
+  -ex "set architecture %OPT_ARCH%" ^
+   ex "set endian %OPT_ENDIAN%" ^
   -ex "echo Connecting to %OPT_HOST%:%OPT_PORT%... " ^
   -ex "target %OPT_TARGET_TYPE% %OPT_HOST%:%OPT_PORT%" ^
   -ex "ghidra trace connect '%GHIDRA_TRACE_RMI_ADDR%'" ^

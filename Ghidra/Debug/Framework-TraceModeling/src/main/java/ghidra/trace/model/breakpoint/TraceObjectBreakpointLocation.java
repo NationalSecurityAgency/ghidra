@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,25 +17,25 @@ package ghidra.trace.model.breakpoint;
 
 import java.util.Collection;
 
-import ghidra.dbg.target.TargetBreakpointLocation;
-import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.target.TraceObjectInterface;
-import ghidra.trace.model.target.annot.TraceObjectInfo;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 import ghidra.util.exception.DuplicateNameException;
 
 @TraceObjectInfo(
-	targetIf = TargetBreakpointLocation.class,
+	schemaName = "BreakpointLocation",
 	shortName = "breakpoint location",
-	fixedKeys = {
-		TargetObject.DISPLAY_ATTRIBUTE_NAME,
-		TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
-		TraceObjectBreakpointLocation.KEY_COMMENT,
+	attributes = {
+		TraceObjectBreakpointLocation.KEY_RANGE,
 		TraceObjectBreakpointLocation.KEY_EMU_ENABLED,
+		TraceObjectBreakpointLocation.KEY_EMU_SLEIGH,
+	},
+	fixedKeys = {
+		TraceObjectBreakpointLocation.KEY_RANGE,
 	})
 public interface TraceObjectBreakpointLocation extends TraceBreakpoint, TraceObjectInterface {
-	String KEY_COMMENT = "_comment";
+	String KEY_RANGE = "_range";
 	String KEY_EMU_ENABLED = "_emu_enabled";
 	String KEY_EMU_SLEIGH = "_emu_sleigh";
 

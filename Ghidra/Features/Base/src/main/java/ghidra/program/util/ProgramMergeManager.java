@@ -15,10 +15,13 @@
  */
 package ghidra.program.util;
 
+import ghidra.framework.store.LockException;
+import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -285,8 +288,8 @@ public class ProgramMergeManager {
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
-	public boolean merge(Address p2Address, TaskMonitor monitor) throws MemoryAccessException,
-			CancelledException {
+	public boolean merge(Address p2Address, TaskMonitor monitor)
+			throws MemoryAccessException, CancelledException {
 		return merge(p2Address, mergeFilter, monitor);
 	}
 
@@ -451,6 +454,7 @@ public class ProgramMergeManager {
 		mergeBookmarks(p1MergeSet, filter, monitor);
 		mergeProperties(p1MergeSet, filter, monitor);
 		mergeFunctionTags(p1MergeSet, filter, monitor);
+		mergeSourceMap(p1MergeSet, filter, monitor);
 
 		merger.reApplyDuplicateEquates();
 		String dupEquatesMessage = merger.getDuplicateEquatesInfo();
@@ -569,9 +573,8 @@ public class ProgramMergeManager {
 		AddressSet byteDiffs2 = null;
 		ProgramDiffFilter byteDiffFilter = new ProgramDiffFilter(ProgramDiffFilter.BYTE_DIFFS);
 		if (filter.getFilter(ProgramMergeFilter.BYTES) == ProgramMergeFilter.IGNORE) {
-			byteDiffs2 =
-				DiffUtility.getCompatibleAddressSet(
-					programDiff.getDifferences(byteDiffFilter, monitor), program2);
+			byteDiffs2 = DiffUtility.getCompatibleAddressSet(
+				programDiff.getDifferences(byteDiffFilter, monitor), program2);
 		}
 
 		// ** Equates **
@@ -625,6 +628,46 @@ public class ProgramMergeManager {
 		}
 		catch (CancelledException e1) {
 			// user cancellation
+		}
+	}
+
+	/**
+	 * Merges source map information from program 2 into program 1.
+	 * <br>
+	 * Note: This method does not consider unmapped {@link SourceFile}s, i.e., those which are
+	 * not associated with any addresses in program 2.  In particular, it will not create new
+	 * unmapped files in program 1.
+	 *  
+	 * @param p1AddressSet address set in program 1 to receive changes
+	 * @param filter merge filter
+	 * @param monitor monitor
+	 */
+	void mergeSourceMap(AddressSetView p1AddressSet, ProgramMergeFilter filter,
+			TaskMonitor monitor) {
+		int setting = filter.getFilter(ProgramMergeFilter.SOURCE_MAP);
+		if (setting == ProgramMergeFilter.IGNORE) {
+			return;
+		}
+		if (setting == ProgramMergeFilter.MERGE) {
+			throw new IllegalStateException("Cannot merge source map information");
+		}
+		int diffType = ProgramDiffFilter.SOURCE_MAP_DIFFS;
+		try {
+			AddressSetView p1DiffSet =
+				programDiff.getDifferences(new ProgramDiffFilter(diffType), monitor);
+			AddressSet p1MergeSet = p1DiffSet.intersect(p1AddressSet);
+			AddressSet p2MergeSet = DiffUtility.getCompatibleAddressSet(p1MergeSet, program2);
+
+			merger.applySourceMapDifferences(p2MergeSet, setting, monitor);
+
+		}
+		catch (CancelledException e1) {
+			// user cancellation
+		}
+		catch (LockException e) {
+			// GUI prevents you from selecting "REPLACE" if you don't have exclusive access
+			// so we shouldn't get here
+			throw new AssertException("Attempting to merge source map without exclusive access");
 		}
 	}
 

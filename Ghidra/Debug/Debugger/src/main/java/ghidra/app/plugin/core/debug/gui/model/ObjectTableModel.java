@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,6 @@ import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -38,6 +35,9 @@ import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema.AttributeSchema;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.NumericUtilities;
 import ghidra.util.datastruct.ListenerSet;
@@ -444,7 +444,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 				AttributeSchema attributeSchema) {
 			String name = attributeSchema.getName();
 			Class<?> type = computeAttributeType(ctx, attributeSchema);
-			return new AutoAttributeColumn<>(name, type, attributeSchema.isHidden());
+			return new AutoAttributeColumn<>(name, type, attributeSchema.isHidden(name));
 		}
 
 		final boolean hidden;
@@ -528,7 +528,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		if (trace == null || query == null) {
 			return List.of();
 		}
-		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return List.of();
 		}
@@ -563,7 +563,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		if (trace == null) {
 			return;
 		}
-		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return;
 		}
@@ -573,7 +573,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 			TraceValueObjectAttributeColumn<?> column =
 				columnCache.computeIfAbsent(ColKey.fromSchema(ctx, as),
 					ck -> AutoAttributeColumn.fromSchema(ctx, as));
-			if (as.isHidden()) {
+			if (as.isHidden(as.getName())) {
 				descriptor.addHiddenColumn(column);
 			}
 			else {

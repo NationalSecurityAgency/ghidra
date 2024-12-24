@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,6 @@ import org.junit.Test;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.*;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.AbstractTracePcodeEmulatorTest;
@@ -47,7 +44,10 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.TraceThread;
 
 public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
@@ -309,7 +309,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				x64.addMappedRegisterRange();
 				x64.addMappedRange(tb.addr(0x00000000), tb.addr(x64, 0x00400000), 0x10000);
 				x64.addMappedRange(tb.addr(0x20000000), tb.addr(x64, 0x00600000), 0x10000);
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers"))
+				objects.createObject(KeyPath.parse("Targets[0].Threads[0].Registers"))
 						.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 				// TODO: Make Sleigh work in the guest platform
 				TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, 0, true);

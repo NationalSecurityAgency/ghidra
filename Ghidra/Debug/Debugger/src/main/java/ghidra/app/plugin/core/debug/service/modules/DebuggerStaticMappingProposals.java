@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ghidra.app.plugin.core.debug.service.modules.ProgramModuleIndexer.IndexEntry;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.modules.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.graph.*;
@@ -31,6 +30,7 @@ import ghidra.graph.jung.JungDirectedGraph;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
 
 public enum DebuggerStaticMappingProposals {
@@ -243,11 +243,8 @@ public enum DebuggerStaticMappingProposals {
 	protected static Set<String> getLikelyModulesFromName(TraceMemoryRegion region) {
 		String key;
 		try {
-			List<String> path = PathUtils.parse(region.getPath());
-			key = PathUtils.getKey(path);
-			if (PathUtils.isIndex(key)) {
-				key = PathUtils.parseIndex(key);
-			}
+			KeyPath path = KeyPath.parse(region.getPath());
+			key = KeyPath.parseIfIndex(path.key());
 		}
 		catch (IllegalArgumentException e) { // Parse error
 			Msg.error(DebuggerStaticMappingProposals.class,

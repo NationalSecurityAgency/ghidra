@@ -36,10 +36,6 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionMapProposalDialog.R
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
-import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
@@ -53,6 +49,10 @@ import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
@@ -111,18 +111,18 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	protected TraceObjectMemoryRegion addRegion(String name, long loaded, AddressRange range) {
 		boolean isData = name.endsWith(".data");
 		TraceObjectManager om = tb.trace.getObjectManager();
-		TraceObjectKeyPath memPath = TraceObjectKeyPath.parse("Memory");
+		KeyPath memPath = KeyPath.parse("Memory");
 		Lifespan span = Lifespan.nowOn(loaded);
 		TraceObjectMemoryRegion region = Objects.requireNonNull(om.createObject(memPath.index(name))
 				.insert(span, ConflictResolution.TRUNCATE)
 				.getDestination(null)
 				.queryInterface(TraceObjectMemoryRegion.class));
 		TraceObject obj = region.getObject();
-		obj.setAttribute(span, TargetMemoryRegion.DISPLAY_ATTRIBUTE_NAME, name);
-		obj.setAttribute(span, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range);
-		obj.setAttribute(span, TargetMemoryRegion.READABLE_ATTRIBUTE_NAME, true);
-		obj.setAttribute(span, TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME, isData);
-		obj.setAttribute(span, TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME, !isData);
+		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_DISPLAY, name);
+		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_RANGE, range);
+		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_READABLE, true);
+		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_WRITABLE, isData);
+		obj.setAttribute(span, TraceObjectMemoryRegion.KEY_EXECUTABLE, !isData);
 		return region;
 	}
 

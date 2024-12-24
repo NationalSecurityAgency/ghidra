@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.LanguageTestWatcher.TestLanguage;
@@ -87,7 +87,7 @@ public class DBTraceMemoryManagerObjectRegistersPerFrameBETest
 		TraceThread thread = super.getOrAddThread(name, creationSnap);
 		TraceObject obj = ((TraceObjectThread) thread).getObject();
 		TraceObject objRegs = b.trace.getObjectManager()
-				.createObject(obj.getCanonicalPath().extend(PathUtils.parse("Stack[0]")));
+				.createObject(obj.getCanonicalPath().extend(KeyPath.parse("Stack[0]")));
 		objRegs.insert(Lifespan.ALL, ConflictResolution.DENY);
 		return thread;
 	}

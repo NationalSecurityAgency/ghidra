@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
@@ -122,13 +122,13 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 			t3.getObject().setValue(Lifespan.nowOn(0), "_state", "TERMINATED");
 			t4.getObject().setValue(Lifespan.nowOn(0), "_state", "TERMINATED");
 
-			om.createObject(TraceObjectKeyPath.parse("Threads[1].Registers"))
+			om.createObject(KeyPath.parse("Threads[1].Registers"))
 					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
-			om.createObject(TraceObjectKeyPath.parse("Threads[2].Registers"))
+			om.createObject(KeyPath.parse("Threads[2].Registers"))
 					.insert(Lifespan.nowOn(2), ConflictResolution.DENY);
-			om.createObject(TraceObjectKeyPath.parse("Threads[3].Registers"))
+			om.createObject(KeyPath.parse("Threads[3].Registers"))
 					.insert(Lifespan.nowOn(5), ConflictResolution.DENY);
-			om.createObject(TraceObjectKeyPath.parse("Threads[4].Registers"))
+			om.createObject(KeyPath.parse("Threads[4].Registers"))
 					.insert(Lifespan.nowOn(10), ConflictResolution.DENY);
 			// insert calls will extend thread life :/
 			t3.getObject().getCanonicalParent(13).setMaxSnap(10);

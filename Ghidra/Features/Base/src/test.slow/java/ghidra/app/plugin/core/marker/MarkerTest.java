@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -345,11 +345,9 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Color startColor = Palette.PINK;
 		MarkerSet markersP1 = markerService.createPointMarker("Awesome Markers", "Description",
-			program, 0, true, true,
-			true, startColor, null, true);
+			program, 0, true, true, true, startColor, null, true);
 		MarkerSet markersP2 = markerService.createPointMarker("Awesome Markers", "Description",
-			program2, 0, true, true,
-			true, startColor, null, true);
+			program2, 0, true, true, true, startColor, null, true);
 
 		Address addressP1 = addr(program, "0x1001000");
 		Address addressP2 = addr(program2, "0x1001004");
@@ -475,8 +473,8 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setSelection(fp, sel);
 
-		DockingActionIf a = getAction(getPlugin(tool, SetHighlightPlugin.class),
-			"Set Highlight From Selection");
+		DockingActionIf a =
+			getAction(getPlugin(tool, SetHighlightPlugin.class), "Set Highlight From Selection");
 		performAction(a, cb.getProvider(), true);
 
 		clearSelection(p);
@@ -484,8 +482,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void clearSelection(Program p) {
 		ProgramSelection emptySelection = new ProgramSelection(p.getAddressFactory());
-		tool.firePluginEvent(
-			new ProgramSelectionPluginEvent("Test", emptySelection, p));
+		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", emptySelection, p));
 	}
 
 	private int getCursorOffset() {
@@ -514,8 +511,8 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private Program loadSecondProgram() throws Exception {
 
-		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder(
-			"Second Sample Program", true);
+		ClassicSampleX86ProgramBuilder builder =
+			new ClassicSampleX86ProgramBuilder("Second Sample Program", true);
 		builder.setBytes("0x010032d7",
 			"53 56 8b 74 24 18 33 db 8d 04 b6 c1 e0 04 66 39 98 60 8f 00 01", true);
 
@@ -543,7 +540,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		turnOffOption("Equates", cd);
 		turnOffOption("Functions", cd);
 		turnOffOption("Registers", cd);
-		turnOffOption("Code", cd);
+		turnOffOption("Instructions", cd);
 		turnOffOption("Symbols", cd);
 
 		runSwing(() -> cd.okCallback());
