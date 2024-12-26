@@ -69,8 +69,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	private long cuOffset = -1;
 
 	@FieldMapping
-	@EOLComment("getFuncIDEnum")
-	private byte funcID;	// see GoFuncID enum
+	private byte funcID;
 
 	@FieldMapping(presentWhen = "1.17+")
 	@EOLComment("flags")
@@ -345,14 +344,6 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	/**
-	 * Returns the {@link GoFuncID} enum that categorizes this function
-	 * @return the {@link GoFuncID} enum that categorizes this function
-	 */
-	public GoFuncID getFuncIDEnum() {
-		return GoFuncID.parseIDByte(funcID);
-	}
-
-	/**
 	 * Returns information about the source file that this function was defined in.
 	 * 
 	 * @return {@link GoSourceFileInfo}, or null if no source file info present
@@ -408,20 +399,25 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	@Override
+	public String getStructureNamespace() throws IOException {
+		return getSymbolName().packagePath();
+	}	
+	
+	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
 		if (npcdata > 0) {
 			ArrayDataType pcdataArrayDT = new ArrayDataType(programContext.getUint32DT(), npcdata,
 				-1, programContext.getDTM());
 			Address addr = context.getStructureAddress().add(getPcDataStartOffset(0));
 			session.markupAddress(addr, pcdataArrayDT);
-			session.labelAddress(addr, getStructureLabel() + "___pcdata");
+			session.labelAddress(addr, getStructureLabel() + "___pcdata", getStructureNamespace());
 		}
 		if (nfuncdata > 0) {
 			ArrayDataType funcdataArrayDT = new ArrayDataType(programContext.getUint32DT(),
 				nfuncdata, -1, programContext.getDTM());
 			Address addr = context.getStructureAddress().add(getPcDataStartOffset(npcdata));
 			session.markupAddress(addr, funcdataArrayDT);
-			session.labelAddress(addr, getStructureLabel() + "___funcdata");
+			session.labelAddress(addr, getStructureLabel() + "___funcdata", getStructureNamespace());
 		}
 	}
 
