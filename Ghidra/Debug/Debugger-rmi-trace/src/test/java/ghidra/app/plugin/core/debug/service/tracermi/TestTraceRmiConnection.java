@@ -27,14 +27,14 @@ import java.util.stream.Stream;
 import db.Transaction;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.async.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection {
@@ -70,13 +70,13 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 		}
 
 		public TestRemoteMethod(String name, ActionName action, String display, String description,
-				Map<String, RemoteParameter> parameters, TargetObjectSchema retType) {
+				Map<String, RemoteParameter> parameters, TraceObjectSchema retType) {
 			this(name, action, display, description, parameters, retType.getName(),
 				new AsyncPairingQueue<>(), new AsyncPairingQueue<>());
 		}
 
 		public TestRemoteMethod(String name, ActionName action, String display, String description,
-				TargetObjectSchema retType, RemoteParameter... parameters) {
+				TraceObjectSchema retType, RemoteParameter... parameters) {
 			this(name, action, display, description, Stream.of(parameters)
 					.collect(Collectors.toMap(RemoteParameter::name, p -> p)),
 				retType);
@@ -110,7 +110,7 @@ public abstract class TestTraceRmiConnection extends AbstractTraceRmiConnection 
 
 	public record TestRemoteParameter(String name, SchemaName type, boolean required,
 			Object defaultValue, String display, String description) implements RemoteParameter {
-		public TestRemoteParameter(String name, TargetObjectSchema type, boolean required,
+		public TestRemoteParameter(String name, TraceObjectSchema type, boolean required,
 				Object defaultValue, String display, String description) {
 			this(name, type.getName(), required, defaultValue, display, description);
 		}

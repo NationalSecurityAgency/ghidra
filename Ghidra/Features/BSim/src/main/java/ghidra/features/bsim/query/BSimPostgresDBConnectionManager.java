@@ -284,7 +284,9 @@ public class BSimPostgresDBConnectionManager {
 
 			String loginError = null;
 
-			serverInfo.setUserInfo(bds);
+			if (bds.getPassword() == null) {
+				serverInfo.setUserInfo(bds);
+			}
 
 			connectionType = serverInfo.hasPassword() ? ConnectionType.SSL_Password_Authentication
 					: ConnectionType.SSL_No_Authentication;

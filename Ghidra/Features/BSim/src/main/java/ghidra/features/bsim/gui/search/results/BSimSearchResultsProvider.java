@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -132,23 +132,27 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 	}
 
 	private void createActions() {
-		new ActionBuilder("Search Info", getName()).toolBarIcon(Icons.INFO_ICON)
+		new ActionBuilder("Search Info", getOwner())
+				.toolBarIcon(Icons.INFO_ICON)
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Search_Info_Action"))
 				.onAction(c -> showSearchInfo())
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Show Searched Functions", getName()).toolBarIcon(FUNCTIONS_ICON)
+		new ActionBuilder("Show Searched Functions", getOwner())
+				.toolBarIcon(FUNCTIONS_ICON)
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Searched_Functions"))
 				.onAction(c -> showSearchedFunctions())
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Filter Results", getName()).toolBarIcon(Icons.CONFIGURE_FILTER_ICON)
+		new ActionBuilder("Filter Results", getOwner())
+				.toolBarIcon(Icons.CONFIGURE_FILTER_ICON)
 				.helpLocation(
 					new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Filter_Results_Action"))
 				.onAction(c -> showFilterPanel())
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Filter Executable", getName()).popupMenuPath("Filter on this Executable")
+		new ActionBuilder("Filter Executable", getOwner())
+				.popupMenuPath("Filter on this Executable")
 				.description("Filter on a specific executable in the function match table")
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Filter_On_Executable"))
 				.withContext(ExecutableTableActionContext.class)
@@ -156,7 +160,8 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 				.onAction(this::filterOnExecutable)
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Load Executable", getName()).popupMenuPath("Load Executable")
+		new ActionBuilder("Load Executable", getOwner())
+				.popupMenuPath("Load Executable")
 				.description("Load the selected executable into the Codebrowser")
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Load_Executable"))
 				.withContext(ExecutableTableActionContext.class)
@@ -164,7 +169,8 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 				.onAction(this::loadExecutable)
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Compare Functions", getName()).popupMenuPath("Compare Functions")
+		new ActionBuilder("Compare Functions", getOwner())
+				.popupMenuPath("Compare Functions")
 				.popupMenuGroup("1")
 				.keyBinding("shift c")
 				.sharedKeyBinding()
@@ -175,7 +181,8 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 				.onAction(this::compareFunctions)
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Apply Function Name", getName()).popupMenuPath("Apply Name")
+		new ActionBuilder("Apply Function Name", getOwner())
+				.popupMenuPath("Apply Name")
 				.popupMenuGroup(APPLY_GROUP, "1")
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Apply_Name"))
 				.withContext(BSimMatchesTableActionContext.class)
@@ -183,7 +190,8 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 				.onAction(this::applyName)
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Apply Function Signature", getName()).popupMenuPath("Apply Signature")
+		new ActionBuilder("Apply Function Signature", getOwner())
+				.popupMenuPath("Apply Signature")
 				.popupMenuGroup(APPLY_GROUP, "2")
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Apply_Signature"))
 				.withContext(BSimMatchesTableActionContext.class)
@@ -191,7 +199,7 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 				.onAction(this::applySignature)
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Apply Signature and Datatypes", getName())
+		new ActionBuilder("Apply Signature and Datatypes", getOwner())
 				.popupMenuPath("Apply Signature and Data Types")
 				.popupMenuGroup(APPLY_GROUP, "3")
 				.helpLocation(
@@ -201,7 +209,7 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 				.onAction(this::applySignatureWithDatatypes)
 				.buildAndInstallLocal(this);
 
-		showExecutableTableAction = new ToggleActionBuilder("Show Executables Table", getName())
+		showExecutableTableAction = new ToggleActionBuilder("Show Executables Table", getOwner())
 				.toolBarIcon(SPLIT_VIEW_ICON)
 				.description("Toggles showing Executables table")
 				.helpLocation(
@@ -212,7 +220,8 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 
 		addLocalAction(new SelectionNavigationAction(plugin, matchesTable.getTable()));
 
-		new ActionBuilder("Clear BSim Error Status", getName()).popupMenuPath("Clear error status")
+		new ActionBuilder("Clear BSim Error Status", getOwner())
+				.popupMenuPath("Clear error status")
 				.helpLocation(new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Clear_Error_Status"))
 				.withContext(BSimMatchesTableActionContext.class)
 				.enabledWhen(this::canClearErrors)

@@ -43,11 +43,11 @@ public class PdbApplicatorOptions {
 
 	// Apply Source Line Numbers.
 	private static final String OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS =
-		"Apply Source Line Numbers"; // DWARF says "Output Source Line Info", but we use "Apply"
+		"Import Source Line Info";
 	private static final String OPTION_DESCRIPTION_APPLY_SOURCE_LINE_NUMBERS =
 		"Create source map entries containing the source code filename, line number, address, and" +
 			" length at each location provided in the PDB data.";
-	private static final boolean DEFAULT_APPLY_SOURCE_LINE_NUMBERS = false;
+	private static final boolean DEFAULT_APPLY_SOURCE_LINE_NUMBERS = true;
 	private boolean applySourceLineNumbers;
 
 	// Apply Code Block Comments.
@@ -190,10 +190,9 @@ public class PdbApplicatorOptions {
 	private void registerOptions(Options options, boolean enableControl) {
 		HelpLocation help = null;
 
-		//TODO:  Uncomment the following for GP-3883
-//		options.registerOption(OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS,
-//			applySourceLineNumbers, help,
-//			OPTION_DESCRIPTION_APPLY_SOURCE_LINE_NUMBERS);
+		options.registerOption(OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS,
+			applySourceLineNumbers, help,
+			OPTION_DESCRIPTION_APPLY_SOURCE_LINE_NUMBERS);
 
 		if (DEVELOPER_MODE || enableControl) {
 			options.registerOption(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL, help,
@@ -202,11 +201,6 @@ public class PdbApplicatorOptions {
 
 		// PdbApplicatorOptions
 		if (DEVELOPER_MODE) {
-
-			//TODO:  Remove the following line for GP-3883
-			options.registerOption(OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS,
-				applySourceLineNumbers, help,
-				OPTION_DESCRIPTION_APPLY_SOURCE_LINE_NUMBERS);
 
 			options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
 				applyCodeScopeBlockComments, help,
@@ -251,9 +245,8 @@ public class PdbApplicatorOptions {
 
 	private void loadOptions(Options options, boolean enableControl) {
 
-		//TODO:  Uncomment the following for GP-3883
-//		applySourceLineNumbers = options.getBoolean(
-//			OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS, applySourceLineNumbers);
+		applySourceLineNumbers = options.getBoolean(
+			OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS, applySourceLineNumbers);
 
 		if (DEVELOPER_MODE || enableControl) {
 			control = options.getEnum(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL);
@@ -261,10 +254,6 @@ public class PdbApplicatorOptions {
 
 		// PdbApplicatorOptions
 		if (DEVELOPER_MODE) {
-
-			//TODO:  Remove the following line for GP-3883
-			applySourceLineNumbers = options.getBoolean(
-				OPTION_NAME_APPLY_SOURCE_LINE_NUMBERS, applySourceLineNumbers);
 
 			applyCodeScopeBlockComments = options.getBoolean(
 				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);

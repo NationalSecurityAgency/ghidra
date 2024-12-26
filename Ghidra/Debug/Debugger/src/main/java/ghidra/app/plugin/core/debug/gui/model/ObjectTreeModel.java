@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,15 @@ import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.dbg.target.*;
-import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.framework.model.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceObjectBreakpointSpec;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.iface.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.KeyPath.KeyComparator;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.LockHold;
@@ -59,25 +63,26 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		protected boolean isEventValue(TraceObjectValue value) {
 			if (!value.getParent()
-					.getTargetSchema()
+					.getSchema()
 					.getInterfaces()
-					.contains(TargetEventScope.class)) {
+					.contains(TraceObjectEventScope.class)) {
 				return false;
 			}
-			if (!TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME.equals(value.getEntryKey())) {
+			if (!TraceObjectEventScope.KEY_EVENT_THREAD.equals(value.getEntryKey())) {
 				return false;
 			}
 			return true;
 		}
 
 		protected boolean isEnabledValue(TraceObjectValue value) {
-			Set<Class<? extends TargetObject>> interfaces =
-				value.getParent().getTargetSchema().getInterfaces();
-			if (!interfaces.contains(TargetBreakpointSpec.class) &&
-				!interfaces.contains(TargetBreakpointLocation.class)) {
+			Set<Class<? extends TraceObjectInterface>> interfaces =
+				value.getParent().getSchema().getInterfaces();
+			if (!interfaces.contains(TraceObjectBreakpointSpec.class) &&
+				!interfaces.contains(TraceObjectBreakpointLocation.class) &&
+				!interfaces.contains(TraceObjectTogglable.class)) {
 				return false;
 			}
-			if (!TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(value.getEntryKey())) {
+			if (!TraceObjectTogglable.KEY_ENABLED.equals(value.getEntryKey())) {
 				return false;
 			}
 			return true;
@@ -257,7 +262,7 @@ public class ObjectTreeModel implements DisplaysModified {
 				return -1;
 			}
 			int c;
-			c = TargetObjectKeyComparator.CHILD.compare(this.getValue().getEntryKey(),
+			c = KeyComparator.CHILD.compare(this.getValue().getEntryKey(),
 				that.getValue().getEntryKey());
 			if (c != 0) {
 				return c;
@@ -297,11 +302,11 @@ public class ObjectTreeModel implements DisplaysModified {
 			}
 		}
 
-		protected AbstractNode getNode(TraceObjectKeyPath p, int pos) {
-			if (pos >= p.getKeyList().size()) {
+		protected AbstractNode getNode(KeyPath p, int pos) {
+			if (pos >= p.size()) {
 				return this;
 			}
-			String key = p.getKeyList().get(pos);
+			String key = p.key(pos);
 			AbstractNode matched = children().stream()
 					.map(c -> (AbstractNode) c)
 					.filter(c -> key.equals(c.getValue().getEntryKey()))
@@ -313,7 +318,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			return matched.getNode(p, pos + 1);
 		}
 
-		public AbstractNode getNode(TraceObjectKeyPath p) {
+		public AbstractNode getNode(KeyPath p) {
 			return getNode(p, 0);
 		}
 
@@ -575,7 +580,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			if (parentValue == null) {
 				return super.getIcon(expanded);
 			}
-			if (!parentValue.getParent().getTargetSchema().isCanonicalContainer()) {
+			if (!parentValue.getParent().getSchema().isCanonicalContainer()) {
 				return super.getIcon(expanded);
 			}
 			if (!isOnEventPath(object)) {
@@ -661,7 +666,8 @@ public class ObjectTreeModel implements DisplaysModified {
 	}
 
 	protected TraceObject getEventObject(TraceObject object) {
-		TraceObject scope = object.queryCanonicalAncestorsTargetInterface(TargetEventScope.class)
+		TraceObject scope = object
+				.findCanonicalAncestorsInterface(TraceObjectEventScope.class)
 				.findFirst()
 				.orElse(null);
 		if (scope == null) {
@@ -671,7 +677,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			return null;
 		}
 		TraceObjectValue eventValue =
-			scope.getAttribute(snap, TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME);
+			scope.getAttribute(snap, TraceObjectEventScope.KEY_EVENT_THREAD);
 		if (eventValue == null || !eventValue.isObject()) {
 			return null;
 		}
@@ -698,7 +704,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		if (type.contains("Breakpoint")) {
 			TraceObject object = edge.getChild();
 			TraceObjectValue en =
-				object.getAttribute(snap, TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME);
+				object.getAttribute(snap, TraceObjectTogglable.KEY_ENABLED);
 			// includes true or non-boolean values
 			if (en == null || !Objects.equals(false, en.getValue())) {
 				return DebuggerResources.ICON_SET_BREAKPOINT;
@@ -941,7 +947,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		return showMethods;
 	}
 
-	public AbstractNode getNode(TraceObjectKeyPath p) {
+	public AbstractNode getNode(KeyPath p) {
 		return root.getNode(p);
 	}
 }

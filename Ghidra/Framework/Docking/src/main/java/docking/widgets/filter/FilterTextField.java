@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -298,6 +298,11 @@ public class FilterTextField extends JPanel {
 		textField.requestFocus();
 	}
 
+	@Override
+	public boolean requestFocusInWindow() {
+		return textField.requestFocusInWindow();
+	}
+
 	private void fireFilterChanged(String text) {
 		for (FilterListener l : listeners) {
 			l.filterChanged(text);
@@ -402,29 +407,20 @@ public class FilterTextField extends JPanel {
 // Inner Classes
 //==================================================================================================
 
-	private class TraversalKeyListener implements KeyListener {
+	private class TraversalKeyListener extends KeyAdapter {
 		private final Component component;
 
 		private TraversalKeyListener(Component component) {
 			this.component = component;
-
 		}
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			// don't care
-		}
-
-		@Override
-		public void keyReleased(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
 				component.requestFocus();
+				KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+				kfm.redispatchEvent(component, e);
 			}
-		}
-
-		@Override
-		public void keyTyped(KeyEvent e) {
-			// don't care
 		}
 	}
 

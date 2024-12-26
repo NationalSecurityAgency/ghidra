@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,7 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Swing;
 
 public class ObjectsTreePanel extends JPanel {
@@ -173,7 +174,7 @@ public class ObjectsTreePanel extends JPanel {
 	protected final ObjectGTree tree;
 
 	protected boolean showing = false;
-	protected Set<TraceObjectKeyPath> savedSelection = null;
+	protected Set<KeyPath> savedSelection = null;
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	protected DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	protected boolean limitToSnap = true;
@@ -264,13 +265,13 @@ public class ObjectsTreePanel extends JPanel {
 			// Repaint for bold current path is already going to happen
 
 			// Repaint is not enough, as node sizes may change
-			for (TraceObjectKeyPath path = current.getPath(); path != null; path = path.parent()) {
+			for (KeyPath path = current.getPath(); path != null; path = path.parent()) {
 				AbstractNode node = treeModel.getNode(path);
 				if (node != null) {
 					node.fireNodeChanged();
 				}
 			}
-			for (TraceObjectKeyPath path = previous.getPath(); path != null; path = path.parent()) {
+			for (KeyPath path = previous.getPath(); path != null; path = path.parent()) {
 				AbstractNode node = treeModel.getNode(path);
 				if (node != null) {
 					node.fireNodeChanged();
@@ -421,14 +422,14 @@ public class ObjectsTreePanel extends JPanel {
 		return getItemFromPath(tree.getSelectionPath());
 	}
 
-	public AbstractNode getNode(TraceObjectKeyPath path) {
+	public AbstractNode getNode(KeyPath path) {
 		return treeModel.getNode(path);
 	}
 
-	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths, EventOrigin origin) {
-		savedSelection = keyPaths instanceof Set<TraceObjectKeyPath> s ? s : Set.copyOf(keyPaths);
+	public void setSelectedKeyPaths(Collection<KeyPath> keyPaths, EventOrigin origin) {
+		savedSelection = keyPaths instanceof Set<KeyPath> s ? s : Set.copyOf(keyPaths);
 		List<TreePath> treePaths = new ArrayList<>();
-		for (TraceObjectKeyPath path : keyPaths) {
+		for (KeyPath path : keyPaths) {
 			AbstractNode node = getNode(path);
 			if (node != null) {
 				treePaths.add(node.getTreePath());
@@ -437,12 +438,12 @@ public class ObjectsTreePanel extends JPanel {
 		tree.setSelectionPaths(treePaths.toArray(TreePath[]::new), origin);
 	}
 
-	public Set<TraceObjectKeyPath> getSelectedKeyPaths() {
-		Set<TraceObjectKeyPath> result = new HashSet<>();
+	public Set<KeyPath> getSelectedKeyPaths() {
+		Set<KeyPath> result = new HashSet<>();
 		for (AbstractNode node : getSelectedItems()) {
 			TraceObjectValue value = node.getValue();
 			if (value == null) {
-				result.add(TraceObjectKeyPath.of());
+				result.add(KeyPath.of());
 			}
 			else {
 				result.add(value.getCanonicalPath());
@@ -451,7 +452,7 @@ public class ObjectsTreePanel extends JPanel {
 		return result;
 	}
 
-	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
+	public void setSelectedKeyPaths(Collection<KeyPath> keyPaths) {
 		setSelectedKeyPaths(keyPaths, EventOrigin.API_GENERATED);
 	}
 

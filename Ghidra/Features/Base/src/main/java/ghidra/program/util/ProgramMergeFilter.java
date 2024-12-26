@@ -140,11 +140,16 @@ public class ProgramMergeFilter {
 	/** Indicates the <B>merge filter</B> for function tags. */
 	public static final int FUNCTION_TAGS = 1 << MERGE_FUNCTION_TAGS;
 
+	/** Internal array index for "source map" filter value. */
+	private static final int MERGE_SOURCE_MAP = 17;
+	/** Indicates the <B>merge filter</B> for source map information. */
+	public static final int SOURCE_MAP = 1 << MERGE_SOURCE_MAP;
+
 	// NOTE: If you add a new primary type here, make sure to use the
 	//       next available integer and update the NUM_PRIMARY_TYPES.
 	//       ** Also don't forget to add it to ALL below. **
 	/** The total number of primary merge difference types. */
-	private static final int NUM_PRIMARY_TYPES = 17;
+	private static final int NUM_PRIMARY_TYPES = 18;
 
 	/** Indicates to merge code unit differences. This includes instructions,
 	 * data, and equates.
@@ -152,12 +157,13 @@ public class ProgramMergeFilter {
 	public static final int CODE_UNITS = INSTRUCTIONS | DATA;
 
 	/** Indicates to merge all comment differences. */
-	public static final int COMMENTS = PLATE_COMMENTS | PRE_COMMENTS | EOL_COMMENTS |
-		REPEATABLE_COMMENTS | POST_COMMENTS;
+	public static final int COMMENTS =
+		PLATE_COMMENTS | PRE_COMMENTS | EOL_COMMENTS | REPEATABLE_COMMENTS | POST_COMMENTS;
 
 	/** Indicates all <B>merge filters</B> for all types of differences. */
-	public static final int ALL = PROGRAM_CONTEXT | BYTES | CODE_UNITS | EQUATES | REFERENCES |
-		COMMENTS | SYMBOLS | PRIMARY_SYMBOL | BOOKMARKS | PROPERTIES | FUNCTIONS | FUNCTION_TAGS;
+	public static final int ALL =
+		PROGRAM_CONTEXT | BYTES | CODE_UNITS | EQUATES | REFERENCES | COMMENTS | SYMBOLS |
+			PRIMARY_SYMBOL | BOOKMARKS | PROPERTIES | FUNCTIONS | FUNCTION_TAGS | SOURCE_MAP;
 
 	/** Array holding the filter value for each of the primary merge difference types. */
 	private int[] filterFlags = new int[NUM_PRIMARY_TYPES];
@@ -185,7 +191,7 @@ public class ProgramMergeFilter {
 	}
 
 	/** getFilter determines whether or not the specified type of filter is set.
-	 * Valid types are: BYTES, INSTRUCTIONS, DATA,
+	 * Valid types are: BYTES, INSTRUCTIONS, DATA, SOURCE_MAP,
 	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS.
 	 * INVALID is returned if combinations of merge types (e.g. ALL) are 
 	 * passed in.
@@ -213,6 +219,7 @@ public class ProgramMergeFilter {
 			case FUNCTIONS:
 			case FUNCTION_TAGS:
 			case EQUATES:
+			case SOURCE_MAP:
 				int bitPos = 0;
 				int tmpType = type;
 				while (bitPos < NUM_PRIMARY_TYPES) {
@@ -234,7 +241,8 @@ public class ProgramMergeFilter {
 	/** validatePredefinedType determines whether or not the indicated type
 	 * of filter item is a valid predefined type.
 	 * Valid types are: BYTES, INSTRUCTIONS, DATA,
-	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS, ALL.
+	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS, 
+	 * SOURCE_MAP, ALL.
 	 *
 	 * @param type the type of difference to look for between the programs.
 	 * @return true if this is a pre-defined merge type.
@@ -260,6 +268,7 @@ public class ProgramMergeFilter {
 			case EQUATES:
 			case CODE_UNITS:
 			case COMMENTS:
+			case SOURCE_MAP:
 			case ALL:
 				return true;
 			default:
@@ -316,7 +325,8 @@ public class ProgramMergeFilter {
 	/** isMergeValidForFilter determines whether or not the <CODE>MERGE</CODE>
 	 *  filter if valid for the indicated primary merge type.
 	 * Possible types are: BYTES, INSTRUCTIONS, DATA, REFERENCES,
-	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS, ALL.
+	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS, 
+	 * SOURCE_MAP, ALL.
 	 *
 	 * @param type the type of difference to merge between the programs.
 	 * @return true if <CODE>MERGE</CODE> is valid for the merge type.
@@ -325,7 +335,7 @@ public class ProgramMergeFilter {
 	 */
 	private boolean isMergeValidForFilter(int type) throws IllegalArgumentException {
 		switch (type) {
-		// The following can be MERGE.
+			// The following can be MERGE.
 			case PLATE_COMMENTS:
 			case PRE_COMMENTS:
 			case EOL_COMMENTS:
@@ -334,7 +344,7 @@ public class ProgramMergeFilter {
 			case SYMBOLS:
 			case FUNCTION_TAGS:
 				return true;
-				// The following cannot be MERGE.
+			// The following cannot be MERGE.
 			case PROGRAM_CONTEXT:
 			case BYTES:
 			case INSTRUCTIONS:
@@ -345,6 +355,7 @@ public class ProgramMergeFilter {
 			case FUNCTIONS:
 			case EQUATES:
 			case PRIMARY_SYMBOL:
+			case SOURCE_MAP:
 				return false;
 			default:
 				throw new IllegalArgumentException(
@@ -469,6 +480,8 @@ public class ProgramMergeFilter {
 				return "COMMENTS";
 			case ALL:
 				return "ALL";
+			case SOURCE_MAP:
+				return "SOURCE_MAP";
 			default:
 				return "";
 		}

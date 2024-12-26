@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -270,14 +270,20 @@ public class DWARFLine {
 		return lpe;
 	}
 
-	public record SourceFileAddr(long address, String fileName, int lineNum) {}
+	public record SourceFileAddr(long address, String fileName, byte[] md5, int lineNum,
+			boolean isEndSequence) {}
 
 	public List<SourceFileAddr> getAllSourceFileAddrInfo(DWARFCompilationUnit cu,
 			BinaryReader reader) throws IOException {
 		try (DWARFLineProgramExecutor lpe = getLineProgramexecutor(cu, reader)) {
 			List<SourceFileAddr> results = new ArrayList<>();
 			for (DWARFLineProgramState row : lpe.allRows()) {
-				results.add(new SourceFileAddr(row.address, getFilePath(row.file, true), row.line));
+				byte[] md5 = null;
+				if (cu.getDWARFVersion() >= 5 && (row.file < cu.getLine().getNumFiles())) {
+					md5 = cu.getLine().getFile(row.file).getMD5();
+				}
+				results.add(new SourceFileAddr(row.address, getFilePath(row.file, true), md5,
+					row.line, row.isEndSequence));
 			}
 
 			return results;
@@ -315,6 +321,14 @@ public class DWARFLine {
 			"Invalid file index %d for line table at 0x%x: ".formatted(index, startOffset));
 	}
 
+	/**
+	 * Returns the number of indexed files
+	 * @return num files
+	 */
+	public int getNumFiles() {
+		return files.size();
+	}
+
 	public String getFilePath(int index, boolean includePath) {
 		try {
 			DWARFFile f = getFile(index);
@@ -322,9 +336,7 @@ public class DWARFLine {
 				return f.getName();
 			}
 
-			String dir = f.getDirectoryIndex() >= 0
-					? getDir(f.getDirectoryIndex()).getName()
-					: "";
+			String dir = f.getDirectoryIndex() >= 0 ? getDir(f.getDirectoryIndex()).getName() : "";
 
 			return FSUtilities.appendPath(dir, f.getName());
 		}

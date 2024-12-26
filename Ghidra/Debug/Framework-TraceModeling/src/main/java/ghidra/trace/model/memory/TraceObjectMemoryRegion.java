@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,22 +18,31 @@ package ghidra.trace.model.memory;
 import java.util.Collection;
 import java.util.Set;
 
-import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.target.TraceObjectInterface;
-import ghidra.trace.model.target.annot.TraceObjectInfo;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInfo;
 
 @TraceObjectInfo(
-	targetIf = TargetMemoryRegion.class,
+	schemaName = "MemoryRegion",
 	shortName = "region",
+	attributes = {
+		TraceObjectMemoryRegion.KEY_RANGE,
+		TraceObjectMemoryRegion.KEY_READABLE,
+		TraceObjectMemoryRegion.KEY_WRITABLE,
+		TraceObjectMemoryRegion.KEY_EXECUTABLE,
+		TraceObjectMemoryRegion.KEY_VOLATILE,
+	},
 	fixedKeys = {
-		TargetObject.DISPLAY_ATTRIBUTE_NAME,
-		TargetMemoryRegion.RANGE_ATTRIBUTE_NAME
+		TraceObjectInterface.KEY_DISPLAY,
+		TraceObjectMemoryRegion.KEY_RANGE,
 	})
 public interface TraceObjectMemoryRegion extends TraceMemoryRegion, TraceObjectInterface {
+	String KEY_RANGE = "_range";
+	String KEY_READABLE = "_readable";
+	String KEY_WRITABLE = "_writable";
+	String KEY_EXECUTABLE = "_executable";
 	String KEY_VOLATILE = "_volatile";
 
 	void setName(Lifespan lifespan, String name);

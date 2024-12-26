@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,6 +86,8 @@ public class GTable extends JTable {
 		KeyStroke.getKeyStroke(KeyEvent.VK_C, CONTROL_KEY_MODIFIER_MASK | SHIFT_DOWN_MASK);
 	private static final KeyStroke SELECT_ALL_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_A, CONTROL_KEY_MODIFIER_MASK);
+	private static final KeyStroke ACTIVATE_FILTER_KEY_STROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_F, CONTROL_KEY_MODIFIER_MASK);
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
 	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
@@ -128,6 +130,8 @@ public class GTable extends JTable {
 
 	private TableColumnModelListener tableColumnModelListener = null;
 	private final Map<Integer, GTableCellRenderingData> columnRenderingDataMap = new HashMap<>();
+
+	private GTableFilterPanel<?> tableFilterPanel;
 
 	/**
 	 * Constructs a new GTable
@@ -835,6 +839,22 @@ public class GTable extends JTable {
 	}
 
 	/**
+	 * Sets the table filter panel being used for this table.
+	 * @param filterPanel the filter panel
+	 */
+	public void setTableFilterPanel(GTableFilterPanel<?> filterPanel) {
+		this.tableFilterPanel = filterPanel;
+	}
+
+	/**
+	 * Returns the filter panel being used by this table or null.
+	 * @return the filter panel or null
+	 */
+	public GTableFilterPanel<?> getTableFilterPanel() {
+		return tableFilterPanel;
+	}
+
+	/**
 	 * Sets the key for saving and restoring column configuration state.  Use this if you have
 	 * multiple instances of a table and you want different column settings for each instance.
 	 *
@@ -1450,12 +1470,79 @@ public class GTable extends JTable {
 		selectAllAction.setHelpLocation(new HelpLocation("Tables", "SelectAll"));
 		//@formatter:on
 
+		GTableAction activateFilterAction = new GTableAction("Table/Tree Activate Filter", owner) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTable gTable = (GTable) context.getSourceComponent();
+				return gTable.getTableFilterPanel() != null;
+			}
+
+			@Override
+			public void actionPerformed(ActionContext context) {
+
+				GTable gTable = (GTable) context.getSourceComponent();
+				GTableFilterPanel<?> filterPanel = gTable.getTableFilterPanel();
+				filterPanel.activate();
+			}
+		};
+		//@formatter:off
+		activateFilterAction.setPopupMenuData(new MenuData(
+				new String[] { "Activate Filter" },
+				null /*icon*/,
+				actionMenuGroup,
+				NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);
+		activateFilterAction.setKeyBindingData(new KeyBindingData(ACTIVATE_FILTER_KEY_STROKE));
+		activateFilterAction.setHelpLocation(new HelpLocation("Trees", "Activate_Filter"));
+		//@formatter:on
+
+		GTableAction toggleFilterAction = new GTableAction("Table/Tree Toggle Filter", owner) {
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+
+				GTable gTable = (GTable) context.getSourceComponent();
+				return gTable.getTableFilterPanel() != null;
+			}
+
+			@Override
+			public void actionPerformed(ActionContext context) {
+
+				GTable gTable = (GTable) context.getSourceComponent();
+				GTableFilterPanel<?> filterPanel = gTable.getTableFilterPanel();
+				filterPanel.toggleVisibility();
+			}
+		};
+		//@formatter:off
+		toggleFilterAction.setPopupMenuData(new MenuData(
+				new String[] { "Toggle Filter" },
+				null /*icon*/,
+				actionMenuGroup,
+				NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);		
+		toggleFilterAction.setHelpLocation(new HelpLocation("Trees", "Toggle_Filter"));
+		//@formatter:on
+
 		toolActions.addGlobalAction(copyAction);
 		toolActions.addGlobalAction(copyColumnsAction);
 		toolActions.addGlobalAction(copyCurrentColumnAction);
 		toolActions.addGlobalAction(exportAction);
 		toolActions.addGlobalAction(exportColumnsAction);
 		toolActions.addGlobalAction(selectAllAction);
+		toolActions.addGlobalAction(activateFilterAction);
+		toolActions.addGlobalAction(toggleFilterAction);
 	}
 
 //==================================================================================================

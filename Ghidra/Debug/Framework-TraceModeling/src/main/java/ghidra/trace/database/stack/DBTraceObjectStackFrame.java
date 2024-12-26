@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,6 @@ package ghidra.trace.database.stack;
 
 import java.util.*;
 
-import ghidra.dbg.target.TargetStackFrame;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.EventType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
@@ -32,13 +29,15 @@ import ghidra.trace.model.stack.TraceObjectStack;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 
 public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceObjectInterface {
-	private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
+	private static final Map<TraceObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
 
 	private final DBTraceObject object;
 	private final Set<String> keys;
@@ -50,10 +49,10 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	public DBTraceObjectStackFrame(DBTraceObject object) {
 		this.object = object;
 
-		TargetObjectSchema schema = object.getTargetSchema();
+		TraceObjectSchema schema = object.getSchema();
 		synchronized (KEYS_BY_SCHEMA) {
 			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
-				s -> Set.of(schema.checkAliasedAttribute(TargetStackFrame.PC_ATTRIBUTE_NAME)));
+				s -> Set.of(schema.checkAliasedAttribute(TraceObjectStackFrame.KEY_PC)));
 		}
 	}
 
@@ -68,13 +67,13 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 	@Override
 	public int getLevel() {
-		List<String> keys = object.getCanonicalPath().getKeyList();
-		for (int i = keys.size() - 1; i >= 0; i--) {
-			String k = keys.get(i);
-			if (!PathUtils.isIndex(k)) {
+		KeyPath path = object.getCanonicalPath();
+		for (int i = path.size() - 1; i >= 0; i--) {
+			String k = path.key(i);
+			if (!KeyPath.isIndex(k)) {
 				continue;
 			}
-			String index = PathUtils.parseIndex(k);
+			String index = KeyPath.parseIndex(k);
 			try {
 				return Integer.decode(index);
 				// TODO: Perhaps just have an attribute that is its level?
@@ -88,7 +87,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 	@Override
 	public Address getProgramCounter(long snap) {
-		return TraceObjectInterfaceUtils.getValue(object, snap, TargetStackFrame.PC_ATTRIBUTE_NAME,
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectStackFrame.KEY_PC,
 			Address.class, null);
 	}
 
@@ -98,7 +97,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 			if (pc == Address.NO_ADDRESS) {
 				pc = null;
 			}
-			object.setValue(span, TargetStackFrame.PC_ATTRIBUTE_NAME, pc);
+			object.setValue(span, TraceObjectStackFrame.KEY_PC, pc);
 		}
 	}
 
@@ -128,7 +127,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	public void setComment(long snap, String comment) {
 		/* See rant in getComment */
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			TraceObjectValue pcAttr = object.getValue(snap, TargetStackFrame.PC_ATTRIBUTE_NAME);
+			TraceObjectValue pcAttr = object.getValue(snap, TraceObjectStackFrame.KEY_PC);
 			object.getTrace()
 					.getCommentAdapter()
 					.setComment(pcAttr.getLifespan(), (Address) pcAttr.getValue(),

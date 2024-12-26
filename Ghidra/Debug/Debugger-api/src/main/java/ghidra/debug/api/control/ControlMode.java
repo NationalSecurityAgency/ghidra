@@ -27,7 +27,6 @@ import generic.theme.GIcon;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
-import ghidra.async.AsyncUtils;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -258,7 +257,7 @@ public enum ControlMode {
 					return CompletableFuture.failedFuture(new MemoryAccessException());
 				}
 			}
-			return AsyncUtils.nil();
+			return CompletableFuture.completedFuture(null);
 		}
 
 		@Override

@@ -1142,7 +1142,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 					BigInteger index2 = loc2.getIndex();
 					int fieldNum2 = layout.getEndRowFieldNum(loc2.getFieldNum());
 					if (fieldNum2 >= layout2.getNumFields()) {
-						index2 = loc2.getIndex().add(BigInteger.valueOf(layout2.getIndexSize()));
+						index2 = loc2.getIndex().add(BigInteger.ONE);
 						fieldNum2 = 0;
 					}
 					fieldSel.addRange(new FieldLocation(loc1.getIndex(), fieldNum1, 0, 0),

@@ -25,8 +25,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -35,6 +33,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
@@ -164,15 +163,15 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		if (object == null) {
 			return null;
 		}
-		PathPattern pat = PathPredicates.parse(pattern).getSingletonPattern();
+		PathPattern pat = PathFilter.parse(pattern).getSingletonPattern();
 //		if (pat.countWildcards() != 1) {
 //			throw new IllegalArgumentException("Exactly one wildcard required");
 //		}
-		List<String> path = object.getCanonicalPath().getKeyList();
+		KeyPath path = object.getCanonicalPath();
 		if (path.size() < pat.asPath().size()) {
 			return null;
 		}
-		List<String> matched = pat.matchKeys(path.subList(0, pat.asPath().size()));
+		List<String> matched = pat.matchKeys(path, false);
 		if (matched == null) {
 			return null;
 		}

@@ -1081,7 +1081,7 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
       vn->clearFlags((~fl)&mask);
     }
     if (ct != (Datatype *)0) {
-      if (vn->updateType(ct,false,false))
+      if (vn->updateType(ct))
 	updateoccurred = true;
     }
   } while(iter != enditer);

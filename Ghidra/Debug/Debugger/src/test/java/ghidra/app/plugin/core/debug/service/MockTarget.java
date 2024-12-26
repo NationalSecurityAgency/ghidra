@@ -21,19 +21,19 @@ import java.util.concurrent.CompletableFuture;
 
 import docking.ActionContext;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -76,17 +76,17 @@ public class MockTarget implements Target {
 	}
 
 	@Override
-	public TraceThread getThreadForSuccessor(TraceObjectKeyPath path) {
+	public TraceThread getThreadForSuccessor(KeyPath path) {
 		return null;
 	}
 
 	@Override
-	public TargetExecutionState getThreadExecutionState(TraceThread thread) {
+	public TraceExecutionState getThreadExecutionState(TraceThread thread) {
 		return null;
 	}
 
 	@Override
-	public TraceStackFrame getStackFrameForSuccessor(TraceObjectKeyPath path) {
+	public TraceStackFrame getStackFrameForSuccessor(KeyPath path) {
 		return null;
 	}
 
@@ -96,7 +96,7 @@ public class MockTarget implements Target {
 	}
 
 	@Override
-	public TraceObjectKeyPath getFocus() {
+	public KeyPath getFocus() {
 		return null;
 	}
 

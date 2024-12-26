@@ -5,8 +5,6 @@ Module.manifest||GHIDRA||||END|
 README.md||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/debugger-launchers/local-lldb.bat||GHIDRA||||END|
-src/llvm-project/lldb/bindings/java/java-typemaps.swig||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm-project/lldb/bindings/java/java.swig||Apache License 2.0 with LLVM Exceptions||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|

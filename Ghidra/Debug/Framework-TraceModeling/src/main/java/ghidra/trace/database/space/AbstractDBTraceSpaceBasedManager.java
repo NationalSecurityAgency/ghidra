@@ -23,12 +23,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
-import ghidra.dbg.target.TargetRegisterContainer;
 import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.memory.TraceObjectRegisterContainer;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
@@ -310,12 +310,12 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	}
 
 	protected TraceObject doGetRegisterContainer(TraceObject threadObject, int frameLevel) {
-		if (threadObject.getTargetSchema()
+		if (threadObject.getSchema()
 				.getInterfaces()
-				.contains(TargetRegisterContainer.class)) {
+				.contains(TraceObjectRegisterContainer.class)) {
 			return threadObject;
 		}
-		return threadObject.queryRegisterContainer(frameLevel);
+		return threadObject.findRegisterContainer(frameLevel);
 	}
 
 	protected M getForRegisterSpace(TraceObject threadObject, int frameLevel,

@@ -561,6 +561,7 @@ src/main/help/help/topics/ShowInstructionInfoPlugin/images/RawInstructionDisplay
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/ShowInstructionInfo.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/UnableToLaunch.png||GHIDRA||||END|
 src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||||END|
+src/main/help/help/topics/SourceFilesTablePlugin/SourceFilesTable.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/StackEditor.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/NumElementsPrompt.png||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/StackEditor.png||GHIDRA||||END|
@@ -899,6 +900,7 @@ src/main/resources/images/pencil16.png||GHIDRA||||END|
 src/main/resources/images/pin.png||GHIDRA||||END|
 src/main/resources/images/play_again.png||GHIDRA||||END|
 src/main/resources/images/preferences-system.png||Tango Icons - Public Domain|||tango|END|
+src/main/resources/images/python.png||GHIDRA||||END|
 src/main/resources/images/question_zero.png||GHIDRA||||END|
 src/main/resources/images/red-cross.png||GHIDRA||||END|
 src/main/resources/images/redQuestionMark.png||GHIDRA||||END|

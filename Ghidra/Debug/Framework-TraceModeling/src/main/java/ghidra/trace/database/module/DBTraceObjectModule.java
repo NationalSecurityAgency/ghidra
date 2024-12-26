@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,6 @@ package ghidra.trace.database.module;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.PathMatcher;
-import ghidra.dbg.util.PathPredicates.Align;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.*;
@@ -30,7 +25,12 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter.Align;
+import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
@@ -38,18 +38,18 @@ import ghidra.util.exception.DuplicateNameException;
 public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInterface {
 
 	protected class ModuleChangeTranslator extends Translator<TraceModule> {
-		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+		private static final Map<TraceObjectSchema, Set<String>> KEYS_BY_SCHEMA =
 			new WeakHashMap<>();
 
 		private final Set<String> keys;
 
 		protected ModuleChangeTranslator(DBTraceObject object, TraceModule iface) {
-			super(TargetModule.RANGE_ATTRIBUTE_NAME, object, iface);
-			TargetObjectSchema schema = object.getTargetSchema();
+			super(TraceObjectModule.KEY_RANGE, object, iface);
+			TraceObjectSchema schema = object.getSchema();
 			synchronized (KEYS_BY_SCHEMA) {
 				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
-					s.checkAliasedAttribute(TargetModule.RANGE_ATTRIBUTE_NAME),
-					s.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME)));
+					s.checkAliasedAttribute(TraceObjectModule.KEY_RANGE),
+					s.checkAliasedAttribute(TraceObjectInterface.KEY_DISPLAY)));
 			}
 		}
 
@@ -102,8 +102,8 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 			throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			DBTraceObjectManager manager = object.getManager();
-			List<String> sectionKeyList = PathUtils.parse(sectionPath);
-			if (!PathUtils.isAncestor(object.getCanonicalPath().getKeyList(), sectionKeyList)) {
+			KeyPath sectionKeyList = KeyPath.parse(sectionPath);
+			if (!object.getCanonicalPath().isAncestor(sectionKeyList)) {
 				throw new IllegalArgumentException(
 					"Section path must be a successor of this module's path");
 			}
@@ -118,7 +118,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 
 	@Override
 	public void setName(Lifespan lifespan, String name) {
-		object.setValue(lifespan, TargetModule.MODULE_NAME_ATTRIBUTE_NAME, name);
+		object.setValue(lifespan, TraceObjectModule.KEY_MODULE_NAME, name);
 	}
 
 	@Override
@@ -131,13 +131,13 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public String getName() {
 		return TraceObjectInterfaceUtils.getValue(object, getLoadedSnap(),
-			TargetModule.MODULE_NAME_ATTRIBUTE_NAME, String.class, "");
+			TraceObjectModule.KEY_MODULE_NAME, String.class, "");
 	}
 
 	@Override
 	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(lifespan, TargetModule.RANGE_ATTRIBUTE_NAME, range);
+			object.setValue(lifespan, TraceObjectModule.KEY_RANGE, range);
 			this.range = range;
 		}
 	}
@@ -156,7 +156,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 				return range;
 			}
 			return range = TraceObjectInterfaceUtils.getValue(object, getLoadedSnap(),
-				TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class, range);
+				TraceObjectModule.KEY_RANGE, AddressRange.class, range);
 		}
 	}
 
@@ -255,7 +255,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 
 	@Override
 	public TraceObjectSection getSectionByName(String sectionName) {
-		PathMatcher matcher = object.getTargetSchema().searchFor(TargetSection.class, true);
+		PathMatcher matcher = object.getSchema().searchFor(TraceObjectSection.class, true);
 		PathMatcher applied = matcher.applyKeys(Align.LEFT, List.of(sectionName));
 		return object.getSuccessors(getLifespan(), applied)
 				.map(p -> p.getDestination(object).queryInterface(TraceObjectSection.class))

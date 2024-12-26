@@ -194,12 +194,10 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		// 2) Check for actions local to the source component
 		//
 		for (ActionData actionData : actions) {
-			if (!(actionData.action instanceof ComponentBasedDockingAction)) {
+			if (!(actionData.action instanceof ComponentBasedDockingAction componentAction)) {
 				continue;
 			}
 
-			ComponentBasedDockingAction componentAction =
-				(ComponentBasedDockingAction) actionData.action;
 			if (componentAction.isValidComponentContext(localContext)) {
 				hasLocalActionsForKeyBinding = true;
 				if (isValidAndEnabled(actionData, localContext)) {

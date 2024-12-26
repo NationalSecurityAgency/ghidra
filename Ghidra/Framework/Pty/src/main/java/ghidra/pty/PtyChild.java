@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +62,12 @@ public interface PtyChild extends PtyEndpoint {
 
 	/**
 	 * @see #session(String[], Map, File, Collection)
+	 * @param args the image path and arguments
+	 * @param env the environment
+	 * @param workingDirectory the working directory
+	 * @param mode the terminal mode. If a mode is not implemented, it may be silently ignored.
+	 * @return a handle to the subprocess
+	 * @throws IOException if the session could not be started
 	 */
 	default PtySession session(String[] args, Map<String, String> env, File workingDirectory,
 			TermMode... mode) throws IOException {
@@ -70,6 +76,11 @@ public interface PtyChild extends PtyEndpoint {
 
 	/**
 	 * @see #session(String[], Map, File, Collection)
+	 * @param args the image path and arguments
+	 * @param env the environment
+	 * @param mode the terminal mode. If a mode is not implemented, it may be silently ignored.
+	 * @return a handle to the subprocess
+	 * @throws IOException if the session could not be started
 	 */
 	default PtySession session(String[] args, Map<String, String> env, TermMode... mode)
 			throws IOException {
@@ -97,6 +108,10 @@ public interface PtyChild extends PtyEndpoint {
 
 	/**
 	 * @see #nullSession(Collection)
+	 * @param mode the terminal mode. If a mode is not implemented, it may be silently ignored.
+	 * @return the file name
+	 * @throws IOException if the session could not be started or the pty name could not be
+	 *             determined
 	 */
 	default String nullSession(TermMode... mode) throws IOException {
 		return nullSession(List.of(mode));

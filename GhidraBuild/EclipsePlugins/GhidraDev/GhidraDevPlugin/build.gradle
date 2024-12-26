@@ -81,8 +81,8 @@ task pyDevUnpack(type:Copy) {
 		!pyDevDestDir.exists()
 	}
 	
-	File depsFile = file("${DEPS_DIR}/GhidraDev/PyDev 6.3.1.zip")
-	File binRepoFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
+	File depsFile = file("${DEPS_DIR}/GhidraDev/PyDev 9.3.0.zip")
+	File binRepoFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 9.3.0.zip")
 
 	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
 	def pyDevZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
@@ -115,6 +115,13 @@ task cdtUnpack(type:Copy) {
 	destinationDir cdtDestDir
 }
 
+task prepGhidraDev {
+	dependsOn("utilityJar")
+	dependsOn("launchSupportJar")
+	dependsOn("pyDevUnpack")
+	dependsOn("cdtUnpack")
+}
+
 // We do not currently build GhidraDev plugin at Ghidra build time so we must 
 // copy the prebuilt zip file from the BIN_REPO
 rootProject.assembleDistribution {
@@ -129,9 +136,3 @@ rootProject.assembleMarkdownToHtml {
 		into "Extensions/Eclipse/GhidraDev/"
 	}
 }
-
-// PrepDev dependencies
-rootProject.prepDev.dependsOn utilityJar
-rootProject.prepDev.dependsOn launchSupportJar
-rootProject.prepDev.dependsOn pyDevUnpack
-rootProject.prepDev.dependsOn cdtUnpack

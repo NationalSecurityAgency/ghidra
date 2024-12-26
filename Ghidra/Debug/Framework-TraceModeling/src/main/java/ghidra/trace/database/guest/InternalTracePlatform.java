@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,20 +17,19 @@ package ghidra.trace.database.guest;
 
 import java.util.*;
 
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetRegister;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.util.PathMatcher;
-import ghidra.dbg.util.PathPredicates.Align;
-import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter.Align;
+import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
@@ -113,21 +112,21 @@ public interface InternalTracePlatform extends TracePlatform {
 	}
 
 	@Override
-	default PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
+	default PathMatcher getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Collection<String> names) {
-		PathMatcher matcher = schema.searchFor(TargetRegister.class, path, true);
-		if (matcher.isEmpty()) {
+		PathMatcher matcher = schema.searchFor(TraceObjectRegister.class, path, true);
+		if (matcher.isNone()) {
 			return matcher;
 		}
 		PathMatcher result = new PathMatcher();
-		for (String name:names) {
+		for (String name : names) {
 			result.addAll(matcher.applyKeys(Align.RIGHT, List.of(name)));
 		}
 		return result;
 	}
 
 	@Override
-	default PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
+	default PathMatcher getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Register register) {
 		return getConventionalRegisterPath(schema, path,
 			getConventionalRegisterObjectNames(register));
@@ -135,24 +134,18 @@ public interface InternalTracePlatform extends TracePlatform {
 
 	@Override
 	default PathMatcher getConventionalRegisterPath(TraceObject container, Register register) {
-		return getConventionalRegisterPath(container.getTargetSchema(),
-			container.getCanonicalPath().getKeyList(), register);
-	}
-
-	@Override
-	default PathMatcher getConventionalRegisterPath(TargetObject container, Register register) {
-		return getConventionalRegisterPath(container.getSchema(), container.getPath(), register);
+		return getConventionalRegisterPath(container.getSchema(),
+			container.getCanonicalPath(), register);
 	}
 
 	@Override
 	default PathMatcher getConventionalRegisterPath(AddressSpace space, Register register) {
-		List<String> path = PathUtils.parse(space.getName());
-		TargetObjectSchema rootSchema = getTrace().getObjectManager().getRootSchema();
+		KeyPath path = KeyPath.parse(space.getName());
+		TraceObjectSchema rootSchema = getTrace().getObjectManager().getRootSchema();
 		if (rootSchema == null) {
 			return null;
 		}
-		TargetObjectSchema schema = rootSchema
-				.getSuccessorSchema(path);
+		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
 		return getConventionalRegisterPath(schema, path, register);
 	}
 

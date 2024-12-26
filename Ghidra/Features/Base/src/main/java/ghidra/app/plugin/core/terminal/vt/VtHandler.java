@@ -23,6 +23,7 @@ import java.util.PrimitiveIterator.OfInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ghidra.app.plugin.core.terminal.vt.AnsiColorResolver.ReverseVideo;
 import ghidra.util.Msg;
 
 /**
@@ -171,42 +172,50 @@ public interface VtHandler {
 		 * Usually the darkest black available. Implementations may select a color softer on the
 		 * eyes, depending on use. For foreground, this should likely be true black (0,0,0).
 		 */
-		BLACK,
+		BLACK(AnsiIntenseColor.BLACK, AnsiDimColor.BLACK),
 		/**
 		 * A color whose hue is clearly red.
 		 */
-		RED,
+		RED(AnsiIntenseColor.RED, AnsiDimColor.RED),
 		/**
 		 * A color whose hue is clearly green.
 		 */
-		GREEN,
+		GREEN(AnsiIntenseColor.GREEN, AnsiDimColor.GREEN),
 		/**
 		 * A color whose hue is clearly yellow.
 		 */
-		YELLOW,
+		YELLOW(AnsiIntenseColor.YELLOW, AnsiDimColor.YELLOW),
 		/**
 		 * A color whose hue is clearly blue. For palettes made to display on a dark (but not black)
 		 * background, a hue tinted toward cyan is recommended.
 		 */
-		BLUE,
+		BLUE(AnsiIntenseColor.BLUE, AnsiDimColor.BLUE),
 		/**
 		 * A color whose hue is clearly magenta or purple. For palettes made to display on a dark
 		 * (but not black) background, a hue tinted toward red is recommended.
 		 */
-		MAGENTA,
+		MAGENTA(AnsiIntenseColor.MAGENTA, AnsiDimColor.MAGENTA),
 		/**
 		 * A color whose hue is clearly cyan.
 		 */
-		CYAN,
+		CYAN(AnsiIntenseColor.CYAN, AnsiDimColor.CYAN),
 		/**
 		 * A relatively bright white, sparing the brightest for intense white.
 		 */
-		WHITE;
+		WHITE(AnsiIntenseColor.WHITE, AnsiDimColor.WHITE);
 
 		/**
 		 * An unmodifiable list giving all the standard colors
 		 */
 		public static final List<AnsiStandardColor> ALL = List.of(AnsiStandardColor.values());
+
+		public final AnsiIntenseColor intense;
+		public final AnsiDimColor dim;
+
+		private AnsiStandardColor(AnsiIntenseColor intense, AnsiDimColor dim) {
+			this.intense = intense;
+			this.dim = dim;
+		}
 
 		/**
 		 * Get the standard color for the given numerical code
@@ -283,13 +292,68 @@ public interface VtHandler {
 	}
 
 	/**
+	 * One of the eight ANSI dim colors
+	 */
+	public enum AnsiDimColor implements AnsiColor {
+		/**
+		 * A relatively dark grey, but not true black.
+		 */
+		BLACK,
+		/**
+		 * See {@link AnsiStandardColor#RED}, but darker.
+		 */
+		RED,
+		/**
+		 * See {@link AnsiStandardColor#GREEN}, but darker.
+		 */
+		GREEN,
+		/**
+		 * See {@link AnsiStandardColor#YELLOW}, but darker.
+		 */
+		YELLOW,
+		/**
+		 * See {@link AnsiStandardColor#BLUE}, but darker.
+		 */
+		BLUE,
+		/**
+		 * See {@link AnsiStandardColor#MAGENTA}, but darker.
+		 */
+		MAGENTA,
+		/**
+		 * See {@link AnsiStandardColor#CYAN}, but darker.
+		 */
+		CYAN,
+		/**
+		 * Usually grey.
+		 */
+		WHITE;
+
+		/**
+		 * An unmodifiable list giving all the dim colors
+		 */
+		public static final List<AnsiDimColor> ALL = List.of(AnsiDimColor.values());
+
+		/**
+		 * Get the dim color for the given numerical code
+		 * 
+		 * <p>
+		 * For example, the sequence {@code CSI [ 34 m} would use code 4 (blue).
+		 * 
+		 * @param code the code
+		 * @return the color
+		 */
+		public static AnsiDimColor get(int code) {
+			return ALL.get(code);
+		}
+	}
+
+	/**
 	 * For 8-bit colors, one of the 216 colors from the RGB cube
 	 * 
 	 * <p>
 	 * The r, g, and b fields give the "step" number from 0 to 5, dimmest to brightest.
 	 */
-	public record Ansi216Color(int r, int g, int b) implements AnsiColor {
-	}
+	public record Ansi216Color(int r, int g, int b) implements AnsiColor {}
 
 	/**
 	 * For 8-bit colors, one of the 24 grays
@@ -298,8 +362,7 @@ public interface VtHandler {
 	 * The v field is a value from 0 to 23, 0 being the dimmest, but not true black, and 23 being
 	 * the brightest, but not true white.
 	 */
-	public record AnsiGrayscaleColor(int v) implements AnsiColor {
-	}
+	public record AnsiGrayscaleColor(int v) implements AnsiColor {}
 
 	/**
 	 * A 24-bit color
@@ -307,8 +370,7 @@ public interface VtHandler {
 	 * <p>
 	 * The r, g, and b fields are values from 0 to 255 dimmest to brightest.
 	 */
-	public record Ansi24BitColor(int r, int g, int b) implements AnsiColor {
-	}
+	public record Ansi24BitColor(int r, int g, int b) implements AnsiColor {}
 
 	/**
 	 * Modifies the intensity of the character either by color or by font weight.
@@ -1202,7 +1264,7 @@ public interface VtHandler {
 				handleBlink(Blink.FAST);
 				return;
 			case 7:
-				handleReverseVideo(true);
+				handleReverseVideo(ReverseVideo.REVERSED);
 				return;
 			case 8:
 				handleHidden(true);
@@ -1232,7 +1294,7 @@ public interface VtHandler {
 				handleProportionalSpacing(true);
 				return;
 			case 27:
-				handleReverseVideo(false);
+				handleReverseVideo(ReverseVideo.NORMAL);
 				return;
 			case 28:
 				handleHidden(false);
@@ -1345,9 +1407,9 @@ public interface VtHandler {
 	 * "default background," care must be taken to ensure the foreground is still painted in
 	 * reversed mode.
 	 * 
-	 * @param reverse true to reverse, false otherwise
+	 * @param reverse the reverse video mode
 	 */
-	void handleReverseVideo(boolean reverse);
+	void handleReverseVideo(ReverseVideo reverse);
 
 	/**
 	 * Handle toggling of the hidden attribute

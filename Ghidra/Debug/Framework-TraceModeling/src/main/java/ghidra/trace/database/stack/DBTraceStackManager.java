@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,10 @@
 package ghidra.trace.database.stack;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import generic.NestedIterator;
-import ghidra.dbg.target.*;
-import ghidra.dbg.util.*;
 import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -34,7 +31,8 @@ import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
@@ -97,8 +95,9 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 		return frameStore.getObjectAt(frameKey);
 	}
 
-	public static PathPredicates single(TraceObject seed, Class<? extends TargetObject> targetIf) {
-		PathMatcher stackMatcher = seed.getTargetSchema().searchFor(targetIf, false);
+	public static PathFilter single(TraceObject seed,
+			Class<? extends TraceObjectInterface> targetIf) {
+		PathMatcher stackMatcher = seed.getSchema().searchFor(targetIf, false);
 		if (stackMatcher.getSingletonPath() == null) {
 			throw new IllegalStateException("Schema doesn't provide a unique " +
 				targetIf.getSimpleName() + " for " + seed.getCanonicalPath());
@@ -110,32 +109,29 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 			boolean createIfAbsent) {
 		TraceObjectThread objThread = (TraceObjectThread) thread;
 		TraceObject obj = objThread.getObject();
-		PathPredicates predicates = single(obj, TargetStack.class);
+		PathFilter filter = single(obj, TraceObjectStack.class);
 		if (createIfAbsent) {
 			try (LockHold hold = trace.lockWrite()) {
 				TraceObjectStack stack = trace.getObjectManager()
-						.getSuccessor(obj, predicates, snap, TraceObjectStack.class);
+						.getSuccessor(obj, filter, snap, TraceObjectStack.class);
 				if (stack != null) {
 					return stack;
 				}
-				List<String> keyList = PathUtils.extend(obj.getCanonicalPath().getKeyList(),
-					predicates.getSingletonPath());
-				return trace.getObjectManager().addStack(keyList, snap);
+				KeyPath path = obj.getCanonicalPath().extend(filter.getSingletonPath());
+				return trace.getObjectManager().addStack(path, snap);
 			}
 		}
 		try (LockHold hold = trace.lockRead()) {
 			return trace.getObjectManager()
-					.getSuccessor(obj, predicates, snap, TraceObjectStack.class);
+					.getSuccessor(obj, filter, snap, TraceObjectStack.class);
 		}
 	}
 
 	protected TraceObjectStack doGetLatestObjectStack(TraceThread thread, long snap) {
 		TraceObjectThread objThread = (TraceObjectThread) thread;
 		TraceObject obj = objThread.getObject();
-		List<String> keyList = single(obj, TargetStack.class).getSingletonPath();
-		return trace.getObjectManager()
-				.getLatestSuccessor(obj, TraceObjectKeyPath.of(keyList), snap,
-					TraceObjectStack.class);
+		KeyPath path = single(obj, TraceObjectStack.class).getSingletonPath();
+		return trace.getObjectManager().getLatestSuccessor(obj, path, snap, TraceObjectStack.class);
 	}
 
 	@Override
@@ -189,7 +185,7 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 			return () -> NestedIterator.start(set.iterator(),
 				rng -> trace.getObjectManager()
 						.getObjectsIntersecting(Lifespan.ALL, rng,
-							TargetStackFrame.PC_ATTRIBUTE_NAME, TraceObjectStackFrame.class)
+							TraceObjectStackFrame.KEY_PC, TraceObjectStackFrame.class)
 						.iterator());
 		}
 		return () -> NestedIterator.start(set.iterator(),

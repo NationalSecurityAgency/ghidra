@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.trace.database.target;
 
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.space.DBTraceSpaceKey.DefaultDBTraceSpaceKey;
@@ -23,7 +22,10 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
 import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.TraceUniqueObject;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.iface.TraceObjectInterface;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.*;
 import ghidra.util.database.ObjectKey;
 
@@ -42,7 +44,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 				this.spaceValueKey = null;
 			}
 			else {
-				TargetObjectSchema schema = object.getTargetSchema();
+				TraceObjectSchema schema = object.getSchema();
 				this.spaceValueKey = schema.checkAliasedAttribute(spaceValueKey);
 			}
 			this.object = object;

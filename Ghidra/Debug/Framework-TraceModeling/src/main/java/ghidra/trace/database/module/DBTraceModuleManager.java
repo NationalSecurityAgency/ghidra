@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
-import ghidra.dbg.target.TargetModule;
-import ghidra.dbg.target.TargetSection;
 import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -159,7 +157,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	public Collection<? extends TraceModule> getModulesAt(long snap, Address address) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsContaining(snap, address, TargetModule.RANGE_ATTRIBUTE_NAME,
+					.getObjectsContaining(snap, address, TraceObjectModule.KEY_RANGE,
 						TraceObjectModule.class);
 		}
 		return delegateRead(address.getAddressSpace(), m -> m.getModulesAt(snap, address),
@@ -171,7 +169,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 			AddressRange range) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsIntersecting(lifespan, range, TargetModule.RANGE_ATTRIBUTE_NAME,
+					.getObjectsIntersecting(lifespan, range, TraceObjectModule.KEY_RANGE,
 						TraceObjectModule.class);
 		}
 		return delegateRead(range.getAddressSpace(), m -> m.getModulesIntersecting(lifespan, range),
@@ -187,7 +185,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	public Collection<? extends TraceSection> getSectionsAt(long snap, Address address) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsContaining(snap, address, TargetSection.RANGE_ATTRIBUTE_NAME,
+					.getObjectsContaining(snap, address, TraceObjectSection.KEY_RANGE,
 						TraceObjectSection.class);
 		}
 		return delegateRead(address.getAddressSpace(), m -> m.getSectionsAt(snap, address),
@@ -199,7 +197,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 			AddressRange range) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsIntersecting(lifespan, range, TargetSection.RANGE_ATTRIBUTE_NAME,
+					.getObjectsIntersecting(lifespan, range, TraceObjectSection.KEY_RANGE,
 						TraceObjectSection.class);
 		}
 		return delegateRead(range.getAddressSpace(),

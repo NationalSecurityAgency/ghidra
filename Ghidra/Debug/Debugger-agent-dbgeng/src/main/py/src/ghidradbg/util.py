@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from collections import namedtuple
 from concurrent.futures import Future
@@ -238,6 +238,7 @@ class GhidraDbg(object):
                      ]:
             setattr(self, name, self.eng_thread(getattr(base, name)))
             self.IS_KERNEL = False
+            self.IS_EXDI = False
 
     def _new_base(self):
         self._protected_base = AllDbg()
@@ -455,6 +456,8 @@ def get_breakpoints():
 @dbg.eng_thread
 def selected_process():
     try:
+        if is_exdi():
+            return 0
         if is_kernel():
             do = dbg._base._systems.GetCurrentProcessDataOffset()
             id = c_ulong()
@@ -472,6 +475,8 @@ def selected_process():
 @dbg.eng_thread
 def selected_process_space():
     try:
+        if is_exdi():
+            return 0
         if is_kernel():
             return dbg._base._systems.GetCurrentProcessDataOffset()
         return selected_process()
@@ -530,7 +535,12 @@ def select_thread(id: int):
 
 @dbg.eng_thread
 def select_frame(id: int):
-    return dbg.cmd('.frame 0x{:x}'.format(id))
+    return dbg.cmd('.frame /c {}'.format(id))
+
+
+@dbg.eng_thread
+def reset_frames():
+    return dbg.cmd('.cxr')
 
 
 @dbg.eng_thread
@@ -754,6 +764,8 @@ def split_path(pathString):
     segs = pathString.split(".")
     for s in segs:
         if s.endswith("]"):
+            if "[" not in s:
+                print(f"Missing terminator: {s}")
             index = s.index("[")
             list.append(s[:index])
             list.append(s[index:])
@@ -902,3 +914,9 @@ def set_kernel(value):
     
 def is_kernel():
     return dbg.IS_KERNEL
+
+def set_exdi(value):
+    dbg.IS_EXDI = value
+    
+def is_exdi():
+    return dbg.IS_EXDI

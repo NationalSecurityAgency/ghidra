@@ -50,8 +50,6 @@ import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.pcode.exec.SuspendedPcodeExecutionException;
 import ghidra.program.model.address.Address;
@@ -59,6 +57,7 @@ import ghidra.program.model.data.ShortDataType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.target.TraceObject;
@@ -123,7 +122,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		Map<String, Object> args = rmiMethodResume.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.RUNNING.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.RUNNING.name());
 		}
 		rmiMethodResume.result(null);
 		assertEquals(Map.ofEntries(
@@ -146,7 +145,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		assertFalse(actionTargetInterrupt.isEnabled());
 
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.RUNNING.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.RUNNING.name());
 		}
 		waitForDomainObject(tb.trace);
 
@@ -154,7 +153,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		Map<String, Object> args = rmiMethodInterrupt.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.STOPPED.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.STOPPED.name());
 		}
 		rmiMethodInterrupt.result(null);
 		assertEquals(Map.ofEntries(
@@ -178,7 +177,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		Map<String, Object> args = rmiMethodKill.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			proc1.setAttribute(Lifespan.nowOn(0), "_state", TargetExecutionState.TERMINATED.name());
+			proc1.setAttribute(Lifespan.nowOn(0), "_state", TraceExecutionState.TERMINATED.name());
 		}
 		rmiMethodKill.result(null);
 		assertEquals(Map.ofEntries(
@@ -208,7 +207,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	}
 
 	protected void runTestRmiTargetStepAction(Supplier<DockingAction> actionSupplier,
-			TargetStepKind expected, Supplier<TestRemoteMethod> methodSupplier) throws Throwable {
+			Supplier<TestRemoteMethod> methodSupplier) throws Throwable {
 		setUpRmiTarget(); // method is created here, so we accept a supplier
 		TraceObject thread1 = tb.obj("Processes[1].Threads[1]");
 		traceManager.activateObject(thread1);
@@ -235,19 +234,19 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testRmiTargetStepIntoAction() throws Throwable {
 		runTestRmiTargetStepAction(() -> controlPlugin.actionTargetStepInto,
-			TargetStepKind.INTO, () -> rmiMethodStepInto);
+			() -> rmiMethodStepInto);
 	}
 
 	@Test
 	public void testRmiTargetStepOverAction() throws Throwable {
 		runTestRmiTargetStepAction(() -> controlPlugin.actionTargetStepOver,
-			TargetStepKind.OVER, () -> rmiMethodStepOver);
+			() -> rmiMethodStepOver);
 	}
 
 	@Test
 	public void testRmiTargetStepOutAction() throws Throwable {
 		runTestRmiTargetStepAction(() -> controlPlugin.actionTargetStepOut,
-			TargetStepKind.FINISH, () -> rmiMethodStepOut);
+			() -> rmiMethodStepOut);
 	}
 
 	TraceThread createToyLoopTrace() throws Throwable {

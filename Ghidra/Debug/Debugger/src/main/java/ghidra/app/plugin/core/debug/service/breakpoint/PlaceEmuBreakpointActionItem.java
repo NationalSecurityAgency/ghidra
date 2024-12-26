@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,21 +15,21 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import db.Transaction;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.target.*;
-import ghidra.dbg.util.PathMatcher;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathMatcher;
 import ghidra.util.exception.DuplicateNameException;
 
 public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address address, long length,
@@ -69,7 +69,8 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		if (region == null) {
 			throw new IllegalArgumentException("Address does not belong to a memory in the trace");
 		}
-		return region.getObject().querySuitableTargetInterface(TargetBreakpointSpecContainer.class);
+		return region.getObject()
+				.findSuitableContainerInterface(TraceObjectBreakpointSpec.class);
 	}
 
 	private String computePath() {
@@ -83,21 +84,21 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 				"Address is not associated with a breakpoint container");
 		}
 		PathMatcher specMatcher =
-			container.getTargetSchema().searchFor(TargetBreakpointSpec.class, true);
+			container.getSchema().searchFor(TraceObjectBreakpointSpec.class, true);
 		if (specMatcher == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint specifications");
 		}
-		List<String> specRelPath = specMatcher.applyKeys(name).getSingletonPath();
+		KeyPath specRelPath = specMatcher.applyKeys(name).getSingletonPath();
 		if (specRelPath == null) {
 			throw new IllegalArgumentException("Too many wildcards to breakpoint specification");
 		}
-		PathMatcher locMatcher = container.getTargetSchema()
+		PathMatcher locMatcher = container.getSchema()
 				.getSuccessorSchema(specRelPath)
-				.searchFor(TargetBreakpointLocation.class, true);
+				.searchFor(TraceObjectBreakpointLocation.class, true);
 		if (locMatcher == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint locations");
 		}
-		List<String> locRelPath = locMatcher.applyIntKeys(0).getSingletonPath();
+		KeyPath locRelPath = locMatcher.applyIntKeys(0).getSingletonPath();
 		if (locRelPath == null) {
 			throw new IllegalArgumentException("Too many wildcards to breakpoint location");
 		}

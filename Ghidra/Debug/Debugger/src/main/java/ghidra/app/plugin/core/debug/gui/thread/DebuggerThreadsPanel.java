@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.thread;
 
-import java.util.List;
 import java.util.Objects;
 
 import javax.swing.event.ListSelectionEvent;
@@ -30,8 +29,6 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
@@ -41,13 +38,17 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.iface.TraceObjectExecutionStateful;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.TraceObjectSchema;
+import ghidra.trace.model.thread.TraceObjectProcess;
 import ghidra.trace.model.thread.TraceObjectThread;
 
 public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceObjectThread> {
 
-	protected static ModelQuery successorThreads(TargetObjectSchema rootSchema, List<String> path) {
-		TargetObjectSchema schema = rootSchema.getSuccessorSchema(path);
-		return new ModelQuery(schema.searchFor(TargetThread.class, path, true));
+	protected static ModelQuery successorThreads(TraceObjectSchema rootSchema, KeyPath path) {
+		TraceObjectSchema schema = rootSchema.getSuccessorSchema(path);
+		return new ModelQuery(schema.searchFor(TraceObjectThread.class, path, true));
 	}
 
 	private static class ThreadPathColumn extends TraceValueKeyColumn {
@@ -245,7 +246,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	private static class ThreadStateColumn extends TraceValueObjectAttributeColumn<String> {
 		public ThreadStateColumn() {
 			// NB. The recorder converts enums to strings
-			super(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, String.class);
+			super(TraceObjectExecutionStateful.KEY_STATE, String.class);
 		}
 
 		@Override
@@ -343,19 +344,25 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	@Override
 	protected ModelQuery computeQuery(TraceObject object) {
-		TargetObjectSchema rootSchema = object.getRoot().getTargetSchema();
-		List<String> seedPath = object.getCanonicalPath().getKeyList();
-		List<String> processPath = rootSchema.searchForAncestor(TargetProcess.class, seedPath);
+		TraceObjectSchema rootSchema = object.getRoot().getSchema();
+		KeyPath seedPath = object.getCanonicalPath();
+		KeyPath processPath = rootSchema.searchForAncestor(TraceObjectProcess.class, seedPath);
 		if (processPath != null) {
-			return successorThreads(rootSchema, processPath);
+			ModelQuery result =  successorThreads(rootSchema, processPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		List<String> containerPath =
-			rootSchema.searchForSuitableContainer(TargetThread.class, seedPath);
+		KeyPath containerPath =
+			rootSchema.searchForSuitableContainer(TraceObjectThread.class, seedPath);
 
 		if (containerPath != null) {
-			return successorThreads(rootSchema, containerPath);
+			ModelQuery result =  successorThreads(rootSchema, containerPath);
+			if (!result.isEmpty()) {
+				return result;
+			}
 		}
-		return successorThreads(rootSchema, List.of());
+		return successorThreads(rootSchema, KeyPath.ROOT);
 	}
 
 	private void trySelectCurrentThread() {

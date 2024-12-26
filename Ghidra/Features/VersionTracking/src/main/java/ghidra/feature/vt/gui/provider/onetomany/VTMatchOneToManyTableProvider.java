@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,9 +43,9 @@ import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.provider.markuptable.DisplayableListingAddress;
 import ghidra.feature.vt.gui.provider.matchtable.MatchTableRenderer;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
-import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.util.MatchStatusRenderer;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -136,7 +136,7 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		addLocalAction(new SetVTMatchFromOneToManyAction(controller, true));
 		addLocalAction(new ClearMatchAction(controller));
 		addLocalAction(new AcceptMatchAction(controller));
-		new ActionBuilder("Compare Functions", getName())
+		new ActionBuilder("Compare Functions", getOwner())
 				.popupMenuPath("Compare Functions")
 				.popupMenuIcon(COMPARISON_ICON)
 				.popupMenuGroup("AAA_VT_Main")

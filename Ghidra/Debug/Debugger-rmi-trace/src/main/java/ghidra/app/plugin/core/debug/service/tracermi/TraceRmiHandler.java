@@ -35,10 +35,6 @@ import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
@@ -60,6 +56,9 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -652,12 +651,12 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 				.getCompilerSpecByID(new CompilerSpecID(compiler.getId()));
 	}
 
-	protected static TraceObjectKeyPath toKeyPath(ObjPath path) {
-		return TraceObjectKeyPath.parse(path.getPath());
+	protected static KeyPath toKeyPath(ObjPath path) {
+		return KeyPath.parse(path.getPath());
 	}
 
 	protected static PathPattern toPathPattern(ObjPath path) {
-		return new PathPattern(PathUtils.parse(path.getPath()));
+		return PathFilter.parse(path.getPath());
 	}
 
 	protected static Lifespan toLifespan(Span span) {
@@ -686,7 +685,7 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		return ObjSpec.newBuilder().setId(object.getKey()).build();
 	}
 
-	protected static ObjPath makeObjPath(TraceObjectKeyPath path) {
+	protected static ObjPath makeObjPath(KeyPath path) {
 		return ObjPath.newBuilder().setPath(path.toString()).build();
 	}
 

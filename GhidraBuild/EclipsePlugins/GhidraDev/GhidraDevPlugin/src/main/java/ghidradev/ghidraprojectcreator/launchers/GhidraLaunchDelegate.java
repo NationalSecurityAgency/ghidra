@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.PlatformUI;
 
-import ghidra.launch.JavaConfig;
+import ghidra.launch.AppConfig;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.*;
 
@@ -62,10 +62,10 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		}
 		IFolder ghidraFolder =
 			javaProject.getProject().getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
-		JavaConfig javaConfig;
+		AppConfig appConfig;
 		String ghidraInstallPath = ghidraFolder.getLocation().toOSString();
 		try {
-			javaConfig = new JavaConfig(new File(ghidraInstallPath));
+			appConfig = new AppConfig(new File(ghidraInstallPath));
 		}
 		catch (ParseException | IOException e) {
 			EclipseMessageUtils.showErrorDialog(
@@ -98,7 +98,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		}
 
 		// Set VM arguments
-		String vmArgs = javaConfig.getLaunchProperties().getVmArgs();
+		String vmArgs = appConfig.getLaunchProperties().getVmArgs();
 		vmArgs += " " + configuration.getAttribute(GhidraLaunchUtils.ATTR_VM_ARGUMENTS, "").trim();
 		vmArgs += " -Dghidra.external.modules=\"%s%s%s\"".formatted(
 			javaProject.getProject().getLocation(), File.pathSeparator,
@@ -171,7 +171,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 			}
 
 			// Start PyDev debugger
-			if (PyDevUtils.isSupportedPyDevInstalled()) {
+			if (PyDevUtils.isSupportedJythonPyDevInstalled()) {
 				try {
 					PyDevUtils.startPyDevRemoteDebugger();
 				}

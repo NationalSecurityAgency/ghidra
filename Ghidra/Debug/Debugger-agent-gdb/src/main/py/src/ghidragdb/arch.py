@@ -164,7 +164,7 @@ def compute_ghidra_compiler(lang):
 
     # Check if the selected lang has specific compiler recommendations
     if not lang in compiler_map:
-        print(f"{lang} not found in compiler map")
+        print(f"{lang} not found in compiler map - using default compiler")
         return 'default'
     comp_map = compiler_map[lang]
     if comp_map == data64_compiler_map:
@@ -174,7 +174,7 @@ def compute_ghidra_compiler(lang):
         return comp_map[osabi]
     if None in comp_map:
         return comp_map[None]
-    print(f"{osabi} not found in compiler map")
+    print(f"{osabi} not found in compiler map - using default compiler")
     return 'default'
 
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,13 +22,16 @@ import java.util.*;
 import generic.concurrent.*;
 import generic.lsh.vector.LSHVector;
 import generic.lsh.vector.VectorCompare;
-import ghidra.features.bsim.query.BSimServerInfo;
-import ghidra.features.bsim.query.LSHException;
+import ghidra.features.bsim.query.*;
+import ghidra.features.bsim.query.BSimPostgresDBConnectionManager.BSimPostgresDataSource;
+import ghidra.features.bsim.query.BSimServerInfo.DBType;
+import ghidra.features.bsim.query.FunctionDatabase.Status;
 import ghidra.features.bsim.query.client.*;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.elastic.Base64VectorFactory;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
 import ghidra.features.bsim.query.protocol.*;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64VectorFactory> {
@@ -120,6 +123,48 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 		}
 	}
 
+	@Override
+	protected void dropDatabase() throws SQLException {
+
+		if (getStatus() == Status.Busy || fileDs.getActiveConnections() != 0) {
+			throw new SQLException("database in use");
+		}
+
+		close(); // close this instance
+
+		if (!fileDs.exists()) {
+			// ignore request and return
+			return;
+		}
+
+		// Connect to database and examine schema
+		HashSet<String> tableNames = new HashSet<>();
+		try (Connection c = initConnection(); Statement st = c.createStatement()) {
+			try (ResultSet rs = st.executeQuery(
+				"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name")) {
+				while (rs.next()) {
+					tableNames.add(rs.getString(1));
+				}
+			}
+		}
+
+		// Spot check for a few BSim table names that always exist
+		if (!tableNames.contains("keyvaluetable") || !tableNames.contains("desctable") ||
+			!tableNames.contains("weighttable")) {
+			throw new SQLException("attempted to drop non-BSim database");
+		}
+
+		fileDs.dispose(); // disconnect before deleting database
+
+		BSimServerInfo serverInfo = fileDs.getServerInfo();
+		if (!fileDs.delete()) {
+			throw new SQLException("failed to delete H2-file database: " + serverInfo);
+		}
+
+		Msg.info(this, "Deleted BSim H2-file database: " + serverInfo);
+
+	}
+
 	/**
 	 * Create vector map which maps vector ID to {@link VectorStoreEntry}
 	 * @return vector map
@@ -136,7 +181,7 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 
 	@Override
 	public QueryResponseRecord doQuery(BSimQuery<?> query, Connection c)
-		throws SQLException, LSHException, DatabaseNonFatalException {
+			throws SQLException, LSHException, DatabaseNonFatalException {
 
 		if (query instanceof PrewarmRequest preWarmRequest) {
 			preWarmRequest.buildResponseTemplate();
@@ -174,8 +219,8 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 	}
 
 	@Override
-	protected int queryNearestVector(List<VectorResult> resultset, LSHVector vec,
-		double simthresh, double sigthresh, int max) throws SQLException {
+	protected int queryNearestVector(List<VectorResult> resultset, LSHVector vec, double simthresh,
+			double sigthresh, int max) throws SQLException {
 		VectorCompare comp;
 		List<VectorResult> resultsToSort = new ArrayList<>();
 		for (VectorStoreEntry entry : vectorStore) {
@@ -192,7 +237,7 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 				continue;
 			}
 			resultsToSort
-				.add(new VectorResult(entry.id(), entry.count(), cosine, sig, entry.vec()));
+					.add(new VectorResult(entry.id(), entry.count(), cosine, sig, entry.vec()));
 		}
 		resultsToSort.sort((r1, r2) -> Double.compare(r2.sim, r1.sim));
 		int maxResults = Math.min(max, resultsToSort.size());
@@ -220,19 +265,19 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 			new ConcurrentQBuilder<>();
 		ConcurrentQ<FunctionDescription, SimilarityVectorResult> evalQ =
 			evalBuilder.setThreadPool(threadPool)
-				.setCollectResults(true)
-				.setMonitor(TaskMonitor.DUMMY)
-				.build((fd, m) -> {
-					List<VectorResult> resultset = new ArrayList<>();
-					queryNearestVector(resultset, fd.getSignatureRecord().getLSHVector(),
+					.setCollectResults(true)
+					.setMonitor(TaskMonitor.DUMMY)
+					.build((fd, m) -> {
+						List<VectorResult> resultset = new ArrayList<>();
+						queryNearestVector(resultset, fd.getSignatureRecord().getLSHVector(),
 							query.thresh, query.signifthresh, vectormax);
-					if (resultset.isEmpty()) {
-						return null;
-					}
-					SimilarityVectorResult simres = new SimilarityVectorResult(fd);
-					simres.addNotes(resultset);
-					return simres;
-				});
+						if (resultset.isEmpty()) {
+							return null;
+						}
+						SimilarityVectorResult simres = new SimilarityVectorResult(fd);
+						simres.addNotes(resultset);
+						return simres;
+					});
 
 		evalQ.add(toQuery);
 		try {
@@ -257,8 +302,8 @@ public class H2FileFunctionDatabase extends AbstractSQLFunctionDatabase<Base64Ve
 
 	@Override
 	public int queryFunctions(QueryNearest query, BSimSqlClause filter, ResponseNearest response,
-		DescriptionManager descMgr, Iterator<FunctionDescription> iter)
-		throws SQLException, LSHException {
+			DescriptionManager descMgr, Iterator<FunctionDescription> iter)
+			throws SQLException, LSHException {
 		//TODO: is this what the method should return
 		//TODO: why is iter an argument?  Why not just use query.manage.listAllFunctions()
 

@@ -4144,10 +4144,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			if (restrictive &&
 				GenericCallingConvention
 						.getGenericCallingConvention(name) == GenericCallingConvention.unknown &&
-				!getKnownCallingConventionNames().contains(name) &&
-				getCallingConvention(name) == null) {
+				!getKnownCallingConventionNames().contains(name)) {
 
-				throw new InvalidInputException("Invalid calling convention name: " + name);
+				throw new InvalidInputException("Unknown calling convention name: " + name);
 			}
 
 			return callingConventionAdapter.getCallingConventionId(name,
