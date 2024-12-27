@@ -82,7 +82,7 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  */
 public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContext {
 	public static final GoVer SUPPORTED_MIN_VER = new GoVer(1, 15);
-	public static final GoVer SUPPORTED_MAX_VER = new GoVer(1, 22);
+	public static final GoVer SUPPORTED_MAX_VER = new GoVer(1, 23);
 
 	private static final List<String> SYMBOL_SEARCH_PREFIXES = List.of("", "_" /* macho symbols */);
 	private static final List<String> SECTION_PREFIXES =
@@ -1161,6 +1161,13 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 				GoType type = it.next();
 				type.discoverGoTypes(discoveredTypes);
+			}
+			for (GoItab itab : module.getItabs()) {
+				upwtm.checkCancelled();
+				upwtm.setProgress(discoveredTypes.size());
+
+				itab.getInterfaceType().discoverGoTypes(discoveredTypes);
+				itab.getType().discoverGoTypes(discoveredTypes);
 			}
 		}
 
