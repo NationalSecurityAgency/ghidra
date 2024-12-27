@@ -760,6 +760,20 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+
+class RuleStackAlignFix: public Rule {
+public:
+  RuleStackAlignFix(const string &g) : Rule(g, 0, "stackalignfix") {} ///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *) 0;
+    return new RuleStackAlignFix(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op, Funcdata &data);
+private:
+  static bool inSpacebase(Architecture *glb, Varnode *vn);
+};
+
 class RuleAddMultCollapse : public Rule {
 public:
   RuleAddMultCollapse(const string &g) : Rule(g, 0, "addmultcollapse") {}	///< Constructor
