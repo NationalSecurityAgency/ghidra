@@ -16,8 +16,7 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.framework.Application;
@@ -173,6 +172,7 @@ public abstract class GFileSystemBase implements GFileSystem {
 		if (path == null || path.equals("/")) {
 			return root;
 		}
+		nameComp = Objects.requireNonNullElseGet(nameComp, this::getFilenameComparator);
 
 		GFile current = root;
 		String[] parts = path.split("/");
