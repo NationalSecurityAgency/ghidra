@@ -1181,27 +1181,20 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected FSRL resolveLibraryFile(GFileSystem fs, Path libraryParentPath, String libraryName)
 			throws IOException {
-		GFile libraryParentDir = fs.lookup(
-			libraryParentPath != null ? FilenameUtils.separatorsToUnix(libraryParentPath.toString())
-					: null);
-		boolean compareWithoutExtension = isOptionalLibraryFilenameExtensions() &&
-			FilenameUtils.getExtension(libraryName).equals("");
-		if (libraryParentDir != null) {
-			Comparator<String> libNameComparator = getLibraryNameComparator();
-			for (GFile file : fs.getListing(libraryParentDir)) {
-				if (file.isDirectory()) {
-					continue;
-				}
-				String compareName = file.getName();
-				if (compareWithoutExtension) {
-					compareName = FilenameUtils.getBaseName(compareName);
-				}
-				if (libNameComparator.compare(libraryName, compareName) == 0) {
-					return file.getFSRL();
-				}
-			}
-		}
-		return null;
+		String lpp = libraryParentPath != null 
+				? FilenameUtils.separatorsToUnix(libraryParentPath.toString())
+				: null;
+		String targetPath = FSUtilities.appendPath(lpp, libraryName);
+
+		Comparator<String> baseNameComp = getLibraryNameComparator();
+		Comparator<String> nameComp = isOptionalLibraryFilenameExtensions() &&
+			FilenameUtils.getExtension(libraryName).isEmpty()
+					? (s1, s2) -> baseNameComp.compare(FilenameUtils.getBaseName(s1),
+						FilenameUtils.getBaseName(s2))
+					: baseNameComp;
+
+		GFile foundFile = fs.lookup(targetPath, nameComp);
+		return foundFile != null && !foundFile.isDirectory() ? foundFile.getFSRL() : null;
 	}
 
 	/**
