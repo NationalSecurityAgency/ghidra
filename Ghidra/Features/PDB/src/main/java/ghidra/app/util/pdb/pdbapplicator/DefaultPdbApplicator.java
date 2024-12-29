@@ -391,7 +391,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			// as that allows us to fetch the function start, given any address within
 			// the function
 			if (applicatorOptions.applySourceLineNumbers()) {
-				linesApplicator.process();
+				linesApplicator.process(monitor);
 			}
 //			Options options = program.getOptions(Program.PROGRAM_INFO);
 //			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
