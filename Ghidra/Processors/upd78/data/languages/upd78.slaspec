@@ -82,7 +82,6 @@ define token opbyte (8)
     cr_0_2  = (0,1)
 
     fah_0_3 = (0,2)
-    fal_0_8 = (0,8)
 
     ta_0_5 = (0,4)
     jdisp1_0_6 = (0,5) signed
@@ -180,8 +179,8 @@ macro addCarry(op1, op2) {
     local Ccopy = zext($(CY_flag));
     local AFmask = -1 >> 4;
     $(HC_flag) = (((op1 & AFmask) + (op2 & AFmask) + Ccopy) & (AFmask + 1)) != 0;
-    $(CY_flag) = carry(operand1, operand2);
-    local tempResult = operand1 + operand2;
+    $(CY_flag) = carry(op1, op2);
+    local tempResult = op1 + op2;
     $(CY_flag) = $(CY_flag) || carry(tempResult, Ccopy);
     result = tempResult + Ccopy;
 }
