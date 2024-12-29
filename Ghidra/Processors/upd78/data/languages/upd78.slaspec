@@ -1012,7 +1012,7 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
     lesser(A, imm8);
 }
 
-:LTI r_0_2, imm8 is op0_7 =74; op3_7 = 0x07 & r_0_2; imm8 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+:LTI r_0_2, imm8 is op0_7 =0x74; op3_7 = 0x07 & r_0_2; imm8 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     lesser(r_0_2, imm8);
 }
 
@@ -1078,6 +1078,10 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
 
 :OFFI r_0_2, imm8 is op0_7 = 0x74; op3_7 = 0x0b & r_0_2; imm8 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
     offTest(r_0_2, imm8);
+}
+
+:OFFI sr2l_0_2, imm8 is op0_7 = 0x64; op3_7 = 0x0b & sr2l_0_2; imm8 [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
+    offTest(sr2l_0_2, imm8);
 }
 
 ################################################################
