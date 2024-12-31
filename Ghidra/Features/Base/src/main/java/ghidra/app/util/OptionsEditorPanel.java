@@ -338,7 +338,7 @@ public class OptionsEditorPanel extends JPanel {
 			return null;
 		}
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
-		AddressInput addressInput = new AddressInput();
+		AddressInput addressInput = new AddressInput(a -> option.setValue(a));
 		addressInput.setName(option.getName());
 		Address addr = (Address) option.getValue();
 		if (addr == null && addressFactory != null) {
@@ -347,7 +347,6 @@ public class OptionsEditorPanel extends JPanel {
 		}
 		addressInput.setAddressFactory(addressFactory);
 		addressInput.setAddress(addr);
-		addressInput.addChangeListener(e -> option.setValue(addressInput.getAddress()));//		addressInput.addActionListener(e -> option.setValue(addressInput.getAddress()));
 		return addressInput;
 	}
 }

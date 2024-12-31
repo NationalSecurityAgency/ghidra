@@ -191,7 +191,8 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	}
 
 	private void initializeToAddressField(Address toAddr) {
-		toAddressField.setAddressFactory(fromCodeUnit.getProgram().getAddressFactory(), (s) -> {
+		Program program = fromCodeUnit.getProgram();
+		toAddressField.setProgram(program, (s) -> {
 			if (s.isLoadedMemorySpace()) {
 				return true;
 			}

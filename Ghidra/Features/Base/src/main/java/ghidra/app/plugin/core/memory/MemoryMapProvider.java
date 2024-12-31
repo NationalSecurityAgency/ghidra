@@ -690,7 +690,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 				"OTHER overlay blocks can not be split.");
 		}
 		else {
-			SplitBlockDialog d = new SplitBlockDialog(plugin, block, program.getAddressFactory());
+			SplitBlockDialog d = new SplitBlockDialog(plugin, block, program);
 			tool.showDialog(d, this);
 		}
 	}
@@ -711,7 +711,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 
 		ExpandBlockDialog dialog =
-			new ExpandBlockDialog(tool, model, block, program.getAddressFactory(), dialogType);
+			new ExpandBlockDialog(tool, model, block, program, dialogType);
 		model.initialize(block);
 		dialog.dispose();
 	}
