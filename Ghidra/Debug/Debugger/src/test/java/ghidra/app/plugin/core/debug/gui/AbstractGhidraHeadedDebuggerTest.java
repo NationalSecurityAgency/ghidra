@@ -42,6 +42,7 @@ import docking.action.DockingActionIf;
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
@@ -73,6 +74,7 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
+import utility.application.ApplicationLayout;
 
 public abstract class AbstractGhidraHeadedDebuggerTest
 		extends AbstractGhidraHeadedIntegrationTest implements AsyncTestUtils {
@@ -108,6 +110,18 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 		catch (IOException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath())) {
+			@Override
+			protected Set<String> getDependentModulePatterns() {
+				Set<String> patterns = super.getDependentModulePatterns();
+				patterns.add("Debugger-agent");
+				return patterns;
+			}
+		};
 	}
 
 	public static final String LANGID_TOYBE64 = "Toy:BE:64:default";
