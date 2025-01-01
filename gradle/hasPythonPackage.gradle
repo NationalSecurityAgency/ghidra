@@ -55,7 +55,7 @@ task buildPyPackage {
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		exec {
 			workingDir { "build/pypkg" }
-			commandLine rootProject.PYTHON3
+			commandLine rootProject.PYTHON3_VENV
 			args "-m", "pip", "wheel", "-w", "dist/", "--no-index", "--no-deps", "-f", setuptools, "."
 		}
 	}

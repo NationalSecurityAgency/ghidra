@@ -276,7 +276,7 @@ task createGhidraStubsWheel {
 		
 		exec {
 			workingDir { typestubsDir }
-			commandLine PYTHON3
+			commandLine PYTHON3_VENV
 			args "-m", "pip", "wheel", "-w", distDir, "--no-index", "-f", setuptools, "."
 		}
 	}
