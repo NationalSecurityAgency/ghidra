@@ -32,6 +32,7 @@ import ghidra.util.Msg;
 import ghidra.util.SourceFileUtils;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Helper class to PdbApplicator for applying source line information
@@ -81,9 +82,10 @@ public class PdbSourceLinesApplicator {
 	//==============================================================================================
 	/**
 	 * Process all Module line information
+	 * @param monitor the task monitor
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void process() throws CancelledException {
+	public void process(TaskMonitor monitor) throws CancelledException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			Msg.info(this, "PDB: Missing DebugInfo - cannot process line numbers.");
@@ -98,11 +100,14 @@ public class PdbSourceLinesApplicator {
 		// Not processing user defined "Types" source information.  TODO: ???
 
 		int numModules = debugInfo.getNumModules();
+		monitor.initialize(numModules);
+		monitor.setMessage("PDB: Importing module function source line information...");
 		for (int num = 1; num <= numModules; num++) {
-			pdb.checkCancelled();
+			monitor.checkCancelled();
 			Module module = debugInfo.getModule(num);
 			processC11Lines(module);
 			processC13Sections(module);
+			monitor.incrementProgress(1);
 		}
 	}
 
