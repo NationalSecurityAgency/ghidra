@@ -53,9 +53,9 @@ a specific need.
   * Free long term support (LTS) versions of JDK 21 are provided by:
     * [Adoptium Temurin](https://adoptium.net/temurin/releases)
     * [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
-* Python3 (3.9 to 3.12)
-  * Python 3.7 to 3.12 for [Debugger support](#installing-the-debuggers-python-dependencies)
-  * Python 3.9 to 3.12 for [PyGhidra support](#pyghidra-mode)
+* Python3 (3.9 to 3.13)
+  * Python 3.7 to 3.13 for [Debugger support](#installing-the-debuggers-python-dependencies)
+  * Python 3.9 to 3.13 for [PyGhidra support](#pyghidra-mode)
   * This is available from [Python.org](https://python.org) or most operating system's app stores or
     software repositories.  For Linux it is recommended that the system's package repository be used
     to install a suitable version of Python.
