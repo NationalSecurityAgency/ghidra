@@ -244,7 +244,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				Selected Ghidra compiler: %s""".formatted(PLAT.lang(), PLAT.cSpec()),
 			extractOutSection(out, "---File---"));
 		assertEquals("""
-				Toy:BE:64:default not found in compiler map
+				Toy:BE:64:default not found in compiler map - using default compiler
 				Selected Ghidra language: Toy:BE:64:default
 				Selected Ghidra compiler: default""",
 			extractOutSection(out, "---Language---"));
