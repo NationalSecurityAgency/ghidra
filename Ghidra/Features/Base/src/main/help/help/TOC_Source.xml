@@ -196,6 +196,8 @@
         <!-- Formerly The Byte Viewer -->
  
         <tocdef id="Program Annotation" text="Program Annotation"  target="help/topics/ProgramManagerPlugin/Program_Annotation.htm">
+            <tocdef id="Address Expressions" sortgroup="a" text="Address Expressions" target="help/topics/Misc/AddressExpressions.htm" />
+
             <tocdef id="Auto Analysis" sortgroup="a" text="Auto Analysis" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm" >
                 <tocdef id="Forcing Analysis" sortgroup="a" text="Forcing Analysis" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyze" />
                 <tocdef id="Auto Analysis Options Panel" sortgroup="b" text="Auto Analysis Options Panel" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analysis_Option" />

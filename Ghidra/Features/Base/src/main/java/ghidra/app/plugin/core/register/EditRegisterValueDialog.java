@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +16,18 @@
 package ghidra.app.plugin.core.register;
 
 import java.math.BigInteger;
+import java.util.function.Consumer;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
 import docking.widgets.label.GLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.bean.FixedBitSizeValueField;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
@@ -39,9 +40,9 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 	private boolean wasCancelled = true;
 
 	EditRegisterValueDialog(Register register, Address start, Address end, BigInteger value,
-			AddressFactory factory) {
+			Program program) {
 		super("Edit Register Value Range");
-		addWorkPanel(buildWorkPanel(register, start, end, value, factory));
+		addWorkPanel(buildWorkPanel(register, start, end, value, program));
 
 		addOKButton();
 		addCancelButton();
@@ -49,24 +50,15 @@ class EditRegisterValueDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel(Register register, Address start, Address end,
-			BigInteger value, AddressFactory factory) {
+			BigInteger value, Program program) {
 
 		JTextField registerField =
 			new JTextField(register.getName() + " (" + register.getBitLength() + ")");
 		registerField.setEditable(false);
 
-		startAddrField = new AddressInput();
-		endAddrField = new AddressInput();
-		ChangeListener changeListener = new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				updateOk();
-			}
-		};
-		startAddrField.setAddressFactory(factory);
-		endAddrField.setAddressFactory(factory);
-		startAddrField.addChangeListener(changeListener);
-		endAddrField.addChangeListener(changeListener);
+		Consumer<Address> addressChangeListener = a -> updateOk();
+		startAddrField = new AddressInput(program, addressChangeListener);
+		endAddrField = new AddressInput(program, addressChangeListener);
 
 		registerValueField = new FixedBitSizeValueField(register.getBitLength(), true, false);
 		startAddrField.setAddress(start);

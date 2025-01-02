@@ -27,6 +27,7 @@ import java.util.Iterator;
 
 import org.bouncycastle.util.Arrays;
 
+import generic.expressions.ExpressionEvaluator;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.script.GhidraScript;
@@ -35,7 +36,6 @@ import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.CPP.*;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.util.AddressEvaluator;
 import ghidra.util.Msg;
 
 public class CreateAVR8GDTArchiveScript extends GhidraScript {
@@ -230,7 +230,7 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 					continue;
 				}
 
-				lvalue = AddressEvaluator.evaluateToLong(expandValue);
+				lvalue = ExpressionEvaluator.evaluateToLong(expandValue);
 				if (lvalue == null) {
 					continue;
 				}
