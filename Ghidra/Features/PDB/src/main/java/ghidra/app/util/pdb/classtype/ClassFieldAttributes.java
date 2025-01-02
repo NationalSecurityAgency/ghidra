@@ -15,28 +15,36 @@
  */
 package ghidra.app.util.pdb.classtype;
 
-import java.util.*;
+import java.util.Objects;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.ClassFieldMsAttributes;
 
 /**
- *
+ * Class field attributes
  */
 public class ClassFieldAttributes {
 
-	private static final Map<ClassFieldAttributes, ClassFieldAttributes> map = new HashMap<>();
+	private static final ClassFieldAttributes all[][] =
+		new ClassFieldAttributes[Access.values().length][Property.values().length];
 
-	// These initializations use the map above, so it must be initialized first
+	static {
+		for (Access access : Access.values()) {
+			for (Property property : Property.values()) {
+				all[access.ordinal()][property.ordinal()] =
+					new ClassFieldAttributes(access, property);
+			}
+		}
+	}
+
+	// These initializations use the 'all' array above, so it must be initialized first
 	public static final ClassFieldAttributes UNKNOWN = get(Access.UNKNOWN, Property.UNKNOWN);
 	public static final ClassFieldAttributes BLANK = get(Access.BLANK, Property.BLANK);
 
 	private final Access access;
 	private final Property property;
 
-	public synchronized static ClassFieldAttributes get(Access access, Property property) {
-		ClassFieldAttributes key = new ClassFieldAttributes(access, property);
-		ClassFieldAttributes cfa = map.putIfAbsent(key, key);
-		return (cfa != null) ? cfa : key;
+	public static ClassFieldAttributes get(Access access, Property property) {
+		return all[access.ordinal()][property.ordinal()];
 	}
 
 	public static ClassFieldAttributes convert(ClassFieldMsAttributes msAtts,
