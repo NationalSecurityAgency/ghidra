@@ -57,7 +57,7 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 
 	protected final Constructor cons;
 	protected final AssemblyPatternBlock ins;
-	protected final AssemblyPatternBlock ctx;
+	protected AssemblyPatternBlock ctx;
 
 	protected final Set<AssemblyResolvedBackfill> backfills;
 	protected final Set<AssemblyResolvedPatterns> forbids;
@@ -558,6 +558,11 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 	@Override
 	public AssemblyPatternBlock getContext() {
 		return ctx;
+	}
+
+	@Override
+	public void setContext(AssemblyPatternBlock ctx) {
+		this.ctx = ctx;
 	}
 
 	@Override
