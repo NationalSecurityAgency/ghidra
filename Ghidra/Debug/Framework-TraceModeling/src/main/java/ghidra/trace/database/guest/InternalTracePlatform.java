@@ -26,9 +26,8 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.path.PathFilter.Align;
-import ghidra.trace.model.target.path.PathMatcher;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.LockHold;
@@ -112,34 +111,31 @@ public interface InternalTracePlatform extends TracePlatform {
 	}
 
 	@Override
-	default PathMatcher getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
+	default PathFilter getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Collection<String> names) {
-		PathMatcher matcher = schema.searchFor(TraceObjectRegister.class, path, true);
-		if (matcher.isNone()) {
-			return matcher;
+		PathFilter filter = schema.searchFor(TraceObjectRegister.class, path, true);
+		if (filter.isNone()) {
+			return PathFilter.NONE;
 		}
-		PathMatcher result = new PathMatcher();
-		for (String name : names) {
-			result.addAll(matcher.applyKeys(Align.RIGHT, List.of(name)));
-		}
-		return result;
+		return PathMatcher.any(names.stream()
+				.flatMap(n -> filter.applyKeys(Align.RIGHT, List.of(n)).getPatterns().stream()));
 	}
 
 	@Override
-	default PathMatcher getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
+	default PathFilter getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Register register) {
 		return getConventionalRegisterPath(schema, path,
 			getConventionalRegisterObjectNames(register));
 	}
 
 	@Override
-	default PathMatcher getConventionalRegisterPath(TraceObject container, Register register) {
+	default PathFilter getConventionalRegisterPath(TraceObject container, Register register) {
 		return getConventionalRegisterPath(container.getSchema(),
 			container.getCanonicalPath(), register);
 	}
 
 	@Override
-	default PathMatcher getConventionalRegisterPath(AddressSpace space, Register register) {
+	default PathFilter getConventionalRegisterPath(AddressSpace space, Register register) {
 		KeyPath path = KeyPath.parse(space.getName());
 		TraceObjectSchema rootSchema = getTrace().getObjectManager().getRootSchema();
 		if (rootSchema == null) {

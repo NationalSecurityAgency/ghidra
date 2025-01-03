@@ -29,7 +29,7 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.util.exception.DuplicateNameException;
 
 public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address address, long length,
@@ -83,22 +83,22 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 			throw new IllegalArgumentException(
 				"Address is not associated with a breakpoint container");
 		}
-		PathMatcher specMatcher =
+		PathFilter specFilter =
 			container.getSchema().searchFor(TraceObjectBreakpointSpec.class, true);
-		if (specMatcher == null) {
+		if (specFilter == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint specifications");
 		}
-		KeyPath specRelPath = specMatcher.applyKeys(name).getSingletonPath();
+		KeyPath specRelPath = specFilter.applyKeys(name).getSingletonPath();
 		if (specRelPath == null) {
 			throw new IllegalArgumentException("Too many wildcards to breakpoint specification");
 		}
-		PathMatcher locMatcher = container.getSchema()
+		PathFilter locFilter = container.getSchema()
 				.getSuccessorSchema(specRelPath)
 				.searchFor(TraceObjectBreakpointLocation.class, true);
-		if (locMatcher == null) {
+		if (locFilter == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint locations");
 		}
-		KeyPath locRelPath = locMatcher.applyIntKeys(0).getSingletonPath();
+		KeyPath locRelPath = locFilter.applyIntKeys(0).getSingletonPath();
 		if (locRelPath == null) {
 			throw new IllegalArgumentException("Too many wildcards to breakpoint location");
 		}

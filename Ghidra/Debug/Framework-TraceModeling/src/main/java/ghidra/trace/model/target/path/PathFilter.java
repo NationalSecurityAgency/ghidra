@@ -79,8 +79,8 @@ public interface PathFilter {
 		}
 
 		@Override
-		public Collection<PathPattern> getPatterns() {
-			return List.of();
+		public Set<PathPattern> getPatterns() {
+			return Set.of();
 		}
 
 		@Override
@@ -263,7 +263,7 @@ public interface PathFilter {
 	 * 
 	 * @return the patterns
 	 */
-	Collection<PathPattern> getPatterns();
+	Set<PathPattern> getPatterns();
 
 	/**
 	 * Remove count elements from the right

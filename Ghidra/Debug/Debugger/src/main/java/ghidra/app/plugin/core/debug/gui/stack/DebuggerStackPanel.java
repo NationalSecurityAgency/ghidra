@@ -39,7 +39,7 @@ import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObjectStackFrame>
@@ -195,8 +195,8 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 			return ModelQuery.EMPTY;
 		}
 		TraceObjectSchema stackSchema = rootSchema.getSuccessorSchema(stackPath);
-		PathMatcher matcher = stackSchema.searchFor(TraceObjectStackFrame.class, stackPath, true);
-		return new ModelQuery(matcher);
+		PathFilter filter = stackSchema.searchFor(TraceObjectStackFrame.class, stackPath, true);
+		return new ModelQuery(filter);
 	}
 
 	@Override

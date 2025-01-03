@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
@@ -1130,24 +1131,87 @@ public class TraceRmiTarget extends AbstractTarget {
 		throw new AssertionError();
 	}
 
-	protected TraceObject findRegisterObject(TraceObjectThread thread, int frame, String name) {
+	protected TraceObjectValue tryRegister(TraceObject container, PathFilter filter, String name) {
+		final PathFilter applied;
+		if (filter.isNone()) {
+			applied = PathMatcher.any(
+				new PathPattern(KeyPath.ROOT.key(name)),
+				new PathPattern(KeyPath.ROOT.key(name.toLowerCase())),
+				new PathPattern(KeyPath.ROOT.key(name.toUpperCase())),
+				new PathPattern(KeyPath.ROOT.index(name)),
+				new PathPattern(KeyPath.ROOT.index(name.toLowerCase())),
+				new PathPattern(KeyPath.ROOT.index(name.toUpperCase())));
+		}
+		else {
+			applied = PathMatcher.any(
+				filter.applyKeys(Align.RIGHT, name),
+				filter.applyKeys(Align.RIGHT, name.toLowerCase()),
+				filter.applyKeys(Align.RIGHT, name.toUpperCase()));
+		}
+		TraceObjectValPath regValPath =
+			container.getSuccessors(Lifespan.at(getSnap()), applied).findFirst().orElse(null);
+
+		if (regValPath == null) {
+			Msg.error(this, "Cannot find register object/value for " + name + " in " + container);
+			return null;
+		}
+		return regValPath.getLastEntry();
+	}
+
+	record FoundRegister(Register register, TraceObjectValue value) {
+		String name() {
+			return KeyPath.parseIfIndex(value.getEntryKey());
+		}
+	}
+
+	protected FoundRegister findRegister(TraceObject container, PathFilter filter,
+			Register register) {
+		TraceObjectValue val;
+		val = tryRegister(container, filter, register.getName());
+		if (val != null) {
+			return new FoundRegister(register, val);
+		}
+		/**
+		 * When checking for register validity, we consider it valid if it or any of its parents are
+		 * valid, or any alias thereof.
+		 */
+		for (String alias : register.getAliases()) {
+			val = tryRegister(container, filter, alias);
+			if (val != null) {
+				return new FoundRegister(register, val);
+			}
+		}
+		Register parent = register.getParentRegister();
+		if (parent == null) {
+			return null;
+		}
+		return findRegister(container, filter, parent);
+	}
+
+	protected FoundRegister findRegister(TraceObjectThread thread, int frame,
+			Register register) {
 		TraceObject container = thread.getObject().findRegisterContainer(frame);
 		if (container == null) {
 			Msg.error(this, "No register container for thread=" + thread + ",frame=" + frame);
 			return null;
 		}
-		PathMatcher matcher =
-			container.getSchema().searchFor(TraceObjectRegister.class, true);
-		PathFilter filter = matcher.applyKeys(Align.RIGHT, name)
-				.or(matcher.applyKeys(Align.RIGHT, name.toLowerCase()))
-				.or(matcher.applyKeys(Align.RIGHT, name.toUpperCase()));
-		TraceObjectValPath regValPath =
-			container.getCanonicalSuccessors(filter).findFirst().orElse(null);
-		if (regValPath == null) {
-			Msg.error(this, "Cannot find register object for " + name + " in " + container);
-			return null;
+		PathFilter filter = container.getSchema().searchFor(TraceObjectRegister.class, true);
+		return findRegister(container, filter, register);
+	}
+
+	protected byte[] getBytes(RegisterValue rv) {
+		return Utils.bigIntegerToBytes(rv.getUnsignedValue(), rv.getRegister().getMinimumByteSize(),
+			true);
+	}
+
+	protected RegisterValue retrieveAndCombine(TracePlatform platform, TraceThread thread,
+			int frameLevel, FoundRegister found, RegisterValue value) {
+		TraceMemorySpace regSpace =
+			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
+		if (regSpace == null) {
+			return new RegisterValue(found.register, BigInteger.ZERO).combineValues(value);
 		}
-		return regValPath.getDestination(container);
+		return regSpace.getValue(platform, getSnap(), found.register).combineValues(value);
 	}
 
 	@Override
@@ -1162,17 +1226,20 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.error(this, "Non-object trace with TraceRmi!");
 			return AsyncUtils.nil();
 		}
-		Register register = value.getRegister();
-		String regName = register.getName();
-		byte[] data =
-			Utils.bigIntegerToBytes(value.getUnsignedValue(), register.getMinimumByteSize(), true);
+		FoundRegister found = findRegister(tot, frameLevel, value.getRegister());
+		if (found == null) {
+			Msg.warn(this, "Could not find register " + value.getRegister() + " in object model.");
+		}
+		else if (found.register != value.getRegister()) {
+			value = retrieveAndCombine(platform, thread, frameLevel, found, value);
+		}
 
 		RemoteParameter paramThread = writeReg.params.get("thread");
 		if (paramThread != null) {
 			return writeReg.method.invokeAsync(Map.ofEntries(
 				Map.entry(paramThread.name(), tot.getObject()),
-				Map.entry(writeReg.params.get("name").name(), regName),
-				Map.entry(writeReg.params.get("value").name(), data)))
+				Map.entry(writeReg.params.get("name").name(), found.name()),
+				Map.entry(writeReg.params.get("value").name(), getBytes(value))))
 					.toCompletableFuture()
 					.thenApply(__ -> null);
 		}
@@ -1187,18 +1254,17 @@ public class TraceRmiTarget extends AbstractTarget {
 			}
 			return writeReg.method.invokeAsync(Map.ofEntries(
 				Map.entry(paramFrame.name(), tof.getObject()),
-				Map.entry(writeReg.params.get("name").name(), regName),
-				Map.entry(writeReg.params.get("value").name(), data)))
+				Map.entry(writeReg.params.get("name").name(), found.name()),
+				Map.entry(writeReg.params.get("value").name(), getBytes(value))))
 					.toCompletableFuture()
 					.thenApply(__ -> null);
 		}
-		TraceObject regObj = findRegisterObject(tot, frameLevel, regName);
-		if (regObj == null) {
+		if (found == null || !found.value.isObject()) {
 			return AsyncUtils.nil();
 		}
 		return writeReg.method.invokeAsync(Map.ofEntries(
-			Map.entry(writeReg.params.get("frame").name(), regObj),
-			Map.entry(writeReg.params.get("value").name(), data)))
+			Map.entry(writeReg.params.get("register").name(), found.value.getChild()),
+			Map.entry(writeReg.params.get("value").name(), getBytes(value))))
 				.toCompletableFuture()
 				.thenApply(__ -> null);
 	}
@@ -1220,8 +1286,9 @@ public class TraceRmiTarget extends AbstractTarget {
 		if (!(thread instanceof TraceObjectThread tot)) {
 			return false;
 		}
-		TraceObject regObj = findRegisterObject(tot, frame, register.getName());
-		if (regObj == null) {
+		// May be primitive or object
+		FoundRegister found = findRegister(tot, frame, register);
+		if (found == null) {
 			return false;
 		}
 		return true;
