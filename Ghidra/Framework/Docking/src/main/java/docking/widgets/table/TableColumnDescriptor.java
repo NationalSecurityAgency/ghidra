@@ -17,6 +17,8 @@ package docking.widgets.table;
 
 import java.util.*;
 
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 
 public class TableColumnDescriptor<ROW_TYPE> {
@@ -96,6 +98,43 @@ public class TableColumnDescriptor<ROW_TYPE> {
 	}
 
 	/**
+	 * Adds a visible column to the descriptor via an anonymous accessor function instead of an anonymous object
+	 *
+	 * The column type needs to be explicitly specified because there is no way to prevent erasure of the generic
+	 * types of an anonymous function
+	 *
+	 * @param name
+	 * @param columnTypeClass
+	 * @param rowObjectAccessor
+	 * @param <COLUMN_TYPE>
+	 */
+	public <COLUMN_TYPE> void addVisibleColumn(String name, Class<COLUMN_TYPE> columnTypeClass, RowObjectAccessor<ROW_TYPE, COLUMN_TYPE> rowObjectAccessor) {
+		addVisibleColumn(new AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object>() {
+			@Override
+			public String getColumnName() {
+				return name;
+			}
+
+			@Override
+			public COLUMN_TYPE getValue(ROW_TYPE rowObject, Settings settings, Object data, ServiceProvider serviceProvider) throws IllegalArgumentException {
+				return rowObjectAccessor.access(rowObject);
+			}
+
+			@Override
+			public Class<COLUMN_TYPE> getColumnClass() {
+				return columnTypeClass;
+			}
+
+			@Override
+			public Class<ROW_TYPE> getSupportedRowType() {
+				// The reflection tricks in the regular implementation won't work and will always return null
+				// because of type erasure
+				return null;
+			}
+		});
+	}
+
+	/**
 	 * @param column the column to add
 	 * @param sortOrdinal the <b>ordinal (i.e., 1, 2, 3...n)</b>, not the index (i.e, 0, 1, 2...n).
 	 * @param ascending true to sort ascending
@@ -129,4 +168,10 @@ public class TableColumnDescriptor<ROW_TYPE> {
 			return sortIndex - o.sortIndex;
 		}
 	}
+
+	@FunctionalInterface
+	public interface RowObjectAccessor<ROW_TYPE, COLUMN_TYPE> {
+		public COLUMN_TYPE access(ROW_TYPE rowObject) throws IllegalArgumentException;
+	}
+
 }
