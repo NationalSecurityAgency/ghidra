@@ -207,7 +207,7 @@ If you'd like some details of our fine tuning, take a look at [building_fid.txt]
 ## Debugger Development
 
 We have recently changed the Debugger's back-end architecture.
-We no longer user JNA to access native Debugger APIs.
+We no longer use JNA to access native Debugger APIs.
 We only use it for pseudo-terminal access.
 Instead, we use Python3 and a protobuf-based TCP connection for back-end integration.
 
@@ -234,19 +234,13 @@ description and status.
  time.
  * Framework-AsyncComm - a collection of utilities for asynchronous communication (packet formats
  and completable-future conveniences).
- * Framework-Debugging - specifies interfaces for debugger models and provides implementation
- conveniences. This is mostly deprecated.
- * Debugger - the collection of Ghidra plugins and services comprising the Debugger UI.
+ * Debugger-api - the interfaces for interacting with the Debugger UI.
+ * Debugger - the collection of Ghidra plugins and services comprising the Debugger UI implementation.
+ * Debugger-isf - A service providing access to Ghidra's DataTypes via ISF.
  * Debugger-rmi-trace - the wire protocol, client, services, and UI components for Trace RMI, the new back-end architecture.
- * Debugger-agent-dbgeng - the connector for WinDbg (via dbgeng.dll) on Windows x64.
- * Debugger-agent-dbgmodel - an experimental connector for WinDbg Preview (with TTD, via 
- dbgmodel.dll) on Windows x64. This is deprecated, as most of these features are implemented in Debugger-agent-dbgeng for the new architecture.
- * Debugger-agent-dbgmodel-traceloader - an experimental "importer" for WinDbg trace files. This is deprecated.
- * Debugger-agent-gdb - the connector for GDB (13 or later recommended) on UNIX.
- * Debugger-swig-lldb - the Java language bindings for LLDB's SBDebugger, also proposed upstream. This is deprecated. We now use the Python3 language bindings for LLDB.
+ * Debugger-agent-dbgeng - the connector for WinDbg (via dbgeng.dll and dbgmodel.dll) on Windows x64.
+ * Debugger-agent-gdb - the connector for GDB (13 or later recommended) on UNIX and Windows.
  * Debugger-agent-lldb - the connector for LLDB (10 or later recommended) on macOS, UNIX, and Windows.
- * Debugger-gadp - the connector for our custom wire protocol the Ghidra Asynchronous Debugging 
- Protocol. This is deprecated. It's replaced by Debugger-rmi-trace.
  * Debugger-jpda - an in-development connector for Java and Dalvik debugging via JDI (i.e., JDWP). This is deprecated and not yet replaced.
 
 The Trace Modeling schema records machine state and markup over time.
@@ -255,7 +249,7 @@ Trace "recording" is a de facto requirement for displaying information in Ghidra
 The back-end connector has full discretion over what is recorded by using Trace RMI.
 Typically, only the machine state actually observed by the user (or perhaps a script) is recorded.
 For most use cases, the Trace is small and ephemeral, serving only to mediate between the UI components and the target's model.
-It supports many of the same markup (e.g., disassembly, data types) as Programs, in addition to tracking active threads, loaded modues, breakpoints, etc.
+It supports many of the same markup (e.g., disassembly, data types) as Programs, in addition to tracking active threads, loaded modules, breakpoints, etc.
 
 Every back end (or "adapter" or "connector" or "agent") employs the Trace RMI client to populate a trace database.
 As a general rule in Ghidra, no component is allowed to access a native API and reside in the same JVM as the Ghidra UI.
@@ -265,13 +259,12 @@ This also allows us to better bridge the language gap between Java and Python, w
 This protocol is loosely coupled to Framework-TraceModeling, essentially exposing its methods via RMI, as well as some methods for controlling the UI.
 The protocol is built using Google's Protobuf library, providing a potential path for back-end implementations in alternative languages.
 We provide the Trace RMI server as a Ghidra component implemented in Java and the Trace RMI client as a Python3 package.
+The client is also available in Java, but it depends heavily on Ghidra's code base.
 A back-end implementation may be a stand-alone executable or script that accesses the native debugger's API, or a script or plugin for the native debugger.
 It then connects to Ghidra via Trace RMI to populate the trace database with information gleaned from that API.
 It should provide a set of diagnostic commands to control and monitor that connection.
 It should also use the native API to detect session and target changes so that Ghidra's UI consistently reflects the debugging session.
-
-The old system relied on a "recorder" to discover targets and map them to traces in the proper Ghidra language.
-That responsibility is now delegated to the back end.
+It is the back-end's responsibility to discover targets in the session and map them to traces in the proper Ghidra language.
 Typically, it examines the target's architecture and immediately creates a trace upon connection.
 
 ### Developing a new connector
@@ -291,18 +284,19 @@ When things go wrong, it could be because of, without limitation:
 We are still (yes, still) in the process of writing up this documentation.
 In the meantime, we recommend using the GDB and dbgeng agents as examples.
 Be sure to look at the Python code `src/main/py`!
-The deprecated Java code `src/main/java` is still included as we transition.
+This is not so readily presented by Eclipse.
 
 You'll also need to provide launcher(s) so that Ghidra knows how to configure and start your connector.
 These are just shell scripts.
 We use bash scripts on Linux and macOS, and we use batch files on Windows.
+The ideal goal for a launcher is (after one-time configuration) the user can launch and begin debugging with a single click.
 Try to include as many common use cases as makes sense for the debugger.
 This provides the most flexibility to users and examples to power users who might create derivative launchers.
 Look at the existing launchers for examples.
 
 For testing, please follow the examples for GDB.
 We no longer provide abstract classes that prescribe requirements.
-Instead, we just provide GDB as an example.
+Instead, we just provide GDB as an example or template.
 Usually, we split our tests into three categories:
 
  * Commands
@@ -315,10 +309,10 @@ In general, do the minimum connection setup, execute the command, and check that
 The Methods tests check that the remote methods, conventionally implemented in `methods.py`, work correctly.
 Many methods are just wrappers around CLI commands, some provided by the native debugger and some provided by `commands.py`.
 These work similarly to the commands test, except that they invoke methods instead of executing commands.
-Again, check the return value (rarely applicable) and that it causes the expected effects.
+Check the return value (rarely applicable) and that it causes the expected effects.
 
 The Hooks tests check that the back end is able to listen for session and target changes, e.g., knowing when the target stops.
-*The test should not "cheat" by executing commands or invoking methods that should instead be triggered by the listener.*
+*The test should not "cheat" by executing commands or invoking methods that should instead be triggered by the hook.*
 It should execute the minimal commands to setup the test, then trigger an event.
 It should then check that the event in turn triggered the expected effects, e.g., updating PC upon the target stopping.
 
