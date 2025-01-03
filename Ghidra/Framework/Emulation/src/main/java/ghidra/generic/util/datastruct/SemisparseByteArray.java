@@ -114,6 +114,15 @@ public class SemisparseByteArray {
 		getData(loc, data, 0, data.length);
 	}
 
+	public synchronized byte[] getDirect(final long loc) {
+		long blockNum = Long.divideUnsigned(loc, BLOCK_SIZE);
+		int blockOffset = (int) Long.remainderUnsigned(loc, BLOCK_SIZE);
+		if (blockOffset != 0) {
+			throw new IllegalArgumentException("Offset must be at block boundary");
+		}
+		return blocks.computeIfAbsent(blockNum, n -> new byte[BLOCK_SIZE]);
+	}
+
 	/**
 	 * Copy a range of data from the semisparse array into a portion of the given byte array
 	 * 

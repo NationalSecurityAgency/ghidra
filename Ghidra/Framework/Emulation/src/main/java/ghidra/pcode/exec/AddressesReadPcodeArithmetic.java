@@ -19,8 +19,7 @@ import java.math.BigInteger;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Endian;
 
 /**
@@ -48,15 +47,15 @@ public enum AddressesReadPcodeArithmetic implements PcodeArithmetic<AddressSetVi
 	}
 
 	@Override
-	public AddressSetView modBeforeStore(int sizeout, int sizeinAddress, AddressSetView inAddress,
-			int sizeinValue, AddressSetView inValue) {
+	public AddressSetView modBeforeStore(int sizeinOffset, AddressSpace space,
+			AddressSetView inOffset, int sizeinValue, AddressSetView inValue) {
 		return inValue;
 	}
 
 	@Override
-	public AddressSetView modAfterLoad(int sizeout, int sizeinAddress, AddressSetView inAddress,
-			int sizeinValue, AddressSetView inValue) {
-		return inValue == null || inAddress == null ? null : inValue.union(inAddress);
+	public AddressSetView modAfterLoad(int sizeinAddress, AddressSpace space,
+			AddressSetView inOffset, int sizeinValue, AddressSetView inValue) {
+		return inValue == null || inOffset == null ? null : inValue.union(inOffset);
 	}
 
 	@Override

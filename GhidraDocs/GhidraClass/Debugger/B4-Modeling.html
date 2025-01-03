@@ -634,47 +634,46 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb7-39"><a href="#cb7-39"></a>    <span class="op">}</span></span>
 <span id="cb7-40"><a href="#cb7-40"></a></span>
 <span id="cb7-41"><a href="#cb7-41"></a>    <span class="at">@Override</span></span>
-<span id="cb7-42"><a href="#cb7-42"></a>    <span class="kw">public</span> Expr <span class="fu">modBeforeStore</span><span class="op">(</span><span class="dt">int</span> sizeout<span class="op">,</span> <span class="dt">int</span> sizeinAddress<span class="op">,</span> Expr inAddress<span class="op">,</span> <span class="dt">int</span> sizeinValue<span class="op">,</span></span>
+<span id="cb7-42"><a href="#cb7-42"></a>    <span class="kw">public</span> Expr <span class="fu">modBeforeStore</span><span class="op">(</span><span class="dt">int</span> sizeinAddress<span class="op">,</span> Expr inAddress<span class="op">,</span> <span class="dt">int</span> sizeinValue<span class="op">,</span></span>
 <span id="cb7-43"><a href="#cb7-43"></a>            Expr inValue<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb7-44"><a href="#cb7-44"></a>        <span class="cf">return</span> inValue<span class="op">;</span></span>
 <span id="cb7-45"><a href="#cb7-45"></a>    <span class="op">}</span></span>
 <span id="cb7-46"><a href="#cb7-46"></a></span>
 <span id="cb7-47"><a href="#cb7-47"></a>    <span class="at">@Override</span></span>
-<span id="cb7-48"><a href="#cb7-48"></a>    <span class="kw">public</span> Expr <span class="fu">modAfterLoad</span><span class="op">(</span><span class="dt">int</span> sizeout<span class="op">,</span> <span class="dt">int</span> sizeinAddress<span class="op">,</span> Expr inAddress<span class="op">,</span> <span class="dt">int</span> sizeinValue<span class="op">,</span></span>
-<span id="cb7-49"><a href="#cb7-49"></a>            Expr inValue<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-50"><a href="#cb7-50"></a>        <span class="cf">return</span> inValue<span class="op">;</span></span>
-<span id="cb7-51"><a href="#cb7-51"></a>    <span class="op">}</span></span>
-<span id="cb7-52"><a href="#cb7-52"></a></span>
-<span id="cb7-53"><a href="#cb7-53"></a>    <span class="at">@Override</span></span>
-<span id="cb7-54"><a href="#cb7-54"></a>    <span class="kw">public</span> Expr <span class="fu">fromConst</span><span class="op">(</span><span class="dt">byte</span><span class="op">[]</span> value<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-55"><a href="#cb7-55"></a>        <span class="cf">if</span> <span class="op">(</span>endian<span class="op">.</span><span class="fu">isBigEndian</span><span class="op">())</span> <span class="op">{</span></span>
-<span id="cb7-56"><a href="#cb7-56"></a>            <span class="cf">return</span> <span class="kw">new</span> <span class="fu">LitExpr</span><span class="op">(</span><span class="kw">new</span> <span class="bu">BigInteger</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> value<span class="op">),</span> value<span class="op">.</span><span class="fu">length</span><span class="op">);</span></span>
-<span id="cb7-57"><a href="#cb7-57"></a>        <span class="op">}</span></span>
-<span id="cb7-58"><a href="#cb7-58"></a>        <span class="dt">byte</span><span class="op">[]</span> reversed <span class="op">=</span> <span class="bu">Arrays</span><span class="op">.</span><span class="fu">copyOf</span><span class="op">(</span>value<span class="op">,</span> value<span class="op">.</span><span class="fu">length</span><span class="op">);</span></span>
-<span id="cb7-59"><a href="#cb7-59"></a>        ArrayUtils<span class="op">.</span><span class="fu">reverse</span><span class="op">(</span>reversed<span class="op">);</span></span>
-<span id="cb7-60"><a href="#cb7-60"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">LitExpr</span><span class="op">(</span><span class="kw">new</span> <span class="bu">BigInteger</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> reversed<span class="op">),</span> reversed<span class="op">.</span><span class="fu">length</span><span class="op">);</span></span>
-<span id="cb7-61"><a href="#cb7-61"></a>    <span class="op">}</span></span>
-<span id="cb7-62"><a href="#cb7-62"></a></span>
-<span id="cb7-63"><a href="#cb7-63"></a>    <span class="at">@Override</span></span>
-<span id="cb7-64"><a href="#cb7-64"></a>    <span class="kw">public</span> Expr <span class="fu">fromConst</span><span class="op">(</span><span class="bu">BigInteger</span> value<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> <span class="dt">boolean</span> isContextreg<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-65"><a href="#cb7-65"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">LitExpr</span><span class="op">(</span>value<span class="op">,</span> size<span class="op">);</span></span>
-<span id="cb7-66"><a href="#cb7-66"></a>    <span class="op">}</span></span>
-<span id="cb7-67"><a href="#cb7-67"></a></span>
-<span id="cb7-68"><a href="#cb7-68"></a>    <span class="at">@Override</span></span>
-<span id="cb7-69"><a href="#cb7-69"></a>    <span class="kw">public</span> Expr <span class="fu">fromConst</span><span class="op">(</span><span class="dt">long</span> value<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-70"><a href="#cb7-70"></a>        <span class="cf">return</span> <span class="fu">fromConst</span><span class="op">(</span><span class="bu">BigInteger</span><span class="op">.</span><span class="fu">valueOf</span><span class="op">(</span>value<span class="op">),</span> size<span class="op">);</span></span>
-<span id="cb7-71"><a href="#cb7-71"></a>    <span class="op">}</span></span>
-<span id="cb7-72"><a href="#cb7-72"></a></span>
-<span id="cb7-73"><a href="#cb7-73"></a>    <span class="at">@Override</span></span>
-<span id="cb7-74"><a href="#cb7-74"></a>    <span class="kw">public</span> <span class="dt">byte</span><span class="op">[]</span> <span class="fu">toConcrete</span><span class="op">(</span>Expr value<span class="op">,</span> Purpose purpose<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-75"><a href="#cb7-75"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
-<span id="cb7-76"><a href="#cb7-76"></a>    <span class="op">}</span></span>
-<span id="cb7-77"><a href="#cb7-77"></a></span>
-<span id="cb7-78"><a href="#cb7-78"></a>    <span class="at">@Override</span></span>
-<span id="cb7-79"><a href="#cb7-79"></a>    <span class="kw">public</span> <span class="dt">long</span> <span class="fu">sizeOf</span><span class="op">(</span>Expr value<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb7-80"><a href="#cb7-80"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
-<span id="cb7-81"><a href="#cb7-81"></a>    <span class="op">}</span></span>
-<span id="cb7-82"><a href="#cb7-82"></a><span class="op">}</span></span></code></pre></div>
+<span id="cb7-48"><a href="#cb7-48"></a>    <span class="kw">public</span> Expr <span class="fu">modAfterLoad</span><span class="op">(</span><span class="dt">int</span> sizeinAddress<span class="op">,</span> Expr inAddress<span class="op">,</span> <span class="dt">int</span> sizeinValue<span class="op">,</span> Expr inValue<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-49"><a href="#cb7-49"></a>        <span class="cf">return</span> inValue<span class="op">;</span></span>
+<span id="cb7-50"><a href="#cb7-50"></a>    <span class="op">}</span></span>
+<span id="cb7-51"><a href="#cb7-51"></a></span>
+<span id="cb7-52"><a href="#cb7-52"></a>    <span class="at">@Override</span></span>
+<span id="cb7-53"><a href="#cb7-53"></a>    <span class="kw">public</span> Expr <span class="fu">fromConst</span><span class="op">(</span><span class="dt">byte</span><span class="op">[]</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-54"><a href="#cb7-54"></a>        <span class="cf">if</span> <span class="op">(</span>endian<span class="op">.</span><span class="fu">isBigEndian</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb7-55"><a href="#cb7-55"></a>            <span class="cf">return</span> <span class="kw">new</span> <span class="fu">LitExpr</span><span class="op">(</span><span class="kw">new</span> <span class="bu">BigInteger</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> value<span class="op">),</span> value<span class="op">.</span><span class="fu">length</span><span class="op">);</span></span>
+<span id="cb7-56"><a href="#cb7-56"></a>        <span class="op">}</span></span>
+<span id="cb7-57"><a href="#cb7-57"></a>        <span class="dt">byte</span><span class="op">[]</span> reversed <span class="op">=</span> <span class="bu">Arrays</span><span class="op">.</span><span class="fu">copyOf</span><span class="op">(</span>value<span class="op">,</span> value<span class="op">.</span><span class="fu">length</span><span class="op">);</span></span>
+<span id="cb7-58"><a href="#cb7-58"></a>        ArrayUtils<span class="op">.</span><span class="fu">reverse</span><span class="op">(</span>reversed<span class="op">);</span></span>
+<span id="cb7-59"><a href="#cb7-59"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">LitExpr</span><span class="op">(</span><span class="kw">new</span> <span class="bu">BigInteger</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> reversed<span class="op">),</span> reversed<span class="op">.</span><span class="fu">length</span><span class="op">);</span></span>
+<span id="cb7-60"><a href="#cb7-60"></a>    <span class="op">}</span></span>
+<span id="cb7-61"><a href="#cb7-61"></a></span>
+<span id="cb7-62"><a href="#cb7-62"></a>    <span class="at">@Override</span></span>
+<span id="cb7-63"><a href="#cb7-63"></a>    <span class="kw">public</span> Expr <span class="fu">fromConst</span><span class="op">(</span><span class="bu">BigInteger</span> value<span class="op">,</span> <span class="dt">int</span> size<span class="op">,</span> <span class="dt">boolean</span> isContextreg<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-64"><a href="#cb7-64"></a>        <span class="cf">return</span> <span class="kw">new</span> <span class="fu">LitExpr</span><span class="op">(</span>value<span class="op">,</span> size<span class="op">);</span></span>
+<span id="cb7-65"><a href="#cb7-65"></a>    <span class="op">}</span></span>
+<span id="cb7-66"><a href="#cb7-66"></a></span>
+<span id="cb7-67"><a href="#cb7-67"></a>    <span class="at">@Override</span></span>
+<span id="cb7-68"><a href="#cb7-68"></a>    <span class="kw">public</span> Expr <span class="fu">fromConst</span><span class="op">(</span><span class="dt">long</span> value<span class="op">,</span> <span class="dt">int</span> size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-69"><a href="#cb7-69"></a>        <span class="cf">return</span> <span class="fu">fromConst</span><span class="op">(</span><span class="bu">BigInteger</span><span class="op">.</span><span class="fu">valueOf</span><span class="op">(</span>value<span class="op">),</span> size<span class="op">);</span></span>
+<span id="cb7-70"><a href="#cb7-70"></a>    <span class="op">}</span></span>
+<span id="cb7-71"><a href="#cb7-71"></a></span>
+<span id="cb7-72"><a href="#cb7-72"></a>    <span class="at">@Override</span></span>
+<span id="cb7-73"><a href="#cb7-73"></a>    <span class="kw">public</span> <span class="dt">byte</span><span class="op">[]</span> <span class="fu">toConcrete</span><span class="op">(</span>Expr value<span class="op">,</span> Purpose purpose<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-74"><a href="#cb7-74"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
+<span id="cb7-75"><a href="#cb7-75"></a>    <span class="op">}</span></span>
+<span id="cb7-76"><a href="#cb7-76"></a></span>
+<span id="cb7-77"><a href="#cb7-77"></a>    <span class="at">@Override</span></span>
+<span id="cb7-78"><a href="#cb7-78"></a>    <span class="kw">public</span> <span class="dt">long</span> <span class="fu">sizeOf</span><span class="op">(</span>Expr value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-79"><a href="#cb7-79"></a>        <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">UnsupportedOperationException</span><span class="op">();</span></span>
+<span id="cb7-80"><a href="#cb7-80"></a>    <span class="op">}</span></span>
+<span id="cb7-81"><a href="#cb7-81"></a><span class="op">}</span></span></code></pre></div>
 <p>We have implemented two arithmetic models: one for big-endian
 languages and one for little-endian. The endianness comes into play when
 we encode constant values passed to <code>fromConst()</code>. We must

@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import ghidra.pcode.exec.ConcretionError;
 import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.trace.model.memory.TraceMemoryState;
 
@@ -58,15 +59,15 @@ public enum TraceMemoryStatePcodeArithmetic implements PcodeArithmetic<TraceMemo
 	}
 
 	@Override
-	public TraceMemoryState modBeforeStore(int sizeout, int sizeinAddress,
-			TraceMemoryState inAddress, int sizeinValue, TraceMemoryState inValue) {
+	public TraceMemoryState modBeforeStore(int sizeinOffset, AddressSpace space,
+			TraceMemoryState inOffset, int sizeinValue, TraceMemoryState inValue) {
 		return inValue; // Shouldn't see STORE during Sleigh eval, anyway
 	}
 
 	@Override
-	public TraceMemoryState modAfterLoad(int sizeout, int sizeinAddress, TraceMemoryState inAddress,
-			int sizeinValue, TraceMemoryState inValue) {
-		if (inAddress == TraceMemoryState.KNOWN && inValue == TraceMemoryState.KNOWN) {
+	public TraceMemoryState modAfterLoad(int sizeinOffset, AddressSpace space,
+			TraceMemoryState inOffset, int sizeinValue, TraceMemoryState inValue) {
+		if (inOffset == TraceMemoryState.KNOWN && inValue == TraceMemoryState.KNOWN) {
 			return TraceMemoryState.KNOWN;
 		}
 		return TraceMemoryState.UNKNOWN;

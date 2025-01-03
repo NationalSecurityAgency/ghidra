@@ -19,6 +19,7 @@ import java.util.Objects;
 
 import ghidra.pcode.exec.ConcretionError;
 import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
@@ -83,7 +84,7 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 * <p>
 	 * We can't just naively return {@code in1}, because each unary op may mix the bytes of the
 	 * operand a little differently. For {@link PcodeOp#COPY}, we can, since no mixing happens at
-	 * all. This is also the case of both {@link NEGATE} operations ("negate" is a bit of a
+	 * all. This is also the case of both {@code NEGATE} operations ("negate" is a bit of a
 	 * misnomer, as they merely inverts the bits.) For {@link PcodeOp#INT_ZEXT}, we append empties
 	 * to the correct end of the vector. Similarly, we replicate the most-significant element and
 	 * append for {@link PcodeOp#INT_SEXT}. For {@link PcodeOp#INT_2COMP} (which negates an integer
@@ -183,9 +184,9 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 * Here we handle indirect taint for indirect writes
 	 */
 	@Override
-	public TaintVec modBeforeStore(int sizeout, int sizeinAddress, TaintVec inAddress,
+	public TaintVec modBeforeStore(int sizeinOffset, AddressSpace space, TaintVec inOffset,
 			int sizeinValue, TaintVec inValue) {
-		return inValue.tagIndirectWrite(inAddress);
+		return inValue.tagIndirectWrite(inOffset);
 	}
 
 	/**
@@ -195,9 +196,9 @@ public enum TaintPcodeArithmetic implements PcodeArithmetic<TaintVec> {
 	 * Here we handle indirect taint for indirect reads
 	 */
 	@Override
-	public TaintVec modAfterLoad(int sizeout, int sizeinAddress, TaintVec inAddress,
+	public TaintVec modAfterLoad(int sizeinOffset, AddressSpace space, TaintVec inOffset,
 			int sizeinValue, TaintVec inValue) {
-		return inValue.tagIndirectRead(inAddress);
+		return inValue.tagIndirectRead(inOffset);
 	}
 
 	/**
