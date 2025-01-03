@@ -198,6 +198,14 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	}
 
 	/**
+	 * Sets the selected AddressSpace to the given space.
+	 * @param addressSpace the address space to set selected
+	 */
+	public void setAddressSpace(AddressSpace addressSpace) {
+		addressSpaceField.setAddressSpace(addressSpace);
+	}
+
+	/**
 	 * Returns the address in the field or null if the address can't
 	 * be parsed.
 	 * @return The address for the current value in the text field
@@ -577,4 +585,5 @@ public class AddressInput extends JPanel implements FocusableEditor {
 			return model;
 		}
 	}
+
 }

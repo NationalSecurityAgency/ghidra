@@ -71,7 +71,7 @@ public class AddressEvaluator extends ExpressionEvaluator {
 	public static Address evaluate(Program p, Address baseAddr, String inputExpression) {
 		AddressEvaluator evaluator = new AddressEvaluator(p, true);
 		try {
-			return evaluator.parseAsAddress(inputExpression);
+			return evaluator.parseAsRelativeAddress(inputExpression, baseAddr);
 		}
 		catch (ExpressionException e) {
 			return null;
