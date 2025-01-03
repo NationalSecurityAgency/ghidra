@@ -93,12 +93,14 @@ using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc).
 
 ### Java Notes
 * Ghidra requires a [supported](#minimum-requirements) version of a Java Runtime and Development Kit
-  on the PATH to run. However, if there is a version of Java on the PATH that Ghidra does not 
-  support, it will use that version of Java (if 1.8 or later) to assist in locating a supported 
-  version on your system.  If one cannot be automatically located, the user will be prompted to
-  enter a path to the Java home directory to use (the Java home directory is the parent directory of
-  Java's `bin` directory).  This minimizes the impact Ghidra has on pre-existing configurations of
-  Java that other software may rely on.
+  on the PATH, or specified by the JAVA_HOME environment variable. If JAVA_HOME is specified
+  it will take precedence over the PATH.  If the version of Java found does not satisfy the 
+  [minimum version](#minimum-requirements) required, it will use that version of Java 
+  (if 1.8 or later) to assist in locating a supported version on your system.  If one cannot 
+  be automatically located the user will be prompted to enter a path to the Java home directory 
+  to use (the Java home directory is the parent directory of Java's `bin` directory).  This 
+  minimizes the impact Ghidra has on pre-existing configurations of Java that other software may 
+  rely on.
 
 * Depending on your operating system, it may be possible to find and install a 
   [supported](#minimum-requirements) version of a Java Runtime and Development Kit through 
@@ -151,8 +153,8 @@ using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRAR, etc).
   version that Ghidra automatically locates.  To force Ghidra to launch with a specific version of
   Java, set the `JAVA_HOME_OVERRIDE` property in the `support/launch.properties` file. If this
   property is set to an incompatible version of Java, Ghidra will revert to automatically locating a
-  compatible version.  Note that _some_ Java must still be on the PATH in order for Ghidra to use
-  the `JAVA_HOME_OVERRIDE` property.
+  compatible version.  Note that _some_ Java must still be on the PATH or specified by JAVA_HOME
+  environment variable in order for Ghidra to use the `JAVA_HOME_OVERRIDE` property.
 
 ### Debugger Notes
 The Debugger now uses Python to connect to the host platform's native debuggers. This requires
@@ -381,16 +383,18 @@ Ghidra Server.
 When launching Ghidra with the provided scripts in `<GhidraInstallDir>` and 
 `<GhidraInstallDir>/support`, you may encounter the following error messages:
 
-* __Problem:__ _Java runtime not found._
-  * __Solution:__ A Java runtime (java/java.exe) is required to be on the system PATH. Please see
-    the [requirements](#minimum-requirements) section for what version of Java must be pre-installed
+* __Problem:__ _The 'java' command could not be found in your PATH or with JAVA_HOME._
+  * __Solution:__ A Java runtime (java/java.exe) is required to be on the system PATH or the Java 
+    installation directory specified by the JAVA_HOME environment variable. Please see the 
+    [requirements](#minimum-requirements) section for what version of Java must be pre-installed 
     for Ghidra to launch.
 
 * __Problem:__ _Failed to find a supported JDK._
-  * __Solution:__ The Ghidra launch script uses the Java runtime on the system PATH to find a 
-    supported version of a Java Development Kit (JDK) that Ghidra needs to complete its launch. 
-    Please see the [requirements](#minimum-requirements) section for what version of JDK must be 
-    pre-installed for Ghidra to launch.
+  * __Solution:__ The Ghidra launch script uses the Java runtime on the system PATH or specified 
+    by the JAVA_HOME environment variable to find a supported version of a Java Development Kit 
+    (JDK) that Ghidra needs to complete its launch.  Please see the 
+    [requirements](#minimum-requirements) section for what version of JDK must be pre-installed 
+    for Ghidra to launch.
 
 * __Problem:__ _Exited with error.  Run in foreground (fg) mode for more details._
   * __Solution:__ Ghidra failed to launch in the background and the error message describing the 
