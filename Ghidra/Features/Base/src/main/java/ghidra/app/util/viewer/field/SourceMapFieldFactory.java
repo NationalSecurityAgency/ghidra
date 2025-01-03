@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,6 +118,7 @@ public class SourceMapFieldFactory extends FieldFactory {
 			entriesToShow = entriesStartingWithinCu;
 		}
 
+		int entriesShown = 0;
 		for (SourceMapEntry entry : entriesToShow) {
 			StringBuilder sb = new StringBuilder();
 			if (showOnlyFileNames) {
@@ -149,10 +150,23 @@ public class SourceMapFieldFactory extends FieldFactory {
 				entry.getBaseAddress().compareTo(cuAddr) <= 0 ? Palette.BLACK : OFFCUT_COLOR;
 			AttributedString attrString = new AttributedString(sb.toString(), color, getMetrics());
 			fieldElements.add(new TextFieldElement(attrString, 0, 0));
+			entriesShown++;
+			if (entriesShown == maxEntries) {
+				int entriesLeft = entriesToShow.size() - maxEntries;
+				if (entriesLeft == 0) {
+					break;
+				}
+				String singularOrPlural = entriesLeft == 1 ? " entry " : " entries ";
+				AttributedString truncatedMessage = new AttributedString(
+					"-- " + entriesLeft + singularOrPlural + "omitted --",
+					OFFCUT_COLOR, getMetrics());
+				fieldElements.add(new TextFieldElement(truncatedMessage, 0, 0));
+				break;
+			}
 		}
 
 		return ListingTextField.createMultilineTextField(this, obj, fieldElements,
-			startX + varWidth, width, maxEntries, hlProvider);
+			startX + varWidth, width, maxEntries + 1, hlProvider);
 	}
 
 	@Override
