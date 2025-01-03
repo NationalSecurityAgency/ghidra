@@ -26,7 +26,12 @@ eclipse.project.name = 'Framework Generic'
 
 dependencies {
 	api project(':Utility')
-	api "com.google.guava:guava:32.1.3-jre"
+	api ("com.google.guava:guava:32.1.3-jre") {
+		exclude group: 'com.google.guava', module: 'listenablefuture'
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+		exclude group: 'com.google.code.findbugs', module: 'jsr305'
+		exclude group: 'org.checkerframework', module: 'checker-qual'
+	}
 	api "com.google.guava:failureaccess:1.0.1"
 	api "org.jdom:jdom-legacy:1.1.3"
 	api "org.apache.logging.log4j:log4j-api:2.17.1"
