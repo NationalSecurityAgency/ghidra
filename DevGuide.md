@@ -2,7 +2,7 @@
 
 ## Environment
 * Primary Language: [Java][java]
-* Secondary Languages: [C++][cpp], [Sleigh][sleigh], [Jython][jython]
+* Secondary Languages: [C++][cpp], [Sleigh][sleigh], [Python 3][python] [Jython 2.7][jython]
 * Integrated Development Environment: [Eclipse][eclipse]
 * Build System: [Gradle][gradle]
 * Source Control: [Git][git]
@@ -62,7 +62,7 @@ Build Javadoc:
 gradle createJavadocs
 ```
 
-Build Python3 packages for the Debugger:
+Build Python3 packages for PyGhidra and the Debugger:
 ```
 gradle buildPyPackage
 ```
@@ -86,6 +86,25 @@ prevent specific tasks from running:
 ```
 gradle buildGhidra -x ip
 ```
+
+## PyGhidra
+The supported way to develop and debug PyGhidra is with the _[PyDev][pydev]_ plugin for Eclipse.
+When PyDev is installed and configured, several new Eclipse run configurations will appear that
+enable running and debugging PyGhidra from both _GUI_ and _Interpreter_ modes.
+
+When you perform a `gradle prepdev`, a Python virtual environment gets setup at `build/venv/`. PyDev
+should be pointed at this virtual environment so it has access to the editable PyGhidra module, as
+well as the typing/stub information.  From Eclipse (with PyDev installed):
+
+1. _Settings -> PyDev -> Interpreters -> Python Interpreter_
+2. Click _New..._
+3. Click _Browse for python/pypy exe_
+4. Choose `build/venv/bin/python3`
+5. Enter a value for _Interpreter Name_
+6. Check _Select All_ and press _OK_
+7. Click the _Prefined_ tab, and then _New..._
+8. Choose `build/typestubs/pypredef`
+9. Click _Apply and Close_
 
 ## Known Issues
 * There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
@@ -111,10 +130,10 @@ along with the rest of the repo.
 Developing the GhidraDev Eclipse plugin requires the 
 _Eclipse PDE (Plug-in Development Environment)_, which can be installed via the Eclipse marketplace.
 It is also included in the _Eclipse IDE for RCP and RAP Developers_. To generate the GhidraDev 
-Eclipse projects, execute:
+Eclipse projects and prepare the necessary dependencies, execute:
 
 ```
-gradle eclipse -PeclipsePDE
+gradle prepGhidraDev eclipse -PeclipsePDE
 ```
 
 Import the newly generated GhidraDev projects into an Eclipse that supports this type of project. 
@@ -345,8 +364,10 @@ When submitting help tickets and pull requests, please tag those related to the 
 [java]: https://dev.java
 [cpp]: https://isocpp.org
 [sleigh]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/languages/index.html
+[python]: https://www.python.org
 [jython]: https://www.jython.org
 [eclipse]: https://www.eclipse.org/downloads/
+[pydev]: https://www.pydev.org
 [gradle]: https://gradle.org
 [git]: https://git-scm.com
 [apache]: https://www.apache.org/licenses/LICENSE-2.0

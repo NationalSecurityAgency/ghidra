@@ -87,10 +87,14 @@ For issues building, please check the [Known Issues][known-issues] section for p
 ### User Scripts and Extensions
 Ghidra installations support users writing custom scripts and extensions via the *GhidraDev* plugin 
 for Eclipse.  The plugin and its corresponding instructions can be found within a Ghidra release at
-`Extensions/Eclipse/GhidraDev/` or at [this link][ghidradev].
+`Extensions/Eclipse/GhidraDev/` or at [this link][ghidradev].  Alternatively, Visual Studio Code may
+be used to edit scripts by clicking the Visual Studio Code icon in the Script Manager.
+Fully-featured Visual Studio Code projects can be created from a Ghidra CodeBrowser window at 
+_Tools -> Create VSCode Module project_.
 
-**NOTE:** The *GhidraDev* plugin for Eclipse only supports developing against fully built
-Ghidra installations which can be downloaded from the [Releases][releases] page.
+**NOTE:** Both the *GhidraDev* plugin for Eclipse and Visual Studio Code integrations only support 
+developing against fully built Ghidra installations which can be downloaded from the
+[Releases][releases] page.
 
 ### Advanced Development
 To develop the Ghidra tool itself, it is highly recommended to use Eclipse, which the Ghidra 
