@@ -159,6 +159,7 @@ public class PcodeBlock {
 			encoder.writeSignedInteger(ATTRIB_END, point.getIndex());
 			// Position within other blocks edgelist
 			encoder.writeSignedInteger(ATTRIB_REV, reverse_index);
+			encoder.writeUnsignedInteger(ATTRIB_EDGE_LABEL, label);
 			encoder.closeElement(ELEM_EDGE);
 		}
 
@@ -170,26 +171,26 @@ public class PcodeBlock {
 		 */
 		public void decode(Decoder decoder, BlockMap resolver) throws DecoderException {
 			int el = decoder.openElement(ELEM_EDGE);
-			label = 0;		// Tag does not currently contain info about label
 			int endIndex = (int) decoder.readSignedInteger(ATTRIB_END);
 			point = resolver.findLevelBlock(endIndex);
 			if (point == null) {
 				throw new DecoderException("Bad serialized edge in block graph");
 			}
 			reverse_index = (int) decoder.readSignedInteger(ATTRIB_REV);
+			label = (int) decoder.readUnsignedInteger(ATTRIB_EDGE_LABEL);
 			decoder.closeElement(el);
 		}
 
 		public void decode(Decoder decoder, ArrayList<? extends PcodeBlock> blockList)
 				throws DecoderException {
 			int el = decoder.openElement(ELEM_EDGE);
-			label = 0;		// Tag does not currently contain info about label
 			int endIndex = (int) decoder.readSignedInteger(ATTRIB_END);
 			point = blockList.get(endIndex);
 			if (point == null) {
 				throw new DecoderException("Bad serialized edge in block list");
 			}
 			reverse_index = (int) decoder.readSignedInteger(ATTRIB_REV);
+			label = (int) decoder.readUnsignedInteger(ATTRIB_EDGE_LABEL);
 			decoder.closeElement(el);
 		}
 
@@ -257,7 +258,7 @@ public class PcodeBlock {
 		while (inEdge.point.outofthis.size() <= inEdge.reverse_index) {
 			inEdge.point.outofthis.add(null);
 		}
-		BlockEdge outEdge = new BlockEdge(this, 0, intothis.size() - 1);
+		BlockEdge outEdge = new BlockEdge(this, inEdge.label, intothis.size() - 1);
 		inEdge.point.outofthis.set(inEdge.reverse_index, outEdge);
 	}
 
@@ -275,7 +276,7 @@ public class PcodeBlock {
 		while (inEdge.point.outofthis.size() <= inEdge.reverse_index) {
 			inEdge.point.outofthis.add(null);
 		}
-		BlockEdge outEdge = new BlockEdge(this, 0, intothis.size() - 1);
+		BlockEdge outEdge = new BlockEdge(this, inEdge.label, intothis.size() - 1);
 		inEdge.point.outofthis.set(inEdge.reverse_index, outEdge);
 	}
 
@@ -283,8 +284,16 @@ public class PcodeBlock {
 		return intothis.get(i).point;
 	}
 
+	public int getInEdgeLabel(int i) {
+		return intothis.get(i).label;
+	}
+
 	public PcodeBlock getOut(int i) {
 		return outofthis.get(i).point;
+	}
+
+	public int getOutEdgeLabel(int i) {
+		return outofthis.get(i).label;
 	}
 
 	/**
