@@ -491,7 +491,8 @@ public interface TraceObject extends TraceUniqueObject {
 	 * <p>
 	 * If an object has a disjoint life, i.e., multiple canonical parents, then only the
 	 * least-recent of those is traversed. Aliased keys are excluded; those can't be canonical
-	 * anyway.
+	 * anyway. By definition, a primitive value is not canonical, even if it is the final value in
+	 * the path.
 	 * 
 	 * @param relativeFilter filter on the relative path from this object to desired successors
 	 * @return the stream of value paths

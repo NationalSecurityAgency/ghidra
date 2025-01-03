@@ -469,8 +469,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		if (rootSchema == null) {
 			throw new IllegalStateException("There is no schema. Create a root object.");
 		}
-		PathMatcher matcher = rootSchema.searchFor(iface, true);
-		return getValuePaths(span, matcher).filter(p -> {
+		PathFilter filter = rootSchema.searchFor(iface, true);
+		return getValuePaths(span, filter).filter(p -> {
 			TraceObject object = p.getDestination(getRootObject());
 			if (object == null) {
 				Msg.error(this, "NULL VALUE! " + p.getLastEntry());

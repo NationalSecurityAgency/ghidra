@@ -28,8 +28,8 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
 import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.path.PathFilter.Align;
-import ghidra.trace.model.target.path.PathMatcher;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
@@ -255,8 +255,8 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 
 	@Override
 	public TraceObjectSection getSectionByName(String sectionName) {
-		PathMatcher matcher = object.getSchema().searchFor(TraceObjectSection.class, true);
-		PathMatcher applied = matcher.applyKeys(Align.LEFT, List.of(sectionName));
+		PathFilter filter = object.getSchema().searchFor(TraceObjectSection.class, true);
+		PathFilter applied = filter.applyKeys(Align.LEFT, List.of(sectionName));
 		return object.getSuccessors(getLifespan(), applied)
 				.map(p -> p.getDestination(object).queryInterface(TraceObjectSection.class))
 				.findAny()

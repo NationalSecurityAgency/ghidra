@@ -24,7 +24,8 @@ import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
@@ -100,9 +101,9 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 
 	protected TraceObjectStackFrame doAddStackFrame(int level) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			PathMatcher matcher =
+			PathFilter filter =
 				object.getSchema().searchFor(TraceObjectStackFrame.class, true);
-			KeyPath relPath = matcher.applyKeys(KeyPath.makeIndex(level)).getSingletonPath();
+			KeyPath relPath = filter.applyKeys(KeyPath.makeIndex(level)).getSingletonPath();
 			if (relPath == null) {
 				throw new IllegalStateException("Could not determine where to create new frame");
 			}

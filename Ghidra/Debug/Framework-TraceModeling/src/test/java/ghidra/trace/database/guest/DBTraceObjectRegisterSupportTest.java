@@ -37,7 +37,7 @@ import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
@@ -428,9 +428,9 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			x86.getConventionalRegisterRange(overlay, EAX));
 	}
 
-	protected static void assertMatches(String path, PathMatcher matcher) {
-		String message = matcher + " does not match " + path;
-		assertTrue(message, matcher.matches(KeyPath.parse(path)));
+	protected static void assertMatches(String path, PathFilter filter) {
+		String message = filter + " does not match " + path;
+		assertTrue(message, filter.matches(KeyPath.parse(path)));
 	}
 
 	@Test
@@ -475,10 +475,10 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers", registers);
 		}
 
-		PathMatcher matcher = b.host.getConventionalRegisterPath(overlay, r0);
-		assertMatches("Targets[0].Threads[0].Registers.User[r0]", matcher);
-		assertMatches("Targets[0].Threads[0].Registers.User[a0]", matcher);
-		assertMatches("Targets[0].Threads[0].Registers.User[R0]", matcher);
-		assertMatches("Targets[0].Threads[0].Registers.User[A0]", matcher);
+		PathFilter filter = b.host.getConventionalRegisterPath(overlay, r0);
+		assertMatches("Targets[0].Threads[0].Registers.User[r0]", filter);
+		assertMatches("Targets[0].Threads[0].Registers.User[a0]", filter);
+		assertMatches("Targets[0].Threads[0].Registers.User[R0]", filter);
+		assertMatches("Targets[0].Threads[0].Registers.User[A0]", filter);
 	}
 }
