@@ -47,6 +47,8 @@ import ghidra.util.Msg;
  * This class implements the control-flow logic of the target machine, cooperating with the p-code
  * program flow implemented by the {@link PcodeExecutor}. This implementation exists primarily in
  * {@link #beginInstructionOrInject()} and {@link #advanceAfterFinished()}.
+ * 
+ * @param <T> the type of variables in the emulator
  */
 public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
@@ -122,7 +124,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * 
 		 * @see PcodeMachine#addBreakpoint(Address, String)
 		 */
-		@PcodeUserop
+		@PcodeUserop(functional = true)
 		public void emu_swi() {
 			thread.swi();
 		}
@@ -136,7 +138,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * calls to this p-code op. Then, only if and when an erroneous inject is encountered will
 		 * the client be notified.
 		 */
-		@PcodeUserop
+		@PcodeUserop(functional = true)
 		public void emu_injection_err() {
 			throw new InjectionErrorPcodeExecutionException(null, null);
 		}
@@ -148,6 +150,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	 * <p>
 	 * This executor checks for thread suspension and updates the program counter register upon
 	 * execution of (external) branches.
+	 * 
+	 * @param <T> the type of variables in the emulator
 	 */
 	public static class PcodeThreadExecutor<T> extends PcodeExecutor<T> {
 		volatile boolean suspended = false;
@@ -192,7 +196,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 
 		@Override
-		protected void branchToAddress(Address target) {
+		protected void branchToAddress(PcodeOp op, Address target) {
 			thread.branchToAddress(target);
 		}
 
@@ -249,7 +253,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		this.arithmetic = machine.arithmetic;
 		PcodeExecutorState<T> sharedState = machine.getSharedState();
 		PcodeExecutorState<T> localState = machine.createLocalState(this);
-		this.state = new ThreadPcodeExecutorState<>(sharedState, localState);
+		this.state = createThreadState(sharedState, localState);
 		this.decoder = createInstructionDecoder(sharedState);
 		this.library = createUseropLibrary();
 
@@ -267,6 +271,18 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			defaultContext = null;
 		}
 		this.reInitialize();
+	}
+
+	/**
+	 * A factory method for the thread's (multiplexed) state
+	 * 
+	 * @param sharedState the shared part of the state
+	 * @param localState the thread-local part of the state
+	 * @return the complete state
+	 */
+	protected ThreadPcodeExecutorState<T> createThreadState(PcodeExecutorState<T> sharedState,
+			PcodeExecutorState<T> localState) {
+		return new ThreadPcodeExecutorState<>(sharedState, localState);
 	}
 
 	/**
@@ -465,8 +481,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 	}
 
-	protected RegisterValue getContextAfterCommits() {
+	public static RegisterValue getContextAfterCommits(Instruction instruction, long counter) {
 		PseudoInstruction pins = (PseudoInstruction) instruction;
+		Language language = instruction.getPrototype().getLanguage();
 		try {
 			SleighParserContext parserCtx = (SleighParserContext) pins.getParserContext();
 			var procCtx = new DisassemblerContextAdapter() {
@@ -477,7 +494,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 					if (!value.getRegister().isProcessorContext()) {
 						return;
 					}
-					if (!address.equals(counter)) {
+					if (address.getOffset() != counter &&
+						!Objects.equals(pins.getAddress(), address)) {
 						Msg.warn(this, "Context applied somewhere other than the counter.");
 						return;
 					}
@@ -490,6 +508,10 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		catch (MemoryAccessException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	protected RegisterValue getContextAfterCommits() {
+		return getContextAfterCommits(instruction, counter.getOffset());
 	}
 
 	/**

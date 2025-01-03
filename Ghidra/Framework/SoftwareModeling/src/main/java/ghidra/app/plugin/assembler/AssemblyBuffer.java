@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.plugin.assembler;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
@@ -72,6 +73,21 @@ public class AssemblyBuffer {
 	 * Assemble a line and append it to the buffer
 	 * 
 	 * @param line the line
+	 * @param ctx the assembly context
+	 * @return the resulting bytes for the assembled instruction
+	 * @throws AssemblySyntaxException if the instruction cannot be parsed
+	 * @throws AssemblySemanticException if the instruction cannot be encoded
+	 * @throws IOException if the buffer cannot be written
+	 */
+	public byte[] assemble(String line, AssemblyPatternBlock ctx)
+			throws AssemblySyntaxException, AssemblySemanticException, IOException {
+		return emit(asm.assembleLine(getNext(), line, ctx));
+	}
+
+	/**
+	 * Assemble a line and append it to the buffer
+	 * 
+	 * @param line the line
 	 * @return the resulting bytes for the assembled instruction
 	 * @throws AssemblySyntaxException if the instruction cannot be parsed
 	 * @throws AssemblySemanticException if the instruction cannot be encoded
@@ -107,6 +123,28 @@ public class AssemblyBuffer {
 	 * the caller should check the lengths of the returned byte arrays for the template and the
 	 * patch.
 	 * 
+	 * @param at the address of the instruction to patch
+	 * @param line the line
+	 * @param ctx the assembly context
+	 * @return the resulting bytes for the assembled instruction
+	 * @throws AssemblySyntaxException if the instruction cannot be parsed
+	 * @throws AssemblySemanticException if the instruction cannot be encoded
+	 * @throws IOException if the buffer cannot be written
+	 */
+	public byte[] assemble(Address at, String line, AssemblyPatternBlock ctx)
+			throws AssemblySyntaxException, AssemblySemanticException, IOException {
+		byte[] full = baos.toByteArray();
+		byte[] bytes = asm.assembleLine(at, line, ctx);
+		System.arraycopy(bytes, 0, full, (int) at.subtract(entry), bytes.length);
+		baos.reset();
+		baos.write(full);
+		return bytes;
+	}
+
+	/**
+	 * Assemble a line and patch into the buffer
+	 * 
+	 * @see #assemble(Address, String, AssemblyPatternBlock)
 	 * @param at the address of the instruction to patch
 	 * @param line the line
 	 * @return the resulting bytes for the assembled instruction
@@ -147,5 +185,23 @@ public class AssemblyBuffer {
 	 */
 	public byte[] getBytes() {
 		return baos.toByteArray();
+	}
+
+	/**
+	 * Get the starting address
+	 * 
+	 * @return the address
+	 */
+	public Address getEntry() {
+		return entry;
+	}
+
+	/**
+	 * Get the assembler for this buffer
+	 * 
+	 * @return the assembler
+	 */
+	public Assembler getAssembler() {
+		return asm;
 	}
 }

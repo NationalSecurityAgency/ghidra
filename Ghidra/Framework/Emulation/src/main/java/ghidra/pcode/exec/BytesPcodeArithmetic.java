@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.lang.Language;
 
@@ -102,14 +103,14 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	}
 
 	@Override
-	public byte[] modBeforeStore(int sizeout, int sizeinAddress, byte[] inAddress, int sizeinValue,
-			byte[] inValue) {
+	public byte[] modBeforeStore(int sizeinOffset, AddressSpace space, byte[] inOffset,
+			int sizeinValue, byte[] inValue) {
 		return inValue;
 	}
 
 	@Override
-	public byte[] modAfterLoad(int sizeout, int sizeinAddress, byte[] inAddress, int sizeinValue,
-			byte[] inValue) {
+	public byte[] modAfterLoad(int sizeinOffset, AddressSpace space, byte[] inOffset,
+			int sizeinValue, byte[] inValue) {
 		return inValue;
 	}
 

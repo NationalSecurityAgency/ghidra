@@ -29,17 +29,13 @@ dependencies {
 	api project(':Base')
 	api project(':Recognizers')
 	api project(':PDB')
-	
+
 	// Used by "Android DEX to JAR" file system
+	// dex2jar depends on asm-9.7.1, which is declared in Framework/Emulation
 	api 'de.femtopedia.dex2jar:dex-ir:2.4.24'
 	api 'de.femtopedia.dex2jar:dex-reader:2.4.24'
 	api 'de.femtopedia.dex2jar:dex-reader-api:2.4.24'
 	api 'de.femtopedia.dex2jar:dex-translator:2.4.24'
-	api 'org.ow2.asm:asm:9.7.1'
-	api 'org.ow2.asm:asm-analysis:9.7.1'
-	api 'org.ow2.asm:asm-commons:9.7.1'
-	api 'org.ow2.asm:asm-tree:9.7.1'
-	api 'org.ow2.asm:asm-util:9.7.1'
 
 	// Used by "Android DEX to SMALI" file system
 	api 'org.smali:baksmali:2.5.2' // requires guava-27.1-android or later

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import generic.ULongSpan.ULongSpanSet;
 import ghidra.app.emulator.memory.MemoryLoadImage;
 import ghidra.app.emulator.state.RegisterState;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.lifecycle.Transitional;
 import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.PcodeMachine.SwiMode;
@@ -35,7 +36,6 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -134,7 +134,7 @@ public class AdaptedEmulator implements Emulator {
 				PcodeExecutorState<byte[]> sharedState) {
 			return new SleighInstructionDecoder(language, sharedState) {
 				@Override
-				public Instruction decodeInstruction(Address address, RegisterValue context) {
+				public PseudoInstruction decodeInstruction(Address address, RegisterValue context) {
 					try {
 						isDecoding = true;
 						return super.decodeInstruction(address, context);
@@ -147,8 +147,7 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
-	record StateBacking(MemoryFaultHandler faultHandler, MemoryLoadImage loadImage) {
-	}
+	record StateBacking(MemoryFaultHandler faultHandler, MemoryLoadImage loadImage) {}
 
 	class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
 		public AdaptedBytesPcodeExecutorState(Language language, StateBacking backing) {

@@ -15,6 +15,8 @@
  */
 package ghidra.util;
 
+import java.util.Comparator;
+
 public class MathUtilities {
 
 	private MathUtilities() {
@@ -203,5 +205,21 @@ public class MathUtilities {
 	 */
 	public static long unsignedMax(long a, int b) {
 		return (Long.compareUnsigned(a, b & 0x0ffffffffL) > 0) ? a : b;
+	}
+
+	public static <C> C cmin(C a, C b, Comparator<C> comp) {
+		return comp.compare(a, b) <= 0 ? a : b;
+	}
+
+	public static <C extends Comparable<C>> C cmin(C a, C b) {
+		return cmin(a, b, Comparator.naturalOrder());
+	}
+
+	public static <C> C cmax(C a, C b, Comparator<C> comp) {
+		return comp.compare(a, b) >= 0 ? a : b;
+	}
+
+	public static <C extends Comparable<C>> C cmax(C a, C b) {
+		return cmax(a, b, Comparator.naturalOrder());
 	}
 }
