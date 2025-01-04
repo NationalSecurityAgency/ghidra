@@ -56,8 +56,9 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.symbol.TraceReferenceManager;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -432,6 +433,17 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return result.flip();
 	}
 
+	public class EventSuspension implements AutoCloseable {
+		public EventSuspension() {
+			trace.setEventsEnabled(false);
+		}
+
+		@Override
+		public void close() {
+			trace.setEventsEnabled(true);
+		}
+	}
+
 	/**
 	 * Start a transaction on the trace
 	 * 
@@ -442,6 +454,18 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public Transaction startTransaction() {
 		return trace.openTransaction("Testing");
+	}
+
+	/**
+	 * Suspend events for the trace
+	 * 
+	 * <p>
+	 * Use this in a {@code try-with-resources} block
+	 * 
+	 * @return the suspension handle
+	 */
+	public EventSuspension suspendEvents() {
+		return new EventSuspension();
 	}
 
 	/**

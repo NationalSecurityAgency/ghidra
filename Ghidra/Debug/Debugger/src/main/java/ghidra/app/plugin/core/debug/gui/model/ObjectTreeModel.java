@@ -340,8 +340,16 @@ public class ObjectTreeModel implements DisplaysModified {
 			while (ic < current.size() && ig < generated.size()) {
 				GTreeNode nc = current.get(ic);
 				GTreeNode ng = generated.get(ig);
+				if (nc == ng) {
+					ic++;
+					ig++;
+					continue;
+				}
 				int comp = nc.compareTo(ng);
 				if (comp == 0) {
+					// Same path, but not identical. Replace.
+					addNode(ic + diff, ng);
+					removeNode(nc);
 					ic++;
 					ig++;
 				}
