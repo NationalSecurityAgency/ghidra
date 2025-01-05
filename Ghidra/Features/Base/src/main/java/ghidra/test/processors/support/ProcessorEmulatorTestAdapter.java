@@ -209,8 +209,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 	private File resourcesTestDataDir;
 
 	private FileDataTypeManager archiveDtMgr;
-	private Structure testInfoStruct;
-	private Structure groupInfoStruct;
+	protected Structure testInfoStruct;
+	protected Structure groupInfoStruct;
 
 	private ParallelInstructionLanguageHelper parallelHelper;
 

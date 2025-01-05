@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/processor_spec.rxg -->
+
+<processor_spec>
+  <properties>
+    <property key="pcodeInjectLibraryClass" value="wasm.pcode.PcodeInjectLibraryWasm"/>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.WasmEmulateInstructionStateModifier"/>
+  </properties>
+  <inferptrbounds>
+    <range space="ram" first="0x400" last="0xffffffff"/>
+  </inferptrbounds>
+  <programcounter register="PC"/>
+  <register_data>
+    <register name="SP" group="Alt"/>
+  </register_data>
+</processor_spec>

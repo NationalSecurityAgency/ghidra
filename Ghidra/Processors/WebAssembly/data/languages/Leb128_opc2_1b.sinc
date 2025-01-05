@@ -1,0 +1,5 @@
+$(NAME): is topbit = 0 & v0 = $(N) {}
+$(NAME): is topbit = 1 & v0 = $(N); topbit = 0 & v1 = 0 {}
+$(NAME): is topbit = 1 & v0 = $(N); topbit = 1 & v1 = 0; topbit = 0 & v2 = 0 {}
+$(NAME): is topbit = 1 & v0 = $(N); topbit = 1 & v1 = 0; topbit = 1 & v2 = 0; topbit = 0 & v3 = 0 {}
+$(NAME): is topbit = 1 & v0 = $(N); topbit = 1 & v1 = 0; topbit = 1 & v2 = 0; topbit = 1 & v3 = 0; topbit = 0 & v4 = 0 {}

@@ -78,6 +78,8 @@ class PCodeTestBuild(BuildUtil):
             return PCodeBuildCCS(pcode_test)
         elif pcode_test.config.toolchain_type == 'sdcc':
             return PCodeBuildSDCC(pcode_test)
+        elif pcode_test.config.toolchain_type == 'llvm':
+            return PCodeBuildLLVM(pcode_test)
         else:
             raise Exception(pcode_test.config.format('Toolchain type %(toolchain_type)s not known'))
 
@@ -308,6 +310,55 @@ class PCodeBuildCCS(PCodeTestBuild):
         cmd += ['-z', '-h', '-e', 'printf5']
         cmd += [self.config.format('%(toolchain_dir)s/tools/compiler/ti-cgt-msp430_16.9.0.LTS/lib/libc.a')]
         cmd += ['-o', output_file]
+        out, err = self.run(cmd)
+        if out: self.log_info(out)
+
+        # print error messages, which may just be warnings
+        if err: self.log_warn(err)
+
+        # return now if the error preempted the binary
+
+        if not self.is_readable_file(output_file):
+            self.log_err('output not created %s' % output_file)
+            return
+
+class PCodeBuildLLVM(PCodeTestBuild):
+
+    def __init__(self, PCodeTest):
+        super(PCodeBuildLLVM, self).__init__(PCodeTest)
+
+    # Set options for compiler depending on needs.
+    def cflags(self, output_file):
+        f = []
+        f += ['-DHAS_FLOAT=1' if self.config.has_float else '-DHAS_FLOAT_OVERRIDE=1']
+        f += ['-DHAS_DOUBLE=1' if self.config.has_double else '-DHAS_DOUBLE_OVERRIDE=1']
+        f += ['-DHAS_LONGLONG=1' if self.config.has_longlong else '-DHAS_LONGLONG_OVERRIDE=1']
+        if self.config.has_shortfloat: f += ['-DHAS_SHORTFLOAT=1']
+        if self.config.has_vector: f += ['-DHAS_VECTOR=1']
+        if self.config.has_decimal128: f += ['-DHAS_DECIMAL128=1']
+        if self.config.has_decimal32: f += ['-DHAS_DECIMAL32=1']
+        if self.config.has_decimal64: f += ['-DHAS_DECIMAL64=1']
+
+        f += ['-DNAME=NAME:%s' % output_file]
+
+        f += ['-static', '-Wno-unused-macros', '-nodefaultlibs', '-nostartfiles', '-fno-builtin']
+
+        f += self.config.ccflags.split()
+        f += self.config.add_ccflags.split()
+
+        return f
+
+    def compile(self, input_files, opt_cflag, output_base):
+
+        # Name the output file, and delete it if it exists
+
+        output_file = '%s.out' % (output_base)
+        self.remove(output_file)
+
+        # Construct the compile command line and execute it
+
+        cmp = self.which('compile_exe')
+        cmd = [cmp] + input_files + self.cflags(output_file) + [opt_cflag, "-o", output_file]
         out, err = self.run(cmd)
         if out: self.log_info(out)
 

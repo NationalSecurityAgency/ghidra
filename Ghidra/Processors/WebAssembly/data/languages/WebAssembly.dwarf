@@ -1,0 +1,6 @@
+<dwarf>
+	<register_mappings>
+		<!-- This is a dummy file to prevent "No DWARF to Ghidra register mappings" error-->
+		<register_mapping dwarf="3000" ghidra="SP" stackpointer="true"/>
+	</register_mappings>
+</dwarf>

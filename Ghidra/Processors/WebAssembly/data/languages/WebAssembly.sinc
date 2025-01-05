@@ -1,0 +1,503 @@
+# sleigh include file for WebAssembly language instructions
+
+define token opbyte (8)
+	opc = (0, 7)
+	valtype = (0, 7)
+	bytev = (0, 7)
+
+	topbit = (7, 7)
+	v0 = (0, 6)
+	v1 = (0, 6)
+	v2 = (0, 6)
+	v3 = (0, 6)
+	v4 = (0, 6)
+	v5 = (0, 6)
+	v6 = (0, 6)
+	v7 = (0, 6)
+	v8 = (0, 6)
+	v9 = (0, 6)
+;
+
+define token I32 (32)
+	f32 = (0,31)
+;
+
+define token I64 (64)
+	f64 = (0,63)
+;
+
+attach names valtype [
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x10
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x20
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x30
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x40
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x50
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ externref # 0x60
+  funcref _ _ _ _ _ _ _ _ _ _ v128 f64 f32 i64 i32 # 0x70
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x80
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x90
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xa0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xb0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xc0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xd0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xe0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xf0
+];
+
+################################################################
+
+define pcodeop funcEntryCallOther;
+define pcodeop popCallOther;
+define pcodeop pushCallOther;
+define pcodeop callPrologueCallOther;
+define pcodeop callEpilogueCallOther;
+define pcodeop halt_trap;
+define pcodeop popcnt;
+define pcodeop clz;
+define pcodeop ctz;
+# TODO: define some of these in terms of a more generic "memcpy"/"memset" operation
+define pcodeop table_init;
+define pcodeop elem_drop;
+define pcodeop table_copy;
+define pcodeop table_grow;
+define pcodeop table_size;
+define pcodeop table_fill;
+define pcodeop memory_size;
+define pcodeop memory_grow;
+define pcodeop memory_init;
+define pcodeop data_drop;
+define pcodeop memory_copy;
+define pcodeop memory_fill;
+
+@include "Leb128.sinc"
+
+# This is a silly hack because I couldn't work out how to use Leb128 itself
+# in the disassembly actions section of another constructor...
+# NOTE: Recursive expansion doesn't seem to work, so we hardcode REG_SIZE and REG_LOCALS_BASE here.
+@define SYMBOL local4
+@define DEST_EXPR "0x10000000 + 16 * "
+@define EXPORT_EXPR "export *[register]:4 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL local8
+@define DEST_EXPR "0x10000000 + 16 * "
+@define EXPORT_EXPR "export *[register]:8 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL local16
+@define DEST_EXPR "0x10000000 + 16 * "
+@define EXPORT_EXPR "export *[register]:16 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL global4
+@define DEST_EXPR "16 * "
+@define EXPORT_EXPR "export *[global]:4 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL global8
+@define DEST_EXPR "16 * "
+@define EXPORT_EXPR "export *[global]:8 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL global16
+@define DEST_EXPR "16 * "
+@define EXPORT_EXPR "export *[global]:16 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL tableref
+@define DEST_EXPR "(1<<32) * "
+@define EXPORT_EXPR "export *[table]:4 dest;"
+@include "Leb128_u32.sinc"
+
+@include "Leb128_opc2.sinc"
+
+sp0_32: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 0) * $(REG_SIZE);] {
+	export *[register]:4 tmp_sp;
+}
+
+sp0_64: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 0) * $(REG_SIZE);] {
+	export *[register]:8 tmp_sp;
+}
+
+sp0_128: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 0) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
+}
+
+sp1_32: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE);] {
+	export *[register]:4 tmp_sp;
+}
+
+sp1_64: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE);] {
+	export *[register]:8 tmp_sp;
+}
+
+sp1_128: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
+}
+
+sp2_32: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE);] {
+	export *[register]:4 tmp_sp;
+}
+
+sp2_64: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE);] {
+	export *[register]:8 tmp_sp;
+}
+
+sp2_128: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
+}
+
+sp3_32: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 3) * $(REG_SIZE);] {
+	export *[register]:4 tmp_sp;
+}
+
+sp3_64: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 3) * $(REG_SIZE);] {
+	export *[register]:8 tmp_sp;
+}
+
+sp3_128: tmp_sp is ctx_sp [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 3) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
+}
+
+br_target: ctx_br_target is ctx_br_target {
+	export *[ram]:4 ctx_br_target;
+}
+
+funcidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+typeidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+elemidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+tableidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+tableidx2: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+dataidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+memidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+memidx2: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+count: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+# An explicit no-op operation, to be used before
+# callother instructions to work around Ghidra issue #3390
+# (which causes incorrect decompilation if the first pcodeop
+# in a branch target instruction is a callother)
+macro nop() {
+	LR = LR;
+}
+
+macro trap() {
+<trap_loop>
+	halt_trap();
+	goto <trap_loop>;
+}
+
+macro doBranch(br_target) {
+	nop();
+	popCallOther(&t0);
+	pushCallOther(&t0);
+	goto br_target;
+}
+
+################################################################
+
+## Locals directives at the start of the function
+:.locals is count; ctx_is_directive=1; ctx_directive_type=$(DIRECTIVE_LOCALS) {
+	nop();
+	funcEntryCallOther(&i0, &l0);
+}
+
+:.local "count="^count "type="^typeidx is count; typeidx; ctx_is_directive=1; ctx_directive_type=$(DIRECTIVE_LOCAL) {
+}
+
+## Control instructions
+:unreachable is opc=0x00; ctx_is_directive=0 {
+	trap();
+}
+
+:nop is opc=0x01; ctx_is_directive=0 {
+}
+
+:block "blocktype="^ULeb128 is opc=0x02; ULeb128; ctx_is_directive=0 {
+}
+:loop "blocktype="^ULeb128 is opc=0x03; ULeb128; ctx_is_directive=0 {
+}
+:if "blocktype="^ULeb128 is opc=0x04; ULeb128; br_target; sp1_32; ctx_is_directive=0 {
+	if(sp1_32 != 0) goto inst_next;
+	doBranch(br_target);
+}
+:else is opc=0x05; br_target; ctx_is_directive=0 {
+	doBranch(br_target);
+}
+
+:end is opc=0x0b; ctx_is_return=1; ctx_is_directive=0 {
+	nop();
+	callEpilogueCallOther(&o0);
+	return [LR];
+}
+:end is opc=0x0b; ctx_is_return=0; ctx_is_directive=0 {
+}
+
+:br br_target is opc=0x0c; ULeb128; br_target; ctx_is_directive=0 {
+	doBranch(br_target);
+}
+:br_if br_target is opc=0x0d; ULeb128; br_target; sp1_32; ctx_is_directive=0 {
+	if(sp1_32 == 0) goto inst_next;
+	doBranch(br_target);
+}
+
+:.case ctx_case_index br_target is ULeb128; br_target; ctx_case_index; ctx_is_directive=1; ctx_directive_type=$(DIRECTIVE_CASE) {
+	if(BRTableInput != ctx_case_index) goto inst_next;
+	doBranch(br_target);
+}
+
+:.default br_target is ULeb128; br_target; ctx_is_directive=1; ctx_directive_type=$(DIRECTIVE_DEFAULT) {
+	doBranch(br_target);
+}
+
+:br_table is opc=0x0e; ULeb128; sp1_32; ctx_is_directive=0 {
+	BRTableInput = sp1_32;
+}
+
+:return is opc=0x0f; ctx_is_directive=0 {
+	nop();
+	callEpilogueCallOther(&o0);
+	return [LR];
+}
+# note: anything following the call doesn't happen in emulation mode
+# the movement of outputs is handled by callEpilogueCallOther in emulation mode
+:call br_target is opc=0x10; ULeb128; br_target; ctx_is_directive=0 {
+	LR = inst_next;
+	callPrologueCallOther(&i0);
+	call br_target;
+	pushCallOther(&o0);
+}
+:call_indirect "type="^typeidx tableref is opc=0x11; typeidx; tableref; sp1_32; ctx_is_directive=0 {
+	addr:8 = &tableref + zext(sp1_32) * 4;
+	val:4 = *[table] addr;
+	LR = inst_next;
+	callPrologueCallOther(&i0);
+	call [val];
+	pushCallOther(&o0);
+}
+
+## Reference Instructions
+:ref.null valtype is opc=0xd0; valtype; sp0_32; ctx_is_directive=0 {
+	sp0_32 = 0;
+}
+:ref.is_null is opc=0xd1; sp1_32; ctx_is_directive=0 {
+	res:4 = zext(sp1_32 == 0);
+	sp1_32 = res;
+}
+:ref.func br_target is opc=0xd2; funcidx; br_target; sp0_32; ctx_is_directive=0 {
+	sp0_32 = &br_target;
+}
+
+## Parametric Instructions
+:drop is opc=0x1a; ctx_is_directive=0 {
+	# stack adjustment is handled by preanalyzer
+}
+
+macro select32(sp1_32, sp2_32, sp3_32) {
+	if (sp1_32 != 0) goto inst_next;
+	sp3_32 = sp2_32;
+}
+
+macro select64(sp1_32, sp2_64, sp3_64) {
+	if (sp1_32 != 0) goto inst_next;
+	sp3_64 = sp2_64;
+}
+
+macro select128(sp1_32, sp2_128, sp3_128) {
+	if (sp1_32 != 0) goto inst_next;
+	sp3_128 = sp2_128;
+}
+
+:select is opc=0x1b; sp1_32; sp2_32; sp3_32; ctx_is_directive=0; ctx_operand_size=4 {
+	select32(sp1_32, sp2_32, sp3_32);
+}
+:select is opc=0x1b; sp1_32; sp2_64; sp3_64; ctx_is_directive=0; ctx_operand_size=8 {
+	select64(sp1_32, sp2_64, sp3_64);
+}
+:select is opc=0x1b; sp1_32; sp2_128; sp3_128; ctx_is_directive=0; ctx_operand_size=16 {
+	select128(sp1_32, sp2_128, sp3_128);
+}
+
+# In the current version of Wasm, only one type index is permitted in select t*.
+# This is functionally identical to regular select.
+select_valtype: valtype is valtype; sp1_32; sp2_32; sp3_32 {
+	# i32, f32, funcref, externref
+	select32(sp1_32, sp2_32, sp3_32);
+}
+select_valtype: valtype is valtype & (bytev=0x7e | bytev=0x7c); sp1_32; sp2_64; sp3_64 {
+	# i64, f64
+	select64(sp1_32, sp2_64, sp3_64);
+}
+select_valtype: valtype is valtype & bytev=0x7b; sp1_32; sp2_128; sp3_128 {
+	# v128
+	select128(sp1_32, sp2_128, sp3_128);
+}
+
+# opc2_1 is used here to check that the LEB128 length of the type vector is 1.
+:select select_valtype is opc=0x1c; opc2_1; select_valtype; ctx_is_directive=0 {
+}
+
+## Variable Instructions
+:local.get local4 is opc=0x20; local4; sp0_32; ctx_is_directive=0; ctx_operand_size=4 {
+	sp0_32 = local4;
+}
+:local.get local8 is opc=0x20; local8; sp0_64; ctx_is_directive=0; ctx_operand_size=8 {
+	sp0_64 = local8;
+}
+:local.get local16 is opc=0x20; local16; sp0_128; ctx_is_directive=0; ctx_operand_size=16 {
+	sp0_128 = local16;
+}
+
+:local.set local4 is opc=0x21; local4; sp1_32; ctx_is_directive=0; ctx_operand_size=4 {
+	local4 = sp1_32;
+}
+:local.set local8 is opc=0x21; local8; sp1_64; ctx_is_directive=0; ctx_operand_size=8 {
+	local8 = sp1_64;
+}
+:local.set local16 is opc=0x21; local16; sp1_128; ctx_is_directive=0; ctx_operand_size=16 {
+	local16 = sp1_128;
+}
+
+:local.tee local4 is opc=0x22; local4; sp1_32; ctx_is_directive=0; ctx_operand_size=4 {
+	local4 = sp1_32;
+}
+:local.tee local8 is opc=0x22; local8; sp1_64; ctx_is_directive=0; ctx_operand_size=8 {
+	local8 = sp1_64;
+}
+:local.tee local16 is opc=0x22; local16; sp1_128; ctx_is_directive=0; ctx_operand_size=16 {
+	local16 = sp1_128;
+}
+
+:global.get global4 is opc=0x23; global4; sp0_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=0 {
+	sp0_32 = global4;
+}
+:global.get global4 is opc=0x23; global4; sp0_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=1 {
+	sp0_32 = SP;
+}
+:global.get global8 is opc=0x23; global8; sp0_64; ctx_is_directive=0; ctx_operand_size=8 {
+	sp0_64 = global8;
+}
+:global.get global16 is opc=0x23; global16; sp0_128; ctx_is_directive=0; ctx_operand_size=16 {
+	sp0_128 = global16;
+}
+
+:global.set global4 is opc=0x24; global4; sp1_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=0 {
+	global4 = sp1_32;
+}
+:global.set global4 is opc=0x24; global4; sp1_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=1 {
+	SP = sp1_32;
+}
+:global.set global8 is opc=0x24; global8; sp1_64; ctx_is_directive=0; ctx_operand_size=8 {
+	global8 = sp1_64;
+}
+:global.set global16 is opc=0x24; global16; sp1_128; ctx_is_directive=0; ctx_operand_size=16 {
+	global16 = sp1_128;
+}
+
+## Table Instructions
+:table.get tableref is opc=0x25; tableref; sp1_32; ctx_is_directive=0 {
+	addr:8 = &tableref + zext(sp1_32) * 4;
+	sp1_32 = *[table] addr;
+}
+
+:table.set tableref is opc=0x26; tableref; sp1_32; sp2_32; ctx_is_directive=0 {
+	addr:8 = &tableref + zext(sp2_32) * 4;
+	*[table] addr = sp1_32;
+}
+
+:table.init elemidx tableidx is opc=0xfc; opc2_12; elemidx; tableidx; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	table_init(elemidx:4, tableidx:4, sp1_32, sp2_32, sp3_32);
+}
+
+:elem.drop elemidx is opc=0xfc; opc2_13; elemidx; ctx_is_directive=0 {
+	elem_drop(elemidx:4);
+}
+
+:table.copy tableidx tableidx2 is opc=0xfc; opc2_14; tableidx; tableidx2; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	table_copy(tableidx:4, tableidx2:4, sp1_32, sp2_32, sp3_32);
+}
+
+:table.grow tableidx is opc=0xfc; opc2_15; tableidx; sp1_32; ctx_is_directive=0 {
+	sp1_32 = table_grow(tableidx:4, sp1_32);
+}
+
+:table.size tableidx is opc=0xfc; opc2_16; tableidx; sp0_32; ctx_is_directive=0 {
+	sp0_32 = table_size(tableidx:4);
+}
+
+:table.fill tableidx is opc=0xfc; opc2_17; tableidx; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	table_fill(tableidx:4, sp1_32, sp2_32, sp3_32);
+}
+
+
+## Memory Instructions
+:memory.size memidx is opc=0x3f; memidx; sp0_32; ctx_is_directive=0 {
+	sp0_32 = memory_size(memidx:4);
+}
+
+:memory.grow memidx is opc=0x40; memidx; sp1_32; ctx_is_directive=0 {
+	sp1_32 = memory_grow(memidx:4, sp1_32);
+}
+
+:memory.init dataidx memidx is opc=0xfc; opc2_8; dataidx; memidx; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	memory_init(dataidx, memidx:4, sp1_32, sp2_32, sp3_32);
+}
+
+:data.drop dataidx is opc=0xfc; opc2_9; dataidx; ctx_is_directive=0 {
+	data_drop(dataidx);
+}
+
+:memory.copy memidx memidx2 is opc=0xfc; opc2_10; memidx; memidx2; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	memory_copy(memidx:4, memidx2:4, sp1_32, sp2_32, sp3_32);
+}
+
+:memory.fill memidx is opc=0xfc; opc2_11; memidx; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	memory_fill(memidx:4, sp1_32, sp2_32, sp3_32);
+}
+
+## Numeric Instructions: const
+:i32.const SLeb128 is opc=0x41; SLeb128; sp0_32; ctx_is_directive=0 {
+	sp0_32 = SLeb128:4;
+}
+
+:i64.const SLeb128 is opc=0x42; SLeb128; sp0_64; ctx_is_directive=0 {
+	sp0_64 = SLeb128:8;
+}
+
+:f32.const f32 is opc=0x43; f32; sp0_32; ctx_is_directive=0 {
+	sp0_32 = f32:4;
+}
+
+:f64.const f64 is opc=0x44; f64; sp0_64; ctx_is_directive=0 {
+	sp0_64 = f64:8;
+}
+
+@include "BasicOps.sinc"
+@include "VectorOps.sinc"
