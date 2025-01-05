@@ -87,14 +87,19 @@ prevent specific tasks from running:
 gradle buildGhidra -x ip
 ```
 
-## PyGhidra
+## PyGhidra Development
 The supported way to develop and debug PyGhidra is with the _[PyDev][pydev]_ plugin for Eclipse.
 When PyDev is installed and configured, several new Eclipse run configurations will appear that
 enable running and debugging PyGhidra from both _GUI_ and _Interpreter_ modes.
 
-When you perform a `gradle prepdev`, a Python virtual environment gets setup at `build/venv/`. PyDev
-should be pointed at this virtual environment so it has access to the editable PyGhidra module, as
-well as the typing/stub information.  From Eclipse (with PyDev installed):
+To prepare PyGhidra for development and/or debugging, first execute the following gradle task:
+```
+gradle prepPyGhidra
+```
+This sets up a Python virtual environment at `build/venv/`, and installs an editable PyGhidra
+module (and its dependencies) into it. PyDev should be pointed at this virtual environment so it has
+access to the editable PyGhidra module, as well as the typing/stub information. From Eclipse 
+(with PyDev installed):
 
 1. _Settings -> PyDev -> Interpreters -> Python Interpreter_
 2. Click _New..._
@@ -106,27 +111,7 @@ well as the typing/stub information.  From Eclipse (with PyDev installed):
 8. Choose `build/typestubs/pypredef`
 9. Click _Apply and Close_
 
-## Known Issues
-* There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
-  if a non-English system locale is being used. As a workaround, set the following environment 
-  variable prior to running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
-
-## Offline Development Environment
-Sometimes you may want to move the Ghidra repository to an offline network and do development there.
-These are the recommended steps to ensure that you not only move the source repository, but all 
-downloaded dependencies as well:
-
-1. `gradle -I gradle/support/fetchDependencies.gradle`
-2. `gradle -g dependencies/gradle prepdev`
-3. Move ghidra directory to different system
-4. `gradle -g dependencies/gradle buildGhidra` (on offline system)
-
-**NOTE**: The `-g` flag specifies the Gradle user home directory. The default is the `.gradle`
-directory in the user’s home directory.  Overriding it to be inside the Ghidra repository will
-ensure that all maven central dependencies that were fetched during the `prepdev` task will be moved
-along with the rest of the repo.
-
-## Developing GhidraDev Eclipse Plugin
+## GhidraDev Eclipse Plugin Development
 Developing the GhidraDev Eclipse plugin requires the 
 _Eclipse PDE (Plug-in Development Environment)_, which can be installed via the Eclipse marketplace.
 It is also included in the _Eclipse IDE for RCP and RAP Developers_. To generate the GhidraDev 
@@ -143,6 +128,21 @@ preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/Ghi
 
 See [Building GhidraDev](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md#building)
 for instructions on how to build the GhidraDev plugin.
+
+## Offline Development Environment
+Sometimes you may want to move the Ghidra repository to an offline network and do development there.
+These are the recommended steps to ensure that you not only move the source repository, but all 
+downloaded dependencies as well:
+
+1. `gradle -I gradle/support/fetchDependencies.gradle`
+2. `gradle -g dependencies/gradle prepdev`
+3. Move ghidra directory to different system
+4. `gradle -g dependencies/gradle buildGhidra` (on offline system)
+
+**NOTE**: The `-g` flag specifies the Gradle user home directory. The default is the `.gradle`
+directory in the user’s home directory.  Overriding it to be inside the Ghidra repository will
+ensure that all maven central dependencies that were fetched during the `prepdev` task will be moved
+along with the rest of the repo.
 
 ## Running tests
 To run unit tests, do:
@@ -354,11 +354,18 @@ We also provide out-of-the-box QEMU integration via GDB.
 
 When submitting help tickets and pull requests, please tag those related to the debugger with "Debugger" so that we can triage them more quickly.
 
+## Known Issues
+* There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
+  if a non-English system locale is being used. As a workaround, set the following environment 
+  variable prior to running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
+* If the Ghidra build is only finding versions of Python that do not have access to `pip`, it may
+  be necessary to perform the build from a Python [virtual environment][venv].
 
 [java]: https://dev.java
 [cpp]: https://isocpp.org
 [sleigh]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/languages/index.html
 [python]: https://www.python.org
+[venv]: https://docs.python.org/3/tutorial/venv.html
 [jython]: https://www.jython.org
 [eclipse]: https://www.eclipse.org/downloads/
 [pydev]: https://www.pydev.org

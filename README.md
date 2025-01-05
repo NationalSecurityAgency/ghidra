@@ -1,7 +1,6 @@
 <img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="400">
 
 # Ghidra Software Reverse Engineering Framework
-
 Ghidra is a software reverse engineering (SRE) framework created and maintained by the 
 [National Security Agency][nsa] Research Directorate. This framework includes a suite of 
 full-featured, high-end software analysis tools that enable users to analyze compiled code on a 
@@ -22,7 +21,6 @@ cybersecurity tools for NSA to help protect our nation and its allies, consider 
 [career with us][career].
 
 ## Security Warning
-
 **WARNING:** There are known security vulnerabilities within certain versions of Ghidra.  Before 
 proceeding, please read through Ghidra's [Security Advisories][security] for a better understanding 
 of how you might be impacted.
@@ -35,14 +33,14 @@ To install an official pre-built multi-platform Ghidra release:
     `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
     Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
-* Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
+* Launch Ghidra: `./ghidraRun` (`ghidraRun.bat` for Windows)
+  - or launch [PyGhidra][pyghidra]: `./support/pyGhidraRun` (`support\pyGhidraRun.bat` for Windows)
 
 For additional information and troubleshooting tips about installing and running a Ghidra release, 
 please refer to the [Installation Guide][installationguide] which can be found in a Ghidra release
 at `docs/InstallationGuide.html`. 
 
 ## Build
-
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
@@ -119,7 +117,7 @@ gradle prepdev eclipse buildNatives
 When Eclipse finishes building the projects, Ghidra can be launched and debugged with the provided
 **Ghidra** Eclipse *run configuration*.
 
-For more detailed information on developing Ghidra, please read the [Developer Guide][devguide]. 
+For more detailed information on developing Ghidra, please read the [Developer Guide][devguide].
 
 ## Contribute
 If you would like to contribute bug fixes, improvements, and new features back to Ghidra, please 
@@ -143,3 +141,4 @@ source project.
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
 [ghidradev]: GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md
+[pyghidra]: Ghidra/Features/PyGhidra/README.md
