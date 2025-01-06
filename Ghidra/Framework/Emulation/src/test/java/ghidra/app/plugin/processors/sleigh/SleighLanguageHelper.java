@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,16 +32,24 @@ import ghidra.util.Msg;
 import resources.ResourceManager;
 
 public class SleighLanguageHelper {
+
+	private static SleighLanguage MOCK_BE_64_LANGUAGE;
+
 	private static ResourceFile getResourceFile(String name) {
 		URL url = ResourceManager.getResource(name);
 		if (url == null) {
 			return null;
 		}
-		return new ResourceFile(url.getPath());
+		ResourceFile maybeInJar = new ResourceFile(url.toExternalForm());
+		ResourceFile notInJar = new ResourceFile(maybeInJar.getFile(true));
+		return notInJar;
 	}
 
-	public static SleighLanguage getMockBE64Language()
+	public synchronized static SleighLanguage getMockBE64Language()
 			throws DecoderException, UnknownInstructionException, SAXException, IOException {
+		if (MOCK_BE_64_LANGUAGE != null) {
+			return MOCK_BE_64_LANGUAGE;
+		}
 
 		ResourceFile cSpecFile = getResourceFile("mock.cpsec");
 		CompilerSpecDescription cSpecDesc =
@@ -50,6 +58,7 @@ public class SleighLanguageHelper {
 		ResourceFile pSpecFile = getResourceFile("mock.pspec");
 		ResourceFile slaSpecFile = getResourceFile("mock.slaspec");
 		ResourceFile slaFile = getResourceFile("mock.sla");
+
 		if (slaFile == null || !slaFile.exists() ||
 			(slaSpecFile.lastModified() > slaFile.lastModified())) {
 			assertNotNull("Cannot find mock.slaspec", slaSpecFile);
@@ -61,8 +70,8 @@ public class SleighLanguageHelper {
 			catch (IOException | RecognitionException e) {
 				throw new AssertionError(e);
 			}
-			slaFile = getResourceFile("mock.sla");
-			assertNotNull("Cannot find mock.sla (after compilation)");
+			slaFile = new ResourceFile(slaSpecFile.getParentFile(), "mock.sla");
+			assertTrue("Cannot find mock.sla (after compilation)", slaFile.exists());
 		}
 
 		SleighLanguageDescription langDesc = new SleighLanguageDescription(
@@ -74,12 +83,14 @@ public class SleighLanguageHelper {
 			0, // minor version
 			false, // deprecated
 			new HashMap<>(), // truncatedSpaceMap
-			new ArrayList<>(List.of(cSpecDesc)), new HashMap<>() // externalNames
+			new ArrayList<>(List.of(cSpecDesc)), // compiler specs
+			new HashMap<>() // externalNames
 		);
 		langDesc.setDefsFile(lDefsFile);
 		langDesc.setSpecFile(pSpecFile);
 		langDesc.setSlaFile(slaFile);
 
-		return new SleighLanguage(langDesc);
+		MOCK_BE_64_LANGUAGE = new SleighLanguage(langDesc);
+		return MOCK_BE_64_LANGUAGE;
 	}
 }
