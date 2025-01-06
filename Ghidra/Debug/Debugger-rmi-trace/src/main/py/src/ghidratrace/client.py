@@ -34,7 +34,7 @@ from .util import send_delimited, recv_delimited
 # Other places to change:
 # * every pyproject.toml file (incl. deps)
 # * TraceRmiHandler.VERSION
-VERSION = '11.2'
+VERSION = '11.3'
 
 
 class RemoteResult(Future):
