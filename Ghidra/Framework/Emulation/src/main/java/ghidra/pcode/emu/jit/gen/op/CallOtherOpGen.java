@@ -16,7 +16,6 @@
 package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

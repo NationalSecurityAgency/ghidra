@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.IFLE;
-
 import ghidra.pcode.emu.jit.op.JitIntLessEqualOp;
 
 /**

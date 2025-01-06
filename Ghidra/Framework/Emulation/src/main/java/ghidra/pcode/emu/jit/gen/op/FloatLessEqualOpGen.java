@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.*;
-
 import ghidra.pcode.emu.jit.op.JitFloatLessEqualOp;
 
 /**

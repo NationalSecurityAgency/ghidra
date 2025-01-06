@@ -22,7 +22,7 @@ import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 /**
  * A field request for a pre-fetched or pre-constructed element
  */
-interface FieldReq {
+public interface FieldReq {
 	/**
 	 * Derive a suitable name for the field
 	 * 

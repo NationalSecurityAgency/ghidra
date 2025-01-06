@@ -15,9 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.IFEQ;
-import static org.objectweb.asm.Opcodes.IF_ICMPEQ;
-
 import ghidra.pcode.emu.jit.op.JitIntEqualOp;
 
 /**

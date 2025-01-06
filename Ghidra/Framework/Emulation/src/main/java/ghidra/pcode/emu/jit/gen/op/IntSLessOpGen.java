@@ -15,9 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.IFLT;
-import static org.objectweb.asm.Opcodes.IF_ICMPLT;
-
 import ghidra.pcode.emu.jit.op.JitIntSLessOp;
 
 /**

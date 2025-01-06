@@ -17,7 +17,6 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_SLEIGH_LINK_EXCEPTION__$INIT;
 import static ghidra.pcode.emu.jit.gen.GenConsts.NAME_SLEIGH_LINK_EXCEPTION;
-import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.MethodVisitor;
 

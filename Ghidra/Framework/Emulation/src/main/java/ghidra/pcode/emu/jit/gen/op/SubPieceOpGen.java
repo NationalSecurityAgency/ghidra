@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.*;
-
 import org.objectweb.asm.*;
 
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;

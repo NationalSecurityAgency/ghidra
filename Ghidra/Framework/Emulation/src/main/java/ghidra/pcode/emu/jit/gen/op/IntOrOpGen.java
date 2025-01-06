@@ -15,9 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.IOR;
-import static org.objectweb.asm.Opcodes.LOR;
-
 import ghidra.pcode.emu.jit.op.JitIntOrOp;
 
 /**

@@ -15,16 +15,13 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.ACONST_NULL;
-import static org.objectweb.asm.Opcodes.ARETURN;
-
 import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.JitPcodeThread;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
 import ghidra.pcode.emu.jit.analysis.JitType.LongJitType;
-import ghidra.pcode.emu.jit.gen.*;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
 import ghidra.pcode.emu.jit.op.JitBranchIndOp;
 

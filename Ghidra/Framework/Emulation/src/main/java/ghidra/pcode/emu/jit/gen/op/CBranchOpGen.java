@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.*;
-
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
@@ -24,7 +22,7 @@ import ghidra.pcode.emu.jit.JitPassage.ExtBranch;
 import ghidra.pcode.emu.jit.JitPassage.IntBranch;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.analysis.JitType;
-import ghidra.pcode.emu.jit.gen.*;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.type.TypeConversions;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.gen.var.VarGen.BlockTransition;

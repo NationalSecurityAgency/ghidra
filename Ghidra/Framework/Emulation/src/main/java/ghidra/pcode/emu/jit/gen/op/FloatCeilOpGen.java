@@ -18,7 +18,6 @@ package ghidra.pcode.emu.jit.gen.op;
 import static ghidra.lifecycle.Unfinished.TODO;
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_$DOUBLE_UNOP;
 import static ghidra.pcode.emu.jit.gen.GenConsts.NAME_MATH;
-import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.MethodVisitor;
 

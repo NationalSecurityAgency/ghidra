@@ -15,9 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.INEG;
-import static org.objectweb.asm.Opcodes.LNEG;
-
 import org.objectweb.asm.MethodVisitor;
 
 import ghidra.lifecycle.Unfinished;
