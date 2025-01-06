@@ -807,33 +807,6 @@ void HeapSequence::gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varno
     indirects[i]->clearMark();
 }
 
-/// \brief Remove the given PcodeOp and any other ops that uniquely produce its inputs
-///
-/// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow
-/// path of their output is to the given op, and they are not a CALL or are otherwise special.
-/// \param op is the given PcodeOp to remove
-/// \param scratch is scratch space for holding
-void HeapSequence::removeRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
-
-{
-  scratch.clear();
-  scratch.push_back(op);
-  int4 pos = 0;
-  while(pos < scratch.size()) {
-    op = scratch[pos];
-    pos += 1;
-    for(int4 i=0;i<op->numInput();++i) {
-      Varnode *vn = op->getIn(i);
-      if (!vn->isWritten() || vn->isAutoLive()) continue;
-      if (vn->loneDescend() == (PcodeOp *)0) continue;
-      PcodeOp *defOp = vn->getDef();
-      if (defOp->isCall() || defOp->isIndirectSource()) continue;
-      scratch.push_back(defOp);
-    }
-    data.opDestroy(op);
-  }
-}
-
 /// If the STORE pointer no longer has any other uses, remove the PTRADD producing it, recursively,
 /// up to the base pointer.  INDIRECT ops surrounding any STORE that is removed are replaced with
 /// INDIRECTs around the user-op replacing the STOREs.
@@ -847,7 +820,7 @@ void HeapSequence::removeStoreOps(PcodeOp *replaceOp)
   gatherIndirectPairs(indirects, indirectPairs);
   for(int4 i=0;i<moveOps.size();++i) {
     PcodeOp *op = moveOps[i].op;
-    removeRecursive(op, scratch);
+    data.opDestroyRecursive(op, scratch);
   }
   for(int4 i=0;i<indirects.size();++i) {
     data.opDestroy(indirects[i]);

@@ -849,22 +849,22 @@ void PrintC::opSubpiece(const PcodeOp *op)
     if (ct->isPieceStructured()) {
       int8 offset;
       int8 byteOff = TypeOpSubpiece::computeByteOffsetForComposite(op);
+      Symbol *sym = vn->getHigh()->getSymbol();
+      if (sym != (Symbol *)0 && vn->isExplicit()) {
+	int4 sz = op->getOut()->getSize();
+	int4 suboff = vn->getHigh()->getSymbolOffset();
+	if (suboff > 0)
+	  byteOff += suboff;
+	int4 slot = ct->needsResolution() ? 1 : 0;		// Use artificial slot for initial resolution
+	pushPartialSymbol(sym, byteOff, sz, op->getOut(), op, slot, true);
+	return;
+      }
       const TypeField *field = ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
       if (field != (const TypeField*)0 && offset == 0) {		// A formal structure field
 	pushOp(&object_member,op);
 	pushVn(vn,op,mods);
 	pushAtom(Atom(field->name,fieldtoken,EmitMarkup::no_color,ct,field->ident,op));
 	return;
-      }
-      else if (vn->isExplicit() && vn->getHigh()->getSymbolOffset() == -1) {	// An explicit, entire, structured object
-	Symbol *sym = vn->getHigh()->getSymbol();
-	if (sym != (Symbol *)0) {
-	  int4 sz = op->getOut()->getSize();
-	  int4 off = (int4)op->getIn(1)->getOffset();
-	  off = vn->getSpace()->isBigEndian() ? vn->getSize() - (sz + off) : off;
-	  pushPartialSymbol(sym, off, sz, vn, op, -1);
-	  return;
-	}
       }
       // Fall thru to functional printing
     }
@@ -1089,7 +1089,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	// we can't use a cast in its description, so turn off
 	// casting when printing the partial symbol
 	//	Datatype *exttype = ((mods & print_store_value)!=0) ? (Datatype *)0 : ct;
-	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,-1);
+	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,-1,false);
       }
     }
     if (arrayvalue)
@@ -1883,7 +1883,7 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
       pushSymbol(entry->getSymbol(),vn,op);
     else {
       int4 symboloff = vn->getOffset() - entry->getFirst();
-      pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,-1);
+      pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,-1,false);
     }
   }
   else {
@@ -1946,7 +1946,7 @@ void PrintC::pushUnnamedLocation(const Address &addr,
 
 void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 			       const Varnode *vn,const PcodeOp *op,
-			       int4 inslot)
+			       int4 slot,bool allowCast)
 {
   // We need to print "bottom up" in order to get parentheses right
   // I.e. we want to print globalstruct.arrayfield[0], rather than
@@ -1965,12 +1965,12 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     bool succeeded = false;
     if (ct->getMetatype()==TYPE_STRUCT) {
       if (ct->needsResolution() && ct->getSize() == sz) {
-	Datatype *outtype = ct->findResolve(op, inslot);
+	Datatype *outtype = ct->findResolve(op, slot);
 	if (outtype == ct)
 	  break;	// Turns out we don't resolve to the field
       }
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,newoff);
+      field = ct->findTruncation(off,sz,op,slot,newoff);
       if (field != (const TypeField *)0) {
 	off = newoff;
 	stack.emplace_back();
@@ -2000,7 +2000,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (ct->getMetatype() == TYPE_UNION) {
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,newoff);
+      field = ct->findTruncation(off,sz,op,slot,newoff);
       if (field != (const TypeField*)0) {
 	off = newoff;
 	stack.emplace_back();
@@ -2015,7 +2015,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
       else if (ct->getSize() == sz)
 	break;		// Turns out we don't need to resolve the field
     }
-    else if (inslot >= 0) {
+    else if (allowCast) {
       Datatype *outtype = vn->getHigh()->getType();
       AddrSpace *spc = sym->getFirstWholeMap()->getAddr().getSpace();
       if (spc == (AddrSpace *)0)

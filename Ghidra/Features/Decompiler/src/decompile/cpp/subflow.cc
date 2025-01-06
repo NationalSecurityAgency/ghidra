@@ -2983,6 +2983,70 @@ int4 RuleSplitStore::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
+void RuleDumptyHumpLate::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_SUBPIECE);
+}
+
+int4 RuleDumptyHumpLate::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *vn = op->getIn(0);
+  if (!vn->isWritten()) return 0;
+  PcodeOp *pieceOp = vn->getDef();
+  if (pieceOp->code() != CPUI_PIECE) return 0;
+  Varnode *out = op->getOut();
+  int4 outSize = out->getSize();
+  int4 trunc = (int4)op->getIn(1)->getOffset();
+  for(;;) {
+    // Try to backtrack thru PIECE to the component vn is being truncated from
+    Varnode *trialVn = pieceOp->getIn(1);	// Assume the least significant component
+    int4 trialTrunc = trunc;
+    if (trunc >= trialVn->getSize()) {	// Test for truncation from the most significant part
+      trialTrunc -= trialVn->getSize();		// How much is truncated
+      trialVn = pieceOp->getIn(0);
+    }
+    if (outSize + trialTrunc > trialVn->getSize())
+      break;				// vn crosses both components
+    vn = trialVn;				// Commit to this component
+    trunc = trialTrunc;
+    if (vn->getSize() == outSize)
+      break;				// Found matching component
+    if (!vn->isWritten())
+      break;
+    pieceOp = vn->getDef();
+    if (pieceOp->code() != CPUI_PIECE)
+      break;
+  }
+  if (vn == op->getIn(0))
+    return 0;				// Didn't backtrack thru any PIECE
+  if (vn->isWritten() && vn->getDef()->code() == CPUI_COPY)
+    vn = vn->getDef()->getIn(0);
+  PcodeOp *removeOp;
+  if (outSize != vn->getSize()) {	// Component does not match size exactly. Preserve SUBPIECE.
+    removeOp = op->getIn(0)->getDef();
+    if (op->getIn(1)->getOffset() != trunc)
+      data.opSetInput(op, data.newConstant(4, trunc), 1);
+    data.opSetInput(op, vn, 0);
+  }
+  else if (out->isAutoLive()) {		// Exact match but output address fixed. Change SUBPIECE to COPY.
+    removeOp = op->getIn(0)->getDef();
+    data.opRemoveInput(op, 1);
+    data.opSetOpcode(op, CPUI_COPY);
+    data.opSetInput(op, vn, 0);
+  }
+  else {				// Exact match. Completely replace output with component.
+    removeOp = op;
+    data.totalReplace(out, vn);
+  }
+  if (removeOp->getOut()->hasNoDescend() && !removeOp->getOut()->isAutoLive()) {
+    vector<PcodeOp *> scratch;
+    data.opDestroyRecursive(removeOp, scratch);
+  }
+  return 1;
+}
+
 /// This method distinguishes between a floating-point variable with \e full precision, where all the
 /// storage can vary (or is unknown), versus a value that is extended from a floating-point variable with
 /// smaller storage.  Within the data-flow above the given Varnode, we search for the maximum
