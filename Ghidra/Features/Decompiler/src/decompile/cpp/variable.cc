@@ -303,19 +303,19 @@ void HighVariable::stripType(void) const
 {
   if (!type->hasStripped())
     return;
-  if (type->getMetatype() == TYPE_PARTIALUNION) {
-    if (symbol != (Symbol *)0 && symboloffset != -1) {
-	type_metatype meta = symbol->getType()->getMetatype();
-	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
-	  type = type->getStripped();			// strip the partial union
+  type_metatype meta = type->getMetatype();
+  if (meta == TYPE_PARTIALUNION || meta == TYPE_PARTIALSTRUCT) {
+    if (symbol != (Symbol *)0 && symboloffset != -1) {	// If there is a bigger backing symbol
+	type_metatype submeta = symbol->getType()->getMetatype();
+	if (submeta == TYPE_STRUCT || submeta == TYPE_UNION)
+	  return;			// Don't strip the partial union
     }
   }
   else if (type->isEnumType()) {
-    if (inst.size() != 1 || !inst[0]->isConstant())	// Only preserve partial enum on a constant
-      type = type->getStripped();
+    if (inst.size() == 1 && inst[0]->isConstant())	// Only preserve partial enum on a constant
+      return;
   }
-  else
-    type = type->getStripped();
+  type = type->getStripped();
 }
 
 /// Only update if the cover is marked as \e dirty.
