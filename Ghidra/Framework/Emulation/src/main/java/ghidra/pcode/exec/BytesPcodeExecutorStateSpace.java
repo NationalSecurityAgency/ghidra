@@ -171,7 +171,8 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 */
 	protected ULongSpanSet computeUninitialized(long offset, int size) {
 		long max = offset + size - 1;
-		if (max <= space.getMaxAddress().getOffset()) {
+		if (Long.compareUnsigned(max, space.getMaxAddress().getOffset()) <= 0 &&
+			Long.compareUnsigned(offset, max) <= 0) {
 			return bytes.getUninitialized(offset, max);
 		}
 		long end = space.getMinAddress().getOffset() + max - space.getMaxAddress().getOffset() - 1;
