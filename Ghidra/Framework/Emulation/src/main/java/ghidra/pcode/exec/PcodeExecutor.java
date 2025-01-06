@@ -421,9 +421,9 @@ public class PcodeExecutor<T> {
 	 * 
 	 * <p>
 	 * This implements only part of the p-code control flow semantics. An emulator must also
-	 * override {@link #branchToAddress(Address)}, so that it can update its internal program
-	 * counter. The emulator could just read the program counter from the state after <em>every</em>
-	 * completed frame, but receiving it "out of band" is faster.
+	 * override {@link #branchToAddress(PcodeOp, Address)}, so that it can update its internal
+	 * program counter. The emulator could just read the program counter from the state after
+	 * <em>every</em> completed frame, but receiving it "out of band" is faster.
 	 * 
 	 * @param op the op
 	 * @param offset the offset (the new value of the program counter)

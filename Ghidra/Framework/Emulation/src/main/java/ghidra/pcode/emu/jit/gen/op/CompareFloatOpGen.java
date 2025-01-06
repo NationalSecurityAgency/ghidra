@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.GOTO;
-
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 

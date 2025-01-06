@@ -18,8 +18,8 @@ package ghidra.pcode.emu.jit.gen.op;
 import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.analysis.JitType;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.op.JitUnOp;
 
 /**

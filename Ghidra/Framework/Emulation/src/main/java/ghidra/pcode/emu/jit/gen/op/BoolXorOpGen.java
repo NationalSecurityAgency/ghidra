@@ -15,9 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.IXOR;
-import static org.objectweb.asm.Opcodes.LXOR;
-
 import ghidra.pcode.emu.jit.op.JitBoolXorOp;
 import ghidra.pcode.opbehavior.OpBehaviorBoolXor;
 

@@ -15,9 +15,6 @@
  */
 package ghidra.pcode.emu.jit.gen.op;
 
-import static org.objectweb.asm.Opcodes.IAND;
-import static org.objectweb.asm.Opcodes.LAND;
-
 import ghidra.pcode.emu.jit.op.JitBoolAndOp;
 import ghidra.pcode.opbehavior.OpBehaviorBoolAnd;
 

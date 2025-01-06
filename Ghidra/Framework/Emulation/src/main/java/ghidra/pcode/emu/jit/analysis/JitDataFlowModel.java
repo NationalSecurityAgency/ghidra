@@ -322,8 +322,8 @@ public class JitDataFlowModel {
 	/**
 	 * An upward graph traversal for collecting all values in the use-def graph.
 	 * 
-	 * @see JitAnalysisContext#allValues()
-	 * @see JitAnalysisContext#allValuesSorted()
+	 * @see #allValues()
+	 * @see #allValuesSorted()
 	 */
 	protected class ValCollector extends HashSet<JitVal> implements JitOpUpwardVisitor {
 		public ValCollector() {
@@ -479,7 +479,7 @@ public class JitDataFlowModel {
 	 * NOTE: This is only as complete as it needed to be for me to diagnose whatever issue I was
 	 * having at the time.
 	 * 
-	 * @see JitAnalysisContext#exportGraphviz(File)
+	 * @see #exportGraphviz(File)
 	 */
 	protected class GraphvizExporter implements JitOpUpwardVisitor {
 		final PrintWriter out;

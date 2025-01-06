@@ -21,7 +21,7 @@ import org.objectweb.asm.MethodVisitor;
 /**
  * An instance field request initialized in the class constructor
  */
-interface InstanceFieldReq extends FieldReq {
+public interface InstanceFieldReq extends FieldReq {
 	/**
 	 * Emit the field declaration and its initialization bytecode
 	 * 

@@ -17,7 +17,6 @@ package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.MDESC_JIT_COMPILED_PASSAGE__GET_CHAINED;
 import static ghidra.pcode.emu.jit.gen.GenConsts.NAME_JIT_COMPILED_PASSAGE;
-import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -25,7 +24,8 @@ import org.objectweb.asm.MethodVisitor;
 import ghidra.pcode.emu.jit.JitPassage.*;
 import ghidra.pcode.emu.jit.JitPcodeThread;
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
-import ghidra.pcode.emu.jit.gen.*;
+import ghidra.pcode.emu.jit.gen.FieldForExitSlot;
+import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage;
 import ghidra.pcode.emu.jit.gen.var.VarGen;
 import ghidra.pcode.emu.jit.op.JitBranchOp;

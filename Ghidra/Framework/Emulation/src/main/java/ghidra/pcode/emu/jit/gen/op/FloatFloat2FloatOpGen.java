@@ -16,8 +16,6 @@
 package ghidra.pcode.emu.jit.gen.op;
 
 import static ghidra.lifecycle.Unfinished.TODO;
-import static org.objectweb.asm.Opcodes.D2F;
-import static org.objectweb.asm.Opcodes.F2D;
 
 import org.objectweb.asm.MethodVisitor;
 

@@ -19,6 +19,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import ghidra.pcode.emu.jit.analysis.JitControlFlowModel.JitBlock;
 import ghidra.pcode.emu.jit.gen.JitCodeGenerator;
+import ghidra.pcode.emu.jit.op.JitNopOp;
 import ghidra.pcode.emu.jit.op.JitOp;
 
 /**

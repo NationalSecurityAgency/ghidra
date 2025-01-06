@@ -483,7 +483,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * 
  * @param <T> the class of p-code op node in the use-def graph
  */
-public interface OpGen<T extends JitOp> {
+public interface OpGen<T extends JitOp> extends Opcodes {
 	/**
 	 * Lookup the generator for a given p-code op use-def node
 	 * 

@@ -16,7 +16,6 @@
 package ghidra.pcode.emu.jit.gen.type;
 
 import static ghidra.pcode.emu.jit.gen.GenConsts.*;
-import static org.objectweb.asm.Opcodes.*;
 
 import org.objectweb.asm.*;
 
@@ -61,7 +60,7 @@ import ghidra.program.model.pcode.PcodeOp;
  * if the operand requires a floating-point type.</li>
  * </ul>
  */
-public interface TypeConversions {
+public interface TypeConversions extends Opcodes {
 	/**
 	 * Emit an {@link Opcodes#IAND} to reduce the number of bits to those permitted in an int of the
 	 * given size.
@@ -583,7 +582,6 @@ public interface TypeConversions {
 	 * float is used as a boolean, it must be converted to an int first.
 	 * 
 	 * @param from the type of the value currently on the stack
-	 * @param size the size in bytes of the value on the stack
 	 * @param mv the method visitor
 	 * @see #generateLdcFalse(JitType, MethodVisitor)
 	 * @see #generateLdcTrue(JitType, MethodVisitor)
