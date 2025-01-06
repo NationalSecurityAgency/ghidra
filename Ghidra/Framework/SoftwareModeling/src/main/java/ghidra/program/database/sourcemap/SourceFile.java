@@ -104,6 +104,9 @@ public final class SourceFile implements Comparable<SourceFile> {
 					throw new IllegalArgumentException(
 						"SourceFile URI must represent a file (not a directory)");
 				}
+				if (path.startsWith("/../")) {
+					throw new IllegalArgumentException("path must be absolute after normalization");
+				}
 			}
 			catch (URISyntaxException e) {
 				throw new IllegalArgumentException("path not valid: " + e.getMessage());

@@ -52,9 +52,46 @@ public class SourceFileTest extends AbstractSourceFileTest {
 	}
 
 	@Test
-	public void testPathNormalization() {
+	public void testPathNormalizationLinux() {
 		assertEquals("/src/dir1/dir2/file.c",
 			new SourceFile("/src/test/../dir1/test/../dir2/file.c").getPath());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationLinux() {
+		new SourceFile("/src/../../../file.c");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationLinuxUtilsMethod() {
+		SourceFileUtils.getSourceFileFromPathString("/src/../../../file.c");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationWindows() {
+		new SourceFile("/c:/src/../../../file.c");
+	}
+
+	@Test
+	public void testFixDwarfRelativePath() {
+		String baseDirName = "root_dir";
+		assertEquals("/src/file.c",
+			SourceFileUtils.fixDwarfRelativePath("/src/file.c", baseDirName));
+		assertEquals("/file.c",
+			SourceFileUtils.fixDwarfRelativePath("/src/../file.c", baseDirName));
+		assertEquals("/root_dir/file.c",
+			SourceFileUtils.fixDwarfRelativePath("./file.c", baseDirName));
+		assertEquals("/root_dir_1/file.c",
+			SourceFileUtils.fixDwarfRelativePath("/../file.c", baseDirName));
+		assertEquals("/root_dir_2/file.c",
+			SourceFileUtils.fixDwarfRelativePath("/.././../file.c", baseDirName));
+		assertEquals("/root_dir_1/file.c",
+			SourceFileUtils.fixDwarfRelativePath("./../file.c", baseDirName));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testInteriorPathNormalizationWindowsUtilsMethod() {
+		SourceFileUtils.getSourceFileFromPathString("c:\\src\\..\\..\\..\\file.c");
 	}
 
 	@Test

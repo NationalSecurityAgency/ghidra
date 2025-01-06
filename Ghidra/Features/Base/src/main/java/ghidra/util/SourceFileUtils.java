@@ -16,8 +16,11 @@
 package ghidra.util;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,6 +36,7 @@ import ghidra.program.model.sourcemap.SourceMapEntry;
 public class SourceFileUtils {
 
 	private static HexFormat hexFormat = HexFormat.of();
+	private static Pattern dirNameValidator = Pattern.compile("\\W");
 
 	private SourceFileUtils() {
 		// singleton class
@@ -145,6 +149,58 @@ public class SourceFileUtils {
 			}
 		}
 		return new SourceLineBounds(min, max);
+	}
+
+	/**
+	 * Corrects potentially relative paths encountered in DWARF debug info.
+	 * Relative paths are based at /{@code baseDir}/.  If normalization of "/../" subpaths
+	 * results in a path "above" /{@code baseDir}/, the returned path will be based at "baseDir_i"
+	 * where i is the count of initial "/../" in the normalized path.
+	 * @param path path to normalize
+	 * @param baseDir name of artificial root directory
+	 * @return normalized path
+	 * @throws IllegalArgumentException if the path is not valid or if baseDir contains a
+	 * non-alphanumeric, non-underscore character
+	 */
+	public static String fixDwarfRelativePath(String path, String baseDir) {
+		if (StringUtils.isEmpty(baseDir)) {
+			throw new IllegalArgumentException("baseDir cannot be empty");
+		}
+		Matcher matcher = dirNameValidator.matcher(baseDir);
+		if (matcher.find()) {
+			throw new IllegalArgumentException(
+				"baseDir must consist of alphanumeric characters or underscores");
+		}
+		boolean based = false;
+		if (path.startsWith("./")) {
+			path = "/" + baseDir + path.substring(1);
+			based = true;
+		}
+		try {
+			URI uri = new URI("file", null, path, null).normalize();
+			path = uri.getPath();
+		}
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("path not valid: " + e.getMessage());
+		}
+		int numDotDots = 0;
+		while (path.startsWith("/..")) {
+			path = path.substring(3);
+			numDotDots += 1;
+		}
+		if (numDotDots == 0) {
+			if (!based) {
+				return path; // baseDir not necessary: path normalizes to absolute path without it 
+			}
+			if (path.startsWith("/" + baseDir)) {
+				return path; // adding initial /baseDir was sufficient
+			}
+		}
+		if (based) {
+			numDotDots += 1; //initial baseDir was consumed by interior /../ during normalization
+		}
+		String count = numDotDots == 0 ? "" : "_" + Integer.toString(numDotDots);
+		return "/" + baseDir + count + path;
 	}
 
 	/**
