@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,8 @@ public class FileBytes {
 	 * @throws IOException if there is a problem reading the database.
 	 * @throws IndexOutOfBoundsException if the given offset is invalid.
 	 */
-	public synchronized byte getModifiedByte(long offset) throws IOException {
+	public synchronized byte getModifiedByte(long offset)
+			throws IOException, IndexOutOfBoundsException {
 		return getByte(layeredBuffers, offset);
 	}
 
@@ -123,7 +124,8 @@ public class FileBytes {
 	 * @throws IOException if there is a problem reading the database.
 	 * @throws IndexOutOfBoundsException if the given offset is invalid.
 	 */
-	public synchronized byte getOriginalByte(long offset) throws IOException {
+	public synchronized byte getOriginalByte(long offset)
+			throws IOException, IndexOutOfBoundsException {
 		return getByte(originalBuffers, offset);
 	}
 
@@ -135,8 +137,10 @@ public class FileBytes {
 	 * @param b the byte array to populate.
 	 * @return the number of bytes actually populated.
 	 * @throws IOException if there is an error reading from the database
+	 * @throws IndexOutOfBoundsException if the given offset is invalid.
 	 */
-	public synchronized int getModifiedBytes(long offset, byte[] b) throws IOException {
+	public synchronized int getModifiedBytes(long offset, byte[] b)
+			throws IOException, IndexOutOfBoundsException {
 		return getBytes(layeredBuffers, offset, b, 0, b.length);
 	}
 
@@ -148,8 +152,10 @@ public class FileBytes {
 	 * @param b the byte array to populate.
 	 * @return the number of bytes actually populated.
 	 * @throws IOException if there is an error reading from the database
+	 * @throws IndexOutOfBoundsException if the given offset is invalid.
 	 */
-	public synchronized int getOriginalBytes(long offset, byte[] b) throws IOException {
+	public synchronized int getOriginalBytes(long offset, byte[] b)
+			throws IOException, IndexOutOfBoundsException {
 		return getBytes(originalBuffers, offset, b, 0, b.length);
 	}
 
@@ -168,7 +174,7 @@ public class FileBytes {
 	 * size of the buffer b.
 	 */
 	public synchronized int getModifiedBytes(long offset, byte[] b, int off, int length)
-			throws IOException {
+			throws IOException, IndexOutOfBoundsException {
 		return getBytes(layeredBuffers, offset, b, off, length);
 	}
 
@@ -187,7 +193,7 @@ public class FileBytes {
 	 * size of the buffer b.
 	 */
 	public synchronized int getOriginalBytes(long offset, byte[] b, int off, int length)
-			throws IOException {
+			throws IOException, IndexOutOfBoundsException {
 		return getBytes(originalBuffers, offset, b, off, length);
 	}
 
@@ -237,9 +243,10 @@ public class FileBytes {
 	 * @param offset the offset into the file bytes.
 	 * @param b a byte array with the new values to write.
 	 * @return the number of bytes written
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException if the write to the database fails.
 	 */
-	synchronized int putBytes(long offset, byte[] b) throws IOException {
+	synchronized int putBytes(long offset, byte[] b) throws IOException, IndexOutOfBoundsException {
 		return putBytes(offset, b, 0, b.length);
 	}
 
@@ -256,7 +263,8 @@ public class FileBytes {
 	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException if the write to the database fails.
 	 */
-	synchronized int putBytes(long offset, byte[] b, int off, int length) throws IOException {
+	synchronized int putBytes(long offset, byte[] b, int off, int length)
+			throws IOException, IndexOutOfBoundsException {
 
 		checkValid();
 
