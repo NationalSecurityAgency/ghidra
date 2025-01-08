@@ -1043,6 +1043,74 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:543
       execution.</LI>
     </UL>
 
+    <H2>Drgn Launchers</H2>
+
+    <P>The following launchers uses Meta's <B>drgn</B> engine to explore various targets:</P>
+
+    <H3><A name="drgn"></A>drgn</H3>
+
+    <P>This launcher attaches to a running process via the Linux "/proc/pid" interface.</P>
+
+    <H4><A name="drgn_setup"></A>Setup</H4>
+
+    <P>You must have Meta's <B>drgn</B> installed on the local system.  The default behavior
+	assumes you do NOT need root access to attach to a running process, i.e. it assumes you
+    have run the command:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+echo 0 > /proc/sys/kernel/yama/ptrace_scope
+</PRE>
+      </LI>
+    </UL>
+
+	<P>using root privileges at some point.  Alternately, you can prepend "sudo -E"
+	to the drgn invocation line in "local-drgn.sh"".  Note: <B>drgn</B> does not currently
+	support stack unwinding or register access for user-mode access to running processes.
+	</P>
+	
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>PID</B>: The running process's id</LI>
+      </LI>
+    </UL>
+
+    <H3><A name="drgn-core"></A>drgn-core</H3>
+
+    <P>This launcher loads a Linux core dump.</P>
+
+    <H4><A name="drgn_core_setup"></A>Setup</H4>
+
+    <P>You must have Meta's <B>drgn</B> installed on the local system.  No other setup is required.
+	   Note: Core dumps may or may not include memory, so the Dynamic Listing may or may not be populated.
+	</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Core dump</B>: The core-dump file</LI>
+      </LI>
+    </UL>
+
+	<H3><A name="drgn-kernel"></A>drgn-kernel</H3>
+
+	<P>This launcher attaches to a Linux kernel via the "/proc/kcore" interface.</P>
+
+	<H4><A name="drgn_kernel_setup"></A>Setup</H4>
+
+	<P>You must have Meta's <B>drgn</B> installed on the local system.  No other setup is required.
+	   Note: requires root access - you will be prompted for a password in the Terminal.
+	</P>
+
+	<H4>Options</H4>
+
+	<UL>
+	  <LI><B>None</LI>
+	  </LI>
+	</UL>
+
     <H2>Development and Diagnostic Launchers</H2>
 
     <P>We currently provide one launcher for Trace RMI API exploration and development:</P>
