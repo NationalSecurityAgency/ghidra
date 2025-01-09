@@ -33,11 +33,7 @@ rootProject.assembleDistribution {
 	from ("${p.projectDir}/Module.manifest") {
 		into  { zipPath }
 	}
-	
-	from ("${p.projectDir}/README.md") {
-		into  { zipPath }
-	}
-	
+
 	from ("${p.projectDir}/support") {
 		into  { "${zipPath}/support" }
 	}
