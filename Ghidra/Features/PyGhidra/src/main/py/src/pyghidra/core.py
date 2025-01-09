@@ -34,7 +34,7 @@ def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
     :param verbose: Enable verbose output during JVM startup (Defaults to False)
     :param install_dir: The path to the Ghidra installation directory.
         (Defaults to the GHIDRA_INSTALL_DIR environment variable)
-    :return: The PhyidraLauncher used to start the JVM
+    :return: The PyGhidraLauncher used to start the JVM
     """
     from pyghidra.launcher import HeadlessPyGhidraLauncher
     launcher = HeadlessPyGhidraLauncher(verbose=verbose,  install_dir=install_dir)
