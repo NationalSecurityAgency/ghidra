@@ -19,14 +19,14 @@
             endian="big"
             size="16"
             variant="cip-51"
-            version="2.0"
+            version="1.0"
             slafile="cip-51.sla"
             processorspec="8051.pspec"
 	    manualindexfile="../manuals/8051.idx"
             id="8051:BE:16:cip-51">
     <description>Silicon Labs CIP-51 Microcontroller Family</description>
     <compiler name="default" spec="8051.cspec" id="default"/>
-	<compiler name="Keil Cx51" spec="keil-cx51.cspec" id="Cx51"/>
+    <compiler name="Keil Cx51" spec="keil-cx51.cspec" id="Cx51"/>
 <!--<compiler name="Archimedes" spec="8051_archimedes.cspec" id="Archimedes"/> -->
     <external_name tool="IDA-PRO" name="8051"/>
   </language>
