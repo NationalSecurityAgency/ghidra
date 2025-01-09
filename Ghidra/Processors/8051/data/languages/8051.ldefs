@@ -8,7 +8,7 @@
             version="2.0"
             slafile="8051.sla"
             processorspec="8051.pspec"
-			manualindexfile="../manuals/8051.idx"
+	    manualindexfile="../manuals/8051.idx"
             id="8051:BE:16:default">
     <description>8051 Microcontroller Family</description>
     <compiler name="default" spec="8051.cspec" id="default"/>
@@ -18,11 +18,11 @@
   <language processor="8051"
             endian="big"
             size="16"
-            variant="CIP-51"
+            variant="cip-51"
             version="2.0"
-            slafile="8051.sla"
+            slafile="cip-51.sla"
             processorspec="8051.pspec"
-			manualindexfile="../manuals/8051.idx"
+	    manualindexfile="../manuals/8051.idx"
             id="8051:BE:16:cip-51">
     <description>Silicon Labs CIP-51 Microcontroller Family</description>
     <compiler name="default" spec="8051.cspec" id="default"/>
@@ -60,7 +60,7 @@
             version="2.0"
             slafile="mx51.sla"
             processorspec="mx51.pspec"
-		manualindexfile="../manuals/8051.idx"
+	    manualindexfile="../manuals/8051.idx"
             id="8051:BE:24:mx51">
     <description>NXP/Phillips MX51</description>
     <compiler name="default" spec="mx51.cspec" id="default"/>
