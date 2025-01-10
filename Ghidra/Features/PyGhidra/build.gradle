@@ -100,3 +100,12 @@ task prepPyGhidra(type: Exec) {
 		commandLine "$PYTHON3_VENV", "-m", "pip", "install", "-e", "src/main/py", "--no-index", "-f", "$dir"
 	}
 }
+
+rootProject.assembleMarkdownToHtml {
+	def p = this.project
+	def zipPath = getZipPath(p)
+	
+	from ("${p.projectDir}/src/main/py/README.md") {
+		into { "${zipPath}/pypkg" }
+	}
+}
