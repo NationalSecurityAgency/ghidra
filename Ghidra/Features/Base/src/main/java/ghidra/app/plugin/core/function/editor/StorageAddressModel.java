@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -161,40 +161,7 @@ class StorageAddressModel {
 
 	private void validate() {
 		statusText = "";
-		isValid = hasValidVarnodes() && hasCorrectAllocatedSize() && isProperMix() && hasNoDups();
-	}
-
-	private boolean hasNoDups() {
-		AddressSet addressSet = new AddressSet();
-		for (int i = 0; i < varnodes.size(); i++) {
-			VarnodeInfo varnode = varnodes.get(i);
-			AddressRange range;
-			try {
-				range = new AddressRangeImpl(varnode.getAddress(), varnode.getSize());
-			}
-			catch (AddressOverflowException e) {
-				// should already have been checked
-				throw new AssertException("Unexpected exception", e);
-			}
-			if (addressSet.intersects(range.getMinAddress(), range.getMaxAddress())) {
-				statusText = "Row " + i + ": Overlapping storage address used.";
-				return false;
-			}
-			addressSet.add(range);
-		}
-		return true;
-	}
-
-	private boolean isProperMix() {
-		// all except last varnode must be a register
-		for (int i = 0; i < varnodes.size() - 1; i++) {
-			VarnodeInfo varnode = varnodes.get(i);
-			if (varnode.getType() != VarnodeType.Register) {
-				statusText = "Only the last entry may be of type " + varnode.getType();
-				return false;
-			}
-		}
-		return true;
+		isValid = hasValidVarnodes() && hasCorrectAllocatedSize();
 	}
 
 	private boolean hasCorrectAllocatedSize() {
@@ -217,11 +184,22 @@ class StorageAddressModel {
 	private boolean hasValidVarnodes() {
 		for (int i = 0; i < varnodes.size(); i++) {
 			VarnodeInfo varnode = varnodes.get(i);
-			if (!(isValidSize(varnode, i) && isValidAddress(varnode, i))) {
+			if (varnode.getAddress() == null) {
+				statusText = "Row " + i + ": Storage not specified";
+				return false;
+			}
+			if (!(isValidSize(varnode, i) || !isValidAddress(varnode, i))) {
 				return false;
 			}
 		}
-		return true;
+		try {
+			buildStorage();
+			return true;
+		}
+		catch (InvalidInputException e) {
+			statusText = e.getMessage();
+			return false;
+		}
 	}
 
 	private boolean isValidSize(VarnodeInfo varnode, int row) {
@@ -349,10 +327,7 @@ class StorageAddressModel {
 		return program;
 	}
 
-	VariableStorage getStorage() {
-		if (!isValid) {
-			return null;
-		}
+	private VariableStorage buildStorage() throws InvalidInputException {
 		if (varnodes.size() == 0) {
 			if (requiredSize == 0) {
 				return VariableStorage.VOID_STORAGE;
@@ -361,10 +336,22 @@ class StorageAddressModel {
 		}
 		List<Varnode> varnodeList = new ArrayList<>(varnodes.size());
 		for (VarnodeInfo varnodeInfo : varnodes) {
-			varnodeList.add(new Varnode(varnodeInfo.getAddress(), varnodeInfo.getSize()));
+			Address addr = varnodeInfo.getAddress();
+			if (addr == null) {
+				// this method should not be invoked with this condition
+				return VariableStorage.UNASSIGNED_STORAGE;
+			}
+			varnodeList.add(new Varnode(addr, varnodeInfo.getSize()));
+		}
+		return new VariableStorage(program, varnodeList);
+	}
+
+	VariableStorage getStorage() {
+		if (!isValid) {
+			return null;
 		}
 		try {
-			return new VariableStorage(program, varnodeList);
+			return buildStorage();
 		}
 		catch (InvalidInputException e) {
 			// validation checks should prevent this.
