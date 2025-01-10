@@ -108,7 +108,7 @@ task buildBSimHelpPdf(type: Exec) {
 		"""
 
 	// Allows doLast block regardless of exit value.
-	ignoreExitValue true
+	ignoreExitValue = true
 
 	// Store the output instead of printing to the console.
 	standardOutput = new ByteArrayOutputStream()
@@ -169,7 +169,7 @@ task buildBSimHelpHtml(type: Exec) {
 	"""
 
 	// Allows doLast block regardless of exit value.
-	ignoreExitValue true
+	ignoreExitValue = true
 
 	// Store the output instead of printing to the console.
 	standardOutput = new ByteArrayOutputStream()

@@ -31,17 +31,19 @@
 /*********************************************************************************
  * Defines the main ip task for each subproject
  *********************************************************************************/
-task ip { 
+task ip {
+	def p = project
+	
 	doLast {
 		
 		// scans all the files in the module, reads ip from header, verifies ip, and creates mapping
-		def ipToFileMap = getIpForModule(project)
+		def ipToFileMap = getIpForModule(p)
 		
 		// reads the ip info from the Module.manifest file and verifies each ip
-		def moduleManifestIpMap = getModuleManifestIp(project)
+		def moduleManifestIpMap = getModuleManifestIp(p)
 		
 		// gets the external libs from gradle and verifies they are accounted for in the Module.manifest file
-		checkExternalLibsInMap(moduleManifestIpMap, project)
+		checkExternalLibsInMap(moduleManifestIpMap, p)
 		
 		// gets the declared external python wheels and verifies they are accounted for in the Module.manifest file
 		checkExternalPythonWheelsInMap(moduleManifestIpMap, project)
@@ -50,7 +52,7 @@ task ip {
 		addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
 		
 		// writes the LICENSE.txt file for the module
-		writeLicenseInfo(project, ipToFileMap)
+		writeLicenseInfo(p, ipToFileMap)
 	}
 }
 rootProject.assembleDistribution.dependsOn ip
@@ -192,6 +194,7 @@ def isCSourceFile(File file) {
 	return filename.endsWith(".java") ||
 		   filename.endsWith(".c") ||
 		   filename.endsWith(".gradle") ||
+		   filename.endsWith(".gradle.kts") ||
 		   filename.endsWith(".groovy") ||
 		   filename.endsWith(".cpp") ||
 		   filename.endsWith(".cc") ||

@@ -104,10 +104,10 @@ task testSpecimenLinux_x86_64 {
 	dependsOn 'expTraceableSleepExecutable'//Linux_x86_64Executable'
 
 	doLast {
-		exec {
+		providers.exec {
 			workingDir "build/os/linux_x86_64"
 			commandLine "strip", "-o", "expSpin.stripped", "expSpin"
-		}
+		}.result.get()
 	}
 }
 

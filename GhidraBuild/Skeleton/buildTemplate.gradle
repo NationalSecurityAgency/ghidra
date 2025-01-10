@@ -43,7 +43,7 @@ else {
 }
 
 task distributeExtension {
-	group "Ghidra"
+	group = "Ghidra"
 
 	apply from: new File(ghidraInstallDir).getCanonicalPath() + "/support/buildExtension.gradle"
 	dependsOn ':buildExtension'
