@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -203,7 +203,7 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
-	 * Step on p-code op
+	 * Step one p-code op
 	 * 
 	 * @param op the op
 	 * @param frame the current frame
@@ -211,49 +211,24 @@ public class PcodeExecutor<T> {
 	 */
 	public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		OpBehavior b = OpBehaviorFactory.getOpBehavior(op.getOpcode());
-		if (b == null) {
-			badOp(op);
-			return;
-		}
-		if (b instanceof UnaryOpBehavior unOp) {
-			executeUnaryOp(op, unOp);
-			return;
-		}
-		if (b instanceof BinaryOpBehavior binOp) {
-			executeBinaryOp(op, binOp);
-			return;
-		}
-		switch (op.getOpcode()) {
-			case PcodeOp.LOAD:
-				executeLoad(op);
-				return;
-			case PcodeOp.STORE:
-				executeStore(op);
-				return;
-			case PcodeOp.BRANCH:
-				executeBranch(op, frame);
-				return;
-			case PcodeOp.CBRANCH:
-				executeConditionalBranch(op, frame);
-				return;
-			case PcodeOp.BRANCHIND:
-				executeIndirectBranch(op, frame);
-				return;
-			case PcodeOp.CALL:
-				executeCall(op, frame, library);
-				return;
-			case PcodeOp.CALLIND:
-				executeIndirectCall(op, frame);
-				return;
-			case PcodeOp.CALLOTHER:
-				executeCallother(op, frame, library);
-				return;
-			case PcodeOp.RETURN:
-				executeReturn(op, frame);
-				return;
-			default:
-				badOp(op);
-				return;
+		switch (b) {
+			case null -> badOp(op);
+			case UnaryOpBehavior unOp -> executeUnaryOp(op, unOp);
+			case BinaryOpBehavior binOp -> executeBinaryOp(op, binOp);
+			default -> {
+				switch (op.getOpcode()) {
+					case PcodeOp.LOAD -> executeLoad(op);
+					case PcodeOp.STORE -> executeStore(op);
+					case PcodeOp.BRANCH -> executeBranch(op, frame);
+					case PcodeOp.CBRANCH -> executeConditionalBranch(op, frame);
+					case PcodeOp.BRANCHIND -> executeIndirectBranch(op, frame);
+					case PcodeOp.CALL -> executeCall(op, frame, library);
+					case PcodeOp.CALLIND -> executeIndirectCall(op, frame);
+					case PcodeOp.CALLOTHER -> executeCallother(op, frame, library);
+					case PcodeOp.RETURN -> executeReturn(op, frame);
+					default -> badOp(op);
+				}
+			}
 		}
 	}
 
@@ -340,21 +315,40 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Get the address space for a {@link PcodeOp#LOAD load} or {@link PcodeOp#STORE store} op
+	 * 
+	 * @param op the op
+	 * @return the address space (derived from const input 0)
+	 */
+	protected AddressSpace getLoadStoreSpace(PcodeOp op) {
+		int spaceID = getIntConst(op.getInput(0));
+		return language.getAddressFactory().getAddressSpace(spaceID);
+	}
+
+	/**
+	 * Get the offset varnode for a {@link PcodeOp#LOAD load} or {@link PcodeOp#STORE store} op
+	 * 
+	 * @param op the op
+	 * @return the offset varnode (input 1)
+	 */
+	protected Varnode getLoadStoreOffset(PcodeOp op) {
+		return op.getInput(1);
+	}
+
+	/**
 	 * Execute a load
 	 * 
 	 * @param op the op
 	 */
 	public void executeLoad(PcodeOp op) {
-		int spaceID = getIntConst(op.getInput(0));
-		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceID);
-		Varnode inOffset = op.getInput(1);
+		AddressSpace space = getLoadStoreSpace(op);
+		Varnode inOffset = getLoadStoreOffset(op);
 		T offset = state.getVar(inOffset, reason);
 		Varnode outVar = op.getOutput();
 		checkLoad(space, offset, outVar.getSize());
 
 		T out = state.getVar(space, offset, outVar.getSize(), true, reason);
-		T mod = arithmetic.modAfterLoad(outVar.getSize(), inOffset.getSize(), offset,
-			outVar.getSize(), out);
+		T mod = arithmetic.modAfterLoad(op, space, offset, out);
 		state.setVar(outVar, mod);
 	}
 
@@ -369,21 +363,29 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Get the value varnode for a {@link PcodeOp#STORE store} op
+	 * 
+	 * @param op the op
+	 * @return the value varnode (input 2)
+	 */
+	protected Varnode getStoreValue(PcodeOp op) {
+		return op.getInput(2);
+	}
+
+	/**
 	 * Execute a store
 	 * 
 	 * @param op the op
 	 */
 	public void executeStore(PcodeOp op) {
-		int spaceID = getIntConst(op.getInput(0));
-		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceID);
-		Varnode inOffset = op.getInput(1);
+		AddressSpace space = getLoadStoreSpace(op);
+		Varnode inOffset = getLoadStoreOffset(op);
 		T offset = state.getVar(inOffset, reason);
-		Varnode valVar = op.getInput(2);
+		Varnode valVar = getStoreValue(op);
 		checkStore(space, offset, valVar.getSize());
 
 		T val = state.getVar(valVar, reason);
-		T mod = arithmetic.modBeforeStore(valVar.getSize(), inOffset.getSize(), offset,
-			valVar.getSize(), val);
+		T mod = arithmetic.modBeforeStore(op, space, offset, val);
 		state.setVar(space, offset, valVar.getSize(), true, mod);
 	}
 
@@ -395,7 +397,23 @@ public class PcodeExecutor<T> {
 	 * 
 	 * @param target the target address
 	 */
-	protected void branchToAddress(Address target) {
+	protected void branchToAddress(PcodeOp op, Address target) {
+	}
+
+	/**
+	 * Convert the given offset to the machine's type and delegate to
+	 * {@link #branchToOffset(PcodeOp, Object, PcodeFrame)}.
+	 * 
+	 * <p>
+	 * Overriding this allows extension to avert attempted uses of the arithmetic, when it may not
+	 * be applicable.
+	 * 
+	 * @param op the op
+	 * @param offset the offset (the new value of the program counter)
+	 * @param frame the frame to finish
+	 */
+	protected void branchToOffset(PcodeOp op, long offset, PcodeFrame frame) {
+		branchToOffset(op, arithmetic.fromConst(offset, pcSize), frame);
 	}
 
 	/**
@@ -403,18 +421,40 @@ public class PcodeExecutor<T> {
 	 * 
 	 * <p>
 	 * This implements only part of the p-code control flow semantics. An emulator must also
-	 * override {@link #branchToAddress(Address)}, so that it can update its internal program
-	 * counter. The emulator could just read the program counter from the state after <em>every</em>
-	 * completed frame, but receiving it "out of band" is faster.
+	 * override {@link #branchToAddress(PcodeOp, Address)}, so that it can update its internal
+	 * program counter. The emulator could just read the program counter from the state after
+	 * <em>every</em> completed frame, but receiving it "out of band" is faster.
 	 * 
+	 * @param op the op
 	 * @param offset the offset (the new value of the program counter)
 	 * @param frame the frame to finish
 	 */
-	protected void branchToOffset(T offset, PcodeFrame frame) {
+	protected void branchToOffset(PcodeOp op, T offset, PcodeFrame frame) {
 		T truncOff = arithmetic.unaryOp(PcodeOp.COPY, pc.getMinimumByteSize(),
 			(int) arithmetic.sizeOf(offset), offset);
 		state.setVar(pc, truncOff);
 		frame.finishAsBranch();
+	}
+
+	/**
+	 * Branch internally
+	 * 
+	 * @param frame the frame
+	 * @param relative the relative offset to branch
+	 */
+	protected void branchInternal(PcodeOp op, PcodeFrame frame, int relative) {
+		frame.branch(relative);
+	}
+
+	/**
+	 * Get the target address of a {@link PcodeOp#BRANCH branch}, {@link PcodeOp#CBRANCH conditional
+	 * branch}, or {@link PcodeOp#CALL call} op
+	 * 
+	 * @param op the op
+	 * @return the target address (input 0's address)
+	 */
+	protected Address getBranchTarget(PcodeOp op) {
+		return op.getInput(0).getAddress();
 	}
 
 	/**
@@ -428,13 +468,13 @@ public class PcodeExecutor<T> {
 	 * @param frame the frame
 	 */
 	protected void doExecuteBranch(PcodeOp op, PcodeFrame frame) {
-		Address target = op.getInput(0).getAddress();
+		Address target = getBranchTarget(op);
 		if (target.isConstantAddress()) {
-			frame.branch((int) target.getOffset());
+			branchInternal(op, frame, (int) target.getOffset());
 		}
 		else {
-			branchToOffset(arithmetic.fromConst(target.getOffset(), pcSize), frame);
-			branchToAddress(target);
+			branchToOffset(op, target.getOffset(), frame);
+			branchToAddress(op, target);
 		}
 	}
 
@@ -444,8 +484,9 @@ public class PcodeExecutor<T> {
 	 * <p>
 	 * This merely defers to {@link #doExecuteBranch(PcodeOp, PcodeFrame)}. To instrument the
 	 * operation, override this. To modify or instrument branching in general, override
-	 * {@link #doExecuteBranch(PcodeOp, PcodeFrame)}, {@link #branchToOffset(Object, PcodeFrame)},
-	 * and/or {@link #branchToAddress(Address)}.
+	 * {@link #doExecuteBranch(PcodeOp, PcodeFrame)},
+	 * {@link #branchToOffset(PcodeOp, Object, PcodeFrame)}, and/or
+	 * {@link #branchToAddress(PcodeOp, Address)}.
 	 * 
 	 * @param op the op
 	 * @param frame the frame
@@ -455,17 +496,38 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Get the predicate varnode of a {@link PcodeOp#CBRANCH conditional branch} op
+	 * 
+	 * @param op the op
+	 * @return the predicate varnode (input 1)
+	 */
+	protected Varnode getConditionalBranchPredicate(PcodeOp op) {
+		return op.getInput(1);
+	}
+
+	/**
 	 * Execute a conditional branch
 	 * 
 	 * @param op the op
 	 * @param frame the frame
 	 */
 	public void executeConditionalBranch(PcodeOp op, PcodeFrame frame) {
-		Varnode condVar = op.getInput(1);
+		Varnode condVar = getConditionalBranchPredicate(op);
 		T cond = state.getVar(condVar, reason);
 		if (arithmetic.isTrue(cond, Purpose.CONDITION)) {
 			doExecuteBranch(op, frame);
 		}
+	}
+
+	/**
+	 * Get the target of an {@link PcodeOp#BRANCHIND indirect branch}, {@link PcodeOp#CALLIND
+	 * indirect call}, or {@link PcodeOp#RETURN return} op.
+	 * 
+	 * @param op the op
+	 * @return the target varnode (input 0)
+	 */
+	protected Varnode getIndirectBranchTarget(PcodeOp op) {
+		return op.getInput(0);
 	}
 
 	/**
@@ -481,12 +543,12 @@ public class PcodeExecutor<T> {
 	 * @param frame the frame
 	 */
 	protected void doExecuteIndirectBranch(PcodeOp op, PcodeFrame frame) {
-		T offset = state.getVar(op.getInput(0), reason);
-		branchToOffset(offset, frame);
+		T offset = state.getVar(getIndirectBranchTarget(op), reason);
+		branchToOffset(op, offset, frame);
 
 		long concrete = arithmetic.toLong(offset, Purpose.BRANCH);
 		Address target = op.getSeqnum().getTarget().getNewAddress(concrete, true);
-		branchToAddress(target);
+		branchToAddress(op, target);
 	}
 
 	/**
@@ -509,11 +571,12 @@ public class PcodeExecutor<T> {
 	 * 
 	 * @param op the op
 	 * @param frame the frame
+	 * @param library the userop library
 	 */
 	public void executeCall(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
-		Address target = op.getInput(0).getAddress();
-		branchToOffset(arithmetic.fromConst(target.getOffset(), pcSize), frame);
-		branchToAddress(target);
+		Address target = getBranchTarget(op);
+		branchToOffset(op, target.getOffset(), frame);
+		branchToAddress(op, target);
 	}
 
 	/**
@@ -541,6 +604,16 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Get the userop number of a {@link PcodeOp#CALLOTHER callother} op
+	 * 
+	 * @param op the op
+	 * @return the userop number (const input 0)
+	 */
+	protected int getCallotherOpNumber(PcodeOp op) {
+		return getIntConst(op.getInput(0));
+	}
+
+	/**
 	 * Execute a userop call
 	 * 
 	 * @param op the op
@@ -548,15 +621,14 @@ public class PcodeExecutor<T> {
 	 * @param library the library of userops
 	 */
 	public void executeCallother(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
-		int opNo = getIntConst(op.getInput(0));
+		int opNo = getCallotherOpNumber(op);
 		String opName = getUseropName(opNo, frame);
 		if (opName == null) {
 			throw new AssertionError("Pcode userop " + opNo + " is not defined");
 		}
 		PcodeUseropDefinition<T> opDef = library.getUserops().get(opName);
 		if (opDef != null) {
-			opDef.execute(this, library, op.getOutput(),
-				List.of(op.getInputs()).subList(1, op.getNumInputs()));
+			opDef.execute(this, library, op);
 			return;
 		}
 		onMissingUseropDef(op, frame, opName, library);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ public class LaunchProperties {
 	public static String VMARGS_PLATFORM = "VMARGS_" + JavaFinder.getCurrentPlatform();
 
 	private Map<String, List<String>> propertyMap;
+	private File launchPropertiesFile;
 
 	/**
 	 * Creates a new launch properties object from the given launch properties file.
@@ -57,7 +58,17 @@ public class LaunchProperties {
 	 */
 	public LaunchProperties(File launchPropertiesFile)
 			throws FileNotFoundException, IOException, ParseException {
+		this.launchPropertiesFile = launchPropertiesFile;
 		propertyMap = parseLaunchProperties(launchPropertiesFile);
+	}
+
+	/**
+	 * Get the launch properties storage file.
+	 * NOTE: File is intended for read-only use by application.
+	 * @return launch properties file
+	 */
+	public File getLaunchPropertiesFile() {
+		return launchPropertiesFile;
 	}
 
 	/**

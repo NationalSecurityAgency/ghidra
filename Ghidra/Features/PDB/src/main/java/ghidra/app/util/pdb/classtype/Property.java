@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * Class properties
  */
 public enum Property {
 	UNKNOWN("INVALID_PROPERTY", -1),

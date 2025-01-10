@@ -24,8 +24,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.util.ComparatorMath;
 import ghidra.util.LockHold;
+import ghidra.util.MathUtilities;
 import ghidra.util.exception.*;
 
 public class DBTraceProgramViewRootModule implements ProgramModule {
@@ -195,7 +195,7 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 					.getMinAddress();
 		}
 		// TODO: There has got to be a better way
-		return reduceRegions(TraceMemoryRegion::getMinAddress, ComparatorMath::cmin);
+		return reduceRegions(TraceMemoryRegion::getMinAddress, MathUtilities::cmin);
 	}
 
 	@Override
@@ -206,7 +206,7 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 					.getMaxAddress();
 		}
 		// TODO: There has got to be a better way
-		return reduceRegions(TraceMemoryRegion::getMaxAddress, ComparatorMath::cmax);
+		return reduceRegions(TraceMemoryRegion::getMaxAddress, MathUtilities::cmax);
 	}
 
 	@Override

@@ -703,7 +703,8 @@ public class HighFunctionDBUtil {
 			throws InvalidInputException {
 
 		ParameterDefinition[] params = sig.getArguments();
-		FunctionDefinitionDataType fsig = new FunctionDefinitionDataType("tmpname"); // Empty datatype, will get renamed later
+		FunctionDefinitionDataType fsig =
+			new FunctionDefinitionDataType("tmpname", function.getProgram().getDataTypeManager()); // Empty datatype, will get renamed later
 		fsig.setCallingConvention(sig.getCallingConventionName());
 		fsig.setArguments(params);
 		fsig.setReturnType(sig.getReturnType());

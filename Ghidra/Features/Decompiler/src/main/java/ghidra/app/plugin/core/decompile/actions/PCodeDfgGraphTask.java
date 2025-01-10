@@ -39,7 +39,7 @@ public class PCodeDfgGraphTask extends Task {
 
 	private GraphDisplayBroker graphService;
 	protected HighFunction hfunction;
-	private AttributedGraph graph;
+	protected AttributedGraph graph;
 	private PluginTool tool;
 
 	public PCodeDfgGraphTask(PluginTool tool, GraphDisplayBroker graphService,

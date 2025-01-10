@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.macosx.analyzers;
 
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.DyldCacheLoader;
 import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -143,9 +144,11 @@ public class CFStringAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean isMachOAndContainsCFStrings(Program program) {
-		if (program.getExecutableFormat().equals(MachoLoader.MACH_O_NAME)) {
-			MemoryBlock[] blocks = program.getMemory().getBlocks();
-			for (MemoryBlock block : blocks) {
+		String format = program.getExecutableFormat();
+		if (MachoLoader.MACH_O_NAME.equals(format) ||
+			DyldCacheLoader.DYLD_CACHE_NAME.equals(format) ||
+			"Extracted DYLD Component".equals(format)) {
+			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (block.getName().equals(CFSTRING)) {
 					return true;
 				}

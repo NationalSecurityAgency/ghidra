@@ -62,7 +62,7 @@ public class PcodeOp {
 	public static final int INT_SLESS = 13;         	// Return TRUE if signed op1 < signed op2
 	public static final int INT_SLESSEQUAL = 14;	// Return TRUE if signed op1 <= signed op2
 	public static final int INT_LESS = 15;		// Return TRUE if unsigned op1 < unsigned op2
-	// Also indicates borrow on unsigned substraction
+	// Also indicates borrow on unsigned subtraction
 	public static final int INT_LESSEQUAL = 16;	// Return TRUE if unsigned op1 <= unsigned op2
 	public static final int INT_ZEXT = 17;		// Zero extend operand 
 	public static final int INT_SEXT = 18;		// Sign extend operand 

@@ -5,13 +5,24 @@
 #   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
 #---------------------------------------------------------------------------------------
 
-# The Java 21 (or later) runtime installation must either be on the system path or identified
-# by setting the JAVA_HOME environment variable.  If not using a formally installed Java 
-# runtime which has been configured into the system PATH ahead of other Java installations
-# it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME
-# below:
+# The Java 21 (or later) runtime installation must either be on the system path, specified by the
+# JAVA_HOME environment variable or preferably set explicitly with the GHIDRA_JAVA_HOME variable 
+# below.  Since this script may be used during service initialization, reliance on environmental 
+# settings such as JAVA_HOME may be problematic.  It is also important to note that once installed
+# as a service, changes to this file or environmental settings may not have an affect on any service
+# scripts that was generated at the time of service installation.
+#
+# When specifying GHIDRA_JAVA_HOME below it is recommended that a symbolic link path be specified 
+# which only includes the major java version so that any system Java updates will allow for this 
+# path to remain valid.  In the case of Linux, this is important since once the Ghidra Server is 
+# installed as a systemd service the Java path will be locked-in to the generated ghidra.service 
+# script.
+#
+# Example: The symbolic link "/usr/lib/jvm/java-21-openjdk" should be specified in favor of a
+#		  version-specific path such as "/usr/lib/jvm/java-21-openjdk-21.0.5.0.10-3.el8.x86_64".  
 
-# JAVA_HOME=
+# Uncomment the following line and set JAVA_HOME before installing as a service
+# GHIDRA_JAVA_HOME=/usr/lib/jvm/java-21-openjdk
 
 OPTION=$1
 
@@ -25,29 +36,30 @@ usage() {
 
 adminFail() {
 	echo
-	echo "Command option \"$OPTION\" must be run as administrator (use elevated shell - see svrREADME.html)"
+	echo "Command option \"${OPTION}\" must be run as administrator (use elevated shell - see svrREADME.html)"
 	echo
 	exit 1
 }
 
 reportError() {
 	echo
-	echo "$1"
+	echo -e "ERROR: $1"
+	echo "Please refer to the svrREADME documentation."
 	echo
-	echo "$1" >> "${GHIDRA_HOME}/wrapper.log"
+	echo -e "ERROR: $1" >> "${GHIDRA_HOME}/wrapper.log"
 	exit 1
 }
 
-if [ "$OPTION" == "" ]; then
+if [ "${OPTION}" == "" ]; then
 	usage
 fi
 
-if [ "$EUID" != "0" ]; then
-	if [ "$OPTION" == "start" ]; then adminFail
-	elif [ "$OPTION" == "stop" ]; then adminFail
-	elif [ "$OPTION" == "install" ]; then adminFail
-	elif [ "$OPTION" == "uninstall" ]; then adminFail
-	elif [ "$OPTION" == "restart" ]; then adminFail
+if [ "${EUID}" != "0" ]; then
+	if [ "${OPTION}" == "start" ]; then adminFail
+	elif [ "${OPTION}" == "stop" ]; then adminFail
+	elif [ "${OPTION}" == "install" ]; then adminFail
+	elif [ "${OPTION}" == "uninstall" ]; then adminFail
+	elif [ "${OPTION}" == "restart" ]; then adminFail
 	fi
 fi
 
@@ -55,7 +67,7 @@ APP_NAME="ghidraSvr"
 APP_LONG_NAME="Ghidra Server"
 MODULE_DIR="Ghidra/Features/GhidraServer"
 WRAPPER_NAME_PREFIX=yajsw
-SERVICE_NAME=org.rzo.yajsw.$APP_NAME
+SERVICE_NAME=org.rzo.yajsw.${APP_NAME}
 WRAPPER_TMPDIR="${TMPDIR:-/tmp}"
 
 # Resolve symbolic link if present and get the directory this script lives in.
@@ -66,7 +78,7 @@ SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Ensure Ghidra path doesn't contain illegal characters
-if [[ "$SCRIPT_DIR" = *"!"* ]]; then
+if [[ "${SCRIPT_DIR}" = *"!"* ]]; then
 	echo "Ghidra path cannot contain a \"!\" character."
 	exit 1
 fi
@@ -76,7 +88,7 @@ cd "${SCRIPT_DIR}"
 SCRIPT_DIR="$(pwd)"
 
 OS="$(uname -s)"
-if [ "$OS" = "Darwin" ]; then
+if [ "${OS}" = "Darwin" ]; then
 	OS_DIRNAME="osx64"
 else
 	OS_DIRNAME="linux64"
@@ -117,32 +129,47 @@ if [ ! -d "${WRAPPER_HOME}" -o ! -f "${WRAPPER_HOME}/wrapper.jar" ]; then
 	exit 1
 fi
 
-echo "Using service wrapper: $(basename "$WRAPPER_HOME")"
+echo "Using service wrapper: $(basename "${WRAPPER_HOME}")"
 
 # Determine the Java command to use to start the JVM.
-JAVA_CMD=java
-if [ -n "$JAVA_HOME" ] ; then
-    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
-        # IBM's JDK on AIX uses strange locations for the executables
-        JAVA_CMD="$JAVA_HOME/jre/sh/java"
-    else
-        JAVA_CMD="$JAVA_HOME/bin/java"
-    fi
-    if [ ! -x "$JAVA_CMD" ] ; then
-        reportError "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME"
+JAVA_CMD=
+if [ -n "${GHIDRA_JAVA_HOME}" ] ; then
+	# Identify java command from GHIDRA_JAVA_HOME
+	JAVA_CMD="${GHIDRA_JAVA_HOME}/bin/java"
+	if [ ! -x "${JAVA_CMD}" ] ; then
+		reportError "The ghidraSvr script GHIDRA_JAVA_HOME variable is set to an invalid directory: ${GHIDRA_JAVA_HOME}"
+	fi
+	
+	$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${GHIDRA_HOME}" -java_home_check "${GHIDRA_JAVA_HOME}")
+	if [ ! $? -eq 0 ] ; then
+		reportError "The ghidraSvr script GHIDRA_JAVA_HOME variable specifies an invalid or unsupported Java runtime: ${GHIDRA_JAVA_HOME}"
 	fi
 else
-    JAVA_CMD="java"
-    which java >/dev/null 2>&1 || reportError "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH."
-fi
+	# Identify java command from either JAVA_HOME or PATH, try PATH first
+	JAVA_CMD=
+	if [ -x "$(command -v java)" ] ; then
+		JAVA_CMD=java
+	elif [ -n "${JAVA_HOME}" ] ; then
+		JAVA_CMD="${JAVA_HOME}/bin/java"
+		if [ ! -x "${JAVA_CMD}" ] ; then
+			echo "WARNING: JAVA_HOME environment variable is set to an invalid directory: ${JAVA_HOME}"
+			JAVA_CMD=
+		fi
+	fi
+	
+	if [ "${JAVA_CMD}" == "" ]; then
+		reportError "The 'java' command could not be found in your PATH or with JAVA_HOME."
+	fi
+		
+	# Get the java that will be used to launch GhidraServer
+	# Ensure that locally-set JAVA_HOME environment variable passes thru to LaunchSupport
+	LS_JAVA_HOME=$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${GHIDRA_HOME}" -java_home)
+	if [ ! $? -eq 0 ] ; then
+		reportError "Unable to find a supported Java runtime on your system."
+	fi
 
-# Get the java that will be used to launch GhidraServer
-JAVA_HOME=$($JAVA_CMD -cp "${LS_CPATH}" LaunchSupport "${GHIDRA_HOME}" -java_home)
-if [ ! $? -eq 0 ]; then
-	reportError "Failed to find a supported Java runtime.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+	JAVA_CMD="${LS_JAVA_HOME}/bin/java"
 fi
-
-JAVA_CMD="${JAVA_HOME}/bin/java"
 
 VMARGS=()
 VMARGS+=("-Djna_tmpdir=${WRAPPER_TMPDIR}")
@@ -151,14 +178,14 @@ VMARGS+=("-Djava.io.tmpdir=${WRAPPER_TMPDIR}")
 enableForkHack() {
 
 	# use of fork_hack only needed for Mac OS X
-	if [ "$OS" != "Darwin" ]; then
+	if [ "${OS}" != "Darwin" ]; then
 		return 0
 	fi
 
 	# watch out for revisions to the associated fork_hack comment in server.conf
 	# that could throw this off
 	HAS_FORK_HACK_LINE="$(grep "wrapper.fork_hack=" "${WRAPPER_CONF}")"
-	HAS_FORK_HACK_LINE=$(echo $HAS_FORK_HACK_LINE)
+	HAS_FORK_HACK_LINE=$(echo ${HAS_FORK_HACK_LINE})
 	if [ "${HAS_FORK_HACK_LINE}" = "wrapper.fork_hack=true" ]; then
 		return 0
 	fi
@@ -200,81 +227,81 @@ checkInstall() {
 }
 
 console() {
-    echo "Running ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -c "${WRAPPER_CONF}"
+	echo "Running ${APP_LONG_NAME}..."
+	java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -c "${WRAPPER_CONF}"
 }
 
 start() {
-    echo "Starting ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
+	echo "Starting ${APP_LONG_NAME}..."
+	java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
 }
  
 stopit() {
-    echo "Stopping ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
+	echo "Stopping ${APP_LONG_NAME}..."
+	java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
 }
 
 install() {
-    echo "Installing ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -i "${WRAPPER_CONF}"
+	echo "Installing ${APP_LONG_NAME}..."
+	java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -i "${WRAPPER_CONF}"
 }
 
 uninstall() {
-    echo "Uninstalling ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -r "${WRAPPER_CONF}"
+	echo "Uninstalling ${APP_LONG_NAME}..."
+	java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -r "${WRAPPER_CONF}"
 }
 
 status() {
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}"
+	java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}"
 }
 
 case "$1" in
 
-    'console')
-    	enableForkHack
-        console
-        ;;
-        
-    'status')
-        status 
-        ;;
+	'console')
+		enableForkHack
+		console
+		;;
+		
+	'status')
+		status 
+		;;
 
-    'start')
-    		checkInstall
-    		if [ $? = 0 ]; then
-        		start
-        fi
-        ;;
+	'start')
+		checkInstall
+		if [ $? = 0 ]; then
+			start
+		fi
+		;;
 
-    'stop')
-    		checkInstall
-    		if [ $? = 0 ]; then
-        		stopit
-        fi
-        ;;
+	'stop')
+		checkInstall
+		if [ $? = 0 ]; then
+			stopit
+		fi
+		;;
 
-    'restart')
-    		checkInstall
-    		if [ $? = 0 ]; then
-        		stopit
-        		start
-        	fi
-        ;;
+	'restart')
+		checkInstall
+		if [ $? = 0 ]; then
+			stopit
+			start
+		fi
+		;;
 
-    'install')
-    	enableForkHack
-        install
-        start
-        ;;
+	'install')
+		enableForkHack
+		install
+		start
+		;;
 
-    'uninstall')
-    		checkInstall
-    		if [ $? = 0 ]; then
-        		uninstall 
-        fi
-        ;;
+	'uninstall')
+		checkInstall
+		if [ $? = 0 ]; then
+			uninstall 
+		fi
+		;;
 
-    *)
-        usage
-        ;;
+	*)
+		usage
+		;;
 esac

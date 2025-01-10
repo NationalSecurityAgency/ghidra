@@ -8,9 +8,9 @@ setting up analysis on a given sample and running a Ghidra script locally. It al
 plugin to allow the use of CPython 3 from the Ghidra GUI.
 
 ## Installation and Setup
-Ghidra provides an out-of-the box integraton with the PyGhidra Python library which makes 
-installation and usage fairly straighforward. This enables the Ghidra GUI and headless Ghidra to run
-GhidraScript's written in native CPython 3, as well as interact with the Ghidra GUI through a 
+Ghidra provides an out-of-the box integration with the PyGhidra Python library which makes 
+installation and usage fairly straightforward. This enables the Ghidra GUI and headless Ghidra to
+run GhidraScript's written in native CPython 3, as well as interact with the Ghidra GUI through a 
 built-in REPL. To launch Ghidra in PyGhidra-mode, see Ghidra's latest
 [Installation Guide](https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraDocs/InstallationGuide.md#pyghidra-mode). 
 
@@ -28,6 +28,12 @@ To install the PyGhidra Python library:
    * Online: `pip install pyghidra`
    * Offline: `python3 -m pip install --no-index -f 
      <GhidraInstallDir>/Ghidra/Features/PyGhidra/pypkg/dist pyghidra`
+     
+Optionally, you can also install the Ghidra type stubs to improve your development experience 
+(assuming your Python editor supports it). The type stubs module is specific to each version of
+Ghidra:
+* Online: `pip install ghidra-stubs==<version>`
+* Offline: `python3 -m pip install --no-index -f <GhidraInstallDir>/docs/ghidra_stubs ghidra-stubs`
 
 ## API
 The current version of PyGhidra inherits an API from the original "Pyhidra" project that provides an
@@ -49,7 +55,7 @@ def start(verbose=False, *, install_dir: Path = None) -> "PyGhidraLauncher":
     :param verbose: Enable verbose output during JVM startup (Defaults to False)
     :param install_dir: The path to the Ghidra installation directory.
         (Defaults to the GHIDRA_INSTALL_DIR environment variable)
-    :return: The PhyidraLauncher used to start the JVM
+    :return: The PyGhidraLauncher used to start the JVM
     """
 ```
 

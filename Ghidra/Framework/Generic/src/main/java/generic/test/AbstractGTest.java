@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,9 @@ import java.util.function.Supplier;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 
+import generic.test.rule.*;
 import ghidra.framework.Application;
 import ghidra.framework.TestApplicationUtils;
 import ghidra.util.SystemUtilities;
@@ -41,11 +43,12 @@ import utility.application.ApplicationUtilities;
 /**
  * A root for system tests that provides known system information.
  *
- * <P>This class exists so that fast unit tests have a place to share data without having the
- * slowness of more heavy weight concepts like {@link Application}, logging, etc.
+ * <P>
+ * This class exists so that fast unit tests have a place to share data without having the slowness
+ * of more heavy weight concepts like {@link Application}, logging, etc.
  *
- * <P>						!!	WARNING  !!
- * This test is meant to initialize quickly.  All file I/O should be avoided.
+ * <P>
+ * !! WARNING !! This test is meant to initialize quickly. All file I/O should be avoided.
  */
 public abstract class AbstractGTest {
 
@@ -75,8 +78,25 @@ public abstract class AbstractGTest {
 	public TestName testName = new TestName();
 
 	/**
-	 * Get the directory path within which all temporary test
-	 * data files should be created.
+	 * This rule handles the {@link Repeated} annotation
+	 *
+	 * <p>
+	 * During batch mode, this rule should never be needed. This rule is included here as a
+	 * convenience, in case a developer wants to use the {@link Repeated} annotation to diagnose a
+	 * non-deterministic test failure. Without this rule, the annotation would be silently ignored.
+	 */
+	@Rule
+	public TestRule repeatedRule = new RepeatedTestRule();
+
+	/**
+	 * This rule handles the {@link IgnoreUnfinished} annotation
+	 */
+	@Rule
+	public TestRule ignoreUnfinishedRule = new IgnoreUnfinishedRule();
+
+	/**
+	 * Get the directory path within which all temporary test data files should be created.
+	 * 
 	 * @return test directory path ending with a File.separator character
 	 */
 	private static String createTestDirectoryPath() {
@@ -161,9 +181,9 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Compares the contents of two arrays to determine if they are equal.  The contents must
-	 * match in the same order. If <code>message</code>
-	 * is <code>null</code>, then a generic error message will be printed.
+	 * Compares the contents of two arrays to determine if they are equal. The contents must match
+	 * in the same order. If <code>message</code> is <code>null</code>, then a generic error message
+	 * will be printed.
 	 *
 	 * @param message The message to print upon failure; can be null
 	 * @param expected The expected array.
@@ -180,9 +200,9 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Compares the contents of two arrays to determine if they are equal.  The contents do not have
-	 * to be in the same order.  If <code>message</code>
-	 * is <code>null</code>, then a generic error message will be printed.
+	 * Compares the contents of two arrays to determine if they are equal. The contents do not have
+	 * to be in the same order. If <code>message</code> is <code>null</code>, then a generic error
+	 * message will be printed.
 	 *
 	 * @param message The message to print upon failure; can be null
 	 * @param expected The expected array.
@@ -394,7 +414,7 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the given AtomicBoolean to return true.  This is a convenience method for
+	 * Waits for the given AtomicBoolean to return true. This is a convenience method for
 	 * {@link #waitFor(BooleanSupplier)}.
 	 *
 	 * @param ab the atomic boolean
@@ -441,8 +461,8 @@ public abstract class AbstractGTest {
 	 * Waits for the given condition to return true
 	 *
 	 * @param condition the condition that returns true when satisfied
-	 * @param failureMessageSupplier the function that will supply the failure message in the
-	 *        event of a timeout.
+	 * @param failureMessageSupplier the function that will supply the failure message in the event
+	 *            of a timeout.
 	 * @throws AssertionFailedError if the condition is not met within the timeout period
 	 */
 	public static void waitForCondition(BooleanSupplier condition,
@@ -452,11 +472,12 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the given condition to return true.  Most of the <code>waitForCondition()</code>
-	 * methods throw an {@link AssertionFailedError} if the timeout period expires.
-	 *  This method allows you to setup a longer wait period by repeatedly calling this method.
+	 * Waits for the given condition to return true. Most of the <code>waitForCondition()</code>
+	 * methods throw an {@link AssertionFailedError} if the timeout period expires. This method
+	 * allows you to setup a longer wait period by repeatedly calling this method.
 	 *
-	 * <P>Most clients should use {@link #waitForCondition(BooleanSupplier)}.
+	 * <P>
+	 * Most clients should use {@link #waitForCondition(BooleanSupplier)}.
 	 *
 	 * @param supplier the supplier that returns true when satisfied
 	 */
@@ -496,8 +517,8 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the value returned by the supplier to be non-null, throwing an exception if
-	 * that does not happen by the default timeout.
+	 * Waits for the value returned by the supplier to be non-null, throwing an exception if that
+	 * does not happen by the default timeout.
 	 *
 	 * @param supplier the supplier of the value
 	 * @param failureMessage the message to print upon the timeout being reached
@@ -509,8 +530,8 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the value returned by the supplier to be non-null, throwing an exception if
-	 * that does not happen by the default timeout.
+	 * Waits for the value returned by the supplier to be non-null, throwing an exception if that
+	 * does not happen by the default timeout.
 	 *
 	 * @param supplier the supplier of the value
 	 * @return the non-null value
@@ -521,8 +542,8 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the value returned by the supplier to be non-null, throwing an exception if
-	 * that does not happen by the default timeout.
+	 * Waits for the value returned by the supplier to be non-null, throwing an exception if that
+	 * does not happen by the default timeout.
 	 *
 	 * @param supplier the supplier of the value
 	 * @return the non-null value
@@ -533,12 +554,13 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the value returned by the supplier to be non-null.  If the timeout period
-	 * expires, then null will be returned.   Most of the <code>waitXyz()</code> methods
-	 * throw an {@link AssertionFailedError} if the timeout period expires.  This method allows
-	 * you to setup a longer wait period by repeatedly calling this method.
+	 * Waits for the value returned by the supplier to be non-null. If the timeout period expires,
+	 * then null will be returned. Most of the <code>waitXyz()</code> methods throw an
+	 * {@link AssertionFailedError} if the timeout period expires. This method allows you to setup a
+	 * longer wait period by repeatedly calling this method.
 	 *
-	 * <P>Most clients should use {@link #waitForValue(Supplier)}.
+	 * <P>
+	 * Most clients should use {@link #waitForValue(Supplier)}.
 	 *
 	 * @param supplier the supplier of the value
 	 * @return the value; may be null
@@ -549,8 +571,8 @@ public abstract class AbstractGTest {
 	}
 
 	/**
-	 * Waits for the value returned by the supplier to be non-null, optionally
-	 * throwing an exception if that does not happen by the given timeout.
+	 * Waits for the value returned by the supplier to be non-null, optionally throwing an exception
+	 * if that does not happen by the given timeout.
 	 *
 	 * @param supplier the supplier of the value
 	 * @param failureMessage the message to print upon the timeout being reached

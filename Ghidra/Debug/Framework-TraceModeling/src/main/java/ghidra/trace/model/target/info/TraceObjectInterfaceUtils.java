@@ -53,7 +53,8 @@ public enum TraceObjectInterfaceUtils {
 				List<TraceObjectInterfaceFactory> instances =
 					ClassSearcher.getInstances(TraceObjectInterfaceFactory.class);
 				if (instances.isEmpty()) {
-					Msg.warn(this, "ClassSearcher not active, yet. Falling back to built-ins");
+					Msg.warn(this, "ClassSearcher not active, yet. " +
+						"Falling back to built-in TraceObjectInterfaces.");
 					instances = List.of(new BuiltinTraceObjectInterfaceFactory());
 				}
 				mapByClass = instances

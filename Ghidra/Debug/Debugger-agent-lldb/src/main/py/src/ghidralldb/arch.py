@@ -118,6 +118,7 @@ data64_compiler_map = {
 x86_compiler_map = {
     'windows': 'windows',
     'Cygwin': 'windows',
+    'linux' : 'gcc',
     'default': 'gcc',
     'unknown': 'gcc',
 }

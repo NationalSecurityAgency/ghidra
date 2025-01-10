@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,12 @@ public class FileBytesProvider implements ByteProvider {
 
 	@Override
 	public byte readByte(long index) throws IOException {
-		return fileBytes.getOriginalByte(index);
+		try {
+			return fileBytes.getOriginalByte(index);
+		}
+		catch (IndexOutOfBoundsException e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override
@@ -84,7 +89,12 @@ public class FileBytesProvider implements ByteProvider {
 			throw new EOFException();
 		}
 		byte[] bytes = new byte[(int) length];
-		fileBytes.getOriginalBytes(index, bytes);
+		try {
+			fileBytes.getOriginalBytes(index, bytes);
+		}
+		catch (IndexOutOfBoundsException e) {
+			throw new IOException(e);
+		}
 		return bytes;
 	}
 
@@ -105,18 +115,36 @@ public class FileBytesProvider implements ByteProvider {
 		private long offset;
 
 		FileBytesProviderInputStream(long offset) {
+			if (offset < 0) {
+				throw new IllegalArgumentException("Negative offset: " + offset);
+			}
 			this.offset = offset;
 			this.initialOffset = offset;
 		}
 
 		@Override
 		public int read() throws IOException {
-			byte b = readByte(offset++);
+			if (offset >= length()) {
+				return -1;
+			}
+			byte b = readByte(offset);
+			++offset;
 			return b & 0xff;
 		}
 
 		@Override
 		public int read(byte[] b, int off, int len) throws IOException {
+			if (off < 0 || off >= b.length) {
+				throw new IllegalArgumentException("Array index out of range: " + off);
+			}
+			long fileBytesLen = length();
+			if (offset >= fileBytesLen) {
+				return -1;
+			}
+			long limit = fileBytesLen - offset;
+			if (len > limit) {
+				len = (int) limit; // reduce read length
+			}
 			byte[] bytes = new byte[len];
 			int count = fileBytes.getOriginalBytes(offset, bytes);
 			System.arraycopy(bytes, 0, b, off, count);

@@ -24,7 +24,7 @@ import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.path.PathFilter;
 
 /**
  * The schemas common to all contexts, as they describe the primitive and built-in types.
@@ -202,9 +202,9 @@ public enum PrimitiveTraceObjectSchema implements TraceObjectSchema {
 	}
 
 	@Override
-	public PathMatcher searchFor(Class<? extends TraceObjectInterface> type,
+	public PathFilter searchFor(Class<? extends TraceObjectInterface> type,
 			boolean requireCanonical) {
-		return new PathMatcher();
+		return PathFilter.NONE;
 	}
 
 	@Override

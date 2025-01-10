@@ -983,6 +983,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
 		}
 	}
+
 	@Test
 	public void testITE_ContextFlow() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {

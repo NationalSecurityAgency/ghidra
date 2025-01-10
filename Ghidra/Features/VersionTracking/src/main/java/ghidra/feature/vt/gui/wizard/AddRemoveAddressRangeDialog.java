@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import docking.widgets.label.GDLabel;
 import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.PairLayout;
@@ -32,7 +31,6 @@ import ghidra.util.layout.PairLayout;
 public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 
 	private Program program;
-	private AddressFactory addressFactory;
 	private AddressRangeListener listener;
 
 	private JPanel addressRangePanel;
@@ -45,7 +43,6 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 			AddressRangeListener listener) {
 		super(programIndicator + " Address Range", true, true, true, false);
 		this.program = program;
-		addressFactory = program.getAddressFactory();
 		this.listener = listener;
 		setHelpLocation(new HelpLocation(HelpTopics.LABEL, "AddEditDialog"));
 		addWorkPanel(createAddressRangePanel());
@@ -68,8 +65,7 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 		minLabel.setToolTipText("Enter minimum address to add or remove");
 		addressRangePanel.add(minLabel);
 
-		minAddressField = new AddressInput();
-		minAddressField.setAddressFactory(addressFactory);
+		minAddressField = new AddressInput(program);
 		Dimension minPreferredSize = getPreferredSize();
 		minPreferredSize.width = 200;
 		minAddressField.setPreferredSize(minPreferredSize);
@@ -79,8 +75,7 @@ public class AddRemoveAddressRangeDialog extends DialogComponentProvider {
 		maxLabel.setToolTipText("Enter maximum address to add or remove");
 		addressRangePanel.add(maxLabel);
 
-		maxAddressField = new AddressInput();
-		maxAddressField.setAddressFactory(addressFactory);
+		maxAddressField = new AddressInput(program);
 		Dimension maxPreferredSize = getPreferredSize();
 		maxPreferredSize.width = 200;
 		minAddressField.setPreferredSize(maxPreferredSize);

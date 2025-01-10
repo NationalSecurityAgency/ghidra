@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -224,7 +224,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			markupSession.appendComment(func, "Golang function info: ",
 				AddressAnnotatedStringHandler.createAddressAnnotationString(
 					funcdata.getStructureContext().getStructureAddress(),
-					"Flags: %s, ID: %s".formatted(funcdata.getFlags(), funcdata.getFuncIDEnum())));
+					"Flags: %s".formatted(funcdata.getFlags())));
 
 			if (!funcSymbolNameInfo.getSymbolName().equals(funcname)) {
 				markupSession.appendComment(func, "Golang original name: ",
@@ -234,11 +234,12 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			GoSourceFileInfo sfi = null;
 			if (analyzerOptions.outputSourceInfo && (sfi = funcdata.getSourceFileInfo()) != null) {
 				markupSession.appendComment(func, "Golang source: ", sfi.getDescription());
+				funcdata.markupSourceFileInfo();
 			}
 
 			if (funcdata.getFlags().isEmpty() /* dont try to get arg info for ASM funcs*/) {
 				markupSession.appendComment(func, null,
-					"Golang recovered signature: " + funcdata.recoverFunctionSignature());
+					"Golang stacktrace signature: " + funcdata.recoverFunctionSignature());
 			}
 
 			// Try to get a function definition signature from:
@@ -648,7 +649,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 						goType != null ? callsite.returnTypeMapper.apply(goType) : null;
 					if (newReturnType != null) {
 						// Create a funcdef for this call site, where the return value is a
-						// specific glang type instead of the void* it was before.
+						// specific golang type instead of the void* it was before.
 						FunctionDefinitionDataType signature =
 							new FunctionDefinitionDataType(callsite.calledFunc, true);
 						signature.setReturnType(newReturnType);

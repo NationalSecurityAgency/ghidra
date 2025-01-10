@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#adding-a-debugger">Adding a debugger</a><ul>
+<li><a href="#debugger-documentation">Debugger documentation</a></li>
+<li><a href="#anatomy-of-a-ghidra-debugger-agent">Anatomy of a Ghidra debugger agent</a></li>
+<li><a href="#drgn-as-an-example">drgn as an Example</a><ul>
+<li><a href="#the-first-launcher-local-drgn.sh">The first launcher — <code>local-drgn.sh</code></a></li>
+<li><a href="#the-schema">The schema</a></li>
+<li><a href="#the-build-logic">The build logic</a></li>
+<li><a href="#the-python-files">The Python files</a></li>
+<li><a href="#revisiting-the-schema">Revisiting the schema</a></li>
+<li><a href="#unit-tests">Unit tests</a></li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#extended-features">Extended features</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<section id="adding-a-debugger" class="level1">
+<h1>Adding a debugger</h1>
+<p>This module walks you through an example of how to add a debugger agent to Ghidra. It has no exercises and is certainly not the only way to implement an agent, but hopefully contains some useful pointers and highlights some pit-falls that you might encounter. The example traces the implementation of an actual agent — the agent for <em>Meta</em>’s <strong>drgn</strong> debugger, which provides a scriptable, albeit read-only, interface to the running Linux kernel, as well as user-mode and core-dump targets.</p>
+<section id="debugger-documentation" class="level2">
+<h2>Debugger documentation</h2>
+<ul>
+<li>Recommended reading: <strong>drgn</strong> (<a href="https://github.com/osandov/drgn" class="uri">https://github.com/osandov/drgn</a>)</li>
+<li>Also: <strong>drgn (docs)</strong> (<a href="https://drgn.readthedocs.io/en/latest" class="uri">https://drgn.readthedocs.io/en/latest</a>)</li>
+</ul>
+</section>
+<section id="anatomy-of-a-ghidra-debugger-agent" class="level2">
+<h2>Anatomy of a Ghidra debugger agent</h2>
+<p>To support debugging on various platforms, the Ghidra debugger has <em>agents</em>, i.e. clients capable of receiving information from a native debugger and passing it to the Ghidra GUI. They include the <strong>dbgeng</strong> agent that supports Windows debuggers, the <strong>gdb</strong> agent for gdb on a variery of platforms, the <strong>lldb</strong> agent for macOS and Linux, and the <strong>jpda</strong> agent for Java. All but the last are written in Python 3, and all communicate with the GUI via a protobuf-based protocol described in <a href="../../../Ghidra/Debug/Debugger-rmi-trace/src/main/proto/trace-rmi.proto">Debugger-rmi-trace</a>.</p>
+<p>At the highest level, each agent has four elements (ok, a somewhat arbitrary division, but…):</p>
+<ul>
+<li><a href="../../../Ghidra/Debug/Debugger-agent-drgn/data/debugger-launchers"><code>debugger-launchers</code></a> – A set of launchers, often a mixture of <code>.bat</code>,<code>.sh</code>, and sometime <code>.py</code> scripts</li>
+<li><a href="../../../Ghidra/Debug/Debugger-agent-drgn/src/main/py/src/ghidradrgn/schema.xml"><code>schema.xml</code></a> – An object-model schema. (While expressed in XML, this is not an “XML schema”.)</li>
+<li><a href="../../../Ghidra/Debug/Debugger-agent-drgn/src/main/py/src/ghidradrgn"><code>src/ghidradrgn</code></a> – Python files for architecture, commands, hooks, methods, and common utility functions</li>
+<li><a href="../../../Ghidra/Debug/Debugger-agent-drgn/build.gradle"><code>build.gradle</code></a> – Build logic</li>
+</ul>
+<p>Large portions of each are identical or similar across agents, so, as a general strategy, copying an existing agent and renaming all agent-specific variables, methods, etc. is not the worst plan of action. Typically, this leads to large chunks of detritus that need to be edited out late in the development process.</p>
+</section>
+<section id="drgn-as-an-example" class="level2">
+<h2>drgn as an Example</h2>
+<section id="the-first-launcher-local-drgn.sh" class="level3">
+<h3>The first launcher — <code>local-drgn.sh</code></h3>
+<p>The initial objective is to create a shell that sets up the environment variables for parameters we’ll need and invokes the target. For this project, I originally started duplicating the <strong>lldb</strong> agent and then switched to the <strong>dbgeng</strong> agent. Why? The hardest part of writing an agent is getting the initial launch pattern correct. <strong>drgn</strong> is itself written in Python. While gdb and lldb support Python as scripting languages, their cores are not Python-based. For these debuggers, the launcher runs the native debugger and instructs it to load our plugin, which is the agent. The dbgeng agent inverts this pattern, i.e. the agent is a Python application that uses the <strong>Pybag</strong> package to access the native <em>kd</em> interface over COM. <strong>drgn</strong> follows this pattern.</p>
+<p>That said, a quick look at the launchers in the <strong>dbgeng</strong> project (under <a href="../../../Ghidra/Debug/Debugger-agent-dbgeng/data/debugger-launchers"><code>debugger-launchers</code></a>) shows <code>.bat</code> files, each of which calls a <code>.py</code> file in <a href="../../../Ghidra/Debug/Debugger-agent-dbgeng/data/support"><code>data/support</code></a>. As <strong>drgn</strong> is a Linux-only debugger, we need to convert the <code>.bat</code> examples to <code>.sh</code>. Luckily, the conversion is pretty simple: most line annotations use <code>#</code> in place of <code>::</code> and environment variables are referenced using <code>$VAR</code> in place of <code>%VAR%</code>.</p>
+<p>The syntax of the <code>.sh</code> is typical of any <em>*nix</em> shell. In addition to the shell script, a launcher include a metadata header to populate its menu and options dialog. Annotations include:</p>
+<ul>
+<li>A <code>#!</code> line for the shell invocation</li>
+<li>The Ghidra license</li>
+<li>A <code>#@title</code> line for the launcher name</li>
+<li>A <code>#@desc</code>-annotated HTML description, as displayed in the launch dialog</li>
+<li><code>#@menu-group</code> for organizing launchers</li>
+<li><code>#@icon</code> for an icon</li>
+<li><code>#@help</code> the help file and anchor</li>
+<li>Some number of <code>#@arg</code> variables, usually only one to name the executable image</li>
+<li><code>#@args</code> specifies the remainder of the arguments, passed to a user-mode target if applicable</li>
+<li>Some number of <code>#@env</code> variables referenced by the Python code</li>
+</ul>
+<p>While the <strong>drgn</strong> launcher does not use <code>@arg</code> or <code>@args</code>, there are plentiful examples in the <a href="../../../Ghidra/Debug/Debugger-agent-gdb/data/debugger-launchers"><strong>gdb</strong> project</a>. The <code>#@env</code> lines are composed of the variable name (usually in caps), its type, default value, a label for the dialog if the user need to be queried, and a description. The syntax looks like:</p>
+<ul>
+<li><code>#@env</code> <em>Name</em> <code>:</code> <em>Type</em> [ <code>!</code> ] <code>=</code> <em>DefaultValue</em> <em>Label</em> <em>Description</em></li>
+</ul>
+<p>where <code>!</code>, if present, indicates the option is required.</p>
+<p>For <strong>drgn</strong>, invoking the <code>drgn</code> command directly saves us a lot of the work involved in getting the environment correct. We pass it our Python launcher <code>local-drgn.py</code> instead of allowing it to call <code>run_interactive</code>, which does not return. Instead, we created an instance of <code>prog</code> based on the parameters, complete the Ghidra-specific initialization, and call <code>run_interactive(prog)</code> ourselves.</p>
+<p>The Python script needs to do the setup work for Ghidra and for <strong>drgn</strong>. A good start is to try to implement a script that calls the methods for <code>connect</code>, <code>create</code>, and <code>start</code>, with <code>create</code> doing as little as possible initially. This should allow you to work the kinks out of <code>arch.py</code> and <code>util.py</code>.</p>
+<p>For this particular target, there are some interesting wrinkles surrounding the use of <code>sudo</code> (required for most targets) which complicate where wheels are installed (i.e. it is pretty easy to accidentally mix user-local and system <code>site-packages</code>). Additionally, the <code>-E</code> parameter is required to ensure that the environment variable we defined get passed to the root environment. In the cases where we use <code>sudo</code>, the first message printed in the interactive shell will be the request for the user’s password.</p>
+</section>
+<section id="the-schema" class="level3">
+<h3>The schema</h3>
+<p>The schema, specified in <code>schema.xml</code>, provides a basic structure for Ghidra’s <strong>Model</strong> View and allows Ghidra to identify and locate various interfaces that are used to populate the GUI. For example, the <em>Memory</em> interface identifies the container for items with the interface <em>MemoryRegion</em>, which provide information used to fill the <strong>Memory</strong> View. Among the important interfaces are <em>Process</em>, <em>Thread</em>, <em>Frame</em>, <em>Register</em>, <em>MemoryRegion</em>, <em>Module</em>, and <em>Section</em>. These interfaces are “built into” Ghidra so that it can identify which objects provide specific information and commands.</p>
+<p>For the purposes of getting started, it’s easiest to clone the <strong>dbgeng</strong> schema and modify it as needed. Again, this will require substantial cleanup later on, but, as schema errors are frequently subtle and hard to identify, revisiting is probably the better approach. <code>MANIFEST.in</code> should be modfied to reflect the schema’s path.</p>
+</section>
+<section id="the-build-logic" class="level3">
+<h3>The build logic</h3>
+<p>Similarly, <code>build.gradle</code> can essentially be cloned from <strong>dbgeng</strong>, with the appropriate change to <code>eclipse.project.name</code>. For the most part, you need only apply the <code>distributableGhidraModule.gradle</code> and <code>hasPythonPackage.gradle</code> scripts. If further customization is needed, consult other examples in the Ghidra project and Gradle’s documentation.</p>
+<p>Not perhaps directly a build logic item, but <code>pyproject.toml</code> should be modified to reflect the agent’s version number (by convention, Ghidra’s version number).</p>
+</section>
+<section id="the-python-files" class="level3">
+<h3>The Python files</h3>
+<p>At this point, we can start actually implementing the <strong>drgn</strong> agent. <code>arch.py</code> is usually a good starting point, as much of the initial logic depends on it. For <code>arch.py</code>, the hard bit is knowing what maps to what. The <code>language_map</code> converts the debugger’s self-reported architecture to Ghidra’s language set. Ghidra’s languages are mapped to a set of language-to-compiler maps, which are then used to map the debugger’s self-reported language to Ghidra’s compiler. Certain combinations are not allowed because Ghidra has no concept of that language-compiler combination. For example, x86 languages never map to <code>default</code>. Hence, the need for a <code>x86_compiler_map</code>, which defaults to something else (in this case, <code>gcc</code>).</p>
+<p>After <code>arch.py</code>, a first pass at <code>util.py</code> is probably warranted. In particular, the version info is used early in the startup process. A lot of this code is not relevant to our current project, but at a minimum we want to implement (or fake out) methods such as <code>selected_process</code>, <code>selected_thread</code>, and <code>selected_frame</code>. In this example, there probably won’t be more than one session or one process. Ultimately, we’ll have to decide whether we even want <em>Session</em> in the schema. For now, we’re defaulting session and process to 0, and thread to 1, as 0 is invalid for debugging the kernel. (Later, it becomes obvious that the attached pid and <code>prog.main_thread().tid</code> make sense for user-mode debugging, and <code>prog.crashed_thread().tid</code> makes sense for crash dump debugging.)</p>
+<p>With <code>arch.py</code> and <code>util.py</code> good to a first approximation, we would normally start implementing <code>put</code> methods in <code>commands.py</code> for various objects in the <strong>Model</strong> View, starting at the root of the tree and descending through the children. Again, <em>Session</em> and <em>Process</em> are rather poorly-defined, so we skip them (leaving one each) and tackle <em>Threads</em>. Typically, for each iterator in the debugger API, two commands get implemented — one internal method that does the actual work, e.g. <code>put_threads()</code> and one invokable method that wraps this method in a (potentialy batched) transaction, e.g. <code>ghidra_trace_put_threads()</code>. The internal methods are meant to be called by other Python code, with the caller assumed to be responsible for setting up the transaction. The <code>ghidra_trace</code>-prefixed methods are meant to be part of the custom CLI command set which the user can invoke and therefore should set up the transaction. The internal method typically creates the path to the container using patterns for the container, individual keys, and the combination, e.g. <code>THREADS_PATTERN</code>, <code>THREAD_KEY_PATTERN</code>, and <code>THREAD_PATTERN</code>. Patterns are built up from other patterns, going back to the root. A trace object corresponding to the debugger object is created from the path and inserted into the trace database.</p>
+<p>Once this code has been tested, attributes of the object can be added to the base object using <code>set_value</code>. Attributes that are not primitives can be added using the pattern create-populate-insert, i.e. we call <code>create_object</code> with extensions to the path, populate the object’s children, and call <code>insert</code> with the created object. In many cases (particularly when populating an object’s children is expensive), you may want to defer the populate step, effectively creating a placeholder that can be populated on-demand. The downside of this approach, of course, is that <em>refresh</em> methods must be added to populate those nodes.</p>
+<p>As an aside, it’s probably worth noting the function of <code>create_object</code> and <code>insert</code>. Objects in the trace are maintained in a directory tree, with links (and backlinks) allowed, whose visible manifestation is the <strong>Model</strong> View. As such, operations on the tree follow the normal procedure for operations on a graph. <code>create_object</code> creates a node but not any edges, not even the implied (“canonical”) edge from parent to child. <code>insert</code> creates the canonical edge. Until that edge exists, the object is not considered to be “alive”, so the lifespan of the edge effectively encodes the object’s life. Following the create-populate-insert pattern, minimizes the number of events that need to be processed.</p>
+<p>Having completed a single command, we can proceed in one of two directions — we can continue implementing commands for other objects in the tree, or we can implement matching <em>refresh</em> methods in <code>methods.py</code> for the completed object. <code>methods.py</code> also requires patterns which are used to match a path to a trace object, usually via <code>find_x_by_pattern</code> methods. The <code>refresh</code> methods may or may not rely on the <code>find_by</code> methods depending on whether the matching command needs parameters. For example, we may want to assume the <code>selected_thread</code> matches the current object in the view, in which case it can be used to locate that node, or we may want to force the method to match on the node if the trace object can be easily matched to the debugger object, or we may want to use the node to set <code>selected_thread</code>.</p>
+<p>The concept of focus in the debugger is fairly complicated and a frequent source of confusion. In general, we use <em>selected</em> to represent the GUI’s current focus, typically the node in the <strong>Model</strong> or associated views which the user has selected. In some sense, it represents the process, thread, or frame the user is interested in. It also may differ from the <em>highlighted</em> node, chosen by a single-click (versus a double-click which sets the <em>selection</em>). By contrast, the native debugger has its own idea of focus, which we usually describe as <em>current</em>. (This concept is itself complicated by distinctions between the <em>event</em> object, e.g. which thread the debugger broke on, and the <em>current</em> object, e.g. which thread is being inspected.) <em>Current</em> values are pushed “up” to Ghidra’s GUI from the native debugger; <em>selected</em> values are pushed “down” to the native debugger from Ghidra. To the extent possible, it makes sense to synchronize these values. In other words, in most cases, a new <em>selection</em> should force a change in the set of <em>current</em> objects, and an event signaling a change in the <em>current</em> object should alter the GUI’s set of <em>selected</em> objects. (Of course, care needs to be taken not to make this a round-trip cycle.)</p>
+<p><code>refresh</code> methods (and others) are often annotated in several ways. The <code>@REGISTRY.method</code> annotation makes the method available to the GUI. It specifies the <code>action</code> to be taken and the <code>display</code> that appears in the GUI pop-up menu. <em>Actions</em> may be purely descriptive or may correspond to built-in actions taken by the GUI, e.g. <code>refresh</code> and many of the control methods, such as <code>step_into</code>. Parameters for the methods may be annotated with <code>sch.Schema</code> (conventionally on the first parameter) to indicate the nodes to which the method applies, and with <code>ParamDesc</code> to describe the parameter’s type and label for pop-up dialogs. After retrieving necessary parameters, <code>refresh</code> methods invoke methods from <code>commands.py</code> wrapped in a transaction.</p>
+<p>For <strong>drgn</strong>, we implemented <code>put</code>/<code>refresh</code> methods for threads, frames, registers (<code>putreg</code>), and local variables, then modules and sections, memory and regions, the environment, and finally processes. We also implemented <code>putmem</code> using the <strong>drgn</strong>’s <code>read</code> API. <em>Symbols</em> was another possibility, but, for the moment, populating symbols seemed to expensive. Instead, <code>retrieve_symbols</code> was added to allow per-pattern symbols to be added. Unfortunately, the <strong>drgn</strong> API doesn’t support wildcards, so eventually some other strategy will be necessary.</p>
+<p>The remaining set of Python functions, <code>hooks.py</code>, comprises callbacks for various events sent by the native debugger. The current <strong>drgn</strong> code has no event system. A set of skeletal methods has been left in place as (a) we can use the single-step button as a stand-in for “update state”, and (b) some discussion exists in the <strong>drgn</strong> user forums regarding eventually implementing more control functionality. For anyone implementing <code>hooks.py</code>, the challenging logic resides in the event loop, particularly if there is a need to move back-and-forth between the debugger and a <em>repl</em>. Also, distinctions need to be made between control commands, which wait for events, and commands which rely on a callback but complete immediately. As a rule-of-thumb, we <em>push</em> to Ghidra, i.e. Ghidra issue requests asynchronously and the agent must update the trace database.</p>
+</section>
+<section id="revisiting-the-schema" class="level3">
+<h3>Revisiting the schema</h3>
+<p>At this point, revisiting and editing the schema may be called for. For example, for <strong>drgn</strong>, it’s not obvious that there can ever be more than one session, so it may be cleaner to embed <em>Processes</em> at the root. This, in turn, requires editing the <code>commands.py</code> and <code>methods.py</code> patterns. Similarly, as breakpoints are not supported, the breakpoint-related entries may safely be deleted.</p>
+<p>In general, the schema can be structured however you like, but there are several details worth mentioning. Interfaces generally need to be respected for various functions in the GUI to work. Process, thread, frame, module, section, and memory elements can be named arbitrarily, but their interfaces must be named correctly. Additionally, the logic for finding objects in the tree is quite complicated. If elements need be traversed as part of the default search process, their containers must be tagged <code>canonical</code>. If attributes need to be traversed, their parents should have the interface <code>Aggregate</code>.</p>
+<p>Each entry may have <code>elements</code> of the same type ordered by keys, and <code>attributes</code> of arbitrary type. The <code>element</code> entry describes the schema for all elements; the schema for attributes may be given explicitly using named <code>attribute</code> entries or defaulted using the unnamed <code>attribute</code> entry, typically <code>&lt;attribute schema="VOID"&gt;</code> or <code>&lt;attribute schema="ANY"&gt;</code>. The schema for any element in the <strong>Model</strong> View is visible using the hover, which helps substantially when trying to identify schema traversal errors.</p>
+<p>Schema entries may be marked <code>hidden=yes</code> with the obvious result. Additionally, certain attribute names and schema have special properties. For example, <code>_display</code> defines the visible ID for an entry in the <strong>Model</strong> tree, and <code>ADDRESS</code> and <code>RANGE</code> mark attributes which are navigable.</p>
+</section>
+<section id="unit-tests" class="level3">
+<h3>Unit tests</h3>
+<p>The hardest part of writing unit tests is almost always getting the first test to run, and the easiest unit tests, as with the Python files, are those for <code>commands.py</code>. For <strong>drgn</strong>, as before, we’re using <strong>dbgeng</strong> as the pattern, but several elements had to be changed. Because the launchers execute a script, we need to amend the <code>runThrowError</code> logic (and, more specifically, the <code>execInPython</code> logic) in <a href="../../../Ghidra/Test/DebuggerIntegrationTest/src/test.slow/java/agent/drgn/rmi/AbstractDrgnTraceRmiTest.java"><code>AbstractDrgnTraceRmiTest</code></a> with a <code>ProcessBuilder</code> call that takes a script, rather than writing the script to stdin. While there, we can also trim out the unnecessary helper logic around items like breakpoints, watchpoints, etc. from all of the test classes.</p>
+<p>JUnits for <code>methods.py</code> follow a similar pattern, but, again, getting the first one to run is often the most difficult. For <strong>drgn</strong>, we’ve had to override the timeouts in <code>waitForPass</code> and <code>waitForCondition</code>. After starting with hardcoded paths for the test target, we also had to add logic to re-write the <code>PREAMBLE</code> on-the-fly in <code>execInDrgn</code>. Obviously, with no real <code>hooks.py</code> logic, there’s no need for <code>DrgnHooksTest</code>.</p>
+<p>Of note, we’ve used the gdb <code>gcore</code> command to create a core dump for the tests. Both user- and kernel-mode require privileges to run the debugger, and, for testing, that’s not ideal.</p>
+</section>
+<section id="documentation" class="level3">
+<h3>Documentation</h3>
+<p>The principal piece of documentation for all new debuggers is a description of the launchers. Right now, the <a href="../../../Ghidra/Debug/Debugger-rmi-trace/src/main/help/help/topics/TraceRmiConnectionManagerPlugin/TraceRmiLauncherServicePlugin.html"><code>TraceRmiLauncherServicePlugin.html</code></a> file in <code>Debug/Debugger-rmi-trace</code> contains all of this information. Detail to note: the <code>#@help</code> locations in the launchers themselves ought to match the HTML tags in the file, as should the launcher names.</p>
+</section>
+<section id="extended-features" class="level3">
+<h3>Extended features</h3>
+<p>Once everything else is done, it may be worth considering additional functionality specific to the debugger. This can be made available in either <code>commands.py</code> or <code>methods.py</code>. For <strong>drgn</strong>, we’ve added <code>attach</code> methods that allow the user to attach to additional programs.</p>
+</section>
+</section>
+</section>
+</body>
+</html>

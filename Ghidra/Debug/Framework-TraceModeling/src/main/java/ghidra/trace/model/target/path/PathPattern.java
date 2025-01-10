@@ -78,19 +78,7 @@ public class PathPattern implements PathFilter {
 		if (this.equals(that)) {
 			return this;
 		}
-		PathMatcher result = new PathMatcher();
-		result.addPattern(this);
-		if (that instanceof PathPattern) {
-			result.addPattern(this);
-		}
-		else if (that instanceof PathMatcher) {
-			PathMatcher matcher = (PathMatcher) that;
-			result.patterns.addAll(matcher.patterns);
-		}
-		else {
-			throw new AssertionError();
-		}
-		return result;
+		return PathMatcher.any(this, that);
 	}
 
 	public static boolean isWildcard(String pat) {
@@ -190,8 +178,8 @@ public class PathPattern implements PathFilter {
 	}
 
 	@Override
-	public Collection<PathPattern> getPatterns() {
-		return List.of(this);
+	public Set<PathPattern> getPatterns() {
+		return Set.of(this);
 	}
 
 	@Override
@@ -315,18 +303,18 @@ public class PathPattern implements PathFilter {
 		return result;
 	}
 
-	void doRemoveRight(int count, PathMatcher result) {
+	void doRemoveRight(int count, Set<PathPattern> result) {
 		KeyPath parent = pattern.parent(count);
 		if (parent == null) {
 			return;
 		}
-		result.addPattern(parent);
+		result.add(new PathPattern(parent));
 	}
 
 	@Override
 	public PathMatcher removeRight(int count) {
-		PathMatcher result = new PathMatcher();
-		doRemoveRight(count, result);
-		return result;
+		Set<PathPattern> patterns = new HashSet<>();
+		doRemoveRight(count, patterns);
+		return new PathMatcher(Collections.unmodifiableSet(patterns));
 	}
 }

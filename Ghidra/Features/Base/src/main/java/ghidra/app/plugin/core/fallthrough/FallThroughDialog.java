@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,15 +117,14 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		}
 	}
 
-	private void addressChanged() {
+	private void addressChanged(Address address) {
 		if (changing) {
 			return;
 		}
 
 		Runnable r = () -> {
-			Address addr = addrField.getAddress();
-			if (addr != null || addrField.getValue().length() == 0) {
-				model.setCurrentFallthrough(addr);
+			if (address != null || addrField.getText().length() == 0) {
+				model.setCurrentFallthrough(address);
 			}
 			else {
 				setStatusText("Invalid Address");
@@ -139,9 +138,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 	private JPanel create() {
 		JPanel panel = new JPanel(new BorderLayout(0, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-		addrField = new AddressInput();
-		addrField.setAddressFactory(model.getProgram().getAddressFactory());
-		addrField.addChangeListener(e -> addressChanged());
+		addrField = new AddressInput(model.getProgram(), this::addressChanged);
 		addrField.addActionListener(e -> model.setCurrentFallthrough(addrField.getAddress()));
 		panel.add(createHomePanel(), BorderLayout.NORTH);
 		panel.add(createAddressPanel(), BorderLayout.CENTER);

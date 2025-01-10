@@ -594,15 +594,18 @@ def putreg(frame, reg_descs):
     cobj = STATE.trace.create_object(space)
     cobj.insert()
     mapper = STATE.trace.register_mapper
+    keys = []
     values = []
     # NB: This command will fail if the process is running
-    endian = arch.get_endian()
     for desc in reg_descs:
         v = frame.read_register(desc.name)
         rv = mapper.map_value(inf, desc.name, v)
         values.append(rv)
-        value = hex(int.from_bytes(rv.value, endian))
+        # Mapper has converted to big endian. Display value should interpret it as such.
+        value = hex(int.from_bytes(rv.value, byteorder='big'))
         cobj.set_value(desc.name, str(value))
+        keys.append(desc.name)
+    cobj.retain_values(keys)
     # TODO: Memorize registers that failed for this arch, and omit later.
     missing = STATE.trace.put_registers(space, values)
     return {'missing': missing}

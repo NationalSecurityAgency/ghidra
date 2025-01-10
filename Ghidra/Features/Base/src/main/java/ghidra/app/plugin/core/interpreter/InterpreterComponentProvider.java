@@ -41,7 +41,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	public InterpreterComponentProvider(InterpreterPanelPlugin plugin,
 			InterpreterConnection interpreter, boolean visible) {
-		super(plugin.getTool(), interpreter.getTitle(), plugin.getName());
+		super(plugin.getTool(), interpreter.getTitle(), interpreter.getTitle());
 
 		this.panel = new InterpreterPanel(plugin.getTool(), interpreter);
 		this.interpreter = interpreter;

@@ -43,8 +43,8 @@ import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.exception.CancelledException;
 
 public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedDebuggerTest {

@@ -1,17 +1,18 @@
 @echo off
 
-rem ---------------------------------------------------------------------------------------
-rem Ghidra Server Script (see svrREADME.html for usage details)
-rem   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
-rem ---------------------------------------------------------------------------------------
+:: ---------------------------------------------------------------------------------------
+:: Ghidra Server Script (see svrREADME.html for usage details)
+::   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
+:: ---------------------------------------------------------------------------------------
 
-rem  The Java 21 (or later) runtime installation must either be on the system path or identified
-rem  by setting the JAVA_HOME environment variable.  If not using a formally installed Java 
-rem  runtime which has been configured into the system PATH ahead of other Java installations
-rem  it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME
-rem  below:
+:: The Java 21 (or later) runtime installation must either be on the system path, specified by the
+:: JAVA_HOME environment variable or preferably set explicitly with the GHIDRA_JAVA_HOME variable 
+:: below.  Since this script may be used during service initialization, reliance on environmental 
+:: settings such as JAVA_HOME may be problematic.  It is also important to note that once installed
+:: as a service, changes to this file or environmental settings may not have an affect on any service
+:: registration that was generated at the time of service installation.
 
-rem set "JAVA_HOME="
+:: set "GHIDRA_JAVA_HOME="
 
 :: Sets SERVER_DIR to the directory that contains this file (ghidraSvr.bat).
 :: SERVER_DIR will not contain a trailing slash.
@@ -23,7 +24,7 @@ rem set "JAVA_HOME="
 set "SERVER_DIR=%~dp0"
 set "SERVER_DIR=%SERVER_DIR:~0,-1%"
 
-rem Ensure Ghidra path doesn't contain illegal characters
+:: Ensure Ghidra path doesn't contain illegal characters
 if not "%SERVER_DIR:!=%"=="%SERVER_DIR%" (
 	echo Ghidra path cannot contain a "!" character.
 	exit /B 1
@@ -56,7 +57,7 @@ set IS_ADMIN=NO
 whoami /groups | findstr "S-1-16-12288 " >NUL && set IS_ADMIN=YES
 
 if "%IS_ADMIN%"=="NO" (
-	rem The following command options require admin
+	:: The following command options require admin
 	if "%OPTION%"=="start" goto adminFail
 	if "%OPTION%"=="stop" goto adminFail
 	if "%OPTION%"=="install" goto adminFail
@@ -72,11 +73,11 @@ set "WRAPPER_TMPDIR=%TEMP%"
 
 if exist "%SERVER_DIR%\..\Ghidra\" goto normal
 
-rem NOTE: If adjusting JAVA command assignment - do not attempt to add parameters (e.g., -d64, -version:1.7, etc.)
+:: NOTE: If adjusting JAVA command assignment - do not attempt to add parameters (e.g., -d64, -version:1.7, etc.)
 
-rem NOTE: Variables that get accessed in server.conf must be lowercase
+:: NOTE: Variables that get accessed in server.conf must be lowercase
 
-rem Development Environment (Eclipse classes or "gradle jar")
+:: Development Environment (Eclipse classes or "gradle jar")
 set "GHIDRA_HOME=%SERVER_DIR%\..\..\..\.."
 set "WRAPPER_CONF=%SERVER_DIR%\..\..\Common\server\server.conf"
 set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data"
@@ -86,7 +87,7 @@ if not exist "%LS_CPATH%" (
 	set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\build\libs\LaunchSupport.jar"
 )
 if not exist "%LS_CPATH%" (
-	set ERROR=ERROR: Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
+	set ERROR=Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
 	goto reportError
 )
 
@@ -101,7 +102,7 @@ set "LS_CPATH=%GHIDRA_HOME%\support\LaunchSupport.jar"
 
 :lab1
 
-rem set WRAPPER_HOME to unpacked yajsw location (crazy FOR syntax to set variable from command output)
+:: set WRAPPER_HOME to unpacked yajsw location (crazy FOR syntax to set variable from command output)
 for /F "usebackq delims=" %%p in (`dir "%DATA_DIR%" /ad /b ^| findstr "^%WRAPPER_NAME_PREFIX%"`) do set WRAPPER_DIRNAME=%%p
 set "WRAPPER_HOME=%DATA_DIR%\%WRAPPER_DIRNAME%"
 
@@ -114,34 +115,60 @@ if not exist "%WRAPPER_HOME%\" (
 
 echo Using service wrapper: %WRAPPER_DIRNAME%
 
-rem Find java.exe
-if defined JAVA_HOME goto findJavaFromJavaHome
+:: Check for use of GHIDRA_JAVA_HOME
+if not defined GHIDRA_JAVA_HOME goto findJava
 
+set "java=%GHIDRA_JAVA_HOME%\bin\java.exe"
+"%java%" -version >NUL 2>&1
+if %ERRORLEVEL% neq 0 (
+    set ERROR=The ghidraSvr.bat script GHIDRA_JAVA_HOME variable is set to an invalid directory: %GHIDRA_JAVA_HOME%
+    goto reportError
+)
+
+:: Check specified GHIDRA_JAVA_HOME
+"%java%" -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home_check "%GHIDRA_JAVA_HOME%"
+if %ERRORLEVEL% neq 0 ( 
+    set ERROR=The ghidraSvr script GHIDRA_JAVA_HOME variable specifies an invalid or unsupported Java runtime: %GHIDRA_JAVA_HOME%
+    goto reportError
+)
+
+:: Bypass LaunchSupport java search when GHIDRA_JAVA_HOME is specified
+goto lab3
+
+:findJava
+
+:: check for java based upon PATH
 set java=java.exe
-%java% -version >NUL 2>&1
-if "%ERRORLEVEL%" == "0" goto lab2
-set ERROR=ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
-goto reportError
+java.exe -version >NUL 2>&1
+if %ERRORLEVEL% equ 0 goto lab2
 
-:findJavaFromJavaHome
+:: check for java based upon JAVA_HOME environment variable
+if not defined JAVA_HOME goto javaNotFound
 set "java=%JAVA_HOME%\bin\java.exe"
+"%java%" -version >NUL 2>&1
+if %ERRORLEVEL% equ 0 goto lab2
+echo WARNING: JAVA_HOME environment variable is set to an invalid directory: %JAVA_HOME%
 
-if exist "%java%" goto lab2
-set ERROR=ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
+:javaNotFound
+set ERROR=The ghidraSvr.bat script GHIDRA_JAVA_HOME variable is not set and 'java' command could not be found in your PATH or with JAVA_HOME.
 goto reportError
 
+:: Use LaunchSupport to locate supported java runtime
 :lab2
 
 :: Get the java that will be used to launch GhidraServer
-set JAVA_HOME=
-for /f "delims=*" %%i in ('call "%java%" -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home') do set JAVA_HOME=%%i
-if "%JAVA_HOME%" == "" (
-	set ERROR=Failed to find a supported Java runtime.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
+set LS_JAVA_HOME=
+for /f "delims=*" %%i in ('call "%java%" -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home') do set LS_JAVA_HOME=%%i
+if "%LS_JAVA_HOME%" == "" (
+	set ERROR=Unable to find a supported Java runtime on your system.
 	goto reportError
 )
 
-rem reestablish JAVA path based upon final JAVA_HOME
-set "java=%JAVA_HOME%\bin\java.exe"
+:: reestablish JAVA path based upon LS_JAVA_HOME
+set "java=%LS_JAVA_HOME%\bin\java.exe"
+
+:: execute command OPTION
+:lab3
 
 set VMARGS=-Djava.io.tmpdir="%WRAPPER_TMPDIR%"
 set VMARGS=%VMARGS% -Djna_tmpdir="%WRAPPER_TMPDIR%"
@@ -186,9 +213,10 @@ goto eof
 	
 :reportError
 	echo.
-	echo %ERROR%
+	echo ERROR: %ERROR%
+	echo Please refer to the svrREADME documentation.
 	echo.
-	echo %ERROR% >> %GHIDRA_HOME%\wrapper.log
+	echo ERROR: %ERROR% >> %GHIDRA_HOME%\wrapper.log
 	exit /B 1
 
 :eof
