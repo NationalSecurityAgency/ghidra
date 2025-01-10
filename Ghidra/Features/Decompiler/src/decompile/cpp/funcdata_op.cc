@@ -221,6 +221,31 @@ void Funcdata::opDestroy(PcodeOp *op)
   }
 }
 
+/// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow
+/// path of their output is to the given op, and they are not a CALL or are otherwise special.
+/// \param op is the given PcodeOp to remove
+/// \param scratch is scratch space for holding PcodeOps being examined
+void Funcdata::opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
+
+{
+  scratch.clear();
+  scratch.push_back(op);
+  int4 pos = 0;
+  while(pos < scratch.size()) {
+    op = scratch[pos];
+    pos += 1;
+    for(int4 i=0;i<op->numInput();++i) {
+      Varnode *vn = op->getIn(i);
+      if (!vn->isWritten() || vn->isAutoLive()) continue;
+      if (vn->loneDescend() == (PcodeOp *)0) continue;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp->isCall() || defOp->isIndirectSource()) continue;
+      scratch.push_back(defOp);
+    }
+    opDestroy(op);
+  }
+}
+
 /// This is a specialized routine for deleting an op during flow generation that has
 /// been replaced by something else.  The op is expected to be \e dead with none of its inputs
 /// or outputs linked to anything else.  Both the PcodeOp and all the input/output Varnodes are destroyed.
