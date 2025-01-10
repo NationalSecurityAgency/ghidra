@@ -17,6 +17,7 @@ package agent.drgn.rmi;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.util.*;
 
@@ -200,9 +201,7 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			txCreate(conn, path);
 
 			String out = conn.executeCapture("print(hasattr(drgn, 'RelocatableModule'))").strip();
-			if (out.equals("False")) {
-				return;
-			}
+			assumeFalse(out.equals("False"));
 
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
 			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
@@ -227,9 +226,7 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			txCreate(conn, path);
 
 			String out = conn.executeCapture("print(hasattr(drgn, 'RelocatableModule'))").strip();
-			if (out.equals("False")) {
-				return;
-			}
+			assumeFalse(out.equals("False"));
 
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
 			try (ManagedDomainObject mdo = openDomainObject(MDO)) {

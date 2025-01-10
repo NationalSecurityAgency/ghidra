@@ -230,10 +230,6 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected record PythonAndConnection(ExecInDrgn exec, TraceRmiConnection connection)
 			implements AutoCloseable {
-		protected boolean hasMethod(String name) {
-			return connection.getMethods().get(name) != null;
-		}
-
 		protected RemoteMethod getMethod(String name) {
 			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
