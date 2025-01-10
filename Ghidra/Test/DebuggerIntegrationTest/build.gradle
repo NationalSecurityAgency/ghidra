@@ -220,6 +220,7 @@ integrationTest {
 	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-dbgeng').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-drgn').assemblePyPackage }
 
 	if ("linux_x86_64".equals(getCurrentPlatformName())) {
 		dependsOn("testSpecimenLinux_x86_64")

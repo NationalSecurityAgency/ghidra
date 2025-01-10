@@ -1073,30 +1073,30 @@ def ghidra_trace_put_modules():
         put_modules()
 
 
-
-def put_sections(m : drgn.RelocatableModule):
-    nproc = util.selected_process()
-    if nproc is None:
-        return
-    
-    mapper = STATE.trace.memory_mapper
-    section_keys = []
-    sections = m.section_addresses
-    maddr = hex(m.address_range[0])
-    for key in sections.keys():
-        value = sections[key]
-        spath = SECTION_PATTERN.format(procnum=nproc, modpath=maddr, secname=key)
-        sobj = STATE.trace.create_object(spath)
-        section_keys.append(SECTION_KEY_PATTERN.format(modpath=maddr, secname=key))
-        base_base, base_addr = mapper.map(nproc, value)
-        if base_base != base_addr.space:
-            STATE.trace.create_overlay_space(base_base, base_addr.space)
-        sobj.set_value('Address', base_addr)
-        sobj.set_value('Range', base_addr.extend(1))
-        sobj.set_value('Name', key)
-        sobj.insert()
-    STATE.trace.proxy_object_path(SECTIONS_PATTERN.format(
-        procnum=nproc, modpath=maddr)).retain_values(section_keys)
+if hasattr(drgn, 'RelocatableModule'):
+    def put_sections(m : drgn.RelocatableModule):
+        nproc = util.selected_process()
+        if nproc is None:
+            return
+        
+        mapper = STATE.trace.memory_mapper
+        section_keys = []
+        sections = m.section_addresses
+        maddr = hex(m.address_range[0])
+        for key in sections.keys():
+            value = sections[key]
+            spath = SECTION_PATTERN.format(procnum=nproc, modpath=maddr, secname=key)
+            sobj = STATE.trace.create_object(spath)
+            section_keys.append(SECTION_KEY_PATTERN.format(modpath=maddr, secname=key))
+            base_base, base_addr = mapper.map(nproc, value)
+            if base_base != base_addr.space:
+                STATE.trace.create_overlay_space(base_base, base_addr.space)
+            sobj.set_value('Address', base_addr)
+            sobj.set_value('Range', base_addr.extend(1))
+            sobj.set_value('Name', key)
+            sobj.insert()
+        STATE.trace.proxy_object_path(SECTIONS_PATTERN.format(
+            procnum=nproc, modpath=maddr)).retain_values(section_keys)
 
 
 
