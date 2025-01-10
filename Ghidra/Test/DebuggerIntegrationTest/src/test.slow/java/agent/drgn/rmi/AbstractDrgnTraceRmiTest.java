@@ -94,7 +94,7 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected void setPythonPath(ProcessBuilder pb) throws IOException {
 		String sep =
-			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX ? ";" : ":";
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX ? ":" : ";";
 		String rmiPyPkg = Application.getModuleSubDirectory("Debugger-rmi-trace",
 			"build/pypkg/src").getAbsolutePath();
 		String drgnPyPkg = Application.getModuleSubDirectory("Debugger-agent-drgn",
@@ -230,6 +230,10 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected record PythonAndConnection(ExecInDrgn exec, TraceRmiConnection connection)
 			implements AutoCloseable {
+		protected boolean hasMethod(String name) {
+			return connection.getMethods().get(name) != null;
+		}
+
 		protected RemoteMethod getMethod(String name) {
 			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
