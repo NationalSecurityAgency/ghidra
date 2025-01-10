@@ -89,7 +89,7 @@ task elasticPluginJar(type: Jar) {
 task elasticPluginZip(type: Zip) {
 	from 'build/ziplayout'
 	archiveBaseName = 'lsh'
-	destinationDirectory =  file("build/data")	
+	destinationDirectory = file("build/data")	
 }
 
 // Currently targeting elasticsearch-8.8.1 which by default runs with java 20

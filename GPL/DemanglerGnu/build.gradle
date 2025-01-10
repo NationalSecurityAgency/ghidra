@@ -35,8 +35,8 @@ def srcVersion24 = "src/demangler_gnu_v2_24"
  */
 task zipBuildableSource(type:Zip) {
 
-	group 'private'
-	description "Collects the source files needed to build this module."
+	group = 'private'
+	description = "Collects the source files needed to build this module."
 	archiveBaseName = project.name + "-src-for-build"
 	archiveExtension = 'zip'
 		

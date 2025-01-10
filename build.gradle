@@ -160,14 +160,10 @@ def checkGradleVersion() {
  *********************************************************************************/
 def checkPythonVersion(List<String> pyCmd) {
 	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
+		return providers.exec {
 			commandLine pyCmd
 			args "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		return "$stdout".strip()
+		}.standardOutput.asText.get().strip()
 	}
 	catch (Exception e) {
 		return "ABSENT"
@@ -176,14 +172,10 @@ def checkPythonVersion(List<String> pyCmd) {
 
 def getPythonExecutable(List<String> pyCmd) {
 	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
+		return providers.exec {
 			commandLine pyCmd
 			args "-c", "import sys; print(sys.executable)"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		return "$stdout".strip()
+		}.standardOutput.asText.get().strip()
 	}
 	catch (Exception e) {
 		return "ABSENT"
@@ -192,14 +184,10 @@ def getPythonExecutable(List<String> pyCmd) {
 
 def checkPip(List<String> pyCmd, boolean shouldPrint) {
 	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
+		def version = providers.exec {
 			commandLine pyCmd
 			args "-c", "import pip; print(pip.__version__)"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		def version = "$stdout".strip();
+		}.standardOutput.asText.get().strip()
 		if (shouldPrint) {
 			if (version.length() == 0) {
 				println("Warning: Python3 pip not installed (required for build)")
