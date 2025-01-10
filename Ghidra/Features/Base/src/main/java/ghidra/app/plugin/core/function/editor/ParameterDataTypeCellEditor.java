@@ -159,7 +159,7 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor
 				fireEditingCanceled(); // user picked the same datatype
 			}
 			else {
-				dt = dataType;
+				dt = dataType.clone(dtm);
 				fireEditingStopped();
 			}
 		}
