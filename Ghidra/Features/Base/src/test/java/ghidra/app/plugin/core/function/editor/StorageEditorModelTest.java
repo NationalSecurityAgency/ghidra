@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,20 +70,19 @@ public class StorageEditorModelTest extends AbstractGuiTest {
 		Address address = stackSpace.getAddress(4);
 		VariableStorage storage = new VariableStorage(program, address, currentStorage);
 
-		model = new StorageAddressModel(program, storage,
-			new ModelChangeListener() {
+		model = new StorageAddressModel(program, storage, new ModelChangeListener() {
 
-				@Override
-				public void dataChanged() {
-					dataChangeCalled = true;
-				}
+			@Override
+			public void dataChanged() {
+				dataChangeCalled = true;
+			}
 
-				@Override
-				public void tableRowsChanged() {
-					// nothing here
-				}
+			@Override
+			public void tableRowsChanged() {
+				// nothing here
+			}
 
-			});
+		});
 		model.setRequiredSize(requiredStorage, unconstrained);
 
 	}
@@ -297,7 +296,37 @@ public class StorageEditorModelTest extends AbstractGuiTest {
 		varnode = model.getVarnodes().get(1);
 		model.setVarnode(varnode, program.getRegister(testRegName).getAddress(), 2);
 		assertTrue(!model.isValid());
-		assertEquals("Row 1: Overlapping storage address used.", model.getStatusText());
+		assertEquals("One or more conflicting storage varnodes", model.getStatusText());
+	}
+
+	@Test
+	public void testCompoundStorage() {
+
+		// Little-endian test case
+
+		VarnodeInfo varnode = model.getVarnodes().get(0);
+		assertEquals(VarnodeType.Stack, varnode.getType());
+
+		model.addVarnode();
+
+		// select new row and move it up
+		model.setSelectedVarnodeRows(new int[] { 1 });
+		model.moveSelectedVarnodeUp();
+
+		varnode = model.getVarnodes().get(0);
+
+		model.setVarnodeType(varnode, VarnodeType.Register);
+		model.setVarnode(varnode, program.getRegister(testRegName).getAddress(), 4);
+
+		assertTrue(!model.isValid());
+		assertEquals("Compound storage must use registers except for first LE varnode",
+			model.getStatusText());
+
+		// select last row (i.e., stack) and move it as first to make valid
+		model.setSelectedVarnodeRows(new int[] { 1 });
+		model.moveSelectedVarnodeUp();
+
+		assertTrue(model.isValid());
 	}
 
 }
