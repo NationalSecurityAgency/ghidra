@@ -27,12 +27,21 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.xml.*;
 
 /**
- * Action assigning a parameter Address from the next available stack location
+ * Consume stack resources as a side-effect
+ * 
+ * This action is a side-effect and doesn't assign an address for the current parameter.
+ * If the current parameter has been assigned a address that is not on the stack, this action consumes
+ * stack resources as if the parameter were allocated to the stack.  If the current parameter was
+ * already assigned a stack address, no additional action is taken. 
  */
-public class GotoStack extends AssignAction {
+public class ExtraStack extends AssignAction {
 
-	private ParamEntry stackEntry;	// Parameter Entry corresponding to the stack
+	private ParamEntry stackEntry;	// Parameter entry corresponding to the stack
 
+	/**
+	 * Find stack entry in resource list
+	 * @throws InvalidInputException if there is no stack entry
+	 */
 	private void initializeEntry() throws InvalidInputException {
 		for (int i = 0; i < resource.getNumParamEntry(); ++i) {
 			ParamEntry entry = resource.getEntry(i);
@@ -42,21 +51,22 @@ public class GotoStack extends AssignAction {
 			}
 		}
 		if (stackEntry == null) {
-			throw new InvalidInputException("Cannot find matching <pentry> for action: goto_stack");
+			throw new InvalidInputException(
+				"Cannot find matching <pentry> for action: extra_stack");
 		}
 	}
 
 	/**
 	 * Constructor for use with restoreXml
-	 * @param res is the new resource list to associate with the action
-	 * @param val is a dummy argument
+	 * @param res is the resource list
+	 * @param val is a dummy variable
 	 */
-	protected GotoStack(ParamListStandard res, int val) {
+	public ExtraStack(ParamListStandard res, int val) {
 		super(res);
 		stackEntry = null;
 	}
 
-	public GotoStack(ParamListStandard res) throws InvalidInputException {
+	public ExtraStack(ParamListStandard res) throws InvalidInputException {
 		super(res);
 		stackEntry = null;
 		initializeEntry();
@@ -64,7 +74,7 @@ public class GotoStack extends AssignAction {
 
 	@Override
 	public AssignAction clone(ParamListStandard newResource) throws InvalidInputException {
-		return new GotoStack(newResource);
+		return new ExtraStack(newResource);
 	}
 
 	@Override
@@ -72,28 +82,34 @@ public class GotoStack extends AssignAction {
 		if (this.getClass() != op.getClass()) {
 			return false;
 		}
-		GotoStack otherAction = (GotoStack) op;
+		ExtraStack otherAction = (ExtraStack) op;
 		return stackEntry.isEquivalent(otherAction.stackEntry);
 	}
 
 	@Override
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
+		if (res.address.getAddressSpace() == stackEntry.getSpace()) {
+			return SUCCESS;	// Parameter was already assigned to the stack
+		}
 		int grp = stackEntry.getGroup();
-		res.type = dt;
-		status[grp] = stackEntry.getAddrBySlot(status[grp], dt.getLength(), dt.getAlignment(), res);
+		// We assign the stack address (but ignore the actual address) updating the status for the stack,
+		// which consumes the stack resources.
+		ParameterPieces unused = new ParameterPieces();
+		status[grp] =
+			stackEntry.getAddrBySlot(status[grp], dt.getLength(), dt.getAlignment(), unused);
 		return SUCCESS;
 	}
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ELEM_GOTO_STACK);
-		encoder.closeElement(ELEM_GOTO_STACK);
+		encoder.openElement(ELEM_EXTRA_STACK);
+		encoder.closeElement(ELEM_EXTRA_STACK);
 	}
 
 	@Override
 	public void restoreXml(XmlPullParser parser) throws XmlParseException {
-		XmlElement elem = parser.start(ELEM_GOTO_STACK.name());
+		XmlElement elem = parser.start(ELEM_EXTRA_STACK.name());
 		parser.end(elem);
 		try {
 			initializeEntry();

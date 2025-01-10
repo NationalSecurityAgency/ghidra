@@ -346,6 +346,7 @@
     <attribute name="name"/>
     <optional><attribute name="minsize"/></optional>
     <optional><attribute name="maxsize"/></optional>
+    <optional><attribute name="sizes"/></optional>
   </define>
   
   <define name="modelrule_type">
@@ -437,6 +438,11 @@
     <zeroOrMore>
       <element name="consume_extra">
         <attribute name="storage"/>
+      </element>
+    </zeroOrMore>
+    <zeroOrMore>
+      <element name="extra_stack">
+        <empty/>
       </element>
     </zeroOrMore>
   </define>

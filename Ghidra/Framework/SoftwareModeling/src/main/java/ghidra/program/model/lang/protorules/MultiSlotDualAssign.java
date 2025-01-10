@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,61 +45,43 @@ public class MultiSlotDualAssign extends AssignAction {
 	private boolean consumeMostSig;		// True if resources are consumed starting with most significant bytes
 	private boolean justifyRight;		// True if initial bytes are padding for odd data-type sizes
 	private int tileSize;				// Number of bytes in a tile
-	private int baseIter;				// Iterator to first element in the base resource list
-	private int altIter;				// Iterator to first element in alternate resource list
+	private ParamEntry[] baseTiles;		// General registers for joining
+	private ParamEntry[] altTiles;		// Alternate registers for joininig
 
 	/**
 	 * Find the first ParamEntry matching the baseType, and the first matching altType.
 	 * @throws InvalidInputException if the required elements are not available in the resource list
 	 */
 	private void initializeEntries() throws InvalidInputException {
-		baseIter = -1;
-		altIter = -1;
-		for (int i = 0; i < resource.getNumParamEntry(); ++i) {
-			ParamEntry entry = resource.getEntry(i);
-			if (baseIter == -1 && entry.isExclusion() && entry.getType() == baseType &&
-				entry.getAllGroups().length == 1) {
-				baseIter = i;		// First matching base resource type
-			}
-			if (altIter == -1 && entry.isExclusion() && entry.getType() == altType &&
-				entry.getAllGroups().length == 1) {
-				altIter = i;		// First matching alt resource type
-			}
-		}
-		if (baseIter == -1 || altIter == -1) {
+		baseTiles = resource.extractTiles(baseType);
+		altTiles = resource.extractTiles(altType);
+		if (baseTiles.length == 0 || altTiles.length == 0) {
 			throw new InvalidInputException(
 				"Could not find matching resources for action: join_dual_class");
 		}
-		tileSize = resource.getEntry(baseIter).getSize();
-		if (tileSize != resource.getEntry(altIter).getSize()) {
+		tileSize = baseTiles[0].getSize();
+		if (tileSize != altTiles[0].getSize()) {
 			throw new InvalidInputException(
 				"Storage class register sizes do not match for action: join_dual_class");
 		}
 	}
 
 	/**
-	 * Get the first unused ParamEntry that matches the given storage class
+	 * Get the first unused ParamEntry within a given tileset
 	 * @param iter points to the starting entry to search
-	 * @param storage is the given storage class to match
+	 * @param tiles is the given tileset
 	 * @param status is the usage information for the entries
 	 * @return the iterator to the unused ParamEntry
 	 */
-	private int getFirstUnused(int iter, StorageClass storage, int[] status) {
-		int endIter = resource.getNumParamEntry();
-		for (; iter != endIter; ++iter) {
-			ParamEntry entry = resource.getEntry(iter);
-			if (!entry.isExclusion()) {
-				break;		// Reached end of resource list
-			}
-			if (entry.getType() != storage || entry.getAllGroups().length != 1) {
-				continue;		// Not a single register from desired resource
-			}
+	private int getFirstUnused(int iter, ParamEntry[] tiles, int[] status) {
+		for (; iter != tiles.length; ++iter) {
+			ParamEntry entry = tiles[iter];
 			if (status[entry.getGroup()] != 0) {
 				continue;		// Already consumed
 			}
 			return iter;
 		}
-		return endIter;
+		return tiles.length;
 	}
 
 	/**
@@ -186,11 +168,24 @@ public class MultiSlotDualAssign extends AssignAction {
 			justifyRight != otherAction.justifyRight) {
 			return false;
 		}
-		if (baseIter != otherAction.baseIter || altIter != otherAction.altIter) {
-			return false;
-		}
 		if (baseType != otherAction.baseType || altType != otherAction.altType) {
 			return false;
+		}
+		if (baseTiles.length != otherAction.baseTiles.length) {
+			return false;
+		}
+		for (int i = 0; i < baseTiles.length; ++i) {
+			if (!baseTiles[i].isEquivalent(otherAction.baseTiles[i])) {
+				return false;
+			}
+		}
+		if (altTiles.length != otherAction.altTiles.length) {
+			return false;
+		}
+		for (int i = 0; i < altTiles.length; ++i) {
+			if (!altTiles[i].isEquivalent(otherAction.altTiles[i])) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -209,25 +204,28 @@ public class MultiSlotDualAssign extends AssignAction {
 		ArrayList<Varnode> pieces = new ArrayList<>();
 		int typeSize = dt.getLength();
 		int sizeLeft = typeSize;
-		int iterBase = baseIter;
-		int iterAlt = altIter;
-		int endIter = resource.getNumParamEntry();
+		int iterBase = 0;
+		int iterAlt = 0;
 		while (sizeLeft > 0) {
-			int iter;
 			int iterType = getTileClass(primitives, typeSize - sizeLeft, primitiveIndex);
 			if (iterType < 0) {
 				return FAIL;
 			}
+			ParamEntry entry;
 			if (iterType == 0) {
-				iter = iterBase = getFirstUnused(iterBase, baseType, tmpStatus);
+				iterBase = getFirstUnused(iterBase, baseTiles, tmpStatus);
+				if (iterBase == baseTiles.length) {
+					return FAIL;		// Out of general registers
+				}
+				entry = baseTiles[iterBase];
 			}
 			else {
-				iter = iterAlt = getFirstUnused(iterAlt, altType, tmpStatus);
+				iterAlt = getFirstUnused(iterAlt, altTiles, tmpStatus);
+				if (iterAlt == altTiles.length) {
+					return FAIL;		// Out of alternate registers
+				}
+				entry = altTiles[iterAlt];
 			}
-			if (iter == endIter) {
-				return FAIL;	// Out of the particular resource
-			}
-			ParamEntry entry = resource.getEntry(iter);
 			int trialSize = entry.getSize();
 			entry.getAddrBySlot(tmpStatus[entry.getGroup()], trialSize, 1, param);
 			tmpStatus[entry.getGroup()] = -1;	// Consume the register
@@ -254,22 +252,7 @@ public class MultiSlotDualAssign extends AssignAction {
 		}
 		System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);	// Commit resource usage for all the pieces
 		res.type = dt;
-		if (pieces.size() == 1) {
-			res.address = pieces.get(0).getAddress();
-			return SUCCESS;
-		}
-		res.joinPieces = new Varnode[pieces.size()];
-		if (!consumeMostSig) {
-			for (int i = 0; i < res.joinPieces.length; ++i) {
-				res.joinPieces[i] = pieces.get(pieces.size() - 1 - i);
-			}
-		}
-		else {
-			for (int i = 0; i < pieces.size(); ++i) {
-				res.joinPieces[i] = pieces.get(i);
-			}
-		}
-		res.address = Address.NO_ADDRESS;
+		res.assignAddressFromPieces(pieces, consumeMostSig, false, resource.getLanguage());
 		return SUCCESS;
 	}
 

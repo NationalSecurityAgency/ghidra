@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import static ghidra.program.model.pcode.ElementId.*;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
@@ -94,22 +93,7 @@ public class MultiMemberAssign extends AssignAction {
 
 		System.arraycopy(tmpStatus, 0, status, 0, tmpStatus.length);	// Commit resource usage for all the pieces
 		res.type = dt;
-		if (pieces.size() == 1) {
-			res.address = pieces.get(0).getAddress();
-			return SUCCESS;
-		}
-		res.joinPieces = new Varnode[pieces.size()];
-		if (!consumeMostSig) {
-			for (int i = 0; i < res.joinPieces.length; ++i) {
-				res.joinPieces[i] = pieces.get(pieces.size() - 1 - i);
-			}
-		}
-		else {
-			for (int i = 0; i < pieces.size(); ++i) {
-				res.joinPieces[i] = pieces.get(i);
-			}
-		}
-		res.address = Address.NO_ADDRESS;		// Placeholder for join space address
+		res.assignAddressFromPieces(pieces, consumeMostSig, false, resource.getLanguage());
 		return SUCCESS;
 	}
 
