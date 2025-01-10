@@ -22,15 +22,19 @@
   </data_organization>
 
   <global>
+    <range space="IFLASH"/>
     <range space="CODE"/>
+    <range space="INTMEM"/>
+    <range space="SFR"/>
     <range space="XRAM"/>
     <range space="RAM"/>
+    <range space="BITS"/>
   </global>
 
-  <stackpointer register="SP" space="RAM" growth="negative"/>
+  <stackpointer register="SP" space="RAM" growth="positive"/>
 
   <default_proto>
-    <prototype name="__stdcall" extrapop="2" stackshift="2">
+    <prototype name="__stdcall" extrapop="2" stackshift="2" strategy="register">
       <input>
         <pentry minsize="1" maxsize="1" metatype="float">
           <register name="R4"/>
