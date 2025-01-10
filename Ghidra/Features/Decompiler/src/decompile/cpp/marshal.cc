@@ -1254,7 +1254,7 @@ AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
 AttributeId ATTRIB_STORAGE = AttributeId("storage",149);
 AttributeId ATTRIB_STACKSPILL = AttributeId("stackspill",150);
 
-AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",151); // Number serves as next open index
+AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",152); // Number serves as next open index
 
 ElementId ELEM_DATA = ElementId("data",1);
 ElementId ELEM_INPUT = ElementId("input",2);
@@ -1267,6 +1267,6 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",287); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",288); // Number serves as next open index
 
 } // End namespace ghidra

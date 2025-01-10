@@ -971,10 +971,10 @@ PcodeOp *CloneBlockOps::buildOpClone(PcodeOp *op)
   return dup;
 }
 
-/// Make a basic clone of the Varnode and its flags. The clone is created
-/// as an output of a previously cloned PcodeOp.
-/// \param op is the given op whose output should be cloned
-/// \param newop is the cloned version
+/// Make a basic clone of a Varnode and its flags. The clone is created
+/// as an output Varnode of a previously cloned PcodeOp.
+/// \param origOp is the given op whose output should be cloned
+/// \param cloneOp is the cloned version
 void CloneBlockOps::buildVarnodeOutput(PcodeOp *origOp,PcodeOp *cloneOp)
 
 {
