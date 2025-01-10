@@ -265,7 +265,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		int initialSize = statuses.size();
 
 		DockingActionIf removeBundlesAction =
-			getActionByName(bundleStatusProvider, "RemoveBundles");
+			getActionByName(bundleStatusProvider, "Remove Bundles");
 		performAction(removeBundlesAction);
 		waitForSwing();
 
