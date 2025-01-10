@@ -263,20 +263,22 @@ def refresh_locals(node: sch.Schema('LocalsContainer')):
         commands.ghidra_trace_put_locals()
 
 
-@REGISTRY.method(action='refresh', display='Refresh Memory')
-def refresh_mappings(node: sch.Schema('Memory')):
-    """Refresh the list of memory regions for the process."""
-    with commands.open_tracked_tx('Refresh Memory Regions'):
-        commands.ghidra_trace_put_regions()
+if hasattr(drgn, 'RelocatableModule'):
+    @REGISTRY.method(action='refresh', display='Refresh Memory')
+    def refresh_mappings(node: sch.Schema('Memory')):
+        """Refresh the list of memory regions for the process."""
+        with commands.open_tracked_tx('Refresh Memory Regions'):
+            commands.ghidra_trace_put_regions()
 
 
-@REGISTRY.method(action='refresh', display='Refresh Modules')
-def refresh_modules(node: sch.Schema('ModuleContainer')):
-    """
-    Refresh the modules list for the process.
-    """
-    with commands.open_tracked_tx('Refresh Modules'):
-        commands.ghidra_trace_put_modules()
+if hasattr(drgn, 'RelocatableModule'):
+    @REGISTRY.method(action='refresh', display='Refresh Modules')
+    def refresh_modules(node: sch.Schema('ModuleContainer')):
+        """
+        Refresh the modules list for the process.
+        """
+        with commands.open_tracked_tx('Refresh Modules'):
+            commands.ghidra_trace_put_modules()
 
 
 @REGISTRY.method(action='activate')

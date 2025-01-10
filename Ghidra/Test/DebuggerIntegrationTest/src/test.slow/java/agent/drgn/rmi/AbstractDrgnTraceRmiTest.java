@@ -94,7 +94,7 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected void setPythonPath(ProcessBuilder pb) throws IOException {
 		String sep =
-			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX ? ";" : ":";
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX ? ":" : ";";
 		String rmiPyPkg = Application.getModuleSubDirectory("Debugger-rmi-trace",
 			"build/pypkg/src").getAbsolutePath();
 		String drgnPyPkg = Application.getModuleSubDirectory("Debugger-agent-drgn",
