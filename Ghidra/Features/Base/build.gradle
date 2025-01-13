@@ -76,8 +76,8 @@ sourceSets {
 }
 
 task buildCParser(type: JavaExec) {
-	group 'private'
-	description "  Compiles the JavaCC files for the C parser\n"
+	group = 'private'
+	description = "  Compiles the JavaCC files for the C parser\n"
 	
 	def inputFile = "C.jj"
 	def packagePath = 'ghidra/app/util/cparser/C'
@@ -96,8 +96,8 @@ task buildCParser(type: JavaExec) {
 }				
 	
 task buildCPPParser(type: JavaExec) {
-	group 'private'
-	description "  Compiles the JavaCC files for the CPP parser\n"
+	group = 'private'
+	description = "  Compiles the JavaCC files for the CPP parser\n"
 	
 	def inputFile = "CPP.jj"
 	def packagePath = 'ghidra/app/util/cparser/CPP'
@@ -119,15 +119,15 @@ task buildCPPParser(type: JavaExec) {
 // A public task to tie together private sub-tasks
 task buildJavacc {
 	dependsOn buildCParser, buildCPPParser
-	group rootProject.GHIDRA_GROUP
-	description "  Compiles the JavaCC files\n"
+	group = rootProject.GHIDRA_GROUP
+	description = "  Compiles the JavaCC files\n"
 }
 
 // Note: this must happen before the standard buildHelp for Base
 tasks.register('generateExtraHelpFiles') {
 	
 	group = 'private'
-	description "  Creates any extra help files for Base not covered by the standard build help system"
+	description = "  Creates any extra help files for Base not covered by the standard build help system"
 
 	def rawTipsFile = file('src/main/resources/ghidra/app/plugin/core/totd/tips.txt')	
 	inputs.file(rawTipsFile)

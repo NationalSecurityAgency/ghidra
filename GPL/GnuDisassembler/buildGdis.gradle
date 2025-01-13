@@ -76,8 +76,8 @@ gradle.taskGraph.whenReady {
  * Task to unpack the standard binutils zip file
  *******************************************************************************************/
 task binutilsUnpack {
-	description "Unpack binutils (for building gdis)"
-	group "Native Build Dependencies"
+	description = "Unpack binutils (for building gdis)"
+	group = "Native Build Dependencies"
 	outputs.file { binutilsUnpackDir }
 	onlyIf { !binutilsUnpackDir.exists() }
 	
@@ -104,8 +104,8 @@ supportedPlatforms.each { platform ->
 	def artifactsDir = file("build/binutils/${platform}")
 		
 	task(buildName) {
-		description "Configure and make binutils for $platform (for building gdis)"
-		group "Native Prebuild Dependencies"
+		description ="Configure and make binutils for $platform (for building gdis)"
+		group = "Native Prebuild Dependencies"
 		
 		onlyIf { !configDir.exists() }
 		
@@ -122,21 +122,21 @@ supportedPlatforms.each { platform ->
 			println "Configuring binutils - config directory: $configDir"
 			println "${binutilsDir}/configure --prefix=\"${configDir}\" --enable-targets=all --with-zlib=no --disable-nls --disable-werror"
 			configDir.mkdirs();
-			exec {
+			providers.exec {
 				workingDir configDir
 				commandLine "${binutilsDir}/configure", "--prefix=${configDir}", "--enable-targets=all", "--with-zlib=no", "--disable-nls",  "--disable-werror"
-			}
+			}.result.get()
 			
 			println "Building binutils - config directory: $configDir"
-			exec {
+			providers.exec {
 				commandLine "make", "-C", "${configDir}", "all"
-			}
+			}.result.get()
 		}	
 	}
 	
 	task(postBuildName, type: Copy) {
-		description "Copy binutil artifcacts for $platform (for building gdis)"
-		group "Native Prebuild Dependencies"
+		description = "Copy binutil artifcacts for $platform (for building gdis)"
+		group = "Native Prebuild Dependencies"
 		
 		dependsOn buildName
 		
