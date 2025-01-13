@@ -205,8 +205,8 @@ class VarargsFilter : public QualifierFilter {
   int4 firstPos;			///< Start of range to match (offset relative to first variable arg)
   int4 lastPos;				///< End of range to match
 public:
-  VarargsFilter(void) { firstPos = 0x80000000; lastPos = 0x7fffffff; }
-  VarargsFilter(int4 first,int4 last) { firstPos = first; lastPos = last; }
+  VarargsFilter(void) { firstPos = 0x80000000; lastPos = 0x7fffffff; }	///< Constructor for use with decode
+  VarargsFilter(int4 first,int4 last) { firstPos = first; lastPos = last; }	///< Constructor
   virtual QualifierFilter *clone(void) const { return new VarargsFilter(firstPos,lastPos); }
   virtual bool filter(const PrototypePieces &proto,int4 pos) const;
   virtual void decode(Decoder &decoder);

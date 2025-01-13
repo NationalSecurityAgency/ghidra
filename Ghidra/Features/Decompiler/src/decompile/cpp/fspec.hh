@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -560,8 +560,8 @@ public:
 
   /// \brief Return \b true if ParamEntry locations should automatically be considered killed by call
   ///
-  /// \return \b true if automatically assume killbycall
-  virtual bool isAutoKillByCall(void) const=0;
+  /// \return \b true if automatically assume \e killedbycall
+  virtual bool isAutoKilledByCall(void) const=0;
 
   /// \brief Restore the model from an \<input> or \<output> element in the stream
   ///
@@ -587,6 +587,7 @@ protected:
   int4 numgroup;			///< Number of \e groups in this parameter convention
   int4 maxdelay;			///< Maximum heritage delay across all parameters
   bool thisbeforeret;			///< Does a \b this parameter come before a hidden return parameter
+  bool autoKilledByCall;		///< Are storage locations in \b this list automatically \e killed \e by \e call
   vector<int4> resourceStart;		///< The starting group for each resource section
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
@@ -605,9 +606,9 @@ protected:
   void addResolverRange(AddrSpace *spc,uintb first,uintb last,ParamEntry *paramEntry,int4 position);
   void populateResolver(void);	///< Build the ParamEntry resolver maps
   void parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
-		   int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped);
+		   int4 groupid,bool normalstack,bool splitFloat,bool grouped);
   void parseGroup(Decoder &decoder,vector<EffectRecord> &effectlist,
-		  int4 groupid,bool normalstack,bool autokill,bool splitFloat);
+		  int4 groupid,bool normalstack,bool splitFloat);
 public:
   ParamListStandard(void) {}						///< Construct for use with decode()
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
@@ -634,7 +635,7 @@ public:
   virtual bool isThisBeforeRetPointer(void) const { return thisbeforeret; }
   virtual void getRangeList(AddrSpace *spc,RangeList &res) const;
   virtual int4 getMaxDelay(void) const { return maxdelay; }
-  virtual bool isAutoKillByCall(void) const { return false; }
+  virtual bool isAutoKilledByCall(void) const { return autoKilledByCall; }
   virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
@@ -659,7 +660,6 @@ public:
   virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool possibleParam(const Address &loc,int4 size) const;
-  virtual bool isAutoKillByCall(void) const { return useFillinFallback; }
   virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
@@ -995,7 +995,7 @@ public:
   /// \brief Does \b this model automatically consider potential output locations as killed by call
   ///
   /// \return \b true if output locations should be considered killed by call
-  bool isAutoKillByCall(void) const { return output->isAutoKillByCall(); }
+  bool isAutoKilledByCall(void) const { return output->isAutoKilledByCall(); }
 
   /// \brief Is \b this a merged prototype model
   ///
@@ -1350,7 +1350,7 @@ class FuncProto {
     is_destructor = 0x400,	///< Function is an (object-oriented) destructor
     has_thisptr= 0x800,		///< Function is a method with a 'this' pointer as an argument
     is_override = 0x1000,	///< Set if \b this prototype is created to override a single call site
-    auto_killbycall = 0x2000	///< Potential output storage should always be considered \e killed \e by \e call
+    auto_killedbycall = 0x2000	///< Potential output storage should always be considered \e killed \e by \e call
   };
   ProtoModel *model;		///< Model of for \b this prototype
   ProtoStore *store;		///< Storage interface for parameters
@@ -1612,7 +1612,7 @@ public:
   /// \return the active set of flags for \b this prototype
   uint4 getComparableFlags(void) const { return (flags & (dotdotdot | is_constructor | is_destructor | has_thisptr )); }
 
-  bool isAutoKillByCall(void) const;	///< Is a potential output automatically considered \e killed \e by \e call
+  bool isAutoKilledByCall(void) const;	///< Is a potential output automatically considered \e killed \e by \e call
 
   void encode(Encoder &encoder) const;
   void decode(Decoder &decoder,Architecture *glb);
