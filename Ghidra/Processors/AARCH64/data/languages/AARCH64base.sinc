@@ -4463,9 +4463,9 @@ is sf=0 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rn=0x1f & opcode2=0x0 & Rm_GPR32
 {
 	tmp:4 = Rm_GPR32 + zext(!CY);
 	add_with_carry_flags(0,~tmp);
-	Rd_GPR64 = zext(-tmp);
-	resultflags(Rd_GPR32);
+	resultflags(-tmp);
 	affectflags();
+	Rd_GPR64 = zext(-tmp);
 }
 
 # C6.2.237 NGCS page C6-1700 line 100524 MATCH x7a0003e0/mask=x7fe0ffe0
@@ -4478,9 +4478,9 @@ is sf=1 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rn=0x1f & opcode2=0x0 & Rm_GPR64
 {
 	tmp:8 = Rm_GPR64 + zext(!CY);
 	add_with_carry_flags(0,~tmp);
-	Rd_GPR64 = -tmp;
-	resultflags(Rd_GPR64);
+	resultflags(-tmp);
 	affectflags();
+	Rd_GPR64 = -tmp;
 }
 
 # C6.2.238 NOP page C6-1702 line 100611 MATCH xd503201f/mask=xffffffff
@@ -5069,9 +5069,9 @@ is sf=0 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn_GPR3
 {
 	tmp:4 = Rm_GPR32 + zext(!CY);
 	add_with_carry_flags(Rn_GPR32, ~Rm_GPR32);
-	Rd_GPR64 = zext(Rn_GPR32 - tmp);
-	resultflags(Rd_GPR32);
+	resultflags(Rn_GPR32 - tmp);
 	affectflags();
+	Rd_GPR64 = zext(Rn_GPR32 - tmp);
 }
 
 # C6.2.266 SBCS page C6-1749 line 103074 MATCH x7a000000/mask=x7fe0fc00
@@ -5084,9 +5084,9 @@ is sf=1 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rm_GPR64 & opcode2=0x0 & Rn_GPR6
 {
 	tmp:8 = Rm_GPR64 + zext(!CY);
 	add_with_carry_flags(Rn_GPR64, ~Rm_GPR64);
-	Rd_GPR64 = Rn_GPR64 - tmp;
-	resultflags(Rd_GPR64);
+	resultflags(Rn_GPR64 - tmp);
 	affectflags();
+	Rd_GPR64 = Rn_GPR64 - tmp;
 }
 
 # C6.2.209 SBFIZ page C6-856 line 49751 KEEPWITH
