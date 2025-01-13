@@ -7728,7 +7728,9 @@ is b_3131=0 & q=0 & u=0 & b_2428=0xe & advSIMD3.size=2 & b_2121=1 & Rm_VPR64.2S 
 	# simd infix TMPD1 = Rn_VPR64.2S f* Rm_VPR64.2S on lane size 4
 	TMPD1[0,32] = Rn_VPR64.2S[0,32] f* Rm_VPR64.2S[0,32];
 	TMPD1[32,32] = Rn_VPR64.2S[32,32] f* Rm_VPR64.2S[32,32];
-	Rd_VPR64.2S = Rd_VPR64.2S f- TMPD1;
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f- TMPD1 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f- TMPD1[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f- TMPD1[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
