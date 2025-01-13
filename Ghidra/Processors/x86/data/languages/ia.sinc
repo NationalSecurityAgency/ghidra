@@ -1301,26 +1301,35 @@ moffs64: segWide^[imm32]  is addrsize=1 & highseg=1 & segWide & imm32   { tmp:8 
 @endif
 # TODO: segment register offset in 64bit might not be right
 
+@ifdef IA64
+check_EDI_dest: is $(LONGMODE_ON)	{ RDI = zext(EDI); }
+check_ESI_dest: is $(LONGMODE_ON)	{ RSI = zext(ESI); }
+check_ECX_dest: is $(LONGMODE_ON)	{ RCX = zext(ECX); }
+@endif
+check_EDI_dest:	is epsilon  		{ }
+check_ESI_dest:	is epsilon  		{ }
+check_ECX_dest:	is epsilon  		{ }
+
 # String memory access
 dseSI1: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 1-2*zext(DF); export *:1 tmp; }
-dseSI1: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 1-2*zext(DF); export *:1 tmp; }
+dseSI1: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 1-2*zext(DF); build check_ESI_dest; export *:1 tmp; }
 dseSI2: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 2-4*zext(DF); export *:2 tmp; }
-dseSI2: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 2-4*zext(DF); export *:2 tmp; }
+dseSI2: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 2-4*zext(DF); build check_ESI_dest; export *:2 tmp; }
 dseSI4: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 4-8*zext(DF); export *:4 tmp; }
-dseSI4: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 4-8*zext(DF); export *:4 tmp; }
+dseSI4: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 4-8*zext(DF); build check_ESI_dest; export *:4 tmp; }
 eseDI1: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 1-2*zext(DF); export *:1 tmp; }
-eseDI1: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+1-2*zext(DF); export *:1 tmp; }
+eseDI1: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+1-2*zext(DF); build check_EDI_dest; export *:1 tmp; }
 eseDI2: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 2-4*zext(DF); export *:2 tmp; }
-eseDI2: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+2-4*zext(DF); export *:2 tmp; }
+eseDI2: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+2-4*zext(DF); build check_EDI_dest; export *:2 tmp; }
 eseDI4: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 4-8*zext(DF); export *:4 tmp; }
-eseDI4: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+4-8*zext(DF); export *:4 tmp; }
+eseDI4: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+4-8*zext(DF); build check_EDI_dest; export *:4 tmp; }
 
 @ifdef IA64
 # quadword string functions
 dseSI8: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 8-16*zext(DF); export *:8 tmp; }
-dseSI8: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 8-16*zext(DF); export *:8 tmp; }
+dseSI8: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 8-16*zext(DF); build check_ESI_dest; export *:8 tmp; }
 eseDI8: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 8-16*zext(DF); export *:8 tmp; }
-eseDI8: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+8-16*zext(DF); export *:8 tmp; }
+eseDI8: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+8-16*zext(DF); build check_EDI_dest; export *:8 tmp; }
 
 dseSI1: RSI   is addrsize=2 & RSI { local tmp = RSI; RSI = RSI + 1-2*zext(DF); export *:1 tmp; }
 dseSI2: RSI   is addrsize=2 & RSI { local tmp = RSI; RSI = RSI + 2-4*zext(DF); export *:2 tmp; }
@@ -1405,7 +1414,7 @@ cc: "G" is cond=15          { local tmp = !ZF && (OF == SF); export tmp; }
 
 # repeat prefixes
 rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
-rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
+rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=1 & check_ECX_dest  { if (ECX==0) goto inst_next; ECX=ECX-1; build check_ECX_dest; }
 @ifdef IA64
 rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=2  { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
@@ -1415,12 +1424,12 @@ reptail:	is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1))			{ goto i
 reptail:	is repprefx=0 & repneprefx=0			{ }
 
 repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
-repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
+repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=1 & check_ECX_dest { if (ECX==0) goto inst_next; ECX=ECX-1; build check_ECX_dest; }
 @ifdef IA64
 repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=2  { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
 repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=0    { if (CX==0) goto inst_next; CX=CX-1; }
-repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=1    { if (ECX==0) goto inst_next; ECX=ECX-1; }
+repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=1 & check_ECX_dest { if (ECX==0) goto inst_next; ECX=ECX-1; build check_ECX_dest; }
 @ifdef IA64
 repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=2    { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
@@ -3389,25 +3398,25 @@ define pcodeop LocalDescriptorTableRegister;
 
 :LODSB^rep^reptail dseSI1   is vexMode=0 & rep & reptail & byte=0xAC & dseSI1           { build rep; build dseSI1; AL=dseSI1; build reptail; }
 :LODSW^rep^reptail dseSI2   is vexMode=0 & rep & reptail & opsize=0 & byte=0xAD & dseSI2    { build rep; build dseSI2; AX=dseSI2; build reptail; }
-:LODSD^rep^reptail dseSI4   is vexMode=0 & rep & reptail & opsize=1 & byte=0xAD & dseSI4    { build rep; build dseSI4; EAX=dseSI4; build reptail; }
+:LODSD^rep^reptail dseSI4   is vexMode=0 & rep & reptail & opsize=1 & byte=0xAD & dseSI4 & check_EAX_dest { build rep; build dseSI4; EAX=dseSI4; build check_EAX_dest; build reptail; }
 @ifdef IA64
 :LODSQ^rep^reptail dseSI8   is $(LONGMODE_ON) & vexMode=0 & rep & reptail & opsize=2 & byte=0xAD & dseSI8    { build rep; build dseSI8; RAX=dseSI8; build reptail; }
 @endif
 
-:LOOP   rel8        is vexMode=0 & addrsize=0 & byte=0xE2; rel8             { CX = CX -1; if (CX!=0) goto rel8; }
-:LOOP   rel8        is vexMode=0 & addrsize=1 & byte=0xE2; rel8             { ECX = ECX -1; if (ECX!=0) goto rel8; }
+:LOOP   rel8        is vexMode=0 & addrsize=0 & byte=0xE2; rel8                  { CX = CX -1; if (CX!=0) goto rel8; }
+:LOOP   rel8        is vexMode=0 & addrsize=1 & byte=0xE2; rel8 & check_ECX_dest { ECX = ECX -1; build check_ECX_dest; if (ECX!=0) goto rel8; }
 @ifdef IA64
 :LOOP   rel8        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xE2; rel8             { RCX = RCX -1; if (RCX!=0) goto rel8; }
 @endif
 
-:LOOPZ  rel8        is vexMode=0 & addrsize=0 & byte=0xE1; rel8             { CX = CX -1; if (CX!=0 && ZF!=0) goto rel8; }
-:LOOPZ  rel8        is vexMode=0 & addrsize=1 & byte=0xE1; rel8             { ECX = ECX -1; if (ECX!=0 && ZF!=0) goto rel8; }
+:LOOPZ  rel8        is vexMode=0 & addrsize=0 & byte=0xE1; rel8                  { CX = CX -1; if (CX!=0 && ZF!=0) goto rel8; }
+:LOOPZ  rel8        is vexMode=0 & addrsize=1 & byte=0xE1; rel8 & check_ECX_dest { ECX = ECX -1; build check_ECX_dest; if (ECX!=0 && ZF!=0) goto rel8; }
 @ifdef IA64
 :LOOPZ  rel8        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xE1; rel8             { RCX = RCX -1; if (RCX!=0 && ZF!=0) goto rel8; }
 @endif
 
-:LOOPNZ rel8        is vexMode=0 & addrsize=0 & byte=0xE0; rel8             { CX = CX -1; if (CX!=0 && ZF==0) goto rel8; }
-:LOOPNZ rel8        is vexMode=0 & addrsize=1 & byte=0xE0; rel8             { ECX = ECX -1; if (ECX!=0 && ZF==0) goto rel8; }
+:LOOPNZ rel8        is vexMode=0 & addrsize=0 & byte=0xE0; rel8                  { CX = CX -1; if (CX!=0 && ZF==0) goto rel8; }
+:LOOPNZ rel8        is vexMode=0 & addrsize=1 & byte=0xE0; rel8 & check_ECX_dest { ECX = ECX -1; build check_ECX_dest; if (ECX!=0 && ZF==0) goto rel8; }
 @ifdef IA64
 :LOOPNZ rel8        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xE0; rel8             { RCX = RCX -1; if (RCX!=0 && ZF==0) goto rel8; }
 @endif
