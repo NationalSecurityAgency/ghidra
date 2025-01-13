@@ -1314,8 +1314,9 @@ def ghidra_trace_put_all():
     STATE.require_tx()
     with STATE.client.batch() as b:
         put_environment()
-        put_regions()
-        put_modules()
+        if hasattr(drgn, 'RelocatableModule'):
+            put_regions()
+            put_modules()
         syms = SYMBOLS_PATTERN.format(procnum=util.selected_process())
         sobj = STATE.trace.create_object(syms)
         sobj.insert()
