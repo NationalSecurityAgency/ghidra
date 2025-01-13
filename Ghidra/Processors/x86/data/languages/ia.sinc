@@ -995,24 +995,24 @@ addr16: [BP + imm16]  is mod=2 & r_m=6 & BP; imm16        { local tmp=BP+imm16; 
 addr16: [BX + imm16]  is mod=2 & r_m=7 & BX; imm16        { local tmp=BX+imm16; export tmp; }
 
 # 32-bit addressing modes   (the offset portion)
-addr32: [Rmr32]							is mod=0 & Rmr32  							 { export Rmr32; }
+addr32: [Rmr32]							is mod=0 & Rmr32  							 { local tmp=Rmr32; export tmp; }
 addr32: [Rmr32 + simm8_32]				is mod=1 & Rmr32; simm8_32       			 { local tmp=Rmr32+simm8_32; export tmp; }
-addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0			 { export Rmr32; }
+addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0			 { local tmp=Rmr32; export tmp; }
 addr32: [Rmr32 + imm32]					is mod=2 & Rmr32; imm32                      { local tmp=Rmr32+imm32; export tmp; }
-addr32: [Rmr32]							is mod=2 & r_m!=4 & Rmr32; imm32=0           { export Rmr32; }
+addr32: [Rmr32]							is mod=2 & r_m!=4 & Rmr32; imm32=0           { local tmp=Rmr32; export tmp; }
 addr32: [imm32]							is mod=0 & r_m=5; imm32                      { export *[const]:4 imm32; }
 addr32: [Base + Index*ss]				is mod=0 & r_m=4; Index & Base & ss          { local tmp=Base+Index*ss; export tmp; }
-addr32: [Base]							is mod=0 & r_m=4; index=4 & Base             { export Base; }
+addr32: [Base]							is mod=0 & r_m=4; index=4 & Base             { local tmp=Base; export tmp; }
 addr32: [Index*ss + imm32]				is mod=0 & r_m=4; Index & base=5 & ss; imm32 { local tmp=imm32+Index*ss; export tmp; }
 addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:4 imm32; }
 addr32: [Base + Index*ss + simm8_32]	is mod=1 & r_m=4; Index & Base & ss; simm8_32    { local tmp=simm8_32+Base+Index*ss; export tmp; }
 addr32: [Base + simm8_32]				is mod=1 & r_m=4; index=4 & Base; simm8_32   { local tmp=simm8_32+Base; export tmp; }
 addr32: [Base + Index*ss]				is mod=1 & r_m=4; Index & Base & ss; simm8=0 { local tmp=Base+Index*ss; export tmp; }
-addr32: [Base]							is mod=1 & r_m=4; index=4 & Base; simm8=0    { export Base; }
+addr32: [Base]							is mod=1 & r_m=4; index=4 & Base; simm8=0    { local tmp=Base; export tmp; }
 addr32: [Base + Index*ss + imm32]		is mod=2 & r_m=4; Index & Base & ss; imm32   { local tmp=imm32+Base+Index*ss; export tmp; }
 addr32: [Base + imm32]					is mod=2 & r_m=4; index=4 & Base; imm32      { local tmp=imm32+Base; export tmp; }
 addr32: [Base + Index*ss]				is mod=2 & r_m=4; Index & Base & ss; imm32=0 { local tmp=Base+Index*ss; export tmp; }
-addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0    { export Base; }
+addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0    { local tmp=Base; export tmp; }
 @ifdef IA64
 addr32: [pcRelSimm32]					is bit64=1 & mod=0 & r_m=4; index=4 & base=5; pcRelSimm32 { export *[const]:4 pcRelSimm32; }
 
@@ -1026,14 +1026,14 @@ Addr32_64: addr32						is addr32									 { tmp:8 = sext(addr32); export tmp; }
 # 64-bit addressing modes   (the offset portion)
 
 @ifdef IA64
-addr64: [Rmr64]							is mod=0 & Rmr64                                   { export Rmr64; }
+addr64: [Rmr64]							is mod=0 & Rmr64                                   { local tmp=Rmr64; export tmp; }
 addr64: [Rmr64 + simm8_64]				is mod=1 & Rmr64; simm8_64                         { local tmp=Rmr64+simm8_64; export tmp; }
 addr64: [Rmr64 + simm32_64]				is mod=2 & Rmr64; simm32_64                        { local tmp=Rmr64+simm32_64; export tmp; }
-addr64: [Rmr64]							is mod=1 & r_m!=4 & Rmr64; simm8=0                 { export Rmr64; }
-addr64: [Rmr64]							is mod=2 & r_m!=4 & Rmr64; simm32=0                { export Rmr64; }
+addr64: [Rmr64]							is mod=1 & r_m!=4 & Rmr64; simm8=0                 { local tmp=Rmr64; export tmp; }
+addr64: [Rmr64]							is mod=2 & r_m!=4 & Rmr64; simm32=0                { local tmp=Rmr64; export tmp; }
 addr64: [pcRelSimm32]					is mod=0 & r_m=5; pcRelSimm32                      { export *[const]:8 pcRelSimm32; }
 addr64: [Base64 + Index64*ss]			is mod=0 & r_m=4; Index64 & Base64 & ss            { local tmp=Base64+Index64*ss; export tmp; }
-addr64: [Base64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & Base64    { export Base64; }
+addr64: [Base64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & Base64    { local tmp = Base64; export tmp; }
 addr64: [simm32_64 + Index64*ss]		is mod=0 & r_m=4; Index64 & base64=5 & ss; simm32_64   { local tmp=simm32_64+Index64*ss; export tmp; }
 addr64: [Index64*ss]					is mod=0 & r_m=4; Index64 & base64=5 & ss; imm32=0 { local tmp=Index64*ss; export tmp; }
 addr64: [simm32_64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & base64=5; simm32_64      { export *[const]:8 simm32_64; }
@@ -1041,7 +1041,7 @@ addr64: [Base64 + simm8_64]				is mod=1 & r_m=4; rexXprefix=0 & index64=4 & Base
 addr64: [Base64 + Index64*ss + simm8_64] is mod=1 & r_m=4; Index64 & Base64 & ss; simm8_64 { local tmp=simm8_64+Base64+Index64*ss; export tmp; }
 addr64: [Base64 + Index64*ss]			is mod=1 & r_m=4; Index64 & Base64 & ss; simm8=0   { local tmp=Base64+Index64*ss; export tmp; }
 addr64: [Base64 + simm32_64]			is mod=2 & r_m=4; rexXprefix=0 & index64=4 & Base64; simm32_64        { local tmp=simm32_64+Base64; export tmp; }
-addr64: [Base64]						is mod=2 & r_m=4; rexXprefix=0 & index64=4 & Base64; imm32=0      { export Base64; }
+addr64: [Base64]						is mod=2 & r_m=4; rexXprefix=0 & index64=4 & Base64; imm32=0      { local tmp = Base64; export tmp; }
 addr64: [Base64 + Index64*ss + simm32_64] is mod=2 & r_m=4; Index64 & Base64 & ss; simm32_64     { local tmp=simm32_64+Base64+Index64*ss; export tmp; }
 addr64: [Base64 + Index64*ss]			is mod=2 & r_m=4; Index64 & Base64 & ss; imm32=0   { local tmp=Base64+Index64*ss; export tmp; }
 @endif
@@ -4456,12 +4456,21 @@ define pcodeop wrpkru;
 define pcodeop wrmsr;
 :WRMSR is vexMode=0 & byte=0xf; byte=0x30 { tmp:8 = (zext(EDX) << 32) | zext(EAX); wrmsr(ECX,tmp); }
 
+macro xadd(dst,src) {
+    local tmp = dst;
+    addflags(tmp,src);
+    local result = tmp + src;
+    src = tmp;
+    dst = result; 
+    resultflags(result);
+}
+
 # See 'lockable.sinc' for memory destination, lockable variants
 :XADD       Rmr8,Reg8 	is vexMode=0 & byte=0x0F; byte=0xC0; mod=3 & Rmr8 & Reg8        { addflags( Rmr8,Reg8 ); local tmp =  Rmr8 +  Reg8;  Reg8 = Rmr8; Rmr8 = tmp;     resultflags(tmp); }
-:XADD      Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0x0F; byte=0xC1; mod=3 & Rmr16 & Reg16 { addflags(Rmr16,Reg16); local tmp = Rmr16 + Reg16; Reg16 = Rmr16; Rmr16 = tmp; resultflags(tmp); }
-:XADD      Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0x0F; byte=0xC1; mod=3 & Rmr32 & check_Rmr32_dest & Reg32 & check_Reg32_dest { addflags(Rmr32,Reg32); local tmp = Rmr32 + Reg32; Reg32 = Rmr32; Rmr32 = tmp; build check_Rmr32_dest; build check_Reg32_dest; resultflags(tmp); }
+:XADD      Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0x0F; byte=0xC1; mod=3 & Rmr16 & Reg16                                       { xadd(Rmr16,Reg16); }
+:XADD      Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0x0F; byte=0xC1; mod=3 & Rmr32 & check_Rmr32_dest & Reg32 & check_Reg32_dest { xadd(Rmr32,Reg32); build check_Rmr32_dest; build check_Reg32_dest; }
 @ifdef IA64
-:XADD      Rmr64,Reg64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0F; byte=0xC1; mod=3 & Rmr64 & Reg64 { addflags(Rmr64,Reg64); local tmp = Rmr64 + Reg64; Reg64 = Rmr64; Rmr64 = tmp; resultflags(tmp); }
+:XADD      Rmr64,Reg64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0F; byte=0xC1; mod=3 & Rmr64 & Reg64                      { xadd(Rmr64,Reg64); }
 @endif
 
 define pcodeop xabort;
