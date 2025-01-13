@@ -586,6 +586,7 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
   spacebase = op2.spacebase;
   maxdelay = op2.maxdelay;
   thisbeforeret = op2.thisbeforeret;
+  autoKilledByCall = op2.autoKilledByCall;
   resourceStart = op2.resourceStart;
   for(list<ModelRule>::const_iterator iter=op2.modelRules.begin();iter!=op2.modelRules.end();++iter) {
     modelRules.emplace_back(*iter,&op2);
@@ -1198,11 +1199,10 @@ void ParamListStandard::populateResolver(void)
 /// \param effectlist holds any passed back effect records
 /// \param groupid is the group to which the new ParamEntry is assigned
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
-/// \param autokill is \b true if parameters are automatically added to the killedbycall list
 /// \param splitFloat is \b true if floating-point parameters are in their own resource section
 /// \param grouped is \b true if the new ParamEntry is grouped with other entries
 void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
-				    int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped)
+				    int4 groupid,bool normalstack,bool splitFloat,bool grouped)
 {
   type_class lastClass = TYPECLASS_CLASS4;
   if (!entry.empty()) {
@@ -1221,7 +1221,7 @@ void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effec
   AddrSpace *spc = entry.back().getSpace();
   if (spc->getType() == IPTR_SPACEBASE)
     spacebase = spc;
-  else if (autokill)	// If a register parameter AND we automatically generate killedbycall
+  else if (autoKilledByCall)	// If a register parameter AND we automatically generate killedbycall
     effectlist.push_back(EffectRecord(entry.back(),EffectRecord::killedbycall));
 
   int4 maxgroup = entry.back().getAllGroups().back() + 1;
@@ -1236,17 +1236,16 @@ void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effec
 /// \param effectlist holds any passed back effect records
 /// \param groupid is the group to which all ParamEntry elements are assigned
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
-/// \param autokill is \b true if parameters are automatically added to the killedbycall list
 /// \param splitFloat is \b true if floating-point parameters are in their own resource section
 void ParamListStandard::parseGroup(Decoder &decoder,vector<EffectRecord> &effectlist,
-				   int4 groupid,bool normalstack,bool autokill,bool splitFloat)
+				   int4 groupid,bool normalstack,bool splitFloat)
 {
   int4 basegroup = numgroup;
   ParamEntry *previous1 = (ParamEntry *)0;
   ParamEntry *previous2 = (ParamEntry *)0;
   uint4 elemId = decoder.openElement(ELEM_GROUP);
   while(decoder.peekElement() != 0) {
-    parsePentry(decoder, effectlist, basegroup, normalstack, autokill, splitFloat, true);
+    parsePentry(decoder, effectlist, basegroup, normalstack, splitFloat, true);
     ParamEntry &pentry( entry.back() );
     if (pentry.getSpace()->getType() == IPTR_JOIN)
       throw LowlevelError("<pentry> in the join space not allowed in <group> tag");
@@ -1434,8 +1433,8 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
   spacebase = (AddrSpace *)0;
   int4 pointermax = 0;
   thisbeforeret = false;
+  autoKilledByCall = false;
   bool splitFloat = true;		// True if we should split FLOAT entries into their own resource section
-  bool autokilledbycall = false;
   uint4 elemId = decoder.openElement();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -1447,7 +1446,7 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
       thisbeforeret = decoder.readBool();
     }
     else if (attribId == ATTRIB_KILLEDBYCALL) {
-      autokilledbycall = decoder.readBool();
+      autoKilledByCall = decoder.readBool();
     }
     else if (attribId == ATTRIB_SEPARATEFLOAT) {
       splitFloat = decoder.readBool();
@@ -1457,10 +1456,10 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
     if (subId == ELEM_PENTRY) {
-      parsePentry(decoder, effectlist, numgroup, normalstack, autokilledbycall, splitFloat, false);
+      parsePentry(decoder, effectlist, numgroup, normalstack, splitFloat, false);
     }
     else if (subId == ELEM_GROUP) {
-      parseGroup(decoder, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
+      parseGroup(decoder, effectlist, numgroup, normalstack, splitFloat);
     }
     else if (subId == ELEM_RULE) {
       break;
@@ -1599,6 +1598,8 @@ void ParamListStandardOut::initialize(void)
       break;
     }
   }
+  if (useFillinFallback)
+    autoKilledByCall = true;	// Legacy behavior if there are no rules
 }
 
 /// \brief Find the return value storage using the older \e fallback method
@@ -3778,8 +3779,8 @@ void FuncProto::setModel(ProtoModel *m)
       flags |= has_thisptr;
     if (m->isConstructor())
       flags |= is_constructor;
-    if (m->isAutoKillByCall())
-      flags |= auto_killbycall;
+    if (m->isAutoKilledByCall())
+      flags |= auto_killedbycall;
     model = m;
   }
   else {
@@ -4557,13 +4558,13 @@ void FuncProto::printRaw(const string &funcname,ostream &s) const
 /// This assumes the storage location has already been determined to be contained
 /// in standard return value location.
 /// \return \b true if the location should be considered killed by call
-bool FuncProto::isAutoKillByCall(void) const
+bool FuncProto::isAutoKilledByCall(void) const
 
 {
-  if ((flags & auto_killbycall)!=0)
-    return true;		// The ProtoModel always does killbycall
+  if ((flags & auto_killedbycall)!=0)
+    return true;		// The ProtoModel always does killedbycall
   if (isOutputLocked())
-    return true;		// A locked output location is killbycall by definition
+    return true;		// A locked output location is killedbycall by definition
   return false;
 }
 
