@@ -285,12 +285,12 @@ public class GTree extends JPanel implements BusyListener {
 			realModelRootNode.dispose();
 		}
 
-		// if there is a filter applied, clean up the filtered nodes. Note that filtered nodes
+		// If there is a filter applied, clean up the filtered nodes. Note that filtered nodes
 		// are expected to be shallow clones of the model nodes, so we don't want to call full
 		// dispose on the filtered nodes because internal clean-up should happen when the
-		// model nodes are disposed. The disposeClones just breaks the child-parent ties.
+		// model nodes are disposed. The disposeClone() just breaks the child-parent ties.
 		if (realViewRootNode != null && realViewRootNode != realModelRootNode) {
-			realViewRootNode.disposeClones();
+			realViewRootNode.disposeClone();
 		}
 
 		filterProvider.dispose();
@@ -847,15 +847,32 @@ public class GTree extends JPanel implements BusyListener {
 		Swing.runIfSwingOrRunLater(() -> {
 			worker.clearAllJobs();
 			rootNode.setParent(rootParent);
+			GTreeNode oldModelRoot = realModelRootNode;
+			GTreeNode oldViewRoot = realViewRootNode;
 			realModelRootNode = rootNode;
 			realViewRootNode = rootNode;
-			GTreeNode oldRoot;
-			oldRoot = swingSetModelRootNode(rootNode);
-			oldRoot.dispose();
+			swingSetModelRootNode(rootNode);
+
+			disposeOldRoots(oldModelRoot, oldViewRoot);
+
 			if (filter != null) {
 				filterUpdateManager.update();
 			}
 		});
+	}
+
+	private void disposeOldRoots(GTreeNode oldModelRoot, GTreeNode oldViewRoot) {
+		if (oldModelRoot != null && oldModelRoot != realModelRootNode) {
+			oldModelRoot.dispose();
+		}
+
+		// If there is a filter applied, clean up the filtered nodes. Note that filtered nodes
+		// are expected to be shallow clones of the model nodes, so we don't want to call full
+		// dispose on the filtered nodes because internal clean-up should happen when the
+		// model nodes are disposed. The disposeClone() just breaks the child-parent ties.
+		if (oldViewRoot != null && oldViewRoot != realViewRootNode) {
+			oldViewRoot.disposeClone(); // safe to call even if we disposed the same node above
+		}
 	}
 
 	void swingSetFilteredRootNode(GTreeNode filteredRootNode) {
@@ -863,7 +880,7 @@ public class GTree extends JPanel implements BusyListener {
 		realViewRootNode = filteredRootNode;
 		GTreeNode currentRoot = swingSetModelRootNode(filteredRootNode);
 		if (currentRoot != realModelRootNode) {
-			currentRoot.disposeClones();
+			currentRoot.disposeClone();
 		}
 	}
 
@@ -871,7 +888,7 @@ public class GTree extends JPanel implements BusyListener {
 		realViewRootNode = realModelRootNode;
 		GTreeNode currentRoot = swingSetModelRootNode(realModelRootNode);
 		if (currentRoot != realModelRootNode && currentRoot != null) {
-			currentRoot.disposeClones();
+			currentRoot.disposeClone();
 		}
 	}
 
