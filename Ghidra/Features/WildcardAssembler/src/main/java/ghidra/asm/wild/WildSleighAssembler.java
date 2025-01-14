@@ -23,7 +23,6 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParser;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseBranch;
-import ghidra.app.plugin.languages.sleigh.InputContextScraper;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.asm.wild.sem.DefaultWildAssemblyResolvedPatterns;
 import ghidra.asm.wild.sem.WildAssemblyResolvedPatterns;
@@ -38,20 +37,24 @@ import ghidra.program.model.listing.Program;
  * Construct these using {@link WildSleighAssemblerBuilder}. 
  */
 public class WildSleighAssembler extends AbstractSleighAssembler<WildAssemblyResolvedPatterns> {
-	protected Set<AssemblyPatternBlock> inputContexts = null;
+	protected final Set<AssemblyPatternBlock> inputContexts;
 
 	protected WildSleighAssembler(
 			AbstractAssemblyResolutionFactory<WildAssemblyResolvedPatterns, ?> factory,
 			AssemblySelector selector, SleighLanguage lang, AssemblyParser parser,
-			AssemblyDefaultContext defaultContext, AssemblyContextGraph ctxGraph) {
+			AssemblyDefaultContext defaultContext, Set<AssemblyPatternBlock> inputContexts,
+			AssemblyContextGraph ctxGraph) {
 		super(factory, selector, lang, parser, defaultContext, ctxGraph);
+		this.inputContexts = inputContexts;
 	}
 
 	protected WildSleighAssembler(
 			AbstractAssemblyResolutionFactory<WildAssemblyResolvedPatterns, ?> factory,
 			AssemblySelector selector, Program program, AssemblyParser parser,
-			AssemblyDefaultContext defaultContext, AssemblyContextGraph ctxGraph) {
+			AssemblyDefaultContext defaultContext, Set<AssemblyPatternBlock> inputContexts,
+			AssemblyContextGraph ctxGraph) {
 		super(factory, selector, program, parser, defaultContext, ctxGraph);
+		this.inputContexts = inputContexts;
 	}
 
 	@Override
@@ -64,39 +67,28 @@ public class WildSleighAssembler extends AbstractSleighAssembler<WildAssemblyRes
 	public AssemblyResolutionResults resolveTree(
 			AssemblyParseResult parse, Address at, AssemblyPatternBlock ctx) {
 
-		if (inputContexts == null) {
-			InputContextScraper scraper = new InputContextScraper(lang);
-			inputContexts = scraper.scrapeInputContexts();
-		}
-
 		AssemblyResolutionResults allResults = new AssemblyResolutionResults();
 
-		// This could happen if a language doesn't use context
-		// Just forward the (likely empty) ctx argument to resolveTree()
 		if (inputContexts.isEmpty()) {
-			allResults = super.resolveTree(parse, at, ctx);
-			setContexts(allResults, ctx);
+			absorbWithContext(allResults, super.resolveTree(parse, at, ctx), ctx);
 			return allResults;
 		}
 
 		for (AssemblyPatternBlock inputCtx : inputContexts) {
-			AssemblyPatternBlock combinedCtx = inputCtx.combinePrecedence(ctx);
-			AssemblyResolutionResults results = super.resolveTree(parse, at, combinedCtx);
-			
-			setContexts(results, combinedCtx);
-			allResults.absorb(results);
+			AssemblyPatternBlock combinedCtx = inputCtx.assign(ctx);
+			absorbWithContext(allResults, super.resolveTree(parse, at, combinedCtx), combinedCtx);
 		}
 		return allResults;
 	}
-	
-	private static void setContexts(AssemblyResolutionResults results, AssemblyPatternBlock ctx) {
+
+	protected static void absorbWithContext(AssemblyResolutionResults allResults,
+			AssemblyResolutionResults results, AssemblyPatternBlock ctx) {
 		// Unspecified context bits are destroyed during assembly; restore them
-		// All DefaultWildAssemblyResolvedPatterns in results argument should have identical context
-		// TODO: Remove this hack. It's unclear where the best place is to keep/restore the original context
 		for (AssemblyResolution res : results) {
-			if (res instanceof DefaultWildAssemblyResolvedPatterns rp) {
-				rp.setContext(ctx);
-			}
+			allResults.add(switch (res) {
+				case DefaultWildAssemblyResolvedPatterns rp -> rp.withContext(ctx);
+				default -> res;
+			});
 		}
 	}
 }

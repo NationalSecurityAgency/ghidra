@@ -435,7 +435,7 @@ public class WildSleighAssemblerTest extends AbstractGhidraHeadlessIntegrationTe
 			allValidEncodings.addAll(getInstructionValuesHex(results));
 		}
 		// In this case, wildcard assembler now returns identical encodings with different contexts
-		assertTrue("Expect to have at least one valid encoding", allValidEncodings.size() > 0);
+		assertTrue("Expect to have at least one valid encoding", allValidEncodings.size() >= 1);
 		assertTrue("Expect to have 02:1c:41:e2 as an encoding",
 			allValidEncodings.contains("02:1c:41:e2"));
 	}

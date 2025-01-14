@@ -57,7 +57,7 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 
 	protected final Constructor cons;
 	protected final AssemblyPatternBlock ins;
-	protected AssemblyPatternBlock ctx;
+	protected final AssemblyPatternBlock ctx;
 
 	protected final Set<AssemblyResolvedBackfill> backfills;
 	protected final Set<AssemblyResolvedPatterns> forbids;
@@ -560,9 +560,23 @@ public class DefaultAssemblyResolvedPatterns extends AbstractAssemblyResolution
 		return ctx;
 	}
 
+	protected AbstractAssemblyResolvedPatternsBuilder<?> withContextBuilder(
+			AssemblyPatternBlock ctx) {
+		var builder = factory.newPatternsBuilder();
+		builder.description = description;
+		builder.cons = cons;
+		builder.children = children;
+		builder.right = right;
+		builder.ins = ins;
+		builder.ctx = ctx;
+		builder.backfills = backfills;
+		builder.forbids = forbids;
+		return builder;
+	}
+
 	@Override
-	public void setContext(AssemblyPatternBlock ctx) {
-		this.ctx = ctx;
+	public AssemblyResolvedPatterns withContext(AssemblyPatternBlock ctx) {
+		return withContextBuilder(ctx).build();
 	}
 
 	@Override

@@ -420,7 +420,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * @param that the other block
 	 * @return the new combined block
 	 */
-	public AssemblyPatternBlock combinePrecedence(AssemblyPatternBlock that) {
+	public AssemblyPatternBlock assign(AssemblyPatternBlock that) {
 		int newOffset = Math.min(this.offset, that.offset);
 		int bufLen = Math.max(this.length(), that.length()) - newOffset;
 
@@ -633,9 +633,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Write mask bits from context commit to mask array of block
 	 * 
-	 * <p>
-	 * This is used when scraping for valid input contexts to determine which context variables are
-	 * passed to the <code>globalset</code> directive.
+	 * @implNote This is used when scraping for valid input contexts to determine which context variables
+	 *           are passed to the <code>globalset</code> directive.
 	 * 
 	 * @param cc the context commit
 	 * @return the result

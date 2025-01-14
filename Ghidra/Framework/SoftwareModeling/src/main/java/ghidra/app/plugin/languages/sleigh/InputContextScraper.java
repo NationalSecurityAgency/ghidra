@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.languages.sleigh;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,9 +41,8 @@ public class InputContextScraper {
 	}
 
 	/**
-	 * Get set of all all valid input contexts that affect constructor selection.
+	 * Get set of all valid input contexts that affect constructor selection.
 	 * 
-	 * <p>
 	 * <ol>
 	 * <li>Start with mask of the language's default context
 	 * <li>Scrape language for <code>globalset</code> context variables and OR their masks into our
@@ -57,13 +57,12 @@ public class InputContextScraper {
 		// We don't care about the actual default values, just if a context variable HAS a default
 		// value. It's possible for a local context variable to be set in the default context, but
 		// doing so is questionable. It could be an input context variable in that case, so to
-		// account for it, we start with the default context mask Doing so ensures those variables
+		// account for it, we start with the default context mask. Doing so ensures those variables
 		// are included
 		AssemblyPatternBlock defaultCtx = new AssemblyDefaultContext(language).getDefault();
 
 		// Erase the values for posterity; we don't care about them at this point
-		System.arraycopy(new byte[defaultCtx.getVals().length], 0, defaultCtx.getVals(), 0,
-			defaultCtx.length());
+		Arrays.fill(defaultCtx.getVals(), (byte) 0);
 
 		GlobalSetScraper globalSetScraper = new GlobalSetScraper(defaultCtx);
 		SleighLanguages.traverseConstructors(language, globalSetScraper);
@@ -123,7 +122,11 @@ public class InputContextScraper {
 				// Combine constraint with blank context to ensure generated context has no shifts
 				AssemblyPatternBlock inputCtx =
 					blankContext.combine(contextConstraint).maskOut(nonInputMask);
-				inputContexts.add(inputCtx);
+
+				// Filter out entirely undefined context
+				if (inputCtx.getSpecificity() > 0) {
+					inputContexts.add(inputCtx);
+				}
 			}
 			return CONTINUE;
 		}

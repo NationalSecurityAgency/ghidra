@@ -240,4 +240,11 @@ public class DefaultWildAssemblyResolvedPatterns extends DefaultAssemblyResolved
 		builder.opInfo = opInfo;
 		return builder;
 	}
+
+	@Override
+	protected WildAssemblyResolvedPatternsBuilder withContextBuilder(AssemblyPatternBlock ctx) {
+		var builder = cast(super.withContextBuilder(ctx));
+		builder.opInfo = opInfo;
+		return builder;
+	}
 }
