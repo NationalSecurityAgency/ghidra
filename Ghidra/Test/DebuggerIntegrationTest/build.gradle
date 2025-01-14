@@ -105,7 +105,7 @@ task testSpecimenLinux_x86_64 {
 
 	doLast {
 		providers.exec {
-			workingDir "build/os/linux_x86_64"
+			workingDir { file("build/os/linux_x86_64") }
 			commandLine "strip", "-o", "expSpin.stripped", "expSpin"
 		}.result.get()
 	}
