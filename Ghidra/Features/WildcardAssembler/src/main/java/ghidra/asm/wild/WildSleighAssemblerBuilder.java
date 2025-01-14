@@ -23,8 +23,10 @@ import ghidra.app.plugin.assembler.sleigh.SleighAssemblerBuilder;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
 import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedBackfill;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
+import ghidra.app.plugin.languages.sleigh.InputContextScraper;
 import ghidra.app.plugin.processors.sleigh.Constructor;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
@@ -49,6 +51,7 @@ public class WildSleighAssemblerBuilder
 		extends AbstractSleighAssemblerBuilder<WildAssemblyResolvedPatterns, WildSleighAssembler> {
 
 	protected final Map<AssemblySymbol, AssemblyNonTerminal> wildNTs = new HashMap<>();
+	protected final Set<AssemblyPatternBlock> inputContexts;
 
 	/**
 	 * Construct a builder for the given language
@@ -62,6 +65,8 @@ public class WildSleighAssemblerBuilder
 	 */
 	public WildSleighAssemblerBuilder(SleighLanguage lang) {
 		super(lang);
+		InputContextScraper scraper = new InputContextScraper(lang);
+		this.inputContexts = scraper.scrapeInputContexts();
 	}
 
 	@Override
@@ -139,12 +144,13 @@ public class WildSleighAssemblerBuilder
 
 	@Override
 	protected WildSleighAssembler newAssembler(AssemblySelector selector) {
-		return new WildSleighAssembler(factory, selector, lang, parser, defaultContext, ctxGraph);
+		return new WildSleighAssembler(factory, selector, lang, parser, defaultContext,
+			inputContexts, ctxGraph);
 	}
 
 	@Override
 	protected WildSleighAssembler newAssembler(AssemblySelector selector, Program program) {
 		return new WildSleighAssembler(factory, selector, program, parser, defaultContext,
-			ctxGraph);
+			inputContexts, ctxGraph);
 	}
 }
