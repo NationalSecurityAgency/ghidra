@@ -2,9 +2,9 @@
 
 @if ADDRSIZE == "32" || ADDRSIZE == "64" || ADDRSIZE == "128"
 @include "riscv.rv32i.sinc"
+@include "riscv.rv32b.sinc"
 @include "riscv.rv32a.sinc"
 @include "riscv.rv32m.sinc"
-@include "riscv.rv32b.sinc"
 @include "riscv.rv32p.sinc"
 @include "riscv.rv32k.sinc"
 
@@ -25,7 +25,6 @@
 @include "riscv.rv64i.sinc"
 @include "riscv.rv64a.sinc"
 @include "riscv.rv64m.sinc"
-@include "riscv.rv64b.sinc"
 @include "riscv.rv64p.sinc"
 @include "riscv.rv64k.sinc"
 
@@ -46,9 +45,18 @@
 @include "riscv.priv.sinc"
 @include "riscv.rvc.sinc"
 @include "riscv.rvv.sinc"
+@include "riscv.zcb.sinc"
+@include "riscv.zknd.sinc"
+@include "riscv.zfh.sinc"
+@include "riscv.zkne.sinc"
+@include "riscv.zknh.sinc"
+@include "riscv.zksed.sinc"
+@include "riscv.zksh.sinc"
+@include "riscv.zvbb.sinc"
+@include "riscv.zvbc.sinc"
+@include "riscv.zvkng.sinc"
+@include "riscv.zvksg.sinc"
 @include "riscv.zi.sinc"
-
-@include "riscv.custom.sinc"
 
 # todos that may be possible, mostly just artifacts from my
 # script to generate the initial SELIGH
