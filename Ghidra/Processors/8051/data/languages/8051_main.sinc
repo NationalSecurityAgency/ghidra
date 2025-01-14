@@ -34,7 +34,7 @@ define space BITS     type=ram_space      size=2;
 #   EXTERNAL - 0x010000-0x01ffff
 #   INTERNAL - 0x000000-0x0000ff
 
-@elif defined(MCS51)
+@elif defined(MCS51) || defined(CIP51)
 
 @if defined(PTRSIZE)
 @else
@@ -50,8 +50,16 @@ define space BITS     type=ram_space      size=2;
 define space CODE     type=ram_space      size=$(PTRSIZE)  default;
 define space INTMEM   type=ram_space      size=1;
 define space EXTMEM   type=ram_space      size=2;
+@if defined(CIP51)
+define space SFR      type=ram_space      size=2;
+@else
 define space SFR      type=ram_space      size=1;
+@endif
 define space BITS     type=ram_space      size=1;
+
+@if defined(CIP51)
+define space IFLASH   type=ram_space      size=3;
+@endif
 
 @elif defined(MCS80390)
 
