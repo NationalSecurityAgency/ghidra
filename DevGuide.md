@@ -354,6 +354,46 @@ We also provide out-of-the-box QEMU integration via GDB.
 
 When submitting help tickets and pull requests, please tag those related to the debugger with "Debugger" so that we can triage them more quickly.
 
+## Troubleshooting and Help
+
+### Eclipse Issues
+After pulling or syncing with the latest Ghidra source repository, you might run into the following
+issues in Eclipse:
+
+* __Problem:__ _There are Eclipse compilation errors that I don't know how to deal with._
+  * __Solution:__
+    * From Eclipse, select all projects in the _Package Explorer_ or _Project Explorer_
+    * Right-click on them, and then click _Delete_
+    * Leave _"Delete project contents on disk"_ checkbox __UNCHECKED__
+    * Click _OK_
+    * `gradle -I gradle/support/fetchDependencies.gradle`
+    * `gradle prepdev cleanEclipse eclipse buildNatives`
+    * From Eclipse, _File -> Import..._
+    * _General | Existing Projects into Workspace_
+    * Select root directory to be your downloaded or cloned ghidra source repository
+    * Check _"Search for nested projects"_
+    * Click _Finish_
+    
+    This should get Eclipse back to a fresh state. There should never be a need to re-clone the
+    repository.
+
+* __Problem:__ _The Ghidra run configurations (launchers) are missing_.
+  * __Solution:__
+    The Ghidra run configurations are kept under source control in various modules' `.launch/` 
+    directories (i.e., `Ghidra/Features/Base/.launch/`). As long as the corresponding module 
+    project is imported into Eclipse (i.e., `Features Base`), the run configurations should be
+    available in Eclipse under _Run -> Run Configurations_.  If they aren't there and the 
+    projects are imported, try closing and reopening Eclipse. 
+    
+    __NOTE:__ Sometimes you have to launch Ghidra via the _Run -> Run Configurations..._ window one
+    time for the run configuration to show up under the favorites menu in the main Eclipse button 
+    bar.
+    
+    __NOTE:__ Never address missing run configurations by manually importing them via _File -> 
+    Import... -> Run/Debug -> Launch Configurations._ This avoids the real issue and will 
+    inevitably result in duplicate run configurations showing up one day, which can cause
+    additional confusion.
+
 ## Known Issues
 * There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
   if a non-English system locale is being used. As a workaround, set the following environment 
