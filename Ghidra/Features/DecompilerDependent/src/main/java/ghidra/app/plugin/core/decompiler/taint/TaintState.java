@@ -46,6 +46,10 @@ public interface TaintState {
 		SRCSINK, DEFAULT, CUSTOM
 	}
 
+	public enum TaskType {
+		SET_TAINT, SET_DELTA, APPLY_DELTA
+	}
+
 	public static TaintState newInstance(TaintPlugin plugin) {
 		return new TaintStateCTADL(plugin);
 	}
@@ -93,9 +97,11 @@ public interface TaintState {
 
 	public void setCancellation(boolean status);
 
-	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap);
+	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, TaskType delta);
 
 	public Map<Address, Set<TaintQueryResult>> getTaintVarnodeMap();
+
+	public Set<TaintQueryResult> getQuerySet(Address addr);
 
 	public void buildIndex(List<String> param_list, String engine_path, String facts_path,
 			String index_directory);
@@ -152,5 +158,7 @@ public interface TaintState {
 		}
 		return false;
 	}
+
+	public void setTaskType(TaskType taskType);
 
 }

@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.decompiler.taint;
 import java.awt.Color;
 
 import generic.theme.GColor;
-import ghidra.app.plugin.core.decompiler.taint.TaintPlugin.Highlighter;
+import ghidra.app.plugin.core.decompiler.taint.TaintPlugin.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
@@ -45,12 +45,13 @@ public class TaintOptions {
 	/* The default name of the index database file. */
 	public final static String OP_KEY_TAINT_DB = "Taint.Query.Index";
 
+	public final static String OP_KEY_TAINT_QUERY_DIRECTION = "Taint.Force Direction";
 	public final static String OP_KEY_TAINT_QUERY_OUTPUT_FORM = "Taint.Output Format";
 	/* Color used in the decompiler to highlight taint. */
 	public final static String TAINT_HIGHLIGHT = "Taint.Highlight Color";
 	/* How to apply highlight taint. */
 	public final static String TAINT_HIGHLIGHT_STYLE = "Taint.Highlight Style";
-	public final static String TAINT_ALL_ACCESS = "Taint.Use all access paths";
+	public final static String TAINT_ALL_ACCESS = "Taint.Match on Fields";
 	private final static Boolean TAINT_ALL_ACCESS_PATHS = true;
 
 	public final static String DEFAULT_TAINT_ENGINE_PATH = "";
@@ -60,7 +61,6 @@ public class TaintOptions {
 	/* this is the text code that contains the datalog query the plugin writes. */
 	public final static String DEFAULT_TAINT_QUERY = "taintquery.dl";
 	public final static String DEFAULT_TAINT_DB = "ctadlir.db";
-	public final static String DEFAULT_TAINT_OUTPUT_FORM = "sarif+all";
 
 	public final static Boolean DEFAULT_GET_PATHS = true;
 
@@ -75,7 +75,8 @@ public class TaintOptions {
 	private String taintQuery;
 	private String taintDB;
 
-	private String taintQueryOutputForm;
+	private TaintDirection taintQueryDirection;
+	private TaintFormat taintQueryOutputForm;
 
 	private Highlighter taintHighlightStyle;
 	private Color taintHighlightColor;
@@ -110,7 +111,8 @@ public class TaintOptions {
 		taintOutputDir = DEFAULT_TAINT_OUTPUT_DIR;
 		taintQuery = DEFAULT_TAINT_QUERY;
 		taintDB = DEFAULT_TAINT_DB;
-		taintQueryOutputForm = DEFAULT_TAINT_OUTPUT_FORM;
+		taintQueryOutputForm = TaintFormat.ALL;
+		taintQueryDirection = TaintDirection.DEFAULT;
 		taintUseAllAccess = TAINT_ALL_ACCESS_PATHS;
 
 	}
@@ -125,7 +127,7 @@ public class TaintOptions {
 	 */
 	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program) {
 
-		opt.registerOption(OP_KEY_TAINT_QUERY_OUTPUT_FORM, DEFAULT_TAINT_OUTPUT_FORM,
+		opt.registerOption(OP_KEY_TAINT_QUERY_OUTPUT_FORM, TaintFormat.ALL,
 			new HelpLocation(HelpTopics.DECOMPILER, "Taint Output Type"),
 			"The type of Source-Sink query output (e.g., sarif, summary, text");
 
@@ -181,7 +183,8 @@ public class TaintOptions {
 		taintOutputDir = opt.getString(OP_KEY_TAINT_OUTPUT_DIR, "");
 		taintDB = opt.getString(OP_KEY_TAINT_DB, "");
 
-		taintQueryOutputForm = opt.getString(OP_KEY_TAINT_QUERY_OUTPUT_FORM, "");
+		taintQueryDirection = opt.getEnum(OP_KEY_TAINT_QUERY_DIRECTION, TaintDirection.DEFAULT);
+		taintQueryOutputForm = opt.getEnum(OP_KEY_TAINT_QUERY_OUTPUT_FORM, TaintFormat.ALL);
 
 		taintHighlightStyle = opt.getEnum(TAINT_HIGHLIGHT_STYLE, TAINT_HIGHLIGHT_STYLE_DEFAULT);
 		taintHighlightColor = opt.getColor(TAINT_HIGHLIGHT, TAINT_HIGHLIGHT_COLOR);
@@ -189,7 +192,7 @@ public class TaintOptions {
 
 	}
 
-	public String getTaintOutputForm() {
+	public TaintFormat getTaintOutputForm() {
 		return taintQueryOutputForm;
 	}
 
@@ -233,13 +236,17 @@ public class TaintOptions {
 		return taintHighlightStyle;
 	}
 
+	public TaintDirection getTaintDirection() {
+		return taintQueryDirection;
+	}
+
 	public Boolean getTaintUseAllAccess() {
 		return taintUseAllAccess;
 	}
 
-	public void setTaintOutputForm(String form) {
+	public void setTaintOutputForm(TaintFormat form) {
 		this.taintQueryOutputForm = form;
-		taintProvider.setOption(OP_KEY_TAINT_QUERY_OUTPUT_FORM, form);
+		taintProvider.setOption(OP_KEY_TAINT_QUERY_OUTPUT_FORM, form.getOptionString());
 	}
 
 	public void setTaintFactsDirectory(String path) {
@@ -269,12 +276,16 @@ public class TaintOptions {
 
 	public void setTaintHighlightStyle(Highlighter style) {
 		this.taintHighlightStyle = style;
-		taintProvider.setOption(TAINT_HIGHLIGHT_STYLE, style.name());
+		taintProvider.setOption(TAINT_HIGHLIGHT_STYLE, style.getOptionString());
 		taintProvider.changeHighlighter(style);
+	}
+
+	public void setTaintDirection(TaintDirection direction) {
+		this.taintQueryDirection = direction;
+		taintProvider.setOption(OP_KEY_TAINT_QUERY_DIRECTION, direction.getOptionString());
 	}
 
 	public void setTaintAllAccess(Boolean allAccess) {
 		this.taintUseAllAccess = allAccess;
-		taintProvider.setAllAccess(TAINT_ALL_ACCESS, allAccess);
 	}
 }

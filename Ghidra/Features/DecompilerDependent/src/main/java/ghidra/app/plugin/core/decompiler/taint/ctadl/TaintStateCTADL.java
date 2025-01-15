@@ -23,6 +23,7 @@ import java.util.List;
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompiler.taint.*;
+import ghidra.app.plugin.core.decompiler.taint.TaintPlugin.TaintDirection;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
@@ -48,8 +49,23 @@ public class TaintStateCTADL extends AbstractTaintState {
 		paramList.add("--directory");
 		paramList.add(indexDirectory);
 		paramList.add("query");
+		Comparable<TaintDirection> direction = taintOptions.getTaintDirection();
+		if (!direction.equals(TaintDirection.DEFAULT)) {
+			paramList.add("--compute-slices");
+			switch (taintOptions.getTaintDirection()) {
+				case TaintDirection.BOTH ->
+					paramList.add("all");
+				case TaintDirection.FORWARD ->
+					paramList.add("fwd");
+				case TaintDirection.BACKWARD ->
+					paramList.add("bwd");
+				default -> {
+					// No action
+				}
+			}
+		}
 		paramList.add("-j8");
-		paramList.add("--format=" + taintOptions.getTaintOutputForm());
+		paramList.add("--format=" + taintOptions.getTaintOutputForm().toString());
 	}
 
 	@Override
@@ -131,6 +147,10 @@ public class TaintStateCTADL extends AbstractTaintState {
 			if (addr != null && addr.getOffset() != 0 && !mark.bySymbol()) {
 				if (!TaintState.isActualParam(token) && !(hv instanceof HighParam)) {
 					writer.println("\tVNODE_PC_ADDRESS(vn, " + addr.getOffset() + "),");
+				}
+				else { // NB: we still want a local match
+					writer.println("\t(PCODE_INPUT(i, _, vn) ; PCODE_OUTPUT(i, vn)),");
+					writer.println("\tPCODE_TARGET(i, " + addr.getOffset() + "),");
 				}
 			}
 			if (mark.bySymbol()) {

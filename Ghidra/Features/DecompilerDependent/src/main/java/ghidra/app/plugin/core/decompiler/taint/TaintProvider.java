@@ -34,6 +34,7 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin.Highlighter;
+import ghidra.app.plugin.core.decompiler.taint.TaintState.TaskType;
 import ghidra.app.plugin.core.decompiler.taint.actions.*;
 import ghidra.app.services.CodeViewerService;
 import ghidra.framework.options.OptionsChangeListener;
@@ -63,8 +64,6 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 	private TaintState state;
 
 	private DecompilerHighlighter highlighter;
-
-	private Boolean allAccess;
 
 	private TaintCTokenHighlighterPalette highlightPalette;
 	private int paletteIndex;
@@ -250,12 +249,15 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 	 * <p>
 	 * TODO: We could limit our taint addresses to those in this function...? TODO:
 	 * We should reset the palette cache to start coloring from the start.
+	 * 
+	 * @param taskType subtract previous result
 	 */
-	public void setTaint() {
+	public void setTaint(TaskType taskType) {
 		if (navigatable == null) {
 			navigatable = tool.getService(CodeViewerService.class).getNavigatable();
 		}
 
+		state.setTaskType(taskType);
 		AddressSet taintAddressSet = state.getTaintAddressSet();
 		Msg.info(this, "setTaint(): " + taintAddressSet.toString());
 
@@ -274,14 +276,16 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 		// apply highlights to the decompiler window.
 		highlighter.applyHighlights();
+		state.setTaskType(TaskType.SET_TAINT);
+	}
+	
+	public void setTaint() {
+		setTaint(TaskType.SET_TAINT);
 	}
 
 	public boolean matchOn(ClangToken token) {
 
-		Map<Address, Set<TaintQueryResult>> taintVarnodeMap = state.getTaintVarnodeMap();
-
-		if (taintVarnodeMap == null || taintVarnodeMap.isEmpty() ||
-			token instanceof ClangBreak ||
+		if (token instanceof ClangBreak ||
 			token instanceof ClangTypeToken ||
 			token instanceof ClangSyntaxToken ||
 			token instanceof ClangCommentToken) {
@@ -298,7 +302,8 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 		Address tokenFuncEntryAddr = hf.getFunction().getEntryPoint();
 
 		// Just the tainted elements that are in this function.
-		Set<TaintQueryResult> funcTaintSet = taintVarnodeMap.get(tokenFuncEntryAddr);
+		Set<TaintQueryResult> funcTaintSet = state.getQuerySet(tokenFuncEntryAddr);
+		//Set<TaintQueryResult> funcTaintSet = taintVarnodeMap.get(tokenFuncEntryAddr);
 		if (funcTaintSet == null || funcTaintSet.isEmpty()) {
 			return false;
 		}
@@ -456,14 +461,6 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 	public void changeHighlighter(Highlighter hl) {
 		plugin.changeHighlighter(hl);
-	}
-
-	public boolean isAllAccess() {
-		return allAccess;
-	}
-
-	public void setAllAccess(String taintAllAccess, Boolean allAccess) {
-		this.allAccess = allAccess;
 	}
 
 	public int getTokenCount() {
