@@ -108,7 +108,7 @@ def put_processes_exdi(state, radix):
     radix = util.get_convenience_variable('output-radix')
     keys = []
     result = util.dbg._base.cmd("!process 0 0")
-    lines = result.split("\n")
+    lines = list(x for x in result.splitlines() if "DeepFreeze" not in x)
     count = int((len(lines)-2)/5)
     for i in range(0,count):
         l1 = lines[i*5+1].strip().split() # PROCESS
