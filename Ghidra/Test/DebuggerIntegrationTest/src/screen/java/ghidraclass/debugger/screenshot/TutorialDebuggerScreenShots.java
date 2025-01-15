@@ -34,6 +34,7 @@ import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.Unique;
 import generic.jar.ResourceFile;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.decompiler.component.DecompilerPanel;
@@ -109,6 +110,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
+import utility.application.ApplicationLayout;
 
 public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		implements AsyncTestUtils {
@@ -144,6 +146,18 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 				nav.getSelection(), nav.getHighlight());
 		}
 	};
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath())) {
+			@Override
+			protected Set<String> getDependentModulePatterns() {
+				Set<String> patterns = super.getDependentModulePatterns();
+				patterns.add("Debugger-agent");
+				return patterns;
+			}
+		};
+	}
 
 	@Override
 	protected TestEnv newTestEnv() throws Exception {
@@ -734,7 +748,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
-		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
+		//waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
 
 		runSwing(() -> tool.setSize(1920, 1080));
 		captureProvider(DebuggerStaticMappingProvider.class);

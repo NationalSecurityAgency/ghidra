@@ -219,14 +219,23 @@ when using Trace RMI.
 Note this technique is only possible because the target waits for input.
 
 1. Run `termmines` in a terminal outside of Ghidra with the desired command-line parameters.
-1. In the Ghidra Debugger, use the **Launch** button drop-down and select **Configured and Launch termmines using... &rarr; raw gdb**.
-   The "raw" connector will give us a GDB session without a target.
+1. In the Ghidra Debugger, use the **Launch** button drop-down and select **Configure and Launch termmines using... &rarr; gdb**.
+1. Clear the **Image** field to configure a GDB session without a target.
 1. Ghidra needs to know the location of gdb and the architecture of the intended target.
    The defaults are correct for 64-bit x86 targets using the system's copy of GDB.
-   Probably, you can just click **Launch**.
+1. Click **Launch**.
 1. In the **Model** window (to the left), expand the *Available* node.
 1. In the filter box, type `termmines`.
 1. Right click on the node and select **Attach**, or, if you prefer, note the PID, e.g. 1234, then in the **Terminal** type, e.g., `attach 1234`.
+
+**TIP**: In later exercises, you may use the **Reset** button to re-populate the default value for the **Image** field.
+Be sure to change **Run Command** back to "start", though.
+
+### Troubleshooting
+
+If the **Model** window is blank, check for a "noname" tab in the Dynamic Listing, and click it.
+
+If the **Model** window seems incomplete after attaching, check that its Filter box is cleared.
 
 ## Exercise: Attach
 

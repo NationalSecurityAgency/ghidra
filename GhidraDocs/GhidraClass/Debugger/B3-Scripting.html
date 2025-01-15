@@ -168,17 +168,14 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb1-6"><a href="#cb1-6"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">run</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
 <span id="cb1-7"><a href="#cb1-7"></a>    <span class="op">}</span></span>
 <span id="cb1-8"><a href="#cb1-8"></a><span class="op">}</span></span></code></pre></div>
-<p><strong>NOTE</strong>: The scripting API has been refactored a little
-since the transition from Recorder-based to TraceRmi-based targets.
-Parts of the API that are back-end agnostic are accessible from the
+<p><strong>NOTE</strong>: The scripting API has been refactored since
+the transition from Recorder-based to TraceRmi-based targets. Parts of
+the API that are back-end agnostic are accessible from the
 <code>FlatDebuggerAPI</code> interface. Parts of the API that require a
-specific back end are in <code>FlatDebuggerRmiAPI</code> and
-<code>FlatDebuggerRecorderAPI</code>, the latter of which is deprecated.
-If a script written for version 11.0.2 or prior is not compiling, it can
-most likely be patched up by changing
-<code>implements FlatDebuggerAPI</code> to
-<code>implements FlatDebuggerRecorderAPI</code>, but we recommend
-porting it to use <code>implements FlatDebuggerRmiAPI</code>.</p>
+specific back end are in <code>FlatDebuggerRmiAPI</code>. The old
+<code>FlatDebuggerRecorderAPI</code> was removed in Ghidra 11.3, and
+scripts needing it should be ported to
+<code>FlatDebuggerRmiAPI</code>.</p>
 <p>Technically, the Debugger’s “deep” API is accessible to scripts;
 however, the flat API is preferred for scripting. Also, the flat API is
 usually more stable than the deep API. However, because the dynamic

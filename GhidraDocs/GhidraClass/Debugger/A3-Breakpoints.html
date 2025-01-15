@@ -273,7 +273,9 @@ toggle action, press <strong><code>K</code></strong> on the keyboard, or
 double-click its icon in the margin.</li>
 <li>From the Model window, expand the <em>Breakpoints</em> node and
 double-click a breakpoint, or select one with the keyboard and press
-<strong><code>ENTER</code></strong>.</li>
+<strong><code>ENTER</code></strong>. For GDB, this must be done from the
+top-level <em>Breakpoints</em> node, not the one subordinate to the
+<em>inferior</em>.</li>
 <li>From the Breakpoints window, single-click the breakpoint’s status
 icon, right-click an entry and select a toggle action, or create a
 selection and use a toggling action from the local toolbar. Either panel
@@ -340,7 +342,8 @@ synchronized after importing libc</figcaption>
 <section id="troubleshooting" class="level4">
 <h4>Troubleshooting</h4>
 <p>If it seems nothing has changed, except now you have a second program
-database open, then the new module may not be successfully mapped.</p>
+database open, then the new module may not be successfully mapped. Try
+one or more of the following:</p>
 <ol type="1">
 <li>Re-check the Debug Console window and verify the note has been
 removed.</li>
@@ -349,6 +352,9 @@ system, so the name of the module and the name of the program database
 do not match.</li>
 <li>Ensure that <code>libc</code> is the current program (tab) in the
 Static Listing.</li>
+<li>Wait for auto-analysis of <code>libc</code> to complete. Yeah, it
+may take a moment, but auto-mapping is queued as a background task, and
+so it cannot map things until auto-analysis is done.</li>
 <li>In the Modules window, right-click on <code>libc</code>, and select
 <strong>Map Module to libc</strong>. (Names and titles will likely
 differ.)</li>
@@ -446,7 +452,7 @@ boards for any <code>termmines</code> session.</p>
 <p>Write a program that takes a seed from the user and prints a diagram
 of the first game board with the mines indicated. Optionally, have it
 print each subsequent game board when the user presses
-<strong>ENTER</strong>. Check your work by re-launching
+<strong><code>ENTER</code></strong>. Check your work by re-launching
 <code>termmines</code>, capturing its seed, inputting it into your
 program, and then winning the game. Optionally, win 2 more games in the
 same session.</p>
