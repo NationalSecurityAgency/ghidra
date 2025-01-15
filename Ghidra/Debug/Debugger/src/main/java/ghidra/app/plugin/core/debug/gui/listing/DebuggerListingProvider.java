@@ -235,7 +235,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
 				DebuggerListingProvider.this);
 
-			getListingPanel().addIndexMapChangeListener(e -> this.doTrack());
+			getListingPanel().addIndexMapChangeListener(e -> this.doTrack(TrackCause.DB_CHANGE));
 		}
 
 		@Override

@@ -234,7 +234,7 @@ public class ObjectsTreePanel extends JPanel {
 	}
 
 	public void goToCoordinates(DebuggerCoordinates coords) {
-		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
+		if (DebuggerCoordinates.equalsIgnoreTargetAndView(current, coords)) {
 			return;
 		}
 		previous = current;

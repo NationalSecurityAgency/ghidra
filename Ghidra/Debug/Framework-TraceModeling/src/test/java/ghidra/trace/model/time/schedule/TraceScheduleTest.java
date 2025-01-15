@@ -470,4 +470,37 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 				"t0-{r0=0x200000001};t0-{r1l=0x3}", time.toString());
 		}
 	}
+
+	@Test
+	public void testDiffersOnlyByPatch() throws Exception {
+		assertTrue(TraceSchedule.parse("1").differsOnlyByPatch(TraceSchedule.parse("1")));
+		assertTrue(TraceSchedule.parse("1:1").differsOnlyByPatch(TraceSchedule.parse("1:1")));
+		assertTrue(TraceSchedule.parse("1:1.1").differsOnlyByPatch(TraceSchedule.parse("1:1.1")));
+		assertTrue(TraceSchedule.parse("1:1;{r0=1}")
+				.differsOnlyByPatch(TraceSchedule.parse("1:1;{r0=1}")));
+		assertTrue(TraceSchedule.parse("1:1.1;{r0=1}")
+				.differsOnlyByPatch(TraceSchedule.parse("1:1.1;{r0=1}")));
+
+		assertFalse(TraceSchedule.parse("1").differsOnlyByPatch(TraceSchedule.parse("1:1")));
+		assertFalse(TraceSchedule.parse("1:1").differsOnlyByPatch(TraceSchedule.parse("1")));
+
+		assertFalse(TraceSchedule.parse("1:1").differsOnlyByPatch(TraceSchedule.parse("1:2")));
+		assertFalse(TraceSchedule.parse("1:2").differsOnlyByPatch(TraceSchedule.parse("1:1")));
+
+		assertFalse(TraceSchedule.parse("1:1").differsOnlyByPatch(TraceSchedule.parse("1:1.1")));
+		assertFalse(TraceSchedule.parse("1:1.1").differsOnlyByPatch(TraceSchedule.parse("1:1")));
+
+		assertTrue(TraceSchedule.parse("1").differsOnlyByPatch(TraceSchedule.parse("1:{r0=1}")));
+		assertFalse(TraceSchedule.parse("1:{r0=1}").differsOnlyByPatch(TraceSchedule.parse("1")));
+
+		assertTrue(
+			TraceSchedule.parse("1:1").differsOnlyByPatch(TraceSchedule.parse("1:1;{r0=1}")));
+		assertFalse(
+			TraceSchedule.parse("1:1;{r0=1}").differsOnlyByPatch(TraceSchedule.parse("1:1")));
+
+		assertTrue(
+			TraceSchedule.parse("1:1.1").differsOnlyByPatch(TraceSchedule.parse("1:1.1;{r0=1}")));
+		assertFalse(
+			TraceSchedule.parse("1:1.1;{r0=1}").differsOnlyByPatch(TraceSchedule.parse("1:1.1")));
+	}
 }
