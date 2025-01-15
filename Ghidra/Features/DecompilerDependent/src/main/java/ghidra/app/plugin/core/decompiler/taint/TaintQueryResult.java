@@ -41,22 +41,14 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 
 	public TaintQueryResult(Map<String, Object> result, Run run, LogicalLocation ll) {
 		this(
-			SarifUtils.extractDisplayName(fqnFromLoc(run, ll)),
-			fqnFromLoc(run, ll).getFullyQualifiedName(), 
+			SarifUtils.extractDisplayName(ll),
+			ll.getFullyQualifiedName(), 
 			(Address) result.get("Address"),
 			(Address) result.get("entry"),
 			new ArrayList<String>(),
 			(Address) result.get("Address") == null);
 		String value = (String) result.get("value");
 		addLabel(value);
-	}
-
-	private static LogicalLocation fqnFromLoc(Run run, LogicalLocation ll) {
-		String fqn = ll.getFullyQualifiedName();
-		if (fqn == null) {
-			ll = SarifUtils.getLogicalLocation(run, ll.getIndex());
-		}
-		return ll;
 	}
 
 	public String getLabel() {
@@ -111,8 +103,11 @@ public record TaintQueryResult(String name,String fqname, Address iaddr, Address
 		}
 		else {
 			// if neither are function-level, the addresses must match
+			// NB: parameter/local use matches on the representative
 			if (!iaddr.equals(vaddr)) {
-				return null;
+				if (!(hv instanceof HighParam) || !iaddr.equals(hv.getRepresentative().getPCAddress())) {
+					return null;
+				}
 			}
 		}
 		if (hvName.startsWith(":")) { // fqname is FUN@FUN:name:vname
