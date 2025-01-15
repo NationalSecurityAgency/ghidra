@@ -373,6 +373,7 @@ issues in Eclipse:
     * Select root directory to be your downloaded or cloned ghidra source repository
     * Check _"Search for nested projects"_
     * Click _Finish_
+    * A _"Marketplace solutions available"_ dialog may appear at this point. You can ignore it by closing it or clicking _Cancel_.
     
     This should get Eclipse back to a fresh state. There should never be a need to re-clone the
     repository.
