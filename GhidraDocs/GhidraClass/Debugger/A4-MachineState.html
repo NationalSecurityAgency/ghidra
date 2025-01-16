@@ -195,8 +195,8 @@ pointer there, just like you would in the Static Listing. You can now
 navigate to that address by double-clicking it. To return to the stack
 pointer, you can use the back arrow in the global toolbar, you can click
 the <img src="images/register-marker.png" alt="track location" /> Track
-Location button, or you can double-click the <code>sp = [Address]</code>
-label in the top right of the Dynamic Listing.</p>
+Location button, or you can double-click the “sp = …” label in the top
+right of the Dynamic Listing.</p>
 <p>To examine a more complicated stack segment, we will break at
 <code>rand</code>. Ensure your breakpoint at <code>rand</code> is
 enabled and press <img src="images/resume.png" alt="resume" /> Resume.
@@ -295,6 +295,13 @@ section of <code>termmines</code> in the Static Listing, the Dynamic
 Listing will follow along showing you the live values in memory. You can
 also experiment by placing code units in the Dynamic Listing before
 committing to them in the Static Listing.</p>
+<p><strong>NOTE</strong>: There’s a known issue with auto-seek obtruding
+user navigation in the listings. In most cases, just navigating again
+will make it stick. If it becomes a real annoyance, set the
+<strong>Auto-Track</strong> drop-down in the top right of the Dynamic
+Listing to <strong>Do Not Track</strong> while you’re doing static RE.
+Be sure to put it back to <strong>Track Program Counter</strong> when
+you are done.</p>
 <section id="questions" class="level4">
 <h4>Questions:</h4>
 <ol type="1">
@@ -450,7 +457,7 @@ address is into <code>main</code>, you could use
 href="../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml">Sleigh
 documentation</a>.</p>
 <p>Sleigh is a bit unconventional in that its operators are typed rather
-than its variables. All variables are fix-length bit vectors. Their
+than its variables. All variables are fixed-length bit vectors. Their
 sizes are specified in bytes, but they have no other type
 information.</p>
 <section id="variables-and-constants" class="level3">

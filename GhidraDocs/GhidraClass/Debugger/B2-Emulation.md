@@ -377,7 +377,7 @@ After you have written your Sleigh code:
 1. Click ![resume button](images/resume.png) **Resume**.
 
 Stubbing any remaining external calls is left as an exercise.
-You are successful when the emulator crashes with `pc = 00000000`.
+You are successful when the emulator crashes with "pc = 00000000".
 
 Clear or disable your breakpoint and invalidate the emulator cache again before proceeding to the next technique.
 
@@ -412,7 +412,7 @@ return [RIP];
 Notice that we cannot just write `RET`, but instead must write the Sleigh code to mimic a `RET`.
 As with the `CALL` override technique, you must now invalidate the emulator cache and resume.
 Stubbing any remaining external functions is left as an exercise.
-You are successful when the emulator crashes with `pc = 00000000`.
+You are successful when the emulator crashes with "pc = 00000000".
 
 ### Wrapping Up
 
