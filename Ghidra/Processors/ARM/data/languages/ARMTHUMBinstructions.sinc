@@ -2880,7 +2880,7 @@ define pcodeop setProcStackPointerLimit;
 
 define pcodeop getMainStackPointerLimit;
 
-:mrs^ItCond Rd0811,msplim 		is TMode=1 & ItCond & op0=0xf3ff; op12=0x8 & Rd0811 & sysm=10 & msplim
+:mrs^ItCond Rd0811,msplim 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=10 & msplim
 {
   build ItCond;
   Rd0811 = getMainStackPointerLimit();
@@ -2888,7 +2888,7 @@ define pcodeop getMainStackPointerLimit;
 
 define pcodeop getProcessStackPointerLimit;
 
-:mrs^ItCond Rd0811,psplim 		is TMode=1 & ItCond & op0=0xf3ff; op12=0x8 & Rd0811 & sysm=11 & psplim
+:mrs^ItCond Rd0811,psplim 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=11 & psplim
 {
   build ItCond;
   Rd0811 = getProcessStackPointerLimit();
