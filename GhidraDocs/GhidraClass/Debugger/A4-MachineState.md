@@ -137,11 +137,6 @@ Because you are in a dynamic session, you have an example board to work with.
 As you navigate the `.data` section of `termmines` in the Static Listing, the Dynamic Listing will follow along showing you the live values in memory.
 You can also experiment by placing code units in the Dynamic Listing before committing to them in the Static Listing.
 
-**NOTE**: There's a known issue with auto-seek obtruding user navigation in the listings.
-In most cases, just navigating again will make it stick.
-If it becomes a real annoyance, set the **Auto-Track** drop-down in the top right of the Dynamic Listing to **Do Not Track** while you're doing static RE.
-Be sure to put it back to **Track Program Counter** when you are done.
-
 #### Questions:
 
 1. How are the cells allocated?

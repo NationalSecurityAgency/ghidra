@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,10 @@ public class DebuggerTrackLocationTrait {
 	protected static final AutoConfigState.ClassHandler<DebuggerTrackLocationTrait> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerTrackLocationTrait.class, MethodHandles.lookup());
 
+	public enum TrackCause {
+		USER, DB_CHANGE, NAVIGATION, EMU_PATCH, SPEC_CHANGE_API;
+	}
+
 	protected class ForTrackingListener extends TraceDomainObjectListener {
 
 		public ForTrackingListener() {
@@ -68,7 +72,7 @@ public class DebuggerTrackLocationTrait {
 			if (!tracker.affectedByBytesChange(space, range, current)) {
 				return;
 			}
-			doTrack();
+			doTrack(TrackCause.DB_CHANGE);
 		}
 
 		private void stackChanged(TraceStack stack) {
@@ -79,7 +83,7 @@ public class DebuggerTrackLocationTrait {
 			if (!tracker.affectedByStackChange(stack, current)) {
 				return;
 			}
-			doTrack();
+			doTrack(TrackCause.DB_CHANGE);
 		}
 	}
 
@@ -188,11 +192,11 @@ public class DebuggerTrackLocationTrait {
 	public void setSpec(LocationTrackingSpec spec) {
 		if (action == null) {
 			// It might if the client doesn't need a new button, e.g., TraceDiff
-			doSetSpec(spec);
+			doSetSpec(spec, TrackCause.SPEC_CHANGE_API);
 		}
 		else if (!hasSpec(spec)) {
 			Msg.warn(this, "No action state for given tracking spec: " + spec);
-			doSetSpec(spec);
+			doSetSpec(spec, TrackCause.SPEC_CHANGE_API);
 		}
 		else {
 			action.setCurrentActionStateByUserData(spec);
@@ -234,21 +238,21 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	protected void clickedSpecButton(ActionContext ctx) {
-		doTrack();
+		doTrack(TrackCause.USER);
 	}
 
 	protected void clickedSpecMenu(ActionState<LocationTrackingSpec> newState,
 			EventTrigger trigger) {
-		doSetSpec(newState.getUserData());
+		doSetSpec(newState.getUserData(), TrackCause.USER);
 	}
 
-	protected void doSetSpec(LocationTrackingSpec spec) {
+	protected void doSetSpec(LocationTrackingSpec spec, TrackCause cause) {
 		if (this.spec != spec) {
 			this.spec = spec;
 			this.tracker = spec.getTracker();
 			specChanged(spec);
 		}
-		doTrack();
+		doTrack(cause);
 	}
 
 	protected ProgramLocation computeTrackedLocation() {
@@ -282,9 +286,15 @@ public class DebuggerTrackLocationTrait {
 		return spec.getLocationLabel() + " = " + trackedLocation.getByteAddress();
 	}
 
-	protected void doTrack() {
+	protected void doTrack(TrackCause cause) {
 		try {
-			trackedLocation = computeTrackedLocation();
+			ProgramLocation newLocation = computeTrackedLocation();
+			if (Objects.equals(newLocation, trackedLocation)) {
+				if (cause == TrackCause.DB_CHANGE || cause == TrackCause.EMU_PATCH) {
+					return;
+				}
+			}
+			trackedLocation = newLocation;
 			locationTracked();
 		}
 		catch (Throwable ex) {
@@ -315,11 +325,12 @@ public class DebuggerTrackLocationTrait {
 		if (doListeners) {
 			removeOldListeners();
 		}
+		boolean isPatch = current.differsOnlyByPatch(coordinates);
 		current = coordinates;
 		if (doListeners) {
 			addNewListeners();
 		}
-		doTrack();
+		doTrack(isPatch ? TrackCause.EMU_PATCH : TrackCause.NAVIGATION);
 	}
 
 	public void writeConfigState(SaveState saveState) {
