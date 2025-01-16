@@ -90,6 +90,27 @@ Its implementation is named `JitPcodeEmulator`, and it's a near drop-in replacem
 `PcodeEmulator`. See its javadoc for usage and implementation details. This is very new, so there
 may still be many bugs.
 
+## Source File Information
+Source file and line information can now be added to Ghidra using a Program's SourceFileManager. 
+The DWARF, PDB, and Go analyzers now record this information by default. Source information can also
+be added programmatically; see the example scripts in the _SourceMapping_ script category. 
+Source information can be viewed in the _"Source Map"_ Listing Field or the 
+`SourceFilesTablePlugin`, which is accessible from the Code Browser via 
+_Window -> Source Files and Transforms_.
+
+The scripts `OpenSourceFileAtLineInEclipseScript.java` and `OpenSourceFileAtLineinVSCodeScript.java`
+open a source file at the appropriate line in Eclipse or Visual Studio Code when run on an address
+in Ghidra with source file information (consider keybinding your preferred script). The 
+SourceFilesTablePlugin can be used to modify the source file paths stored in the SourceFileManager
+before sending them to Eclipse or Visual Studio Code.
+
+## Function Graph
+The Function Graph has had a number of improvements:
+* Added new _"Flow Chart"_ layouts
+* Position of the satellite view can be configured
+* Ctrl-Space toggles between the Listing and the Function Graph (starting fully zoomed in vs. fully
+  zoomed out is controlled by a Function Graph option).
+
 ## Other Improvements 
 * Much of Ghidra's standalone documentation has been modernized to the Markdown format. Generated 
   HTML versions are provided alongside the Markdown files for convenience. Converting all relevant
