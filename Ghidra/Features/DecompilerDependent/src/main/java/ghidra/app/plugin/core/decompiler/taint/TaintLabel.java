@@ -51,8 +51,11 @@ public class TaintLabel {
 		}
 
 		Varnode exactSpot = token.getVarnode();
-		if (exactSpot != null) { // The user pointed at a particular usage, not just the vardecl
-			highVar = hfun.splitOutMergeGroup(exactSpot.getHigh(), exactSpot);
+		if (exactSpot != null) { // The user pointed at a particular usage, not just the vardecl			
+			HighVariable high = exactSpot.getHigh();
+			if (high instanceof HighLocal) {
+				highVar = hfun.splitOutMergeGroup(high, exactSpot);
+			}
 		}
 
 		String fn = token instanceof ClangFuncNameToken ftoken ? ftoken.getText()

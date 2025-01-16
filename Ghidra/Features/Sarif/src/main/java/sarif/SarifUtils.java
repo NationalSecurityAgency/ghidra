@@ -68,13 +68,17 @@ public class SarifUtils {
 	// artifactLocation/uri <= the overlayED space name (typically OTHER)
 
 	private static Run currentRun = null;
+	// llocs has indexed per run and is not valid across runs
+	// Attempts to access llocs outside the population phase will throw an error
 	private static LogicalLocation[] llocs;
+	// All of the following have keys that are valid across queries
 	private static List<com.contrastsecurity.sarif.Address> addresses;
 	private static Map<String, Long> nameToOffset = new HashMap<>();
 	private static Map<String, LogicalLocation[]> nodeLocs = new HashMap<>();
 	private static Map<String, String> edgeSrcs = new HashMap<>();
 	private static Map<String, String> edgeDsts = new HashMap<>();
 	private static Map<String, String> edgeDescs = new HashMap<>();
+	private static boolean populating = false;
 
 	public static JsonArray setLocations(Address min, Address max) {
 		AddressSet set = new AddressSet(min, max);
@@ -141,6 +145,9 @@ public class SarifUtils {
 	}
 
 	public static Address locationToAddress(Location location, Program program, boolean useOverlays) {
+		if (!populating) {
+			throw new RuntimeException("Locations valid only during population phase");
+		}
 		Long addr = -1L;
 		PhysicalLocation physicalLocation = location.getPhysicalLocation();
 		if (location.getPhysicalLocation() != null) {
@@ -244,7 +251,9 @@ public class SarifUtils {
 
 	public static Address extractFunctionEntryAddr(Program program, String fqname) {
 		String addr = null;
-		if (fqname.contains("!")) {
+		// NB: ! can be used both as a delimiter and part of an operator
+		// TODO: This may eventually require a more complicated check
+		if (fqname.contains("!") && !fqname.contains("!=")) {
 			fqname = fqname.substring(0, fqname.indexOf("!"));
 		}
 		String[] parts = fqname.split("@");
@@ -263,10 +272,6 @@ public class SarifUtils {
 		return program.getAddressFactory().getAddress(addr);
 	}
 
-	/**
-	 * @param fqname
-	 * @return
-	 */
 	public static List<Address> extractFQNameAddrPair(Program program, String fqname) {
 		List<Address> addr_pair = new ArrayList<Address>();
 		String[] parts = fqname.split("@");
@@ -350,6 +355,9 @@ public class SarifUtils {
 	}
 
 	public static LogicalLocation getLogicalLocation(Run run, Location loc) {
+		if (!populating) {
+			throw new RuntimeException("Locations valid only during population phase");
+		}
 		Set<LogicalLocation> llocset = loc.getLogicalLocations();
 		if (llocset == null) {
 			return null;
@@ -364,10 +372,6 @@ public class SarifUtils {
 			return next;
 		}
 		return null;
-	}
-
-	public static LogicalLocation getLogicalLocation(Run run, Long index) {
-		return llocs[index.intValue()];
 	}
 
 	public static void validateRun(Run run) {
@@ -407,9 +411,18 @@ public class SarifUtils {
 				Location loc = n.getLocation();
 				if (loc != null) {
 					Set<LogicalLocation> logicalLocations = loc.getLogicalLocations();
-					LogicalLocation[] llocs = new LogicalLocation[logicalLocations.size()];
-					logicalLocations.toArray(llocs);
-					nodeLocs.put(id, llocs);
+					LogicalLocation[] nodells = new LogicalLocation[logicalLocations.size()];
+					int i = 0;
+					for (LogicalLocation ll : logicalLocations) {
+						// NB: These have to be derefenced immediately as they will be invalid for subsequent queries
+						if (ll.getFullyQualifiedName() != null) {
+							nodells[i++] = ll;
+						}
+						else {
+							nodells[i++] = llocs[ll.getIndex().intValue()];
+						}
+					}
+					nodeLocs.put(id, nodells);
 				}
 			}
 		}
@@ -437,6 +450,10 @@ public class SarifUtils {
 
 	public static LogicalLocation[] getNodeLocs(String id) {
 		return nodeLocs.get(id);
+	}
+
+	public static void setPopulating(boolean b) {
+		populating = b;
 	}
 
 }

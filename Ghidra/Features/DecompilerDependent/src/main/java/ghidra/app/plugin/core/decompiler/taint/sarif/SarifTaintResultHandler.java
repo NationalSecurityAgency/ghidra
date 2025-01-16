@@ -23,6 +23,7 @@ import com.contrastsecurity.sarif.*;
 import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.plugin.core.decompiler.taint.*;
+import ghidra.app.plugin.core.decompiler.taint.TaintState.TaskType;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
@@ -49,12 +50,12 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 	}
 
 	@Override
-	public void handle(SarifDataFrame dframe, Run run, Result result, Map<String, Object> map) {
+	public void handle(SarifDataFrame dframe, Run r, Result res, Map<String, Object> map) {
 		this.df = dframe;
 		this.controller = df.getController();
 
-		this.run = run;
-		this.result = result;
+		this.run = r;
+		this.result = res;
 
 		String ruleId = result.getRuleId();
 		if (ruleId == null || ruleId.equals("C0001")) {
@@ -199,6 +200,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 	private class ApplyTaintViaVarnodesTask extends ProgramTask {
 
 		private SarifResultsTableProvider tableProvider;
+		protected TaskType taskType = TaskType.SET_TAINT;
 
 		protected ApplyTaintViaVarnodesTask(SarifResultsTableProvider provider) {
 			super(provider.getController().getProgram(), "ApplyTaintViaVarnodesTask", true, true,
@@ -224,7 +226,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			PluginTool tool = tableProvider.getController().getPlugin().getTool();
 			TaintService service = tool.getService(TaintService.class);
 			if (service != null) {
-				service.setVarnodeMap(map, true);
+				service.setVarnodeMap(map, true, taskType);
 			}
 		}
 
@@ -318,7 +320,7 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 				}
 			}
 
-			service.setVarnodeMap(map, false);
+			service.setVarnodeMap(map, false, TaskType.SET_TAINT);
 			service.setAddressSet(set, false);
 		}
 
@@ -363,4 +365,68 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		return vset;
 	}
 
+	// Saving these for later - on the fence re use case
+	/*
+	DockingAction applyDelta = new DockingAction("Apply delta", getKey()) {
+		@Override
+		public void actionPerformed(ActionContext context) {
+			provider.filterTable.getTable().selectAll();
+			TaskLauncher.launch(new ApplyDeltaViaVarnodesTask(provider));
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isEnabled;
+		}
+
+		@Override
+		public boolean isAddToPopup(ActionContext context) {
+			return isEnabled;
+		}
+	};
+	applyDelta.setDescription("Apply delta");
+	applyDelta.setToolBarData(new ToolBarData(Icons.COLLAPSE_ALL_ICON));
+	provider.addLocalAction(applyDelta);
+
+	DockingAction initDelta = new DockingAction("Set base for delta", getKey()) {
+		@Override
+		public void actionPerformed(ActionContext context) {
+			TaskLauncher.launch(new SetDeltaBaseTask(provider));
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return isEnabled;
+		}
+
+		@Override
+		public boolean isAddToPopup(ActionContext context) {
+			return isEnabled;
+		}
+	};
+	initDelta.setDescription("Initialize delta");
+	initDelta.setToolBarData(new ToolBarData(Icons.INFO_ICON));
+	provider.addLocalAction(initDelta);
+	*/
+
+	/*
+	private class ApplyDeltaViaVarnodesTask extends ApplyTaintViaVarnodesTask {
+		
+		protected ApplyDeltaViaVarnodesTask(SarifResultsTableProvider provider) {
+			super(provider);
+			this.delta = TaskType.APPLY_DELTA;
+		}
+		
+	}
+	
+	private class SetDeltaBaseTask extends ApplyTaintViaVarnodesTask {
+		
+		protected SetDeltaBaseTask(SarifResultsTableProvider provider) {
+			super(provider);
+			this.delta = TaskType.SET_DELTA;
+		}
+		
+	}
+	*/
+	
 }
