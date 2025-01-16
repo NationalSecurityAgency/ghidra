@@ -360,12 +360,19 @@ When submitting help tickets and pull requests, please tag those related to the 
 After pulling or syncing with the latest Ghidra source repository, you might run into the following
 issues in Eclipse:
 
-* __Problem:__ _There are Eclipse compilation errors that I don't know how to deal with._
+* __Problem:__ _There are Eclipse compilation errors that I don't know how to deal with...I give up!_
   * __Solution:__
-    * From Eclipse, select all projects in the _Package Explorer_ or _Project Explorer_
-    * Right-click on them, and then click _Delete_
+    * From Eclipse, collapse all projects in the _Package Explorer_ or _Project Explorer_ by
+      clicking the `⊟` icon in that frame
+    * Locate any projects in the _Package Explorer_ or _Project Explorer_ that have little `?` icons
+      on them (these projects should no longer be in source control)
+    * Right-click on __only them__, and then click _Delete_.
+    * __CHECK__ the _"Delete project contents on disk"_ checkbox.
+    * Click _OK_ (confirm git does not contain any new unstaged files for delete)
+    * Select all projects in the _Package Explorer_ or _Project Explorer_
+    * Right-click on them, and then click _Delete_ (this may not work if projects are not collapsed)
     * Leave _"Delete project contents on disk"_ checkbox __UNCHECKED__
-    * Click _OK_
+    * Click _OK_.  You should now have an empty _Package Explorer_ or _Project Explorer_.
     * `gradle -I gradle/support/fetchDependencies.gradle`
     * `gradle prepdev cleanEclipse eclipse buildNatives`
     * From Eclipse, _File -> Import..._
