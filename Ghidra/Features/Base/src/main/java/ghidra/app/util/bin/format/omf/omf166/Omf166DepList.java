@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public class Omf166DepList extends OmfRecord {
 			if (info.time != null) {
 				struct.add(DWORD, "time32", null);
 			}
-			struct.add(info.name.toDataType(), "name", null);
+			struct.add(info.name.toDataType(), info.name.getDataTypeSize(), "name", null);
 		}
 		struct.add(BYTE, "checksum", null);
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
