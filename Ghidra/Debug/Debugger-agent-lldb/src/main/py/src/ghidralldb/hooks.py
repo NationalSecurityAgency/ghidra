@@ -110,28 +110,7 @@ class ProcessState(object):
         procobj.set_value('State', 'TERMINATED')
 
 
-class BrkState(object):
-    __slots__ = ('break_loc_counts',)
-
-    def __init__(self):
-        self.break_loc_counts = {}
-
-    def update_brkloc_count(self, b, count):
-        self.break_loc_counts[b.GetID()] = count
-
-    def get_brkloc_count(self, b):
-        return self.break_loc_counts.get(b.GetID(), 0)
-
-    def del_brkloc_count(self, b):
-        if b.GetID() not in self.break_loc_counts:
-            return 0  # TODO: Print a warning?
-        count = self.break_loc_counts[b.GetID()]
-        del self.break_loc_counts[b.GetID()]
-        return count
-
-
 HOOK_STATE = HookState()
-BRK_STATE = BrkState()
 PROC_STATE = {}
 
 
@@ -240,9 +219,9 @@ def process_event(self, listener, event):
             return True
         if lldb.SBWatchpoint.EventIsWatchpointEvent(event):
             btype = lldb.SBWatchpoint.GetWatchpointEventTypeFromEvent(event)
-            bpt = lldb.SBWatchpoint.GetWatchpointFromEvent(eventt)
+            bpt = lldb.SBWatchpoint.GetWatchpointFromEvent(event)
             if btype is lldb.eWatchpointEventTypeAdded:
-                return on_watchpoint_added(bpt)
+                return on_watchpoint_created(bpt)
             if btype is lldb.eWatchpointEventTypeCommandChanged:
                 return on_watchpoint_modified(bpt)
             if btype is lldb.eWatchpointEventTypeConditionChanged:
@@ -550,18 +529,6 @@ def on_exited(event):
             commands.activate()
 
 
-def notify_others_breaks(proc):
-    for num, state in PROC_STATE.items():
-        if num != proc.GetProcessID():
-            state.breaks = True
-
-
-def notify_others_watches(proc):
-    for num, state in PROC_STATE.items():
-        if num != proc.GetProcessID():
-            state.watches = True
-
-
 def modules_changed():
     # Assumption: affects the current process
     proc = util.get_process()
@@ -580,111 +547,80 @@ def on_free_objfile(event):
 
 def on_breakpoint_created(b):
     proc = util.get_process()
-    notify_others_breaks(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
     trace = commands.STATE.trace
     if trace is None:
         return
-    ibpath = commands.PROC_BREAKS_PATTERN.format(procnum=proc.GetProcessID())
     with commands.STATE.client.batch():
         with trace.open_tx("Breakpoint {} created".format(b.GetID())):
-            ibobj = trace.create_object(ibpath)
-            # Do not use retain_values or it'll remove other locs
-            commands.put_single_breakpoint(b, ibobj, proc, [])
-            ibobj.insert()
+            commands.put_single_breakpoint(b, proc)
 
 
 def on_breakpoint_modified(b):
     proc = util.get_process()
-    notify_others_breaks(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
-    old_count = BRK_STATE.get_brkloc_count(b)
     trace = commands.STATE.trace
     if trace is None:
         return
-    ibpath = commands.PROC_BREAKS_PATTERN.format(procnum=proc.GetProcessID())
     with commands.STATE.client.batch():
         with trace.open_tx("Breakpoint {} modified".format(b.GetID())):
-            ibobj = trace.create_object(ibpath)
-            commands.put_single_breakpoint(b, ibobj, proc, [])
-            new_count = BRK_STATE.get_brkloc_count(b)
-            # NOTE: Location may not apply to process, but whatever.
-            for i in range(new_count, old_count):
-                ikey = commands.PROC_BREAK_KEY_PATTERN.format(
-                    breaknum=b.GetID(), locnum=i+1)
-                ibobj.set_value(ikey, None)
+            commands.put_single_breakpoint(b, proc)
 
 
 def on_breakpoint_deleted(b):
     proc = util.get_process()
-    notify_others_breaks(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
-    old_count = BRK_STATE.del_brkloc_count(b)
     trace = commands.STATE.trace
     if trace is None:
         return
-    bpath = commands.BREAKPOINT_PATTERN.format(breaknum=b.GetID())
-    ibobj = trace.proxy_object_path(
-        commands.PROC_BREAKS_PATTERN.format(procnum=proc.GetProcessID()))
+    bpt_path = commands.PROC_BREAK_PATTERN.format(
+        procnum=proc.GetProcessID(), breaknum=b.GetID())
+    bpt_obj = trace.proxy_object_path(bpt_path)
     with commands.STATE.client.batch():
         with trace.open_tx("Breakpoint {} deleted".format(b.GetID())):
-            trace.proxy_object_path(bpath).remove(tree=True)
-            for i in range(old_count):
-                ikey = commands.PROC_BREAK_KEY_PATTERN.format(
-                    breaknum=b.GetID(), locnum=i+1)
-                ibobj.set_value(ikey, None)
+            bpt_obj.remove(tree=True)
 
 
 def on_watchpoint_created(b):
     proc = util.get_process()
-    notify_others_watches(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
     trace = commands.STATE.trace
     if trace is None:
         return
-    ibpath = commands.PROC_WATCHES_PATTERN.format(procnum=proc.GetProcessID())
     with commands.STATE.client.batch():
         with trace.open_tx("Breakpoint {} created".format(b.GetID())):
-            ibobj = trace.create_object(ibpath)
-            # Do not use retain_values or it'll remove other locs
-            commands.put_single_watchpoint(b, ibobj, proc, [])
-            ibobj.insert()
+            commands.put_single_watchpoint(b, proc)
 
 
 def on_watchpoint_modified(b):
     proc = util.get_process()
-    notify_others_watches(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
-    old_count = BRK_STATE.get_brkloc_count(b)
     trace = commands.STATE.trace
     if trace is None:
         return
-    ibpath = commands.PROC_WATCHES_PATTERN.format(procnum=proc.GetProcessID())
     with commands.STATE.client.batch():
         with trace.open_tx("Watchpoint {} modified".format(b.GetID())):
-            ibobj = trace.create_object(ibpath)
-            commands.put_single_watchpoint(b, ibobj, proc, [])
+            commands.put_single_watchpoint(b, proc)
 
 
 def on_watchpoint_deleted(b):
     proc = util.get_process()
-    notify_others_watches(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
     trace = commands.STATE.trace
     if trace is None:
         return
-    bpath = commands.WATCHPOINT_PATTERN.format(watchnum=b.GetID())
-    ibobj = trace.proxy_object_path(
-        commands.PROC_WATCHES_PATTERN.format(procnum=proc.GetProcessID()))
+    wpt_path = commands.PROC_WATCH_PATTERN.format(
+        procnum=proc.GetProcessID(), watchnum=b.GetID())
+    wpt_obj = trace.proxy_object_path(wpt_path)
     with commands.STATE.client.batch():
         with trace.open_tx("Watchpoint {} deleted".format(b.GetID())):
-            trace.proxy_object_path(bpath).remove(tree=True)
+            wpt_obj.remove(tree=True)
 
 
 def install_hooks():

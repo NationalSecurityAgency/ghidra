@@ -181,6 +181,17 @@ public interface TraceObject extends TraceUniqueObject {
 	LifeSet getLife();
 
 	/**
+	 * Check if the object is alive at the given snap
+	 * 
+	 * <p>
+	 * This is preferable to {@link #getLife()}, when we only need to check one snap
+	 * 
+	 * @param snap the snap
+	 * @return true if alive, false if not
+	 */
+	boolean isAlive(long snap);
+
+	/**
 	 * Inserts this object at its canonical path for the given lifespan
 	 * 
 	 * <p>
