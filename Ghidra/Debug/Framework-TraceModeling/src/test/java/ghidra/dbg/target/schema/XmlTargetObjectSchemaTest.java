@@ -16,12 +16,15 @@
 package ghidra.dbg.target.schema;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
 import org.jdom.JDOMException;
 import org.junit.Test;
 
+import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.DefaultTraceObjectSchema.DefaultAttributeSchema;
 import ghidra.trace.model.target.schema.TraceObjectSchema.*;
@@ -74,5 +77,36 @@ public class XmlTargetObjectSchemaTest {
 	public void testDeserialize() throws JDOMException, IOException {
 		SchemaContext result = XmlSchemaContext.deserialize(SCHEMA_XML);
 		assertEquals(CTX, result);
+	}
+
+	@Test
+	public void testSearchWithMultipleImpls() throws Exception {
+		SchemaContext ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name="root">
+				        <interface name="Aggregate" />
+				        <attribute name="Watches" schema="WatchContainer" />
+				        <attribute name="Breaks" schema="BreakContainer" />
+				    </schema>
+				    <schema name="WatchContainer" canonical="yes">
+				        <element schema="Watch" />
+				    </schema>
+				    <schema name="Watch">
+				        <interface name="BreakpointSpec" />
+				        <interface name="BreakpointLocation" />
+				    </schema>
+				    <schema name="BreakContainer" canonical="yes">
+				        <element schema="Break" />
+				    </schema>
+				    <schema name="Break">
+				        <interface name="BreakpointSpec" />
+				        <interface name="BreakpointLocation" />
+				    </schema>
+				</context>
+				""");
+
+		KeyPath found = ctx.getSchema(new SchemaName("root"))
+				.searchForSuitable(TraceObjectBreakpointLocation.class, KeyPath.ROOT);
+		assertNotNull(found);
 	}
 }

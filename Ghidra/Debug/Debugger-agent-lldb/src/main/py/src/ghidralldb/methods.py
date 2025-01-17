@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from concurrent.futures import Future, ThreadPoolExecutor
 import re
@@ -33,13 +33,12 @@ def extre(base, ext):
 
 
 AVAILABLE_PATTERN = re.compile('Available\[(?P<pid>\\d*)\]')
-WATCHPOINT_PATTERN = re.compile('Watchpoints\[(?P<watchnum>\\d*)\]')
-BREAKPOINT_PATTERN = re.compile('Breakpoints\[(?P<breaknum>\\d*)\]')
-BREAK_LOC_PATTERN = extre(BREAKPOINT_PATTERN, '\[(?P<locnum>\\d*)\]')
 PROCESS_PATTERN = re.compile('Processes\[(?P<procnum>\\d*)\]')
 PROC_BREAKS_PATTERN = extre(PROCESS_PATTERN, '\.Breakpoints')
+PROC_BREAK_PATTERN = extre(PROC_BREAKS_PATTERN, '\[(?P<breaknum>\\d*)\]')
+PROC_BREAKLOC_PATTERN = extre(PROC_BREAK_PATTERN, '\[(?P<locnum>\\d*)\]')
 PROC_WATCHES_PATTERN = extre(PROCESS_PATTERN, '\.Watchpoints')
-PROC_WATCHLOC_PATTERN = extre(PROC_WATCHES_PATTERN, '\[(?P<watchnum>\\d*)\]')
+PROC_WATCH_PATTERN = extre(PROC_WATCHES_PATTERN, '\[(?P<watchnum>\\d*)\]')
 ENV_PATTERN = extre(PROCESS_PATTERN, '\.Environment')
 THREADS_PATTERN = extre(PROCESS_PATTERN, '\.Threads')
 THREAD_PATTERN = extre(THREADS_PATTERN, '\[(?P<tnum>\\d*)\]')
@@ -183,7 +182,7 @@ def find_bpt_by_pattern(pattern, object, err_msg):
 
 
 def find_bpt_by_obj(object):
-    return find_bpt_by_pattern(BREAKPOINT_PATTERN, object, "a BreakpointSpec")
+    return find_bpt_by_pattern(PROC_BREAK_PATTERN, object, "a BreakpointSpec")
 
 
 # Oof. no lldb/Python method to get breakpoint by number
@@ -206,7 +205,7 @@ def find_wpt_by_pattern(pattern, object, err_msg):
 
 
 def find_wpt_by_obj(object):
-    return find_wpt_by_pattern(PROC_WATCHLOC_PATTERN, object, "a WatchpointSpec")
+    return find_wpt_by_pattern(PROC_WATCH_PATTERN, object, "a WatchpointSpec")
 
 
 def find_bptlocnum_by_pattern(pattern, object, err_msg):
@@ -219,7 +218,7 @@ def find_bptlocnum_by_pattern(pattern, object, err_msg):
 
 
 def find_bptlocnum_by_obj(object):
-    return find_bptlocnum_by_pattern(BREAK_LOC_PATTERN, object,
+    return find_bptlocnum_by_pattern(PROC_BREAKLOC_PATTERN, object,
                                      "a BreakpointLocation")
 
 
@@ -607,17 +606,20 @@ def break_exception(lang: str):
 
 
 @REGISTRY.method(action='toggle')
-def toggle_watchpoint(breakpoint: sch.Schema('WatchpointSpec'), enabled: bool):
+def toggle_watchpoint(watchpoint: sch.Schema('WatchpointSpec'), enabled: bool):
     """Toggle a watchpoint."""
     wpt = find_wpt_by_obj(watchpoint)
     wpt.enabled = enabled
+    cmd = 'enable' if enabled else 'disable'
+    exec_convert_errors(f'watchpoint {cmd} {wpt.GetID()}')
 
 
 @REGISTRY.method(action='toggle')
 def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
     """Toggle a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)
-    bpt.enabled = enabled
+    cmd = 'enable' if enabled else 'disable'
+    exec_convert_errors(f'breakpoint {cmd} {bpt.GetID()}')
 
 
 @REGISTRY.method(action='toggle')
