@@ -8,7 +8,7 @@ So we can just build PostgreSQL and harvest the object files we need.
 **Note**: For the tutorial, we continue to use the H2 BSim backend. 
 We do not run any PostgreSQL code, we simply analyze some files produced when building PostgreSQL.
 
-Note that these files must be built on a machine running Linux.
+Note that these files must be built on a machine running Linux or macOS.
 Windows users can build these files in a Linux virtual machine.
 
 To build the files, execute the following commands in a shell: [^1] 
