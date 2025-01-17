@@ -709,7 +709,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		if (forType != null) {
 			return forType;
 		}
-		if (type.contains("Breakpoint")) {
+		if (type.contains("Breakpoint") || type.contains("Watchpoint")) {
 			TraceObject object = edge.getChild();
 			TraceObjectValue en =
 				object.getAttribute(snap, TraceObjectTogglable.KEY_ENABLED);

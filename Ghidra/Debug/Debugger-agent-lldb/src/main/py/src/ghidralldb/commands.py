@@ -42,20 +42,16 @@ DEFAULT_REGISTER_BANK = "General Purpose Registers"
 AVAILABLES_PATH = 'Available'
 AVAILABLE_KEY_PATTERN = '[{pid}]'
 AVAILABLE_PATTERN = AVAILABLES_PATH + AVAILABLE_KEY_PATTERN
-BREAKPOINTS_PATH = 'Breakpoints'
 BREAKPOINT_KEY_PATTERN = '[{breaknum}]'
-BREAKPOINT_PATTERN = BREAKPOINTS_PATH + BREAKPOINT_KEY_PATTERN
-WATCHPOINTS_PATH = 'Watchpoints'
 WATCHPOINT_KEY_PATTERN = '[{watchnum}]'
-WATCHPOINT_PATTERN = WATCHPOINTS_PATH + WATCHPOINT_KEY_PATTERN
 BREAK_LOC_KEY_PATTERN = '[{locnum}]'
 PROCESSES_PATH = 'Processes'
 PROCESS_KEY_PATTERN = '[{procnum}]'
 PROCESS_PATTERN = PROCESSES_PATH + PROCESS_KEY_PATTERN
 PROC_WATCHES_PATTERN = PROCESS_PATTERN + '.Watchpoints'
-PROC_WATCH_KEY_PATTERN = PROC_WATCHES_PATTERN + '[{watchnum}]'
+PROC_WATCH_PATTERN = PROC_WATCHES_PATTERN + WATCHPOINT_KEY_PATTERN
 PROC_BREAKS_PATTERN = PROCESS_PATTERN + '.Breakpoints'
-PROC_BREAK_KEY_PATTERN = '[{breaknum}.{locnum}]'
+PROC_BREAK_PATTERN = PROC_BREAKS_PATTERN + BREAKPOINT_KEY_PATTERN
 ENV_PATTERN = PROCESS_PATTERN + '.Environment'
 THREADS_PATTERN = PROCESS_PATTERN + '.Threads'
 THREAD_KEY_PATTERN = '[{tnum}]'
@@ -1474,108 +1470,102 @@ def ghidra_trace_put_available(debugger, command, result, internal_dict):
         put_available()
 
 
-def put_single_breakpoint(b, ibobj, proc, ikeys):
+def put_single_breakpoint(b, proc):
     mapper = STATE.trace.memory_mapper
-    bpath = BREAKPOINT_PATTERN.format(breaknum=b.GetID())
-    brkobj = STATE.trace.create_object(bpath)
+    bpt_path = PROC_BREAK_PATTERN.format(
+        procnum=proc.GetProcessID(), breaknum=b.GetID())
+    bpt_obj = STATE.trace.create_object(bpt_path)
     if b.IsHardware():
-        brkobj.set_value('Expression', util.get_description(b))
-        brkobj.set_value('Kinds', 'HW_EXECUTE')
+        bpt_obj.set_value('Expression', util.get_description(b))
+        bpt_obj.set_value('Kinds', 'HW_EXECUTE')
     else:
-        brkobj.set_value('Expression', util.get_description(b))
-        brkobj.set_value('Kinds', 'SW_EXECUTE')
+        bpt_obj.set_value('Expression', util.get_description(b))
+        bpt_obj.set_value('Kinds', 'SW_EXECUTE')
     cmdList = lldb.SBStringList()
     if b.GetCommandLineCommands(cmdList):
         list = []
         for i in range(0, cmdList.GetSize()):
             list.append(cmdList.GetStringAtIndex(i))
-        brkobj.set_value('Commands', list)
+        bpt_obj.set_value('Commands', list)
     if b.GetCondition():
-        brkobj.set_value('Condition', b.GetCondition())
-    brkobj.set_value('Hit Count', b.GetHitCount())
-    brkobj.set_value('Ignore Count', b.GetIgnoreCount())
-    brkobj.set_value('Temporary', b.IsOneShot())
-    brkobj.set_value('Enabled', b.IsEnabled())
-    keys = []
+        bpt_obj.set_value('Condition', b.GetCondition())
+    bpt_obj.set_value('Hit Count', b.GetHitCount())
+    bpt_obj.set_value('Ignore Count', b.GetIgnoreCount())
+    bpt_obj.set_value('Temporary', b.IsOneShot())
+    bpt_obj.set_value('Enabled', b.IsEnabled())
+    loc_keys = []
     locs = util.BREAKPOINT_LOCATION_INFO_READER.get_locations(b)
-    hooks.BRK_STATE.update_brkloc_count(b, len(locs))
     for i, l in enumerate(locs):
         # Retain the key, even if not for this process
         k = BREAK_LOC_KEY_PATTERN.format(locnum=i+1)
-        keys.append(k)
-        locobj = STATE.trace.create_object(bpath + k)
-        ik = PROC_BREAK_KEY_PATTERN.format(breaknum=b.GetID(), locnum=i+1)
-        ikeys.append(ik)
+        loc_keys.append(k)
+        loc_obj = STATE.trace.create_object(bpt_path + k)
         if b.location is not None:  # Implies execution break
             base, addr = mapper.map(proc, l.GetLoadAddress())
             if base != addr.space:
                 STATE.trace.create_overlay_space(base, addr.space)
-            locobj.set_value('Range', addr.extend(1))
-            locobj.set_value('Enabled', l.IsEnabled())
+            loc_obj.set_value('Range', addr.extend(1))
+            loc_obj.set_value('Enabled', l.IsEnabled())
         else:  # I guess it's a catchpoint
             pass
-        locobj.insert()
-        ibobj.set_value(ik, locobj)
-    brkobj.retain_values(keys)
-    brkobj.insert()
+        loc_obj.insert()
+    bpt_obj.retain_values(loc_keys)
+    bpt_obj.insert()
 
 
-def put_single_watchpoint(b, ibobj, proc, ikeys):
+def put_single_watchpoint(w, proc):
     mapper = STATE.trace.memory_mapper
-    bpath = PROC_WATCH_KEY_PATTERN.format(
-        procnum=proc.GetProcessID(), watchnum=b.GetID())
-    brkobj = STATE.trace.create_object(bpath)
-    desc = util.get_description(b, level=0)
-    brkobj.set_value('Expression', desc)
-    brkobj.set_value('Kinds', 'WRITE')
+    wpt_path = PROC_WATCH_PATTERN.format(
+        procnum=proc.GetProcessID(), watchnum=w.GetID())
+    wpt_obj = STATE.trace.create_object(wpt_path)
+    desc = util.get_description(w, level=0)
+    wpt_obj.set_value('Expression', desc)
+    wpt_obj.set_value('Kinds', 'WRITE')
     if "type = r" in desc:
-        brkobj.set_value('Kinds', 'READ')
+        wpt_obj.set_value('Kinds', 'READ')
     if "type = rw" in desc:
-        brkobj.set_value('Kinds', 'READ,WRITE')
-    base, addr = mapper.map(proc, b.GetWatchAddress())
+        wpt_obj.set_value('Kinds', 'READ,WRITE')
+    base, addr = mapper.map(proc, w.GetWatchAddress())
     if base != addr.space:
         STATE.trace.create_overlay_space(base, addr.space)
-    brkobj.set_value('Range', addr.extend(b.GetWatchSize()))
-    if b.GetCondition():
-        brkobj.set_value('Condition', b.GetCondition())
-    brkobj.set_value('Hit Count', b.GetHitCount())
-    brkobj.set_value('Ignore Count', b.GetIgnoreCount())
-    brkobj.set_value('Hardware Index', b.GetHardwareIndex())
-    brkobj.set_value('Watch Address', hex(b.GetWatchAddress()))
-    brkobj.set_value('Watch Size', b.GetWatchSize())
-    brkobj.set_value('Enabled', b.IsEnabled())
-    brkobj.insert()
+    wpt_obj.set_value('Range', addr.extend(w.GetWatchSize()))
+    if w.GetCondition():
+        wpt_obj.set_value('Condition', w.GetCondition())
+    wpt_obj.set_value('Hit Count', w.GetHitCount())
+    wpt_obj.set_value('Ignore Count', w.GetIgnoreCount())
+    wpt_obj.set_value('Hardware Index', w.GetHardwareIndex())
+    wpt_obj.set_value('Watch Address', hex(w.GetWatchAddress()))
+    wpt_obj.set_value('Watch Size', w.GetWatchSize())
+    wpt_obj.set_value('Enabled', w.IsEnabled())
+    wpt_obj.insert()
 
 
 def put_breakpoints():
     target = util.get_target()
     proc = util.get_process()
-    ibpath = PROC_BREAKS_PATTERN.format(procnum=proc.GetProcessID())
-    ibobj = STATE.trace.create_object(ibpath)
+    cont_path = PROC_BREAKS_PATTERN.format(procnum=proc.GetProcessID())
+    cont_obj = STATE.trace.create_object(cont_path)
     keys = []
-    ikeys = []
     for i in range(0, target.GetNumBreakpoints()):
         b = target.GetBreakpointAtIndex(i)
         keys.append(BREAKPOINT_KEY_PATTERN.format(breaknum=b.GetID()))
-        put_single_breakpoint(b, ibobj, proc, ikeys)
-    ibobj.insert()
-    STATE.trace.proxy_object_path(BREAKPOINTS_PATH).retain_values(keys)
-    ibobj.retain_values(ikeys)
+        put_single_breakpoint(b, proc)
+    cont_obj.insert()
+    cont_obj.retain_values(keys)
 
 
 def put_watchpoints():
     target = util.get_target()
     proc = util.get_process()
-    ibpath = PROC_WATCHES_PATTERN.format(procnum=proc.GetProcessID())
-    ibobj = STATE.trace.create_object(ibpath)
+    cont_path = PROC_WATCHES_PATTERN.format(procnum=proc.GetProcessID())
+    cont_obj = STATE.trace.create_object(cont_path)
     keys = []
-    ikeys = []
     for i in range(0, target.GetNumWatchpoints()):
         b = target.GetWatchpointAtIndex(i)
         keys.append(WATCHPOINT_KEY_PATTERN.format(watchnum=b.GetID()))
-        put_single_watchpoint(b, ibobj, proc, ikeys)
-    ibobj.insert()
-    STATE.trace.proxy_object_path(WATCHPOINTS_PATH).retain_values(keys)
+        put_single_watchpoint(b, proc)
+    cont_obj.insert()
+    cont_obj.retain_values(keys)
 
 
 @convert_errors

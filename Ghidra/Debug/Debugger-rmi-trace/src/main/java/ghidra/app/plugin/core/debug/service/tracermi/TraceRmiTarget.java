@@ -60,12 +60,6 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceRmiTarget extends AbstractTarget {
-	private static final String BREAK_HW_EXEC = "breakHwExec";
-	private static final String BREAK_SW_EXEC = "breakSwExec";
-	private static final String BREAK_READ = "breakRead";
-	private static final String BREAK_WRITE = "breakWrite";
-	private static final String BREAK_ACCESS = "breakAccess";
-
 	private final TraceRmiConnection connection;
 	private final Trace trace;
 
@@ -510,14 +504,15 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	interface MethodMatcher {
-		default MatchedMethod match(RemoteMethod method, SchemaContext ctx) {
+		default MatchedMethod match(RemoteMethod method, TraceObjectSchema rootSchema,
+				KeyPath path) {
 			List<ParamSpec> spec = spec();
 			if (spec.size() != method.parameters().size()) {
 				return null;
 			}
 			Map<String, RemoteParameter> found = new HashMap<>();
 			for (ParamSpec ps : spec) {
-				RemoteParameter param = ps.find(method, ctx);
+				RemoteParameter param = ps.find(method, rootSchema, path);
 				if (param == null) {
 					return null;
 				}
@@ -530,10 +525,10 @@ public class TraceRmiTarget extends AbstractTarget {
 
 		int score();
 
-		static MatchedMethod matchPreferredForm(RemoteMethod method, SchemaContext ctx,
-				List<? extends MethodMatcher> preferred) {
+		static MatchedMethod matchPreferredForm(RemoteMethod method, TraceObjectSchema rootSchema,
+				KeyPath path, List<? extends MethodMatcher> preferred) {
 			return preferred.stream()
-					.map(m -> m.match(method, ctx))
+					.map(m -> m.match(method, rootSchema, path))
 					.filter(m -> m != null)
 					.findFirst()
 					.orElse(null);
@@ -549,7 +544,8 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected static boolean typeMatches(RemoteMethod method, RemoteParameter param,
-			SchemaContext ctx, Class<?> type) {
+			TraceObjectSchema rootSchema, KeyPath path, Class<?> type) {
+		SchemaContext ctx = rootSchema.getContext();
 		TraceObjectSchema sch = ctx.getSchemaOrNull(param.type());
 		if (sch == null) {
 			throw new RuntimeException(
@@ -561,7 +557,15 @@ public class TraceRmiTarget extends AbstractTarget {
 			return sch == PrimitiveTraceObjectSchema.OBJECT;
 		}
 		else if (TraceObjectInterface.class.isAssignableFrom(type)) {
-			return sch.getInterfaces().contains(type);
+			if (path == null) {
+				return sch.getInterfaces().contains(type);
+			}
+			KeyPath found =
+				rootSchema.searchForSuitable(type.asSubclass(TraceObjectInterface.class), path);
+			if (found == null) {
+				return false;
+			}
+			return sch == rootSchema.getSuccessorSchema(path);
 		}
 		else {
 			return sch.getType() == type;
@@ -571,12 +575,13 @@ public class TraceRmiTarget extends AbstractTarget {
 	interface ParamSpec {
 		String name();
 
-		RemoteParameter find(RemoteMethod method, SchemaContext ctx);
+		RemoteParameter find(RemoteMethod method, TraceObjectSchema rootSchema, KeyPath path);
 	}
 
 	record SchemaParamSpec(String name, SchemaName schema) implements ParamSpec {
 		@Override
-		public RemoteParameter find(RemoteMethod method, SchemaContext ctx) {
+		public RemoteParameter find(RemoteMethod method, TraceObjectSchema rootSchema,
+				KeyPath path) {
 			List<RemoteParameter> withType = method.parameters()
 					.values()
 					.stream()
@@ -591,11 +596,12 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	record TypeParamSpec(String name, Class<?> type) implements ParamSpec {
 		@Override
-		public RemoteParameter find(RemoteMethod method, SchemaContext ctx) {
+		public RemoteParameter find(RemoteMethod method, TraceObjectSchema rootSchema,
+				KeyPath path) {
 			List<RemoteParameter> withType = method.parameters()
 					.values()
 					.stream()
-					.filter(p -> typeMatches(method, p, ctx, type))
+					.filter(p -> typeMatches(method, p, rootSchema, path, type))
 					.toList();
 			if (withType.size() != 1) {
 				return null;
@@ -606,9 +612,10 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	record NameParamSpec(String name, Class<?> type) implements ParamSpec {
 		@Override
-		public RemoteParameter find(RemoteMethod method, SchemaContext ctx) {
+		public RemoteParameter find(RemoteMethod method, TraceObjectSchema rootSchema,
+				KeyPath path) {
 			RemoteParameter param = method.parameters().get(name);
-			if (param != null && typeMatches(method, param, ctx, type)) {
+			if (param != null && typeMatches(method, param, rootSchema, path, type)) {
 				return param;
 			}
 			return null;
@@ -802,30 +809,63 @@ public class TraceRmiTarget extends AbstractTarget {
 		static final List<ToggleBreakMatcher> SPEC = matchers(HAS_SPEC);
 	}
 
-	protected class Matches {
-		private final Map<String, MatchedMethod> map = new HashMap<>();
+	record MatchKey(Class<? extends MethodMatcher> cls, ActionName action, TraceObjectSchema sch) {}
 
-		public MatchedMethod getBest(String name, ActionName action,
-				Supplier<List<? extends MethodMatcher>> preferredSupplier) {
-			return getBest(name, action, preferredSupplier.get());
+	protected class Matches {
+		private final Map<MatchKey, MatchedMethod> map = new HashMap<>();
+
+		public MatchKey makeKey(Class<? extends MethodMatcher> cls, ActionName action,
+				KeyPath path) {
+			TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+			if (rootSchema == null) {
+				return null;
+			}
+			return new MatchKey(cls, action,
+				path == null ? null : rootSchema.getSuccessorSchema(path));
 		}
 
-		public MatchedMethod getBest(String name, ActionName action,
-				List<? extends MethodMatcher> preferred) {
+		public <T extends MethodMatcher> MatchedMethod getBest(Class<T> cls, KeyPath path,
+				ActionName action, Supplier<List<T>> preferredSupplier) {
+			return getBest(cls, path, action, preferredSupplier.get());
+		}
+
+		/**
+		 * Search for the most preferred method for a given operation, with respect to a given path
+		 * 
+		 * <p>
+		 * A given path should be given as a point of reference, usually the current object or the
+		 * object from the UI action context. If given, parameters that require a certain
+		 * {@link TraceObjectInterface} will seek a suitable schema from that path and require it.
+		 * Otherwise, any parameter whose schema includes the interface will be accepted.
+		 * 
+		 * @param <T> the matcher class representing the desired operation
+		 * @param cls the matcher class representing the desired operation
+		 * @param path a path as a point of reference, or null for "any" point of reference.
+		 * @param action the required action name for a matching method
+		 * @param preferred the list of matchers (signatures) in preferred order
+		 * @return the best method, or null
+		 */
+		public <T extends MethodMatcher> MatchedMethod getBest(Class<T> cls, KeyPath path,
+				ActionName action, List<T> preferred) {
+			MatchKey key = makeKey(cls, action, path);
 			synchronized (map) {
-				return map.computeIfAbsent(name, n -> chooseBest(action, preferred));
+				return map.computeIfAbsent(key, k -> chooseBest(action, path, preferred));
 			}
 		}
 
-		private MatchedMethod chooseBest(ActionName name, List<? extends MethodMatcher> preferred) {
+		private MatchedMethod chooseBest(ActionName name, KeyPath path,
+				List<? extends MethodMatcher> preferred) {
 			if (preferred.isEmpty()) {
 				return null;
 			}
-			SchemaContext ctx = getSchemaContext();
+			TraceObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+			if (rootSchema == null) {
+				return null;
+			}
 			MatchedMethod best = connection.getMethods()
 					.getByAction(name)
 					.stream()
-					.map(m -> MethodMatcher.matchPreferredForm(m, ctx, preferred))
+					.map(m -> MethodMatcher.matchPreferredForm(m, rootSchema, path, preferred))
 					.filter(f -> f != null)
 					.max(MatchedMethod::compareTo)
 					.orElse(null);
@@ -902,7 +942,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public CompletableFuture<String> executeAsync(String command, boolean toString) {
-		MatchedMethod execute = matches.getBest("execute", ActionName.EXECUTE, ExecuteMatcher.ALL);
+		MatchedMethod execute =
+			matches.getBest(ExecuteMatcher.class, null, ActionName.EXECUTE, ExecuteMatcher.ALL);
 		if (execute == null) {
 			return CompletableFuture.failedFuture(new NoSuchElementException());
 		}
@@ -923,10 +964,10 @@ public class TraceRmiTarget extends AbstractTarget {
 			return AsyncUtils.nil();
 		}
 
-		SchemaName name = object.getSchema().getName();
-		MatchedMethod activate = matches.getBest("activate_" + name, ActionName.ACTIVATE,
-			() -> ActivateMatcher.makeBySpecificity(trace.getObjectManager().getRootSchema(),
-				object.getCanonicalPath()));
+		MatchedMethod activate =
+			matches.getBest(ActivateMatcher.class, object.getCanonicalPath(), ActionName.ACTIVATE,
+				() -> ActivateMatcher.makeBySpecificity(trace.getObjectManager().getRootSchema(),
+					object.getCanonicalPath()));
 		if (activate == null) {
 			return AsyncUtils.nil();
 		}
@@ -1004,7 +1045,8 @@ public class TraceRmiTarget extends AbstractTarget {
 		// NOTE: I don't intend to warn about the number of requests.
 		//   They're delivered in serial, and there's a cancel button that works
 
-		MatchedMethod readMem = matches.getBest("readMem", ActionName.READ_MEM, ReadMemMatcher.ALL);
+		MatchedMethod readMem =
+			matches.getBest(ReadMemMatcher.class, null, ActionName.READ_MEM, ReadMemMatcher.ALL);
 		if (readMem == null) {
 			return AsyncUtils.nil();
 		}
@@ -1066,7 +1108,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	@Override
 	public CompletableFuture<Void> writeMemoryAsync(Address address, byte[] data) {
 		MatchedMethod writeMem =
-			matches.getBest("writeMem", ActionName.WRITE_MEM, WriteMemMatcher.ALL);
+			matches.getBest(WriteMemMatcher.class, null, ActionName.WRITE_MEM, WriteMemMatcher.ALL);
 		if (writeMem == null) {
 			return AsyncUtils.nil();
 		}
@@ -1088,7 +1130,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	public CompletableFuture<Void> readRegistersAsync(TracePlatform platform, TraceThread thread,
 			int frame, Set<Register> registers) {
 		MatchedMethod readRegs =
-			matches.getBest("readRegs", ActionName.REFRESH, ReadRegsMatcher.ALL);
+			matches.getBest(ReadRegsMatcher.class, null, ActionName.REFRESH, ReadRegsMatcher.ALL);
 		if (readRegs == null) {
 			return AsyncUtils.nil();
 		}
@@ -1218,7 +1260,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	public CompletableFuture<Void> writeRegisterAsync(TracePlatform platform, TraceThread thread,
 			int frameLevel, RegisterValue value) {
 		MatchedMethod writeReg =
-			matches.getBest("writeReg", ActionName.WRITE_REG, WriteRegMatcher.ALL);
+			matches.getBest(WriteRegMatcher.class, null, ActionName.WRITE_REG, WriteRegMatcher.ALL);
 		if (writeReg == null) {
 			return AsyncUtils.nil();
 		}
@@ -1371,8 +1413,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected CompletableFuture<Void> placeHwExecBreakAsync(Address address, String condition,
 			String commands) {
-		MatchedMethod breakHwExec =
-			matches.getBest(BREAK_HW_EXEC, ActionName.BREAK_HW_EXECUTE, BreakExecMatcher.ALL);
+		MatchedMethod breakHwExec = matches.getBest(BreakExecMatcher.class, null,
+			ActionName.BREAK_HW_EXECUTE, BreakExecMatcher.ALL);
 		if (breakHwExec == null) {
 			return AsyncUtils.nil();
 		}
@@ -1381,8 +1423,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected CompletableFuture<Void> placeSwExecBreakAsync(Address address, String condition,
 			String commands) {
-		MatchedMethod breakSwExec =
-			matches.getBest(BREAK_SW_EXEC, ActionName.BREAK_SW_EXECUTE, BreakExecMatcher.ALL);
+		MatchedMethod breakSwExec = matches.getBest(BreakExecMatcher.class, null,
+			ActionName.BREAK_SW_EXECUTE, BreakExecMatcher.ALL);
 		if (breakSwExec == null) {
 			return AsyncUtils.nil();
 		}
@@ -1399,8 +1441,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected CompletableFuture<Void> placeReadBreakAsync(AddressRange range, String condition,
 			String commands) {
-		MatchedMethod breakRead =
-			matches.getBest(BREAK_READ, ActionName.BREAK_READ, BreakAccMatcher.ALL);
+		MatchedMethod breakRead = matches.getBest(BreakAccMatcher.class, null,
+			ActionName.BREAK_READ, BreakAccMatcher.ALL);
 		if (breakRead == null) {
 			return AsyncUtils.nil();
 		}
@@ -1409,8 +1451,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected CompletableFuture<Void> placeWriteBreakAsync(AddressRange range, String condition,
 			String commands) {
-		MatchedMethod breakWrite =
-			matches.getBest(BREAK_WRITE, ActionName.BREAK_WRITE, BreakAccMatcher.ALL);
+		MatchedMethod breakWrite = matches.getBest(BreakAccMatcher.class, null,
+			ActionName.BREAK_WRITE, BreakAccMatcher.ALL);
 		if (breakWrite == null) {
 			return AsyncUtils.nil();
 		}
@@ -1419,8 +1461,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected CompletableFuture<Void> placeAccessBreakAsync(AddressRange range, String condition,
 			String commands) {
-		MatchedMethod breakAccess =
-			matches.getBest(BREAK_ACCESS, ActionName.BREAK_ACCESS, BreakAccMatcher.ALL);
+		MatchedMethod breakAccess = matches.getBest(BreakAccMatcher.class, null,
+			ActionName.BREAK_ACCESS, BreakAccMatcher.ALL);
 		if (breakAccess == null) {
 			return AsyncUtils.nil();
 		}
@@ -1484,15 +1526,16 @@ public class TraceRmiTarget extends AbstractTarget {
 		if (breakpoint.getName().endsWith("emu-" + breakpoint.getMinAddress())) {
 			return false;
 		}
-		if (!breakpoint.getLifespan().contains(getSnap())) {
+		if (!breakpoint.isAlive(getSnap())) {
 			return false;
 		}
 		return true;
 	}
 
 	protected CompletableFuture<Void> deleteBreakpointSpecAsync(TraceObjectBreakpointSpec spec) {
+		KeyPath path = spec.getObject().getCanonicalPath();
 		MatchedMethod delBreak =
-			matches.getBest("delBreakSpec", ActionName.DELETE, DelBreakMatcher.SPEC);
+			matches.getBest(DelBreakMatcher.class, path, ActionName.DELETE, DelBreakMatcher.SPEC);
 		if (delBreak == null) {
 			return AsyncUtils.nil();
 		}
@@ -1504,8 +1547,9 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	// TODO: Would this make sense for any debugger? To delete individual locations?
 	protected CompletableFuture<Void> deleteBreakpointLocAsync(TraceObjectBreakpointLocation loc) {
+		KeyPath path = loc.getObject().getCanonicalPath();
 		MatchedMethod delBreak =
-			matches.getBest("delBreakLoc", ActionName.DELETE, DelBreakMatcher.ALL);
+			matches.getBest(DelBreakMatcher.class, path, ActionName.DELETE, DelBreakMatcher.ALL);
 		if (delBreak == null) {
 			Msg.debug(this, "Falling back to delete spec");
 			return deleteBreakpointSpecAsync(loc.getSpecification());
@@ -1533,33 +1577,37 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected CompletableFuture<Void> toggleBreakpointSpecAsync(TraceObjectBreakpointSpec spec,
 			boolean enabled) {
-		MatchedMethod delBreak =
-			matches.getBest("toggleBreakSpec", ActionName.TOGGLE, ToggleBreakMatcher.SPEC);
-		if (delBreak == null) {
+		KeyPath path = spec.getObject().getCanonicalPath();
+		MatchedMethod toggleBreak =
+			matches.getBest(ToggleBreakMatcher.class, path, ActionName.TOGGLE,
+				ToggleBreakMatcher.SPEC);
+		if (toggleBreak == null) {
 			return AsyncUtils.nil();
 		}
-		return delBreak.method
+		return toggleBreak.method
 				.invokeAsync(Map.ofEntries(
-					Map.entry(delBreak.params.get("specification").name(), spec.getObject()),
-					Map.entry(delBreak.params.get("enabled").name(), enabled)))
+					Map.entry(toggleBreak.params.get("specification").name(), spec.getObject()),
+					Map.entry(toggleBreak.params.get("enabled").name(), enabled)))
 				.toCompletableFuture()
 				.thenApply(__ -> null);
 	}
 
 	protected CompletableFuture<Void> toggleBreakpointLocAsync(TraceObjectBreakpointLocation loc,
 			boolean enabled) {
-		MatchedMethod delBreak =
-			matches.getBest("toggleBreakLoc", ActionName.TOGGLE, ToggleBreakMatcher.ALL);
-		if (delBreak == null) {
+		KeyPath path = loc.getObject().getCanonicalPath();
+		MatchedMethod toggleBreak =
+			matches.getBest(ToggleBreakMatcher.class, path, ActionName.TOGGLE,
+				ToggleBreakMatcher.ALL);
+		if (toggleBreak == null) {
 			Msg.debug(this, "Falling back to toggle spec");
 			return toggleBreakpointSpecAsync(loc.getSpecification(), enabled);
 		}
-		RemoteParameter paramLocation = delBreak.params.get("location");
+		RemoteParameter paramLocation = toggleBreak.params.get("location");
 		if (paramLocation != null) {
-			return delBreak.method
+			return toggleBreak.method
 					.invokeAsync(Map.ofEntries(
 						Map.entry(paramLocation.name(), loc.getObject()),
-						Map.entry(delBreak.params.get("enabled").name(), enabled)))
+						Map.entry(toggleBreak.params.get("enabled").name(), enabled)))
 					.toCompletableFuture()
 					.thenApply(__ -> null);
 		}
