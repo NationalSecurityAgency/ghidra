@@ -25,7 +25,7 @@ import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 
 /**
@@ -192,7 +192,7 @@ public interface TracePlatform {
 	 * @param names the possible names of the register on the target
 	 * @return the path matcher, possibly empty
 	 */
-	PathMatcher getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
+	PathFilter getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Collection<String> names);
 
 	/**
@@ -207,7 +207,7 @@ public interface TracePlatform {
 	 * @param register the platform register
 	 * @return the path matcher, possibly empty
 	 */
-	PathMatcher getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
+	PathFilter getConventionalRegisterPath(TraceObjectSchema schema, KeyPath path,
 			Register register);
 
 	/**
@@ -218,7 +218,7 @@ public interface TracePlatform {
 	 * @param register the platform register
 	 * @return that path matcher, possibly empty, or null if the trace has no root schema
 	 */
-	PathMatcher getConventionalRegisterPath(TraceObject container, Register register);
+	PathFilter getConventionalRegisterPath(TraceObject container, Register register);
 
 	/**
 	 * Get the expected path where an object defining the register value would be
@@ -228,7 +228,7 @@ public interface TracePlatform {
 	 * @param register the platform register
 	 * @return the path matcher, or null if there is no root schema
 	 */
-	PathMatcher getConventionalRegisterPath(AddressSpace overlay, Register register);
+	PathFilter getConventionalRegisterPath(AddressSpace overlay, Register register);
 
 	/**
 	 * Add a label the conventionally maps the value of a {@link TraceObjectRegister} in the object

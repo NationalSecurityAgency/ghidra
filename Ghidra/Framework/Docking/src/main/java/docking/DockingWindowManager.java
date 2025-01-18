@@ -2389,7 +2389,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 					}
 					Tool t = provider.getTool();
 					DockingWindowManager dwm = t.getWindowManager();
-					return dwm.isLastProviderInDetachedWindow(provider);
+					if (!dwm.isLastProviderInDetachedWindow(provider)) {
+						return false; // not the only provider
+					}
+					return containsFocusOwner(provider);
 				})
 				.onAction(c -> {
 					ComponentProvider provider = getComponentProviderForContext(c);
@@ -2397,6 +2400,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 				})
 				.build();
 		toolActions.addGlobalAction(closeAction);
+	}
+
+	private static boolean containsFocusOwner(ComponentProvider provider) {
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = kfm.getFocusOwner();
+		if (focusOwner == null) {
+			return false;
+		}
+		JComponent providerComponent = provider.getComponent();
+		return SwingUtilities.isDescendingFrom(focusOwner, providerComponent);
 	}
 
 	private static ComponentProvider getComponentProviderForContext(ActionContext context) {

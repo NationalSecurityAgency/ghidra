@@ -41,12 +41,12 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 	}
 
 	@Override
-	public void handle(SarifDataFrame dframe, Run run, Result result, Map<String, Object> map) {
+	public void handle(SarifDataFrame dframe, Run r, Result res, Map<String, Object> map) {
 		this.df = dframe;
 		this.controller = df.getController();
 
-		this.run = run;
-		this.result = result;
+		this.run = r;
+		this.result = res;
 
 		List<Map<String, Object>> tableResults = df.getTableResults();
 		String ruleId = result.getRuleId();

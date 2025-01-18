@@ -17,24 +17,30 @@ package ghidra.trace.model.target.path;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
 public class PathMatcher implements PathFilter {
 	protected static final Set<String> WILD_SINGLETON = Set.of("");
 
-	protected final Set<PathPattern> patterns = new HashSet<>();
+	protected final Set<PathPattern> patterns;
 
-	public void addPattern(KeyPath pattern) {
-		patterns.add(new PathPattern(pattern));
+	public static PathMatcher any(Stream<PathPattern> patterns) {
+		return new PathMatcher(patterns.collect(Collectors.toUnmodifiableSet()));
 	}
 
-	public void addPattern(PathPattern pattern) {
-		patterns.add(pattern);
+	public static PathMatcher any(Collection<PathFilter> filters) {
+		return any(filters.stream().flatMap(f -> f.getPatterns().stream()));
 	}
 
-	public void addAll(PathMatcher matcher) {
-		patterns.addAll(matcher.patterns);
+	public static PathMatcher any(PathFilter... filters) {
+		return any(Stream.of(filters).flatMap(f -> f.getPatterns().stream()));
+	}
+
+	PathMatcher(Set<PathPattern> patterns) {
+		this.patterns = patterns;
 	}
 
 	@Override
@@ -59,19 +65,10 @@ public class PathMatcher implements PathFilter {
 
 	@Override
 	public PathFilter or(PathFilter that) {
-		PathMatcher result = new PathMatcher();
-		result.patterns.addAll(this.patterns);
-		if (that instanceof PathMatcher) {
-			PathMatcher matcher = (PathMatcher) that;
-			result.patterns.addAll(matcher.patterns);
-		}
-		else if (that instanceof PathPattern) {
-			result.patterns.add((PathPattern) that);
-		}
-		else {
-			throw new AssertionError();
-		}
-		return result;
+		Set<PathPattern> patterns = new HashSet<>();
+		patterns.addAll(this.patterns);
+		patterns.addAll(that.getPatterns());
+		return new PathMatcher(Collections.unmodifiableSet(patterns));
 	}
 
 	/**
@@ -123,7 +120,7 @@ public class PathMatcher implements PathFilter {
 	}
 
 	@Override
-	public Collection<PathPattern> getPatterns() {
+	public Set<PathPattern> getPatterns() {
 		return patterns;
 	}
 
@@ -189,19 +186,19 @@ public class PathMatcher implements PathFilter {
 
 	@Override
 	public PathMatcher applyKeys(Align align, List<String> indices) {
-		PathMatcher result = new PathMatcher();
-		for (PathPattern pat : patterns) {
-			result.addPattern(pat.applyKeys(align, indices));
+		Set<PathPattern> patterns = new HashSet<>();
+		for (PathPattern pat : this.patterns) {
+			patterns.add(pat.applyKeys(align, indices));
 		}
-		return result;
+		return new PathMatcher(Collections.unmodifiableSet(patterns));
 	}
 
 	@Override
 	public PathMatcher removeRight(int count) {
-		PathMatcher result = new PathMatcher();
-		for (PathPattern pat : patterns) {
-			pat.doRemoveRight(count, result);
+		Set<PathPattern> patterns = new HashSet<>();
+		for (PathPattern pat : this.patterns) {
+			pat.doRemoveRight(count, patterns);
 		}
-		return result;
+		return new PathMatcher(Collections.unmodifiableSet(patterns));
 	}
 }

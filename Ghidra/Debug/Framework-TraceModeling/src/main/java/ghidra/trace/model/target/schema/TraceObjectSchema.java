@@ -422,7 +422,7 @@ public interface TraceObjectSchema {
 	 * @param requireCanonical only return patterns matching a canonical location for the type
 	 * @return a set of patterns where such objects could be found
 	 */
-	default PathMatcher searchFor(Class<? extends TraceObjectInterface> type,
+	default PathFilter searchFor(Class<? extends TraceObjectInterface> type,
 			boolean requireCanonical) {
 		return searchFor(type, KeyPath.ROOT, requireCanonical);
 	}
@@ -439,15 +439,15 @@ public interface TraceObjectSchema {
 	 * @param requireCanonical only return patterns matching a canonical location for the type
 	 * @return a set of patterns where such objects could be found
 	 */
-	default PathMatcher searchFor(Class<? extends TraceObjectInterface> type, KeyPath prefix,
+	default PathFilter searchFor(Class<? extends TraceObjectInterface> type, KeyPath prefix,
 			boolean requireCanonical) {
 		if (type == TraceObjectInterface.class) {
 			throw new IllegalArgumentException("Must provide a specific interface");
 		}
-		PathMatcher result = new PathMatcher();
-		Private.searchFor(this, result, prefix, true, type, false, requireCanonical,
+		Set<PathPattern> patterns = new HashSet<>();
+		Private.searchFor(this, patterns, prefix, true, type, false, requireCanonical,
 			new HashSet<>());
-		return result;
+		return PathMatcher.any(patterns.stream());
 	}
 
 	class Private {
@@ -497,18 +497,23 @@ public interface TraceObjectSchema {
 			public void nextLevel() {
 				Set<T> nextLevel = new HashSet<>();
 				for (T ent : allOnLevel) {
-					if (!descend(ent)) {
-						continue;
+					if (descendAttributes(ent)) {
+						expandAttributes(nextLevel, ent);
+						expandDefaultAttribute(nextLevel, ent);
 					}
-					expandAttributes(nextLevel, ent);
-					expandDefaultAttribute(nextLevel, ent);
-					expandElements(nextLevel, ent);
-					expandDefaultElement(nextLevel, ent);
+					if (descendElements(ent)) {
+						expandElements(nextLevel, ent);
+						expandDefaultElement(nextLevel, ent);
+					}
 				}
 				allOnLevel = nextLevel;
 			}
 
-			public boolean descend(T ent) {
+			public boolean descendAttributes(T ent) {
+				return true;
+			}
+
+			public boolean descendElements(T ent) {
 				return true;
 			}
 
@@ -549,8 +554,13 @@ public interface TraceObjectSchema {
 			}
 
 			@Override
-			public boolean descend(SearchEntry ent) {
+			public boolean descendAttributes(SearchEntry ent) {
 				return ent.schema.getInterfaces().contains(TraceObjectAggregate.class);
+			}
+
+			@Override
+			public boolean descendElements(SearchEntry ent) {
+				return ent.schema.isCanonicalContainer();
 			}
 
 			@Override
@@ -574,7 +584,7 @@ public interface TraceObjectSchema {
 			}
 		}
 
-		private static void searchFor(TraceObjectSchema sch, PathMatcher result,
+		private static void searchFor(TraceObjectSchema sch, Set<PathPattern> patterns,
 				KeyPath prefix, boolean parentIsCanonical,
 				Class<? extends TraceObjectInterface> type,
 				boolean requireAggregate, boolean requireCanonical,
@@ -583,7 +593,7 @@ public interface TraceObjectSchema {
 				return;
 			}
 			if (sch.getInterfaces().contains(type) && (parentIsCanonical || !requireCanonical)) {
-				result.addPattern(prefix);
+				patterns.add(new PathPattern(prefix));
 				return;
 			}
 			if (!visited.add(sch)) {
@@ -597,24 +607,24 @@ public interface TraceObjectSchema {
 			for (Entry<String, SchemaName> ent : sch.getElementSchemas().entrySet()) {
 				KeyPath extended = prefix.index(ent.getKey());
 				TraceObjectSchema elemSchema = ctx.getSchema(ent.getValue());
-				searchFor(elemSchema, result, extended, isCanonical, type, requireAggregate,
+				searchFor(elemSchema, patterns, extended, isCanonical, type, requireAggregate,
 					requireCanonical, visited);
 			}
 			KeyPath deExtended = prefix.key("[]");
 			TraceObjectSchema deSchema = ctx.getSchema(sch.getDefaultElementSchema());
-			searchFor(deSchema, result, deExtended, isCanonical, type, requireAggregate,
+			searchFor(deSchema, patterns, deExtended, isCanonical, type, requireAggregate,
 				requireCanonical, visited);
 
 			for (Entry<String, AttributeSchema> ent : sch.getAttributeSchemas().entrySet()) {
 				KeyPath extended = prefix.key(ent.getKey());
 				TraceObjectSchema attrSchema = ctx.getSchema(ent.getValue().getSchema());
-				searchFor(attrSchema, result, extended, isCanonical, type, requireAggregate,
+				searchFor(attrSchema, patterns, extended, isCanonical, type, requireAggregate,
 					requireCanonical, visited);
 			}
 			KeyPath daExtended = prefix.key("");
 			TraceObjectSchema daSchema =
 				ctx.getSchema(sch.getDefaultAttributeSchema().getSchema());
-			searchFor(daSchema, result, daExtended, isCanonical, type, requireAggregate,
+			searchFor(daSchema, patterns, daExtended, isCanonical, type, requireAggregate,
 				requireCanonical, visited);
 
 			visited.remove(sch);
@@ -803,14 +813,14 @@ public interface TraceObjectSchema {
 	 * @return the filter for finding objects
 	 */
 	default PathFilter filterForSuitable(Class<? extends TraceObjectInterface> type, KeyPath path) {
-		PathMatcher result = new PathMatcher();
+		Set<PathPattern> patterns = new HashSet<>();
 		Set<TraceObjectSchema> visited = new HashSet<>();
 		List<TraceObjectSchema> schemas = getSuccessorSchemas(path);
 		for (; path != null; path = path.parent()) {
 			TraceObjectSchema schema = schemas.get(path.size());
-			Private.searchFor(schema, result, path, false, type, true, false, visited);
+			Private.searchFor(schema, patterns, path, false, type, true, false, visited);
 		}
-		return result;
+		return PathMatcher.any(patterns.stream());
 	}
 
 	/**
@@ -1036,7 +1046,7 @@ public interface TraceObjectSchema {
 			return null;
 		}
 
-		PathMatcher result = new PathMatcher();
+		Set<PathPattern> patterns = new HashSet<>();
 		for (String index : List.of(Integer.toString(frameLevel),
 			"0x" + Integer.toHexString(frameLevel))) {
 			KeyPath framePathRelStack =
@@ -1044,10 +1054,10 @@ public interface TraceObjectSchema {
 			KeyPath framePath = stackPath.extend(framePathRelStack);
 			KeyPath regsPath = searchForSuitable(TraceObjectRegisterContainer.class, framePath);
 			if (regsPath != null) {
-				result.addPattern(regsPath);
+				patterns.add(new PathPattern(regsPath));
 			}
 		}
-		return result;
+		return PathMatcher.any(patterns.stream());
 	}
 
 	/**

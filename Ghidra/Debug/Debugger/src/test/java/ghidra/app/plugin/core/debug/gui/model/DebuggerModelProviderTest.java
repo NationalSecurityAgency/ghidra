@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.trace.database.ToyDBTraceBuilder.EventSuspension;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
@@ -46,8 +47,8 @@ import ghidra.trace.model.target.iface.TraceObjectEventScope;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -694,6 +695,47 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		assertPathIs(path, 11, 0);
 	}
 
+	/**
+	 * The trace-rmi handler suspends trace events during a remote transaction. Also, if there are
+	 * sufficient events to overload the queue, the event support with clear them and just issue an
+	 * OBJ_RESTORED event instead. This test ensures we update attributes in the tree when that
+	 * happens.
+	 */
+	@Test
+	public void testTreeTracksChangeAttributeWithEventsSuspended() throws Throwable {
+		createTraceAndPopulateObjects();
+		KeyPath path = KeyPath.parse("Processes[0].Threads[2].Bytes");
+		try (Transaction tx = tb.startTransaction()) {
+			TraceObject thread =
+				tb.trace.getObjectManager().getObjectByCanonicalPath(path.parent());
+			thread.setAttribute(Lifespan.nowOn(0), "Bytes", tb.arr(1, 2, 3, 4));
+		}
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+		runSwing(() -> modelProvider.setShowPrimitivesInTree(true));
+		waitForTasks();
+		modelProvider.setPath(path);
+		waitForTasks();
+
+		waitForPass(() -> {
+			AbstractNode node = modelProvider.objectsTreePanel.treeModel.getNode(path);
+			assertEquals("<html>Bytes:&nbsp;01:02:03:04", node.getDisplayText());
+		});
+
+		try (Transaction tx = tb.startTransaction(); EventSuspension es = tb.suspendEvents()) {
+			TraceObject thread =
+				tb.trace.getObjectManager().getObjectByCanonicalPath(path.parent());
+			thread.setAttribute(Lifespan.nowOn(0), "Bytes", tb.arr(5, 6, 7, 8));
+		}
+		waitForTasks();
+
+		waitForPass(() -> {
+			AbstractNode node = modelProvider.objectsTreePanel.treeModel.getNode(path);
+			assertEquals("<html>Bytes:&nbsp;05:06:07:08", node.getDisplayText());
+		});
+	}
+
 	@Test
 	public void testPanesTrackAddAttribute() throws Throwable {
 		createTraceAndPopulateObjects();
@@ -1239,11 +1281,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		tb.trace.setEventsEnabled(false);
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction(); EventSuspension es = tb.suspendEvents()) {
 			tb.trace.getTimeManager().getSnapshot(30, true);
 		}
-		tb.trace.setEventsEnabled(true);
 		waitForDomainObject(tb.trace);
 
 		// NB. The plot adds a margin of 1

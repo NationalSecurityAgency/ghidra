@@ -39,12 +39,13 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 	protected TaintPlugin plugin;
 	protected TaintState state;
 	protected String desc;
+	protected String title;
 
 	protected String executeTaintQueryIconString;
 	protected Icon executeTaintQueryIcon;
 	protected QueryType queryType;
 
-	public TaintAbstractQueryAction(TaintPlugin plugin, TaintState state, String desc, String cmd) {
+	public TaintAbstractQueryAction(TaintPlugin plugin, TaintState state, String desc, String title, String cmd) {
 		super(cmd);
 
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "Taint"+desc));
@@ -53,6 +54,7 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 		this.plugin = plugin;
 		this.state = state;
 		this.desc = desc;
+		this.title = title;
 	}
 
 	/*
@@ -68,7 +70,7 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 		Program program = context.getProgram();
 		PluginTool tool = context.getTool();
 
-		Task defaultQueryTask = new Task("Source-Sink Query Task", true, true, true, true) {
+		Task defaultQueryTask = new Task(title, true, true, true, true) {
 			@Override
 			public void run(TaskMonitor monitor) {
 				state.setCancellation(false);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.sys;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -132,8 +133,8 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	 * Derive a syscall number to calling convention map by scraping functions in the program's
 	 * "syscall" space.
 	 * 
-	 * @param program
-	 * @return
+	 * @param program the program whose "syscall" space to scrape
+	 * @return the map of syscall number to calling convention
 	 */
 	public static Map<Long, PrototypeModel> loadSyscallConventionMap(Program program) {
 		return loadSyscallFunctionMap(program).entrySet()
@@ -169,6 +170,37 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 				Varnode outVar, List<Varnode> inVars) {
 			syslib.syscall(executor, library);
 		}
+
+		@Override
+		public boolean isFunctional() {
+			return false;
+		}
+
+		@Override
+		public boolean hasSideEffects() {
+			return true;
+		}
+
+		@Override
+		public boolean canInlinePcode() {
+			return false;
+		}
+
+		@Override
+		public PcodeUseropLibrary<?> getDefiningLibrary() {
+			return syslib;
+		}
+
+		@Override
+		public Method getJavaMethod() {
+			try {
+				return syslib.getClass()
+						.getMethod("syscall", PcodeExecutor.class, PcodeUseropLibrary.class);
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				throw new AssertionError(e);
+			}
+		}
 	}
 
 	/**
@@ -199,7 +231,7 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	 */
 	default PcodeUseropDefinition<T> getSyscallUserop() {
 		return new SyscallPcodeUseropDefinition<>(this);
-	};
+	}
 
 	/**
 	 * Retrieve the desired system call number according to the emulated system's conventions

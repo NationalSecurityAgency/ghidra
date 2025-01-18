@@ -59,20 +59,24 @@ compileJava.enabled = false
 jar.enabled = false
 
 task utilityJar(type:Copy) {
-	destinationDir file("build/data")
+	destinationDir = file("build/data")
 
-	from { project(':Utility').jar } // using closure to delay until all projects evaluated
+	def utilityProject = project(':Utility')
+
+	from { utilityProject.jar } // using closure to delay until all projects evaluated
 }
 
 task launchSupportJar(type:Copy) {
-	destinationDir file("build/data")
+	destinationDir = file("build/data")
 
-	from { project(':LaunchSupport').jar } // using closure to delay until all projects evaluated
+	def launchSupportProject = project(':LaunchSupport')
+
+	from { launchSupportProject.jar } // using closure to delay until all projects evaluated
 }
 
 task pyDevUnpack(type:Copy) {
-	description "Unpack PyDev plugin archive for development use"
-	group "Development Preparation"
+	description = "Unpack PyDev plugin archive for development use"
+	group = "Development Preparation"
 	
 	File pyDevDestDir = file("build/data/buildDependencies/pydev")
 
@@ -90,12 +94,12 @@ task pyDevUnpack(type:Copy) {
 	from pyDevZipTree
 	exclude "**/.project", "**/.pydevproject"
 
-	destinationDir pyDevDestDir
+	destinationDir = pyDevDestDir
 }
 
 task cdtUnpack(type:Copy) {
-	description "Unpack CDT plugin archive for development use"
-	group "Development Preparation"
+	description = "Unpack CDT plugin archive for development use"
+	group = "Development Preparation"
 	
 	File cdtDestDir = file("build/data/buildDependencies/cdt")
 
@@ -112,7 +116,7 @@ task cdtUnpack(type:Copy) {
 
 	from cdtZipTree
 
-	destinationDir cdtDestDir
+	destinationDir = cdtDestDir
 }
 
 task prepGhidraDev {

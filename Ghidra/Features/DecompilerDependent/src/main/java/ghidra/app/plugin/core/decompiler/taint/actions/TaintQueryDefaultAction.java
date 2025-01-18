@@ -15,6 +15,10 @@
  */
 package ghidra.app.plugin.core.decompiler.taint.actions;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+
+import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
@@ -24,12 +28,13 @@ import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 public class TaintQueryDefaultAction extends TaintAbstractQueryAction {
 
 	public TaintQueryDefaultAction(TaintPlugin plugin, TaintState state) {
-		super(plugin, state, "DefaultQuery", "Run default taint query");
+		super(plugin, state, "DefaultQuery", "Default Taint Query", "Run default taint query");
 		executeTaintQueryIconString = "icon.version.tracking.markup.status.conflict";
 		executeTaintQueryIcon = new GIcon(executeTaintQueryIconString);
 		queryType = QueryType.DEFAULT;
 
 		setToolBarData(new ToolBarData(executeTaintQueryIcon));
+		setKeyBindingData(new KeyBindingData(KeyEvent.VK_Y, InputEvent.SHIFT_DOWN_MASK));
 	}
 
 }

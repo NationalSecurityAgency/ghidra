@@ -34,7 +34,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.util.ComparatorMath;
+import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 
 public enum DebuggerStaticMappingUtils {
@@ -163,8 +163,8 @@ public enum DebuggerStaticMappingUtils {
 		private Address max = null;
 
 		public void consider(Address min, Address max) {
-			this.min = this.min == null ? min : ComparatorMath.cmin(this.min, min);
-			this.max = this.max == null ? max : ComparatorMath.cmax(this.max, max);
+			this.min = this.min == null ? min : MathUtilities.cmin(this.min, min);
+			this.max = this.max == null ? max : MathUtilities.cmax(this.max, max);
 		}
 
 		public void consider(AddressRange range) {

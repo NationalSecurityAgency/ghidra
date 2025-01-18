@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu;
 
-import java.util.Objects;
-
 import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emulate.InstructionDecodeException;
 import ghidra.pcode.exec.DecodePcodeExecutionException;
@@ -58,6 +56,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	/**
 	 * Construct a Sleigh instruction decoder
 	 * 
+	 * @see DefaultPcodeThread#createInstructionDecoder(PcodeExecutorState)
 	 * @param language the language to decoder
 	 * @param state the state containing the target program, probably the shared state of the p-code
 	 *            machine. It must be possible to obtain concrete buffers on this state.
@@ -73,6 +72,11 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 		};
 		disassembler =
 			Disassembler.getDisassembler(language, addrFactory, TaskMonitor.DUMMY, listener);
+	}
+
+	@Override
+	public Language getLanguage() {
+		return language;
 	}
 
 	protected boolean useCachedInstruction(Address address, RegisterValue context) {
@@ -100,7 +104,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	}
 
 	@Override
-	public Instruction decodeInstruction(Address address, RegisterValue context) {
+	public PseudoInstruction decodeInstruction(Address address, RegisterValue context) {
 		lastMsg = DEFAULT_ERROR;
 		if (!useCachedInstruction(address, context)) {
 			parseNewBlock(address, context);
@@ -116,7 +120,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 		 * However, if the cached instruction's context does not match the desired one, assume we're
 		 * starting a new block. That check will have to wait for the decode call, though.
 		 */
-		if (block.getInstructionAt(address) == null) {
+		if (block == null || block.getInstructionAt(address) == null) {
 			block = null;
 		}
 	}

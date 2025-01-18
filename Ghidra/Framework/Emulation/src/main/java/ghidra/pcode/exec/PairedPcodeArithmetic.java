@@ -19,6 +19,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -115,22 +116,38 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
-	public Pair<L, R> modBeforeStore(int sizeout, int sizeinAddress, Pair<L, R> inAddress,
+	public Pair<L, R> modBeforeStore(PcodeOp op, AddressSpace space, Pair<L, R> inOffset,
+			Pair<L, R> inValue) {
+		return Pair.of(
+			leftArith.modBeforeStore(op, space, inOffset.getLeft(), inValue.getLeft()),
+			rightArith.modBeforeStore(op, space, inOffset.getRight(), inValue.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> modBeforeStore(int sizeinOffset, AddressSpace space, Pair<L, R> inOffset,
 			int sizeinValue, Pair<L, R> inValue) {
 		return Pair.of(
-			leftArith.modBeforeStore(sizeout, sizeinAddress, inAddress.getLeft(), sizeinValue,
+			leftArith.modBeforeStore(sizeinOffset, space, inOffset.getLeft(), sizeinValue,
 				inValue.getLeft()),
-			rightArith.modBeforeStore(sizeout, sizeinAddress, inAddress.getRight(), sizeinValue,
+			rightArith.modBeforeStore(sizeinOffset, space, inOffset.getRight(), sizeinValue,
 				inValue.getRight()));
 	}
 
 	@Override
-	public Pair<L, R> modAfterLoad(int sizeout, int sizeinAddress, Pair<L, R> inAddress,
+	public Pair<L, R> modAfterLoad(PcodeOp op, AddressSpace space, Pair<L, R> inOffset,
+			Pair<L, R> inValue) {
+		return Pair.of(
+			leftArith.modAfterLoad(op, space, inOffset.getLeft(), inValue.getLeft()),
+			rightArith.modAfterLoad(op, space, inOffset.getRight(), inValue.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> modAfterLoad(int sizeinOffset, AddressSpace space, Pair<L, R> inOffset,
 			int sizeinValue, Pair<L, R> inValue) {
 		return Pair.of(
-			leftArith.modAfterLoad(sizeout, sizeinAddress, inAddress.getLeft(), sizeinValue,
+			leftArith.modAfterLoad(sizeinOffset, space, inOffset.getLeft(), sizeinValue,
 				inValue.getLeft()),
-			rightArith.modAfterLoad(sizeout, sizeinAddress, inAddress.getRight(), sizeinValue,
+			rightArith.modAfterLoad(sizeinOffset, space, inOffset.getRight(), sizeinValue,
 				inValue.getRight()));
 	}
 

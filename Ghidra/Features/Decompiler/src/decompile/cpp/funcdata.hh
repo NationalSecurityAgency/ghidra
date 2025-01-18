@@ -464,6 +464,7 @@ public:
   void opUninsert(PcodeOp *op);					///< Remove the given PcodeOp from its basic block
   void opUnlink(PcodeOp *op);					///< Unset inputs/output and remove given PcodeOP from its basic block
   void opDestroy(PcodeOp *op);					///< Remove given PcodeOp and destroy its Varnode operands
+  void opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch);	///< Remove a PcodeOp and recursively remove ops producing its inputs
   void opDestroyRaw(PcodeOp *op);				///< Remove the given \e raw PcodeOp
   void opDeadAndGone(PcodeOp *op) { obank.destroy(op); }	///< Free resources for the given \e dead PcodeOp
   void opSetAllInput(PcodeOp *op,const vector<Varnode *> &vvec);	///< Set all input Varnodes for the given PcodeOp simultaneously

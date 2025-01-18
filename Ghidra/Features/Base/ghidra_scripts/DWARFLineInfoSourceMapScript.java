@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 // Adds DWARF source file line number info to the current program as source map entries.
+// A source file that is relative after path normalization will have all leading "."
+// and "/../" entries stripped and then be placed under an artificial directory.
 // Note that you can run this script on a program that has already been analyzed by the
 // DWARF analyzer.
 //@category DWARF
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.BinaryReader;
@@ -30,25 +31,30 @@ import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFact
 import ghidra.framework.store.LockException;
 import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.database.sourcemap.SourceFileIdType;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.util.Msg;
+import ghidra.util.SourceFileUtils;
 import ghidra.util.exception.CancelledException;
 
 public class DWARFLineInfoSourceMapScript extends GhidraScript {
 	public static final int ENTRY_MAX_LENGTH = 1000;
+	private static final int MAX_ERROR_MSGS_TO_DISPLAY = 25;
+	private static final int MAX_WARNING_MSGS_TO_DISPLAY = 25;
+	private static final String COMPILATION_ROOT_DIRECTORY = DWARFImporter.DEFAULT_COMPILATION_DIR;
+	private int numErrors;
+	private int numWarnings;
 
 	@Override
 	protected void run() throws Exception {
 
 		if (!currentProgram.hasExclusiveAccess()) {
 			Msg.showError(this, null, "Exclusive Access Required",
-				"Must have exclusive access to a program to add source map info");
+					"Must have exclusive access to a program to add source map info");
 			return;
 		}
 		DWARFSectionProvider dsp =
-			DWARFSectionProviderFactory.createSectionProviderFor(currentProgram, monitor);
+				DWARFSectionProviderFactory.createSectionProviderFor(currentProgram, monitor);
 		if (dsp == null) {
 			printerr("Unable to find DWARF information");
 			return;
@@ -69,71 +75,111 @@ public class DWARFLineInfoSourceMapScript extends GhidraScript {
 			return;
 		}
 		int entryCount = 0;
-		monitor.initialize(reader.length(), "DWARF Source Map Info");
 		List<DWARFCompilationUnit> compUnits = dprog.getCompilationUnits();
 		SourceFileManager sourceManager = currentProgram.getSourceFileManager();
 		List<SourceFileAddr> sourceInfo = new ArrayList<>();
+		monitor.initialize(compUnits.size(), "DWARF: Reading Source Map Info");
 		for (DWARFCompilationUnit cu : compUnits) {
+			monitor.increment();
 			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu, reader));
 		}
+		monitor.setIndeterminate(true);
+		monitor.setMessage("Sorting " + sourceInfo.size() + " entries");
 		sourceInfo.sort((i, j) -> Long.compareUnsigned(i.address(), j.address()));
-		monitor.initialize(sourceInfo.size());
+		monitor.setIndeterminate(false);
+		monitor.initialize(sourceInfo.size(), "DWARF: Applying Source Map Info");
+		Map<SourceFileAddr, SourceFile> sfasToSourceFiles = new HashMap<>();
+		Set<SourceFileAddr> badSfas = new HashSet<>();
+		AddressSet warnedAddresses = new AddressSet();
 		for (int i = 0; i < sourceInfo.size(); i++) {
-			monitor.checkCancelled();
 			monitor.increment(1);
 			SourceFileAddr sourceFileAddr = sourceInfo.get(i);
 			if (sourceFileAddr.isEndSequence()) {
 				continue;
 			}
+			if (sourceFileAddr.fileName() == null) {
+				continue;
+			}
+
+			if (badSfas.contains(sourceFileAddr)) {
+				continue;
+			}
+
 			Address addr = dprog.getCodeAddress(sourceFileAddr.address());
+			if (warnedAddresses.contains(addr)) {
+				continue; // only warn once per address
+			}
+
 			if (!currentProgram.getMemory().getExecuteSet().contains(addr)) {
-				printerr(
-					"entry for non-executable address; skipping: file %s line %d address: %s %x"
-							.formatted(sourceFileAddr.fileName(), sourceFileAddr.lineNum(),
-								addr.toString(), sourceFileAddr.address()));
+				if (numWarnings++ < MAX_WARNING_MSGS_TO_DISPLAY) {
+					printerr(
+						"entry for non-executable address; skipping: file %s line %d address: %s %x"
+						.formatted(sourceFileAddr.fileName(), sourceFileAddr.lineNum(),
+							addr.toString(), sourceFileAddr.address()));
+				}
+				warnedAddresses.add(addr);
 				continue;
 			}
 
 			long length = getLength(i, sourceInfo);
 			if (length < 0) {
-				println(
-					"Error computing entry length for file %s line %d address %s %x; replacing" +
-						" with length 0 entry".formatted(sourceFileAddr.fileName(),
-							sourceFileAddr.lineNum(), addr.toString(), sourceFileAddr.address()));
-				length = 0;
+				if (numWarnings++ < MAX_WARNING_MSGS_TO_DISPLAY) {
+					println(
+						"Error computing entry length for file %s line %d address %s %x; replacing" +
+							" with length 0 entry".formatted(sourceFileAddr.fileName(),
+								sourceFileAddr.lineNum(), addr.toString(),
+								sourceFileAddr.address()));
+				}
 			}
 			if (length > ENTRY_MAX_LENGTH) {
-				println(
-					("entry for file %s line %d address: %s %x length %d too large, replacing " +
-						"with length 0 entry").formatted(sourceFileAddr.fileName(),
-							sourceFileAddr.lineNum(), addr.toString(), sourceFileAddr.address(),
-							length));
-				length = 0;
+				if (numWarnings++ < MAX_WARNING_MSGS_TO_DISPLAY) {
+					println(
+						("entry for file %s line %d address: %s %x length %d too large, replacing " +
+								"with length 0 entry").formatted(sourceFileAddr.fileName(),
+									sourceFileAddr.lineNum(), addr.toString(), sourceFileAddr.address(),
+									length));
+				}
 			}
-			if (sourceFileAddr.fileName() == null) {
-				continue;
-			}
-			SourceFile source = null;
-			try {
-				SourceFileIdType type =
-					sourceFileAddr.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
-				source = new SourceFile(sourceFileAddr.fileName(), type, sourceFileAddr.md5());
-				sourceManager.addSourceFile(source);
-			}
-			catch (IllegalArgumentException e) {
-				printerr("Exception creating source file %s".formatted(e.getMessage()));
-				continue;
+
+
+			SourceFile source = sfasToSourceFiles.get(sourceFileAddr);
+			if (source == null) {
+				String path = SourceFileUtils.fixDwarfRelativePath(sourceFileAddr.fileName(),
+					COMPILATION_ROOT_DIRECTORY);
+				try {
+					SourceFileIdType type =
+						sourceFileAddr.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
+					source = new SourceFile(path, type, sourceFileAddr.md5());
+					sourceManager.addSourceFile(source);
+					sfasToSourceFiles.put(sourceFileAddr, source);
+				}
+				catch (IllegalArgumentException e) {
+					if (numErrors++ < MAX_ERROR_MSGS_TO_DISPLAY) {
+						printerr("Exception creating source file %s".formatted(e.getMessage()));
+					}
+					badSfas.add(sourceFileAddr);
+					continue;
+				}
 			}
 			try {
 				sourceManager.addSourceMapEntry(source, sourceFileAddr.lineNum(), addr, length);
 			}
 			catch (IllegalArgumentException e) {
-				printerr(e.getMessage());
+				if (numErrors++ < MAX_ERROR_MSGS_TO_DISPLAY) {
+					printerr(e.getMessage());
+				}
 				continue;
 			}
 			entryCount++;
 		}
+		if (numWarnings >= MAX_WARNING_MSGS_TO_DISPLAY) {
+			println("Additional warning messages suppressed");
+		}
+		if (numErrors >= MAX_ERROR_MSGS_TO_DISPLAY) {
+			println("Additional error messages suppressed");
+		}
 		println("Added " + entryCount + " source map entries");
+		printf("There were %d errors and %d warnings\n", numErrors,numWarnings);
 	}
 
 	private long getLength(int i, List<SourceFileAddr> allSFA) {

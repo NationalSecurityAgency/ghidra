@@ -16,7 +16,7 @@
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 ::@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
 ::@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
-::@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
+::@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
 ::@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
 

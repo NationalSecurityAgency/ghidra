@@ -272,8 +272,8 @@ public class ProgramEmulationUtils {
 
 	public static PathPattern computePattern(TraceObjectSchema root, Trace trace,
 			Class<? extends TraceObjectInterface> iface) {
-		PathMatcher matcher = root.searchFor(iface, true);
-		PathPattern pattern = matcher.getSingletonPattern();
+		PathFilter filter = root.searchFor(iface, true);
+		PathPattern pattern = filter.getSingletonPattern();
 		if (pattern == null || pattern.countWildcards() != 1) {
 			throw new IllegalArgumentException(
 				"Cannot find unique " + iface.getSimpleName() + " container");

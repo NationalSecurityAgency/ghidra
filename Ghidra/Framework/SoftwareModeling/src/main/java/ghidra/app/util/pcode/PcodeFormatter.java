@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -37,11 +36,11 @@ public interface PcodeFormatter<T> {
 	}
 
 	/**
-	 * Format the pcode ops with a specified {@link AddressFactory}.  For use when the 
-	 * pcode ops can reference program-specific address spaces.
+	 * Format the pcode ops with a specified {@link AddressFactory}. For use when the pcode ops can
+	 * reference program-specific address spaces.
 	 * 
 	 * @param language the language generating the p-code
-	 * @param addrFactory  addressFactory to use when generating pcodeop templates
+	 * @param addrFactory addressFactory to use when generating pcodeop templates
 	 * @param pcodeOps p-code ops to format
 	 * @return the formatted result
 	 * 
@@ -71,8 +70,8 @@ public interface PcodeFormatter<T> {
 		ArrayList<OpTpl> list = new ArrayList<OpTpl>();
 		HashMap<Integer, Integer> labelMap = new HashMap<Integer, Integer>(); // label offset to index map
 
-		for (PcodeOp pcodeOp : pcodeOps) {
-
+		for (int seq = 0; seq < pcodeOps.size(); seq++) {
+			PcodeOp pcodeOp = pcodeOps.get(seq);
 			int opcode = pcodeOp.getOpcode();
 
 			VarnodeTpl outputTpl = null;
@@ -90,7 +89,7 @@ public interface PcodeFormatter<T> {
 				if (i == 0 && (opcode == PcodeOp.BRANCH || opcode == PcodeOp.CBRANCH)) {
 					// Handle internal branch destination represented by constant destination
 					if (input.isConstant()) {
-						int labelOffset = pcodeOp.getSeqnum().getTime() + (int) input.getOffset();
+						int labelOffset = seq + (int) input.getOffset();
 						int labelIndex;
 						if (labelMap.containsKey(labelOffset)) {
 							labelIndex = labelMap.get(labelOffset);
@@ -117,6 +116,10 @@ public interface PcodeFormatter<T> {
 		Collections.sort(offsetList);
 		for (int i = offsetList.size() - 1; i >= 0; i--) {
 			int labelOffset = offsetList.get(i);
+			if (labelOffset > pcodeOps.size()) {
+				// Skip jumps out of this block/program
+				continue;
+			}
 			int labelIndex = labelMap.get(labelOffset);
 			OpTpl labelTpl = getLabelOpTemplate(addrFactory, labelIndex);
 			list.add(labelOffset, labelTpl);
@@ -142,11 +145,7 @@ public interface PcodeFormatter<T> {
 
 	private static VarnodeTpl getVarnodeTpl(AddressFactory addrFactory, Varnode v) {
 		ConstTpl offsetTpl = new ConstTpl(ConstTpl.REAL, v.getOffset());
-		AddressSpace addressSpace = addrFactory.getAddressSpace(v.getSpace());
-		if (addressSpace == null) {
-			throw new IllegalArgumentException("Unknown varnode space ID: " + v.getSpace());
-		}
-		ConstTpl spaceTpl = new ConstTpl(addressSpace);
+		ConstTpl spaceTpl = new ConstTpl(v.getAddress().getAddressSpace());
 		ConstTpl sizeTpl = new ConstTpl(ConstTpl.REAL, v.getSize());
 		return new VarnodeTpl(spaceTpl, offsetTpl, sizeTpl);
 	}

@@ -28,7 +28,7 @@ import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.iface.TraceObjectTogglable;
 import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
-import ghidra.trace.model.target.path.PathMatcher;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.util.*;
@@ -197,6 +197,13 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
+	public boolean isAlive(long snap) {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object.isAlive(snap);
+		}
+	}
+
+	@Override
 	public Lifespan computeSpan() {
 		Lifespan span = TraceObjectBreakpointLocation.super.computeSpan();
 		if (span != null) {
@@ -301,8 +308,8 @@ public class DBTraceObjectBreakpointLocation
 				return threads;
 			}
 
-			PathMatcher procMatcher = schema.searchFor(TraceObjectProcess.class, false);
-			return object.getAncestorsRoot(getLifespan(), procMatcher)
+			PathFilter procFilter = schema.searchFor(TraceObjectProcess.class, false);
+			return object.getAncestorsRoot(getLifespan(), procFilter)
 					.flatMap(proc -> proc.getSource(object)
 							.querySuccessorsInterface(getLifespan(),
 								TraceObjectThread.class, true))

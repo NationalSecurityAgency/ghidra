@@ -19,6 +19,7 @@ import ghidra.app.plugin.core.debug.stack.Sym.ConstSym;
 import ghidra.pcode.exec.ConcretionError;
 import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -70,14 +71,14 @@ class SymPcodeArithmetic implements PcodeArithmetic<Sym> {
 	}
 
 	@Override
-	public Sym modBeforeStore(int sizeout, int sizeinAddress, Sym inAddress,
-			int sizeinValue, Sym inValue) {
+	public Sym modBeforeStore(int sizeinOffset, AddressSpace space, Sym inOffset, int sizeinValue,
+			Sym inValue) {
 		return inValue;
 	}
 
 	@Override
-	public Sym modAfterLoad(int sizeout, int sizeinAddress, Sym inAddress,
-			int sizeinValue, Sym inValue) {
+	public Sym modAfterLoad(int sizeinOffset, AddressSpace space, Sym inOffset, int sizeinValue,
+			Sym inValue) {
 		return inValue;
 	}
 

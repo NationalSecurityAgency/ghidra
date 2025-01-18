@@ -65,7 +65,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
 public class TraceRmiHandler extends AbstractTraceRmiConnection {
-	public static final String VERSION = "11.2";
+	public static final String VERSION = "11.3";
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {

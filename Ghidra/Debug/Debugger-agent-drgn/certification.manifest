@@ -1,0 +1,11 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+##MODULE IP: Apache License 2.0 with LLVM Exceptions
+Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+src/main/py/LICENSE||GHIDRA||||END|
+src/main/py/MANIFEST.in||GHIDRA||||END|
+src/main/py/README.md||GHIDRA||||END|
+src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidradrgn/schema.xml||GHIDRA||||END|

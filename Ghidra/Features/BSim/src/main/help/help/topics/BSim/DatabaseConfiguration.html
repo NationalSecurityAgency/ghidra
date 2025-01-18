@@ -982,7 +982,7 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
           options set for any new executables will automatically read into the database as part of
           the ingest process. Previously ingested executables, assuming they have the new program
           options set, can be updated within the BSim database using one of the <SPAN class=
-          "command"><STRONG>bsim updaterepo</STRONG></SPAN> command variants. In either case, the
+          "command"><STRONG>bsim generateupdates</STRONG></SPAN> command variants. In either case, the
           relevant program options typically need to be filled by running a Ghidra script (See <A
           class="xref" href="IngestProcess.html#IngestExeCat" title=
           "Ingesting Executable Categories">&ldquo;Ingesting Executable Categories&rdquo;</A>).
@@ -1032,7 +1032,7 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
           <P>The new tag will automatically be read in when any new executables are ingested. If
           previously ingested executables already had the new tags before they were registered,
           their metadata within BSim database can be updated using the <SPAN class=
-          "command"><STRONG>bsim updaterepo</STRONG></SPAN> command variants. BSim is limited to 29
+          "command"><STRONG>bsim generateupdates</STRONG></SPAN> command variants. BSim is limited to 29
           registered tag names, and there is currently no way to remove a tag once it has been
           registered.</P>
         </DIV>

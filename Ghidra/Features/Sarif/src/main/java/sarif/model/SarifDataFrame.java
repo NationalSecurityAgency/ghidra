@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,28 +82,34 @@ public class SarifDataFrame {
 				columns.add(new SarifColumnKey(entry.getKey(), entry.getValue()));
 			}
 			SarifUtils.validateRun(run);
-			for (Result result : run.getResults()) {
-				compileTaxaMap(run, result);
-
-				Map<String, Object> curTableResult = new HashMap<>();
-				for (SarifResultHandler handler : resultHandlers) {
+			SarifUtils.setPopulating(true);
+			try {
+				for (Result result : run.getResults()) {
+					compileTaxaMap(run, result);
+	
+					Map<String, Object> curTableResult = new HashMap<>();
+					for (SarifResultHandler handler : resultHandlers) {
+						if (handler.isEnabled(this)) {
+							handler.handle(this, run, result, curTableResult);
+						}
+					}
+					tableResults.add(curTableResult);
+					String ruleid = (String) curTableResult.get("RuleId");
+					List<Map<String, Object>> list = tableResultsAsMap.get(ruleid);
+					if (list == null) {
+						list = new ArrayList<>();
+						tableResultsAsMap.put(ruleid, list);
+					}
+					list.add(curTableResult);
+				}
+				for (SarifRunHandler handler : controller.getSarifRunHandlers()) {
 					if (handler.isEnabled(this)) {
-						handler.handle(this, run, result, curTableResult);
+						handler.handle(this, run);
 					}
 				}
-				tableResults.add(curTableResult);
-				String ruleid = (String) curTableResult.get("RuleId");
-				List<Map<String, Object>> list = tableResultsAsMap.get(ruleid);
-				if (list == null) {
-					list = new ArrayList<>();
-					tableResultsAsMap.put(ruleid, list);
-				}
-				list.add(curTableResult);
-			}
-			for (SarifRunHandler handler : controller.getSarifRunHandlers()) {
-				if (handler.isEnabled(this)) {
-					handler.handle(this, run);
-				}
+			} 
+			finally {
+				SarifUtils.setPopulating(false);
 			}
 		}
 	}
@@ -147,7 +153,7 @@ public class SarifDataFrame {
 		Set<ReportingDescriptorReference> taxa = result.getTaxa();
 		if (taxa != null) {
 			for (ReportingDescriptorReference ref : taxa) {
-				long idx = (long) ref.getToolComponent().getIndex();
+				long idx = ref.getToolComponent().getIndex();
 				if (idx >= 0 && idx < view.size()) {
 					ToolComponent tc = view.get((int) idx);
 					taxaMap.put(tc.getName(), ref);

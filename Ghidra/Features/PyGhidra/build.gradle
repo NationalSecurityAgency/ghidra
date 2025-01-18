@@ -86,8 +86,9 @@ task installGhidraStubs(type: Exec) {
 	}
 }
 
-// Install PyGhidra in editable mode to the development virtual environment
-task installEditablePyGhidra(type: Exec) {
+// Prepares PyGhidra for development by installing it in editable mode to the development virtual
+// environment
+task prepPyGhidra(type: Exec) {
 	dependsOn("installJPype")
 	dependsOn("installGhidraStubs")
 	
@@ -100,6 +101,11 @@ task installEditablePyGhidra(type: Exec) {
 	}
 }
 
-if (findPython3(false)) {
-	rootProject.prepDev.dependsOn installEditablePyGhidra
+rootProject.assembleMarkdownToHtml {
+	def p = this.project
+	def zipPath = getZipPath(p)
+	
+	from ("${p.projectDir}/src/main/py/README.md") {
+		into { "${zipPath}/pypkg" }
+	}
 }

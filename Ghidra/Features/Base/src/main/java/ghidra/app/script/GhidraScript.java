@@ -2630,7 +2630,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		Address choice = doAsk(Integer.class, title, message, existingValue, lastValue -> {
 
 			AskAddrDialog dialog =
-				new AskAddrDialog(title, message, currentProgram.getAddressFactory(), lastValue);
+				new AskAddrDialog(title, message, currentProgram, lastValue);
 			if (dialog.isCanceled()) {
 				throw new CancelledException();
 			}

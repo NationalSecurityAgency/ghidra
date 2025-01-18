@@ -40,14 +40,13 @@ public class DummyProc implements AutoCloseable {
 			// just try next strategy
 		}
 
-		List<ResourceFile> mods = Stream.concat(Application.getApplicationRootDirectories()
-				.stream()
-				.map(ar -> new ResourceFile(ar, "Test/DebuggerIntegrationTest")),
-			Application.getModuleRootDirectories().stream())
-				.toList();
-
 		// Try the build/exe/<cmd>/ and build/exe/<cmd>/<platform>/ directory
 		try {
+			List<ResourceFile> mods = Stream.concat(Application.getApplicationRootDirectories()
+					.stream()
+					.map(ar -> new ResourceFile(ar, "Test/DebuggerIntegrationTest")),
+				Application.getModuleRootDirectories().stream())
+					.toList();
 			for (ResourceFile modRoot : mods) {
 				ResourceFile osExe = new ResourceFile(modRoot,
 					"build/os/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" + cmd);

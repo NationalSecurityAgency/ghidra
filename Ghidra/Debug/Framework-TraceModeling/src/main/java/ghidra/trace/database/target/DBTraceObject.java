@@ -36,7 +36,8 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.info.TraceObjectInterfaceFactory.Constructor;
 import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
-import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceEvents;
@@ -162,19 +163,32 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
+	protected LifeSet ensureCachedLife() {
+		if (cachedLife != null) {
+			return cachedLife;
+		}
+		MutableLifeSet result = new DefaultLifeSet();
+		getCanonicalParents(Lifespan.ALL).forEach(v -> result.add(v.getLifespan()));
+		cachedLife = result;
+		return result;
+	}
+
 	@Override
 	public LifeSet getLife() {
 		try (LockHold hold = manager.trace.lockRead()) {
-			if (cachedLife != null) {
-				synchronized (cachedLife) {
-					return DefaultLifeSet.copyOf(cachedLife);
-				}
-			}
-			MutableLifeSet result = new DefaultLifeSet();
-			getCanonicalParents(Lifespan.ALL).forEach(v -> result.add(v.getLifespan()));
-			cachedLife = result;
+			LifeSet result = ensureCachedLife();
 			synchronized (result) {
 				return DefaultLifeSet.copyOf(result);
+			}
+		}
+	}
+
+	@Override
+	public boolean isAlive(long snap) {
+		try (LockHold hold = manager.trace.lockRead()) {
+			LifeSet result = ensureCachedLife();
+			synchronized (result) {
+				return result.contains(snap);
 			}
 		}
 	}
@@ -681,8 +695,8 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Stream<? extends TraceObjectValPath> findAncestorsInterface(Lifespan span,
 			Class<? extends TraceObjectInterface> iface) {
 		// This is a sort of meet-in-the-middle. The type search must originate from the root
-		PathMatcher matcher = getManager().getRootSchema().searchFor(iface, false);
-		return getAncestorsRoot(span, matcher);
+		PathFilter filter = getManager().getRootSchema().searchFor(iface, false);
+		return getAncestorsRoot(span, filter);
 	}
 
 	@Override
@@ -694,8 +708,8 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	public TraceObject findOrCreateCanonicalAncestorInterface(
 			Class<? extends TraceObjectInterface> iface) {
-		PathMatcher matcher = getManager().getRootSchema().searchFor(iface, false);
-		return path.streamMatchingAncestry(matcher)
+		PathFilter filter = getManager().getRootSchema().searchFor(iface, false);
+		return path.streamMatchingAncestry(filter)
 				.limit(1)
 				.map(kp -> manager.createObject(kp))
 				.findAny()
@@ -711,9 +725,9 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Stream<? extends TraceObject> findCanonicalAncestorsInterface(
 			Class<? extends TraceObjectInterface> iface) {
 		// This is a sort of meet-in-the-middle. The type search must originate from the root
-		PathMatcher matcher = getManager().getRootSchema().searchFor(iface, false);
+		PathFilter filter = getManager().getRootSchema().searchFor(iface, false);
 		try (LockHold hold = manager.trace.lockRead()) {
-			return path.streamMatchingAncestry(matcher)
+			return path.streamMatchingAncestry(filter)
 					.map(kp -> manager.getObjectByCanonicalPath(kp));
 		}
 	}
@@ -741,8 +755,8 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	@Override
 	public Stream<? extends TraceObjectValPath> findSuccessorsInterface(Lifespan span,
 			Class<? extends TraceObjectInterface> iface, boolean requireCanonical) {
-		PathMatcher matcher = getSchema().searchFor(iface, requireCanonical);
-		return getSuccessors(span, matcher).filter(p -> isActuallyInterface(p, iface));
+		PathFilter filter = getSchema().searchFor(iface, requireCanonical);
+		return getSuccessors(span, filter).filter(p -> isActuallyInterface(p, iface));
 	}
 
 	@Override

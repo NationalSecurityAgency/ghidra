@@ -888,7 +888,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		CompletableFuture<Void> future = editor.setRegister(rv);
 		future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			reportError("Edit Register", "Could not write target register", ex);
+			reportError(null, "Could not write target register", ex);
 			return null;
 		});
 		return;

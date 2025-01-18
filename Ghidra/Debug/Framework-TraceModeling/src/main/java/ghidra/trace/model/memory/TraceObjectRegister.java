@@ -42,8 +42,8 @@ import ghidra.trace.model.thread.TraceObjectThread;
  * a preferred presentation. In the tree convention, each register is presented with this interface.
  * The name is taken from the object key, the length in bits is given in the attribute
  * {@link #KEY_BITLENGTH}, and the value is given in the attribute
- * {@link TraceObjectInterface#KEY_VALUE}. Some connectors may present registers as primitive
- * children of the container, but that convention is discouraged.</li>
+ * {@link TraceObjectInterface#KEY_VALUE}. Alternatively, connectors may present registers as
+ * primitive children of the container.</li>
  * </ol>
  * 
  * <p>

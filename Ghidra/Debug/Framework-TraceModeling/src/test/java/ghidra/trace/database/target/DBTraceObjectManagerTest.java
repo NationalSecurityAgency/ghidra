@@ -570,6 +570,13 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
+	public void testGetCanonicalSuccessors() {
+		populateModel(3);
+		assertEquals(3, root.getCanonicalSuccessors(PathFilter.parse("Targets[]")).count());
+		assertEquals(0, root.getCanonicalSuccessors(PathFilter.parse("anAttribute")).count());
+	}
+
+	@Test
 	public void testSetValue_TruncatesOrDeletes() {
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();

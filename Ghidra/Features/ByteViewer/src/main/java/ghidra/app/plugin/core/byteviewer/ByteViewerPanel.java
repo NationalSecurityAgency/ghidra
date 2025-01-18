@@ -612,8 +612,8 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 			c.setFontMetrics(fm);
 		}
 		indexFactory = new IndexFieldFactory(fm);
-		updateIndexMap();
 		indexFactory.setSize(getIndexSizeInChars());
+		updateIndexMap();
 		indexPanel.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 	}
 

@@ -29,7 +29,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.importer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
@@ -101,9 +100,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			// Load (or get) the primary program
 			Program program = null;
 			if (!shouldLoadOnlyLibraries(options)) {
-				if (provider instanceof FileBytesProvider) {
-					throw new LoadException("Cannot load an already loaded program");
-				}
 				program = doLoad(provider, loadedName, loadSpec, libraryNameList, options, consumer,
 					log, monitor);
 				loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));
@@ -1181,27 +1177,20 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected FSRL resolveLibraryFile(GFileSystem fs, Path libraryParentPath, String libraryName)
 			throws IOException {
-		GFile libraryParentDir = fs.lookup(
-			libraryParentPath != null ? FilenameUtils.separatorsToUnix(libraryParentPath.toString())
-					: null);
-		boolean compareWithoutExtension = isOptionalLibraryFilenameExtensions() &&
-			FilenameUtils.getExtension(libraryName).equals("");
-		if (libraryParentDir != null) {
-			Comparator<String> libNameComparator = getLibraryNameComparator();
-			for (GFile file : fs.getListing(libraryParentDir)) {
-				if (file.isDirectory()) {
-					continue;
-				}
-				String compareName = file.getName();
-				if (compareWithoutExtension) {
-					compareName = FilenameUtils.getBaseName(compareName);
-				}
-				if (libNameComparator.compare(libraryName, compareName) == 0) {
-					return file.getFSRL();
-				}
-			}
-		}
-		return null;
+		String lpp = libraryParentPath != null 
+				? FilenameUtils.separatorsToUnix(libraryParentPath.toString())
+				: null;
+		String targetPath = FSUtilities.appendPath(lpp, libraryName);
+
+		Comparator<String> baseNameComp = getLibraryNameComparator();
+		Comparator<String> nameComp = isOptionalLibraryFilenameExtensions() &&
+			FilenameUtils.getExtension(libraryName).isEmpty()
+					? (s1, s2) -> baseNameComp.compare(FilenameUtils.getBaseName(s1),
+						FilenameUtils.getBaseName(s2))
+					: baseNameComp;
+
+		GFile foundFile = fs.lookup(targetPath, nameComp);
+		return foundFile != null && !foundFile.isDirectory() ? foundFile.getFSRL() : null;
 	}
 
 	/**

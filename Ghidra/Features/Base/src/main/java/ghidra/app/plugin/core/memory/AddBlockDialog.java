@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,6 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlockType;
@@ -69,7 +68,6 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private JCheckBox overlayCB;
 	private RegisterField initialValueField;
 	private JLabel initialValueLabel;
-	private AddressFactory addrFactory;
 	private AddressInput baseAddrField; // used for Bit and Byte mapped blocks
 	private IntegerTextField schemeDestByteCountField; // used for Byte mapped blocks
 	private IntegerTextField schemeSrcByteCountField; // used for Byte mapped blocks
@@ -134,12 +132,12 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private Component buildBasicInfoPanel() {
-		JPanel panel = new JPanel(new PairLayout(4, 10, 150));
+		JPanel panel = new JPanel(new PairLayout(5, 10, 150));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 7, 4, 5));
 
 		panel.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panel.add(buildNameField());
-		panel.add(new GLabel("Start Addr:", SwingConstants.RIGHT));
+		panel.add(new GLabel("Start Address:", SwingConstants.RIGHT));
 		panel.add(buildAddressField());
 		panel.add(new GLabel("Length:", SwingConstants.RIGHT));
 		panel.add(buildLengthField());
@@ -422,26 +420,16 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		model.setFileBytes((FileBytes) fileBytesComboBox.getSelectedItem());
 	}
 
-	private void addrChanged() {
-		Address addr = null;
-		try {
-			addr = addrField.getAddress();
-		}
-		catch (IllegalArgumentException e) {
-			// just let it be null
-		}
-		model.setStartAddress(addr);
+	private void addressChanged(Address address) {
+		model.setStartAddress(address);
 	}
 
-	private void baseAddressChanged() {
-		Address addr = null;
-		try {
-			addr = baseAddrField.getAddress();
-		}
-		catch (IllegalArgumentException e) {
-			// just let it be null
-		}
-		model.setBaseAddress(addr);
+	private void addressError(String errorMessage) {
+		model.setAddressError(errorMessage);
+	}
+
+	private void baseAddressChanged(Address address) {
+		model.setBaseAddress(address);
 	}
 
 	private void schemeSrcByteCountChanged() {
@@ -476,12 +464,11 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private JPanel buildMappedPanel() {
+		Program program = model.getProgram();
 		JPanel panel = new JPanel(new PairLayout());
 
-		baseAddrField = new AddressInput();
-		baseAddrField.setAddressFactory(addrFactory);
+		baseAddrField = new AddressInput(program, this::baseAddressChanged);
 		baseAddrField.setName("Source Addr");
-		baseAddrField.addChangeListener(ev -> baseAddressChanged());
 		baseAddrField.setAccessibleName("Source Address");
 
 		JPanel schemePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -504,7 +491,6 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		schemePanel.add(new GLabel(" : "));
 		schemePanel.add(schemeSrcByteCountField.getComponent());
 
-		Program program = model.getProgram();
 		Address minAddr = program.getMinAddress();
 		if (minAddr == null) {
 			minAddr = program.getAddressFactory().getDefaultAddressSpace().getAddress(0);
@@ -561,12 +547,12 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	}
 
 	private Component buildAddressField() {
-		addrField = new AddressInput();
+		Program program = model.getProgram();
+		addrField = new AddressInput(program, this::addressChanged);
+		addrField.setAddressErrorConsumer(this::addressError);
+		addrField.setAddressSpaceFilter(AddressInput.ALL_MEMORY_SPACES);
 		addrField.setName("Start Addr");
 		addrField.setAccessibleName("Memory Block Start Address");
-		addrFactory = model.getProgram().getAddressFactory();
-		addrField.setAddressFactory(addrFactory, AddressInput.INCLUDE_ALL_MEMORY_SPACES);
-		addrField.addChangeListener(ev -> addrChanged());
 		return addrField;
 	}
 

@@ -32,7 +32,8 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
-import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
@@ -97,12 +98,12 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 
 	public static PathFilter single(TraceObject seed,
 			Class<? extends TraceObjectInterface> targetIf) {
-		PathMatcher stackMatcher = seed.getSchema().searchFor(targetIf, false);
-		if (stackMatcher.getSingletonPath() == null) {
+		PathFilter stackFilter = seed.getSchema().searchFor(targetIf, false);
+		if (stackFilter.getSingletonPath() == null) {
 			throw new IllegalStateException("Schema doesn't provide a unique " +
 				targetIf.getSimpleName() + " for " + seed.getCanonicalPath());
 		}
-		return stackMatcher.getSingletonPattern();
+		return stackFilter.getSingletonPattern();
 	}
 
 	protected TraceObjectStack doGetOrAddObjectStack(TraceThread thread, long snap,

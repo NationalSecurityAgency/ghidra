@@ -51,13 +51,17 @@ public abstract class AbstractTaintState implements TaintState {
 	private AddressSet taintAddressSet = new AddressSet();
 	private Map<Address, Set<TaintQueryResult>> taintVarnodeMap = new HashMap<>();
 
-	/// private QueryDataFrame currentQueryData;
+	private AddressSet deltaAddressSet = new AddressSet();
+	private Map<Address, Set<TaintQueryResult>> deltaVarnodeMap = new HashMap<>();
+
 	private SarifSchema210 currentQueryData;
 
 	protected TaintOptions taintOptions;
 	private TaintPlugin plugin;
 
 	private boolean cancellation;
+
+	private TaskType taskType;
 
 	public AbstractTaintState(TaintPlugin plugin) {
 		this.plugin = plugin;
@@ -281,10 +285,15 @@ public abstract class AbstractTaintState implements TaintState {
 
 			if (queryType.equals(QueryType.SRCSINK) || queryType.equals(QueryType.CUSTOM)) {
 				// The datalog that specifies the query.
-				if (queryType.equals(QueryType.CUSTOM)) {
+				if (queryType.equals(QueryType.CUSTOM)) {					
 					Path queryPath = Path.of(taintOptions.getTaintOutputDirectory(),
 						taintOptions.getTaintQueryDLName());
-					queryFile = queryPath.toFile();
+					GhidraFileChooser chooser = new GhidraFileChooser(plugin.getProvider().getComponent());
+					chooser.setCurrentDirectory(queryPath.toFile());
+					queryFile = chooser.getSelectedFile();
+					if (queryFile == null) {
+						return false;
+					}
 				}
 				param_list.add(queryFile.getAbsolutePath());
 			}
@@ -296,12 +305,8 @@ public abstract class AbstractTaintState implements TaintState {
 				pb.redirectError(Redirect.INHERIT);
 				Process p = pb.start();
 
-				switch (taintOptions.getTaintOutputForm()) {
-					case "sarif+all":
-						readQueryResultsIntoDataFrame(program, p.getInputStream());
-						break;
-					default:
-				}
+				readQueryResultsIntoDataFrame(program, p.getInputStream());
+
 				// We wait for the process to finish after starting to read the input stream,
 				// otherwise waitFor() might wait for a running process trying to write to 
 				// a filled output buffer. This causes waitFor() to wait indefinitely.
@@ -401,25 +406,54 @@ public abstract class AbstractTaintState implements TaintState {
 
 	@Override
 	public void setTaintAddressSet(AddressSet aset) {
-		taintAddressSet = aset;
+		switch (taskType) {
+			case SET_TAINT -> taintAddressSet = aset;
+			case SET_DELTA -> deltaAddressSet = aset;
+			case APPLY_DELTA -> {
+				// Empty
+			}
+		}
 	}
 
 	@Override
 	public AddressSet getTaintAddressSet() {
-		return taintAddressSet;
+		return switch(taskType) {
+			case SET_TAINT -> taintAddressSet;
+			case SET_DELTA -> deltaAddressSet;
+			case APPLY_DELTA ->  taintAddressSet.subtract(deltaAddressSet);
+			default -> new AddressSet();
+		};
+	}
+
+	@Override
+	public void setTaskType(TaskType taskType) {
+		this.taskType = taskType;
 	}
 
 	@Override
 	public void augmentAddressSet(ClangToken token) {
 		Address addr = token.getMinAddress();
-		if (addr != null) {
-			taintAddressSet.add(addr);
+		if (addr == null) {
+			return;
+		}
+		switch (taskType) {
+			case SET_TAINT -> taintAddressSet.add(addr);
+			case SET_DELTA -> deltaAddressSet.add(addr);
+			case APPLY_DELTA -> {
+				if (!deltaAddressSet.contains(addr)) {
+					taintAddressSet.add(addr);
+				}
+			}
 		}
 	}
 
 	@Override
-	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap) {
-		taintVarnodeMap = vmap;
+	public void setTaintVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, TaskType delta) {
+		switch (delta) {
+			case SET_TAINT -> taintVarnodeMap = vmap;
+			case SET_DELTA -> deltaVarnodeMap = vmap;
+			case APPLY_DELTA -> taintVarnodeMap = vmap;
+		}
 	}
 
 	@Override
@@ -428,10 +462,41 @@ public abstract class AbstractTaintState implements TaintState {
 	}
 
 	@Override
+	public Set<TaintQueryResult> getQuerySet(Address key) {
+		Set<TaintQueryResult> set = new HashSet<>();
+		switch (taskType) {
+			case SET_TAINT -> set = taintVarnodeMap.get(key);
+			case SET_DELTA -> set = deltaVarnodeMap.get(key);
+			case APPLY_DELTA -> {
+				Set<TaintQueryResult> A = taintVarnodeMap.get(key);
+				if (A != null) {
+					set.addAll(A);
+				}
+				Set<TaintQueryResult> B = deltaVarnodeMap.get(key);
+				if (A != null) {
+					set.removeAll(B);
+				}
+			}
+		}
+		return set;
+	}
+
+	@Override
 	public void clearTaint() {
 		Msg.info(this, "TaintState: clearTaint() - clearing address set");
-		taintAddressSet.clear();
-		taintVarnodeMap.clear();
+		switch (taskType) {
+			case SET_TAINT -> {
+				taintAddressSet.clear();
+				taintVarnodeMap.clear();
+			}
+			case SET_DELTA -> {
+				deltaAddressSet.clear();
+				deltaVarnodeMap.clear();
+			}
+			case APPLY_DELTA -> {
+				// EMPTY
+			}
+		}
 	}
 
 	@Override
