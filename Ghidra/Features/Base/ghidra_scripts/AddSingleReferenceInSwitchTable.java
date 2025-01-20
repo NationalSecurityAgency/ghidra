@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//With a user-inputed base address, this script will add a reference on the current switch table entry to corresponding code
+//With a user-input base address, this script will add a reference on the current switch table entry to corresponding code
 //Make sure your table entry is defined data (db,dw,etc).
 //@category ARM
 
