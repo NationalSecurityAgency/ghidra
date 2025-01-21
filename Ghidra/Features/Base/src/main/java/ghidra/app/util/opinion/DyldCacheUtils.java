@@ -27,6 +27,7 @@ import ghidra.formats.gfilesystem.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -149,7 +150,8 @@ public class DyldCacheUtils {
 				splitHeader.parseFromFile(shouldProcessLocalSymbols, log, monitor);
 				headers.add(splitHeader);
 				names.add(splitFSRL.getName());
-				uuidToFileMap.put(splitHeader.getUUID(), splitFSRL);
+				uuidToFileMap.put(NumericUtilities.convertBytesToString(splitHeader.getUUID()),
+					splitFSRL);
 			}
 
 			// Validate the subcaches
@@ -164,7 +166,8 @@ public class DyldCacheUtils {
 				}
 				log.appendMsg("Including subcache: " + fsrl.getName() + " - " + uuid);
 			}
-			String symbolUUID = baseHeader.getSymbolFileUUID();
+			String symbolUUID =
+				NumericUtilities.convertBytesToString(baseHeader.getSymbolFileUUID());
 			if (symbolUUID != null) {
 				FSRL symbolFSRL = uuidToFileMap.get(symbolUUID);
 				if (symbolFSRL == null) {
