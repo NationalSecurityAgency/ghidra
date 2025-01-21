@@ -4300,6 +4300,10 @@ define pcodeop PolynomialMultiply;
 	Qd = FloatVectorMult(Qn,Qm,4:1,16:1);
 }
 
+@endif # SIMD
+
+@if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
+
 :vmul^COND^".f64" Dd,Dn,Dm  is ( ($(AMODE) & ARMcond=1 & c2327=0x1c &     c2021=2 &     c0811=11 &     c0606=0 &     c0404=0) |
                                ($(TMODE_E) &         thv_c2327=0x1c & thv_c2021=2 & thv_c0811=11 & thv_c0606=0 & thv_c0404=0) ) & COND & Dm & Dn & Dd 
 {
@@ -4311,6 +4315,10 @@ define pcodeop PolynomialMultiply;
 {
 	Sd = Sn f* Sm;
 }
+
+@endif #  VFPv2 || VFPv3 || SIMD
+
+@if defined(SIMD)
 
 :vmul^COND^".f16" Sd,Sn,Sm  is ( ($(AMODE) & ARMcond=1 & c2327=0x1c &     c2021=2 &     c0811=9 &     c0606=0 &     c0404=0) |
                                ($(TMODE_E) &         thv_c2327=0x1c & thv_c2021=2 & thv_c0811=9 & thv_c0606=0 & thv_c0404=0) ) & COND & Sm & Sn & Sd 
@@ -5209,6 +5217,9 @@ define pcodeop VectorWidenMultipyAccumulate;
 {
 	Qd = VectorWidenMultipyAccumulate(Qm,Qn,2:1);
 }
+@endif # SIMD
+
+@if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
 
 :vsqrt^COND^".f32" Sd,Sm		is COND & ( ($(AMODE) & ARMcond=1 & c2327=0x1d & c2021=3 & c1619=1 & c0811=10 & c0607=3 & c0404=0) |
                                         ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=3 & thv_c1619=1 & thv_c0811=10 & thv_c0606=1 & thv_c0404=0) ) & Sm & Sd
@@ -5228,6 +5239,9 @@ define pcodeop VectorWidenMultipyAccumulate;
 	Dd = sqrt(Dm);
 }
 
+@endif #VFPv2 | VFPv3 | SIMD
+
+@if defined(SIMD)
 :vsra.^udt^ShiftSize Qd, Qm, ShiftImmRLI is ( ($(AMODE) & ARMcond=0 & cond=15 &     c2527=1 &  c2323=1 &     c0811=1 &      c0606=1     & c0404=1) |
                                        ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=1 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmRLI & Qd & Qm
 {
