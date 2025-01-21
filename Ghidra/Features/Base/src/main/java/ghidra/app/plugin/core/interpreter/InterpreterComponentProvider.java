@@ -19,13 +19,13 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
+import javax.swing.*;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
-import docking.widgets.OptionDialog;
+import docking.action.builder.ActionBuilder;
+import docking.widgets.*;
 import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
@@ -38,6 +38,9 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	private InterpreterPanel panel;
 	private InterpreterConnection interpreter;
 	private List<Callback> firstActivationCallbacks;
+
+	private FindDialog findDialog;
+	private TextComponentSearcher searcher;
 
 	public InterpreterComponentProvider(InterpreterPanelPlugin plugin,
 			InterpreterConnection interpreter, boolean visible) {
@@ -72,8 +75,28 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 		clearAction.setDescription("Clear Interpreter");
 		clearAction.setToolBarData(new ToolBarData(Icons.CLEAR_ICON, null));
 		clearAction.setEnabled(true);
-
 		addLocalAction(clearAction);
+
+		//@formatter:off
+		new ActionBuilder("Find", getOwner())
+			.keyBinding("Ctrl F")
+			.sharedKeyBinding()
+			.popupMenuPath("Find...")
+			.onAction(c -> {
+				showFindDialog();
+			})
+			.buildAndInstallLocal(this)
+			;
+		//@formatter:on	
+	}
+
+	private void showFindDialog() {
+		if (findDialog == null) {
+			JTextPane textPane = panel.getOutputTextPane();
+			searcher = new TextComponentSearcher(textPane);
+			findDialog = new FindDialog("Find", searcher);
+		}
+		getTool().showDialog(findDialog);
 	}
 
 	@Override
@@ -128,6 +151,10 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	@Override
 	public void clear() {
 		panel.clear();
+
+		if (searcher != null) {
+			searcher.clearHighlights();
+		}
 	}
 
 	@Override
