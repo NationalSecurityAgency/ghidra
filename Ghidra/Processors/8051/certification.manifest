@@ -15,6 +15,7 @@ data/languages/8051.slaspec||GHIDRA||||END|
 data/languages/8051_archimedes.cspec||GHIDRA||||END|
 data/languages/8051_main.sinc||GHIDRA||||END|
 data/languages/cip-51.pspec||GHIDRA||||END|
+data/languages/cip-51.slaspec||GHIDRA||||END|
 data/languages/keil-cx51.cspec||GHIDRA||||END|
 data/languages/mx51.cspec||GHIDRA||||END|
 data/languages/mx51.pspec||GHIDRA||||END|
