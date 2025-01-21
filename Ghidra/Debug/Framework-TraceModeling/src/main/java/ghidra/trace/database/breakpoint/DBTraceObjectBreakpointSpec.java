@@ -107,6 +107,13 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
+	public boolean isAlive(long snap) {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object.isAlive(snap);
+		}
+	}
+
+	@Override
 	public long getPlacedSnap() {
 		return computeMinSnap();
 	}

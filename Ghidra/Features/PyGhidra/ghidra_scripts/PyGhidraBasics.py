@@ -17,6 +17,9 @@
 # @category: Examples.Python
 # @runtime PyGhidra
 
+import typing
+if typing.TYPE_CHECKING:
+    from ghidra.ghidra_builtins import *
 
 # we can import java libraries just as if they were python libraries
 from java.util import LinkedList

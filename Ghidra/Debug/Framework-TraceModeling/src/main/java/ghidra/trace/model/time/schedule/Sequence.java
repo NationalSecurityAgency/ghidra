@@ -470,4 +470,25 @@ public class Sequence implements Comparable<Sequence> {
 		}
 		return result;
 	}
+
+	public boolean differsOnlyByPatch(Sequence that) {
+		int size = this.steps.size();
+		if (size == that.steps.size()) {
+			if (size == 0) {
+				return true;
+			}
+			if (!this.steps.subList(0, size - 1).equals(that.steps.subList(0, size - 1))) {
+				return false;
+			}
+			Step thisLast = this.steps.getLast();
+			Step thatLast = that.steps.getLast();
+			return thisLast.equals(thatLast) ||
+				thisLast instanceof PatchStep && thatLast instanceof PatchStep;
+		}
+		if (size == that.steps.size() - 1) {
+			Step thatLast = that.steps.getLast();
+			return thatLast instanceof PatchStep;
+		}
+		return false;
+	}
 }

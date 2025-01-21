@@ -211,6 +211,7 @@ Obviously, with no real `hooks.py` logic, there's no need for `DrgnHooksTest`.
 
 Of note, we've used the gdb `gcore` command to create a core dump for the tests.
 Both user- and kernel-mode require privileges to run the debugger, and, for testing, that's not ideal.
+[`build.gradle`](../../../Ghidra/Test/DebuggerIntegrationTest/build.gradle) for IntegrationTest projext will also need to be modified to include the new debugger package.
 
 ### Documentation
 

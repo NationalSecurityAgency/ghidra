@@ -219,8 +219,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointAdded(TraceBreakpoint tb) {
-			Lifespan span = tb.getLifespan();
-			if (span == null || !span.contains(info.snap)) {
+			if (!tb.isAlive(info.snap)) {
 				return;
 			}
 			try {
@@ -233,7 +232,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointChanged(TraceBreakpoint tb) {
-			if (!tb.getLifespan().contains(info.snap)) {
+			if (!tb.isAlive(info.snap)) {
 				return;
 			}
 			try {
@@ -521,7 +520,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 							forgetTraceBreakpoint(r, tb);
 							continue;
 						}
-						if (!tb.getLifespan().contains(snap)) {
+						if (!tb.isAlive(snap)) {
 							forgetTraceBreakpoint(r, tb);
 							continue;
 						}

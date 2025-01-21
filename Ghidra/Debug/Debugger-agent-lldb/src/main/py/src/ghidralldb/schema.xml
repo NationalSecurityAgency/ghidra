@@ -6,8 +6,6 @@
 		<element schema="VOID" />
 		<attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
 		<attribute name="Available" schema="AvailableContainer" required="yes" fixed="yes" />
-		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
-		<attribute name="Watchpoints" schema="WatchpointContainer" required="yes" fixed="yes" />
 		<attribute name="_event_thread" schema="OBJECT" hidden="yes" />
 		<attribute name="_focus" schema="Selectable" required="yes" hidden="yes" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
@@ -62,6 +60,7 @@
 	</schema>
 	<schema name="WatchpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="BreakpointSpec" />
+		<interface name="BreakpointLocation" />
 		<interface name="Togglable" />
 		<attribute name="Expression" schema="STRING" required="yes" hidden="yes" />
 		<attribute-alias from="_expression" to="Expression" />
@@ -93,7 +92,7 @@
 		<interface name="ExecutionStateful" />
 		<element schema="VOID" />
 		<attribute name="Threads" schema="ThreadContainer" required="yes" fixed="yes" />
-		<attribute name="Breakpoints" schema="BreakpointLocationContainer" required="yes" fixed="yes" />
+		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
 		<attribute name="Watchpoints" schema="WatchpointContainer" required="yes" fixed="yes" />
 		<attribute name="Exit Code" schema="LONG" />
 		<attribute-alias from="_exit_code" to="Exit Code" />

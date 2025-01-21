@@ -104,10 +104,10 @@ task testSpecimenLinux_x86_64 {
 	dependsOn 'expTraceableSleepExecutable'//Linux_x86_64Executable'
 
 	doLast {
-		exec {
-			workingDir "build/os/linux_x86_64"
+		providers.exec {
+			workingDir { file("build/os/linux_x86_64") }
 			commandLine "strip", "-o", "expSpin.stripped", "expSpin"
-		}
+		}.result.get()
 	}
 }
 
@@ -220,6 +220,7 @@ integrationTest {
 	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-dbgeng').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-drgn').assemblePyPackage }
 
 	if ("linux_x86_64".equals(getCurrentPlatformName())) {
 		dependsOn("testSpecimenLinux_x86_64")

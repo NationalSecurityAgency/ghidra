@@ -55,10 +55,13 @@ echo $DIR
 
 POSTGRES_GZ_PATH=${DIR}/../../../../ghidra.bin/Ghidra/Features/BSim/${POSTGRES_GZ}
 if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
-	POSTGRES_GZ_PATH=${DIR}/support/${POSTGRES_GZ}
+	POSTGRES_GZ_PATH=${DIR}/../../../dependencies/BSim/${POSTGRES_GZ}
 	if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
-		echo "Postgres source bundle not found: ${POSTGRES_GZ_PATH}"
-		exit -1
+		POSTGRES_GZ_PATH=${DIR}/support/${POSTGRES_GZ}
+		if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
+			echo "Postgres source bundle not found: ${POSTGRES_GZ_PATH}"
+			exit -1
+		fi
 	fi
 fi
 
@@ -81,14 +84,26 @@ pushd build/${POSTGRES}
 
 if [ "$OS" = "Darwin" ]; then
 	export MACOSX_DEPLOYMENT_TARGET=10.5
-	export ARCHFLAGS="-arch x86_64"
-	OSDIR=mac_x86_64
+	export ARCHFLAGS="-arch $ARCH"
+	if [ "$ARCH" = "x86_64" ]; then
+		OSDIR="mac_x86_64"
+		HOMEBREW="/usr/local"
+	else
+		OSDIR="mac_arm_64"
+		HOMEBREW="/opt/homebrew"
+	fi
+	POSTGRES_CONFIG_OPTIONS+="--with-includes=${HOMEBREW}/include"
+	POSTGRES_CONFIG_OPTIONS+="--with-libraries=${HOMEBREW}/lib"
 elif [ "$ARCH" = "x86_64" ]; then
-	OSDIR=linux_x86_64
+	OSDIR="linux_x86_64"
+elif [ "$ARCH" = "aarch64" ]; then
+	OSDIR="linux_arm_64"
 else
 	echo "Unsupported platform: $OS $ARCH"
 	exit -1	
 fi
+
+echo "Platform: $OSDIR"
 
 # Install within build/os
 INSTALL_DIR=${DIR}/build/os/${OSDIR}/postgresql

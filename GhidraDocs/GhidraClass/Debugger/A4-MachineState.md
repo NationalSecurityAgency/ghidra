@@ -68,7 +68,7 @@ Since the target has just entered `main`, we should expect a return address at t
 With your cursor at the stack pointer, press **`P`** to place a pointer there, just like
 you would in the Static Listing.
 You can now navigate to that address by double-clicking it.
-To return to the stack pointer, you can use the back arrow in the global toolbar, you can click the ![track location](images/register-marker.png) Track Location button, or you can double-click the `sp = [Address]` label in the top right of the Dynamic Listing.
+To return to the stack pointer, you can use the back arrow in the global toolbar, you can click the ![track location](images/register-marker.png) Track Location button, or you can double-click the "sp = ..." label in the top right of the Dynamic Listing.
 
 To examine a more complicated stack segment, we will break at `rand`.
 Ensure your breakpoint at `rand` is enabled and press ![resume](images/resume.png) Resume.
@@ -244,7 +244,7 @@ For example, to see how far a return address is into `main`, you could use `*:8 
 For the complete specification, see the Semantic Section in the [Sleigh documentation](../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml).
 
 Sleigh is a bit unconventional in that its operators are typed rather than its variables.
-All variables are fix-length bit vectors.
+All variables are fixed-length bit vectors.
 Their sizes are specified in bytes, but they have no other type information.
 
 ### Variables and Constants

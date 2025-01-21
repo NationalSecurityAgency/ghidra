@@ -32,8 +32,7 @@ import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
-import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
-import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
+import ghidra.app.plugin.core.decompiler.taint.TaintState.*;
 import ghidra.app.plugin.core.decompiler.taint.sarif.SarifTaintGraphRunHandler;
 import ghidra.app.services.CodeViewerService;
 import ghidra.framework.Application;
@@ -186,7 +185,7 @@ public class DecompilerTaintTest extends AbstractGhidraHeadedIntegrationTest {
 		for (Map<String, Object> result : df.getTableResults()) {
 			processResult(map, result);
 		}
-		taintService.setVarnodeMap(map, true);
+		taintService.setVarnodeMap(map, true, TaskType.SET_TAINT);
 		validateResult(token, map);
 	}
 

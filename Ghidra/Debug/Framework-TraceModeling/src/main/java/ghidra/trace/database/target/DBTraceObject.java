@@ -163,19 +163,32 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
+	protected LifeSet ensureCachedLife() {
+		if (cachedLife != null) {
+			return cachedLife;
+		}
+		MutableLifeSet result = new DefaultLifeSet();
+		getCanonicalParents(Lifespan.ALL).forEach(v -> result.add(v.getLifespan()));
+		cachedLife = result;
+		return result;
+	}
+
 	@Override
 	public LifeSet getLife() {
 		try (LockHold hold = manager.trace.lockRead()) {
-			if (cachedLife != null) {
-				synchronized (cachedLife) {
-					return DefaultLifeSet.copyOf(cachedLife);
-				}
-			}
-			MutableLifeSet result = new DefaultLifeSet();
-			getCanonicalParents(Lifespan.ALL).forEach(v -> result.add(v.getLifespan()));
-			cachedLife = result;
+			LifeSet result = ensureCachedLife();
 			synchronized (result) {
 				return DefaultLifeSet.copyOf(result);
+			}
+		}
+	}
+
+	@Override
+	public boolean isAlive(long snap) {
+		try (LockHold hold = manager.trace.lockRead()) {
+			LifeSet result = ensureCachedLife();
+			synchronized (result) {
+				return result.contains(snap);
 			}
 		}
 	}

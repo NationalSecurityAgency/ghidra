@@ -425,6 +425,32 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
 	}
 
+	@Test
+	public void testCloseSaveRestoreState() throws Exception {
+		//
+		// Test that we can close one of the program's trees and have the close correctly persist
+		// when saved and restored. This happens when a user closes a tree, then changes between
+		// program tabs.
+		//
+		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
+		setCurrentViewProvider(DEFAULT_TREE_NAME);
+		performAction(closeAction);
+
+		setCurrentViewProvider("Main Tree");
+		AddressSetView set = provider.getCurrentView();
+
+		env.saveRestoreToolState();
+
+		String[] treeNames = program.getListing().getTreeNames();
+		assertEquals(treeNames.length - 1, tabbedPane.getTabCount());
+
+		ViewProviderService vps = provider.getCurrentViewProvider();
+		assertEquals("Main Tree", vps.getViewName());
+		assertTrue(set.hasSameAddresses(provider.getCurrentView()));
+		assertTrue(set.hasSameAddresses(cb.getView()));
+		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
+	}
+
 	@SuppressWarnings("unused")
 	private JTextField findTextField(Container container) {
 		Component[] c = container.getComponents();

@@ -211,7 +211,7 @@ protected:
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,int4 inslot);
+				 const Varnode *vn,const PcodeOp *op,int4 slot,bool allowCast);
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
   virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);

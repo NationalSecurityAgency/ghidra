@@ -497,18 +497,23 @@ public interface TraceObjectSchema {
 			public void nextLevel() {
 				Set<T> nextLevel = new HashSet<>();
 				for (T ent : allOnLevel) {
-					if (!descend(ent)) {
-						continue;
+					if (descendAttributes(ent)) {
+						expandAttributes(nextLevel, ent);
+						expandDefaultAttribute(nextLevel, ent);
 					}
-					expandAttributes(nextLevel, ent);
-					expandDefaultAttribute(nextLevel, ent);
-					expandElements(nextLevel, ent);
-					expandDefaultElement(nextLevel, ent);
+					if (descendElements(ent)) {
+						expandElements(nextLevel, ent);
+						expandDefaultElement(nextLevel, ent);
+					}
 				}
 				allOnLevel = nextLevel;
 			}
 
-			public boolean descend(T ent) {
+			public boolean descendAttributes(T ent) {
+				return true;
+			}
+
+			public boolean descendElements(T ent) {
 				return true;
 			}
 
@@ -549,8 +554,13 @@ public interface TraceObjectSchema {
 			}
 
 			@Override
-			public boolean descend(SearchEntry ent) {
+			public boolean descendAttributes(SearchEntry ent) {
 				return ent.schema.getInterfaces().contains(TraceObjectAggregate.class);
+			}
+
+			@Override
+			public boolean descendElements(SearchEntry ent) {
+				return ent.schema.isCanonicalContainer();
 			}
 
 			@Override

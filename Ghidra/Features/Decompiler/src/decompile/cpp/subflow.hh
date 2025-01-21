@@ -353,6 +353,24 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+/// \brief Simplify join and break apart based on data-types
+///
+/// Simplify expressions like:
+///  - `sub( concat(V,W), 0)  =>  W`
+///  - `sub( concat(V,W), c)  =>  V`
+///
+/// preserving the data-types and removing the SUBPIECE and PIECE operations that are discarded.
+class RuleDumptyHumpLate : public Rule {
+public:
+  RuleDumptyHumpLate(const string &g) : Rule( g, 0, "dumptyhumplate") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleDumptyHumpLate(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 /// \brief Class for tracing changes of precision in floating point variables
 ///
 /// It follows the flow of a logical lower precision value stored in higher precision locations

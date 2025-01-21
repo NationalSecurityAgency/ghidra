@@ -197,6 +197,13 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
+	public boolean isAlive(long snap) {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object.isAlive(snap);
+		}
+	}
+
+	@Override
 	public Lifespan computeSpan() {
 		Lifespan span = TraceObjectBreakpointLocation.super.computeSpan();
 		if (span != null) {

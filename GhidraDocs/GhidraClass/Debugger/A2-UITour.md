@@ -142,6 +142,7 @@ Notice that the Dynamic Listing moves forward a single instruction each time you
 Also notice that the Static Listing moves with the Dynamic Listing.
 You may navigate in either listing, and so long as there is a corresponding location in the other, the two will stay synchronized.
 You may also open the Decompiler just as you would in the CodeBrowser, and it will stay in sync too.
+**TIP**: If you get lost in memory, you can seek back to the program counter by double-clicking "pc = ..." in the top right of the listing.
 
 When you have clicked ![step into](images/stepinto.png) **Step Into** a sufficient number of times, you should end up in a subroutine.
 You can click ![step out](images/stepout.png) **Step Out** to leave the subroutine.

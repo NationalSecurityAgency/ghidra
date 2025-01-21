@@ -377,6 +377,10 @@ class PyGhidraLauncher:
 
         # set the JAVA_HOME environment variable to the correct one so jpype uses it
         os.environ['JAVA_HOME'] = str(self.java_home)
+        
+        # add bin dir to DLL search path to help address JPype 1.5.1 issue
+        if sys.platform == "win32":
+            os.add_dll_directory(str(self.java_home) + "/bin")
 
         jpype_kwargs['ignoreUnrecognized'] = True
 

@@ -973,130 +973,135 @@ def ghidra_trace_put_environment():
         put_environment()
 
 
-def put_regions():
-    nproc = util.selected_process()
-    if nproc is None:
-        return
+# Detect whether this is supported before defining the command
+if hasattr(drgn, 'RelocatableModule'):
+    def put_regions():
+        nproc = util.selected_process()
+        if nproc is None:
+            return
+    
+        try:
+            regions = prog.loaded_modules()
+        except Exception as e:
+            regions = []
+        #if len(regions) == 0:
+        #    regions = util.full_mem()
+            
+        mapper = STATE.trace.memory_mapper
+        keys = []
+        # r : MEMORY_BASIC_INFORMATION64
+        for r in regions:
+            start = r[0].address_range[0]
+            end = r[0].address_range[1]
+            size = end - start + 1
+            rpath = REGION_PATTERN.format(procnum=nproc, start=start)
+            keys.append(REGION_KEY_PATTERN.format(start=start))
+            regobj = STATE.trace.create_object(rpath)
+            (start_base, start_addr) = map_address(start)
+            regobj.set_value('Range', start_addr.extend(size))
+            regobj.set_value('Name', r[0].name)
+            regobj.set_value('Object File', r[0].loaded_file_path)
+            regobj.set_value('_readable', True)
+            regobj.set_value('_writable', True)
+            regobj.set_value('_executable', True)
+            regobj.set_value('_display', '{:x} {}'.format(start, r[0].name))
+            regobj.insert()
+        STATE.trace.proxy_object_path(
+            MEMORY_PATTERN.format(procnum=nproc)).retain_values(keys)
 
-    try:
-        regions = prog.loaded_modules()
-    except Exception as e:
-        regions = []
-    #if len(regions) == 0:
-    #    regions = util.full_mem()
+
+    def ghidra_trace_put_regions():
+        """
+        Read the memory map, if applicable, and write to the trace's Regions
+        """
+    
+        STATE.require_tx()
+        with STATE.client.batch() as b:
+            put_regions()
+
+
+
+# Detect whether this is supported before defining the command
+if hasattr(drgn, 'RelocatableModule'):
+    def put_modules():
+        nproc = util.selected_process()
+        if nproc is None:
+            return
         
-    mapper = STATE.trace.memory_mapper
-    keys = []
-    # r : MEMORY_BASIC_INFORMATION64
-    for r in regions:
-        start = r[0].address_range[0]
-        end = r[0].address_range[1]
-        size = end - start + 1
-        rpath = REGION_PATTERN.format(procnum=nproc, start=start)
-        keys.append(REGION_KEY_PATTERN.format(start=start))
-        regobj = STATE.trace.create_object(rpath)
-        (start_base, start_addr) = map_address(start)
-        regobj.set_value('Range', start_addr.extend(size))
-        regobj.set_value('Name', r[0].name)
-        regobj.set_value('Object File', r[0].loaded_file_path)
-        regobj.set_value('_readable', True)
-        regobj.set_value('_writable', True)
-        regobj.set_value('_executable', True)
-        regobj.set_value('_display', '{:x} {}'.format(start, r[0].name))
-        regobj.insert()
-    STATE.trace.proxy_object_path(
-        MEMORY_PATTERN.format(procnum=nproc)).retain_values(keys)
-
-
-def ghidra_trace_put_regions():
-    """
-    Read the memory map, if applicable, and write to the trace's Regions
-    """
-
-    STATE.require_tx()
-    with STATE.client.batch() as b:
-        put_regions()
-
-
-
-def put_modules():
-    nproc = util.selected_process()
-    if nproc is None:
-        return
+        try:
+            modules = prog.modules()
+        except Exception as e:
+            return
     
-    try:
-        modules = prog.modules()
-    except Exception as e:
-        return
-
-    mapper = STATE.trace.memory_mapper
-    mod_keys = []
-    for m in modules:
-        name = m.name
-        # m[1] : _DEBUG_MODULE_PARAMETERS
-        base = m.address_range[0]
-        hbase = hex(base)
-        size = m.address_range[1] - base
-        mpath = MODULE_PATTERN.format(procnum=nproc, modpath=hbase)
-        modobj = STATE.trace.create_object(mpath)
-        mod_keys.append(MODULE_KEY_PATTERN.format(modpath=hbase))
-        base_base, base_addr = mapper.map(nproc, base)
-        if base_base != base_addr.space:
-            STATE.trace.create_overlay_space(base_base, base_addr.space)
-        modobj.set_value('Range', base_addr.extend(size))
-        modobj.set_value('Name', name)
-        modobj.set_value('_display', '{:x} {}'.format(base, name))
-        modobj.insert()
-        attrobj = STATE.trace.create_object(mpath+".Attributes")
-        attrobj.set_value('BuildId', m.build_id)
-        attrobj.set_value('DebugBias', m.debug_file_bias)
-        attrobj.set_value('DebugPath', m.debug_file_path)
-        attrobj.set_value('DebugStatus', str(m.debug_file_status))
-        attrobj.set_value('LoadBias', m.loaded_file_bias)
-        attrobj.set_value('LoadPath', m.loaded_file_path)
-        attrobj.set_value('LoadStatus', str(m.loaded_file_status))
-        attrobj.insert()
-        if type(m) == drgn.RelocatableModule:
-            secobj = STATE.trace.create_object(mpath+".Sections")
-            secobj.insert()
-    STATE.trace.proxy_object_path(MODULES_PATTERN.format(
-        procnum=nproc)).retain_values(mod_keys)
+        mapper = STATE.trace.memory_mapper
+        mod_keys = []
+        for m in modules:
+            name = m.name
+            # m[1] : _DEBUG_MODULE_PARAMETERS
+            base = m.address_range[0]
+            hbase = hex(base)
+            size = m.address_range[1] - base
+            mpath = MODULE_PATTERN.format(procnum=nproc, modpath=hbase)
+            modobj = STATE.trace.create_object(mpath)
+            mod_keys.append(MODULE_KEY_PATTERN.format(modpath=hbase))
+            base_base, base_addr = mapper.map(nproc, base)
+            if base_base != base_addr.space:
+                STATE.trace.create_overlay_space(base_base, base_addr.space)
+            modobj.set_value('Range', base_addr.extend(size))
+            modobj.set_value('Name', name)
+            modobj.set_value('_display', '{:x} {}'.format(base, name))
+            modobj.insert()
+            attrobj = STATE.trace.create_object(mpath+".Attributes")
+            attrobj.set_value('BuildId', m.build_id)
+            attrobj.set_value('DebugBias', m.debug_file_bias)
+            attrobj.set_value('DebugPath', m.debug_file_path)
+            attrobj.set_value('DebugStatus', str(m.debug_file_status))
+            attrobj.set_value('LoadBias', m.loaded_file_bias)
+            attrobj.set_value('LoadPath', m.loaded_file_path)
+            attrobj.set_value('LoadStatus', str(m.loaded_file_status))
+            attrobj.insert()
+            if type(m) == drgn.RelocatableModule:
+                secobj = STATE.trace.create_object(mpath+".Sections")
+                secobj.insert()
+        STATE.trace.proxy_object_path(MODULES_PATTERN.format(
+            procnum=nproc)).retain_values(mod_keys)
 
 
-def ghidra_trace_put_modules():
-    """
-    Gather object files, if applicable, and write to the trace's Modules
-    """
-
-    STATE.require_tx()
-    with STATE.client.batch() as b:
-        put_modules()
-
-
-
-def put_sections(m : drgn.RelocatableModule):
-    nproc = util.selected_process()
-    if nproc is None:
-        return
+    def ghidra_trace_put_modules():
+        """
+        Gather object files, if applicable, and write to the trace's Modules
+        """
     
-    mapper = STATE.trace.memory_mapper
-    section_keys = []
-    sections = m.section_addresses
-    maddr = hex(m.address_range[0])
-    for key in sections.keys():
-        value = sections[key]
-        spath = SECTION_PATTERN.format(procnum=nproc, modpath=maddr, secname=key)
-        sobj = STATE.trace.create_object(spath)
-        section_keys.append(SECTION_KEY_PATTERN.format(modpath=maddr, secname=key))
-        base_base, base_addr = mapper.map(nproc, value)
-        if base_base != base_addr.space:
-            STATE.trace.create_overlay_space(base_base, base_addr.space)
-        sobj.set_value('Address', base_addr)
-        sobj.set_value('Range', base_addr.extend(1))
-        sobj.set_value('Name', key)
-        sobj.insert()
-    STATE.trace.proxy_object_path(SECTIONS_PATTERN.format(
-        procnum=nproc, modpath=maddr)).retain_values(section_keys)
+        STATE.require_tx()
+        with STATE.client.batch() as b:
+            put_modules()
+
+
+# Detect whether this is supported before defining the command
+if hasattr(drgn, 'RelocatableModule'):
+    def put_sections(m : drgn.RelocatableModule):
+        nproc = util.selected_process()
+        if nproc is None:
+            return
+        
+        mapper = STATE.trace.memory_mapper
+        section_keys = []
+        sections = m.section_addresses
+        maddr = hex(m.address_range[0])
+        for key in sections.keys():
+            value = sections[key]
+            spath = SECTION_PATTERN.format(procnum=nproc, modpath=maddr, secname=key)
+            sobj = STATE.trace.create_object(spath)
+            section_keys.append(SECTION_KEY_PATTERN.format(modpath=maddr, secname=key))
+            base_base, base_addr = mapper.map(nproc, value)
+            if base_base != base_addr.space:
+                STATE.trace.create_overlay_space(base_base, base_addr.space)
+            sobj.set_value('Address', base_addr)
+            sobj.set_value('Range', base_addr.extend(1))
+            sobj.set_value('Name', key)
+            sobj.insert()
+        STATE.trace.proxy_object_path(SECTIONS_PATTERN.format(
+            procnum=nproc, modpath=maddr)).retain_values(section_keys)
 
 
 
@@ -1309,8 +1314,9 @@ def ghidra_trace_put_all():
     STATE.require_tx()
     with STATE.client.batch() as b:
         put_environment()
-        put_regions()
-        put_modules()
+        if hasattr(drgn, 'RelocatableModule'):
+            put_regions()
+            put_modules()
         syms = SYMBOLS_PATTERN.format(procnum=util.selected_process())
         sobj = STATE.trace.create_object(syms)
         sobj.insert()

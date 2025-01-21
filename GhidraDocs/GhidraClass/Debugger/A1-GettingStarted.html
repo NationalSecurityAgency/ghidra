@@ -152,11 +152,15 @@ id="toc-customized-launching">Customized Launching</a></li>
 <li><a href="#exercise-launch-with-command-line-help"
 id="toc-exercise-launch-with-command-line-help">Exercise: Launch with
 Command-line Help</a></li>
-<li><a href="#attaching" id="toc-attaching">Attaching</a></li>
-<li><a href="#exercise-attach" id="toc-exercise-attach">Exercise:
-Attach</a></li>
+<li><a href="#attaching" id="toc-attaching">Attaching</a>
+<ul>
 <li><a href="#troubleshooting-1"
 id="toc-troubleshooting-1">Troubleshooting</a></li>
+</ul></li>
+<li><a href="#exercise-attach" id="toc-exercise-attach">Exercise:
+Attach</a></li>
+<li><a href="#troubleshooting-2"
+id="toc-troubleshooting-2">Troubleshooting</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -453,13 +457,14 @@ target waits for input.</p>
 <li>Run <code>termmines</code> in a terminal outside of Ghidra with the
 desired command-line parameters.</li>
 <li>In the Ghidra Debugger, use the <strong>Launch</strong> button
-drop-down and select <strong>Configured and Launch termmines using… →
-raw gdb</strong>. The “raw” connector will give us a GDB session without
-a target.</li>
+drop-down and select <strong>Configure and Launch termmines using… →
+gdb</strong>.</li>
+<li>Clear the <strong>Image</strong> field to configure a GDB session
+without a target.</li>
 <li>Ghidra needs to know the location of gdb and the architecture of the
 intended target. The defaults are correct for 64-bit x86 targets using
-the system’s copy of GDB. Probably, you can just click
-<strong>Launch</strong>.</li>
+the system’s copy of GDB.</li>
+<li>Click <strong>Launch</strong>.</li>
 <li>In the <strong>Model</strong> window (to the left), expand the
 <em>Available</em> node.</li>
 <li>In the filter box, type <code>termmines</code>.</li>
@@ -467,6 +472,17 @@ the system’s copy of GDB. Probably, you can just click
 you prefer, note the PID, e.g. 1234, then in the
 <strong>Terminal</strong> type, e.g., <code>attach 1234</code>.</li>
 </ol>
+<p><strong>TIP</strong>: In later exercises, you may use the
+<strong>Reset</strong> button to re-populate the default value for the
+<strong>Image</strong> field. Be sure to change <strong>Run
+Command</strong> back to “start”, though.</p>
+<section id="troubleshooting-1" class="level3">
+<h3>Troubleshooting</h3>
+<p>If the <strong>Model</strong> window is blank, check for a “noname”
+tab in the Dynamic Listing, and click it.</p>
+<p>If the <strong>Model</strong> window seems incomplete after
+attaching, check that its Filter box is cleared.</p>
+</section>
 </section>
 <section id="exercise-attach" class="level2">
 <h2>Exercise: Attach</h2>
@@ -476,7 +492,7 @@ in <code>read</code> you have completed this exercise. Quit GDB from the
 <strong>Terminal</strong> before proceeding to the next module: <a
 href="A2-UITour.html">A Tour of the UI</a></p>
 </section>
-<section id="troubleshooting-1" class="level2">
+<section id="troubleshooting-2" class="level2">
 <h2>Troubleshooting</h2>
 <p>If you get <code>Operation not permitted</code> or similar when
 trying to attach, it is likely your Linux system is configured with

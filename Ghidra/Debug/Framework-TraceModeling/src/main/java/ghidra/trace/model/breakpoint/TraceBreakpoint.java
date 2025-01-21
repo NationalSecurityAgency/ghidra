@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.*;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -105,8 +106,20 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * Get the lifespan of this breakpoint
 	 * 
 	 * @return the lifespan
+	 * @deprecated Either this method no longer makes sense, or we need to wrap a
+	 *             {@link TraceObjectValue} instead. Even then, the attribute values can vary over
+	 *             the lifespan.
 	 */
+	@Deprecated(since = "11.3", forRemoval = true)
 	Lifespan getLifespan();
+
+	/**
+	 * Check if the breakpoint is present at the given snap
+	 * 
+	 * @param snap the snap
+	 * @return true if alive, false if not
+	 */
+	boolean isAlive(long snap);
 
 	/**
 	 * Get the placed snap of this breakpoint

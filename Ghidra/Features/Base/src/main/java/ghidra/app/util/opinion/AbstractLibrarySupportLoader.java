@@ -29,7 +29,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.importer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
@@ -101,9 +100,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			// Load (or get) the primary program
 			Program program = null;
 			if (!shouldLoadOnlyLibraries(options)) {
-				if (provider instanceof FileBytesProvider) {
-					throw new LoadException("Cannot load an already loaded program");
-				}
 				program = doLoad(provider, loadedName, loadSpec, libraryNameList, options, consumer,
 					log, monitor);
 				loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));

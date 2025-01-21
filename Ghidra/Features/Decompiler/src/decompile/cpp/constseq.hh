@@ -99,7 +99,6 @@ class HeapSequence : public ArraySequence {
   bool collectStoreOps(void);		///< Collect ops STOREing into a memory region from the same root pointer
   PcodeOp *buildStringCopy(void);	///< Build the strncpy,wcsncpy, or memcpy function with string as input
   void gatherIndirectPairs(vector<PcodeOp *> &indirects,vector<Varnode *> &pairs);
-  void removeRecursive(PcodeOp *op,vector<PcodeOp *> &scratch);
   void removeStoreOps(PcodeOp *replaceOp);	///< Remove all STORE ops from the basic block
 public:
   HeapSequence(Funcdata &fdata,Datatype *ct,PcodeOp *root);

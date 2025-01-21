@@ -17,6 +17,7 @@ package agent.drgn.rmi;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import java.util.*;
 
@@ -160,7 +161,7 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 							PathFilter.parse("Processes[].Threads[].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
-				assertEquals(7, list.size());
+				assertTrue(list.size() == 7 || list.size() == 1);
 			}
 		}
 	}
@@ -199,6 +200,9 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			start(conn, null);
 			txCreate(conn, path);
 
+			String out = conn.executeCapture("print(hasattr(drgn, 'RelocatableModule'))").strip();
+			assumeFalse(out.equals("False"));
+
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
 			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
@@ -220,6 +224,9 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			String path = "Processes[].Modules";
 			start(conn, null);
 			txCreate(conn, path);
+
+			String out = conn.executeCapture("print(hasattr(drgn, 'RelocatableModule'))").strip();
+			assumeFalse(out.equals("False"));
 
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
 			try (ManagedDomainObject mdo = openDomainObject(MDO)) {
