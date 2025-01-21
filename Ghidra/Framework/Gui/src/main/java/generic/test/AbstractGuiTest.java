@@ -473,12 +473,12 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	public static AbstractButton findAbstractButtonByName(Container container, String name) {
 		Component[] comp = container.getComponents();
 		for (Component element : comp) {
-			if ((element instanceof AbstractButton) &&
-				name.equals(((AbstractButton) element).getName())) {
-				return (AbstractButton) element;
+			if ((element instanceof AbstractButton button) &&
+				name.equals(button.getName())) {
+				return button;
 			}
-			else if (element instanceof Container) {
-				AbstractButton b = findAbstractButtonByName((Container) element, name);
+			else if (element instanceof Container subContainer) {
+				AbstractButton b = findAbstractButtonByName(subContainer, name);
 				if (b != null) {
 					return b;
 				}

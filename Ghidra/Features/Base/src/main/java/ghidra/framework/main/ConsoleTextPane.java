@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,6 @@ import ghidra.util.task.SwingUpdateManager;
 
 /**
  * A generic text pane that is used as a console to which text can be written.
- *
- * There is not test for this class, but it is indirectly tested by FrontEndGuiTest.
  */
 public class ConsoleTextPane extends JTextPane implements OptionsChangeListener {
 
@@ -211,7 +209,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		outputAttributes = new GAttributes(font, new GColor("color.fg.consoletextpane"));
 		outputAttributes.addAttribute(CUSTOM_ATTRIBUTE_KEY, OUTPUT_ATTRIBUTE_VALUE);
 
-		errorAttributes = new GAttributes(font, new GColor("color.fg.error.consoletextpane"));
+		errorAttributes = new GAttributes(font, new GColor("color.fg.consoletextpane.error"));
 		errorAttributes.addAttribute(CUSTOM_ATTRIBUTE_KEY, ERROR_ATTRIBUTE_VALUE);
 	}
 
