@@ -200,7 +200,7 @@ define context contextReg
 # GROUP3 - MCS251 instructions in 0x60-0xff range
 @define GROUP3 "((srcMode=0 & A5Prefix=1) | (srcMode=1 & A5Prefix=0))"
 
-@elif defined(MCS51) || defined(MCS80390) || defined(MX51)
+@elif defined(MCS51) || defined(MCS80390) || defined(MX51) || defined(CIP51)
 
 @define GROUP1 "epsilon"
 @define GROUP2 "epsilon"
