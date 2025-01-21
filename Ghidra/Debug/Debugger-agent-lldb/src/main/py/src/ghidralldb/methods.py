@@ -287,7 +287,7 @@ def refresh_processes(node: sch.Schema('ProcessContainer')):
 
 
 @REGISTRY.method(action='refresh', display="Refresh Breakpoints")
-def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
+def refresh_proc_breakpoints(node: sch.Schema('BreakpointContainer')):
     """
     Refresh the breakpoints for the process.
     """

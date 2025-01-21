@@ -15,10 +15,9 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.util.*;
 
@@ -152,7 +151,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathFilter.parse("Processes[].Breakpoints[]"))
+							PathFilter.parse("Processes[].Breakpoints[][1]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -161,10 +160,10 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 					procBreakLocVals.get(0).getChild().getValue(0, "_range").castValue();
 				Address main = rangeMain.getMinAddress();
 
-				assertBreakLoc(procBreakLocVals.get(0), "[1.1]", main, 1,
+				assertBreakLoc(procBreakLocVals.get(0), "[1]", main, 1,
 					Set.of(TraceBreakpointKind.SW_EXECUTE),
 					"main");
-				assertBreakLoc(procBreakLocVals.get(1), "[2.1]", main, 1,
+				assertBreakLoc(procBreakLocVals.get(1), "[1]", main, 1,
 					Set.of(TraceBreakpointKind.HW_EXECUTE),
 					"main");
 			}
@@ -1063,7 +1062,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				conn.execute("breakpoint set -n main");
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints[]"));
 
 				toggleBreakpoint.invoke(Map.of("breakpoint", bpt, "enabled", false));
 
@@ -1087,7 +1086,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				conn.execute("breakpoint set -n main");
 				txPut(conn, "breakpoints");
 
-				TraceObject loc = Objects.requireNonNull(tb.objAny0("Breakpoints[][]"));
+				TraceObject loc = Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints[][]"));
 
 				toggleBreakpointLocation.invoke(Map.of("location", loc, "enabled", false));
 
@@ -1110,7 +1109,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				conn.execute("breakpoint set -n main");
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints[]"));
 
 				deleteBreakpoint.invoke(Map.of("breakpoint", bpt));
 
