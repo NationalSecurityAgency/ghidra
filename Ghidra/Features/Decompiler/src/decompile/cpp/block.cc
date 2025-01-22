@@ -24,6 +24,7 @@ AttributeId ATTRIB_DEPTH = AttributeId("depth",76);
 AttributeId ATTRIB_END = AttributeId("end",77);
 AttributeId ATTRIB_OPCODE = AttributeId("opcode",78);
 AttributeId ATTRIB_REV = AttributeId("rev",79);
+AttributeId ATTRIB_EDGE_LABEL = AttributeId("edgelabel",151);
 
 ElementId ELEM_BHEAD = ElementId("bhead",102);
 ElementId ELEM_BLOCK = ElementId("block",103);
@@ -36,9 +37,9 @@ void BlockEdge::encode(Encoder &encoder) const
 
 {
   encoder.openElement(ELEM_EDGE);
-  // We are not saving label currently
   encoder.writeSignedInteger(ATTRIB_END, point->getIndex());	// Reference to other end of edge
   encoder.writeSignedInteger(ATTRIB_REV, reverse_index);	// Position within other blocks edgelist
+  encoder.writeUnsignedInteger(ATTRIB_EDGE_LABEL, label);
   encoder.closeElement(ELEM_EDGE);
 }
 
@@ -49,12 +50,12 @@ void BlockEdge::decode(Decoder &decoder,BlockMap &resolver)
 
 {
   uint4 elemId = decoder.openElement(ELEM_EDGE);
-  label = 0;		// Tag does not currently contain info about label
   int4 endIndex = decoder.readSignedInteger(ATTRIB_END);
   point = resolver.findLevelBlock(endIndex);
   if (point == (FlowBlock *)0)
     throw LowlevelError("Bad serialized edge in block graph");
   reverse_index = decoder.readSignedInteger(ATTRIB_REV);
+  label = decoder.readUnsignedInteger(ATTRIB_EDGE_LABEL);
   decoder.closeElement(elemId);
 }
 
