@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,7 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParser;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseBranch;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.asm.wild.sem.DefaultWildAssemblyResolvedPatterns;
-import ghidra.asm.wild.sem.WildAssemblyResolvedPatterns;
-import ghidra.asm.wild.sem.WildAssemblyTreeResolver;
+import ghidra.asm.wild.sem.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
@@ -34,7 +32,7 @@ import ghidra.program.model.listing.Program;
  * An assembler implementation that allows for wildcard operands
  * 
  * <p>
- * Construct these using {@link WildSleighAssemblerBuilder}. 
+ * Construct these using {@link WildSleighAssemblerBuilder}.
  */
 public class WildSleighAssembler extends AbstractSleighAssembler<WildAssemblyResolvedPatterns> {
 	protected final Set<AssemblyPatternBlock> inputContexts;

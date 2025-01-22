@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,11 @@
  */
 package ghidra.app.plugin.languages.sleigh;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyDefaultContext;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
-import ghidra.app.plugin.processors.sleigh.Constructor;
-import ghidra.app.plugin.processors.sleigh.ContextChange;
-import ghidra.app.plugin.processors.sleigh.ContextCommit;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
 
