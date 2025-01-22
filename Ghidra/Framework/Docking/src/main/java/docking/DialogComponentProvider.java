@@ -725,6 +725,12 @@ public class DialogComponentProvider
 			return;
 		}
 
+		Callback animatorFinishedCallback = () -> {
+			statusLabel.setVisible(true);
+			alertFinishedCallback.call();
+			isAlerting = false;
+		};
+
 		isAlerting = true;
 
 		// Note: manually call validate() so the 'statusLabel' updates its bounds after
@@ -733,14 +739,17 @@ public class DialogComponentProvider
 		mainPanel.validate();
 		statusLabel.setVisible(false); // disable painting in this dialog so we don't see double
 		Animator animator = AnimationUtils.pulseComponent(statusLabel, 1);
-		animator.addTarget(new TimingTargetAdapter() {
-			@Override
-			public void end() {
-				statusLabel.setVisible(true);
-				alertFinishedCallback.call();
-				isAlerting = false;
-			}
-		});
+		if (animator == null) {
+			animatorFinishedCallback.call();
+		}
+		else {
+			animator.addTarget(new TimingTargetAdapter() {
+				@Override
+				public void end() {
+					animatorFinishedCallback.call();
+				}
+			});
+		}
 	}
 
 	protected Color getStatusColor(MessageType type) {

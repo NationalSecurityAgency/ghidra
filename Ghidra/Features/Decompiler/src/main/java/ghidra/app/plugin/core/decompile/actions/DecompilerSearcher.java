@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,8 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
+import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.util.Msg;
 import ghidra.util.UserSearchUtils;
 
@@ -82,6 +84,16 @@ public class DecompilerSearcher implements FindDialogSearcher {
 	@Override
 	public void highlightSearchResults(SearchLocation location) {
 		decompilerPanel.setSearchResults(location);
+	}
+
+	@Override
+	public void clearHighlights() {
+		decompilerPanel.setSearchResults(null);
+	}
+
+	@Override
+	public void dispose() {
+		clearHighlights();
 	}
 
 	@Override
@@ -160,7 +172,6 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			results.add(searchLocation);
 
 			FieldLocation last = searchLocation.getFieldLocation();
-
 			int line = last.getIndex().intValue();
 			int field = 0; // there is only 1 field
 			int row = 0; // there is only 1 row 
@@ -260,14 +271,15 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			if (match == SearchMatch.NO_MATCH) {
 				continue;
 			}
+
+			String fullLine = field.getText();
 			if (i == line) { // cursor is on this line
 				//
 				// The match start for all lines without the cursor will be relative to the start
 				// of the line, which is 0.  However, when searching on the row with the cursor,
 				// the match start is relative to the cursor position.  Update the start to
 				// compensate for the difference between the start of the line and the cursor.
-				//
-				String fullLine = field.getText();
+				//				
 				int cursorOffset = fullLine.length() - partialLine.length();
 				match.start += cursorOffset;
 				match.end += cursorOffset;
@@ -276,11 +288,24 @@ public class DecompilerSearcher implements FindDialogSearcher {
 			FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
 			FieldLocation fieldLocation =
 				new FieldLocation(i, lineInfo.fieldNumber(), 0, lineInfo.column());
-
+			LocationReferenceContext context = createContext(fullLine, match);
 			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
-				searchString, true, field.getText());
+				searchString, true, field.getText(), context);
 		}
 		return null;
+	}
+
+	private LocationReferenceContext createContext(String line, SearchMatch match) {
+		LocationReferenceContextBuilder builder = new LocationReferenceContextBuilder();
+		int start = match.start;
+		int end = match.end;
+		builder.append(line.substring(0, start));
+		builder.appendMatch(line.substring(start, end));
+		if (end < line.length()) {
+			builder.append(line.substring(end));
+		}
+
+		return builder.build();
 	}
 
 	private DecompilerSearchLocation findPrevious(Function<String, SearchMatch> matcher,
@@ -291,16 +316,17 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		for (int i = line; i >= 0; i--) {
 			ClangTextField field = (ClangTextField) fields.get(i);
 			String textLine = substring(field, (i == line) ? currentLocation : null, false);
-
 			SearchMatch match = matcher.apply(textLine);
-			if (match != SearchMatch.NO_MATCH) {
-				FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
-				FieldLocation fieldLocation =
-					new FieldLocation(i, lineInfo.fieldNumber(), 0, lineInfo.column());
-
-				return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
-					searchString, false, field.getText());
+			if (match == SearchMatch.NO_MATCH) {
+				continue;
 			}
+
+			FieldLineLocation lineInfo = getFieldIndexFromOffset(match.start, field);
+			FieldLocation fieldLocation =
+				new FieldLocation(i, lineInfo.fieldNumber(), 0, lineInfo.column());
+			LocationReferenceContext context = createContext(field.getText(), match);
+			return new DecompilerSearchLocation(fieldLocation, match.start, match.end - 1,
+				searchString, false, field.getText(), context);
 		}
 		return null;
 	}
@@ -317,7 +343,6 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		}
 
 		String partialText = textField.getText();
-
 		if (forwardSearch) {
 
 			int nextCol = location.getCol();
@@ -365,6 +390,5 @@ public class DecompilerSearcher implements FindDialogSearcher {
 		}
 	}
 
-	private record FieldLineLocation(int fieldNumber, int column) {
-	}
+	private record FieldLineLocation(int fieldNumber, int column) {}
 }
