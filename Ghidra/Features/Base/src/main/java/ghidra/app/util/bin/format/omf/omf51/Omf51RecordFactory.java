@@ -58,7 +58,7 @@ public class Omf51RecordFactory extends AbstractOmfRecordFactory {
 			case PublicDEF:
 			case ExternalDEF:
 			case LibModLocs:
-			case LibModName:
+			case LibModNames:
 			case LibDictionary:
 			case LibHeader:
 				yield new OmfUnsupportedRecord(reader, Omf51RecordTypes.class);
