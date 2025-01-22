@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcode.emu.jit;
+package ghidra.pcode.emu;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,10 +29,9 @@ import generic.test.AbstractGTest;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.assembler.AssemblyBuffer;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.pcode.emu.PcodeEmulator;
-import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -48,6 +48,7 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 	public static final LanguageID LANGID_TOY_BE = new LanguageID("Toy:BE:64:default");
 	public static final LanguageID LANGID_TOY_LE = new LanguageID("Toy:BE:64:default");
 	public static final LanguageID LANGID_X64 = new LanguageID("x86:LE:64:default");
+	public static final LanguageID LANGID_ARMV8 = new LanguageID("ARM:LE:32:v8");
 
 	public static final int FIB_ITER_N = 100000;
 	public static final long FIB_ITER_VAL = 2754320626097736315L;
@@ -297,5 +298,65 @@ public abstract class AbstractPcodeEmulatorTest extends AbstractGTest {
 		assertEquals(1,
 			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
 		assertEquals(inject, thread.getCounter());
+	}
+
+	@Test
+	public void testSkipThumbStaysThumb() throws Exception {
+		PcodeEmulator emu = createEmulator(getLanguage(LANGID_ARMV8));
+		PcodeArithmetic<byte[]> arithmetic = emu.getArithmetic();
+		AddressSpace space = emu.getLanguage().getDefaultSpace();
+		Address entry = space.getAddress(0x00400000);
+		AssemblyBuffer asm = new AssemblyBuffer(Assemblers.getAssembler(emu.getLanguage()), entry);
+
+		Language language = asm.getAssembler().getLanguage();
+		Register regCtx = language.getContextBaseRegister();
+		Register regT = language.getRegister("T");
+		RegisterValue rvDefault = new RegisterValue(regCtx,
+			asm.getAssembler().getContextAt(asm.getNext()).toBigInteger(regCtx.getNumBytes()));
+		RegisterValue rvThumb = rvDefault.assign(regT, BigInteger.ONE);
+		AssemblyPatternBlock ctxThumb = AssemblyPatternBlock.fromRegisterValue(rvThumb);
+
+		Address addrBlx = asm.getNext();
+		asm.assemble("blx 0x0");
+		Address addrThumb = asm.getNext();
+		asm.assemble("hlt 1", ctxThumb);
+		Address addrB = asm.getNext();
+		asm.assemble("b 0x%s".formatted(entry), ctxThumb); // placeholder
+		asm.assemble("adds r0, #0x1", ctxThumb); // Never executed
+		Address addrTgt = asm.getNext();
+		asm.assemble("adds r1, #0x1", ctxThumb);
+		Address addrEnd = asm.getNext();
+
+		// NOTE: blx [addr] always changes the instruction set
+		asm.assemble(addrBlx, "blx 0x%s".formatted(addrThumb));
+		asm.assemble(addrB, "b 0x%s".formatted(addrTgt), ctxThumb);
+
+		// Skip the HLT instruction
+		emu.inject(addrThumb, "goto 0x%s[ram];".formatted(addrB));
+
+		byte[] bytes = asm.getBytes();
+		// Sanity check regarding instruction encoding
+		assertEquals(12, bytes.length);
+
+		emu.getSharedState().setVar(asm.getEntry(), bytes.length, false, bytes);
+		PcodeThread<byte[]> thread = emu.newThread();
+		thread.overrideCounter(entry);
+		thread.overrideContextWithDefault();
+
+		try {
+			thread.run();
+			fail("Should have crashed on decode error");
+		}
+		catch (DecodePcodeExecutionException e) {
+			assertEquals(addrEnd, e.getProgramCounter());
+		}
+
+		Register r0 = emu.getLanguage().getRegister("r0");
+		Register r1 = emu.getLanguage().getRegister("r1");
+
+		assertEquals(0,
+			arithmetic.toLong(thread.getState().getVar(r0, Reason.INSPECT), Purpose.INSPECT));
+		assertEquals(1,
+			arithmetic.toLong(thread.getState().getVar(r1, Reason.INSPECT), Purpose.INSPECT));
 	}
 }
