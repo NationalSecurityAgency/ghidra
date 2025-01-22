@@ -74,12 +74,9 @@ public class CreateUEFIGDTArchivesScript extends GhidraScript {
 		String dataTypeFile = outputDir + File.separator + gdtName + ".gdt";
 		
 		File f = getArchiveFile(dataTypeFile);
-		
-        FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(f,languageID, compiler);
         
-		CParseResults results = CParserUtils.parseHeaderFiles(openTypes, filenames, includePaths, args, dtMgr, monitor);
-		
-		Msg.info(this, results.getFormattedParseMessage(null));
+		FileDataTypeManager dtMgr = CParserUtils.parseHeaderFiles(openTypes, filenames,
+			includePaths, args, f.getAbsolutePath(), languageID, compiler, monitor);
 
 		dtMgr.save();
 		dtMgr.close();

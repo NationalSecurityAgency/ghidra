@@ -37,6 +37,16 @@
 #define DidFOO  "true" /* test comment */
 # endif
 
+#ifdef NOFOO
+int IntShouldBeCommented;
+#pragma PragmaShouldBeCommented
+#endif
+
+#ifndef NOFOO
+int IntShouldNotBeCommented;
+#pragma PragmaShouldNotBeCommented;
+#endif
+
 
  /* definition coming from -D, should evaluate to true */
  #if FROM_ARG_VALUE
@@ -459,6 +469,23 @@ ldp LDP((
 #define __MISMATCH_TAGS_PUSH                                            \
         _Pragma("clang diagnostic push")                                \
         _Pragma("clang diagnostic ignored \"-Wmismatched-tags\"")
+
+/**
+ ** Multi line false ifdef with Quoted string
+ */
+
+#define __USE_GNU "1"
+
+#ifdef __USE_GNU
+extern int pthread_yield (void) __THROW;
+# ifdef __REDIRECT_NTH
+extern int __REDIRECT_NTH (pthread_yield, (void), sched_yield)
+  __attribute_deprecated_msg__ ("\
+pthread_yield is deprecated, use sched_yield instead");
+# else
+#  define pthread_yield sched_yield
+# endif
+#endif
 
 /**
  ** Protected from macro expansion

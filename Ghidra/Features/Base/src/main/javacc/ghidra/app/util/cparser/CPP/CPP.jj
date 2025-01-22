@@ -526,7 +526,7 @@ public class PreProcessor {
 				}
     		}
     		if (image.length() == 1 && image.startsWith("\n")) {
-               image = (!emitExecSwitch ? "////\n" : "\n");
+               image = (!emitExecSwitch ? "///-\n" : "\n");
             }
     		print(image);
         }
@@ -858,11 +858,25 @@ public class PreProcessor {
 		return false;
 	}
 	
-	void bufAppendWithComment(PPToken buf, Token u) {
-	    if (emitExecSwitch==true)
-	        buf.append(u.image,true);
-	    else
-	        buf.append("//// " + u.image, false);
+//	void bufAppendWithComment(PPToken buf, Token u) {
+//	    if (emitExecSwitch==true)
+//	        buf.append(u.image,true);
+//	    else
+//	        buf.append("///- " + u.image, false);
+//	}
+	
+	void bufAppendWithComment(PPToken buf, Token u, Token previous, boolean commentNL) {
+		String str = u.image;
+		if (!emitExecSwitch) {
+			if (commentNL) {
+				// if not emmitting, replace any embedded \n with a \n-comment
+				str = str.replace("\n", "\n///- ");
+			}
+			if (previous == null || previous.image.length() == 0) {
+				str = "///- " + str;
+			}
+		}
+		buf.append(str, emitExecSwitch);
 	}
 
 	// Parse include file
@@ -1079,9 +1093,9 @@ public class PreProcessor {
 	
 	private void printCommentedLines(boolean emitSwitch, String line, String state) {
 		StringBuffer buf = new StringBuffer("///");
-		buf.append(emitSwitch ? " " : "/" );
+		buf.append(emitSwitch ? "+ " : "- " );
 		buf.append(line);
-		if (emitSwitch) {
+		if (emitSwitch && state != null) {
 			buf.append(" ===" + state);
 		}
 		buf.append("\n");
@@ -1538,7 +1552,7 @@ PPToken IFGroup() : { PPToken t, e, olde; }
          }
          olde = (PPToken) execStack.pop();
          emitExecSwitch = olde.getEmitSave();
-         printCommentedLines(emitExecSwitch, "#else if " + t.image, "" + t.getTruth());
+         printCommentedLines(emitExecSwitch, "#elif " + t.image, "" + t.getTruth());
          e.setEmitSave(emitExecSwitch);
          if (!olde.getTruth() && emitExecSwitch==true)
              emitExecSwitch = e.getTruth();
@@ -1618,6 +1632,8 @@ PPToken Include() : {Token t;PPToken pt;int conditionDepth=execStack.size();}
          if (emitExecSwitch==true) {
              localPlace(pt, true);
              println("\n#line "+t.beginLine+": \""+curFileStackTop()+"\"");
+         } else {
+             printCommentedLines(emitExecSwitch, "#include <"+t.beginLine+">", "");
          }
      }
      |t=<STANDARD>{
@@ -1625,6 +1641,8 @@ PPToken Include() : {Token t;PPToken pt;int conditionDepth=execStack.size();}
          if (emitExecSwitch==true) {
              standardPlace(pt, true);
              println("\n#line "+t.beginLine+": \""+curFileStackTop()+"\"");
+         } else {
+             printCommentedLines(emitExecSwitch, "#include \""+t.beginLine+"\"", "");
          }
      }
      |t=<MACEXPPATH>{
@@ -1738,6 +1756,7 @@ PPToken UnDef() : {Token t;}
         if (isDef(pt)==true) {
             UnDefine(pt);
         }
+        printCommentedLines(emitExecSwitch, "#undef " + def.image, null);
         return pt;
     }
 }
@@ -1762,8 +1781,13 @@ PPToken MacroVals() : {Token s,t,u=new Token();u.image="";}
 PPToken Pragma() :
 {Token t,u=null; }
 {   (LOOKAHEAD(2)(t=<PRAGMA_EXPRN> { if (u==null) { u = t; } else { u.image += t.image; } } ))+ {
-       PPToken pt = new PPToken(u);
-       if (emitExecSwitch==true) println("#pragma " + defs.expand(u.image,true)); return pt;
+       PPToken pt = new PPToken("#pragma");
+       pt.append(u.image,emitExecSwitch);
+       if (emitExecSwitch==true) {
+    	   println("#pragma" + defs.expand(u.image,true));
+       } else {
+    	   printCommentedLines(emitExecSwitch, "#pragma" + u.image, null);
+       }
     }
 }
 
@@ -1813,6 +1837,7 @@ PPToken IfNDefExpr() :
 PPToken Error() :
 {Token t;}
 {   t=<ERROR_EXPRN>{
+        printCommentedLines(emitExecSwitch, "#error " + t.image, "Error!");
         if (emitExecSwitch==true) {
             addParseMessage(null, curFileStackTop()+"'"+t.beginLine+" #error Error:");
             addParseMessage(null, t.image);
@@ -1825,6 +1850,7 @@ PPToken Error() :
 PPToken Warning() :
 {Token t;}
 {   t=<WARNING_EXPRN>{
+        printCommentedLines(emitExecSwitch, "#warning " + t.image, "Warning!");
         if (emitExecSwitch==true) {
             addParseMessage(null, curFileStackTop()+"'"+t.beginLine+" Warning: ");
             addParseMessage(null, t.image);
@@ -1902,31 +1928,31 @@ PPToken QuotedValue() :
 }
 
 PPToken Text() :
-{Token u, nl, t = new Token(); PPToken buf = new PPToken(""); t.image="";}
+{Token u, nl, lastToken; PPToken buf = new PPToken(""); }
 {
     ( LOOKAHEAD(3)
-      (LOOKAHEAD(2)(u=<OUTER_TEXT>{ bufAppendWithComment(buf,u); }
-                    (LOOKAHEAD(2)nl=NewLines() {if (emitExecSwitch==true) buf.append(nl.image,true); else buf.append((u.image.length() == 0 ? "//// " : "") + nl.image, false); } )* |
+      (LOOKAHEAD(2)(u=<OUTER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }
+                    (LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; } )* |
 
-                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); } )
-       [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }]
-       [(LOOKAHEAD(2)(u=QuotedText() {bufAppendWithComment(buf,u); }
-                    [LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u); }] |
-                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); })
-           [LOOKAHEAD(2)t=NewLines() {if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
-           [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }]
-           [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }])+]
-       [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }
-        (LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u);})*])+|
+                    u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; } )
+       [LOOKAHEAD(2)nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }]
+       [(LOOKAHEAD(2)(u=QuotedText() { bufAppendWithComment(buf,u,lastToken,true); lastToken = u; }
+                    [LOOKAHEAD(2) nl=NewLines(){ bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }] |
+                    u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; })
+           [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; } ]
+           [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }]
+           [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }])+]
+       [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }
+        (LOOKAHEAD(2) nl=NewLines(){ bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; })*])+|
                 
-      (LOOKAHEAD(2)(u=QuotedText() {bufAppendWithComment(buf,u); }
-                    [LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u); }] |
-                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); })
-       [LOOKAHEAD(2)t=NewLines() {if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
-       [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }]
-       [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }])+ |
+      (LOOKAHEAD(2)(u=QuotedText() { bufAppendWithComment(buf,u,lastToken,true); lastToken = u; }
+                    [LOOKAHEAD(2) nl=NewLines(){ bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }] |
+                    u=<OTHER_TEXT> { bufAppendWithComment(buf, u,lastToken,false); lastToken = u; })
+       [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf,nl,lastToken,false); lastToken = null; }]
+       [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf, u,lastToken,false); lastToken = u; }]
+       [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf, nl,lastToken,false); lastToken = null; }])+ |
        
-      u=NewLines() {bufAppendWithComment(buf,u); }
+      nl=NewLines() { bufAppendWithComment(buf,nl); lastToken = null; }
     ) { return buf;}
 }
 
