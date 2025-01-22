@@ -34,7 +34,7 @@ public class Omf51RecordTypes {
 	public final static int PublicDEF = 0x16;
 	public final static int ExternalDEF = 0x18;
 	public final static int LibModLocs = 0x26;
-	public final static int LibModName = 0x28;
+	public final static int LibModNames = 0x28;
 	public final static int LibDictionary = 0x2a;
 	public final static int LibHeader = 0x2c;
 
