@@ -163,7 +163,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
 		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
 
-		if (!DefaultCompositeMember.applyDataTypeMembers(composite, isClass, size, myMembers,
+		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, isClass, size, myMembers,
 			msg -> reconstructionWarn(msg, hasHiddenComponents(lists)),
 			applicator.getCancelOnlyWrappingMonitor())) {
 			clearComponents(composite);

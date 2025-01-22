@@ -64,7 +64,7 @@ public class DefaultCompositeMember extends CompositeMember {
 	private TreeMap<Integer, CompositeMember> structureMemberOffsetMap;
 	private RangeMap structureMemberRangeMap;
 	private int largestPrimitiveSize;
-	private boolean hasPadding = false;
+	private boolean hasStructurePadding = false;
 
 	// Union container data
 	private List<CompositeMember> unionMemberList;
@@ -250,7 +250,7 @@ public class DefaultCompositeMember extends CompositeMember {
 	}
 
 	@Override
-	void finalizeDataType(int preferredSize) {
+	void finalizeDataType(int preferredSize, boolean packingDisabled) {
 		if (!isContainer()) {
 			return;
 		}
@@ -258,7 +258,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			updateContainerNameAndCategoryPath("s");
 			CompositeMember lastMember = null;
 			for (CompositeMember member : structureMemberOffsetMap.values()) {
-				member.finalizeDataType(0);
+				member.finalizeDataType(0, packingDisabled);
 				lastMember = member;
 			}
 			transformLastMemberIntoFlexArray(lastMember);
@@ -269,10 +269,10 @@ public class DefaultCompositeMember extends CompositeMember {
 		else if (isUnionContainer()) {
 			updateContainerNameAndCategoryPath("u");
 			for (CompositeMember member : unionMemberList) {
-				member.finalizeDataType(0);
+				member.finalizeDataType(0, packingDisabled);
 			}
 		}
-		alignComposite(preferredSize);
+		alignComposite(preferredSize, packingDisabled);
 	}
 
 	/**
@@ -318,8 +318,10 @@ public class DefaultCompositeMember extends CompositeMember {
 	/**
 	 * Align container composite data type if possible.
 	 * @param preferredSize preferred size of composite if known, else <= 0 if unknown
+	 * @param packingDisabled {@code true} to disable any attempted use of packing on this
+	 * composite or any of its generated composite dependencies
 	 */
-	private void alignComposite(int preferredSize) {
+	private void alignComposite(int preferredSize, boolean packingDisabled) {
 
 		Composite composite = (Composite) memberDataType;
 
@@ -333,6 +335,20 @@ public class DefaultCompositeMember extends CompositeMember {
 			return;
 		}
 
+		// Try to get unions to get to the preferred size by adding a padding member
+		if (composite instanceof Union && preferredSize > composite.getAlignedLength()) {
+			ArrayDataType padding = new ArrayDataType(CharDataType.dataType, preferredSize);
+			composite.add(padding, PADDING_COMPONENT_NAME, "");
+		}
+
+		if (packingDisabled) {
+			if (composite instanceof Structure) {
+				removeAllPadding(composite); // includes bit-field padding
+			}
+			setComputedAlignment(composite);
+			return;
+		}
+
 		Composite copy = (Composite) composite.copy(dataTypeManager);
 
 		int pack = 0;
@@ -341,18 +357,18 @@ public class DefaultCompositeMember extends CompositeMember {
 		boolean alignOK = isGoodAlignment(copy, preferredSize);
 		if (alignOK) {
 			composite.setToDefaultPacking();
-			if (hasPadding) {
+			if (hasStructurePadding) {
 				removeUnnecessaryPadding(composite);
 			}
 		}
-		else {
+		else if (composite instanceof Structure) {
 			if (preferredSize > 0 && copy.getLength() != preferredSize) {
 				copy.setToMachineAligned(); // will only impact structure length
 				alignOK = isGoodAlignment(copy, preferredSize);
 				if (alignOK) {
 					composite.setToDefaultPacking();
 					composite.setToMachineAligned();
-					if (hasPadding) {
+					if (hasStructurePadding) {
 						removeUnnecessaryPadding(composite);
 					}
 				}
@@ -362,7 +378,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			}
 			if (!alignOK) {
 				removeAllPadding(composite); // includes bit-field padding
-				if (!hasPadding) {
+				if (!hasStructurePadding) {
 					pack = 1;
 					copy.setExplicitPackingValue(pack);
 					alignOK = isGoodAlignment(copy, preferredSize);
@@ -372,11 +388,44 @@ public class DefaultCompositeMember extends CompositeMember {
 				}
 			}
 		}
-		if (!alignOK && errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
+		// Unions fall through to here
+		if (!alignOK) {
+			setComputedAlignment(composite);
+		}
+		// Don't complain about Class structs which always fail... this might always be true
+		//  for the MSDIA analyzer, but we hope classes will align better with PDB Universal in
+		//  the future
+		if (!alignOK && errorConsumer != null && !isClass) {
 			String anonymousStr = parent != null ? " anonymous " : "";
 			errorConsumer.accept("PDB " + anonymousStr + memberType +
 				" reconstruction failed to align " + composite.getPathName());
 		}
+	}
+
+	/**
+	 * Computes and sets the alignment of the composite.  Will not set an alignment if the
+	 * calculation does not make sense
+	 * @param composite the composite to affect
+	 */
+	private void setComputedAlignment(Composite composite) {
+		// Only need to compute alignment from immediate child components, as those components
+		//  would have already seen this method in their calculations.
+		// If any component of the composite is not at an offset that is a multiple of that
+		//  comonent's alignment, then abort setting the composite alignment
+		int compositeAlignment = 1;
+		for (DataTypeComponent dtc : composite.getDefinedComponents()) {
+			DataType dt = dtc.getDataType();
+			int offset = dtc.getOffset();
+			int alignment = dt.getAlignment();
+			if (offset % alignment != 0) {
+				return;
+			}
+			compositeAlignment = Integer.max(compositeAlignment, alignment);
+		}
+		if (composite.getLength() % compositeAlignment != 0) {
+			return;
+		}
+		composite.align(compositeAlignment);
 	}
 
 	private void removeUnnecessaryPadding(Composite packedComposite) {
@@ -507,7 +556,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			structureMemberRangeMap = new RangeMap(-1);
 			// allow padding size to use pointer-size and smaller by default
 			largestPrimitiveSize = memberDataType.getDataOrganization().getPointerSize();
-			hasPadding = false;
+			hasStructurePadding = false;
 			unionMemberList = null;
 		}
 		else {
@@ -750,8 +799,8 @@ public class DefaultCompositeMember extends CompositeMember {
 	/**
 	 * Insert minimal padding into structure prior to the addition of a component such that packing
 	 * will allow component to be placed at intended offset.
-	 * @param nextComponentOffset 
-	 * @param dt 
+	 * @param nextComponentOffset
+	 * @param dt
 	 */
 	private void insertMinimalStructurePadding(int nextComponentOffset, DataType dt) {
 
@@ -786,7 +835,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			int paddingOffset =
 				DataOrganizationImpl.getAlignedOffset(paddingDt.getAlignment(), structLen);
 			struct.insertAtOffset(paddingOffset, paddingDt, -1, PADDING_COMPONENT_NAME, null);
-			hasPadding = true;
+			hasStructurePadding = true;
 
 			structLen = struct.getLength();
 			fillSpace = nextComponentOffset - structLen;
@@ -1296,6 +1345,8 @@ public class DefaultCompositeMember extends CompositeMember {
 	 * Buildup an empty composite by applying datatype composite members.
 	 * Only those children with a kind of "Member" will be processed.
 	 * @param composite empty composite to which members will be added
+	 * @param packingDisabled {@code true} to disable any attempted use of packing on this
+	 * composite or any of its generated composite dependencies
 	 * @param isClass true if composite corresponds to a Class structure, else false
 	 * @param preferredCompositeSize preferred size of composite, <= 0 indicates unknown
 	 * @param members list of composite members
@@ -1304,9 +1355,10 @@ public class DefaultCompositeMember extends CompositeMember {
 	 * @return true if members successfully added to composite
 	 * @throws CancelledException if monitor is cancelled
 	 */
-	public static boolean applyDataTypeMembers(Composite composite, boolean isClass,
-			int preferredCompositeSize, List<? extends PdbMember> members,
-			Consumer<String> errorConsumer, TaskMonitor monitor) throws CancelledException {
+	public static boolean applyDataTypeMembers(Composite composite, boolean packingDisabled,
+			boolean isClass, int preferredCompositeSize,
+			List<? extends PdbMember> members, Consumer<String> errorConsumer, TaskMonitor monitor)
+			throws CancelledException {
 
 		Composite editComposite = composite;
 
@@ -1332,7 +1384,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			}
 		}
 
-		rootMember.finalizeDataType(preferredCompositeSize);
+		rootMember.finalizeDataType(preferredCompositeSize, packingDisabled);
 		return true;
 	}
 
