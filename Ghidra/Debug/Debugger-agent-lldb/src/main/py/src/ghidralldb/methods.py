@@ -269,16 +269,6 @@ def refresh_available(node: sch.Schema('AvailableContainer')):
         exec_convert_errors('ghidra trace put-available')
 
 
-@REGISTRY.method(action='refresh', display="Refresh Breakpoints")
-def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
-    """
-    Refresh the list of breakpoints (including locations for the current
-    process).
-    """
-    with commands.open_tracked_tx('Refresh Breakpoints'):
-        exec_convert_errors('ghidra trace put-breakpoints')
-
-
 @REGISTRY.method(action='refresh', display="Refresh Processes")
 def refresh_processes(node: sch.Schema('ProcessContainer')):
     """Refresh the list of processes."""
@@ -287,7 +277,7 @@ def refresh_processes(node: sch.Schema('ProcessContainer')):
 
 
 @REGISTRY.method(action='refresh', display="Refresh Breakpoints")
-def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
+def refresh_proc_breakpoints(node: sch.Schema('BreakpointContainer')):
     """
     Refresh the breakpoints for the process.
     """

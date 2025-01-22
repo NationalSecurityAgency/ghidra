@@ -61,7 +61,7 @@ public class OmfExternalSymbol extends OmfRecord {
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
 		for (Reference ref : refs) {
-			struct.add(ref.name.toDataType(), "external_name", null);
+			struct.add(ref.name.toDataType(), ref.name.getDataTypeSize(), "external_name", null);
 			struct.add(ref.typeIndex.toDataType(), "type_index", null);
 		}
 		struct.add(BYTE, "checksum", null);

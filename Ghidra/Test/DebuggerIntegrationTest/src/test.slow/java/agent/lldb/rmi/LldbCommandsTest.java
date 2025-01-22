@@ -49,7 +49,8 @@ import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -1040,7 +1041,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathFilter.parse("Processes[].Breakpoints[]"))
+						PathFilter.parse("Processes[].Breakpoints[][1]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1049,10 +1050,10 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				procBreakLocVals.get(0).getChild().getValue(0, "_range").castValue();
 			Address main = rangeMain.getMinAddress();
 
-			assertBreakLoc(procBreakLocVals.get(0), "[1.1]", main, 1,
+			assertBreakLoc(procBreakLocVals.get(0), "[1]", main, 1,
 				Set.of(TraceBreakpointKind.SW_EXECUTE),
 				"main");
-			assertBreakLoc(procBreakLocVals.get(1), "[2.1]", main, 1,
+			assertBreakLoc(procBreakLocVals.get(1), "[1]", main, 1,
 				Set.of(TraceBreakpointKind.HW_EXECUTE),
 				"main");
 		}
