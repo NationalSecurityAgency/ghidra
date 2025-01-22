@@ -24,8 +24,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.database.sourcemap.SourceFileIdType;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.util.Msg;
@@ -387,6 +386,12 @@ public class PdbSourceLinesApplicator {
 
 	//==============================================================================================
 	private void applyRecord(SourceFile sourceFile, Address address, int start, int length) {
+		// Throw out values that do not make sense
+		if (!address.isMemoryAddress() || start < 0 || length < 0) {
+			log.appendMsg("PDB", "Invalid source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
+			return;
+		}
 		// Need to use getCodeUnitContaining(address) instead of getCodeUnitAt(address) because
 		//  there is a situation where the PDB associates a line number with the base part of an
 		//  instructions instead of the prefix part, such as with MSFT tool-chain emits a
@@ -414,7 +419,12 @@ public class PdbSourceLinesApplicator {
 		catch (IllegalArgumentException e) {
 			// thrown by SourceFileManager.addSourceMapEntry if the new entry conflicts
 			// with an existing entry or if sourceFile is not associated with manager
-			log.appendMsg("PDB", e.getMessage());
+			log.appendMsg("PDB", "IllegalArgumentException for source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
+		}
+		catch (AddressOutOfBoundsException e) {
+			log.appendMsg("PDB", "AddressOutOfBoundsException for source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
 		}
 	}
 
