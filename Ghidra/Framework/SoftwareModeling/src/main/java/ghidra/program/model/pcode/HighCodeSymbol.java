@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,30 +40,40 @@ public class HighCodeSymbol extends HighSymbol {
 	 * @param sz is the storage size, in bytes, of the symbol
 	 * @param func is the decompiler function model owning the new HighSymbol
 	 */
-	public HighCodeSymbol(CodeSymbol sym, DataType dataType, int sz, HighFunction func) {
-		super(sym.getID(), sym.getName(), dataType, func);
+	public HighCodeSymbol(CodeSymbol sym, HighFunction func) {
+		super(sym.getID(), sym.getName(), null, func);
 		symbol = sym;
 		setNameLock(true);
 		setTypeLock(true);
-		Data data = null;
-		Object dataObj = symbol.getObject();
-		if (dataObj instanceof Data) {
-			data = (Data) dataObj;
-		}
-		VariableStorage store;
-		try {
-			store = new VariableStorage(symbol.getProgram(), symbol.getAddress(), sz);
-		}
-		catch (InvalidInputException e) {
-			store = VariableStorage.UNASSIGNED_STORAGE;
-		}
+
 		SymbolEntry entry;
-		if (data != null) {
+
+		// NOTE: Use of symbol.getObject return Data at the symbol address if it is at the start
+		// of a Data code unit, the lowest level non-composite/primitive DataComponent, or null
+		// if offcut or non-data
+		Object dataObj = symbol.getObject();
+		if (dataObj instanceof Data data) {
+			data = (Data) dataObj;
+			type = data.getDataType();
+			int size = type.getLength();
+			if (size <= 0) {
+				size = data.getLength();
+			}
+
+			VariableStorage store = VariableStorage.UNASSIGNED_STORAGE;
+			try {
+				store = new VariableStorage(symbol.getProgram(), symbol.getAddress(), size);
+			}
+			catch (InvalidInputException e) {
+				// ignore
+			}
 			entry = new MappedDataEntry(this, store, data);
 		}
 		else {
-			entry = new MappedEntry(this, store, null);
+			type = DataType.DEFAULT;
+			entry = new MappedEntry(this, VariableStorage.UNASSIGNED_STORAGE, null);
 		}
+
 		addMapEntry(entry);
 	}
 
