@@ -61,6 +61,6 @@ public class Omf51RecordTypes {
 	 * @return The name of the given record type
 	 */
 	public final static String getName(int type) {
-		return OmfUtils.GetRecordName(type, Omf51RecordTypes.class);
+		return OmfUtils.getRecordName(type, Omf51RecordTypes.class);
 	}
 }
