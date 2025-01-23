@@ -2373,7 +2373,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	@Override
 	protected void close() {
-		if (changed && languageUpgradeTranslator != null) {
+		if (programUserData != null && changed && languageUpgradeTranslator != null) {
 			// Prevent user data from being saved if program and user data 
 			// have gone through a major language upgrade and the program
 			// was not saved.
