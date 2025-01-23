@@ -68,6 +68,12 @@ ext.deps = [
 		destination: FLAT_REPO_DIR
 	],
 	[
+		name: "dbgmodel.tlb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/Debugger/dbgmodel.tlb",
+		sha256: "8cf5f3a2eb81160aa349056a5ca4c2c726b1b6e98bf3097cd4135147163343c7",
+		destination: file("${DEPS_DIR}/Debugger-agent-dbgeng/")
+	],
+	[
 		name: "AXMLPrinter2.jar",
 		url: "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar",
 		sha256: "00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d",
