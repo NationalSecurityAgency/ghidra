@@ -1261,6 +1261,7 @@ public class PreProcessor {
 		try {
 			if (str.endsWith("L") || str.endsWith("l") || str.endsWith("U")) {
 				str = str.substring(0, str.length() - 1);
+				return getLongValue(str);
 			}
 			
 			if (str.startsWith("--")) {
@@ -1756,7 +1757,7 @@ PPToken UnDef() : {Token t;}
         if (isDef(pt)==true) {
             UnDefine(pt);
         }
-        printCommentedLines(emitExecSwitch, "#undef " + def.image, null);
+        printCommentedLines(emitExecSwitch, "#undef " + pt.image, null);
         return pt;
     }
 }
@@ -1788,6 +1789,7 @@ PPToken Pragma() :
        } else {
     	   printCommentedLines(emitExecSwitch, "#pragma" + u.image, null);
        }
+       return pt;
     }
 }
 
@@ -1928,7 +1930,7 @@ PPToken QuotedValue() :
 }
 
 PPToken Text() :
-{Token u, nl, lastToken; PPToken buf = new PPToken(""); }
+{Token u, nl, lastToken = null; PPToken buf = new PPToken(""); }
 {
     ( LOOKAHEAD(3)
       (LOOKAHEAD(2)(u=<OUTER_TEXT> { bufAppendWithComment(buf,u,lastToken,false); lastToken = u; }
@@ -1952,7 +1954,10 @@ PPToken Text() :
        [LOOKAHEAD(2) u=<OTHER_TEXT> { bufAppendWithComment(buf, u,lastToken,false); lastToken = u; }]
        [LOOKAHEAD(2) nl=NewLines() { bufAppendWithComment(buf, nl,lastToken,false); lastToken = null; }])+ |
        
-      nl=NewLines() { bufAppendWithComment(buf,nl); lastToken = null; }
+      nl=NewLines() {
+          //bufAppendWithComment(buf,nl);
+          lastToken = null;
+      }
     ) { return buf;}
 }
 
@@ -2722,7 +2727,7 @@ TOKEN : {
 <INCLUDE>
 TOKEN : {
     <INCLINE: <ENDL> > : INCLUDE |
-    <MACEXPPATH: <NOTWWSQLT>(<NOTWSQLT>)* > : DEFAULT
+    <MACEXPPATH: <NOTWWSQLT>(<NOTWWSQLT>)* > : DEFAULT
 }
 
 <INCLUDE>
@@ -2730,7 +2735,21 @@ SKIP : {
     <_COD: <COD> > : INCLUDE |
     <_WSP: <WSP> > : INCLUDE |
     <__LT: <_LT> > : STDPATH |
-    <_QTE: <ENDREL> > : RELPATH
+    <_QTE: <ENDREL> > : RELPATH |
+    <_ECMT_INC: <CMT><ECMT> > : INCLUDE_COMMENT
+}
+
+<INCLUDE_COMMENT>
+SKIP : {
+    <_ECMT_INCLUDE_ns: ~["*"] > : INCLUDE_COMMENT |
+    <_ECMT_INCLUDE_s:   "*" > : INCLUDE_COMMENT_END
+}
+
+<INCLUDE_COMMENT_END>
+SKIP : {
+    <_ECMT_INCLUDE_es: "*" > : INCLUDE_COMMENT_END |
+    <_ECMT_INCLUDE_eo: ~["*","/"] > : INCLUDE_COMMENT |
+    <_ECMT_INCLUDE_e:  "/" > : INCLUDE
 }
 
 <STDPATH>
