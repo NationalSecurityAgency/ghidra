@@ -21,6 +21,7 @@
 ::@env OPT_CREATE_FLAGS:int="1" "Create flags" "Creation flags"
 ::@env OPT_CREATE_ENGFLAGS:int="0" "Create flags (Engine)" "Engine-specific creation flags"
 ::@env OPT_VERIFIER_FLAGS:int="0" "Verifier flags" "Verifier flags"
+::@env OPT_ENG_OPTIONS:int="0x20" "Engine options" "Options for AddEngineOptions (e.g. INITIAL_BREAK=0x20)"
 
 @echo off
 
