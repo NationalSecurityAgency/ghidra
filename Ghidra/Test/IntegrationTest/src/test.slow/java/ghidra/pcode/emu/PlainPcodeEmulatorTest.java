@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcode.emu.jit;
+package ghidra.pcode.emu;
 
-import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.program.model.lang.Language;
 
 public class PlainPcodeEmulatorTest extends AbstractPcodeEmulatorTest {
