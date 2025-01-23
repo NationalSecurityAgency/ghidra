@@ -270,7 +270,7 @@ def ghidra_trace_create(command=None, initial_break=True, timeout=DbgEng.WAIT_IN
 
 
 @util.dbg.eng_thread
-def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0\0", create_flags=1, create_flags_eng=0, verifier_flags=0, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0\0", create_flags=1, create_flags_eng=0, verifier_flags=0, engine_options=0x20, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
     """
     Create a session.
     """
@@ -295,8 +295,7 @@ def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0
         if envVariables is not None and envVariables.endswith("/0/0") is False:
             envVariables += "/0/0"
         dbg._client.CreateProcess2(command, options, initialDirectory, envVariables)
-        if initial_break:
-            dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
+        dbg._control.AddEngineOptions(int(engine_options))
     if start_trace:
         ghidra_trace_start(command)
 
