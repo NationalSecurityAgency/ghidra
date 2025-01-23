@@ -16,8 +16,9 @@
 package docking.widgets;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.regex.*;
 
 import javax.swing.JEditorPane;
@@ -66,6 +67,8 @@ public class TextComponentSearcher implements FindDialogSearcher {
 
 	public void setEditorPane(JEditorPane editorPane) {
 		if (this.editorPane != editorPane) {
+			Document document = editorPane.getDocument();
+			document.removeDocumentListener(documentListener);
 			markResultsStale();
 		}
 		this.editorPane = editorPane;
@@ -79,10 +82,12 @@ public class TextComponentSearcher implements FindDialogSearcher {
 	public void dispose() {
 		caretUpdater.dispose();
 
-		Document document = editorPane.getDocument();
-		document.removeDocumentListener(documentListener);
+		if (editorPane != null) {
+			Document document = editorPane.getDocument();
+			document.removeDocumentListener(documentListener);
 
-		clearHighlights();
+			clearHighlights();
+		}
 	}
 
 	@Override
@@ -253,9 +258,7 @@ public class TextComponentSearcher implements FindDialogSearcher {
 				return;
 			}
 
-			Iterator<FindMatch> it = matchesByPosition.values().iterator();
-			while (it.hasNext()) {
-				FindMatch match = it.next();
+			for (FindMatch match : matchesByPosition.values()) {
 				boolean isActive = false;
 				if (match.contains(pos)) {
 					activeMatch = match;
