@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,8 @@ import javax.swing.border.Border;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTable;
-import docking.wizard.AbstractWizardJPanel;
 import generic.theme.GColor;
 import generic.theme.GIcon;
-import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.remote.User;
@@ -53,7 +51,7 @@ import util.CollectionUtils;
  * be read-only.
  *
  */
-public class ProjectAccessPanel extends AbstractWizardJPanel {
+public class ProjectAccessPanel extends JPanel {
 
 	protected KnownUsersPanel knownUsersPanel;
 	protected UserAccessPanel userAccessPanel;
@@ -116,32 +114,6 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 		createMainPanel(knownUsers, anonymousServerAccessAllowed);
 	}
 
-	@Override
-	public boolean isValidInformation() {
-		return true;
-	}
-
-	@Override
-	public String getTitle() {
-		return "Specify Users for Repository " + repositoryName;
-	}
-
-	@Override
-	public void initialize() {
-		userAccessPanel.resetUserList();
-		if (anonymousAccessCB != null) {
-			anonymousAccessCB.setSelected(origAnonymousAccessEnabled);
-		}
-	}
-
-	@Override
-	public HelpLocation getHelpLocation() {
-		if (helpLoc != null) {
-			return helpLoc;
-		}
-		return new HelpLocation(GenericHelpTopics.FRONT_END, "UserAccessList");
-	}
-
 	/**
 	 * Sets the help location.
 	 *
@@ -156,7 +128,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 	 *
 	 * @return the list of users
 	 */
-	User[] getProjectUsers() {
+	public User[] getProjectUsers() {
 		return userAccessPanel.getProjectUsers();
 	}
 
@@ -165,7 +137,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 	 *
 	 * @return true if allowed
 	 */
-	boolean allowAnonymousAccess() {
+	public boolean allowAnonymousAccess() {
 		return anonymousAccessCB != null && anonymousAccessCB.isSelected();
 	}
 
@@ -354,7 +326,7 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 		 *
 		 * @param user the current user
 		 */
-		UserAccessPanel(String user) {
+		public UserAccessPanel(String user) {
 			setLayout(new BorderLayout());
 
 			tableModel = new UserAccessTableModel(user, origProjectUserList, tool);
