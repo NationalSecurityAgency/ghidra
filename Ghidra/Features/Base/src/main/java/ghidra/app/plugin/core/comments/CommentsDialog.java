@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import ghidra.app.util.viewer.field.AnnotatedStringHandler;
-import ghidra.app.util.viewer.field.Annotation;
+import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.HelpLocation;
@@ -225,7 +225,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 	}
 
 	private AnnotationAdapterWrapper[] getAnnotationAdapterWrappers() {
-		List<AnnotatedStringHandler> annotations = Annotation.getAnnotatedStringHandlers();
+		List<AnnotatedStringHandler> annotations = CommentUtils.getAnnotatedStringHandlers();
 		int count = annotations.size();
 		AnnotationAdapterWrapper[] retVal = new AnnotationAdapterWrapper[count];
 		for (int i = 0; i < count; i++) {

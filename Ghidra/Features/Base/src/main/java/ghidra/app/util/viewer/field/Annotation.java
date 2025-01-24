@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,132 +15,34 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import docking.widgets.fieldpanel.field.AttributedString;
-import ghidra.app.nav.Navigatable;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
-import ghidra.util.classfinder.ClassSearcher;
 
 public class Annotation {
 
 	public static final String ESCAPABLE_CHARS = "{}\"\\";
 
-	private static List<AnnotatedStringHandler> ANNOTATED_STRING_HANDLERS;
-	private static Map<String, AnnotatedStringHandler> ANNOTATED_STRING_MAP;
-
 	private String annotationText;
 	private String[] annotationParts;
-	private AnnotatedStringHandler annotatedStringHandler;
-	private AttributedString displayString;
-
-	public static List<AnnotatedStringHandler> getAnnotatedStringHandlers() {
-		if (ANNOTATED_STRING_HANDLERS == null) {
-			ANNOTATED_STRING_HANDLERS = getSupportedAnnotationHandlers();
-		}
-		return ANNOTATED_STRING_HANDLERS;
-	}
-
-	private static Map<String, AnnotatedStringHandler> getAnnotatedStringHandlerMap() {
-		if (ANNOTATED_STRING_MAP == null) { // lazy init due to our use of ClassSearcher
-			ANNOTATED_STRING_MAP = createAnnotatedStringHandlerMap();
-		}
-		return ANNOTATED_STRING_MAP;
-	}
-
-	private static Map<String, AnnotatedStringHandler> createAnnotatedStringHandlerMap() {
-		Map<String, AnnotatedStringHandler> map = new HashMap<>();
-		for (AnnotatedStringHandler instance : getAnnotatedStringHandlers()) {
-			String[] supportedAnnotations = instance.getSupportedAnnotations();
-			for (String supportedAnnotation : supportedAnnotations) {
-				map.put(supportedAnnotation, instance);
-			}
-		}
-		return Collections.unmodifiableMap(map);
-	}
-
-	// locates AnnotatedStringHandler implementations to handle annotations
-	private static List<AnnotatedStringHandler> getSupportedAnnotationHandlers() {
-		List<AnnotatedStringHandler> list = new ArrayList<>();
-		for (AnnotatedStringHandler h : ClassSearcher.getInstances(AnnotatedStringHandler.class)) {
-			if (h.getSupportedAnnotations().length != 0) {
-				list.add(h);
-			}
-		}
-		return Collections.unmodifiableList(list);
-	}
 
 	/**
 	 * Constructor
 	 * <b>Note</b>: This constructor assumes that the string starts with "{<pre>@</pre>" and ends with '}'
 	 * 
 	 * @param annotationText The complete annotation text.
-	 * @param prototypeString An AttributedString that provides the attributes for the display
 	 * text this Annotation can create
 	 * @param program the program
 	 */
-	public Annotation(String annotationText, AttributedString prototypeString, Program program) {
+	public Annotation(String annotationText, Program program) {
 
 		this.annotationText = annotationText;
-		annotationParts = parseAnnotationText(annotationText);
-
-		annotatedStringHandler = getHandler(annotationParts);
-
-		try {
-			displayString = annotatedStringHandler.createAnnotatedString(prototypeString,
-				annotationParts, program);
-		}
-		catch (AnnotationException ae) {
-			// uh-oh
-			annotatedStringHandler =
-				new InvalidAnnotatedStringHandler("Annotation Exception: " + ae.getMessage());
-			displayString = annotatedStringHandler.createAnnotatedString(prototypeString,
-				annotationParts, program);
-		}
+		this.annotationParts = parseAnnotationText(annotationText);
 	}
 
-	private AnnotatedStringHandler getHandler(String[] annotationPieces) {
-
-		if (annotationPieces.length <= 1) {
-			return new InvalidAnnotatedStringHandler(
-				"Invalid annotation format." + " Expected at least two strings.");
-		}
-
-		// the first part is the annotation (@xxx)
-		String keyword = annotationPieces[0];
-		AnnotatedStringHandler handler = getAnnotatedStringHandlerMap().get(keyword);
-
-		if (handler == null) {
-			return new InvalidAnnotatedStringHandler("Invalid annotation keyword: " + keyword);
-		}
-		return handler;
-	}
-
-	String[] getAnnotationParts() {
+	public String[] getAnnotationParts() {
 		return annotationParts;
-	}
-
-	AnnotatedStringHandler getHandler() {
-		return annotatedStringHandler;
-	}
-
-	public AttributedString getDisplayString() {
-		return displayString;
-	}
-
-	/**
-	 * Called when a mouse click occurs on a FieldElement containing this Annotation.
-	 * 
-	 * @param sourceNavigatable The source navigatable associated with the mouse click.
-	 * @param serviceProvider The service provider to be used when creating
-	 * {@link AnnotatedStringHandler} instances.
-	 * @return true if the handler desires to handle the mouse click.
-	 */
-	public boolean handleMouseClick(Navigatable sourceNavigatable,
-			ServiceProvider serviceProvider) {
-		return annotatedStringHandler.handleMouseClick(annotationParts, sourceNavigatable,
-			serviceProvider);
 	}
 
 	public String getAnnotationText() {
@@ -150,10 +52,6 @@ public class Annotation {
 	@Override
 	public String toString() {
 		return annotationText;
-	}
-
-	/*package*/ static Set<String> getAnnotationNames() {
-		return Collections.unmodifiableSet(getAnnotatedStringHandlerMap().keySet());
 	}
 
 	private String[] parseAnnotationText(String text) {
