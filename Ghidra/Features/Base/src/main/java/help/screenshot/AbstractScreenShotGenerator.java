@@ -87,6 +87,8 @@ import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
 
+	private static final String SCREENSHOT_USER_NAME = "User-1";
+
 	static {
 		System.setProperty("user.name", "User-1");
 	}
@@ -122,6 +124,13 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 	@Before
 	public void setUp() throws Exception {
+
+		// sanity check to ensure out user name override above is still working
+		String path = getTestDirectoryPath();
+		assertTrue("Seeing this failure means that some call has initialized the temporary test " +
+			"directory before out static call to change user.name above",
+			path.contains(SCREENSHOT_USER_NAME));
+
 		env = newTestEnv();
 
 		prepareTool();
