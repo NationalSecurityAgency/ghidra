@@ -72,7 +72,8 @@ public abstract class AbstractGTest {
 	// 10x longer than normal
 	// private static final int PRIVATE_MAX_WAIT_TIMEOUT = DEFAULT_WAIT_TIMEOUT * 10;
 
-	private static String testDirectoryPath = createTestDirectoryPath();
+	// let this get created lazily so that subclasses can change system state first
+	private static String testDirectoryPath; //  = createTestDirectoryPath();
 
 	@Rule
 	public TestName testName = new TestName();
@@ -95,14 +96,11 @@ public abstract class AbstractGTest {
 	public TestRule ignoreUnfinishedRule = new IgnoreUnfinishedRule();
 
 	/**
-	 * Get the directory path within which all temporary test data files should be created.
-	 * 
-	 * @return test directory path ending with a File.separator character
+	 * Get the directory path within which all temporary test data files should be created.  This
+	 * method will only initialize the test directory path one time.
 	 */
-	private static String createTestDirectoryPath() {
-
+	private static void initializeTestDirectoryPath() {
 		if (testDirectoryPath == null) {
-
 			//
 			// Build unique test data directory.  Note that we can't make any calls which
 			// depend upon Application initialization, so we have to create directories using
@@ -123,8 +121,6 @@ public abstract class AbstractGTest {
 			}
 			System.out.println("Created test directory: " + testDir);
 		}
-
-		return testDirectoryPath;
 	}
 
 	private static String buildBatchDirectoryPath() {
@@ -150,6 +146,7 @@ public abstract class AbstractGTest {
 	}
 
 	public static String getTestDirectoryPath() {
+		initializeTestDirectoryPath();
 		return testDirectoryPath;
 	}
 

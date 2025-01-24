@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import docking.test.AbstractDockingTest;
 import ghidra.GhidraTestApplicationLayout;
@@ -93,7 +93,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		System.setProperty(GhidraScriptConstants.USER_SCRIPTS_DIR_PROPERTY, getTestDirectoryPath());
 	}
 
-	@BeforeClass
+	@AfterClass
 	public static void cleanDbTestDir() {
 		// keep files around in batch mode to allow tests to run faster; assume batch mode performs
 		// its own cleanup; only run once per class to allow subsequent tests to be faster
