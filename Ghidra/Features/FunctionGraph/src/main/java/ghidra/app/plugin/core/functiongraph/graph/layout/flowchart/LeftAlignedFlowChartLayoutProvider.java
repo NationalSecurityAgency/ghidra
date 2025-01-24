@@ -21,6 +21,7 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProviderExtensionPoint;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -51,4 +52,8 @@ public class LeftAlignedFlowChartLayoutProvider extends FGLayoutProviderExtensio
 		return new FGFlowChartLayout(graph, true);
 	}
 
+	@Override
+	public HelpLocation getHelpLocation() {
+		return new HelpLocation("FunctionGraphPlugin", "Flow_Chart_Layout_Left");
+	}
 }
