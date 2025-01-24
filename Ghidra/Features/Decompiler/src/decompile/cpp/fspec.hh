@@ -367,6 +367,7 @@ struct ParameterPieces {
   Datatype *type;		///< The datatype of the parameter
   uint4 flags;			///< additional attributes of the parameter
   void swapMarkup(ParameterPieces &op);	///< Swap data-type markup between \b this and another parameter
+  void assignAddressFromPieces(vector<VarnodeData> &pieces,bool mostToLeast,Architecture *glb);
 };
 
 /// \brief Raw components of a function prototype (obtained from parsing source code)
@@ -614,7 +615,7 @@ public:
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries
-  list<ParamEntry>::const_iterator getFirstIter(type_class type) const;	///< Get iterator to first entry in a storage class
+  void extractTiles(vector<const ParamEntry *> &tiles,type_class type) const;	///< Get registers of given storage class
   const ParamEntry *getStackEntry(void) const;	///< Get the stack entry
   uint4 assignAddressFallback(type_class resource,Datatype *tp,bool matchExact,vector<int4> &status,
 			      ParameterPieces &param) const;

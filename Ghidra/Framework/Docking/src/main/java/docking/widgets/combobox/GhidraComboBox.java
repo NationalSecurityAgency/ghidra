@@ -108,12 +108,16 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 
 	@Override
 	public void setUI(ComboBoxUI ui) {
+
+		int oldColumns = getColumns();
+
 		super.setUI(ui);
-		// this gets called during construction and during theming changes.  It always
+
+		// This gets called during construction and during theming changes.  It always
 		// creates a new editor and any listeners or documents set on the current editor are
 		// lost.  So to combat this, we install the pass through listeners here instead of
 		// in the init() method. We also reset the document if the client ever called the
-		// setDocument() method
+		// setDocument() method.
 
 		installPassThroughListeners();
 
@@ -133,6 +137,13 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 					}
 				}
 			});
+		}
+
+		// As mentioned above, the default editor gets replaced.  In that case, restore the columns
+		// if the client has set the value.
+		if (oldColumns > 0) {
+			JTextField tf = getTextField();
+			tf.setColumns(oldColumns);
 		}
 	}
 
@@ -189,14 +200,36 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 *
 	 * @param columnCount The number of columns for the text field editor
 	 * @see JTextField#setColumns(int)
+	 * @deprecated use {@link #setColumns(int)}
 	 */
+	@Deprecated(forRemoval = true, since = "11.3")
 	public void setColumnCount(int columnCount) {
-		JTextField textField = getTextField();
-		textField.setColumns(columnCount);
+		setColumns(columnCount);
 	}
 
 	/**
-	 * Selects the text in the text field editor usd by this combo box.
+	 * Sets the number of column's in the editor's component (JTextField).
+	 * @param columns the number of columns to show
+	 * @see JTextField#setColumns(int)
+	 */
+	public void setColumns(int columns) {
+		JTextField textField = getTextField();
+		textField.setColumns(columns);
+	}
+
+	private int getColumns() {
+		ComboBoxEditor currentEditor = getEditor();
+		if (currentEditor != null) {
+			Object object = currentEditor.getEditorComponent();
+			if (object instanceof JTextField textField) {
+				return textField.getColumns();
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Selects the text in the text field editor used by this combo box.
 	 *
 	 * @see JTextField#selectAll()
 	 */
@@ -295,16 +328,6 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 */
 	public void removeDocumentListener(DocumentListener l) {
 		docListeners.remove(l);
-	}
-
-	/**
-	 * Sets the number of column's in the editor's component (JTextField).
-	 * @param columns the number of columns to show
-	 * @see JTextField#setColumns(int)
-	 */
-	public void setColumns(int columns) {
-		JTextField textField = getTextField();
-		textField.setColumns(columns);
 	}
 
 	/**

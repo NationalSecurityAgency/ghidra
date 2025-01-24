@@ -583,12 +583,16 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implemen
 		}
 
 		DomainObjectAdapterDB userData = getUserData();
-		if (userData != null && userData.isChanged() && (getDomainFile() instanceof GhidraFile)) {
+		if (canSave() && userData != null && userData.isChanged() &&
+			(getDomainFile() instanceof GhidraFile)) {
+			// Only save user data if this domain object was open for update and the
+			// user data was modified.
 			try {
 				userData.prepareToSave();
 				userData.save(null, TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
+				// ignore
 			}
 			catch (IOException e) {
 				Msg.warn(this, "Failed to save user data for: " + getDomainFile().getName());

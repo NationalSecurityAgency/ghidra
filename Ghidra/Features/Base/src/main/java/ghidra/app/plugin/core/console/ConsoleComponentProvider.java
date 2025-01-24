@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,13 @@ import java.awt.event.*;
 import java.io.PrintWriter;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
+import javax.swing.text.*;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
+import docking.widgets.FindDialog;
+import docking.widgets.TextComponentSearcher;
 import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.app.services.*;
@@ -53,13 +55,19 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 	private ConsoleTextPane textPane;
 	private JScrollPane scroller;
 	private JComponent component;
-	private boolean scrollLock = false;
-	private DockingAction clearAction;
-	private ToggleDockingAction scrollAction;
-	private Address currentAddress;
+
 	private PrintWriter stderr;
 	private PrintWriter stdin;
+	private boolean scrollLock = false;
+
+	private DockingAction clearAction;
+	private ToggleDockingAction scrollAction;
+
 	private Program currentProgram;
+	private Address currentAddress;
+
+	private FindDialog findDialog;
+	private TextComponentSearcher searcher;
 
 	public ConsoleComponentProvider(PluginTool tool, String owner) {
 		super(tool, "Console", owner);
@@ -97,6 +105,10 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		textPane.dispose();
 		stderr.close();
 		stdin.close();
+
+		if (findDialog != null) {
+			findDialog.close();
+		}
 	}
 
 	private void createOptions() {
@@ -117,70 +129,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		textPane.setName(textPaneName);
 		textPane.getAccessibleContext().setAccessibleName(textPaneName);
 
-		textPane.addMouseMotionListener(new MouseMotionAdapter() {
-			@Override
-			public void mouseMoved(MouseEvent e) {
-				if (currentProgram == null) {
-					return;
-				}
-
-				Point hoverPoint = e.getPoint();
-				ConsoleWord word = getWordSeparatedByWhitespace(hoverPoint);
-				if (word == null) {
-					textPane.setCursor(Cursor.getDefaultCursor());
-					return;
-				}
-
-				Address addr = currentProgram.getAddressFactory().getAddress(word.word);
-				if (addr != null || isSymbol(word.word)) {
-					textPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-					return;
-				}
-
-				ConsoleWord trimmedWord = word.getWordWithoutSpecialCharacters();
-				addr = currentProgram.getAddressFactory().getAddress(trimmedWord.word);
-				if (addr != null || isSymbol(trimmedWord.word)) {
-					textPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-					return;
-				}
-			}
-		});
-		textPane.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				if (e.getClickCount() != 2) {
-					return;
-				}
-				if (currentProgram == null) {
-					return;
-				}
-
-				GoToService gotoService = tool.getService(GoToService.class);
-				if (gotoService == null) {
-					return;
-				}
-
-				Point clickPoint = e.getPoint();
-				ConsoleWord word = getWordSeparatedByWhitespace(clickPoint);
-				if (word == null) {
-					return;
-				}
-
-				Address addr = currentProgram.getAddressFactory().getAddress(word.word);
-				if (addr != null || isSymbol(word.word)) {
-					goTo(word);
-					return;
-				}
-
-				ConsoleWord trimmedWord = word.getWordWithoutSpecialCharacters();
-				addr = currentProgram.getAddressFactory().getAddress(trimmedWord.word);
-				if (addr == null && !isSymbol(trimmedWord.word)) {
-					return;
-				}
-
-				goTo(trimmedWord);
-			}
-		});
+		textPane.addMouseMotionListener(new CursorUpdateMouseMotionListener());
+		textPane.addMouseListener(new GoToMouseListener());
 
 		scroller = new JScrollPane(textPane);
 		scroller.setPreferredSize(new Dimension(200, 100));
@@ -191,72 +141,10 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		tool.addComponentProvider(this, true);
 	}
 
-	private void goTo(ConsoleWord word) {
-
-		GoToService gotoService = tool.getService(GoToService.class);
-		if (gotoService == null) {
-			return;
-		}
-
-		// NOTE: must be case sensitive otherwise the service will report that it has
-		//       processed the request even if there are no matches
-		boolean found =
-			gotoService.goToQuery(currentAddress, new QueryData(word.word, true), null, null);
-		if (found) {
-			select(word);
-			return;
-		}
-
-		ConsoleWord trimmedWord = word.getWordWithoutSpecialCharacters();
-		found = gotoService.goToQuery(currentAddress, new QueryData(trimmedWord.word, true), null,
-			null);
-		if (found) {
-			select(trimmedWord);
-		}
-	}
-
-	private ConsoleWord getWordSeparatedByWhitespace(Point p) {
-		int pos = textPane.viewToModel2D(p);
-		Document doc = textPane.getDocument();
-		int startIndex = pos;
-		int endIndex = pos;
-		try {
-			for (; startIndex > 0; --startIndex) {
-				char c = doc.getText(startIndex, 1).charAt(0);
-				if (Character.isWhitespace(c)) {
-					break;
-				}
-			}
-			for (; endIndex < doc.getLength() - 1; ++endIndex) {
-				char c = doc.getText(endIndex, 1).charAt(0);
-				if (Character.isWhitespace(c)) {
-					break;
-				}
-			}
-			String text = doc.getText(startIndex + 1, endIndex - startIndex);
-			if (text == null || text.trim().length() == 0) {
-				return null;
-			}
-			return new ConsoleWord(text.trim(), startIndex + 1, endIndex);
-		}
-		catch (BadLocationException ble) {
-			return null;
-		}
-	}
-
 	private boolean isSymbol(String word) {
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		SymbolIterator symbolIterator = symbolTable.getSymbols(word);
 		return symbolIterator.hasNext();
-	}
-
-	protected void select(ConsoleWord word) {
-		try {
-			textPane.select(word.startPosition, word.endPosition);
-		}
-		catch (Exception e) {
-			// we are too lazy to verify our data before calling select--bleh
-		}
 	}
 
 	private void createActions() {
@@ -268,9 +156,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 			}
 		};
 		clearAction.setDescription("Clear Console");
-// ACTIONS - auto generated
 		clearAction.setToolBarData(new ToolBarData(new GIcon("icon.plugin.console.clear"), null));
-
 		clearAction.setEnabled(true);
 
 		scrollAction = new ToggleDockingAction("Scroll Lock", getOwner()) {
@@ -282,12 +168,31 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		scrollAction.setDescription("Scroll Lock");
 		scrollAction.setToolBarData(
 			new ToolBarData(new GIcon("icon.plugin.console.scroll.lock"), null));
-
 		scrollAction.setEnabled(true);
 		scrollAction.setSelected(scrollLock);
 
+		//@formatter:off
+		new ActionBuilder("Find", getOwner())
+			.keyBinding("Ctrl F")
+			.sharedKeyBinding()
+			.popupMenuPath("Find...")
+			.onAction(c -> {
+				showFindDialog();
+			})
+			.buildAndInstallLocal(this)
+			;
+		//@formatter:on		
+
 		addLocalAction(scrollAction);
 		addLocalAction(clearAction);
+	}
+
+	private void showFindDialog() {
+		if (findDialog == null) {
+			searcher = new TextComponentSearcher(textPane);
+			findDialog = new FindDialog("Find", searcher);
+		}
+		getTool().showDialog(findDialog);
 	}
 
 	@Override
@@ -304,26 +209,6 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 
 	@Override
 	public void addException(String originator, Exception e) {
-		try {
-			e.printStackTrace(stderr);
-		}
-		catch (Exception e1) {
-			//
-			// sometimes an exception will occur while printing
-			// the stack trace on an exception.
-			// if that happens catch it and manually print
-			// some information about it.
-			// see org.jruby.exceptions.RaiseException
-			//
-			stderr.println("Unexpected Exception: " + e.getMessage());
-			for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-				stderr.println("\t" + stackTraceElement.toString());
-			}
-			stderr.println("Unexpected Exception: " + e1.getMessage());
-			for (StackTraceElement stackTraceElement : e1.getStackTrace()) {
-				stderr.println("\t" + stackTraceElement.toString());
-			}
-		}
 		Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 	}
 
@@ -331,6 +216,10 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 	public void clearMessages() {
 		checkVisible();
 		textPane.setText("");
+
+		if (searcher != null) {
+			searcher.clearHighlights();
+		}
 	}
 
 	@Override
@@ -383,20 +272,19 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		return textPane.getDocument().getLength();
 	}
 
-	////////////////////////////////////////////////////////////////////
-
 	private void checkVisible() {
 		if (!isVisible()) {
 			tool.showComponentProvider(this, true);
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#getComponent()
-	 */
 	@Override
 	public JComponent getComponent() {
 		return component;
+	}
+
+	ConsoleTextPane getTextPane() {
+		return textPane;
 	}
 
 	public void setCurrentProgram(Program program) {
@@ -407,4 +295,136 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		currentAddress = address;
 	}
 
+	private static ConsoleWord getWordSeparatedByWhitespace(JTextComponent textComponent, Point p) {
+		int pos = textComponent.viewToModel2D(p);
+		Document doc = textComponent.getDocument();
+		int startIndex = pos;
+		int endIndex = pos;
+		try {
+			for (; startIndex > 0; --startIndex) {
+				char c = doc.getText(startIndex, 1).charAt(0);
+				if (Character.isWhitespace(c)) {
+					break;
+				}
+			}
+			for (; endIndex < doc.getLength() - 1; ++endIndex) {
+				char c = doc.getText(endIndex, 1).charAt(0);
+				if (Character.isWhitespace(c)) {
+					break;
+				}
+			}
+			String text = doc.getText(startIndex + 1, endIndex - startIndex);
+			if (text == null || text.trim().length() == 0) {
+				return null;
+			}
+			return new ConsoleWord(text.trim(), startIndex + 1, endIndex);
+		}
+		catch (BadLocationException ble) {
+			return null;
+		}
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	private class GoToMouseListener extends MouseAdapter {
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if (e.getClickCount() != 2) {
+				return;
+			}
+			if (currentProgram == null) {
+				return;
+			}
+
+			GoToService gotoService = tool.getService(GoToService.class);
+			if (gotoService == null) {
+				return;
+			}
+
+			Point clickPoint = e.getPoint();
+			ConsoleWord word = getWordSeparatedByWhitespace(textPane, clickPoint);
+			if (word == null) {
+				return;
+			}
+
+			Address addr = currentProgram.getAddressFactory().getAddress(word.word);
+			if (addr != null || isSymbol(word.word)) {
+				goTo(word);
+				return;
+			}
+
+			ConsoleWord trimmedWord = word.getWordWithoutSpecialCharacters();
+			addr = currentProgram.getAddressFactory().getAddress(trimmedWord.word);
+			if (addr == null && !isSymbol(trimmedWord.word)) {
+				return;
+			}
+
+			goTo(trimmedWord);
+		}
+
+		private void goTo(ConsoleWord word) {
+
+			GoToService gotoService = tool.getService(GoToService.class);
+			if (gotoService == null) {
+				return;
+			}
+
+			// NOTE: must be case sensitive otherwise the service will report that it has
+			//       processed the request even if there are no matches
+			boolean found =
+				gotoService.goToQuery(currentAddress, new QueryData(word.word, true), null, null);
+			if (found) {
+				select(word);
+				return;
+			}
+
+			ConsoleWord trimmedWord = word.getWordWithoutSpecialCharacters();
+			found =
+				gotoService.goToQuery(currentAddress, new QueryData(trimmedWord.word, true), null,
+					null);
+			if (found) {
+				select(trimmedWord);
+			}
+		}
+
+		private void select(ConsoleWord word) {
+			try {
+				textPane.select(word.startPosition, word.endPosition);
+			}
+			catch (Exception e) {
+				// we are too lazy to verify our data before calling select--bleh
+			}
+		}
+	}
+
+	private class CursorUpdateMouseMotionListener extends MouseMotionAdapter {
+		@Override
+		public void mouseMoved(MouseEvent e) {
+			if (currentProgram == null) {
+				return;
+			}
+
+			Point hoverPoint = e.getPoint();
+			ConsoleWord word = getWordSeparatedByWhitespace(textPane, hoverPoint);
+			if (word == null) {
+				textPane.setCursor(Cursor.getDefaultCursor());
+				return;
+			}
+
+			Address addr = currentProgram.getAddressFactory().getAddress(word.word);
+			if (addr != null || isSymbol(word.word)) {
+				textPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+				return;
+			}
+
+			ConsoleWord trimmedWord = word.getWordWithoutSpecialCharacters();
+			addr = currentProgram.getAddressFactory().getAddress(trimmedWord.word);
+			if (addr != null || isSymbol(trimmedWord.word)) {
+				textPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+				return;
+			}
+		}
+	}
 }

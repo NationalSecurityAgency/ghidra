@@ -686,7 +686,7 @@ public class CppCompositeType {
 				addLayoutPdbMembers(directClassPdbMembers, layoutMembers);
 				insertVirtualFunctionTablePointers(directClassPdbMembers);
 
-				if (!DefaultCompositeMember.applyDataTypeMembers(directDataType, false, 0,
+				if (!DefaultCompositeMember.applyDataTypeMembers(directDataType, false, false, 0,
 					directClassPdbMembers, msg -> Msg.warn(this, msg), monitor)) {
 					clearComponents(directDataType);
 				}
@@ -706,7 +706,8 @@ public class CppCompositeType {
 						directDataType = new StructureDataType(cn.getParent(), cn.getName(), 0,
 							composite.getDataTypeManager());
 						if (!DefaultCompositeMember.applyDataTypeMembers(directDataType, false,
-							size, directClassPdbMembers, msg -> Msg.warn(this, msg), monitor)) {
+							false, size, directClassPdbMembers, msg -> Msg.warn(this, msg),
+							monitor)) {
 							clearComponents(directDataType);
 						}
 						directClassLength = getCompositeLength(directDataType);
@@ -735,7 +736,7 @@ public class CppCompositeType {
 				throw new PdbException("Unhandled layout mode");
 		}
 
-		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, size, memberData,
+		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size, memberData,
 			msg -> Msg.warn(this, msg), monitor)) {
 			clearComponents(composite);
 		}
@@ -826,7 +827,7 @@ public class CppCompositeType {
 				addLayoutPdbMembers(directClassPdbMembers, layoutMembers);
 				insertVirtualFunctionTablePointers(directClassPdbMembers);
 
-				if (!DefaultCompositeMember.applyDataTypeMembers(directDataType, false, 0,
+				if (!DefaultCompositeMember.applyDataTypeMembers(directDataType, false, false, 0,
 					directClassPdbMembers, msg -> Msg.warn(this, msg), monitor)) {
 					clearComponents(directDataType);
 				}
@@ -846,7 +847,8 @@ public class CppCompositeType {
 						directDataType = new StructureDataType(cn.getParent(), cn.getName(), 0,
 							composite.getDataTypeManager());
 						if (!DefaultCompositeMember.applyDataTypeMembers(directDataType, false,
-							size, directClassPdbMembers, msg -> Msg.warn(this, msg), monitor)) {
+							false, size, directClassPdbMembers, msg -> Msg.warn(this, msg),
+							monitor)) {
 							clearComponents(directDataType);
 						}
 						directClassLength = getCompositeLength(directDataType);
@@ -875,7 +877,7 @@ public class CppCompositeType {
 				throw new PdbException("Unhandled layout mode");
 		}
 
-		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, size, memberData,
+		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, false, size, memberData,
 			msg -> Msg.warn(this, msg), monitor)) {
 			clearComponents(composite);
 		}

@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.assembler.AssemblyBuffer;
+import ghidra.pcode.emu.AbstractPcodeEmulatorTest;
 import ghidra.pcode.emu.jit.JitPassage.AddrCtx;
 import ghidra.pcode.emu.jit.gen.tgt.JitCompiledPassage.EntryPoint;
 import ghidra.pcode.exec.*;

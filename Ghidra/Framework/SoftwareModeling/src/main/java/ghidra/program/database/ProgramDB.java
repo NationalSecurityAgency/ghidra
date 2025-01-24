@@ -1910,8 +1910,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
-	protected void setChanged(boolean b) {
-		super.setChanged(b);
+	protected void setChanged(boolean state) {
+		super.setChanged(state);
+		if (!state && !dbh.isChanged()) {
+			// language upgrade has already been completed
+			languageUpgradeTranslator = null;
+		}
 	}
 
 	void setChangeSet(ProgramDBChangeSet changeSet) {
@@ -2369,6 +2373,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	@Override
 	protected void close() {
+		if (programUserData != null && changed && languageUpgradeTranslator != null) {
+			// Prevent user data from being saved if program and user data 
+			// have gone through a major language upgrade and the program
+			// was not saved.
+			programUserData.setChanged(false);
+		}
 		super.close();
 		intRangePropertyMap.clear();
 		addrSetPropertyMap.clear();

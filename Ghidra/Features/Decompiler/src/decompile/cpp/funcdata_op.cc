@@ -555,6 +555,7 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
 ///
 /// \param vn is the given Varnode
 /// \param op is the point at which to insert the BOOL_NEGATE op
+/// \param insertafter is \b true if the BOOL_NEGATE is inserted after, otherwise its inserted before
 /// \return the result Varnode
 Varnode *Funcdata::opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter)
 
@@ -1273,7 +1274,6 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
 ///
 /// The precomputed list of PcodeOps have their op-codes modified to
 /// facilitate the flip.
-/// \param data is the function being modified
 /// \param fliplist is the list of PcodeOps to modify
 void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
 

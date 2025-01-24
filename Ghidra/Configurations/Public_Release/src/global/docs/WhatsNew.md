@@ -69,7 +69,8 @@ Ghidra, as well as a Gradle task to export the module as a distributable Ghidra 
 The "_Edit Script with Visual Studio Code_" button in the Script Manager enables quick editing and
 debugging of the selected script in a Visual Studio Code workspace that is automatically created
 behind the scenes in Ghidra's user settings directory. This provides a much snappier and modern
-alternative to Eclipse, while maintaining all of the core fuctionality you would expect from an IDE (auto complete, hover, navigation, etc).
+alternative to Eclipse, while maintaining all of the core fuctionality you would expect from an IDE
+(auto complete, hover, navigation, etc).
 
 Ghidra will do its best to automatically locate your Visual Studio Code installation, but if cannot
 find it, it can be set via the Front-End GUI at _Edit -> Tool Options -> Visual Studio Code
@@ -99,10 +100,11 @@ Source information can be viewed in the _"Source Map"_ Listing Field or the
 _Window -> Source Files and Transforms_.
 
 The scripts `OpenSourceFileAtLineInEclipseScript.java` and `OpenSourceFileAtLineinVSCodeScript.java`
-open a source file at the appropriate line in Eclipse or Visual Studio Code when run on an address
-in Ghidra with source file information (consider keybinding your preferred script). The 
-SourceFilesTablePlugin can be used to modify the source file paths stored in the SourceFileManager
-before sending them to Eclipse or Visual Studio Code.
+provide proof-of-concept IDE integration. These scripts open a source file at the appropriate line 
+in Eclipse or Visual Studio Code when run on an address in Ghidra with source file information 
+(consider keybinding your preferred script). The SourceFilesTablePlugin can be used to modify the 
+source file paths stored in the SourceFileManager before sending them to Eclipse or Visual Studio
+Code.
 
 ## Function Graph
 The Function Graph has had a number of improvements:

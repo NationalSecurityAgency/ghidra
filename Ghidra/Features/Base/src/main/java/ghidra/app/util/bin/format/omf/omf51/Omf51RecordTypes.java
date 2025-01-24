@@ -34,24 +34,27 @@ public class Omf51RecordTypes {
 	public final static int PublicDEF = 0x16;
 	public final static int ExternalDEF = 0x18;
 	public final static int LibModLocs = 0x26;
-	public final static int LibModName = 0x28;
+	public final static int LibModNames = 0x28;
 	public final static int LibDictionary = 0x2a;
 	public final static int LibHeader = 0x2c;
 
-	// The five following record types with names ending in "Keil", which are produced by ARM Keil's
+	// Record types with names ending in "Keil", which are produced by ARM Keil's
 	// 8051 tooling, are only slight variants of the similarly-named record types in the Intel spec.
-	public final static int SegmentDEFKeil = SegmentDEF + 1;
-	public final static int ScopeDEFKeil = ScopeDEF + 1;
-	public final static int DebugItemKeil = DebugItem + 1;
-	public final static int PublicDEFKeil = PublicDEF + 1;
+	public final static int KeilSegmentDEF = SegmentDEF + 1;
+	public final static int KeilScopeDEF = ScopeDEF + 1;
+	public final static int KeilDebugItemOBJ = 0x22;         // Keil debug items, in linker output format
+	public final static int KeilDebugItemSRC = 0x23;         // Keil debug item, in compiler output format
+	public final static int KeilModuleSourceName = 0x24;     // Name of the current module's source file
+	public final static int KeilPublicDEF = PublicDEF + 1;
+	public final static int KeilSourceBrowserFiles = 0x61;   // Sequence of source filenames, for Keil debugger's source browser
 
 	// The three type values 0x62, 0x63, and 0x64, which are produced by ARM Keil's 8051 toolchain,
 	// contain data that is used for source-level debugging in the company's uVision IDE--such 
 	// information as function prototypes, struct definitions, function variable names and types,
 	// etc. As more is learned about their content, more descriptive names could be considered.
-	public final static int DebugData62Keil = 0x62;
-	public final static int DebugData63Keil = 0x63;
-	public final static int DebugData64Keil = 0x64;
+	public final static int KeilDebugData62 = 0x62;
+	public final static int KeilDebugData63 = 0x63;
+	public final static int KeilDebugData64 = 0x64;
 
 	/**
 	 * Gets the name of the given record type
