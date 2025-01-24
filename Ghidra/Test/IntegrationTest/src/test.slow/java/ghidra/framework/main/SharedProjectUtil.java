@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +29,11 @@ import javax.swing.*;
 
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
-import docking.wizard.WizardManager;
+import docking.wizard.WizardDialog;
 import generic.test.AbstractGTest;
 import generic.test.AbstractGuiTest;
 import ghidra.framework.client.*;
+import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.*;
 import ghidra.server.remote.ServerTestUtil;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -73,7 +74,7 @@ public class SharedProjectUtil {
 		AbstractDockingTest.performAction(action, false);
 		AbstractGuiTest.waitForSwing();
 
-		WizardManager wm = AbstractDockingTest.waitForDialogComponent(WizardManager.class);
+		WizardDialog wm = AbstractDockingTest.waitForDialogComponent(WizardDialog.class);
 
 		ProjectTypePanel typePanel = AbstractDockingTest.findComponent(wm, ProjectTypePanel.class);
 		final JRadioButton rb =
@@ -126,12 +127,7 @@ public class SharedProjectUtil {
 			projNameField.setText(projectName);
 		});
 
-		if (!finishButton.isEnabled()) {
-			String statusMessage = projPanel.getStatusMessage();
-			System.err.println(
-				"Finish button is unexectedly disabled!!\n\t" + "Status message: " + statusMessage);
-			return false;
-		}
+		assertTrue("Finish button is unexpectedly disabled", finishButton.isEnabled());
 
 		AbstractGuiTest.pressButton(finishButton, true);
 		AbstractGuiTest.waitForSwing();

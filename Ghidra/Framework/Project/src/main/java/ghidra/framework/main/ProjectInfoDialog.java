@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import docking.widgets.OptionDialog;
 import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import docking.wizard.WizardManager;
-import generic.theme.GIcon;
+import docking.wizard.WizardDialog;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ConvertFileSystem;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.wizard.project.ProjectChooseRepositoryWizardModel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.PluginToolAccessUtils;
@@ -56,7 +56,6 @@ import help.HelpService;
  */
 public class ProjectInfoDialog extends DialogComponentProvider {
 
-	private final static Icon CONVERT_ICON = new GIcon("icon.project.info.convert");
 	public final static String CHANGE = "Change Shared Project Info...";
 	final static String CONVERT = "Convert to Shared...";
 
@@ -354,15 +353,16 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		if (!checkToolsClose()) {
 			return;
 		}
+		RepositoryAdapter currentRepository = project.getRepository();
+		ServerInfo serverInfo = currentRepository.getServerInfo();
+		ProjectChooseRepositoryWizardModel model =
+			new ProjectChooseRepositoryWizardModel(plugin.getTool(),
+				"Change Shared Project Information", serverInfo);
+		WizardDialog dialog = new WizardDialog(model);
+		dialog.show(getComponent());
+		RepositoryAdapter rep = model.getRepository();
 
-		SetupProjectPanelManager panelManager =
-			new SetupProjectPanelManager(plugin.getTool(), project.getRepository().getServerInfo());
-		WizardManager wm = new WizardManager("Change Shared Project Information", true,
-			panelManager, CONVERT_ICON);
-		wm.showWizard(getComponent());
-		RepositoryAdapter rep = panelManager.getProjectRepository();
 		if (rep != null) {
-			RepositoryAdapter currentRepository = project.getRepository();
 			if (currentRepository.getServerInfo().equals(rep.getServerInfo()) &&
 				currentRepository.getName().equals(rep.getName())) {
 				Msg.showInfo(getClass(), getComponent(), "No Changes Made",
@@ -458,12 +458,12 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		if (!checkToolsClose()) {
 			return;
 		}
+		ProjectChooseRepositoryWizardModel model =
+			new ProjectChooseRepositoryWizardModel(plugin.getTool(), "Convert Project");
+		WizardDialog dialog = new WizardDialog(model);
+		dialog.show(getComponent());
 
-		SetupProjectPanelManager panelManager =
-			new SetupProjectPanelManager(plugin.getTool(), null);
-		WizardManager wm = new WizardManager("Convert Project", true, panelManager, CONVERT_ICON);
-		wm.showWizard(getComponent());
-		RepositoryAdapter rep = panelManager.getProjectRepository();
+		RepositoryAdapter rep = model.getRepository();
 		if (rep != null) {
 			StringBuffer confirmMsg = new StringBuffer();
 			confirmMsg.append("All version history on your files will be\n" +

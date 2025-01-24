@@ -312,11 +312,11 @@ src/main/help/help/topics/FrontEndPlugin/images/SelectSharedProjectType.png||GHI
 src/main/help/help/topics/FrontEndPlugin/images/ServerInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/SharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/UsersPanel.png||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/images/UsersPanelMini.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOnoServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOwithServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/hijack_file.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/FunctionComparison.htm||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/AddFunctionsPanel.png||GHIDRA||||END|

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package help.screenshot;
+
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.io.File;
@@ -31,14 +33,14 @@ import docking.DockingDialog;
 import docking.widgets.*;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.GTable;
-import docking.wizard.WizardManager;
-import docking.wizard.WizardPanel;
+import docking.wizard.WizardDialog;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
 import ghidra.framework.Application;
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.*;
+import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.extensions.ExtensionTablePanel;
@@ -57,7 +59,7 @@ import resources.MultiIcon;
 
 public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	private static final String OTHER_PROJECT = "Other_Project";
-	Icon icon = (Icon) getInstanceField("CONVERT_ICON", ProjectInfoDialog.class);
+	Icon icon = (Icon) getInstanceField("CONVERT_ICON", ProjectChooseRepositoryWizardModel.class);
 
 	public FrontEndPluginScreenShots() {
 		super();
@@ -98,18 +100,20 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testChangeAccessList() {
+
 		String[] knownUsers = { "user1", "user2", "user3", "user4", "user5", "user6" };
 		ArrayList<User> userList = new ArrayList<>();
 		userList.add(new User("user4", 2));
 
 		runSwing(() -> {
-			WizardPanel panel =
-				new ProjectAccessPanel(knownUsers, "Bob", userList, "Demo", false, false, tool);
-			TestDummyPanelManager panelMgr =
-				new TestDummyPanelManager(panel, true, false, true, 650, 250);
-			WizardManager wizard =
-				new WizardManager("Change Shared Project Information", false, panelMgr, icon);
-			wizard.showWizard();
+
+			ProjectAccessPanel panel =
+				new ProjectAccessPanel(knownUsers, "user4", userList, "Demo", false, false, tool);
+			TestDummyWizardModel<ProjectWizardData> panelMgr =
+				new TestDummyWizardModel<>(panel, true, false, true,
+					"Change Shared Project Information", 650, 250, new ProjectWizardData(), icon);
+			WizardDialog wizard = new WizardDialog(panelMgr, false);
+			wizard.show();
 		});
 
 		waitForSwing();
@@ -131,13 +135,15 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testChangeRepositoryPanel() {
 		RepositoryPanel panel =
-			new RepositoryPanel(null, "MyServer", new String[] { "Demo", "Test", "Sample" }, false);
+			new RepositoryPanel(null, new String[] { "Demo", "Test", "Sample" }, false);
 
-		TestDummyPanelManager panelMgr =
-			new TestDummyPanelManager(panel, false, true, false, 600, 375);
-		WizardManager wizard =
-			new WizardManager("Change Shared Project Information", false, panelMgr, icon);
-		wizard.showWizard();
+		TestDummyWizardModel<ProjectWizardData> panelMgr =
+			new TestDummyWizardModel<ProjectWizardData>(panel, false, true, false,
+				"Change Shared Project Information", 600, 375,
+				new ProjectWizardData(), icon);
+
+		WizardDialog wizard = new WizardDialog(panelMgr, false);
+		wizard.show();
 
 		waitForSwing();
 
@@ -146,17 +152,16 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testChangeServerInfoPanel() {
-		TestDummyPanelManager panelMgr =
-			new TestDummyPanelManager(null, false, true, false, 600, 180);
-		ServerInfoPanel panel = new ServerInfoPanel(panelMgr);
-		panelMgr.setPanel(panel);
+		ServerInfoPanel panel = new ServerInfoPanel(null);
 
-		WizardManager wizard =
-			new WizardManager("Change Shared Project Information", false, panelMgr, icon);
+		ProjectWizardData data = new ProjectWizardData();
+		data.setServerInfo(new ServerInfo("server1", 13100));
+		TestDummyWizardModel<ProjectWizardData> panelMgr =
+			new TestDummyWizardModel<>(panel, false, true, false,
+				"Change Shared Project Information", 600, 180, data, icon);
 
-		panel.setServerInfo(new ServerInfo("server1", 13100));
-
-		wizard.showWizard();
+		WizardDialog wizard = new WizardDialog(panelMgr, false);
+		wizard.show();
 
 		waitForSwing();
 
@@ -254,7 +259,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testDeleteProject() {
 		performAction("Delete Project", "FrontEndPlugin", false);
-		captureDialog();
+		captureDialog(600, 350);
 	}
 
 	@Test
@@ -280,7 +285,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		runSwing(() -> {
 			JPanel panel =
-				new ProjectAccessPanel(knownUsers, "Bob", userList, "What", false, false, tool);
+				new ProjectAccessPanel(knownUsers, "user2", userList, "What", false, false, tool);
 
 			DummyDialogComponentProvider dialog =
 				new DummyDialogComponentProvider("Edit Project Access List for Demo", panel);
@@ -311,7 +316,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testOpenProject() {
 		performAction("Open Project", "FrontEndPlugin", false);
-		captureDialog();
+		captureDialog(600, 350);
 	}
 
 	@Test
@@ -397,17 +402,17 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testRepositoryNamePanel() {
-		TestDummyPanelManager panelMgr =
-			new TestDummyPanelManager(null, false, true, true, 600, 375);
+		RepositoryPanel panel =
+			new RepositoryPanel(null, new String[] { "Demo", "Test", "Sample" }, false);
 
-		final RepositoryPanel panel = new RepositoryPanel(panelMgr, "Server1",
-			new String[] { "Demo", "Test", "Sample" }, false);
-		panelMgr.setPanel(panel);
+		TestDummyWizardModel<ProjectWizardData> panelMgr =
+			new TestDummyWizardModel<ProjectWizardData>(panel, false, true, false,
+				"Specify Repository Name on Server1", 600, 375,
+				new ProjectWizardData(), icon);
 
-		WizardManager wizard =
-			new WizardManager("Specify Repository Name on Server1", false, panelMgr, icon);
+		WizardDialog wizard = new WizardDialog(panelMgr, false);
 
-		wizard.showWizard();
+		wizard.show();
 
 		runSwing(() -> {
 			JList<?> jlist = (JList<?>) getInstanceField("nameList", panel);
@@ -482,12 +487,14 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testSelectProjectLocation() {
 		performAction("New Project", "FrontEndPlugin", false);
 		DialogComponentProvider dialog = getDialog();
-		final WizardManager wm = (WizardManager) dialog;
+		WizardDialog wm = (WizardDialog) dialog;
+		JButton nextButton = findButtonByText(wm, "Next >>");
+		pressButton(nextButton, true);
+
+		SelectProjectPanel projPanel = findComponent(wm, SelectProjectPanel.class);
+		JTextField dirField = (JTextField) findComponentByName(projPanel, "Project Directory");
 		runSwing(() -> {
-			wm.next();
-			WizardPanel panel = wm.getCurrentWizardPanel();
-			JTextField textField = (JTextField) getInstanceField("directoryField", panel);
-			textField.setText("/Projects");
+			dirField.setText("/Projects");
 			wm.setStatusText("");
 		});
 
@@ -504,14 +511,17 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testSelectSharedProjectLocation() {
 		performAction("New Project", "FrontEndPlugin", false);
 		DialogComponentProvider dialog = getDialog();
-		final WizardManager wm = (WizardManager) dialog;
+		WizardDialog wm = (WizardDialog) dialog;
+		JButton nextButton = findButtonByText(wm, "Next >>");
+		pressButton(nextButton, true);
+		SelectProjectPanel projPanel = findComponent(wm, SelectProjectPanel.class);
+		JTextField nameField = (JTextField) findComponentByName(projPanel, "Project Name");
+		JTextField dirField = (JTextField) findComponentByName(projPanel, "Project Directory");
+
 		runSwing(() -> {
-			wm.next();
-			WizardPanel panel = wm.getCurrentWizardPanel();
-			JTextField textField = (JTextField) getInstanceField("directoryField", panel);
-			textField.setText("/Projects");
-			textField = (JTextField) getInstanceField("projectNameField", panel);
-			textField.setText("Demo");
+
+			dirField.setText("/Projects");
+			nameField.setText("Demo");
 			wm.setStatusText("");
 			JLabel label = (JLabel) getInstanceField("titleLabel", wm);
 			label.setText("Select Local Project Location for Repository Demo");
@@ -523,32 +533,41 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testSelectSharedProjectType() {
+	public void testSelectSharedProjectType() throws Exception {
 		performAction("New Project", "FrontEndPlugin", false);
 		DialogComponentProvider dialog = getDialog();
-		final WizardManager wm = (WizardManager) dialog;
+		WizardDialog wm = (WizardDialog) dialog;
+		final JRadioButton rb =
+			(JRadioButton) findAbstractButtonByText(dialog.getComponent(), "Shared Project");
+		assertNotNull(rb);
+		assertTrue(!rb.isSelected());
+
+		SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
+
 		runSwing(() -> {
-			WizardPanel panel = wm.getCurrentWizardPanel();
-			JRadioButton sharedRB = (JRadioButton) getInstanceField("sharedRB", panel);
-			sharedRB.setSelected(true);
 			wm.setStatusText("");
 		});
 		captureDialog(700, 350);
 	}
 
 	@Test
-	public void testServerInfo() {
+	public void testServerInfo() throws Exception {
 		performAction("New Project", "FrontEndPlugin", false);
 		DialogComponentProvider dialog = getDialog();
-		final WizardManager wm = (WizardManager) dialog;
-		runSwing(() -> {
-			WizardPanel panel = wm.getCurrentWizardPanel();
-			JRadioButton sharedRB = (JRadioButton) getInstanceField("sharedRB", panel);
-			sharedRB.setSelected(true);
-			wm.next();
-			panel = wm.getCurrentWizardPanel();
-			Component comp = (Component) getInstanceField("serverInfoComponent", panel);
+		WizardDialog wm = (WizardDialog) dialog;
 
+		final JRadioButton rb =
+			(JRadioButton) findAbstractButtonByText(dialog.getComponent(), "Shared Project");
+		assertNotNull(rb);
+		assertTrue(!rb.isSelected());
+
+		SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
+		JButton nextButton = findButtonByText(wm, "Next >>");
+		pressButton(nextButton, true);
+		ServerInfoPanel serverPanel = findComponent(wm, ServerInfoPanel.class);
+		Component comp = (Component) getInstanceField("serverInfoComponent", serverPanel);
+
+		runSwing(() -> {
 			JTextField textField = (JTextField) getInstanceField("nameField", comp);
 			textField.setText("Server1");
 		});
@@ -577,28 +596,6 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		});
 		captureDialog(400, 500);
-	}
-
-	@Test
-	public void testEditProjectAccessPanel() {
-		String[] knownUsers = { "user1", "user2", "user3", "user4", "user5", "user6" };
-		ArrayList<User> userList = new ArrayList<>();
-		userList.add(new User("user2", 2));
-		userList.add(new User("user4", 0));
-		userList.add(new User("user5", 1));
-
-		runSwing(() -> {
-			WizardPanel panel =
-				new ProjectAccessPanel(knownUsers, "user2", userList, "Demo", false, false, tool);
-
-			TestDummyPanelManager panelMgr =
-				new TestDummyPanelManager(panel, true, false, true, 650, 250);
-			WizardManager wizard = new WizardManager("New Project", false, panelMgr, icon);
-			wizard.showWizard();
-		});
-
-		waitForSwing();
-		captureDialog();
 	}
 
 	@Test
@@ -647,13 +644,6 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 		multiIcon.addIcon(ProgramContentHandler.PROGRAM_ICON);
 
 		captureIconAndText(multiIcon, "Example (1)");
-	}
-
-	@Test
-	public void testMemoryUsage() {
-		performFrontEndAction("Show VM memory", "MemoryUsagePlugin", false);
-		waitForVMMemoryInitialilzed();// this is asynchronous and takes a while
-		captureDialog();
 	}
 
 	@Test
