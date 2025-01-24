@@ -28,6 +28,8 @@ class ParamListStandard;
 class ParamEntry;
 class ParamActive;
 
+extern AttributeId ATTRIB_SIZES;	///< Marshaling attribute "sizes"
+
 extern ElementId ELEM_DATATYPE;		///< Marshaling element \<datatype>
 extern ElementId ELEM_CONSUME;		///< Marshaling element \<consume>
 extern ElementId ELEM_CONSUME_EXTRA;	///< Marshaling element \<consume_extra>
@@ -40,6 +42,7 @@ extern ElementId ELEM_VARARGS;		///< Marshaling element \<varargs>
 extern ElementId ELEM_HIDDEN_RETURN;	///< Marshaling element \<hidden_return>
 extern ElementId ELEM_JOIN_PER_PRIMITIVE;	///< Marshaling element \<join_per_primitive>
 extern ElementId ELEM_JOIN_DUAL_CLASS;	///< Marshaling element \<join_dual_class>
+extern ElementId ELEM_EXTRA_STACK;	///< Marshaling element \<extra_stack>
 
 /// \brief Class for extracting primitive elements of a data-type
 ///
@@ -105,20 +108,23 @@ public:
   static DatatypeFilter *decodeFilter(Decoder &decoder);	///< Instantiate a filter from the given stream
 };
 
-/// \brief A common base class for data-type filters that tests for a size range
+/// \brief A base class for data-type filters that tests for either a range or an enumerated list of sizes
 ///
-/// Any filter that inherits from \b this, can use ATTRIB_MINSIZE and ATTRIB_MAXSIZE
+/// Any filter that inherits from \b this, can use ATTRIB_MINSIZE, ATTRIB_MAXSIZE, or ATTRIB_SIZES
 /// to place bounds on the possible sizes of data-types.  The bounds are enforced
 /// by calling filterOnSize() within the inheriting classes filter() method.
 class SizeRestrictedFilter : public DatatypeFilter {
 protected:
   int4 minSize;		///< Minimum size of the data-type in bytes
   int4 maxSize;		///< Maximum size of the data-type in bytes
+  set<int4> sizes;	///< An enumerated list of sizes (if not empty)
+  void initFromSizeList(const string &str);	///< Initialize filter from enumerated list of sizes
 public:
   SizeRestrictedFilter(void) { minSize=0; maxSize=0; }	///< Constructor for use with decode()
   SizeRestrictedFilter(int4 min,int4 max);	///< Constructor
+  SizeRestrictedFilter(const SizeRestrictedFilter &op2);	///< Copy constructor
   bool filterOnSize(Datatype *dt) const;		///< Enforce any size bounds on a given data-type
-  virtual DatatypeFilter *clone(void) const { return new SizeRestrictedFilter(minSize,maxSize); }
+  virtual DatatypeFilter *clone(void) const { return new SizeRestrictedFilter(*this); }
   virtual bool filter(Datatype *dt) const { return filterOnSize(dt); }
   virtual void decode(Decoder &decoder);
 };
@@ -132,7 +138,8 @@ protected:
 public:
   MetaTypeFilter(type_metatype meta);	///< Constructor for use with decode()
   MetaTypeFilter(type_metatype meta,int4 min,int4 max);	///< Constructor
-  virtual DatatypeFilter *clone(void) const { return new MetaTypeFilter(metaType,minSize,maxSize); }
+  MetaTypeFilter(const MetaTypeFilter &op2);	///< Copy constructor
+  virtual DatatypeFilter *clone(void) const { return new MetaTypeFilter(*this); }
   virtual bool filter(Datatype *dt) const;
 };
 
@@ -145,7 +152,8 @@ class HomogeneousAggregate : public SizeRestrictedFilter {
 public:
   HomogeneousAggregate(type_metatype meta);	///< Constructor for use with decode()
   HomogeneousAggregate(type_metatype meta,int4 maxPrim,int4 min,int4 max);	///< Constructor
-  virtual DatatypeFilter *clone(void) const { return new HomogeneousAggregate(metaType,maxPrimitives, minSize,maxSize); }
+  HomogeneousAggregate(const HomogeneousAggregate &op2);	///< Copy constructor
+  virtual DatatypeFilter *clone(void) const { return new HomogeneousAggregate(*this); }
   virtual bool filter(Datatype *dt) const;
 };
 
@@ -310,7 +318,7 @@ class GotoStack : public AssignAction {
   void initializeEntry(void);	///< Find stack entry in resource list
 public:
   GotoStack(const ParamListStandard *res,int4 val);	///< Constructor for use with decode
-  GotoStack(const ParamListStandard *res);	///< Constructor for use with decode()
+  GotoStack(const ParamListStandard *res);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const { return new GotoStack(newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
@@ -342,8 +350,8 @@ class MultiSlotAssign : public AssignAction {
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
   bool enforceAlignment;		///< True if register resources are discarded to match alignment
   bool justifyRight;			///< True if initial bytes are padding for odd data-type sizes
+  vector<const ParamEntry *> tiles;	///< List of registers that can be joined
   const ParamEntry *stackEntry;		///< The stack resource
-  list<ParamEntry>::const_iterator firstIter;	///< Iterator to first element in the resource list
   void initializeEntries(void);		///< Cache specific ParamEntry needed by the action
 public:
   MultiSlotAssign(const ParamListStandard *res);	///< Constructor for use with decode
@@ -385,11 +393,10 @@ class MultiSlotDualAssign : public AssignAction {
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
   bool justifyRight;			///< True if initial bytes are padding for odd data-type sizes
   int4 tileSize;			///< Number of bytes in a tile
-  list<ParamEntry>::const_iterator baseIter;	///< Iterator to first element in the base resource list
-  list<ParamEntry>::const_iterator altIter;	///< Iterator to first element in alternate resource list
+  vector<const ParamEntry *> baseTiles;	///< General registers to be joined
+  vector<const ParamEntry *> altTiles;	///< Alternate registers to be joined
   void initializeEntries(void);		///< Cache specific ParamEntry needed by the action
-  list<ParamEntry>::const_iterator getFirstUnused(list<ParamEntry>::const_iterator iter,type_class storage,
-						  vector<int4> &status) const;
+  int4 getFirstUnused(int4 iter,const vector<const ParamEntry *> &tiles,vector<int4> &status) const;
   int4 getTileClass(const PrimitiveExtractor &primitives,int4 off,int4 &index) const;
 public:
   MultiSlotDualAssign(const ParamListStandard *res);		///< Constructor for use with decode
@@ -451,14 +458,33 @@ public:
 /// only a single register is consumed. If all registers are already consumed, no action is taken.
 class ConsumeExtra : public AssignAction {
   type_class resourceType;		///< The other resource list to consume from
-  list<ParamEntry>::const_iterator firstIter;	///< Iterator to first element in the resource list
   bool matchSize;			///< \b false, if side-effect only consumes a single register
+  vector<const ParamEntry *> tiles;	///< List of registers that can be consumed
   void initializeEntries(void);		///< Cache specific ParamEntry needed by the action
 public:
   ConsumeExtra(const ParamListStandard *res);	///< Constructor for use with decode
   ConsumeExtra(type_class store,bool match,const ParamListStandard *res);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const {
     return new ConsumeExtra(resourceType,matchSize,newResource); }
+  virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
+			      vector<int4> &status,ParameterPieces &res) const;
+  virtual void decode(Decoder &decoder);
+};
+
+/// \brief Consume stack resources as a side-effect
+///
+/// This action is a side-effect and doesn't assign an address for the current parameter.
+/// If the current parameter has been assigned a address that is not on the stack, this action consumes
+/// stack resources as if the parameter were allocated to the stack.  If the current parameter was
+/// already assigned a stack address, no additional action is taken.
+class ExtraStack : public AssignAction {
+  const ParamEntry *stackEntry;	///< Parameter Entry corresponding to the stack
+  void initializeEntry(void);	///< Find stack entry in resource list
+public:
+  ExtraStack(const ParamListStandard *res,int4 val);	///< Constructor for use with decode
+  ExtraStack(const ParamListStandard *res);	///< Constructor
+  virtual AssignAction *clone(const ParamListStandard *newResource) const {
+    return new ExtraStack(newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
   virtual void decode(Decoder &decoder);

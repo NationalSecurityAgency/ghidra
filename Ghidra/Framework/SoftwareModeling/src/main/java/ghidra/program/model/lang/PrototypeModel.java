@@ -627,44 +627,44 @@ public class PrototypeModel {
 		inputParams = null;
 		outputParams = null;
 		XmlElement protoElement = parser.start();
-		name = protoElement.getAttribute("name");
+		name = protoElement.getAttribute(ATTRIB_NAME.name());
 		if (!SpecExtension.isValidFormalName(name)) {
 			throw new XmlParseException("Prototype name uses illegal characters");
 		}
 		extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-		String extpopStr = protoElement.getAttribute("extrapop");
+		String extpopStr = protoElement.getAttribute(ATTRIB_EXTRAPOP.name());
 		if (!extpopStr.equals("unknown")) {
 			extrapop = SpecXmlUtils.decodeInt(extpopStr);
 		}
-		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute("stackshift"));
+		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute(ATTRIB_STACKSHIFT.name()));
 		hasThis = false;
 		isConstruct = false;
-		String thisString = protoElement.getAttribute("hasthis");
+		String thisString = protoElement.getAttribute(ATTRIB_HASTHIS.name());
 		if (thisString != null) {
 			hasThis = SpecXmlUtils.decodeBoolean(thisString);
 		}
 		else {
 			hasThis = name.equals(CompilerSpec.CALLING_CONVENTION_thiscall);
 		}
-		String constructString = protoElement.getAttribute("constructor");
+		String constructString = protoElement.getAttribute(ATTRIB_CONSTRUCTOR.name());
 		if (constructString != null) {
 			isConstruct = SpecXmlUtils.decodeBoolean(constructString);
 		}
 
-		buildParamList(protoElement.getAttribute("strategy"));
+		buildParamList(protoElement.getAttribute(ATTRIB_STRATEGY.name()));
 		while (parser.peek().isStart()) {
 			XmlElement subel = parser.peek();
 			String elName = subel.getName();
-			if (elName.equals("input")) {
+			if (elName.equals(ELEM_INPUT.name())) {
 				inputParams.restoreXml(parser, cspec);
 			}
-			else if (elName.equals("output")) {
+			else if (elName.equals(ELEM_OUTPUT.name())) {
 				outputParams.restoreXml(parser, cspec);
 			}
-			else if (elName.equals("pcode")) {
+			else if (elName.equals(ELEM_PCODE.name())) {
 				XmlElement el = parser.peek();
 				String source = "Compiler spec=" + cspec.getCompilerSpecID().getIdAsString();
-				if (el.getAttribute("inject").equals("uponentry")) {
+				if (el.getAttribute(ATTRIB_INJECT.name()).equals("uponentry")) {
 					hasUponEntry = true;
 				}
 				else {
@@ -674,25 +674,25 @@ public class PrototypeModel {
 						.restoreXmlInject(source, getInjectName(), InjectPayload.CALLMECHANISM_TYPE,
 							parser);
 			}
-			else if (elName.equals("unaffected")) {
+			else if (elName.equals(ELEM_UNAFFECTED.name())) {
 				unaffected = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("killedbycall")) {
+			else if (elName.equals(ELEM_KILLEDBYCALL.name())) {
 				killedbycall = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("returnaddress")) {
+			else if (elName.equals(ELEM_RETURNADDRESS.name())) {
 				returnaddress = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("likelytrash")) {
+			else if (elName.equals(ELEM_LIKELYTRASH.name())) {
 				likelytrash = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("internal_storage")) {
+			else if (elName.equals(ELEM_INTERNAL_STORAGE.name())) {
 				internalstorage = readVarnodes(parser, cspec);
 			}
-			else if (elName.equals("localrange")) {
+			else if (elName.equals(ELEM_LOCALRANGE.name())) {
 				localRange = readAddressSet(parser, cspec);
 			}
-			else if (elName.equals("paramrange")) {
+			else if (elName.equals(ELEM_PARAMRANGE.name())) {
 				paramRange = readAddressSet(parser, cspec);
 			}
 			else {

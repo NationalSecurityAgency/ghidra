@@ -39,7 +39,8 @@ import ghidra.xml.*;
  */
 public class ParamListStandard implements ParamList {
 
-	protected int numgroup;			// Number of "groups" in this parameter convention
+	protected Language language;		// The language associate with this convention
+	protected int numgroup;				// Number of "groups" in this parameter convention
 //	protected int maxdelay;
 	protected boolean thisbeforeret;	// Do hidden return pointers usurp the storage of the this pointer
 	protected boolean autoKilledByCall;	// Is storage in this list automatically "killed by call"
@@ -326,6 +327,7 @@ public class ParamListStandard implements ParamList {
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
 		ArrayList<ParamEntry> pe = new ArrayList<>();
 		numgroup = 0;
+		language = cspec.getLanguage();
 		spacebase = null;
 		int pointermax = 0;
 		thisbeforeret = false;
@@ -454,6 +456,11 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
+	public Language getLanguage() {
+		return language;
+	}
+
+	@Override
 	public AddressSpace getSpacebase() {
 		return spacebase;
 	}
@@ -498,5 +505,39 @@ public class ParamListStandard implements ParamList {
 	@Override
 	public boolean isThisBeforeRetPointer() {
 		return thisbeforeret;
+	}
+
+	/**
+	 * Extract all ParamEntry that have the given storage class and are single registers.
+	 * @param resType is the given storage class
+	 * @return the array of registers
+	 */
+	public ParamEntry[] extractTiles(StorageClass resType) {
+		ArrayList<ParamEntry> buffer = new ArrayList<>();
+		for (int i = 0; i < entry.length; ++i) {
+			ParamEntry pentry = entry[i];
+			if (!pentry.isExclusion() || pentry.getAllGroups().length != 1 ||
+				pentry.getType() != resType) {
+				continue;
+			}
+			buffer.add(pentry);
+		}
+		ParamEntry[] res = new ParamEntry[buffer.size()];
+		buffer.toArray(res);
+		return res;
+	}
+
+	/**
+	 * If there is a ParamEntry corresponding to the stack resource in this list, return it.
+	 * @return the stack ParamEntry or null
+	 */
+	public ParamEntry extractStack() {
+		for (int i = entry.length - 1; i >= 0; --i) {
+			ParamEntry pentry = entry[i];
+			if (!pentry.isExclusion() && pentry.getSpace().isStackSpace()) {
+				return pentry;
+			}
+		}
+		return null;
 	}
 }
