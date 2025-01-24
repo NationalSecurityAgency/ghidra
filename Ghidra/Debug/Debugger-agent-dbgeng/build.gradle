@@ -67,17 +67,19 @@ else if (file(tlb).exists()) {
 	}
 }
 else {
-	def prebuiltTlb = new File(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb")
-	if (prebuiltTlb.exists()) {
-		println "Copying prebuilt dbgmodel.tlb"
+	def depsFile = file("${DEPS_DIR}/Debugger-agent-dbgeng/dbgmodel.tlb")
+	def binRepoFile = file("${BIN_REPO}/${getGhidraRelativePath(project)}/os/win_x86_64/dbgmodel.tlb")
+	def prebuiltTlb = depsFile.exists() ? depsFile : (binRepoFile.exists() ? binRepoFile : null)
+
+	if (prebuiltTlb) {
 		tasks.assemblePyPackage {
-			from(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb") {
+			from(prebuiltTlb) {
 				into("src/ghidradbg/dbgmodel/tlb")
 			}
 		}
 	}
 	else {
-		println "WARNING: dbgmodel.tlb omitted from ghidradbg python package"
+		println "****WARNING:**** dbgmodel.tlb omitted from ghidradbg python package"
 	}
 }
 
