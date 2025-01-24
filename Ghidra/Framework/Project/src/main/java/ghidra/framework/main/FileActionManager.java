@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,20 @@ package ghidra.framework.main;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
-import docking.wizard.WizardManager;
-import generic.theme.GIcon;
-import ghidra.framework.client.ClientUtil;
+import docking.wizard.WizardDialog;
 import ghidra.framework.client.RepositoryAdapter;
+import ghidra.framework.main.wizard.project.ProjectWizardModel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
@@ -46,12 +45,8 @@ import ghidra.util.task.TaskLauncher;
  */
 class FileActionManager {
 
-	private final static int NEW_ACCELERATOR = KeyEvent.VK_N;
-	private final static int OPEN_ACCELERATOR = KeyEvent.VK_O;
 	private final static int CLOSE_ACCELERATOR = KeyEvent.VK_W;
 	private final static int SAVE_ACCELERATOR = KeyEvent.VK_S;
-
-	private final static Icon NEW_PROJECT_ICON = new GIcon("icon.menu.file.new.project");
 
 	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 	private static final String DISPLAY_DATA = "DISPLAY_DATA";
@@ -59,10 +54,7 @@ class FileActionManager {
 	private FrontEndTool tool;
 	private FrontEndPlugin plugin;
 
-	private DockingAction newAction;
-	private DockingAction openAction;
 	private DockingAction closeProjectAction;
-	private DockingAction deleteAction;
 	private DockingAction saveAction;
 
 	private List<ViewInfo> reopenList;
@@ -80,32 +72,19 @@ class FileActionManager {
 	 * creates all the menu items for the File menu
 	 */
 	private void createActions() {
-		// create the menu items and their listeners
-		newAction = new DockingAction("New Project", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				newProject();
-			}
-		};
-		newAction.setEnabled(true);
-		newAction.setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(NEW_ACCELERATOR, ActionEvent.CTRL_MASK)));
-		newAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "New Project..." }, "AProject"));
-		tool.addAction(newAction);
+		new ActionBuilder("New Project", plugin.getName())
+				.menuPath(ToolConstants.MENU_FILE, "New Project...")
+				.menuGroup("AProject")
+				.keyBinding("ctrl N")
+				.onAction(c -> newProject())
+				.buildAndInstall(tool);
 
-		openAction = new DockingAction("Open Project", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				openProject();
-			}
-		};
-		openAction.setEnabled(true);
-		openAction.setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(OPEN_ACCELERATOR, ActionEvent.CTRL_MASK)));
-		openAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "Open Project..." }, "AProject"));
-		tool.addAction(openAction);
+		new ActionBuilder("Open Project", plugin.getName())
+				.menuPath(ToolConstants.MENU_FILE, "Open Project...")
+				.menuGroup("AProject")
+				.keyBinding("ctrl O")
+				.onAction(c -> openProject())
+				.buildAndInstall(tool);
 
 		saveAction = new DockingAction("Save Project", plugin.getName()) {
 			@Override
@@ -134,16 +113,12 @@ class FileActionManager {
 			new MenuData(new String[] { ToolConstants.MENU_FILE, "Close Project" }, "BProject"));
 		tool.addAction(closeProjectAction);
 
-		deleteAction = new DockingAction("Delete Project", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				deleteProject();
-			}
-		};
-		deleteAction.setEnabled(true);
-		deleteAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_FILE, "Delete Project..." }, "CProject"));
-		tool.addAction(deleteAction);
+		new ActionBuilder("Delete Project", plugin.getName())
+				.menuPath(ToolConstants.MENU_FILE, "Delete Project...")
+				.menuGroup("CProject")
+				.onAction(c -> deleteProject())
+				.buildAndInstall(tool);
+
 	}
 
 	/**
@@ -173,52 +148,25 @@ class FileActionManager {
 	 * Create a new project using a wizard to get the project information.
 	 */
 	void newProject() {
-		NewProjectPanelManager panelManager = new NewProjectPanelManager(tool);
-		WizardManager wm = new WizardManager("New Project", true, panelManager, NEW_PROJECT_ICON);
-		wm.showWizard(tool.getToolFrame());
-		ProjectLocator newProjectLocator = panelManager.getNewProjectLocation();
-		RepositoryAdapter newRepo = panelManager.getProjectRepository();
+		ProjectWizardModel model = new ProjectWizardModel(tool);
+		WizardDialog dialog = new WizardDialog(model);
+		dialog.show(tool.getToolFrame());
 
-		if (newProjectLocator == null) {
+		if (model.wasCancelled()) {
+			return;
+		}
+
+		if (!closeProject(false)) { // false --> not exiting
 			return; // user canceled
 		}
 
-		Project newProject = null;
-		try {
-			// if all is well and we already have an active project, close it
-			Project activeProject = plugin.getActiveProject();
-			if (activeProject != null) {
-				if (!closeProject(false)) { // false --> not exiting
-					return; // user canceled
-				}
-			}
+		ProjectLocator projectLocator = model.getProjectLocator();
+		RepositoryAdapter repository = model.getRepository();
 
-			if (newRepo != null) {
-				try {
-					if (newRepo.getServer().isConnected()) {
-						newRepo.connect();
-					}
-				}
-				catch (IOException e) {
-					ClientUtil.handleException(newRepo, e, "Repository Connection",
-						tool.getToolFrame());
-				}
-			}
-
-			newProject = tool.getProjectManager().createProject(newProjectLocator, newRepo, true);
-		}
-		catch (Exception e) {
-			String msg = e.getMessage();
-			if (msg == null) {
-				msg = e.toString();
-			}
-			Msg.showError(this, tool.getToolFrame(), "Create Project Failed",
-				"Failed to create new project '" + newProjectLocator.getName() + "': " + msg, e);
-		}
-		finally {
-			if (newProject == null && newRepo != null) {
-				newRepo.disconnect();
-			}
+		Project newProject = createProject(projectLocator, repository);
+		if (newProject == null && repository != null) {
+			repository.disconnect();
+			return;
 		}
 
 		// make the new project the active one
@@ -230,6 +178,17 @@ class FileActionManager {
 		if (newProject != null) {
 			openProjectAndNotify(newProject);
 		}
+	}
+
+	private Project createProject(ProjectLocator locator, RepositoryAdapter repository) {
+		try {
+			return tool.getProjectManager().createProject(locator, repository, true);
+		}
+		catch (Exception e) {
+			Msg.showError(this, tool.getToolFrame(), "Create Project Failed",
+				"Failed to create new project '" + locator.getName() + "': " + e.getMessage(), e);
+		}
+		return null;
 	}
 
 	private void openProject() {

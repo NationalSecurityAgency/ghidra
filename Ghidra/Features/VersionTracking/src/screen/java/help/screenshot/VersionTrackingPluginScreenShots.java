@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import ghidra.feature.vt.gui.provider.onetomany.VTMatchDestinationTableProvider;
 import ghidra.feature.vt.gui.provider.onetomany.VTMatchSourceTableProvider;
 import ghidra.feature.vt.gui.task.*;
 import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.feature.vt.gui.wizard.*;
+import ghidra.feature.vt.gui.wizard.add.*;
 import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.main.datatree.DataTree;
@@ -228,11 +228,13 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		selectMatch("Call_strncpy_s");
 
-		dualListingIsVisible(getProvider(VTMarkupItemsTableProvider.class));
+		VTMarkupItemsTableProvider provider = getProvider(VTMarkupItemsTableProvider.class);
+		tool.showComponentProvider(provider, true);
+		assertTrue(dualListingIsVisible(provider));
 
 		hideDualListing(VTMarkupItemsTableProvider.class);
 
-		dualListingIsVisible(getProvider(VTMarkupItemsTableProvider.class));
+		assertFalse(dualListingIsVisible(provider));
 
 		setToolSize(1300, 750);
 
@@ -441,6 +443,8 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		assertNotNull(destinationTool);
 
 		tool = sourceTool;
+		ComponentProvider provider = tool.getComponentProvider("Decompiler");
+		tool.showComponentProvider(provider, BATCH_MODE);
 		setToolSize(1200, 550);
 		sourceTool.toFront();
 		captureToolWindow(1200, 550);
@@ -785,7 +789,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		assertNotNull(provider);
 
 		ToggleDockingAction action =
-			(ToggleDockingAction) getLocalAction(provider, "Dual Listing Toggle Orientation");
+			(ToggleDockingAction) getLocalAction(provider, "Listing View Toggle Orientation");
 		assertNotNull(action);
 		setToggleActionSelected(action, new DefaultActionContext(), vertical);
 		waitForSwing();
@@ -817,12 +821,10 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		DialogComponentProvider dialog = getDialog();
 		LimitAddressSetsPanel panel = findComponent(dialog, LimitAddressSetsPanel.class);
-		AddressSetPanel destinationPanel =
-			(AddressSetPanel) getInstanceField("destinationPanel", panel);
-		ChooseAddressSetEditorPanel choosePanel =
-			findComponent(destinationPanel, ChooseAddressSetEditorPanel.class);
+		ChooseAddressSetEditorPanel destinationPanel =
+			(ChooseAddressSetEditorPanel) getInstanceField("destinationPanel", panel);
 		JRadioButton myRangesButton =
-			(JRadioButton) getInstanceField("myRangesButton", choosePanel);
+			(JRadioButton) getInstanceField("myRangesButton", destinationPanel);
 		pressButton(myRangesButton);
 	}
 
@@ -833,17 +835,18 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		DialogComponentProvider dialog = getDialog();
 		AddressSetOptionsPanel panel = findComponent(dialog, AddressSetOptionsPanel.class);
 		JCheckBox showAddressSetPanelsCheckbox =
-			(JCheckBox) getInstanceField("showAddressSetPanelsCheckbox", panel);
+			(JCheckBox) getInstanceField("limitAddressSetsCheckbox", panel);
 		showAddressSetPanelsCheckbox.setSelected(true);
 	}
 
 	private void setupVTWizardOptionsPanel() throws Exception {
 		setupVTWizardCorrelatorPanel();
 		DialogComponentProvider dialog = getDialog();
-		CorrelatorPanel correlatorPanel = findComponent(dialog, CorrelatorPanel.class);
+		CorrelatorChooserPanel correlatorPanel =
+			findComponent(dialog, CorrelatorChooserPanel.class);
 		VTProgramTableCorrelatorModel model =
 			(VTProgramTableCorrelatorModel) getInstanceField("model", correlatorPanel);
-		model.setValueAt(true, 1, 0);// Set "Exact Function Bytes Match" to selected.
+		runSwing(() -> model.setValueAt(true, 6, 0));// Set "Exact Function Bytes Match" to selected
 		model.fireTableDataChanged();
 		waitForSwing();
 		pressNextButtonWhenEnabled();

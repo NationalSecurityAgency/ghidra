@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
-import docking.wizard.WizardManager;
+import docking.wizard.WizardDialog;
 import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -37,7 +37,7 @@ import ghidra.feature.vt.gui.provider.functionassociation.VTFunctionAssociationP
 import ghidra.feature.vt.gui.provider.impliedmatches.*;
 import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemsTableProvider;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
-import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
+import ghidra.feature.vt.gui.wizard.session.VTNewSessionWizardModel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
@@ -268,11 +268,10 @@ public class VTPlugin extends Plugin {
 			if (!controller.closeVersionTrackingSession()) {
 				return false; // user cancelled  during save dialog
 			}
-			VTNewSessionWizardManager vtWizardManager =
-				new VTNewSessionWizardManager(controller, programFile1, programFile2);
-			WizardManager wizardManager =
-				new WizardManager("Version Tracking Wizard", true, vtWizardManager);
-			wizardManager.showWizard(tool.getToolFrame());
+			VTNewSessionWizardModel model =
+				new VTNewSessionWizardModel(controller, programFile1, programFile2);
+			WizardDialog wizardDialog = new WizardDialog(model);
+			wizardDialog.show(tool.getToolFrame());
 			return true;
 		}
 
