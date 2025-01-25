@@ -115,7 +115,7 @@ public class SingleFileSystemIndexHelper {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#getListing(GFile)} interface.
+	 * Mirrors {@link GFileSystem#getListing(GFile)} interface.
 	 *
 	 * @param directory {@link GFile} directory to get the list of child files that have been
 	 * added to this index, null means root directory.
@@ -130,7 +130,7 @@ public class SingleFileSystemIndexHelper {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * Mirrors {@link GFileSystem#lookup(String)} interface.
 	 * 
 	 * @param path path and filename of a file to find (either "/" for root or the payload file's
 	 * path).
@@ -141,7 +141,7 @@ public class SingleFileSystemIndexHelper {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * Mirrors {@link GFileSystem#lookup(String)} interface.
 	 * 
 	 * @param baseDir starting directory 
 	 * @param path path and filename of a file to find (either "/" for root or the payload file's
