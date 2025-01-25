@@ -1,7 +1,7 @@
 # sleigh specification file for Intel 8051
 
 #@define BIT_OPS "PCODEOPS"
-#@define BIT_OPS "SHIFTS" 
+#@define BIT_OPS "SHIFTS"
 @define BIT_OPS "BIT_ADDRS"
 
 # It's sometimes clearer for decompilation to omit the pushing and
@@ -47,6 +47,7 @@ define space BITS     type=ram_space      size=2;
 #
 @define SP_SIZE 1
 
+define space RAM	  type=ram_space	  size=1;
 define space CODE     type=ram_space      size=$(PTRSIZE)  default;
 define space INTMEM   type=ram_space      size=1;
 define space EXTMEM   type=ram_space      size=2;
@@ -59,6 +60,7 @@ define space BITS     type=ram_space      size=1;
 
 @if defined(CIP51)
 define space IFLASH   type=ram_space      size=3;
+define space XRAM     type=ram_space	  size=2;
 @endif
 
 @elif defined(MCS80390)
@@ -122,13 +124,13 @@ define register offset=0x0   size=2 [ WR0  WR2  WR4  WR6  WR8  AB   WR12 WR14
 define register offset=0x0   size=4 [ DR0  DR4  DR8  DR12 DR16 DR20 DR24 DR28 ];
 
 define register offset=0x38  size=1 [ R56 DPXL DPH DPL R60 R61 SPH ];
-define register offset=0x3A  size=2 [ DPTR ];         
+define register offset=0x3A  size=2 [ DPTR ];
 define register offset=0x38  size=4 [ DPX SPX ];
 
-@elif defined(MCS51) || defined(MCS80390) || defined(MX51)
+@elif defined(MCS51) || defined(MCS80390) || defined(MX51) || defined(CIP51)
 
 define register offset=0x00  size=4 [ R0R1R2R3 ];
-define register offset=0x01  size=3 [ R1R2R3 ];  # Used as R3R2R1 
+define register offset=0x01  size=3 [ R1R2R3 ];  # Used as R3R2R1
 define register offset=0x01  size=2 [ R2R1 ];
 define register offset=0x00  size=2 [ R0R1 R2R3 R4R5 R6R7 ];
 define register offset=0x04  size=4 [ R4R5R6R7 ];
@@ -137,7 +139,7 @@ define register offset=0x05  size=3 [ R5R6R7 ];
 define register offset=0x0A  size=1 [ B ACC ];  # relocated to facilitate AB 16-bit access
 define register offset=0x0A  size=2 [ AB ];
 
-@if defined(MCS51) || defined(MX51)
+@if defined(MCS51) || defined(MX51) || defined(CIP51)
 define register offset=0x82  size=2 [ DPTR ];
 define register offset=0x82  size=1 [ DPH DPL ]; # relocated to facilitate DPTR 16-bit access
 @elif defined(MCS80390)
@@ -146,7 +148,7 @@ define register offset=0x82  size=1 [ DPH DPL ]; # relocated to facilitate DPTR 
 # access.  Rework some direct moves to compensate.  Not clear that all
 # cases are covered, thus might be problematic hack in the long term.
 define register offset=0x82  size=3 [ DPTR ];
-define register offset=0x82  size=1 [ DPX DPH DPL ]; 
+define register offset=0x82  size=1 [ DPX DPH DPL ];
 @endif
 
 @else
@@ -231,7 +233,7 @@ define token opbyte (8)
    rifill   = (1,3)
    opaddr   = (5,7)
    addrfill = (4,4)
-   
+
    b_0000 = (0,0)
    b_0001 = (0,1)
    b_0002 = (0,2)
@@ -360,7 +362,7 @@ macro push8(val) {
   SPX = SPX + 1;
   ptr:3 = SPX:3;
   *[RAM]:1 ptr = val;
-@elif defined(MCS51) || defined(MCS80390)
+@elif defined(MCS51) || defined(MCS80390) || defined(CIP51)
   SP = SP + 1;
   *[INTMEM]:1 SP = val;
 @elif defined(MX51)
@@ -387,32 +389,32 @@ macro push16(val) {
 @if defined(MCS251)
   al:1 = val:1;
   ah:1 = val(1);
-  
+
   SPX = SPX + 1;
   *[RAM]:1 SPX:3 = al;
-  SPX = SPX + 1; 
+  SPX = SPX + 1;
   *[RAM]:1 SPX:3 = ah;
-  
-@elif defined(MCS51) 
+
+@elif defined(MCS51) || defined(CIP51)
   al:1 = val:1;
   ah:1 = val(1);
-  
+
   SP = SP + 1;
   *[INTMEM]:1 SP = al;
-  SP = SP + 1; 
+  SP = SP + 1;
   *[INTMEM]:1 SP = ah;
-  
+
 @elif defined(MX51)
   # dptr push
   #ptr:1 = SP + 1;
   #tmp:3 = zext(ptr) + $(STACKBASE);
-  
+
   al:1 = val:1;
   ah:1 = val(1);
-  
+
   SP = SP + 1;
   *[RAM]:1 SP = al;
-  SP = SP + 1; 
+  SP = SP + 1;
   *[RAM]:1 SP = ah;
 @else
   val = val;
@@ -424,12 +426,12 @@ macro push24(val) {
   al:1 = val:1;
   ah:1 = val(1);
   ax:1 = val(2);
-  
+
   SP = SP + 1;
   *[INTMEM]:1 SP = al;
-  SP = SP + 1; 
+  SP = SP + 1;
   *[INTMEM]:1 SP = ah;
-  SP = SP + 1;  
+  SP = SP + 1;
   *[INTMEM]:1 SP = ax;
 }
 @endif
@@ -440,7 +442,7 @@ macro pop8(val) {
   ptr:3 = SPX:3;
   val = *[RAM]:1 ptr;
   SPX = SPX - 1;
-@elif defined(MCS51) || defined(MCS80390)
+@elif defined(MCS51) || defined(MCS80390) || defined(CIP51)
   val = *[INTMEM]:1 SP;
   SP = SP - 1;
 @elif defined(MX51)
@@ -464,7 +466,7 @@ macro pop24(val) {
    ax : 1 = *[INTMEM]:1 (ptr+2);
   bl:3 = zext(al);
   bh:3 = zext(ah) << 8;
-  bx:3 = zext(ax) << 16;  
+  bx:3 = zext(ax) << 16;
    z : 3 = bl;
   z = (z | bh);
   z = (z | bx);
@@ -477,31 +479,31 @@ macro pop24(val) {
 macro pop16(val) { val = val; }
 @else
 macro pop16(val) {
-@if defined(MCS251) 
+@if defined(MCS251)
 
   ah:1 = *:1 SPX:$(SP_SIZE);
   SPX = SPX - 1;
   al:1 = *:1 SPX:$(SP_SIZE);
   SPX = SPX - 1;
-  
+
   val = (zext(ah) << 8) | zext(al);
-  
-@elif defined(MCS51)
-  
+
+@elif defined(MCS51) || defined(CIP51)
+
   ah:1 = *[INTMEM]:1 SP;
   SP = SP - 1;
   al:1 = *[INTMEM]:1 SP;
   SP = SP - 1;
-  
+
   val = (zext(ah) << 8) | zext(al);
-  
+
 @elif defined(MX51)
-  
+
   ah:1 = *[RAM]:1 SP;
   SP = SP - 1;
   al:1 = *[RAM]:1 SP;
   SP = SP - 1;
-  
+
   val = (zext(ah) << 8) | zext(al);
 @else
   val = val;
@@ -520,7 +522,7 @@ DPTRreg: DPTR    is ophi & DPTR      { export DPTR; }
 
 @if defined(MCS251)
 ADPTR:   "@A+"^DPTR is ophi & DPTR		{ ptr:3 = 0xff0000 + zext(DPTR) + zext(ACC); export ptr; }
-@elif defined(MCS51) 
+@elif defined(MCS51)  || defined(CIP51)
 ADPTR:   "@A+"^DPTR is ophi & DPTR		{ ptr:$(PTRSIZE) = zext(DPTR) + zext(ACC); export ptr; }
 @elif defined(MCS80390)
 ADPTR:   "@A+"^DPTR is ophi & DPTR		{ ptr:3 = zext(DPTR) + zext(ACC); export ptr; }
@@ -532,7 +534,7 @@ APC:     "@A+PC"    is epsilon			{ tmp:$(PTRSIZE) = inst_next + zext(ACC); expor
 
 @if defined(MCS251)
 ATDPTR:  "@"^DPTR   is ophi	& DPTR	{ ptr:3 = 0x010000 + zext(DPTR); export *:1 ptr; } # 8051 External data address mapped into RAM space
-@elif defined(MCS51) 
+@elif defined(MCS51)  || defined(CIP51)
 ATDPTR:  "@"^DPTR   is ophi	& DPTR	{ ptr:2 = DPTR; export *[EXTMEM]:1 ptr; }
 @elif defined(MCS80390)
 ATDPTR:  "@"^DPTR   is ophi	& DPTR	{ ptr:3 = zext(DPTR); export *[EXTMEM]:1 ptr; }
@@ -544,15 +546,15 @@ ATDPTR:  "@"^DPTR   is ophi	& DPTR	{ ptr:3 = zext(DPTR); export *[RAM]:1 ptr; }
 Ri:      @ri       is ri      { ptr:3 = zext(ri); export *[RAM]:1 ptr; }
 @elif defined(MX51)
 Ri:      @ri       is ri      { ptr:3 = zext(ri) + 0x7f0000; export *[RAM]:1 ptr; }
-@elif defined(MCS51) || defined(MCS80390)
+@elif defined(MCS51) || defined(MCS80390) || defined(CIP51)
 Ri:      @ri       is ri      { export *[INTMEM]:1 ri; }
 @endif
 
 @if defined(MCS251)
 RiX:     @ri       is ri      { ptr:3 = 0x010000 + zext(ri); export *:1 ptr; } # 8051 8-bit External data address mapped into RAM space
-@elif defined(MCS51) 
+@elif defined(MCS51)  || defined(CIP51)
 RiX:     @ri       is ri      { ptr:2 = zext(ri); export *[EXTMEM]:1 ptr; } # limited to 8-bit external data address (I/O state can be used to produce 16-bit addr)
-@elif defined(MCS80390) 
+@elif defined(MCS80390)
 RiX:     @ri       is ri      { ptr:3 = zext(ri); export *[EXTMEM]:1 ptr; } # tocheck
 @elif defined(MX51)
 RiX:     @ri       is ri      { ptr:3 = zext(ri); export *[RAM]:1 ptr; }
@@ -568,7 +570,7 @@ Data24:  "#"data24 is data24  { export *[const]:3 data24; }
 Direct:  mainreg   is bank=0 & mainreg	{ export *[RAM]:1 mainreg; }
 @elif defined(MX51)
 Direct:  mainreg   is bank=0 & mainreg	{ tmp:3 = mainreg + 0x7f0000; export *[RAM]:1 tmp; }
-@elif defined(MCS51) || defined(MCS80390)
+@elif defined(MCS51) || defined(MCS80390) || defined(CIP51)
 Direct:  mainreg   is bank=0 & mainreg	{ export *[INTMEM]:1 mainreg; }
 @endif
 Direct:  direct    is bank=1 & direct 	{ export *[SFR]:1 direct; }
@@ -588,7 +590,7 @@ Direct:  DPXL      is bank=1 & direct=0x84 & DPXL  { export DPXL;  }
 Direct2:  mainreg2  is bank2=0 & mainreg2	{ export *[RAM]:1 mainreg2; }
 @elif defined(MX51)
 Direct2:  mainreg2  is bank2=0 & mainreg2	{ tmp:3 = mainreg2 + 0x7f0000; export *[RAM]:1 tmp; }
-@elif defined(MCS51) || defined(MCS80390)
+@elif defined(MCS51) || defined(MCS80390) || defined(CIP51)
 Direct2:  mainreg2  is bank2=0 & mainreg2	{ export *[INTMEM]:1 mainreg2; }
 @endif
 Direct2: direct2   is bank2=1 & direct2  	{ export *[SFR]:1 direct2; }
@@ -600,7 +602,7 @@ Direct2:  DPH      is bank2=1 & direct2=0x83 & DPH  { export DPH;  }
 @if defined(MCS80390)
 Direct2:  DPX      is bank2=1 & direct2=0x93 & DPX  { export DPX;  }
 @endif
-@if defined(MCS251) 
+@if defined(MCS251)
 Direct2:  DPXL     is bank2=1 & direct2=0x84 & DPXL  { export DPXL;  }
 @endif
 
@@ -609,7 +611,7 @@ BitAddr:  bitaddr is bitbank=1 & sfrbyte & sfrbit [ bitaddr =(sfrbyte << 6)+sfrb
 BitAddr:  bitaddr is bitbank=0 & lowbyte & sfrbit [ bitaddr =(lowbyte << 3)+sfrbit; ] { export *[BITS]:1 bitaddr; }
 BitAddr2: "/"bitaddr is bitbank=1 & sfrbyte & sfrbit	 [ bitaddr =(sfrbyte << 6)+sfrbit; ] { export *[BITS]:1 bitaddr; }
 BitAddr2: "/"bitaddr is bitbank=0 & lowbyte & sfrbit [ bitaddr =(lowbyte << 3)+sfrbit; ] { export *[BITS]:1 bitaddr; }
-@elif defined(MCS51) || defined(MCS80390) || defined(MX51)
+@elif defined(MCS51) || defined(MCS80390) || defined(MX51) || defined(CIP51)
 ##
 ##TODO !!! 8051 SFRBITS bit overlay block is probably incorrect since there is not a 1:1 mapping to the SFR space
 ##  While the BitAddr is only used for disassembly markup, and labels come from pspec, the underlying data will
@@ -630,14 +632,14 @@ BitByteAddr: PSW 	    is bitbank=1 & sfrbyte=0x1A & sfrbit & PSW { export PSW; }
 BitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0x20; ] { export *[RAM]:1 byteaddr; }
 @elif defined(MX51)
 BitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0x20; ] { tmp:3 = byteaddr + 0x7f0000; export *[RAM]:1 tmp; }
-@elif defined(MCS51) || defined(MCS80390)
+@elif defined(MCS51) || defined(MCS80390) || defined(CIP51)
 BitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0x20; ] { export *[INTMEM]:1 byteaddr; }
 @endif
 
 @if defined(MCS251) || defined(MX51)
 Addr11: relAddr is aopaddr & adata [ relAddr = (inst_next $and 0xfff800)+(aopaddr*256)+adata; ]  { export *:1 relAddr; }
 Addr16: addr is addr16 [ addr = (inst_next $and 0xff0000) + addr16; ] { export *:1 addr; }
-@elif defined(MCS51)
+@elif defined(MCS51) || defined(CIP51)
 Addr11: relAddr is aopaddr & adata [ relAddr =(inst_next $and 0xf800)+(aopaddr*256)+adata; ]  { export *:1 relAddr; }
 Addr16: addr16 is addr16 { export *:1 addr16; }
 @elif defined(MCS80390)
@@ -744,7 +746,7 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 :INC rn      is $(GROUP2) & ophi=0 & rnfill=1 & rn				    { rn = rn + 1; }
 :INC Direct  is $(GROUP1) & ophi=0 & oplo=5; Direct		{ Direct = Direct + 1; }
 @if defined(DUAL_DPTR) && defined(DPS_REG_NUM)
-:INC Direct  is $(GROUP1) & ophi=0 & oplo=5; Direct & direct=$(DPS_REG_NUM)   { 
+:INC Direct  is $(GROUP1) & ophi=0 & oplo=5; Direct & direct=$(DPS_REG_NUM)   {
    AUXR1 = AUXR1 ^ 0x01;
    tmp:2 = DPTR;
    DPTR = DPTR2;
@@ -864,23 +866,23 @@ Rel16:   relAddr is rel16		     [ relAddr=inst_next+rel16; ] { export *:1 relAdd
 
 :PUSH Direct is $(GROUP1) & ophi=12 & oplo=0; Direct	{ push8(Direct); }
 
-:RET  is $(GROUP1) & ophi=2 & oplo=2	{ 
+:RET  is $(GROUP1) & ophi=2 & oplo=2	{
 @if defined(MCS251) || defined(MX51)
-pc:2 = 0; pop16(pc); pc3:3 = (inst_next & 0xff0000) + zext(pc); return[pc3]; 
-@elif defined(MCS51)
-pc:2 = 0; pop16(pc); return[pc]; 
+pc:2 = 0; pop16(pc); pc3:3 = (inst_next & 0xff0000) + zext(pc); return[pc3];
+@elif defined(MCS51) || defined(CIP51)
+pc:2 = 0; pop16(pc); return[pc];
 @elif defined(MCS80390)
-pc:3 = 0; pop24(pc); return[pc]; 
+pc:3 = 0; pop24(pc); return[pc];
 @endif
 }
 
-:RETI is $(GROUP1) & ophi=3 & oplo=2	{ 
+:RETI is $(GROUP1) & ophi=3 & oplo=2	{
 @if defined(MCS251) || defined(MX51)
-pc:2 = 0; pop16(pc); pc3:3 = (inst_next & 0xff0000) + zext(pc); return[pc3]; 
-@elif defined(MCS51)
-pc:2 = 0; pop16(pc); return[pc]; 
+pc:2 = 0; pop16(pc); pc3:3 = (inst_next & 0xff0000) + zext(pc); return[pc3];
+@elif defined(MCS51) || defined(CIP51)
+pc:2 = 0; pop16(pc); return[pc];
 @elif defined(MCS80390)
-pc:3 = 0; pop24(pc); return[pc]; 
+pc:3 = 0; pop24(pc); return[pc];
 @endif
 }
 

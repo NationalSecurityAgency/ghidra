@@ -61,8 +61,35 @@
           <addr space="RAM" offset="0"/>
         </pentry>
       </input>
+
       <output>
-        <pentry minsize="1" maxsize="1" metatype="float">
+  <pentry minsize="1" maxsize="1">
+    <register name="R7"/>
+  </pentry>
+  <!-- Two bytes in R6:R7 -->
+  <pentry minsize="1" maxsize="1">
+    <register name="R6"/>
+  </pentry>
+  <pentry minsize="1" maxsize="1">
+    <register name="R7"/>
+  </pentry>
+  <!-- Four bytes in R4:R5:R6:R7 -->
+  <pentry minsize="1" maxsize="1">
+    <register name="R4"/>
+  </pentry>
+  <pentry minsize="1" maxsize="1">
+    <register name="R5"/>
+  </pentry>
+  <pentry minsize="1" maxsize="1">
+    <register name="R6"/>
+  </pentry>
+  <pentry minsize="1" maxsize="1">
+    <register name="R7"/>
+  </pentry>
+  <!-- Continue pattern for remaining registers -->
+
+<!--
+         <pentry minsize="1" maxsize="1" metatype="float">
           <register name="R4"/>
         </pentry>
         <pentry minsize="1" maxsize="4">
@@ -71,7 +98,8 @@
           <register name="DPH"/>
           <register name="DPL"/>
         </pentry>
-      </output>
+ -->
+       </output>
       <unaffected>
         <register name="SP"/>
         <register name="PSW"/>
@@ -79,7 +107,8 @@
     </prototype>
   </default_proto>
 
-  <callotherfixup>
+<!--
+  <callotherfixup targetop="call">
     <callmechanism name="lcall">
       <input pointermax="4">
         <pentry minsize="1" maxsize="4">
@@ -88,7 +117,7 @@
       </input>
     </callmechanism>
   </callotherfixup>
-
+  -->
   <funcptr align="2" />
 
   <aggressivetrim signext="true"/>
@@ -97,14 +126,16 @@
     <varnode space="stack" offset="0" size="2"/>
   </returnaddress>
 
-  <segmentop space="CODE" userop="segment" farpointer="yes">
+<segmentop space="CODE" userop="segment" farpointer="yes">
     <pcode>
       <input name="baseValue" size="2"/>
       <input name="innerValue" size="2"/>
       <output name="res" size="4"/>
       <body><![CDATA[
-        res = concat(baseValue,innerValue);
+        res = baseValue;
+        res = res << 16;
+        res = res | innerValue;
       ]]></body>
     </pcode>
-  </segmentop>
+</segmentop>
 </compiler_spec>
