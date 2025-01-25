@@ -880,7 +880,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		}
 
 		GTreeNode node = (GTreeNode) path.getLastPathComponent();
-		previewPane.setText(node.getToolTip());
+		if (node instanceof DataTypeNode dtNode) {
+			showDataTypePreview(dtNode);
+		}
 	}
 
 	String getPreviewText() {
