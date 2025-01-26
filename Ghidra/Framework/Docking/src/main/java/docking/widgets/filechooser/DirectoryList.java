@@ -26,6 +26,7 @@ import java.util.List;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.AutoLookup;
 import docking.widgets.label.GDLabel;
@@ -133,6 +134,9 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					e.consume();
 					handleEnterKey();
+				} else if (e.getKeyCode() == KeyEvent.VK_UP && e.getModifiersEx() == DockingUtils.CONTROL_KEY_MODIFIER_MASK) {
+					e.consume();
+					chooser.goUpOneDirectoryLevel();
 				}
 			}
 		});
