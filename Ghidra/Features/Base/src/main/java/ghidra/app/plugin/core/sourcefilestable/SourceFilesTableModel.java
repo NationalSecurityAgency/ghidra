@@ -22,7 +22,8 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.database.sourcemap.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.sourcemap.*;
+import ghidra.program.model.sourcemap.SourceFileManager;
+import ghidra.program.model.sourcemap.SourcePathTransformer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -150,6 +151,12 @@ public class SourceFilesTableModel extends ThreadedTableModelStub<SourceFileRowO
 		@Override
 		public String getValue(SourceFileRowObject rowObject, Settings settings, Object data,
 				ServiceProvider sProvider) throws IllegalArgumentException {
+			if (program == null) {
+				return null;
+			}
+			if (pathTransformer == null) {
+				pathTransformer = UserDataPathTransformer.getPathTransformer(program);
+			}
 			return pathTransformer.getTransformedPath(rowObject.getSourceFile(),
 				useExistingAsDefault);
 		}
