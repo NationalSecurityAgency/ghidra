@@ -281,7 +281,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			destination = focusOwner;
 		}
 
-		if (!(destination instanceof JTextComponent)) {
+		if (!(destination instanceof JTextComponent textComponent)) {
 			return false; // we only handle text components
 		}
 
@@ -299,7 +299,9 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		// widgets register actions for Escape and then check for that action.
 		int code = event.getKeyCode();
 		if (code == KeyEvent.VK_ESCAPE) {
-			return false;
+			// Cell editors will process the Escape key, so let them have it.  Otherwise, allow the
+			// system to process the Escape key as, described above.
+			return isCellEditing(textComponent);
 		}
 
 		// We've made the executive decision to allow all keys to go through to the text component
@@ -310,7 +312,22 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		}
 
 		// the key is modified; let it through if the component has a mapping for the key
-		return hasRegisteredKeyBinding((JTextComponent) destination, event);
+		return hasRegisteredKeyBinding(textComponent, event);
+	}
+
+	private boolean isCellEditing(JTextComponent c) {
+		Container parent = c.getParent();
+		while (parent != null) {
+			if (parent instanceof JTree tree) {
+				return tree.isEditing();
+			}
+			else if (parent instanceof JTable table) {
+				return table.isEditing();
+			}
+
+			parent = parent.getParent();
+		}
+		return false;
 	}
 
 	/**
