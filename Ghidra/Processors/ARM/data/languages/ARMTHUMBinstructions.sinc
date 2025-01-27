@@ -2860,6 +2860,42 @@ control: "control" 			is epsilon {}
 
 @endif
 
+@if defined(CORTEX)
+
+define pcodeop setMainStackPointerLimit;
+
+:msr^ItCond msplim,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm=10 & msplim
+{
+  build ItCond;
+  setMainStackPointerLimit(Rn0003);
+}
+
+define pcodeop setProcStackPointerLimit;
+
+:msr^ItCond psplim,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm=11 & psplim
+{
+  build ItCond;
+  setProcStackPointerLimit(Rn0003);
+}
+
+define pcodeop getMainStackPointerLimit;
+
+:mrs^ItCond Rd0811,msplim 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=10 & msplim
+{
+  build ItCond;
+  Rd0811 = getMainStackPointerLimit();
+}
+
+define pcodeop getProcessStackPointerLimit;
+
+:mrs^ItCond Rd0811,psplim 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=11 & psplim
+{
+  build ItCond;
+  Rd0811 = getProcessStackPointerLimit();
+}
+
+@endif #CORTEX
+
 :mrs^ItCond Rd0811,cpsr 		is TMode=1 & ItCond & op0=0xf3ef; op12=0x8 & Rd0811 & sysm=0 & cpsr
 {
   build ItCond;
