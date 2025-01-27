@@ -26,8 +26,8 @@
 
     <BLOCKQUOTE>
       <OL>
-        <LI>A path, which must be an absolute, normalized path using forward slashes (think file
-        URI).</LI>
+        <LI>A path, which must be an absolute, normalized path using forward slashes.
+        E.g., "/usr/src/main/file.c", "/C:/Users/Ghidra/sourceFile.cc".</LI>
 
         <LI>A <I>SourceFileIdType</I>, which can be NONE, UNKNOWN, TIMESTAMP_64, MD5, SHA1, SHA256,
         or SHA512.</LI>
@@ -81,8 +81,9 @@
 
     <BLOCKQUOTE>
       <P><IMG src="help/shared/note.png" alt="Note" border="0">Note that adding source files,
-      removing source files, or changing the source map requires exclusive access to a program.
-      Reading the source file list or source map does not require exclusive access.</P>
+      removing source files, or changing the source map requires an exclusive checkout if
+	  the program is in a shared Ghidra repository. Reading the source file list or source map does 
+	  not require an exclusive checkout.</P>
       <BR>
     </BLOCKQUOTE><BR>
      <BR>
@@ -111,7 +112,8 @@
         path.</LI>
 
         <LI><I>Directory Transforms</I>, which replace a parent directory of a source file's path
-        with another directory.</LI>
+        with another directory.  For example, the directory transform "/src/ -> "/usr/test/files/"
+		would transform the path "/src/dir1/file.c" to "/usr/test/files/dir1/file.c".</LI>
       </OL>
     </BLOCKQUOTE><BR>
      <BR>
@@ -176,15 +178,54 @@
       <P>This action removes the selected transform from the list of transforms.</P>
 
       <H3><A name="Edit_Transform"></A>Edit Transform</H3>
-    </BLOCKQUOTE>
 
     <P>This action allows you to change the destination of a transform (but not the source).</P>
+	</BLOCKQUOTE>
+	
+	<H2><A name="Source_Files_Table_Plugin_Actions"></A>Listing Actions</H2>
+
+	<BLOCKQUOTE>
+	  <H3><A name="View_Source"></A>View Source</H3>
+
+	  <P>This Listing action is enabled if there is source map information
+		for an address.  It will open the corresponding source file at the
+		appropriate line in a source code viewer (currently Eclipse and VS Code
+		are supported).  Options for configuring the viewer are described 
+		<A href="#Source_Files_Table_Plugin_Options"> below</A>.  If there are 
+		multiple source map entries defined for an address, the user will be 
+		prompted to select which one to send to the viewer.  Performing
+		this action on a particular line of the Source Map Listing field will
+		open the corresponding file in the viewer even if there are multiple 
+		entries defined at the current address.
+	  </P>
+		
+	</BLOCKQUOTE>
+	
+	
+	<H2><A name="Source_Files_Table_Plugin_Options"></A>Plugin Options</H2>
+
+	<BLOCKQUOTE>
+	  <H3><A name="Use_Existing_As_Default"></A>Use Existing As Default</H3>
+
+	  <P>If enabled, the SourcePathTransformer will just return a SourceFile's path if
+		no transform applies to the file.</P>
+
+	  <H3><A name="Viewer_for_Source_Files"></A>Viewer for Source Files</H3>
+	  <P> Selects the viewer to use for source files. The supported viewers are Eclipse
+		and Visual Studio Code.  Your viewer of choice must be configured via the 
+		appropriate option in the Front-End tool.
+		
+	</BLOCKQUOTE>
 
     <P class="relatedtopic">Related Topics:</P>
 
     <UL>
       <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm#Source_Map_Field">Source
       Map Field</A></LI>
+	  <LI><A href="help/topics/EclipseIntegration/EclipseIntegration.htm"> Eclipse Integration</A>
+	  </LI>
+	  <LI><A href="help/topics/VSCodeIntegration/VSCodeIntegration.htm"> Visual Studio Code 
+		Integration</A></LI>
     </UL><BR>
      <BR>
      <BR>
