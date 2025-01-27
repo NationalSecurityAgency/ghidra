@@ -36,16 +36,16 @@ public class InputContextScraper {
 	}
 
 	/**
-	 * Get set of all valid input contexts that affect constructor selection.
+	 * {@return the set of all valid input contexts that affect constructor selection.}
 	 * 
 	 * <ol>
-	 * <li>Start with mask of the language's default context
+	 * <li>Start with mask of the language's default context</li>
 	 * <li>Scrape language for <code>globalset</code> context variables and OR their masks into our
-	 * mask
+	 * mask</li>
 	 * <li>Flip bits of our mask to get mask of context variables not used as input
-	 * (local/transient)
+	 * (local/transient)</li>
 	 * <li>Check constructor constraints and use mask to get values of relevant input context
-	 * variables
+	 * variables</li>
 	 * </ol>
 	 */
 	public Set<AssemblyPatternBlock> scrapeInputContexts() {
