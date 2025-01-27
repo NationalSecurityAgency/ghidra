@@ -260,20 +260,22 @@ public class CParserPlugin extends ProgramPlugin {
 	}
 
 	protected String getFormattedParseMessage(String errMsg) {
-		String message = "";
+		String message = "<html>";
 
 		if (errMsg != null) {
 			message += errMsg + "\n\n";
+			message = HTMLUtilities.toHTML(message);
 		}
 
 		String msg = (results == null ? null : results.cParseMessages());
+		
 		if (msg != null && msg.length() != 0) {
-			message += "CParser Messages:\n" + msg + "\n\n";
+			message += "<b>CParser Messages:</b><br>\n" + HTMLUtilities.toHTML(msg) + "<br>\n<br>\n";
 		}
 
 		msg = (results == null ? null : results.cppParseMessages());
 		if (msg != null && msg.length() != 0) {
-			message += "PreProcessor Messages:\n" + msg;
+			message += "<b>PreProcessor Messages:</b><br>\n" + HTMLUtilities.toHTML(msg);
 		}
 
 		return message;
