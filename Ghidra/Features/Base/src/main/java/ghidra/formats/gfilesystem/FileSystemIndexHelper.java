@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,7 +138,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#getListing(GFile)} interface.
+	 * Mirrors {@link GFileSystem#getListing(GFile)} interface.
 	 *
 	 * @param directory {@link GFile} directory to get the list of child files that have been
 	 * added to this index, null means root directory
@@ -156,7 +156,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * Mirrors {@link GFileSystem#lookup(String)} interface.
 	 *
 	 * @param path path and filename of a file to find
 	 * @return {@link GFile} instance or null if no file was added to the index at that path
@@ -166,7 +166,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	}
 
 	/**
-	 * Mirror's {@link GFileSystem#lookup(String)} interface, with additional parameters to
+	 * Mirrors {@link GFileSystem#lookup(String)} interface, with additional parameters to
 	 * control the lookup.
 	 * 
 	 * @param baseDir optional starting directory to perform lookup
