@@ -36,8 +36,6 @@ public class HighCodeSymbol extends HighSymbol {
 	/**
 	 * Construct with a backing CodeSymbol.  An attempt is made to also find a backing Data object.
 	 * @param sym is the backing CodeSymbol
-	 * @param dataType is the (possibly distinct) data-type associated with the new HighSymbol
-	 * @param sz is the storage size, in bytes, of the symbol
 	 * @param func is the decompiler function model owning the new HighSymbol
 	 */
 	public HighCodeSymbol(CodeSymbol sym, HighFunction func) {
