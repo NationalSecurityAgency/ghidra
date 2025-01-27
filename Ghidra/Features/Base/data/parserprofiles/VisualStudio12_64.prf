@@ -80,7 +80,6 @@ isa_availability.h
 mbdata.h
 msdos.h
 mtdll.h
-nlsdownlevel.h
 nlsint.h
 nmmintrin.h
 oscalls.h
@@ -137,6 +136,9 @@ mmdeviceapi.h
 mprapi.h
 msctfmonitorapi.h
 ndfapi.h
+winsock2.h
+ws2tcpip.h
+iphlpapi.h
 netioapi.h
 npapi.h
 nspapi.h
@@ -171,12 +173,11 @@ wpapi.h
 wpcapi.h
 wscapi.h
 wsdapi.h
-wspiapi.h
 rpcproxy.h
 
--D_M_IX86=300
 -D_MSC_VER=1200
 -D_INTEGRAL_MAX_BITS=64
+-DNTDDI_VERSION=0x09000000
 -DWINVER=0x0900
 -D_AMD64_
 -D_M_AMD64
@@ -204,10 +205,12 @@ rpcproxy.h
 -v0
 -D__inner_checkReturn=""
 
-/data/HeaderFiles/VC/VS12/include
 /data/HeaderFiles/VC/VS12/src
+/data/HeaderFiles/VC/VS12/include
 /data/HeaderFiles/VC/SDK/v7.1A/Include
 
+x86:LE:64:default
 
+windows
 
 

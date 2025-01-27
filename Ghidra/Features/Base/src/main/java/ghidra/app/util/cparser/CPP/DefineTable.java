@@ -388,6 +388,7 @@ public class DefineTable {
 		int replacedSubpieceLen = currKey.length();
 		if (argv == null && sublist.contains(currKey)) {
 			if (!initialList) {
+				// stop recursion of replacement
 				System.err.println("DONT Replace " + currKey + " in: " + buf);
 			}
 			return -1;
