@@ -99,12 +99,11 @@ Source information can be viewed in the _"Source Map"_ Listing Field or the
 `SourceFilesTablePlugin`, which is accessible from the Code Browser via 
 _Window -> Source Files and Transforms_.
 
-The scripts `OpenSourceFileAtLineInEclipseScript.java` and `OpenSourceFileAtLineinVSCodeScript.java`
-provide proof-of-concept IDE integration. These scripts open a source file at the appropriate line 
-in Eclipse or Visual Studio Code when run on an address in Ghidra with source file information 
-(consider keybinding your preferred script). The SourceFilesTablePlugin can be used to modify the 
-source file paths stored in the SourceFileManager before sending them to Eclipse or Visual Studio
-Code.
+The _"View Source..."_ Listing action, enabled on addresses with source file information, opens a 
+source file at the correct line in either Eclipse or Visual Studio Code (there is a _"Source Files 
+and Transforms"_ tool option to determine the viewer). The SourceFilesTablePlugin can be used to 
+modify the source file paths stored in the SourceFileManager before sending them to Eclipse or 
+Visual Studio Code.
 
 ## Function Graph
 The Function Graph has had a number of improvements:
