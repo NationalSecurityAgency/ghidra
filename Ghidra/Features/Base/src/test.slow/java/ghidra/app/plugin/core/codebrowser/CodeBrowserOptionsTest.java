@@ -197,7 +197,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Pre-comments Field", groups[idx++]);
 		assertEquals("Register Field", groups[idx++]);
 		assertEquals("Selection Colors", groups[idx++]);
-		assertEquals("Source Maps", groups[idx++]);
+		assertEquals("Source Map", groups[idx++]);
 		assertEquals("Templates", groups[idx++]);
 		assertEquals("XREFs Field", groups[idx++]);
 	}
