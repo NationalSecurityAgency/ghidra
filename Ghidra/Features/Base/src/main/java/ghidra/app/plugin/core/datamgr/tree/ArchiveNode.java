@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class ArchiveNode extends CategoryNode {
 	protected ArchiveNodeCategoryChangeListener listener;
 	private DataTypeManager dataTypeManager; // may be null
 
-	public ArchiveNode(Archive archive, ArrayPointerFilterState filterState) {
+	public ArchiveNode(Archive archive, DtFilterState filterState) {
 		this(archive, archive.getDataTypeManager() == null ? null
 				: archive.getDataTypeManager().getRootCategory(),
 			filterState);
@@ -48,7 +48,7 @@ public class ArchiveNode extends CategoryNode {
 	}
 
 	protected ArchiveNode(Archive archive, Category rootCategory,
-			ArrayPointerFilterState filterState) {
+			DtFilterState filterState) {
 		super(rootCategory, filterState);
 		this.archive = archive;
 	}

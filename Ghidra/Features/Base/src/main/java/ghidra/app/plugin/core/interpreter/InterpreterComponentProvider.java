@@ -27,6 +27,7 @@ import docking.action.ToolBarData;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.*;
 import generic.theme.GIcon;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import resources.Icons;
@@ -81,6 +82,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 		new ActionBuilder("Find", getOwner())
 			.keyBinding("Ctrl F")
 			.sharedKeyBinding()
+			.helpLocation(new HelpLocation(HelpTopics.CONSOLE, "Console_Find"))
 			.popupMenuPath("Find...")
 			.onAction(c -> {
 				showFindDialog();
