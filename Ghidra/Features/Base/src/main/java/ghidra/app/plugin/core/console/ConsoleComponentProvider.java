@@ -30,6 +30,7 @@ import docking.widgets.TextComponentSearcher;
 import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.app.services.*;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.ConsoleTextPane;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -175,6 +176,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		new ActionBuilder("Find", getOwner())
 			.keyBinding("Ctrl F")
 			.sharedKeyBinding()
+			.helpLocation(new HelpLocation(HelpTopics.CONSOLE, "Console_Find"))
 			.popupMenuPath("Find...")
 			.onAction(c -> {
 				showFindDialog();

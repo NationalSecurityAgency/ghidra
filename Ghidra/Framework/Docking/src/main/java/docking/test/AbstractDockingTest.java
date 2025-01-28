@@ -986,6 +986,43 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 	/**
 	 * Finds the toggle button with the given name inside of the given container and then
+	 * gets the selected state of the button.
+	 * <p>
+	 * Note: this works for any instanceof {@link JToggleButton}, such as:
+	 * <ul>
+	 * 	<li>{@link JCheckBox}</li>
+	 *  <li>{@link JRadioButton}</li>
+	 * </ul>
+	 * as well as {@link EmptyBorderToggleButton}s.
+	 *
+	 * @param container a container that has the desired button as a descendant
+	 * @param buttonName the name of the button (you must set this on the button when it is
+	 *                   constructed; if there is no button with the given name found, then this
+	 *                   method will search for a button with the given text
+	 * @return true if the button is selected
+	 */
+	public static boolean isToggleButttonSelected(Container container, String buttonName) {
+		AbstractButton button = findAbstractButtonByName(container, buttonName);
+		if (button == null) {
+			button = findAbstractButtonByText(container, buttonName);
+		}
+		if (button == null) {
+			throw new AssertionError("Could not find button by name or text '" + buttonName + "'");
+		}
+
+		boolean isToggle =
+			(button instanceof JToggleButton) || (button instanceof EmptyBorderToggleButton);
+		if (!isToggle) {
+			throw new AssertionError(
+				"Found a button, but it is not a toggle button.  Text: '" + buttonName + "'");
+		}
+
+		AbstractButton finalButton = button;
+		return runSwing(() -> finalButton.isSelected());
+	}
+
+	/**
+	 * Finds the toggle button with the given name inside of the given container and then
 	 * ensures that the selected state of the button matches <code>selected</code>.
 	 * <p>
 	 * Note: this works for any instanceof {@link JToggleButton}, such as:
@@ -1037,7 +1074,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 * @param selected true to toggle the button to selected; false for de-selected
 	 */
 	public static void setToggleButtonSelected(AbstractButton button, boolean selected) {
-		boolean isSelected = button.isSelected();
+		boolean isSelected = runSwing(() -> button.isSelected());
 		if (isSelected != selected) {
 			pressButton(button);
 		}
