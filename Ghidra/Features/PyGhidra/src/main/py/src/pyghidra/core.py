@@ -176,7 +176,7 @@ def _setup_script(project: "GhidraProject", program: "Program"):
             location = ProgramLocation(program, mem.getMinAddress())
     state = GhidraState(None, project, program, location, None, None)
     script = PyGhidraScript()
-    script.set(state, TaskMonitor.DUMMY, PrintWriter(System.out))
+    script.set(state, TaskMonitor.DUMMY, PrintWriter(System.out), PrintWriter(System.err))
     return script
 
 
@@ -187,10 +187,7 @@ def _analyze_program(flat_api, program):
         GhidraScriptUtil.acquireBundleHostReference()
         try:
             flat_api.analyzeAll(program)
-            if hasattr(GhidraProgramUtilities, "markProgramAnalyzed"):
-                GhidraProgramUtilities.markProgramAnalyzed(program)
-            else:
-                GhidraProgramUtilities.setAnalyzedFlag(program, True)  # @UndefinedVariable
+            GhidraProgramUtilities.markProgramAnalyzed(program)
         finally:
             GhidraScriptUtil.releaseBundleHostReference()
 
