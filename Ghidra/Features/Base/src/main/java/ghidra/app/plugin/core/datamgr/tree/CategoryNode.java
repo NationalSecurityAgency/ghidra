@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import javax.swing.Icon;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Function;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
@@ -32,9 +34,9 @@ public class CategoryNode extends DataTypeTreeNode {
 	private String name;
 
 	private boolean isCut;
-	private ArrayPointerFilterState filterState;
+	private DtFilterState filterState;
 
-	public CategoryNode(Category category, ArrayPointerFilterState filterState) {
+	public CategoryNode(Category category, DtFilterState filterState) {
 		this.filterState = filterState;
 		setCategory(category);
 	}
@@ -70,12 +72,28 @@ public class CategoryNode extends DataTypeTreeNode {
 	}
 
 	private boolean isFilteredType(DataType dataType) {
-		if (filterState.filterArrays() && dataType instanceof Array) {
+		if (!filterState.isShowArrays() && dataType instanceof Array) {
 			return true;
 		}
 
-		if (filterState.filterPointers() && (dataType instanceof Pointer) &&
+		if (!filterState.isShowPointers() && (dataType instanceof Pointer) &&
 			!(dataType.getDataTypeManager() instanceof BuiltInDataTypeManager)) {
+			return true;
+		}
+
+		if (!filterState.isShowEnums() && (dataType instanceof Enum)) {
+			return true;
+		}
+
+		if (!filterState.isShowFunctions() && (dataType instanceof Function)) {
+			return true;
+		}
+
+		if (!filterState.isShowStructures() && (dataType instanceof Structure)) {
+			return true;
+		}
+
+		if (!filterState.isShowUnions() && (dataType instanceof Union)) {
 			return true;
 		}
 
