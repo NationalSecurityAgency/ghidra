@@ -1007,13 +1007,15 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 				List<HelpLocation> nestedHelp = getParentHelpLocations(options, name);
 				for (HelpLocation help : nestedHelp) {
 					if (help != null && !isValidHelpLocation(help)) {
-						missing.add("Bad help location: " + help.toString());
+						missing.add("Bad parent help for path: " + options.getName() + "." + name +
+							"; help: " + help.toString() + "\nMake sure your options parent node " +
+							"has a help location set, in addition to the individual options " +
+							"node");
 					}
 				}
 
 				// it has a help location; is it valid?
 				if (hl != null && !isValidHelpLocation(hl)) {
-					isValidHelpLocation(hl);
 					missing.add(options.getName() + "." + name);
 				}
 			}

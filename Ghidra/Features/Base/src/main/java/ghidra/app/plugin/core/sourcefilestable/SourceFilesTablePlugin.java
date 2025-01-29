@@ -322,7 +322,6 @@ public class SourceFilesTablePlugin extends ProgramPlugin implements OptionsChan
 
 	}
 
-
 	private void initOptions(ToolOptions options) {
 		options.registerOption(USE_EXISTING_AS_DEFAULT_OPTION_NAME, true,
 			new HelpLocation(getName(), "Use_Existing_As_Default"),
@@ -336,8 +335,8 @@ public class SourceFilesTablePlugin extends ProgramPlugin implements OptionsChan
 			() -> new StringWithChoicesEditor(VIEWERS));
 		selectedViewer = options.getString(SELECTED_VIEWER_OPTION_NAME, VS_CODE);
 		options.addOptionsChangeListener(this);
+
+		options.setOptionsHelpLocation(
+			new HelpLocation(getName(), "Source_Files_Table_Plugin_Options"));
 	}
-
-
-
 }
