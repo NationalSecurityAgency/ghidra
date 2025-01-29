@@ -109,6 +109,17 @@ class _PyGhidraImportLoader:
     def exec_module(self, fullname):
         pass
 
+class _GhidraBundleFinder(importlib.machinery.PathFinder):
+    """ (internal) Used to find modules in Ghidra bundle locations """
+    
+    def find_spec(self, fullname, path=None, target=None):
+        from ghidra.app.script import GhidraScriptUtil
+        GhidraScriptUtil.acquireBundleHostReference()
+        for directory in GhidraScriptUtil.getEnabledScriptSourceDirectories():
+            spec = super().find_spec(fullname, [directory.absolutePath], target)
+            if spec is not None:
+                return spec
+        return None
 
 @contextlib.contextmanager
 def _plugin_lock():
@@ -394,8 +405,9 @@ class PyGhidraLauncher:
             **jpype_kwargs
         )
 
-        # Install hook into python importlib
+        # Install hooks into python importlib
         sys.meta_path.append(_PyGhidraImportLoader())
+        sys.meta_path.append(_GhidraBundleFinder())
 
         imports.registerDomain("ghidra")
 
