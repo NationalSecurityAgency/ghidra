@@ -243,6 +243,7 @@ public class SourceMapFieldFactory extends FieldFactory {
 			"Show source file identifier info");
 		showIdentifier = fieldOptions.getBoolean(SHOW_IDENTIFIER_OPTION_NAME, false);
 
+		fieldOptions.getOptions(GROUP_TITLE).setOptionsHelpLocation(helpLoc);
 	}
 
 	private List<SourceMapEntry> getSourceMapEntries(CodeUnit cu) {
