@@ -2962,7 +2962,7 @@ RnAligned3: "["^Rn^vld1Align3^"]" 	is Rn & vld1Align3	{ export Rn; }
 {
 	mult_dat8 = vld1RnReplicate;
 	build vld1DdList3;
-	RnAligned3 = RnAligned3 + vld1DdList3;
+	RnAligned3 = RnAligned3 + esize0607;
 }
 
 :vld1.^esize0607 vld1DdList3,RnAligned3,VRm	is $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & RnAligned3 & vld1RnReplicate & vld1DdList3 & c0811=12 & esize0607 & VRm & $(vld1Constrain)
@@ -3012,7 +3012,7 @@ VRnAligned3: "["^VRn^thv_vld1Align3^"]" 	is VRn & thv_vld1Align3	{ export VRn; }
 {
 	mult_dat8 = thv_vld1RnReplicate;
 	build thv_vld1DdList3;
-	VRnAligned3 = VRnAligned3 + thv_vld1DdList3;
+	VRnAligned3 = VRnAligned3 + esize0607;
 }
 
 :vld1.^esize0607 thv_vld1DdList3,VRnAligned3,VRm	is $(TMODE_F)  &thv_c2327=19 & thv_c2021=2 & VRnAligned3 & thv_vld1RnReplicate & thv_vld1DdList3 & thv_c0811=12 & esize0607 & VRm & $(T_vld1Constrain)
