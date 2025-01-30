@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,7 +135,6 @@ public class FSUtilities {
 	/**
 	 * Returns a decoded version of the input stream where "%nn" escape sequences are
 	 * replaced with their actual characters, using UTF-8 decoding rules.
-	 * <p>
 	 *
 	 * @param s string with escape sequences in the form "%nn", or null.
 	 * @return string with all escape sequences replaced with native characters, or null if
@@ -281,7 +280,7 @@ public class FSUtilities {
 	 * Displays a filesystem related {@link Throwable exception} in the most user-friendly manner
 	 * possible, even if we have to do some hacky things with helping the user with
 	 * crypto problems.
-	 * <p>
+	 * 
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param parent
@@ -474,7 +473,7 @@ public class FSUtilities {
 	 * <p>
 	 * Handles forward or back slashes as path separator characters in the input, but
 	 * only adds forward slashes when separating the path strings that need a separator.
-	 * <p>
+	 * 
 	 * @param paths vararg list of path strings, empty or null elements are ok and are skipped.
 	 * @return null if all params null, "" empty string if all are empty, or
 	 * "path_element[1]/path_element[2]/.../path_element[N]" otherwise.

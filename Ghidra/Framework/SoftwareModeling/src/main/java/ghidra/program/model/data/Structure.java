@@ -195,7 +195,6 @@ public interface Structure extends Composite {
 	 * Zero length bitfields may be inserted although they have no real affect when packing disabled. 
 	 * Only the resulting byte offset within the structure is of significance in
 	 * determining its ordinal placement.
-	 * <p>
 	 * 
 	 * @param byteOffset the first byte offset within this structure which corresponds to the first
 	 *            byte of the specified storage unit identified by its byteWidth.

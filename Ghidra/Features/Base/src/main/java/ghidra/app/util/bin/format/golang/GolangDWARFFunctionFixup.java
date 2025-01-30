@@ -45,7 +45,6 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * Go's 'unique' usage of DW_TAG_subroutine_type to define its ptr-to-ptr-to-func is handled in
  * DWARFDataTypeImporter.makeDataTypeForFunctionDefinition().
- * <p>
  */
 @ExtensionPointProperties(priority = DWARFFunctionFixup.PRIORITY_NORMAL_EARLY)
 public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {

@@ -53,8 +53,7 @@ public class SelectProjectPanel extends JPanel {
 
 	/**
 	 * Construct a new panel.
-	 * @param statusChangedCallback 
-	 * @param panelManager manager for the "new project" set of panels
+	 * @param statusChangedCallback callback
 	 */
 	public SelectProjectPanel(Callback statusChangedCallback) {
 		super(new PairLayout(10, 10));

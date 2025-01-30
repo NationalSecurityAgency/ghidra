@@ -32,7 +32,7 @@ public class SingleFileSystemIndexHelper {
 	 * Creates a new instance.
 	 *
 	 * A "root" directory GFile will be auto-created for the filesystem.
-	 * <p>
+	 * 
 	 * @param fs the {@link GFileSystem} that this index will be for.
 	 * @param fsFSRL the {@link FSRLRoot fsrl} of the filesystem itself.
 	 * (this parameter is explicitly passed here so there is no possibility of trying to call

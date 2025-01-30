@@ -46,7 +46,6 @@ import ghidra.util.exception.CancelledException;
  * Once the vertices are place in the grid, edge articulations are computed so that edges are
  * routed orthogonally using an {@link OrthogonalEdgeRouter}.
  * <P>
- * 
  * To position the vertices and edges in layout space, it uses an 
  * {@link OrthogonalGridToLayoutMapper} to size the grid and map grid points to layout points. 
  *

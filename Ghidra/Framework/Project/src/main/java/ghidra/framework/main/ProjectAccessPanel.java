@@ -39,13 +39,11 @@ import util.CollectionUtils;
 /**
  * Panel that shows the users for a given repository and the users associated with the current
  * shared project. There are 3 main sub-panels:
- * <p>
  * <ul>
  * <li>Known Users Panel: Displays all users in the repository</li>
  * <li>Button Panel: Provides buttons for adding/removing users from the project</li>
  * <li>User Access Panel: Displays all users on the project, and their access permissions</li>
  * </ul>
- * <p>
  * If the current user is an admin, he may change user permissions and add/remove them
  * from the project. If not, only the User Access Panel will be visible and it will
  * be read-only.

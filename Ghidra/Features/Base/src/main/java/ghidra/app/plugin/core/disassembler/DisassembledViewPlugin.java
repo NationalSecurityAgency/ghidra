@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -543,7 +543,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Constructs a new info instance based upon the given address.
 		 * <p>
-		 * Note: A NullPointerException will be logged if <tt> address</tt> is
+		 * Note: A NullPointerException will be logged if {@code address} is
 		 *       null.
 		 * 
 		 * @param  address The address that this info is based upon.

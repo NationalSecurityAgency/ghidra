@@ -11,9 +11,7 @@ package mobiledevices.dmg.ghidra;
 
 public class GDataConverterLE implements GDataConverter {
 	public static GDataConverterLE INSTANCE = new GDataConverterLE();
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	/**

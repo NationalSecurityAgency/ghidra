@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu.jit.analysis;
 
-import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.maxAddr;
-import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.overlapsLeft;
+import static ghidra.pcode.emu.jit.analysis.JitVarScopeModel.*;
 import static org.objectweb.asm.Opcodes.*;
 
 import java.math.BigInteger;
@@ -85,7 +84,6 @@ import ghidra.program.model.pcode.Varnode;
  * Several values and variables are at play here. We tabulate the type assignments and resulting
  * votes:
  * 
- * <p>
  * <table border="1">
  * <tr>
  * <th>SSA Var</th>
@@ -129,7 +127,6 @@ import ghidra.program.model.pcode.Varnode;
  * </tr>
  * </table>
  * 
- * <p>
  * The registers {@code RCX}, {@code RDX}, and {@code EBX} are trivially allocated as locals of JVM
  * types {@code double}, {@code double}, and {@code float}, respectively. It is also worth noting
  * that {@code 0x3f800000} is allocated as a {@code float} constant in the classfile's constant

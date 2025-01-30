@@ -173,7 +173,7 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 		 * of the invocation, not the actual run time invocation. This derives type information
 		 * about the userop from the Java method and selects the approparite {@link JitCallOtherOpIf
 		 * callother} op to enter into the use-def graph. If an output operand is given, then this
-		 * generates an output notes defined by a {@lnk JitCallOtherDefOp}. Otherwise, it generates
+		 * generates an output notes defined by a {@link JitCallOtherDefOp}. Otherwise, it generates
 		 * a (sink) {@link JitCallOtherOp}.
 		 * 
 		 * @implNote When inlining a userop, the decoder leaves the original callother op in place.

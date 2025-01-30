@@ -78,10 +78,10 @@ import resources.ResourceManager;
  * (ie. when displaying an error to the user about a bad file, don't put the filename
  * value at the start of the string, but instead put a quote or some other delimiter to prevent
  * html mode).
- * <p>
+ * 
  * <h3>Recommended Ghidra UI Components:</h3>
- * <p>
- * <table border=1><caption></caption>
+ * 
+ * <table border=1>
  * 	<tr><th>Native Component</th><th>Recommended Component</th></tr>
  * 	<tr><td>{@link JLabel}</td><td>{@link GLabel}<br>{@link GDLabel}<br>{@link GHtmlLabel}<br>{@link GDHtmlLabel}<br>{@link GIconLabel}</td></tr>
  * 	<tr><td>{@link JCheckBox}</td><td>{@link GCheckBox}<br>{@link GHtmlCheckBox}</td></tr>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * by the specified label. The user should check the value of "isCanceled()" to know whether or
 	 * not the user canceled the operation. Otherwise, use the "getValue()" or "getValues()" to get
 	 * the value(s) entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
@@ -61,7 +60,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * specified label. The user should check the value of "isCanceled()" to know whether or not the
 	 * user canceled the operation. Otherwise, use the "getValue()" or "getValues()" to get the
 	 * value(s) entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
@@ -76,7 +74,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * specified label. The user should check the value of "isCanceled()" to know whether or not the
 	 * user canceled the operation. Otherwise, use the "getValue()" or "getValues()" to get the
 	 * value(s) entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
@@ -93,7 +90,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * specified label. The user should check the value of "isCanceled()" to know whether or not the
 	 * user canceled the operation. Otherwise, use the "getValue()" or "getValues()" to get the
 	 * value(s) entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
@@ -109,7 +105,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * specified label. The user should check the value of "isCanceled()" to know whether or not the
 	 * user canceled the operation. Otherwise, use the "getValue()" or "getValues()" to get the
 	 * value(s) entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param labels values to use for the labels of the text fields
@@ -124,7 +119,6 @@ public class InputDialog extends DialogComponentProvider {
 	 * specified label. The user should check the value of "isCanceled()" to know whether or not the
 	 * user canceled the operation. Otherwise, use the "getValue()" or "getValues()" to get the
 	 * value(s) entered by the user. Use the tool's "showDialog()" to display the dialog.
-	 * <P>
 	 * 
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param labels values to use for the labels of the text fields

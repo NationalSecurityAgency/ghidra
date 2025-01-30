@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package functioncalls.graph;
 
-import static functioncalls.graph.FcgDirection.IN_AND_OUT;
-import static functioncalls.graph.FcgDirection.OUT;
+import static functioncalls.graph.FcgDirection.*;
 
 /**
  * A container class that represents a {@link FunctionCallGraph} level, or row.   A level 
@@ -115,7 +114,7 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	/**
 	 * Returns true if this level is the immediate predecessor of the given other level.
 	 * 
-	 * <P>The <tt>source</tt> level is the parent of the first level in either direction.
+	 * <P>The {@code source} level is the parent of the first level in either direction.
 	 * 
 	 * @param other the other level that is a potential child level
 	 * @return true if this level is the immediate predecessor of the given other level

@@ -358,7 +358,7 @@ public class JitDataFlowArithmetic implements PcodeArithmetic<JitVal> {
 	 * {@inheritDoc}
 	 * 
 	 * <p>
-	 * We override this to record the {@lnk JitLoadOp load} op into the use-def graph. For our
+	 * We override this to record the {@link JitLoadOp load} op into the use-def graph. For our
 	 * {@code inValue}, the {@link JitDataFlowState state} will have just returned the
 	 * {@link JitIndirectMemoryVar#INSTANCE dummy indirect} variable definition. We must not "use"
 	 * this. Instead, we must take our other parameters to construct the load op and return its

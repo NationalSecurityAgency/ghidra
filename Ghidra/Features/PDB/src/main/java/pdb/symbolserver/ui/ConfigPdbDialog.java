@@ -642,7 +642,6 @@ public class ConfigPdbDialog extends DialogComponentProvider {
 
 	/**
 	 * Returns true if the given file path is a directory that contains no files.
-	 * <p>
 	 *
 	 * @param directory path to a location on the file system
 	 * @return true if is a directory and it contains no files

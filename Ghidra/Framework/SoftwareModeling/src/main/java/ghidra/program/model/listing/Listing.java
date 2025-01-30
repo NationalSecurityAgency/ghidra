@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -209,7 +209,6 @@ public interface Listing {
 	 * to the <code>next</code> method. An initial call to the <code>previous</code>
 	 * method would return the code unit with an address less than the specified
 	 * address.
-	 * <p>
 	 *
 	 * @param addr the start address of the iterator.
 	 * @param forward true means get iterator in forward direction
@@ -285,7 +284,6 @@ public interface Listing {
 	 * to the <code>next</code> method. An initial call to the <code>previous</code>
 	 * method would return the instruction with an address less than the
 	 * specified address.
-	 * <p>
 	 *
 	 * @param addr the initial position of the iterator
 	 * @param forward true means get iterator in forward direction
@@ -359,7 +357,6 @@ public interface Listing {
 	 * first Data that would be returned by an initial call to the <code>next</code>
 	 * method. An initial call to the <code>previous</code> method would return the
 	 * Data with an address less than the specified address.
-	 * <p>
 	 *
 	 * @param addr the initial position of the iterator
 	 * @param forward true means get iterator in forward direction
@@ -438,7 +435,6 @@ public interface Listing {
 	 * call to the <code>next</code> method. An initial call to the
 	 * <code>previous</code> method would return the defined Data with an address
 	 * less than the specified address.
-	 * <p>
 	 *
 	 * @param addr the initial position of the iterator
 	 * @param forward true means get iterator in forward direction
@@ -735,7 +731,6 @@ public interface Listing {
 
 	/**
 	 * Returns the fragment containing the given address.
-	 * <P>
 	 * 
 	 * @param treeName name of the tree to search
 	 * @param addr the address that is contained within a fragment.
@@ -746,7 +741,6 @@ public interface Listing {
 
 	/**
 	 * Returns the module with the given name.
-	 * <P>
 	 * 
 	 * @param treeName name of the tree to search
 	 * @param name the name of the module to find.
@@ -757,7 +751,6 @@ public interface Listing {
 
 	/**
 	 * Returns the fragment with the given name.
-	 * <P>
 	 * 
 	 * @param treeName name of the tree to search
 	 * @param name the name of the fragment to find.

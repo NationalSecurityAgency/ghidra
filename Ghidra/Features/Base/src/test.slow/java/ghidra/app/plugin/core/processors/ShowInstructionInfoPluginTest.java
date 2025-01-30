@@ -398,9 +398,9 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	 * Tests the addresses of the table models of the "Instruction Info" dialog.
 	 * The method will fail the current test if the result is not as 
 	 * expected by the caller of this method.  For example, if 
-	 * <tt>expectedSame</tt> is true, then the method expects the values to
+	 * {@code expectedSame} is true, then the method expects the values to
 	 * be the same when compared with the given address and will fail if 
-	 * they are not.  If <tt>expectedSame</tt> is false, then the method will
+	 * they are not.  If {@code expectedSame} is false, then the method will
 	 * fail if the test values are the same.
 	 * 
 	 * @param instructionAddress The address to compare against the address

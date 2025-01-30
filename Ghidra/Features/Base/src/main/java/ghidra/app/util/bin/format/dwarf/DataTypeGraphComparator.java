@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,6 @@ public class DataTypeGraphComparator {
 		 * This callback can choose to abort traversing the tree of child types if it returns
 		 * false.  (ie. if this was a Pointer DataType, returning false would stop
 		 * the graph comparator from comparing the DataType pointed to by this Pointer)
-		 * <p>
 		 *
 		 * @param dt1 element from the first/left/src DataType graph
 		 * @param dt2 matching element from the second/right/dest DataType graph
@@ -57,7 +56,7 @@ public class DataTypeGraphComparator {
 	/**
 	 * Compares two {@link DataType datatypes} graphs, calling the observer callback
 	 * for each paired DataType that occupy equivalent positions in each graph.
-	 * <p>
+	 * 
 	 * @param preDT - Original (impl) DataType from before submitting to DataTypeManager.
 	 * @param postDT - Result DataType from the DataTypeManager
 	 * @param observer - Callback called for each position in the preDT graph that has a matching

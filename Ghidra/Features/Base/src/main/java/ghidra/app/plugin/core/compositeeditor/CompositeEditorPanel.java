@@ -1432,7 +1432,7 @@ public abstract class CompositeEditorPanel<T extends Composite, M extends Compos
 	 * list of traversal components.  Once one of the radio buttons is focused, the up and down 
 	 * arrow keys can be used to navigate the radio buttons.  With this traversal policy, pressing 
 	 * Tab when on these buttons will move to the next traversal component.
-	 * <P>
+	 *
 	 * @see #getFocusComponents()
 	 */
 	private class CompFocusTraversalPolicy extends FocusTraversalPolicy {

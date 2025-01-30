@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public final class CoffArchiveHeader implements StructConverter {
 	/**
 	 * Returns true if the data contained in the {@link ByteProvider provider} contains
 	 * a COFF Archive file.
-	 * <p>
+	 * 
 	 * @param provider
 	 * @return
 	 * @throws IOException
@@ -56,7 +56,7 @@ public final class CoffArchiveHeader implements StructConverter {
 	 * <p>
 	 * Returns a {@link CoffArchiveHeader} that has a list of the 
 	 * {@link CoffArchiveMemberHeader members} in the archive.
-	 * <p>
+	 * 
 	 * @param provider
 	 * @param monitor
 	 * @return

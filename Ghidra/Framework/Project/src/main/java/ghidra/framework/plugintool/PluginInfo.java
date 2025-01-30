@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public @interface PluginInfo {
 	 * The {@link PluginStatus} of this plugin:
 	 * {@link PluginStatus#STABLE STABLE} , {@link PluginStatus#RELEASED RELEASED},
 	 * {@link PluginStatus#HIDDEN HIDDEN}, {@link PluginStatus#UNSTABLE UNSTABLE}
-	 * <p>
+	 * 
 	 * @return {@link PluginStatus#STABLE STABLE} , {@link PluginStatus#RELEASED RELEASED},
 	 * {@link PluginStatus#HIDDEN HIDDEN}, {@link PluginStatus#UNSTABLE UNSTABLE}, etc.
 	 */
@@ -55,14 +55,13 @@ public @interface PluginInfo {
 	 * The package name this plugin belongs in.
 	 * <p>
 	 * Use XYZPluginPackage.NAME
-	 * <p>
+	 * 
 	 * @return String package name
 	 */
 	String packageName();
 
 	/**
 	 * See PluginCategoryNames
-	 * <p>
 	 * <ul>
 	 * <li>PluginCategoryNames.COMMON
 	 * <li>PluginCategoryNames.SUPPORT

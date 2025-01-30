@@ -25,7 +25,7 @@ import java.util.Iterator;
 public interface AddressSetView extends Iterable<AddressRange> {
 	/**
 	 * Test if the address is contained within this set.
-	 * <P>
+	 * 
 	 * @param addr address to test.
 	 * @return true if addr exists in the set, false otherwise.
 	 */
@@ -35,7 +35,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	 * Test if the given address range is contained in this set.
 	 * The specified start and end addresses must form a valid range within
 	 * a single {@link AddressSpace}.
-	 * <P>
+	 * 
 	 * @param start the first address in the range.
 	 * @param end the last address in the range.
 	 * @return true if entire range is contained within the set,
@@ -45,7 +45,7 @@ public interface AddressSetView extends Iterable<AddressRange> {
 
 	/**
 	 * Test if the given address set is a subset of this set.
-	 * <P>
+	 * 
 	 * @param rangeSet the set to test.
 	 * @return true if the entire set is contained within this set,
 	 *         false otherwise.

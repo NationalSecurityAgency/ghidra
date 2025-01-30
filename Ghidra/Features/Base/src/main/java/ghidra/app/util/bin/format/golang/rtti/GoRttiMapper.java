@@ -1026,7 +1026,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 	/**
 	 * Returns a function definition for a method that is attached to a golang type.
-	 * <p>
 	 * 
 	 * @param methodName name of method
 	 * @param methodType golang function def type
@@ -1339,7 +1338,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	/**
 	 * Returns the {@link GoName} corresponding to an offset that is relative to the controlling
 	 * GoModuledata's typesOffset.
-	 * <p>
 	 * 
 	 * @param ptrInModule the address of the structure that contains the offset that needs to be
 	 * calculated.  The containing-structure's address is important because it indicates which
@@ -1534,7 +1532,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		/**
 		 * Returns true if the specified function should be included in the bootstrap function defs
 		 * that are written to the golang_NNNN.gdt archive.
-		 * <p>
+		 * 
 		 * @return true if function should be included in golang.gdt bootstrap file
 		 */
 		public boolean isBootstrapFunction() {

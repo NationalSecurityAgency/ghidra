@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class DWARFAttributeDef<E extends Enum<E>> {
 	 * Reads a {@link DWARFAttributeDef} instance from the {@link BinaryReader reader}.
 	 * <p>
 	 * Returns a null if its a end-of-list marker (which is only used by an attributespec list).
-	 * <p>
+	 * 
 	 * @param <E> attribute id enum type
 	 * @param reader {@link BinaryReader}
 	 * @param mapper func that converts an attribute id int into its enum

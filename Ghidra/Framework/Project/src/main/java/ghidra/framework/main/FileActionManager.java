@@ -372,7 +372,7 @@ class FileActionManager {
 	 * menu listener for File | Close Project...
 	 * <p>
 	 * This method will always save the FrontEndTool and project, but not the data unless 
-	 * <tt>confirmClose</tt> is called.
+	 * {@code confirmClose} is called.
 	 * 
 	 * @param isExiting true if we are closing the project because 
 	 * Ghidra is exiting

@@ -27,8 +27,6 @@ import pdb.symbolserver.SymbolServer.StatusRequiresContext;
 /**
  * A Pdb symbol server / symbol store, similar to the {@link LocalSymbolStore}, 
  * but limited to searching just the single directory that the original executable is located in.
- * <p>
- * 
  */
 public class SameDirSymbolStore implements SymbolStore, StatusRequiresContext {
 

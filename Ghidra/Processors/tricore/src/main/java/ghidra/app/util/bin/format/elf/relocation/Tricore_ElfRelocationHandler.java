@@ -505,9 +505,6 @@ public class Tricore_ElfRelocationHandler
 		return 2;
 	}
 
-	/**
-	 * 
-	 */
 	private int relocate_3POS(Memory memory, Address relocationAddress, long rv)
 			throws MemoryAccessException {
 		long mask = 0xfffffff8L;
@@ -518,9 +515,6 @@ public class Tricore_ElfRelocationHandler
 		return 4;
 	}
 
-	/**
-	 * 
-	 */
 	private int relocate_5POS(Memory memory, Address relocationAddress, long rv)
 			throws MemoryAccessException {
 		long mask = 0xffffffe0L;
@@ -531,9 +525,6 @@ public class Tricore_ElfRelocationHandler
 		return 4;
 	}
 
-	/**
-	 * 
-	 */
 	private int relocate_5POS2(Memory memory, Address relocationAddress, long rv)
 			throws MemoryAccessException {
 		long mask = 0xffffffe0L;

@@ -439,9 +439,6 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 		setRelOffsetSelection(offsetSelection);
 	}
 
-	/**
-	 * 
-	 */
 	private OffsetPairs getRelOffsetSelection() {
 		OffsetPairs offsets = new OffsetPairs();
 		int num = selection.getNumRanges();
@@ -461,9 +458,6 @@ public class StackEditorModel extends CompositeEditorModel<StackFrameDataType> {
 		return offsets;
 	}
 
-	/**
-	 * 
-	 */
 	private void setRelOffsetSelection(OffsetPairs offsets) {
 		FieldSelection newSelection = new FieldSelection();
 		int num = offsets.getNumPairs();

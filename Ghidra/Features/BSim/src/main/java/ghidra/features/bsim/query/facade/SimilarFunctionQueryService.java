@@ -118,7 +118,7 @@ public class SimilarFunctionQueryService implements AutoCloseable {
 	}
 
 	/**
-	 * Query the given server with the parameters provider by <tt>queryInfo</tt>.
+	 * Query the given server with the parameters provider by {@code queryInfo}.
 	 * 
 	 * @param queryInfo a query info object containing the settings for the query
 	 * @param listener is the listener to be informed of the query status and incremental results 

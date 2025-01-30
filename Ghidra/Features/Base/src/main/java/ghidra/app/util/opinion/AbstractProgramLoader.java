@@ -344,7 +344,6 @@ public abstract class AbstractProgramLoader implements Loader {
 
 	/**
 	 * Sets a program's Executable Path, Executable Format, MD5, SHA256, and FSRL properties.
-	 * <p>
 	 *  
 	 * @param prog {@link Program} (with active transaction)
 	 * @param provider {@link ByteProvider} that the program was created from

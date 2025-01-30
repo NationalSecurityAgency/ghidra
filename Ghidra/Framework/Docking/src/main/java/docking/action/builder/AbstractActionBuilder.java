@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -606,8 +606,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * {@link #withContext(Class)} method must also be called to specify the matching
 	 * context; otherwise an exception will be thrown when the action is built.
 	 * <P>
-	 *  
-	 *  The default is that the action will only appear in the main window.
+	 * The default is that the action will only appear in the main window.
 	 *
 	 * @param when use the {@link When} enum to specify the windowing behavior
 	 * of the action.
@@ -651,7 +650,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * {@link DockingAction#setEnabled(boolean)} method.
 	 * <P>
 	 * For more details on how the action context system works, see {@link ActionContext}.
-	 * <P>
+	 * 
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.
@@ -697,7 +696,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * {@link DockingAction#setEnabled(boolean)} method.
 	 * <P>
 	 * For more details on how the action context system works, see {@link ActionContext}.
-	 * <P>
+	 * 
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.

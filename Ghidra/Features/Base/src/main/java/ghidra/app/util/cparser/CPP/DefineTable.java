@@ -23,9 +23,6 @@ import ghidra.app.util.cparser.CPP.PreProcessor.PPToken;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
-/**
- * 
- */
 public class DefineTable {
 	private static final String VARARG_ELLIPSIS = "...";
 
@@ -44,9 +41,6 @@ public class DefineTable {
 
 	private final static String VALUE = "value";
 
-	/**
-	 * 
-	 */
 	public DefineTable() {
 		super();
 		// TODO Auto-generated constructor stub
