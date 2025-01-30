@@ -4084,8 +4084,8 @@ dNvmovIndex: Dn^"["^vmovIndex^"]"   is Dn & vmovIndex     { }
                                    ($(TMODE_E) &         thv_c2327=0x1c & thv_c2222=1 & thv_c2020=0 & thv_c0811=11 & thv_c0404=1 & thv_c0003=0 ) ) & COND & Dn & VRd & vmovIndex & dNvmovIndex
 {
 	el:1 = VRd(0);
-	vmask:8 = 0xf << (vmovIndex*8);
-	Dn = (Dn & ~vmask) | (zext(el) & vmask);
+	vmask:8 = 0xff << (vmovIndex*8);
+	Dn = (Dn & ~vmask) | (zext(el) << (vmovIndex*8));
 	#VectorSetElement(VRd,Dn,vmovIndex);
 }
 
@@ -4093,8 +4093,8 @@ dNvmovIndex: Dn^"["^vmovIndex^"]"   is Dn & vmovIndex     { }
                                        ($(TMODE_E) &         thv_c2327=0x1c & thv_c2222=0 & thv_c2020=0 & thv_c0811=11 & thv_c0505=1 & thv_c0404=1 & thv_c0003=0 ) ) & COND & Dn & VRd & vmovIndex & dNvmovIndex
 {
 	el:2 = VRd(0);
-	vmask:8 = 0xff << (vmovIndex*16);
-	Dn = (Dn & ~vmask) | (zext(el) & vmask);
+	vmask:8 = 0xffff << (vmovIndex*16);
+	Dn = (Dn & ~vmask) | (zext(el) << (vmovIndex*16));
 	#VectorSetElement(VRd,Dn,vmovIndex,vmovSize);
 }
 
@@ -4103,8 +4103,8 @@ dNvmovIndex: Dn^"["^vmovIndex^"]"   is Dn & vmovIndex     { }
                                        ($(TMODE_E) &         thv_c2327=0x1c & thv_c2222=0 & thv_c2020=0 & thv_c0811=11 & thv_c0506=0 & thv_c0404=1 & thv_c0003=0 ) ) & COND & Dn & VRd & vmovIndex & dNvmovIndex
 {
 	el:4 = VRd;
-	vmask:8 = 0xffff << (vmovIndex*32);
-	Dn = (Dn & ~vmask) | (zext(el) & vmask);
+	vmask:8 = 0xffffffff << (vmovIndex*32);
+	Dn = (Dn & ~vmask) | (zext(el) << (vmovIndex*32));
 	#VectorSetElement(VRd,Dn,vmovIndex,vmovSize);
 }
 
