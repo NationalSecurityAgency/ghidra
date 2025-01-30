@@ -2483,7 +2483,7 @@ vdupDm: Dm^"["^vdupIndex^"]"	is Dm & vdupIndex & ((TMode=0 & c1618=4) | (TMode=1
 vdupDm16: vdupDm	is vdupDm	
 { 
 	val:16 = zext(vdupDm); 
-	val = val & (val << 64); 
+	val = val | (val << 64); 
 	export val; 
 }
 
@@ -2503,25 +2503,28 @@ vdupDm16: vdupDm	is vdupDm
 # VDUP (ARM core register)
 #
 
-vdupSize2: 8	is c2222=1 & c0505=0	{ }
-vdupSize2: 16	is c2222=0 & c0505=1	{ }
-vdupSize2: 32	is c2222=0 & c0505=0	{ }
+vdupSize2: 8		is TMode=0 & c2222=1 & c0505=0	{ }
+vdupSize2: 16		is TMode=0 & c2222=0 & c0505=1	{ }
+vdupSize2: 32		is TMode=0 & c2222=0 & c0505=0	{ }
+vdupSize2: 8	    is TMode=1 & thv_c2222=1 & thv_c0505=0		{ }
+vdupSize2: 16		is TMode=1 & thv_c2222=0 & thv_c0505=1 		{ }
+vdupSize2: 32		is TMode=1 & thv_c2222=0 & thv_c0505=0		{ }
 
-vdupRd8: VRd	is VRd & c2222=1 & c0505=0
+vdupRd8: VRd	is VRd & ((TMode=0 & c2222=1 & c0505=0) | (TMode=1 & thv_c2222=1 & thv_c0505=0))
 {
 	val:8 = 0;
 	local tmpRd = VRd;
 	replicate1to8(tmpRd:1, val);
 	export val;
 }
-vdupRd8: VRd	is VRd & c2222=0 & c0505=1
+vdupRd8: VRd	is VRd & ((TMode=0 & c2222=0 & c0505=1) | (TMode=1 & thv_c2222=0 & thv_c0505=1))
 {
 	val:8 = 0;
 	local tmpRd = VRd;
 	replicate2to8(tmpRd:2, val);
 	export val;
 }
-vdupRd8: VRd	is VRd & c2222=0 & c0505=0
+vdupRd8: VRd	is VRd & ((TMode=0 & c2222=0 & c0505=0) | (TMode=1 & thv_c2222=0 & thv_c0505=0))
 {
 	val:8 = 0;
 	local tmpRd = VRd;
@@ -2532,7 +2535,7 @@ vdupRd8: VRd	is VRd & c2222=0 & c0505=0
 vdupRd16: vdupRd8	is vdupRd8	
 { 
 	val:16 = zext(vdupRd8); 
-	val = val & (val << 64); 
+	val = val | (val << 64); 
 	export val; 
 }
 
