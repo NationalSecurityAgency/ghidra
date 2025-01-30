@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 	 * 6 characters of the string are <code>&lt;html&gt;</code>).
 	 * <p>
 	 * This method will not return until the user presses the OK button.
-	 * <p>
+	 * 
 	 * @param parent - parent component or null
 	 * @param title - dialog title
 	 * @param shortMessage - short message that appears above the main message.

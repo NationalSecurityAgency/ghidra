@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -198,7 +198,7 @@ public class DWARFDataTypeManager {
 	 * Returns a Ghidra {@link DataType} corresponding to the specified {@link DIEAggregate},
 	 * or the specified defaultValue if the DIEA param is null or does not map to an already
 	 * defined datatype (registered with {@link #addDataType(long, DataType, DWARFSourceInfo)}).
-	 * <p>
+	 * 
 	 * @param diea {@link DIEAggregate} that defines a data type
 	 * @param defaultValue Ghidra {@link DataType} to return if the specified DIEA is null
 	 * or not already defined.
@@ -230,7 +230,6 @@ public class DWARFDataTypeManager {
 	 * Returns a Ghidra {@link DataType} corresponding to the specified DIE (based on its
 	 * offset), or the specified defaultValue if the DIE does not map to a defined
 	 * datatype (registered with {@link #addDataType(long, DataType, DWARFSourceInfo)}).
-	 * <p>
 	 *
 	 * @param dieOffset offset of a DIE record that defines a data type
 	 * @param defaultValue Ghidra {@link DataType} to return if the specified DIE not already defined.
@@ -312,7 +311,7 @@ public class DWARFDataTypeManager {
 	/**
 	 * Returns a Ghidra {@link DataType datatype} that corresponds to a type
 	 * that can be used to represent an offset.
-	 * <p>
+	 * 
 	 * @param size
 	 * @return
 	 */
@@ -366,7 +365,7 @@ public class DWARFDataTypeManager {
 	 * <p>
 	 * Any newly created Ghidra data types will be cached and the same instance will be returned
 	 * if the same DWARF named base type is requested again.
-	 * <p>
+	 * 
 	 * @param name
 	 * @param dwarfSize
 	 * @param dwarfEncoding
@@ -672,7 +671,6 @@ public class DWARFDataTypeManager {
 	/**
 	 * Regex to match common fixed-size type names like "int64", "int64_t", etc, by triggering
 	 * off some known size designators in the string.
-	 * <p>
 	 * <pre>
 	 * \D+ &larr; one or more non-digits
 	 *    (8|16|32|64|128) &larr; list of common sizes that we are triggering on

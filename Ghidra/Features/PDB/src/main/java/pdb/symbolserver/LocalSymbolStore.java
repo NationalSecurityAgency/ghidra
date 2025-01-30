@@ -28,7 +28,6 @@ import utilities.util.FileUtilities;
  * Stores Pdb symbol files in a local directory.
  * <p>
  * This is both a {@link SymbolServer} and a {@link SymbolStore}
- * <p>
  */
 public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStore {
 	private static final String ADMIN_DIRNAME = "000admin"; // per MS custom
@@ -52,7 +51,6 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 	/**
 	 * Creates a (hopefully) MS-compatible symbol server directory location.
-	 * <p>
 	 * 
 	 * @param rootDir    Directory location of the new symbol store
 	 * @param indexLevel the 'level' of the storage directory. Typical directories

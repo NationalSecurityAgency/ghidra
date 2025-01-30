@@ -338,7 +338,7 @@ public class ProgramBuilder {
 	 * Sets the bytes starting at {@code address} to the values encoded in {@code byteString}.
 	 * <p>
 	 * See {@link #setBytes(String, byte[], boolean)}.
-	 * <p>
+	 * 
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
@@ -354,7 +354,7 @@ public class ProgramBuilder {
 	 * and then optionally disassembling.
 	 * <p>
 	 * See {@link #setBytes(String, byte[], boolean)}.
-	 * <p>
+	 * 
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
@@ -373,7 +373,7 @@ public class ProgramBuilder {
 	/**
 	 * Sets the bytes starting at {@code stringAddress} to the byte values in {@code bytes}
 	 * and then optionally disassembling.
-	 * <p>
+	 * 
 	 * @param stringAddress String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param bytes array of bytes to copy into the memory buffer at the addresss.
 	 * @param disassemble boolean flag.  See {@link #disassemble(String, int)}

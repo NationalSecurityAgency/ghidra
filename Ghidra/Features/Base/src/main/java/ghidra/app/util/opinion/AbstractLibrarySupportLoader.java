@@ -658,7 +658,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * <p>
 	 * If the library path has a path and it wasn't found under the given folder, the
 	 * filename part of library path will be used to search the given folder for matches.
-	 * <p>
+	 * 
 	 * @param libraryPath path with filename of the library to find
 	 * @param folder {@link DomainFolder} within which imported libraries will be searched.
 	 *   If null this method will return null.
@@ -715,7 +715,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * <p>
 	 * If the library specifies an absolute path, its native path is searched on the local 
 	 * filesystem.
-	 * <p>
+	 * 
 	 * @param libraryPath The library {@link Path}.  This will be either an absolute path, a
 	 *   relative path, or just a filename.
 	 * @param fsSearchPaths A {@link List} of {@link FileSystemSearchPath}s that will be searched

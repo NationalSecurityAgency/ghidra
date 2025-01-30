@@ -18,9 +18,6 @@ package mdemangler.typeinfo;
 import mdemangler.*;
 import mdemangler.naming.MDNameModifier;
 
-/**
- *
- */
 public class MDTypeInfo extends MDParsableItem implements MDNameModifier {
 	private static final String PRIVATE = "private: ";
 	private static final String PROTECTED = "protected: ";

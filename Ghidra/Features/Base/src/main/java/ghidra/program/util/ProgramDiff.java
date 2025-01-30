@@ -20,6 +20,7 @@ import java.util.*;
 import javax.help.UnsupportedOperationException;
 
 import org.apache.commons.collections4.CollectionUtils;
+
 import ghidra.program.database.properties.UnsupportedMapDB;
 import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.model.address.*;
@@ -46,7 +47,7 @@ import ghidra.util.task.TaskMonitor;
  * equivalent address spaces. If the programs have different program context
  * registers, the Diff can still occur but will not determine program context
  * differences.
- * <P>
+ * 
  * @see ghidra.program.util.ProgramDiffFilter
  */
 

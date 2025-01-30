@@ -249,9 +249,6 @@ class ModuleManager {
 		}
 	}
 
-	/**
-	 *
-	 */
 	private void createRootModule() throws IOException {
 		DBRecord rootRecord = moduleAdapter.createModuleRecord(0, getProgram().getName());
 		ModuleDB root = new ModuleDB(this, moduleCache, rootRecord);

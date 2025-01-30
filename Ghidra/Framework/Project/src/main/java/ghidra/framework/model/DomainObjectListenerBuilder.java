@@ -31,7 +31,6 @@ import utility.function.Callback;
  * the remaining event records. This is can be handled with an {@link #any(EventType...)},  
  * followed by a {@link AnyBuilder#terminate(Callback)} or {@link AnyBuilder#terminate(Consumer)} 
  * if you want the event.
- * <P>
  * <PRE>
  * new DomainObjectListenerBuilder()
  *	.any(DomainObjectEvent.RESTORED).call(() -> refreshAll())
@@ -51,7 +50,6 @@ import utility.function.Callback;
  * details of the record, only that one of the  given events was fired. This can be handled using 
  * the  {@link #any(EventType...)}, followed by a  call to {@link AnyBuilder#call(Callback)} or
  * {@link AnyBuilder#call(Consumer)}
- * <P>
  * <PRE>
  * new DomainObjectListenerBuilder()
  *	.onAny(ProgramEvent.FUNCTION_CHANGED).call(() -> refreshFunctions())
@@ -74,7 +72,6 @@ import utility.function.Callback;
  * can be changed by calling {@link #with(Class)}. Once this is called the builder
  * will require that all consumers being passed in will now be typed on that record
  * class. 
- * <P>
  * <PRE>
  * new DomainObjectListenerBuilder()
  *	.each(DomainObjectEvent.PROPERTY_CHANGED).call(r -> processPropertyChanged(r))

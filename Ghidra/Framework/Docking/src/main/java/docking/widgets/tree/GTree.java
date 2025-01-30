@@ -1393,7 +1393,6 @@ public class GTree extends JPanel implements BusyListener {
 	/**
 	 * Used to run simple GTree tasks that can be expressed as a {@link MonitoredRunnable} (or a
 	 * lambda taking a {@link TaskMonitor}).
-	 * <p>
 	 *
 	 * @param runnableTask {@link TaskMonitor} to watch and update with progress.
 	 */

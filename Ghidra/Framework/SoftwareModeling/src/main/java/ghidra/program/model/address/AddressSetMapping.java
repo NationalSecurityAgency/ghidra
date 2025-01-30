@@ -18,10 +18,13 @@ package ghidra.program.model.address;
 import java.util.*;
 
 /**
- * Class that provides random access to {@link Address}es in an {@link AddressSet}, based on the index of the address in the set, not the {@link Address#getOffset() address offset value}.<p>
+ * Class that provides random access to {@link Address}es in an {@link AddressSet}, based on the 
+ * index of the address in the set, not the {@link Address#getOffset() address offset value}.
  * <p>
- * For instance, a {@link AddressSet} containing addresses [0,1,2,3,4,90,91,92,93,94], {@link #getAddress(int) getAddress(1)} will return an {@link Address} with an
- * offset value of 1, but {@link #getAddress(int) getAddress(5)} will return an {@link Address} instance with an offset value of 90.
+ * For instance, a {@link AddressSet} containing addresses [0,1,2,3,4,90,91,92,93,94], 
+ * {@link #getAddress(int) getAddress(1)} will return an {@link Address} with an
+ * offset value of 1, but {@link #getAddress(int) getAddress(5)} will return an {@link Address} 
+ * instance with an offset value of 90.
  * <p>
  * This collapses a sparse address space with holes into a contiguous list of addresses.
  */

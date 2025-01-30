@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.exception.NotFoundException;
 public interface ProgramFragment extends Group, AddressSetView {
 
 	/**
-	 * Returns whether this fragment contains the given code unit.<P>
+	 * Returns whether this fragment contains the given code unit.
 	 * 
 	 * @param codeUnit the code unit being tested.
 	 * 
@@ -51,10 +51,10 @@ public interface ProgramFragment extends Group, AddressSetView {
 	 * Note that <CODE>min</CODE> must the starting address of a code unit
 	 * and <CODE>max</CODE> must be the ending address of a code unit.
 	 * Furthermore every address in the given range must exist in program
-	 * memory.<P>
+	 * memory.
 	 *
 	 * @param min min address of range specifying the code units to move
-     * @param max max address of range specifying the code units to move
+	 * @param max max address of range specifying the code units to move
 	 * @exception NotFoundException thrown if any address between <CODE>min</CODE>
 	 * and <CODE>max</CODE> (inclusive) does not belong to program memory.
 	 */

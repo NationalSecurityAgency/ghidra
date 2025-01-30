@@ -36,7 +36,6 @@ import ghidra.util.SystemUtilities;
  * <p>
  * When a candidate data type is matched with an existing data type, this
  * conflict handler will specify that the new data type is:
- * <p>
  * <ul>
  * <li>discarded and replaced by the existing data type
  * ({@link ConflictResult#USE_EXISTING})</li>
@@ -45,7 +44,6 @@ import ghidra.util.SystemUtilities;
  * </ul>
  * or the candidate data type was <b>NOT</b> matched with an existing data type,
  * and the new data type is:
- * <p>
  * <ul>
  * <li>kept, but renamed with a .conflictNNNN suffix to make it unique
  * ({@link ConflictResult#RENAME_AND_ADD})</li>
@@ -147,7 +145,7 @@ public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	 * <p> Each defined component in the candidate partial structure must be present
 	 * in the 'full' structure and must be equiv. <p> The order and sparseness of
 	 * the candidate partial structure is not important, only that all of its
-	 * defined components are present in the full structure. <p>
+	 * defined components are present in the full structure.
 	 */
 	private boolean isStructurePart(Structure full, Structure part, Set<Long> visitedDataTypes) {
 		// Both structures should be equal in length

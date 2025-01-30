@@ -59,7 +59,6 @@ import ghidra.util.SystemUtilities;
  * FSRL's can be created from strings using {@link #fromString(String)}.
  * <p>
  * FSRLs that have a MD5 value are {@link FileSystemService#getFullyQualifiedFSRL(FSRL, ghidra.util.task.TaskMonitor) "fully qualified"}.
- * <p>
  */
 public class FSRL {
 	public static final String PARAM_MD5 = "MD5";
@@ -100,7 +99,7 @@ public class FSRL {
 	 * are not intern()'d so will not be shared with other FSRL instances.
 	 * <p>
 	 * See {@link #fromPartString(FSRL, String)} for details of character encoding fixups.
-	 * <p>
+	 * 
 	 * @param fsrlStr something like "fstype://path/path|fs2type://path2/path2|etc://etc/etc"
 	 * @return new {@link FSRL} instance, never null
 	 * @throws MalformedURLException if empty string or bad format
@@ -113,7 +112,7 @@ public class FSRL {
 	 * Creates a {@link FSRL} from a raw string.
 	 * <p>
 	 * See {@link #fromPartString(FSRL, String)} for details of character encoding fixups.
-	 * <p>
+	 * 
 	 * @param parent Parent {@link FSRL}
 	 * @param fsrlStr something like "fstype://path/path|fs2type://path2/path2|etc://etc/etc"
 	 * @return new {@link FSRL} instance, never null
@@ -297,7 +296,7 @@ public class FSRL {
 	 * Returns the name portion of the FSRL part at parent depth {@code nestedDepth}, where 0
 	 * is ourself (equiv to just calling {@link #getName()}, 1 is the parent
 	 * container's name, etc.
-	 * <p>
+	 * 
 	 * @param nestedDepth relative parent index of FSRL part to query, 0 == this instance.
 	 * @return name portion of the path of the specified FSRL part.
 	 * @throws IOException if nestedDepth is larger than number of FSRL parent parts.
@@ -320,7 +319,7 @@ public class FSRL {
 	 * Returns the MD5 string associated with this file.
 	 * <p>
 	 * NULL if no MD5 value present.
-	 * <p>
+	 * 
 	 * @return md5 string associated with this file object, or null if not present.
 	 */
 	public String getMD5() {
@@ -357,7 +356,7 @@ public class FSRL {
 	 * but with a new path.
 	 * <p>
 	 * See also {@link #appendPath(String)}.
-	 * <p>
+	 * 
 	 * @param newpath string path
 	 * @return new {@link FSRL} instance with the specified path.
 	 */
@@ -381,7 +380,7 @@ public class FSRL {
 	/**
 	 * Creates a new {@link FSRL} instance, using the same {@link FSRLRoot} as this instance,
 	 * combining the current {@link #getPath() path} with the {@code relPath} value.
-	 * <p>
+	 * 
 	 * @param relPath relative path string to append, '/'s will be automatically added
 	 * @return new {@link FSRL} instance with additional path appended.
 	 */
@@ -481,7 +480,7 @@ public class FSRL {
 	 * "file://path"<br>
 	 * "file://path|subfs://blah"<br>
 	 * "file://path|subfs://blah|subfs2://blah2"
-	 * <p>
+	 * 
 	 * @return {@link List} of {@link FSRL} elements pointing to each level of this FSRL.
 	 */
 	public List<FSRL> split() {
@@ -547,7 +546,7 @@ public class FSRL {
 	/**
 	 * Returns {@code true} if this object is a child or descendant of the
 	 * specified {@code potentialParent} parameter.
-	 * <p>
+	 * 
 	 * @param potentialParent {@link FSRL} to test against
 	 * @return boolean true if the specified {@link FSRL} is a parent (ignoring md5 hashes)
 	 * of this instance.

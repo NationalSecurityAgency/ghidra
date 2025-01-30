@@ -37,7 +37,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * Plugins expose their features or capabilities to users via menu items and buttons that
  * the user can click on, and via "service" APIs that other Plugins can programmatically subscribe
  * to, and via {@link PluginEvent}s that are broadcast.
- * <p>
+ * 
  * <h2>Well formed Plugins:</h2>
  * <UL>
  *   <LI>Derive from <code>Plugin</code> (directly or indirectly).</LI>
@@ -75,13 +75,13 @@ import ghidra.util.classfinder.ExtensionPoint;
  *           (required)</LI>
  *       <LI>Create Actions (optional)</LI>
  *       <LI>Register {@link ghidra.framework.options.Options Options} with the
- *           {@link PluginTool#getOptions(String)}. (optional)</LI><br>
+ *           {@link PluginTool#getOptions(String)}. (optional)</LI>
  *     </OL>
  *  </LI>
  *  <LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
  * 	If your dependencies are not available (i.e., not installed, threw an exception during their
  *	initialization, etc), your Plugin's {@link #dispose()} will be called and then your Plugin
- *	instance will be discarded.</LI><br>
+ *	instance will be discarded.</LI>
  *  <LI>Your Plugin's {@link #init()} method is called (when its dependencies are met).</LI>
  *  <LI>
  *    <OL>
@@ -171,7 +171,6 @@ import ghidra.util.classfinder.ExtensionPoint;
  * multi-implemented service will either receive a randomly picked instance if using
  * {@link PluginTool#getService(Class)} or will receive all implementations if using
  * {@link PluginTool#getServices(Class)}.
- * <p>
  *
  * <h2>Plugin Events</h2>
  * <UL>
@@ -232,7 +231,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Construct a new Plugin.
-	 * <p>
+	 * 
 	 * @param tool PluginTool that will host/contain this plugin.
 	 */
 	protected Plugin(PluginTool tool) {
@@ -292,7 +291,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Returns this plugin's name.
-	 * <p>
+	 * 
 	 * @return String name, derived from simple class name.
 	 */
 	public final String getName() {
@@ -326,7 +325,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Return classes of data types that this plugin can support.
-	 * <p>
+	 * 
 	 * @return classes of data types that this plugin can support
 	 */
 	public Class<?>[] getSupportedDataTypes() {
@@ -335,7 +334,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Method called if the plugin supports this domain file.
-	 * <p>
+	 * 
 	 * @param data array of {@link DomainFile}s
 	 * @return boolean true if can accept
 	 */
@@ -346,7 +345,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	/**
 	 * Request plugin to process URL if supported.  Actual processing may be delayed and 
 	 * interaction with user may occur (e.g., authentication, approval, etc.).
-	 * <p>
+	 * 
 	 * @param url data URL
 	 * @return boolean true if this plugin can process URL.
 	 */
@@ -356,7 +355,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Get the domain files that this plugin has open.
-	 * <p>
+	 * 
 	 * @return array of {@link DomainFile}s that are open by this Plugin.
 	 */
 	public DomainFile[] getData() {
@@ -577,7 +576,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * with the PluginTool's services.
 	 * <p>
 	 * The {@link #initServices()} handles registering the services queued during the constructor.
-	 * <p>
+	 * 
 	 * @param interfaceClass Class that the service object implements.
 	 * @param service Service object instance.
 	 * @param dynamicRegister boolean flag that indicates that the service being registered
@@ -638,7 +637,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	/**
 	 * Used to register a service dynamically, during runtime, instead of during the Plugin's
 	 * constructor.
-	 * <p>
+	 * 
 	 * @param interfaceClass service interface class
 	 * @param service service implementation
 	 */
@@ -844,7 +843,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	/**
 	 * Returns the static {@link PluginDescription} object that was derived from the
 	 * {@link PluginInfo @PluginInfo} annotation at the top of your Plugin.
-	 * <p>
+	 * 
 	 * @return the static/shared {@link PluginDescription} instance that describes this Plugin.
 	 */
 	public final PluginDescription getPluginDescription() {

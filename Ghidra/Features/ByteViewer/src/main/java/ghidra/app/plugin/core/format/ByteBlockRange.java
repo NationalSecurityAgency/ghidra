@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +61,7 @@ public class ByteBlockRange {
 	/**
 	 * Indicates whether some other object is "equal to" this one.
 	 * <p>
-	 * The <tt>equals</tt> method for class <code>Object</code> implements
+	 * The {@code equals} method for class <code>Object</code> implements
 	 * the most discriminating possible equivalence relation on objects;
 	 * that is, for any reference values <code>x</code> and <code>y</code>,
 	 * this method returns <code>true</code> if and only if <code>x</code> and
@@ -97,7 +96,6 @@ public class ByteBlockRange {
 	 * Returns a hash code value for the object. This method is
 	 * supported for the benefit of hashtables such as those provided by
 	 * <code>java.util.Hashtable</code>.
-	 * <p>
 	 *
 	 * @return  a hash code value for this object.
 	 */

@@ -1515,8 +1515,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 		<li>In the headless environment this method will set the {@link #currentSelection}
 	 * 			variable to the given value and update the GhidraState's selection variable.</li>
 	 * </ol>
-	 * <p>
-	 *
+	 * 
 	 * @param addressSet the set of addresses to include in the selection.  If this value is null,
 	 * the current selection will be cleared and the variables set to null.
 	 */
@@ -1558,7 +1557,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 		<li>In the headless environment this method will set the {@link #currentHighlight}
 	 * 			variable to	the given value and update the GhidraState's highlight variable.</li>
 	 * </ol>
-	 * <p>
 	 *
 	 * @param addressSet the set of addresses to include in the highlight.  If this value is null,
 	 * the current highlight will be cleared and the variables set to null.
@@ -2986,7 +2984,6 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <p>
 	 * Note that in both headless and GUI modes, you may specify "PI" or "E" and get the
 	 * corresponding floating point value to 15 decimal places.
-	 * <p>
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)

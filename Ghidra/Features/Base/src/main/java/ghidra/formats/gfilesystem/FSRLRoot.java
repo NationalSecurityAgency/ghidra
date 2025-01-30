@@ -23,7 +23,6 @@ package ghidra.formats.gfilesystem;
  * A FSRLRoot's parent is always a FSRL (ie. the container the filesystem data is in), or null.
  * <p>
  * Examples of relationship between FSRL and FSRLRoots:
- * <p>
  * <ul>
  * 	<li>FSRLRoot [ file:// ]<br>
  *	  "file://"</li>
@@ -84,7 +83,7 @@ public class FSRLRoot extends FSRL {
 
 	/**
 	 * Private constructor used by static factory methods.
-	 * <p>
+	 * 
 	 * @param parent {@link FSRL} parent
 	 * @param protocol string filesystem type.
 	 */
@@ -101,7 +100,7 @@ public class FSRLRoot extends FSRL {
 	/**
 	 * Returns the "protocol" portion of this FSRLRoot, for example, in a FSRLRoot of
 	 * "file://", this method would return "file".
-	 * <p>
+	 * 
 	 * @return string protocol / filesystem type.
 	 */
 	public String getProtocol() {
@@ -111,7 +110,7 @@ public class FSRLRoot extends FSRL {
 	/**
 	 * Returns the parent containerfile FSRL, or null if this FSRLRoot specifies
 	 * a root-level filesystem.
-	 * <p>
+	 * 
 	 * @return {@link FSRL} of the container object that this filesystem is nested under.
 	 */
 	public FSRL getContainer() {
@@ -152,7 +151,7 @@ public class FSRLRoot extends FSRL {
 	/**
 	 * Creates a new {@link FSRL} as a child of this {@link FSRLRoot}, using the supplied
 	 * path and MD5 values.
-	 * <p>
+	 * 
 	 * @param newPath string path and filename of the object inside this filesystem, should
 	 * not be null.
 	 * @param newMD5 string md5 of the object inside this filesystem, null ok.

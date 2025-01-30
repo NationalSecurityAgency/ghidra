@@ -106,7 +106,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Returns the {@link FileSystemRefManager ref manager} that is responsible for
 	 * creating and releasing {@link FileSystemRef refs} to this filesystem.
-	 * <p>
+	 * 
 	 * @return {@link FileSystemRefManager} that manages references to this filesystem.
 	 */
 	FileSystemRefManager getRefManager();
@@ -123,7 +123,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename, using
 	 * this filesystem's default name comparison logic (eg. case sensitive vs insensitive).
-	 * <p>
+	 * 
 	 * @param path string path and filename of a file located in this filesystem.  Use 
 	 * {@code null} or "/" to retrieve the root directory 
 	 * @return {@link GFile} instance of requested file, null if not found.
@@ -134,7 +134,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename, using
 	 * the specified name comparison logic (eg. case sensitive vs insensitive).
-	 * <p>
+	 * 
 	 * @param path string path and filename of a file located in this filesystem.  Use 
 	 * {@code null} or "/" to retrieve the root directory
 	 * @param nameComp string comparator used to compare filenames.  Use {@code null} to specify
@@ -171,7 +171,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * Returns an {@link InputStream} that contains the contents of the specified {@link GFile}.
 	 * <p>
 	 * The caller is responsible for closing the stream.
-	 * <p>
+	 * 
 	 * @param file {@link GFile} to get an InputStream for
 	 * @param monitor {@link TaskMonitor} to watch and update progress
 	 * @return new {@link InputStream} contains the contents of the file or NULL if the
@@ -202,7 +202,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Returns a list of {@link GFile files} that reside in the specified directory on
 	 * this filesystem.
-	 * <p>
+	 * 
 	 * @param directory NULL means root of filesystem.
 	 * @return {@link List} of {@link GFile} instances of file in the requested directory.
 	 * @throws IOException if IO problem.
@@ -239,7 +239,6 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Default implementation of getting an {@link InputStream} from a {@link GFile}'s
 	 * {@link ByteProvider}.
-	 * <p>
 	 * 
 	 * @param file {@link GFile}
 	 * @param fs the {@link GFileSystem filesystem} containing the file

@@ -37,7 +37,7 @@ import javax.swing.JComponent;
  *    <LI> One or more classes that extend {@link WizardStep}<br>
  *    <LI> A data class that holds that data being collected by this wizard.<br> 
  * </OL>
- * <P>
+ *
  * Subclasses must at a minimum implement two methods.
  * <OL>
  * 	   <LI> AddWizardSteps() - This is where the model defines the ordered list of
@@ -46,7 +46,7 @@ import javax.swing.JComponent;
  * 			will be called when the user presses the <B>Finish</B> button and all the panels have
  * 			had a chance to update the wizard data object.</LI>
  * </OL>
- * <P>
+ *
  * Optionally, there are several additional methods clients may want to override.
  * <OL>
  * 		<LI>dispose() - This will be called when the wizard is completed or cancelled and this is
@@ -66,6 +66,7 @@ import javax.swing.JComponent;
  * 		<LI>getPreferredSize() - By default, this will return a preferred size that is the biggest
  * 			width and height of all the preferred sizes of the step panels. Override this to 
  * 			simply specify the preferred size of the dialog.</LI>
+ * </OL>
  * 
  * @param <T> the data object for this wizard
  */

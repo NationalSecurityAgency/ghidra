@@ -166,7 +166,6 @@ public abstract class AbstractTaintState implements TaintState {
 	 * The artifacts (e.g., sources) that are used in the datalog query are those
 	 * selected by the user via the menu.
 	 * 
-	 * <p>
 	 * @param queryTextFile - file containing the query
 	 * @return success
 	 * @throws Exception - on write

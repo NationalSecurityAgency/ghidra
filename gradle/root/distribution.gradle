@@ -120,13 +120,25 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	// find referenced classes.
 	classpath = rootProject.ext.ghidraPath
 
-	// generate documentation using html5
+	// Generate documentation using html5
 	options.addBooleanOption("html5", true)
 
-	options.addBooleanOption('Xdoclint:none', true)
+	// Control what warnings appear
+	options.addBooleanOption('Xdoclint:html', true)
+	options.addBooleanOption('Xdoclint:syntax', true)
+	options.addBooleanOption('Xdoclint:reference', true)
+	//options.addBooleanOption('Xdoclint:accessibility', true)
+	//options.addBooleanOption('Xdoclint:missing', true)
 	
 	// Some internal packages are not public and need to be exported.
 	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
+	
+	// Have to manually add these in for some reason
+	options.tags = [
+		'apiNote:a:API Notes:',
+		'implSpec:a:Implementation Requirements:',
+		'implNote:a:Implementation Notes:'
+    ]
 }
 
 
@@ -209,7 +221,7 @@ task createPythonTypeStubs(type: Javadoc, description: 'Generate pyi stubs for a
 
 	// Set the ghidra flag to enable the creation of the ghidra_builtins pseudo package
 	options.addBooleanOption("ghidra", true)
-
+	
 	// Newer versions of gradle set this to true by default.
 	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
 	options.setNoTimestamp(false)

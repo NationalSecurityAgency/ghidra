@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -197,7 +197,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	/**
 	 * Test structure definition when a struct is fwd decl'd in one CU and fully
 	 * defined in a second CU.
-	 * <p>
+	 * 
 	 * @throws CancelledException
 	 * @throws IOException
 	 * @throws DWARFException
@@ -649,7 +649,6 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * for the structs being placed in the root namespace.
 	 * <p>
 	 * See GDTSD-351
-	 * <p>
 	 */
 	@Test
 	public void testDTMIncorrectOverwrite() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,10 +141,10 @@ public class WeakHashMap2<K, V> extends AbstractMap<K, V> {
 
 	/**
 	 * Constructs a new <code>WeakHashMap2</code> with the same mappings as the
-	 * specified <tt>Map</tt>.  The <code>WeakHashMap2</code> is created with an
+	 * specified {@code Map}.  The {@code WeakHashMap2} is created with an
 	 * initial capacity of twice the number of mappings in the specified map
 	 * or 11 (whichever is greater), and a default load factor, which is
-	 * <tt>0.75</tt>.
+	 * {@code 0.75}.
 	 *
 	 * @param   t the map whose mappings are to be placed in this map.
 	 * @since	1.3

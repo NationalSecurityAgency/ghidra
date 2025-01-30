@@ -988,9 +988,6 @@ public class ProgramMerge {
 		dupEquates.put(dupEquate.getName(), new DupEquate(dupEquate, desiredName));
 	}
 
-	/**
-	 *
-	 */
 	void reApplyDuplicateEquates() {
 		for (String conflictName : dupEquates.keySet()) {
 			DupEquate dupEquate = dupEquates.get(conflictName);
@@ -1021,9 +1018,6 @@ public class ProgramMerge {
 		}
 	}
 
-	/**
-	 *
-	 */
 	String getDuplicateEquatesInfo() {
 		StringBuffer buf = new StringBuffer();
 		for (String conflictName : dupEquates.keySet()) {
@@ -1037,9 +1031,6 @@ public class ProgramMerge {
 		return buf.toString();
 	}
 
-	/**
-	 *
-	 */
 	void clearDuplicateEquates() {
 		dupEquates.clear();
 	}
@@ -1922,9 +1913,6 @@ public class ProgramMerge {
 		mergeLabels(originAddressSet, ProgramMergeFilter.REPLACE, true, replaceFunction, monitor);
 	}
 
-	/**
-	 *
-	 */
 	void reApplyDuplicateSymbols() {
 		SymbolTable originSymTab = originProgram.getSymbolTable();
 		SymbolTable resultSymTab = resultProgram.getSymbolTable();
@@ -1955,9 +1943,6 @@ public class ProgramMerge {
 		}
 	}
 
-	/**
-	 *
-	 */
 	String getDuplicateSymbolsInfo() {
 		StringBuffer buf = new StringBuffer();
 		SymbolTable origSymTab = originProgram.getSymbolTable();
@@ -1989,9 +1974,6 @@ public class ProgramMerge {
 		return buf.toString();
 	}
 
-	/**
-	 *
-	 */
 	void clearDuplicateSymbols() {
 		conflictSymbolIDMap.removeAll();
 //		dupSyms.clear();

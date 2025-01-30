@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -683,7 +683,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 * be used by plugins or other objects that get instantiated immediately when the tool is
 	 * constructed. Otherwise, if the tool exits and this hasn't been called, any saved option
 	 * values will be lost.
-	 * <P>
+	 * 
 	 * @param tool The tool to use to register options
 	 * @param help the help location to be used by the {@link OptionsDialog} for display/editing
 	 * these options
