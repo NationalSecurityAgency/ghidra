@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 
@@ -27,7 +28,7 @@ import ghidra.program.model.mem.MemoryAccessException;
  */
 public class ProgramVirtualBaseTable extends VirtualBaseTable {
 
-	private Memory memory;
+	private Program program;
 	private Address address;
 	private int entrySize;
 	private String mangledName; // remove?
@@ -44,19 +45,19 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	 * Constructor
 	 * @param owner the class that owns the table
 	 * @param parentage the parentage of the base class(es) of the table
-	 * @param memory the program memory
+	 * @param program the program
 	 * @param address the address of the table
 	 * @param entrySize the size for each table entry
 	 * @param ctm the class type manager
 	 * @param mangledName the mangled name of the table
 	 */
-	public ProgramVirtualBaseTable(ClassID owner, List<ClassID> parentage, Memory memory,
+	public ProgramVirtualBaseTable(ClassID owner, List<ClassID> parentage, Program program,
 			Address address, int entrySize, ClassTypeManager ctm, String mangledName) {
 		super(owner, parentage);
 		if (entrySize != 4 && entrySize != 8) {
 			throw new IllegalArgumentException("Invalid size (" + entrySize + "): must be 4 or 8.");
 		}
-		this.memory = memory;
+		this.program = program;
 		this.address = address;
 		this.entrySize = entrySize;
 		this.mangledName = mangledName;
@@ -98,6 +99,7 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 
 	@Override
 	public Long getBaseOffset(int index) throws PdbException {
+		Memory memory = program.getMemory();
 		Address entryAddress = address.add(index * entrySize);
 		try {
 			Long offset = (entrySize == 4) ? (long) memory.getInt(entryAddress)
