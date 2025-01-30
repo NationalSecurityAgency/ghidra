@@ -20,14 +20,16 @@ import java.util.List;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 
 /**
  * Manages virtual function table lookups.
  */
 public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 
-	private Memory memory;
+	private Program program;
 	private Address address;
 	private int defaultEntrySize; // Might go away, as would constructor param
 	private String mangledName;
@@ -36,19 +38,19 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 	 * Constructor
 	 * @param owner the owner class
 	 * @param parentage the parentage for the table
-	 * @param memory the program memory
+	 * @param program the program
 	 * @param address the address of the table in memory
 	 * @param defaultEntrySize the default entry size
 	 * @param mangledName the mangled name for the table
 	 */
-	public ProgramVirtualFunctionTable(ClassID owner, List<ClassID> parentage, Memory memory,
+	public ProgramVirtualFunctionTable(ClassID owner, List<ClassID> parentage, Program program,
 			Address address, int defaultEntrySize, String mangledName) {
 		super(owner, parentage);
 		if (defaultEntrySize != 4 && defaultEntrySize != 8) {
 			throw new IllegalArgumentException(
 				"Invalid size (" + defaultEntrySize + "): must be 4 or 8.");
 		}
-		this.memory = memory;
+		this.program = program;
 		this.address = address;
 		this.defaultEntrySize = defaultEntrySize;
 		this.mangledName = mangledName;
@@ -72,7 +74,24 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 
 	@Override
 	public Address getAddress(int ordinal) throws PdbException {
-		throw new UnsupportedOperationException();
+		Memory memory = program.getMemory();
+		Address entryAddress = address.add(ordinal * defaultEntrySize);
+		try {
+			long offset =
+				(defaultEntrySize == 4) ? Integer.toUnsignedLong(memory.getInt(entryAddress))
+						: memory.getLong(entryAddress);
+			if (offset == 0L) {
+				return null;
+			}
+			Address result = address.getNewAddress(offset, false);
+			return result;
+		}
+		catch (MemoryAccessException e) {
+			throw new PdbException(
+				"MemoryAccessException while trying to parse virtual function table entry at address: " +
+					entryAddress);
+		}
+		//throw new UnsupportedOperationException();
 	}
 
 	@Override

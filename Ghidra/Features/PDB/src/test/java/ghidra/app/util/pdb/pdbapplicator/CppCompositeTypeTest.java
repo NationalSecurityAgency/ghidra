@@ -27,9 +27,12 @@ import ghidra.app.plugin.core.checksums.MyTestMemory;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.classtype.*;
+import ghidra.program.model.StubFunctionManager;
+import ghidra.program.model.StubProgram;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressIterator;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.LittleEndianDataConverter;
@@ -54,6 +57,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static ClassTypeManager ctm64;
 	private static Memory memory32;
 	private static Memory memory64;
+	private static Program program32;
+	private static Program program64;
 	private static Map<String, Address> addressByMangledName32;
 	private static Map<String, Address> addressByMangledName64;
 	private static DataType vftptr32;
@@ -180,8 +185,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 		createVbTables();
 
-		msftVxtManager32 = new MsftVxtManager(ctm32, memory32);
-		msftVxtManager64 = new MsftVxtManager(ctm64, memory64);
+		msftVxtManager32 = new MsftVxtManager(ctm32, program32);
+		msftVxtManager64 = new MsftVxtManager(ctm64, program64);
 		try {
 			msftVxtManager32.createVirtualTables(CategoryPath.ROOT, addressByMangledName32, log,
 				monitor);
@@ -265,6 +270,44 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 				assertEquals(num, 8);
 				return LittleEndianDataConverter.INSTANCE.getLong(bytes);
 			}
+		}
+	}
+
+	private static class MyStubFunctionManager extends StubFunctionManager {
+
+		private Map<Address, Function> myFunctions;
+
+		private MyStubFunctionManager() {
+			myFunctions = new HashMap<>();
+		}
+
+		private void addFunction(Address address, Function function) {
+			myFunctions.put(address, function);
+		}
+
+		@Override
+		public Function getFunctionAt(Address entryPoint) {
+			return null;
+		}
+	}
+
+	private static class MyStubProgram extends StubProgram {
+		private Memory myMemory;
+		private FunctionManager myFunctionManager;
+
+		private MyStubProgram(Memory mem, FunctionManager fm) {
+			this.myMemory = mem;
+			this.myFunctionManager = fm;
+		}
+
+		@Override
+		public FunctionManager getFunctionManager() {
+			return myFunctionManager;
+		}
+
+		@Override
+		public Memory getMemory() {
+			return myMemory;
 		}
 	}
 
@@ -483,6 +526,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 		memory32 = preparer32.getMemory();
 		memory64 = preparer64.getMemory();
+
+		MyStubFunctionManager functionManager32 = new MyStubFunctionManager();
+		MyStubFunctionManager functionManager64 = new MyStubFunctionManager();
+
+		program32 = new MyStubProgram(memory32, functionManager32);
+		program64 = new MyStubProgram(memory64, functionManager64);
 
 		List<Address> addresses32 = preparer32.getAddresses();
 		List<Address> addresses64 = preparer64.getAddresses();
