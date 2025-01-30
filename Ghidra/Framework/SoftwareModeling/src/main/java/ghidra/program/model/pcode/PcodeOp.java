@@ -689,6 +689,8 @@ public class PcodeOp {
 				return "PTRADD";
 			case PTRSUB:
 				return "PTRSUB";
+			case SEGMENTOP:
+				return "SEGMENTOP";
 			case CPOOLREF:
 				return "CPOOLREF";
 			case NEW:
