@@ -27,6 +27,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.event.*;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumnModel;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -186,7 +187,27 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	@Override
+	protected void cancelCallback() {
+		// called when cancelled button is pressed; ignore all changes
+		model.dispose();
+		super.close();
+	}
+
+	@Override
+	protected void dismissCallback() {
+		// Called when the x button on the dialog is pressed.  Call the standard close() so we 
+		// prompt the user if they have changes.
+		close();
+	}
+
+	@Override
 	public void close() {
+		if (model.hasChanged()) {
+			if (!promptToAbortChanges()) {
+				return;
+			}
+		}
+
 		model.dispose();
 		super.close();
 	}
@@ -523,6 +544,11 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 	@Override
 	public void dataChanged() {
+
+		// Save off the selected column so that we can restore it in the case that it makes sense
+		// to do so (see updateTableSelection()). 
+		TableCell oldSelectedCell = getSelectedTableCell();
+
 		if (model.isInParsingMode()) {
 			setGlassPane(glassPane);
 			glassPane.setVisible(true);
@@ -540,7 +566,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			updateCallFixupCombo();
 			updateOkButton();
 			updateParamTable();
-			updateTableSelection();
+			updateTableSelection(oldSelectedCell);
 			updateTableButtonEnablement();
 			updateStorageEditingEnabled();
 			updateOptionalParamCommit();
@@ -567,21 +593,63 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		downButton.setEnabled(model.canMoveParameterDown());
 	}
 
-	private void updateTableSelection() {
-		int[] selectedRows = model.getSelectedParameterRows();
+	private void updateTableSelection(TableCell lastSelectedCell) {
 
-		if (!Arrays.equals(selectedRows, parameterTable.getSelectedRows())) {
-			ListSelectionModel selectionModel = parameterTable.getSelectionModel();
-			selectionModel.removeListSelectionListener(selectionListener);
-			parameterTable.clearSelection();
-			for (int i : selectedRows) {
-				if (i < parameterTable.getRowCount()) {
-					parameterTable.addRowSelectionInterval(i, i);
-				}
-			}
-			parameterTable.scrollToSelectedRow();
-			selectionModel.addListSelectionListener(selectionListener);
+		int[] modelRows = model.getSelectedParameterRows();
+		int[] tableRows = parameterTable.getSelectedRows();
+		if (Arrays.equals(modelRows, tableRows)) {
+			return;
 		}
+
+		ListSelectionModel rowSelectionModel = parameterTable.getSelectionModel();
+		rowSelectionModel.removeListSelectionListener(selectionListener);
+
+		try {
+			rowSelectionModel.clearSelection();
+			doUpdateTableSelection(lastSelectedCell);
+			parameterTable.scrollToSelectedRow();
+		}
+		finally {
+			rowSelectionModel.addListSelectionListener(selectionListener);
+		}
+	}
+
+	private void doUpdateTableSelection(TableCell lastSelectedCell) {
+
+		ListSelectionModel rowSelectionModel = parameterTable.getSelectionModel();
+		int[] modelRows = model.getSelectedParameterRows();
+
+		// single parameter row selected
+		if (modelRows.length == 1) {
+			int row = modelRows[0];
+			rowSelectionModel.setSelectionInterval(row, row);
+
+			//
+			// Special Code
+			// This method will attempt to selected the row in the UI that matches the model's 
+			// notion of the selected row.  Model changes trigger calls to this method.  Sometimes 
+			// this method is called when the user clicks a new row.  In that case, if the user has 
+			// selected a table cell, that is lost when we rebuild the table just before the call to
+			// this method.  We use the old row and column here to restore that selected table cell.  
+			//
+			if (row == lastSelectedCell.row) {
+				lastSelectedCell.selectedColumn();
+			}
+			return;
+		}
+
+		// multiple rows selected
+		for (int row : modelRows) {
+			if (row < parameterTable.getRowCount()) {
+				rowSelectionModel.addSelectionInterval(row, row);
+			}
+		}
+	}
+
+	private TableCell getSelectedTableCell() {
+		int row = parameterTable.getSelectionModel().getLeadSelectionIndex();
+		int col = parameterTable.getColumnModel().getSelectionModel().getLeadSelectionIndex();
+		return new TableCell(parameterTable, row, col);
 	}
 
 	private void updateParamTable() {
@@ -723,6 +791,42 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 	}
 
+	private record TableCell(GTable table, int row, int col) {
+
+		TableCell getNextCell() {
+
+			int nextRow = row;
+			int nextCol = col + 1; // next column
+			int rowCount = table.getRowCount();
+			if (nextRow == rowCount) {
+				// wrap around to the first cell
+				return new TableCell(table, 0, 0);
+			}
+
+			int maxCol = table.getColumnCount();
+			if (nextCol < maxCol) {
+				// valid row and column
+				return new TableCell(table, nextRow, nextCol);
+			}
+
+			nextCol = 0; // move to the start of the next row
+			nextRow++;
+			if (nextRow < rowCount) {
+				// next row is valid
+				return new TableCell(table, nextRow, nextCol);
+			}
+
+			// reached the end; go to the start of the table
+			return new TableCell(table, 0, 0);
+		}
+
+		void selectedColumn() {
+			TableColumnModel columnModel = table.getColumnModel();
+			ListSelectionModel columnSelectionModel = columnModel.getSelectionModel();
+			columnSelectionModel.setSelectionInterval(col, col);
+		}
+	}
+
 	private class ParameterTable extends GTable {
 
 		private FocusListener focusListener = new FocusAdapter() {
@@ -778,37 +882,77 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 
 		@Override
-		public boolean editCellAt(int row, int column, EventObject e) {
+		public boolean editCellAt(int row, int col, EventObject e) {
 
-			if (row < 0 || row >= getRowCount() || column < 1 || column >= getColumnCount()) {
+			if (row < 0 || row >= getRowCount() || col < 1 || col >= getColumnCount()) {
+				editNextEditableCell(new TableCell(parameterTable, row, col));
 				return false;
 			}
 
-			boolean isEditable = super.editCellAt(row, column, e);
-			if (!isEditable) {
-				if ((e instanceof KeyEvent) ||
-					(e instanceof MouseEvent && ((MouseEvent) e).getClickCount() == 2)) {
-					FunctionVariableData rowData = paramTableModel.getRowObject(row);
-					if (rowData.getStorage().isAutoStorage()) {
-						setStatusText("Auto-parameters may not be modified");
-					}
-					else if (row == 0 && "Name".equals(getColumnName(column))) {
-						setStatusText("Return name may not be modified");
-					}
-					else if ("Storage".equals(getColumnName(column))) {
-						boolean blockVoidStorageEdit = (rowData.getIndex() == null) &&
-							VoidDataType.isVoidDataType(rowData.getFormalDataType());
-						if (!blockVoidStorageEdit) {
-							setStatusText(
-								"Enable 'Use Custom Storage' to allow editing of Parameter and Return Storage");
-						}
-						else {
-							setStatusText("Void return storage may not be modified");
-						}
-					}
-				}
+			boolean isEditable = super.editCellAt(row, col, e);
+			if (isEditable) {
+				return true;
 			}
-			return isEditable;
+
+			if (!(e instanceof KeyEvent)) {
+				// When the user double-clicks a table cell, print an error message to signal why 
+				// the cell is not editable.  For key events, we will try to edit the next cell, as 
+				// other tables do this in the system.
+				showEditErrorMessage(row, col);
+				return false;
+			}
+
+			// For key events, we will conveniently edit the next available cell
+			return editNextEditableCell(new TableCell(parameterTable, row, col));
+		}
+
+		/*
+		 * As a convenience to the user, if the cell they are on is not editable, find the next cell
+		 * that is and initiate an edit.  This was a user request.
+		 */
+		private boolean editNextEditableCell(TableCell currentCell) {
+
+			TableCell nextCell = currentCell.getNextCell();
+			do {
+				int row = nextCell.row;
+				int col = nextCell.col;
+				boolean isEditable = super.editCellAt(row, col);
+				if (isEditable) {
+					// set the cell selection so future navigation starts at the edit cell
+					getSelectionModel().setSelectionInterval(row, row);
+					nextCell.selectedColumn();
+					return true;
+				}
+				nextCell = nextCell.getNextCell();
+			}
+			while (!currentCell.equals(nextCell)); // stop if we cycle back to the original cell
+
+			return false;
+		}
+
+		private void showEditErrorMessage(int row, int column) {
+			FunctionVariableData rowData = paramTableModel.getRowObject(row);
+			if (rowData.getStorage().isAutoStorage()) {
+				setStatusText("Auto-parameters may not be modified");
+				return;
+			}
+
+			String columnName = getColumnName(column);
+			if (row == 0 && "Name".equals(columnName)) {
+				setStatusText("Return name may not be modified");
+				return;
+			}
+
+			if ("Storage".equals(columnName)) {
+				boolean blockVoidStorageEdit = (rowData.getIndex() == null) &&
+					VoidDataType.isVoidDataType(rowData.getFormalDataType());
+				if (blockVoidStorageEdit) {
+					setStatusText("Void return storage may not be modified");
+					return;
+				}
+
+				setStatusText("Enable 'Use Custom Storage' to edit Parameter and Return Storage");
+			}
 		}
 	}
 
