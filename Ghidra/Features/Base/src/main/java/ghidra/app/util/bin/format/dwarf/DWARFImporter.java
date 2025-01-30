@@ -305,8 +305,8 @@ public class DWARFImporter {
 			try {
 				sourceManager.addSourceMapEntry(source, sfa.lineNum(), addr, length);
 			}
-			catch (AddressOverflowException e) {
-				String errorString = "AddressOverflowException for source map entry %s %d %s %x %d"
+			catch (AddressOverflowException | IllegalArgumentException e) {
+				String errorString = e.getClass().getName() + " for source map entry %s %d %s %x %d"
 						.formatted(source.getFilename(), sfa.lineNum(), addr.toString(),
 							sfa.address(), length);
 				if (numSourceLineErrorReports++ < MAX_NUM_SOURCE_LINE_ERROR_REPORTS) {

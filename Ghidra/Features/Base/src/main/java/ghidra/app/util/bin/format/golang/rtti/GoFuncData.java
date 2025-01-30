@@ -403,13 +403,17 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 						Address startAddr = programContext.getCodeAddress(startpc);
 						long len = lineEval.getPC() - startpc;
 
+						SourceFile sourceFile = new SourceFile(fileName);
 						try {
-							SourceFile sourceFile = new SourceFile(fileName);
+
 							sfman.addSourceFile(sourceFile);
 							sfman.addSourceMapEntry(sourceFile, lineNum, startAddr, len);
 						}
 						catch (AddressOverflowException e) {
 							Msg.error(this, "Failed to add source file mapping", e);
+						}
+						catch (IllegalArgumentException e) {
+							// overlapping entry
 						}
 					}
 				}
