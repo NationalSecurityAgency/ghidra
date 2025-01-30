@@ -97,7 +97,7 @@ class PCodeTestBuild(BuildUtil):
             return
 
         # save path to tpp
-        tpp_py = os.getcwd() + '/tpp.py'
+        tpp_py = os.getcwd() + '/test_preprocessor.py'
 
         # Get a list of strings to filter input files
         available_files = sorted(glob.glob(self.config.format('%(pcodetest_src)s/*')))
