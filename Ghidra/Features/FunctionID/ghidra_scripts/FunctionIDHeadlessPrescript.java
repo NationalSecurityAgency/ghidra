@@ -34,6 +34,8 @@ public class FunctionIDHeadlessPrescript extends GhidraScript {
 	private static final String LIBRARY_IDENTIFICATION = "Library Identification";
 	private static final String DEMANGLER_MS_ANALYZER = "Demangler Microsoft";
 	private static final String DEMANGLER_GNU_ANALYZER = "Demangler GNU";
+	private static final String DEMANGLER_RUST_ANALYZER = "Demangler Rust";
+	private static final String DEMANGLER_SWIFT_ANALYZER = "Demangler Swift";
 	private static final String SCALAR_OPERAND_ANALYZER = "Scalar Operand References";
 
 	@Override
@@ -50,6 +52,12 @@ public class FunctionIDHeadlessPrescript extends GhidraScript {
 		}
 		if (options.containsKey(DEMANGLER_GNU_ANALYZER)) {
 			setAnalysisOption(currentProgram, DEMANGLER_GNU_ANALYZER, "false");
+		}
+		if (options.containsKey(DEMANGLER_RUST_ANALYZER)) {
+			setAnalysisOption(currentProgram, DEMANGLER_RUST_ANALYZER, "false");
+		}
+		if (options.containsKey(DEMANGLER_SWIFT_ANALYZER)) {
+			setAnalysisOption(currentProgram, DEMANGLER_SWIFT_ANALYZER, "false");
 		}
 		if (options.containsKey(SCALAR_OPERAND_ANALYZER)) {
 			setAnalysisOption(currentProgram, SCALAR_OPERAND_ANALYZER, "true");
