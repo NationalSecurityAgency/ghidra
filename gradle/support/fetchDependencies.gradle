@@ -218,129 +218,129 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	], 
 	[
-		name: "jpype1-1.5.1-cp313-cp313-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/5f/35/e88bc402f2e476449bb835e568c72e6dad6463ca30aa692df84afe5caa7d/jpype1-1.5.1-cp313-cp313-win_amd64.whl",
-		sha256: "39bf24e4a2f1001906d235b731a3fd573e89164a569be592485bb54f394ccd5b",
+		name: "jpype1-1.5.2-cp313-cp313-macosx_10_13_universal2.whl", 
+		url: "https://files.pythonhosted.org/packages/76/be/b37005bec457b94eaaf637a663073b7c5df70113fd4ae4865f6e386c612f/jpype1-1.5.2-cp313-cp313-macosx_10_13_universal2.whl", 
+		sha256: "4acb098cb1698b14b6e5c79e275f4c70dcc01b0fb93425f206d0a5e380e43c66", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		url: "https://files.pythonhosted.org/packages/53/09/c1d188d04fc308049163313419d3d606e2924005015174ba5e276a1b511c/jpype1-1.5.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		sha256: "3bd441732ee864ddec56369d01b131aa851d43d6d722d9b236d09eda5c2c691a",
+		name: "jpype1-1.5.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		url: "https://files.pythonhosted.org/packages/20/a3/00a265d424f7d47e0dc547df2320225ce0143fec671faf710def41404b8c/jpype1-1.5.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		sha256: "c08480c7d18125664a12bf0a244b96b49c05105306b65937dbefeb05ab4b2847", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		url: "https://files.pythonhosted.org/packages/35/9c/3af1f95be832931d7a3e87de00913563b37daf78b9137da4e5b93ae99eda/jpype1-1.5.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		sha256: "d78dd96bd21e220f8be275393f20a64ec8e1ecf071fd2d7d44dac81653e8e78a",
+		name: "jpype1-1.5.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		url: "https://files.pythonhosted.org/packages/6d/d0/191db2e9ab6ae7029368a488c9d88235966843b185aba7925e54aa0c0013/jpype1-1.5.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		sha256: "42fe8db66ad4e5c66f637f5c4de82fca880ba696104e1f4a7e575885923dead8", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp313-cp313-macosx_10_13_universal2.whl",
-		url: "https://files.pythonhosted.org/packages/74/5e/c10e9f68335fae39d0216c82fb31255cb1771b8f2a8899344dea57b735cb/jpype1-1.5.1-cp313-cp313-macosx_10_13_universal2.whl",
-		sha256: "6d17792936c36b475527217dc827f45d088c0de928f0021007e8216fb0008bf0",
+		name: "jpype1-1.5.2-cp313-cp313-win_amd64.whl", 
+		url: "https://files.pythonhosted.org/packages/e3/b7/e1787633b41d609320b41d0dd87fe3118598210609e4e3f6cef93cfcef40/jpype1-1.5.2-cp313-cp313-win_amd64.whl", 
+		sha256: "2b96365f1302df2fb3c6ad73117d6fe450a55b7550fd7fecadac3cec5bc7117c", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp312-cp312-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/fe/58/d376f5c50bad7cafbb4d93eab948ccfdea4a107dda28e016febd2be215a9/jpype1-1.5.1-cp312-cp312-win_amd64.whl",
-		sha256: "9a49463f5eadf4ed8b0bb51dffebe20171bbfc5e6dcc7c1ea9c6888582e4797d",
+		name: "jpype1-1.5.2-cp312-cp312-macosx_10_9_universal2.whl", 
+		url: "https://files.pythonhosted.org/packages/8d/e4/0c27352e8222dcc0e3ce44b298015072d2057d08dd353541c980a31d26c9/jpype1-1.5.2-cp312-cp312-macosx_10_9_universal2.whl", 
+		sha256: "1e1db9ac909ad2ae0e40b04c2aa88cb14250d5245d69715561507681f2b08b2f", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		url: "https://files.pythonhosted.org/packages/42/d9/61f8477f874b1e98537498c97b7a2e411c5d03216cc05a28dfe51054655e/jpype1-1.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		sha256: "b09f4a7c1cbfe56d7f706d7e0f9fa4cc4514c43e7ddb589de5a071115daaf20f",
+		name: "jpype1-1.5.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		url: "https://files.pythonhosted.org/packages/fa/4c/e0200a6e3fed5cda79e926c2a8a610676f04948f89d7e38d93c7d4b21be9/jpype1-1.5.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		sha256: "994fb7b319b453f77ad4b6aff01e0dd4180ea74a6fe5a031e4e9db92dbe95376", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		url: "https://files.pythonhosted.org/packages/b5/a2/b09d703658164b03c7a738a594cd1489a20947c83247ae0b1f276a7a3e8e/jpype1-1.5.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		sha256: "c7263724ba753e1e579b8905401d3a11cc7bf332f5aa6f5b5e93807ac0a4ebee",
+		name: "jpype1-1.5.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		url: "https://files.pythonhosted.org/packages/74/f3/1cd4332076ed0421e703412f47f15f43af170809435c57ba3162edc80d4b/jpype1-1.5.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		sha256: "b5b1fb2b430a50f081ea0ee24d19232ae0d03dbfe3dd076ec5f8ae42b30a656f", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp312-cp312-macosx_10_9_universal2.whl",
-		url: "https://files.pythonhosted.org/packages/9a/c7/1b1a3f1fd286cfdc3d1c39c496cef7e3535226ddd8c60c634a4960fabf71/jpype1-1.5.1-cp312-cp312-macosx_10_9_universal2.whl",
-		sha256: "2f970de32d147d3cb732e14c692bd67ed0b8cd0c02786098a25d26424ce9d053",
+		name: "jpype1-1.5.2-cp312-cp312-win_amd64.whl", 
+		url: "https://files.pythonhosted.org/packages/74/dd/7408d4beae755de6fcd07c76b2f0bacabc0461b43fba83811c1f7c22440e/jpype1-1.5.2-cp312-cp312-win_amd64.whl", 
+		sha256: "c7b1c2d76d211cab60be16505d32a6b3c9fffc51ce79c68e81a3d48e5effff2d", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp311-cp311-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/39/c9/594ef03273b97ad0e2cd9fadc0a4b774fbbac16d9b3974935f9810af32c3/jpype1-1.5.1-cp311-cp311-win_amd64.whl",
-		sha256: "53d007c1b01de8ec98adc9a6843c19a15df002c3d4c4e65bfb959ac4cb2a18ca",
+		name: "jpype1-1.5.2-cp311-cp311-macosx_10_9_universal2.whl", 
+		url: "https://files.pythonhosted.org/packages/35/a0/638186a75026a02286041e4a0449b1dff799a3914dc1c0716ef9b9367b73/jpype1-1.5.2-cp311-cp311-macosx_10_9_universal2.whl", 
+		sha256: "c9f6ab8dd284c16e2617a697d54c3d0304b08020a37386ed96103a129391a2d9", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		url: "https://files.pythonhosted.org/packages/08/2e/277763811099480ccea91b1571901766466a08306eb2ca1469ddb13756c5/jpype1-1.5.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		sha256: "bd331191fd62d4b3d5ac2eec46a0b0ef96ccb424d9f65e702a2ceac87c09df7a",
+		name: "jpype1-1.5.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		url: "https://files.pythonhosted.org/packages/0e/78/95db2eb3c8a7311ee08a2c237cea24828859db6a6cb5e901971d3f5e49da/jpype1-1.5.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		sha256: "a54a771ee56260f98e5b9a77455084e4a48061967de13dabf628bdba9c8122e0", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		url: "https://files.pythonhosted.org/packages/62/7c/cc341ad8d7cb49901e31c6b1c29cb6453720d8717b2dd2114dabfbdd1b6b/jpype1-1.5.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		sha256: "29a9929ac85fa166739c8fd3153a45c0668d485b06252dd8b6fb5939a57e4e4b",
+		name: "jpype1-1.5.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		url: "https://files.pythonhosted.org/packages/0b/7d/9fdbbc1a574be43f9820735ca8df0caf8b159856201d9b21fd73932342bc/jpype1-1.5.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		sha256: "b900e154826a076118d074166596f1d817e113e07084bf0c9c43d8064a86ab77", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp311-cp311-macosx_10_9_universal2.whl",
-		url: "https://files.pythonhosted.org/packages/03/de/2833ba955bfdcec52d86c4a98e3f957d0f7af1d4be8a89a26f666a6a4608/jpype1-1.5.1-cp311-cp311-macosx_10_9_universal2.whl",
-		sha256: "a225b2077b29aac1c9f306c7ca74987f4fb9c3bcfd2eb3f05f7511311a711d84",
+		name: "jpype1-1.5.2-cp311-cp311-win_amd64.whl", 
+		url: "https://files.pythonhosted.org/packages/0e/b9/4dfb38a7f4efb21f71df7344944a8d9a23e30d0503574e455af6ce4f1a56/jpype1-1.5.2-cp311-cp311-win_amd64.whl", 
+		sha256: "0a0d18d4384b3df2e55282545737dfcf18c604504f1382ad14f880bef960f265", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp310-cp310-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/f8/23/877a62da099e8aa46cf006a7b3d2bb593c7156a089e19054ccd44305260c/jpype1-1.5.1-cp310-cp310-win_amd64.whl",
-		sha256: "a1f5760a2b6aef859c6d824260f60bf14d1a7d81732815db61d8816c825b9756",
+		name: "jpype1-1.5.2-cp310-cp310-macosx_10_9_universal2.whl", 
+		url: "https://files.pythonhosted.org/packages/c7/f2/b2efcad1ea5a541f125218e4eb1529ebb8ca18941264c879f3e89a36dc35/jpype1-1.5.2-cp310-cp310-macosx_10_9_universal2.whl", 
+		sha256: "7b2da98c142812ca40a18a735b33e47c6511b03debf1e979630f4cf473b68a87", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		url: "https://files.pythonhosted.org/packages/65/3e/2038d1bac97e28f64ee49a89439c241b8ec6290b3e2a15dbb6e917ac04f4/jpype1-1.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		sha256: "b7eae79ddb568084a6f62b4bb3fce6226d8eee99a847fde8896afaf2995be25b",
+		name: "jpype1-1.5.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		url: "https://files.pythonhosted.org/packages/c0/c6/63538d160c17e837f62d29ba4163bc444cef08c29cd3f3b8090691c1869c/jpype1-1.5.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		sha256: "fcfc5c1d45d6b108800d172ea817bda585db7f1646d6a98d14da9aca66e0eb44", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		url: "https://files.pythonhosted.org/packages/d8/e4/de57e2c1d671880b99ee6c9c4fa8bfd8869781ad68c2372755ea5eccdd17/jpype1-1.5.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		sha256: "8f576712be49855a4fd54ecceb8d451e255f2316bd66cb6d050aefebcc711ebb",
+		name: "jpype1-1.5.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		url: "https://files.pythonhosted.org/packages/97/0a/cbe03759331c640aa5862f974028122a862b08935a0b11b8fa6f6e46c26b/jpype1-1.5.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		sha256: "cdca93cc74f8db1f604d2ea6adb764dec4dec68528f1ee68308fa3d524095739", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp310-cp310-macosx_10_9_universal2.whl",
-		url: "https://files.pythonhosted.org/packages/57/7d/2d4f166be9d5d04d7286b2d476371545272d363f2ab1a53747a92860d0f3/jpype1-1.5.1-cp310-cp310-macosx_10_9_universal2.whl",
-		sha256: "7fecd9dc83aab90acf7b9a9f776cef39ddd15e60f80de5512c57abf1fd2a8434",
+		name: "jpype1-1.5.2-cp310-cp310-win_amd64.whl", 
+		url: "https://files.pythonhosted.org/packages/22/18/0a51845ca890ffdc72f4d71a0c2be334b887c5bb6812207efe5ad45afcb3/jpype1-1.5.2-cp310-cp310-win_amd64.whl", 
+		sha256: "924b0a0cf93d3dddb3f79286fbe40f8c901c78ed61216edbe108666234df43e0", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp39-cp39-win_amd64.whl",
-		url: "https://files.pythonhosted.org/packages/3b/69/337339f7c700f3002bdadbff40e9899a4c4c350fc5f5fb1421ed26b5f9fe/jpype1-1.5.1-cp39-cp39-win_amd64.whl",
-		sha256: "19d0ebb359b9209fe25268cf9eba2f6dd31df4fe806c7b33f3d5fc4cf2017a75",
+		name: "jpype1-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl", 
+		url: "https://files.pythonhosted.org/packages/05/71/590b2a91b43763aa27eac2c63803542a2878a4d8c600b81aa694d3fde919/jpype1-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl", 
+		sha256: "8b75d33e93a3bc6543ddf97c24ee0adb5a86a69fb67f0e4f4fa1c8c3970bbf98", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		url: "https://files.pythonhosted.org/packages/28/c0/4fceffedacf3ca90af2dbf336627bcf03239a2ca214243418afe9c776948/jpype1-1.5.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-		sha256: "e7a95741501410ee7e8b9a0e77ed62386edff48ecac3fab3219ae0971753b624",
+		name: "jpype1-1.5.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		url: "https://files.pythonhosted.org/packages/77/6b/130fb6d0c43976b4e129c6bc19daf0e25c42fc38c5096ed92c4105bfd2c4/jpype1-1.5.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", 
+		sha256: "ea21bca4cece752cd3ee88fcd62ce8f444feac8dc7244475fdb9c0e8712e07ea", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		url: "https://files.pythonhosted.org/packages/cf/52/0275836bc56ac111bb1a131bee90ed2006dbbf5e9f93e71cc4fba5ab5e2a/jpype1-1.5.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
-		sha256: "13bea6bf8005a9cdd6c7c04f9012f35ec905a18d42fedfe71624e5731d15af40",
+		name: "jpype1-1.5.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		url: "https://files.pythonhosted.org/packages/77/91/f08a719461a390b48d9096b50f1f4a49ee281007ec192e51073090d3d8b7/jpype1-1.5.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", 
+		sha256: "54744265ef36665d110d139a4b81d10532694c6077b23ef60f3609feadc22d30", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1-cp39-cp39-macosx_10_9_x86_64.whl",
-		url: "https://files.pythonhosted.org/packages/84/48/79250c84ed3b7f96dfdd58b0969de9b263b1dfccf03ab8828309d4b4fd8c/jpype1-1.5.1-cp39-cp39-macosx_10_9_x86_64.whl",
-		sha256: "7b8e0e903d15f425eec412a43fe94ff581beb919277ec350e1a73a22f43eca74",
+		name: "jpype1-1.5.2-cp39-cp39-win_amd64.whl", 
+		url: "https://files.pythonhosted.org/packages/e5/cf/344e1f81f1e8c651ec23dfa9fe4b91f6e1d699b36f610a547ba85ee7fb16/jpype1-1.5.2-cp39-cp39-win_amd64.whl", 
+		sha256: "68e1d118200fc46f4ea4bf20900081587ec04de484037c997b0a3b7c5eb71fe3", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	],
 	[
-		name: "jpype1-1.5.1.tar.gz",
-		url: "https://files.pythonhosted.org/packages/c2/50/cc34769452934a1342326c1eee23d4e70229164364e7cbbdf3f572699f31/jpype1-1.5.1.tar.gz",
-		sha256: "cbb8ea952bf0a0c6011f21a31a97baed241c4aad0e2499db386edfd5cf2adece",
+		name: "jpype1-1.5.2.tar.gz", 
+		url: "https://files.pythonhosted.org/packages/bd/68/47fa634cbd0418cbca86355e9421425f5892ee994f7338106327e49f9117/jpype1-1.5.2.tar.gz", 
+		sha256: "74a42eccf21d30394c1832aec3985a14965fa5320da087b65029d172c0cec43b", 
 		destination: file("${DEPS_DIR}/PyGhidra/")
 	]
 ]
