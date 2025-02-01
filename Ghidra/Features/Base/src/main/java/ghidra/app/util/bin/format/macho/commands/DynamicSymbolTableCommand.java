@@ -304,7 +304,7 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public int getLinkerDataOffset() {
+	public long getLinkerDataOffset() {
 		return indirectsymoff;
 	}
 

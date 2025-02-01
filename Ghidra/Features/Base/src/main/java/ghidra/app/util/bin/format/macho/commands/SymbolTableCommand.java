@@ -37,9 +37,9 @@ import ghidra.util.task.TaskMonitor;
  * Represents a symtab_command structure
  */
 public class SymbolTableCommand extends LoadCommand {
-	private int symoff;
+	private long symoff;
 	private int nsyms;
-	private int stroff;
+	private long stroff;
 	private int strsize;
 
 	private List<NList> symbols = new ArrayList<NList>();
@@ -58,9 +58,9 @@ public class SymbolTableCommand extends LoadCommand {
 			MachHeader header) throws IOException {
 		super(loadCommandReader);
 
-		symoff = loadCommandReader.readNextInt();
+		symoff = loadCommandReader.readNextUnsignedInt();
 		nsyms = loadCommandReader.readNextInt();
-		stroff = loadCommandReader.readNextInt();
+		stroff = loadCommandReader.readNextUnsignedInt();
 		strsize = loadCommandReader.readNextInt();
 
 		List<NList> nlistList = new ArrayList<>(nsyms);
@@ -90,7 +90,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * The symbol table is an array of nlist data structures.
 	 * @return symbol table offset
 	 */
-	public int getSymbolOffset() {
+	public long getSymbolOffset() {
 		return symoff;
 	}
 
@@ -107,7 +107,7 @@ public class SymbolTableCommand extends LoadCommand {
 	 * location of the string table.
 	 * @return string table offset
 	 */
-	public int getStringTableOffset() {
+	public long getStringTableOffset() {
 		return stroff;
 	}
 
@@ -169,7 +169,7 @@ public class SymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public int getLinkerDataOffset() {
+	public long getLinkerDataOffset() {
 		return symoff;
 	}
 

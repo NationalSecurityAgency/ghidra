@@ -91,7 +91,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * 
 	 * @return The file offset of this load command's "linker data", or 0 if it has no linker data
 	 */
-	public int getLinkerDataOffset() {
+	public long getLinkerDataOffset() {
 		return 0;
 	}
 
@@ -170,7 +170,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * @param size The size (actual size not important, but 0 will cause null to be returned)
 	 * @return The converted {@link Address}, or null if there is no corresponding {@link Address}
 	 */
-	protected Address fileOffsetToAddress(Program program, MachHeader header, int fileOffset,
+	protected Address fileOffsetToAddress(Program program, MachHeader header, long fileOffset,
 			int size) {
 		if (fileOffset != 0 && size != 0) {
 			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();

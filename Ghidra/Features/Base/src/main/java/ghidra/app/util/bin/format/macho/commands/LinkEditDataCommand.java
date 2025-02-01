@@ -58,7 +58,7 @@ public class LinkEditDataCommand extends LoadCommand {
 	}
 
 	@Override
-	public int getLinkerDataOffset() {
+	public long getLinkerDataOffset() {
 		return dataoff;
 	}
 
