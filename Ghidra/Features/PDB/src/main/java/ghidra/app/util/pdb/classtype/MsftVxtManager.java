@@ -25,7 +25,7 @@ import ghidra.app.util.demangler.microsoft.MicrosoftMangledContext;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.mem.Memory;
+import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -52,7 +52,7 @@ import mdemangler.typeinfo.*;
  */
 public class MsftVxtManager extends VxtManager {
 
-	private Memory memory;
+	private Program program;
 	private Map<String, Address> vxtAddressByMangled;
 	private Map<String, ParentageNode> parentageNodeByMangled;
 
@@ -72,11 +72,11 @@ public class MsftVxtManager extends VxtManager {
 	/**
 	 * Constructor for this class
 	 * @param ctm the class type manager
-	 * @param memory the memory of the program
+	 * @param program the program
 	 */
-	public MsftVxtManager(ClassTypeManager ctm, Memory memory) {
+	public MsftVxtManager(ClassTypeManager ctm, Program program) {
 		super(ctm);
-		this.memory = memory;
+		this.program = program;
 		vxtAddressByMangled = new HashMap<>();
 		parentageNodeByMangled = new HashMap<>();
 		vbtsByOwner = new HashMap<>();
@@ -108,6 +108,54 @@ public class MsftVxtManager extends VxtManager {
 			return null;
 		}
 		return map.firstEntry().getValue();
+	}
+
+	/**
+	 * Returns the class IDs of all owners of VBTs
+	 * @return the IDs
+	 */
+	public ClassID[] getAllVbtOwners() {
+		ClassID ids[] = new ClassID[vbtsByOwner.size()];
+		Set<ClassID> set = vbtsByOwner.keySet();
+		return set.toArray(ids);
+	}
+
+	/**
+	 * Returns the class IDs of all owners of VFTs
+	 * @return the IDs
+	 */
+	public ClassID[] getAllVftOwners() {
+		ClassID ids[] = new ClassID[vbtsByOwner.size()];
+		Set<ClassID> set = vftsByOwner.keySet();
+		return set.toArray(ids);
+	}
+
+	/**
+	 * Returns the ordered in-memory {@link VBTable}s for the owning class
+	 * @param owner the owning class of the table
+	 * @return the tables
+	 */
+	public VBTable[] getVbts(ClassID owner) {
+		TreeMap<Address, VBTable> map = vbtsByOwner.get(owner);
+		if (map == null) {
+			return null;
+		}
+		Collection<VBTable> values = map.values();
+		return values.toArray(new VBTable[values.size()]);
+	}
+
+	/**
+	 * Returns the ordered in-memory {@link VFTable}s for the owning class
+	 * @param owner the owning class of the table
+	 * @return the tables
+	 */
+	public VFTable[] getVfts(ClassID owner) {
+		TreeMap<Address, VFTable> map = vftsByOwner.get(owner);
+		if (map == null) {
+			return null;
+		}
+		Collection<VFTable> values = map.values();
+		return values.toArray(new VFTable[values.size()]);
 	}
 
 	/**
@@ -245,7 +293,7 @@ public class MsftVxtManager extends VxtManager {
 		switch (demanglerResults.vtType()) {
 			case VBT:
 				ProgramVirtualBaseTable prvbt = new ProgramVirtualBaseTable(owner, parentage,
-					memory, address, ctm.getDefaultVbtTableElementSize(), ctm, mangled);
+					program, address, ctm.getDefaultVbtTableElementSize(), ctm, mangled);
 				if (node.getVBTable() != null) {
 					Msg.warn(this, "VBT already exists at node for " + mangled);
 					return false;
@@ -257,7 +305,7 @@ public class MsftVxtManager extends VxtManager {
 
 			case VFT:
 				ProgramVirtualFunctionTable vft = new ProgramVirtualFunctionTable(owner, parentage,
-					memory, address, ctm.getDefaultVftTableElementSize(), mangled);
+					program, address, ctm.getDefaultVftTableElementSize(), mangled);
 				if (node.getVFTable() != null) {
 					Msg.warn(this, "VFT already exists at node for " + mangled);
 					return false;
