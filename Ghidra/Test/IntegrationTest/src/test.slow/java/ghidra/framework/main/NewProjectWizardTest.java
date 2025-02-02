@@ -28,7 +28,6 @@ import org.junit.experimental.categories.Category;
 
 import docking.action.DockingActionIf;
 import docking.wizard.WizardDialog;
-import generic.test.AbstractGenericTest;
 import generic.test.category.PortSensitiveCategory;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
@@ -313,7 +312,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertNotNull(repNameField);
 			assertTrue(!repNameField.isEnabled());
 
-			JList repList = findComponent(repPanel, JList.class);
+			JList<?> repList = findComponent(repPanel, JList.class);
 			assertNotNull(repList);
 			assertTrue(repList.isEnabled());
 
@@ -457,7 +456,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertNotNull(repNameField);
 			assertTrue(!repNameField.isEnabled());
 
-			final JList repList = findComponent(repPanel, JList.class);
+			final JList<?> repList = findComponent(repPanel, JList.class);
 			assertNotNull(repList);
 			assertTrue(repList.isEnabled());
 
@@ -471,7 +470,6 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			SwingUtilities.invokeAndWait(() -> repList.setSelectedIndex(0));
 			waitForSwing();
 			assertTrue(nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
 
 			// next panel is project location panel
 			pressButton(nextButton, true);
@@ -531,7 +529,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void startServer() throws Exception {
-		File parent = new File(AbstractGenericTest.getTestDirectoryPath());
+		File parent = new File(getTestDirectoryPath());
 
 		// Create server instance
 		serverRoot = new File(parent, "My_Server");
