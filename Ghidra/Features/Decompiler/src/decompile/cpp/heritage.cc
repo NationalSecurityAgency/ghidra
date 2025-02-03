@@ -1892,10 +1892,11 @@ TaskList::iterator Heritage::refinement(TaskList::iterator memiter,const vector<
   int4 size = (*memiter).size;
   if (size > 1024) return disjoint.end();
   Address addr = (*memiter).addr;
-  vector<int4> refine(size+1,0);
+  vector<int4> refine(size+1,0);		// Add "fencepost" for size position
   buildRefinement(refine,addr,readvars);
   buildRefinement(refine,addr,writevars);
   buildRefinement(refine,addr,inputvars);
+  refine.pop_back();				// Remove the fencepost
   int4 lastpos = 0;
   for(int4 curpos=1;curpos < size;++curpos) { // Convert boundary points to partition sizes
     if (refine[curpos] != 0) {
