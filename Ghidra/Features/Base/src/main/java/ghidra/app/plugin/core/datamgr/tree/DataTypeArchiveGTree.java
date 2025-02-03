@@ -24,6 +24,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 
+import docking.action.DockingAction;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
@@ -122,10 +123,18 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	@Override
-	protected boolean supportsPopupActions() {
-		// The base tree adds collapse/ expand actions, which we already provide, so signal that we
-		// do not want those actions.
-		return false;
+	protected boolean isAddToPopup(DockingAction action) {
+
+		String name = action.getName();
+		switch (name) {
+			case "Tree Expand All":
+			case "Tree Expand Node":
+			case "Tree Collapse Node":
+				// case "Tree Collapse All": // this action seems ok
+				return false;
+			default:
+				return true;
+		}
 	}
 
 	@Override
