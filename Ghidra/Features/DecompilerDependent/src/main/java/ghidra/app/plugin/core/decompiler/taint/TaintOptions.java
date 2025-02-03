@@ -45,6 +45,7 @@ public class TaintOptions {
 	/* The default name of the index database file. */
 	public final static String OP_KEY_TAINT_DB = "Taint.Query.Index";
 
+	public final static String OP_KEY_TAINT_QUERY_ENGINE = "Taint.Query Engine";
 	public final static String OP_KEY_TAINT_QUERY_DIRECTION = "Taint.Force Direction";
 	public final static String OP_KEY_TAINT_QUERY_OUTPUT_FORM = "Taint.Output Format";
 	/* Color used in the decompiler to highlight taint. */
@@ -68,13 +69,14 @@ public class TaintOptions {
 		new GColor("color.bg.listing.highlighter.default");
 	private final static Highlighter TAINT_HIGHLIGHT_STYLE_DEFAULT = Highlighter.DEFAULT;
 
-	private String taintEngine;
+	private String taintEnginePath;
 	private String taintFactsDir;
 	private String taintOutputDir;
 
 	private String taintQuery;
 	private String taintDB;
 
+	private String taintQueryEngine;
 	private TaintDirection taintQueryDirection;
 	private TaintFormat taintQueryOutputForm;
 
@@ -106,7 +108,7 @@ public class TaintOptions {
 	public TaintOptions(TaintProvider provider) {
 		taintProvider = provider;
 
-		taintEngine = DEFAULT_TAINT_ENGINE_PATH;
+		taintEnginePath = DEFAULT_TAINT_ENGINE_PATH;
 		taintFactsDir = DEFAULT_TAINT_FACTS_DIR;
 		taintOutputDir = DEFAULT_TAINT_OUTPUT_DIR;
 		taintQuery = DEFAULT_TAINT_QUERY;
@@ -129,7 +131,11 @@ public class TaintOptions {
 
 		opt.registerOption(OP_KEY_TAINT_QUERY_OUTPUT_FORM, TaintFormat.ALL,
 			new HelpLocation(HelpTopics.DECOMPILER, "Taint Output Type"),
-			"The type of Source-Sink query output (e.g., sarif, summary, text");
+			"The type of Source-Sink query output (e.g., sarif, summary, text)");
+
+		opt.registerOption(OP_KEY_TAINT_QUERY_ENGINE, "",
+			new HelpLocation(HelpTopics.DECOMPILER, "Taint Query Engine"),
+			"The query engine (e.g., angr, ctadl)");
 
 		opt.registerOption(OP_KEY_TAINT_ENGINE_PATH, DEFAULT_TAINT_ENGINE_PATH,
 			new HelpLocation(HelpTopics.DECOMPILER, "Taint Engine Directory"),
@@ -176,7 +182,17 @@ public class TaintOptions {
 	 */
 	public void grabFromToolAndProgram(Plugin ownerPlugin, ToolOptions opt, Program program) {
 
-		taintEngine = opt.getString(OP_KEY_TAINT_ENGINE_PATH, "");
+		String engine = opt.getString(OP_KEY_TAINT_QUERY_ENGINE, "");
+		if (!engine.equals(taintQueryEngine)) {
+			TaintPlugin plugin = (TaintPlugin) ownerPlugin;
+			TaintState state = TaintState.newInstance(plugin, engine);
+			if (state != null) {
+				plugin.setTaintState(state);
+				taintQueryEngine = engine;
+			}
+		}
+		
+		taintEnginePath = opt.getString(OP_KEY_TAINT_ENGINE_PATH, "");
 		taintFactsDir = opt.getString(OP_KEY_TAINT_FACTS_DIR, "");
 		taintQuery = opt.getString(OP_KEY_TAINT_QUERY, "");
 		// taintQueryResultsFile = opt.getString(OP_KEY_TAINT_QUERY_RESULTS, "");
@@ -196,8 +212,12 @@ public class TaintOptions {
 		return taintQueryOutputForm;
 	}
 
+	public String getTaintEngineType() {
+		return taintQueryEngine;
+	}
+
 	public String getTaintEnginePath() {
-		return taintEngine;
+		return taintEnginePath;
 	}
 
 	public String getTaintFactsDirectory() {
@@ -242,6 +262,11 @@ public class TaintOptions {
 
 	public Boolean getTaintUseAllAccess() {
 		return taintUseAllAccess;
+	}
+
+	public void setTaintQueryEngine(String engine) {
+		this.taintQueryEngine = engine;
+		taintProvider.setOption(OP_KEY_TAINT_QUERY_ENGINE, engine);
 	}
 
 	public void setTaintOutputForm(TaintFormat form) {

@@ -111,8 +111,11 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	}
 
 	public static enum TaintFormat {
-		ALL("all", "sarif+all"), GRAPHS("graphs", "sarif+graphs"), 
-		INSTS("insts", "sarif+instructions"), PATHS("paths", "sarif");
+		ALL("all", "sarif+all"), 
+		GRAPHS("graphs", "sarif+graphs"), 
+		INSTS("insts", "sarif+instructions"),
+		PATHS("paths", "sarif"),
+		NONE("none", "none");
 
 		private String label;
 		private String optionString;
@@ -175,7 +178,6 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	public TaintPlugin(PluginTool tool) {
 		super(tool);
-		state = TaintState.newInstance(this);
 		taintProvider = new TaintProvider(this);
 		taintDecompMarginProvider = new TaintDecompilerMarginProvider(this);
 		createActions();
@@ -353,9 +355,11 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 				GhidraState ghidraState = new GhidraState(tool, null, currentProgram,
 					currentLocation, currentHighlight, currentHighlight);
 				GhidraScript exportScript = state.getExportScript(consoleService, false);
-				RunPCodeExportScriptTask export_task =
-					new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
-				tool.execute(export_task);
+				if (exportScript != null) {
+					RunPCodeExportScriptTask export_task =
+						new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
+					tool.execute(export_task);
+				}
 			}
 
 			@Override
@@ -431,6 +435,10 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	public TaintState getTaintState() {
 		return state;
+	}
+
+	public void setTaintState(TaintState state) {
+		this.state = state;
 	}
 
 	public TaintProvider getProvider() {

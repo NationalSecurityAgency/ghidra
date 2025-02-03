@@ -16,19 +16,19 @@
 package ghidra.app.plugin.core.decompiler.taint.actions;
 
 import docking.action.MenuData;
+import docking.widgets.dialogs.InputDialog;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.plugin.core.decompiler.taint.TaintLabel;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
-import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
 import ghidra.program.model.listing.Function;
-import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
 /**
  * Triggered by right-click on a token in the decompiler window.
- * 
- * Action triggered from a specific token in the decompiler window to mark a symbol as a
+ * <p>
+ * Action triggered from a specific token in the decompiler window to mark a variable as a
  * source or sink and generate the requisite query. Legal tokens to select include:
  * <ul><li>
  * An input parameter,
@@ -40,22 +40,15 @@ import ghidra.util.UndefinedFunction;
  * A "dynamic" variable. 
  * </li></ul>
  */
-public class TaintSourceBySymbolAction extends TaintAbstractDecompilerAction {
+public class TaintSetSizeAction extends TaintAbstractDecompilerAction {
 
 	private TaintPlugin plugin;
-	private MarkType mtype;
 
-	public TaintSourceBySymbolAction(TaintPlugin plugin) {
-		super("Mark Source (Symbol)");
-		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintSourceSymbol"));
+	public TaintSetSizeAction(TaintPlugin plugin) {
+		super("Set length");
 		// Taint Menu  -> Source sub item.
-		setPopupMenuData(new MenuData(new String[] { "Taint", "Source (Symbol)" }, "Decompile"));
+		setPopupMenuData(new MenuData(new String[] { "Taint", "Set length" }, "Decompile"));
 		this.plugin = plugin;
-		this.mtype = MarkType.SOURCE;
-	}
-
-	protected void mark(ClangToken token) {
-		plugin.toggleIcon(mtype, token, true);
 	}
 
 	@Override
@@ -90,6 +83,15 @@ public class TaintSourceBySymbolAction extends TaintAbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		mark(context.getTokenAtCursor());
+		TaintLabel label = plugin.getTaintState().getLabelForToken(MarkType.SOURCE, context.getTokenAtCursor());
+		if (label != null) {
+			InputDialog dialog = new InputDialog("Update length", "Length", Integer.toHexString(label.getSize()));
+			plugin.getTool().showDialog(dialog);
+			if (dialog.isCanceled()) {
+				return;
+			}
+			String val = dialog.getValue();
+			label.setSize(Integer.parseInt(val, 16));
+		}
 	}
 }
