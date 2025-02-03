@@ -1457,12 +1457,16 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * A method that subclasses can override to signal that they wish not to have this tree's
-	 * built-in popup actions.   Subclasses will almost never need to override this method.
-	 *
-	 * @return true if popup actions are supported
+	 * A method that subclasses can override to decide if the given action should appear in the 
+	 * popup menu.  Most subclasses will not need to override this method.  An example for 
+	 * overriding this method is one of the subclasses that have their own version of one of the 
+	 * built-in actions, such as Expand All.  Some clients have a custom expand action.  In that 
+	 * case, the client wants their action in the menu and not the built-in version.
+	 * 
+	 * @param action the action 
+	 * @return true to have the action appear in the popup; the default is true
 	 */
-	protected boolean supportsPopupActions() {
+	protected boolean isAddToPopup(DockingAction action) {
 		return true;
 	}
 
@@ -1484,6 +1488,7 @@ public class GTree extends JPanel implements BusyListener {
 		private boolean paintLeafHandles = true;
 		private int scrollableUnitIncrementOverride = -1;
 		private boolean allowRootCollapse = true;
+		private boolean isCopyFormatted;
 
 		public AutoScrollTree(TreeModel model) {
 			super(model);
@@ -1492,11 +1497,30 @@ public class GTree extends JPanel implements BusyListener {
 
 			setRowHeight(-1);// variable size rows
 			setSelectionModel(new GTreeSelectionModel());
-			setInvokesStopCellEditing(true);// clicking outside the cell editor will trigger a save, not a cancel
+
+			// clicking outside the cell editor will trigger a save, not a cancel
+			setInvokesStopCellEditing(true);
 
 			updateDefaultKeyBindings();
 
 			ToolTipManager.sharedInstance().registerComponent(this);
+		}
+
+		@Override
+		public String convertValueToText(Object value, boolean selected, boolean expanded,
+				boolean leaf, int row, boolean hasFocus) {
+
+			String spacing = "";
+			if (isCopyFormatted) {
+				GTreeNode node = (GTreeNode) value;
+				TreePath path = node.getTreePath();
+				int n = path.getPathCount();
+				int tabs = (n - 1) * 4; // no spacing for the first column
+				spacing = StringUtils.repeat(' ', tabs);
+			}
+
+			String text = super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
+			return spacing + text;
 		}
 
 		private void updateDefaultKeyBindings() {
@@ -1666,7 +1690,7 @@ public class GTree extends JPanel implements BusyListener {
 			}
 
 			GTree gTree = getTree(context);
-			return gTree.supportsPopupActions();
+			return gTree.isAddToPopup(this);
 		}
 
 		@Override
@@ -1733,7 +1757,6 @@ public class GTree extends JPanel implements BusyListener {
 			)
 		);
 		collapseAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK));
-		collapseAction.setHelpLocation(new HelpLocation("Trees", "Collapse"));
 		//@formatter:on
 
 		GTreeAction expandAction = new GTreeAction("Tree Expand Node", owner) {
@@ -1767,7 +1790,6 @@ public class GTree extends JPanel implements BusyListener {
 			)
 		);
 		expandAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK));
-		expandAction.setHelpLocation(new HelpLocation("Trees", "Expand"));
 		//@formatter:on
 
 		GTreeAction collapseTreeAction = new GTreeAction("Tree Collapse All", owner) {
@@ -1786,7 +1808,6 @@ public class GTree extends JPanel implements BusyListener {
 				Integer.toString(subGroupIndex++)
 			)
 		);
-		collapseTreeAction.setHelpLocation(new HelpLocation("Trees", "Collapse_Tree"));
 		//@formatter:on
 
 		GTreeAction expandTreeAction = new GTreeAction("Tree Expand All", owner) {
@@ -1804,7 +1825,32 @@ public class GTree extends JPanel implements BusyListener {
 				Integer.toString(subGroupIndex++)
 			)
 		);
-		expandTreeAction.setHelpLocation(new HelpLocation("Trees", "Expand_Tree"));
+		//@formatter:on
+
+		GTreeAction copyFormattedAction = new GTreeAction("Tree Copy Formatted", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+
+				GTree gTree = (GTree) context.getSourceComponent();
+				gTree.tree.isCopyFormatted = true;
+				try {
+					Action builtinCopyAction = TransferHandler.getCopyAction();
+					builtinCopyAction.actionPerformed(new ActionEvent(gTree.tree, 0, "copy"));
+				}
+				finally {
+					gTree.tree.isCopyFormatted = false;
+				}
+			}
+		};
+		//@formatter:off
+		copyFormattedAction.setPopupMenuData(new MenuData(
+				new String[] { "Copy Formatted" },
+				null,
+				actionMenuGroup, NO_MNEMONIC,
+				Integer.toString(subGroupIndex++)
+			)
+		);
+		copyFormattedAction.setHelpLocation(new HelpLocation("Trees", "Copy_Special"));
 		//@formatter:on
 
 		GTreeAction activateFilterAction = new GTreeAction("Table/Tree Activate Filter", owner) {
@@ -1850,6 +1896,7 @@ public class GTree extends JPanel implements BusyListener {
 		toolActions.addGlobalAction(expandAction);
 		toolActions.addGlobalAction(collapseTreeAction);
 		toolActions.addGlobalAction(expandTreeAction);
+		toolActions.addGlobalAction(copyFormattedAction);
 		toolActions.addGlobalAction(activateFilterAction);
 		toolActions.addGlobalAction(toggleFilterAction);
 	}
