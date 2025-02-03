@@ -25,7 +25,6 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
 import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
-import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
@@ -43,7 +42,7 @@ public class TaintGateAction extends TaintAbstractDecompilerAction {
 	private TaintPlugin plugin;
 	private MarkType mtype;
 
-	public TaintGateAction(TaintPlugin plugin, TaintState state) {
+	public TaintGateAction(TaintPlugin plugin) {
 		super("Mark Gate");
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintGate"));
 		setPopupMenuData(new MenuData(new String[] { "Taint", "Gate" }, "Decompile"));
@@ -58,6 +57,10 @@ public class TaintGateAction extends TaintAbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		if (plugin.getTaintState() == null) {
+			return false;
+		}
+		
 		Function function = context.getFunction();
 		if (function == null || function instanceof UndefinedFunction) {
 			return false;

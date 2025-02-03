@@ -28,6 +28,7 @@ public class TaintLabel {
 	private String fname;
 	private HighFunction hfun;
 	private HighVariable hvar;
+	private Varnode vnode;
 	private boolean active;
 	private String label;
 	private boolean isGlobal = false;
@@ -36,8 +37,10 @@ public class TaintLabel {
 	// TODO: This is not a good identifier since it could change during re work!
 	private Address addr;
 	private ClangLine clangLine;
+	private int size = 0;
 
 	public TaintLabel(MarkType mtype, ClangToken token) throws PcodeException {
+	
 		HighVariable highVar = token.getHighVariable();
 		if (highVar == null) {
 			hfun = token.getClangFunction().getHighFunction();
@@ -50,25 +53,31 @@ public class TaintLabel {
 			}
 		}
 
-		Varnode exactSpot = token.getVarnode();
-		if (exactSpot != null) { // The user pointed at a particular usage, not just the vardecl			
-			HighVariable high = exactSpot.getHigh();
+		this.vnode = token.getVarnode();
+		if (vnode != null) { // The user pointed at a particular usage, not just the vardecl			
+			HighVariable high = vnode.getHigh();
 			if (high instanceof HighLocal) {
-				highVar = hfun.splitOutMergeGroup(high, exactSpot);
+				highVar = hfun.splitOutMergeGroup(high, vnode);
 			}
 		}
 
 		String fn = token instanceof ClangFuncNameToken ftoken ? ftoken.getText()
 				: hfun.getFunction().getName();
 		PcodeOp pcodeOp = token.getPcodeOp();
-		Address target = pcodeOp == null ? null : pcodeOp.getSeqnum().getTarget();
-
+		Address target = pcodeOp == null ? hfun.getFunction().getEntryPoint() : pcodeOp.getSeqnum().getTarget();
+		if (vnode == null && pcodeOp != null) {
+			vnode = pcodeOp.getOutput();
+		}
+		
 		this.mtype = mtype;
 		this.token = token;
 		this.fname = fn;
 		this.hvar = highVar;
 		this.active = true;
 		this.addr = target;
+		if (hvar != null) {
+			size = hvar.getSize();
+		}
 		this.clangLine = token.getLineParent();
 
 		// Initial label is one of SOURCE, SINK, or GATE
@@ -145,6 +154,14 @@ public class TaintLabel {
 	public void activate() {
 		active = true;
 	}
+	
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
+	}
 
 	public void toggle() {
 		active = !active;
@@ -212,6 +229,13 @@ public class TaintLabel {
 			return false;
 		}
 		return true;
+	}
+	
+	public Address getVarnodeAddress() {
+		if (vnode != null) {
+			return vnode.getAddress();
+		}
+		return null;
 	}
 
 }

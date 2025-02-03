@@ -43,22 +43,22 @@ public abstract class AbstractTaintState implements TaintState {
 
 	public static String ENGINE_NAME = "";
 
-	private Set<TaintLabel> sources = new HashSet<>();
-	private Set<TaintLabel> sinks = new HashSet<>();
-	private Set<TaintLabel> gates = new HashSet<>();
+	protected Set<TaintLabel> sources = new HashSet<>();
+	protected Set<TaintLabel> sinks = new HashSet<>();
+	protected Set<TaintLabel> gates = new HashSet<>();
 
 	// Sets used for highlighting.
-	private AddressSet taintAddressSet = new AddressSet();
-	private Map<Address, Set<TaintQueryResult>> taintVarnodeMap = new HashMap<>();
+	protected AddressSet taintAddressSet = new AddressSet();
+	protected Map<Address, Set<TaintQueryResult>> taintVarnodeMap = new HashMap<>();
 
 	private AddressSet deltaAddressSet = new AddressSet();
 	private Map<Address, Set<TaintQueryResult>> deltaVarnodeMap = new HashMap<>();
 
-	private SarifSchema210 currentQueryData;
+	protected SarifSchema210 currentQueryData;
 
 	protected TaintOptions taintOptions;
-	private TaintPlugin plugin;
-
+	protected TaintPlugin plugin;
+	protected boolean usesIndex = true;
 	private boolean cancellation;
 
 	private TaskType taskType;
@@ -74,9 +74,13 @@ public abstract class AbstractTaintState implements TaintState {
 	public abstract void buildIndex(List<String> param_list, String engine_path, String facts_path,
 			String index_path);
 
+	protected abstract void writeHeader(PrintWriter writer);
+
 	protected abstract void writeRule(PrintWriter writer, TaintLabel mark, boolean isSource);
 
 	protected abstract void writeGate(PrintWriter writer, TaintLabel mark);
+
+	protected abstract void writeFooter(PrintWriter writer);
 
 	@Override
 	public boolean wasCancelled() {
@@ -120,6 +124,17 @@ public abstract class AbstractTaintState implements TaintState {
 		marks.add(tlabel);
 		plugin.getTool().contextChanged(plugin.getDecompilerProvider());
 		return tlabel;
+	}
+
+	@Override
+	public TaintLabel getLabelForToken(MarkType type, ClangToken token) {
+		Set<TaintLabel> marks = getTaintLabels(type);
+		for (TaintLabel existingLabel : marks) {
+			if (token.equals(existingLabel.getToken())) {
+				return existingLabel;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -173,15 +188,13 @@ public abstract class AbstractTaintState implements TaintState {
 	public boolean writeQueryFile(File queryTextFile) throws Exception {
 
 		PrintWriter writer = new PrintWriter(queryTextFile);
-		writer.println("#include \"pcode/taintquery.dl\"");
+		writeHeader(writer);
 
 		for (TaintLabel mark : sources) {
 			if (mark.isActive()) {
 				writeRule(writer, mark, true);
 			}
 		}
-
-		writer.println("");
 
 		for (TaintLabel mark : sinks) {
 			if (mark.isActive()) {
@@ -191,7 +204,6 @@ public abstract class AbstractTaintState implements TaintState {
 		}
 
 		if (!gates.isEmpty()) {
-			writer.println("");
 			for (TaintLabel mark : gates) {
 				if (mark.isActive()) {
 					writeGate(writer, mark);
@@ -199,6 +211,8 @@ public abstract class AbstractTaintState implements TaintState {
 			}
 		}
 
+		writeFooter(writer);
+		
 		writer.flush();
 		writer.close();
 
@@ -220,7 +234,7 @@ public abstract class AbstractTaintState implements TaintState {
 			return false;
 		}
 
-		List<String> param_list = new ArrayList<String>();
+		List<String> paramList = new ArrayList<String>();
 		File queryFile = null;
 		taintOptions = plugin.getOptions();
 
@@ -228,36 +242,38 @@ public abstract class AbstractTaintState implements TaintState {
 
 			// Make sure we can access and execute the engine binary.
 			Path engine = Path.of(taintOptions.getTaintEnginePath());
-			File engine_file = engine.toFile();
+			File engineFile = engine.toFile();
 
-			if (!engine_file.exists() || !engine_file.canExecute()) {
+			if (!engineFile.exists()) {
 				plugin.consoleMessage("The " + getName() + " binary (" +
-					engine_file.getCanonicalPath() + ") cannot be found or executed.");
-				engine_file = getFilePath(taintOptions.getTaintEnginePath(),
+					engineFile.getCanonicalPath() + ") cannot be found or executed.");
+				engineFile = getFilePath(taintOptions.getTaintEnginePath(),
 					"Select the " + getName() + " binary");
-				if (engine_file == null) {
+				if (engineFile == null) {
 					plugin.consoleMessage(
 						"No " + getName() + " engine has been specified; exiting query function.");
 					return false;
 				}
 			}
 
-			plugin.consoleMessage("Using " + getName() + " binary: " + engine_file.toString());
+			plugin.consoleMessage("Using " + getName() + " binary: " + engineFile.toString());
 
-			Path index_directory = Path.of(taintOptions.getTaintOutputDirectory());
+			Path indexDirectory = Path.of(taintOptions.getTaintOutputDirectory());
 			Path indexDBPath = Path.of(taintOptions.getTaintOutputDirectory(),
 				taintOptions.getTaintIndexDBName(program.getName()));
-
 			File indexDBFile = indexDBPath.toFile();
-			plugin.consoleMessage("Attempting to use index: " + indexDBFile.toString());
-
-			if (!indexDBFile.exists()) {
-				plugin.consoleMessage("The index database for the binary named: " +
-					program.getName() + " does not exist; create it first.");
-				return false;
+			
+			if (usesIndex) {
+				plugin.consoleMessage("Attempting to use index: " + indexDBFile.toString());
+	
+				if (!indexDBFile.exists()) {
+					plugin.consoleMessage("The index database for the binary named: " +
+						program.getName() + " does not exist; create it first.");
+					return false;
+				}
+	
+				plugin.consoleMessage("Using index database: " + indexDBFile);
 			}
-
-			plugin.consoleMessage("Using index database: " + indexDBFile);
 
 			switch (queryType) {
 				case SRCSINK:
@@ -280,7 +296,7 @@ public abstract class AbstractTaintState implements TaintState {
 					plugin.consoleMessage("Unknown query type.");
 			}
 
-			buildQuery(param_list, engine, indexDBFile, index_directory.toString());
+			buildQuery(paramList, engine, indexDBFile, indexDirectory.toString());
 
 			if (queryType.equals(QueryType.SRCSINK) || queryType.equals(QueryType.CUSTOM)) {
 				// The datalog that specifies the query.
@@ -294,12 +310,12 @@ public abstract class AbstractTaintState implements TaintState {
 						return false;
 					}
 				}
-				param_list.add(queryFile.getAbsolutePath());
+				paramList.add(queryFile.getAbsolutePath());
 			}
 
-			Msg.info(this, "Query Param List: " + param_list.toString());
+			Msg.info(this, "Query Param List: " + paramList.toString());
 			try {
-				ProcessBuilder pb = new ProcessBuilder(param_list);
+				ProcessBuilder pb = new ProcessBuilder(paramList);
 				pb.directory(new File(taintOptions.getTaintOutputDirectory()));
 				pb.redirectError(Redirect.INHERIT);
 				Process p = pb.start();
@@ -326,9 +342,10 @@ public abstract class AbstractTaintState implements TaintState {
 	}
 
 	/**
+	 * @param prog current program if needed
 	 * @param is the input stream (SARIF json) from the process builder that runs the engine
 	 */
-	private void readQueryResultsIntoDataFrame(Program program, InputStream is) {
+	protected void readQueryResultsIntoDataFrame(Program prog, InputStream is) {
 
 		StringBuilder sb = new StringBuilder();
 		String line = null;
@@ -533,6 +550,7 @@ public abstract class AbstractTaintState implements TaintState {
 		return plugin.getOptions();
 	}
 
+	@Override
 	public String getName() {
 		return ENGINE_NAME;
 	}
