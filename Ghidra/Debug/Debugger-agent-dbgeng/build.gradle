@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/hasPythonPackage.gradle"
 
 apply plugin: 'eclipse'
