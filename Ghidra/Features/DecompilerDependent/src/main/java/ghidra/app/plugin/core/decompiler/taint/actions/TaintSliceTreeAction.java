@@ -20,7 +20,6 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
 import ghidra.app.plugin.core.decompiler.taint.TaintState;
-import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.util.HelpLocation;
@@ -45,7 +44,7 @@ public class TaintSliceTreeAction extends TaintAbstractDecompilerAction {
 
 	private TaintPlugin plugin;
 
-	public TaintSliceTreeAction(TaintPlugin plugin, TaintState state) {
+	public TaintSliceTreeAction(TaintPlugin plugin) {
 		super("Show Slice Tree");
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintSliceTree"));
 		setPopupMenuData(new MenuData(new String[] { "Taint", "Slice Tree" }, "Decompile"));
@@ -56,6 +55,10 @@ public class TaintSliceTreeAction extends TaintAbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		if (plugin.getTaintState() == null) {
+			return false;
+		}
+
 		return true;
 	}
 

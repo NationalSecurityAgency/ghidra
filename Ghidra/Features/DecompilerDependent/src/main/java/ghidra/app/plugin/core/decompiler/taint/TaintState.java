@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.decompiler.taint;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 import com.contrastsecurity.sarif.SarifSchema210;
 
 import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.decompiler.taint.ctadl.TaintStateCTADL;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.PluginTool;
@@ -31,12 +31,18 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.classfinder.ExtensionPoint;
 
 /**
  * The interface for the methods that collect desired taint information from the decompiler window and store them
  * for construction of queries and indexing.
+ * <p>
+ * NOTE:  ALL TaintState CLASSES MUST END IN "TaintState".  If not,
+ * the ClassSearcher will not find them.
  */
-public interface TaintState {
+public interface TaintState extends ExtensionPoint {
 
 	public enum MarkType {
 		SOURCE, SINK, GATE
@@ -50,9 +56,30 @@ public interface TaintState {
 		SET_TAINT, SET_DELTA, APPLY_DELTA
 	}
 
-	public static TaintState newInstance(TaintPlugin plugin) {
-		return new TaintStateCTADL(plugin);
+	public static TaintState newInstance(TaintPlugin plugin, String type) {
+		List<Class<? extends TaintState>> list = ClassSearcher.getClasses(TaintState.class)
+				.stream()
+				.toList();
+		Class<?>[] constructorArgumentTypes = {TaintPlugin.class};
+		Object[] args = new Object[1];
+		args[0] = plugin;
+		for (Class<? extends TaintState> clazz : list) {
+			if (clazz.getName().toLowerCase().contains(type)) {
+				try {
+					Constructor<?> constructor = clazz.getConstructor(constructorArgumentTypes);
+					Object obj = constructor.newInstance(plugin);
+					return TaintState.class.cast(obj);
+				}
+				catch (Exception e) {
+					throw new RuntimeException("Unable to instantiate TaintState");
+				}
+			}
+		}
+		Msg.error(plugin, "No match for engine = "+type);
+		return null;
 	}
+
+	public String getName();
 
 	/**
 	 * Perform a Source-Sink query on the index database.
@@ -108,6 +135,10 @@ public interface TaintState {
 
 	public GhidraScript getExportScript(ConsoleService console, boolean perFunction);
 
+	public void setTaskType(TaskType taskType);
+
+	public TaintLabel getLabelForToken(MarkType type, ClangToken token);
+
 	public static String hvarName(ClangToken token) {
 		HighVariable hv = token.getHighVariable();
 		HighFunction hf =
@@ -158,7 +189,5 @@ public interface TaintState {
 		}
 		return false;
 	}
-
-	public void setTaskType(TaskType taskType);
 
 }

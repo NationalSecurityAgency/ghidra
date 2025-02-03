@@ -27,8 +27,8 @@ import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 
 public class TaintQueryDefaultAction extends TaintAbstractQueryAction {
 
-	public TaintQueryDefaultAction(TaintPlugin plugin, TaintState state) {
-		super(plugin, state, "DefaultQuery", "Default Taint Query", "Run default taint query");
+	public TaintQueryDefaultAction(TaintPlugin plugin) {
+		super(plugin, "DefaultQuery", "Default Taint Query", "Run default taint query");
 		executeTaintQueryIconString = "icon.version.tracking.markup.status.conflict";
 		executeTaintQueryIcon = new GIcon(executeTaintQueryIconString);
 		queryType = QueryType.DEFAULT;

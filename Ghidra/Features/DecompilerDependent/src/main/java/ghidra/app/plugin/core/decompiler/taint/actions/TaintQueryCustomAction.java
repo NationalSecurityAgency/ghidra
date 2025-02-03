@@ -25,8 +25,8 @@ import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 
 public class TaintQueryCustomAction extends TaintAbstractQueryAction {
 
-	public TaintQueryCustomAction(TaintPlugin plugin, TaintState state) {
-		super(plugin, state, "CustomQuery", "Custom Taint Query", "Run custom taint query");
+	public TaintQueryCustomAction(TaintPlugin plugin) {
+		super(plugin, "CustomQuery", "Custom Taint Query", "Run custom taint query");
 		queryType = QueryType.CUSTOM;
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK));
 	}

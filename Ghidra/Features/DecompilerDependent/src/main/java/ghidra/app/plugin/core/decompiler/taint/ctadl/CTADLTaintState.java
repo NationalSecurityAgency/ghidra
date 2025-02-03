@@ -35,9 +35,9 @@ import ghidra.program.model.pcode.HighVariable;
  * Container for all the decompiler elements the users "selects" via the menu.
  * This data is used to build queries.
  */
-public class TaintStateCTADL extends AbstractTaintState {
+public class CTADLTaintState extends AbstractTaintState {
 
-	public TaintStateCTADL(TaintPlugin plugin) {
+	public CTADLTaintState(TaintPlugin plugin) {
 		super(plugin);
 		ENGINE_NAME = "ctadl";
 	}
@@ -106,6 +106,12 @@ public class TaintStateCTADL extends AbstractTaintState {
 		return perFunction ? "ExportPCodeForSingleFunction.java" : "ExportPCodeForCTADL.java";
 	}
 
+
+	@Override
+	protected void writeHeader(PrintWriter writer) {
+		writer.println("#include \"pcode/taintquery.dl\"");
+	}
+	
 	/*
 	 * NOTE: This is the only method used now for Sources and Sinks.
 	 */
@@ -178,6 +184,7 @@ public class TaintStateCTADL extends AbstractTaintState {
 		Boolean allAccess = taintOptions.getTaintUseAllAccess();
 		String method = "TaintSanitizeAll";
 		Address addr = mark.getAddress();
+		// TODO: verify setting entryPoint as addr doesn't break things
 
 		if (mark.getFunctionName() == null) {
 			return;
@@ -197,6 +204,11 @@ public class TaintStateCTADL extends AbstractTaintState {
 			writer.println("\tp = \"\",");
 		}
 		writer.println("\tVertex(vn, p).");
+	}
+
+	@Override
+	protected void writeFooter(PrintWriter writer) {
+		// Nothing to do here
 	}
 
 }

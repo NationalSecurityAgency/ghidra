@@ -29,6 +29,7 @@ dependencies {
 	api project(':Base')
 	api project(':ByteViewer')
 	api project(':Decompiler')
+	api project(':DecompilerDependent')
 	api project(':FunctionGraph')
 	api project(':ProposedUtils')
 
