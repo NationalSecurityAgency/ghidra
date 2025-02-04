@@ -78,6 +78,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testContains() {
 		setFilterOptions(TextFilterStrategy.CONTAINS);
+
 		// no filter text - make sure all 5 nodes are there
 		assertEquals(TOTAL_TABLE_ROWS, filteredModel.getRowCount());
 
