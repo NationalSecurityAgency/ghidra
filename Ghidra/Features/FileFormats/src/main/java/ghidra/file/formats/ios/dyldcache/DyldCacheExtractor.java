@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
@@ -48,19 +47,10 @@ public class DyldCacheExtractor {
 		"Ghidra DYLD extraction v1".getBytes(StandardCharsets.US_ASCII);
 
 	/**
-	 * A {@link DyldCacheMappingAndSlideInfo} with a possibly reduced set of available addresses
-	 * within the mapping
-	 * 
-	 * @param mappingInfo A {@link DyldCacheMappingAndSlideInfo}
-	 * @param rangeSet A a possibly reduced set of available addresses within the mapping
-	 */
-	public record MappingRange(DyldCacheMappingAndSlideInfo mappingInfo, RangeSet<Long> rangeSet) {}
-
-	/**
 	 * Gets a {@link ByteProvider} that contains a DYLIB from a {@link DyldCacheFileSystem}.  The
 	 * DYLIB's header will be altered to account for its segment bytes being packed down.   
 	 * 
-	 * @param dylibOffset The offset of the DYLIB in the given provider
+	 * @param entry The mapping's {@link DyldCacheEntry}
 	 * @param splitDyldCache The {@link SplitDyldCache}
 	 * @param index The DYLIB's {@link SplitDyldCache} index
 	 * @param slideFixupMap A {@link Map} of {@link DyldFixup}s to perform
@@ -71,10 +61,11 @@ public class DyldCacheExtractor {
 	 * @throws IOException If there was an IO-related issue with extracting the DYLIB
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public static ByteProvider extractDylib(long dylibOffset, SplitDyldCache splitDyldCache,
+	public static ByteProvider extractDylib(DyldCacheEntry entry, SplitDyldCache splitDyldCache,
 			int index, Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap,
 			FSRL fsrl, TaskMonitor monitor) throws IOException, MachException, CancelledException {
-
+		long dylibOffset = entry.rangeSet().asRanges().iterator().next().lowerEndpoint() -
+			splitDyldCache.getDyldCacheHeader(entry.splitCacheIndex()).getBaseAddress();
 		ExtractedMacho extractedMacho = new DyldPackedSegments(dylibOffset, splitDyldCache, index,
 			FOOTER_V1, slideFixupMap, monitor);
 		extractedMacho.pack();
@@ -84,7 +75,7 @@ public class DyldCacheExtractor {
 	/**
 	 * Gets a {@link ByteProvider} that contains a byte mapping from a {@link DyldCacheFileSystem}
 	 * 
-	 * @param mappingRange The {@link MappingRange}
+	 * @param entry The mapping's {@link DyldCacheEntry}
 	 * @param segmentName The name of the segment in the resulting Mach-O
 	 * @param splitDyldCache The {@link SplitDyldCache}
 	 * @param index The mapping's {@link SplitDyldCache} index
@@ -96,14 +87,14 @@ public class DyldCacheExtractor {
 	 * @throws IOException If there was an IO-related issue with extracting the mapping
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public static ByteProvider extractMapping(MappingRange mappingRange, String segmentName,
+	public static ByteProvider extractMapping(DyldCacheEntry entry, String segmentName,
 			SplitDyldCache splitDyldCache, int index,
 			Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap, FSRL fsrl,
 			TaskMonitor monitor) throws IOException, MachException, CancelledException {
 
 		int magic = MachConstants.MH_MAGIC_64;
-		List<Range<Long>> ranges = new ArrayList<>(mappingRange.rangeSet().asRanges());
-		DyldCacheMappingAndSlideInfo mappingInfo = mappingRange.mappingInfo();
+		List<Range<Long>> ranges = new ArrayList<>(entry.rangeSet().asRanges());
+		DyldCacheMappingAndSlideInfo mappingInfo = entry.mappingInfo();
 		int allSegmentsSize = SegmentCommand.size(magic) * ranges.size();
 
 		// Fix slide pointers
