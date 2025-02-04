@@ -120,7 +120,8 @@ public class FileByteProvider implements MutableByteProvider {
 	public byte[] readBytes(long index, long length) throws IOException {
 		ensureBounds(index, length);
 		if (length > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Read length 0x%x exceeds Integer.MAX_VALUE (0x%x)"
+					.formatted(length, Integer.MAX_VALUE));
 		}
 		int len = (int) length;
 		byte[] result = new byte[len];
