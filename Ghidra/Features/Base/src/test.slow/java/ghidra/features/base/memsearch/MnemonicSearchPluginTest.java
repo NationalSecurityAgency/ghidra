@@ -26,8 +26,8 @@ import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
-import ghidra.app.plugin.core.searchmem.MemSearchPlugin;
 import ghidra.app.services.ProgramManager;
+import ghidra.features.base.memsearch.gui.MemorySearchPlugin;
 import ghidra.features.base.memsearch.gui.MemorySearchProvider;
 import ghidra.features.base.memsearch.mnemonic.MnemonicSearchPlugin;
 import ghidra.framework.plugintool.PluginTool;
@@ -58,7 +58,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		tool.addPlugin(CodeBrowserPlugin.class.getName());
 		tool.addPlugin(MarkerManagerPlugin.class.getName());
-		tool.addPlugin(MemSearchPlugin.class.getName());
+		tool.addPlugin(MemorySearchPlugin.class.getName());
 		tool.addPlugin(MnemonicSearchPlugin.class.getName());
 		plugin = env.getPlugin(MnemonicSearchPlugin.class);
 		cb = env.getPlugin(CodeBrowserPlugin.class);

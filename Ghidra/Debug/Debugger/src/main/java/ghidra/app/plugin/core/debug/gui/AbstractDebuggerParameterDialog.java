@@ -637,6 +637,9 @@ public abstract class AbstractDebuggerParameterDialog<P> extends DialogComponent
 	protected void setEditorValue(PropertyEditor editor, P param, ValStr<?> val) {
 		switch (val.val()) {
 			case null -> {
+				if (parameterType(param) == String.class) {
+					editor.setValue(val.str());
+				}
 			}
 			case BigInteger bi -> editor.setAsText(val.str());
 			default -> editor.setValue(val.val());

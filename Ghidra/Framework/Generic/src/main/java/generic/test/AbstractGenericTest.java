@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -39,8 +39,6 @@ import org.junit.rules.*;
 import org.junit.runner.Description;
 
 import generic.jar.ResourceFile;
-import generic.test.rule.Repeated;
-import generic.test.rule.RepeatedTestRule;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.*;
@@ -110,17 +108,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	@Rule
 	public RuleChain ruleChain = RuleChain.outerRule(testName).around(watchman);// control rule ordering
-
-	/**
-	 * This rule handles the {@link Repeated} annotation
-	 *
-	 * <p>
-	 * During batch mode, this rule should never be needed. This rule is included here as a
-	 * convenience, in case a developer wants to use the {@link Repeated} annotation to diagnose a
-	 * non-deterministic test failure. Without this rule, the annotation would be silently ignored.
-	 */
-	@Rule
-	public TestRule repeatedRule = new RepeatedTestRule();
 
 	@After
 	public void resetLogging() {
@@ -237,9 +224,9 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * A callback for subclasses when a test has failed. This will be called
-	 * <b>after</b> <code>tearDown()</code>.  This means that any diagnostics will have to
-	 * take into account items that have already been disposed.
+	 * A callback for subclasses when a test has failed. This will be called <b>after</b>
+	 * <code>tearDown()</code>. This means that any diagnostics will have to take into account items
+	 * that have already been disposed.
 	 *
 	 * @param e the exception that happened when the test failed
 	 */
@@ -258,10 +245,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * A convenience method to change the log level of the given logger name.  The logger name is
-	 * typically the class name that contains specialized logging.  You may also pass a package
-	 * name to get logging for all classes in that package.
-	 * See {@link Configurator#setLevel(String, Level)}
+	 * A convenience method to change the log level of the given logger name. The logger name is
+	 * typically the class name that contains specialized logging. You may also pass a package name
+	 * to get logging for all classes in that package. See
+	 * {@link Configurator#setLevel(String, Level)}
 	 * <P>
 	 * The console appender's log level will be changed if needed to ensure that messages for the
 	 * given log level are displayed.
@@ -316,9 +303,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * Returns the window parent of c. If c is a window, then c is returned.
 	 *
 	 * <P>
-	 * Warning: this differs from
-	 * {@link SwingUtilities#windowForComponent(Component)} in that the latter
-	 * method will not return the given component if it is a window.
+	 * Warning: this differs from {@link SwingUtilities#windowForComponent(Component)} in that the
+	 * latter method will not return the given component if it is a window.
 	 *
 	 * @param c the component
 	 * @return the window
@@ -328,8 +314,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Load a text resource file into an ArrayList. Each line of the file is
-	 * stored as an item in the list.
+	 * Load a text resource file into an ArrayList. Each line of the file is stored as an item in
+	 * the list.
 	 *
 	 * @param cls class where resource exists
 	 * @param name resource filename
@@ -372,15 +358,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Returns the file within the data directory of the TestResources module
-	 * that matches the given relative path
+	 * Returns the file within the data directory of the TestResources module that matches the given
+	 * relative path
 	 * <p>
 	 * A {@link FileNotFoundException} is throw if the file does not exist.
 	 *
-	 * @param path path relative to the data directory of the TestResources
-	 *            module.
-	 * @return the file within the data directory of the TestResources module
-	 *         that matches the given relative path
+	 * @param path path relative to the data directory of the TestResources module.
+	 * @return the file within the data directory of the TestResources module that matches the given
+	 *         relative path
 	 * @throws FileNotFoundException if the given file does not exist
 	 */
 	public static File getTestDataFile(String path) throws FileNotFoundException {
@@ -390,8 +375,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Returns a file that points to the location on disk of the given relative
-	 * path name. The path is relative to the test resources directory.
+	 * Returns a file that points to the location on disk of the given relative path name. The path
+	 * is relative to the test resources directory.
 	 *
 	 * @param relativePath the path of the file
 	 * @return a file that points to the location on disk of the relative path.
@@ -406,15 +391,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Returns the file within the data directory of the TestResources module
-	 * that matches the given relative path.
+	 * Returns the file within the data directory of the TestResources module that matches the given
+	 * relative path.
 	 * <p>
 	 * Null is returned if the file could not be found.
 	 *
-	 * @param path path relative to the data directory of the TestResources
-	 *            module.
-	 * @return the file within the data directory of the TestResources module
-	 *         that matches the given relative path
+	 * @param path path relative to the data directory of the TestResources module.
+	 * @return the file within the data directory of the TestResources module that matches the given
+	 *         relative path
 	 */
 	public static File findTestDataFile(String path) {
 		try {
@@ -445,9 +429,9 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Get the first field object contained within object ownerInstance which
-	 * has the type classType. This method is only really useful if it is known
-	 * that only a single field of classType exists within the ownerInstance.
+	 * Get the first field object contained within object ownerInstance which has the type
+	 * classType. This method is only really useful if it is known that only a single field of
+	 * classType exists within the ownerInstance.
 	 *
 	 * @param <T> the type
 	 * @param classType the class type of the desired field
@@ -461,17 +445,15 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Sets the instance field by the given name on the given object instance.
 	 * <p>
-	 * Note: if the field is static, then the <code>ownerInstance</code> field can
-	 * be the class of the object that contains the variable.
+	 * Note: if the field is static, then the <code>ownerInstance</code> field can be the class of
+	 * the object that contains the variable.
 	 *
 	 * @param fieldName The name of the field to retrieve.
-	 * @param ownerInstance The object instance from which to get the variable
-	 *            instance.
+	 * @param ownerInstance The object instance from which to get the variable instance.
 	 * @param value The value to use when setting the given field
-	 * @throws RuntimeException if there is a problem accessing the field using
-	 *             reflection. A RuntimeException is used so that calling tests
-	 *             can avoid using a try/catch block, but will still fail when
-	 *             an error is encountered.
+	 * @throws RuntimeException if there is a problem accessing the field using reflection. A
+	 *             RuntimeException is used so that calling tests can avoid using a try/catch block,
+	 *             but will still fail when an error is encountered.
 	 * @see Field#set(Object, Object)
 	 */
 	public static void setInstanceField(String fieldName, Object ownerInstance, Object value)
@@ -480,20 +462,18 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Gets the instance field by the given name on the given object instance.
-	 * The value is a primitive wrapper if it is a primitive type.
+	 * Gets the instance field by the given name on the given object instance. The value is a
+	 * primitive wrapper if it is a primitive type.
 	 * <p>
-	 * Note: if the field is static, then the <code>ownerInstance</code> field can
-	 * be the class of the object that contains the variable.
+	 * Note: if the field is static, then the <code>ownerInstance</code> field can be the class of
+	 * the object that contains the variable.
 	 *
 	 * @param fieldName The name of the field to retrieve.
-	 * @param ownerInstance The object instance from which to get the variable
-	 *            instance.
+	 * @param ownerInstance The object instance from which to get the variable instance.
 	 * @return The field instance.
-	 * @throws RuntimeException if there is a problem accessing the field using
-	 *             reflection. A RuntimeException is used so that calling tests
-	 *             can avoid using a try/catch block, but will still fail when
-	 *             an error is encountered.
+	 * @throws RuntimeException if there is a problem accessing the field using reflection. A
+	 *             RuntimeException is used so that calling tests can avoid using a try/catch block,
+	 *             but will still fail when an error is encountered.
 	 * @see Field#get(java.lang.Object)
 	 * @since Tracker Id 267
 	 */
@@ -503,22 +483,19 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Uses reflection to execute the constructor for the given class with the
-	 * given parameters. The new instance of the given class will be returned.
+	 * Uses reflection to execute the constructor for the given class with the given parameters. The
+	 * new instance of the given class will be returned.
 	 * <p>
 	 *
 	 * @param containingClass The class that contains the desired constructor.
-	 * @param parameterTypes The parameter <b>types</b> that the constructor
-	 *            takes. This value can be null or zero length if there are no
-	 *            parameters to pass
-	 * @param args The parameter values that should be passed to the
-	 *            constructor. This value can be null or zero length if there
-	 *            are no parameters to pass
+	 * @param parameterTypes The parameter <b>types</b> that the constructor takes. This value can
+	 *            be null or zero length if there are no parameters to pass
+	 * @param args The parameter values that should be passed to the constructor. This value can be
+	 *            null or zero length if there are no parameters to pass
 	 * @return The new class instance
-	 * @throws RuntimeException if there is a problem accessing the constructor
-	 *             using reflection. A RuntimeException is used so that calling
-	 *             tests can avoid using a try/catch block, but will still fail
-	 *             when an error is encountered.
+	 * @throws RuntimeException if there is a problem accessing the constructor using reflection. A
+	 *             RuntimeException is used so that calling tests can avoid using a try/catch block,
+	 *             but will still fail when an error is encountered.
 	 */
 	public static Object invokeConstructor(Class<?> containingClass, Class<?>[] parameterTypes,
 			Object[] args) throws RuntimeException {
@@ -527,26 +504,23 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Uses reflection to execute the method denoted by the given method name.
-	 * If any value is returned from the method execution, then it will be
-	 * returned from this method. Otherwise, <code>null</code> is returned.
+	 * Uses reflection to execute the method denoted by the given method name. If any value is
+	 * returned from the method execution, then it will be returned from this method. Otherwise,
+	 * <code>null</code> is returned.
 	 * <p>
-	 * Note: if the method is static, then the <code>ownerInstance</code> field can
-	 * be the class of the object that contains the method.
+	 * Note: if the method is static, then the <code>ownerInstance</code> field can be the class of
+	 * the object that contains the method.
 	 *
 	 * @param methodName The name of the method to execute.
-	 * @param ownerInstance The object instance of which the method will be
-	 *            executed.
+	 * @param ownerInstance The object instance of which the method will be executed.
 	 * @param parameterTypes The parameter <b>types</b> that the method takes.
-	 * @param args The parameter values that should be passed to the method.
-	 *            This value can be null or zero length if there are no
-	 *            parameters to pass
+	 * @param args The parameter values that should be passed to the method. This value can be null
+	 *            or zero length if there are no parameters to pass
 	 * @return The return value as returned from executing the method.
 	 * @see Method#invoke(java.lang.Object, java.lang.Object[])
-	 * @throws RuntimeException if there is a problem accessing the field using
-	 *             reflection. A RuntimeException is used so that calling tests
-	 *             can avoid using a try/catch block, but will still fail when
-	 *             an error is encountered.
+	 * @throws RuntimeException if there is a problem accessing the field using reflection. A
+	 *             RuntimeException is used so that calling tests can avoid using a try/catch block,
+	 *             but will still fail when an error is encountered.
 	 * @since Tracker Id 267
 	 */
 	public static Object invokeInstanceMethod(String methodName, Object ownerInstance,
@@ -557,19 +531,16 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * This method is just a "pass through" method for
-	 * {@link #invokeInstanceMethod(String, Object, Class[], Object[])} so that
-	 * callers do not need to pass null to that method when the underlying
-	 * instance method does not have any parameters.
+	 * {@link #invokeInstanceMethod(String, Object, Class[], Object[])} so that callers do not need
+	 * to pass null to that method when the underlying instance method does not have any parameters.
 	 *
 	 * @param methodName The name of the method to execute.
-	 * @param ownerInstance The object instance of which the method will be
-	 *            executed.
+	 * @param ownerInstance The object instance of which the method will be executed.
 	 * @return The return value as returned from executing the method.
 	 * @see Method#invoke(java.lang.Object, java.lang.Object[])
-	 * @throws RuntimeException if there is a problem accessing the field using
-	 *             reflection. A RuntimeException is used so that calling tests
-	 *             can avoid using a try/catch block, but will still fail when
-	 *             an error is encountered.
+	 * @throws RuntimeException if there is a problem accessing the field using reflection. A
+	 *             RuntimeException is used so that calling tests can avoid using a try/catch block,
+	 *             but will still fail when an error is encountered.
 	 * @see #invokeInstanceMethod(String, Object, Class[], Object[])
 	 */
 	public static Object invokeInstanceMethod(String methodName, Object ownerInstance)
@@ -578,8 +549,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Returns a string which is a printout of a stack trace for each thread
-	 * running in the current JVM
+	 * Returns a string which is a printout of a stack trace for each thread running in the current
+	 * JVM
 	 *
 	 * @return the stack trace string
 	 */
@@ -588,8 +559,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Prints the contents of the given collection by way of the
-	 * {@link Object#toString()} method.
+	 * Prints the contents of the given collection by way of the {@link Object#toString()} method.
 	 *
 	 * @param collection The contents of which to print
 	 * @return A string representation of the given collection
@@ -616,6 +586,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Returns a font metrics for the given font using a generic buffered image graphics context.
+	 * 
 	 * @param font the font
 	 * @return the font metrics
 	 */
@@ -628,10 +599,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Signals that the client expected the System Under Test (SUT) to report errors.  Use this
-	 * when you wish to verify that errors are reported and you do not want those errors to
-	 * fail the test.  The default value for this setting is false, which means that any
-	 * errors reported will fail the running test.
+	 * Signals that the client expected the System Under Test (SUT) to report errors. Use this when
+	 * you wish to verify that errors are reported and you do not want those errors to fail the
+	 * test. The default value for this setting is false, which means that any errors reported will
+	 * fail the running test.
 	 *
 	 * @param expected true if errors are expected.
 	 */
@@ -651,12 +622,12 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 //==================================================================================================
 
 	/**
-	 * Returns the directory into which tests can write debug files, such as
-	 * files containing print statements or image files.
+	 * Returns the directory into which tests can write debug files, such as files containing print
+	 * statements or image files.
 	 *
 	 * <P>
-	 * This is not a temporary directory that will be deleted between tests,
-	 * which is useful in that the debug files will persist after a test run.
+	 * This is not a temporary directory that will be deleted between tests, which is useful in that
+	 * the debug files will persist after a test run.
 	 *
 	 * <P>
 	 * Examples of this directory:
@@ -701,16 +672,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a <b>sub-directory</b> with the given name as a child of the Java
-	 * temp directory. The given name will be the prefix of the new directory
-	 * name, with any additional text as created by
-	 * {@link Files#createTempDirectory(Path, String, java.nio.file.attribute.FileAttribute...)}.
-	 * Any left-over test directories will be cleaned-up before creating the new
-	 * directory.
+	 * Creates a <b>sub-directory</b> with the given name as a child of the Java temp directory. The
+	 * given name will be the prefix of the new directory name, with any additional text as created
+	 * by {@link Files#createTempDirectory(Path, String, java.nio.file.attribute.FileAttribute...)}.
+	 * Any left-over test directories will be cleaned-up before creating the new directory.
 	 *
 	 * <p>
-	 * Note: you should not call this method multiple times, as each call will
-	 * cleanup the previously created directories.
+	 * Note: you should not call this method multiple times, as each call will cleanup the
+	 * previously created directories.
 	 *
 	 * @param name the name of the directory to create
 	 * @return the newly created directory
@@ -738,14 +707,13 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file path with a filename that is under the system temp
-	 * directory. The path returned will not point to an existing file. The
-	 * suffix of the file will be <code>.tmp</code>.
+	 * Creates a file path with a filename that is under the system temp directory. The path
+	 * returned will not point to an existing file. The suffix of the file will be
+	 * <code>.tmp</code>.
 	 *
 	 * @param name the filename
 	 * @return a new file path
-	 * @throws IOException if there is any problem ensuring that the created
-	 *             path is non-existent
+	 * @throws IOException if there is any problem ensuring that the created path is non-existent
 	 * @see #createTempFilePath(String, String)
 	 */
 	public String createTempFilePath(String name) throws IOException {
@@ -754,16 +722,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file path with a filename that is under the system temp
-	 * directory. The path returned will not point to an existing file. This
-	 * method is the same as {@link #createTempFilePath(String)}, except that
-	 * you must provide the extension.
+	 * Creates a file path with a filename that is under the system temp directory. The path
+	 * returned will not point to an existing file. This method is the same as
+	 * {@link #createTempFilePath(String)}, except that you must provide the extension.
 	 *
 	 * @param name the filename
 	 * @param extension the file extension
 	 * @return a new file path
-	 * @throws IOException if there is any problem ensuring that the created
-	 *             path is non-existent
+	 * @throws IOException if there is any problem ensuring that the created path is non-existent
 	 * @see #createTempFile(String, String)
 	 */
 	public String createTempFilePath(String name, String extension) throws IOException {
@@ -773,10 +739,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a temp file for the current test, using the test name as a prefix
-	 * for the filename. This method calls {@link #createTempFile(String)},
-	 * which will cleanup any pre-existing temp files whose name pattern matches
-	 * this test name. This helps to avoid old temp files from accumulating.
+	 * Creates a temp file for the current test, using the test name as a prefix for the filename.
+	 * This method calls {@link #createTempFile(String)}, which will cleanup any pre-existing temp
+	 * files whose name pattern matches this test name. This helps to avoid old temp files from
+	 * accumulating.
 	 *
 	 * @return the new temp file
 	 * @throws IOException if there is a problem creating the new file
@@ -786,10 +752,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a temp file for the current test, using the test name as a prefix
-	 * for the filename. This method calls {@link #createTempFile(String)},
-	 * which will cleanup any pre-existing temp files whose name pattern matches
-	 * this test name. This helps to avoid old temp files from accumulating.
+	 * Creates a temp file for the current test, using the test name as a prefix for the filename.
+	 * This method calls {@link #createTempFile(String)}, which will cleanup any pre-existing temp
+	 * files whose name pattern matches this test name. This helps to avoid old temp files from
+	 * accumulating.
 	 *
 	 * @param suffix the suffix to provide for the temp file
 	 * @return the new temp file
@@ -800,15 +766,13 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file in the Application temp directory using the given name as a
-	 * prefix and the given suffix. The final filename will also include the
-	 * current test name, as well as any data added by
-	 * {@link File#createTempFile(String, String, File)}. The file suffix will be
+	 * Creates a file in the Application temp directory using the given name as a prefix and the
+	 * given suffix. The final filename will also include the current test name, as well as any data
+	 * added by {@link File#createTempFile(String, String, File)}. The file suffix will be
 	 * <code>.tmp</code>
 	 * <p>
-	 * The file will be marked to delete on JVM exit. This will not work if the
-	 * JVM is taken down the hard way, as when pressing the stop button in
-	 * Eclipse.
+	 * The file will be marked to delete on JVM exit. This will not work if the JVM is taken down
+	 * the hard way, as when pressing the stop button in Eclipse.
 	 *
 	 * @param name the prefix to put on the file, before the test name
 	 * @return the newly created file
@@ -821,25 +785,22 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file in the Application temp directory using the given name as a
-	 * prefix and the given suffix. The final filename will also include the
-	 * current test name, as well as any data added by
-	 * {@link File#createTempFile(String, String, File)}.
+	 * Creates a file in the Application temp directory using the given name as a prefix and the
+	 * given suffix. The final filename will also include the current test name, as well as any data
+	 * added by {@link File#createTempFile(String, String, File)}.
 	 * <p>
-	 * The file will be marked to delete on JVM exit. This will not work if the
-	 * JVM is taken down the hard way, as when pressing the stop button in
-	 * Eclipse.
+	 * The file will be marked to delete on JVM exit. This will not work if the JVM is taken down
+	 * the hard way, as when pressing the stop button in Eclipse.
 	 * <p>
-	 * Note: This method <b>will</b> create the file on disk! If you need the
-	 * file to not exist, then you must delete the file yourself. Alternatively,
-	 * you could instead call {@link #createTempFilePath(String, String)}, which
-	 * will ensure that the created temp file is deleted.
+	 * Note: This method <b>will</b> create the file on disk! If you need the file to not exist,
+	 * then you must delete the file yourself. Alternatively, you could instead call
+	 * {@link #createTempFilePath(String, String)}, which will ensure that the created temp file is
+	 * deleted.
 	 *
 	 * <p>
-	 * Finally, this method will delete any files that match the given name and
-	 * suffix values before creating the given temp file. <b>This is important,
-	 * as it will delete any files already created by the test that match this
-	 * info.</b>
+	 * Finally, this method will delete any files that match the given name and suffix values before
+	 * creating the given temp file. <b>This is important, as it will delete any files already
+	 * created by the test that match this info.</b>
 	 *
 	 * @param name the prefix to put on the file, before the test name
 	 * @param suffix the file suffix
@@ -866,8 +827,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Delete any files under the Java temp directory that have the given text
-	 * in their name.
+	 * Delete any files under the Java temp directory that have the given text in their name.
 	 *
 	 * @param nameText the partial name text to match against the files
 	 * @see #deleteMatchingTempFiles(String)
@@ -880,8 +840,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Delete any files under the this test case's specific temp directory that
-	 * match the give regex {@link Pattern}
+	 * Delete any files under the this test case's specific temp directory that match the give regex
+	 * {@link Pattern}
 	 *
 	 * @param namePattern the pattern to match against the files
 	 * @see #deleteSimilarTempFiles(String)

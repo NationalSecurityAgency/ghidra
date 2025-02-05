@@ -2,6 +2,7 @@
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: MIT
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/debugger-launchers/kernel-dbgeng.bat||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng-attach.bat||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng-ext.bat||GHIDRA||||END|
@@ -14,4 +15,5 @@ src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
 src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl||GHIDRA||||END|
 src/main/py/src/ghidradbg/schema.xml||GHIDRA||||END|
+src/main/py/src/ghidradbg/schema_exdi.xml||GHIDRA||||END|
 src/main/py/src/ghidrattd/schema.xml||GHIDRA||||END|

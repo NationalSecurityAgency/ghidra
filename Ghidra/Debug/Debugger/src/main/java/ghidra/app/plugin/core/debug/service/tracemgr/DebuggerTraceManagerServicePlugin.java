@@ -39,7 +39,6 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.async.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
-import ghidra.dbg.target.TargetObject;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.target.Target;
@@ -61,7 +60,7 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -120,7 +119,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			Target target = current.getTarget();
 			if (supportsFocus(target)) {
 				// TODO: Same for stack frame? I can't imagine it's as common as this....
-				TraceObjectKeyPath focus = target.getFocus();
+				KeyPath focus = target.getFocus();
 				if (focus == null) {
 					return;
 				}
@@ -222,12 +221,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 		@Override
 		public void targetWithdrawn(Target target) {
+			Swing.runLater(() -> updateCurrentTarget());
 			boolean save = isSaveTracesByDefault();
 			CompletableFuture<Void> flush = save
 					? waitUnlockedDebounced(target)
 					: AsyncUtils.nil();
 			flush.thenRunAsync(() -> {
-				updateCurrentTarget();
 				if (!isAutoCloseOnTerminate()) {
 					return;
 				}
@@ -257,7 +256,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return;
 			}
 			DebuggerCoordinates coords = current;
-			TraceObjectKeyPath focus = curTarget.getFocus();
+			KeyPath focus = curTarget.getFocus();
 			if (focus != null) {
 				coords = coords.path(focus);
 			}
@@ -288,7 +287,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		new ForFollowPresentListener();
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-	protected TargetObject curObj;
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> saveTracesByDefault = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
@@ -561,13 +559,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
 		newCurrent = fillInTarget(newCurrent.getTrace(), newCurrent);
 		newCurrent = fillInPlatform(newCurrent);
-		if (cause == ActivationCause.START_RECORDING || cause == ActivationCause.FOLLOW_PRESENT) {
+		if (cause == ActivationCause.TARGET_UPDATED || cause == ActivationCause.FOLLOW_PRESENT) {
 			Target target = newCurrent.getTarget();
 			if (target != null) {
 				newCurrent = newCurrent.snap(target.getSnap());
 			}
 		}
-		newCurrent = validateCoordiantes(newCurrent, cause);
+		newCurrent = validateCoordinates(newCurrent, cause);
 		if (newCurrent == null || !doSetCurrent(newCurrent)) {
 			return null;
 		}
@@ -589,7 +587,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return controlService == null ? ControlMode.DEFAULT : controlService.getCurrentMode(trace);
 	}
 
-	private DebuggerCoordinates validateCoordiantes(DebuggerCoordinates coordinates,
+	private DebuggerCoordinates validateCoordinates(DebuggerCoordinates coordinates,
 			ActivationCause cause) {
 		ControlMode mode = getEffectiveControlMode(coordinates.getTrace());
 		return mode.validateCoordinates(tool, coordinates, cause);
@@ -633,11 +631,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void updateCurrentTarget() {
 		Target target = computeTarget(current.getTrace());
-		if (target == null) {
+		if (target == null && current.getTarget() == null) {
 			return;
 		}
 		DebuggerCoordinates toActivate = current.target(target);
-		activate(toActivate, ActivationCause.FOLLOW_PRESENT);
+		activate(toActivate, ActivationCause.TARGET_UPDATED);
 	}
 
 	@Override
@@ -1123,8 +1121,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 
-		if (cause == ActivationCause.FOLLOW_PRESENT) {
-			if (!isFollowsPresent(newTrace)) {
+		if (cause == ActivationCause.FOLLOW_PRESENT || cause == ActivationCause.TARGET_UPDATED) {
+			if (!isFollowsPresent(newTrace) && cause == ActivationCause.FOLLOW_PRESENT) {
 				return AsyncUtils.nil();
 			}
 			if (current.getTrace() != newTrace) {
@@ -1216,7 +1214,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
-	public DebuggerCoordinates resolvePath(TraceObjectKeyPath path) {
+	public DebuggerCoordinates resolvePath(KeyPath path) {
 		return current.path(path);
 	}
 

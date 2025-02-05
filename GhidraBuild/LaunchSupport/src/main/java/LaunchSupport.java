@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.launch.JavaFinder.JavaFilter;
  * rather than in OS-specific scripts.
  */
 public class LaunchSupport {
-	
+
 	private static final int EXIT_SUCCESS = 0;
 	private static final int EXIT_FAILURE = 1;
 
@@ -37,13 +37,18 @@ public class LaunchSupport {
 	 * {@link LaunchSupport} entry point.  Uses standard exit codes to tell the user if 
 	 * the desired operation succeeded for failed.
 	 * 
-	 * @param args [INSTALL_DIR] [-java_home | -jdk_home | -vmargs] [-ask | -save]
+	 * @param args [INSTALL_DIR] [-java_home | -jdk_home | -vmargs | -java_home_check &lt;path&gt;] [-ask | -save]
 	 * <ul>
-	 *   <li><b>-java_home: </b> Get Java home (JDK or JRE)</li>
-	 *   <li><b>-jdk_home: </b> Get Java home (JDK only)</li>
-	 *   <li><b>-vmargs: </b> Get JVM arguments</li>
-	 *   <li><b>-ask: </b> Interactively ask the user to choose a Java home</li>
-	 *   <li><b>-save: </b> Save Java home to file for future use</li>
+	 *   <li><b>-java_home: </b> Get Java home (JDK or JRE) and output on stdout.</li>
+	 *   <li><b>-jdk_home: </b> Get Java home (JDK only) and output on stdout.</li>
+	 *   <li><b>-jdk_home_check: </b> Verify that the specified Java home directory contains a 
+	 *                           supported version of java.  No output is produced.</li>
+	 *   <li><b>-vmargs: </b> Get JVM arguments and output on stdout (one per line).</li>
+	 * </ul>
+	 * Optional arguments supported by -java_home and -jdk_home:
+	 * <ul>
+	 *   <li><b>-ask: </b> Interactively ask the user to choose a Java home.</li>
+	 *   <li><b>-save: </b> Save Java home to file for future use.</li>
 	 * </ul>
 	 */
 	public static void main(String[] args) {
@@ -55,14 +60,25 @@ public class LaunchSupport {
 			System.err.println("LaunchSupport expected 2 to 4 arguments but got " + args.length);
 			System.exit(exitCode);
 		}
-		
+
 		// Parse command line arguments
-		String installDirPath = args[0];
-		String mode = args[1];
+		int argIx = 0;
+		String installDirPath = args[argIx++];
+		String mode = args[argIx++];
+		String checkPath = null;
+		if ("-java_home_check".equals(mode)) {
+			checkPath = args[argIx++];
+		}
+
+		if (!"-java_home".equals(mode) && !"-jdk_home".equals(mode) && argIx != args.length) {
+			System.err.println("LaunchSupport received illegal argument: " + args[argIx]);
+			System.exit(exitCode);
+		}
+
 		boolean ask = false;
 		boolean save = false;
 
-		for (int i = 2; i < args.length; i++) {
+		for (int i = argIx; i < args.length; i++) {
 			if (args[i].equals("-ask")) {
 				ask = true;
 			}
@@ -76,22 +92,27 @@ public class LaunchSupport {
 		}
 
 		try {
-			
+
 			File installDir = new File(installDirPath).getCanonicalFile(); // change relative path to absolute
-			JavaConfig javaConfig = new JavaConfig(installDir);
+			AppConfig appConfig = new AppConfig(installDir);
 			JavaFinder javaFinder = JavaFinder.create();
 
 			// Pass control to a mode-specific handler
 			switch (mode.toLowerCase()) {
 				case "-java_home":
-					exitCode = handleJavaHome(javaConfig, javaFinder, JavaFilter.ANY, ask, save);
+					exitCode = handleJavaHome(appConfig, javaFinder, JavaFilter.ANY, ask, save);
+					break;
+				case "-java_home_check":
+					if (appConfig.isSupportedJavaHomeDir(new File(checkPath), JavaFilter.ANY)) {
+						exitCode = EXIT_SUCCESS;
+					}
 					break;
 				case "-jdk_home":
 					exitCode =
-						handleJavaHome(javaConfig, javaFinder, JavaFilter.JDK_ONLY, ask, save);
+						handleJavaHome(appConfig, javaFinder, JavaFilter.JDK_ONLY, ask, save);
 					break;
 				case "-vmargs":
-					exitCode = handleVmArgs(javaConfig);
+					exitCode = handleVmArgs(appConfig);
 					break;
 				default:
 					System.err.println("LaunchSupport received illegal argument: " + mode);
@@ -109,7 +130,7 @@ public class LaunchSupport {
 	 * Handles figuring out a Java home directory to use for the launch.  If it is successfully 
 	 * determined, an exit code that indicates success is returned.
 	 * 
-	 * @param javaConfig The Java configuration that defines what we support.
+	 * @param appConfig The appConfig configuration that defines what we support.
 	 * @param javaFinder The Java finder.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @param ask True to interact with the user to they can specify a Java home directory.
@@ -120,12 +141,24 @@ public class LaunchSupport {
 	 *   successfully determined.
 	 * @throws IOException if there was a disk-related problem.
 	 */
-	private static int handleJavaHome(JavaConfig javaConfig, JavaFinder javaFinder,
+	private static int handleJavaHome(AppConfig appConfig, JavaFinder javaFinder,
 			JavaFilter javaFilter, boolean ask, boolean save) throws IOException {
 		if (ask) {
-			return askJavaHome(javaConfig, javaFinder, javaFilter);
+			return askJavaHome(appConfig, javaFinder, javaFilter);
 		}
-		return findJavaHome(javaConfig, javaFinder, javaFilter, save);
+		return findJavaHome(appConfig, javaFinder, javaFilter, save);
+	}
+
+	private static void logJavaHomeError(File javaHomeDir, boolean isError, String source) {
+		String level = isError ? "ERROR: " : "WARNING: ";
+		if (!javaHomeDir.isDirectory()) {
+			System.err
+					.println(level + source + " specifies non-existing directory: " + javaHomeDir);
+		}
+		else {
+			System.err.println(
+				level + source + " specifies unsupported java version: " + javaHomeDir);
+		}
 	}
 
 	/**
@@ -133,7 +166,7 @@ public class LaunchSupport {
 	 * found, its path is printed to STDOUT and an exit code that indicates success is 
 	 * returned.  Otherwise, nothing is printed to STDOUT and an error exit code is returned.
 	 * 
-	 * @param javaConfig The Java configuration that defines what we support.
+	 * @param appConfig The application configuration that defines what we support.
 	 * @param javaFinder The Java finder.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @param save True if the determined Java home directory should get saved to a file. 
@@ -141,54 +174,74 @@ public class LaunchSupport {
 	 *   successfully determined.
 	 * @throws IOException if there was a problem saving the java home to disk.
 	 */
-	private static int findJavaHome(JavaConfig javaConfig, JavaFinder javaFinder,
+	private static int findJavaHome(AppConfig appConfig, JavaFinder javaFinder,
 			JavaFilter javaFilter, boolean save) throws IOException {
 
 		File javaHomeDir;
-		LaunchProperties launchProperties = javaConfig.getLaunchProperties();
+		LaunchProperties launchProperties = appConfig.getLaunchProperties();
 
 		// PRIORITY 1: JAVA_HOME_OVERRIDE property
 		// If a valid java home override is specified in the launch properties, use that.
 		// Someone presumably wants to force that specific version.
 		javaHomeDir = launchProperties.getJavaHomeOverride();
-		if (javaConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
+		if (appConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
 			if (save) {
-				javaConfig.saveJavaHome(javaHomeDir);
+				appConfig.saveJavaHome(javaHomeDir);
 			}
 			System.out.println(javaHomeDir);
 			return EXIT_SUCCESS;
 		}
+		if (javaHomeDir != null) {
+			logJavaHomeError(javaHomeDir, true,
+				launchProperties.getLaunchPropertiesFile().getAbsolutePath() + ", " +
+					LaunchProperties.JAVA_HOME_OVERRIDE);
+		}
 
-		// PRIORITY 2: Java on PATH
+		// PRIORITY 2: Java specified by JAVA_HOME environment
+		String javaHome = System.getenv("JAVA_HOME");
+		if (javaHome != null) {
+			javaHomeDir = new File(javaHome);
+			if (appConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
+				System.out.println(javaHomeDir);
+				return EXIT_SUCCESS;
+			}
+		}
+
+		// PRIORITY 3: Java on PATH
 		// This program (LaunchSupport) was started with the Java on the PATH. Try to use this one 
 		// next because it is most likely the one that is being upgraded on the user's system.
-		javaHomeDir = javaFinder.findSupportedJavaHomeFromCurrentJavaHome(javaConfig, javaFilter);
+		javaHomeDir = javaFinder.findSupportedJavaHomeFromCurrentJavaHome(appConfig, javaFilter);
 		if (javaHomeDir != null) {
 			if (save) {
-				javaConfig.saveJavaHome(javaHomeDir);
+				appConfig.saveJavaHome(javaHomeDir);
 			}
 			System.out.println(javaHomeDir);
 			return EXIT_SUCCESS;
 		}
 
-		// PRIORITY 3: Last used Java
+		// PRIORITY 4: Last used Java
 		// Check to see if a prior launch resulted in that Java being saved. If so, try to use that.
-		javaHomeDir = javaConfig.getSavedJavaHome();
-		if (javaConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
+		javaHomeDir = appConfig.getSavedJavaHome();
+		if (appConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
 			System.out.println(javaHomeDir);
 			return EXIT_SUCCESS;
 		}
 
-		// PRIORITY 4: Find all supported Java installations, and use the newest.
+		// PRIORITY 5: Find all supported Java installations, and use the newest.
 		List<File> javaHomeDirs =
-			javaFinder.findSupportedJavaHomeFromInstallations(javaConfig, javaFilter);
+			javaFinder.findSupportedJavaHomeFromInstallations(appConfig, javaFilter);
 		if (!javaHomeDirs.isEmpty()) {
 			javaHomeDir = javaHomeDirs.iterator().next();
 			if (save) {
-				javaConfig.saveJavaHome(javaHomeDir);
+				appConfig.saveJavaHome(javaHomeDir);
 			}
 			System.out.println(javaHomeDir);
 			return EXIT_SUCCESS;
+		}
+
+		// Issue warning about incompatible JAVA_HOME
+		if (javaHome != null) {
+			logJavaHomeError(new File(javaHome), false, "JAVA_HOME environment");
 		}
 
 		return EXIT_FAILURE;
@@ -196,10 +249,10 @@ public class LaunchSupport {
 
 	/**
 	 * Handles interacting with the user to choose a Java home directory to use for the launch.  
-	 * If a valid Java home directory was successfully determined, it is saved to the the user's
+	 * If a valid Java home directory was successfully determined, it is saved to the user's
 	 * Java home save file, and an exit code that indicates success is returned.
 	 * 
-	 * @param javaConfig The Java configuration that defines what we support.  
+	 * @param appConfig The application configuration that defines what we support.  
 	 * @param javaFinder The Java finder.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * * @return A suggested exit code based on whether or not a valid Java home directory was
@@ -207,13 +260,13 @@ public class LaunchSupport {
 	 * @throws IOException if there was a problem interacting with the user, or saving the java
 	 *   home location to disk.
 	 */
-	private static int askJavaHome(JavaConfig javaConfig, JavaFinder javaFinder,
+	private static int askJavaHome(AppConfig appConfig, JavaFinder javaFinder,
 			JavaFilter javaFilter) throws IOException {
 
 		String javaName = javaFilter.equals(JavaFilter.JDK_ONLY) ? "JDK" : "Java";
 		String javaRange;
-		int min = javaConfig.getMinSupportedJava();
-		int max = javaConfig.getMaxSupportedJava();
+		int min = appConfig.getMinSupportedJava();
+		int max = appConfig.getMaxSupportedJava();
 		if (min == max) {
 			javaRange = min + "";
 		}
@@ -225,9 +278,9 @@ public class LaunchSupport {
 		}
 
 		System.out.println("******************************************************************");
-		System.out.println(
-			javaName + " " + javaRange + " (" + javaConfig.getSupportedArchitecture() +
-				"-bit) could not be found and must be manually chosen!");
+		System.out
+				.println(javaName + " " + javaRange + " (" + appConfig.getSupportedArchitecture() +
+					"-bit) could not be found and must be manually chosen!");
 		System.out.println("******************************************************************");
 
 		File javaHomeDir = null;
@@ -254,13 +307,13 @@ public class LaunchSupport {
 				continue;
 			}
 			try {
-				JavaVersion javaVersion = javaConfig.getJavaVersion(javaHomeDir, javaFilter);
-				if (javaConfig.isJavaVersionSupported(javaVersion)) {
+				JavaVersion javaVersion = appConfig.getJavaVersion(javaHomeDir, javaFilter);
+				if (appConfig.isJavaVersionSupported(javaVersion)) {
 					break;
 				}
 				System.out.println(
 					"Java version " + javaVersion + " is outside of supported range: [" +
-						javaRange + " " + javaConfig.getSupportedArchitecture() + "-bit]");
+						javaRange + " " + appConfig.getSupportedArchitecture() + "-bit]");
 			}
 			catch (FileNotFoundException e) {
 				System.out.println(
@@ -271,7 +324,7 @@ public class LaunchSupport {
 			}
 		}
 
-		File javaHomeSaveFile = javaConfig.saveJavaHome(javaHomeDir);
+		File javaHomeSaveFile = appConfig.saveJavaHome(javaHomeDir);
 		System.out.println("Saved changes to " + javaHomeSaveFile);
 		return EXIT_SUCCESS;
 	}
@@ -281,18 +334,18 @@ public class LaunchSupport {
 	 * to STDOUT as a new-line delimited string that can be parsed and added to the command line, 
 	 * and an exit code that indicates success is returned. 
 	
-	 * @param javaConfig The Java configuration that defines what we support.  
+	 * @param appConfig The appConfig configuration that defines what we support.  
 	 * @return A suggested exit code based on whether or not the VM arguments were successfully
 	 *   gotten.
 	 */
-	private static int handleVmArgs(JavaConfig javaConfig) {
-		if (javaConfig.getLaunchProperties() == null) {
-			System.out.println("Launch properties file was not specified!");
+	private static int handleVmArgs(AppConfig appConfig) {
+		if (appConfig.getLaunchProperties() == null) {
+			System.err.println("Launch properties file was not specified!");
 			return EXIT_FAILURE;
 		}
 
 		// Force newline style to make cross-platform parsing consistent
-		javaConfig.getLaunchProperties().getVmArgList().forEach(e -> System.out.print(e + "\r\n"));
+		appConfig.getLaunchProperties().getVmArgList().forEach(e -> System.out.print(e + "\r\n"));
 		return EXIT_SUCCESS;
 	}
 }

@@ -323,13 +323,15 @@ public class ProgramTreePlugin extends ProgramPlugin
 		//
 		// Update low-level component cache.  We want to maintain the order of the tree views so 
 		// that the UI does not move around on the user.  Use the view names as they are stored in 
-		// the program to provide a consistent order.
+		// the program to provide a consistent order. Do not open trees the user has closed.
 		//		
 		List<TreeViewProvider> list = new ArrayList<>();
 		String[] orderedTreeNames = currentProgram.getListing().getTreeNames();
 		for (String treeName : orderedTreeNames) {
 			TreeViewProvider provider = providerMap.get(treeName);
-			list.add(provider);
+			if (provider != null) { // Provider will be null if this tree is not open in the view
+				list.add(provider);
+			}
 		}
 
 		componentProvider.treeViewsRestored(list);

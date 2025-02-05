@@ -56,7 +56,7 @@ public class MemorySearcher {
 	 * @param searchLimit the max number of hits before stopping
 	 */
 	public MemorySearcher(AddressableByteSource byteSource, ByteMatcher matcher,
-			AddressSet addresses, int searchLimit) {
+			AddressSetView addresses, int searchLimit) {
 		this(byteSource, matcher, addresses, searchLimit, DEFAULT_CHUNK_SIZE);
 	}
 
@@ -69,7 +69,7 @@ public class MemorySearcher {
 	 * @param chunkSize the maximum number of bytes to feed to the matcher at any one time. 
 	 */
 	public MemorySearcher(AddressableByteSource byteSource, ByteMatcher matcher,
-			AddressSet addresses, int searchLimit, int chunkSize) {
+			AddressSetView addresses, int searchLimit, int chunkSize) {
 		this.matcher = matcher;
 		this.searchSet = addresses;
 		this.searchLimit = searchLimit;

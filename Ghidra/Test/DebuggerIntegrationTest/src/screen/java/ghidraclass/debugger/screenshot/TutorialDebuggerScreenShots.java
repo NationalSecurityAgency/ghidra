@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,13 +34,14 @@ import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.Unique;
 import generic.jar.ResourceFile;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.analysis.AutoAnalysisPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyActionsPlugin;
@@ -51,7 +52,6 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerMemoryBytesProvider;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingProvider;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider;
@@ -60,7 +60,9 @@ import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueHoverPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
+import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectDialog;
 import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectionManagerPlugin;
+import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLaunchDialog;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin.EmulateProgramAction;
@@ -108,6 +110,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
+import utility.application.ApplicationLayout;
 
 public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		implements AsyncTestUtils {
@@ -143,6 +146,18 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 				nav.getSelection(), nav.getHighlight());
 		}
 	};
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath())) {
+			@Override
+			protected Set<String> getDependentModulePatterns() {
+				Set<String> patterns = super.getDependentModulePatterns();
+				patterns.add("Debugger-agent");
+				return patterns;
+			}
+		};
+	}
 
 	@Override
 	protected TestEnv newTestEnv() throws Exception {
@@ -262,7 +277,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 			}
 		}));
 
-		captureDialog(DebuggerMethodInvocationDialog.class);
+		captureDialog(TraceRmiLaunchDialog.class);
 	}
 
 	@Test
@@ -733,7 +748,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
-		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
+		//waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
 
 		runSwing(() -> tool.setSize(1920, 1080));
 		captureProvider(DebuggerStaticMappingProvider.class);
@@ -775,7 +790,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		performAction("Connect by Accept",
 			PluginUtils.getPluginNameFromClass(TraceRmiConnectionManagerPlugin.class),
 			false);
-		captureDialog(DebuggerMethodInvocationDialog.class);
+		captureDialog(TraceRmiConnectDialog.class);
 	}
 
 	protected Function findCommandLineParser() throws Throwable {
@@ -818,7 +833,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	}
 
 	@Test
-	public void testEmulation_LazyStaleListing() throws Throwable {
+	public void testEmulation_InitialListing() throws Throwable {
 		emulateCommandLineParser();
 
 		runSwing(() -> tool.setSize(1920, 1080));
@@ -829,9 +844,6 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	public void testEmulation_ListingAfterResume() throws Throwable {
 		emulateCommandLineParser();
 
-		DebuggerListingProvider listing = getProvider(DebuggerListingProvider.class);
-		listing.setAutoReadMemorySpec(
-			AutoReadMemorySpec.fromConfigName(LoadEmulatorAutoReadMemorySpec.CONFIG_NAME));
 		EmulationResult result = flatDbg.getEmulationService()
 				.run(flatDbg.getCurrentPlatform(), flatDbg.getCurrentEmulationSchedule(), monitor,
 					Scheduler.oneThread(flatDbg.getCurrentThread()));

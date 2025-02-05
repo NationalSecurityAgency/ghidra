@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,8 @@ import javax.help.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import generic.jar.ResourceFile;
-import ghidra.framework.Application;
 import ghidra.util.SystemUtilities;
+import help.validator.JavaHelpValidator;
 
 /**
  * Ghidra help set that creates a GhidraHelpBroker, installs some custom HTML handling code via
@@ -201,17 +200,22 @@ public class GHelpSet extends HelpSet {
 		/**
 		 * This is meant for help files that are not included in the standard help system.  Their
 		 * id paths are expected to be relative to the application install directory.
-		 * @param id the help id.
+		 * @param rawId the help id.
 		 * @return the URL to the help file.
 		 */
-		private URL tryToCreateURLFromID(String id) {
+		private URL tryToCreateURLFromID(String rawId) {
 
-			URL fileURL = createFileURL(id);
-			if (fileURL != null) {
-				return fileURL;
+			String idText = rawId;
+			if (rawId.startsWith(JavaHelpValidator.EXTERNAL_PREFIX)) {
+				idText = rawId.substring(JavaHelpValidator.EXTERNAL_PREFIX.length());
 			}
 
-			URL rawURL = createRawURL(id);
+			URL fileUrl = HelpBuildUtils.findApplicationUrl(idText);
+			if (fileUrl != null) {
+				return fileUrl;
+			}
+
+			URL rawURL = createRawURL(idText);
 			return rawURL;
 		}
 
@@ -236,31 +240,6 @@ public class GHelpSet extends HelpSet {
 			}
 
 			return null;
-		}
-
-		private URL createFileURL(String id) {
-			ResourceFile helpFile = fileFromID(id);
-			if (!helpFile.exists()) {
-				LOG.trace("ID is not a file; tried: " + helpFile);
-				return null;
-			}
-
-			try {
-				return helpFile.toURL();
-			}
-			catch (MalformedURLException e) {
-				// this shouldn't happen, as the file exists
-				LOG.trace("ID is not a URL; tried to make URL from file: " + helpFile);
-			}
-			return null;
-		}
-
-		private ResourceFile fileFromID(String id) {
-			// this allows us to find files by using relative paths (e.g., 'docs/WhatsNew.html'
-			// will get resolved relative to the installation directory in a build).
-			ResourceFile installDir = Application.getInstallationDirectory();
-			ResourceFile helpFile = new ResourceFile(installDir, id);
-			return helpFile;
 		}
 
 		@Override

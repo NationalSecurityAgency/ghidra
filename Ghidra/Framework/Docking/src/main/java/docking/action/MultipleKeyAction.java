@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -110,6 +110,22 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	@Override
+	public List<DockingActionIf> getValidActions(Object source) {
+
+		if (ignoreActionWhileMenuShowing()) {
+			return List.of();
+		}
+
+		List<DockingActionIf> validActions = new ArrayList<>();
+		List<ExecutableAction> proxyActions = getActionsForCurrentOrDefaultContext(source);
+		for (ExecutableAction proxy : proxyActions) {
+			DockingActionIf action = proxy.getAction();
+			validActions.add(action);
+		}
+		return validActions;
+	}
+
+	@Override
 	public void actionPerformed(final ActionEvent event) {
 		// Build list of actions which are valid in current context
 		List<ExecutableAction> list = getActionsForCurrentOrDefaultContext(event.getSource());
@@ -178,12 +194,10 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		// 2) Check for actions local to the source component
 		//
 		for (ActionData actionData : actions) {
-			if (!(actionData.action instanceof ComponentBasedDockingAction)) {
+			if (!(actionData.action instanceof ComponentBasedDockingAction componentAction)) {
 				continue;
 			}
 
-			ComponentBasedDockingAction componentAction =
-				(ComponentBasedDockingAction) actionData.action;
 			if (componentAction.isValidComponentContext(localContext)) {
 				hasLocalActionsForKeyBinding = true;
 				if (isValidAndEnabled(actionData, localContext)) {

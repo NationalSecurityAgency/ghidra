@@ -21,29 +21,17 @@ GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment.html||GHIDRA|||This fi
 GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/AdvancedDevelopment/Images/GhidraLogo64.png||GHIDRA||||END|
 GhidraClass/AdvancedDevelopment/Images/highLevelClasses.png||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_BSim_Command_Line.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_BSim_Command_Line.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Basic_Queries.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Basic_Queries.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Creating_Database_From_GUI.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Creating_Database_From_GUI.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Enabling.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Enabling.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Evaluating_Matches.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Evaluating_Matches.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Exe_Results.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Exe_Results.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Filters.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Filters.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Ghidra_Command_Line.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Ghidra_Command_Line.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Intro.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Intro.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Overview_Queries.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Overview_Queries.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Scripting.html||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Scripting.md||GHIDRA||||END|
-GhidraClass/BSim/README.html||GHIDRA||||END|
 GhidraClass/BSim/README.md||GHIDRA||||END|
 GhidraClass/BSim/images/Plus2.png||GHIDRA||||END|
 GhidraClass/BSim/images/actions.png||GHIDRA||||END|
@@ -95,7 +83,7 @@ GhidraClass/Debugger/images/Breakpoints_MissingModuleNote.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_PopAfterSRandRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_SeedValueAfterBreakSRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_SyncedAfterImportLibC.png||GHIDRA||||END|
-GhidraClass/Debugger/images/Emulation_LazyStaleListing.png||GHIDRA||||END|
+GhidraClass/Debugger/images/Emulation_InitialListing.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_ListingAfterResume.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_ListingForCmdlineSet.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_PcodeStepper.png||GHIDRA||||END|
@@ -202,7 +190,7 @@ GhidraClass/Intermediate/VersionTracking.html||GHIDRA|||This file contains mostl
 GhidraClass/Intermediate/VersionTracking_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraCodingStandards.html||GHIDRA||||END|
 GhidraFilesystemStorage.html||GHIDRA||||END|
-InstallationGuide.html||GHIDRA||||END|
+InstallationGuide.md||GHIDRA||||END|
 images/B.gif||GHIDRA||||END|
 images/D.gif||GHIDRA||||END|
 images/F.gif||GHIDRA||||END|

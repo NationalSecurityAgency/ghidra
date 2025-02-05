@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +15,15 @@
  */
 package ghidra.app.plugin.core.diff;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ArrayList;
 
 /**
  * DiffController controls a program Diff. It maintains address sets indicating 
@@ -41,8 +41,7 @@ public class DiffController {
 	private AddressSetView p1LastDiffs;
 	private AddressSetView p1LimitSet;
 	private Address p1CurrentAddress;
-	private ArrayList<DiffControllerListener> listenerList =
-		new ArrayList<DiffControllerListener>();
+	private List<DiffControllerListener> listenerList = new ArrayList<DiffControllerListener>();
 
 	/**
 	 * Constructor
@@ -54,13 +53,12 @@ public class DiffController {
 	 * The addresses in this set should be derived from p1.
 	 * @param diffFilter filter indicating difference types to mark.
 	 * @param mergeFilter filter indicating difference types to apply.
-	 * @param monitor the progress monitor
 	 * @throws ProgramConflictException
 	 */
 	public DiffController(Program p1, Program p2, AddressSetView p1LimitSet,
-			ProgramDiffFilter diffFilter, ProgramMergeFilter mergeFilter, TaskMonitor monitor)
+			ProgramDiffFilter diffFilter, ProgramMergeFilter mergeFilter)
 			throws ProgramConflictException {
-		mergeEngine = new ProgramMergeManager(p1, p2, p1LimitSet, monitor);
+		mergeEngine = new ProgramMergeManager(p1, p2, p1LimitSet);
 		mergeEngine.setDiffFilter(diffFilter);
 		mergeEngine.setMergeFilter(mergeFilter);
 		this.p1LimitSet = p1LimitSet;
@@ -181,7 +179,7 @@ public class DiffController {
 	 */
 	public void restrictResults(AddressSetView p1AddressSet, TaskMonitor monitor) {
 		mergeEngine.restrictResults(p1AddressSet);
-		differencesChanged(monitor);
+		differencesChanged();
 	}
 
 	/** Remove the restriction for the resulting differences to the indicated address set.
@@ -190,7 +188,7 @@ public class DiffController {
 	 */
 	public void removeResultRestrictions(TaskMonitor monitor) {
 		mergeEngine.removeResultRestrictions();
-		differencesChanged(monitor);
+		differencesChanged();
 	}
 
 	/**
@@ -224,7 +222,7 @@ public class DiffController {
 	 */
 	void ignore(AddressSetView p1AddressSet, TaskMonitor monitor) {
 		mergeEngine.ignore(p1AddressSet);
-		differencesChanged(monitor);
+		differencesChanged();
 	}
 
 	/**
@@ -357,7 +355,7 @@ public class DiffController {
 		if (keepIgnored) {
 			mergeEngine.ignore(ignoreSet);
 		}
-		differencesChanged(monitor);
+		differencesChanged();
 	}
 
 	private void recomputeDiffs(TaskMonitor monitor) throws ProgramConflictException {
@@ -372,7 +370,7 @@ public class DiffController {
 		ProgramMergeFilter mergeFilter = mergeEngine.getMergeFilter();
 		this.p1LimitSet = newLimitSet;
 
-		mergeEngine = new ProgramMergeManager(p1, p2, newLimitSet, monitor);
+		mergeEngine = new ProgramMergeManager(p1, p2, newLimitSet);
 		mergeEngine.setDiffFilter(diffFilter);
 		mergeEngine.setMergeFilter(mergeFilter);
 	}
@@ -392,7 +390,7 @@ public class DiffController {
 		}
 	}
 
-	public void differencesChanged(TaskMonitor monitor) {
+	public void differencesChanged() {
 		for (int i = 0; i < listenerList.size(); i++) {
 			DiffControllerListener listener = listenerList.get(i);
 			listener.differencesChanged(this);

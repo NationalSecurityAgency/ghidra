@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	public InterpreterComponentProvider(InterpreterPanelPlugin plugin,
 			InterpreterConnection interpreter, boolean visible) {
-		super(plugin.getTool(), interpreter.getTitle(), plugin.getName());
+		super(plugin.getTool(), interpreter.getTitle(), interpreter.getTitle());
 
 		this.panel = new InterpreterPanel(plugin.getTool(), interpreter);
 		this.interpreter = interpreter;
@@ -63,7 +63,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	private void createActions() {
 
-		DockingAction clearAction = new DockingAction("Clear Interpreter", getName()) {
+		DockingAction clearAction = new DockingAction("Clear Interpreter", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				clear();

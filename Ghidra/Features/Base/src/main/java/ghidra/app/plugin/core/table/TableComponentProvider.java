@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,8 +138,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		if (navigatable != null) {
 			// Only allow global actions if we are derived from the connect/primary navigatable.  
-			// This allows the the primary navigatable to process key events without the user having
-			// to focus first focus the primary navigatable.
+			// This allows the primary navigatable to process key events without the user having
+			// to first focus the primary navigatable.
 			table.setActionsEnabled(navigatable.isConnected());
 			navigatable.addNavigatableListener(this);
 			table.installNavigation(tool, navigatable);
@@ -160,6 +160,13 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private void createActions(Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
+
+		// The name of this provider is specified by the clients of the service and it is expected 
+		// to be something like 'Search Results'.  The title is also from the client and is expected
+		// to be something like 'Search Text "foo"'
+		table.setAccessibleNamePrefix(getName());
+		table.getAccessibleContext().setAccessibleDescription("Provider title: " + getTitle());
+
 		if (navigatable != null) {
 			selectAction =
 				new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
@@ -174,7 +181,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectionNavigationAction
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
-		externalGotoAction = new DockingAction("Go to External Location", getName()) {
+		externalGotoAction = new DockingAction("Go to External Location", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				gotoExternalAddress(getSelectedExternalAddress());
@@ -382,6 +389,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	public GhidraProgramTableModel<T> getModel() {
 		return model;
+	}
+
+	public GhidraTable getTable() {
+		return threadedPanel.getTable();
 	}
 
 	private void updateTitle() {

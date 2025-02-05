@@ -526,6 +526,25 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
     return res;
 }
 
+/// \brief Construct the boolean negation of a given boolean Varnode into a temporary register
+///
+/// \param vn is the given Varnode
+/// \param op is the point at which to insert the BOOL_NEGATE op
+/// \return the result Varnode
+Varnode *Funcdata::opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter)
+
+{
+  PcodeOp *negateop = newOp(1,op->getAddr());
+  opSetOpcode(negateop,CPUI_BOOL_NEGATE);
+  Varnode *resvn = newUniqueOut(1,negateop);
+  opSetInput(negateop,vn,0);
+  if (insertafter)
+    opInsertAfter(negateop,op);
+  else
+    opInsertBefore(negateop,op);
+  return resvn;
+}
+
 /// Convert the given CPUI_PTRADD into the equivalent CPUI_INT_ADD.  This may involve inserting a
 /// CPUI_INT_MULT PcodeOp. If finalization is requested and a new PcodeOp is needed, the output
 /// Varnode is marked as \e implicit and has its data-type set
@@ -546,7 +565,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
     newVal &= calc_mask(offVn->getSize());
     Varnode *newOffVn = newConstant(offVn->getSize(), newVal);
     if (finalize)
-      newOffVn->updateType(offVn->getTypeReadFacing(op), false, false);
+      newOffVn->updateType(offVn->getTypeReadFacing(op));
     opSetInput(op,newOffVn,1);
     return;
   }
@@ -554,7 +573,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
   opSetOpcode(multOp,CPUI_INT_MULT);
   Varnode *addVn = newUniqueOut(offVn->getSize(),multOp);
   if (finalize) {
-    addVn->updateType(multVn->getType(), false, false);
+    addVn->updateType(multVn->getType());
     addVn->setImplied();
   }
   opSetInput(multOp,offVn,0);
@@ -804,8 +823,8 @@ void Funcdata::truncatedFlow(const Funcdata *fd,const FlowInfo *flow)
 /// \param inlinefd is the function to in-line
 /// \param flow is the flow object being injected
 /// \param callop is the site of the injection
-/// \return \b true if the injection was successful
-bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
+/// \return 0 for a successful inlining with the easy model, 1 for the hard model, -1 if inlining was not successful
+int4 Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
 {
   inlinefd->getArch()->clearAnalysis(inlinefd);
@@ -821,7 +840,9 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   inlineflow.forwardRecursion(flow);
   inlineflow.generateOps();
 
+  int4 res;
   if (inlineflow.checkEZModel()) {
+    res = 0;
     // With an EZ clone there are no jumptables to clone
     list<PcodeOp *>::const_iterator oiter = obank.endDead();
     --oiter;			// There is at least one op
@@ -843,7 +864,8 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   else {
     Address retaddr;
     if (!flow.testHardInlineRestrictions(inlinefd,callop,retaddr))
-      return false;
+      return -1;
+    res = 1;
     vector<JumpTable *>::const_iterator jiter; // Clone any jumptables from inline piece
     for(jiter=inlinefd->jumpvec.begin();jiter!=inlinefd->jumpvec.end();++jiter) {
       JumpTable *jtclone = new JumpTable(*jiter);
@@ -862,7 +884,7 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
   obank.setUniqId( inlinefd->obank.getUniqId() );
   
-  return true;
+  return res;
 }
 
 /// \brief Find the primary branch operation for an instruction

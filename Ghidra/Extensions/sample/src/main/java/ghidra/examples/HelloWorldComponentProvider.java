@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,8 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 	private JPanel mainPanel;
 	private DockingAction action;
 
-	public HelloWorldComponentProvider(PluginTool tool, String name) {
-		super(tool, name, name);
+	public HelloWorldComponentProvider(PluginTool tool, String owner) {
+		super(tool, "Hello World", owner);
 		buildMainPanel();
 		setIcon(new GIcon("icon.sample.provider"));
 		setHelpLocation(HELP);
@@ -51,7 +51,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 	private void createActions() {
 
 		// set actions for Hello->World menu item
-		action = new DockingAction("Hello World", getName()) {
+		action = new DockingAction("Hello World", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				// pop up a "Hello World" dialog
@@ -66,7 +66,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		Icon icon = new GIcon("icon.sample.action.hello.world");
 		action.setMenuBarData(new MenuData(new String[] { "Misc", "Hello World" }, icon));
 		action.setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_MASK)));
+			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)));
 
 		// puts the action on the local toolbar.
 		action.setToolBarData(new ToolBarData(icon));
@@ -77,7 +77,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		addLocalAction(action);
 
 		//Example popup action
-		DockingAction popupAction = new DockingAction("Hello Popup", getName()) {
+		DockingAction popupAction = new DockingAction("Hello Popup", getOwner()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				announce("Hello World");
@@ -136,9 +136,6 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		return null;
 	}
 
-	/**
-	 * popup the Hello Dialog
-	 */
 	protected void announce(String message) {
 		Msg.showInfo(getClass(), mainPanel, "Hello World", message);
 	}
@@ -148,13 +145,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 			super(name);
 			setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
 
-			addActionListener(new ActionListener() {
-
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					announce("Hello World");
-				}
-			});
+			addActionListener(e -> announce("Hello World"));
 		}
 	}
 }

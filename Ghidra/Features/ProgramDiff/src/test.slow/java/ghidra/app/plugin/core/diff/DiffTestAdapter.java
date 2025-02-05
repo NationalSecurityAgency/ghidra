@@ -103,6 +103,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	JCheckBox functionCB;
 	JCheckBox bookmarkCB;
 	JCheckBox propertiesCB;
+	JCheckBox sourceMapCB;
 
 	JCheckBox limitToSelectionCB;
 	JTextArea limitText;
@@ -501,12 +502,14 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws Exception {
 
 		Window win = getWindow("Select Other Program");
 		if (win != null) {
 			pressButton(win, "Cancel");
 		}
+
+		closeDiff();
 
 		env.dispose();
 	}
@@ -516,7 +519,15 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		performAction(setView, context, true);
 	}
 
+	protected boolean isDiffActive() {
+		return runSwing(() -> diffPlugin.isDiffActive());
+	}
+
 	void closeDiff() throws Exception {
+
+		if (!isDiffActive()) {
+			return;
+		}
 
 		closeDiffByAction();
 		DialogComponentProvider dialogProvider = waitForDialogComponent("Close Diff Session");
@@ -1062,6 +1073,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		functionCB = (JCheckBox) findComponentByName(win, "FunctionsDiffCB");
 		bookmarkCB = (JCheckBox) findComponentByName(win, "BookmarksDiffCB");
 		propertiesCB = (JCheckBox) findComponentByName(win, "PropertiesDiffCB");
+		sourceMapCB = (JCheckBox) findComponentByName(win, "SourceMapDiffCB");
 
 		limitToSelectionCB = (JCheckBox) findComponentByName(win, "LimitToSelectionDiffCB");
 		limitText = (JTextArea) findComponentByName(win, "AddressTextArea");
@@ -1069,7 +1081,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	void setAllTypes(boolean select) {
 		setCheckBoxes(select, new JCheckBox[] { programContextCB, byteCB, codeUnitCB, refCB,
-			commentCB, labelCB, functionCB, bookmarkCB, propertiesCB });
+			commentCB, labelCB, functionCB, bookmarkCB, propertiesCB, sourceMapCB });
 	}
 
 	void topOfFile(final FieldPanel fp) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,12 +102,14 @@ public class BSimOverviewProvider extends ComponentProviderAdapter {
 		addLocalAction(new SelectionNavigationAction(plugin, table));
 		HelpLocation help =
 			new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Overview_Search_Info_Action");
-		new ActionBuilder("Search Info", getName()).toolBarIcon(Icons.INFO_ICON)
+		new ActionBuilder("Search Info", getOwner())
+				.toolBarIcon(Icons.INFO_ICON)
 				.helpLocation(help)
 				.onAction(c -> showSearchInfo())
 				.buildAndInstallLocal(this);
 
-		new ActionBuilder("Make Selection", getOwner()).popupMenuPath("Make Selection")
+		new ActionBuilder("Make Selection", getOwner())
+				.popupMenuPath("Make Selection")
 				.description("Make a selection using selected rows")
 				.helpLocation(
 					new HelpLocation(BSimSearchPlugin.HELP_TOPIC, "Overview_Make_Selection"))

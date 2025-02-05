@@ -35,8 +35,7 @@ import ghidra.app.plugin.core.format.*;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.PairLayout;
 import help.Help;
@@ -362,9 +361,8 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 				c.setViewerCursorLocation(info.getBlock(), info.getOffset(), info.getColumn());
 			}
 			if (updateViewPosition) {
-				Runnable r = () -> indexPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(),
-					vp.getYOffset());
-				SwingUtilities.invokeLater(r);
+				Swing.runLater(() -> indexPanel.setViewerPosition(vp.getIndex(), vp.getXOffset(),
+					vp.getYOffset()));
 			}
 			addingView = false;
 		}
@@ -615,6 +613,7 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 		}
 		indexFactory = new IndexFieldFactory(fm);
 		indexFactory.setSize(getIndexSizeInChars());
+		updateIndexMap();
 		indexPanel.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 	}
 

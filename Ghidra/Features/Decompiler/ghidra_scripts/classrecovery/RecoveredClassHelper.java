@@ -1040,7 +1040,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issues setting return type
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void gatherClassMemberDataInfoForFunction(RecoveredClass recoveredClass,
 			Function function) throws CancelledException, DuplicateNameException,
@@ -1256,7 +1256,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issue making function thiscall
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void temporarilyReplaceEmptyStructures(Function function, Namespace classNamespace)
 			throws CancelledException, DuplicateNameException, InvalidInputException,
@@ -1823,7 +1823,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public boolean processConstructorsAndDestructorsUsingParent(RecoveredClass recoveredClass,
 			RecoveredClass parentClass) throws CancelledException, InvalidInputException,
@@ -1965,7 +1965,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if error setting return type
 	 * @throws DuplicateNameException  if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void addConstructorToClass(RecoveredClass recoveredClass, Function constructorFunction)
 			throws CancelledException, InvalidInputException, DuplicateNameException,
@@ -2090,7 +2090,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if error setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void createListedConstructorFunctions(Map<Address, RecoveredClass> referenceToClassMap,
 			List<Address> referencesToConstructors) throws CancelledException,
@@ -2124,7 +2124,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issue setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 
 	public void processInlineConstructor(RecoveredClass recoveredClass,
@@ -2443,7 +2443,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to return the total number of vbase destructors in the given list of classes
 	 * @param recoveredClasses the list of classes
-	 * @return the the total number of vbase destructors in the given list of classes
+	 * @return the total number of vbase destructors in the given list of classes
 	 * @throws CancelledException if cancelled
 	 */
 	public int getNumberOfVBaseFunctions(List<RecoveredClass> recoveredClasses)
@@ -2542,7 +2542,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to use existing pdb names to assign class constructors and destructors
 	 * @param recoveredClasses List of classes
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 * @throws CancelledException if cancelled
@@ -2562,7 +2562,11 @@ public class RecoveredClassHelper {
 				Function function = functionIterator.next();
 				Namespace namespace = function.getParentNamespace();
 				if (!namespace.equals(recoveredClass.getClassNamespace())) {
-					continue;
+					Symbol functionSymbol = function.getSymbol();
+					if (functionSymbol.getSource().equals(SourceType.IMPORTED)) {
+						functionIterator.remove(); // remove named functions belonging to other class
+					}
+					continue; // continue in either case to skip functions in other namespaces
 				}
 				String name = function.getName();
 				if (name.equals(recoveredClass.getName())) {
@@ -3480,7 +3484,7 @@ public class RecoveredClassHelper {
 	 * @param address the given address
 	 * @param name the name to give the new symbol
 	 * @param namespace the namespace to put the new symbol in
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws CancelledException if cancelled
@@ -3563,7 +3567,7 @@ public class RecoveredClassHelper {
 	 * @param namespace the namespace to put the new symbol in
 	 * @param setPrimary if true, set the new symbol primary, if false do not make the new symbol primary
 	 * @param removeBadFID if true, check for and remove any incorrect FID symbols, if false leave them there
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws CancelledException if cancelled
@@ -3640,7 +3644,7 @@ public class RecoveredClassHelper {
 	 * @param name the given name
 	 * @param function the given function
 	 * @throws CancelledException if cancelled
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issues setting return type
 	 */
@@ -3728,7 +3732,7 @@ public class RecoveredClassHelper {
 	* @throws CancelledException if cancelled
 	* @throws InvalidInputException if error setting return type
 	* @throws DuplicateNameException if try to create same symbol name already in namespace
-	* @throws CircularDependencyException if parent namespace is descendent of given namespace
+	* @throws CircularDependencyException if parent namespace is descendant of given namespace
 	*/
 	private void findAndRemoveBadStructuresFromFunction(Function function, Namespace namespace)
 			throws CancelledException, InvalidInputException, DuplicateNameException,
@@ -3765,7 +3769,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if invalid data input
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void fixBadSignatures(Function function, List<Structure> badStructureDataTypes)
 			throws CancelledException, InvalidInputException, DuplicateNameException,
@@ -3842,7 +3846,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if invalid data input
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void removeBadParameterDataTypes(Function function,
 			List<Structure> badStructureDataTypes) throws CancelledException,
@@ -4694,7 +4698,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	private void nameVfunctions(RecoveredClass recoveredClass, Address vftableAddress,
 			String vftableStructureName) throws CancelledException, InvalidInputException,
@@ -6078,7 +6082,7 @@ public class RecoveredClassHelper {
 	 * determine, using vftable order, which class contains the constructor/destructor and which
 	 * contains the inlined constructor/destructor.
 	 * @param recoveredClasses List of classes
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 * @throws CancelledException when cancelled and others
@@ -6140,7 +6144,7 @@ public class RecoveredClassHelper {
 				}
 
 				// if one or more is a constructor and none are destructors then the indeterminate
-				// inline is is an inlined constructor
+				// inline is an inlined constructor
 				if (isConstructor == true && isDestructor == false) {
 					processInlineConstructor(recoveredClass, inlineFunction, referenceToClassMap);
 				}
@@ -6258,7 +6262,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void processRemainingIndeterminateConstructorsAndDestructors(
 			List<RecoveredClass> recoveredClasses) throws CancelledException, InvalidInputException,
@@ -6561,7 +6565,7 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 */
 	public void processRegularConstructorsAndDestructorsUsingCallOrder(
 			List<RecoveredClass> recoveredClasses) throws CancelledException, InvalidInputException,
@@ -6592,7 +6596,7 @@ public class RecoveredClassHelper {
 	 * indeterminate functions are constructors or destructors.
 	 * @param recoveredClasses List of class objects
 	 * @throws CancelledException if cancelled
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 */
@@ -6661,7 +6665,7 @@ public class RecoveredClassHelper {
 	 * descendant regular list.
 	 * @param recoveredClasses list of classes
 	 * @throws CancelledException if cancelled
-	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if error setting return type
 	 */
@@ -8465,7 +8469,8 @@ public class RecoveredClassHelper {
 			Symbol symbol = symbols.next();
 			if (symbol.getName().equals("vftable") ||
 				symbol.getName().substring(1).startsWith("vftable") ||
-				symbol.getName().contains("vftable_for_")) {
+				symbol.getName().contains("vftable_for_") ||
+				symbol.getName().contains("vftable{for")) {
 				vftableSymbols.add(symbol);
 			}
 

@@ -5174,7 +5174,7 @@
   <para>
     Decompilation is triggered again to incorporate the
     new name, causing local variable declarations to be reordered and line breaks to
-    change, but otherwise the the output is unaffected.
+    change, but otherwise the output is unaffected.
   </para>
   <para>
     Local variables and parameters presented by the Decompiler may be invented on-the-fly

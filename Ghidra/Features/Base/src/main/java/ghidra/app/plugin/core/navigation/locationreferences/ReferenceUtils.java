@@ -1097,6 +1097,9 @@ public final class ReferenceUtils {
 		Enum enumm = (Enum) dt;
 		List<String> names = getEnumNames(data, enumm);
 		for (String name : names) {
+			if (!enumm.contains(name)) {
+				continue;
+			}
 			long value = enumm.getValue(name);
 			if (matcher.matches(name, (int) value)) {
 				return true;

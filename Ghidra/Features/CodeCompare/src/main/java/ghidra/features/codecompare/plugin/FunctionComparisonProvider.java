@@ -157,7 +157,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 				functionComparisonPanel.getDualListingPanel();
 			if (dualListingPanel != null) {
 				ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
-				return leftPanel.getHeaderActions(getName());
+				return leftPanel.getHeaderActions(getOwner());
 			}
 		}
 		return new ArrayList<>();

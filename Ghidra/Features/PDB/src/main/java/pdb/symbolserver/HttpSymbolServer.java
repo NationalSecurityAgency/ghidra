@@ -113,7 +113,7 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 	 * Creates a new instance of a HttpSymbolServer.
 	 * 
 	 * @param serverURI URI / URL of the symbol server 
-	 * @param isTrusted flag, if true the the http server can be trusted when querying and downloading
+	 * @param isTrusted flag, if true the http server can be trusted when querying and downloading
 	 */
 	public HttpSymbolServer(URI serverURI, boolean isTrusted) {
 		String path = serverURI.getPath();

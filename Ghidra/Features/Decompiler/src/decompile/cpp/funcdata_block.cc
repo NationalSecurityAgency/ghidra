@@ -833,150 +833,6 @@ BlockBasic *Funcdata::nodeSplitBlockEdge(BlockBasic *b,int4 inedge)
   return bprime;
 }
 
-/// \brief Duplicate the given PcodeOp as part of splitting a block
-///
-/// Make a basic clone of the p-code op copying its basic control-flow properties
-/// \param op is the given PcodeOp
-/// \return the cloned op
-PcodeOp *Funcdata::nodeSplitCloneOp(PcodeOp *op)
-
-{
-  PcodeOp *dup;
-
-  if (op->isBranch()) {
-    if (op->code() != CPUI_BRANCH)
-      throw LowlevelError("Cannot duplicate 2-way or n-way branch in nodeplit");
-    return (PcodeOp *)0;
-  }
-  dup = newOp(op->numInput(),op->getAddr());
-  opSetOpcode(dup,op->code());
-  uint4 fl = op->flags & (PcodeOp::startbasic | PcodeOp::nocollapse |
-			  PcodeOp::startmark);
-  dup->setFlag(fl);
-  return dup;
-}
-
-/// \brief Duplicate output Varnode of the given p-code op, as part of splitting a block
-///
-/// Make a basic clone of the Varnode and its basic flags. The clone is created
-/// as an output of a previously cloned PcodeOp.
-/// \param op is the given op whose output should be cloned
-/// \param newop is the cloned version
-void Funcdata::nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop)
-
-{
-  Varnode *opvn = op->getOut();
-  Varnode *newvn;
-
-  if (opvn == (Varnode *)0) return;
-  newvn = newVarnodeOut(opvn->getSize(),opvn->getAddr(),newop);
-  uint4 vflags = opvn->getFlags();
-  vflags &= (Varnode::externref | Varnode::volatil | Varnode::incidental_copy |
-	     Varnode::readonly | Varnode::persist |
-	     Varnode::addrtied | Varnode::addrforce);
-  newvn->setFlags(vflags);
-}
-
-/// \brief Clone all p-code ops from a block into its copy
-///
-/// P-code in a basic block is cloned into the split version of the block.
-/// Only the output Varnodes are cloned, not the inputs.
-/// \param b is the original basic block
-/// \param bprime is the cloned block
-void Funcdata::nodeSplitRawDuplicate(BlockBasic *b,BlockBasic *bprime)
-
-{
-  PcodeOp *b_op,*prime_op;
-  list<PcodeOp *>::iterator iter;
-
-  for(iter=b->beginOp();iter!=b->endOp();++iter) {
-    b_op = *iter;
-    prime_op = nodeSplitCloneOp(b_op);
-    if (prime_op == (PcodeOp *)0) continue;
-    nodeSplitCloneVarnode(b_op,prime_op);
-    opInsertEnd(prime_op,bprime);
-  }
-}
-
-/// \brief Patch Varnode inputs to p-code ops in split basic block
-///
-/// Map Varnodes that are inputs for PcodeOps in the original basic block to the
-/// input slots of the cloned ops in the split block. Constants and code ref Varnodes
-/// need to be duplicated, other Varnodes are shared between the ops. This routine
-/// also pulls an input Varnode out of riginal MULTIEQUAL ops and adds it back
-/// to the cloned MULTIEQUAL ops.
-/// \param b is the original basic block
-/// \param bprime is the split clone of the block
-/// \param inedge is the incoming edge index that was split on
-void Funcdata::nodeSplitInputPatch(BlockBasic *b,BlockBasic *bprime,int4 inedge)
-
-{
-  list<PcodeOp *>::iterator biter,piter;
-  PcodeOp *bop,*pop;
-  Varnode *bvn,*pvn;
-  map<PcodeOp *,PcodeOp *> btop; // Map from b to bprime
-  vector<PcodeOp *> pind;	// pop needing b input
-  vector<PcodeOp *> bind;	// bop giving input
-  vector<int4> pslot;		// slot within pop needing b input
-
-  biter = b->beginOp();
-  piter = bprime->beginOp();
-
-  while(piter != bprime->endOp()) {
-    bop = *biter;
-    pop = *piter;
-    btop[bop] = pop;		// Establish mapping
-    if (bop->code() == CPUI_MULTIEQUAL) {
-      pop->setNumInputs(1);	// One edge now goes into bprime
-      opSetOpcode(pop,CPUI_COPY);
-      opSetInput(pop,bop->getIn(inedge),0);
-      opRemoveInput(bop,inedge); // One edge is removed from b
-      if (bop->numInput() == 1)
-	opSetOpcode(bop,CPUI_COPY);
-    }
-    else if (bop->code() == CPUI_INDIRECT) {
-      throw LowlevelError("Can't handle INDIRECTs in nodesplit");
-    }
-    else if (bop->isCall()) {
-      throw LowlevelError("Can't handle CALLs in nodesplit");
-    }
-    else {
-      for(int4 i=0;i<pop->numInput();++i) {
-	bvn = bop->getIn(i);
-	if (bvn->isConstant())
-	  pvn = newConstant(bvn->getSize(),bvn->getOffset());
-	else if (bvn->isAnnotation())
-	  pvn = newCodeRef(bvn->getAddr());
-	else if (bvn->isFree())
-	  throw LowlevelError("Can't handle free varnode in nodesplit");
-	else {
-	  if (bvn->isWritten()) {
-	    if (bvn->getDef()->getParent() == b) {
-	      pind.push_back(pop); // Need a cross reference
-	      bind.push_back(bvn->getDef());
-	      pslot.push_back(i);
-	      continue;
-	    }
-	    else
-	      pvn = bvn;
-	  }
-	  else
-	    pvn = bvn;
-	}
-	opSetInput(pop,pvn,i);
-      }
-    }
-    ++piter;
-    ++biter;
-  }
-
-  for(int4 i=0;i<pind.size();++i) {
-    pop = pind[i];
-    PcodeOp *cross = btop[bind[i]];
-    opSetInput(pop,cross->getOut(),pslot[i]);
-  }
-}
-
 /// \brief Split control-flow into a basic block, duplicating its p-code into a new block
 ///
 /// P-code is duplicated into another block, and control-flow is modified so that the new
@@ -1000,10 +856,8 @@ void Funcdata::nodeSplit(BlockBasic *b,int4 inedge)
 
 				// Create duplicate block
   BlockBasic *bprime = nodeSplitBlockEdge(b,inedge);
-				// Make copy of b's ops
-  nodeSplitRawDuplicate(b,bprime);
-				// Patch up inputs based on split
-  nodeSplitInputPatch(b,bprime,inedge);
+  CloneBlockOps cloner(*this);
+  cloner.cloneBlock(b, bprime, inedge);		// Copy b's ops into bprime
 
   // We would need to patch outputs here for the more general
   // case when b has out edges
@@ -1085,6 +939,154 @@ void Funcdata::spliceBlockBasic(BlockBasic *bl)
   bl->mergeRange(outbl);	// Update the address cover
   bblocks.spliceBlock(bl);
   structureReset();
+}
+
+/// Make a basic clone of the p-code op copying its basic control-flow properties.
+/// In the case of a \e branch, the p-code op is not cloned and null is returned.
+/// \param op is the given PcodeOp
+/// \return the cloned op or null
+PcodeOp *CloneBlockOps::buildOpClone(PcodeOp *op)
+
+{
+  PcodeOp *dup;
+
+  if (op->isBranch()) {
+    if (op->code() != CPUI_BRANCH)
+      throw LowlevelError("Cannot duplicate 2-way or n-way branch in nodeplit");
+    return (PcodeOp *)0;
+  }
+  dup = data.newOp(op->numInput(),op->getAddr());
+  data.opSetOpcode(dup,op->code());
+  uint4 fl = op->flags & (PcodeOp::startbasic | PcodeOp::nocollapse | PcodeOp::startmark |
+      PcodeOp::nonprinting | PcodeOp::halt | PcodeOp::badinstruction | PcodeOp::unimplemented |
+      PcodeOp::noreturn | PcodeOp::missing | PcodeOp::indirect_creation | PcodeOp::indirect_store |
+      PcodeOp::no_indirect_collapse | PcodeOp::calculated_bool | PcodeOp::ptrflow);
+  dup->setFlag(fl);
+  fl = op->addlflags & (PcodeOp::special_prop | PcodeOp::special_print | PcodeOp::incidental_copy |
+      PcodeOp::is_cpool_transformed | PcodeOp::stop_type_propagation | PcodeOp::store_unmapped);
+  dup->setAdditionalFlag(fl);
+
+  cloneList.emplace_back(dup,op);	// Map from clone to orig
+  origToClone[op] = dup;		// Map from orig to clone
+  return dup;
+}
+
+/// Make a basic clone of the Varnode and its flags. The clone is created
+/// as an output of a previously cloned PcodeOp.
+/// \param op is the given op whose output should be cloned
+/// \param newop is the cloned version
+void CloneBlockOps::buildVarnodeOutput(PcodeOp *origOp,PcodeOp *cloneOp)
+
+{
+  Varnode *opvn = origOp->getOut();
+  Varnode *newvn;
+
+  if (opvn == (Varnode *)0) return;
+  newvn = data.newVarnodeOut(opvn->getSize(),opvn->getAddr(),cloneOp);
+  uint4 vflags = opvn->getFlags();
+  vflags &= (Varnode::externref | Varnode::volatil | Varnode::incidental_copy | Varnode::readonly |
+      Varnode::persist | Varnode::addrtied | Varnode::addrforce | Varnode::nolocalalias | Varnode::spacebase |
+      Varnode::indirect_creation | Varnode::return_address | Varnode::precislo | Varnode::precishi |
+      Varnode::incidental_copy);
+  newvn->setFlags(vflags);
+  uint2 aflags = opvn->addlflags;
+  aflags &= (Varnode::writemask | Varnode::ptrflow | Varnode::stack_store);
+  newvn->addlflags |= aflags;
+}
+
+/// P-code in a basic block is cloned into the split version of the block.
+/// \param b is the original basic block
+/// \param bprime is the cloned block
+/// \param inedge is the incoming edge index that was split on
+void CloneBlockOps::cloneBlock(BlockBasic *b,BlockBasic *bprime,int4 inedge)
+
+{
+  PcodeOp *origOp,*cloneOp;
+  list<PcodeOp *>::iterator iter;
+
+  for(iter=b->beginOp();iter!=b->endOp();++iter) {
+    origOp = *iter;
+    cloneOp = buildOpClone(origOp);
+    if (cloneOp == (PcodeOp *)0) continue;
+    buildVarnodeOutput(origOp,cloneOp);
+    data.opInsertEnd(cloneOp,bprime);
+  }
+  patchInputs(inedge);
+}
+
+/// P-code in the list is cloned right before the given \b followOp.
+/// \param ops is the list of ops to clone
+/// \param followOp is the point where the cloned ops are inserted
+/// \return the output Varnode of the last cloned op
+Varnode *CloneBlockOps::cloneExpression(vector<PcodeOp *> &ops,PcodeOp *followOp)
+
+{
+  PcodeOp *origOp,*cloneOp;
+  for(int4 i=0;i<ops.size();++i) {
+    origOp = ops[i];
+    cloneOp = buildOpClone(origOp);
+    if (cloneOp == (PcodeOp *)0) continue;
+    buildVarnodeOutput(origOp,cloneOp);
+    data.opInsertBefore(cloneOp, followOp);
+  }
+  if (cloneList.empty())
+    throw LowlevelError("No expression to clone");
+  patchInputs(0);
+  cloneOp = cloneList.back().cloneOp;
+  return cloneOp->getOut();
+}
+
+/// Map Varnodes that are inputs for PcodeOps in the original basic block to the input slots of
+/// the cloned ops. Constants and code ref Varnodes need to be duplicated, other Varnodes are shared
+/// between the ops. This routine also pulls an input Varnode out of original MULTIEQUAL ops and adds
+/// it back to the cloned MULTIEQUAL ops.
+/// \param inedge is the incoming edge index that was split on
+void CloneBlockOps::patchInputs(int4 inedge)
+
+{
+  for(int4 pos=0;pos<cloneList.size();++pos) {
+    PcodeOp *origOp = cloneList[pos].origOp;
+    PcodeOp *cloneOp = cloneList[pos].cloneOp;
+    if (origOp->code() == CPUI_MULTIEQUAL) {
+      cloneOp->setNumInputs(1);	// One edge now goes into the new block
+      data.opSetOpcode(cloneOp,CPUI_COPY);
+      data.opSetInput(cloneOp,origOp->getIn(inedge),0);
+      data.opRemoveInput(origOp,inedge); // One edge is removed from original block
+      if (origOp->numInput() == 1)
+	data.opSetOpcode(origOp,CPUI_COPY);
+    }
+    else if (origOp->code() == CPUI_INDIRECT) {
+      throw LowlevelError("Can't clone INDIRECTs");
+    }
+    else if (origOp->isCall()) {
+      throw LowlevelError("Can't clone CALLs");
+    }
+    else {
+      for(int4 i=0;i<cloneOp->numInput();++i) {
+	Varnode *origVn = origOp->getIn(i);
+	Varnode *cloneVn;
+	if (origVn->isConstant())
+	  cloneVn = origVn;
+	else if (origVn->isAnnotation())
+	  cloneVn = data.newCodeRef(origVn->getAddr());
+	else if (origVn->isFree())
+	  throw LowlevelError("Can't clone free varnode");
+	else {
+	  if (origVn->isWritten()) {
+	    map<PcodeOp *,PcodeOp *>::const_iterator iter = origToClone.find(origVn->getDef());
+	    if (iter != origToClone.end()) {
+	      cloneVn = (*iter).second->getOut();
+	    }
+	    else
+	      cloneVn = origVn;
+	  }
+	  else
+	    cloneVn = origVn;
+	}
+	data.opSetInput(cloneOp,cloneVn,i);
+      }
+    }
+  }
 }
 
 } // End namespace ghidra

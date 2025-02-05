@@ -140,7 +140,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		tableSelectionStateAction = new MatchTableSelectionAction(this);
 		addLocalAction(tableSelectionStateAction);
 
-		new ActionBuilder("Compare Functions", getName()).popupMenuPath("Compare Functions")
+		new ActionBuilder("Compare Functions", getOwner())
+				.popupMenuPath("Compare Functions")
 				.popupMenuGroup("Selection")
 				.popupMenuIcon(COMPARISON_ICON)
 				.keyBinding("shift c")

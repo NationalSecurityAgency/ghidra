@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,12 +25,10 @@ import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -40,6 +38,8 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.path.PathPattern;
 
 public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
@@ -82,13 +82,13 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod refreshAvailable = conn.getMethod("refresh_available");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject available = Objects.requireNonNull(tb.objAny("Available"));
+				TraceObject available = Objects.requireNonNull(tb.objAny0("Available"));
 
 				refreshAvailable.invoke(Map.of("node", available));
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Available[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertThat(list.size(), greaterThan(2));
@@ -111,12 +111,12 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				conn.execute("util.dbg.ba(expr=pc+4)");
 				txPut(conn, "breakpoints");
 				TraceObject breakpoints =
-					Objects.requireNonNull(tb.objAny("Processes[].Breakpoints"));
+					Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints"));
 				refreshBreakpoints.invoke(Map.of("node", breakpoints));
 
 				List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Processes[].Breakpoints[]"))
+							PathFilter.parse("Processes[].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -150,12 +150,12 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				conn.execute("util.dbg.ba(expr=pc+4, access=DbgEng.DEBUG_BREAK_READ)");
 				conn.execute("util.dbg.ba(expr=pc+8, access=DbgEng.DEBUG_BREAK_WRITE)");
 				TraceObject locations =
-					Objects.requireNonNull(tb.objAny("Processes[].Breakpoints"));
+					Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints"));
 				refreshProcWatchpoints.invoke(Map.of("node", locations));
 
 				List<TraceObjectValue> procBreakVals = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Processes[].Breakpoints[]"))
+							PathFilter.parse("Processes[].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
 						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
@@ -193,13 +193,13 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod refreshProcesses = conn.getMethod("refresh_processes");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject processes = Objects.requireNonNull(tb.objAny("Processes"));
+				TraceObject processes = Objects.requireNonNull(tb.objAny0("Processes"));
 
 				refreshProcesses.invoke(Map.of("node", processes));
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
-						.getValuePaths(Lifespan.at(0), PathPredicates.parse("Processes[]"))
+						.getValuePaths(Lifespan.at(0), PathFilter.parse("Processes[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertEquals(1, list.size());
@@ -217,7 +217,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod refreshEnvironment = conn.getMethod("refresh_environment");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject env = Objects.requireNonNull(tb.objAny(path));
+				TraceObject env = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshEnvironment.invoke(Map.of("node", env));
 
@@ -240,7 +240,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod refreshThreads = conn.getMethod("refresh_threads");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject threads = Objects.requireNonNull(tb.objAny(path));
+				TraceObject threads = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshThreads.invoke(Map.of("node", threads));
 
@@ -263,13 +263,13 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				txPut(conn, "frames");
-				TraceObject stack = Objects.requireNonNull(tb.objAny(path));
+				TraceObject stack = Objects.requireNonNull(tb.objAny0(path));
 				refreshStack.invoke(Map.of("node", stack));
 
 				// Would be nice to control / validate the specifics
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0),
-							PathPredicates.parse("Processes[].Threads[].Stack[]"))
+							PathFilter.parse("Processes[].Threads[].Stack[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertTrue(list.size() > 1);
@@ -315,7 +315,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod refreshMappings = conn.getMethod("refresh_mappings");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject memory = Objects.requireNonNull(tb.objAny(path));
+				TraceObject memory = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshMappings.invoke(Map.of("node", memory));
 
@@ -337,7 +337,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod refreshModules = conn.getMethod("refresh_modules");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				TraceObject modules = Objects.requireNonNull(tb.objAny(path));
+				TraceObject modules = Objects.requireNonNull(tb.objAny0(path));
 
 				refreshModules.invoke(Map.of("node", modules));
 
@@ -363,7 +363,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				txPut(conn, "threads");
 
 				PathPattern pattern =
-					PathPredicates.parse("Processes[].Threads[]").getSingletonPattern();
+					PathFilter.parse("Processes[].Threads[]").getSingletonPattern();
 				List<TraceObject> list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(0), pattern)
 						.map(p -> p.getDestination(null))
@@ -373,7 +373,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				for (TraceObject t : list) {
 					activateThread.invoke(Map.of("thread", t));
 					String out = conn.executeCapture("print(util.dbg.get_thread())").strip();
-					List<String> indices = pattern.matchKeys(t.getCanonicalPath().getKeyList());
+					List<String> indices = pattern.matchKeys(t.getCanonicalPath(), true);
 					assertEquals("%s".formatted(indices.get(1)), out);
 				}
 			}
@@ -390,7 +390,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/netstat.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc2 = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc2 = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				removeProcess.invoke(Map.of("process", proc2));
 
 				String out = conn.executeCapture("print(list(util.process_list()))");
@@ -451,7 +451,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/netstat.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				detach.invoke(Map.of("process", proc));
 
 				String out = conn.executeCapture("print(list(util.process_list()))");
@@ -512,7 +512,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped("Missed initial stop");
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				kill.invoke(Map.of("process", proc));
 
 				String out = conn.executeCapture("print(list(util.process_list()))");
@@ -535,7 +535,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped("Missed initial stop");
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 
 				for (int i = 0; i < 5; i++) {
 					go.invoke(Map.of("process", proc));
@@ -561,7 +561,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				waitStopped("Missed initial stop");
 				txPut(conn, "threads");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 
 				while (!getInst(conn).contains("call")) {
 					stepInto.invoke(Map.of("thread", thread));
@@ -595,7 +595,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				waitStopped("Missed initial stop");
 				txPut(conn, "threads");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 
 				while (!getInst(conn).contains("call")) {
 					stepOver.invoke(Map.of("thread", thread));
@@ -623,7 +623,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				txPut(conn, "threads");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 				while (!getInst(conn).contains("call")) {
 					stepInto.invoke(Map.of("thread", thread));
 				}
@@ -656,7 +656,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				waitStopped("Missed initial stop");
 				txPut(conn, "threads");
 
-				TraceObject thread = Objects.requireNonNull(tb.objAny("Processes[].Threads[]"));
+				TraceObject thread = Objects.requireNonNull(tb.objAny0("Processes[].Threads[]"));
 
 				while (!getInst(conn).contains("call")) {
 					stepInto.invoke(Map.of("thread", thread));
@@ -683,7 +683,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 
 				long address = getAddressAtOffset(conn, 0);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
@@ -723,7 +723,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 
 				long address = getAddressAtOffset(conn, 0);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
@@ -764,7 +764,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped("Missed initial stop");
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = getAddressAtOffset(conn, 0);
 				AddressRange range = tb.range(address, address + 3); // length 4
 				breakRange.invoke(Map.of("process", proc, "range", range));
@@ -809,7 +809,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped("Missed initial stop");
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = getAddressAtOffset(conn, 0);
 				AddressRange range = tb.range(address, address + 3); // length 4
 				breakRange.invoke(Map.of("process", proc, "range", range));
@@ -854,7 +854,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped("Missed initial stop");
 
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				long address = getAddressAtOffset(conn, 0);
 				AddressRange range = tb.range(address, address + 3); // length 4
 				breakRange.invoke(Map.of("process", proc, "range", range));
@@ -900,11 +900,11 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				long address = getAddressAtOffset(conn, 0);
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny("Processes[].Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints[]"));
 
 				toggleBreakpoint.invoke(Map.of("breakpoint", bpt, "enabled", false));
 
@@ -926,11 +926,11 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				long address = getAddressAtOffset(conn, 0);
-				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
+				TraceObject proc = Objects.requireNonNull(tb.objAny0("Processes[]"));
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
 				txPut(conn, "breakpoints");
-				TraceObject bpt = Objects.requireNonNull(tb.objAny("Processes[].Breakpoints[]"));
+				TraceObject bpt = Objects.requireNonNull(tb.objAny0("Processes[].Breakpoints[]"));
 
 				deleteBreakpoint.invoke(Map.of("breakpoint", bpt));
 

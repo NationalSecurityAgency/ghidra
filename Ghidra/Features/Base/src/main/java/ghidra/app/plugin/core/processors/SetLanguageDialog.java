@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@ import javax.swing.BorderFactory;
 
 import docking.DialogComponentProvider;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.plugin.importer.LcsSelectionListener;
-import ghidra.plugin.importer.NewLanguagePanel;
+import ghidra.plugin.importer.*;
+import ghidra.plugin.importer.LcsSelectionEvent.Type;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.HelpLocation;
@@ -30,33 +30,14 @@ public class SetLanguageDialog extends DialogComponentProvider {
 
 	private NewLanguagePanel selectLangPanel;
 	private PluginTool tool;
-	private LanguageCompilerSpecPair currentLCSPair;
+	private LanguageCompilerSpecPair currentLcsPair;
 
 	private LanguageID dialogLanguageID;
 	private CompilerSpecID dialogCompilerSpecID;
 
-	LcsSelectionListener listener = e -> {
-		LanguageID langID = null;
-		CompilerSpecID compilerSpecID = null;
-		if (e != null && e.selection != null) {
-			langID = e.selection.languageID;
-			compilerSpecID = e.selection.compilerSpecID;
-		}
-		if ((currentLCSPair != null) && (langID != null) &&
-			(langID.equals(currentLCSPair.getLanguageID()))) {
-			if (compilerSpecID != null &&
-				compilerSpecID.equals(currentLCSPair.getCompilerSpecID())) {
-				setStatusText("Please select a different Language or Compiler Spec.");
-				setOkEnabled(false);
-			}
-			else {
-				setStatusText(null);
-				setOkEnabled(true);
-			}
-			return;
-		}
-		setStatusText(null);
-		setOkEnabled(langID != null);
+	private LcsSelectionListener listener = e -> {
+		languageSelected(e.getLcs());
+		maybePressOk(e);
 	};
 
 	/**
@@ -89,7 +70,7 @@ public class SetLanguageDialog extends DialogComponentProvider {
 	 */
 	public SetLanguageDialog(PluginTool tool, LanguageCompilerSpecPair lcsPair, String title) {
 		super(title, true, true, true, false);
-		currentLCSPair = lcsPair;
+		currentLcsPair = lcsPair;
 		this.tool = tool;
 
 		selectLangPanel = new NewLanguagePanel();
@@ -110,7 +91,40 @@ public class SetLanguageDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation("LanguageProviderPlugin", "set language"));
 		selectLangPanel.setShowRecommendedCheckbox(false);
 
-		listener.valueChanged(null); // kick to establish initial button enablement
+		languageSelected(null); // kick to establish initial button enablement
+	}
+
+	private void languageSelected(LanguageCompilerSpecPair lcs) {
+		LanguageID langId = null;
+		CompilerSpecID compilerSpecID = null;
+		if (lcs != null) {
+			langId = lcs.languageID;
+			compilerSpecID = lcs.compilerSpecID;
+		}
+
+		if ((currentLcsPair != null) && (langId != null) &&
+			(langId.equals(currentLcsPair.getLanguageID()))) {
+			if (compilerSpecID != null &&
+				compilerSpecID.equals(currentLcsPair.getCompilerSpecID())) {
+				setStatusText("Please select a different Language or Compiler Spec.");
+				setOkEnabled(false);
+			}
+			else {
+				setStatusText(null);
+				setOkEnabled(true);
+			}
+			return;
+		}
+
+		setStatusText(null);
+		setOkEnabled(langId != null);
+	}
+
+	private void maybePressOk(LcsSelectionEvent e) {
+		if (e.getType() == Type.PICKED && isOKEnabled()) {
+			// the user picked (i.e., double-clicked) a language and it is valid, so use it
+			okCallback();
+		}
 	}
 
 	private static LanguageCompilerSpecPair getLanguageCompilerSpecPair(String languageIdStr,

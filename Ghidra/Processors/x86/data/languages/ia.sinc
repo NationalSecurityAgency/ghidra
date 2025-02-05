@@ -378,6 +378,11 @@ define register offset=2200 size=16 [ BCST16 ];
 define register offset=2200 size=32 [ BCST32 ];
 define register offset=2200 size=64 [ BCST64 ];
 
+define register offset=2300 size=16 [ XmmResult _ _ _ XmmMask ];
+define register offset=2300 size=32 [ YmmResult   _   YmmMask ];
+define register offset=2300 size=64 [ ZmmResult       ZmmMask ];
+
+
 #
 #
 # This context layout is important:  the 32 bit version sees addrsize as just the
@@ -781,6 +786,8 @@ define pcodeop vmxon;    # Enter VMX operation; opcode f3 0f C7 /6
 @define BYTE_80_82 "(byte=0x80 | byte=0x82)"
 @endif
 
+@include "macros.sinc"
+
 @ifdef IA64
 Reg8:   reg8        is rexprefix=0 & reg8                               { export reg8; }
 Reg8:   reg8_x0     is rexprefix=1 & rexRprefix=0 & reg8_x0             { export reg8_x0; }
@@ -859,6 +866,7 @@ ZmmReg1:  zmmreg1   is zmmreg1                           { export zmmreg1; }
 ZmmReg2:  zmmreg2   is zmmreg2                           { export zmmreg2; }
 Xmm_vsib:  xmm_vsib       is xmm_vsib                    { export xmm_vsib; }
 Ymm_vsib:  ymm_vsib       is ymm_vsib                    { export ymm_vsib; }
+Zmm_vsib:  zmm_vsib       is zmm_vsib                    { export zmm_vsib; }
 @endif
 
 # signed immediate value subconstructors
@@ -1122,6 +1130,11 @@ vaddr32y: [Ymm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Ymm_vsib & base=5 & ss;
 vaddr32y: [Base + Ymm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Ymm_vsib & Base & ss;		simm8_32	{ }
 vaddr32y: [Base + Ymm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Ymm_vsib & Base & ss;		simm32_32	{ }
 
+vaddr32z: [Base + Zmm_vsib*ss]					is mod=0 & r_m=4; Zmm_vsib & Base & ss					{ }
+vaddr32z: [Zmm_vsib*ss + simm32_32]				is mod=0 & r_m=4; Zmm_vsib & base=5 & ss;	simm32_32	{ }
+vaddr32z: [Base + Zmm_vsib*ss + simm8_32]		is mod=1 & r_m=4; Zmm_vsib & Base & ss;		simm8_32	{ }
+vaddr32z: [Base + Zmm_vsib*ss + simm32_32]		is mod=2 & r_m=4; Zmm_vsib & Base & ss;		simm32_32	{ }
+
 @ifdef IA64
 vaddr64x: [Base64 + Xmm_vsib*ss]				is mod=0 & r_m=4; Xmm_vsib & Base64 & ss				{ }
 vaddr64x: [Xmm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Xmm_vsib & base64=5 & ss;	simm32_64	{ }
@@ -1132,6 +1145,11 @@ vaddr64y: [Base64 + Ymm_vsib*ss]				is mod=0 & r_m=4; Ymm_vsib & Base64 & ss				
 vaddr64y: [Ymm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Ymm_vsib & base64=5 & ss;	simm32_64	{ }
 vaddr64y: [Base64 + Ymm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Ymm_vsib & Base64 & ss;	simm8_64	{ }
 vaddr64y: [Base64 + Ymm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Ymm_vsib & Base64 & ss;	simm32_64	{ }
+
+vaddr64z: [Base64 + Zmm_vsib*ss]				is mod=0 & r_m=4; Zmm_vsib & Base64 & ss				{ }
+vaddr64z: [Zmm_vsib*ss + simm32_64]				is mod=0 & r_m=4; Zmm_vsib & base64=5 & ss;	simm32_64	{ }
+vaddr64z: [Base64 + Zmm_vsib*ss + simm8_64]		is mod=1 & r_m=4; Zmm_vsib & Base64 & ss;	simm8_64	{ }
+vaddr64z: [Base64 + Zmm_vsib*ss + simm32_64]	is mod=2 & r_m=4; Zmm_vsib & Base64 & ss;	simm32_64	{ }
 @endif
 
 
@@ -1140,6 +1158,9 @@ vMem32x: segWide^vaddr32x	is addrsize=1 & segWide & highseg=1; vaddr32x 		{ }
 
 vMem32y: segWide^vaddr32y	is addrsize=1 & segWide; vaddr32y       			{ }
 vMem32y: segWide^vaddr32y	is addrsize=1 & segWide & highseg=1; vaddr32y 		{ }
+
+vMem32z: segWide^vaddr32z	is addrsize=1 & segWide; vaddr32z       			{ }
+vMem32z: segWide^vaddr32z	is addrsize=1 & segWide & highseg=1; vaddr32z 		{ }
 
 @ifdef IA64
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
@@ -1151,6 +1172,11 @@ vMem32x: segWide^vaddr64x	is addrsize=2 & segWide & highseg=1; vaddr64x 		{ }
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
 vMem32y: segWide^vaddr64y	is addrsize=2 & segWide; vaddr64y             		{ }
 vMem32y: segWide^vaddr64y	is addrsize=2 & segWide & highseg=1; vaddr64y 		{ }
+
+#      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
+#      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
+vMem32z: segWide^vaddr64z	is addrsize=2 & segWide; vaddr64z             		{ }
+vMem32z: segWide^vaddr64z	is addrsize=2 & segWide & highseg=1; vaddr64z 		{ }
 
 #      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
 #      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
@@ -1167,24 +1193,46 @@ vMem64y: segWide^vaddr32y	is addrsize=1 & segWide & highseg=1; vaddr32y		{ }
 
 vMem64y: segWide^vaddr64y	is addrsize=2 & segWide; vaddr64y             		{ }
 vMem64y: segWide^vaddr64y	is addrsize=2 & segWide & highseg=1; vaddr64y 		{ }
+
+#      GAS always inserts a 0x67 prefix before a VSIB instruction with a 32-bit base.
+#      Behavior is coded to match Binutils; exceeds what the manual indicates is possible.
+vMem64z: segWide^vaddr32z	is addrsize=1 & segWide; vaddr32z 					{ }
+vMem64z: segWide^vaddr32z	is addrsize=1 & segWide & highseg=1; vaddr32z		{ }
+
+vMem64z: segWide^vaddr64z	is addrsize=2 & segWide; vaddr64z             		{ }
+vMem64z: segWide^vaddr64z	is addrsize=2 & segWide & highseg=1; vaddr64z 		{ }
 @endif
 
 
 d_vm32x: "dword ptr "^vMem32x is vMem32x { }
 d_vm32y: "dword ptr "^vMem32y is vMem32y { }
+# not used d_vm32z: "dword ptr "^vMem32z is vMem32z { }
 
 @ifdef IA64
 d_vm64x: "dword ptr "^vMem64x is vMem64x { }
 d_vm64y: "dword ptr "^vMem64y is vMem64y { }
+# not used d_vm64z: "dword ptr "^vMem64z is vMem64z { }
 @endif
 
 
 q_vm32x: "qword ptr "^vMem32x is vMem32x { }
 # not used q_vm32y: "qword ptr "^vMem32y is vMem32y { }
+# not used q_vm32z: "qword ptr "^vMem32z is vMem32z { }
 
 @ifdef IA64
 q_vm64x: "qword ptr "^vMem64x is vMem64x { }
 q_vm64y: "qword ptr "^vMem64y is vMem64y { }
+q_vm64z: "qword ptr "^vMem64z is vMem64z { }
+@endif
+
+x_vm32x: "xmmword ptr "^vMem32x is vMem32x { export vMem32x; }
+y_vm32y: "ymmword ptr "^vMem32y is vMem32y { export vMem32y; }
+z_vm32z: "zmmword ptr "^vMem32z is vMem32z { export vMem32z; }
+
+@ifdef IA64
+x_vm64x: "xmmword ptr "^vMem64x is vMem64x { }
+y_vm64y: "ymmword ptr "^vMem64y is vMem64y { }
+z_vm64z: "zmmword ptr "^vMem64z is vMem64z { }
 @endif
 
 Reg32_m8:     Rmr32     is mod=3 & Rmr32                     { export Rmr32; }
@@ -1454,24 +1502,338 @@ unlock:		is epsilon { }
 
 KReg_reg: opmaskreg is opmaskreg { export opmaskreg; }
 KReg_rm: opmaskrm   is opmaskrm  { export opmaskrm; }
-vexVVVV_KReg: evexVopmask is evexVopmask              { export evexVopmask; }
+# not used vexVVVV_KReg: evexVopmask is evexVopmask              { export evexVopmask; }
 vex1VVV_KReg: evexVopmask is evexVopmask & vexHighV=1 { export evexVopmask; }
 
-KWriteMask: "{"^evexOpmask^"}" is evexOpmask { export evexOpmask; }
-KWriteMask: is evexOpmask=0 { local tmp:8 = 0; export tmp; }
+XmmMaskMode: is evexZ=0 { }
+XmmMaskMode: "{z}" is evexZ=1 { XmmMask=0; }
 
-RegK_m8:  KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
-RegK_m8:  m8      is m8              { tmp:8 = zext(m8); export tmp; }
-RegK_m16: KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
-RegK_m16: m16     is m16             { tmp:8 = zext(m16); export tmp; }
-RegK_m32: KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
-RegK_m32: m32     is m32             { tmp:8 = zext(m32); export tmp; }
+YmmMaskMode: is evexZ=0 { }
+YmmMaskMode: "{z}" is evexZ=1 { YmmMask=0; }
+
+ZmmMaskMode: is evexZ=0 { }
+ZmmMaskMode: "{z}" is evexZ=1 { ZmmMask=0; }
+
+AVXOpMask: "{"^evexOpmask^"}" is evexOpmask { export evexOpmask; }
+
+# Z=0: merge masking
+# Z=1: zero masking
+XmmOpMask: AVXOpMask^XmmMaskMode is AVXOpMask & XmmMaskMode {
+	export AVXOpMask;
+}
+
+XmmOpMask8: AVXOpMask^XmmMaskMode is AVXOpMask & XmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(XmmResult[0,8], mask[0,1], XmmResult[0,8], XmmMask[0,8]);
+	conditionalAssign(XmmResult[8,8], mask[1,1],XmmResult[8,8], XmmMask[8,8]);
+	conditionalAssign(XmmResult[16,8], mask[2,1], XmmResult[16,8], XmmMask[16,8]);
+	conditionalAssign(XmmResult[24,8], mask[3,1], XmmResult[24,8], XmmMask[24,8]);
+	conditionalAssign(XmmResult[32,8], mask[4,1], XmmResult[32,8], XmmMask[32,8]);
+	conditionalAssign(XmmResult[40,8], mask[5,1], XmmResult[40,8], XmmMask[40,8]);
+	conditionalAssign(XmmResult[48,8], mask[6,1], XmmResult[48,8], XmmMask[48,8]);
+	conditionalAssign(XmmResult[56,8], mask[7,1], XmmResult[56,8], XmmMask[56,8]);
+	conditionalAssign(XmmResult[64,8], mask[8,1], XmmResult[64,8], XmmMask[64,8]);
+	conditionalAssign(XmmResult[72,8], mask[9,1], XmmResult[72,8], XmmMask[72,8]);
+	conditionalAssign(XmmResult[80,8], mask[10,1], XmmResult[80,8], XmmMask[80,8]);
+	conditionalAssign(XmmResult[88,8], mask[11,1], XmmResult[88,8], XmmMask[88,8]);
+	conditionalAssign(XmmResult[96,8], mask[12,1], XmmResult[96,8], XmmMask[96,8]);
+	conditionalAssign(XmmResult[104,8], mask[13,1], XmmResult[104,8], XmmMask[104,8]);
+	conditionalAssign(XmmResult[112,8], mask[14,1], XmmResult[112,8], XmmMask[112,8]);
+	conditionalAssign(XmmResult[120,8], mask[15,1], XmmResult[120,8], XmmMask[120,8]);
+}
+
+XmmOpMask8: is evexOpmask=0 {
+}
+
+XmmOpMask16: AVXOpMask^XmmMaskMode is AVXOpMask & XmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(XmmResult[0,16], mask[0,1], XmmResult[0,16], XmmMask[0,16]);
+	conditionalAssign(XmmResult[16,16], mask[1,1], XmmResult[16,16], XmmMask[16,16]);
+	conditionalAssign(XmmResult[32,16], mask[2,1], XmmResult[32,16], XmmMask[32,16]);
+	conditionalAssign(XmmResult[48,16], mask[3,1], XmmResult[48,16], XmmMask[48,16]);
+	conditionalAssign(XmmResult[64,16], mask[4,1], XmmResult[64,16], XmmMask[64,16]);
+	conditionalAssign(XmmResult[80,16], mask[5,1], XmmResult[80,16], XmmMask[80,16]);
+	conditionalAssign(XmmResult[96,16], mask[6,1], XmmResult[96,16], XmmMask[96,16]);
+	conditionalAssign(XmmResult[112,16], mask[7,1], XmmResult[112,16], XmmMask[112,16]);
+}
+
+XmmOpMask16: is evexOpmask=0 {
+}
+
+
+XmmOpMask32: AVXOpMask^XmmMaskMode is AVXOpMask & XmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(XmmResult[0,32], mask[0,1], XmmResult[0,32], XmmMask[0,32]);
+	conditionalAssign(XmmResult[32,32], mask[1,1], XmmResult[32,32], XmmMask[32,32]);
+	conditionalAssign(XmmResult[64,32], mask[2,1], XmmResult[64,32], XmmMask[64,32]);
+	conditionalAssign(XmmResult[96,32], mask[3,1], XmmResult[96,32], XmmMask[96,32]);
+}
+
+XmmOpMask32: is evexOpmask=0 {
+}
+
+XmmOpMask64: AVXOpMask^XmmMaskMode is AVXOpMask & XmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(XmmResult[0,64], mask[0,1], XmmResult[0,64], XmmMask[0,64]);
+	conditionalAssign(XmmResult[64,64], mask[1,1], XmmResult[64,64], XmmMask[64,64]);
+}
+
+XmmOpMask64: is evexOpmask=0 {
+}
+
+YmmOpMask: AVXOpMask^YmmMaskMode is AVXOpMask & YmmMaskMode {
+	export AVXOpMask;
+}
+
+YmmOpMask8: AVXOpMask^YmmMaskMode is AVXOpMask & YmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(YmmResult[0,8], mask[0,1], YmmResult[0,8], YmmMask[0,8]);
+	conditionalAssign(YmmResult[8,8], mask[1,1], YmmResult[8,8], YmmMask[8,8]);
+	conditionalAssign(YmmResult[16,8], mask[2,1], YmmResult[16,8], YmmMask[16,8]);
+	conditionalAssign(YmmResult[24,8], mask[3,1], YmmResult[24,8], YmmMask[24,8]);
+	conditionalAssign(YmmResult[32,8], mask[4,1], YmmResult[32,8], YmmMask[32,8]);
+	conditionalAssign(YmmResult[40,8], mask[5,1], YmmResult[40,8], YmmMask[40,8]);
+	conditionalAssign(YmmResult[48,8], mask[6,1], YmmResult[48,8], YmmMask[48,8]);
+	conditionalAssign(YmmResult[56,8], mask[7,1], YmmResult[56,8], YmmMask[56,8]);
+	conditionalAssign(YmmResult[64,8], mask[8,1], YmmResult[64,8], YmmMask[64,8]);
+	conditionalAssign(YmmResult[72,8], mask[9,1], YmmResult[72,8], YmmMask[72,8]);
+	conditionalAssign(YmmResult[80,8], mask[10,1], YmmResult[80,8], YmmMask[80,8]);
+	conditionalAssign(YmmResult[88,8], mask[11,1], YmmResult[88,8], YmmMask[88,8]);
+	conditionalAssign(YmmResult[96,8], mask[12,1], YmmResult[96,8], YmmMask[96,8]);
+	conditionalAssign(YmmResult[104,8], mask[13,1], YmmResult[104,8], YmmMask[104,8]);
+	conditionalAssign(YmmResult[112,8], mask[14,1], YmmResult[112,8], YmmMask[112,8]);
+	conditionalAssign(YmmResult[120,8], mask[15,1], YmmResult[120,8], YmmMask[120,8]);
+	conditionalAssign(YmmResult[128,8], mask[16,1], YmmResult[128,8], YmmMask[128,8]);
+	conditionalAssign(YmmResult[136,8], mask[17,1], YmmResult[136,8], YmmMask[136,8]);
+	conditionalAssign(YmmResult[144,8], mask[18,1], YmmResult[144,8], YmmMask[144,8]);
+	conditionalAssign(YmmResult[152,8], mask[19,1], YmmResult[152,8], YmmMask[152,8]);
+	conditionalAssign(YmmResult[160,8], mask[20,1], YmmResult[160,8], YmmMask[160,8]);
+	conditionalAssign(YmmResult[168,8], mask[21,1], YmmResult[168,8], YmmMask[168,8]);
+	conditionalAssign(YmmResult[176,8], mask[22,1], YmmResult[176,8], YmmMask[176,8]);
+	conditionalAssign(YmmResult[184,8], mask[23,1], YmmResult[184,8], YmmMask[184,8]);
+	conditionalAssign(YmmResult[192,8], mask[24,1], YmmResult[192,8], YmmMask[192,8]);
+	conditionalAssign(YmmResult[200,8], mask[25,1], YmmResult[200,8], YmmMask[200,8]);
+	conditionalAssign(YmmResult[208,8], mask[26,1], YmmResult[208,8], YmmMask[208,8]);
+	conditionalAssign(YmmResult[216,8], mask[27,1], YmmResult[216,8], YmmMask[216,8]);
+	conditionalAssign(YmmResult[224,8], mask[28,1], YmmResult[224,8], YmmMask[224,8]);
+	conditionalAssign(YmmResult[232,8], mask[29,1], YmmResult[232,8], YmmMask[232,8]);
+}
+
+YmmOpMask8: is evexOpmask=0 {
+}
+
+YmmOpMask16: AVXOpMask^YmmMaskMode is AVXOpMask & YmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(YmmResult[0,16], mask[0,1], YmmResult[0,16], YmmMask[0,16]);
+	conditionalAssign(YmmResult[16,16], mask[1,1], YmmResult[16,16], YmmMask[16,16]);
+	conditionalAssign(YmmResult[32,16], mask[2,1], YmmResult[32,16], YmmMask[32,16]);
+	conditionalAssign(YmmResult[48,16], mask[3,1], YmmResult[48,16], YmmMask[48,16]);
+	conditionalAssign(YmmResult[64,16], mask[4,1], YmmResult[64,16], YmmMask[64,16]);
+	conditionalAssign(YmmResult[80,16], mask[5,1], YmmResult[80,16], YmmMask[80,16]);
+	conditionalAssign(YmmResult[96,16], mask[6,1], YmmResult[96,16], YmmMask[96,16]);
+	conditionalAssign(YmmResult[112,16], mask[7,1], YmmResult[112,16], YmmMask[112,16]);
+	conditionalAssign(YmmResult[128,16], mask[8,1], YmmResult[128,16], YmmMask[128,16]);
+	conditionalAssign(YmmResult[144,16], mask[9,1], YmmResult[144,16], YmmMask[144,16]);
+	conditionalAssign(YmmResult[160,16], mask[10,1], YmmResult[160,16], YmmMask[160,16]);
+	conditionalAssign(YmmResult[176,16], mask[11,1], YmmResult[176,16], YmmMask[176,16]);
+	conditionalAssign(YmmResult[192,16], mask[12,1], YmmResult[192,16], YmmMask[192,16]);
+	conditionalAssign(YmmResult[208,16], mask[13,1], YmmResult[208,16], YmmMask[208,16]);
+	conditionalAssign(YmmResult[224,16], mask[14,1], YmmResult[224,16], YmmMask[224,16]);
+	conditionalAssign(YmmResult[240,16], mask[15,1], YmmResult[240,16], YmmMask[240,16]);
+}
+
+YmmOpMask16: is evexOpmask=0 {
+}
+
+YmmOpMask32: AVXOpMask^YmmMaskMode is AVXOpMask & YmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(YmmResult[0,32], mask[0,1], YmmResult[0,32], YmmMask[0,32]);
+	conditionalAssign(YmmResult[32,32], mask[1,1], YmmResult[32,32], YmmMask[32,32]);
+	conditionalAssign(YmmResult[64,32], mask[2,1], YmmResult[64,32], YmmMask[64,32]);
+	conditionalAssign(YmmResult[96,32], mask[3,1], YmmResult[96,32], YmmMask[96,32]);
+	conditionalAssign(YmmResult[128,32], mask[4,1], YmmResult[128,32], YmmMask[128,32]);
+	conditionalAssign(YmmResult[160,32], mask[5,1], YmmResult[160,32], YmmMask[160,32]);
+	conditionalAssign(YmmResult[192,32], mask[6,1], YmmResult[192,32], YmmMask[192,32]);
+	conditionalAssign(YmmResult[224,32], mask[7,1], YmmResult[224,32], YmmMask[224,32]);
+}
+
+YmmOpMask32: is evexOpmask=0 {
+}
+
+YmmOpMask64: AVXOpMask^YmmMaskMode is AVXOpMask & YmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(YmmResult[0,64], mask[0,1], YmmResult[0,64], YmmMask[0,64]);
+	conditionalAssign(YmmResult[64,64], mask[1,1], YmmResult[64,64], YmmMask[64,64]);
+	conditionalAssign(YmmResult[128,64], mask[2,1], YmmResult[128,64], YmmMask[128,64]);
+	conditionalAssign(YmmResult[192,64], mask[3,1], YmmResult[192,64], YmmMask[192,64]);
+}
+
+YmmOpMask64: is evexOpmask=0 {
+}
+
+ZmmOpMask: AVXOpMask^ZmmMaskMode is AVXOpMask & ZmmMaskMode {
+	export AVXOpMask;
+}
+
+ZmmOpMask8: AVXOpMask^ZmmMaskMode is AVXOpMask & ZmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(ZmmResult[0,8], mask[0,1], ZmmResult[0,8], ZmmMask[0,8]);
+	conditionalAssign(ZmmResult[8,8], mask[1,1], ZmmResult[8,8], ZmmMask[8,8]);
+	conditionalAssign(ZmmResult[16,8], mask[2,1], ZmmResult[16,8], ZmmMask[16,8]);
+	conditionalAssign(ZmmResult[24,8], mask[3,1], ZmmResult[24,8], ZmmMask[24,8]);
+	conditionalAssign(ZmmResult[32,8], mask[4,1], ZmmResult[32,8], ZmmMask[32,8]);
+	conditionalAssign(ZmmResult[40,8], mask[5,1], ZmmResult[40,8], ZmmMask[40,8]);
+	conditionalAssign(ZmmResult[48,8], mask[6,1], ZmmResult[48,8], ZmmMask[48,8]);
+	conditionalAssign(ZmmResult[56,8], mask[7,1], ZmmResult[56,8], ZmmMask[56,8]);
+	conditionalAssign(ZmmResult[64,8], mask[8,1], ZmmResult[64,8], ZmmMask[64,8]);
+	conditionalAssign(ZmmResult[72,8], mask[9,1], ZmmResult[72,8], ZmmMask[72,8]);
+	conditionalAssign(ZmmResult[80,8], mask[10,1], ZmmResult[80,8], ZmmMask[80,8]);
+	conditionalAssign(ZmmResult[88,8], mask[11,1], ZmmResult[88,8], ZmmMask[88,8]);
+	conditionalAssign(ZmmResult[96,8], mask[12,1], ZmmResult[96,8], ZmmMask[96,8]);
+	conditionalAssign(ZmmResult[104,8], mask[13,1], ZmmResult[104,8], ZmmMask[104,8]);
+	conditionalAssign(ZmmResult[112,8], mask[14,1], ZmmResult[112,8], ZmmMask[112,8]);
+	conditionalAssign(ZmmResult[120,8], mask[15,1], ZmmResult[120,8], ZmmMask[120,8]);
+	conditionalAssign(ZmmResult[128,8], mask[16,1], ZmmResult[128,8], ZmmMask[128,8]);
+	conditionalAssign(ZmmResult[136,8], mask[17,1], ZmmResult[136,8], ZmmMask[136,8]);
+	conditionalAssign(ZmmResult[144,8], mask[18,1], ZmmResult[144,8], ZmmMask[144,8]);
+	conditionalAssign(ZmmResult[152,8], mask[19,1], ZmmResult[152,8], ZmmMask[152,8]);
+	conditionalAssign(ZmmResult[160,8], mask[20,1], ZmmResult[160,8], ZmmMask[160,8]);
+	conditionalAssign(ZmmResult[168,8], mask[21,1], ZmmResult[168,8], ZmmMask[168,8]);
+	conditionalAssign(ZmmResult[176,8], mask[22,1], ZmmResult[176,8], ZmmMask[176,8]);
+	conditionalAssign(ZmmResult[184,8], mask[23,1], ZmmResult[184,8], ZmmMask[184,8]);
+	conditionalAssign(ZmmResult[192,8], mask[24,1], ZmmResult[192,8], ZmmMask[192,8]);
+	conditionalAssign(ZmmResult[200,8], mask[25,1], ZmmResult[200,8], ZmmMask[200,8]);
+	conditionalAssign(ZmmResult[208,8], mask[26,1], ZmmResult[208,8], ZmmMask[208,8]);
+	conditionalAssign(ZmmResult[216,8], mask[27,1], ZmmResult[216,8], ZmmMask[216,8]);
+	conditionalAssign(ZmmResult[224,8], mask[28,1], ZmmResult[224,8], ZmmMask[224,8]);
+	conditionalAssign(ZmmResult[232,8], mask[29,1], ZmmResult[232,8], ZmmMask[232,8]);
+	conditionalAssign(ZmmResult[240,8], mask[30,1], ZmmResult[240,8], ZmmMask[240,8]);
+	conditionalAssign(ZmmResult[248,8], mask[31,1], ZmmResult[248,8], ZmmMask[248,8]);
+	conditionalAssign(ZmmResult[256,8], mask[32,1], ZmmResult[256,8], ZmmMask[256,8]);
+	conditionalAssign(ZmmResult[264,8], mask[33,1], ZmmResult[264,8], ZmmMask[264,8]);
+	conditionalAssign(ZmmResult[272,8], mask[34,1], ZmmResult[272,8], ZmmMask[272,8]);
+	conditionalAssign(ZmmResult[280,8], mask[35,1], ZmmResult[280,8], ZmmMask[280,8]);
+	conditionalAssign(ZmmResult[288,8], mask[36,1], ZmmResult[288,8], ZmmMask[288,8]);
+	conditionalAssign(ZmmResult[296,8], mask[37,1], ZmmResult[296,8], ZmmMask[296,8]);
+	conditionalAssign(ZmmResult[304,8], mask[38,1], ZmmResult[304,8], ZmmMask[304,8]);
+	conditionalAssign(ZmmResult[312,8], mask[39,1], ZmmResult[312,8], ZmmMask[312,8]);
+	conditionalAssign(ZmmResult[320,8], mask[40,1], ZmmResult[320,8], ZmmMask[320,8]);
+	conditionalAssign(ZmmResult[328,8], mask[41,1], ZmmResult[328,8], ZmmMask[328,8]);
+	conditionalAssign(ZmmResult[336,8], mask[42,1], ZmmResult[336,8], ZmmMask[336,8]);
+	conditionalAssign(ZmmResult[344,8], mask[43,1], ZmmResult[344,8], ZmmMask[344,8]);
+	conditionalAssign(ZmmResult[352,8], mask[44,1], ZmmResult[352,8], ZmmMask[352,8]);
+	conditionalAssign(ZmmResult[360,8], mask[45,1], ZmmResult[360,8], ZmmMask[360,8]);
+	conditionalAssign(ZmmResult[368,8], mask[46,1], ZmmResult[368,8], ZmmMask[368,8]);
+	conditionalAssign(ZmmResult[376,8], mask[47,1], ZmmResult[376,8], ZmmMask[376,8]);
+	conditionalAssign(ZmmResult[384,8], mask[48,1], ZmmResult[384,8], ZmmMask[384,8]);
+	conditionalAssign(ZmmResult[392,8], mask[49,1], ZmmResult[392,8], ZmmMask[392,8]);
+	conditionalAssign(ZmmResult[400,8], mask[50,1], ZmmResult[400,8], ZmmMask[400,8]);
+	conditionalAssign(ZmmResult[408,8], mask[51,1], ZmmResult[408,8], ZmmMask[408,8]);
+	conditionalAssign(ZmmResult[416,8], mask[52,1], ZmmResult[416,8], ZmmMask[416,8]);
+	conditionalAssign(ZmmResult[424,8], mask[53,1], ZmmResult[424,8], ZmmMask[424,8]);
+	conditionalAssign(ZmmResult[432,8], mask[54,1], ZmmResult[432,8], ZmmMask[432,8]);
+	conditionalAssign(ZmmResult[440,8], mask[55,1], ZmmResult[440,8], ZmmMask[440,8]);
+	conditionalAssign(ZmmResult[448,8], mask[56,1], ZmmResult[448,8], ZmmMask[448,8]);
+	conditionalAssign(ZmmResult[456,8], mask[57,1], ZmmResult[456,8], ZmmMask[456,8]);
+	conditionalAssign(ZmmResult[464,8], mask[58,1], ZmmResult[464,8], ZmmMask[464,8]);
+	conditionalAssign(ZmmResult[472,8], mask[59,1], ZmmResult[472,8], ZmmMask[472,8]);
+	conditionalAssign(ZmmResult[480,8], mask[60,1], ZmmResult[480,8], ZmmMask[480,8]);
+	conditionalAssign(ZmmResult[488,8], mask[61,1], ZmmResult[488,8], ZmmMask[488,8]);
+	conditionalAssign(ZmmResult[496,8], mask[62,1], ZmmResult[496,8], ZmmMask[496,8]);
+	conditionalAssign(ZmmResult[504,8], mask[63,1], ZmmResult[504,8], ZmmMask[504,8]);
+}
+
+ZmmOpMask8: is evexOpmask=0 {
+}
+
+ZmmOpMask16: AVXOpMask^ZmmMaskMode is AVXOpMask & ZmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(ZmmResult[0,16], mask[0,1], ZmmResult[0,16], ZmmMask[0,16]);
+	conditionalAssign(ZmmResult[16,16], mask[1,1], ZmmResult[16,16], ZmmMask[16,16]);
+	conditionalAssign(ZmmResult[32,16], mask[2,1], ZmmResult[32,16], ZmmMask[32,16]);
+	conditionalAssign(ZmmResult[48,16], mask[3,1], ZmmResult[48,16], ZmmMask[48,16]);
+	conditionalAssign(ZmmResult[64,16], mask[4,1], ZmmResult[64,16], ZmmMask[64,16]);
+	conditionalAssign(ZmmResult[80,16], mask[5,1], ZmmResult[80,16], ZmmMask[80,16]);
+	conditionalAssign(ZmmResult[96,16], mask[6,1], ZmmResult[96,16], ZmmMask[96,16]);
+	conditionalAssign(ZmmResult[112,16], mask[7,1], ZmmResult[112,16], ZmmMask[112,16]);
+	conditionalAssign(ZmmResult[128,16], mask[8,1], ZmmResult[128,16], ZmmMask[128,16]);
+	conditionalAssign(ZmmResult[144,16], mask[9,1], ZmmResult[144,16], ZmmMask[144,16]);
+	conditionalAssign(ZmmResult[160,16], mask[10,1], ZmmResult[160,16], ZmmMask[160,16]);
+	conditionalAssign(ZmmResult[176,16], mask[11,1], ZmmResult[176,16], ZmmMask[176,16]);
+	conditionalAssign(ZmmResult[192,16], mask[12,1], ZmmResult[192,16], ZmmMask[192,16]);
+	conditionalAssign(ZmmResult[208,16], mask[13,1], ZmmResult[208,16], ZmmMask[208,16]);
+	conditionalAssign(ZmmResult[224,16], mask[14,1], ZmmResult[224,16], ZmmMask[224,16]);
+	conditionalAssign(ZmmResult[240,16], mask[15,1], ZmmResult[240,16], ZmmMask[240,16]);
+	conditionalAssign(ZmmResult[256,16], mask[16,1], ZmmResult[256,16], ZmmMask[256,16]);
+	conditionalAssign(ZmmResult[272,16], mask[17,1], ZmmResult[272,16], ZmmMask[272,16]);
+	conditionalAssign(ZmmResult[288,16], mask[18,1], ZmmResult[288,16], ZmmMask[288,16]);
+	conditionalAssign(ZmmResult[304,16], mask[19,1], ZmmResult[304,16], ZmmMask[304,16]);
+	conditionalAssign(ZmmResult[320,16], mask[20,1], ZmmResult[320,16], ZmmMask[320,16]);
+	conditionalAssign(ZmmResult[336,16], mask[21,1], ZmmResult[336,16], ZmmMask[336,16]);
+	conditionalAssign(ZmmResult[352,16], mask[22,1], ZmmResult[352,16], ZmmMask[352,16]);
+	conditionalAssign(ZmmResult[368,16], mask[23,1], ZmmResult[368,16], ZmmMask[368,16]);
+	conditionalAssign(ZmmResult[384,16], mask[24,1], ZmmResult[384,16], ZmmMask[384,16]);
+	conditionalAssign(ZmmResult[400,16], mask[25,1], ZmmResult[400,16], ZmmMask[400,16]);
+	conditionalAssign(ZmmResult[416,16], mask[26,1], ZmmResult[416,16], ZmmMask[416,16]);
+	conditionalAssign(ZmmResult[432,16], mask[27,1], ZmmResult[432,16], ZmmMask[432,16]);
+	conditionalAssign(ZmmResult[448,16], mask[28,1], ZmmResult[448,16], ZmmMask[448,16]);
+	conditionalAssign(ZmmResult[464,16], mask[29,1], ZmmResult[464,16], ZmmMask[464,16]);
+	conditionalAssign(ZmmResult[480,16], mask[30,1], ZmmResult[480,16], ZmmMask[480,16]);
+	conditionalAssign(ZmmResult[496,16], mask[31,1], ZmmResult[496,16], ZmmMask[496,16]);
+}
+
+ZmmOpMask16: is evexOpmask=0 {
+}
+
+ZmmOpMask32: AVXOpMask^ZmmMaskMode is AVXOpMask & ZmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(ZmmResult[0,32], mask[0,1], ZmmResult[0,32], ZmmMask[0,32]);
+	conditionalAssign(ZmmResult[32,32], mask[1,1], ZmmResult[32,32], ZmmMask[32,32]);
+	conditionalAssign(ZmmResult[64,32], mask[2,1], ZmmResult[64,32], ZmmMask[64,32]);
+	conditionalAssign(ZmmResult[96,32], mask[3,1], ZmmResult[96,32], ZmmMask[96,32]);
+	conditionalAssign(ZmmResult[128,32], mask[4,1], ZmmResult[128,32], ZmmMask[128,32]);
+	conditionalAssign(ZmmResult[160,32], mask[5,1], ZmmResult[160,32], ZmmMask[160,32]);
+	conditionalAssign(ZmmResult[192,32], mask[6,1], ZmmResult[192,32], ZmmMask[192,32]);
+	conditionalAssign(ZmmResult[224,32], mask[7,1], ZmmResult[224,32], ZmmMask[224,32]);
+	conditionalAssign(ZmmResult[256,32], mask[8,1], ZmmResult[256,32], ZmmMask[256,32]);
+	conditionalAssign(ZmmResult[288,32], mask[9,1], ZmmResult[288,32], ZmmMask[288,32]);
+	conditionalAssign(ZmmResult[320,32], mask[10,1], ZmmResult[320,32], ZmmMask[320,32]);
+	conditionalAssign(ZmmResult[352,32], mask[11,1], ZmmResult[352,32], ZmmMask[352,32]);
+	conditionalAssign(ZmmResult[384,32], mask[12,1], ZmmResult[384,32], ZmmMask[384,32]);
+	conditionalAssign(ZmmResult[416,32], mask[13,1], ZmmResult[416,32], ZmmMask[416,32]);
+	conditionalAssign(ZmmResult[448,32], mask[14,1], ZmmResult[448,32], ZmmMask[448,32]);
+	conditionalAssign(ZmmResult[480,32], mask[15,1], ZmmResult[480,32], ZmmMask[480,32]);
+}
+
+ZmmOpMask32: is evexOpmask=0 {
+}
+
+ZmmOpMask64: AVXOpMask^ZmmMaskMode is AVXOpMask & ZmmMaskMode {
+	local mask = AVXOpMask;
+	conditionalAssign(ZmmResult[0,64], mask[0,1], ZmmResult[0,64], ZmmMask[0,64]);
+	conditionalAssign(ZmmResult[64,64], mask[1,1], ZmmResult[64,64], ZmmMask[64,64]);
+	conditionalAssign(ZmmResult[128,64], mask[2,1], ZmmResult[128,64], ZmmMask[128,64]);
+	conditionalAssign(ZmmResult[192,64], mask[3,1], ZmmResult[192,64], ZmmMask[192,64]);
+	conditionalAssign(ZmmResult[256,64], mask[4,1], ZmmResult[256,64], ZmmMask[256,64]);
+	conditionalAssign(ZmmResult[320,64], mask[5,1], ZmmResult[320,64], ZmmMask[320,64]);
+	conditionalAssign(ZmmResult[384,64], mask[6,1], ZmmResult[384,64], ZmmMask[384,64]);
+	conditionalAssign(ZmmResult[448,64], mask[7,1], ZmmResult[448,64], ZmmMask[448,64]);
+}
+
+ZmmOpMask64: is evexOpmask=0 {
+}
+
+
+RegK_m8:  KReg_rm is mod=3 & KReg_rm { tmp:1 = KReg_rm[0,8]; export tmp; }
+RegK_m8:  m8      is m8              { tmp:1 = m8; export tmp; }
+RegK_m16: KReg_rm is mod=3 & KReg_rm { tmp:2 = KReg_rm[0,16]; export tmp;}
+RegK_m16: m16     is m16             { tmp:2 = m16; export tmp; }
+RegK_m32: KReg_rm is mod=3 & KReg_rm { tmp:4 = KReg_rm[0,32]; export tmp; }
+RegK_m32: m32     is m32             { tmp:4 = m32; export tmp; }
 RegK_m64: KReg_rm is mod=3 & KReg_rm { export KReg_rm; }
 RegK_m64: m64     is m64             { export m64; }
 
 # Some macros
-
-@include "macros.sinc"
 
 macro ptr2(r,x) {
   r = zext(x);

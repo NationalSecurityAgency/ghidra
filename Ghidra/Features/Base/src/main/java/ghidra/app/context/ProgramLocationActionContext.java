@@ -124,7 +124,7 @@ public class ProgramLocationActionContext extends ProgramActionContext
 		return functions;
 	}
 
-	private Function getFunctionForLocation() {
+	protected Function getFunctionForLocation() {
 		if (location instanceof FunctionLocation functionLocation) {
 			Address functionAddress = functionLocation.getFunctionAddress();
 			return program.getFunctionManager().getFunctionAt(functionAddress);

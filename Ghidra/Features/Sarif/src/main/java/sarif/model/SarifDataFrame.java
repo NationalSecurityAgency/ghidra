@@ -20,18 +20,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.contrastsecurity.sarif.Artifact;
 import com.contrastsecurity.sarif.ReportingDescriptorReference;
 import com.contrastsecurity.sarif.Result;
 import com.contrastsecurity.sarif.Run;
 import com.contrastsecurity.sarif.SarifSchema210;
+import com.contrastsecurity.sarif.Tool;
 import com.contrastsecurity.sarif.ToolComponent;
 import com.contrastsecurity.sarif.ToolComponentReference;
 
 import sarif.SarifController;
+import sarif.SarifUtils;
 import sarif.handlers.SarifResultHandler;
 import sarif.handlers.SarifRunHandler;
 import sarif.managers.ProgramSarifMgr;
@@ -49,6 +51,8 @@ public class SarifDataFrame {
 	private Map<String, ReportingDescriptorReference> taxaMap;
 	private String sourceLanguage;
 	private String compiler;
+	private String toolID;
+	private String version;
 
 	public SarifDataFrame(SarifSchema210 sarifLog, SarifController controller, boolean parseHeaderOnly) {
 		this.controller = controller;
@@ -70,19 +74,20 @@ public class SarifDataFrame {
 				continue;
 			}
 			compileComponentMap(run);
-			for (String name :getComponentMap().keySet()) {
+			for (String name : getComponentMap().keySet()) {
 				columns.add(new SarifColumnKey(name, false));
 			}
 			ProgramSarifMgr programMgr = controller.getProgramSarifMgr();
 			for (Entry<String, Boolean> entry : programMgr.getKeys().entrySet()) {
 				columns.add(new SarifColumnKey(entry.getKey(), entry.getValue()));
 			}
+			SarifUtils.validateRun(run);
 			for (Result result : run.getResults()) {
 				compileTaxaMap(run, result);
 
 				Map<String, Object> curTableResult = new HashMap<>();
 				for (SarifResultHandler handler : resultHandlers) {
-					if (handler.isEnabled()) {
+					if (handler.isEnabled(this)) {
 						handler.handle(this, run, result, curTableResult);
 					}
 				}
@@ -96,7 +101,7 @@ public class SarifDataFrame {
 				list.add(curTableResult);
 			}
 			for (SarifRunHandler handler : controller.getSarifRunHandlers()) {
-				if (handler.isEnabled()) {
+				if (handler.isEnabled(this)) {
 					handler.handle(this, run);
 				}
 			}
@@ -104,6 +109,12 @@ public class SarifDataFrame {
 	}
 
 	private void parseHeader(Run run) {
+		Tool tool = run.getTool();
+		if (tool != null) {
+			ToolComponent driver = tool.getDriver();
+			toolID = driver.getName();
+			version = driver.getVersion();
+		}
 		Set<Artifact> artifacts = run.getArtifacts();
 		if (artifacts == null) {
 			return;
@@ -179,5 +190,12 @@ public class SarifDataFrame {
 	public String getCompiler() {
 		return compiler;
 	}
-}
 
+	public String getToolID() {
+		return toolID;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+}

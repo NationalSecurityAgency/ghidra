@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
 from pybag import pydbg
@@ -38,6 +38,7 @@ data64_compiler_map = {
 x86_compiler_map = {
     'windows': 'windows',
     'Cygwin': 'windows',
+    'default': 'windows',
 }
 
 default_compiler_map = {
@@ -182,13 +183,17 @@ def compute_ghidra_compiler(lang):
 
     # Check if the selected lang has specific compiler recommendations
     if not lang in compiler_map:
+        print(f"{lang} not found in compiler map")
         return 'default'
     comp_map = compiler_map[lang]
+    if comp_map == data64_compiler_map:
+        print(f"Using the DATA64 compiler map")
     osabi = get_osabi()
     if osabi in comp_map:
         return comp_map[osabi]
     if None in comp_map:
         return comp_map[None]
+    print(f"{osabi} not found in compiler map")
     return 'default'
 
 
@@ -204,16 +209,11 @@ class DefaultMemoryMapper(object):
         self.defaultSpace = defaultSpace
 
     def map(self, proc: int, offset: int):
-        if proc == 0:
-            space = self.defaultSpace
-        else:
-            space = f'{self.defaultSpace}{proc}'
+        space = self.defaultSpace
         return self.defaultSpace, Address(space, offset)
 
     def map_back(self, proc: int, address: Address) -> int:
-        if address.space == self.defaultSpace and proc == 0:
-            return address.offset
-        if address.space == f'{self.defaultSpace}{proc}':
+        if address.space == self.defaultSpace:
             return address.offset
         raise ValueError(f"Address {address} is not in process {proc}")
 

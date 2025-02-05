@@ -133,7 +133,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				String name = cycleGroupAction.getName();
 				checkEnablement(action,
 					name.equals("Cycle: byte,word,dword,qword") ||
-						name.equals("Cycle: float,double") ||
+						name.equals("Cycle: float,double,longdouble") ||
 						name.equals("Cycle: char,string,unicode") || name.equals("char") ||
 						name.equals("string"));
 			}
@@ -173,7 +173,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				String name = cycleGroupAction.getName();
 				checkEnablement(action,
 					name.equals("Cycle: byte,word,dword,qword") ||
-						name.equals("Cycle: float,double") ||
+						name.equals("Cycle: float,double,longdouble") ||
 						name.equals("Cycle: char,string,unicode") || name.equals("char") ||
 						name.equals("string"));
 			}
@@ -218,7 +218,7 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				String name = cycleGroupAction.getName();
 				checkEnablement(action,
 					name.equals("Cycle: byte,word,dword,qword") ||
-						name.equals("Cycle: float,double") ||
+						name.equals("Cycle: float,double,longdouble") ||
 						name.equals("Cycle: char,string,unicode") || name.equals("char") ||
 						name.equals("string"));
 			}

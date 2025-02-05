@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,7 +160,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 	}
 
-	protected class TrackRecordersListener implements TargetPublicationListener {
+	protected class TrackTargetsListener implements TargetPublicationListener {
 		@Override
 		public void targetPublished(Target target) {
 			processChange(c -> evtTraceTargetPublished(c, target), "targetPublished");
@@ -219,8 +219,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointAdded(TraceBreakpoint tb) {
-			Lifespan span = tb.getLifespan();
-			if (span == null || !span.contains(info.snap)) {
+			if (!tb.isAlive(info.snap)) {
 				return;
 			}
 			try {
@@ -233,7 +232,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointChanged(TraceBreakpoint tb) {
-			if (!tb.getLifespan().contains(info.snap)) {
+			if (!tb.isAlive(info.snap)) {
 				return;
 			}
 			try {
@@ -521,7 +520,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 							forgetTraceBreakpoint(r, tb);
 							continue;
 						}
-						if (!tb.getLifespan().contains(snap)) {
+						if (!tb.isAlive(snap)) {
 							forgetTraceBreakpoint(r, tb);
 							continue;
 						}
@@ -804,7 +803,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	private final ListenerSet<LogicalBreakpointsChangeListener> changeListeners =
 		new ListenerSet<>(LogicalBreakpointsChangeListener.class, true);
 
-	private final TrackRecordersListener targetsListener = new TrackRecordersListener();
+	private final TrackTargetsListener targetsListener = new TrackTargetsListener();
 	private final TrackMappingsListener mappingListener = new TrackMappingsListener();
 	private final TrackModesListener modeListener = new TrackModesListener();
 

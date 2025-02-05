@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,12 +81,11 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 		if (provider instanceof ProgramByteViewerComponentProvider) {
 			Program program = ((ProgramByteViewerComponentProvider) provider).getProgram();
 			if (program != null) {
-				addressInputField = new AddressInput();
-				addressInputField.setAddressFactory(program.getAddressFactory());
-				addressInputField.showAddressSpaceCombo(false);
-				addressInputField.setAddress(getAlignmentAddress());
+				Address alignment = getAlignmentAddress();
+				addressInputField = new AddressInput(program, a -> update());
+				addressInputField.setAddressSpaceFilter(s -> s == alignment.getAddressSpace());
+				addressInputField.setAddress(alignment);
 				panel.add(addressInputField);
-				addressInputField.addChangeListener(this);
 				addressInputField.setAccessibleName("Alignment Address");
 			}
 		}
@@ -214,13 +213,13 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 	}
 
 	private boolean hasValidFieldValues() {
-		if (addressInputField.getValue().length() == 0) {
+		if (addressInputField.getText().length() == 0) {
 			setStatusText("Enter an alignment address");
 			return false;
 		}
 		Address alignmentAddress = addressInputField.getAddress();
 		if (alignmentAddress == null) {
-			setStatusText("Invalid alignment address:" + addressInputField.getValue());
+			setStatusText("Invalid alignment address:" + addressInputField.getText());
 			return false;
 		}
 		BigInteger bytesPerLine = bytesPerLineField.getValue();

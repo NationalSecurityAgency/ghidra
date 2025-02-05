@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,7 +120,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// They are either undefined bytes or code that is not in a function. 
 	private static final boolean FIXUP_PROGRAM = true;
 
-	// bookmark all constructor/destructor functions figured out by this script
+	// bookmark all constructor/destructor functions recognized by script
 	private static final boolean BOOKMARK_FOUND_FUNCTIONS = true;
 
 	// show a graph of class hierarchies after script is complete
@@ -323,12 +323,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			getNumberOfConstructorsOrDestructors(recoveredClasses) +
 			" class member functions to assign.");
 
-		if (!hasDebugSymbols) {
-
-			if (BOOKMARK_FOUND_FUNCTIONS) {
-				bookmarkFunctions(recoveredClasses);
-				println("See Bookmark Manager for a list of functions by type.");
-			}
+		if (BOOKMARK_FOUND_FUNCTIONS) {
+			bookmarkFunctions(recoveredClasses);
+			println("See Bookmark Manager for a list of functions by type.");
 		}
 
 		callOptionalOutputMethods(recoveredClasses, out);
@@ -468,17 +465,18 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				if (status == Status.FAILURE) {
 					return true;
 				}
-				
+
 				// if any relocations for special typeinfo class symbols are unsupported then
 				// determine where the symbol is located before determining if it is an issue
-				if(status == Status.UNSUPPORTED) {
+				if (status == Status.UNSUPPORTED) {
 
 					//if relocation symbol is the same as the symbol at the relcation address
 					//then this situation is not an issue - it indicates a copy relocation at the
 					//location of the special typeinfo vtable which is a use case that can be handled
 					Address address = r.getAddress();
-					Symbol symbolAtAddress  = currentProgram.getSymbolTable().getSymbol(symbolName, address, currentProgram.getGlobalNamespace());
-					if(symbolAtAddress != null) {
+					Symbol symbolAtAddress = currentProgram.getSymbolTable()
+							.getSymbol(symbolName, address, currentProgram.getGlobalNamespace());
+					if (symbolAtAddress != null) {
 						continue;
 					}
 					return true;
@@ -488,7 +486,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return false;
 	}
-
 
 	private void analyzeProgramChanges(AddressSetView beforeChanges) throws Exception {
 

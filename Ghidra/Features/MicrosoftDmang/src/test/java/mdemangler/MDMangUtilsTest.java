@@ -43,7 +43,9 @@ public class MDMangUtilsTest extends AbstractGenericTest {
 			"class `struct name1::name2 __cdecl name1::name0(struct name1::name3,struct name1::name4)'::`1'::<lambda_0>";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDDataType item = demangler.demangleType(mangled, true);
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDDataType item = demangler.demangleType();
 
 		String demangled = item.toString();
 		SymbolPath symbolPath = MDMangUtils.getSymbolPath(item);
@@ -69,7 +71,9 @@ public class MDMangUtilsTest extends AbstractGenericTest {
 			"struct name8::name7::name0<class `public: virtual void __cdecl name4::`anonymous namespace'::name2::name1(class Aname3::name5,int,class Aname3::name6 const & __ptr64) __ptr64'::`1'::<lambda_0> && __ptr64>";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDDataType item = demangler.demangleType(mangled, true);
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDDataType item = demangler.demangleType();
 
 		String demangled = item.toString();
 		SymbolPath symbolPath = MDMangUtils.getSymbolPath(item);
@@ -94,7 +98,9 @@ public class MDMangUtilsTest extends AbstractGenericTest {
 			"struct name4::name3::name0<class `public: virtual __cdecl name2::Aname1::~Aname1(void) __ptr64'::`1'::<lambda_0> && __ptr64>";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDDataType item = demangler.demangleType(mangled, true);
+		demangler.setMangledSymbol(mangled);
+		demangler.setErrorOnRemainingChars(true);
+		MDDataType item = demangler.demangleType();
 
 		String demangled = item.toString();
 		SymbolPath symbolPath = MDMangUtils.getSymbolPath(item);

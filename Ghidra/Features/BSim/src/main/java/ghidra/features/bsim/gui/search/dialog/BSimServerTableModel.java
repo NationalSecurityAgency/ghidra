@@ -21,11 +21,15 @@ import java.util.*;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.features.bsim.gui.BSimServerManager;
-import ghidra.features.bsim.query.BSimServerInfo;
+import ghidra.features.bsim.query.*;
+import ghidra.features.bsim.query.BSimPostgresDBConnectionManager.BSimPostgresDataSource;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
+import ghidra.framework.client.ClientUtil;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.util.table.column.AbstractGColumnRenderer;
@@ -90,6 +94,7 @@ public class BSimServerTableModel extends GDynamicColumnTableModel<BSimServerInf
 		descriptor.addVisibleColumn(new TypeColumn());
 		descriptor.addVisibleColumn(new HostColumn());
 		descriptor.addVisibleColumn(new PortColumn());
+		descriptor.addVisibleColumn(new UserInfoColumn());
 		descriptor.addVisibleColumn(new ConnectionStatusColumn());
 		return descriptor;
 	}
@@ -165,6 +170,42 @@ public class BSimServerTableModel extends GDynamicColumnTableModel<BSimServerInf
 		}
 	}
 
+	private static class UserInfoColumn
+			extends AbstractDynamicTableColumn<BSimServerInfo, String, Object> {
+
+		@Override
+		public String getColumnName() {
+			return "User";
+		}
+
+		@Override
+		public String getValue(BSimServerInfo serverInfo, Settings settings, Object data,
+				ServiceProvider provider) throws IllegalArgumentException {
+			if (serverInfo.hasDefaultLogin()) {
+				if (serverInfo.getDBType() == DBType.postgres) {
+					BSimPostgresDataSource ds =
+						BSimPostgresDBConnectionManager.getDataSourceIfExists(serverInfo);
+					if (ds != null) {
+						return ds.getUserName();
+					}
+				}
+				// TODO: how can we determine elastic username?
+				return "";
+			}
+			String info = serverInfo.getUserName();
+			boolean hasPassword = serverInfo.hasPassword();
+			if (hasPassword) {
+				info = info + ":****"; // show w/masked password
+			}
+			return info;
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 100;
+		}
+	}
+
 	private static class HostColumn
 			extends AbstractDynamicTableColumn<BSimServerInfo, String, Object> {
 
@@ -176,7 +217,6 @@ public class BSimServerTableModel extends GDynamicColumnTableModel<BSimServerInf
 		@Override
 		public String getValue(BSimServerInfo serverInfo, Settings settings, Object data,
 				ServiceProvider provider) throws IllegalArgumentException {
-
 			return serverInfo.getServerName();
 		}
 

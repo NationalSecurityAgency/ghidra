@@ -26,7 +26,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.BSimServerInfo.DBType;
-import ghidra.features.bsim.query.FunctionDatabase.Error;
+import ghidra.features.bsim.query.FunctionDatabase.BSimError;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.description.DescriptionManager;
@@ -71,8 +71,7 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 		askValues("Select Database File", null, values);
 
 		File h2DbFile = values.getFile(DATABASE);
-		BSimServerInfo serverInfo =
-			new BSimServerInfo(DBType.file, null, 0, h2DbFile.getAbsolutePath());
+		BSimServerInfo serverInfo = new BSimServerInfo(h2DbFile.getAbsolutePath());
 
 		BSimH2FileDataSource existingBDS =
 			BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
@@ -129,7 +128,7 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				InsertRequest insertreq = new InsertRequest();
 				insertreq.manage = manager;
 				if (insertreq.execute(h2Database) == null) {
-					Error lastError = h2Database.getLastError();
+					BSimError lastError = h2Database.getLastError();
 					if ((lastError.category == ErrorCategory.Format) ||
 						(lastError.category == ErrorCategory.Nonfatal)) {
 						Msg.showWarn(this, null, "Skipping Insert",

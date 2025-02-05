@@ -196,18 +196,12 @@ MODULE_INFO_READER = _choose_module_info_reader()
 
 
 REGIONS_CMD = 'info proc mappings'
-REGION_PATTERN_V8 = re.compile("\\s*" +
-                               "0x(?P<start>[0-9,A-F,a-f]+)\\s+" +
-                               "0x(?P<end>[0-9,A-F,a-f]+)\\s+" +
-                               "0x(?P<size>[0-9,A-F,a-f]+)\\s+" +
-                               "0x(?P<offset>[0-9,A-F,a-f]+)\\s+" +
-                               "(?P<objfile>.*)")
-REGION_PATTERN_V12 = re.compile("\\s*" +
+REGION_PATTERN = re.compile("\\s*" +
                                 "0x(?P<start>[0-9,A-F,a-f]+)\\s+" +
                                 "0x(?P<end>[0-9,A-F,a-f]+)\\s+" +
                                 "0x(?P<size>[0-9,A-F,a-f]+)\\s+" +
                                 "0x(?P<offset>[0-9,A-F,a-f]+)\\s+" +
-                                "(?P<perms>[rwsxp\\-]+)\\s+" +
+                                "((?P<perms>[rwsxp\\-]+)?\\s+)?" +
                                 "(?P<objfile>.*)")
 
 
@@ -216,6 +210,9 @@ class Region(namedtuple('BaseRegion', ['start', 'end', 'offset', 'perms', 'objfi
 
 
 class RegionInfoReader(object):
+    cmd = REGIONS_CMD
+    region_pattern = REGION_PATTERN
+    
     def region_from_line(self, line):
         mat = self.region_pattern.fullmatch(line)
         if mat is None:
@@ -253,28 +250,13 @@ class RegionInfoReader(object):
             return False, None
         return True, new_regions
 
-
-class RegionInfoReaderV8(RegionInfoReader):
-    cmd = REGIONS_CMD
-    region_pattern = REGION_PATTERN_V8
-
-    def get_region_perms(self, mat):
-        return None
-
-
-class RegionInfoReaderV12(RegionInfoReader):
-    cmd = REGIONS_CMD
-    region_pattern = REGION_PATTERN_V12
-
     def get_region_perms(self, mat):
         return mat['perms']
 
 
 def _choose_region_info_reader():
-    if 8 <= GDB_VERSION.major < 12:
-        return RegionInfoReaderV8()
-    elif GDB_VERSION.major >= 12:
-        return RegionInfoReaderV12()
+    if 8 <= GDB_VERSION.major:
+        return RegionInfoReader()
     else:
         raise gdb.GdbError(
             "GDB version not recognized by ghidragdb: " + GDB_VERSION.full)

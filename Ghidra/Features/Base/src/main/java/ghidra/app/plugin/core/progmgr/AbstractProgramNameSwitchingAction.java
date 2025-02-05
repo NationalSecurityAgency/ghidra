@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.app.context.ProgramActionContext;
 import ghidra.program.model.listing.Program;
 
 /**
- * Abstract base class for program actions that change their menu name depending on the the active
+ * Abstract base class for program actions that change their menu name depending on the active
  * program. Note that actions that derived from this class only work on programs that are
  * globally managed by Ghidra and not opened and managed by individual plugins. If the action 
  * context should happen to contain a non-global managed program, the tool's concept of the 

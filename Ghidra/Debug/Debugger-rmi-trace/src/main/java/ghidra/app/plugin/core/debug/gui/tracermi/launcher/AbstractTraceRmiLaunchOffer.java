@@ -36,7 +36,6 @@ import ghidra.app.plugin.core.terminal.TerminalListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.util.ShellUtils;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.action.AutoMapSpec;
 import ghidra.debug.api.modules.DebuggerMissingProgramActionContext;
@@ -57,7 +56,6 @@ import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer {
-	public static final String PARAM_DISPLAY_IMAGE = "Image";
 	public static final String PREFIX_PARAM_EXTTOOL = "env:GHIDRA_LANG_EXTTOOL_";
 
 	public static final int DEFAULT_TIMEOUT_MILLIS = 10000;
@@ -299,15 +297,10 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	protected Map<String, ValStr<?>> generateDefaultLauncherArgs(
 			Map<String, LaunchParameter<?>> params) {
 		Map<String, ValStr<?>> map = new LinkedHashMap<>();
-		ImageParamSetter imageSetter = null;
 		for (Entry<String, LaunchParameter<?>> entry : params.entrySet()) {
 			LaunchParameter<?> param = entry.getValue();
 			map.put(entry.getKey(), ValStr.cast(Object.class, param.defaultValue()));
-			if (PARAM_DISPLAY_IMAGE.equals(param.display())) {
-				imageSetter = ImageParamSetter.get(param);
-				// May still be null if type is not supported
-			}
-			else if (param.name().startsWith(PREFIX_PARAM_EXTTOOL)) {
+			if (param.name().startsWith(PREFIX_PARAM_EXTTOOL)) {
 				String tool = param.name().substring(PREFIX_PARAM_EXTTOOL.length());
 				List<String> names =
 					program.getLanguage().getLanguageDescription().getExternalNames(tool);
@@ -328,7 +321,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				}
 			}
 		}
-		if (imageSetter != null && program != null) {
+		if (supportsImage() && program != null) {
+			ImageParamSetter imageSetter = ImageParamSetter.get(imageParameter());
 			imageSetter.setImage(map, program);
 		}
 		return map;
@@ -559,9 +553,18 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		return auto == null ? ByModuleAutoMapSpec.instance() : auto.getAutoMapSpec(trace);
 	}
 
-	protected void initializeMonitor(TaskMonitor monitor) {
+	protected boolean providesImage(Map<String, ValStr<?>> args) {
+		LaunchParameter<?> param = imageParameter();
+		if (param == null) {
+			return false;
+		}
+		return !"".equals(param.get(args).str());
+	}
+
+	protected void updateMonitorMax(TaskMonitor monitor, Map<String, ValStr<?>> args) {
 		AutoMapSpec spec = getAutoMapSpec();
-		if (requiresImage() && spec.hasTask()) {
+		boolean image = args == null ? supportsImage() : providesImage(args);
+		if (image && spec.hasTask()) {
 			monitor.setMaximum(6);
 		}
 		else {
@@ -621,7 +624,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		Trace trace = null;
 		Throwable lastExc = null;
 
-		initializeMonitor(monitor);
+		updateMonitorMax(monitor, null);
 		while (true) {
 			try {
 				monitor.setMessage("Gathering arguments");
@@ -633,6 +636,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 					return new LaunchResult(program, sessions, acceptor, connection, trace,
 						lastExc);
 				}
+				updateMonitorMax(monitor, args);
 				monitor.increment();
 
 				acceptor = null;
@@ -659,7 +663,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				trace = connection.waitForTrace(getTimeoutMillis());
 				traceManager.openTrace(trace);
 				traceManager.activate(traceManager.resolveTrace(trace),
-					ActivationCause.START_RECORDING);
+					ActivationCause.TARGET_UPDATED);
 				monitor.increment();
 
 				waitForModuleMapping(monitor, connection, trace);

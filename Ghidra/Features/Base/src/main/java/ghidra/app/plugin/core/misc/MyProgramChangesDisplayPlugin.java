@@ -102,9 +102,16 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	private int serverVersion = -1;
 	private int localVersion = -1;
 
-	private boolean programChangedLocally;
-	private boolean programChangedRemotely;
-	private boolean programSaved;
+	// currentProgram object changed; affects currentMyChangeMarks
+	private boolean currentProgramChanged;
+
+	// domain file updated on server; affects currentOtherChangeMarks
+	private boolean domainFileChangedRemotely;
+
+	// domain file updated locally; affects currentChangesSinceCheckoutMarks
+	private boolean domainFileChangedLocally;
+
+	// flag to force update of currentConflictChangeMarks
 	private boolean updateConflicts;
 
 	public MyProgramChangesDisplayPlugin(PluginTool tool) {
@@ -181,9 +188,9 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 		serverVersion = -1;
 		localVersion = -1;
-		programChangedLocally = false;
-		programChangedRemotely = false;
-		programSaved = false;
+		currentProgramChanged = false;
+		domainFileChangedRemotely = false;
+		domainFileChangedLocally = false;
 		program.removeTransactionListener(transactionListener);
 		program.removeListener(this);
 		disposeMarkerSets(program);
@@ -191,9 +198,9 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 	private void intializeChangeMarkers() {
 		// set all the triggers for updating markers when initializing
-		programChangedLocally = true;
-		programChangedRemotely = true;
-		programSaved = true;
+		currentProgramChanged = true;
+		domainFileChangedRemotely = true;
+		domainFileChangedLocally = true;
 		updateConflicts = true;
 		updateChangeMarkers();
 	}
@@ -273,24 +280,25 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 		ProgramChangeSet changeSet = currentProgram.getChanges();
 
-		if (programChangedLocally) {
+		if (currentProgramChanged) {
 			currentMyChangeMarks
 					.setAddressSetCollection(changeSet.getAddressSetCollectionSinceLastSave());
 		}
 
 		if (isTrackingServerChanges()) {
-			if (programSaved || programChangedRemotely) {
+			if (domainFileChangedLocally) {
 				currentChangesSinceCheckoutMarks
 						.setAddressSetCollection(changeSet.getAddressSetCollectionSinceCheckout());
 			}
 
-			if (programChangedRemotely) {
+			if (domainFileChangedRemotely) {
 				currentOtherChangeMarks
 						.setAddressSetCollection(new SingleAddressSetCollection(otherChangeSet));
 			}
 
-			// only update conflict markers when server changeSet changes or we end a transaction
-			if (programChangedRemotely || updateConflicts) {
+			// Update conflict markers when forced by server version change,
+			// local version change (merge may have occured) or a transaction has ended
+			if (updateConflicts) {
 				AddressSet intersect = changeSet.getAddressSetCollectionSinceCheckout()
 						.getCombinedAddressSet()
 						.intersect(otherChangeSet);
@@ -299,9 +307,9 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			}
 		}
 
-		programChangedLocally = false;
-		programChangedRemotely = false;
-		programSaved = false;
+		currentProgramChanged = false;
+		domainFileChangedRemotely = false;
+		domainFileChangedLocally = false;
 		updateConflicts = false;
 	}
 
@@ -310,30 +318,43 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	 * checkout and launch update thread if necessary.
 	 */
 	private void updateForDomainFileChanged() {
+
 		DomainFile df = currentProgram.getDomainFile();
+		if (!df.isCheckedOut()) {
+			// Only currentMyChangeMarks are maintained using domain object change listener
+			// when file is not checked-out
+			return;
+		}
 
 		int latestServerVersion = df.getLatestVersion();
 		int latestLocalVersion = df.getVersion();
-		// if the server version changes, schedule thread to get server changeSet
-		// which will trigger an marker update for both the other and conflict marker sets.
-		if (df.isCheckedOut() && serverVersion != latestServerVersion) {
-			serverVersion = latestServerVersion;
-			localVersion = latestLocalVersion;
-			if (serverVersion == localVersion) {
-				otherChangeSet = new AddressSet();
-				programChangedRemotely = true;
-				updateManager.update();
-			}
-			else {
-				scheduleUpdatesFromServer(currentProgram);
-			}
+
+		boolean localVersionChanged = localVersion != latestLocalVersion;
+		boolean serverVersionChanged = serverVersion != latestServerVersion;
+		if (!localVersionChanged && !serverVersionChanged) {
+			return; // No update to change bars
 		}
-		// else just the local version changed, update conflict sets.
-		else if (latestLocalVersion != localVersion) {
-			localVersion = latestLocalVersion;
-			updateConflicts = true;
-			updateManager.update();
+
+		localVersion = latestLocalVersion;
+		serverVersion = latestServerVersion;
+
+		domainFileChangedLocally |= localVersionChanged;
+		domainFileChangedRemotely |= serverVersionChanged;
+		updateConflicts = true;
+
+		if (localVersion == serverVersion) {
+			// When server and local versions match otherChangeSet is empty
+			otherChangeSet = new AddressSet();
+			domainFileChangedRemotely = true;
 		}
+		else if (serverVersionChanged) {
+			// Use UpdateChangeSetJob to compute the otherChangeSet
+			// GUI update deferred to UpdateChangeSetJob
+			scheduleUpdatesFromServer(currentProgram);
+			return;
+		}
+
+		updateManager.update();
 	}
 
 	private void scheduleUpdatesFromServer(Program p) {
@@ -350,9 +371,9 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		programChangedLocally = true;
+		currentProgramChanged = true;
 		if (ev.contains(DomainObjectEvent.SAVED)) {
-			programSaved = true;
+			domainFileChangedLocally = true;
 		}
 
 		updateManager.update();
@@ -428,6 +449,10 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 
+			if (localVersion == serverVersion) {
+				return; // skip update if versions now match
+			}
+
 			monitor.checkCancelled(); // plugin was shut down while we were scheduled
 
 			ProgramChangeSet changes = null;
@@ -456,7 +481,8 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			}
 
 			otherChangeSet = remoteChanges;
-			programChangedRemotely = true;
+			domainFileChangedRemotely = true;
+			updateConflicts = true;
 			updateManager.update();
 		}
 	}

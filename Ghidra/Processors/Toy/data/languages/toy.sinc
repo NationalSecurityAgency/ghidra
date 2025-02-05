@@ -20,6 +20,10 @@ define register offset=0x1000 size=$(SIZE) [
        r8  r9 r10 r11 r12  sp  lr  pc
 ];
 
+define ram offset=0x0 size=$(SIZE) [
+       mmr0
+];
+
 # STATUS REGISTER MAP: (LOW)
 # C - CARRY
 # Z - ZERO

@@ -461,7 +461,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		tool.addLocalAction(this, new CollapseAllDataAction(this));
 		tool.addLocalAction(this, new ToggleExpandCollapseDataAction(this));
 
-		cloneCodeViewerAction = new CloneCodeViewerAction(getName(), this);
+		cloneCodeViewerAction = new CloneCodeViewerAction(plugin.getName(), this);
 		addLocalAction(cloneCodeViewerAction);
 
 		DockingAction action = new GotoPreviousFunctionAction(tool, plugin.getName());
@@ -727,7 +727,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return panelProgram.getDomainFile().toString();
 	}
 
-	public void setPanel(ListingPanel lp) {
+	public void setOtherPanel(ListingPanel lp) {
 		Program myProgram = listingPanel.getListingModel().getProgram();
 		Program otherProgram = lp.getListingModel().getProgram();
 		String myName = "<EMPTY>";
@@ -982,7 +982,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool dt, ActionContext context) {
 		if (context.getComponentProvider() == this) {
-			return listingPanel.getHeaderActions(getName());
+			return listingPanel.getHeaderActions(getOwner());
 		}
 		return null;
 	}

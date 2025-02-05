@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
-import ghidra.app.util.pdb.pdbapplicator.PdbVbtManager.PdbVirtualBaseTable;
+import ghidra.app.util.pdb.classtype.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -45,10 +45,11 @@ public class CppCompositeType {
 	private List<Member> layoutMembers;
 	private List<Member> layoutVftPtrMembers;
 	private boolean isFinal;
-	private Type type;
+	private ClassKey classKey;
 	private String className; // String for now.
 	private String mangledName;
 	private int size;
+	private CategoryPath baseCategoryPath;
 	private SymbolPath symbolPath;
 	private Composite composite;
 	private CategoryPath categoryPath;
@@ -80,7 +81,8 @@ public class CppCompositeType {
 	private Map<Integer, PlaceholderVirtualBaseTable> placeholderVirtualBaseTables;
 
 	//----------------------------------------------------------------------------------------------
-	public CppCompositeType(SymbolPath symbolPath, Composite composite, String mangledName) {
+	public CppCompositeType(CategoryPath baseCategoryPath, SymbolPath symbolPath,
+			Composite composite, String mangledName) {
 		Objects.requireNonNull(symbolPath, "symbolPath may not be null");
 		Objects.requireNonNull(composite, "composite may not be null");
 		syntacticBaseClasses = new ArrayList<>();
@@ -92,7 +94,8 @@ public class CppCompositeType {
 		layoutVftPtrMembers = new ArrayList<>();
 
 		isFinal = false;
-		type = Type.UNKNOWN;
+		classKey = ClassKey.UNKNOWN;
+		this.baseCategoryPath = baseCategoryPath;
 		this.symbolPath = symbolPath;
 		this.composite = composite;
 		placeholderVirtualBaseTables = new HashMap<>();
@@ -100,47 +103,51 @@ public class CppCompositeType {
 		this.mangledName = mangledName;
 	}
 
-	public static CppClassType createCppClassType(SymbolPath symbolPath, Composite composite,
-			String mangledName) {
-		return new CppClassType(symbolPath, composite, mangledName);
+	public static CppClassType createCppClassType(CategoryPath baseCategoryPath,
+			SymbolPath symbolPath, Composite composite, String mangledName) {
+		return new CppClassType(baseCategoryPath, symbolPath, composite, mangledName);
 	}
 
-	public static CppClassType createCppClassType(SymbolPath symbolPath, Composite composite,
-			String name, String mangledName, int size) {
-		CppClassType cppType = new CppClassType(symbolPath, composite, mangledName);
+	public static CppClassType createCppClassType(CategoryPath baseCategoryPath,
+			SymbolPath symbolPath, Composite composite, String name, String mangledName, int size) {
+		CppClassType cppType =
+			new CppClassType(baseCategoryPath, symbolPath, composite, mangledName);
 		cppType.setName(name);
 		cppType.setSize(size);
 		return cppType;
 	}
 
-	public static CppStructType createCppStructType(SymbolPath symbolPath, Composite composite,
-			String mangledName) {
-		return new CppStructType(symbolPath, composite, mangledName);
+	public static CppStructType createCppStructType(CategoryPath baseCategoryPath,
+			SymbolPath symbolPath, Composite composite, String mangledName) {
+		return new CppStructType(baseCategoryPath, symbolPath, composite, mangledName);
 	}
 
-	public static CppStructType createCppStructType(SymbolPath symbolPath, Composite composite,
-			String name, String mangledName, int size) {
-		CppStructType cppType = new CppStructType(symbolPath, composite, mangledName);
+	public static CppStructType createCppStructType(CategoryPath baseCategoryPath,
+			SymbolPath symbolPath, Composite composite, String name, String mangledName, int size) {
+		CppStructType cppType =
+			new CppStructType(baseCategoryPath, symbolPath, composite, mangledName);
 		cppType.setName(name);
 		cppType.setSize(size);
 		return cppType;
 	}
 
 	private static class CppClassType extends CppCompositeType {
-		private CppClassType(SymbolPath symbolPath, Composite composite, String mangledName) {
-			super(symbolPath, composite, mangledName);
+		private CppClassType(CategoryPath baseCategoryPath, SymbolPath symbolPath,
+				Composite composite, String mangledName) {
+			super(baseCategoryPath, symbolPath, composite, mangledName);
 			setClass();
 		}
 	}
 
 	private static class CppStructType extends CppCompositeType {
-		private CppStructType(SymbolPath symbolPath, Composite composite, String mangledName) {
-			super(symbolPath, composite, mangledName);
+		private CppStructType(CategoryPath baseCategoryPath, SymbolPath symbolPath,
+				Composite composite, String mangledName) {
+			super(composite.getCategoryPath(), symbolPath, composite, mangledName);
 			setStruct();
 		}
 	}
 
-	static boolean validateMangledCompositeName(String mangledCompositeTypeName, Type type) {
+	static boolean validateMangledCompositeName(String mangledCompositeTypeName, ClassKey type) {
 		if (mangledCompositeTypeName == null) {
 			return false;
 		}
@@ -155,17 +162,20 @@ public class CppCompositeType {
 		}
 		switch (mangledCompositeTypeName.charAt(3)) {
 			case 'T':
-				if ((type.compareTo(Type.UNION) != 0) && (type.compareTo(Type.UNKNOWN) != 0)) {
+				if ((type.compareTo(ClassKey.UNION) != 0) &&
+					(type.compareTo(ClassKey.UNKNOWN) != 0)) {
 					PdbLog.message("Warning: Mismatched complex type 'T' for " + type);
 				}
 				break;
 			case 'U':
-				if ((type.compareTo(Type.STRUCT) != 0) && (type.compareTo(Type.UNKNOWN) != 0)) {
+				if ((type.compareTo(ClassKey.STRUCT) != 0) &&
+					(type.compareTo(ClassKey.UNKNOWN) != 0)) {
 					PdbLog.message("Warning: Mismatched complex type 'U' for " + type);
 				}
 				break;
 			case 'V':
-				if ((type.compareTo(Type.CLASS) != 0) && (type.compareTo(Type.UNKNOWN) != 0)) {
+				if ((type.compareTo(ClassKey.CLASS) != 0) &&
+					(type.compareTo(ClassKey.UNKNOWN) != 0)) {
 					PdbLog.message("Warning: Mismatched complex type 'V' for " + type);
 				}
 				break;
@@ -200,7 +210,7 @@ public class CppCompositeType {
 		return composite;
 	}
 
-	private CategoryPath getCategoryPath() {
+	public CategoryPath getCategoryPath() {
 		return categoryPath;
 	}
 
@@ -213,20 +223,20 @@ public class CppCompositeType {
 	}
 
 	public void setClass() {
-		type = Type.CLASS;
+		classKey = ClassKey.CLASS;
 	}
 
 	public void setStruct() {
-		type = Type.STRUCT;
+		classKey = ClassKey.STRUCT;
 	}
 
 	public void setUnion() {
-		type = Type.UNION;
+		classKey = ClassKey.UNION;
 	}
 
 	// not sure if user can see Type when returned.
-	public Type getType() {
-		return type;
+	public ClassKey getType() {
+		return classKey;
 	}
 
 	public void setName(String className) {
@@ -235,6 +245,10 @@ public class CppCompositeType {
 
 	public String getName() {
 		return className;
+	}
+
+	public DataTypePath getDataTypePath() {
+		return composite.getDataTypePath();
 	}
 
 	public void setMangledName(String mangledName) {
@@ -563,7 +577,7 @@ public class CppCompositeType {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(type);
+		builder.append(classKey);
 		builder.append(className);
 		if (isFinal) {
 			builder.append(" final");
@@ -615,7 +629,7 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createLayoutFromSyntacticDescription(VbtManager vbtManager, TaskMonitor monitor) {
+	public void createLayoutFromSyntacticDescription(VxtManager vxtManager, TaskMonitor monitor) {
 		for (SyntacticBaseClass base : syntacticBaseClasses) {
 			if (base instanceof DirectSyntacticBaseClass) {
 
@@ -628,21 +642,21 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createLayout(ObjectOrientedClassLayout layoutOptions, VbtManager vbtManager,
+	public void createLayout(ObjectOrientedClassLayout layoutOptions, VxtManager vxtManager,
 			TaskMonitor monitor) throws PdbException, CancelledException {
-		if (vbtManager instanceof PdbVbtManager) { // Information from PDB/program symbols
+		if (vxtManager instanceof MsftVxtManager) { // Information from PDB/program symbols
 			// TODO: both same for now
-			//doSpeculativeLayout(vbtManager, monitor);
-			createVbtBasedLayout(layoutOptions, vbtManager, monitor);
+			//doSpeculativeLayout(vxtManager, monitor);
+			createVbtBasedLayout(layoutOptions, vxtManager, monitor);
 		}
 		else {
-			createSpeculativeLayout(layoutOptions, vbtManager, monitor);
+			createSpeculativeLayout(layoutOptions, vxtManager, monitor);
 		}
 	}
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createVbtBasedLayout(ObjectOrientedClassLayout layoutOptions, VbtManager vbtManager,
+	public void createVbtBasedLayout(ObjectOrientedClassLayout layoutOptions, VxtManager vxtManager,
 			TaskMonitor monitor) throws PdbException, CancelledException {
 		CategoryPath cn;
 		hasDirect = false;
@@ -667,7 +681,7 @@ public class CppCompositeType {
 
 				// TODO: consider moving down below next line.
 				boolean allVbtFound =
-					reconcileVirtualBaseTables(composite.getDataTypeManager(), vbtManager);
+					reconcileVirtualBaseTables(composite.getDataTypeManager(), vxtManager);
 
 				addLayoutPdbMembers(directClassPdbMembers, layoutMembers);
 				insertVirtualFunctionTablePointers(directClassPdbMembers);
@@ -772,7 +786,7 @@ public class CppCompositeType {
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
 	public void createSpeculativeLayout(ObjectOrientedClassLayout layoutOptions,
-			VbtManager vbtManager, TaskMonitor monitor) throws PdbException, CancelledException {
+			VxtManager vxtManager, TaskMonitor monitor) throws PdbException, CancelledException {
 		// Speculative Layout uses recursion to try to know the order of members.  However, MSFT
 		//  rearranges the order of the Base Class records such that they are not necessarily in
 		//  the order that the class was declared, and it seems that the member order follows the
@@ -807,7 +821,7 @@ public class CppCompositeType {
 
 				// TODO: consider moving down below next line.
 				boolean allVbtFound =
-					reconcileVirtualBaseTables(composite.getDataTypeManager(), vbtManager);
+					reconcileVirtualBaseTables(composite.getDataTypeManager(), vxtManager);
 
 				addLayoutPdbMembers(directClassPdbMembers, layoutMembers);
 				insertVirtualFunctionTablePointers(directClassPdbMembers);
@@ -943,7 +957,7 @@ public class CppCompositeType {
 		return placeholderVirtualBaseTables;
 	}
 
-	private boolean reconcileVirtualBaseTables(DataTypeManager dtm, VbtManager vbtManager)
+	private boolean reconcileVirtualBaseTables(DataTypeManager dtm, VxtManager vxtManager)
 			throws PdbException {
 		if (placeholderVirtualBaseTables.size() > 1) {
 			// study this.
@@ -957,14 +971,14 @@ public class CppCompositeType {
 			if (!table.validateOffset()) {
 				// TODO study this.
 			}
-			DataType vbptr = getVbptrDataType(dtm, vbtManager, table);
+			DataType vbptr = getVbptrDataType(dtm, vxtManager, table);
 			allVbtFound &=
-				addOrUpdateVbtAndVbtptrMember(vbtManager, table, vbptr, vbtptrOffset, getName());
+				addOrUpdateVbtAndVbtptrMember(vxtManager, table, vbptr, vbtptrOffset, getName());
 		}
 		return allVbtFound;
 	}
 
-	private DataType getVbptrDataType(DataTypeManager dtm, VbtManager vbtManager,
+	private DataType getVbptrDataType(DataTypeManager dtm, VxtManager vxtManager,
 			PlaceholderVirtualBaseTable table) {
 		DataType vbptr = null;
 		for (int index = 1; index < table.getMaxOffset(); index++) {
@@ -975,106 +989,67 @@ public class CppCompositeType {
 			}
 		}
 		if (vbptr == null) {
-			vbptr = vbtManager.getFallbackVbptr();
+			vbptr = vxtManager.getDefaultVbtPtr();
 		}
 		return vbptr;
 	}
 
-	private class CppCompositeAndMember {
-		private CppCompositeType cppType;
-		private Member member;
+	private record CppParentageAndMember(List<CppCompositeType> parentage, Member member) {}
 
-		private CppCompositeAndMember(CppCompositeType cppType, Member member) {
-			this.cppType = cppType;
-			this.member = member;
-		}
-
-		private CppCompositeType getComposite() {
-			return cppType;
-		}
-
-		private Member getMember() {
-			return member;
-		}
-	}
-
-	private boolean addOrUpdateVbtAndVbtptrMember(VbtManager vbtManager,
+	private boolean addOrUpdateVbtAndVbtptrMember(VxtManager vxtManager,
 			PlaceholderVirtualBaseTable table, DataType vbptr, int vbtptrOffset, String myClass)
 			throws PdbException {
 
-		List<String> subMangled = new ArrayList<>();
-		//subMangled.add(getMangledName());
-		CppCompositeAndMember cAndM = findDirectBaseCompositeAndMember(this, 0, vbtptrOffset);
-		if (cAndM == null) {
+		// TODO: if we want to match vbtables with the pointers in *virtual* base classes, we are
+		//  not currently doing the work... we are only looking for direct bases, as they are
+		//  what dictate the placement for our current class (though cross-checks could be done
+		//  with all vbtables (at some point))
+
+		List<CppCompositeType> parentage = new ArrayList<>();
+
+		CppParentageAndMember cAndP = findDirectBaseParentageAndMember(this, 0, vbtptrOffset);
+
+		if (cAndP == null) {
 			insertMember("{vbptr}", vbptr, false, vbtptrOffset, "{vbptr} for " + myClass);
 		}
-		else if (!"{vbptr}".equals(cAndM.getMember().getName())) {
+		else if (!"{vbptr}".equals(cAndP.member().getName())) {
 			String message = "PDB: Collision of non-{vbptr}.";
 			PdbLog.message(message);
 			Msg.info(this, message);
 			return false;
 		}
 		else {
-			CppCompositeType compositeThatContainsMember = cAndM.getComposite();
-			String mangled = compositeThatContainsMember.getMangledName();
-			subMangled.add(mangled);
+			parentage = cAndP.parentage();
 		}
-		if (!(vbtManager instanceof PdbVbtManager)) {
+		if (!(vxtManager instanceof MsftVxtManager mvxtManager)) {
 			return false;
 		}
 		int entrySize = 4; // Default to something (could be wrong)
 		if (vbptr instanceof PointerDataType) {
 			entrySize = ((PointerDataType) vbptr).getDataType().getLength();
 		}
-
-		return findVbtBySymbolConstruction(table, (PdbVbtManager) vbtManager, entrySize,
-			getMangledName(), type, subMangled);
+		boolean x = findVbt(table, mvxtManager, entrySize, symbolPath, parentage);
+		return x;
 	}
 
-	private boolean findVbtBySymbolConstruction(PlaceholderVirtualBaseTable table,
-			PdbVbtManager vbtm, int entrySize, String mangledCompositeTypeName, Type mainType,
-			List<String> subMangledCompositeTypeNames) {
-		if (!validateMangledCompositeName(mangledCompositeTypeName, mainType)) {
-			return false;
-		}
-		for (String mangled : subMangledCompositeTypeNames) {
-			if (!validateMangledCompositeName(mangled, Type.UNKNOWN)) {
-				return false;
-			}
-		}
-		StringBuilder builder = new StringBuilder();
-		builder.append("??_8");
-		builder.append(mangledCompositeTypeName.substring(4));
-		builder.append("7B"); // Hope will always be 'B' ("const")
-		builder.append("@");
-		String possibleName = builder.toString();
-		if (findAndUpdate(table, vbtm, entrySize, possibleName)) {
-			return true;
-		}
-		for (String mangled : subMangledCompositeTypeNames) {
-			builder.deleteCharAt(builder.length() - 1);
-			builder.append(mangled.substring(4));
-			builder.append("@");
-			possibleName = builder.toString();
-			if (findAndUpdate(table, vbtm, entrySize, possibleName)) {
-				return true;
-			}
-		}
-		return false;
-	}
+	private boolean findVbt(PlaceholderVirtualBaseTable table, MsftVxtManager mvbtm, int entrySize,
+			SymbolPath ownerSp, List<CppCompositeType> parentage) {
 
-	boolean findAndUpdate(PlaceholderVirtualBaseTable table, PdbVbtManager vbtm, int entrySize,
-			String mangledTableName) {
-		PdbVirtualBaseTable vbt = vbtm.createVirtualBaseTableByName(mangledTableName, entrySize);
-		if (vbt == null) {
-			return false;
+		ClassID mId = new ProgramClassID(baseCategoryPath, ownerSp);
+		List<ClassID> cIdParentage = new ArrayList<>();
+		for (CppCompositeType t : parentage) {
+			ClassID id = new ProgramClassID(t.baseCategoryPath, t.getSymbolPath());
+			cIdParentage.add(id);
 		}
-		table.setName(mangledTableName);
+		ProgramVirtualBaseTable vbt = (ProgramVirtualBaseTable) mvbtm.findPrimaryVbt(mId);
+		//ProgramVirtualBaseTable vbt = (ProgramVirtualBaseTable) mvbtm.findVbt(mId, cIdParentage);
+
 		table.setVirtualBaseTable(vbt);
-		return true;
+
+		return vbt != null;
 	}
 
-	private CppCompositeAndMember findDirectBaseCompositeAndMember(CppCompositeType cppType,
+	private CppParentageAndMember findDirectBaseParentageAndMember(CppCompositeType cppType,
 			int offsetCppType, int vbtptrOffset) throws PdbException {
 		for (LayoutBaseClass base : cppType.layoutBaseClasses) {
 			if (!(base instanceof DirectLayoutBaseClass)) {
@@ -1086,16 +1061,18 @@ public class CppCompositeType {
 			if (vbtptrOffset >= directBaseOffset &&
 				vbtptrOffset < directBaseOffset + directBaseLength) {
 				CppCompositeType childCppType = directBase.getBaseClassType();
-				CppCompositeAndMember cAndM =
-					findDirectBaseCompositeAndMember(childCppType, directBaseOffset, vbtptrOffset);
-				if (cAndM == null) {
+				CppParentageAndMember cAndP =
+					findDirectBaseParentageAndMember(childCppType, directBaseOffset, vbtptrOffset);
+				if (cAndP == null) {
 					Member member = childCppType.findLayoutMemberOrVftPtrMember(vbtptrOffset);
 					if (member == null) {
 						return null;
 					}
-					cAndM = new CppCompositeAndMember(childCppType, member);
+					cAndP = new CppParentageAndMember(new ArrayList<>(), member);
 				}
-				return cAndM;
+				List<CppCompositeType> parentage = cAndP.parentage();
+				parentage.add(childCppType);
+				return cAndP;
 			}
 		}
 		return null;
@@ -1674,7 +1651,7 @@ public class CppCompositeType {
 	//----------------------------------------------------------------------------------------------
 	static class PlaceholderVirtualBaseTable {
 		private String name;
-		private PdbVirtualBaseTable pdbVirtualBaseTable = null;
+		private ProgramVirtualBaseTable vbt = null;
 
 		// We do not know if every index will be given.  We can check after the fact, and once
 		// the set of sequential integers is assured, we could create a list.
@@ -1697,19 +1674,19 @@ public class CppCompositeType {
 			this.name = name;
 		}
 
-		void setVirtualBaseTable(PdbVirtualBaseTable pdbVirtualBaseTable) {
-			this.pdbVirtualBaseTable = pdbVirtualBaseTable;
+		void setVirtualBaseTable(ProgramVirtualBaseTable vbt) {
+			this.vbt = vbt;
 		}
 
 		boolean canLookupOffset() {
-			return pdbVirtualBaseTable != null;
+			return vbt != null;
 		}
 
 		long getOffset(int ordinal) throws PdbException {
-			if (pdbVirtualBaseTable == null) {
-				throw new PdbException("pdbVirtualBaseTable not initialized");
+			if (vbt != null) {
+				return vbt.getBaseOffset(ordinal);
 			}
-			return pdbVirtualBaseTable.getOffset(ordinal);
+			throw new PdbException("pdbVirtualBaseTable not initialized");
 		}
 
 		Map<Integer, PlaceholderVirtualBaseTableEntry> getEntries() {
@@ -1748,52 +1725,6 @@ public class CppCompositeType {
 				}
 			}
 			return null;
-		}
-	}
-
-	//----------------------------------------------------------------------------------------------
-	//----------------------------------------------------------------------------------------------
-	//----------------------------------------------------------------------------------------------
-	//----------------------------------------------------------------------------------------------
-	static enum Type {
-		UNKNOWN("UNKNOWN_TYPE", -1),
-		BLANK("", 1),
-		CLASS("class", 2),
-		STRUCT("struct", 3),
-		UNION("union", 4);
-
-		private static final Map<Integer, Type> BY_VALUE = new HashMap<>();
-		static {
-			for (Type val : values()) {
-				BY_VALUE.put(val.value, val);
-			}
-		}
-		private final String label;
-		private final int value;
-
-		public String getString() {
-			return label;
-		}
-
-		@Override
-		public String toString() {
-			if (label.length() != 0) {
-				return label + " ";
-			}
-			return label;
-		}
-
-		public int getValue() {
-			return value;
-		}
-
-		public static Type fromValue(int val) {
-			return BY_VALUE.getOrDefault(val, UNKNOWN);
-		}
-
-		private Type(String label, int value) {
-			this.label = label;
-			this.value = value;
 		}
 	}
 

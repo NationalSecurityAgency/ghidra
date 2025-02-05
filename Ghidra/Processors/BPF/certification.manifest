@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 data/languages/BPF.cspec||GHIDRA||||END|
 data/languages/BPF.ldefs||GHIDRA||||END|
 data/languages/BPF.pspec||GHIDRA||||END|

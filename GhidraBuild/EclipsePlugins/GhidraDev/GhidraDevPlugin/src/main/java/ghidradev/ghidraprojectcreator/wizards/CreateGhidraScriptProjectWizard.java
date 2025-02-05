@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,7 @@ import org.eclipse.ui.IWorkbench;
 import ghidra.GhidraApplicationLayout;
 import ghidradev.EclipseMessageUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraScriptUtils;
+import ghidradev.ghidraprojectcreator.utils.PyDevUtils.ProjectPythonInterpreter;
 import ghidradev.ghidraprojectcreator.wizards.pages.*;
 import utilities.util.FileUtilities;
 
@@ -81,11 +82,11 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 		String runConfigMemory = projectPage.getRunConfigMemory();
 		boolean linkUserScripts = projectConfigPage.shouldLinkUsersScripts();
 		boolean linkSystemScripts = projectConfigPage.shouldLinkSystemScripts();
-		String jythonInterpreterName = pythonPage.getJythonInterpreterName();
+		ProjectPythonInterpreter pythonInterpreter = pythonPage.getProjectPythonInterpreter();
 		try {
 			getContainer().run(true, false,
 				monitor -> create(ghidraInstallDir, projectName, projectDir, createRunConfig,
-					runConfigMemory, linkUserScripts, linkSystemScripts, jythonInterpreterName,
+					runConfigMemory, linkUserScripts, linkSystemScripts, pythonInterpreter,
 					monitor));
 		}
 		catch (InterruptedException e) {
@@ -110,15 +111,14 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
 	 * @param linkUserScripts Whether or not to link in the user scripts directory.
 	 * @param linkSystemScripts Whether or not to link in the system scripts directories.
-	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
-	 *   Could be null if Python support is not wanted.
+	 * @param pythonInterpreter The Python interpreter to use.	
 	 * @param monitor The monitor to use during project creation.
 	 * @throws InvocationTargetException if an error occurred during project creation.
 	 */
 	private void create(File ghidraInstallDir, String projectName, File projectDir,
 			boolean createRunConfig, String runConfigMemory, boolean linkUserScripts,
-			boolean linkSystemScripts, String jythonInterpreterName, IProgressMonitor monitor)
-			throws InvocationTargetException {
+			boolean linkSystemScripts, ProjectPythonInterpreter pythonInterpreter,
+			IProgressMonitor monitor) throws InvocationTargetException {
 		try {
 			info("Creating " + projectName + " at " + projectDir);
 			monitor.beginTask("Creating " + projectName, 2);
@@ -128,7 +128,7 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 
 			GhidraScriptUtils.createGhidraScriptProject(projectName, projectDir, createRunConfig,
 				runConfigMemory, linkUserScripts, linkSystemScripts, ghidraLayout,
-				jythonInterpreterName, monitor);
+				pythonInterpreter, monitor);
 			monitor.worked(1);
 
 			info("Finished creating " + projectName);

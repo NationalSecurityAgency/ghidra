@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ public class FSBFileNode extends FSBNode {
 	protected boolean hasPassword;
 	protected String symlinkDest;
 	protected long lastModified;
+	protected String filenameExtOverride;
 
 	FSBFileNode(GFile file) {
 		this.file = file;
@@ -83,6 +84,17 @@ public class FSBFileNode extends FSBNode {
 		return symlinkDest != null;
 	}
 
+	public String getFilenameExtOverride() {
+		return filenameExtOverride;
+	}
+
+	@Override
+	public String getFileExtension() {
+		return filenameExtOverride != null && !filenameExtOverride.isEmpty()
+				? filenameExtOverride
+				: super.getFileExtension();
+	}
+
 	@Override
 	public int hashCode() {
 		return file.hashCode();
@@ -95,6 +107,7 @@ public class FSBFileNode extends FSBNode {
 		symlinkDest = fattrs.get(SYMLINK_DEST_ATTR, String.class, null);
 		Date lastModDate = fattrs.get(MODIFIED_DATE_ATTR, Date.class, null);
 		lastModified = lastModDate != null ? lastModDate.getTime() : 0;
+		filenameExtOverride = fattrs.get(FILENAME_EXT_OVERRIDE, String.class, null);
 	}
 
 	@Override

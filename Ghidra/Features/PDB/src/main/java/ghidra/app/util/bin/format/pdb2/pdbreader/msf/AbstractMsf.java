@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents the the Multi-Stream Format File used for Windows PDB files.
+ * This class represents the Multi-Stream Format File used for Windows PDB files.
  *  We have intended to implement to the Microsoft PDB API (source); see the API for truth.
  *  <P>
  *  Derived classes represents the real formats.  The file format represents a kind of
@@ -271,8 +271,8 @@ public abstract class AbstractMsf implements Msf {
 	}
 
 	/**
-	 * Returns the the mask used for masking off the upper bits of a value use to get the
-	 *  mod-page-size of the value (pageSizes must be power of two for this to work)
+	 * Returns the mask used for masking off the upper bits of a value used to get the
+	 *  mod-page-size of the value (pageSizes must be a power of two for this to work)
 	 * @return the mask
 	 */
 	@Override

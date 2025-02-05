@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		ListingField bf = cb.getCurrentField();
 		int fieldStart = bf.getStartX();
 		int distance = 10;
-		int row = 3;
+		int row = 4;
 		dragFieldEdge(fieldStart, row, distance);
 
 		waitForSwing();
@@ -133,8 +133,8 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void dragFieldEdge(int fieldStartX, int row, int delta) {
-		dragMouse(header.getHeaderTab(), BUTTON_ONE, fieldStartX, row(3), fieldStartX + delta,
-			row(3), NO_MODIFIERS);
+		dragMouse(header.getHeaderTab(), BUTTON_ONE, fieldStartX, row(4), fieldStartX + delta,
+			row(4), NO_MODIFIERS);
 	}
 
 	private int row(int i) {
@@ -147,7 +147,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		int startX = bf.getStartX();
 		int width = bf.getWidth();
 		int endX = startX + width;
-		int row = 3;
+		int row = 4;
 		int distance = -10;
 		dragFieldEdge(endX, row, distance);
 		waitForSwing();
@@ -166,7 +166,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		int width = bf.getWidth();
 		int middleFirstFieldX = startX / 2;
 		int pastMiddleSecondFieldX = startX + width / 2 + 1;
-		int row = 3;
+		int row = 4;
 		dragField(row, middleFirstFieldX, row, pastMiddleSecondFieldX);
 
 		waitForSwing();
@@ -192,7 +192,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move the cursor just before the end of the first column, startX has the position
 		// of the start of the second column field.
-		moveMouse(header.getHeaderTab(), startX - 1, row(3));
+		moveMouse(header.getHeaderTab(), startX - 1, row(4));
 
 		waitForSwing();
 
@@ -200,7 +200,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("East Resize Cursor", cursor.getName());
 
 		// move the cursor to the middle of the second col
-		moveMouse(header.getHeaderTab(), (startX + endX) / 2, row(3));
+		moveMouse(header.getHeaderTab(), (startX + endX) / 2, row(4));
 
 		waitForSwing();
 
@@ -208,7 +208,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Default Cursor", cursor.getName());
 
 		// move the cursor to near the beginning of the second field
-		moveMouse(header.getHeaderTab(), startX + 1, row(3));
+		moveMouse(header.getHeaderTab(), startX + 1, row(4));
 
 		waitForSwing();
 
@@ -223,8 +223,8 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		int width = bf.getWidth();
 		int dragX = startX + width / 2;
 		int dropX = 200; // any x location
-		int dragRow = 3;
-		int dropRow = 8;
+		int dragRow = 4;
+		int dropRow = 9;
 		dragField(dragRow, dragX, dropRow, dropX);
 		waitForSwing();
 		cb.goToField(addr("0x1003522"), "Address", 0, 0);
@@ -236,14 +236,14 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDragToPastBottomRow() {
 		FieldFormatModel model = header.getFormatManager().getCodeUnitFormat();
-		assertEquals(7, model.getNumRows());
+		assertEquals(8, model.getNumRows());
 		ListingField bf = cb.getCurrentField();
 		int startX = bf.getStartX();
 		int width = bf.getWidth();
 		int dragX = startX + width / 2;
 		int dropX = 200; // any x location
-		int dragRow = 3;
-		int dropRow = 7;
+		int dragRow = 4;
+		int dropRow = 8;
 		dragField(dragRow, dragX, dropRow, dropX);
 
 		waitForSwing();
@@ -251,11 +251,11 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		bf = cb.getCurrentField();
 		assertEquals(0, bf.getStartX());
-		assertEquals(8, model.getNumRows());
+		assertEquals(9, model.getNumRows());
 
 		// now drag it back up
-		dragField(7, width / 2, 0, 0);
-		assertEquals(7, model.getNumRows());
+		dragField(8, width / 2, 0, 0);
+		assertEquals(8, model.getNumRows());
 	}
 
 	@Test
@@ -264,7 +264,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		int startX = bf.getStartX();
 		int width = bf.getWidth();
 		int dragX = startX + width / 2;
-		int row = 3;
+		int row = 4;
 		int dropX = 0;
 		dragField(row, dragX, row, dropX);
 		bf = cb.getCurrentField();
@@ -275,16 +275,16 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testInsertDeleteRow() {
 		FieldFormatModel model = header.getHeaderTab().getModel();
 		InsertRowAction act = new InsertRowAction("Test", header);
-		act.isEnabledForContext(new DefaultActionContext(cb.getProvider()).setContextObject(
-			new FieldHeaderLocation(model, null, 0, 0)));
+		act.isEnabledForContext(new DefaultActionContext(cb.getProvider())
+				.setContextObject(new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act, true);
-		assertEquals(8, model.getNumRows());
+		assertEquals(9, model.getNumRows());
 		assertEquals(0, model.getNumFactorys(0));
 		RemoveRowAction act2 = new RemoveRowAction("Test", header);
-		act2.isEnabledForContext(new DefaultActionContext(cb.getProvider()).setContextObject(
-			new FieldHeaderLocation(model, null, 0, 0)));
+		act2.isEnabledForContext(new DefaultActionContext(cb.getProvider())
+				.setContextObject(new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act2, true);
-		assertEquals(7, model.getNumRows());
+		assertEquals(8, model.getNumRows());
 		assertEquals(2, model.getNumFactorys(0));
 	}
 
@@ -294,12 +294,12 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		ListingField bf = cb.getCurrentField();
 		int startX = bf.getStartX();
 		InsertRowAction act = new InsertRowAction("Test", header);
-		act.isEnabledForContext(new DefaultActionContext(cb.getProvider()).setContextObject(
-			new FieldHeaderLocation(model, null, 0, 0)));
+		act.isEnabledForContext(new DefaultActionContext(cb.getProvider())
+				.setContextObject(new FieldHeaderLocation(model, null, 0, 0)));
 		performAction(act, true);
 		int width = bf.getWidth();
 		int dragX = startX + width / 2;
-		int dragRow = 4;
+		int dragRow = 5;
 		int dropX = 200; // any x will do
 		int dropRow = 0;
 		dragField(dragRow, dragX, dropRow, dropX);

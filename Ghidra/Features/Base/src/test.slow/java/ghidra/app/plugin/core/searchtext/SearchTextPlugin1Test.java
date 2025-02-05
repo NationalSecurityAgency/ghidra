@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -421,7 +421,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(getAddr(0x01004192), loc.getAddress());
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals("Search result not placed at the matching character position", 15,
-			((CommentFieldLocation) loc).getCharOffset());
+			loc.getCharOffset());
 		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 
 		pressButton(searchButton);
@@ -673,7 +673,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		//
 		AddressSet set = getAddressesFromModel(model);
 		MarkerService markerService = tool.getService(MarkerService.class);
-		MarkerSet markerSet = markerService.getMarkerSet("Search", program);
+		MarkerSet markerSet = markerService.getMarkerSet("Search Results", program);
 		assertNotNull(markerSet);
 		AddressSet addresses = runSwing(() -> markerSet.getAddressSet());
 		assertTrue(set.hasSameAddresses(addresses));

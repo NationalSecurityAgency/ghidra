@@ -28,4 +28,5 @@ dependencies {
 }
 
 rootProject.createJsondocs.dependsOn jar
+rootProject.createPythonTypeStubs.dependsOn jar
 

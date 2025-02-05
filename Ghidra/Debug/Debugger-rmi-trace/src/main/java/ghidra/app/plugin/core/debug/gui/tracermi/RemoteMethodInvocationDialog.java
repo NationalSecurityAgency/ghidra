@@ -24,14 +24,13 @@ import javax.swing.JLabel;
 
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerParameterDialog;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget.Missing;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.RemoteParameter;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.schema.SchemaContext;
 
 public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialog<RemoteParameter> {
 
@@ -84,11 +83,7 @@ public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialo
 
 	@Override
 	protected Class<?> parameterType(RemoteParameter parameter) {
-		Class<?> type = ctx.getSchema(parameter.type()).getType();
-		if (TargetObject.class.isAssignableFrom(type)) {
-			return TraceObject.class;
-		}
-		return type;
+		return ctx.getSchema(parameter.type()).getType();
 	}
 
 	@Override
@@ -130,10 +125,19 @@ public class RemoteMethodInvocationDialog extends AbstractDebuggerParameterDialo
 			ConfigStateField.getState(state, parameterType(parameter), key));
 	}
 
+	protected ValStr<?> forMissingDefault(RemoteParameter param) {
+		Class<?> type = parameterType(param);
+		if (type == Boolean.class || type == boolean.class) {
+			return ValStr.from(false);
+		}
+		return new ValStr<>(null, "");
+	}
+
 	@Override
 	protected void setEditorValue(PropertyEditor editor, RemoteParameter param, ValStr<?> val) {
 		ValStr<?> v = switch (val.val()) {
-			case Missing __ -> new ValStr<>(null, "");
+			case null -> forMissingDefault(param);
+			case Missing __ -> forMissingDefault(param);
 			case TraceObject obj -> new ValStr<>(obj, obj.getCanonicalPath().toString());
 			default -> val;
 		};

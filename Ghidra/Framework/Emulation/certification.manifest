@@ -1,5 +1,7 @@
 ##VERSION: 2.0
+##MODULE IP: INRIA License
 Module.manifest||GHIDRA||||END|
+README.md||GHIDRA||||END|
 src/test/resources/mock.cspec||GHIDRA||||END|
 src/test/resources/mock.ldefs||GHIDRA||||END|
 src/test/resources/mock.pspec||GHIDRA||||END|

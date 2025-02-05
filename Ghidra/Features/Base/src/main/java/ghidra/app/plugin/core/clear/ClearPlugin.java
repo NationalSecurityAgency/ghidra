@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.clear;
+
+import static ghidra.app.plugin.core.clear.ClearOptions.ClearType.*;
 
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
@@ -42,6 +44,7 @@ import ghidra.program.util.*;
 )
 //@formatter:on
 public class ClearPlugin extends Plugin {
+	private static final String CLEAR_MENU = "Clear";
 	private static final String CLEAR_WITH_OPTIONS_NAME = "Clear With Options";
 	private static final String CLEAR_CODE_BYTES_NAME = "Clear Code Bytes";
 	private static final String CLEAR_FLOW_AND_REPAIR = "Clear Flow and Repair";
@@ -181,7 +184,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_CODE_BYTES_NAME, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_CODE_BYTES_NAME)
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "1")
-				.popupMenuPath(CLEAR_CODE_BYTES_NAME)
+				.popupMenuPath(CLEAR_MENU, CLEAR_CODE_BYTES_NAME)
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "1")
 				.keyBinding("C")
 				.withContext(ListingActionContext.class)
@@ -193,7 +196,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_WITH_OPTIONS_NAME, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_WITH_OPTIONS_NAME + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "2")
-				.popupMenuPath(CLEAR_WITH_OPTIONS_NAME + "...")
+				.popupMenuPath(CLEAR_MENU, CLEAR_WITH_OPTIONS_NAME + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "2")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
@@ -203,7 +206,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_FLOW_AND_REPAIR, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_FLOW_AND_REPAIR + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "3")
-				.popupMenuPath(CLEAR_FLOW_AND_REPAIR + "...")
+				.popupMenuPath(CLEAR_MENU, CLEAR_FLOW_AND_REPAIR + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "3")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
@@ -225,22 +228,16 @@ public class ClearPlugin extends Plugin {
 	}
 
 	private void clearCodeBytes(ListingActionContext context) {
-		ClearOptions opts = new ClearOptions();
+		ClearOptions options = new ClearOptions(false);
 
-		opts.setClearCode(true);
-		opts.setClearSymbols(false);
-		opts.setClearComments(false);
-		opts.setClearProperties(false);
-		opts.setClearFunctions(false);
-		opts.setClearRegisters(false);
-		opts.setClearEquates(false);
-		opts.setClearUserReferences(true);
-		opts.setClearAnalysisReferences(true);
-		opts.setClearImportReferences(true);
-		opts.setClearDefaultReferences(false);
-		opts.setClearBookmarks(false);
+		options.setShouldClear(INSTRUCTIONS, true);
+		options.setShouldClear(DATA, true);
+		options.setShouldClear(USER_REFERENCES, true);
+		options.setShouldClear(ANALYSIS_REFERENCES, true);
+		options.setShouldClear(IMPORT_REFERENCES, true);
+		options.setShouldClear(DEFAULT_REFERENCES, true);
 
-		clear(opts, context);
+		clear(options, context);
 
 	}
 

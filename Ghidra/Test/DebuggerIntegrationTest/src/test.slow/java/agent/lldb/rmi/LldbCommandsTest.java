@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,6 @@ import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.model.DomainFile;
@@ -50,7 +49,10 @@ import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
@@ -243,6 +245,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				Selected Ghidra compiler: %s""".formatted(PLAT.lang(), PLAT.cSpec()),
 			extractOutSection(out, "---File---"));
 		assertEquals("""
+				Toy:BE:64:default not found in compiler map - using default compiler
 				Selected Ghidra language: Toy:BE:64:default
 				Selected Ghidra compiler: default""",
 			extractOutSection(out, "---Language---"));
@@ -433,7 +436,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Processes[].Threads[].Stack[].Registers"))
+						PathFilter.parse("Processes[].Threads[].Stack[].Registers"))
 					.map(p -> p.getLastEntry())
 					.toList();
 			TraceObjectValue tobj = regVals.get(0);
@@ -493,7 +496,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 			List<TraceObjectValue> regVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Processes[].Threads[].Stack[].Registers"))
+						PathFilter.parse("Processes[].Threads[].Stack[].Registers"))
 					.map(p -> p.getLastEntry())
 					.toList();
 			TraceObjectValue tobj = regVals.get(0);
@@ -539,7 +542,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String created = extractOutSection(out, "---Id---");
 			long id = Long.parseLong(created.split("id=")[1].split(",")[0]);
@@ -564,7 +567,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.nowOn(0), life);
@@ -593,7 +596,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.at(0), life);
@@ -621,7 +624,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			TraceObjectValue value = object.getValue(0, "test");
 			return value == null ? null : (T) value.getValue();
@@ -811,7 +814,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/expPrint")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			assertEquals(Map.ofEntries(
 				Map.entry("[1]", Lifespan.nowOn(0)),
@@ -842,7 +845,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
-					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
+					.getObjectByCanonicalPath(KeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String getObject = extractOutSection(out, "---GetObject---");
 			assertEquals("%d\tTest.Objects[1]".formatted(object.getKey()), getObject);
@@ -989,7 +992,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> processes = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(0), PathPredicates.parse("Processes[]"))
+					.getValuePaths(Lifespan.at(0), PathFilter.parse("Processes[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertEquals(1, processes.size());
@@ -1011,7 +1014,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
 			Collection<TraceObject> available = tb.trace.getObjectManager()
-					.getValuePaths(Lifespan.at(0), PathPredicates.parse("Available[]"))
+					.getValuePaths(Lifespan.at(0), PathFilter.parse("Available[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertThat(available.size(), greaterThan(2));
@@ -1038,7 +1041,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Processes[].Breakpoints[]"))
+						PathFilter.parse("Processes[].Breakpoints[][1]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1047,10 +1050,10 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				procBreakLocVals.get(0).getChild().getValue(0, "_range").castValue();
 			Address main = rangeMain.getMinAddress();
 
-			assertBreakLoc(procBreakLocVals.get(0), "[1.1]", main, 1,
+			assertBreakLoc(procBreakLocVals.get(0), "[1]", main, 1,
 				Set.of(TraceBreakpointKind.SW_EXECUTE),
 				"main");
-			assertBreakLoc(procBreakLocVals.get(1), "[2.1]", main, 1,
+			assertBreakLoc(procBreakLocVals.get(1), "[1]", main, 1,
 				Set.of(TraceBreakpointKind.HW_EXECUTE),
 				"main");
 		}
@@ -1077,7 +1080,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procWatchLocVals = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Processes[].Watchpoints[]"))
+						PathFilter.parse("Processes[].Watchpoints[]"))
 					.map(p -> p.getLastEntry())
 					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
@@ -1220,7 +1223,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			List<TraceObject> stack = tb.trace.getObjectManager()
 					.getValuePaths(Lifespan.at(0),
-						PathPredicates.parse("Processes[].Threads[].Stack[]"))
+						PathFilter.parse("Processes[].Threads[].Stack[]"))
 					.map(p -> p.getDestination(null))
 					.toList();
 			assertThat(stack.size(), greaterThan(2));

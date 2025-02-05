@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
@@ -30,7 +28,7 @@ import ghidra.app.util.AddressInput;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
@@ -44,7 +42,6 @@ import ghidra.util.layout.PairLayout;
 public class OffsetTableDialog extends DialogComponentProvider {
 
 	private AddressInput addrInput;
-	private AddressFactory addrFactory;
 	private JComboBox<String> comboBox;
 	private Address defaultAddress;
 	private JCheckBox signedCheckBox;
@@ -52,15 +49,13 @@ public class OffsetTableDialog extends DialogComponentProvider {
 
 	/**
 	 * Construct a new dialog
-	 * @param parent parent of this dialog
 	 * @param defaultAddress address to put in the address field as a default
-	 * @param addrFactory address factory required by AddressInput object
+	 * @param program the program
 	 */
-	OffsetTableDialog(Address defaultAddress, AddressFactory addrFactory) {
+	OffsetTableDialog(Address defaultAddress, Program program) {
 		super("Create Offset References", true);
 		this.defaultAddress = defaultAddress;
-		this.addrFactory = addrFactory;
-		addWorkPanel(buildMainPanel());
+		addWorkPanel(buildMainPanel(program));
 		addOKButton();
 		addCancelButton();
 		setHelpLocation(new HelpLocation(HelpTopics.REFERENCES, "Create_Offset_References"));
@@ -128,23 +123,16 @@ public class OffsetTableDialog extends DialogComponentProvider {
 		signedCheckBox.setSelected(isSigned);
 	}
 
-	private JPanel buildMainPanel() {
+	private JPanel buildMainPanel(Program program) {
 		JPanel panel = new JPanel(new PairLayout(10, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
-		addrInput = new AddressInput();
+		addrInput = new AddressInput(program, a -> clearStatusText());
 		addrInput.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				okCallback();
 			}
 		});
-		addrInput.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				clearStatusText();
-			}
-		});
-		addrInput.setAddressFactory(addrFactory);
 		addrInput.setAddress(defaultAddress);
 
 		panel.add(new GLabel("Enter Base Address:", SwingConstants.RIGHT));

@@ -98,11 +98,11 @@ class InferiorState(object):
                     frame, util.get_register_descs(frame.architecture(), 'general'))
                 try:
                     commands.putmem("$pc", "1", from_tty=False)
-                except MemoryError as e:
+                except gdb.MemoryError as e:
                     print(f"Couldn't record page with PC: {e}")
                 try:
-                    commands.putmem("$sp", "1", from_tty=False)
-                except MemoryError as e:
+                    commands.putmem("$sp-1", "2", from_tty=False)
+                except gdb.MemoryError as e:
                     print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
         # NB: These commands (put_modules/put_regions) will fail if the process is running
@@ -281,6 +281,11 @@ def on_register_changed(event):
 
 @log_errors
 def on_cont(event):
+    if gdb.selected_thread() is None:
+        # thread-based state computed in record_continued will
+        # fail in some versions of gdb because the current_thread is None
+        # and gdb fails to test for None before switching
+        return
     if (HOOK_STATE.check_skip_continue()):
         return
     inf = gdb.selected_inferior()

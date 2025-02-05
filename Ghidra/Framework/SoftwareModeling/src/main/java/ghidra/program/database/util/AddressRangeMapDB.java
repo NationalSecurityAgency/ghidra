@@ -105,7 +105,7 @@ public class AddressRangeMapDB implements DBListener {
 	 * @param errHandler database error handler
 	 * @param valueField specifies the type for the values stored in this map
 	 * @param indexed if true, values will be indexed allowing use of the 
-	 * getValueRangeIterator method
+	 * {@link AddressRangeMapDB#getAddressSet(Field)} method.
 	 */
 	public AddressRangeMapDB(DBHandle dbHandle, AddressMap addressMap, Lock lock, String name,
 			ErrorHandler errHandler, Field valueField, boolean indexed) {
@@ -343,7 +343,8 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	/**
-	 * Returns set of addresses where the given value has been set
+	 * Returns set of addresses where the given value has been set.
+	 * This method may only be invoked on indexed {@link AddressRangeMapDB}s!
 	 * @param value the value to search for
 	 * @return set of addresses where the given value has been set
 	 */

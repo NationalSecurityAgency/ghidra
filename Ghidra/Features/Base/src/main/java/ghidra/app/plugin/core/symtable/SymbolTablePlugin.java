@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -179,7 +179,6 @@ public class SymbolTablePlugin extends Plugin {
 			Program newProg = progEvent.getActiveProgram();
 
 			if (oldProg != null) {
-				inspector.setProgram(null);
 				oldProg.removeListener(domainObjectListener);
 				domainObjectWorker.clearAllJobs();
 				symProvider.setProgram(null, inspector);
@@ -189,7 +188,6 @@ public class SymbolTablePlugin extends Plugin {
 			currentProgram = newProg;
 			if (newProg != null) {
 				currentProgram.addListener(domainObjectListener);
-				inspector.setProgram(currentProgram);
 				symProvider.setProgram(currentProgram, inspector);
 				refProvider.setProgram(currentProgram, inspector);
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package ghidra.graph.viewer.layout;
 
-import java.awt.*;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.util.*;
-import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.common.base.Function;
@@ -43,7 +43,7 @@ public class LayoutLocationMap<V, E> {
 	private int numColumns;
 
 	private TreeMap<Integer, Row<V>> rowsByIndex = new TreeMap<>();
-	private TreeMap<Integer, Column> columnsByIndex = new TreeMap<>();
+	private TreeMap<Integer, Column<V>> columnsByIndex = new TreeMap<>();
 
 	private boolean isCondensed = false;
 	private GridLocationMap<V, E> gridLocations;
@@ -54,27 +54,10 @@ public class LayoutLocationMap<V, E> {
 		this.gridLocations = gridLocations;
 
 		Set<V> vertices = gridLocations.vertices();
-		Set<E> edges = gridLocations.edges();
-		MinMaxRowColumn minMax = getMinMaxRowColumnValues(vertices, edges, monitor);
-		numRows = minMax.maxRow + 1;
-		numColumns = minMax.maxCol + 1;
+		numRows = gridLocations.height();
+		numColumns = gridLocations.width();
 
 		initializeLayoutLocations(transformer, vertices, monitor);
-	}
-
-	private LayoutLocationMap() {
-		// copy constructor
-	}
-
-	public LayoutLocationMap<V, E> copy() {
-		LayoutLocationMap<V, E> map = new LayoutLocationMap<>();
-		map.isCondensed = isCondensed;
-		map.numRows = numRows;
-		map.numColumns = numColumns;
-		map.rowsByIndex = new TreeMap<>(rowsByIndex);
-		map.columnsByIndex = new TreeMap<>(columnsByIndex);
-		map.gridLocations = gridLocations.copy();
-		return map;
 	}
 
 	public void dispose() {
@@ -90,19 +73,19 @@ public class LayoutLocationMap<V, E> {
 		return numColumns;
 	}
 
-	public Column col(V v) {
+	public Column<V> col(V v) {
 		Integer col = gridLocations.col(v);
 		return doGetColumn(col);
 	}
 
-	public Column col(int gridX) {
+	public Column<V> col(int gridX) {
 		return doGetColumn(gridX);
 	}
 
-	public Column getColumnContaining(int x) {
-		Column column = null;
-		Collection<Column> values = columnsByIndex.values();
-		for (Column nextColumn : values) {
+	public Column<V> getColumnContaining(int x) {
+		Column<V> column = null;
+		Collection<Column<V>> values = columnsByIndex.values();
+		for (Column<V> nextColumn : values) {
 			if (x < nextColumn.x) {
 				return column;
 			}
@@ -111,10 +94,10 @@ public class LayoutLocationMap<V, E> {
 		return column;
 	}
 
-	private Column doGetColumn(int index) {
-		Column column = columnsByIndex.get(index);
+	private Column<V> doGetColumn(int index) {
+		Column<V> column = columnsByIndex.get(index);
 		if (column == null) {
-			column = new Column(index);
+			column = new Column<>(index);
 			columnsByIndex.put(index, column);
 		}
 		return column;
@@ -125,10 +108,10 @@ public class LayoutLocationMap<V, E> {
 	 * 
 	 * @return the columns in this location map, sorted from lowest index to highest
 	 */
-	public Collection<Column> columns() {
-		List<Column> result = new ArrayList<>();
-		Collection<Column> values = columnsByIndex.values();
-		for (Column column : values) {
+	public Collection<Column<V>> columns() {
+		List<Column<V>> result = new ArrayList<>();
+		Collection<Column<V>> values = columnsByIndex.values();
+		for (Column<V> column : values) {
 			result.add(column);
 		}
 		return result;
@@ -148,17 +131,17 @@ public class LayoutLocationMap<V, E> {
 		return results;
 	}
 
-	public Column lastColumn() {
+	public Column<V> lastColumn() {
 
-		Entry<Integer, Column> lastEntry = columnsByIndex.lastEntry();
+		Entry<Integer, Column<V>> lastEntry = columnsByIndex.lastEntry();
 		if (lastEntry == null) {
 			return null;
 		}
 		return lastEntry.getValue();
 	}
 
-	public Column nextColumn(Column column) {
-		Column nextColumn = doGetColumn(column.index + 1);
+	public Column<V> nextColumn(Column<V> column) {
+		Column<V> nextColumn = doGetColumn(column.index + 1);
 		if (!nextColumn.isInitialized()) {
 			// last column?
 			nextColumn.x = column.x + column.getPaddedWidth(isCondensed);
@@ -166,12 +149,12 @@ public class LayoutLocationMap<V, E> {
 		return nextColumn;
 	}
 
-	public List<Point> articulations(E e) {
+	public List<GridPoint> articulations(E e) {
 		return gridLocations.getArticulations(e);
 	}
 
 	public Row<V> row(V v) {
-		Integer row = gridLocations.row(v);
+		int row = gridLocations.row(v);
 		return doGetRow(row);
 	}
 
@@ -215,7 +198,7 @@ public class LayoutLocationMap<V, E> {
 
 	public List<Integer> getColOffsets() {
 		ArrayList<Integer> list = new ArrayList<>();
-		for (Column column : columnsByIndex.values()) {
+		for (Column<V> column : columnsByIndex.values()) {
 			list.add(column.x);
 		}
 		return list;
@@ -231,70 +214,55 @@ public class LayoutLocationMap<V, E> {
 			columnsByIndex + "]";
 	}
 
+	public GridCoordinates getGridCoordinates() {
+		Row<?> lastRow = lastRow();
+		Column<?> lastColumn = lastColumn();
+		if (lastRow == null || lastColumn == null) {
+			return new GridCoordinates(new int[0], new int[0]);
+		}
+
+		// add 1 to compute a row y value and a column x value for closing the grid
+		int[] rowStarts = new int[lastRow.index + 1];
+		int[] colStarts = new int[lastColumn.index + 1];
+
+		for (Row<?> row : rowsByIndex.values()) {
+			rowStarts[row.index] = row.y;
+		}
+		for (Column<?> col : columnsByIndex.values()) {
+			colStarts[col.index] = col.x;
+		}
+
+		// Give any empty rows or columns the coordinate of the row or column that precedes it 
+		// since it takes no space. (Otherwise all the empty row or column labels would overwrite
+		// themselves at the 0 row or 0 column.
+		for (int row = 1; row < rowStarts.length; row++) {
+			if (rowStarts[row] == 0) {
+				rowStarts[row] = rowStarts[row - 1];
+			}
+		}
+		for (int col = 1; col < colStarts.length; col++) {
+			if (colStarts[col] == 0) {
+				colStarts[col] = colStarts[col - 1];
+			}
+		}
+
+		// close the grid
+		rowStarts[rowStarts.length - 1] = lastRow.y + lastRow.getPaddedHeight(isCondensed);
+		colStarts[colStarts.length - 1] = lastColumn.x + lastColumn.getPaddedWidth(isCondensed);
+
+		return new GridCoordinates(rowStarts, colStarts);
+
+	}
+
 //==================================================================================================
 // Initialization Code
 //==================================================================================================
-
-	private MinMaxRowColumn getMinMaxRowColumnValues(Collection<V> vertices, Collection<E> edges,
-			TaskMonitor monitor) throws CancelledException {
-
-		MinMaxRowColumn minMax = new MinMaxRowColumn();
-
-		for (V v : vertices) {
-			monitor.checkCancelled();
-
-			int row = gridLocations.row(v);
-			if (row > minMax.maxRow) {
-				minMax.maxRow = row;
-			}
-			if (row < minMax.minRow) {
-				minMax.minRow = row;
-			}
-
-			int column = gridLocations.col(v);
-			if (column > minMax.maxCol) {
-				minMax.maxCol = column;
-			}
-			if (column < minMax.minCol) {
-				minMax.minCol = column;
-			}
-		}
-
-		for (E edge : edges) {
-			monitor.checkCancelled();
-
-			List<Point> articulations = gridLocations.getArticulations(edge);
-			if (articulations.isEmpty()) {
-				continue;
-			}
-
-			for (Point location : articulations) {
-				int row = location.y;
-				if (row > minMax.maxRow) {
-					minMax.maxRow = row;
-				}
-				if (row < minMax.minRow) {
-					minMax.minRow = row;
-				}
-
-				int column = location.x;
-				if (column > minMax.maxCol) {
-					minMax.maxCol = column;
-				}
-				if (column < minMax.minCol) {
-					minMax.minCol = column;
-				}
-			}
-		}
-
-		return minMax;
-	}
 
 	private void initializeLayoutLocations(Function<V, Shape> transformer, Collection<V> vertices,
 			TaskMonitor monitor) throws CancelledException {
 
 		// create this class's rows from the grid
-		List<Row<V>> gridRows = gridLocations.rows();
+		Collection<Row<V>> gridRows = gridLocations.rowsMap().values();
 		for (Row<V> row : gridRows) {
 			rowsByIndex.put(row.index, row);
 		}
@@ -308,7 +276,7 @@ public class LayoutLocationMap<V, E> {
 			monitor.checkCancelled();
 
 			Row<V> row = row(vertex);
-			Column column = col(vertex);
+			Column<V> column = col(vertex);
 			Shape shape = transformer.apply(vertex);
 			Rectangle bounds = shape.getBounds();
 			if (bounds.width > column.width) {
@@ -349,7 +317,7 @@ public class LayoutLocationMap<V, E> {
 		for (int i = 0; i < n; i++) {
 			monitor.checkCancelled();
 
-			Column column = col(i);
+			Column<V> column = col(i);
 			column.x = offset;
 			offset += column.getPaddedWidth(isCondensed);
 		}

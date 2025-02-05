@@ -627,4 +627,48 @@ public class GraphAlgorithms {
 			recursivePrint(g, v2, set, depth + 1, ps);
 		}
 	}
+
+	/**
+	 * Returns a list of list of vertices sorted topologically such that for every edge 
+	 * V1 -> V2, the V1 vertex will appear in the resulting list before the V2 vertex. Normally,
+	 * this is only defined for acyclic graphs. For purposes of this implementation, a root vertex 
+	 * is given as a start point and any edge encountered by following edges from the root that
+	 * results in a "back" edge (i.e any edge that points to a previously visited vertex) is 
+	 * ignored, effectively making the graph acyclic (somewhat arbitrarily depending the order in
+	 * which vertexes are visited which is determined by the given edge comparator). Also, note
+	 * that any vertex in the graph that is not reachable from the given root will not appear in
+	 * the resulting list of sorted vertices.
+	 *  
+	 * @param <V> the vertex type
+	 * @param <E> the edge type
+	 * @param g the graph
+	 * @param root the start node for traversing the graph (will always be the first node in the
+	 * resulting list)
+	 * @param edgeComparator provides an ordering for traversing the graph which can impact which
+	 * edges are ignored as "back" edges and ultimately affect the final ordering
+	 * @return a list of vertices reachable from the given root vertex, sorted topologically
+	 */
+	public static <V, E extends GEdge<V>> List<V> topologicalSort(GDirectedGraph<V, E> g, V root,
+			Comparator<E> edgeComparator) {
+		GraphToTreeAlgorithm<V, E> algorithm = new GraphToTreeAlgorithm<V, E>(g, edgeComparator);
+		return algorithm.topolocigalSort(root);
+	}
+
+	/**
+	 * Converts a general directed graph into a tree graph with the given vertex as the root. It
+	 * does this by first doing a topological sort (which ignores back edges) and greedily accepting
+	 * the first incoming edge based on the sorted vertex order. 
+	 * @param <V> the vertex type
+	 * @param <E> the edge type
+	 * @param g the graph to be converted into a tree
+	 * @param root the vertex to be used as the root
+	 * @param edgeComparator provides a priority ordering of edges with higher priority edges 
+	 * getting first shot at claiming children for its sub-tree.
+	 * @return a graph with edges removed such that the graph is a tree.
+	 */
+	public static <V, E extends GEdge<V>> GDirectedGraph<V, E> toTree(GDirectedGraph<V, E> g,
+			V root, Comparator<E> edgeComparator) {
+		GraphToTreeAlgorithm<V, E> algorithm = new GraphToTreeAlgorithm<V, E>(g, edgeComparator);
+		return algorithm.toTree(root);
+	}
 }

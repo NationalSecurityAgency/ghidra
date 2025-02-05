@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -623,8 +623,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		private boolean isVisible(TraceBreakpoint location) {
 			long snap = traceManager.getCurrentFor(trace).getSnap();
-			Lifespan span = location.getLifespan();
-			return span != null && span.contains(snap);
+			return location.isAlive(snap);
 		}
 
 		private void locationAdded(TraceBreakpoint location) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -190,6 +190,12 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	};
 
 	private void demangleAndTest() throws Exception {
+		testConfiguration.demangleAndTest(testName, mangled, mdTruth, msTruth, ghTruth,
+			ms2013Truth);
+	}
+
+	private void demangleAndTestFunction() throws Exception {
+		testConfiguration.setIsFunction(true);
 		testConfiguration.demangleAndTest(testName, mangled, mdTruth, msTruth, ghTruth,
 			ms2013Truth);
 	}
@@ -2603,7 +2609,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	//This test seems to dictate that a function pointer should be elaborated internal to CVMod, where the based5 will eliminate all of the function context.
-	//  It also seems to indicate that the "int" portion would be the referred-to type and the rest of the function spec would be part of the the function info.
+	//  It also seems to indicate that the "int" portion would be the referred-to type and the rest of the function spec would be part of the function info.
 	//  Other information at one time, led me to believe that the return type of a function is special... need to rekinkdle those thoughts, but think related to nested
 	//  functions, such as function returning a function pointer..
 	@Category(MDMangFailingTestCategory.class)
@@ -4645,6 +4651,34 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	public void testUnderscore7e() throws Exception {
 		mangled = "??_7a@b@@6Bc@d@e@@f@g@h@@i@j@k@@@";
 		msTruth = "const b::a::`vftable'{for `e::d::c's `h::g::f's `k::j::i'}";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Backref used in parentage
+	@Test
+	public void testUnderscore7f() throws Exception {
+		mangled = "??_7a@b@@6B01@@";
+		msTruth = "const b::a::`vftable'{for `b::a'}";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// vbtable with anonymous namespace
+	@Test
+	public void testUnderscore7AnonNs() throws Exception {
+		mangled = "??_7a@?A0xfedcba98@b@@6B@";
+		msTruth = "const b::`anonymous namespace'::a::`vftable'";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// vbtable with anonymous namespace
+	@Test
+	public void testUnderscore7AnonNsAndBackref() throws Exception {
+		mangled = "??_7a@?A0xfedcba98@b@@6B012@01@@";
+		msTruth =
+			"const b::`anonymous namespace'::a::`vftable'{for `b::A0xfedcba98::a's `A0xfedcba98::a'}";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -15309,6 +15343,81 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "?Ti@@3V?$Tc@Vaaa@@$$ZVbbb@@1@@";
 		msTruth = "class Tc<class aaa,class bbb,class bbb> Ti";
 		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+	/*
+	 * Follow are C-style mangling scheme under 32-bit model; __vectorcall also valid for 64-bit
+	 *      __cdecl: '_' prefix; no suffix; example "_name"
+	 *    __stdcall: '_' prefix; "@<decimal_digits>" suffix; example "_name@12"
+	 *   __fastcall: '@' prefix; "@<decimal_digits>" suffix; example "@name@12"
+	 * __vectorcall: no prefix; "@@<decimal_digits>" suffix; example "name@@12"
+	 *
+	 * We've come up with the string output formats for the C-style mangling scheme.
+	 */
+
+	@Test
+	public void testCStyleCdeclFunction() throws Exception {
+		mangled = "_name";
+		mdTruth = "name";
+		msTruth = "";
+		demangleAndTestFunction();
+	}
+
+	@Test
+	public void testCStyleCdeclNoFunction() throws Exception {
+		mangled = "_name";
+		mdTruth = "_name";
+		msTruth = "";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testCStyleStdcallFunction() throws Exception {
+		mangled = "_name@12";
+		mdTruth = "__stdcall name,12";
+		msTruth = "";
+		demangleAndTestFunction();
+	}
+
+	@Test
+	public void testCStyleStdcallNoFunction() throws Exception {
+		mangled = "_name@12";
+		mdTruth = "";
+		msTruth = "";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testCStyleFastcallFunction() throws Exception {
+		mangled = "@name@12";
+		mdTruth = "__fastcall name,12";
+		msTruth = "";
+		demangleAndTestFunction();
+	}
+
+	@Test
+	public void testCStyleFastcallNoFunction() throws Exception {
+		mangled = "@name@12";
+		mdTruth = "";
+		msTruth = "";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testCStyleVectorcallFunction() throws Exception {
+		mangled = "name@@12";
+		mdTruth = "__vectorcall name,12";
+		msTruth = "";
+		demangleAndTestFunction();
+	}
+
+	@Test
+	public void testCStyleVectorcallNoFunction() throws Exception {
+		mangled = "name@@12";
+		mdTruth = "";
+		msTruth = "";
 		demangleAndTest();
 	}
 

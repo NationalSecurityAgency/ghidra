@@ -16,6 +16,7 @@
 ##
 #@timeout 60000
 #@title gdb + gdbserver via ssh
+#@image-opt arg:1
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and <tt>gdbserver</tt> via <tt>ssh</tt></h3>
 #@desc   <p>
@@ -26,14 +27,17 @@
 #@menu-group remote
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb_gdbserver_ssh
-#@arg :str "Image" "The target binary executable image on the remote system"
+#@enum Endian:str auto big little
+#@arg :str! "Image" "The target binary executable image on the remote system"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_SSH_PATH:file="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_SSH_PATH:file!="ssh" "ssh command" "The path to ssh on the local system. Omit the full path to resolve using the system PATH."
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 #@env OPT_GDBSERVER_PATH:str="gdbserver" "gdbserver command (remote)" "The path to gdbserver on the remote system. Omit the full path to resolve using the system PATH."
 #@env OPT_EXTRA_GDBSERVER_ARGS:str="" "Extra gdbserver arguments" "Extra arguments to pass to gdbserver. Use with care."
 #@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_ARCH:str="auto" "Architecture" "Target architecture"
+#@env OPT_ENDIAN:Endian="auto" "Endian" "Target byte order"
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then
@@ -54,6 +58,8 @@ fi
   -ex "set confirm off" \
   -ex "show version" \
   -ex "python import ghidragdb" \
+  -ex "set architecture $OPT_ARCH" \
+  -ex "set endian $OPT_ENDIAN" \
   -ex "target remote | '$OPT_SSH_PATH' $OPT_EXTRA_SSH_ARGS '$OPT_HOST' '$OPT_GDBSERVER_PATH' $OPT_EXTRA_GDBSERVER_ARGS - $@" \
   -ex "ghidra trace connect \"$GHIDRA_TRACE_RMI_ADDR\"" \
   -ex "ghidra trace start" \

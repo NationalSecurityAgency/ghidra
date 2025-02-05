@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyghidra"
+dynamic = ["version", "readme"]
+description = "Native CPython for Ghidra"
+license = {text = "Apache-2.0"}
+requires-python = ">= 3.9"
+authors = [
+    { name = "DC3", email = "dc3.tsd@us.af.mil" },
+]
+maintainers = [
+    { name = "Ghidra Development Team" },
+	{ name = "DC3", email = "dc3.tsd@us.af.mil" },
+]
+keywords = [
+    "ghidra",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "Jpype1>=1.5.2",
+    "packaging"
+]
+
+[project.optional-dependencies]
+testing = [
+    "pytest",
+    "pytest-datadir",
+]
+
+[project.scripts]
+pyghidra = "pyghidra.__main__:main"
+
+[project.gui-scripts]
+pyghidraw = "pyghidra.gui:_gui"
+
+[project.urls]
+Repository = "https://github.com/NationalSecurityAgency/ghidra"
+
+[tool.setuptools.dynamic]
+version = {attr = "pyghidra.__version__"}
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.pytest.ini_options]
+required_plugins = ["pytest-datadir"]
+addopts = "-p no:faulthandler -m \"not plugin\""
+markers = ["plugin"]

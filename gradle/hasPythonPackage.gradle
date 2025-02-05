@@ -48,13 +48,15 @@ task buildPyPackage {
 	outputs.dir(dist)
 
 	doLast {
+		if (rootProject.PYTHON3 == null) {
+			throw new GradleException("A supported version of Python [${PYTHON_SUPPORTED}] was not found!")
+		}
+	
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		exec {
-			workingDir { "build/pypkg" }
-			commandLine	rootProject.PYTHON3, "-m", "pip"
-			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
-			args "-f", setuptools
-			args "."
+			workingDir { file("build/pypkg") }
+			commandLine rootProject.PYTHON3
+			args "-m", "pip", "wheel", "-w", "dist/", "--no-index", "--no-deps", "-f", setuptools, "."
 		}
 	}
 }
@@ -70,14 +72,21 @@ rootProject.assembleDistribution {
 		exclude '**/*.pyc'
 		exclude '**/*.pyo'
 		exclude '**/__pycache__/**'
-		exclude 'dist/*.tar.gz'
+		exclude '**/.pytest_cache'
+		exclude '**/*.egg-info'
+		exclude 'build'
 		into { zipPath + "/pypkg" }
 	}
 }
 
 ext.distributePyDep = { name ->
+	Set<File> wheelFiles = PYTHON_DEPS.get(project)
+	if (wheelFiles == null) {
+		wheelFiles = new HashSet<>()
+		PYTHON_DEPS.put(project, wheelFiles)
+	}
     File dep = findPyDep(name)
-    PYTHON_DEPS.add(dep)
+    wheelFiles.add(dep)
     def zipPath = getZipPath(project) 
     rootProject.assembleDistribution {
         into ("${zipPath}/pypkg/dist") {

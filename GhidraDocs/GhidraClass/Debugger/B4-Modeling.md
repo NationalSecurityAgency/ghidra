@@ -435,14 +435,14 @@ public enum ExprPcodeArithmetic implements PcodeArithmetic<Expr> {
 	}
 
 	@Override
-	public Expr modBeforeStore(int sizeout, int sizeinAddress, Expr inAddress, int sizeinValue,
-			Expr inValue) {
+	public Expr modBeforeStore(int sizeinOffset, AddressSpace space, Expr inOffset,
+			int sizeinValue, Expr inValue) {
 		return inValue;
 	}
 
 	@Override
-	public Expr modAfterLoad(int sizeout, int sizeinAddress, Expr inAddress, int sizeinValue,
-			Expr inValue) {
+	public Expr modAfterLoad(int sizeinOffset, AddressSpace space, Expr inOffset,
+			int sizeinValue, Expr inValue) {
 		return inValue;
 	}
 
@@ -497,8 +497,8 @@ They provide an opportunity to capture dereferencing information.
 We do not need that information, so we just return the value.
 The `mod` methods tread a bit into storage and addressing, which we cover more thoroughly later, but they model memory operations to the extent they do not actually require a storage mechanism.
 For example, were this a dynamic taint analyzer, we could use `modAfterLoad()` to record that a value was retrieved via a tainted address.
-The `inValue` parameter gives the `Expr` actually retrieved from the emulator's storage, and `inAddress` gives the address (really just the `Expr` piece) used to retrieve it.
-Conversely, in `modBeforeStore()`, `inValue` gives the value about to be stored, and `inAddress` gives the address used to store it.
+The `inValue` parameter gives the `Expr` actually retrieved from the emulator's storage, and `inOffset` gives the offset used to retrieve it.
+Conversely, in `modBeforeStore()`, `inValue` gives the value about to be stored, and `inOffset` gives the offset used to store it.
 
 We implement neither `toConcrete()` nor `sizeOf()`.
 Since we will be augmenting a concrete emulator, these methods will be provided by the concrete piece.

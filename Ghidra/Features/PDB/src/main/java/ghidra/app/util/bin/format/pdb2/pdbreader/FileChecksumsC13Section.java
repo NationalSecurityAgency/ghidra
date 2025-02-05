@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -30,6 +29,7 @@ import ghidra.util.task.TaskMonitor;
 public class FileChecksumsC13Section extends C13Section {
 
 	private List<C13FileChecksum> fileChecksums = new ArrayList<>();
+	private Map<Integer, C13FileChecksum> fileChecksumsByOffset = new HashMap<>();
 
 	/**
 	 * Parse and return a {@link FileChecksumsC13Section}.
@@ -50,8 +50,10 @@ public class FileChecksumsC13Section extends C13Section {
 		super(ignore);
 		while (reader.numRemaining() >= C13FileChecksum.getBaseRecordSize()) {
 			monitor.checkCancelled();
+			int offset = reader.getIndex();
 			C13FileChecksum fileChecksum = new C13FileChecksum(reader);
 			fileChecksums.add(fileChecksum);
+			fileChecksumsByOffset.put(offset, fileChecksum);
 		}
 		if (reader.hasMore()) {
 			Msg.debug(FileChecksumsC13Section.class,
@@ -65,6 +67,15 @@ public class FileChecksumsC13Section extends C13Section {
 	 */
 	public List<C13FileChecksum> getFileChecksums() {
 		return fileChecksums;
+	}
+
+	/**
+	 * Returns the C13 file checksum for the offset of the record in the checksum table
+	 * @param offset the offset of the record
+	 * @return the checksum or null if record not found
+	 */
+	public C13FileChecksum getFileChecksumByOffset(int offset) {
+		return fileChecksumsByOffset.get(offset);
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.component.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -38,6 +39,7 @@ import ghidra.program.util.ProgramLocation;
 public class CDisplay {
 	private final static String OPTIONS_TITLE = "Decompiler";
 
+	private ServiceProvider serviceProvider;
 	private DecompilerController controller;
 	private DecompileOptions decompileOptions;
 	private FieldLocation lastCursorPosition;
@@ -46,10 +48,12 @@ public class CDisplay {
 
 	private DecompilerProgramListener programListener;
 
-	public CDisplay(DecompilerCodeComparisonOptions comparisonOptions,
+	public CDisplay(ServiceProvider serviceProvider,
+			DecompilerCodeComparisonOptions comparisonOptions,
 			DecompileResultsListener decompileListener,
 			Consumer<ProgramLocation> locationConsumer) {
 
+		this.serviceProvider = serviceProvider;
 		highlightController = new DiffClangHighlightController(comparisonOptions);
 
 		decompileOptions = new DecompileOptions();
@@ -61,7 +65,7 @@ public class CDisplay {
 			}
 		};
 
-		controller = new DecompilerController(handler, decompileOptions, null) {
+		controller = new DecompilerController(serviceProvider, handler, decompileOptions, null) {
 			@Override
 			public void setDecompileData(DecompileData decompileData) {
 				super.setDecompileData(decompileData);

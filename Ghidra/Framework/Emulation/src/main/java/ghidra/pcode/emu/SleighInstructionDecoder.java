@@ -56,6 +56,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	/**
 	 * Construct a Sleigh instruction decoder
 	 * 
+	 * @see DefaultPcodeThread#createInstructionDecoder(PcodeExecutorState)
 	 * @param language the language to decoder
 	 * @param state the state containing the target program, probably the shared state of the p-code
 	 *            machine. It must be possible to obtain concrete buffers on this state.
@@ -74,13 +75,22 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	}
 
 	@Override
-	public Instruction decodeInstruction(Address address, RegisterValue context) {
-		lastMsg = DEFAULT_ERROR;
-		if (block != null &&
-			(instruction = (PseudoInstruction) block.getInstructionAt(address)) != null) {
-			return instruction;
+	public Language getLanguage() {
+		return language;
+	}
+
+	protected boolean useCachedInstruction(Address address, RegisterValue context) {
+		if (block == null) {
+			return false;
 		}
-		/*
+		// Always use instruction within last block decoded assuming we flowed from another
+		// instruction within the same block.  The block should be null is starting a new flow.
+		instruction = (PseudoInstruction) block.getInstructionAt(address);
+		return instruction != null;
+	}
+
+	protected void parseNewBlock(Address address, RegisterValue context) {
+		/**
 		 * Parse as few instructions as possible. If more are returned, it's because they form a
 		 * parallel instruction group. In that case, I should not have to worry self-modifying code
 		 * within that group, so no need to re-disassemble after each is executed.
@@ -91,17 +101,28 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 			throw new DecodePcodeExecutionException(lastMsg, address);
 		}
 		instruction = (PseudoInstruction) block.getInstructionAt(address);
+	}
+
+	@Override
+	public PseudoInstruction decodeInstruction(Address address, RegisterValue context) {
+		lastMsg = DEFAULT_ERROR;
+		if (!useCachedInstruction(address, context)) {
+			parseNewBlock(address, context);
+		}
 		lengthWithDelays = computeLength();
 		return instruction;
 	}
 
 	@Override
 	public void branched(Address address) {
-		/*
-		 * This shouldn't happen in the middle of a parallel instruction group, but in case the
-		 * group modifies itself and jumps back to itself, this will ensure it is re-disassembled.
+		/**
+		 * There may be internal branching within a decoded block. Those shouldn't clear the block.
+		 * However, if the cached instruction's context does not match the desired one, assume we're
+		 * starting a new block. That check will have to wait for the decode call, though.
 		 */
-		block = null;
+		if (block == null || block.getInstructionAt(address) == null) {
+			block = null;
+		}
 	}
 
 	/**

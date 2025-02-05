@@ -118,8 +118,10 @@ public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 	private static SymbolPath getSymbolPathFromMangledTypeName(String mangledString,
 			String fullPathName) {
 		MDMang demangler = new MDMangGhidra();
+		demangler.setErrorOnRemainingChars(true);
+		demangler.setMangledSymbol(mangledString);
 		try {
-			MDDataType mdDataType = demangler.demangleType(mangledString, true);
+			MDDataType mdDataType = demangler.demangleType();
 			// 20240626:  Ultimately, it might be better to retrieve the Demangled-type to pass
 			// to the DemangledObject.createNamespace() method to convert to a true Ghidra
 			// Namespace that are flagged as functions (not capable at this time) or types or

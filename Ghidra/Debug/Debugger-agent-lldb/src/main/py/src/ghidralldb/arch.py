@@ -1,17 +1,17 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
 import lldb
@@ -115,6 +115,14 @@ data64_compiler_map = {
     None: 'pointer64',
 }
 
+x86_compiler_map = {
+    'windows': 'windows',
+    'Cygwin': 'windows',
+    'linux' : 'gcc',
+    'default': 'gcc',
+    'unknown': 'gcc',
+}
+
 default_compiler_map = {
     'freebsd': 'gcc',
     'linux': 'gcc',
@@ -128,14 +136,14 @@ default_compiler_map = {
     # This may seem wrong, but Ghidra cspecs really describe the ABI
     'Cygwin': 'Visual Studio',
     'default': 'default',
-    'unknown': 'gcc',
+    'unknown': 'default',
 }
 
 compiler_map = {
     'DATA:BE:64:': data64_compiler_map,
     'DATA:LE:64:': data64_compiler_map,
-    'x86:LE:32:': default_compiler_map,
-    'x86:LE:64:': default_compiler_map,
+    'x86:LE:32:': x86_compiler_map,
+    'x86:LE:64:': x86_compiler_map,
     'ARM:LE:32:': default_compiler_map,
     'ARM:LE:64:': default_compiler_map,
 }
@@ -225,17 +233,21 @@ def compute_ghidra_compiler(lang):
         key=lambda l: compiler_map[l]
     )
     if len(matched_lang) == 0:
+        print(f"{lang} not found in compiler map - using default compiler")
         return 'default'
+    
     comp_map = compiler_map[matched_lang[0]]
+    if comp_map == data64_compiler_map:
+        print(f"Using the DATA64 compiler map")
     osabi = get_osabi()
-    matched_osabi = sorted(
-        (l for l in comp_map if l in osabi),
-        key=lambda l: comp_map[l]
-    )
-    if len(matched_osabi) > 0:
-        return comp_map[matched_osabi[0]]
+    if osabi in comp_map:
+        return comp_map[osabi]
+    if lang.startswith("x86:"):
+        print(f"{osabi} not found in compiler map - using gcc")
+        return 'gcc'
     if None in comp_map:
         return comp_map[None]
+    print(f"{osabi} not found in compiler map - using default compiler")
     return 'default'
 
 

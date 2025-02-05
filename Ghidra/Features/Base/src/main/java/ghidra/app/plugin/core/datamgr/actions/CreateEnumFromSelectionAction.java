@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 	}
 
 	private void selectNewEnum(GTree gTree, String parentName, String name) {
-		// Select new node in tree; run later to give the tree a chance to add the the new node
+		// Select new node in tree; run later to give the tree a chance to add the new node
 		Swing.runLater(() -> {
 			GTreeNode rootNode = gTree.getViewRoot();
 			gTree.setSelectedNodeByNamePath(

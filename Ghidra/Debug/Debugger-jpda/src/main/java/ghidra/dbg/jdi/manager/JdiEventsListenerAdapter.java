@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,11 @@
  */
 package ghidra.dbg.jdi.manager;
 
-import java.util.Collection;
-
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
+import ghidra.dbg.jdi.manager.impl.DebugStatus;
 
 /**
  * An adapter for {@link JdiEventsListener}
@@ -30,128 +29,159 @@ import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 public interface JdiEventsListenerAdapter extends JdiEventsListener {
 
 	@Override
-	default void vmSelected(VirtualMachine vm, JdiCause cause) {
+	default DebugStatus vmSelected(VirtualMachine vm, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void threadSelected(ThreadReference thread, StackFrame frame, JdiCause cause) {
+	default DebugStatus threadSelected(ThreadReference thread, StackFrame frame, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void threadStateChanged(ThreadReference thread, Integer state, JdiCause cause,
+	default DebugStatus threadStateChanged(ThreadReference thread, Integer state, JdiCause cause,
 			JdiReason reason) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void libraryLoaded(VirtualMachine vm, String name, JdiCause cause) {
+	default DebugStatus classLoaded(VirtualMachine vm, String name, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void libraryUnloaded(VirtualMachine vm, String name, JdiCause cause) {
+	default DebugStatus classUnloaded(VirtualMachine vm, String name, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void breakpointCreated(JdiBreakpointInfo info, JdiCause cause) {
+	default DebugStatus breakpointCreated(JdiBreakpointInfo info, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void breakpointModified(JdiBreakpointInfo newInfo, JdiBreakpointInfo oldInfo,
+	default DebugStatus breakpointModified(JdiBreakpointInfo newInfo, JdiBreakpointInfo oldInfo,
 			JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void breakpointDeleted(JdiBreakpointInfo info, JdiCause cause) {
+	default DebugStatus breakpointDeleted(JdiBreakpointInfo info, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void memoryChanged(VirtualMachine vm, long addr, int len, JdiCause cause) {
+	default DebugStatus memoryChanged(VirtualMachine vm, long addr, int len, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void vmInterrupted() {
+	default DebugStatus vmInterrupted() {
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	default void breakpointHit(BreakpointEvent evt, JdiCause cause) {
+	default DebugStatus breakpointHit(BreakpointEvent evt, JdiCause cause) {
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	default void exceptionHit(ExceptionEvent evt, JdiCause cause) {
+	default DebugStatus exceptionHit(ExceptionEvent evt, JdiCause cause) {
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	default void methodEntry(MethodEntryEvent evt, JdiCause cause) {
+	default DebugStatus methodEntry(MethodEntryEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void methodExit(MethodExitEvent evt, JdiCause cause) {
+	default DebugStatus methodExit(MethodExitEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void classPrepare(ClassPrepareEvent evt, JdiCause cause) {
+	default DebugStatus classPrepare(ClassPrepareEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void classUnload(ClassUnloadEvent evt, JdiCause cause) {
+	default DebugStatus classUnload(ClassUnloadEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void monitorContendedEntered(MonitorContendedEnteredEvent evt, JdiCause cause) {
+	default DebugStatus monitorContendedEntered(MonitorContendedEnteredEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void monitorContendedEnter(MonitorContendedEnterEvent evt, JdiCause cause) {
+	default DebugStatus monitorContendedEnter(MonitorContendedEnterEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void monitorWaited(MonitorWaitedEvent evt, JdiCause cause) {
+	default DebugStatus monitorWaited(MonitorWaitedEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void monitorWait(MonitorWaitEvent evt, JdiCause cause) {
+	default DebugStatus monitorWait(MonitorWaitEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void stepComplete(StepEvent evt, JdiCause cause) {
+	default DebugStatus stepComplete(StepEvent evt, JdiCause cause) {
+		return DebugStatus.STEP_INTO;
 	}
 
 	@Override
-	default void watchpointHit(WatchpointEvent evt, JdiCause cause) {
+	default DebugStatus watchpointHit(WatchpointEvent evt, JdiCause cause) {
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	default void accessWatchpointHit(AccessWatchpointEvent evt, JdiCause cause) {
+	default DebugStatus accessWatchpointHit(AccessWatchpointEvent evt, JdiCause cause) {
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	default void watchpointModified(ModificationWatchpointEvent evt, JdiCause cause) {
+	default DebugStatus watchpointModified(ModificationWatchpointEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void threadExited(ThreadDeathEvent evt, JdiCause cause) {
+	default DebugStatus threadExited(ThreadDeathEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void threadStarted(ThreadStartEvent evt, JdiCause cause) {
+	default DebugStatus threadStarted(ThreadStartEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void vmDied(VMDeathEvent evt, JdiCause cause) {
+	default DebugStatus vmDied(VMDeathEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void vmDisconnected(VMDisconnectEvent evt, JdiCause cause) {
+	default DebugStatus vmDisconnected(VMDisconnectEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void vmStarted(VMStartEvent evt, JdiCause cause) {
+	default DebugStatus vmStarted(VMStartEvent evt, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 
 	@Override
-	default void processStop(EventSet eventSet, JdiCause cause) {
+	default DebugStatus processStop(EventSet eventSet, JdiCause cause) {
+		return DebugStatus.BREAK;
 	}
 
 	@Override
-	default void processShutdown(Event event, JdiCause cause) {
+	default DebugStatus processShutdown(Event event, JdiCause cause) {
+		return DebugStatus.NO_CHANGE;
 	}
 }

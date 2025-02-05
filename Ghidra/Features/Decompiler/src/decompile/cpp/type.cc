@@ -20,17 +20,18 @@ namespace ghidra {
 
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
-sub_metatype Datatype::base2sub[15] = {
-    SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UNION, SUB_STRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE,
-    SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
+sub_metatype Datatype::base2sub[18] = {
+    SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UINT_PARTIALENUM, SUB_UNION, SUB_STRUCT, SUB_INT_ENUM, SUB_UINT_ENUM,
+    SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN,
+    SUB_SPACEBASE, SUB_VOID
 };
 
 AttributeId ATTRIB_ALIGNMENT = AttributeId("alignment",47);
 AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",48);
 AttributeId ATTRIB_CHAR = AttributeId("char",49);
 AttributeId ATTRIB_CORE = AttributeId("core",50);
-AttributeId ATTRIB_ENUM = AttributeId("enum",51);
-//AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);  // deprecated
+//AttributeId ATTRIB_ENUM = AttributeId("enum",51);	// deprecated
+AttributeId ATTRIB_INCOMPLETE = AttributeId("incomplete",52);
 //AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);  // deprecated
 //AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);  // deprecated
 //AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);  // deprecated
@@ -250,11 +251,20 @@ void metatype2string(type_metatype metatype,string &res)
   case TYPE_ARRAY:
     res = "array";
     break;
+  case TYPE_PARTIALENUM:
+    res = "partenum";
+    break;
   case TYPE_PARTIALSTRUCT:
     res = "partstruct";
     break;
   case TYPE_PARTIALUNION:
     res = "partunion";
+    break;
+  case TYPE_ENUM_INT:
+    res = "enum_int";
+    break;
+  case TYPE_ENUM_UINT:
+    res = "enum_uint";
     break;
   case TYPE_STRUCT:
     res = "struct";
@@ -308,6 +318,12 @@ type_metatype string2metatype(const string &metastring)
   case 'a':
     if (metastring=="array")
       return TYPE_ARRAY;
+    break;
+  case 'e':
+    if (metastring=="enum_int")
+      return TYPE_ENUM_INT;
+    else if (metastring == "enum_uint")
+      return TYPE_ENUM_UINT;
     break;
   case 's':
     if (metastring=="struct")
@@ -646,6 +662,10 @@ void Datatype::decodeBasic(Decoder &decoder)
     }
     else if (attrib == ATTRIB_LABEL) {
       displayName = decoder.readString();
+    }
+    else if (attrib == ATTRIB_INCOMPLETE) {
+      if (decoder.readBool())
+	flags |= type_incomplete;
     }
   }
   if (size < 0)
@@ -1079,6 +1099,12 @@ TypePointer *TypePointer::downChain(int8 &off,TypePointer *&par,int8 &parOff,boo
     }
   }
 
+  if (ptrto->isEnumType()) {
+    // Go "into" the enumeration
+    Datatype *tmp = typegrp.getBase(1, TYPE_UINT);
+    off = 0;
+    return typegrp.getTypePointer(size,tmp,wordsize);
+  }
   type_metatype meta = ptrto->getMetatype();
   bool isArray = (meta == TYPE_ARRAY);
   if (isArray || meta == TYPE_STRUCT) {
@@ -1321,81 +1347,22 @@ TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
 
 {
   namemap = op.namemap;
-  masklist = op.masklist;
-  flags |= (op.flags&poweroftwo)|enumtype;
 }
 
-/// Set the map. Calculate the independent bit-fields within the named values of the enumeration
-/// Two bits are in the same bit-field if there is a name in the map whose value
-/// has those two bits set.  Bit-fields must be a contiguous range of bits.
-void TypeEnum::setNameMap(const map<uintb,string> &nmap)
+/// \param val is the given value to test
+/// \return \b true if \b this enumeration has a name with the value
+bool TypeEnum::hasNamedValue(uintb val) const
 
 {
-  map<uintb,string>::const_iterator iter;
-  uintb curmask,lastmask;
-  int4 maxbit;
-  int4 curmaxbit;
-  bool fieldisempty;
-
-  namemap = nmap;
-  masklist.clear();
-
-  flags &= ~((uint4)poweroftwo);
-
-  maxbit = 8 * size - 1;
-
-  curmaxbit = 0;
-  while(curmaxbit <= maxbit) {
-    curmask = 1;
-    curmask <<= curmaxbit;
-    lastmask = 0;
-    fieldisempty = true;
-    while(curmask != lastmask) {	// Repeat until there is no change in the current mask
-      lastmask = curmask;		// Note changes from last time through
-
-      for(iter=namemap.begin();iter!=namemap.end();++iter) { // For every named enumeration value
-	uintb val = (*iter).first;
-	if ((val & curmask) != 0) {	// If the value shares ANY bits in common with the current mask
-	  curmask |= val;		// Absorb ALL defined bits of the value into the current mask
-	  fieldisempty = false;
-	}
-      }
-
-      // Fill in any holes in the mask (bit field must consist of contiguous bits
-      int4 lsb = leastsigbit_set(curmask);
-      int4 msb = mostsigbit_set(curmask);
-      if (msb > curmaxbit)
-	curmaxbit = msb;
-
-      uintb mask1 = 1;
-      mask1 = (mask1 << lsb) - 1;     // every bit below lsb is set to 1
-      uintb mask2 = 1;
-      mask2 <<= msb;
-      mask2 <<= 1;
-      mask2 -= 1;                  // every bit below or equal to msb is set to 1
-      curmask = mask1 ^ mask2;
-    }
-    if (fieldisempty) {		// If no value hits this bit
-      if (!masklist.empty())
-	masklist.back() |= curmask; // Include the bit with the previous mask
-      else
-	masklist.push_back(curmask);
-    }
-    else
-      masklist.push_back(curmask);
-    curmaxbit += 1;
-  }
-  if (masklist.size() > 1)
-    flags |= poweroftwo;
+  return (namemap.find(val) != namemap.end());
 }
 
 /// Given a specific value of the enumeration, calculate the named representation of that value.
 /// The representation is returned as a list of names that must logically ORed and possibly complemented.
 /// If no representation is possible, no names will be returned.
 /// \param val is the value to find the representation for
-/// \param valnames will hold the returned list of names
-/// \return true if the representation needs to be complemented
-bool TypeEnum::getMatches(uintb val,vector<string> &valnames) const
+/// \param rep will contain the individual names in the representation and other transforms
+void TypeEnum::getMatches(uintb val,Representation &rep) const
 
 {
   map<uintb,string>::const_iterator iter;
@@ -1403,33 +1370,47 @@ bool TypeEnum::getMatches(uintb val,vector<string> &valnames) const
 
   for(count=0;count<2;++count) {
     bool allmatch = true;
-    if (val == 0) {	// Zero handled specially, it crosses all masks
+    if (val == 0) {	// Zero handled specially
       iter = namemap.find(val);
       if (iter != namemap.end())
-	valnames.push_back( (*iter).second );
+	rep.matchname.push_back( (*iter).second );
       else
 	allmatch = false;
     }
     else {
-      for(int4 i=0;i<masklist.size();++i) {
-	uintb maskedval = val & masklist[i];
-	if (maskedval == 0)	// No component of -val- in this mask
-	  continue;		// print nothing
-	iter = namemap.find(maskedval);
-	if (iter != namemap.end())
-	  valnames.push_back( (*iter).second );	// Found name for this component
-	else {					// If no name for this component
-	  allmatch = false;			// Give up on representation
-	  break;				// Stop searching for other components
+      uintb bitsleft = val;
+      uintb target = val;
+      while(target != 0) {
+	// Find named value that matches the largest number of most significant bits in bitsleft
+	iter = namemap.upper_bound(target);
+	if (iter == namemap.begin()) break;	// All named values are greater than target
+	--iter;					// Biggest named value less than or equal to target
+	uintb curval = (*iter).first;
+	uintb diff = coveringmask(bitsleft ^ curval);
+	if (diff >= bitsleft) break;		// Could not match most significant bit of bitsleft
+	if ((curval & diff) == 0) {
+	  // Found a named value that matches at least most significant bit of bitsleft
+	  rep.matchname.push_back( (*iter).second );	// Accept the name
+	  bitsleft ^= curval;				// Remove the bits from bitsleft
+	  target = bitsleft;				// Continue searching for named value that match the new bitsleft
+	}
+	else {
+	  // Not all the (one) bits of curval match into bitsleft, but we can restrict a further search.
+	  // Bits above diff in curval are the maximum we can hope to match with one named value.
+	  // Zero out bits below this and prepare to search at or below this value
+	  target = curval & ~diff;
 	}
       }
+      allmatch = (bitsleft == 0);
     }
-    if (allmatch)			// If we have a complete representation
-      return (count==1);		// Return whether we represented original value or complement
+    if (allmatch) {			// If we have a complete representation
+      rep.complement = (count==1);	// Set whether we represented original value or complement
+      return;
+    }
     val = val ^ calc_mask(size);	// Switch value we are trying to represent (to complement)
-    valnames.clear();			// Clear out old attempt
+    rep.matchname.clear();		// Clear out old attempt
   }
-  return false;	// If we reach here, no representation was possible, -valnames- is empty
+  // If we reach here, no representation was possible, -matchname- is empty
 }
 
 int4 TypeEnum::compare(const Datatype &op,int4 level) const
@@ -1471,8 +1452,7 @@ void TypeEnum::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,-1,encoder);
-  encoder.writeString(ATTRIB_ENUM, "true");
+  encodeBasic((metatype == TYPE_INT) ? TYPE_ENUM_INT : TYPE_ENUM_UINT,-1,encoder);
   map<uintb,string>::const_iterator iter;
   for(iter=namemap.begin();iter!=namemap.end();++iter) {
     encoder.openElement(ELEM_VAL);
@@ -1492,7 +1472,7 @@ string TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
 {
 //  uint4 elemId = decoder.openElement();
   decodeBasic(decoder);
-  submeta = (metatype == TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM;
+  metatype = (metatype == TYPE_ENUM_INT) ? TYPE_INT : TYPE_UINT;	// Use TYPE_INT or TYPE_UINT internally
   map<uintb,string> nmap;
   string warning;
 
@@ -1885,10 +1865,10 @@ string TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (curAlign > calcAlign)
       calcAlign = curAlign;
   }
-  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
-    flags |=  type_incomplete;
-  else
-    markComplete();		// Otherwise the structure is complete
+  if (size == 0)		// Old way to indicate an incomplete structure
+    flags |= type_incomplete;
+  if (field.size() > 0)
+    markComplete();		// If we have fields, mark as complete
   if (field.size() == 1) {			// A single field
     if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special resolution
@@ -2043,10 +2023,10 @@ void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (curAlign > calcAlign)
       calcAlign = curAlign;
   }
-  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
-    flags |=  type_incomplete;
-  else
-    markComplete();		// Otherwise the union is complete
+  if (size == 0)		// Old way to indicate union is incomplete
+    flags |= type_incomplete;
+  if (field.size() > 0)
+    markComplete();		// If we have fields, the union is complete
   if (alignment < 1)
     alignment = calcAlign;
   alignSize = calcAlignSize(size,alignment);
@@ -2259,6 +2239,81 @@ void TypeUnion::assignFieldOffsets(vector<TypeField> &list,int4 &newSize,int4 &n
     if (curAlign > newAlign)
       newAlign = curAlign;
   }
+}
+
+TypePartialEnum::TypePartialEnum(const TypePartialEnum &op)
+  : TypeEnum(op)
+{
+  stripped = op.stripped;
+  parent = op.parent;
+  offset = op.offset;
+}
+
+TypePartialEnum::TypePartialEnum(TypeEnum *par,int4 off,int4 sz,Datatype *strip)
+  : TypeEnum(sz, TYPE_PARTIALENUM)
+{
+  flags |= has_stripped;
+  stripped = strip;
+  parent = par;
+  offset = off;
+}
+
+void TypePartialEnum::printRaw(ostream &s) const
+
+{
+  parent->printRaw(s);
+  s << "[off=" << dec << offset << ",sz=" << size << ']';
+}
+
+bool TypePartialEnum::hasNamedValue(uintb val) const
+
+{
+  val <<= 8*offset;
+  return parent->hasNamedValue(val);
+}
+
+void TypePartialEnum::getMatches(uintb val,Representation &rep) const
+
+{
+  val <<= 8*offset;
+  rep.shiftAmount = offset * 8;
+  parent->getMatches(val,rep);
+}
+
+int4 TypePartialEnum::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  // Both must be partial
+  TypePartialEnum *tp = (TypePartialEnum *) &op;
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  return parent->compare(*tp->parent,level); // Compare the underlying union
+}
+
+int4 TypePartialEnum::compareDependency(const Datatype &op) const
+
+{
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePartialEnum *tp = (TypePartialEnum *) &op;	// Both must be partial
+  if (parent != tp->parent) return (parent < tp->parent) ? -1 : 1;	// Compare absolute pointers
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  return (op.getSize()-size);
+}
+
+void TypePartialEnum::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(TYPE_PARTIALENUM,-1,encoder);
+  encoder.writeSignedInteger(ATTRIB_OFFSET, offset);
+  parent->encodeRef(encoder);
+  encoder.closeElement(ELEM_TYPE);
 }
 
 TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
@@ -3039,6 +3094,10 @@ void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
 //  decoder.closeElement(elemId);
 }
 
+#ifdef TYPEPROP_DEBUG
+bool TypeFactory::propagatedbg_on = false;
+#endif
+
 /// Initialize an empty container
 /// \param g is the owning Architecture
 TypeFactory::TypeFactory(Architecture *g)
@@ -3103,7 +3162,7 @@ void TypeFactory::setupSizes(void)
     setDefaultAlignmentMap();
   if (enumsize == 0) {
     enumsize = glb->getDefaultSize();
-    enumtype = TYPE_UINT;
+    enumtype = TYPE_ENUM_UINT;
   }
 }
 
@@ -3197,6 +3256,7 @@ void TypeFactory::clear(void)
   nametree.clear();
   clearCache();
   warnings.clear();
+  incompleteTypedef.clear();
 }
 
 /// Delete anything that isn't a core type
@@ -3218,6 +3278,7 @@ void TypeFactory::clearNoncore(void)
     delete ct;
   }
   warnings.clear();
+  incompleteTypedef.clear();
 }
 
 TypeFactory::~TypeFactory(void)
@@ -3707,6 +3768,42 @@ void TypeFactory::removeWarning(Datatype *dt)
   }
 }
 
+/// Run through typedefs that were initially defined on incomplete data-types.  If the data-type is now complete,
+/// copy the fields or prototype into the typedef and remove it from the list.
+void TypeFactory::resolveIncompleteTypedefs(void)
+
+{
+  list<Datatype *>::iterator iter = incompleteTypedef.begin();
+  while(iter != incompleteTypedef.end()) {
+    Datatype *dt = *iter;
+    Datatype *defedType = dt->getTypedef();
+    if (!defedType->isIncomplete()) {
+      if (dt->getMetatype() == TYPE_STRUCT) {
+  	TypeStruct *prevStruct = (TypeStruct *)dt;
+  	TypeStruct *defedStruct = (TypeStruct *)defedType;
+  	setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->alignment,defedStruct->flags);
+  	iter = incompleteTypedef.erase(iter);
+      }
+      else if (dt->getMetatype() == TYPE_UNION) {
+  	TypeUnion *prevUnion = (TypeUnion *)dt;
+  	TypeUnion *defedUnion = (TypeUnion *)defedType;
+  	setFields(defedUnion->field,prevUnion,defedUnion->size,defedUnion->alignment,defedUnion->flags);
+  	iter = incompleteTypedef.erase(iter);
+      }
+      else if (dt->getMetatype() == TYPE_CODE) {
+	TypeCode *prevCode = (TypeCode *)dt;
+	TypeCode *defedCode = (TypeCode *)defedType;
+	setPrototype(defedCode->proto, prevCode, defedCode->flags);
+	iter = incompleteTypedef.erase(iter);
+      }
+      else
+	++iter;
+    }
+    else
+      ++iter;
+  }
+}
+
 /// Find or create a data-type identical to the given data-type except for its name and id.
 /// If the name and id already describe an incompatible data-type, an exception is thrown.
 /// \param ct is the given data-type to clone
@@ -3733,6 +3830,8 @@ Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id,uint4
   res->typedefImm = ct;
   res->setDisplayFormat(format);
   insert(res);
+  if (res->isIncomplete())
+    incompleteTypedef.push_back(res);
   return res;
 }
 
@@ -3818,6 +3917,11 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
   return (TypeStruct *) findAdd(tmp);
 }
 
+/// Create a data-type representing storage of part of an \e array or \e structure.
+/// \param contain is the parent \e array or \e structure data-type that we are taking a part of.
+/// \param off is the offset (in bytes) within the parent that the partial data-type starts at
+/// \param sz is the number of bytes in the partial data-type
+/// \return the TypePartialStruct object
 TypePartialStruct *TypeFactory::getTypePartialStruct(Datatype *contain,int4 off,int4 sz)
 
 {
@@ -3839,6 +3943,11 @@ TypeUnion *TypeFactory::getTypeUnion(const string &n)
   return (TypeUnion *) findAdd(tmp);
 }
 
+/// Create a data-type representing storage of part of a \e union data-type.
+/// \param contain is the parent \e union data-type that we are taking a part of.
+/// \param off is the offset (in bytes) within the parent that the partial data-type starts at
+/// \param sz is the number of bytes in the partial data-type
+/// \return the TypePartialUnion object
 TypePartialUnion *TypeFactory::getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz)
 
 {
@@ -3857,6 +3966,19 @@ TypeEnum *TypeFactory::getTypeEnum(const string &n)
   TypeEnum tmp(enumsize,enumtype,n);
   tmp.id = Datatype::hashName(n);
   return (TypeEnum *) findAdd(tmp);
+}
+
+/// Create a data-type representing storage of part of an \e enumeration.
+/// \param contain is the parent \e enumeration data-type that we are taking a part of.
+/// \param off is the offset (in bytes) within the parent that the partial data-type starts at
+/// \param sz is the number of bytes in the partial data-type
+/// \return the TypePartialEnum object
+TypePartialEnum *TypeFactory::getTypePartialEnum(TypeEnum *contain,int4 off,int4 sz)
+
+{
+  Datatype *strip = getBase(sz, TYPE_UNKNOWN);
+  TypePartialEnum tpe(contain,off,sz,strip);
+  return (TypePartialEnum *) findAdd(tpe);
 }
 
 /// Creates the special TypeSpacebase with an associated address space and scope
@@ -3984,6 +4106,8 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
     // If we reach here, lastType is bigger than size
     if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
       return getTypePartialStruct(lastType, lastOff, size);
+    else if (lastType->isEnumType() && !lastType->hasStripped())
+      return getTypePartialEnum((TypeEnum *)lastType, lastOff, size);
   }
   return (Datatype *)0;
 }
@@ -4190,7 +4314,7 @@ Datatype *TypeFactory::decodeTypedef(Decoder &decoder)
 Datatype *TypeFactory::decodeEnum(Decoder &decoder,bool forcecore)
 
 {
-  TypeEnum te(1,TYPE_INT); // size and metatype are replaced
+  TypeEnum te(1,TYPE_ENUM_INT); // metatype and size are replaced
   string warning = te.decode(decoder,*this);
   if (forcecore)
     te.flags |= Datatype::coretype;
@@ -4228,6 +4352,7 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
   }
   if (!warning.empty())
     insertWarning(ct, warning);
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4258,6 +4383,7 @@ Datatype* TypeFactory::decodeUnion(Decoder &decoder,bool forcecore)
   else {		// If structure is a placeholder stub
     setFields(tu.field,(TypeUnion*)ct,tu.size,tu.alignment,tu.flags);	// Define structure now by copying fields
   }
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4293,6 +4419,7 @@ Datatype *TypeFactory::decodeCode(Decoder &decoder,bool isConstructor,bool isDes
   else {	// If there was a placeholder stub
     setPrototype(tc.proto, (TypeCode *)ct, tc.flags);
   }
+  resolveIncompleteTypedefs();
 //  decoder.closeElement(elemId);
   return ct;
 }
@@ -4348,6 +4475,10 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
       ct = findAdd(ta);
     }
     break;
+  case TYPE_ENUM_INT:
+  case TYPE_ENUM_UINT:
+    ct = decodeEnum(decoder,forcecore);
+    break;
   case TYPE_STRUCT:
     ct = decodeStruct(decoder,forcecore);
     break;
@@ -4356,7 +4487,7 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     break;
   case TYPE_SPACEBASE:
     {
-      TypeSpacebase tsb((AddrSpace *)0,Address(),glb);
+      TypeSpacebase tsb(glb);
       tsb.decode(decoder,*this);
       if (forcecore)
 	tsb.flags |= Datatype::coretype;
@@ -4384,12 +4515,6 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
 	if (forcecore)
 	  tc.flags |= Datatype::coretype;
 	ct = findAdd(tc);
-	decoder.closeElement(elemId);
-	return ct;
-      }
-      else if (attribId == ATTRIB_ENUM && decoder.readBool()) {
-	decoder.rewindAttributes();
-	ct = decodeEnum(decoder, forcecore);
 	decoder.closeElement(elemId);
 	return ct;
       }
@@ -4536,9 +4661,9 @@ void TypeFactory::parseEnumConfig(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_ENUM);
   enumsize = decoder.readSignedInteger(ATTRIB_SIZE);
   if (decoder.readBool(ATTRIB_SIGNED))
-    enumtype = TYPE_INT;
+    enumtype = TYPE_ENUM_INT;
   else
-    enumtype = TYPE_UINT;
+    enumtype = TYPE_ENUM_UINT;
   decoder.closeElement(elemId);
 }
 

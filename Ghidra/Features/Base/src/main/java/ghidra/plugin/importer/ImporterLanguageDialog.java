@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,14 @@ import java.awt.Component;
 import java.util.*;
 
 import javax.swing.BorderFactory;
-import javax.swing.SwingUtilities;
 
 import docking.DialogComponentProvider;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.plugin.importer.LcsSelectionEvent.Type;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 public class ImporterLanguageDialog extends DialogComponentProvider {
 
@@ -46,24 +46,10 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 	}
 
 	public void show(Component parent) {
-		if (SwingUtilities.isEventDispatchThread()) {
+		Swing.runIfSwingOrRunLater(() -> {
 			build();
 			tool.showDialog(this, parent);
-		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(new Runnable() {
-					@Override
-					public void run() {
-						build();
-						tool.showDialog(ImporterLanguageDialog.this, parent);
-					}
-				});
-			}
-			catch (Exception e) {
-				Msg.error(this, e);
-			}
-		}
+		});
 	}
 
 	private void build() {
@@ -72,10 +58,11 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 		languagePanel.setShowAllLcsPairs(false);
 		languagePanel.setBorder(
 			BorderFactory.createTitledBorder(" Select Language and Compiler Specification "));
-		languagePanel.addSelectionListener(new LcsSelectionListener() {
-			@Override
-			public void valueChanged(LcsSelectionEvent e) {
-				validateFormInput();
+		languagePanel.addSelectionListener(e -> {
+			validateFormInput();
+
+			if (e.getType() == Type.PICKED && isOKEnabled()) {
+				okCallback();
 			}
 		});
 

@@ -505,33 +505,33 @@ public enum DebuggerPcodeUtils {
 		}
 
 		@Override
-		public WatchValue modBeforeStore(int sizeout, int sizeinAddress, WatchValue inAddress,
+		public WatchValue modBeforeStore(int sizeinOffset, AddressSpace space, WatchValue inOffset,
 				int sizeinValue, WatchValue inValue) {
 			return new WatchValue(
 				new PrettyBytes(inValue.bytes.bigEndian,
-					bytes.modBeforeStore(sizeout, sizeinAddress, inAddress.bytes.bytes,
-						sizeinValue, inValue.bytes.bytes)),
-				STATE.modBeforeStore(sizeout, sizeinAddress, inAddress.state,
-					sizeinValue, inValue.state),
-				location.modBeforeStore(sizeout, sizeinAddress, inAddress.location,
-					sizeinValue, inValue.location),
-				READS.modBeforeStore(sizeout, sizeinAddress, inAddress.reads,
-					sizeinValue, inValue.reads));
+					bytes.modBeforeStore(sizeinOffset, space, inOffset.bytes.bytes, sizeinValue,
+						inValue.bytes.bytes)),
+				STATE.modBeforeStore(sizeinOffset, space, inOffset.state, sizeinValue,
+					inValue.state),
+				location.modBeforeStore(sizeinOffset, space, inOffset.location, sizeinValue,
+					inValue.location),
+				READS.modBeforeStore(sizeinOffset, space, inOffset.reads, sizeinValue,
+					inValue.reads));
 		}
 
 		@Override
-		public WatchValue modAfterLoad(int sizeout, int sizeinAddress, WatchValue inAddress,
+		public WatchValue modAfterLoad(int sizeinOffset, AddressSpace space, WatchValue inOffset,
 				int sizeinValue, WatchValue inValue) {
 			return new WatchValue(
 				new PrettyBytes(getEndian().isBigEndian(),
-					bytes.modAfterLoad(sizeout, sizeinAddress, inAddress.bytes.bytes,
-						sizeinValue, inValue.bytes.bytes)),
-				STATE.modAfterLoad(sizeout, sizeinAddress, inAddress.state,
-					sizeinValue, inValue.state),
-				location.modAfterLoad(sizeout, sizeinAddress, inAddress.location,
-					sizeinValue, inValue.location),
-				READS.modAfterLoad(sizeout, sizeinAddress, inAddress.reads,
-					sizeinValue, inValue.reads));
+					bytes.modAfterLoad(sizeinOffset, space, inOffset.bytes.bytes, sizeinValue,
+						inValue.bytes.bytes)),
+				STATE.modAfterLoad(sizeinOffset, space, inOffset.state, sizeinValue,
+					inValue.state),
+				location.modAfterLoad(sizeinOffset, space, inOffset.location, sizeinValue,
+					inValue.location),
+				READS.modAfterLoad(sizeinOffset, space, inOffset.reads, sizeinValue,
+					inValue.reads));
 		}
 
 		@Override

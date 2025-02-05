@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,7 @@ import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.protorules.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
@@ -85,6 +84,7 @@ public class ParamListStandard implements ParamList {
 	 */
 	public int assignAddressFallback(StorageClass resource, DataType tp, boolean matchExact,
 			int[] status, ParameterPieces param) {
+
 		for (ParamEntry element : entry) {
 			int grp = element.getGroup();
 			if (status[grp] < 0) {
@@ -131,6 +131,12 @@ public class ParamListStandard implements ParamList {
 
 	{
 		if (dt.isZeroLength()) {
+			return AssignAction.NO_ASSIGNMENT;
+		}
+		if (dt == DataType.DEFAULT) {
+			return AssignAction.NO_ASSIGNMENT;
+		}
+		if (dt instanceof TypeDef td && td.getBaseDataType() == DataType.DEFAULT) {
 			return AssignAction.NO_ASSIGNMENT;
 		}
 		for (ModelRule modelRule : modelRules) {

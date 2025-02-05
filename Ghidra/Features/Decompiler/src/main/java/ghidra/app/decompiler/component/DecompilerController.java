@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import com.google.common.cache.CacheBuilder;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
@@ -38,6 +39,8 @@ import utility.function.Callback;
  */
 
 public class DecompilerController {
+
+	private ServiceProvider serviceProvider;
 	private DecompilerPanel decompilerPanel;
 	private DecompilerManager decompilerMgr;
 	private final DecompilerCallbackHandler callbackHandler;
@@ -46,8 +49,10 @@ public class DecompilerController {
 	private Cache<Function, DecompileResults> decompilerCache;
 	private int cacheSize;
 
-	public DecompilerController(DecompilerCallbackHandler handler, DecompileOptions options,
+	public DecompilerController(ServiceProvider serviceProvider, DecompilerCallbackHandler handler,
+			DecompileOptions options,
 			DecompilerClipboardProvider clipboard) {
+		this.serviceProvider = serviceProvider;
 		this.cacheSize = options.getCacheSize();
 		this.callbackHandler = handler;
 		decompilerCache = buildCache();
@@ -56,6 +61,10 @@ public class DecompilerController {
 			new DecompilerPanel(this, options, clipboard, decompilerMgr.getTaskMonitorComponent());
 
 		decompilerPanel.setHoverMode(true);
+	}
+
+	public ServiceProvider getServiceProvider() {
+		return serviceProvider;
 	}
 
 	public DecompilerPanel getDecompilerPanel() {

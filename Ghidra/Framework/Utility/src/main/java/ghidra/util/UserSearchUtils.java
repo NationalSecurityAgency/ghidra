@@ -305,11 +305,12 @@ public class UserSearchUtils {
 	 */
 	private static String convertUserInputToRegex(String input, boolean allowGlobbing) {
 
-		// Note: Order is important! (due to how escape characters added and checked)
-		String escaped = escapeEscapeCharacters(input);
-
+		String escaped = input;
 		if (allowGlobbing) {
-			escaped = escapeSomeRegexCharacters(escaped, GLOB_CHARACTERS);
+
+			// Note: Order is important! (due to how escape characters added and checked)
+			escaped = escapeEscapeCharacters(escaped);
+			escaped = escapeNonGlobbingRegexCharacters(escaped);
 			escaped = convertGlobbingCharactersToRegex(escaped);
 		}
 		else {
@@ -377,6 +378,15 @@ public class UserSearchUtils {
 	}
 
 	/**
+	 * Escapes all special regex characters except globbing chars (*?)
+	 * @param input the string to sanitize
+	 * @return a new string with all non-globing regex characters escaped.
+	 */
+	public static String escapeNonGlobbingRegexCharacters(String input) {
+		return escapeSomeRegexCharacters(input, GLOB_CHARACTERS);
+	}
+
+	/**
 	 * Escapes all regex characters with the '\' character, except for those in the given exclusion 
 	 * array.
 	 *
@@ -384,7 +394,7 @@ public class UserSearchUtils {
 	 * @param doNotEscape an array of characters that should not be escaped
 	 * @return A new regex string with special characters escaped.
 	 */
-	// note: 'package' for testing
+	// package for testing
 	static String escapeSomeRegexCharacters(String input, char[] doNotEscape) {
 		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < input.length(); i++) {

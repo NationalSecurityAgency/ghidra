@@ -25,7 +25,7 @@
 // table entries are deleted.  Mangled C++ symbol names are demangled.
 //
 // The VxWorks symbol table is an array [0..n-1] of (struct SYMBOL) entries.
-// The table may be immediately followed or preceeded by an (int) vxSymTblLen
+// The table may be immediately followed or preceded by an (int) vxSymTblLen
 // value.
 //
 // Prerequisites:
@@ -49,6 +49,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.MangledContext;
 import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -604,7 +605,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 	/**
 	 * Look before/after the table to see if there is a size value there and mark it if it agrees with TableLen
-	 * 
+	 *
 	 * @param symTbl
 	 * @param vxSymbol
 	 * @param tableLen
@@ -784,7 +785,9 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			// Demangle symName
 			String symDemangledName = null;
 			try {
-				symDemangledName = demangler.demangle(symName).getSignature(false);
+				MangledContext mangledContext =
+					demangler.createMangledContext(symName, null, currentProgram, symNameAddr);
+				symDemangledName = demangler.demangle(mangledContext).getSignature(false);
 			}
 			catch (DemangledException e) {		// report demangling error
 				if (!e.isInvalidMangledName()) {

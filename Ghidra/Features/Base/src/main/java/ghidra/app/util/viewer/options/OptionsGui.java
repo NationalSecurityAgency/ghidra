@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,6 +60,7 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", ListingColors.EXT_ENTRY_POINT);
 	public static final ScreenElement COMMENT_EOL = new ScreenElement("Comment, EOL", "EOL Comment", CommentColors.EOL);
 	public static final ScreenElement EXT_REF_RESOLVED = new ScreenElement("External Reference, Resolved", ListingColors.EXT_REF_RESOLVED);
+	public static final ScreenElement EXT_REF_UNRESOLVED = new ScreenElement("External Reference, Unresolved", ListingColors.EXT_REF_UNRESOLVED);
 	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", ListingColors.FIELD_NAME);
 	public static final ScreenElement FUN_CALL_FIXUP = new ScreenElement("Function Call-Fixup", FunctionColors.CALL_FIXUP);
 	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", FunctionColors.NAME);
@@ -102,12 +103,13 @@ public class OptionsGui extends JPanel {
 	static ScreenElement[] elements =
 		{ ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE,
 			COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, COMMENT_REF_REPEAT, CONSTANT,
-			ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE, FLOW_ARROW_NON_ACTIVE,
-			FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS,
-			FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD,
-			MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL,
-			PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE,
-			MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
+			ENTRY_POINT, EXT_REF_RESOLVED, EXT_REF_UNRESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE,
+			FLOW_ARROW_NON_ACTIVE, FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS,
+			FUN_AUTO_PARAMS, FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY,
+			LABELS_PRIMARY, LABELS_UNREFD, MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM,
+			PARAMETER_DYNAMIC, PCODE_LINE_LABEL, PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP,
+			REGISTERS, SEPARATOR, UNDERLINE, MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT,
+			XREF_READ, XREF_WRITE, XREF_OTHER };
 
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 

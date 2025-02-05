@@ -547,6 +547,28 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+class RuleBooleanUndistribute : public Rule {
+  static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &rightFlip);
+public:
+  RuleBooleanUndistribute(const string &g) : Rule(g, 0, "booleanundistribute") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleBooleanUndistribute(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+class RuleBooleanDedup : public Rule {
+  static bool isMatch(Varnode *leftVn,Varnode *rightVn,bool &isFlip);
+public:
+  RuleBooleanDedup(const string &g) : Rule(g, 0, "booleandedup") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleBooleanDedup(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleBooleanNegate : public Rule {
 public:
   RuleBooleanNegate(const string &g) : Rule(g, 0, "booleannegate") {}	///< Constructor
@@ -1181,39 +1203,6 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
-class RuleSplitCopy : public Rule {
-public:
-  RuleSplitCopy(const string &g) : Rule( g, 0, "splitcopy") {}		///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSplitCopy(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSplitLoad : public Rule {
-public:
-  RuleSplitLoad(const string &g) : Rule( g, 0, "splitload") {}		///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSplitLoad(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSplitStore : public Rule {
-public:
-  RuleSplitStore(const string &g) : Rule( g, 0, "splitstore") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSplitStore(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
 class RuleSubNormal : public Rule {
 public:
   RuleSubNormal(const string &g) : Rule( g, 0, "subnormal") {}	///< Constructor
@@ -1398,39 +1387,6 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
-class RuleSubvarAnd : public Rule {
-public:
-  RuleSubvarAnd(const string &g) : Rule( g, 0, "subvar_and") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubvarAnd(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSubvarSubpiece : public Rule {
-public:
-  RuleSubvarSubpiece(const string &g) : Rule( g, 0, "subvar_subpiece") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubvarSubpiece(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSplitFlow : public Rule {
-public:
-  RuleSplitFlow(const string &g) : Rule( g, 0, "splitflow") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSplitFlow(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
 class RulePtrFlow : public Rule {
   Architecture *glb;			///< The address space manager
   bool hasTruncations;			///< \b true if this architecture needs truncated pointers
@@ -1448,63 +1404,6 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
-class RuleSubvarCompZero : public Rule {
-public:
-  RuleSubvarCompZero(const string &g) : Rule( g, 0, "subvar_compzero") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubvarCompZero(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSubvarShift : public Rule {
-public:
-  RuleSubvarShift(const string &g) : Rule( g, 0, "subvar_shift") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubvarShift(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSubvarZext : public Rule {
-public:
-  RuleSubvarZext(const string &g) : Rule( g, 0, "subvar_zext") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubvarZext(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
-class RuleSubvarSext : public Rule {
-  int4 isaggressive;			///< Is it guaranteed the root is a sub-variable needing to be trimmed
-public:
-  RuleSubvarSext(const string &g) : Rule( g, 0, "subvar_sext") { isaggressive = false; }	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubvarSext(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  virtual void reset(Funcdata &data);
-};
-
-class RuleSubfloatConvert : public Rule {
-public:
-  RuleSubfloatConvert(const string &g) : Rule( g, 0, "subfloat_convert") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleSubfloatConvert(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
-
 class RuleNegateNegate : public Rule {
 public:
   RuleNegateNegate(const string &g) : Rule( g, 0, "negatenegate") {}	///< Constructor
@@ -1517,23 +1416,10 @@ public:
 };
 
 class RuleConditionalMove : public Rule {
-  /// \brief Class for categorizing and rebuilding a boolean expression
-  class BoolExpress {
-    int4 optype;		///< 0=constant 1=unary 2=binary
-    OpCode opc;			///< OpCode constructing the boolean value
-    PcodeOp *op;		///< PcodeOp constructing the boolean value
-    uintb val;			///< Value (if boolean is constant)
-    Varnode *in0;		///< First input
-    Varnode *in1;		///< Second input
-    bool mustreconstruct; 	///< Must make a copy of final boolean operation
-  public:
-    bool isConstant(void) const { return (optype==0); }	///< Return \b true if boolean is a constant
-    uintb getVal(void) const { return val; }		///< Get the constant boolean value
-    bool initialize(Varnode *vn);			///< Initialize based on output Varnode
-    bool evaluatePropagation(FlowBlock *root,FlowBlock *branch);	///< Can this expression be propagated
-    Varnode *constructBool(PcodeOp *insertop,Funcdata &data);	///< Construct the expression after the merge
-  };
-  static Varnode *constructNegate(Varnode *vn,PcodeOp *op,Funcdata &data);
+  static Varnode *checkBoolean(Varnode *vn);			///< Check for boolean expression
+  static bool gatherExpression(Varnode *vn,vector<PcodeOp *> &ops,FlowBlock *root,FlowBlock *branch);
+  static Varnode *constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data);	///< Construct the expression after the merge
+  static bool compareOp(PcodeOp *op0,PcodeOp *op1) { return op0->getSeqNum().getOrder() < op1->getSeqNum().getOrder(); }
 public:
   RuleConditionalMove(const string &g) : Rule( g, 0, "conditionalmove") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -1690,6 +1576,19 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleOrCompare(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RuleExpandLoad : public Rule {
+  static bool checkAndComparison(Varnode *vn);
+  static void modifyAndComparison(Funcdata &data,Varnode *oldVn,Varnode *newVn,Datatype *dt,int4 offset);
+public:
+  RuleExpandLoad(const string &g) : Rule( g, 0, "expandload") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleExpandLoad(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);

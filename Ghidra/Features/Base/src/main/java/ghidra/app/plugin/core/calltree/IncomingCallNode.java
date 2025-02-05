@@ -23,21 +23,23 @@ import javax.swing.Icon;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
-import resources.MultiIcon;
-import resources.icons.TranslateIcon;
 
 public class IncomingCallNode extends CallNode {
 
 	private static final Icon INCOMING_ICON = Icons.ARROW_UP_LEFT_ICON;
-	private Icon incomingFunctionIcon;
+	private static final Icon CALL_REFERENCE_ICON = createIcon(INCOMING_ICON, true);
+	private static final Icon NON_CALL_REFERENCE_ICON = createIcon(INCOMING_ICON, false);
+	private static final Icon RECURSIVE_CALL_REFERENCE_ICON = createIcon(RECURSIVE_ICON, true);
+	private static final Icon RECURSIVE_NON_CALL_REFERENCE_ICON = createIcon(RECURSIVE_ICON, false);
 
 	private Icon icon = null;
 	private final Address functionAddress;
@@ -47,23 +49,20 @@ public class IncomingCallNode extends CallNode {
 	private final Address sourceAddress;
 
 	IncomingCallNode(Program program, Function function, Address sourceAddress,
-			CallTreeOptions callTreeOptions) {
+			boolean isCallReference, CallTreeOptions callTreeOptions) {
 		super(callTreeOptions);
 		this.program = program;
 		this.function = function;
 		this.name = function.getName(callTreeOptions.showNamespace());
 		this.sourceAddress = sourceAddress;
 		this.functionAddress = function.getEntryPoint();
-
-		MultiIcon multiIcon = new MultiIcon(INCOMING_ICON, false, 32, 16);
-		TranslateIcon translateIcon = new TranslateIcon(CallTreePlugin.FUNCTION_ICON, 16, 0);
-		multiIcon.addIcon(translateIcon);
-		incomingFunctionIcon = multiIcon;
+		this.isCallReference = isCallReference;
 	}
 
 	@Override
 	CallNode recreate() {
-		return new IncomingCallNode(program, function, sourceAddress, callTreeOptions);
+		return new IncomingCallNode(program, function, sourceAddress, isCallReference,
+			callTreeOptions);
 	}
 
 	@Override
@@ -90,29 +89,31 @@ public class IncomingCallNode extends CallNode {
 	private void doGenerateChildren(Address address, List<GTreeNode> results, TaskMonitor monitor)
 			throws CancelledException {
 
-		FunctionSignatureFieldLocation location =
-			new FunctionSignatureFieldLocation(program, address);
-
-		Set<Address> addresses = ReferenceUtils.getReferenceAddresses(location, monitor);
+		ReferenceIterator refIter = program.getReferenceManager().getReferencesTo(address);
 		LazyMap<Function, List<GTreeNode>> nodesByFunction =
 			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		FunctionManager functionManager = program.getFunctionManager();
-		for (Address fromAddress : addresses) {
+		while (refIter.hasNext()) {
 			monitor.checkCancelled();
-			Function callerFunction = functionManager.getFunctionContaining(fromAddress);
-			if (callerFunction == null) {
+			Reference ref = refIter.next();
+			Address fromAddress = ref.getFromAddress();
+			Function caller = functionManager.getFunctionContaining(fromAddress);
+			if (caller == null) {
 				continue;
 			}
 
 			// If we are not showing thunks, then replace each thunk with all calls to that thunk
-			if (callerFunction.isThunk() && !callTreeOptions.allowsThunks()) {
-				Address callerEntry = callerFunction.getEntryPoint();
-				doGenerateChildren(callerEntry, results, monitor);
+			if (caller.isThunk() && !callTreeOptions.allowsThunks()) {
+				Address callerEntry = caller.getEntryPoint();
+				if (!address.equals(callerEntry)) { // recursive reference from thunk to itself
+					doGenerateChildren(callerEntry, results, monitor);
+				}
 				continue;
 			}
 
 			IncomingCallNode node =
-				new IncomingCallNode(program, callerFunction, fromAddress, callTreeOptions);
+				new IncomingCallNode(program, caller, fromAddress, ref.getReferenceType().isCall(),
+					callTreeOptions);
 			addNode(nodesByFunction, node);
 		}
 
@@ -131,9 +132,12 @@ public class IncomingCallNode extends CallNode {
 	@Override
 	public Icon getIcon(boolean expanded) {
 		if (icon == null) {
-			icon = incomingFunctionIcon;
 			if (functionIsInPath()) {
-				icon = CallTreePlugin.RECURSIVE_ICON;
+				icon = isCallReference ? RECURSIVE_CALL_REFERENCE_ICON
+						: RECURSIVE_NON_CALL_REFERENCE_ICON;
+			}
+			else {
+				icon = isCallReference ? CALL_REFERENCE_ICON : NON_CALL_REFERENCE_ICON;
 			}
 		}
 		return icon;
@@ -142,11 +146,6 @@ public class IncomingCallNode extends CallNode {
 	@Override
 	public String getName() {
 		return name;
-	}
-
-	@Override
-	public String getToolTip() {
-		return null;
 	}
 
 	@Override

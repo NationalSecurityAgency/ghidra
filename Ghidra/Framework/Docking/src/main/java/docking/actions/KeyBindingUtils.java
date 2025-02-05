@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,6 +46,7 @@ import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
 import util.CollectionUtils;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * A class to provide utilities for system key bindings, such as importing and
@@ -55,6 +56,8 @@ import util.CollectionUtils;
  * @since Tracker Id 329
  */
 public class KeyBindingUtils {
+	private static final String NO_KEYBINDING_NAME = "none";
+
 	private static final String LAST_KEY_BINDING_EXPORT_DIRECTORY = "LastKeyBindingExportDirectory";
 
 	private static final String RELEASED = "released";
@@ -337,9 +340,15 @@ public class KeyBindingUtils {
 		}
 
 		Object keyText = im.get(keyStroke);
-		if (keyText == null) {
+		if (keyText == null || keyText.equals(NO_KEYBINDING_NAME)) {
 			// no binding--just pick a name
 			keyText = action.getValue(Action.NAME);
+			if (keyText == null) {
+				Msg.error(KeyBindingUtils.class, "Action must have a name to be registered",
+					ReflectionUtilities.createJavaFilteredThrowable());
+				return;
+			}
+
 			im.put(keyStroke, keyText);
 		}
 
@@ -397,7 +406,7 @@ public class KeyBindingUtils {
 			int focusCondition) {
 		InputMap inputMap = component.getInputMap(focusCondition);
 		if (inputMap != null) {
-			inputMap.put(keyStroke, "none");
+			inputMap.put(keyStroke, NO_KEYBINDING_NAME);
 		}
 	}
 

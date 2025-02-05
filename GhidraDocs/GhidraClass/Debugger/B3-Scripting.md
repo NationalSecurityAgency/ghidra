@@ -24,10 +24,10 @@ public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerAPI 
 }
 ```
 
-**NOTE**: The scripting API has been refactored a little since the transition from Recorder-based to TraceRmi-based targets.
+**NOTE**: The scripting API has been refactored since the transition from Recorder-based to TraceRmi-based targets.
 Parts of the API that are back-end agnostic are accessible from the `FlatDebuggerAPI` interface.
-Parts of the API that require a specific back end are in `FlatDebuggerRmiAPI` and `FlatDebuggerRecorderAPI`, the latter of which is deprecated.
-If a script written for version 11.0.2 or prior is not compiling, it can most likely be patched up by changing `implements FlatDebuggerAPI` to `implements FlatDebuggerRecorderAPI`, but we recommend porting it to use `implements FlatDebuggerRmiAPI`.
+Parts of the API that require a specific back end are in `FlatDebuggerRmiAPI`.
+The old `FlatDebuggerRecorderAPI` was removed in Ghidra 11.3, and scripts needing it should be ported to `FlatDebuggerRmiAPI`.
 
 Technically, the Debugger's "deep" API is accessible to scripts; however, the flat API is preferred for scripting.
 Also, the flat API is usually more stable than the deep API.

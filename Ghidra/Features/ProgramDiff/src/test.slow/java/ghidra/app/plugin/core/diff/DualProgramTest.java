@@ -76,7 +76,7 @@ public class DualProgramTest extends DiffTestAdapter {
 	}
 
 	@Test
-	public void testEscapeOpenSecondProgram() throws Exception {
+	public void testOpenSecondProgram_Escape() throws Exception {
 
 		restoreProgram(diffTestP2);
 		loadProgram(diffTestP1);
@@ -230,9 +230,6 @@ public class DualProgramTest extends DiffTestAdapter {
 		ProgramDB otherProgram = otherBuilder.getProgram();
 		otherBuilder.createMemory(".stuff", "0x1004000", 0x300);
 
-		Window win;
-		Component comp;
-		//InfoWindow.showSplashScreen(); 
 		showTool(frontEndTool);
 		env.showTool();
 
@@ -241,9 +238,9 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		launchDiffByAction();
 		waitForSwing();
-		win = waitForWindow("Select Other Program");
+		Window win = waitForWindow("Select Other Program");
 		assertNotNull(win);
-		comp = getComponentOfType(win, JComboBox.class);
+		Component comp = getComponentOfType(win, JComboBox.class);
 		assertNotNull(comp);
 
 		JTree tree = findComponent(win, JTree.class);

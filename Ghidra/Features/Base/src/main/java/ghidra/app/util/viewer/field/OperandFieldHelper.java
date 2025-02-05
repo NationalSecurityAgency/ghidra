@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,6 @@ abstract class OperandFieldHelper extends FieldFactory {
 	private SymbolInspector inspector;
 
 	private ColorStyleAttributes addressAttributes = new ColorStyleAttributes();
-	private ColorStyleAttributes externalRefAttributes = new ColorStyleAttributes();
 	private ColorStyleAttributes badRefAttributes = new ColorStyleAttributes();
 	private ColorStyleAttributes separatorAttributes = new ColorStyleAttributes();
 	private ColorStyleAttributes scalarAttributes = new ColorStyleAttributes();
@@ -608,6 +607,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 	}
 
 	private ColorStyleAttributes getOpAttributes(Object opObject, Instruction inst, int opIndex) {
+
 		if (opObject instanceof String) {
 			return getOpAttributes(inst, opIndex, inst.getProgram());
 		}
@@ -645,21 +645,16 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 		ReferenceManager refMgr = p.getReferenceManager();
 		Reference[] refs = refMgr.getReferencesFrom(cu.getMinAddress(), opIndex);
-		for (Reference element : refs) {
-			if (element.isExternalReference()) {
-				ExternalManager extMgr = p.getExternalManager();
-				ExternalLocation extLoc = ((ExternalReference) element).getExternalLocation();
+		for (Reference ref : refs) {
 
-				// has external reference been resolved?
-				String path = extMgr.getExternalLibraryPath(extLoc.getLibraryName());
-				if (path != null && path.length() > 0) {
-					return externalRefAttributes;
-				}
-				return badRefAttributes;
+			// handle external references
+			ColorAndStyle c = inspector.getColorAndStyle(p, ref);
+			if (c != null) {
+				ColorStyleAttributes newAttributes = new ColorStyleAttributes();
+				newAttributes.colorAttribute = c.getColor();
+				newAttributes.styleAttribute = c.getStyle();
+				return newAttributes;
 			}
-//          if (refs[i].isVariableReference()) {
-//              return globalFrameRefAttributes;
-//          }
 		}
 
 		Reference mr = refMgr.getPrimaryReferenceFrom(cu.getMinAddress(), opIndex);
@@ -686,27 +681,25 @@ abstract class OperandFieldHelper extends FieldFactory {
 	}
 
 	/**
-	 * Determine the font and color to use to render an operand when that operand
-	 * is a reference.
+	 * Determine the font and color to use to render an operand when that operand is a reference.
 	 */
 	private ColorStyleAttributes getAddressAttributes(CodeUnit cu, Address destAddr, int opIndex,
-			Program program) {
+			Program p) {
 
 		if (destAddr == null) {
 			return separatorAttributes;
 		}
 
-		if (destAddr.isMemoryAddress() && !program.getMemory().contains(destAddr)) {
+		if (destAddr.isMemoryAddress() && !p.getMemory().contains(destAddr)) {
 			return badRefAttributes;
 		}
 
-		SymbolTable st = program.getSymbolTable();
-		ReferenceManager refMgr = program.getReferenceManager();
+		SymbolTable st = p.getSymbolTable();
+		ReferenceManager refMgr = p.getReferenceManager();
 
 		Reference ref = refMgr.getReference(cu.getMinAddress(), destAddr, opIndex);
 		Symbol sym = st.getSymbol(ref);
 		if (sym != null) {
-			inspector.setProgram(program);
 			ColorStyleAttributes newAttributes = new ColorStyleAttributes();
 			ColorAndStyle c = inspector.getColorAndStyle(sym);
 			newAttributes.colorAttribute = c.getColor();
@@ -726,7 +719,6 @@ abstract class OperandFieldHelper extends FieldFactory {
 		scalarAttributes.colorAttribute = ListingColors.CONSTANT;
 		variableRefAttributes.colorAttribute = FunctionColors.VARIABLE;
 		addressAttributes.colorAttribute = ListingColors.ADDRESS;
-		externalRefAttributes.colorAttribute = ListingColors.EXT_REF_RESOLVED;
 		badRefAttributes.colorAttribute = ListingColors.REF_BAD;
 		registerAttributes.colorAttribute = ListingColors.REGISTER;
 
@@ -738,8 +730,6 @@ abstract class OperandFieldHelper extends FieldFactory {
 			options.getInt(OptionsGui.VARIABLE.getStyleOptionName(), -1);
 		addressAttributes.styleAttribute =
 			options.getInt(OptionsGui.ADDRESS.getStyleOptionName(), -1);
-		externalRefAttributes.styleAttribute =
-			options.getInt(OptionsGui.EXT_REF_RESOLVED.getStyleOptionName(), -1);
 		badRefAttributes.styleAttribute =
 			options.getInt(OptionsGui.BAD_REF_ADDR.getStyleOptionName(), -1);
 		registerAttributes.styleAttribute =

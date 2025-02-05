@@ -369,29 +369,13 @@ actually loaded into an emulator, yet, because Ghidra allocates and
 caches emulators as needed. Instead, what you have is a single-snapshot
 trace without a live target. The initial state is snapshot 0, and
 emulation is started by navigating to a schedule, just like in
-extrapolation. You might be unnerved by the apparently empty and stale
-Dynamic listing:</p>
+extrapolation.</p>
 <figure>
-<img src="images/Emulation_LazyStaleListing.png"
-alt="Stale listing upon starting pure emulation" />
-<figcaption aria-hidden="true">Stale listing upon starting pure
+<img src="images/Emulation_InitialListing.png"
+alt="Listing upon starting pure emulation" />
+<figcaption aria-hidden="true">Listing upon starting pure
 emulation</figcaption>
 </figure>
-<p>This is perhaps more a matter of preference, but by default, Ghidra
-will only populate the Dynamic listing with state initialized by the
-emulator itself. When the emulator reads, it will “read through”
-uninitialized state by reading the mapped program image instead. This
-spares the loader from having to copy a potentially large program image
-into the emulator. In general, you should refer to the Static listing
-when following the program counter. If you see contents in the Dynamic
-listing following the program counter, then you are probably dealing
-with self-modifying code.</p>
-<p><strong>NOTE</strong>: If you prefer to see the Dynamic listing
-initialized with the program image, you may select <strong>Load Emulator
-from Program</strong> from the <strong>Auto-Read</strong> drop-down
-button in the Dynamic Listing. The loading is still done lazily as each
-page is viewed in the listing pane. You will want to change this back
-when debugging a live target!</p>
 <p>Because we can easily step back and forth as well as navigate to
 arbitrary points in time, emulation should feel relatively free of risk;
 however, the point about stubbing dependencies will become apparent. If
@@ -692,8 +676,7 @@ Invalidate Emulator Cache</strong>.</li>
 <strong>Resume</strong>.</li>
 </ol>
 <p>Stubbing any remaining external calls is left as an exercise. You are
-successful when the emulator crashes with
-<code>pc = 00000000</code>.</p>
+successful when the emulator crashes with “pc = 00000000”.</p>
 <p>Clear or disable your breakpoint and invalidate the emulator cache
 again before proceeding to the next technique.</p>
 </section>
@@ -734,7 +717,7 @@ write the Sleigh code to mimic a <code>RET</code>. As with the
 <code>CALL</code> override technique, you must now invalidate the
 emulator cache and resume. Stubbing any remaining external functions is
 left as an exercise. You are successful when the emulator crashes with
-<code>pc = 00000000</code>.</p>
+“pc = 00000000”.</p>
 </section>
 </section>
 <section id="wrapping-up" class="level3">

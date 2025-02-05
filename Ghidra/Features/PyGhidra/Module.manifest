@@ -1,0 +1,25 @@
+EXCLUDE FROM GHIDRA JAR: true
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp313-cp313-win_amd64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp313-cp313-macosx_10_13_universal2.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp312-cp312-win_amd64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp312-cp312-macosx_10_9_universal2.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp311-cp311-win_amd64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp311-cp311-macosx_10_9_universal2.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp310-cp310-win_amd64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp310-cp310-macosx_10_9_universal2.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp39-cp39-win_amd64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/jpype1-1.5.2.tar.gz Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/packaging-23.2-py3-none-any.whl Apache License 2.0
+MODULE FILE LICENSE: pypkg/dist/setuptools-68.0.0-py3-none-any.whl MIT
+MODULE FILE LICENSE: pypkg/dist/wheel-0.37.1-py2.py3-none-any.whl MIT

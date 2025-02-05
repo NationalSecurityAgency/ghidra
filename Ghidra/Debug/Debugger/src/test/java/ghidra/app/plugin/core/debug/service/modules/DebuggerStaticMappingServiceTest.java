@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProviderTest;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.framework.model.DomainFile;
@@ -33,10 +34,17 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.schema.SchemaContext;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
+import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.util.Msg;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
@@ -666,5 +674,22 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		assertMapsTwoWay(-1L, -1L);
 		assertMapsTwoWay(Long.MAX_VALUE, Long.MAX_VALUE);
 		assertMapsTwoWay(Long.MIN_VALUE, Long.MIN_VALUE);
+	}
+
+	@Test
+	public void testProposeModuleMappingNullBase() throws Throwable {
+		DBTraceObject objModBash;
+		try (Transaction tx = tb.startTransaction()) {
+			SchemaContext ctx = XmlSchemaContext.deserialize(DebuggerModulesProviderTest.CTX_XML);
+			DBTraceObjectManager objects = tb.trace.getObjectManager();
+			objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
+			objModBash =
+				objects.createObject(KeyPath.parse("Processes[1].Modules[/bin/bash]"));
+			objModBash.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+		}
+
+		TraceModule modBash = objModBash.queryInterface(TraceObjectModule.class);
+		assertEquals(Map.of(),
+			mappingService.proposeModuleMaps(List.of(modBash), List.of(program)));
 	}
 }

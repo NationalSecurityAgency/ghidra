@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,18 +22,18 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import docking.ActionContext;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStackFrame;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -196,7 +196,7 @@ public interface Target {
 	 * @param path the path of the object
 	 * @return the thread, or null
 	 */
-	TraceThread getThreadForSuccessor(TraceObjectKeyPath path);
+	TraceThread getThreadForSuccessor(KeyPath path);
 
 	/**
 	 * Get the execution state of the given thread
@@ -204,7 +204,7 @@ public interface Target {
 	 * @param thread the thread
 	 * @return the state
 	 */
-	TargetExecutionState getThreadExecutionState(TraceThread thread);
+	TraceExecutionState getThreadExecutionState(TraceThread thread);
 
 	/**
 	 * Get the trace stack frame that contains the given object
@@ -212,7 +212,7 @@ public interface Target {
 	 * @param path the path of the object
 	 * @return the stack frame, or null
 	 */
-	TraceStackFrame getStackFrameForSuccessor(TraceObjectKeyPath path);
+	TraceStackFrame getStackFrameForSuccessor(KeyPath path);
 
 	/**
 	 * Check if the target supports synchronizing focus
@@ -226,7 +226,7 @@ public interface Target {
 	 * 
 	 * @return the focused object's path, or null
 	 */
-	TraceObjectKeyPath getFocus();
+	KeyPath getFocus();
 
 	/**
 	 * @see #activate(DebuggerCoordinates, DebuggerCoordinates)

@@ -496,7 +496,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		synchronized (lock) {
 			InfoPerTrace info = requireTrackedInfo(trace);
 			if (info == null) {
-				return null;
+				return Map.of();
 			}
 			return info.getOpenMappedViews(set, Lifespan.at(snap));
 		}

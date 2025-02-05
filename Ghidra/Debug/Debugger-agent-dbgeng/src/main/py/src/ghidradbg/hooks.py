@@ -27,6 +27,7 @@ from pybag.dbgeng.callbacks import EventHandler
 from pybag.dbgeng.idebugbreakpoint import DebugBreakpoint
 
 from . import commands, util
+from .exdi import exdi_commands
 
 
 ALL_EVENTS = 0xFFFF
@@ -65,6 +66,8 @@ class ProcessState(object):
         if first:
             if util.is_kernel():
                 commands.create_generic("Sessions")
+            if util.is_exdi() and util.dbg.use_generics is False:
+                commands.create_generic("Sessions[0].ExdiProcesses")
             commands.put_processes()
             commands.put_environment()
             commands.put_threads()
@@ -77,8 +80,8 @@ class ProcessState(object):
                 commands.putreg()
                 commands.putmem('0x{:x}'.format(util.get_pc()),
                                 "1", display_result=False)
-                commands.putmem('0x{:x}'.format(util.get_sp()),
-                                "1", display_result=False)
+                commands.putmem('0x{:x}'.format(util.get_sp()-1),
+                                "2", display_result=False)
                 commands.put_frames()
                 self.visited.add(thread)
             frame = util.selected_frame()
@@ -86,9 +89,13 @@ class ProcessState(object):
             if first or hashable_frame not in self.visited:
                 self.visited.add(hashable_frame)
         if first or self.regions:
+            if util.is_exdi():
+                exdi_commands.put_regions_exdi(commands.STATE)
             commands.put_regions()
             self.regions = False
         if first or self.modules:
+            if util.is_exdi():
+                exdi_commands.put_kmodules_exdi(commands.STATE)
             commands.put_modules()
             self.modules = False
         if first or self.breaks:

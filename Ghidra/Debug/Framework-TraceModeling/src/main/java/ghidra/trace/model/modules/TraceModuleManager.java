@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,6 +41,8 @@ public interface TraceModuleManager extends TraceModuleOperations {
 	 * @param range the address range of the module -- min should be the base address
 	 * @param lifespan the span from load time to unload time
 	 * @return the new module
+	 * @throws DuplicateNameException if another module with the same name already exists for the
+	 *             desired lifespan
 	 */
 	TraceModule addModule(String modulePath, String moduleName, AddressRange range,
 			Lifespan lifespan) throws DuplicateNameException;
@@ -49,9 +51,12 @@ public interface TraceModuleManager extends TraceModuleOperations {
 	 * Add a module which is still loaded
 	 * 
 	 * @param modulePath the "full name" of the module
+	 * @param moduleName the "short name" of the module
 	 * @param range the address range of the module -- min should be the base address
 	 * @param snap the snap at which the module was loaded
 	 * @return the new module
+	 * @throws DuplicateNameException if another module with the same name already exists for the
+	 *             desired lifespan
 	 */
 	default TraceModule addLoadedModule(String modulePath, String moduleName, AddressRange range,
 			long snap) throws DuplicateNameException {

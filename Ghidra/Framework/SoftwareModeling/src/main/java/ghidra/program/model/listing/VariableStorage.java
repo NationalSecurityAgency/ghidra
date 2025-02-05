@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -181,7 +181,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		return size;
 	}
 
-	private void checkVarnodes() throws InvalidInputException {
+	private void checkVarnodes() throws IllegalArgumentException, InvalidInputException {
 		if (varnodes.length == 0) {
 			throw new IllegalArgumentException("A minimum of one varnode must be specified");
 		}
@@ -191,10 +191,11 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		for (int i = 0; i < varnodes.length; i++) {
 			Varnode varnode = varnodes[i];
 			if (varnode == null) {
-				throw new InvalidInputException("Null varnode not permitted");
+				throw new IllegalArgumentException("Null varnode not permitted");
 			}
 			if (varnode.getSize() <= 0) {
-				throw new InvalidInputException("Unsupported varnode size: " + varnode.getSize());
+				throw new IllegalArgumentException(
+					"Unsupported varnode size: " + varnode.getSize());
 			}
 
 			boolean isRegister = false;
@@ -243,16 +244,24 @@ public class VariableStorage implements Comparable<VariableStorage> {
 							stackOffset + ", size=" + varnode.getSize());
 				}
 			}
-			if (i < (varnodes.length - 1) && !isRegister) {
-				throw new InvalidInputException(
-					"Compound storage must use registers except for last varnode");
+			if (programArch.getLanguage().isBigEndian()) {
+				if (i < (varnodes.length - 1) && !isRegister) {
+					throw new InvalidInputException(
+						"Compound storage must use registers except for last BE varnode");
+				}
+			}
+			else {
+				if (i > 0 && !isRegister) {
+					throw new InvalidInputException(
+						"Compound storage must use registers except for first LE varnode");
+				}
 			}
 			size += varnode.getSize();
 		}
 		for (int i = 0; i < varnodes.length; i++) {
 			for (int j = i + 1; j < varnodes.length; j++) {
 				if (varnodes[i].intersects(varnodes[j])) {
-					throw new InvalidInputException("One or more conflicting varnodes");
+					throw new InvalidInputException("One or more conflicting storage varnodes");
 				}
 			}
 		}

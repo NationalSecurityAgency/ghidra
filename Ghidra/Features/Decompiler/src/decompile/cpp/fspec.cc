@@ -3378,7 +3378,7 @@ void ProtoStoreInternal::encode(Encoder &encoder) const
     if (outparam->isTypeLocked())
       encoder.writeBool(ATTRIB_TYPELOCK,true);
     outparam->getAddress().encode(encoder);
-    outparam->getType()->encode(encoder);
+    outparam->getType()->encodeRef(encoder);
     encoder.closeElement(ELEM_RETPARAM);
   }
   else {
@@ -3406,7 +3406,7 @@ void ProtoStoreInternal::encode(Encoder &encoder) const
     if (param->isHiddenReturn())
       encoder.writeBool(ATTRIB_HIDDENRETPARM, true);
     param->getAddress().encode(encoder);
-    param->getType()->encode(encoder);
+    param->getType()->encodeRef(encoder);
     encoder.closeElement(ELEM_PARAM);
   }
   encoder.closeElement(ELEM_INTERNALLIST);
@@ -3422,7 +3422,7 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
   proto.firstVarArgSlot = -1;
   bool addressesdetermined = true;
 
-  pieces.push_back( ParameterPieces() ); // Push on placeholder for output pieces
+  pieces.emplace_back(); // Push on placeholder for output pieces
   pieces.back().type = outparam->getType();
   pieces.back().flags = 0;
   if (outparam->isTypeLocked())
@@ -3433,6 +3433,10 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
     addressesdetermined = false;
 
   uint4 elemId = decoder.openElement(ELEM_INTERNALLIST);
+  uint4 firstId = decoder.getNextAttributeId();
+  if (firstId == ATTRIB_FIRST) {
+    proto.firstVarArgSlot = decoder.readSignedInteger();
+  }
   for(;;) { // This is only the input params
     uint4 subId = decoder.openElement();		// <retparam> or <param>
     if (subId == 0) break;
@@ -4599,7 +4603,7 @@ void FuncProto::encode(Encoder &encoder) const
   if (outparam->isTypeLocked())
     encoder.writeBool(ATTRIB_TYPELOCK, true);
   outparam->getAddress().encode(encoder,outparam->getSize());
-  outparam->getType()->encode(encoder);
+  outparam->getType()->encodeRef(encoder);
   encoder.closeElement(ELEM_RETURNSYM);
   encodeEffect(encoder);
   encodeLikelyTrash(encoder);

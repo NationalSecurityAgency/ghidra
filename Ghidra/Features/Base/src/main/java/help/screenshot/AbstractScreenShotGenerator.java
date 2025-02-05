@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,6 +237,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public void performAction(String actionName, String owner, ComponentProvider contextProvider,
 			boolean wait) {
 		DockingActionIf action = getAction(tool, owner, actionName);
+		assertNotNull("Could not find action: " + actionName + " for owner " + owner, action);
 		performAction(action, contextProvider, wait);
 	}
 

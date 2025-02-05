@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.Msg;
  * the interface.
  */
 @PlateComment
-@StructureMapping(structureName = "runtime.itab")
+@StructureMapping(structureName = {"runtime.itab", "internal/abi.ITab"})
 public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
 	private GoRttiMapper programContext;
@@ -40,11 +40,11 @@ public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
 	private StructureContext<GoItab> context;
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"inter", "Inter"})
 	@MarkupReference("getInterfaceType")
 	long inter;	// runtime.interfacetype * 
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"_type", "Type"})
 	@MarkupReference("getType")
 	long _type;	// runtime._type *
 
@@ -59,7 +59,8 @@ public class GoItab implements StructureMarkup<GoItab> {
 	 */
 	@Markup
 	public GoInterfaceType getInterfaceType() throws IOException {
-		return programContext.readStructure(GoInterfaceType.class, inter);
+		GoType result = programContext.getGoType(inter);
+		return result instanceof GoInterfaceType ifaceType ? ifaceType : null;
 	}
 
 	/**
@@ -173,6 +174,11 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	@Override
+	public String getStructureNamespace() throws IOException {
+		return getType().getStructureNamespace();
+	}
+	
+	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException {
 		GoSlice funSlice = getFunSlice();
 		List<Address> funcAddrs = Arrays.stream(funSlice.readUIntList(programContext.getPtrSize()))
@@ -185,8 +191,8 @@ public class GoItab implements StructureMarkup<GoItab> {
 
 		GoSlice extraFunSlice =
 			funSlice.getSubSlice(1, funSlice.getLen() - 1, programContext.getPtrSize());
-		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions", null,
-			(DataType) null, true, session);
+		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions",
+			getStructureNamespace(), (DataType) null, true, session);
 	}
 
 	@Override

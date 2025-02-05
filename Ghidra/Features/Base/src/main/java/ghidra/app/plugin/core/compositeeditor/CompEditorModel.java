@@ -568,10 +568,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	@Override
 	public DataTypeComponent add(DataType dataType) throws UsrException {
-		if (isContiguousSelection()) {
-			return add(getMinIndexSelected(), dataType);
+		if (!isContiguousSelection()) {
+			setStatus("Replace data type only works on a contiguous selection", true);
+			return null;
 		}
-		return null;
+		return add(getMinIndexSelected(), dataType);
 	}
 
 	/**
@@ -598,7 +599,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				return null;
 			}
 		});
-		
+
 		fixSelection();
 		componentEdited();
 		selectionChanged();
@@ -711,7 +712,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted
 	 * @throws InsufficientBytesException if there aren't enough bytes in the specified range
-	 * @throws CancelledException the the work is cancelled
+	 * @throws CancelledException if the work is cancelled
 	 */
 	protected abstract boolean replaceRange(int startRowIndex, int endRowIndex, DataType datatype,
 			int length, TaskMonitor monitor)
@@ -822,7 +823,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param length component length
 	 * @throws InvalidDataTypeException if check fails
 	 */
-	private void checkForReplace(int rowIndex, DataType datatype, int length) throws InvalidDataTypeException {
+	private void checkForReplace(int rowIndex, DataType datatype, int length)
+			throws InvalidDataTypeException {
 		DataTypeComponent dtc = getComponent(rowIndex);
 		if (dtc == null) {
 			throw new InvalidDataTypeException("Invalid component selection");
@@ -843,25 +845,28 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		int currentCompSize = dtc.getLength();
 		int newCompSize = length;
 		int sizeDiff = newCompSize - currentCompSize;
-		
+
 		if (sizeDiff <= 0) {
 			return;
 		}
-		
+
 		int undefinedSpaceAvail = getNumUndefinedBytesAfter(dtc);
 		if (sizeDiff > undefinedSpaceAvail) {
 			int spaceNeeded = sizeDiff - undefinedSpaceAvail;
-			String msg = newCompSize + " byte replacement at 0x" + Integer.toHexString(dtc.getOffset());
+			String msg =
+				newCompSize + " byte replacement at 0x" + Integer.toHexString(dtc.getOffset());
 			if (struct.getDefinedComponentAtOrAfterOffset(dtc.getOffset() + 1) == null) {
 				// suggest growing structure
 				int suggestedSize = getLength() + spaceNeeded;
-				throw new InvalidDataTypeException(msg + " requires structure length of " + suggestedSize + "-bytes.");
+				throw new InvalidDataTypeException(
+					msg + " requires structure length of " + suggestedSize + "-bytes.");
 			}
 			// suggest insert bytes (NOTE: in the future a conflict removal/grow could be offered)
-			throw new InvalidDataTypeException(msg + " requires " + spaceNeeded + " additional undefined bytes.");
+			throw new InvalidDataTypeException(
+				msg + " requires " + spaceNeeded + " additional undefined bytes.");
 		}
 	}
-	
+
 	/**
 	 * Get the number of undefined bytes after the specified component.
 	 * The viewComposite must be a non-packed structure.
@@ -879,16 +884,17 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		if (struct.isPackingEnabled()) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		// TODO: May  need special logic if dtc is zero-length component
 		int length = getLength();
 		int nextCompOffset = dtc.getEndOffset() + 1;
 		if (nextCompOffset >= length) {
 			return 0;
 		}
-		DataTypeComponent nextDefinedDtc = struct.getDefinedComponentAtOrAfterOffset(nextCompOffset);
+		DataTypeComponent nextDefinedDtc =
+			struct.getDefinedComponentAtOrAfterOffset(nextCompOffset);
 		int nextDefinedOffset = (nextDefinedDtc == null) ? length : nextDefinedDtc.getOffset();
-		return Math.max(0,  nextDefinedOffset - nextCompOffset); // prevent negative return value
+		return Math.max(0, nextDefinedOffset - nextCompOffset); // prevent negative return value
 	}
 
 	/**

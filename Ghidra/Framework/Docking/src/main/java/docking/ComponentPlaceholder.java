@@ -136,10 +136,21 @@ public class ComponentPlaceholder {
 	}
 
 	/**
-	 * Returns true if the component is not hidden
+	 * Returns true if the component is showing and visible to the user.
 	 * @return true if showing
+	 * @see #isActive()
 	 */
 	boolean isShowing() {
+		return isShowing && comp != null && comp.isShowing();
+	}
+
+	/**
+	 * Returns true if this provider wants to be showing and has a component provider, regardless 
+	 * of whether the provider is showing to the user.
+	 * @return true if active
+	 * @see #isShowing()
+	 */
+	boolean isActive() {
 		return isShowing && componentProvider != null;
 	}
 
@@ -407,7 +418,7 @@ public class ComponentPlaceholder {
 	 */
 	JComponent getProviderComponent() {
 		if (componentProvider != null) {
-			return componentProvider.getComponent();
+			return componentProvider.doGetComponent();
 		}
 		return new JPanel();
 	}

@@ -24,9 +24,9 @@ import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.help.AboutDomainObjectUtils;
 import ghidra.app.services.FileSystemBrowserService;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.GenericHelpTopics;
-import ghidra.app.util.Option;
+import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
@@ -35,7 +35,10 @@ import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.plugins.importer.batch.BatchImportDialog;
+import ghidra.program.database.mem.FileBytes;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
+import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.*;
@@ -56,16 +59,13 @@ public class ImporterUtilities {
 
 	/**
 	 * File extension filter for well known 'loadable' files for GhidraFileChoosers.
-	 *
-	 * TODO: will be refactored to use file_extension_icon.xml file info.
 	 */
 	public static final GhidraFileFilter LOADABLE_FILES_FILTER = ExtensionFileFilter.forExtensions(
-		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib");
+		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib",
+		"dylib");
 
 	/**
 	 * File extension filter for well known 'container' files for GhidraFileChoosers.
-	 *
-	 * TODO: will be refactored to use file_extension_icon.xml file info.
 	 */
 	public static final GhidraFileFilter CONTAINER_FILES_FILTER =
 		ExtensionFileFilter.forExtensions("Container files", "zip", "tar", "tgz", "jar", "gz",
@@ -263,6 +263,34 @@ public class ImporterUtilities {
 			// just return
 		}
 
+	}
+
+	public static void showLoadLibrariesDialog(Program program, PluginTool tool,
+			ProgramManager manager, TaskMonitor monitor) {
+
+		Objects.requireNonNull(monitor);
+
+		// Don't allow Load Libraries while "things are happening" to the program
+		if (!program.canLock()) {
+			Msg.showWarn(null, null, LoadLibrariesOptionsDialog.TITLE,
+				"Cannot Load Libraries while program is locked.  Please wait or stop running tasks.");
+			return;
+		}
+
+		try {
+			ByteProvider provider = getProvider(program);
+			LoadSpec loadSpec = getLoadSpec(provider, program);
+			AddressFactory addressFactory =
+				loadSpec.getLanguageCompilerSpec().getLanguage().getAddressFactory();
+			SystemUtilities.runSwingLater(() -> {
+				OptionsDialog dialog = new LoadLibrariesOptionsDialog(provider, program, tool,
+					loadSpec, () -> addressFactory);
+				tool.showDialog(dialog);
+			});
+		}
+		catch (LanguageNotFoundException e) {
+			Msg.showError(null, null, LoadLibrariesOptionsDialog.TITLE, "Language not found.", e);
+		}
 	}
 
 	/**
@@ -492,5 +520,49 @@ public class ImporterUtilities {
 		HelpLocation helpLocation = new HelpLocation(GenericHelpTopics.ABOUT, "About_Program");
 		AboutDomainObjectUtils.displayInformation(tool, domainFile, metadata,
 			"Import Results Summary", info, helpLocation);
+	}
+
+	/**
+	 * Gets a {@link ByteProvider} based on the {@link FileBytes} of the given {@link Program}.
+	 * <p>
+	 * NOTE: If the {@link Program} has more than one {@link FileBytes} associated with it, the
+	 * first one is used (this is typically the bytes of the originally imported file).
+	 * 
+	 * @param program The {@link Program}
+	 * @return A {@link ByteProvider} based on the {@link FileBytes} of the given {@link Program},
+	 *   or null if the {@link Program} doesn't have an associated {@link FileBytes}
+	 */
+	static ByteProvider getProvider(Program program) {
+		List<FileBytes> allFileBytes = program.getMemory().getAllFileBytes();
+		return !allFileBytes.isEmpty() ? new FileBytesProvider(allFileBytes.get(0)) : null;
+	}
+
+	/**
+	 * Get's the {@link LoadSpec} that was used to import the given {@link Program}
+	 * 
+	 * @param provider The original bytes of the {@link Program}
+	 * @param program The {@link Program}
+	 * @return The {@link LoadSpec} that was used to import the given {@link Program}, or null if
+	 *   it could not be determined
+	 */
+	static LoadSpec getLoadSpec(ByteProvider provider, Program program) {
+		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
+			loader -> loader.getName().equalsIgnoreCase(program.getExecutableFormat()));
+
+		if (loaderMap.isEmpty()) {
+			return null;
+		}
+
+		Loader loader = loaderMap.firstKey();
+		if (loader == null) {
+			return null;
+		}
+
+		LanguageCompilerSpecPair programLcs = program.getLanguageCompilerSpecPair();
+		return loaderMap.get(loader)
+				.stream()
+				.filter(e -> programLcs.equals(e.getLanguageCompilerSpec()))
+				.findFirst()
+				.orElse(null);
 	}
 }

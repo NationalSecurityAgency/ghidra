@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,11 @@ public interface GTreeFilterProvider {
 	public void setDataTransformer(FilterTransformer<GTreeNode> transformer);
 
 	/**
-	 * Loads any filter preferences that have been saved.
+	 * Loads any filter preferences that have been saved.  
+	 * <p>
+	 * This is called when the tree is first made visible in the tool.  This is the chance for the
+	 * filter to load any preferences and to add a preference supplier to the window manager.
+	 * 
 	 * @param windowManager the {@link DockingWindowManager} to load preferences from
 	 */
 	public void loadFilterPreference(DockingWindowManager windowManager);
@@ -93,5 +97,39 @@ public interface GTreeFilterProvider {
 	 */
 	public default GTreeFilterProvider copy(GTree gTree) {
 		return null;
+	}
+
+	/**
+	 * Activates this filter by showing it, if not visible, and then requesting focus in the filter
+	 * text field. 
+	 */
+	public default void activate() {
+		JComponent c = getFilterComponent();
+		if (!c.isShowing()) {
+			c.setVisible(true);
+		}
+		c.requestFocus();
+	}
+
+	/**
+	 * Changes the visibility of the filter, make it not visible it if showing, showing it if
+	 * not visible. 
+	 */
+	public default void toggleVisibility() {
+		JComponent c = getFilterComponent();
+		if (c.isShowing()) {
+			c.setVisible(false);
+		}
+		else {
+			c.setVisible(true);
+			c.requestFocus();
+		}
+	}
+
+	/**
+	 * A method for subclasses to do any optional cleanup
+	 */
+	public default void dispose() {
+		// stub
 	}
 }

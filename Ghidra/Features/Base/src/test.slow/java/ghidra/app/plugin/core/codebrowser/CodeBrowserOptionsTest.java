@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -197,6 +197,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Pre-comments Field", groups[idx++]);
 		assertEquals("Register Field", groups[idx++]);
 		assertEquals("Selection Colors", groups[idx++]);
+		assertEquals("Source Map", groups[idx++]);
 		assertEquals("Templates", groups[idx++]);
 		assertEquals("XREFs Field", groups[idx++]);
 	}
@@ -763,9 +764,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Operands Field.Underline References", names.get(14));
 		assertEquals("Operands Field.Wrap on Semicolons", names.get(15));
 
-		NamespaceWrappedOption namespaceOption =
-			(NamespaceWrappedOption) options.getCustomOption(names.get(3),
-				new NamespaceWrappedOption());
+		NamespaceWrappedOption namespaceOption = (NamespaceWrappedOption) options
+				.getCustomOption(names.get(3), new NamespaceWrappedOption());
 
 		assertTrue(cb.goToField(addr("0x100eee0"), "Address", 0, 0));
 		ListingTextField btf = (ListingTextField) cb.getCurrentField();
@@ -1007,13 +1007,15 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 				List<HelpLocation> nestedHelp = getParentHelpLocations(options, name);
 				for (HelpLocation help : nestedHelp) {
 					if (help != null && !isValidHelpLocation(help)) {
-						missing.add("Bad help location: " + help.toString());
+						missing.add("Bad parent help for path: " + options.getName() + "." + name +
+							"; help: " + help.toString() + "\nMake sure your options parent node " +
+							"has a help location set, in addition to the individual options " +
+							"node");
 					}
 				}
 
 				// it has a help location; is it valid?
 				if (hl != null && !isValidHelpLocation(hl)) {
-					isValidHelpLocation(hl);
 					missing.add(options.getName() + "." + name);
 				}
 			}

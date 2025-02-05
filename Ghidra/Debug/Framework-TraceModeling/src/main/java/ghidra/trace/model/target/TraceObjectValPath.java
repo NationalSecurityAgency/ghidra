@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,9 @@ package ghidra.trace.model.target;
 
 import java.util.List;
 
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.DBTraceObjectValPath;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.target.path.PathFilter;
 
 /**
  * A path of values leading from one object to another
@@ -52,12 +53,12 @@ public interface TraceObjectValPath extends Comparable<TraceObjectValPath> {
 	 * Get the keys in the path, ordered from source to destination
 	 * 
 	 * <p>
-	 * The returned list is suited for testing with {@link PathPredicates} or other
-	 * path-manipulation methods.
+	 * The returned list is suited for testing with {@link PathFilter} or other path-manipulation
+	 * methods.
 	 * 
 	 * @return the list of keys
 	 */
-	List<String> getKeyList();
+	KeyPath getPath();
 
 	/**
 	 * Check if a given value appears on this path
