@@ -107,7 +107,7 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 
 		List<GFile> tmp = new ArrayList<>(localFiles.length);
 		FSRL dirFSRL = directory.getFSRL();
-		String relPath = FSUtilities.normalizeNativePath(directory.getPath());
+		String relPath = directory.getPath(); // this is the clean relative path assigned to the dir GFile earlier
 
 		for (File f : localFiles) {
 			boolean isSymlink = FSUtilities.isSymlink(f); // check this manually to allow broken symlinks to appear in listing
