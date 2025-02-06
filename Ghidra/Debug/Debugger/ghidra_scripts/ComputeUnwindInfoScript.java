@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,6 +52,7 @@ public class ComputeUnwindInfoScript extends GhidraScript {
 		}
 		println("Stack depth at " + currentAddress + ": " + info.depth());
 		println("Return address address: " + addressToString(info.ofReturn()));
+		println("Return address mask: 0x" + Long.toHexString(info.maskOfReturn()));
 		println("Saved registers:");
 		for (Entry<Register, Address> entry : info.saved().entrySet()) {
 			println("  " + entry);
