@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,71 +15,76 @@
  */
 package docking.widgets.table.threaded;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
+import java.awt.BorderLayout;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
-import org.junit.Before;
-import org.junit.Test;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.table.JTableHeader;
 
+import org.junit.*;
+
+import docking.DockingFrame;
+import docking.test.AbstractDockingTest;
 import docking.widgets.filter.*;
 import docking.widgets.table.*;
-import ghidra.docking.settings.Settings;
 import ghidra.docking.spy.SpyEventRecorder;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Specifically tests the sub-filtering behavior of the {@link ThreadedTableModel}, as well
  * as some other more complicated filtering combinations
  */
-public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
+public class DefaultThreadedTableFilterTest extends AbstractDockingTest {
 
 	private SpyEventRecorder recorder = new SpyEventRecorder(getClass().getSimpleName());
 	private SpyTaskMonitor monitor = new SpyTaskMonitor();
-	private SpyTextFilter<Long> spyFilter;
+	private SpyTextFilter<TestRowObject> spyFilter;
 
-	@Override
-	protected TestDataKeyModel createTestModel() {
-		AtomicReference<TestDataKeyModel> ref = new AtomicReference<>();
+	protected TestThreadedTableModel model;
+	protected GTable table;
+	protected JTableHeader header;
+	protected JFrame frame;
+	protected TestThreadedTableModelListener testTableModelListener;
+	protected GThreadedTablePanel<TestRowObject> threadedTablePanel;
+	protected volatile boolean isDisposing = false;
+
+	private TestThreadedTableModel createTestModel() {
 
 		// Note: from the test model, the data looks like this:
 		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE", 
 		//  "ten", "ten", "ten" 
-		runSwing(() -> ref.set(new TestDataKeyModel(monitor, false) {
+		return runSwing(() -> new TestThreadedTableModel() {
 			@Override
 			void setDefaultTaskMonitor(TaskMonitor monitor) {
 				// No! some of our tests use a spy monitor.  If you ever find that you
 				// need the standard monitors to get wired, then wrap the monitor being
 				// passed-in here by the spy and let it delegate whilst recording messages
 			}
-
-			@Override
-			public void setIncrementalTaskMonitor(TaskMonitor monitor) {
-				// no! some of our tests use a spy monitor
-			}
-
-			@Override
-			protected TableColumnDescriptor<Long> createTableColumnDescriptor() {
-				TableColumnDescriptor<Long> descriptor = super.createTableColumnDescriptor();
-
-				// add our own custom column to test filtering
-				descriptor.addVisibleColumn(new RawRowValueTableColumn());
-
-				return descriptor;
-			}
-		}));
-		return ref.get();
+		});
 	}
 
-	@Override
 	@Before
 	public void setUp() throws Exception {
-		super.setUp();
+
+		model = createTestModel();
+		testTableModelListener = createListener();
+		model.addThreadedTableModelListener(testTableModelListener);
+
+		// do this in swing, as some of the table column setup can trigger concurrent modifications
+		// due to the swing and the test working on the widgets at the same time
+		runSwing(() -> {
+			threadedTablePanel = new GThreadedTablePanel<>(model);
+			table = threadedTablePanel.getTable();
+			header = table.getTableHeader();
+
+			buildFrame(threadedTablePanel);
+		});
 
 		// Restore this JVM property, as some tests change it
 		System.setProperty(RowObjectFilterModel.SUB_FILTERING_DISABLED_PROPERTY,
@@ -88,8 +93,28 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		waitForTableModel(model);
 	}
 
-	@Override
-	protected TestThreadedTableModelListener createListener() {
+	@After
+	public void tearDown() throws Exception {
+		isDisposing = true;
+		dispose();
+	}
+
+	protected void buildFrame(GThreadedTablePanel<TestRowObject> tablePanel) {
+		runSwing(() -> {
+			frame = new DockingFrame("Threaded Table Test");
+			frame.getContentPane().setLayout(new BorderLayout());
+			frame.getContentPane().add(new JScrollPane(tablePanel));
+			frame.pack();
+			frame.setVisible(true);
+		});
+	}
+
+	protected void dispose() {
+		close(frame);
+		runSwing(threadedTablePanel::dispose);
+	}
+
+	private TestThreadedTableModelListener createListener() {
 		return new TestThreadedTableModelListener(model, recorder);
 	}
 
@@ -127,11 +152,11 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 		assertTableDoesNotContainValue(newRowIndex);
 
-		addItemToModel(newRowIndex);
+		TestRowObject newItem = addItemToModel(newRowIndex);
 		assertDidFilter();
 		assertTableContainsValue(newRowIndex);
 
-		removeItemFromModel(newRowIndex);
+		removeItemFromModel(newItem);
 		assertDidFilter();
 		assertTableDoesNotContainValue(newRowIndex);
 
@@ -213,8 +238,55 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		assertRowCount(3); // matching values: two, ten, ten, ten
 
 		startsWithFilter("t");
+
+		// note: if the user is typing, no refilter will take place.  But, since we are setting a
+		// new filter in this test, instead of typing, a refilter is forced.  This is why 4 items
+		// pass through the filter instead of 0.
 		assertNumberOfItemsPassedThroughFilter(4);
 		assertRowCount(4); // matching values: two, ten, ten, ten
+	}
+
+	@Test
+	public void testSubFilter_EscapeCharacters_StartsWithFilter() {
+
+		//
+		// Test that sub filters correctly handle escape characters.  Users may enter backslashes
+		// when attempting to escape globbing characters (i.e., ? or *)
+		//
+
+		TestRowObject ro = new TestRowObject("t?n", System.currentTimeMillis());
+		model.addObject(ro);
+		waitForTableModel(model);
+
+		startsWithFilter_AllowGlobbing("t");
+		assertFilteredEntireModel();
+		assertRowCount(5); // matching values: two, ten, ten, ten, t?n
+
+		// sub-filter
+		startsWithFilter_AllowGlobbing("t\\"); // t\
+		assertNumberOfItemsPassedThroughFilter(5);
+		assertRowCount(0); // nothing matching a literal backslash
+
+		startsWithFilter_AllowGlobbing("t\\?");
+		// sub-filter again
+		// The previous filer was not used due to our the the code we have that checks for globbing
+		// escape characters.  But, the filter before that using just 't' is a valid parent of the
+		// current filter, so that get used.
+		assertNumberOfItemsPassedThroughFilter(5);
+		assertRowCount(1); // matching values: t?n
+
+		// go backwards
+		startsWithFilter_AllowGlobbing("t\\");
+		assertNumberOfItemsPassedThroughFilter(5);
+		assertRowCount(0); // nothing matching a literal backslash
+
+		startsWithFilter_AllowGlobbing("t");
+
+		// note: if the user is typing, no refilter will take place.  But, since we are setting a
+		// new filter in this test, instead of typing, a refilter is forced.  This is why 5 items
+		// pass through the filter instead of 0.
+		assertNumberOfItemsPassedThroughFilter(5);
+		assertRowCount(5); // matching values: two, ten, ten, ten, t?n
 	}
 
 	@Test
@@ -245,6 +317,10 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		assertRowCount(3); // matching values: two, ten, ten, ten
 
 		regexFilter("^t");
+
+		// note: if the user is typing, no refilter will take place.  But, since we are setting a
+		// new filter in this test, instead of typing, a refilter is forced.  This is why 4 items
+		// pass through the filter instead of 0.
 		assertNumberOfItemsPassedThroughFilter(4);
 		assertRowCount(4); // matching values: two, ten, ten, ten
 	}
@@ -268,6 +344,10 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 		// jump from 'ten' to 't'--should still used the filtered data for 't'
 		startsWithFilter("t");
+
+		// note: if the user is typing, no refilter will take place.  But, since we are setting a
+		// new filter in this test, instead of typing, a refilter is forced.  This is why 4 items
+		// pass through the filter instead of 0.
 		assertNumberOfItemsPassedThroughFilter(4);
 		assertRowCount(4); // matching values: two, ten, ten, ten
 	}
@@ -334,7 +414,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		// 'isSubFilterOf'
 		//
 
-		TableFilter<Long> customFilter = new EmptyCustomFilter();
+		TableFilter<TestRowObject> customFilter = new EmptyCustomFilter();
 		createCombinedStartsWithFilter("t", customFilter);
 		assertFilteredEntireModel();
 		assertRowCount(4); // matching values: two, ten, ten, ten
@@ -361,7 +441,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		// 'isSubFilterOf'
 		//
 
-		TableFilter<Long> customFilter = new StringColumnContainsCustomFilter("t");
+		TableFilter<TestRowObject> customFilter = new StringColumnContainsCustomFilter("t");
 		createCombinedStartsWithFilter("t", customFilter);
 		assertFilteredEntireModel();
 		assertRowCount(4); // matching values (for both filters): two, ten, ten, ten
@@ -414,8 +494,10 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 		int fullCount = getRowCount();
 
-		// use filter to limit any new items added from passing
-		Predicate<Long> predicate = l -> l < fullCount;
+		Predicate<TestRowObject> predicate = ro -> {
+			int index = model.getRowIndex(ro);
+			return index >= 0; // < 0 means the row object is a new item not yet in the model
+		};
 		PredicateTableFilter noNewItemsPassFilter = new PredicateTableFilter(predicate);
 		createCombinedFilterWithEmptyTextFilter(noNewItemsPassFilter);
 		assertFilteredEntireModel();
@@ -474,22 +556,38 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	}
 
 	private void assertTableContainsValue(long expected) {
-		List<Long> modelValues = getModelData();
-		assertTrue("Value not in the model--filtered out? - Expected " + expected + "; found " +
-			modelValues, modelValues.contains(expected));
+		List<TestRowObject> modelValues = getModelData();
+		for (TestRowObject ro : modelValues) {
+			if (ro.getLongValue() == expected) {
+				return;
+			}
+		}
+		fail("Value not in the model--filtered out? - Expected " + expected + "; found " +
+			modelValues);
 	}
 
 	private void assertTableDoesNotContainValue(long expected) {
-		List<Long> modelValues = getModelData();
-		assertFalse("Value in the model--should not be there - Value " + expected + "; found " +
-			modelValues, modelValues.contains(expected));
+		List<TestRowObject> modelValues = getModelData();
+		for (TestRowObject ro : modelValues) {
+			if (ro.getLongValue() == expected) {
+				fail("Value in the model--should not be there - Value " + expected + "; found " +
+					modelValues);
+			}
+		}
+	}
+
+	private int getUnfilteredRowCount() {
+		return runSwing(() -> model.getUnfilteredRowCount());
+	}
+
+	private List<TestRowObject> getModelData() {
+		return runSwing(() -> model.getModelData());
 	}
 
 	private void filterOnRawColumnValue(long filterValue) throws Exception {
 
-		// the row objects are Long values that are 0-based one-up index values
-		RowFilterTransformer<Long> transformer = value -> {
-			List<String> result = Arrays.asList(Long.toString(value));
+		RowFilterTransformer<TestRowObject> transformer = value -> {
+			List<String> result = Arrays.asList(Long.toString(value.getLongValue()));
 			return result;
 		};
 
@@ -515,17 +613,25 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		filterOnStringsColumnValue(filterValue, TextFilterStrategy.STARTS_WITH);
 	}
 
+	private void startsWithFilter_AllowGlobbing(String filterValue) {
+		filterOnStringsColumnValue(filterValue, TextFilterStrategy.STARTS_WITH, true);
+	}
+
 	private void containsFilter(String filterValue) {
 		filterOnStringsColumnValue(filterValue, TextFilterStrategy.CONTAINS);
 	}
 
 	private void filterOnStringsColumnValue(String filterValue, TextFilterStrategy filterStrategy) {
+		filterOnStringsColumnValue(filterValue, filterStrategy, false);
+	}
 
-		// the row objects are Long values that are 0-based one-up index values
-		DefaultRowFilterTransformer<Long> transformer =
+	private void filterOnStringsColumnValue(String filterValue, TextFilterStrategy filterStrategy,
+			boolean allowGlobbing) {
+
+		DefaultRowFilterTransformer<TestRowObject> transformer =
 			new DefaultRowFilterTransformer<>(model, table.getColumnModel());
 
-		FilterOptions options = new FilterOptions(filterStrategy, false, true, false);
+		FilterOptions options = new FilterOptions(filterStrategy, allowGlobbing, true, false);
 		TextFilterFactory textFactory = options.getTextFilterFactory();
 		TextFilter textFilter = textFactory.getTextFilter(filterValue);
 
@@ -538,16 +644,15 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		waitForSwing();
 	}
 
-	private void createCombinedFilterWithEmptyTextFilter(TableFilter<Long> nonTextFilter) {
+	private void createCombinedFilterWithEmptyTextFilter(TableFilter<TestRowObject> nonTextFilter) {
 
-		// the row objects are Long values that are 0-based one-up index values
-		DefaultRowFilterTransformer<Long> transformer =
+		DefaultRowFilterTransformer<TestRowObject> transformer =
 			new DefaultRowFilterTransformer<>(model, table.getColumnModel());
 
 		TextFilter allPassesFilter = new EmptyTextFilter();
 		spyFilter = new SpyTextFilter<>(allPassesFilter, transformer, recorder);
 
-		CombinedTableFilter<Long> combinedFilter =
+		CombinedTableFilter<TestRowObject> combinedFilter =
 			new CombinedTableFilter<>(spyFilter, nonTextFilter, null);
 
 		recorder.record("Before setting the new filter");
@@ -560,10 +665,9 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	}
 
 	private void createCombinedStartsWithFilter(String filterValue,
-			TableFilter<Long> secondFilter) {
+			TableFilter<TestRowObject> secondFilter) {
 
-		// the row objects are Long values that are 0-based one-up index values
-		DefaultRowFilterTransformer<Long> transformer =
+		DefaultRowFilterTransformer<TestRowObject> transformer =
 			new DefaultRowFilterTransformer<>(model, table.getColumnModel());
 
 		TextFilterStrategy filterStrategy = TextFilterStrategy.STARTS_WITH;
@@ -573,7 +677,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 		spyFilter = new SpyTextFilter<>(textFilter, transformer, recorder);
 
-		CombinedTableFilter<Long> combinedFilter =
+		CombinedTableFilter<TestRowObject> combinedFilter =
 			new CombinedTableFilter<>(spyFilter, secondFilter, null);
 
 		recorder.record("Before setting the new filter");
@@ -586,8 +690,8 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	}
 
 	private void startsWithFilter_CaseInsensitive(String filterValue) {
-		// the row objects are Long values that are 0-based one-up index values
-		DefaultRowFilterTransformer<Long> transformer =
+
+		DefaultRowFilterTransformer<TestRowObject> transformer =
 			new DefaultRowFilterTransformer<>(model, table.getColumnModel());
 
 		FilterOptions options =
@@ -609,40 +713,46 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		monitor.clearMessages();
 	}
 
-	protected void assertDidNotFilter() {
-		assertFalse("The table filtered data when it should not have", monitor.hasFilterMessage());
-	}
-
-	protected void assertDidFilter() {
+	private void assertDidFilter() {
 		assertTrue("The table did not filter data when it should have", spyFilter.hasFiltered());
 	}
 
-	@Override
-	protected void record(String message) {
-		recorder.record("Test - " + message);
+	private void waitForNotBusy() {
+		sleep(50);
+		waitForCondition(() -> testTableModelListener.doneWork(),
+			"Timed-out waiting for table model to update.");
+		waitForSwing();
 	}
+
+	private int getRowCount() {
+		return runSwing(() -> model.getRowCount());
+	}
+
+	private TestRowObject addItemToModel(long l) {
+		TestRowObject ro = new TestRowObject(String.valueOf(l), l);
+		model.addObject(ro);
+		waitForTableModel(model);
+		return ro;
+	}
+
+	private void removeItemFromModel(TestRowObject ro) {
+		model.removeObject(ro);
+		waitForTableModel(model);
+	}
+
+	private void assertRowCount(int expectedCount) {
+		int rowCount = model.getRowCount();
+		assertThat("Have different number of table rows than expected after filtering", rowCount,
+			is(expectedCount));
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
-	private class RawRowValueTableColumn extends AbstractDynamicTableColumnStub<Long, Long> {
-
-		@Override
-		public String getColumnName() {
-			return "Raw Row Value";
-		}
+	private class EmptyCustomFilter implements TableFilter<TestRowObject> {
 
 		@Override
-		public Long getValue(Long rowObject, Settings settings, ServiceProvider provider)
-				throws IllegalArgumentException {
-			return rowObject;
-		}
-	}
-
-	private class EmptyCustomFilter implements TableFilter<Long> {
-
-		@Override
-		public boolean acceptsRow(Long rowObject) {
+		public boolean acceptsRow(TestRowObject rowObject) {
 			return true;
 		}
 
@@ -653,9 +763,9 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		}
 	}
 
-	private class StringColumnContainsCustomFilter implements TableFilter<Long> {
+	private class StringColumnContainsCustomFilter implements TableFilter<TestRowObject> {
 
-		DefaultRowFilterTransformer<Long> transformer =
+		DefaultRowFilterTransformer<TestRowObject> transformer =
 			new DefaultRowFilterTransformer<>(model, table.getColumnModel());
 		private String filterText;
 
@@ -664,7 +774,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		}
 
 		@Override
-		public boolean acceptsRow(Long rowObject) {
+		public boolean acceptsRow(TestRowObject rowObject) {
 
 			List<String> strings = transformer.transform(rowObject);
 			for (String s : strings) {
@@ -702,10 +812,10 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		}
 	}
 
-	private class AllPassesTableFilter implements TableFilter<Long> {
+	private class AllPassesTableFilter implements TableFilter<TestRowObject> {
 
 		@Override
-		public boolean acceptsRow(Long rowObject) {
+		public boolean acceptsRow(TestRowObject rowObject) {
 			return true;
 		}
 
@@ -715,16 +825,16 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		}
 	}
 
-	private class PredicateTableFilter implements TableFilter<Long> {
+	private class PredicateTableFilter implements TableFilter<TestRowObject> {
 
-		private Predicate<Long> predicate;
+		private Predicate<TestRowObject> predicate;
 
-		PredicateTableFilter(Predicate<Long> predicate) {
+		PredicateTableFilter(Predicate<TestRowObject> predicate) {
 			this.predicate = predicate;
 		}
 
 		@Override
-		public boolean acceptsRow(Long rowObject) {
+		public boolean acceptsRow(TestRowObject rowObject) {
 			return predicate.test(rowObject);
 		}
 
