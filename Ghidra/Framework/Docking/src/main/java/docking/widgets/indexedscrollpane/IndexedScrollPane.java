@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,9 +64,18 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 		this.indexMapper = createIndexMapper();
 	}
 
+	@Override
+	public void setBackground(Color bg) {
+		if (viewport != null) {
+			viewport.setBackground(bg);
+		}
+		super.setBackground(bg);
+	}
+
 	/**
 	 * Sets this scroll pane to never show scroll bars. This is useful when you want a container
 	 * whose view is always as big as the component in this scroll pane.
+	 * @param b true to never scroll
 	 */
 	public void setNeverScroll(boolean b) {
 		neverScroll = true;
@@ -75,16 +84,10 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 		useViewSizeAsPreferredSize = b;
 	}
 
-	/**
-	 * @see JScrollPane#setVerticalScrollBarPolicy(int)
-	 */
 	public void setVerticalScrollBarPolicy(int policy) {
 		scrollPane.setVerticalScrollBarPolicy(policy);
 	}
 
-	/**
-	 * @see JScrollPane#setHorizontalScrollBarPolicy(int)
-	 */
 	public void setHorizontalScrollBarPolicy(int policy) {
 		scrollPane.setHorizontalScrollBarPolicy(policy);
 	}
@@ -167,7 +170,8 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 	class ScrollViewLayout implements LayoutManager {
 
 		@Override
-		public void addLayoutComponent(String name, Component comp) {
+		public void addLayoutComponent(String name, Component c) {
+			// stub
 		}
 
 		@Override
@@ -189,7 +193,8 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 		}
 
 		@Override
-		public void removeLayoutComponent(Component comp) {
+		public void removeLayoutComponent(Component c) {
+			// stub
 		}
 
 	}
@@ -231,6 +236,7 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 		@Override
 		protected void paintComponent(Graphics g) {
+			// stub
 		}
 
 		@Override
