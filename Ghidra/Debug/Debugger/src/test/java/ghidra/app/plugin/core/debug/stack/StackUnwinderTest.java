@@ -513,6 +513,54 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
+	protected Function createFillStackStructProgramX86_64() throws Throwable {
+		createProgram("x86:LE:64:default", "gcc");
+		intoProject(program);
+
+		try (Transaction tx = program.openTransaction("Assemble")) {
+			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+			Structure structure = new StructureDataType("MyStruct", 0, dtm);
+			structure.add(DWordDataType.dataType, "f1", "");
+			structure.add(DWordDataType.dataType, "f2", "");
+			structure.add(QWordDataType.dataType, "f3", "");
+			structure =
+				(Structure) dtm.addDataType(structure, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+			Address entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+
+			Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			buf.assemble("PUSH RBP");
+			buf.assemble("MOV RBP, RSP");
+			buf.assemble("SUB RSP, 0x20");
+			buf.assemble("MOV dword ptr [RBP + -0x10], 0x4");
+			buf.assemble("MOV dword ptr [RBP + -0xc], 0xdeadbeef");
+			buf.assemble("MOV qword ptr [RBP + -0x8], 0xcafebab");
+			buf.assemble("LEA RDI, [RBP + -0x10]");
+			buf.assemble("CALL 0x00400040");
+			buf.assemble("MOV RSP, RBP");
+			buf.assemble("POP RBP");
+			buf.assemble("RET");
+			Address end = buf.getNext();
+
+			program.getMemory().setBytes(entry, buf.getBytes());
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null);
+
+			Function funFillStruct = program.getFunctionManager()
+					.createFunction("fillStruct", entry, new AddressSet(entry, end.previous()),
+						SourceType.ANALYSIS);
+			funFillStruct.addLocalVariable(new LocalVariableImpl("s", structure, -0x18, program),
+				SourceType.ANALYSIS);
+
+			return funFillStruct;
+		}
+	}
+
 	protected Function createFillStructArrayProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
@@ -1552,7 +1600,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 					if (!(field instanceof ClangTextField clangField)) {
 						continue;
 					}
-					if (!fieldText.equals(field.getText())) {
+					if (!fieldText.equals(field.getText().trim())) {
 						continue;
 					}
 					int numRows = field.getNumRows();
@@ -1736,6 +1784,43 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			RowKey.LOCATION, "Location: 00004fe8:2", RowKey.BYTES, "Bytes: (UNKNOWN) 00 00",
 			RowKey.INTEGER, "Integer: (UNKNOWN) 0", RowKey.VALUE, "Value: (UNKNOWN) 0h",
 			RowKey.WARNINGS, "IGNORED"), table);
+	}
+
+	@Test
+	public void testStructureSetInStackHighVarStructField() throws Throwable {
+		addPlugins();
+		// PC Tracking interferes with goTo
+		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
+		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
+		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
+		Function function = createFillStackStructProgramX86_64();
+		Address entry = function.getEntryPoint();
+
+		programManager.openProgram(program);
+
+		// Not necessary to actually run. Just examine values at entry.
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		goTo(staticListing, new ProgramLocation(program, entry));
+		HoverLocation loc = findTokenLocation(function, "f1", "s.f1 = 4;");
+		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
+			traceManager.getCurrent(), loc.fLoc, loc.field);
+
+		assertTable(Map.ofEntries(
+			Map.entry(RowKey.NAME, "Name: f1"),
+			Map.entry(RowKey.FRAME, "Frame: 0 fillStruct pc=00400000 sp=00005000 base=00005000"),
+			Map.entry(RowKey.TYPE, "Type: dword"),
+			Map.entry(RowKey.LOCATION, "Location: 00004fe8:4"),
+			Map.entry(RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00"),
+			Map.entry(RowKey.INTEGER, "Integer: (UNKNOWN) 0"),
+			Map.entry(RowKey.VALUE, "Value: (UNKNOWN) 0h"),
+			Map.entry(RowKey.WARNINGS, "IGNORED")),
+			table);
 	}
 
 	@Test

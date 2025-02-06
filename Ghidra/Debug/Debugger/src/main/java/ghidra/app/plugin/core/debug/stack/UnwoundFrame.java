@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 
 /**
  * A frame that has been unwound through analysis or annotated in the listing
@@ -153,8 +154,8 @@ public interface UnwoundFrame<T> {
 	 * 
 	 * <p>
 	 * Each varnode's value is simply retrieved from the state, in contrast to
-	 * {@link #evaluate(VariableStorage, AddressSetView)}, which ascends to varnodes' defining
-	 * p-code ops.
+	 * {@link #evaluate(Program, VariableStorage, AddressSetView)}, which ascends to varnodes'
+	 * defining p-code ops.
 	 * 
 	 * <p>
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
@@ -173,7 +174,7 @@ public interface UnwoundFrame<T> {
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
 	 * with a live session, and this may block to retrieve live state.
 	 * 
-	 * @see #getValue(VariableStorage)
+	 * @see #getValue(Program, VariableStorage)
 	 * @param variable the variable
 	 * @return the value
 	 */
@@ -197,13 +198,13 @@ public interface UnwoundFrame<T> {
 	 * Evaluate the given storage, following defining p-code ops until symbol storage is reached
 	 * 
 	 * <p>
-	 * This behaves similarly to {@link #getValue(VariableStorage)}, except this one will ascend
-	 * recursively to each varnode's defining p-code op. The recursion terminates when a varnode is
-	 * contained in the given symbol storage. The symbol storage is usually collected by examining
-	 * the tokens on the same line, searching for ones that represent "high symbols." This ensures
-	 * that any temporary storage used by the original program in the evaluation of, e.g., a field
-	 * access, are not read from the current state but re-evaluated in terms of the symbols' current
-	 * values.
+	 * This behaves similarly to {@link #getValue(Program, VariableStorage)}, except this one will
+	 * ascend recursively to each varnode's defining p-code op. The recursion terminates when a
+	 * varnode is contained in the given symbol storage. The symbol storage is usually collected by
+	 * examining the tokens on the same line, searching for ones that represent "high symbols." This
+	 * ensures that any temporary storage used by the original program in the evaluation of, e.g., a
+	 * field access, are not read from the current state but re-evaluated in terms of the symbols'
+	 * current values.
 	 * 
 	 * <p>
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
@@ -218,13 +219,27 @@ public interface UnwoundFrame<T> {
 	T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage);
 
 	/**
+	 * Evaluate the given varnode, following defining p-code ops until symbol storage is reached
+	 * 
+	 * <p>
+	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
+	 * with a live session, and this may block to retrieve live state.
+	 * 
+	 * @param program the program containing the varnode
+	 * @param varnode the varnode
+	 * @param symbolStorage the terminal storage, usually that of symbols
+	 * @return the value
+	 */
+	T evaluate(Program program, Varnode varnode, AddressSetView symbolStorage);
+
+	/**
 	 * Evaluate the output for the given p-code op, ascending until symbol storage is reached
 	 * 
 	 * <p>
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
 	 * with a live session, and this may block to retrieve live state.
 	 * 
-	 * @see #evaluate(VariableStorage, AddressSetView)
+	 * @see #evaluate(Program, VariableStorage, AddressSetView)
 	 * @param program the program containing the op
 	 * @param op the op
 	 * @param symbolStorage the terminal storage, usually that of symbols
@@ -251,7 +266,7 @@ public interface UnwoundFrame<T> {
 	/**
 	 * Set the value of the given variable
 	 * 
-	 * @see #setValue(StateEditor, VariableStorage, BigInteger)
+	 * @see #setValue(StateEditor, Program, VariableStorage, BigInteger)
 	 * @param editor the editor for setting values
 	 * @param variable the variable to modify
 	 * @param value the desired value
