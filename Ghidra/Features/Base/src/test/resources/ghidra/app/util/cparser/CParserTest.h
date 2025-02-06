@@ -1235,6 +1235,8 @@ int check_assert(void)
 
     int x;
     static_assert(sizeof(int) > sizeof(char));
+
+    _Static_assert(sizeof(char) <= 1, "message " #Name " is broken " #Up );
 }
 
 struct statcheck {

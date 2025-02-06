@@ -87,8 +87,13 @@ rootProject.assembleDistribution {
 }
 
 ext.distributePyDep = { name ->
+	Set<File> wheelFiles = PYTHON_DEPS.get(project)
+	if (wheelFiles == null) {
+		wheelFiles = new HashSet<>()
+		PYTHON_DEPS.put(project, wheelFiles)
+	}
     File dep = findPyDep(name)
-    PYTHON_DEPS.add(dep)
+    wheelFiles.add(dep)
     def zipPath = getZipPath(project) 
     rootProject.assembleDistribution {
         into ("${zipPath}/pypkg/dist") {

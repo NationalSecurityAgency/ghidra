@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
-apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
-apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
-apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/hasPythonPackage.gradle"
 
 apply plugin: 'eclipse'
@@ -67,17 +64,19 @@ else if (file(tlb).exists()) {
 	}
 }
 else {
-	def prebuiltTlb = new File(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb")
-	if (prebuiltTlb.exists()) {
-		println "Copying prebuilt dbgmodel.tlb"
+	def depsFile = file("${DEPS_DIR}/Debugger-agent-dbgeng/dbgmodel.tlb")
+	def binRepoFile = file("${BIN_REPO}/${getGhidraRelativePath(project)}/os/win_x86_64/dbgmodel.tlb")
+	def prebuiltTlb = depsFile.exists() ? depsFile : (binRepoFile.exists() ? binRepoFile : null)
+
+	if (prebuiltTlb) {
 		tasks.assemblePyPackage {
-			from(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb") {
+			from(prebuiltTlb) {
 				into("src/ghidradbg/dbgmodel/tlb")
 			}
 		}
 	}
 	else {
-		println "WARNING: dbgmodel.tlb omitted from ghidradbg python package"
+		println "****WARNING:**** dbgmodel.tlb omitted from ghidradbg python package"
 	}
 }
 

@@ -71,7 +71,6 @@ import ghidra.util.task.TaskMonitor;
  * This class is used by GhidraScript.
  * <p>
  * Changing this class will break user scripts.
- * <p>
  */
 public class FlatProgramAPI {
 	public static final int MAX_REFERENCES_TO = 0x1000;
@@ -2563,7 +2562,7 @@ public class FlatProgramAPI {
 	 * <p>
 	 * If a program already exists with the specified name, then a time stamp will be appended
 	 * to the name to make it unique.
-	 * <p>
+	 * 
 	 * @param program the program to save
 	 * @param path list of string path elements (starting at the root of the project) that specify
 	 * the project folder to save the program info.  Example: { "folder1", "subfolder2",

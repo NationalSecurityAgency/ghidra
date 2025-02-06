@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,10 @@ public class LocalBSimQueryScript extends GhidraScript {
 	protected void run() throws Exception {
 		if (isRunningHeadless()) {
 			popup("This script cannot be run headlessly.");
+			return;
+		}
+		if (currentProgram == null) {
+			popup("This script requires a program to be open in the tool");
 			return;
 		}
 
@@ -341,7 +345,6 @@ public class LocalBSimQueryScript extends GhidraScript {
 	class CompareMatchesExecutor implements TableChooserExecutor {
 
 		private FunctionComparisonService compareService;
-		private MatchedFunctionComparisonModel model;
 
 		public CompareMatchesExecutor() {
 			compareService = state.getTool().getService(FunctionComparisonService.class);
@@ -355,11 +358,7 @@ public class LocalBSimQueryScript extends GhidraScript {
 		@Override
 		public boolean execute(AddressableRowObject rowObject) {
 			LocalBSimMatch match = (LocalBSimMatch) rowObject;
-			if (model == null) {
-				model = new MatchedFunctionComparisonModel();
-				compareService.createCustomComparison(model, null);
-			}
-			model.addMatch(match.getSourceFunc(), match.getTargetFunc());
+			compareService.createComparison(match.getSourceFunc(), match.getTargetFunc());
 			return false;
 		}
 	}

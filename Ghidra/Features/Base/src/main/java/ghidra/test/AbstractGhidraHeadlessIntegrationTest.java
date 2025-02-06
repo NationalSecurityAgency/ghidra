@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import org.junit.BeforeClass;
+import org.junit.AfterClass;
 
 import docking.test.AbstractDockingTest;
 import ghidra.GhidraTestApplicationLayout;
@@ -39,6 +39,7 @@ import ghidra.framework.plugintool.mgr.ServiceManager;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
@@ -93,7 +94,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		System.setProperty(GhidraScriptConstants.USER_SCRIPTS_DIR_PROPERTY, getTestDirectoryPath());
 	}
 
-	@BeforeClass
+	@AfterClass
 	public static void cleanDbTestDir() {
 		// keep files around in batch mode to allow tests to run faster; assume batch mode performs
 		// its own cleanup; only run once per class to allow subsequent tests to be faster
@@ -206,25 +207,51 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic.
 	 *
-	 * @param p the program
+	 * @param dobj the domain object (e.g., a program)
 	 * @param c the code to execute
 	 * @see #modifyProgram(Program, ExceptionalCallback)
 	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
-	public static <E extends Exception> void tx(Program p, ExceptionalCallback<E> c) {
-		int txId = p.startTransaction("Test - Function in Transaction");
+	public static <E extends Exception> void tx(DomainObject dobj, ExceptionalCallback<E> c) {
+		int txId = dobj.startTransaction("Test - Function in Transaction");
 		boolean commit = true;
 		try {
 			c.call();
-			p.flushEvents();
+			dobj.flushEvents();
 			waitForSwing();
 		}
 		catch (Exception e) {
 			commit = false;
-			failWithException("Exception modifying program '" + p.getName() + "'", e);
+			failWithException("Exception modifying program '" + dobj.getName() + "'", e);
 		}
 		finally {
-			p.endTransaction(txId, commit);
+			dobj.endTransaction(txId, commit);
+		}
+	}
+
+	/**
+	 * Provides a convenient method for modifying the given data type manager, handling the 
+	 * transaction logic.
+	 *
+	 * @param dtm the data type manager
+	 * @param c the code to execute
+	 * @see #modifyProgram(Program, ExceptionalCallback)
+	 * @see #modifyProgram(Program, ExceptionalFunction)
+	 */
+	public static <E extends Exception> void tx(DataTypeManager dtm, ExceptionalCallback<E> c) {
+		int txId = dtm.startTransaction("Test - Function in Transaction");
+		boolean commit = true;
+		try {
+			c.call();
+			dtm.flushEvents();
+			waitForSwing();
+		}
+		catch (Exception e) {
+			commit = false;
+			failWithException("Exception modifying program '" + dtm.getName() + "'", e);
+		}
+		finally {
+			dtm.endTransaction(txId, commit);
 		}
 	}
 
@@ -261,7 +288,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
-	 * logic. This method is calls {@link #tx(Program, ExceptionalCallback)}, but helps with
+	 * logic. This method is calls {@link #tx(DomainObject, ExceptionalCallback)}, but helps with
 	 * semantics.
 	 *
 	 * @param p the program

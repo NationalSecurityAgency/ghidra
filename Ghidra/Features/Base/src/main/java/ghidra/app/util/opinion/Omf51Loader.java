@@ -97,13 +97,20 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 			Address start = headerBlock.getStart();
 
 			for (OmfRecord record : records) {
-				Data d = DataUtilities.createData(program, start.add(record.getRecordOffset()),
-					record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				StructConverter.setEndian(d, false);
+				try {
+					Data d = DataUtilities.createData(program, start.add(record.getRecordOffset()),
+						record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					StructConverter.setEndian(d, false);
+				}
+				catch (Exception e) {
+					log.appendMsg("Failed to markup record type 0x%x at offset 0x%x. %s."
+							.formatted(record.getRecordType(), record.getRecordOffset(),
+								e.getMessage()));
+				}
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg("Failed to markup records");
+			log.appendMsg("Failed to markup records: " + e.getMessage());
 		}
 	}
 

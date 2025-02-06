@@ -45,6 +45,9 @@ task ip {
 		// gets the external libs from gradle and verifies they are accounted for in the Module.manifest file
 		checkExternalLibsInMap(moduleManifestIpMap, p)
 		
+		// gets the declared external python wheels and verifies they are accounted for in the Module.manifest file
+		checkExternalPythonWheelsInMap(moduleManifestIpMap, project)
+		
 		// adds the ip info from the Module.manifest file to the map generated from scanning the module files.
 		addModuleManifestIp(ipToFileMap, moduleManifestIpMap)
 		
@@ -104,6 +107,18 @@ def checkExternalLibsInMap(Map<String, String> map, Project project) {
 			String relativePath = "lib/"+libName;
 			assert map.containsKey(relativePath) : "No License specified for external library: "+relativePath+ " in module "+project.projectDir
 		}
+	}
+}
+
+/**********************************************************************************
+ * Gets the python dependences and makes sure each external wheel is accounted for in
+ * the map from the Module.manifest file
+ *********************************************************************************/
+def checkExternalPythonWheelsInMap(Map<String, String> map, Project project) {
+	PYTHON_DEPS.getOrDefault(project, List.of()).each { dep ->
+		String name = dep.getName()  // get just the filename without the path
+		String relativePath = "pypkg/dist/"+name;
+		assert map.containsKey(relativePath) : "No License specified for external python wheel: "+relativePath+ " in module "+project.projectDir
 	}
 }
 

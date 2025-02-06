@@ -96,7 +96,7 @@ import ghidra.util.task.TaskMonitor;
  *  version of stream 0 is what was persisted in the header.  So after the StreamTable
  *  has been deserialized from the directory stream, the stream 0 information in the
  *  StreamTable gets overwritten with the stream 0 that we had already obtained.
- * <P>
+ * 
  * @see MsfFileReader
  * @see MsfStream
  * @see MsfDirectoryStream

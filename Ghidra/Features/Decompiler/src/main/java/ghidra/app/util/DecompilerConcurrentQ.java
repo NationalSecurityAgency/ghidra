@@ -38,7 +38,6 @@ import utility.function.Dummy;
  * 		<li>For non-blocking usage, simply call
  * 		{@link #process(Iterator, Consumer)}, passing the consumer of the results.</li>
  * </ul>
- * <p>
  *
  * @param <I> The input data needed by the supplied {@link QCallback}
  * @param <R> The result data (can be the same as {@code I} if there is no result) returned
@@ -133,7 +132,7 @@ public class DecompilerConcurrentQ<I, R> {
 
 	/**
 	 * Calls dispose on the queue being processed.  Further, the call will block for up to
-	 * <tt>timeoutSeconds</tt> while waiting for the queue to finish processing.
+	 * {@code timeoutSeconds} while waiting for the queue to finish processing.
 	 *
 	 * @param timeoutSeconds the number of seconds to wait for the disposed queue to finish
 	 *        processing

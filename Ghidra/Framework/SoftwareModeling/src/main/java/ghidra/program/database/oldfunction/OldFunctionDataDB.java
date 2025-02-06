@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,8 @@ package ghidra.program.database.oldfunction;
 import java.io.IOException;
 import java.util.*;
 
-import db.Field;
 import db.DBRecord;
+import db.Field;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -32,9 +32,6 @@ import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.InvalidInputException;
 
-/**
- *
- */
 class OldFunctionDataDB {
 
 	private AddressMap addrMap;

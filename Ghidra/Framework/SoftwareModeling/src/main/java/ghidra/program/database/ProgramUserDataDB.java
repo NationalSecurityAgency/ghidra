@@ -119,6 +119,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		return program.getName() + "_UserData";
 	}
 
+	/**
+	 * Create a new program user data store.
+	 * @param program related program
+	 * @throws IOException if an IO error occurs
+	 */
 	public ProgramUserDataDB(ProgramDB program) throws IOException {
 		super(new DBHandle(), getName(program), 500, program);
 		this.program = program;
@@ -157,8 +162,22 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		}
 	}
 
+	/**
+	 * Open existing program user data store.
+	 * If a major language change is detected the instance will automatically attempt to upgrade
+	 * its internal address map.
+	 * @param dbh user data storage DB handle
+	 * @param program related program
+	 * @param monitor task monitor
+	 * @throws IOException if an IO error occurs
+	 * @throws VersionException if a DB version error occurs
+	 * @throws LanguageNotFoundException if language was not found
+	 * @throws CancelledException if instantiation was cancelled
+	 * @throws IllegalStateException if data store is bad or incmopatible with program
+	 */
 	public ProgramUserDataDB(DBHandle dbh, ProgramDB program, TaskMonitor monitor)
-			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
+			throws IOException, VersionException, LanguageNotFoundException, CancelledException,
+			IllegalStateException {
 
 		super(dbh, getName(program), 500, program);
 		this.program = program;
@@ -200,6 +219,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			upgradeDatabase();
 
 			if (languageVersionExc != null) {
+				if (languageUpgradeTranslator == null) {
+					throw new LanguageNotFoundException(languageID + ":" + languageVersion);
+				}
 				try {
 					setLanguage(languageUpgradeTranslator, monitor);
 					addressMap.memoryMapChanged(program.getMemory());
@@ -210,6 +232,16 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 					}
 					throw e;
 				}
+			}
+
+			if (!program.getLanguageID().equals(languageID)) {
+				throw new IllegalStateException(
+					"User data and program have inconsistent language ID");
+			}
+
+			if (program.getLanguage().getVersion() != languageVersion) {
+				throw new IllegalStateException(
+					"User data language version does not match program's");
 			}
 
 			endTransaction(id, true);
@@ -431,6 +463,10 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			record.setString(VALUE_COL, languageID.getIdAsString());
 			table.putRecord(record);
 
+			record = SCHEMA.createRecord(new StringField(LANGUAGE_VERSION));
+			record.setString(VALUE_COL, Integer.toString(languageVersion));
+			table.putRecord(record);
+
 			setChanged(true);
 			clearCache(true);
 
@@ -451,6 +487,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		return dbh.canUpdate();
 	}
 
+	@Override
+	protected void setChanged(boolean b) {
+		super.setChanged(b);
+	}
+	
 	private PropertyMap<?> getPropertyMap(String owner, String propertyName, int propertyType,
 			Class<?> saveableClass, boolean create) throws PropertyTypeMismatchException {
 

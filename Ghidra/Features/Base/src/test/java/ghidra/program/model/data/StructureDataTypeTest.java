@@ -24,9 +24,6 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 
-/**
- *
- */
 public class StructureDataTypeTest extends AbstractGenericTest {
 
 	private Structure struct;

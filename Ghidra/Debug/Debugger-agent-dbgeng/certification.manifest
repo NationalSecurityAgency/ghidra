@@ -9,6 +9,7 @@ data/debugger-launchers/local-dbgeng-ext.bat||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng.bat||GHIDRA||||END|
 data/debugger-launchers/local-ttd.bat||GHIDRA||||END|
 data/debugger-launchers/remote-dbgeng.bat||GHIDRA||||END|
+data/debugger-launchers/svrcx-dbgeng.bat||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|

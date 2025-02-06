@@ -2228,7 +2228,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * be grouped with a specific set of actions.
 	 * <p>
 	 * The default group for a cascaded submenu is the name of the submenu.
-	 * <p>
 	 *
 	 * @param menuPath menu name path where the last element corresponds to the specified group
 	 *            name.

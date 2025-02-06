@@ -420,7 +420,6 @@ public final class NumericUtilities {
 	 * For example, consider the mask 00001111:01011100, and the value 00001001:00011000. This will
 	 * display as {@code X8:[x0x1][10xx]}. To see the correlation, consider the table:
 	 * <table>
-	 * <caption></caption>
 	 * <tr>
 	 * <th>Display</th>
 	 * <th>{@code X}</th>
@@ -687,7 +686,6 @@ public final class NumericUtilities {
 	 * integer</li>
 	 * </ul>
 	 * <table>
-	 * <caption></caption>
 	 * <tr>
 	 * <th>Number</th>
 	 * <th>Radix</th>
@@ -698,7 +696,7 @@ public final class NumericUtilities {
 	 * <tr>
 	 * <td>&nbsp;</td>
 	 * <td></td>
-	 * <td><i></i></td>
+	 * <td></td>
 	 * <td></td>
 	 * <td></td>
 	 * </tr>
@@ -733,7 +731,7 @@ public final class NumericUtilities {
 	 * <tr>
 	 * <td>&nbsp;</td>
 	 * <td></td>
-	 * <td><i></i></td>
+	 * <td></td>
 	 * <td></td>
 	 * <td></td>
 	 * </tr>
@@ -768,7 +766,7 @@ public final class NumericUtilities {
 	 * <tr>
 	 * <td>&nbsp;</td>
 	 * <td></td>
-	 * <td><i></i></td>
+	 * <td></td>
 	 * <td></td>
 	 * <td></td>
 	 * </tr>

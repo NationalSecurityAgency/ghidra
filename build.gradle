@@ -50,7 +50,7 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
  * Identify supported Python command
  ***************************************************************************************/
 project.ext.PYTHON3 = findPython3(true)
-project.ext.PYTHON_DEPS = new HashSet<String>()
+project.ext.PYTHON_DEPS = new HashMap<Project, Set<File>>()
 
 /*********************************************************************************
  *  Define the location of bin repo

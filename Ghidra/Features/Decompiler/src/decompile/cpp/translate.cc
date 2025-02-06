@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -186,6 +186,49 @@ bool JoinRecord::operator<(const JoinRecord &op2) const
       return (pieces[i] < op2.pieces[i]);
     i += 1;
   }
+}
+
+/// Assuming the given list of VarnodeData go from most significant to least significant,
+/// merge any contiguous elements in the list.  Varnodes that are not in the \e stack address space
+/// are only merged if the resulting byte range has a formal register name.
+/// \param seq is the given list of VarnodeData
+/// \param trans is the language to use for register names
+void JoinRecord::mergeSequence(vector<VarnodeData> &seq,const Translate *trans)
+
+{
+  int4 i=1;
+  while(i<seq.size()) {
+    VarnodeData &hi(seq[i-1]);
+    VarnodeData &lo(seq[i]);
+    if (hi.isContiguous(lo))
+      break;
+    i += 1;
+  }
+  if (i >= seq.size()) return;
+  vector<VarnodeData> res;
+  i = 1;
+  res.push_back(seq.front());
+  bool lastIsInformal = false;
+  while(i<seq.size()) {
+    VarnodeData &hi(res.back());
+    VarnodeData &lo(seq[i]);
+    if (hi.isContiguous(lo)) {
+      hi.offset = hi.space->isBigEndian() ? hi.offset : lo.offset;
+      hi.size += lo.size;
+      if (hi.space->getType() != IPTR_SPACEBASE) {
+	lastIsInformal = trans->getExactRegisterName(hi.space, hi.offset, hi.size).size() == 0;
+      }
+    }
+    else {
+      if (lastIsInformal)
+	break;
+      res.push_back(lo);
+    }
+    i += 1;
+  }
+  if (lastIsInformal)	// If the merge contains an informal register
+    return;		// throw it out and keep the original sequence
+  seq = res;
 }
 
 /// Initialize manager containing no address spaces. All the cached space slots are set to null

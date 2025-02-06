@@ -345,9 +345,8 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		if (dcst == null) {
 			return;
 		}
-		DebugCOFFSymbol[] symbols = dcst.getSymbols();
 		int errorCount = 0;
-		for (DebugCOFFSymbol symbol : symbols) {
+		for (DebugCOFFSymbol symbol : dcst.getSymbols()) {
 			if (monitor.isCancelled()) {
 				return;
 			}

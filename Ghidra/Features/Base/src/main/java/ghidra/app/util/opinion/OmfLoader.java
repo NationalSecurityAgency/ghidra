@@ -160,10 +160,19 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			for (OmfRecord record : fileHeader.getRecords()) {
 				DataUtilities.createData(program, start.add(record.getRecordOffset()),
 					record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				try {
+					DataUtilities.createData(program, start.add(record.getRecordOffset()),
+						record.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				catch (Exception e) {
+					log.appendMsg("Failed to markup record type 0x%x at offset 0x%x. %s."
+							.formatted(record.getRecordType(), record.getRecordOffset(),
+								e.getMessage()));
+				}
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg("Failed to markup records");
+			log.appendMsg("Failed to markup records: " + e.getMessage());
 		}
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.elf.info;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -35,7 +34,6 @@ import ghidra.util.NumericUtilities;
  * An ELF note that contains a list of enumerated "properties".
  * <p>
  * Currently known property types are stack_size and no_copy_on_protected (flag).
- * <p>
  * <pre>
  *  array of Elf_Prop {
  *    word pr_type;

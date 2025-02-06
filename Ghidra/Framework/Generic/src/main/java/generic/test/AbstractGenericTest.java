@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -485,7 +485,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Uses reflection to execute the constructor for the given class with the given parameters. The
 	 * new instance of the given class will be returned.
-	 * <p>
 	 *
 	 * @param containingClass The class that contains the desired constructor.
 	 * @param parameterTypes The parameter <b>types</b> that the constructor takes. This value can

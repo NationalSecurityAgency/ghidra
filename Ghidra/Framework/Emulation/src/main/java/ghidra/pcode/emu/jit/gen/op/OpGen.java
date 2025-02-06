@@ -40,7 +40,6 @@ import ghidra.program.model.pcode.PcodeOp;
  * each p-code op, its use-def class, its generator class, and a brief strategy for its bytecode
  * implementation.
  * 
- * <p>
  * <table border="1">
  * <tr>
  * <th>P-code Op</th>

@@ -163,7 +163,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
 		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
 
-		if (!DefaultCompositeMember.applyDataTypeMembers(composite, isClass, size, myMembers,
+		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, isClass, size, myMembers,
 			msg -> reconstructionWarn(msg, hasHiddenComponents(lists)),
 			applicator.getCancelOnlyWrappingMonitor())) {
 			clearComponents(composite);
@@ -362,16 +362,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			applicator.checkCancelled();
 			RecordNumber recordNumber = vftPtr.getPointerTypeRecordNumber();
 			DataType dataType = applicator.getDataType(recordNumber);
-			if (dataType == null) {
-				throw new PdbException("Type not processed for record: " + recordNumber);
+			if (!(dataType instanceof Pointer ptrType)) {
+				throw new PdbException("vftptr not pointer type for record: " + recordNumber);
 			}
 			int offset = vftPtr.getOffset();
 			String vftPtrMemberName = vftPtr.getName();
 			DefaultPdbUniversalMember member =
 				new DefaultPdbUniversalMember(vftPtrMemberName, dataType, offset);
 			myMembers.add(member);
-			myClassType.addVirtualFunctionTablePointer(member.getName(),
-				member.getDataType().getDataType(), member.getOffset());
+			myClassType.addVirtualFunctionTablePointer(ptrType, offset);
 		}
 	}
 

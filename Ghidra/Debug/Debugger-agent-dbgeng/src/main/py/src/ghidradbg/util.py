@@ -29,12 +29,13 @@ import traceback
 from comtypes import CoClass, GUID
 import comtypes
 from comtypes.gen import DbgMod
-from comtypes.hresult import S_OK
+from comtypes.hresult import S_OK, S_FALSE
 from pybag import pydbg, userdbg, kerneldbg, crashdbg
 from pybag.dbgeng import core as DbgEng
 from pybag.dbgeng import exception
 from pybag.dbgeng import util as DbgUtil
 from pybag.dbgeng.callbacks import DbgEngCallbacks
+from pybag.dbgeng.idebugclient import DebugClient
 
 from ghidradbg.dbgmodel.ihostdatamodelaccess import HostDataModelAccess
 from _winapi import STILL_ACTIVE
@@ -145,7 +146,7 @@ class DbgExecutor(object):
 
     def _submit_no_exit(self, fn, /, *args, **kwargs):
         f = Future()
-        if self._executing:
+        if self._executing and self._ghidra_dbg.IS_REMOTE == False:
             f.set_exception(DebuggeeRunningException("Debuggee is Running"))
             return f
         w = _WorkItem(f, fn, args, kwargs)
@@ -163,7 +164,8 @@ class DbgExecutor(object):
 
     def _state_execute(self):
         self._executing = True
-        self._clear_queue()
+        if self._ghidra_dbg.IS_REMOTE == False:
+            self._clear_queue()
 
     def _state_break(self):
         self._executing = False
@@ -239,9 +241,25 @@ class GhidraDbg(object):
             setattr(self, name, self.eng_thread(getattr(base, name)))
             self.IS_KERNEL = False
             self.IS_EXDI = False
+            self.IS_REMOTE = os.getenv('OPT_CONNECT_STRING') is not None
 
     def _new_base(self):
-        self._protected_base = AllDbg()
+        remote = os.getenv('OPT_CONNECT_STRING')
+        if remote is not None:
+            remote_client = DbgEng.DebugConnect(remote)
+            debug_client = self._generate_client(remote_client)
+            self._protected_base = AllDbg(client=debug_client)
+        else:
+            self._protected_base = AllDbg()
+            
+            
+    def _generate_client(self, original):
+        cli = POINTER(DbgEng.IDebugClient)()
+        cliptr = POINTER(POINTER(DbgEng.IDebugClient))(cli)
+        hr = original.CreateClient(cliptr)
+        exception.check_err(hr)
+        return DebugClient(client=cli)
+           
 
     @property
     def _base(self):
@@ -655,6 +673,9 @@ def GetExitCode():
         return STILL_ACTIVE
     exit_code = c_ulong()
     hr = dbg._base._client._cli.GetExitCode(byref(exit_code))
+    # DebugConnect targets return E_UNEXPECTED but the target is STILL_ACTIVE
+    if hr != S_OK and hr != S_FALSE:
+        return STILL_ACTIVE
     return exit_code.value
 
 
@@ -915,8 +936,20 @@ def set_kernel(value):
 def is_kernel():
     return dbg.IS_KERNEL
 
+
 def set_exdi(value):
     dbg.IS_EXDI = value
     
+    
 def is_exdi():
     return dbg.IS_EXDI
+
+
+def set_remote(value):
+    dbg.IS_REMOTE = value
+    
+    
+def is_remote():
+    return dbg.IS_REMOTE
+    
+		

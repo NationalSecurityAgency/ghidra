@@ -627,7 +627,7 @@ class CloneBlockOps {
     PcodeOp *origOp;		///< Original op that was cloned
     ClonePair(PcodeOp *c,PcodeOp *o) { cloneOp = c; origOp = o; }	///< Constructor
   };
-  Funcdata &data;
+  Funcdata &data;		///< Function containing ops to clone
   vector<ClonePair> cloneList;	///< List of cloned ops
   map<PcodeOp *,PcodeOp *> origToClone;	///< Map from original p-code op to its clone
   PcodeOp *buildOpClone(PcodeOp *op);	///< Produce a skeleton copy of the given PcodeOp

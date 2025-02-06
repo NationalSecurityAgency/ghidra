@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class DIEAggregate {
 	 * <p>
 	 * DW_AT_abstract_origin and DW_AT_specification attributes are followed to find the previous
 	 * {@link DebugInfoEntry} instances.
-	 * <p>
+	 * 
 	 * @param die starting DIE record
 	 * @return new {@link DIEAggregate} made up of the starting DIE and all DIEs that it points
 	 * to via abstract_origin and spec attributes.
@@ -131,7 +131,7 @@ public class DIEAggregate {
 	 * <p>
 	 * Mainly useful early in the {@link DWARFCompilationUnit}'s bootstrapping process
 	 * when it needs to read values from DIEs.
-	 * <p>
+	 * 
 	 * @param die {@link DebugInfoEntry}
 	 * @return {@link DIEAggregate} containing a single DIE
 	 */
@@ -318,7 +318,6 @@ public class DIEAggregate {
 	 * <p>
 	 * Attributes are searched for in each fragment in this aggregate, starting with the
 	 * 'head' fragment, progressing toward the 'decl' fragment.
-	 * <p>
 	 *
 	 * @param attribute See {@link DWARFAttribute}
 	 * @param clazz must be derived from {@link DWARFAttributeValue}
@@ -337,7 +336,6 @@ public class DIEAggregate {
 	 * <p>
 	 * Attributes are searched for in each fragment in this aggregate, starting with the
 	 * 'head' fragment, progressing toward the 'decl' fragment.
-	 * <p>
 	 *
 	 * @param attribute See {@link DWARFAttribute}
 	 * @return DWARFAttributeValue, or null if not found
@@ -362,7 +360,7 @@ public class DIEAggregate {
 	/**
 	 * Returns the boolean value of the requested attribute, or -defaultValue- if
 	 * the attribute is missing or not the correct type.
-	 * <p>
+	 * 
 	 * @param attribute {@link DWARFAttribute} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return boolean value, or the defaultValue if attribute is not present
@@ -375,7 +373,7 @@ public class DIEAggregate {
 	/**
 	 * Returns the string value of the requested attribute, or -defaultValue- if
 	 * the attribute is missing or not the correct type.
-	 * <p>
+	 * 
 	 * @param attribute {@link DWARFAttribute} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return String value, or the defaultValue if attribute is not present
@@ -391,7 +389,7 @@ public class DIEAggregate {
 	/**
 	 * Returns the string value of the {@link DWARFAttribute#DW_AT_name dw_at_name} attribute,
 	 * or null if it is missing.
-	 * <p>
+	 * 
 	 * @return name of this DIE aggregate, or null if missing
 	 */
 	public String getName() {
@@ -435,7 +433,7 @@ public class DIEAggregate {
 	/**
 	 * Returns the {@link DIEAggregate diea} instance pointed to by the requested attribute,
 	 * or null if the attribute does not exist.
-	 * <p>
+	 * 
 	 * @param attribute {@link DWARFAttribute} id
 	 * @return {@link DIEAggregate}, or the null if attribute is not present
 	 */
@@ -484,7 +482,7 @@ public class DIEAggregate {
 
 	/**
 	 * Return a list of children that are of a specific DWARF type.
-	 * <p>
+	 * 
 	 * @param childTag see {@link DWARFTag DWARFTag DW_TAG_* values}
 	 * @return List of children DIEs that match the specified tag
 	 */
@@ -527,7 +525,7 @@ public class DIEAggregate {
 	/**
 	 * Returns the signed integer value of the requested attribute after resolving
 	 * any DWARF expression opcodes.
-	 * <p>
+	 * 
 	 * @param attribute {@link DWARFAttribute} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return int value, or the defaultValue if attribute is not present
@@ -560,7 +558,7 @@ public class DIEAggregate {
 	/**
 	 * Returns the unsigned integer value of the requested attribute after resolving
 	 * any DWARF expression opcodes.
-	 * <p>
+	 * 
 	 * @param attribute {@link DWARFAttribute} id
 	 * @param defaultValue value to return if attribute is not present
 	 * @return unsigned long value, or the defaultValue if attribute is not present
@@ -673,7 +671,7 @@ public class DIEAggregate {
 	/**
 	 * Returns true if this DIE has a DW_AT_declaration attribute and
 	 * does NOT have a matching inbound DW_AT_specification reference.
-	 * <p>
+	 * 
 	 * @return boolean true if this DIE has a DW_AT_declaration attribute and
 	 * does NOT have a matching inbound DW_AT_specification reference
 	 */

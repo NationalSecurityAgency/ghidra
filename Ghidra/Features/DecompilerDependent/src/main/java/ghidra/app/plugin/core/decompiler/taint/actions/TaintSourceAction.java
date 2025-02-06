@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin;
 import ghidra.app.plugin.core.decompiler.taint.TaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.MarkType;
-import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
@@ -49,7 +48,7 @@ public class TaintSourceAction extends TaintAbstractDecompilerAction {
 	private TaintPlugin plugin;
 	private MarkType mtype;
 
-	public TaintSourceAction(TaintPlugin plugin, TaintState state) {
+	public TaintSourceAction(TaintPlugin plugin) {
 		super("Mark Source");
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "TaintSource"));
 		// Taint Menu  -> Source sub item.
@@ -66,6 +65,10 @@ public class TaintSourceAction extends TaintAbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		if (plugin.getTaintState() == null) {
+			return false;
+		}
+
 		Function function = context.getFunction();
 		if (function == null || function instanceof UndefinedFunction) {
 			return false;

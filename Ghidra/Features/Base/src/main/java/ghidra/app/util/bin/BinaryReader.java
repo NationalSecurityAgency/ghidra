@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,6 @@ public class BinaryReader {
 
 	/**
 	 * Reads and returns an object from the current position in the specified input stream.
-	 * <p>
 	 * 
 	 * @param <T> the type of object that will be returned
 	 */
@@ -579,7 +578,6 @@ public class BinaryReader {
 	 * advancing the current index by the length of the string that was found.
 	 * <p>
 	 * Note: this method no longer trims() the returned String.
-	 * <p>
 	 * 
 	 * @return the US-ASCII string at the current index
 	 * @exception IOException if an I/O error occurs
@@ -596,7 +594,7 @@ public class BinaryReader {
 	 * a string from a fixed length field that is padded with trailing null chars)
 	 * <p>
 	 * Note: this method no longer trims() the returned String.
-	 * <p>
+	 * 
 	 * @param length number of bytes to read
 	 * @return the US-ASCII string at the current index
 	 */
@@ -607,7 +605,6 @@ public class BinaryReader {
 	/**
 	 * Reads a null-terminated UTF-16 Unicode string at the current index, 
 	 * advancing the current index by the length of the string that was found.
-	 * <p>
 	 * 
 	 * @return UTF-16 string at the current index
 	 * @exception IOException if an I/O error occurs
@@ -619,7 +616,6 @@ public class BinaryReader {
 	/**
 	 * Reads a fixed length UTF-16 Unicode string at the current index,
 	 * advancing the current index by the length of the string that was found.
-	 * <p>
 	 *
 	 * @param charCount number of UTF-16 characters to read (not bytes)
 	 * @return the UTF-16 Unicode string at the current index
@@ -632,7 +628,6 @@ public class BinaryReader {
 	/**
 	 * Reads a null-terminated UTF-8 string at the current index, 
 	 * advancing the current index by the length of the string that was found.
-	 * <p>
 	 * 
 	 * @return UTF-8 string at the current index
 	 * @exception IOException if an I/O error occurs
@@ -644,7 +639,6 @@ public class BinaryReader {
 	/**
 	 * Reads a fixed length UTF-8 string the current index,
 	 * advancing the current index by the length of the string that was found.
-	 * <p>
 	 *
 	 * @param length number of bytes to read
 	 * @return the UTF-8 string at the current index
@@ -658,7 +652,7 @@ public class BinaryReader {
 	 * Reads a null terminated string starting at the current index, 
 	 * using a specific {@link Charset}, advancing the current index by the length of 
 	 * the string that was found.
-	 * <p>
+	 * 
 	 * @param charset {@link Charset}, see {@link StandardCharsets}
 	 * @param charLen number of bytes in each character
 	 * @return the string
@@ -679,7 +673,7 @@ public class BinaryReader {
 	 * <p>
 	 * Trailing null terminator characters will be removed.  (suitable for reading
 	 * a string from a fixed length field that is padded with trailing null chars)
-	 * <p>
+	 * 
 	 * @param charCount the number of charLen character elements to read
 	 * @param charset {@link Charset}, see {@link StandardCharsets}
 	 * @param charLen number of bytes in each character
@@ -851,7 +845,6 @@ public class BinaryReader {
 	 * the first null character.
 	 * <p>
 	 * Note: this method no longer trims() the returned String.
-	 * <p>
 	 * 
 	 * @param index starting position of the string
 	 * @return US-ASCII string, excluding the trailing null terminator character
@@ -868,7 +861,7 @@ public class BinaryReader {
 	 * a string from a fixed length field that is padded with trailing null chars)
 	 * <p>
 	 * Note: this method no longer trims() the returned String.
-	 * <p>
+	 * 
 	 * @param index where the string begins
 	 * @param length number of bytes to read
 	 * @return the US-ASCII string
@@ -883,7 +876,7 @@ public class BinaryReader {
 	 * the pre-specified {@link #setLittleEndian(boolean) endianness}.
 	 * <p>
 	 * The end of the string is denoted by a two-byte (ie. short) <code>null</code> character.
-	 * <p>
+	 * 
 	 * @param index where the UTF-16 Unicode string begins
 	 * @return the UTF-16 Unicode string
 	 * @exception IOException if an I/O error occurs
@@ -899,7 +892,7 @@ public class BinaryReader {
 	 * <p>
 	 * Trailing null terminator characters will be removed.  (suitable for reading
 	 * a string from a fixed length field that is padded with trailing null chars)
-	 * <p>
+	 * 
 	 * @param index the index where the UTF-16 Unicode string begins
 	 * @param charCount the number of UTF-16 character elements to read.
 	 * @return the UTF-16 Unicode string
@@ -911,7 +904,7 @@ public class BinaryReader {
 
 	/**
 	 * Reads a null-terminated UTF-8 string starting at <code>index</code>.
-	 * <p>
+	 * 
 	 * @param index where the UTF-8 string begins
 	 * @return the string
 	 * @exception IOException if an I/O error occurs
@@ -926,7 +919,7 @@ public class BinaryReader {
 	 * <p>
 	 * Trailing null terminator characters will be removed.  (suitable for reading
 	 * a string from a fixed length field that is padded with trailing null chars)
-	 * <p>
+	 * 
 	 * @param index the index where the UTF-8 string begins
 	 * @param length the number of bytes to read
 	 * @return the string
@@ -942,7 +935,7 @@ public class BinaryReader {
 	 * <p>
 	 * Trailing null terminator characters will be removed.  (suitable for reading
 	 * a string from a fixed length field that is padded with trailing null chars)
-	 * <p>
+	 * 
 	 * @param index the index where the string begins
 	 * @param charCount the number of charLen character elements to read
 	 * @param charset {@link Charset}, see {@link StandardCharsets}
@@ -965,7 +958,7 @@ public class BinaryReader {
 	/**
 	 * Reads a null-terminated string starting at <code>index</code>, using a specific
 	 * {@link Charset}.
-	 * <p>
+	 * 
 	 * @param index where the string begins
 	 * @param charset {@link Charset}, see {@link StandardCharsets}
 	 * @param charLen number of bytes in each character

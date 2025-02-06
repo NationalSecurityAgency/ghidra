@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,6 +44,7 @@ import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
+import ghidra.app.plugin.core.datamgr.tree.DtFilterState;
 import ghidra.app.plugin.core.datamgr.util.DataDropOnBrowserHandler;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.*;
@@ -369,8 +370,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 		DataTypesProvider newProvider = new DataTypesProvider(this, SEARCH_PROVIDER_NAME, true);
 		newProvider.setIncludeDataTypeMembersInFilter(provider.isIncludeDataMembersInSearch());
-		newProvider.setFilteringArrays(provider.isFilteringArrays());
-		newProvider.setFilteringPointers(provider.isFilteringPointers());
+		DtFilterState filterState = provider.getFilterState();
+		newProvider.setFilterState(filterState.copy());
 		return newProvider;
 	}
 

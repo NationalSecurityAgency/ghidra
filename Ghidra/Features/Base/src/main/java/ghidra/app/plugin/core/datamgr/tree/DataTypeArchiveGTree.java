@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
 
+import docking.action.DockingAction;
 import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
@@ -122,10 +123,18 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	@Override
-	protected boolean supportsPopupActions() {
-		// The base tree adds collapse/ expand actions, which we already provide, so signal that we
-		// do not want those actions.
-		return false;
+	protected boolean isAddToPopup(DockingAction action) {
+
+		String name = action.getName();
+		switch (name) {
+			case "Tree Expand All":
+			case "Tree Expand Node":
+			case "Tree Collapse Node":
+				// case "Tree Collapse All": // this action seems ok
+				return false;
+			default:
+				return true;
+		}
 	}
 
 	@Override
@@ -148,15 +157,9 @@ public class DataTypeArchiveGTree extends GTree {
 		super.dispose();
 	}
 
-	public void enableArrayFilter(boolean enabled) {
+	public void setFilterState(DtFilterState filterState) {
 		ArchiveRootNode root = (ArchiveRootNode) getModelRoot();
-		root.setFilterArray(enabled);
-		reloadTree();
-	}
-
-	public void enablePointerFilter(boolean enabled) {
-		ArchiveRootNode root = (ArchiveRootNode) getModelRoot();
-		root.setFilterPointer(enabled);
+		root.setFilterState(filterState);
 		reloadTree();
 	}
 

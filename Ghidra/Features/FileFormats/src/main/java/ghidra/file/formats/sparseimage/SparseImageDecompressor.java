@@ -114,7 +114,7 @@ public class SparseImageDecompressor {
 	/**
 	 * Processes an embedded crc checkvalue, throwing an exception of the current crc
 	 * does not match the stored crc.
-	 * <p>
+	 * 
 	 * @throws IOException if crc bad
 	 */
 	private void processCrcChunk() throws IOException {
@@ -128,7 +128,7 @@ public class SparseImageDecompressor {
 
 	/**
 	 * Writes a chunk of blocks are are zero filled.
-	 * <p>
+	 * 
 	 * @param blocks number of blocks to write
 	 * @param monitor {@link TaskMonitor} to watch
 	 * @throws IOException if error writing
@@ -154,7 +154,7 @@ public class SparseImageDecompressor {
 	 * <p>
 	 * The values in srcPattern are copied into destArray, repeating from the beginning
 	 * of srcPattern as many times as necessary to fill destArray.
-	 * <p>
+	 * 
 	 * @param srcPattern byte array with source pattern
 	 * @param destArray byte array destination
 	 */
@@ -170,7 +170,7 @@ public class SparseImageDecompressor {
 
 	/**
 	 * Writes a chunk of blocks that are defined by a repeated pattern of 4 bytes.
-	 * <p>
+	 * 
 	 * @param blocks number of blocks to write
 	 * @param monitor {@link TaskMonitor} to monitor
 	 * @throws IOException if error when writing or reading
@@ -200,7 +200,7 @@ public class SparseImageDecompressor {
 
 	/**
 	 * Writes a chunk of blocks are are read from the source file.
-	 * <p>
+	 * 
 	 * @param blocks number of blocks to copy
 	 * @param monitor {@link TaskMonitor} to monitor
 	 * @throws IOException if error when reading or writing

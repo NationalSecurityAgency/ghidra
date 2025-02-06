@@ -843,22 +843,40 @@ python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-a
 
     <H3><A name="dbgeng_remote"></A>dbgeng-remote</H3>
 
-    <P>This launcher extends the base dbgeng launcher adding an option for connecting through a
-    remote process server.</P>
+    <P>This launcher connects to a remote debugger that has opened a port for remote control.
+	</P>
 
     <H4>Options</H4>
 
     <UL>
       <LI>
         <B>Connection</B>: This is the connection string specifying the transport options for
-        communicating with the remote server. A typical example might be
-        'tcp:port=12345,server=192.168.0.2'' for a process server launched on the machine at
-        192.168.0.2 using: 
+        communicating with the remote debugger. A typical example might be
+        'tcp:port=12345,server=192.168.0.2' for a debugger that has issued the command
 <PRE>
-dbgsrv -t tcp:port=12345
+.server tcp:port=12345
 </PRE>
       </LI>
     </UL>
+
+	<H3><A name="dbgeng_svrcx"></A>dbgeng-svrcx</H3>
+
+	    <P>This launcher extends the base dbgeng launcher adding an option for connecting through a
+	    remote process server.</P>
+
+	    <H4>Options</H4>
+
+	    <UL>
+	      <LI>
+	        <B>Connection</B>: This is the connection string specifying the transport options for
+	        communicating with the remote server. A typical example might be
+	        'tcp:port=12345,server=192.168.0.2' for a process server launched on the machine at
+	        192.168.0.2 using: 
+	<PRE>
+	dbgsrv -t tcp:port=12345
+	</PRE>
+	      </LI>
+	    </UL>
 
     <H3><A name="dbgeng_kernel"></A>dbgeng-kernel</H3>
 

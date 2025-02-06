@@ -27,6 +27,8 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.apache.commons.io.FilenameUtils;
+
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -544,9 +546,13 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 						Swing.runLater(() -> openWithTarget.open(List.of(df)));
 						return;
 					}
-					ImporterUtilities.showImportSingleFileDialog(fullFsrl, null,
-						fileNode.getFormattedTreePath(), plugin.getTool(), openWithTarget.getPm(),
-						monitor);
+
+					String suggestedPath =
+						FilenameUtils.getFullPathNoEndSeparator(fileNode.getFormattedTreePath())
+								.replaceAll(":/", "/");
+
+					ImporterUtilities.showImportSingleFileDialog(fullFsrl, null, suggestedPath,
+						plugin.getTool(), openWithTarget.getPm(), monitor);
 				}
 				catch (IOException | CancelledException e) {
 					// fall thru
@@ -581,5 +587,4 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 		}
 
 	}
-
 }

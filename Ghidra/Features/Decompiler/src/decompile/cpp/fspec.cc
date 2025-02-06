@@ -34,7 +34,7 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
-AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",151);
+AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",153);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
@@ -605,20 +605,21 @@ ParamListStandard::~ParamListStandard(void)
   }
 }
 
-/// The entry must have a unique group.
-/// If no matching entry is found, the \b end iterator is returned.
+/// \param tiles will contain the set of matching entries
 /// \param type is the storage class
 /// \return the first matching iterator
-list<ParamEntry>::const_iterator ParamListStandard::getFirstIter(type_class type) const
+void ParamListStandard::extractTiles(vector<const ParamEntry *> &tiles,type_class type) const
 
 {
   list<ParamEntry>::const_iterator iter;
   for(iter=entry.begin();iter!=entry.end();++iter) {
     const ParamEntry &curEntry( *iter );
-    if (curEntry.getType() == type && curEntry.getAllGroups().size() == 1)
-      return iter;
+    if (!curEntry.isExclusion())
+      continue;
+    if (curEntry.getType() != type || curEntry.getAllGroups().size() != 1)
+      continue;
+    tiles.push_back(&curEntry);
   }
-  return iter;
 }
 
 /// If the stack entry is not present, null is returned
@@ -2200,6 +2201,29 @@ void ParameterPieces::swapMarkup(ParameterPieces &op)
   type = op.type;
   op.flags = tmpFlags;
   op.type = tmpType;
+}
+
+/// \brief Generate a parameter address given the list of Varnodes making up the parameter
+///
+/// \param pieces is the given list of Varnodes
+/// \param mostToLeast is \b true if the list is ordered \e most significant to \e least
+/// \param glb is the Architecture
+void ParameterPieces::assignAddressFromPieces(vector<VarnodeData> &pieces,bool mostToLeast,Architecture *glb)
+
+{
+  if (!mostToLeast && pieces.size() > 1) {
+    vector<VarnodeData> reverse;
+    for(int4 i=pieces.size()-1;i>=0;--i)
+      reverse.push_back(pieces[i]);
+    pieces.swap(reverse);
+  }
+  JoinRecord::mergeSequence(pieces,glb->translate);
+  if (pieces.size() == 1) {
+    addr = pieces[0].getAddr();
+    return;
+  }
+  JoinRecord *joinRecord = glb->findAddJoin(pieces, 0);
+  addr = joinRecord->getUnified().getAddr();
 }
 
 /// The type is set to \e unknown_effect

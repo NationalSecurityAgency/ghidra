@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
-apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
-apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
-apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/hasPythonPackage.gradle"
 

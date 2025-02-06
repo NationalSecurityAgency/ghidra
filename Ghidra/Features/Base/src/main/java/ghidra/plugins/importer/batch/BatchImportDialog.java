@@ -65,7 +65,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 	 * <p>
 	 * The dialog will chain to the {@link ImportBatchTask} when the user clicks the
 	 * OK button.
-	 * <p>
+	 * 
 	 * @param tool {@link PluginTool} that will be the parent of the dialog
 	 * @param batchInfo optional {@link BatchInfo} instance with already discovered applications, or null.
 	 * @param initialFiles optional {@link List} of {@link FSRL files} to add to the batch import dialog, or null.

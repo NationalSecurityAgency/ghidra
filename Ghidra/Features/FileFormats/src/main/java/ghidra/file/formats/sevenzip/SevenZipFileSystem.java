@@ -340,7 +340,6 @@ public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem>
 	 * 3) lots of write()s, and then 4) setOperationResult().
 	 * <p>
 	 * This class writes the extracted bytes to the FileCache.
-	 * <p>
 	 */
 	private class SZExtractCallback
 			implements IArchiveExtractCallback, ISequentialOutStream, ICryptoGetTextPassword,

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,18 +87,7 @@ public class GlobalSymbolMap {
 		}
 		HighSymbol highSym = null;
 		if (symbol instanceof CodeSymbol) {
-			if (dataType == null) {
-				Object dataObj = symbol.getObject();
-				if (dataObj instanceof Data) {
-					dataType = ((Data) dataObj).getDataType();
-					sz = dataType.getLength();
-				}
-				else {
-					dataType = DataType.DEFAULT;
-					sz = 1;
-				}
-			}
-			highSym = new HighCodeSymbol((CodeSymbol) symbol, dataType, sz, func);
+			highSym = new HighCodeSymbol((CodeSymbol) symbol, func);
 		}
 		else if (symbol instanceof FunctionSymbol) {
 			highSym = new HighFunctionShellSymbol(id, symbol.getName(), symbol.getAddress(),
@@ -127,15 +116,7 @@ public class GlobalSymbolMap {
 		}
 		HighSymbol highSym;
 		if (symbol instanceof CodeSymbol) {
-			Data dataAt = program.getListing().getDataAt(addr);
-			DataType dataType = DataType.DEFAULT;
-			int sz = 1;
-			if (dataAt != null) {
-				dataType = dataAt.getDataType();
-				sz = dataAt.getLength();
-			}
-
-			highSym = new HighCodeSymbol((CodeSymbol) symbol, dataType, sz, func);
+			highSym = new HighCodeSymbol((CodeSymbol) symbol, func);
 		}
 		else if (symbol instanceof FunctionSymbol) {
 			highSym = new HighFunctionShellSymbol(symbol.getID(), symbol.getName(),

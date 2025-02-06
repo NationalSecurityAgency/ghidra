@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -388,9 +388,11 @@ public class EolCommentFieldFactory extends FieldFactory {
 			RowColLocation startRowCol = commentElement.getDataLocationForCharacterIndex(0);
 			int encodedRow = startRowCol.row();
 			int encodedCol = startRowCol.col();
-			Annotation annotation = new Annotation(refAddrComment, currentPrefixString, program);
+			Annotation annotation = new Annotation(refAddrComment, program);
 			FieldElement addressElement =
-				new AnnotatedTextFieldElement(annotation, encodedRow, encodedCol);
+				new AnnotatedTextFieldElement(annotation, currentPrefixString, program, encodedRow,
+					encodedCol);
+
 			// Space character
 			AttributedString spaceStr = new AttributedString(" ", currentPrefixString.getColor(0),
 				currentPrefixString.getFontMetrics(0), false, null);

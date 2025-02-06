@@ -25,9 +25,6 @@ import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 import ghidra.util.task.TaskMonitor;
 
-/**
- *
- */
 public class UnionDBTest extends AbstractGenericTest {
 
 	private StandAloneDataTypeManager dataMgr;

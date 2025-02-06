@@ -135,7 +135,6 @@ import ghidra.util.MathUtilities;
  * execution follows the error path, we'd rather not birth any of those variables. Thus, we might
  * like the result of the scope analysis to be:
  * 
- * <p>
  * <table border="1">
  * <tr>
  * <th>Block</th>
@@ -159,7 +158,6 @@ import ghidra.util.MathUtilities;
  * </tr>
  * </table>
  * 
- * <p>
  * This can be achieved rather simply: Define two sets for each block, the upward view and the
  * downward view. The first corresponds to all varnodes that could be accessed before entering this
  * block or while in it. The second corresponds to all varnodes that could be access while in this

@@ -41,7 +41,7 @@ public class FunctionEditorModel {
 
 	private String signatureFieldText;
 
-	private ModelChangeListener listener;
+	private ModelChangeListener listener = new DummyModelChangedListener();
 
 	private Function function;
 	private Program program;
@@ -68,6 +68,9 @@ public class FunctionEditorModel {
 
 	void setModelChangeListener(ModelChangeListener listener) {
 		this.listener = listener;
+		if (listener == null) {
+			this.listener = new DummyModelChangedListener();
+		}
 	}
 
 	boolean hasChanges() {
@@ -99,24 +102,13 @@ public class FunctionEditorModel {
 	}
 
 	void dispose() {
-		listener = new ModelChangeListener() {
-			@Override
-			public void tableRowsChanged() {
-				// do nothing
-			}
-
-			@Override
-			public void dataChanged() {
-				// do nothing
-			}
-		};
+		listener = new DummyModelChangedListener();
 	}
 
 	private void notifyDataChanged() {
 		validate();
-		if (listener != null) {
-			Swing.runLater(() -> listener.dataChanged());
-		}
+
+		Swing.runLater(() -> listener.dataChanged());
 	}
 
 	private void validate() {
@@ -496,6 +488,12 @@ public class FunctionEditorModel {
 	}
 
 	public void setSelectedParameterRows(int[] selectedRows) {
+
+		int[] currentRows = getSelectedParameterRows();
+		if (Arrays.equals(currentRows, selectedRows)) {
+			return;
+		}
+
 		selectedParams.clear();
 		List<ParamInfo> parameters = functionData.getParameters();
 		for (int i : selectedRows) {
@@ -535,9 +533,9 @@ public class FunctionEditorModel {
 	}
 
 	void addParameter() {
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		ParamInfo p = functionData.addNewParameter();
 		setSelectedParam(p);
 		notifyDataChanged();
@@ -547,9 +545,9 @@ public class FunctionEditorModel {
 		if (!canRemoveParameters()) {
 			throw new AssertException("Attempted to remove parameters when not allowed.");
 		}
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		int ordinal = selectedParams.get(0).getOrdinal();
 		functionData.removeParameters(selectedParams);
 		selectedParams.clear();
@@ -570,9 +568,9 @@ public class FunctionEditorModel {
 		if (!canMoveParameterUp()) {
 			throw new AssertException("Attempted to move parameters up when not allowed.");
 		}
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		ParamInfo p = getSelectedParam();
 		functionData.moveParameterUp(p.getOrdinal());
 		notifyDataChanged();
@@ -582,9 +580,9 @@ public class FunctionEditorModel {
 		if (!canMoveParameterDown()) {
 			throw new AssertException("Attempted to move parameters down when not allowed.");
 		}
-		if (listener != null) {
-			listener.tableRowsChanged();
-		}
+
+		listener.tableRowsChanged();
+
 		ParamInfo p = getSelectedParam();
 		functionData.moveParameterDown(p.getOrdinal());
 		notifyDataChanged();
@@ -1048,9 +1046,24 @@ public class FunctionEditorModel {
 		originalFunctionData = new FunctionDataView(functionData);
 		resetSignatureTextField();
 		validate();
-		if (listener != null) {
-			Swing.runLater(() -> listener.dataChanged());
-		}
+
+		Swing.runLater(() -> listener.dataChanged());
 	}
 
+	public boolean hasChanged() {
+		return !functionData.equals(originalFunctionData);
+	}
+
+	private class DummyModelChangedListener implements ModelChangeListener {
+
+		@Override
+		public void tableRowsChanged() {
+			// do nothing
+		}
+
+		@Override
+		public void dataChanged() {
+			// do nothing
+		}
+	}
 }

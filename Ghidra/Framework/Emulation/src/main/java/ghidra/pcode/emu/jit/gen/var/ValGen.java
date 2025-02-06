@@ -36,7 +36,6 @@ import ghidra.program.model.pcode.Varnode;
  * {@link #lookup(JitVal)} and each output operand {@link VarGen#lookup(JitVar)}. The op generator
  * has already retrieved the {@link JitOp} whose operands are of the {@link JitVal} class.
  * 
- * <p>
  * <table border="1">
  * <tr>
  * <th>Varnode Type</th>

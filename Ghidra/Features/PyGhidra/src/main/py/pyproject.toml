@@ -30,7 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "Jpype1>=1.5.0",
+    "Jpype1>=1.5.2",
     "packaging"
 ]
 

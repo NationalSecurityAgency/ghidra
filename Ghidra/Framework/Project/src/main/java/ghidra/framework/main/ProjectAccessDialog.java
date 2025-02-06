@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,10 @@ import ghidra.util.exception.UserAccessException;
  *
  */
 class ProjectAccessDialog extends DialogComponentProvider {
-	
+
 	private RepositoryAdapter repository;
 	private ProjectAccessPanel projectAccessPanel;
-	
+
 	/**
 	 * Creates a new dialog.
 	 * 
@@ -46,13 +46,14 @@ class ProjectAccessDialog extends DialogComponentProvider {
 	 * @throws IOException
 	 * @throws NotConnectedException
 	 */
-	ProjectAccessDialog(Plugin plugin, RepositoryAdapter repHandle, String[] knownUsers, boolean allowEditing)
+	ProjectAccessDialog(Plugin plugin, RepositoryAdapter repHandle, String[] knownUsers,
+			boolean allowEditing)
 			throws UserAccessException, IOException, NotConnectedException {
 
 		super("Project Access List for " + repHandle.getName(), true);
-		
+
 		this.repository = repHandle;
-		
+
 		setHelpLocation(new HelpLocation(plugin.getName(), "Edit_Project_Access_List"));
 
 		if (allowEditing) {
@@ -61,9 +62,9 @@ class ProjectAccessDialog extends DialogComponentProvider {
 		else {
 			projectAccessPanel = new ViewProjectAccessPanel(repository, plugin.getTool());
 		}
-		
+
 		addWorkPanel(projectAccessPanel);
-		
+
 		if (allowEditing) {
 			addOKButton();
 			setOkEnabled(true);
@@ -74,7 +75,7 @@ class ProjectAccessDialog extends DialogComponentProvider {
 			setCancelButtonText("Close");
 		}
 	}
-	
+
 	@Override
 	protected void cancelCallback() {
 		close();

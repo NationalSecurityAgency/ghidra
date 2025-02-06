@@ -292,7 +292,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		/**
 		 * Return a description string for a file system root.  Avoid slow calls (such as 
 		 * {@link FileSystemView#getSystemDisplayName(File)}.
-		 * <p>
+		 * 
 		 * @param root file location
 		 * @return formatted description string, example "Local Drive (C:)" 
 		 */
@@ -323,7 +323,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 
 		/**
 		 * Return a description string for a root location.
-		 * <p>
+		 * 
 		 * @param root location to get description string
 		 * @return string such as "Local Disk (C:)", "Network Drive (R:)"
 		 */

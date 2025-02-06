@@ -44,7 +44,6 @@ import ghidra.util.task.TaskMonitor;
  * The {@link ByteProvider} given to the constructor is not considered 'owned' by
  * the GFileSystemBase instance until after it passes the {@link #isValid(TaskMonitor) isValid}
  * check and is {@link #open(TaskMonitor) opened}.
- * <p>
  *
  */
 public abstract class GFileSystemBase implements GFileSystem {

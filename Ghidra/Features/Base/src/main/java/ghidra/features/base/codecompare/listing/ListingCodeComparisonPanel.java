@@ -601,6 +601,8 @@ public class ListingCodeComparisonPanel
 	private void updateProgramViews() {
 		displays.get(LEFT).setProgramView(getProgram(LEFT), getAddresses(LEFT), "listing1");
 		displays.get(RIGHT).setProgramView(getProgram(RIGHT), getAddresses(RIGHT), "listing2");
+		displays.get(LEFT).goTo(comparisonData.get(LEFT).getInitialLocation());
+		displays.get(RIGHT).goTo(comparisonData.get(LEFT).getInitialLocation());
 	}
 
 	private void nextAreaDiff(boolean forward) {

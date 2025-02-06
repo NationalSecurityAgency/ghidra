@@ -34,7 +34,6 @@ import help.validator.model.*;
 /**
  * A class that is meant to hold a single help <b>input</b> directory and 0 or more
  * <b>external, pre-built</b> help sources (i.e., jar file or directory).
- * <p>
  * <pre>
  * 						Note
  * 						Note
