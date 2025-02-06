@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -297,26 +297,29 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 			Reason.INSPECT);
 	}
 
-	@Override
-	public T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage) {
+	protected FrameVarnodeEvaluator<T> newEvaluator(AddressSetView symbolStorage) {
 		SavedRegisterMap registerMap = computeRegisterMap();
-		return new FrameVarnodeEvaluator<T>(state.getArithmetic(), symbolStorage) {
+		return new FrameVarnodeEvaluator<>(state.getArithmetic(), symbolStorage) {
 			@Override
 			protected T evaluateMemory(Address address, int size) {
 				return registerMap.getVar(state, address, size, Reason.INSPECT);
 			}
-		}.evaluateStorage(program, storage);
+		};
+	}
+
+	@Override
+	public T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage) {
+		return newEvaluator(symbolStorage).evaluateStorage(program, storage);
+	}
+
+	@Override
+	public T evaluate(Program program, Varnode varnode, AddressSetView symbolStorage) {
+		return newEvaluator(symbolStorage).evaluateVarnode(program, varnode);
 	}
 
 	@Override
 	public T evaluate(Program program, PcodeOp op, AddressSetView symbolStorage) {
-		SavedRegisterMap registerMap = computeRegisterMap();
-		return new FrameVarnodeEvaluator<T>(state.getArithmetic(), symbolStorage) {
-			@Override
-			protected T evaluateMemory(Address address, int size) {
-				return registerMap.getVar(state, address, size, Reason.INSPECT);
-			}
-		}.evaluateOp(program, op);
+		return newEvaluator(symbolStorage).evaluateOp(program, op);
 	}
 
 	@Override
