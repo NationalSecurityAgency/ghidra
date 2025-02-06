@@ -38,9 +38,8 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 	 * by this job.  By default, the value is 0, which means there is nothing to wait for.  If we
 	 * flush, this will be set to 1.
 	 */
-	private CountDownLatch completedCallbackLatch = new CountDownLatch(0);
+	private volatile CountDownLatch completedCallbackLatch = new CountDownLatch(0);
 	private volatile boolean isCancelled = false;
-
 	private volatile IncrementalUpdatingAccumulator incrementalAccumulator;
 
 	IncrementalLoadJob(ThreadedTableModel<ROW_OBJECT, ?> threadedModel,

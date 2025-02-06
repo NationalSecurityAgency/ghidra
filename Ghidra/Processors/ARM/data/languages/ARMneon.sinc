@@ -2808,14 +2808,14 @@ vld1DdList: "{"^buildVld1DdList^"}"	is TMode=1 & thv_c0811=2 & thv_D22 & thv_c12
 @define Vld1DdList "(c0811=2 | c0811=6 | c0811=7 | c0811=10)"
 @define thv_Vld1DdList "(thv_c0811=2 | thv_c0811=6 | thv_c0811=7 | thv_c0811=10)"
 
-vldAlign45:			is TMode=0 & c0405=0  		{ }
-vldAlign45: "@64"	is TMode=0 & c0405=1		{ }
-vldAlign45: "@128"	is TMode=0 & c0405=2		{ }
-vldAlign45: "@256"	is TMode=0 & c0405=3		{ }
-vldAlign45:			is TMode=1 & thv_c0405=0  	{ }
-vldAlign45: "@64"	is TMode=1 & thv_c0405=1	{ }
-vldAlign45: "@128"	is TMode=1 & thv_c0405=2	{ }
-vldAlign45: "@256"	is TMode=1 & thv_c0405=3	{ }
+vldAlign45:         is TMode=0 & c0405=0     { }
+vldAlign45: ":64"   is TMode=0 & c0405=1     { }
+vldAlign45: ":128"  is TMode=0 & c0405=2     { }
+vldAlign45: ":256"  is TMode=0 & c0405=3     { }
+vldAlign45:         is TMode=1 & thv_c0405=0 { }
+vldAlign45: ":64"   is TMode=1 & thv_c0405=1 { }
+vldAlign45: ":128"  is TMode=1 & thv_c0405=2 { }
+vldAlign45: ":256"  is TMode=1 & thv_c0405=3 { }
 
 RnAligned45: "["^VRn^vldAlign45^"]" 	is TMode=0 & VRn & vldAlign45	{ export VRn; }
 RnAligned45: "["^VRn^vldAlign45^"]" 	is TMode=1 & VRn & vldAlign45	{ export VRn; }
@@ -2872,12 +2872,12 @@ vld1DdElement2: Dd^"["^vld1Index^"]"	is Dd & vld1Index & ((TMode=0 & c1011=2) | 
 @define T_Vld1DdElement2 "((thv_c1011=0 & thv_c0404=0) | (thv_c1011=1 &  thv_c0505=0) | (thv_c1011=2 &  (thv_c0406=0 | thv_c0406=3)))"
 
 
-vld1Align2: 		is TMode=0 & c0404=0				{ }
-vld1Align2: "@16"	is TMode=0 & c1011=1 & c0404=1	{ }
-vld1Align2: "@32"	is TMode=0 & c1011=2 & c0404=1	{ }
-vld1Align2: 		is TMode=1 & thv_c0404=0				{ }
-vld1Align2: "@16"	is TMode=1 & thv_c1011=1 & thv_c0404=1	{ }
-vld1Align2: "@32"	is TMode=1 & thv_c1011=2 & thv_c0404=1	{ }
+vld1Align2:        is TMode=0 & c0404=0                   { }
+vld1Align2: ":16"  is TMode=0 & c1011=1 & c0404=1         { }
+vld1Align2: ":32"  is TMode=0 & c1011=2 & c0404=1         { }
+vld1Align2:        is TMode=1 & thv_c0404=0               { }
+vld1Align2: ":16"  is TMode=1 & thv_c1011=1 & thv_c0404=1 { }
+vld1Align2: ":32"  is TMode=1 & thv_c1011=2 & thv_c0404=1 { }
 
 RnAligned2: "["^VRn^vld1Align2^"]" 	is VRn & vld1Align2	{ export VRn; }
 
@@ -2944,9 +2944,9 @@ buildVld1DdList3: vld1Dd3,buildVld1DdList3		is vld1Dd3 & buildVld1DdList3	[ coun
 vld1DdList3: "{"^buildVld1DdList3^"}"	is c0505=0 & D22 & c1215 & buildVld1DdList3 [ regNum=(D22<<4)+c1215-1; counter=1; ] { export 1:4; }
 vld1DdList3: "{"^buildVld1DdList3^"}"	is c0505=1 & D22 & c1215 & buildVld1DdList3 [ regNum=(D22<<4)+c1215-1; counter=2; ] { export 2:4; }
 
-vld1Align3:			is c0404=0				{ }
-vld1Align3: "@16" 	is c0404=1 & c0607=1	{ }
-vld1Align3: "@32" 	is c0404=1 & c0607=2	{ }
+vld1Align3:        is c0404=0                           { }
+vld1Align3: ":16"  is c0404=1 & c0607=1                 { }
+vld1Align3: ":32"  is c0404=1 & c0607=2                 { }
 
 RnAligned3: "["^Rn^vld1Align3^"]" 	is Rn & vld1Align3	{ export Rn; }
 
@@ -2994,9 +2994,9 @@ thv_vld1RnReplicate:	is VRn & thv_c0607=2
 thv_vld1DdList3: "{"^buildVld1DdList3^"}"	is thv_c0505=0 & thv_D22 & thv_c1215 & buildVld1DdList3 [ regNum=(thv_D22<<4)+thv_c1215-1; counter=1; ] { export 1:4; }
 thv_vld1DdList3: "{"^buildVld1DdList3^"}"	is thv_c0505=1 & thv_D22 & thv_c1215 & buildVld1DdList3 [ regNum=(thv_D22<<4)+thv_c1215-1; counter=2; ] { export 2:4; }
 
-thv_vld1Align3:			is thv_c0404=0					{ }
-thv_vld1Align3: "@16" 	is thv_c0404=1 & thv_c0607=1	{ }
-thv_vld1Align3: "@32" 	is thv_c0404=1 & thv_c0607=2	{ }
+thv_vld1Align3:        is thv_c0404=0                { }
+thv_vld1Align3: ":16"  is thv_c0404=1 & thv_c0607=1  { }
+thv_vld1Align3: ":32"  is thv_c0404=1 & thv_c0607=2  { }
 
 VRnAligned3: "["^VRn^thv_vld1Align3^"]" 	is VRn & thv_vld1Align3	{ export VRn; }
 
@@ -3145,14 +3145,14 @@ vld2DdElement2: Dreg^"["^vld2Index^"]"	is Dreg & vld2Index
 {
 }
 
-vld2Align2: 		is TMode=0 & c0404=0 & (c1111=0 | c0505=0)	{ }
-vld2Align2: "@16"	is TMode=0 & c1011=0 & c0404=1				{ }
-vld2Align2: "@32"	is TMode=0 & c1011=1 & c0404=1				{ }
-vld2Align2: "@64"	is TMode=0 & c1011=2 & c0405=1				{ }
-vld2Align2: 		is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)	{ }
-vld2Align2: "@16"	is TMode=1 & thv_c1011=0 & thv_c0404=1				{ }
-vld2Align2: "@32"	is TMode=1 & thv_c1011=1 & thv_c0404=1				{ }
-vld2Align2: "@64"	is TMode=1 & thv_c1011=2 & thv_c0405=1				{ }
+vld2Align2:        is TMode=0 & c0404=0 & (c1111=0 | c0505=0)              { }
+vld2Align2: ":16"  is TMode=0 & c1011=0 & c0404=1                          { }
+vld2Align2: ":32"  is TMode=0 & c1011=1 & c0404=1                          { }
+vld2Align2: ":64"  is TMode=0 & c1011=2 & c0405=1                          { }
+vld2Align2:        is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)  { }
+vld2Align2: ":16"  is TMode=1 & thv_c1011=0 & thv_c0404=1                  { }
+vld2Align2: ":32"  is TMode=1 & thv_c1011=1 & thv_c0404=1                  { }
+vld2Align2: ":64"  is TMode=1 & thv_c1011=2 & thv_c0405=1                  { }
 
 vld2RnAligned2: "["^VRn^vld2Align2^"]" 	is VRn & vld2Align2	{ export VRn; }
 
@@ -3182,14 +3182,14 @@ vld2DdList2: "{"^buildVld2DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0505=1) 
 # VLD2 (single 2-element structure to all lanes)
 #
 
-vld2Align3:			is TMode=0 & c0404=0				{ }
-vld2Align3:	"@16"	is TMode=0 & c0404=1 & c0607=0	{ }
-vld2Align3: "@32" 	is TMode=0 & c0404=1 & c0607=1	{ }
-vld2Align3: "@64" 	is TMode=0 & c0404=1 & c0607=2	{ }
-vld2Align3:			is TMode=1 & thv_c0404=0				{ }
-vld2Align3:	"@16"	is TMode=1 & thv_c0404=1 & thv_c0607=0	{ }
-vld2Align3: "@32" 	is TMode=1 & thv_c0404=1 & thv_c0607=1	{ }
-vld2Align3: "@64" 	is TMode=1 & thv_c0404=1 & thv_c0607=2	{ }
+vld2Align3:        is TMode=0 & c0404=0                     { }
+vld2Align3:	":16"  is TMode=0 & c0404=1 & c0607=0           { }
+vld2Align3: ":32"  is TMode=0 & c0404=1 & c0607=1           { }
+vld2Align3: ":64"  is TMode=0 & c0404=1 & c0607=2           { }
+vld2Align3:        is TMode=1 & thv_c0404=0                 { }
+vld2Align3:	":16"  is TMode=1 & thv_c0404=1 & thv_c0607=0   { }
+vld2Align3: ":32"  is TMode=1 & thv_c0404=1 & thv_c0607=1   { }
+vld2Align3: ":64"  is TMode=1 & thv_c0404=1 & thv_c0607=2   { }
 
 vld2RnAligned3: "["^VRn^vld2Align3^"]" 	is VRn & vld2Align3	{ export VRn; }
 
@@ -3217,11 +3217,10 @@ vld2DdList3: "{"^buildVld2DdList3^"}"	is TMode=1 & thv_c0505=1 & thv_D22 & thv_c
 #######
 # VLD3 (multiple 3-element structures)
 #
-
-vld3Align:			is TMode=0 & c0404=0 { }
-vld3Align: "@64"	is TMode=0 & c0404=1 { }
-vld3Align:			is TMode=1 & thv_c0404=0 { }
-vld3Align: "@64"	is TMode=1 & thv_c0404=1 { }
+vld3Align:        is TMode=0 & c0404=0      { }
+vld3Align: ":64"  is TMode=0 & c0404=1      { }
+vld3Align:        is TMode=1 & thv_c0404=0  { }
+vld3Align: ":64"  is TMode=1 & thv_c0404=1  { }
 
 
 vld3RnAligned: "["^VRn^vld3Align^"]" 	is VRn & vld3Align	{ export VRn; }
@@ -3306,24 +3305,43 @@ vld3DdList3: "{"^buildVld3DdList3^"}"	is TMode=1 & thv_c0505=1 & thv_D22 & thv_c
 vld4Index: val	is TMode=0 & c0507 & c1011	[ val = c0507 >> c1011; ]	{ tmp:4 = val; export tmp; }
 vld4Index: val	is TMode=1 & thv_c0507 & thv_c1011	[ val = thv_c0507 >> thv_c1011; ]	{ tmp:4 = val; export tmp; }
 
-vld4DdElement2: Dreg^"["^vld4Index^"]"	is Dreg & vld4Index
+vld4DdElement2: Dreg^"["^vld4Index^"]"	is Dreg & vld4Index & ((TMode=0 & c1011=0) | (TMode=1 & thv_c1011=0))
 {
+	ptr:4 = &Dreg + vld4Index;
+	*[register]:1 ptr = *:1 mult_addr;
 }
 
-vld4Align2: 		is TMode=0 & c0404=0 & (c1111=0 | c0505=0)				{ }
-vld4Align2: "@32"	is TMode=0 & c1011=0 & c0404=1							{ }
-vld4Align2: "@64"	is TMode=0 & ((c1011=1 & c0404=1) | (c1011=2 & c0405=1))	{ }
-vld4Align2: "@128"	is TMode=0 & c1011=2 & c0405=2							{ }
-vld4Align2: 		is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)				{ }
-vld4Align2: "@32"	is TMode=1 & thv_c1011=0 & thv_c0404=1							{ }
-vld4Align2: "@64"	is TMode=1 & ((thv_c1011=1 & thv_c0404=1) | (thv_c1011=2 & thv_c0405=1))	{ }
-vld4Align2: "@128"	is TMode=1 & thv_c1011=2 & thv_c0405=2							{ }
+vld4DdElement2: Dreg^"["^vld4Index^"]"	is Dreg & vld4Index & ((TMode=0 & c1011=1) | (TMode=1 & thv_c1011=1))
+{
+	ptr:4 = &Dreg + vld4Index;
+	*[register]:2 ptr = *:2 mult_addr;
+}
 
-vld4RnAligned2: "["^Rn^vld4Align2^"]" 	is Rn & vld4Align2	{ export Rn; }
+vld4DdElement2: Dreg^"["^vld4Index^"]"	is Dreg & vld4Index & ((TMode=0 & c1011=2) | (TMode=1 & thv_c1011=2))
+{
+	ptr:4 = &Dreg + vld4Index;
+	*[register]:4 ptr = *:4 mult_addr;
+}
+
+vld4Align2:         is TMode=0 & c0404=0 & (c1111=0 | c0505=0)                                { }
+vld4Align2: ":32"   is TMode=0 & c1011=0 & c0404=1                                            { }
+vld4Align2: ":64"   is TMode=0 & ((c1011=1 & c0404=1) | (c1011=2 & c0405=1))                  { }
+vld4Align2: ":128"  is TMode=0 & c1011=2 & c0405=2                                            { }
+vld4Align2:         is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)                    { }
+vld4Align2: ":32"   is TMode=1 & thv_c1011=0 & thv_c0404=1                                    { }
+vld4Align2: ":64"   is TMode=1 & ((thv_c1011=1 & thv_c0404=1) | (thv_c1011=2 & thv_c0405=1))  { }
+vld4Align2: ":128"  is TMode=1 & thv_c1011=2 & thv_c0405=2                                    { }
+
+vld4RnAligned2: "["^VRn^vld4Align2^"]" 	is VRn & vld4Align2	{ export VRn; }
 
 buildVld4DdList2:					is counter=0			{ }
-buildVld4DdList2: vld4DdElement2	is counter=1 & vld4DdElement2		[ counter=0; regNum=regNum+regInc; ] { }
-buildVld4DdList2: vld4DdElement2,buildVld4DdList2		is vld4DdElement2 & buildVld4DdList2	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildVld4DdList2: vld4DdElement2	is counter=1 & vld4DdElement2		[ counter=0; regNum=regNum+regInc; ] { build vld4DdElement2; }
+buildVld4DdList2: vld4DdElement2,buildVld4DdList2		is vld4DdElement2 & buildVld4DdList2 & esize1011	[ counter=counter-1; regNum=regNum+regInc; ]
+{
+	build vld4DdElement2;
+	mult_addr = mult_addr + esize1011;
+	build buildVld4DdList2;
+}
 
 vld4DdList2: "{"^buildVld4DdList2^"}"	is TMode=0 & D22 & c1215 & buildVld4DdList2 [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
 vld4DdList2: "{"^buildVld4DdList2^"}"	is TMode=0 & ((c1011=1 & c0505=1) | (c1011=2 & c0606=1)) & D22 & c1215 & buildVld4DdList2 [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double
@@ -3333,53 +3351,119 @@ vld4DdList2: "{"^buildVld4DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0505=1) 
 
 :vld4.^esize1011 vld4DdList2,vld4RnAligned2	is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c1011<3  & c0809=3 & c0003=15) |
 	                                             ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3  & thv_c0809=3 & thv_c0003=15 ) ) & esize1011 & vld4RnAligned2 & vld4DdList2
-unimpl
+{
+	mult_addr = vld4RnAligned2;
+	build vld4DdList2;
+}
 
 :vld4.^esize1011 vld4DdList2,vld4RnAligned2^"!"	is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c1011<3  & c0809=3 & c0003=13) |
 	                                             ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3  & thv_c0809=3 & thv_c0003=13 ) ) & esize1011 & vld4RnAligned2 & vld4DdList2
-unimpl
+{
+	mult_addr = vld4RnAligned2;
+	build vld4DdList2;
+	vld4RnAligned2 = vld4RnAligned2 + (4 * esize1011);
+}
 
 :vld4.^esize1011 vld4DdList2,vld4RnAligned2,VRm	is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c1011<3  & c0809=3 & c0003) |
 	                                             ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3  & thv_c0809=3 & thv_c0003 ) ) & esize1011 & VRm & vld4RnAligned2 & vld4DdList2
- unimpl
+ {
+	mult_addr = vld4RnAligned2;
+	build vld4DdList2;
+	vld4RnAligned2 = vld4RnAligned2 + VRm;
+}
 
 #######
 # VLD4 (single 4-element structure to all lanes)
 #
 
-vld4Align3:			is c0404=0							{ }
-vld4Align3:	"@32"	is c0404=1 & c0607=0				{ }
-vld4Align3: "@64" 	is c0404=1 & (c0607=1 | c0607=2)	{ }
-vld4Align3: "@128" 	is c0404=1 & c0607=3				{ }
+vld4size0607: "8"   is TMode=0 & c0607=0      { export 1:4; }
+vld4size0607: "16"  is TMode=0 & c0607=1      { export 2:4; }
+vld4size0607: "32"  is TMode=0 & c0607=2      { export 4:4; }
+vld4size0607: "32"  is TMode=0 & c0607=3      { export 4:4; } # see VLD4 (single 4-element structure to all lanes)
+vld4size0607: "8"   is TMode=1 & thv_c0607=0  { export 1:4; }
+vld4size0607: "16"  is TMode=1 & thv_c0607=1  { export 2:4; }
+vld4size0607: "32"  is TMode=1 & thv_c0607=2  { export 4:4; }
+vld4size0607: "32"  is TMode=1 & thv_c0607=3  { export 4:4; } # see VLD4 (single 4-element structure to all lanes)
 
-vld4RnAligned3: "["^Rn^vld4Align3^"]" 	is Rn & vld4Align3	{ export Rn; }
+vld4Align3:         is TMode=0 & c0404=0                                    { }
+vld4Align3: ":32"   is TMode=0 & c0404=1 & c0607=0                          { }
+vld4Align3: ":64"   is TMode=0 & c0404=1 & (c0607=1 | c0607=2)              { }
+vld4Align3: ":128"  is TMode=0 & c0404=1 & c0607=3                          { }
+vld4Align3:         is TMode=1 & thv_c0404=0                                { }
+vld4Align3: ":32"   is TMode=1 & thv_c0404=1 & thv_c0607=0                  { }
+vld4Align3: ":64"   is TMode=1 & thv_c0404=1 & (thv_c0607=1 | thv_c0607=2)  { }
+vld4Align3: ":128"  is TMode=1 & thv_c0404=1 & thv_c0607=3                  { }
+
+vld4RnAligned3: "["^VRn^vld4Align3^"]" 	is VRn & vld4Align3	{ export VRn; }
+
+vld4DdElement3: is Dreg & ((TMode=0 & c0607=0) | (TMode=1 & thv_c0607=0))
+{
+	data:1 = *:1 mult_addr;
+	replicate1to8(data, Dreg);
+}
+
+vld4DdElement3: is Dreg & ((TMode=0 & c0607=1) | (TMode=1 & thv_c0607=1))
+{
+	data:2 = *:2 mult_addr;
+	replicate2to8(data, Dreg);
+}
+
+vld4DdElement3: is Dreg & ((TMode=0 & c0607>1) | (TMode=1 & thv_c0607>1))
+{
+	data:4 = *:4 mult_addr;
+	replicate4to8(data, Dreg);
+}
 
 buildVld4DdList3:									is counter=0			{ }
-buildVld4DdList3: Dreg^"[]"							is counter=1 & Dreg		[ counter=0; regNum=regNum+regInc; ] { }
-buildVld4DdList3: Dreg^"[]",buildVld4DdList3		is Dreg & buildVld4DdList3	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildVld4DdList3: Dreg^"[]"							is counter=1 & Dreg & vld4DdElement3		[ counter=0; regNum=regNum+regInc; ] { build vld4DdElement3; }
+buildVld4DdList3: Dreg^"[]",buildVld4DdList3		is vld4DdElement3 & Dreg & buildVld4DdList3 & vld4size0607	[ counter=counter-1; regNum=regNum+regInc; ]
+{
+	build vld4DdElement3;
+	mult_addr = mult_addr + vld4size0607;
+	build buildVld4DdList3;
+}
 
-vld4DdList3: "{"^buildVld4DdList3^"}"	is c0505=0 & D22 & c1215 & buildVld4DdList3 [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
-vld4DdList3: "{"^buildVld4DdList3^"}"	is c0505=1 & D22 & c1215 & buildVld4DdList3 [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double
+vld4DdList3: "{"^buildVld4DdList3^"}"	is TMode=0 & c0505=0 & D22 & c1215 & buildVld4DdList3 [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
+vld4DdList3: "{"^buildVld4DdList3^"}"	is TMode=0 & c0505=1 & D22 & c1215 & buildVld4DdList3 [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double
+vld4DdList3: "{"^buildVld4DdList3^"}"	is TMode=1 & thv_c0505=0 & thv_D22 & thv_c1215 & buildVld4DdList3 [ regNum=(thv_D22<<4)+thv_c1215-1; regInc=1; counter=4; ] { } # Single
+vld4DdList3: "{"^buildVld4DdList3^"}"	is TMode=1 & thv_c0505=1 & thv_D22 & thv_c1215 & buildVld4DdList3 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=4; ] { } # Double
 
-:vld4.^esize0607 vld4DdList3,vld4RnAligned3		is $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & vld4RnAligned3 & c0811=15 & esize0607 & c0003=15 & vld4DdList3	unimpl
-#thv_2327=0x12
 
-:vld4.^esize0607 vld4DdList3,vld4RnAligned3^"!"	is $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & vld4RnAligned3 & c0811=15 & esize0607 & c0003=13 & vld4DdList3 unimpl
+:vld4.^vld4size0607 vld4DdList3,vld4RnAligned3		is ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c0811=0xf & c0003=0xf) |
+												   ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c0811=0xf & thv_c0003=0xf) & vld4size0607 & vld4RnAligned3 & vld4DdList3
+{
+	mult_addr = vld4RnAligned3;
+	build vld4DdList3;
+}
 
-:vld4.^esize0607 vld4DdList3,vld4RnAligned3,VRm	is $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & vld4RnAligned3 & c0811=15 & esize0607 & VRm & vld4DdList3 unimpl
+:vld4.^vld4size0607 vld4DdList3,vld4RnAligned3^"!"	is ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c0811=0xf & c0003=0xd) |
+												   ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c0811=0xf & thv_c0003=0xd) & vld4size0607 & vld4RnAligned3 & vld4DdList3
+{
+	mult_addr = vld4RnAligned3;
+	build vld4DdList3;
+	vld4RnAligned3 = vld4RnAligned3 + (4 * vld4size0607);
+}
+
+:vld4.^vld4size0607 vld4DdList3,vld4RnAligned3,VRm	is ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c0811=0xf) |
+												   ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c0811=0xf) & vld4size0607 & VRm & vld4RnAligned3 & vld4DdList3
+{
+	mult_addr = vld4RnAligned3;
+	build vld4DdList3;
+	vld4RnAligned3 = vld4RnAligned3 + VRm;
+}
 
 #######
 # VLD4 (multiple 4-element structures)
 #
 
-vld4Align:			is TMode=0 & c0405=0		{ }
-vld4Align: "@64"	is TMode=0 & c0405=1		{ }
-vld4Align: "@128" 	is TMode=0 & c0405=2 	{ }
-vld4Align: "@256" 	is TMode=0 & c0405=3 	{ }
-vld4Align:			is TMode=1 & thv_c0405=0	{ }
-vld4Align: "@64"	is TMode=1 & thv_c0405=1	{ }
-vld4Align: "@128" 	is TMode=1 & thv_c0405=2 { }
-vld4Align: "@256" 	is TMode=1 & thv_c0405=3 { }
+vld4Align:         is TMode=0 & c0405=0                    { }
+vld4Align: ":64"   is TMode=0 & c0405=1                    { }
+vld4Align: ":128"  is TMode=0 & c0405=2                    { }
+vld4Align: ":256"  is TMode=0 & c0405=3                    { }
+vld4Align:         is TMode=1 & thv_c0405=0                { }
+vld4Align: ":64"   is TMode=1 & thv_c0405=1                { }
+vld4Align: ":128"  is TMode=1 & thv_c0405=2                { }
+vld4Align: ":256"  is TMode=1 & thv_c0405=3                { }
 
 vld4RnAligned: "["^VRn^vld4Align^"]" 	is VRn & vld4Align	{ export VRn; }
 
@@ -5583,14 +5667,14 @@ vst2DdElement2: Dreg^"["^vld2Index^"]"	is Dreg & vld2Index
 {
 }
 
-vst2Align2: 		is TMode=0 & c0404=0 & (c1111=0 | c0505=0)	{ }
-vst2Align2: "@16"	is TMode=0 & c1011=0 & c0404=1				{ }
-vst2Align2: "@32"	is TMode=0 & c1011=1 & c0404=1				{ }
-vst2Align2: "@64"	is TMode=0 & c1011=2 & c0405=1				{ }
-vst2Align2: 		is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)	{ }
-vst2Align2: "@16"	is TMode=1 & thv_c1011=0 & thv_c0404=1				{ }
-vst2Align2: "@32"	is TMode=1 & thv_c1011=1 & thv_c0404=1				{ }
-vst2Align2: "@64"	is TMode=1 & thv_c1011=2 & thv_c0405=1				{ }
+vst2Align2:        is TMode=0 & c0404=0 & (c1111=0 | c0505=0)              { }
+vst2Align2: ":16"  is TMode=0 & c1011=0 & c0404=1                          { }
+vst2Align2: ":32"  is TMode=0 & c1011=1 & c0404=1                          { }
+vst2Align2: ":64"  is TMode=0 & c1011=2 & c0405=1                          { }
+vst2Align2:        is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)  { }
+vst2Align2: ":16"  is TMode=1 & thv_c1011=0 & thv_c0404=1                  { }
+vst2Align2: ":32"  is TMode=1 & thv_c1011=1 & thv_c0404=1                  { }
+vst2Align2: ":64"  is TMode=1 & thv_c1011=2 & thv_c0405=1                  { }
 
 vst2RnAligned2: "["^VRn^vst2Align2^"]" 	is VRn & vst2Align2	{ export VRn; }
 
@@ -5625,10 +5709,10 @@ vst2DdList2: "{"^buildVst2DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0505=1) 
 #
 
 
-vst3Align:			is TMode=0 & c0404=0 { }
-vst3Align: "@64"	is TMode=0 & c0404=1 { }
-vst3Align:			is TMode=1 & thv_c0404=0 { }
-vst3Align: "@64"	is TMode=1 & thv_c0404=1 { }
+vst3Align:        is TMode=0 & c0404=0      { }
+vst3Align: ":64"  is TMode=0 & c0404=1      { }
+vst3Align:        is TMode=1 & thv_c0404=0  { }
+vst3Align: ":64"  is TMode=1 & thv_c0404=1  { }
 
 
 vst3RnAligned: "["^VRn^vst3Align^"]" 	is VRn & vst3Align	{ export VRn; }
@@ -5683,14 +5767,14 @@ vst3DdList2: "{"^buildvst3DdList^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0505=1) |
 # VST4 (multiple 4-element structures)
 #
 
-vst4Align:			is TMode=0 & c0405=0	{ }
-vst4Align: "@64"	is TMode=0 & c0405=1	{ }
-vst4Align: "@128" 	is TMode=0 & c0405=2 	{ }
-vst4Align: "@256" 	is TMode=0 & c0405=3 	{ }
-vst4Align:			is TMode=1 & thv_c0405=0	{ }
-vst4Align: "@64"	is TMode=1 & thv_c0405=1	{ }
-vst4Align: "@128" 	is TMode=1 & thv_c0405=2 	{ }
-vst4Align: "@256" 	is TMode=1 & thv_c0405=3 	{ }
+vst4Align:         is TMode=0 & c0405=0      { }
+vst4Align: ":64"   is TMode=0 & c0405=1      { }
+vst4Align: ":128"  is TMode=0 & c0405=2      { }
+vst4Align: ":256"  is TMode=0 & c0405=3      { }
+vst4Align:         is TMode=1 & thv_c0405=0  { }
+vst4Align: ":64"   is TMode=1 & thv_c0405=1  { }
+vst4Align: ":128"  is TMode=1 & thv_c0405=2  { }
+vst4Align: ":256"  is TMode=1 & thv_c0405=3  { }
 
 vst4RnAligned: "["^VRn^vst4Align^"]" 	is VRn & vst4Align	{ export VRn; }
 
@@ -5720,24 +5804,48 @@ vst4Index: val	is TMode=0 & c0507 & c1011	[ val = c0507 >> c1011; ]	{ tmp:4 = va
 vst4Index: val	is TMode=1 & thv_c0507 & thv_c1011	[ val = thv_c0507 >> thv_c1011; ]	{ tmp:4 = val; export tmp; }
 
 
-vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index
+vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & ((TMode=0 & c1011=0) | (TMode=1 & thv_c1011=0))
 {
+	ptr:4 = &Dreg + vst4Index;
+	*:1 mult_addr = *[register]:1 ptr;
 }
 
-vst4Align2: 		is TMode=0 & c0404=0 & (c1111=0 | c0505=0)				{ }
-vst4Align2: "@32"	is TMode=0 & c1011=0 & c0404=1							{ }
-vst4Align2: "@64"	is TMode=0 & ((c1011=1 & c0404=1) | (c1011=2 & c0405=1))	{ }
-vst4Align2: "@128"	is TMode=0 & c1011=2 & c0405=2							{ }
-vst4Align2: 		is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)	{ }
-vst4Align2: "@32"	is TMode=1 & thv_c1011=0 & thv_c0404=1					{ }
-vst4Align2: "@64"	is TMode=1 & ((thv_c1011=1 & thv_c0404=1) | (thv_c1011=2 & thv_c0405=1))	{ }
-vst4Align2: "@128"	is TMode=1 & thv_c1011=2 & thv_c0405=2					{ }
+vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & TMode=0 & ((TMode=0 & c1011=1) | (TMode=1 & thv_c1011=1))
+{
+	ptr:4 = &Dreg + vst4Index;
+	*:2 mult_addr = *[register]:2 ptr;
+}
+
+vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & ((TMode=0 & c1011=2) | (TMode=1 & thv_c1011=2))
+{
+	ptr:4 = &Dreg + vst4Index;
+	*:4 mult_addr = *[register]:4 ptr;
+}
+
+vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & ((TMode=0 & c1011=3) | (TMode=1 & thv_c1011=3))
+{
+	*mult_addr = Dreg;
+}
+
+vst4Align2:         is TMode=0 & c0404=0 & (c1111=0 | c0505=0)                                { }
+vst4Align2: ":32"   is TMode=0 & c1011=0 & c0404=1                                            { }
+vst4Align2: ":64"   is TMode=0 & ((c1011=1 & c0404=1) | (c1011=2 & c0405=1))                  { }
+vst4Align2: ":128"  is TMode=0 & c1011=2 & c0405=2                                            { }
+vst4Align2:         is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)                    { }
+vst4Align2: ":32"   is TMode=1 & thv_c1011=0 & thv_c0404=1                                    { }
+vst4Align2: ":64"   is TMode=1 & ((thv_c1011=1 & thv_c0404=1) | (thv_c1011=2 & thv_c0405=1))  { }
+vst4Align2: ":128"  is TMode=1 & thv_c1011=2 & thv_c0405=2                                    { }
 
 vst4RnAligned2: "["^VRn^vst4Align2^"]" 	is VRn & vst4Align2	{ export VRn; }
 
 buildVst4DdList2:					is counter=0			{ }
-buildVst4DdList2: vst4DdElement2	is counter=1 & vst4DdElement2		[ counter=0; regNum=regNum+regInc; ] { }
-buildVst4DdList2: vst4DdElement2,buildVst4DdList2		is vst4DdElement2 & buildVst4DdList2	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildVst4DdList2: vst4DdElement2	is counter=1 & vst4DdElement2		[ counter=0; regNum=regNum+regInc; ] { build vst4DdElement2; }
+buildVst4DdList2: vst4DdElement2,buildVst4DdList2		is vst4DdElement2 & buildVst4DdList2 & esize1011	[ counter=counter-1; regNum=regNum+regInc; ]
+{
+	build vst4DdElement2;
+	mult_addr = mult_addr + esize1011;
+	build buildVst4DdList2;
+}
 
 vst4DdList2: "{"^buildVst4DdList2^"}"	is TMode=0 & D22 & c1215 & buildVst4DdList2 [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
 vst4DdList2: "{"^buildVst4DdList2^"}"	is TMode=0 & ((c1011=1 & c0505=1) | (c1011=2 & c0606=1)) & D22 & c1215 & buildVst4DdList2 [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double
@@ -5745,13 +5853,26 @@ vst4DdList2: "{"^buildVst4DdList2^"}"	is TMode=1 & thv_D22 & thv_c1215 & buildVs
 vst4DdList2: "{"^buildVst4DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0505=1) | (thv_c1011=2 & thv_c0606=1)) & thv_D22 & thv_c1215 & buildVst4DdList2 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=4; ] { } # Double
 
 :vst4.^esize1011 vst4DdList2,vst4RnAligned2		is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0 & c1011<3 & c0809=3 & c0003=15) |
-													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3 & thv_c0003=15) ) & vst4RnAligned2 & esize1011 & vst4DdList2	unimpl
+													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3 & thv_c0003=15) ) & vst4RnAligned2 & esize1011 & vst4DdList2
+{
+	mult_addr = vst4RnAligned2;
+	build vst4DdList2;
+}
 
 :vst4.^esize1011 vst4DdList2,vst4RnAligned2^"!"	is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0 & c1011<3 & c0809=3 & c0003=13) |
-													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3 & thv_c0003=13) ) & vst4RnAligned2 & esize1011 & vst4DdList2	unimpl
-
+													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3 & thv_c0003=13) ) & vst4RnAligned2 & esize1011 & vst4DdList2
+{
+	mult_addr = vst4RnAligned2;
+	build vst4DdList2;
+	vst4RnAligned2 = vst4RnAligned2 + (4 * esize1011);
+}
 :vst4.^esize1011 vst4DdList2,vst4RnAligned2,VRm	is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0 & c1011<3 & c0809=3) |
-													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3) ) & VRm & vst4RnAligned2 & esize1011 & vst4DdList2 unimpl
+													 ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=3) ) & VRm & vst4RnAligned2 & esize1011 & vst4DdList2
+{
+	mult_addr = vst4RnAligned2;
+	build vst4DdList2;
+	vst4RnAligned2 = vst4RnAligned2 + VRm;
+}
 
 @endif # SIMD
 
