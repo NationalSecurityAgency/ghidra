@@ -119,7 +119,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
-		setBackground(options.getBackgroundColor());
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -139,6 +138,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				validate();
 			}
 		});
+
+		setBackground(options.getBackgroundColor());
 
 		decompilerHoverProvider = new DecompilerHoverProvider();
 
@@ -454,6 +455,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 		if (fieldPanel != null) {
 			fieldPanel.setBackgroundColor(bg);
+			scroller.setBackground(bg);
 		}
 		super.setBackground(bg);
 	}
