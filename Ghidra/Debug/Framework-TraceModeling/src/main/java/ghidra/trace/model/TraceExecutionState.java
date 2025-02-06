@@ -26,7 +26,7 @@ public enum TraceExecutionState {
 	 * This may apply, e.g., to a GDB "Inferior," which has no yet been used to launch or attach to
 	 * a process.
 	 */
-	INACTIVE(false, false, false, false),
+	INACTIVE,
 
 	/**
 	 * The object is alive, but its execution state is unspecified
@@ -38,12 +38,12 @@ public enum TraceExecutionState {
 	 * <em>all</em> of its threads are stopped. For the clients' sakes, all models should implement
 	 * these conventions internally.
 	 */
-	ALIVE(true, false, false, false),
+	ALIVE,
 
 	/**
 	 * The object is alive, but not executing
 	 */
-	STOPPED(true, false, true, false),
+	STOPPED,
 
 	/**
 	 * The object is alive and executing
@@ -53,7 +53,7 @@ public enum TraceExecutionState {
 	 * thread is currently executing, waiting on an event, or scheduled for execution. It does not
 	 * necessarily mean it is executing on a CPU at this exact moment.
 	 */
-	RUNNING(true, true, false, false),
+	RUNNING,
 
 	/**
 	 * The object is no longer alive
@@ -63,63 +63,5 @@ public enum TraceExecutionState {
 	 * stale handles to objects which may still be queried (e.g., for a process exit code), or e.g.,
 	 * a GDB "Inferior," which could be re-used to launch or attach to another process.
 	 */
-	TERMINATED(false, false, false, true);
-
-	private final boolean alive;
-	private final boolean running;
-	private final boolean stopped;
-	private final boolean terminated;
-
-	private TraceExecutionState(boolean alive, boolean running, boolean stopped,
-			boolean terminated) {
-		this.alive = alive;
-		this.running = running;
-		this.stopped = stopped;
-		this.terminated = terminated;
-	}
-
-	/**
-	 * Check if this state implies the object is alive
-	 * 
-	 * @return true if alive
-	 */
-	public boolean isAlive() {
-		return alive;
-	}
-
-	/**
-	 * Check if this state implies the object is running
-	 * 
-	 * @return true if running
-	 */
-	public boolean isRunning() {
-		return running;
-	}
-
-	/**
-	 * Check if this state implies the object is stopped
-	 * 
-	 * @return true if stopped
-	 */
-	public boolean isStopped() {
-		return stopped;
-	}
-
-	/**
-	 * Check if this state implies the object was terminated
-	 * 
-	 * @return true if terminated
-	 */
-	public boolean isTerminated() {
-		return terminated;
-	}
-
-	/**
-	 * Check if this state is ambiguous
-	 * 
-	 * @return true if terminated
-	 */
-	public boolean isUnknown() {
-		return !stopped && !running && !terminated;
-	}
+	TERMINATED;
 }
