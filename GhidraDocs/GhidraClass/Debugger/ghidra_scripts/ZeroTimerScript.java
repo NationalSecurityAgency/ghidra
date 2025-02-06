@@ -27,8 +27,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 
 public class ZeroTimerScript extends GhidraScript implements FlatDebuggerAPI {
 	@Override
@@ -43,7 +43,7 @@ public class ZeroTimerScript extends GhidraScript implements FlatDebuggerAPI {
 			throw new AssertionError("The current program must be termmines");
 		}
 
-		if (getExecutionState(trace).isRunning()) {
+		if (getExecutionState(trace) != TraceExecutionState.STOPPED) {
 			monitor.setMessage("Interrupting target and waiting for STOPPED");
 			interrupt();
 			waitForBreak(3, TimeUnit.SECONDS);
@@ -87,7 +87,7 @@ public class ZeroTimerScript extends GhidraScript implements FlatDebuggerAPI {
 
 		// --------------------------------
 		while (true) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			TraceExecutionState execState = getExecutionState(trace);
 			switch (execState) {

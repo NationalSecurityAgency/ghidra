@@ -17,10 +17,11 @@ From here, you can toggle and delete existing breakpoints.
 There are several ways to set a new breakpoint:
 
 1. From any static or dynamic listing window, including Disassembly, Memory/Hex, and the Decompiler, right-click and select ![set breakpoint](images/breakpoint-enable.png) Set Breakpoint, press **`K`** on the keyboard, or double-click the margin.
+1. From the Breakpoints window, use the **Set Breakpoint** dropdown to to access the various breakpoint actions defined by GDB.
 1. From the Terminal window, use the GDB command, e.g., `break main`.
 
 The advantage of using the listings is that you can quickly set a breakpoint at any address.
-The advantage of using the Terminal window is that you can specify something other than an address.
+The advantage of using the dropdown action or Terminal window is that you can specify something other than an address.
 Often, those specifications still resolve to addresses, and Ghidra will display them.
 Ghidra will memorize breakpoints by recording them as special bookmarks in the program database.
 There is some iconography to communicate the various states of a breakpoint.

@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -60,6 +62,70 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceRmiTarget extends AbstractTarget {
+
+	class TraceRmiActionEntry implements ActionEntry {
+		private final RemoteMethod method;
+		private final Map<String, Object> args;
+		private final boolean requiresPrompt;
+		private final long specificity;
+		private final ParamAndObjectArg first;
+
+		public TraceRmiActionEntry(RemoteMethod method, Map<String, Object> args) {
+			this.method = method;
+			this.args = args;
+
+			this.requiresPrompt = args.values().contains(Missing.MISSING);
+			this.specificity = computeSpecificity(args);
+			this.first = getFirstObjectArgument(method, args);
+		}
+
+		@Override
+		public String display() {
+			return method.display();
+		}
+
+		@Override
+		public ActionName name() {
+			return method.action();
+		}
+
+		@Override
+		public Icon icon() {
+			return method.icon();
+		}
+
+		@Override
+		public String details() {
+			return method.description();
+		}
+
+		@Override
+		public boolean requiresPrompt() {
+			return requiresPrompt;
+		}
+
+		@Override
+		public long specificity() {
+			return specificity;
+		}
+
+		@Override
+		public CompletableFuture<?> invokeAsyncWithoutTimeout(boolean prompt) {
+			return invokeMethod(prompt, method, args);
+		}
+
+		@Override
+		public boolean isEnabled() {
+			if (first == null) {
+				return true;
+			}
+			if (first.obj == null) {
+				return false;
+			}
+			return name().enabler().isEnabled(first.obj, getSnap());
+		}
+	}
+
 	private final TraceRmiConnection connection;
 	private final Trace trace;
 
@@ -224,8 +290,12 @@ public class TraceRmiTarget extends AbstractTarget {
 		return null;
 	}
 
+	/**
+	 * A singleton to indicate missing arguments
+	 */
 	public enum Missing {
-		MISSING; // The argument requires a prompt
+		/** The argument requires a prompt */
+		MISSING;
 	}
 
 	protected Object findArgument(ActionName action, RemoteParameter parameter,
@@ -266,28 +336,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		return args;
 	}
 
-	private TraceExecutionState getStateOf(TraceObject object) {
-		try {
-			return object.getExecutionState(getSnap());
-		}
-		catch (NoSuchElementException e) {
-			return TraceExecutionState.TERMINATED;
-		}
-	}
-
-	private boolean whenState(TraceObject object,
-			Predicate<TraceExecutionState> predicate) {
-		try {
-			TraceExecutionState state = getStateOf(object);
-			return state == null || predicate.test(state);
-		}
-		catch (Exception e) {
-			Msg.error(this, "Could not get state: " + e);
-			return false;
-		}
-	}
-
-	protected long computeSpecificity(Map<String, Object> args) {
+	protected static long computeSpecificity(Map<String, Object> args) {
 		long score = 0;
 		for (Object o : args.values()) {
 			if (o instanceof TraceObject obj) {
@@ -297,46 +346,34 @@ public class TraceRmiTarget extends AbstractTarget {
 		return score;
 	}
 
-	protected BooleanSupplier chooseEnabler(RemoteMethod method, Map<String, Object> args) {
-		ActionName name = method.action();
+	protected RemoteParameter getFirstObjectParameter(RemoteMethod method) {
 		SchemaContext ctx = getSchemaContext();
 		if (ctx == null) {
-			return () -> true;
+			return null;
 		}
-		RemoteParameter firstParam = method.parameters()
+		return method.parameters()
 				.values()
 				.stream()
 				.filter(
 					p -> TraceObjectInterfaceUtils.isTraceObject(ctx.getSchema(p.type()).getType()))
 				.findFirst()
 				.orElse(null);
+	}
+
+	record ParamAndObjectArg(RemoteParameter param, TraceObject obj) {}
+
+	protected ParamAndObjectArg getFirstObjectArgument(RemoteMethod method,
+			Map<String, Object> args) {
+		RemoteParameter firstParam = getFirstObjectParameter(method);
 		if (firstParam == null) {
-			return () -> true;
+			return null;
 		}
 		Object firstArg = args.get(firstParam.name());
-		if (firstArg == null || firstArg == Missing.MISSING) {
+		if (firstArg == null || !(firstArg instanceof TraceObject obj)) {
 			Msg.trace(this, "MISSING first argument for " + method + "(" + firstParam + ")");
-			return () -> false;
+			return new ParamAndObjectArg(firstParam, null);
 		}
-		TraceObject obj = (TraceObject) firstArg;
-		if (ActionName.RESUME.equals(name) ||
-			ActionName.STEP_BACK.equals(name) ||
-			ActionName.STEP_EXT.equals(name) ||
-			ActionName.STEP_INTO.equals(name) ||
-			ActionName.STEP_OUT.equals(name) ||
-			ActionName.STEP_OVER.equals(name) ||
-			ActionName.STEP_SKIP.equals(name)) {
-			return () -> whenState(obj,
-				state -> state != null && (state.isStopped() || state.isUnknown()));
-		}
-		else if (ActionName.INTERRUPT.equals(name)) {
-			return () -> whenState(obj,
-				state -> state == null || state.isRunning() || state.isUnknown());
-		}
-		else if (ActionName.KILL.equals(name)) {
-			return () -> whenState(obj, state -> state == null || !state.isTerminated());
-		}
-		return () -> true;
+		return new ParamAndObjectArg(firstParam, obj);
 	}
 
 	private Map<String, Object> promptArgs(RemoteMethod method, Map<String, Object> defaults) {
@@ -346,7 +383,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		 */
 		Map<String, ValStr<?>> defs = ValStr.fromPlainMap(defaults);
 		RemoteMethodInvocationDialog dialog = new RemoteMethodInvocationDialog(tool,
-			getSchemaContext(), method.display(), method.display(), null);
+			getSchemaContext(), method.display(), method.okText(), method.icon());
 		Map<String, ValStr<?>> args = dialog.promptArguments(method.parameters(), defs, defs);
 		return args == null ? null : ValStr.toPlainMap(args);
 	}
@@ -374,10 +411,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
 		Map<String, Object> args = collectArguments(method, context, allowContextObject,
 			allowCoordsObject, allowSuitableObject);
-		boolean requiresPrompt = args.values().contains(Missing.MISSING);
-		return new ActionEntry(method.display(), method.action(), method.description(),
-			requiresPrompt, computeSpecificity(args), chooseEnabler(method, args),
-			prompt -> invokeMethod(prompt, method, args));
+		return new TraceRmiActionEntry(method, args);
 	}
 
 	protected Map<String, ActionEntry> collectFromMethods(Collection<RemoteMethod> methods,
@@ -430,6 +464,17 @@ public class TraceRmiTarget extends AbstractTarget {
 	protected Map<String, ActionEntry> collectByName(ActionName name, ActionContext context) {
 		return collectFromMethods(connection.getMethods().getByAction(name), context, false, true,
 			true);
+	}
+
+	@Override
+	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context) {
+		if (name == null) {
+			if (context instanceof ProgramLocationActionContext ctx) {
+				return collectAddressActions(ctx);
+			}
+			return collectAllActions(context);
+		}
+		return collectByName(name, context);
 	}
 
 	@Override

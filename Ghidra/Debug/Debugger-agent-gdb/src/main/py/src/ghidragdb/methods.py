@@ -391,19 +391,19 @@ def refresh_sections(node: sch.Schema('Module')):
         gdb.execute(f'ghidra trace put-sections "{modname}"')
 
 
-@REGISTRY.method(action='activate')
+@REGISTRY.method(action='activate', display="Activate Inferior")
 def activate_inferior(inferior: sch.Schema('Inferior')):
     """Switch to the inferior."""
     switch_inferior(find_inf_by_obj(inferior))
 
 
-@REGISTRY.method(action='activate')
+@REGISTRY.method(action='activate', display="Activate Thread")
 def activate_thread(thread: sch.Schema('Thread')):
     """Switch to the thread."""
     find_thread_by_obj(thread).switch()
 
 
-@REGISTRY.method(action='activate')
+@REGISTRY.method(action='activate', display="Activate Frame")
 def activate_frame(frame: sch.Schema('StackFrame')):
     """Select the frame."""
     find_frame_by_obj(frame).select()
@@ -415,7 +415,7 @@ def add_inferior(container: sch.Schema('InferiorContainer')):
     gdb.execute('add-inferior')
 
 
-@REGISTRY.method(action='delete')
+@REGISTRY.method(action='delete', display="Delete Inferior")
 def delete_inferior(inferior: sch.Schema('Inferior')):
     """Remove the inferior."""
     inf = find_inf_by_obj(inferior)
@@ -433,7 +433,7 @@ def connect(inferior: sch.Schema('Inferior'), spec: str):
 @REGISTRY.method(action='attach', display='Attach')
 def attach_obj(target: sch.Schema('Attachable')):
     """Attach the inferior to the given target."""
-    #switch_inferior(find_inf_by_obj(inferior))
+    # switch_inferior(find_inf_by_obj(inferior))
     pid = find_availpid_by_obj(target)
     gdb.execute(f'attach {pid}')
 
@@ -577,7 +577,7 @@ def break_sw_execute_address(inferior: sch.Schema('Inferior'), address: Address)
     gdb.execute(f'break *0x{offset:x}')
 
 
-@REGISTRY.method(action='break_sw_execute')
+@REGISTRY.method(action='break_ext', display="Set Breakpoint")
 def break_sw_execute_expression(expression: str):
     """Set a breakpoint (break)."""
     # TODO: Escape?
@@ -592,7 +592,7 @@ def break_hw_execute_address(inferior: sch.Schema('Inferior'), address: Address)
     gdb.execute(f'hbreak *0x{offset:x}')
 
 
-@REGISTRY.method(action='break_hw_execute')
+@REGISTRY.method(action='break_ext', display="Set Hardware Breakpoint")
 def break_hw_execute_expression(expression: str):
     """Set a hardware-assisted breakpoint (hbreak)."""
     # TODO: Escape?
@@ -609,7 +609,7 @@ def break_read_range(inferior: sch.Schema('Inferior'), range: AddressRange):
         f'rwatch -location *((char(*)[{range.length()}]) 0x{offset_start:x})')
 
 
-@REGISTRY.method(action='break_read')
+@REGISTRY.method(action='break_ext', display="Set Read Watchpoint")
 def break_read_expression(expression: str):
     """Set a read watchpoint (rwatch)."""
     gdb.execute(f'rwatch {expression}')
@@ -625,7 +625,7 @@ def break_write_range(inferior: sch.Schema('Inferior'), range: AddressRange):
         f'watch -location *((char(*)[{range.length()}]) 0x{offset_start:x})')
 
 
-@REGISTRY.method(action='break_write')
+@REGISTRY.method(action='break_ext', display="Set Watchpoint")
 def break_write_expression(expression: str):
     """Set a watchpoint (watch)."""
     gdb.execute(f'watch {expression}')
@@ -641,7 +641,7 @@ def break_access_range(inferior: sch.Schema('Inferior'), range: AddressRange):
         f'awatch -location *((char(*)[{range.length()}]) 0x{offset_start:x})')
 
 
-@REGISTRY.method(action='break_access')
+@REGISTRY.method(action='break_ext', display="Set Access Watchpoint")
 def break_access_expression(expression: str):
     """Set an access watchpoint (awatch)."""
     gdb.execute(f'awatch {expression}')
@@ -653,21 +653,23 @@ def break_event(inferior: sch.Schema('Inferior'), spec: str):
     gdb.execute(f'catch {spec}')
 
 
-@REGISTRY.method(action='toggle')
+@REGISTRY.method(action='toggle', display="Toggle Breakpoint")
 def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
     """Toggle a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)
     bpt.enabled = enabled
 
 
-@REGISTRY.method(action='toggle', condition=util.GDB_VERSION.major >= 13)
+@REGISTRY.method(action='toggle', display="Toggle Breakpoint Location",
+                 condition=util.GDB_VERSION.major >= 13)
 def toggle_breakpoint_location(location: sch.Schema('BreakpointLocation'), enabled: bool):
     """Toggle a breakpoint location."""
     loc = find_bpt_loc_by_obj(location)
     loc.enabled = enabled
 
 
-@REGISTRY.method(action='toggle', condition=util.GDB_VERSION.major < 13)
+@REGISTRY.method(action='toggle', display="Toggle Breakpoint Location",
+                 condition=util.GDB_VERSION.major < 13)
 def toggle_breakpoint_location(location: sch.Schema('BreakpointLocation'), enabled: bool):
     """Toggle a breakpoint location."""
     bptnum, locnum = find_bptlocnum_by_obj(location)
@@ -675,7 +677,7 @@ def toggle_breakpoint_location(location: sch.Schema('BreakpointLocation'), enabl
     gdb.execute(f'{cmd} {bptnum}.{locnum}')
 
 
-@REGISTRY.method(action='delete')
+@REGISTRY.method(action='delete', display="Delete Breakpoint")
 def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
     """Delete a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)

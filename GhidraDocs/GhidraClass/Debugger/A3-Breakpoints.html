@@ -99,7 +99,8 @@
  class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
  class="advanced" href="B2-Emulation.html">Emulation</a><a
  class="advanced" href="B3-Scripting.html">Scripting</a><a
- class="advanced" href="B4-Modeling.html">Modeling</a>
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
 </header>
 <header id="title-block-header">
 <h1 class="title">Ghidra Debugger</h1>
@@ -160,22 +161,26 @@ Memory/Hex, and the Decompiler, right-click and select <img
 src="images/breakpoint-enable.png" alt="set breakpoint" /> Set
 Breakpoint, press <strong><code>K</code></strong> on the keyboard, or
 double-click the margin.</li>
+<li>From the Breakpoints window, use the <strong>Set Breakpoint</strong>
+dropdown to to access the various breakpoint actions defined by
+GDB.</li>
 <li>From the Terminal window, use the GDB command, e.g.,
 <code>break main</code>.</li>
 </ol>
 <p>The advantage of using the listings is that you can quickly set a
-breakpoint at any address. The advantage of using the Terminal window is
-that you can specify something other than an address. Often, those
-specifications still resolve to addresses, and Ghidra will display them.
-Ghidra will memorize breakpoints by recording them as special bookmarks
-in the program database. There is some iconography to communicate the
-various states of a breakpoint. When all is well and normal, you should
-only see enabled <img src="images/breakpoint-enable.png"
-alt="enabled breakpoint" /> and disabled <img
-src="images/breakpoint-disable.png" alt="disabled breakpoint" />
-breakpoints. If the target is terminated (or not launched yet), you may
-also see ineffective <img src="images/breakpoint-enable-ineff.png"
-alt="ineffective breakpoint" /> breakpoints.</p>
+breakpoint at any address. The advantage of using the dropdown action or
+Terminal window is that you can specify something other than an address.
+Often, those specifications still resolve to addresses, and Ghidra will
+display them. Ghidra will memorize breakpoints by recording them as
+special bookmarks in the program database. There is some iconography to
+communicate the various states of a breakpoint. When all is well and
+normal, you should only see enabled <img
+src="images/breakpoint-enable.png" alt="enabled breakpoint" /> and
+disabled <img src="images/breakpoint-disable.png"
+alt="disabled breakpoint" /> breakpoints. If the target is terminated
+(or not launched yet), you may also see ineffective <img
+src="images/breakpoint-enable-ineff.png" alt="ineffective breakpoint" />
+breakpoints.</p>
 </section>
 <section id="examining-minesweeper-board-setup" class="level2">
 <h2>Examining Minesweeper Board Setup</h2>

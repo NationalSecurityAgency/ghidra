@@ -32,6 +32,10 @@ public class RmiMethodRegistry {
 		String display() default "";
 
 		String description() default "";
+
+		String okText() default "";
+
+		String icon() default "";
 	}
 
 	Map<String, RmiRemoteMethod> map = new HashMap<>();

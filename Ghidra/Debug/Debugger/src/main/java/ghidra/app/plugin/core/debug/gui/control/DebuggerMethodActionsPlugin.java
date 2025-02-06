@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,21 +18,19 @@ package ghidra.app.plugin.core.debug.gui.control;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.Icon;
-
 import docking.ActionContext;
 import docking.Tool;
-import docking.action.*;
+import docking.action.DockingActionIf;
+import docking.action.MenuData;
 import docking.actions.PopupActionProvider;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.InvokeActionEntryAction;
 import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
-import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -57,23 +55,10 @@ import ghidra.trace.model.program.TraceProgramView;
 public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionProvider {
 	public static final String GROUP_METHODS = "Debugger Methods";
 
-	class InvokeActionEntryAction extends DockingAction {
-		private final ActionEntry entry;
-
-		public InvokeActionEntryAction(ActionEntry entry) {
-			super(entry.display(), DebuggerMethodActionsPlugin.this.getName());
-			this.entry = entry;
-			Icon icon = null;
-			if (ActionName.REFRESH.equals(entry.name())) {
-				// TODO: Allow method annotation to specify icon?
-				icon = DebuggerResources.ICON_REFRESH;
-			}
-			setPopupMenuData(new MenuData(new String[] { getName() }, icon, GROUP_METHODS));
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			TargetActionTask.runAction(tool, entry.display(), entry);
+	class MethodAction extends InvokeActionEntryAction {
+		public MethodAction(ActionEntry entry) {
+			super(DebuggerMethodActionsPlugin.this, entry);
+			setPopupMenuData(new MenuData(new String[] { getName() }, entry.icon(), GROUP_METHODS));
 		}
 	}
 
@@ -136,10 +121,10 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 		List<DockingActionIf> result = new ArrayList<>();
 		for (ActionEntry entry : target.collectActions(null, context).values()) {
 			//if (entry.requiresPrompt() || entry.builtIn()) {
-			if (!entry.isEnabled() || entry.builtIn()) {
+			if (!entry.isEnabled() || !entry.getShow().isShowing(context)) {
 				continue;
 			}
-			result.add(new InvokeActionEntryAction(entry));
+			result.add(new MethodAction(entry));
 		}
 		return result;
 	}
