@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
+import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
@@ -67,17 +68,23 @@ public class CommentFieldSearcher extends ProgramDatabaseFieldSearcher {
 		if (comment == null) {
 			return;
 		}
+
+		// Remove newlines; turn any annotations into the display version so the screen positions
+		// of the program locations work correctly.
 		String cleanedUpComment = comment.replace('\n', ' ');
-		Matcher matcher = pattern.matcher(cleanedUpComment);
+		String updatedLine = CommentUtils.getDisplayString(cleanedUpComment, program);
+
+		Matcher matcher = pattern.matcher(updatedLine);
 		while (matcher.find()) {
 			int index = matcher.start();
-			currentMatches
-					.add(new TextSearchResult(getCommentLocation(comment, index, address), index));
+			ProgramLocation commentLocation = getCommentLocation(comment, index, address);
+			currentMatches.add(new TextSearchResult(commentLocation, index));
 		}
 	}
 
 	private ProgramLocation getCommentLocation(String commentStr, int index, Address address) {
 		String[] comments = StringUtilities.toLines(commentStr);
+
 		int rowIndex = findRowIndex(comments, index);
 		int charOffset = getRelativeCharOffset(index, rowIndex, comments);
 		int[] dataPath = getDataComponentPath(address);
