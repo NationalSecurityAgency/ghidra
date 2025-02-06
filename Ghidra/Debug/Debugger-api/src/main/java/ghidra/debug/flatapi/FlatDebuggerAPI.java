@@ -49,7 +49,8 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
@@ -1740,7 +1741,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if alive
 	 */
 	default boolean isTargetAlive(Trace trace) {
-		return getExecutionState(trace).isAlive();
+		return getExecutionState(trace) != TraceExecutionState.TERMINATED;
 	}
 
 	/**
@@ -1763,7 +1764,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if alive
 	 */
 	default boolean isThreadAlive(TraceThread thread) {
-		return getExecutionState(thread).isAlive();
+		return getExecutionState(thread) != TraceExecutionState.TERMINATED;
 	}
 
 	/**
@@ -1792,7 +1793,7 @@ public interface FlatDebuggerAPI {
 	 * @throws TimeoutException if the timeout expires
 	 */
 	default void waitForBreak(Trace trace, long timeout, TimeUnit unit) throws TimeoutException {
-		if (!getExecutionState(trace).isRunning()) {
+		if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 			return;
 		}
 		var listener = new DomainObjectListener() {
@@ -1800,14 +1801,14 @@ public interface FlatDebuggerAPI {
 
 			@Override
 			public void domainObjectChanged(DomainObjectChangedEvent ev) {
-				if (!getExecutionState(trace).isRunning()) {
+				if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 					future.complete(null);
 				}
 			}
 		};
 		trace.addListener(listener);
 		try {
-			if (!getExecutionState(trace).isRunning()) {
+			if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 				return;
 			}
 			listener.future.get(timeout, unit);

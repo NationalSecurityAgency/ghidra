@@ -605,9 +605,11 @@ public class RmiClient {
 	private Method buildMethod(RmiRemoteMethod method) {
 		Method.Builder builder = Method.newBuilder()
 				.setName(method.getName())
-				.setDescription(method.getDescription())
 				.setAction(method.getAction())
-				.setDisplay(method.getDisplay());
+				.setDisplay(method.getDisplay())
+				.setDescription(method.getDescription())
+				.setOkText(method.getOkText())
+				.setIcon(method.getIcon());
 		int i = 0;
 		for (RmiRemoteMethodParameter p : method.getParameters()) {
 			MethodParameter param = buildParameter(p);

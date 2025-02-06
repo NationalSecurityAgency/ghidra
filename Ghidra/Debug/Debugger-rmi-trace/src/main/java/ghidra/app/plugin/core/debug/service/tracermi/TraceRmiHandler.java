@@ -31,6 +31,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import com.google.protobuf.ByteString;
 
 import db.Transaction;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.services.DebuggerControlService;
@@ -1027,7 +1028,9 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		}
 		for (Method m : req.getMethodsList()) {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
-				ActionName.name(m.getAction()), m.getDisplay(), m.getDescription(),
+				ActionName.name(m.getAction()), m.getDisplay(),
+				m.getIcon().isBlank() ? null : new GIcon(m.getIcon()), m.getOkText(),
+				m.getDescription(),
 				m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),
