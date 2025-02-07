@@ -255,6 +255,12 @@ task createGhidraStubsWheel {
 			from(file("${ROOT_PROJECT_DIR}/LICENSE"))
 			into typestubsDir
 		}
+		
+		copy {
+			from("${ROOT_PROJECT_DIR}/GhidraBuild/BuildFiles/Doclets/support/GhidraStubs_README.md")
+			into typestubsDir
+			rename "GhidraStubs_README.md", "README.md"
+		}
 
 		def manifest = file("${typestubsDir}/MANIFEST.in")
 		manifest.write("graft src\n")
@@ -268,10 +274,22 @@ task createGhidraStubsWheel {
 			[project]
 			name = "ghidra-stubs"
 			version = "${p.version}"
+			dynamic = ["readme"]
+			description = "Ghidra Type Stubs"
+			license = {text = "Apache-2.0"}
+			maintainers = [
+				{name = "Ghidra Development Team"},
+			]
+			keywords = [
+				"ghidra",
+			]
 			classifiers = [
 				"License :: OSI Approved :: Apache Software License",
 				"Typing :: Stubs Only",
 			]
+			
+			[tool.setuptools.dynamic]
+			readme = {file = ["README.md"], content-type = "text/markdown"}
 			""".stripIndent()
 		)
 	}
