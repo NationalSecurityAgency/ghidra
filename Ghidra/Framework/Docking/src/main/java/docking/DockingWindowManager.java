@@ -479,6 +479,20 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
+	 * Returns true if the given provider is the last provider in its window.
+	 * @param provider the provider
+	 * @return true if the given provider is the last provider in its window.
+	 */
+	public boolean isLastComponentInWindow(ComponentProvider provider) {
+		Window providerWindow = getProviderWindow(provider);
+		WindowNode providerNode = root.getNodeForWindow(providerWindow);
+		if (providerNode != null) {
+			return providerNode.getComponentCount() == 1;
+		}
+		return false;
+	}
+
+	/**
 	 * Sets the visible state of the set of docking windows.
 	 *
 	 * @param state if true the main window and all sub-windows are set to be visible. If state is
