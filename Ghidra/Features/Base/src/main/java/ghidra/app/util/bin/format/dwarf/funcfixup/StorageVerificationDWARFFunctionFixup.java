@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf.funcfixup;
 
-import ghidra.app.util.bin.format.dwarf.DWARFFunction;
+import ghidra.app.util.bin.format.dwarf.*;
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
-import ghidra.app.util.bin.format.dwarf.DWARFVariable;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -32,10 +31,11 @@ public class StorageVerificationDWARFFunctionFixup implements DWARFFunctionFixup
 
 	@Override
 	public void fixupDWARFFunction(DWARFFunction dfunc) {
+		DWARFRegisterMappings regMappings = dfunc.getProgram().getRegisterMappings();
 		boolean ignoreStorage = dfunc.getProgram().getImportOptions().isIgnoreParamStorage() ||
-			dfunc.getProgram().getRegisterMappings().isUseFormalParameterStorage();
+			(regMappings != null && regMappings.isUseFormalParameterStorage());
 		boolean isEmptySignature = dfunc.params.isEmpty() && dfunc.retval.isVoidType();
-		if (ignoreStorage || isEmptySignature) {
+		if (regMappings == null || ignoreStorage || isEmptySignature) {
 			dfunc.signatureCommitMode = CommitMode.FORMAL;
 			return;
 		}
