@@ -83,14 +83,14 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	 * @param fsRef {@link FileSystemRef} to a {@link GFileSystem}.
 	 */
 	public FSBComponentProvider(FileSystemBrowserPlugin plugin, FileSystemRef fsRef) {
-		super(plugin.getTool(), fsRef.getFilesystem().getName(), plugin.getName());
+		super(plugin.getTool(), getDescriptiveFSName(fsRef.getFilesystem()), plugin.getName());
 
 		this.plugin = plugin;
 		this.rootNode = new FSBRootNode(fsRef);
 		this.pm = plugin.getTool().getService(ProgramManager.class);
 
 		setTransient();
-		setIcon(FSBIcons.PHOTO);
+		setIcon(getFSIcon(fsRef.getFilesystem(), true, fsbIcons));
 
 		initTree();
 		fsRef.getFilesystem().getRefManager().addListener(this);
@@ -147,8 +147,8 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 				super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row,
 					hasFocus);
 
-				if (value instanceof FSBRootNode fsRootNode) {
-					renderFS(fsRootNode, selected);
+				if (value instanceof FSBRootNode) {
+					// do nothing
 				}
 				else if (value instanceof FSBDirNode) {
 					// do nothing special, but exclude FSBFileNode
@@ -158,16 +158,6 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 				}
 
 				return this;
-			}
-
-			private void renderFS(FSBRootNode node, boolean selected) {
-				FileSystemRef nodeFSRef = node.getFSRef();
-				if (nodeFSRef == null || nodeFSRef.getFilesystem() == null) {
-					return;
-				}
-				Icon image = fsbIcons.getIcon(node.getContainerName(),
-					List.of(FSBIcons.FILESYSTEM_OVERLAY_ICON));
-				setIcon(image);
 			}
 
 			private void renderFile(FSBFileNode node, boolean selected) {
@@ -277,7 +267,10 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 	public void setProject(Project project) {
 		gTree.runTask(monitor -> {
 			projectIndex.setProject(project, monitor);
-			Swing.runLater(() -> gTree.repaint()); // icons might need repainting after new info is available
+			Swing.runLater(() -> {
+				contextChanged();
+				gTree.repaint();
+			}); // icons might need repainting after new info is available
 		});
 	}
 
@@ -432,6 +425,9 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 				if (nested) {
 					FSBFileNode modelFileNode =
 						(FSBFileNode) gTree.getModelNodeForPath(node.getTreePath());
+					if (modelFileNode == null) {
+						return;
+					}
 
 					FSBRootNode nestedRootNode = new FSBRootNode(ref, modelFileNode);
 
@@ -586,5 +582,22 @@ public class FSBComponentProvider extends ComponentProviderAdapter
 					.setStatusInfo("Unable to resolve symlink [%s]".formatted(symlinkDest), true);
 		}
 
+	}
+
+	static String getDescriptiveFSName(GFileSystem fs) {
+		return fs instanceof LocalFileSystem ? "My Computer" : fs.getName();
+	}
+
+	static Icon getFSIcon(GFileSystem fs, boolean isRootNode, FSBIcons fsbIcons) {
+		List<Icon> overlays = !isRootNode ? List.of(FSBIcons.FILESYSTEM_OVERLAY_ICON) : List.of();
+		FSRL container = fs.getFSRL().getContainer();
+		String containerName = container != null ? container.getName() : "/";
+		Icon image = fs instanceof LocalFileSystem || fs instanceof LocalFileSystemSub
+				? FSBIcons.MY_COMPUTER
+				: fsbIcons.getIcon(containerName, overlays);
+		if (image == FSBIcons.DEFAULT_ICON) {
+			image = FSBIcons.PHOTO;
+		}
+		return image;
 	}
 }
