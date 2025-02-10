@@ -226,17 +226,19 @@ public class DecompilerTaintTest extends AbstractGhidraHeadedIntegrationTest {
 		Address faddr = (Address) result.get("entry");
 		String fqname = (String) result.get("location");
 		Set<TaintQueryResult> vset = getSet(map, faddr);
-		String edgeId = SarifUtils.getEdge(fqname);
-		if (edgeId != null) {
-			String srcId = SarifUtils.getEdgeSource(edgeId);
-			LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
-			for (LogicalLocation lloc : srcNodes) {
-				vset.add(new TaintQueryResult(result, run, lloc));
-			}
-			String dstId = SarifUtils.getEdgeDest(edgeId);
-			LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
-			for (LogicalLocation lloc : dstNodes) {
-				vset.add(new TaintQueryResult(result, run, lloc));
+		Set<String> edgeIds = SarifUtils.getEdgeSet(fqname);
+		if (edgeIds != null) {
+			for (String edgeId : edgeIds) {
+				String srcId = SarifUtils.getEdgeSource(edgeId);
+				LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
+				for (LogicalLocation lloc : srcNodes) {
+					vset.add(new TaintQueryResult(result, run, lloc));
+				}
+				String dstId = SarifUtils.getEdgeDest(edgeId);
+				LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
+				for (LogicalLocation lloc : dstNodes) {
+					vset.add(new TaintQueryResult(result, run, lloc));
+				}
 			}
 		}
 	}

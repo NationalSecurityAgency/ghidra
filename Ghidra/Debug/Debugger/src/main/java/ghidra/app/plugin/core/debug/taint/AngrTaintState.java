@@ -202,7 +202,6 @@ public class AngrTaintState extends AbstractTaintState {
 		return NumericUtilities.convertBytesToString(bytes);
 	}
 
-
 	@Override
 	protected void readQueryResultsIntoDataFrame(Program program, InputStream is) {
 

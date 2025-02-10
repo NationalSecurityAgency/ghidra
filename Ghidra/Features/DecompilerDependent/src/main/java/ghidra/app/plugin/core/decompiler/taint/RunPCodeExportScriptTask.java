@@ -56,7 +56,7 @@ public class RunPCodeExportScriptTask extends Task {
 
 			ToolOptions options = tool.getOptions("Decompiler");
 			String facts_directory =
-				options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export");
+				options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export").trim();
 			Path facts_path = Path.of(facts_directory);
 			if (!facts_path.toFile().exists() || !facts_path.toFile().isDirectory()) {
 				Msg.info(this, "Facts Path: " + facts_path.toString() + " does not exists.");

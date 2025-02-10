@@ -106,12 +106,12 @@ public class CreateTargetIndexTask extends Task {
 
 		// This will pull all the Taint options default set in the plugin.  These could also be set in Ghidra configuration files.
 		String enginePathName = options.getString(TaintOptions.OP_KEY_TAINT_ENGINE_PATH,
-			"/home/user/workspace/engine_binary");
+			"/home/user/workspace/engine_binary").trim();
 		String factsDirectory =
-			options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export");
+			options.getString(TaintOptions.OP_KEY_TAINT_FACTS_DIR, "/tmp/export").trim();
 		String indexDirectory =
-			options.getString(TaintOptions.OP_KEY_TAINT_OUTPUT_DIR, "/tmp/output");
-		String indexDBName = options.getString(TaintOptions.OP_KEY_TAINT_DB, "ctadlir.db");
+			options.getString(TaintOptions.OP_KEY_TAINT_OUTPUT_DIR, "/tmp/output").trim();
+		String indexDBName = options.getString(TaintOptions.OP_KEY_TAINT_DB, "ctadlir.db").trim();
 
 		// builds a custom db name with the string of the binary embedded in it for better identification.
 		indexDBName = TaintOptions.makeDBName(indexDBName, program.getName());
