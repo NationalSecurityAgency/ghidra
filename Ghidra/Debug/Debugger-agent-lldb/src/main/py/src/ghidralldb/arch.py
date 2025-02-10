@@ -132,9 +132,8 @@ default_compiler_map = {
     'macosx': 'gcc',
     'tvos': 'gcc',
     'watchos': 'gcc',
-    'windows': 'Visual Studio',
-    # This may seem wrong, but Ghidra cspecs really describe the ABI
-    'Cygwin': 'Visual Studio',
+    'windows': 'windows',
+    'Cygwin': 'windows',
     'default': 'default',
     'unknown': 'default',
 }
@@ -206,6 +205,9 @@ def compute_ghidra_language():
     # through them by endian and probably prefer default/simpler variants. The
     # heuristic for "simpler" will be 'default' then shortest variant id.
     arch = get_arch()
+    osabi = get_osabi()
+    if osabi == 'windows' and arch == 'i386':
+        arch = 'x86_64'
     endian = get_endian()
     lebe = ':BE:' if endian == 'big' else ':LE:'
     if not arch in language_map:
