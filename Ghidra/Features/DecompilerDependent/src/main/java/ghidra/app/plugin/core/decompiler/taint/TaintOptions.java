@@ -182,7 +182,7 @@ public class TaintOptions {
 	 */
 	public void grabFromToolAndProgram(Plugin ownerPlugin, ToolOptions opt, Program program) {
 
-		String engine = opt.getString(OP_KEY_TAINT_QUERY_ENGINE, "");
+		String engine = opt.getString(OP_KEY_TAINT_QUERY_ENGINE, "").trim();
 		if (!engine.equals(taintQueryEngine)) {
 			TaintPlugin plugin = (TaintPlugin) ownerPlugin;
 			TaintState state = TaintState.newInstance(plugin, engine);

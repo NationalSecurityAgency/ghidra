@@ -67,7 +67,7 @@ public class TaintSinkBySymbolAction extends TaintAbstractDecompilerAction {
 			return false;
 		}
 		if (tokenAtCursor instanceof ClangFieldToken) {
-			return false;
+			return true;
 		}
 		if (tokenAtCursor.Parent() instanceof ClangReturnType) {
 			return false;

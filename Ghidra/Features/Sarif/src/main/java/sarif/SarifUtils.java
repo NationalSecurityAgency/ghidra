@@ -16,43 +16,17 @@
 package sarif;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.bouncycastle.util.encoders.Base64;
 
-import com.contrastsecurity.sarif.Artifact;
-import com.contrastsecurity.sarif.ArtifactContent;
-import com.contrastsecurity.sarif.ArtifactLocation;
-import com.contrastsecurity.sarif.Edge;
-import com.contrastsecurity.sarif.Graph;
-import com.contrastsecurity.sarif.Location;
-import com.contrastsecurity.sarif.LogicalLocation;
-import com.contrastsecurity.sarif.Node;
-import com.contrastsecurity.sarif.PhysicalLocation;
-import com.contrastsecurity.sarif.ReportingDescriptor;
-import com.contrastsecurity.sarif.ReportingDescriptorReference;
-import com.contrastsecurity.sarif.Run;
-import com.contrastsecurity.sarif.ToolComponent;
+import com.contrastsecurity.sarif.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import ghidra.framework.store.LockException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressFormatException;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressRangeIterator;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
@@ -77,7 +51,7 @@ public class SarifUtils {
 	private static Map<String, LogicalLocation[]> nodeLocs = new HashMap<>();
 	private static Map<String, String> edgeSrcs = new HashMap<>();
 	private static Map<String, String> edgeDsts = new HashMap<>();
-	private static Map<String, String> edgeDescs = new HashMap<>();
+	private static Map<String, Set<String>> edgeDescs = new HashMap<>();
 	private static boolean populating = false;
 
 	public static JsonArray setLocations(Address min, Address max) {
@@ -403,7 +377,12 @@ public class SarifUtils {
 				String desc = e.getLabel().getText();
 				edgeSrcs.put(id, src);
 				edgeDsts.put(id, dst);
-				edgeDescs.put(desc, id);
+				Set<String> set = edgeDescs.get(desc);
+				if (set == null) {
+					set = new HashSet<>();
+					edgeDescs.put(desc, set);
+				}
+				set.add(id);
 			}
 			Set<Node> nodes = rg.getNodes();
 			for (Node n : nodes) {
@@ -428,7 +407,7 @@ public class SarifUtils {
 		}
 	}
 
-	public static String getEdge(String fqname) {
+	public static Set<String> getEdgeSet(String fqname) {
 		return edgeDescs.get(fqname);
 	}
 
@@ -454,6 +433,10 @@ public class SarifUtils {
 
 	public static void setPopulating(boolean b) {
 		populating = b;
+	}
+
+	public static Map<String, Set<String>> getEdgeMap() {
+		return edgeDescs;
 	}
 
 }
