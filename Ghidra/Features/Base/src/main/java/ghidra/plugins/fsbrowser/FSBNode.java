@@ -35,6 +35,12 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class FSBNode extends GTreeSlowLoadingNode {
 
+	protected String name;
+
+	protected FSBNode(String name) {
+		this.name = name;
+	}
+
 	/**
 	 * Returns the {@link FSRL} of the filesystem object that this node represents.
 	 * <p>
@@ -64,7 +70,7 @@ public abstract class FSBNode extends GTreeSlowLoadingNode {
 
 	@Override
 	public String getName() {
-		return getFSRL().getName();
+		return name;
 	}
 
 	/**

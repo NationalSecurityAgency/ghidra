@@ -157,6 +157,7 @@ public class FileSystemBrowserPlugin extends Plugin
 			currentBrowsers.put(fsFSRL, provider);
 			getTool().addComponentProvider(provider, false);
 			provider.afterAddedToTool();
+			provider.contextChanged();
 		}
 
 		if (show) {

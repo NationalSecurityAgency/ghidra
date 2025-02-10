@@ -1104,17 +1104,21 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
 			boolean isFrustrated = isFrustrated();
 			boolean isFocused = isFocused();
 			if (isFocused && !isFrustrated) {
-				// the user has decided to hide this component and is not madly clicking
-				setVisible(false);
+				// the user has decided to hide this component and is not madly clicking; also, we
+				// don't allow the last component in a window to be closed in order to prevent an
+				// empty window.
+				if (!myDwm.isLastComponentInWindow(ComponentProvider.this)) {
+					setVisible(false);
+				}
 				return;
 			}
 
 			boolean emphasize = getComponent().isShowing() && isFrustrated;
-			Tool tool = getTool();
-			DockingWindowManager myDwm = tool.getWindowManager();
 			myDwm.showComponent(ComponentProvider.this, true, emphasize);
 		}
 

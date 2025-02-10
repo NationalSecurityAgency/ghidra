@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,10 +65,11 @@ public class FSRLTest {
 	}
 
 	@Test
-	public void testDOSPaths() throws MalformedURLException {
-		FSRL fsrl = FSRL.fromString("fsrl://a:\\dir\\filename.txt");
+	public void testPathsWithBackslashes() throws MalformedURLException {
+		FSRL fsrl = FSRL.fromString("fsrl:///dir/filename\\with\\backslashes");
 		assertEquals("fsrl", fsrl.getFS().getProtocol());
-		assertEquals("a:/dir/filename.txt", fsrl.getPath());
+		assertEquals("/dir/filename\\with\\backslashes", fsrl.getPath());
+		assertEquals("filename\\with\\backslashes", fsrl.getName());
 	}
 
 	@Test

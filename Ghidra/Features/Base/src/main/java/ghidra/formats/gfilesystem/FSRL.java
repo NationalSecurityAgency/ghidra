@@ -177,7 +177,6 @@ public class FSRL {
 
 		FSRLRoot fsRoot = FSRLRoot.nestedFS(containerFile, proto);
 		String decodedPath = FSUtilities.escapeDecode(path);
-		decodedPath = decodedPath.replace('\\', '/');
 		if (decodedPath.isEmpty()) {
 			decodedPath = null;
 		}
@@ -289,6 +288,11 @@ public class FSRL {
 			return null;
 		}
 		int cp = path.lastIndexOf('/');
+		if (cp > 0 && cp == path.length() - 1) {
+			// if the path ended with a '/', look for the slash before that
+			// typically only for windows drive letter path like "/c:/"
+			cp = path.lastIndexOf('/', cp - 1);
+		}
 		return cp >= 0 ? path.substring(cp + 1) : path;
 	}
 
