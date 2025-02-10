@@ -25,7 +25,7 @@
 #@desc </body></html>
 #@menu-group remote
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#lldb_remote
+#@help TraceRmiLauncherServicePlugin#lldb_android
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
