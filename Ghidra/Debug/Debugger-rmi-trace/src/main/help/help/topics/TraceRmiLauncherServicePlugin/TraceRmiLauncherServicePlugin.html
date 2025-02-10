@@ -703,6 +703,15 @@ perl -i -pe 's/(?<=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
 	      <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
 	    </UL>
 
+		<H3><A name="lldb_ssh"></A>LLDB via SSH</H3>
+
+		<P>This works the same as the "GDB via SSH" launcher, but runs <TT>lldb</TT> on a remote system via <TT>ssh</TT>. 
+
+		<H3><A name="lldb_android"></A>Android LLDB</H3>
+
+		<P>This has the same options as the "LLDB via SSH" launcher, which are necessary for connecting to the Android debugger,
+			but executes via the normal lldb mechanism. 
+
     <H2>Stock Windows Debugger (WinDbg) Launchers</H2>
 
     <P>The following launchers based on Microsoft's <TT>dbgeng.dll</TT> are included out of the
