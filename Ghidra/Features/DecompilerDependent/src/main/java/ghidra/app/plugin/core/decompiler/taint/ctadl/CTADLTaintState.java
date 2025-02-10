@@ -28,7 +28,6 @@ import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.pcode.HighParam;
 import ghidra.program.model.pcode.HighVariable;
 
 /**
@@ -146,18 +145,11 @@ public class CTADLTaintState extends AbstractTaintState {
 				}
 			}
 			writer.println(method + "Vertex(\"" + mark.getLabel() + "\", vn, p) :-");
-			if (!mark.isGlobal()) {
-				writer.println("\tHFUNC_NAME(m, \"" + mark.getFunctionName() + "\"),");
-				writer.println("\tCVar_InFunction(vn, m),");
-			}
+			writer.println("\t((HFUNC_NAME(m, \"" + mark.getFunctionName() + "\"),");
+			writer.println("\tCVar_InFunction(vn, m)) ; CVar_isGlobal(vn)),");
 			if (addr != null && addr.getOffset() != 0 && !mark.bySymbol()) {
-				if (!TaintState.isActualParam(token) && !(hv instanceof HighParam)) {
-					writer.println("\tVNODE_PC_ADDRESS(vn, " + addr.getOffset() + "),");
-				}
-				else { // NB: we still want a local match
-					writer.println("\t(PCODE_INPUT(i, _, vn) ; PCODE_OUTPUT(i, vn)),");
-					writer.println("\tPCODE_TARGET(i, " + addr.getOffset() + "),");
-				}
+				writer.println("\t(PCODE_INPUT(i, _, vn) ; PCODE_OUTPUT(i, vn)),");
+				writer.println("\tPCODE_TARGET(i, " + addr.getOffset() + "),");
 			}
 			if (mark.bySymbol()) {
 				writer.println("\tSYMBOL_NAME(sym, \"" + token.getText() + "\"),");

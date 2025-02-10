@@ -242,17 +242,19 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			Address faddr = (Address) r.get("entry");
 			String fqname = (String) r.get("location");
 			Set<TaintQueryResult> vset = getSet(map, faddr);
-			String edgeId = SarifUtils.getEdge(fqname);
-			if (edgeId != null) {
-				String srcId = SarifUtils.getEdgeSource(edgeId);
-				LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
-				for (LogicalLocation lloc : srcNodes) {
-					vset.add(new TaintQueryResult(r, run, lloc));
-				}
-				String dstId = SarifUtils.getEdgeDest(edgeId);
-				LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
-				for (LogicalLocation lloc : dstNodes) {
-					vset.add(new TaintQueryResult(r, run, lloc));
+			Set<String> edgeIds = SarifUtils.getEdgeSet(fqname);
+			if (edgeIds != null) {
+				for (String edgeId : edgeIds) {
+					String srcId = SarifUtils.getEdgeSource(edgeId);
+					LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
+					for (LogicalLocation lloc : srcNodes) {
+						vset.add(new TaintQueryResult(r, run, lloc));
+					}
+					String dstId = SarifUtils.getEdgeDest(edgeId);
+					LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
+					for (LogicalLocation lloc : dstNodes) {
+						vset.add(new TaintQueryResult(r, run, lloc));
+					}
 				}
 			}
 		}
@@ -338,19 +340,21 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		Address faddr = (Address) r.get("entry");
 		String fqname = (String) r.get("location");
 		Set<TaintQueryResult> vset = getSet(map, faddr);
-		String edgeId = SarifUtils.getEdge(fqname);
-		if (edgeId != null) {
-			String srcId = SarifUtils.getEdgeSource(edgeId);
-			LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
-			for (LogicalLocation lloc : srcNodes) {
-				TaintQueryResult res = new TaintQueryResult(r, run, lloc);
-				vset.remove(res);
-			}
-			String dstId = SarifUtils.getEdgeDest(edgeId);
-			LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
-			for (LogicalLocation lloc : dstNodes) {
-				TaintQueryResult res = new TaintQueryResult(r, run, lloc);
-				vset.remove(res);
+		Set<String> edgeIds = SarifUtils.getEdgeSet(fqname);
+		if (edgeIds != null) {
+			for (String edgeId : edgeIds) {
+				String srcId = SarifUtils.getEdgeSource(edgeId);
+				LogicalLocation[] srcNodes = SarifUtils.getNodeLocs(srcId);
+				for (LogicalLocation lloc : srcNodes) {
+					TaintQueryResult res = new TaintQueryResult(r, run, lloc);
+					vset.remove(res);
+				}
+				String dstId = SarifUtils.getEdgeDest(edgeId);
+				LogicalLocation[] dstNodes = SarifUtils.getNodeLocs(dstId);
+				for (LogicalLocation lloc : dstNodes) {
+					TaintQueryResult res = new TaintQueryResult(r, run, lloc);
+					vset.remove(res);
+				}
 			}
 			map.put(faddr, vset);
 		}
