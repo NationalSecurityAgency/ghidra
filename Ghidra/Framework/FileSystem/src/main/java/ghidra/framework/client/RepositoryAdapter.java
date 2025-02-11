@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,6 +58,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	 * @param name repository name
 	 */
 	public RepositoryAdapter(RepositoryServerAdapter serverAdapter, String name) {
+		(new Exception("CONSTRUCTED " + name)).printStackTrace();
 		this.serverAdapter = serverAdapter;
 		this.name = name;
 		changeDispatcher = new RepositoryChangeDispatcher(this);
@@ -178,6 +179,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 				serverAdapter.connect(); // may cause auto-reconnect of repository
 			}
 			if (repository == null) {
+				(new Exception("CONNECTION")).printStackTrace();
 				repository = serverAdapter.getRepositoryHandle(name);
 				unexpectedDisconnect = false;
 				if (repository == null) {
@@ -410,8 +412,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 			catch (NotConnectedException | RemoteException e) {
 				if (recoverConnection(e)) {
 					ManagedBufferFileAdapter bf =
-						new ManagedBufferFileAdapter(repository.createDatabase(parentPath,
-							itemName, fileID, bufferSize, contentType, projectPath));
+						new ManagedBufferFileAdapter(repository.createDatabase(parentPath, itemName,
+							fileID, bufferSize, contentType, projectPath));
 					fileOpened();
 					return bf;
 				}
@@ -428,17 +430,15 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 		synchronized (serverAdapter) {
 			checkRepository();
 			try {
-				ManagedBufferFileAdapter bf =
-					new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-						version, minChangeDataVer));
+				ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+					repository.openDatabase(parentPath, itemName, version, minChangeDataVer));
 				fileOpened();
 				return bf;
 			}
 			catch (NotConnectedException | RemoteException e) {
 				if (recoverConnection(e)) {
-					ManagedBufferFileAdapter bf =
-						new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-							version, minChangeDataVer));
+					ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+						repository.openDatabase(parentPath, itemName, version, minChangeDataVer));
 					fileOpened();
 					return bf;
 				}
@@ -450,22 +450,20 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	/*
 	 * @see ghidra.framework.remote.RepositoryHandle#openDatabase(java.lang.String, java.lang.String, long)
 	 */
-	public ManagedBufferFileAdapter openDatabase(String parentPath, String itemName, long checkoutId)
-			throws IOException {
+	public ManagedBufferFileAdapter openDatabase(String parentPath, String itemName,
+			long checkoutId) throws IOException {
 		synchronized (serverAdapter) {
 			checkRepository();
 			try {
-				ManagedBufferFileAdapter bf =
-					new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-						checkoutId));
+				ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+					repository.openDatabase(parentPath, itemName, checkoutId));
 				fileOpened();
 				return bf;
 			}
 			catch (NotConnectedException | RemoteException e) {
 				if (recoverConnection(e)) {
-					ManagedBufferFileAdapter bf =
-						new ManagedBufferFileAdapter(repository.openDatabase(parentPath, itemName,
-							checkoutId));
+					ManagedBufferFileAdapter bf = new ManagedBufferFileAdapter(
+						repository.openDatabase(parentPath, itemName, checkoutId));
 					fileOpened();
 					return bf;
 				}
@@ -745,7 +743,8 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	/*
 	 * @see ghidra.framework.remote.RepositoryHandle#getCheckout(java.lang.String, java.lang.String)
 	 */
-	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName) throws IOException {
+	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName)
+			throws IOException {
 		synchronized (serverAdapter) {
 			checkRepository();
 			try {
