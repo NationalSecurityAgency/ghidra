@@ -402,20 +402,19 @@ public class DyldCacheHeader implements StructConverter {
 			DyldCacheMappingInfo mappingInfo =
 				mappingInfoList.get(DyldCacheSlideInfoCommon.DATA_PAGE_MAP_ENTRY);
 			DyldCacheSlideInfoCommon info = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
-				slideInfoOffset, mappingInfo.getAddress(), mappingInfo.getSize(),
-				mappingInfo.getFileOffset(), log, monitor);
+				slideInfoOffset, mappingInfo, log, monitor);
 			if (info != null) {
 				slideInfoList.add(info);
 			}
 		}
 		else if (cacheMappingAndSlideInfoList.size() > 0) {
-			for (DyldCacheMappingAndSlideInfo info : cacheMappingAndSlideInfoList) {
+			for (int i = 0; i < cacheMappingAndSlideInfoList.size(); i++) {
+				DyldCacheMappingAndSlideInfo info = cacheMappingAndSlideInfoList.get(i);
 				if (info.getSlideInfoFileOffset() == 0) {
 					continue;
 				}
 				DyldCacheSlideInfoCommon slideInfo = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
-					info.getSlideInfoFileOffset(), info.getAddress(), info.getSize(),
-					info.getFileOffset(), log, monitor);
+					info.getSlideInfoFileOffset(), mappingInfoList.get(i), log, monitor);
 				if (slideInfo != null) {
 					slideInfoList.add(slideInfo);
 				}
@@ -1067,7 +1066,7 @@ public class DyldCacheHeader implements StructConverter {
 		List<DyldCacheImage> images = new ArrayList<>();
 		for (DyldCacheImage imageInfo : imageInfoList) {
 			for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
-				if (mappingInfo.contains(imageInfo.getAddress())) {
+				if (mappingInfo.contains(imageInfo.getAddress(), true)) {
 					images.add(imageInfo);
 					break;
 				}
