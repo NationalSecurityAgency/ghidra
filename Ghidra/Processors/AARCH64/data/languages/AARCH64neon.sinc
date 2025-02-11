@@ -12343,11 +12343,11 @@ is b_3131=0 & q=0 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_2121=1 & Rm_VPR128.8H
 is b_2131=0b11001110011 & b_1015=0b100011 & Rd_VPR128.2D & Rn_VPR128.2D & Rm_VPR128.2D & Zd
 {
 	# simd infix TMPQ1 = Rm_VPR128.2D << 1:8 on lane size 8
-	TMPQ1[0,64] = Rm_VPR128.2D[0,64] << 1:8;
-	TMPQ1[64,64] = Rm_VPR128.2D[64,64] << 1:8;
+	TMPQ1[0,64] = Rm_VPR128.2D[0,64] << 1:8 | (Rm_VPR128.2D[0,64] >> 63);
+	TMPQ1[64,64] = Rm_VPR128.2D[64,64] << 1:8 | (Rm_VPR128.2D[64,64] >> 63);
 	# simd infix Rd_VPR128.2D = Rn_VPR128.2D | TMPQ1 on lane size 8
-	Rd_VPR128.2D[0,64] = Rn_VPR128.2D[0,64] | TMPQ1[0,64];
-	Rd_VPR128.2D[64,64] = Rn_VPR128.2D[64,64] | TMPQ1[64,64];
+	Rd_VPR128.2D[0,64] = Rn_VPR128.2D[0,64] ^ TMPQ1[0,64];
+	Rd_VPR128.2D[64,64] = Rn_VPR128.2D[64,64] ^ TMPQ1[64,64];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
