@@ -4011,6 +4011,92 @@ int4 RuleXorCollapse::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleStackAlignFix
+/// \brief Fix stack align statement to avoid wrong stack analysis
+///
+/// When facing possibly dynamic stack, compiler sometimes emits stack
+/// alignment that looks like "and rsp, -0x1000" (as in x86).
+/// This would stop the constant propagation on SP thus preventing
+/// analyzing on stack variables.
+/// One example under x86 is:
+/// 
+///   ...
+///   mov rbp, rsp (<-- initial rsp)
+///   and rsp, -0x1000 ; stack alignment
+///   sub rsp, 0x1000 ; frame size
+///   lea r12, [rsp + 8] ; use of stack variable
+///   ...
+///
+/// Now, the use of stack variable cannot be recognized as the and
+/// prevents the further rsp analysis.
+/// This rule will fix this situation by applying:
+///
+/// (rsp + OFFSET) & MASK
+///    ==> (RSP & MASK) + (OFFSET & MASK)
+///    ==> RSP + (OFFSET & MASK)
+///
+/// This may not be constantly true as the stack frame should be
+/// a range anyway (like in above example, range from SIZE~SIZE+0x1000).
+/// And we are fixing it to be SIZE. However, this should be fine in
+/// most cases.
+void RuleStackAlignFix::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_AND);
+}
+
+bool RuleStackAlignFix::inSpacebase(Architecture *glb, Varnode *vn)
+
+{
+  if (vn->isSpacebase()) return true;
+  // If varnode itself is not spacebase, it should be at least \e input
+  // to be possibly spacebase + constant.
+  if (!vn->isInput()) return false;
+
+  if (vn->getSpace()->getType() != IPTR_SPACEBASE) return false;
+
+  return true;
+}
+
+int4 RuleStackAlignFix::applyOp(PcodeOp *op, Funcdata &data)
+
+{
+  Architecture *glb = data.getArch();
+  bool validForm = false;
+  int slot; // the slot of the constant
+
+  // Two varnodes should be one constant and one (spacebase + constant)
+  for (slot = 0; slot < 2; ++slot) {
+    if (op->getIn(slot)->isConstant() && inSpacebase(glb, op->getIn(1 - slot))) {
+      validForm = true;
+      break;
+    }
+  }
+
+  if (!validForm) return 0;
+
+  // Transform the (SP + C0) & C1 into SP = SP + C2 where C2 is the result of C0 & C1
+
+  Varnode *c0 = op->getIn(slot);
+  Varnode *c1 = op->getIn(1 - slot)->getDef()->getIn(1);
+  if (c1->isConstant()) {
+    Varnode *base_vn = op->getIn(1 - slot)->getDef()->getIn(0);
+
+    uintb val = op->getOpcode()->evaluateBinary(
+      c0->getSize(),
+      c0->getSize(),
+      c0->getOffset(),
+      c1->getOffset()
+    );
+    Varnode *new_vn = data.newConstant(op->getIn(slot)->getSize(), val);
+    data.opSetOpcode(op, CPUI_INT_ADD);
+    data.opSetInput(op, base_vn, 0);
+    data.opSetInput(op, new_vn, 1);
+    return 1;
+  }
+  return 0;
+}
+
 /// \class RuleAddMultCollapse
 /// \brief Collapse constants in an additive or multiplicative expression
 ///
