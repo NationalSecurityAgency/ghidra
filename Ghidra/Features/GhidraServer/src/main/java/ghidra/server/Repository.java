@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -169,8 +169,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			GTimer.scheduleRunnable(RepositoryHandle.CLIENT_CHECK_PERIOD, () -> {
 				synchronized (fileSystem) {
 					RepositoryHandleImpl[] handles = getHandles();
-					for (int i = 0; i < handles.length; i++) {
-						handles[i].checkHandle();
+					for (RepositoryHandleImpl handle : handles) {
+						handle.checkHandle();
 					}
 					scheduleHandleCheck();
 				}
@@ -195,8 +195,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				handles = new RepositoryHandleImpl[handleList.size()];
 				handleList.toArray(handles);
 			}
-			for (int i = 0; i < handles.length; i++) {
-				handles[i].dispose();
+			for (RepositoryHandleImpl handle : handles) {
+				handle.dispose();
 			}
 		}
 	}
@@ -239,8 +239,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		}
 
 		RepositoryHandleImpl[] handles = getHandles();
-		for (int i = 0; i < handles.length; i++) {
-			handles[i].dispatchEvents(events);
+		for (RepositoryHandleImpl handle : handles) {
+			handle.dispatchEvents(events);
 		}
 	}
 
@@ -327,7 +327,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * defined to the repository user manager.
 	 * @param currentUser user performing request
 	 * @return list of user names.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public String[] getServerUserList(String currentUser) throws IOException {
 		if (UserManager.ANONYMOUS_USERNAME.equals(currentUser)) {
@@ -343,7 +343,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param users user access list
 	 * @param allowAnonymousAccess true if anonymous access should be permitted (assume allowed by server config).
 	 * @throws UserAccessException if currentUser is not a current repository admin
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public void setUserList(String currentUser, User[] users, boolean allowAnonymousAccess)
 			throws UserAccessException, IOException {
@@ -352,12 +352,12 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			validateAdminPrivilege(currentUser);
 
 			LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
-			for (int i = 0; i < users.length; i++) {
-				String userName = users[i].getName();
+			for (User user : users) {
+				String userName = user.getName();
 				if (UserManager.ANONYMOUS_USERNAME.equals(userName)) {
 					continue; // ignore
 				}
-				newUserMap.put(userName, users[i]);
+				newUserMap.put(userName, user);
 			}
 			User user = newUserMap.get(currentUser);
 			if (user == null || !user.isAdmin()) {
@@ -433,9 +433,10 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Get the list of known users for this repository.
-	 * @param currentUser user that is requesting the user list. 
+	 * @param currentUser user that is requesting the user list.
+	 * @return array of repository users in the ACL 
 	 * @throws UserAccessException if currentUser is not a current repository admin
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public User[] getUserList(String currentUser) throws UserAccessException, IOException {
 		synchronized (fileSystem) {
@@ -446,9 +447,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			validateReadPrivilege(currentUser);
 			User[] users = new User[userMap.size()];
 			int i = 0;
-			Iterator<User> iter = userMap.values().iterator();
-			while (iter.hasNext()) {
-				users[i++] = iter.next();
+			for (User element : userMap.values()) {
+				users[i++] = element;
 			}
 			return users;
 		}
@@ -488,7 +488,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param newUserMap user map
 	 * @param allowAnonymous true if anonymous access is allowed
 	 * @throws UserAccessException if currentUser does not have admin priviledge
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private void writeUserList(String currentUser, LinkedHashMap<String, User> newUserMap,
 			boolean allowAnonymous) throws UserAccessException, IOException {
@@ -506,7 +506,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param newUserMap user map
 	 * @param allowAnonymous true if anonymous access is allowed
 	 * @throws UserAccessException if currentUser does not have admin priviledge
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private void writeUserList(LinkedHashMap<String, User> newUserMap, boolean allowAnonymous)
 			throws IOException {
@@ -524,9 +524,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				out.println(ANONYMOUS_STR);
 			}
 
-			Iterator<User> iter = newUserMap.values().iterator();
-			while (iter.hasNext()) {
-				User user = iter.next();
+			for (User user : newUserMap.values()) {
 				String line = user.getName() + "=" + TYPE_NAMES[user.getPermissionType()];
 				out.println(line);
 			}
@@ -546,8 +544,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * NOTE: This method is not yet implemented.  Server admin should stop server
 	 * and simply delete those repository directories which are unwanted.
 	 * @param currentUser current user
-	 * @throws IOException
-	 * @throws UserAccessException
+	 * @throws IOException if an IO error occurs
+	 * @throws UserAccessException if currentUser does not have Admin priviledge
 	 */
 	void delete(String currentUser) throws IOException, UserAccessException {
 		synchronized (fileSystem) {
@@ -621,7 +619,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Read user access list from local file.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private void readAccessFile() throws IOException {
 		if (!userAccessFile.exists()) {
@@ -633,15 +631,14 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			readAccessFile(userAccessFile, list) && mgr.anonymousAccessAllowed();
 
 		LinkedHashMap<String, User> newUserMap = new LinkedHashMap<>();
-		Iterator<User> iter = list.iterator();
 		boolean hasAdmin = false;
-		while (iter.hasNext()) {
-			User user = iter.next();
+		for (User user : list) {
 			hasAdmin |= user.isAdmin();
 			newUserMap.put(user.getName(), user);
 		}
 		if (!hasAdmin) {
-			throw new IOException("Repository does not have an Admin");
+			RepositoryManager.log
+					.info("WARNING: Repository '" + name + "' does not have an assigned Admin");
 		}
 		userMap = newUserMap;
 	}
@@ -652,7 +649,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * @param userAccessFile repository user access file
 	 * @param users list to be populated with user permissions defined by userAccessFile
 	 * @return true if anonymous read-only access is permitted, else false 
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private static boolean readAccessFile(File userAccessFile, List<User> users)
 			throws IOException {
@@ -684,7 +681,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	/**
 	 * Parse input line from user access list
 	 * @param line text line from user access file
-	 * @return
+	 * @return new {@link User} instance parsed from text line of file or null
 	 */
 	private static User processAccessLine(String line) {
 
@@ -977,8 +974,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 				int indexVersion = IndexedLocalFileSystem.readIndexVersion(rootPath);
 				if (indexVersion >= IndexedLocalFileSystem.LATEST_INDEX_VERSION) {
 					if (!silent) {
-						System.err.println(
-							"Repository '" + repositoryName + "' is already indexed!");
+						System.err
+								.println("Repository '" + repositoryName + "' is already indexed!");
 					}
 					return false;
 				}
