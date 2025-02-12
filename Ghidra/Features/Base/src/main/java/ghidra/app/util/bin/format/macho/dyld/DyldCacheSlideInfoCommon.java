@@ -51,16 +51,13 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
 	 * @param slideInfoOffset The offset of the slide info to parse
-	 * @param mappingAddress The base address of where the slide fixups will take place
-	 * @param mappingSize The size of the slide fixups block
-	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
+	 * @param mappingInfo The {@link DyldCacheMappingInfo} of where the slide fixups will take place
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 * @return The slide info object
 	 */
 	public static DyldCacheSlideInfoCommon parseSlideInfo(BinaryReader reader, long slideInfoOffset,
-			long mappingAddress, long mappingSize, long mappingFileOffset, MessageLog log,
-			TaskMonitor monitor) {
+			DyldCacheMappingInfo mappingInfo, MessageLog log,TaskMonitor monitor) {
 		if (slideInfoOffset == 0) {
 			return null;
 		}
@@ -73,16 +70,11 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 			int version = reader.readInt(reader.getPointerIndex());
 			errorMessage += version;
 			DyldCacheSlideInfoCommon returnedSlideInfo = switch (version) {
-				case 1 -> new DyldCacheSlideInfo1(reader, mappingAddress, mappingSize,
-					mappingFileOffset);
-				case 2 -> new DyldCacheSlideInfo2(reader, mappingAddress, mappingSize,
-					mappingFileOffset);
-				case 3 -> new DyldCacheSlideInfo3(reader, mappingAddress, mappingSize,
-					mappingFileOffset);
-				case 4 -> new DyldCacheSlideInfo4(reader, mappingAddress, mappingSize,
-					mappingFileOffset);
-				case 5 -> new DyldCacheSlideInfo5(reader, mappingAddress, mappingSize,
-					mappingFileOffset);
+				case 1 -> new DyldCacheSlideInfo1(reader, mappingInfo);
+				case 2 -> new DyldCacheSlideInfo2(reader, mappingInfo);
+				case 3 -> new DyldCacheSlideInfo3(reader, mappingInfo);
+				case 4 -> new DyldCacheSlideInfo4(reader, mappingInfo);
+				case 5 -> new DyldCacheSlideInfo5(reader, mappingInfo);
 				default -> throw new IOException(); // will be caught and version will be added to message
 			};
 			monitor.incrementProgress(1);
@@ -97,24 +89,18 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
 	protected int version;
 	protected long slideInfoOffset;
-	protected long mappingAddress;
-	protected long mappingSize;
-	protected long mappingFileOffset;
+	protected DyldCacheMappingInfo mappingInfo;
 
 	/**
 	 * Create a new {@link DyldCacheSlideInfoCommon}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
-	 * @param mappingAddress The base address of where the slide fixups will take place
-	 * @param mappingSize The size of the slide fixups block
-	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
+	 * @param mappingInfo The {@link DyldCacheMappingInfo} of where the slide fixups will take place
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info
 	 */
-	public DyldCacheSlideInfoCommon(BinaryReader reader, long mappingAddress, long mappingSize,
-			long mappingFileOffset) throws IOException {
-		this.mappingAddress = mappingAddress;
-		this.mappingSize = mappingSize;
-		this.mappingFileOffset = mappingFileOffset;
+	public DyldCacheSlideInfoCommon(BinaryReader reader, DyldCacheMappingInfo mappingInfo)
+			throws IOException {
+		this.mappingInfo = mappingInfo;
 		this.version = reader.readNextInt();
 	}
 
@@ -135,22 +121,8 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	/**
 	 * {@return The base address of where the slide fixups will take place}
 	 */
-	public long getMappingAddress() {
-		return mappingAddress;
-	}
-
-	/**
-	 * {@return The size of the slide fixups block}
-	 */
-	public long getMappingSize() {
-		return mappingSize;
-	}
-
-	/**
-	 * {@return The base file offset of where the slide fixups will take place}
-	 */
-	public long getMappingFileOffset() {
-		return mappingFileOffset;
+	public DyldCacheMappingInfo getMappingInfo() {
+		return mappingInfo;
 	}
 
 	/**
@@ -185,7 +157,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
 		Memory memory = program.getMemory();
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-		Address dataPageAddr = space.getAddress(mappingAddress);
+		Address dataPageAddr = space.getAddress(mappingInfo.getAddress());
 
 		try (ByteProvider provider = new MemoryByteProvider(memory, dataPageAddr)) {
 			BinaryReader reader = new BinaryReader(provider, !memory.isBigEndian());

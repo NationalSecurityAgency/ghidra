@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,14 +75,12 @@ public class DyldCacheSlideInfo5 extends DyldCacheSlideInfoCommon {
 	 * Create a new {@link DyldCacheSlideInfo5}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 5
-	 * @param mappingAddress The base address of where the slide fixups will take place
-	 * @param mappingSize The size of the slide fixups block
-	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
+	 * @param mappingInfo The {@link DyldCacheMappingInfo} of where the slide fixups will take place	
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info 5
 	 */
-	public DyldCacheSlideInfo5(BinaryReader reader, long mappingAddress, long mappingSize,
-			long mappingFileOffset) throws IOException {
-		super(reader, mappingAddress, mappingSize, mappingFileOffset);
+	public DyldCacheSlideInfo5(BinaryReader reader, DyldCacheMappingInfo mappingInfo)
+			throws IOException {
+		super(reader, mappingInfo);
 		pageSize = reader.readNextInt();
 		pageStartsCount = reader.readNextInt();
 		reader.readNextInt(); // padding
