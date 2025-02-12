@@ -187,11 +187,15 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 	 * Returns true if the mapping contains the given address
 	 * 
 	 * @param addr The address to check
+	 * @param isAddr True if the {@code addr} parameter is an address; false if it's a file offset
 	 * @return True if the mapping contains the given address; otherwise, false
 	 */
-	public boolean contains(long addr) {
-		return Long.compareUnsigned(addr, address) >= 0 &&
-			Long.compareUnsigned(addr, address + size) < 0;
+	public boolean contains(long addr, boolean isAddr) {
+		return isAddr
+				? Long.compareUnsigned(addr, address) >= 0 &&
+					Long.compareUnsigned(addr, address + size) < 0
+				: Long.compareUnsigned(addr, fileOffset) >= 0 &&
+					Long.compareUnsigned(addr, fileOffset + size) < 0;
 	}
 
 	@Override

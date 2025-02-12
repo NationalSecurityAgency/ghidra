@@ -31,7 +31,6 @@ import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.file.formats.ios.ExtractedMacho;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -52,7 +51,6 @@ public class DyldCacheExtractor {
 	 * 
 	 * @param entry The mapping's {@link DyldCacheEntry}
 	 * @param splitDyldCache The {@link SplitDyldCache}
-	 * @param index The DYLIB's {@link SplitDyldCache} index
 	 * @param slideFixupMap A {@link Map} of {@link DyldFixup}s to perform
 	 * @param fsrl {@link FSRL} to assign to the resulting {@link ByteProvider}
 	 * @param monitor {@link TaskMonitor}
@@ -62,12 +60,12 @@ public class DyldCacheExtractor {
 	 * @throws CancelledException If the user cancelled the operation
 	 */
 	public static ByteProvider extractDylib(DyldCacheEntry entry, SplitDyldCache splitDyldCache,
-			int index, Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap,
-			FSRL fsrl, TaskMonitor monitor) throws IOException, MachException, CancelledException {
+			Map<DyldCacheMappingInfo, Map<Long, DyldFixup>> slideFixupMap, FSRL fsrl,
+			TaskMonitor monitor) throws IOException, MachException, CancelledException {
 		long dylibOffset = entry.rangeSet().asRanges().iterator().next().lowerEndpoint() -
 			splitDyldCache.getDyldCacheHeader(entry.splitCacheIndex()).getBaseAddress();
-		ExtractedMacho extractedMacho = new DyldPackedSegments(dylibOffset, splitDyldCache, index,
-			FOOTER_V1, slideFixupMap, monitor);
+		ExtractedMacho extractedMacho = new DyldPackedSegments(dylibOffset, splitDyldCache,
+			entry.splitCacheIndex(), FOOTER_V1, slideFixupMap, monitor);
 		extractedMacho.pack();
 		return extractedMacho.getByteProvider(fsrl);
 	}
@@ -78,7 +76,6 @@ public class DyldCacheExtractor {
 	 * @param entry The mapping's {@link DyldCacheEntry}
 	 * @param segmentName The name of the segment in the resulting Mach-O
 	 * @param splitDyldCache The {@link SplitDyldCache}
-	 * @param index The mapping's {@link SplitDyldCache} index
 	 * @param slideFixupMap A {@link Map} of {@link DyldFixup}s to perform
 	 * @param fsrl {@link FSRL} to assign to the resulting {@link ByteProvider}
 	 * @param monitor {@link TaskMonitor}
@@ -88,34 +85,14 @@ public class DyldCacheExtractor {
 	 * @throws CancelledException If the user cancelled the operation
 	 */
 	public static ByteProvider extractMapping(DyldCacheEntry entry, String segmentName,
-			SplitDyldCache splitDyldCache, int index,
-			Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap, FSRL fsrl,
+			SplitDyldCache splitDyldCache,
+			Map<DyldCacheMappingInfo, Map<Long, DyldFixup>> slideFixupMap, FSRL fsrl,
 			TaskMonitor monitor) throws IOException, MachException, CancelledException {
 
 		int magic = MachConstants.MH_MAGIC_64;
 		List<Range<Long>> ranges = new ArrayList<>(entry.rangeSet().asRanges());
-		DyldCacheMappingAndSlideInfo mappingInfo = entry.mappingInfo();
+		DyldCacheMappingInfo mappingInfo = entry.mappingInfo();
 		int allSegmentsSize = SegmentCommand.size(magic) * ranges.size();
-
-		// Fix slide pointers
-		ByteProvider origProvider = splitDyldCache.getProvider(index);
-		byte[] fixedProviderBytes = origProvider.readBytes(0, origProvider.length());
-		DyldCacheSlideInfoCommon slideInfo = slideFixupMap.keySet()
-				.stream()
-				.filter(e -> e.getMappingAddress() == mappingInfo.getAddress())
-				.findFirst()
-				.orElse(null);
-		if (slideInfo != null) {
-			List<DyldFixup> slideFixups = slideFixupMap.get(slideInfo);
-			monitor.initialize(slideFixups.size(), "Fixing slide pointers...");
-			for (DyldFixup fixup : slideFixups) {
-				monitor.increment();
-				long fileOffset = slideInfo.getMappingFileOffset() + fixup.offset();
-				byte[] newBytes = ExtractedMacho.toBytes(fixup.value(), fixup.size());
-				System.arraycopy(newBytes, 0, fixedProviderBytes, (int) fileOffset,
-					newBytes.length);
-			}
-		}
 
 		// Mach-O Header
 		byte[] header = MachHeader.create(magic, 0x100000c, 0x80000002, 6, ranges.size(),
@@ -125,19 +102,22 @@ public class DyldCacheExtractor {
 		List<byte[]> segments = new ArrayList<>();
 		List<byte[]> data = new ArrayList<>();
 		int current = header.length + allSegmentsSize;
-		try (ByteProvider fixedProvider = new ByteArrayProvider(fixedProviderBytes)) {
+		try (ByteProvider slidProvider =
+			new DyldCacheSlidProvider(entry.mappingInfo(), splitDyldCache, entry.splitCacheIndex(),
+				slideFixupMap, monitor)) {
 			for (int i = 0; i < ranges.size(); i++) {
 				Range<Long> range = ranges.get(i);
 
 				// Segment Command
 				long dataSize = range.upperEndpoint() - range.lowerEndpoint();
 				segments.add(
-					SegmentCommand.create(magic, "%s.%d.%d".formatted(segmentName, index, i),
+					SegmentCommand.create(magic,
+						"%s.%d.%d".formatted(segmentName, entry.splitCacheIndex(), i),
 						range.lowerEndpoint(), dataSize, current, dataSize,
 						mappingInfo.getMaxProtection(), mappingInfo.getMaxProtection(), 0, 0));
 
 				// Data
-				data.add(fixedProvider.readBytes(
+				data.add(slidProvider.readBytes(
 					range.lowerEndpoint() - mappingInfo.getAddress() + mappingInfo.getFileOffset(),
 					dataSize));
 
@@ -176,10 +156,10 @@ public class DyldCacheExtractor {
 	 * @throws CancelledException If the user cancelled the operation
 	 * @throws IOException If there was an IO-related issue with getting the slide fixups
 	 */
-	public static Map<DyldCacheSlideInfoCommon, List<DyldFixup>> getSlideFixups(
+	public static Map<DyldCacheMappingInfo, Map<Long, DyldFixup>> getSlideFixups(
 			SplitDyldCache splitDyldCache, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap = new HashMap<>();
+		Map<DyldCacheMappingInfo, Map<Long, DyldFixup>> slideFixupMap = new HashMap<>();
 		MessageLog log = new MessageLog();
 
 		for (int i = 0; i < splitDyldCache.size(); i++) {
@@ -187,13 +167,18 @@ public class DyldCacheExtractor {
 			ByteProvider bp = splitDyldCache.getProvider(i);
 			DyldArchitecture arch = header.getArchitecture();
 			for (DyldCacheSlideInfoCommon slideInfo : header.getSlideInfos()) {
-				try (ByteProvider wrapper = new ByteProviderWrapper(bp,
-					slideInfo.getMappingFileOffset(), slideInfo.getMappingSize())) {
+				DyldCacheMappingInfo mappingInfo = slideInfo.getMappingInfo();
+				try (ByteProvider wrapper = new ByteProviderWrapper(bp, mappingInfo.getFileOffset(),
+					mappingInfo.getSize())) {
 					BinaryReader wrapperReader =
 						new BinaryReader(wrapper, !arch.getEndianness().isBigEndian());
 					List<DyldFixup> fixups = slideInfo.getSlideFixups(wrapperReader,
 						arch.is64bit() ? 8 : 4, log, monitor);
-					slideFixupMap.put(slideInfo, fixups);
+					HashMap<Long, DyldFixup> subMap = new HashMap<>();
+					for (DyldFixup fixup : fixups) {
+						subMap.put(mappingInfo.getFileOffset() + fixup.offset(), fixup);
+					}
+					slideFixupMap.put(mappingInfo, subMap);
 				}
 			}
 		}
@@ -209,7 +194,7 @@ public class DyldCacheExtractor {
 	private static class DyldPackedSegments extends ExtractedMacho {
 
 		private SplitDyldCache splitDyldCache;
-		private Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap;
+		private Map<DyldCacheMappingInfo, Map<Long, DyldFixup>> slideFixupMap;
 
 		/**
 		 * Creates a new {@link DyldPackedSegments} object
@@ -226,7 +211,7 @@ public class DyldCacheExtractor {
 		 * @throws CancelledException If the user cancelled the operation
 		 */
 		public DyldPackedSegments(long dylibOffset, SplitDyldCache splitDyldCache, int index,
-				byte[] footer, Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap,
+				byte[] footer, Map<DyldCacheMappingInfo, Map<Long, DyldFixup>> slideFixupMap,
 				TaskMonitor monitor) throws MachException, IOException, CancelledException {
 			super(splitDyldCache.getProvider(index), dylibOffset,
 				new MachHeader(splitDyldCache.getProvider(index), dylibOffset, false)
@@ -237,18 +222,13 @@ public class DyldCacheExtractor {
 		}
 
 		@Override
-		public void pack() throws IOException, CancelledException {
-			super.pack();
-			fixupSlidePointers();
-		}
-
-		@Override
 		protected ByteProvider getSegmentProvider(SegmentCommand segment) throws IOException {
 			for (int i = 0; i < splitDyldCache.size(); i++) {
 				DyldCacheHeader dyldCacheheader = splitDyldCache.getDyldCacheHeader(i);
 				for (DyldCacheMappingInfo mappingInfo : dyldCacheheader.getMappingInfos()) {
-					if (mappingInfo.contains(segment.getVMaddress())) {
-						return splitDyldCache.getProvider(i);
+					if (mappingInfo.contains(segment.getVMaddress(), true)) {
+						return new DyldCacheSlidProvider(mappingInfo, splitDyldCache, i,
+							slideFixupMap, monitor);
 					}
 				}
 			}
@@ -261,54 +241,6 @@ public class DyldCacheExtractor {
 			long base = splitDyldCache.getBaseAddress();
 			DyldCacheLocalSymbolsInfo info = splitDyldCache.getLocalSymbolInfo();
 			return info != null ? info.getNList(textSegment.getVMaddress() - base) : List.of();
-		}
-
-		/**
-		 * Fixes-up the slide pointers
-		 * 
-		 * @throws IOException If there was an IO-related issue performing the fix-up
-		 * @throws CancelledException If the user cancelled the operation
-		 */
-		private void fixupSlidePointers() throws IOException, CancelledException {
-			// TODO; Optimize this fixup algorithm
-			long total = slideFixupMap.values().stream().flatMap(List::stream).count();
-			monitor.initialize(total, "Fixing slide pointers...");
-			for (DyldCacheSlideInfoCommon slideInfo : slideFixupMap.keySet()) {
-				for (DyldFixup fixup : slideFixupMap.get(slideInfo)) {
-					monitor.increment();
-					long addr = slideInfo.getMappingAddress() + fixup.offset();
-					long fileOffset = slideInfo.getMappingFileOffset() + fixup.offset();
-					SegmentCommand segment = getSegmentContaining(addr);
-					if (segment == null) {
-						// Fixup is not in this Mach-O
-						continue;
-					}
-					byte[] newBytes = ExtractedMacho.toBytes(fixup.value(), fixup.size());
-					try {
-						System.arraycopy(newBytes, 0, packed,
-							(int) getPackedOffset(fileOffset, segment), newBytes.length);
-					}
-					catch (NotFoundException e) {
-						throw new IOException(e);
-					}
-				}
-			}
-		}
-
-		/**
-		 * Gets the {@link SegmentCommand segment} that contains the given virtual address
-		 * 
-		 * @param addr The address
-		 * @return The {@link SegmentCommand segment} that contains the given virtual address
-		 */
-		private SegmentCommand getSegmentContaining(long addr) {
-			for (SegmentCommand segment : machoHeader.getAllSegments()) {
-				if (addr >= segment.getVMaddress() &&
-					addr < segment.getVMaddress() + segment.getVMsize()) {
-					return segment;
-				}
-			}
-			return null;
 		}
 	}
 }

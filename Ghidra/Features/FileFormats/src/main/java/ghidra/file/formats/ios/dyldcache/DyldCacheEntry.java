@@ -18,6 +18,7 @@ package ghidra.file.formats.ios.dyldcache;
 import com.google.common.collect.RangeSet;
 
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingAndSlideInfo;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 
 /**
@@ -26,10 +27,13 @@ import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
  * @param path The path of the entry
  * @param splitCacheIndex The entry's {@link SplitDyldCache} index
  * @param rangeSet The entry's address ranges
- * @param mappingInfo The entry's {@link DyldCacheMappingAndSlideInfo}; could be null if this entry
+ * @param mappingInfo The entry's {@link DyldCacheMappingInfo}; could be null if this entry
  *   represents a DYLIB
- * @param mappingIndex The entry's {@link DyldCacheMappingAndSlideInfo} index; ignored if the 
+ * @param mappingAndSlideInfo The entry's {@link DyldCacheMappingAndSlideInfo}; could be null if 
+ *   this entry represents a DYLIB, or if the cache is old and doesn't support this structure
+ * @param mappingIndex The entry's {@link DyldCacheMappingInfo} index; ignored if the 
  *   {@code mappingInfo} is null.
  */
 public record DyldCacheEntry(String path, int splitCacheIndex, RangeSet<Long> rangeSet,
-		DyldCacheMappingAndSlideInfo mappingInfo, int mappingIndex) {}
+		DyldCacheMappingInfo mappingInfo, DyldCacheMappingAndSlideInfo mappingAndSlideInfo,
+		int mappingIndex) {}
