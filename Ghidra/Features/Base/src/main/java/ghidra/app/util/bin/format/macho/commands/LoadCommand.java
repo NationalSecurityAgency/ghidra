@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * 
 	 * @return The file offset of this load command's "linker data", or 0 if it has no linker data
 	 */
-	public int getLinkerDataOffset() {
+	public long getLinkerDataOffset() {
 		return 0;
 	}
 
@@ -170,7 +170,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * @param size The size (actual size not important, but 0 will cause null to be returned)
 	 * @return The converted {@link Address}, or null if there is no corresponding {@link Address}
 	 */
-	protected Address fileOffsetToAddress(Program program, MachHeader header, int fileOffset,
+	protected Address fileOffsetToAddress(Program program, MachHeader header, long fileOffset,
 			int size) {
 		if (fileOffset != 0 && size != 0) {
 			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
