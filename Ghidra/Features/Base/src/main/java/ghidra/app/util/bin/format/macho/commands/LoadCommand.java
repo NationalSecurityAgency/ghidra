@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import ghidra.app.cmd.formats.MachoBinaryAnalysisCommand;
 import ghidra.app.util.bin.BinaryReader;
@@ -101,7 +102,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * 
 	 * @return The file size of this load command's "linker data", or 0 if it has no linker data
 	 */
-	public int getLinkerDataSize() {
+	public long getLinkerDataSize() {
 		return 0;
 	}
 
@@ -171,7 +172,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * @return The converted {@link Address}, or null if there is no corresponding {@link Address}
 	 */
 	protected Address fileOffsetToAddress(Program program, MachHeader header, long fileOffset,
-			int size) {
+			long size) {
 		if (fileOffset != 0 && size != 0) {
 			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 			SegmentCommand segment = getContainingSegment(header, fileOffset);
@@ -181,6 +182,25 @@ public abstract class LoadCommand implements StructConverter {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Checks to make sure the given count value isn't larger than {@link Integer#MAX_VALUE}.
+	 * <p>
+	 * Count values are typically {@code uint32_t}, so we store them as {@code long}s. But, we
+	 * usually end up storing the items in an array or {@link ArrayList}, which can't exceed the
+	 * size of an {@code int}.
+	 * 
+	 * @param count The count value to check
+	 * @return The original count value
+	 * @throws IOException if the given count value exceeds {@link Integer#MAX_VALUE}
+	 */
+	protected long checkCount(long count) throws IOException {
+		if (count > Integer.MAX_VALUE) {
+			throw new IOException("Count value 0x%x in %s is greater than Integer.MAX_VALUE"
+					.formatted(count, getClass().getSimpleName()));
+		}
+		return count;
 	}
 
 	/**

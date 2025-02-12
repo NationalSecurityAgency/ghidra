@@ -44,7 +44,7 @@ public class SegmentCommand extends LoadCommand {
 	private long filesize;
 	private int maxprot;
 	private int initprot;
-	private int nsects;
+	private long nsects;
 	private int flags;
 
 	private boolean is32bit;
@@ -69,10 +69,10 @@ public class SegmentCommand extends LoadCommand {
 		}
 		maxprot = reader.readNextInt();
 		initprot = reader.readNextInt();
-		nsects = reader.readNextInt();
+		nsects = checkCount(reader.readNextUnsignedInt());
 		flags = reader.readNextInt();
 
-		for (int i = 0; i < nsects; ++i) {
+		for (long i = 0; i < nsects; ++i) {
 			sections.add(new Section(reader, is32bit));
 		}
 	}
@@ -194,7 +194,7 @@ public class SegmentCommand extends LoadCommand {
 		return (initprot & SegmentConstants.PROTECTION_X) != 0;
 	}
 
-	public int getNumberOfSections() {
+	public long getNumberOfSections() {
 		return nsects;
 	}
 

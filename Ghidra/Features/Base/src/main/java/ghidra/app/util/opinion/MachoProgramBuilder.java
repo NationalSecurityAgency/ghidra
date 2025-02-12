@@ -660,8 +660,8 @@ public class MachoProgramBuilder {
 		if (dynamicCommand == null) {
 			return;
 		}
-		int[] indirectSymbols = dynamicCommand.getIndirectSymbols();
-		if (indirectSymbols.length == 0) {
+		List<Integer> indirectSymbols = dynamicCommand.getIndirectSymbols();
+		if (indirectSymbols.size() == 0) {
 			return;
 		}
 
@@ -687,7 +687,7 @@ public class MachoProgramBuilder {
 				if (monitor.isCancelled()) {
 					break;
 				}
-				int symbolIndex = indirectSymbols[i];
+				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
 				if (symbol == null) {
 					continue;
