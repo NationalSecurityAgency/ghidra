@@ -51,6 +51,7 @@ public class Omf51RecordFactory extends AbstractOmfRecordFactory {
 			case Omf166RecordTypes.DEPLST:
 				yield new Omf166DepList(reader);
 			case Content:
+				yield new Omf51Content(reader);
 			case Fixup:
 			case SegmentDEF:
 			case ScopeDEF:
