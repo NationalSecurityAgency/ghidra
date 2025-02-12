@@ -253,6 +253,8 @@ def escape_ansi(line):
 
 def debracket(init):
     val = init
+    if init is None:
+        return ""
     val = val.replace("[", "(")
     val = val.replace("]", ")")
     return val
