@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class RebaseTable extends OpcodeTable {
 	 * @param tableSize The size of the table, in bytes
 	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public RebaseTable(BinaryReader reader, MachHeader header, int tableSize) throws IOException {
+	public RebaseTable(BinaryReader reader, MachHeader header, long tableSize) throws IOException {
 		this();
 
 		int pointerSize = header.getAddressSize();

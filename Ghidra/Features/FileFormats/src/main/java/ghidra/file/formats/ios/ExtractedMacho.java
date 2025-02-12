@@ -99,7 +99,7 @@ public class ExtractedMacho {
 						symbolTable.addSymbols(getExtraSymbols());
 					}
 					long offset = cmd.getLinkerDataOffset();
-					int size = cmd.getLinkerDataSize();
+					long size = cmd.getLinkerDataSize();
 					if (offset == 0 || size == 0) {
 						continue;
 					}
