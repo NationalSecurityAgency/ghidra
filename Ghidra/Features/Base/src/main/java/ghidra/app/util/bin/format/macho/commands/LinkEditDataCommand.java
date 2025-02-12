@@ -34,8 +34,8 @@ import ghidra.util.task.TaskMonitor;
  * Represents a linkedit_data_command structure 
  */
 public class LinkEditDataCommand extends LoadCommand {
-	protected int dataoff;
-	protected int datasize;
+	protected long dataoff;
+	protected long datasize;
 	protected BinaryReader dataReader;
 
 	/**
@@ -51,8 +51,8 @@ public class LinkEditDataCommand extends LoadCommand {
 	LinkEditDataCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
 			throws IOException {
 		super(loadCommandReader);
-		this.dataoff = loadCommandReader.readNextInt();
-		this.datasize = loadCommandReader.readNextInt();
+		this.dataoff = loadCommandReader.readNextUnsignedInt();
+		this.datasize = loadCommandReader.readNextUnsignedInt();
 		this.dataReader = dataReader;
 		this.dataReader.setPointerIndex(dataoff);
 	}
@@ -63,7 +63,7 @@ public class LinkEditDataCommand extends LoadCommand {
 	}
 
 	@Override
-	public int getLinkerDataSize() {
+	public long getLinkerDataSize() {
 		return datasize;
 	}
 
