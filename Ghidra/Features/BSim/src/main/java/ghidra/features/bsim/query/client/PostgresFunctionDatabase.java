@@ -417,7 +417,6 @@ public final class PostgresFunctionDatabase
 	/**
 	 * Low level count decrement of a vector record from vectable, if count
 	 * reaches zero, the record is deleted
-	 * @param c database connection
 	 * @param id vector row ID
 	 * @param countdiff the amount to subtract from count
 	 * @return 0 if decrement short of 0, return 1 if record was removed, return
