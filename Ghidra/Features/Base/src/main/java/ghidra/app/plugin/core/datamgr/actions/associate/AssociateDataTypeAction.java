@@ -66,19 +66,19 @@ public class AssociateDataTypeAction extends DockingAction {
 			return false;
 		}
 
-		return hasOnlyDtNodes(((DataTypesActionContext) context).getSelectedNodes());
+		return hasAnyDtNodes(((DataTypesActionContext) context).getSelectedNodes());
 	}
 
-	private boolean hasOnlyDtNodes(List<GTreeNode> nodes) {
+	private boolean hasAnyDtNodes(List<GTreeNode> nodes) {
 		if (nodes.isEmpty()) {
 			return false;
 		}
 		for (GTreeNode node : nodes) {
-			if (!(node instanceof DataTypeNode)) {
-				return false;
+			if (node instanceof DataTypeNode) {
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 	private boolean isAlreadyAssociated(DataTypesActionContext dtContext) {
@@ -129,9 +129,12 @@ public class AssociateDataTypeAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		List<GTreeNode> nodes = ((DataTypesActionContext) context).getSelectedNodes();
+		List<GTreeNode> allNodes = ((DataTypesActionContext) context).getSelectedNodes();
+		List<GTreeNode> dtNodes = allNodes.stream()
+				.filter(n -> n instanceof DataTypeNode)
+				.collect(Collectors.toList());
 
-		Archive dtArchive = getSingleDTArchive(nodes);
+		Archive dtArchive = getSingleDTArchive(dtNodes);
 		if (dtArchive == null) {
 			Msg.showInfo(this, getProviderComponent(), "Multiple Data Type Archives",
 				"The currently selected nodes are from multiple archives.\n" +
@@ -169,7 +172,7 @@ public class AssociateDataTypeAction extends DockingAction {
 		Category destinationCategory = dialog.getCategory();
 
 		DataTypeTreeCopyMoveTask task =
-			new DataTypeTreeCopyMoveTask(destinationArchive, destinationCategory, nodes,
+			new DataTypeTreeCopyMoveTask(destinationArchive, destinationCategory, dtNodes,
 				ActionType.COPY, plugin.getProvider().getGTree(), plugin.getConflictHandler());
 		task.setPromptToAssociateTypes(false); // do not prompt the user; they have already decided
 		TaskLauncher.launch(task);
