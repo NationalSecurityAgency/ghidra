@@ -51,8 +51,14 @@ def main():
     args = os.getenv('OPT_TARGET_ARGS')
     if args:
         args = ' ' + args
+    target = os.getenv('OPT_TARGET_IMG')
+    if target is None or target == "":
+        print("dbgeng requires a target image - please try again.")
+        cmd.ghidra_trace_disconnect()
+        return
+    
     cmd.ghidra_trace_create_ext(
-        os.getenv('OPT_TARGET_IMG') + args, 
+        target + args, 
         os.getenv('OPT_TARGET_DIR'),
         os.getenv('OPT_TARGET_ENV'),
         os.getenv('OPT_CREATE_FLAGS'),
@@ -67,7 +73,7 @@ def main():
     except KeyboardInterrupt as ki:
         dbg.interrupt()
 
-    cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
+    cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()
     
     on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS, DbgEng.DEBUG_STATUS_BREAK)

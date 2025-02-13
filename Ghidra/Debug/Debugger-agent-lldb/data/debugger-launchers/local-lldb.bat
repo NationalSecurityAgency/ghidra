@@ -1,5 +1,5 @@
 ::@title lldb
-::@image-opt arg:1
+::@image-opt env:OPT_TARGET_IMG
 ::@desc <html><body width="300px">
 ::@desc   <h3>Launch with <tt>lldb</tt></h3>
 ::@desc   <p>
@@ -11,8 +11,8 @@
 ::@icon icon.debugger
 ::@help TraceRmiLauncherServicePlugin#lldb
 ::@enum StartCmd:str "process launch" "process launch --stop-at-entry"
-::@arg :file "Image" "The target binary executable image"
-::@args "Arguments" "Command-line arguments to pass to the target"
+::@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
+::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 ::@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb. Omit the full path to resolve using the system PATH."
 ::@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 
@@ -29,38 +29,36 @@ IF EXIST %GHIDRA_HOME%\ghidra\.git (
 )
 set PYTHONPATH=%PYTHONPATH1%;%PYTHONPATH0%;%PYTHONPATH%
 
-set target_image=%1
-shift
-set target_args=<%*
+:: NB: This works - a lot of things do not. Don't change unless you know what you're doing!
+set OPT_TARGET_IMG="%OPT_TARGET_IMG%"
+set OPT_TARGET_ARGS="%OPT_TARGET_ARGS%"
 
-IF '%target_image%'=="" (
+IF %OPT_TARGET_IMG%=="" (
   "%OPT_LLDB_PATH%" ^
     -o "version" ^
     -o "script import ghidralldb" ^
     -o "ghidra trace connect %GHIDRA_TRACE_RMI_ADDR%" ^
     -o "ghidra trace start" ^
     -o "ghidra trace sync-enable" 
-) 
-
-IF NOT '%target_image%'=="" IF "%target_args%"=="" (
-  "%OPT_LLDB_PATH%" ^
-    -o "version" ^
-    -o "script import ghidralldb" ^
-    -o "target create "%target_image%"" ^
-    -o "ghidra trace connect %GHIDRA_TRACE_RMI_ADDR%" ^
-    -o "ghidra trace start" ^
-    -o "ghidra trace sync-enable" ^
-    -o "%OPT_START_CMD%"
-) 
-
-IF NOT '%target_image%'=="" IF NOT "%target_args%"=="" (
-  "%OPT_LLDB_PATH%" ^
-    -o "version" ^
-    -o "script import ghidralldb" ^
-    -o "target create "%target_image%"" ^
-	-o "settings set target.run-args %target_args%" ^
-    -o "ghidra trace connect %GHIDRA_TRACE_RMI_ADDR%" ^
-    -o "ghidra trace start" ^
-    -o "ghidra trace sync-enable" ^
-    -o "%OPT_START_CMD%"
+) ELSE (
+	IF "%OPT_TARGET_ARGS%"=="" (
+	  "%OPT_LLDB_PATH%" ^
+	    -o "version" ^
+	    -o "script import ghidralldb" ^
+	    -o "target create "%OPT_TARGET_IMG%"" ^
+	    -o "ghidra trace connect %GHIDRA_TRACE_RMI_ADDR%" ^
+	    -o "ghidra trace start" ^
+	    -o "ghidra trace sync-enable" ^
+	    -o "%OPT_START_CMD%"
+	) ELSE (
+	  "%OPT_LLDB_PATH%" ^
+	    -o "version" ^
+	    -o "script import ghidralldb" ^
+	    -o "target create "%OPT_TARGET_IMG%"" ^
+		-o "settings set target.run-args %OPT_TARGET_ARGS%" ^
+	    -o "ghidra trace connect %GHIDRA_TRACE_RMI_ADDR%" ^
+	    -o "ghidra trace start" ^
+	    -o "ghidra trace sync-enable" ^
+	    -o "%OPT_START_CMD%"
+	)
 )
