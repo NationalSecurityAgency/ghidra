@@ -22,6 +22,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.action.*;
+import docking.util.AnimationUtils;
 import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -1123,6 +1124,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		private boolean isFrustrated() {
+
+			if (!AnimationUtils.isAnimationEnabled()) {
+				// The use of being frustrated is to emphasize (animate) the window for the user in
+				// order to draw attention to the window.  If animation is off, then no need to 
+				// check for frustration.
+				return false;
+			}
+
 			long time = System.currentTimeMillis();
 			clickTimes.add(time);
 
