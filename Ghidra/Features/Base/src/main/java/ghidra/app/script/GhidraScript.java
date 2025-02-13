@@ -590,8 +590,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		if (isRunningHeadless()) {
 			// only change client authenticator in headless mode
 			try {
-				HeadlessClientAuthenticator.installHeadlessClientAuthenticator(
-					ClientUtil.getUserName(), null, false);
+				HeadlessClientAuthenticator
+						.installHeadlessClientAuthenticator(ClientUtil.getUserName(), null, false);
 			}
 			catch (IOException e) {
 				throw new RuntimeException("Unexpected Exception", e);
@@ -2627,8 +2627,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		Address choice = doAsk(Integer.class, title, message, existingValue, lastValue -> {
 
-			AskAddrDialog dialog =
-				new AskAddrDialog(title, message, currentProgram, lastValue);
+			AskAddrDialog dialog = new AskAddrDialog(title, message, currentProgram, lastValue);
 			if (dialog.isCanceled()) {
 				throw new CancelledException();
 			}
@@ -3155,7 +3154,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			throw new ImproperUseException(
 				"The askPassword() method can only be used when running headed Ghidra.");
 		}
-		PasswordDialog dialog = new PasswordDialog(title, null, null, prompt, null, null);
+		PasswordDialog dialog = new PasswordDialog(title, null, null, prompt);
 		try {
 			state.getTool().showDialog(dialog);
 			if (!dialog.okWasPressed()) {

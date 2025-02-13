@@ -20,6 +20,8 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
@@ -39,26 +41,34 @@ public class PasswordDialog extends DialogComponentProvider {
 	private JComboBox<String> choiceCB;
 	private JCheckBox anonymousAccess;
 	private boolean okPressed = false;
-	private String defaultUserID;
+	private String defaultUserId;
 
 	/**
-	 * Construct a new PasswordDialog.
+	 * Construct a new PasswordDialog which may include user ID specification/prompt, if either
+	 * {@code allowUserIdEntry} is true or a non-null {@code defaultUserId} has been specified, and 
+	 * other optional elements.  The dialog includes a message text area which supports the use 
+	 * of {@link #setErrorText(String)}.
+	 * 
 	 * @param title title of the dialog
 	 * @param serverType 'Server' or 'Key-store' designation
 	 * @param serverName name of server or keystore pathname
-	 * @param passPrompt password prompt to show in the dialog; may be null, in which case
+	 * @param passPrompt password prompt to show in the dialog; may be null/empty, in which case
 	 * "Password:" is displayed next to the password field
-	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null a name will not be prompted for.
-	 * @param defaultUserID default name when prompting for a name
+	 * @param allowUserIdEntry if true user ID entry will be supported
+	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null "User ID:" is prompt
+	 * if either {@code allowUserIdEntry} is true or a non-null {@code defaultUserId} has been specified.
+	 * @param defaultUserId default name when prompting for a name
 	 * @param choicePrompt namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param choices array of choices to present if choicePrompt is not null
 	 * @param defaultChoice default choice index
 	 * @param includeAnonymousOption true signals to add a checkbox to request anonymous login
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
-			String userIdPrompt, String defaultUserID, String choicePrompt, String[] choices,
-			int defaultChoice, boolean includeAnonymousOption) {
-		this(title, serverType, serverName, passPrompt, userIdPrompt, defaultUserID);
+			boolean allowUserIdEntry, String userIdPrompt, String defaultUserId,
+			String choicePrompt, String[] choices, int defaultChoice,
+			boolean includeAnonymousOption) {
+		this(title, serverType, serverName, passPrompt, allowUserIdEntry, userIdPrompt,
+			defaultUserId, true);
 		if (choicePrompt != null) {
 			workPanel.add(new GLabel(choicePrompt));
 			choiceCB = new GComboBox<>(choices);
@@ -89,43 +99,70 @@ public class PasswordDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Construct a new PasswordDialog.
+	 * Construct a new PasswordDialog which only prompts for a password for a specified server
+	 * type and name.  The dialog will not include a User ID display, although server fields 
+	 * may be used for a similar display purpose.  The dialog includes a message text area
+	 * which supports the use of {@link #setErrorText(String)}.
+	 * 
 	 * @param title title of the dialog
 	 * @param serverType 'Server' or 'Key-store' designation
 	 * @param serverName name of server or keystore pathname
 	 * @param passPrompt password prompt to show in the dialog; may be null, in which case
-	 * "Password:" is displayed next to the password field
-	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null a name will not be prompted for.
-	 * @param defaultUserID default name when prompting for a name
+	 * "Password:" is prompt.
 	 */
-	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
-			String userIdPrompt, String defaultUserID) {
-		this(title, serverType, serverName, passPrompt, userIdPrompt, defaultUserID, true);
+	public PasswordDialog(String title, String serverType, String serverName, String passPrompt) {
+		this(title, serverType, serverName, passPrompt, true);
 	}
 
 	/**
-	 * Construct a new PasswordDialog.
+	 * Construct a new PasswordDialog which only prompts for a password for a specified server
+	 * type and name.  The dialog will not include a User ID display, although server fields 
+	 * may be used for a similar display purpose.  The dialog optionally includes a message 
+	 * text area which supports the use of {@link #setErrorText(String)}.
+	 * 
 	 * @param title title of the dialog
 	 * @param serverType 'Server' or 'Key-store' designation
 	 * @param serverName name of server or keystore pathname
 	 * @param passPrompt password prompt to show in the dialog; may be null, in which case
 	 * "Password:" is displayed next to the password field
-	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null a name will not be prompted for.
-	 * @param defaultUserID default name when prompting for a name
-	 * @param hasMessages true if the client will set messages on this dialog.  If true, the 
-	 *        dialog's minimum size will be increased
+	 * @param hasMessages true if a message text area should be included allowing for use of
+	 * {@link #setErrorText(String)}
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
-			String userIdPrompt, String defaultUserID, boolean hasMessages) {
+			boolean hasMessages) {
+		this(title, serverType, serverName, passPrompt, false, null, null, hasMessages);
+	}
+
+	/**
+	 * Construct a new PasswordDialog which may include user ID specification/prompt if either
+	 * {@code allowUserIdEntry} is true or a non-null {@code defaultUserId} has been specified.
+	 * The dialog optionally includes a message text area area which supports the use of 
+	 * {@link #setErrorText(String)}.
+	 * 
+	 * @param title title of the dialog
+	 * @param serverType 'Server' or 'Key-store' designation
+	 * @param serverName name of server or keystore pathname
+	 * @param passPrompt password prompt to show in the dialog; may be null/empty, in which case
+	 * "Password:" is displayed next to the password field
+	 * @param allowUserIdEntry if true user ID entry will be supported
+	 * @param userIdPrompt User ID / Name prompt to show in the dialog, if null "User ID:" is prompt
+	 * if either {@code allowUserIdEntry} is true or a non-null {@code defaultUserId} has been specified.
+	 * @param defaultUserId default name when prompting for a name
+	 * @param hasMessages true if a message text area should be included allowing for use of
+	 * {@link #setErrorText(String)}
+	 */
+	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,
+			boolean allowUserIdEntry, String userIdPrompt, String defaultUserId,
+			boolean hasMessages) {
 		super(title, true);
 
-		this.defaultUserID = defaultUserID;
+		this.defaultUserId = defaultUserId;
 
 		setRememberSize(false);
 		setTransient(true);
 
 		if (hasMessages) {
-			setMinimumSize(300, 150);
+			setMinimumSize(350, 150);
 		}
 
 		workPanel = new JPanel(new PairLayout(5, 5));
@@ -136,20 +173,27 @@ public class PasswordDialog extends DialogComponentProvider {
 			workPanel.add(new GLabel(serverName));
 		}
 
-		if (userIdPrompt != null) {
+		if (StringUtils.isBlank(userIdPrompt)) {
+			userIdPrompt = "User ID:";
+		}
+		if (StringUtils.isBlank(passPrompt)) {
+			passPrompt = "Password:";
+		}
+
+		if (allowUserIdEntry) {
 			workPanel.add(new GLabel(userIdPrompt));
-			nameField = new JTextField(defaultUserID, 16);
+			nameField = new JTextField(defaultUserId, 16);
 			nameField.setName("NAME-ENTRY-COMPONENT");
 			workPanel.add(nameField);
 		}
-		else if (defaultUserID != null) {
-			workPanel.add(new GLabel("User ID:"));
-			JLabel nameLabel = new GLabel(defaultUserID);
+		else if (defaultUserId != null) {
+			workPanel.add(new GLabel(userIdPrompt));
+			JLabel nameLabel = new GLabel(defaultUserId);
 			nameLabel.setName("NAME-COMPONENT");
 			workPanel.add(nameLabel);
 		}
 
-		workPanel.add(new GLabel(passPrompt != null ? passPrompt : "Password:"));
+		workPanel.add(new GLabel(passPrompt));
 		passwordField = new JPasswordField(16);
 		passwordField.setName("PASSWORD-ENTRY-COMPONENT");
 		workPanel.add(passwordField);
@@ -245,7 +289,7 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * @return the user ID / Name entered in the password field
 	 */
 	public String getUserID() {
-		return nameField != null ? nameField.getText().trim() : defaultUserID;
+		return nameField != null ? nameField.getText().trim() : defaultUserId;
 	}
 
 	/**

@@ -418,10 +418,6 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 			}
 
 			String user = userField.getText().trim();
-			if (ClientUtil.getUserName().equals(user)) {
-				user = null;
-			}
-
 			String name = nameField.getText().trim();
 			String host = hostField.getText().trim();
 
