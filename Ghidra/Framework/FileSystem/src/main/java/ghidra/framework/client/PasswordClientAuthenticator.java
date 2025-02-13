@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,14 +83,24 @@ public class PasswordClientAuthenticator implements ClientAuthenticator {
 	}
 
 	@Override
-	public boolean processPasswordCallbacks(String title, String serverType,
-			String serverName, NameCallback nameCb, PasswordCallback passCb,
+	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
+			boolean allowUserNameEntry, NameCallback nameCb, PasswordCallback passCb,
 			ChoiceCallback choiceCb, AnonymousCallback anonymousCb, String loginError) {
 		if (choiceCb != null) {
 			choiceCb.setSelectedIndex(1);
 		}
-		if (nameCb != null && username != null) {
-			nameCb.setName(username);
+		if (nameCb != null && allowUserNameEntry) {
+			String name = username;
+			if (name == null) {
+				name = nameCb.getName();
+			}
+			if (name == null) {
+				name = nameCb.getDefaultName();
+			}
+			if (name == null) {
+				name = ClientUtil.getUserName();
+			}
+			nameCb.setName(name);
 		}
 		passCb.setPassword(password.clone());
 		return true;

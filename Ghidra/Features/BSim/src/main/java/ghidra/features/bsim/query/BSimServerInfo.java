@@ -376,7 +376,7 @@ public class BSimServerInfo implements Comparable<BSimServerInfo> {
 	}
 
 	/**
-	 * Determine of user info was stipulated during construction
+	 * Determine if user info was stipulated during construction
 	 * @return true if user info was stipulated during construction
 	 */
 	public boolean hasDefaultLogin() {
