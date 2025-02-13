@@ -135,7 +135,7 @@ public class MachoProgramBuilder {
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
 
 		// Process load commands
-		processEntryPoint();
+		processEntryPoint(provider.getName());
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
 		processStubs();
@@ -470,9 +470,10 @@ public class MachoProgramBuilder {
 	 * We will sort the discovered entry points by priorities assigned to each type of load
 	 * command, and only use the one with the highest priority.
 	 * 
+	 * @param source A name that represents where the memory blocks came from.
 	 * @throws Exception If there was a problem discovering or setting the entry point.
 	 */
-	protected void processEntryPoint() throws Exception {
+	protected void processEntryPoint(String source) throws Exception {
 		monitor.setMessage("Processing entry point...");
 
 		final int LC_MAIN_PRIORITY = 1;
@@ -513,13 +514,10 @@ public class MachoProgramBuilder {
 						realEntryFound = true;
 					}
 					else {
-						log.appendMsg("Ignoring entry point at: " + addr);
+						log.appendMsg("Ignoring entry point at " + addr + " in " + source);
 					}
 				}
 			}
-		}
-		else {
-			log.appendMsg("Unable to determine entry point.");
 		}
 	}
 
@@ -965,7 +963,7 @@ public class MachoProgramBuilder {
 
 				try {
 					fixupExternalLibrary(program, libraryPaths, binding.getLibraryOrdinal(),
-						symbol);
+						symbol.getName());
 				}
 				catch (Exception e) {
 					log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
@@ -1897,11 +1895,11 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program}
 	 * @param libraryPaths A {@link List} of library paths
 	 * @param libraryOrdinal The library ordinal
-	 * @param symbol The {@link Symbol}
+	 * @param symbol The symbol
 	 * @throws Exception if an unexpected problem occurs
 	 */
 	public static void fixupExternalLibrary(Program program, List<String> libraryPaths,
-			int libraryOrdinal, Symbol symbol) throws Exception {
+			int libraryOrdinal, String symbol) throws Exception {
 		ExternalManager extManager = program.getExternalManager();
 		int libraryIndex = libraryOrdinal - 1;
 		if (libraryIndex < 0 || libraryIndex >= libraryPaths.size()) {
@@ -1915,10 +1913,10 @@ public class MachoProgramBuilder {
 				"Library '%s' not found in external program list".formatted(libraryName));
 		}
 		ExternalLocation loc =
-			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
+			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol);
 		if (loc != null) {
 			try {
-				loc.setName(library, symbol.getName(), SourceType.IMPORTED);
+				loc.setName(library, symbol, SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
 				throw new Exception("Symbol name contains illegal characters");
