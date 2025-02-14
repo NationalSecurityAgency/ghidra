@@ -1850,7 +1850,7 @@ public class GTree extends JPanel implements BusyListener {
 				Integer.toString(subGroupIndex++)
 			)
 		);
-		copyFormattedAction.setHelpLocation(new HelpLocation("Trees", "Copy_Special"));
+		copyFormattedAction.setHelpLocation(new HelpLocation("Trees", "Copy_Formatted"));
 		//@formatter:on
 
 		GTreeAction activateFilterAction = new GTreeAction("Table/Tree Activate Filter", owner) {
