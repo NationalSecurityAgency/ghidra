@@ -90,10 +90,16 @@ public abstract class OmfRecord implements StructConverter {
 		return recordOffset;
 	}
 
+	/**
+	 * {@return the record checksum}
+	 */
 	public byte getRecordChecksum() {
 		return checkSum;
 	}
 
+	/**
+	 * {@return the record data}
+	 */
 	public byte[] getData() {
 		return data;
 	}
