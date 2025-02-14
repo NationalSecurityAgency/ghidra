@@ -286,7 +286,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			}
 		}
 
-		if (!StringUtils.isBlank(userName)) {
+		if (StringUtils.isBlank(userName)) {
 			userName = ClientUtil.getUserName();
 		}
 
