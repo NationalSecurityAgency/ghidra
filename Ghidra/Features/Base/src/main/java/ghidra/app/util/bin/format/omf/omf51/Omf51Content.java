@@ -25,8 +25,8 @@ import ghidra.util.exception.DuplicateNameException;
 public class Omf51Content extends OmfRecord {
 
 	private byte segId;
-	private short offset; 
-	private byte[] contentBytes;
+	private int offset;
+	private byte[] dataBytes;
 
 	/**
 	 * Creates a new {@link Omf51Content} record
@@ -41,15 +41,8 @@ public class Omf51Content extends OmfRecord {
 	@Override
 	public void parseData() throws IOException, OmfException {
 		segId = dataReader.readNextByte();
-		offset = dataReader.readNextShort();
-	    // Record length includes type byte, length bytes, content, and checksum
-	    // We need to subtract: type(1) + length(2) + seg_id(1) + offset(2) + checksum(1)
-	    int remainingBytes = getRecordLength() - 4;
-	    if (remainingBytes > 0) {
-	        contentBytes = dataReader.readNextByteArray(remainingBytes);
-	    } else {
-	        contentBytes = new byte[0];  // Empty array if no content
-	    }
+		offset = dataReader.readNextUnsignedShort();
+		dataBytes = dataReader.readNextByteArray((int) (dataEnd - dataReader.getPointerIndex()));
 	}
 
 	/**
@@ -59,6 +52,20 @@ public class Omf51Content extends OmfRecord {
 		return segId;
 	}
 
+	/**
+	 * {@return the offset}
+	 */
+	public int getOffset() {
+		return offset;
+	}
+
+	/**
+	 * {@return the data}
+	 */
+	public byte[] getDataBytes() {
+		return dataBytes;
+	}
+
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
@@ -66,7 +73,9 @@ public class Omf51Content extends OmfRecord {
 		struct.add(WORD, "length", null);
 		struct.add(BYTE, "SEG ID", null);
 		struct.add(WORD, "offset", null);
-	    struct.add(new ArrayDataType(BYTE, contentBytes.length, 1), "content", null);
+		if (dataBytes.length > 0) {
+			struct.add(new ArrayDataType(BYTE, dataBytes.length, 1), "data", null);
+		}
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
