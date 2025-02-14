@@ -58,7 +58,6 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 	 * @param name repository name
 	 */
 	public RepositoryAdapter(RepositoryServerAdapter serverAdapter, String name) {
-		(new Exception("CONSTRUCTED " + name)).printStackTrace();
 		this.serverAdapter = serverAdapter;
 		this.name = name;
 		changeDispatcher = new RepositoryChangeDispatcher(this);
@@ -179,7 +178,6 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 				serverAdapter.connect(); // may cause auto-reconnect of repository
 			}
 			if (repository == null) {
-				(new Exception("CONNECTION")).printStackTrace();
 				repository = serverAdapter.getRepositoryHandle(name);
 				unexpectedDisconnect = false;
 				if (repository == null) {
