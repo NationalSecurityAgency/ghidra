@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			@Override
 			public void editingCanceled(ChangeEvent e) {
 				cellEditor.removeCellEditorListener(this);
-				reselectNode();
+				tree.setSelectedNode(editNode); // reselect the node on cancel
 			}
 
 			@Override
@@ -68,15 +68,10 @@ public class GTreeStartEditingTask extends GTreeTask {
 				String newName = Objects.toString(cellEditor.getCellEditorValue());
 				cellEditor.removeCellEditorListener(this);
 
-				tree.forceNewNodeIntoView(modelParent, newName, newViewChild -> {
-					tree.setSelectedNode(newViewChild);
+				// note: this call only works when the parent cannot have duplicate named nodes
+				tree.whenNodeIsReady(modelParent, newName, newNode -> {
+					tree.setSelectedNode(newNode);
 				});
-			}
-
-			private void reselectNode() {
-				String name = editNode.getName();
-				GTreeNode newModelChild = modelParent.getChild(name);
-				tree.setSelectedNode(newModelChild);
 			}
 		});
 
