@@ -75,6 +75,10 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 
 @endif # SIMD
 
+@if defined(CORTEX)
+  define register offset=0x400 size=4  [ msplim psplim ];
+@endif
+
 # Define context bits
 # WARNING: when adjusting context keep compiler packing in mind
 # and make sure fields do not span a 32-bit boundary before or 
