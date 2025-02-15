@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<language_definitions>
+
+   <language processor="Xilinx PicoBlaze"
+            endian="big"
+            size="24"
+            variant="KCPSM3"
+            version="1.0"
+            slafile="KCPSM3.sla"
+            processorspec="KCPSM3.pspec"
+            id="KCPSM3:LE:24:default">
+    <description>PicoBlaze KCPSM3</description>
+    <compiler name="default" spec="KCPSM3.cspec" id="default"/>
+  </language> 
+</language_definitions>
