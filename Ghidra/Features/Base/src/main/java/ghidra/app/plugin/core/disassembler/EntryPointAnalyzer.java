@@ -297,7 +297,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		Listing listing = program.getListing();
 		SymbolTable symbolTable = program.getSymbolTable();
 
-		Set<Address> indirectSet = new HashSet();
+		Set<Address> indirectSet = new HashSet<Address>();
 
 		Iterator<Address> iter = doNowSet.iterator();
 		while (iter.hasNext()) {

@@ -787,7 +787,7 @@ public class DefineTable {
 		//
 		String strValue = getValue(defName);
 
-		ArrayList<String> list = new ArrayList();
+		ArrayList<String> list = new ArrayList<String>();
 		list.add(defName);
 
 		String strExpanded = expand(strValue, true, list);
