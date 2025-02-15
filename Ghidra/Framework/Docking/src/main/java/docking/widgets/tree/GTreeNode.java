@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -185,9 +185,15 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the child node of this node with the given name.
+	 * <p>
+	 * WARNING: If this node supports duplicate named children, then the node returned by this 
+	 * method is arbitrary, depending upon how the nodes are arranged in the parent's list.  If you
+	 * know duplicates are not allowed, then calling this method is safe.  Otherwise, you should 
+	 * instead use {@link #getChildren(String)}.
 	 * 
 	 * @param name the name of the child to be returned
 	 * @return the child with the given name
+	 * @see #getChildren(String)
 	 */
 	public GTreeNode getChild(String name) {
 		for (GTreeNode node : children()) {
@@ -199,11 +205,31 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
+	 * Gets any children under this parent with the given name.
+	 * <p>
+	 * Note: if you know this parent node does not allow duplicates, then you can use 
+	 * {@link #getChild(String)} instead of this method.
+	 * 
+	 * @param name the name of the children to be returned
+	 * @return the matching children
+	 */
+	public List<GTreeNode> getChildren(String name) {
+		List<GTreeNode> results = new ArrayList<>();
+		for (GTreeNode node : children()) {
+			if (name.equals(node.getName())) {
+				results.add(node);
+			}
+		}
+		return results;
+	}
+
+	/**
 	 * Returns the child node of this node with the given name which satisfies predicate filter.
 	 * 
 	 * @param name the name of the child to be returned
 	 * @param filter predicate filter
 	 * @return the child with the given name
+	 * @see #getChildren(String)
 	 */
 	public GTreeNode getChild(String name, Predicate<GTreeNode> filter) {
 		for (GTreeNode node : children()) {

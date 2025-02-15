@@ -25,8 +25,7 @@ import java.awt.event.*;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -316,6 +315,7 @@ public class GTree extends JPanel implements BusyListener {
 		updateModelFilter();
 	}
 
+	// adds the given node to the view when the tree is filtered, regardless of filter match
 	private void ignoreFilter(GTreeNode node) {
 		if (!isFiltered()) {
 			return;
@@ -1086,41 +1086,120 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	// Waits for the given model node, passing it to the consumer when available
-	private void getModelNode(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
+	private void getModelNode(GTreeNode parent, Predicate<GTreeNode> matches,
+			Consumer<GTreeNode> consumer) {
 
 		// check for null here to preserve the stack, as the code below is asynchronous
 		Objects.requireNonNull(parent);
-		Objects.requireNonNull(childName);
+		Objects.requireNonNull(matches);
 		Objects.requireNonNull(consumer);
 
 		int expireMs = 3000;
 		Supplier<GTreeNode> supplier = () -> {
 			GTreeNode modelParent = getModelNode(parent);
-			if (modelParent != null) {
-				return modelParent.getChild(childName);
+			if (modelParent == null) {
+				return null;
 			}
+
+			List<GTreeNode> children = modelParent.getChildren();
+			for (GTreeNode node : children) {
+				if (matches.test(node)) {
+					return node;
+				}
+			}
+
 			return null;
 		};
 		ExpiringSwingTimer.get(supplier, expireMs, consumer);
 	}
 
 	// Waits for the given view node, passing it to the consumer when available
-	private void getViewNode(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
+	private void getViewNode(GTreeNode parent, Predicate<GTreeNode> matches,
+			Consumer<GTreeNode> consumer) {
 
 		// check for null here to preserve the stack, as the code below is asynchronous
 		Objects.requireNonNull(parent);
-		Objects.requireNonNull(childName);
+		Objects.requireNonNull(matches);
 		Objects.requireNonNull(consumer);
 
 		int expireMs = 3000;
 		Supplier<GTreeNode> supplier = () -> {
 			GTreeNode viewParent = getViewNode(parent);
-			if (viewParent != null) {
-				return viewParent.getChild(childName);
+			if (viewParent == null) {
+				return null;
+			}
+
+			List<GTreeNode> children = viewParent.getChildren();
+			for (GTreeNode node : children) {
+				if (matches.test(node)) {
+					return node;
+				}
 			}
 			return null;
 		};
 		ExpiringSwingTimer.get(supplier, expireMs, consumer);
+	}
+
+	/**
+	 * A specialized method that will get the child node from the given parent node when it becomes
+	 * available to the model. This method will ensure that the matching child passes any current
+	 * filter in order for the child to appear in the tree. This effect is temporary and will be
+	 * undone when next the filter changes.
+	 *
+	 * <p>
+	 * This method is intended to be used by clients using an asynchronous node model, where new
+	 * nodes will get created by application-level events. Such clients may wish to perform work
+	 * when newly created nodes become available. This method simplifies the concurrent nature of
+	 * the GTree, asynchronous nodes and the processing of asynchronous application-level events by
+	 * providing a callback mechanism for clients. <b>This method is non-blocking.</b>
+	 *
+	 * <p>
+	 * Note: this method assumes that the given parent node is in the view and not filtered out of
+	 * the view. This method makes no attempt to ensure the given parent node passes any existing
+	 * filter.
+	 *
+	 * <p>
+	 * Note: this method will not wait forever for the given node to appear. It will eventually give
+	 * up if the node never arrives.
+	 *
+	 * @param parent the model's parent node. If the view's parent node is passed, it will be
+	 *            translated to the model node.
+	 * @param matches the predicate that returns true when the given node is the desired node
+	 * @param consumer the consumer callback to which the child node will be given when available
+	 */
+	public void whenNodeIsReady(GTreeNode parent, Predicate<GTreeNode> matches,
+			Consumer<GTreeNode> consumer) {
+
+		/*
+		
+		If the GTree were to use Java's CompletableStage API, then the code below
+		could be written thusly:
+		
+		tree.getNewNode(modelParent, newName)
+			.thenCompose(newModelChild -> {
+		 		tree.ignoreFilter(newModelChild);
+		 		return tree.getNewNode(viewParent, newName);
+		 	))
+		 	.thenAccept(consumer);
+		
+		*/
+
+		// ensure we operate on the model node which will always have the given child not the view
+		// node, which may have its child filtered
+		GTreeNode modelParent = getModelNode(parent);
+		if (modelParent == null) {
+			Msg.error(this,
+				"Attempted to show a node with an invalid parent.\n\tParent: " + parent);
+			return;
+		}
+
+		getModelNode(modelParent, matches, newModelChildren -> {
+			// force the filter to accept the new node
+			ignoreFilter(newModelChildren);
+
+			// Wait for the view to update from any filtering that may take place
+			getViewNode(modelParent, matches, consumer);
+		});
 	}
 
 	/**
@@ -1144,50 +1223,31 @@ public class GTree extends JPanel implements BusyListener {
 	 * <p>
 	 * Note: this method will not wait forever for the given node to appear. It will eventually give
 	 * up if the node never arrives.
+	 * 
+	 * <p>
+	 * Note: if your parent node allows duplicate nodes then this method may not match the correct
+	 * node.  If that is the case, then use 
+	 * {@link #whenNodeIsReady(GTreeNode, Predicate, Consumer)}. 
 	 *
 	 * @param parent the model's parent node. If the view's parent node is passed, it will be
 	 *            translated to the model node.
 	 * @param childName the name of the desired child
 	 * @param consumer the consumer callback to which the child node will be given when available
 	 */
-	public void forceNewNodeIntoView(GTreeNode parent, String childName,
-			Consumer<GTreeNode> consumer) {
-
-		/*
-		
-			If the GTree were to use Java's CompletableStage API, then the code below
-			could be written thusly:
-		
-			tree.getNewNode(modelParent, newName)
-				.thenCompose(newModelChild -> {
-			 		tree.ignoreFilter(newModelChild);
-			 		return tree.getNewNode(viewParent, newName);
-			 	))
-			 	.thenAccept(consumer);
-		
-		*/
-
-		// ensure we operate on the model node which will always have the given child not the view
-		// node, which may have its child filtered
-		GTreeNode modelParent = getModelNode(parent);
-		if (modelParent == null) {
-			Msg.error(this, "Attempted to show a node with an invalid parent.\n\tParent: " +
-				parent + "\n\tchild: " + childName);
-			return;
-		}
-		getModelNode(modelParent, childName, newModelChild -> {
-			// force the filter to accept the new node
-			ignoreFilter(newModelChild);
-
-			// Wait for the view to update from any filtering that may take place
-			getViewNode(modelParent, childName, consumer);
-		});
+	public void whenNodeIsReady(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
+		Predicate<GTreeNode> nameMatches = n -> n.getName().equals(childName);
+		whenNodeIsReady(parent, nameMatches, consumer);
 	}
 
 	/**
 	 * Requests that the node with the given name, in the given parent, be edited. This operation is
 	 * asynchronous. This request will be buffered as needed to wait for the given node to be added
 	 * to the parent, up to a timeout period.
+	 * <p>
+	 * Note: if there are multiple nodes by the given name under the given parent, then no editing
+	 * will take place.  In that case, you can instead use {@link #startEditing(GTreeNode)}, if you
+	 * have the node.  If you have duplicates and do not yet have the node, then you will need to 
+	 * create your own mechanism for waiting for the desired node and then starting the edit.
 	 *
 	 * @param parent the parent node
 	 * @param childName the name of the child to edit
@@ -1206,9 +1266,10 @@ public class GTree extends JPanel implements BusyListener {
 		// the Swing thread.  To deal with this, we use a construct that will run our request
 		// once the given node has been added to the parent.
 		//
+		Predicate<GTreeNode> nameMatches = n -> n.getName().equals(childName);
 		GTreeNode modelParent = getModelNode(parent);
-		forceNewNodeIntoView(modelParent, childName, viewNode -> {
-			runTask(new GTreeStartEditingTask(GTree.this, tree, viewNode));
+		whenNodeIsReady(modelParent, nameMatches, editNode -> {
+			runTask(new GTreeStartEditingTask(GTree.this, tree, editNode));
 		});
 	}
 
