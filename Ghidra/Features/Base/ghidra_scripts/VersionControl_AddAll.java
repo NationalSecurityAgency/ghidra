@@ -17,7 +17,7 @@
 //@__params_start
 //@category Version Control
 //@toolbar world.png
-//@menupath Tools.Scripts Manager.Version Control Add All
+//@menupath Tools.Scripts Manager.Version Control.Add All
 //@__params_end
 
 import ghidra.app.script.GhidraScript;

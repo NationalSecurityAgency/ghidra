@@ -17,7 +17,7 @@
 //@__params_start
 //@category Version Control
 //@toolbar world.png
-//@menupath Tools.Scripts Manager.Version Control Version Summary
+//@menupath Tools.Scripts Manager.Version Control.Version Summary
 //@__params_end
 
 import java.util.Arrays;

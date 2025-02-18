@@ -17,7 +17,7 @@
 //@__params_start
 //@category    Version Control
 //@toolbar world.png
-//@menupath Tools.Scripts Manager.Version Control Undo All Checkout
+//@menupath Tools.Scripts Manager.Version Control.Undo All Checkout
 //@__params_end
 
 import ghidra.app.script.GhidraScript;

@@ -17,7 +17,7 @@
 //@__params_start
 //@category Version Control
 //@toolbar world.png
-//@menupath Tools.Scripts Manager.Version Control Reset All
+//@menupath Tools.Scripts Manager.Version Control.Reset All
 //@__params_end
 
 import java.io.IOException;
