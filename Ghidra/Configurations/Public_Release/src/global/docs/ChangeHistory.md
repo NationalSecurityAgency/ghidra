@@ -1,3 +1,23 @@
+# Ghidra 11.3.1 Change History (February 2025)
+
+### Improvements
+* _Multi-User_. Allow a repository without an Admin in the ACL to instantiate during server startup.  The `svrAdmin -grant` command line tool may be used to assign a new Admin to a repository.  Currently, when a user is removed from the server they are removed from all repository ACLs which could leave a repository without an Admin which will fail on server startup. (GP-5368)
+
+### Bugs
+* _Basic Infrastructure_. Fixed a bug that prevented Ghidra from remembering the last-used JDK when the `JAVA_HOME` environment variable was set. (GP-5381, Issue #7503)
+* _Debugger:LLDB_. Fixed an issue with local-lldb.bat (GP-5347, Issue #4977)
+* _Importer:ELF_. Packed relocations in MIPS 64-bit binaries are now applied correctly.  Previously, packed relocations would reference address `0x0`. (GP-5365)
+* _Importer:ELF_. Corrected ELF Import bug which failed to pin absolute symbols and reported an Object Deleted error. (GP-5374)
+* _Multi-User_. Corrected regression bug which would prevent Ghidra Server users from specifying a different login username. (GP-5362, Issue #7454)
+* _Processors_. Added implementation for ARM `vld4` and `vst4` instructions. (GP-5268)
+* _Scripting_. PyGhidra can now find modules that live in directories specified by the Bundle Manager. (GP-5298)
+* _Scripting_. Fixed a PyGhidra issue that prevented accessing Java getters/setters as properties on non-public classes. (GP-5348, Issue #7450)
+* _Scripting_. PyGhidra now respects the `application.settingsdir` property set in Ghidra's `launch.properties`. (GP-5372, Issue #7481)
+* _SourceMatching_. Corrected implementation of DWARF source line ` DW_LNS_const_add_pc` instruction (GP-5353)
+
+### Notable API Changes
+* _Multi-User_. (GP-5362) Revised `PasswordDialog` constructors to simplify those used for password-only entry.
+
 # Ghidra 11.3 Change History (February 2025)
 
 ### New Features
