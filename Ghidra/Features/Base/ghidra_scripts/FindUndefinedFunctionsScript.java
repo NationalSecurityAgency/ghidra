@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Finds undefined functions by searching for common 
+//Finds undefined functions by searching for common
 //byte patterns used by compilers for function entry points.
 //
 //Only Intel GCC, Windows, and PowerPC are currently
@@ -22,11 +22,15 @@
 //Please feel free to change this script and add
 //different byte patterns.
 //
-//When the byte pattern is found, the instructions 
+//When the byte pattern is found, the instructions
 //will be disassembled and a function will be created.
 //
 //Please note: this will NOT find all undefined functions!
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Undefined Functions Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

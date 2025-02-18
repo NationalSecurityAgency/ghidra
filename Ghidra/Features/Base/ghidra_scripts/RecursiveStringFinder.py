@@ -14,8 +14,12 @@
 #  limitations under the License.
 ##
 #Given a function, find all strings used within all called funtions.
-# @category: Strings
-# @runtime Jython
+#@__params_start
+#@runtime Jython
+#@category: Strings
+#@toolbar world.png
+#@menupath Tools.Scripts Manager.Recursive String Finder
+#@__params_end
 
 # Handles only functions, not subroutines, as of now.  Hopefully this will change later
 

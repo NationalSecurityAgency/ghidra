@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 // Select and remove a source map entry at the current address.
+//@__params_start
 //@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Remove Source Map Entry Script
+//@__params_end
+
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

@@ -18,15 +18,19 @@
 // identify function entry points.  This script attempts to find and fix
 // those bad entry points.
 //
-// <b>Issues</b>:  Memory bounds checking is hard-coded. It incorrectly identifies random 
-//          0x60000000 values that the compiler inserted between some functions 
-//          as "ori r0,r0,0" instructions that should be added to the head of the 
-//          functions those values precede.  It makes assumptions that wouldn't be helpful in 
-//          an image that hasn't been mostly disassembled already.  I'm sure there are other 
-//          problems with it.  Still, it did a pretty good job of cleaning up after 
+// <b>Issues</b>:  Memory bounds checking is hard-coded. It incorrectly identifies random
+//          0x60000000 values that the compiler inserted between some functions
+//          as "ori r0,r0,0" instructions that should be added to the head of the
+//          functions those values precede.  It makes assumptions that wouldn't be helpful in
+//          an image that hasn't been mostly disassembled already.  I'm sure there are other
+//          problems with it.  Still, it did a pretty good job of cleaning up after
 //          FindUndefinedFunctionsScript.
 //
+//@__params_start
 //@category CustomerSubmission.Analysis.Repair
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Undefined Functions Follow Up Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.PseudoDisassembler;

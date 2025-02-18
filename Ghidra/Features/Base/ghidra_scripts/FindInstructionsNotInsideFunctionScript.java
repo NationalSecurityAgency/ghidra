@@ -20,7 +20,11 @@
 // In headed mode displays a table identifying the start locations of all
 // unreferenced code.
 //
-// @category Search
+//@__params_start
+//@category Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Instructions Not Inside Function Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

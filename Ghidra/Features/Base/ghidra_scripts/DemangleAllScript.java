@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Attempts to demangle all mangled symbols in the current program using Ghidra's DemanglerCmd and 
+//Attempts to demangle all mangled symbols in the current program using Ghidra's DemanglerCmd and
 //replace the default symbol and function signature (if applicable) with the demangled symbol
 //Works for both Microsoft and Gnu mangled symbols
+//@__params_start
 //@category Symbol
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Demangle All Script
+//@__params_end
 
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.script.GhidraScript;

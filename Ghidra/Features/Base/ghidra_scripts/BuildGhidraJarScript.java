@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //An example of building a single minimal Ghidra jar file.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Build Ghidra Jar Script
+//@__params_end
 
 import java.io.File;
 import java.util.List;

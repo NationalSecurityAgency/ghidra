@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Script to create gcc RTTI vtables and structures 
+// Script to create gcc RTTI vtables and structures
+//@__params_start
 //@category C++
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Gcc Rtti Analysis Script
+//@__params_end
 
 import java.util.*;
 

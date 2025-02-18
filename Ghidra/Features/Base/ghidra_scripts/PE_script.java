@@ -19,7 +19,11 @@
 //representing the PE header. Including,
 //but not limited to, the PE header,
 //section headers, optional header, etc.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.P E_script
+//@__params_end
 
 import ghidra.app.cmd.formats.PortableExecutableBinaryAnalysisCommand;
 import ghidra.app.script.GhidraScript;

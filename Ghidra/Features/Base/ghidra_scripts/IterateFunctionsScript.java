@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Iterates over all functions in the current program.
+//@__params_start
 //@category Iteration
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Iterate Functions Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;

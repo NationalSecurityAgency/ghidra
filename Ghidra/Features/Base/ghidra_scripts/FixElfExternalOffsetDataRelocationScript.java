@@ -15,10 +15,10 @@
  */
 //
 // With ELF imports performed with Ghidra 10.0 and 10.1 certain data relocations
-// which corresponded to symbol pointers with an additional offset produced an 
+// which corresponded to symbol pointers with an additional offset produced an
 // ERROR bookmark and was not applied.  With Ghidra 10.2 such locations now
 // get the relocation applied and should utilize a Pointer-Typedef with an
-// pointer offset setting.  Use of a normal pointer will produce an invalid 
+// pointer offset setting.  Use of a normal pointer will produce an invalid
 // reference which was the original reason we avoided applying the relocation.
 //
 // This script applies the correct relocaton by modifying the memory bytes
@@ -27,7 +27,12 @@
 //
 // Script may be constrained by a selection.
 //
+//@__params_start
 //@category ELF Relocations
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fix Elf External Offset Data Relocation Script
+//@__params_end
+
 import java.util.Iterator;
 
 import ghidra.app.script.GhidraScript;

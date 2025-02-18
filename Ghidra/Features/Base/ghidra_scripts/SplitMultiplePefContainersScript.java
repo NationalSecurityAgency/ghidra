@@ -18,7 +18,11 @@
 //into separate files containing only one container.
 //The name of the file will be the container
 //name defined in the AppleSingleDouble (.) file.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Split Multiple Pef Containers Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;

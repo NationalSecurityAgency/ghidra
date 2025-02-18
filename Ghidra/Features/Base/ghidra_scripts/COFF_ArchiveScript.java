@@ -15,12 +15,16 @@
  * limitations under the License.
  */
 //Given a raw binary COFFArchive image
-//(specifically a .lib file), 
+//(specifically a .lib file),
 //this script will create data structures
 //representing the archive header. Including,
 //but not limited to, the archive member header,
 //the first linker member, etc.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.C O F F_ Archive Script
+//@__params_end
 
 import ghidra.app.cmd.formats.CoffArchiveBinaryAnalysisCommand;
 import ghidra.app.script.GhidraScript;

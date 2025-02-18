@@ -31,8 +31,12 @@
 //
 // NOTE:  Adresses must be hex values -- without "0x" prefixes.
 //
+//@__params_start
 //@category CustomerSubmission.Analysis
 //@keybinding alt Z
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Zap B C T R Script
+//@__params_end
 
 import java.util.List;
 

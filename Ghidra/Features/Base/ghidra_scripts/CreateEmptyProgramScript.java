@@ -15,7 +15,11 @@
  */
 //Creates an empty program using
 //the language selected by the user.
+//@__params_start
 //@category Program
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Empty Program Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.ProgramManager;

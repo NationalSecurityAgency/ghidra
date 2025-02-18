@@ -16,7 +16,7 @@
 // This script looks for offcut instruction(s) in the current selection or location and
 // automatically fixes "safe" offcuts. This script is suitable for correcting polyglot instruction
 // executable size optimizations, LOCK prefix issues, and offcut code used for code obfuscation.
-// 
+//
 // Offcuts are determined to be safe if they don't have additional conflicting offcuts in the same
 // base instruction.
 // The new instruction length override will be set by assuming there actually is an instruction at
@@ -31,7 +31,11 @@
 // taken as fact cautiously since the binary is already confirmed to be well behaved, that is
 // strictly flowed.
 //
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fix Offcut Instruction Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.ScriptMessage;

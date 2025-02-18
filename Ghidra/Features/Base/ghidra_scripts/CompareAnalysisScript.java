@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Script to compare analysis between current and chosen program.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Compare Analysis Script
+//@__params_end
 
 import java.util.Iterator;
 

@@ -16,7 +16,11 @@
 //Converts subroutines to functions.
 //Subroutines are located using the active
 //subroutine model on the BlockModelService.
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Subs To Funcs Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.BlockModelService;

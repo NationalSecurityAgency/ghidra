@@ -16,7 +16,11 @@
 // Generate WARNING Bookmarks at instructions whose pcode contains a CALLOTHER op.
 // This is useful to find PseudoOps that need to be implemented to yield better
 // emulation or decompilation.
-// @category sleigh
+//@__params_start
+//@category sleigh
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Mark Call Other Pcode
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.disassemble.Disassembler;

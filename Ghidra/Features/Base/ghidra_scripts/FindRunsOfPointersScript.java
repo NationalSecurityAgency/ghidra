@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Searches for runs of pointers the same distance apart.
+//@__params_start
 //@category Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Runs Of Pointers Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;

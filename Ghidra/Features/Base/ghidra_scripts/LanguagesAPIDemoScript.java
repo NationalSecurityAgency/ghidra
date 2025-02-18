@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Search for instructions with a given PCode operation.
+//@__params_start
 //@category Languages
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Languages A P I Demo Script
+//@__params_end
 
 import ghidra.app.plugin.languages.sleigh.PcodeOpEntryVisitor;
 import ghidra.app.plugin.languages.sleigh.SleighLanguages;

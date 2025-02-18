@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Imports a program and opens it in the current tool.
+//@__params_start
 //@category Import
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Import Program Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.lang.*;

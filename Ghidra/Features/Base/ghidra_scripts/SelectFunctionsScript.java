@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Creates a selection in the current program consisting of the sum 
+//Creates a selection in the current program consisting of the sum
 //of all function bodies.
+//@__params_start
 //@category Selection
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Select Functions Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.AddressSet;

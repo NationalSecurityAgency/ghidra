@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Show Equates In Selection Script
+//@__params_end
+//
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
@@ -23,9 +29,7 @@ import util.CollectionUtils;
 
 //Shows all equates found within the current program selection or the current function.
 //@category    Examples
-//@menupath    
 //@keybinding  
-//@toolbar    
 public class ShowEquatesInSelectionScript extends GhidraScript {
 
 	@Override

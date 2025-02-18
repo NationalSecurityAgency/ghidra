@@ -15,7 +15,11 @@
  */
 // Shows examples of how to get, set, and reset analysis options using the GhidraScript API.
 //
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Get And Set Analysis Options Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

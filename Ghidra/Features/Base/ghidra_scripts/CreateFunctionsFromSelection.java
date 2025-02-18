@@ -20,7 +20,11 @@
 //
 // This is very useful when used with Search->DeadSubroutines
 //
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Functions From Selection
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

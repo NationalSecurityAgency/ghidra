@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Finds programs containing various audio resources such as WAV's 
+//Finds programs containing various audio resources such as WAV's
+//@__params_start
 //@category Resources
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Audio In Program Script
+//@__params_end
+
 import java.util.ArrayList;
 import java.util.List;
 

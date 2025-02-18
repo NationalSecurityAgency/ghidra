@@ -16,7 +16,12 @@
 //
 //Launches a GUI allowing users to generate YARA search strings based on a set of selected instructions.
 //
+//@__params_start
 //@category Search.YARA
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Yara Ghidra G U I Script
+//@__params_end
+
 import java.awt.BorderLayout;
 import java.util.Observable;
 import java.util.Observer;

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 //Recursively finds a folder that matches a string and renames it to a new name.
+//@__params_start
 //@category Project
-//@menupath
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Batch Rename
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.model.DomainFolder;

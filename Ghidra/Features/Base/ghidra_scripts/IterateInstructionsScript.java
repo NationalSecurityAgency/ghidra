@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Iterates over all instructions in the current program.
+//@__params_start
 //@category Iteration
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Iterate Instructions Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Instruction;

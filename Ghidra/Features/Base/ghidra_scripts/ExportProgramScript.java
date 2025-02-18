@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Example script to show how to export the current program in its original binary format by 
-//looking at the original bytes compared to the current bytes and exporting the original if they 
-//are the same and the current bytes if they are different. If the changed bytes are relocations, 
+//Example script to show how to export the current program in its original binary format by
+//looking at the original bytes compared to the current bytes and exporting the original if they
+//are the same and the current bytes if they are different. If the changed bytes are relocations,
 //the original bytes are used. The script only handles simple use cases.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Export Program Script
+//@__params_end
 
 import java.io.*;
 import java.util.Iterator;

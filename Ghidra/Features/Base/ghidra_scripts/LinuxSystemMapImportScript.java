@@ -26,8 +26,11 @@
 //  </tt>
 //  /proc/ksyms eliminates the middle column, and may add the name of the module
 //  in square brackets at the end of the line.
-
+//@__params_start
 //@category CustomerSubmission.Linux
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Linux System Map Import Script
+//@__params_end
 
 import java.io.*;
 

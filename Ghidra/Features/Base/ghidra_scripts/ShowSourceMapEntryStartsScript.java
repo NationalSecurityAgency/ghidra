@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 // This script displays a table showing the base address of each source map entry
 // in the program along with a count of the number of entries starting at the address.
-// @category SourceMapping
+//@__params_start
+//@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Show Source Map Entry Starts Script
+//@__params_end
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;

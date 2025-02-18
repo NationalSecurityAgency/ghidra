@@ -15,7 +15,11 @@
  */
 //Renames default labels in a selected region, using
 //a user-defined stub and a one-up naming convention.
+//@__params_start
 //@category Symbol
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Auto Rename Labels Script
+//@__params_end
 
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.script.GhidraScript;

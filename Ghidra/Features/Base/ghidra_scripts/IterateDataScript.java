@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Iterates over all defined data in the current program.
+//@__params_start
 //@category Iteration
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Iterate Data Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Data;

@@ -16,7 +16,11 @@
 //Iterates over all functions in the current program
 //starting at the minimum address of the program.
 //
+//@__params_start
 //@category Iteration
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Iterate Functions By Address Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

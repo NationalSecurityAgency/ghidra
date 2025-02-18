@@ -18,7 +18,11 @@
 //
 // Assumes a program is open.
 //
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Report Disassembly Errors
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Bookmark;

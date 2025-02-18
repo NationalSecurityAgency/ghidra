@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Removes left over references from deleted overlays.
+//@__params_start
 //@category Update
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Remove Deleted Overlay References
+//@__params_end
 
 import java.util.ArrayList;
 import java.util.List;

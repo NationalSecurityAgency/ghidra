@@ -15,7 +15,11 @@
  */
 //Trivial search for
 //embedded binaries
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Embedded Finder Script
+//@__params_end
 
 import java.util.*;
 

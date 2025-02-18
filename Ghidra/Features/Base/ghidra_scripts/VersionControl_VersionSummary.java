@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Displays the count of programs that have a specific number of revisions. 
-//@category    Version Control
-//@menupath    Tools.Version Control.Version Summary
+//Displays the count of programs that have a specific number of revisions.
+//@__params_start
+//@category Version Control
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Version Control Version Summary
+//@__params_end
 
 import java.util.Arrays;
 

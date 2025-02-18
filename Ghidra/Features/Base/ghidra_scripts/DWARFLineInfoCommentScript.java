@@ -16,7 +16,12 @@
 // Adds DWARF source file line number info to the current binary as EOL comments.
 // Note that you can run this script on a program that has already been analyzed by the
 // DWARF analyzer.
+//@__params_start
 //@category DWARF
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.D W A R F Line Info Comment Script
+//@__params_end
+
 import java.io.IOException;
 import java.util.List;
 

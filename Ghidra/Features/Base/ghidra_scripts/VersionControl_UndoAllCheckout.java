@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 //Undoes all checkouts under a folder.
+//@__params_start
 //@category    Version Control
-//@menupath    Tools.Version Control.Undo All Checkouts
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Version Control Undo All Checkout
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.model.*;

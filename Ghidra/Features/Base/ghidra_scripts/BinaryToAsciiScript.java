@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Converts a binary file into an ascii hex file.
+//@__params_start
 //@category Conversion
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Binary To Ascii Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.util.Conv;

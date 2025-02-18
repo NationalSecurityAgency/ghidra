@@ -19,7 +19,11 @@
 // property containing "<dotdotdot/>". It then removes the dotdotdot tag from the decompiler_tags.
 // If the decompiler tags is then empty, it is also removed.
 // Currently this doesn't remove the dotdotdot tag if there isn't a function at that address in the program.
+//@__params_start
 //@category Update
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Convert Dot Dot Dot Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

@@ -15,11 +15,11 @@
  */
 //Finds Unrecovered Switches by finding all computed jumps that currently don't have any good destination references.
 //
-//@author
+//@__params_start
 //@category Analysis
-//@keybinding
-//@menupath
-//@toolbar
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Unrecovered Switches Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;

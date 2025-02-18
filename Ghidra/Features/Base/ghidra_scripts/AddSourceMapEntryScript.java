@@ -16,7 +16,12 @@
 // Add a source map entry for the current selection.
 // The current selection must consist of a single address range.
 // If there is no selection, a length 0 entry will be added at the current address.
+//@__params_start
 //@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Add Source Map Entry Script
+//@__params_end
+
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

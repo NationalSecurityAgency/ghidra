@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 //Script to graph class hierarchies given metadata found in class structure description that
-// was applied using the RecoverClassesFromRTTIScript.  
+// was applied using the RecoverClassesFromRTTIScript.
+//@__params_start
 //@category C++
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Graph Classes Script
+//@__params_end
+
 import java.util.ArrayList;
 import java.util.List;
 

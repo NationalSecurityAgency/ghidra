@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 //This script analyzes how registers are modified in a single
-// function or the complete listing and stores the results in the 
-// function's plate comment. 
+// function or the complete listing and stores the results in the
+// function's plate comment.
+//@__params_start
 //@category Analysis
-
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Register Touches Per Function
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.lang.Register;

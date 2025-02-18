@@ -20,7 +20,12 @@
 //
 //     export DWARF_EXTERNAL_DEBUG_FILES=/home/myuserid/debugfiles
 //     analyzeHeadless [...] -preScript DWARFSetExternalDebugFilesLocationPrescript.java
+//@__params_start
 //@category DWARF
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.D W A R F Set External Debug Files Location Prescript
+//@__params_end
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;

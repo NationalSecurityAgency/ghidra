@@ -16,7 +16,11 @@
 //
 //Example script illustrating how to launch the Instruction Pattern Search dialog from a script.
 //
+//@__params_start
 //@category Search.InstructionPattern
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Instruction Search Script
+//@__params_end
 
 import java.util.List;
 

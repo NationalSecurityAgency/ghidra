@@ -20,7 +20,11 @@
 // Note: Script does not verify that no other variable within the
 //       function is already using the new name.
 //
+//@__params_start
 //@category CustomerSubmission.Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Rename Variable
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;

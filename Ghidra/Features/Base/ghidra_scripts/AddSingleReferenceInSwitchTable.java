@@ -15,7 +15,11 @@
  */
 //With a user-input base address, this script will add a reference on the current switch table entry to corresponding code
 //Make sure your table entry is defined data (db,dw,etc).
+//@__params_start
 //@category ARM
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Add Single Reference In Switch Table
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

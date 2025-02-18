@@ -15,7 +15,11 @@
  */
 // Removes exit post comments for all functions in the program or over a selection.
 // " Exit **********" is considered the default value for the end of the post comment.
+//@__params_start
 //@category Update
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Delete Exit Comments Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

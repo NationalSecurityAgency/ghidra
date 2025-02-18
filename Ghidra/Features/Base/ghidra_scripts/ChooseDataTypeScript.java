@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Example of a script prompting the user for a data type.
+//@__params_start
 //@category Examples.Demo
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Choose Data Type Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;

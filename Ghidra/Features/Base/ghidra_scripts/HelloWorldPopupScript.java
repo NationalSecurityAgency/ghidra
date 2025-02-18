@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Writes "Hello World" in a popup dialog.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Hello World Popup Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

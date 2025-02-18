@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 //Uses overriding references and the symbolic propogator to resolve system calls
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Resolve X86or X64 Linux Syscalls Script
+//@__params_end
 
 import java.io.*;
 import java.util.*;

@@ -18,7 +18,11 @@
 // Also indicate where the same named data type has a different type. This doesn't indicate
 // where the internal contents of the same named data types differ.
 //
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Compare G D Ts
+//@__params_end
 
 import java.io.File;
 import java.io.PrintWriter;

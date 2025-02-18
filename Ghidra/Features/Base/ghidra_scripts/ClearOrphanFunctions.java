@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Clears any functions that are not xref'd
+//@__params_start
 //@category Symbol
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Clear Orphan Functions
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;

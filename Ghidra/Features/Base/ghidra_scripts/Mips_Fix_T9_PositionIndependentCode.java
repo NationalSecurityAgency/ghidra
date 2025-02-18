@@ -29,10 +29,11 @@
 //
 // Future: This could be created as an automated analyzer, if one could detect that it should be run.
 //
+//@__params_start
 //@category Analysis.MIPS
-//@keybinding 
-//@menupath 
-//@toolbar 
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Mips_ Fix_ T9_ Position Independent Code
+//@__params_end
 
 import java.math.BigInteger;
 

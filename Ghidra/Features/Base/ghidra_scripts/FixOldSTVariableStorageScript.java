@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 //
-// This fixup script is intended to be run against x86 programs created prior 
+// This fixup script is intended to be run against x86 programs created prior
 // to Ghidra 10.0.3 to update old ST0..ST7 floating point register
 // locations assigned to function parameters and local variables.  The
-// address assignment for these registers was changed with Ghidra 10.0.3 
+// address assignment for these registers was changed with Ghidra 10.0.3
 // x86 slaspec change (GP-1228).
 //
 // This script can be run multiple times without harm
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fix Old S T Variable Storage Script
+//@__params_end
+
 import java.util.Set;
 
 import ghidra.app.script.GhidraScript;

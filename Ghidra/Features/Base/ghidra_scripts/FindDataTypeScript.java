@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Shows how to find data types by name in data type managers other than the current program's, 
+// Shows how to find data types by name in data type managers other than the current program's,
 // which is how the <tt>GhidraScript.getDataTypes(String)</tt> works.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Data Type Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;

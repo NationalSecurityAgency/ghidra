@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 //Creates a template help file by reading all of the actions from a selected plugin.
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Help Template Script
+//@__params_end
 
 import java.io.*;
 import java.util.*;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //
-// Fixes up all composite datatypes within the current program to account for 
+// Fixes up all composite datatypes within the current program to account for
 // any changes to primitive datatype sizes or alignment rules as defined
 // by the associated data organization.
 //
@@ -22,7 +22,12 @@
 // of excessive change conflicts.
 //
 // This script can be run multiple times without harm
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fixup Composite Data Types Script
+//@__params_end
+
 import java.util.ArrayList;
 
 import ghidra.app.script.GhidraScript;

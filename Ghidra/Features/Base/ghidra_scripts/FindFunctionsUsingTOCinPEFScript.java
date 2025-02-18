@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //This script finds a .toc symbol, which is used to search for function pointers.
+//@__params_start
 //@category Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Functions Using T O Cin P E F Script
+//@__params_end
 
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.plugin.core.analysis.FindReferencesTableModel;

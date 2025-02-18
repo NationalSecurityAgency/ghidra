@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 // Shows how to perform an operation on all of the files within the current project
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Rename Programs In Project Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.model.*;

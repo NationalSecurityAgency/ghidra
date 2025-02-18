@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //This script collapses filler bytes in between functions.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Condense Filler Bytes
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;

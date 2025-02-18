@@ -15,9 +15,13 @@
  */
 // Script to ask user for a byte sequence that is a common function start
 // make functions at those locations
-// if code has only one block it asks the user where the data block is and splits the program into 
+// if code has only one block it asks the user where the data block is and splits the program into
 // code and data blocks
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Make Functions Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

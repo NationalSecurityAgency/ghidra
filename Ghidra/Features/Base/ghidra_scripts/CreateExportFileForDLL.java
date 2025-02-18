@@ -21,10 +21,11 @@
 //
 //   The name of the .exports file will be printed when the script finishes.
 //
+//@__params_start
 //@category Windows
-//@keybinding 
-//@menupath 
-//@toolbar 
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Export File For D L L
+//@__params_end
 
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;

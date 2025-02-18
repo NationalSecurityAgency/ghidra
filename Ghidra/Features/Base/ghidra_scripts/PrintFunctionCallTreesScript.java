@@ -15,6 +15,11 @@
  */
 // An example script that will print to the console, for a given function, all other functions
 // that call it and all functions that it calls.
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Print Function Call Trees Script
+//@__params_end
+
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

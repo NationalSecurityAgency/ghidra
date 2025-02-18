@@ -18,12 +18,11 @@
 // otherwise, it will try and rename the pointer to reflect the LABEL
 // to which it is pointing.
 //
-//
-//@author
+//@__params_start
 //@category Symbol
-//@keybinding
-//@menupath
-//@toolbar
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Name String Pointers Plus
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

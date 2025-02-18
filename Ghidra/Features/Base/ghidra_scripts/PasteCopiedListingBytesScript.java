@@ -44,8 +44,12 @@
 //  ...
 //  0x00000210 1a443b6a 13441846 1437bd46 5df8047b .D;j.D.F.7.F]..{
 //
+//@__params_start
 //@category Program
-//@menupath Edit.Paste Listing Text
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Paste Copied Listing Bytes Script
+//@__params_end
+
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.*;

@@ -16,7 +16,11 @@
 //Splits a Mac OS X Universal Binary into the separate
 //files for each processor. The output files
 //are placed in the same directory with the processor name appended.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Split Universal Binaries Script
+//@__params_end
 
 import java.io.*;
 import java.util.List;

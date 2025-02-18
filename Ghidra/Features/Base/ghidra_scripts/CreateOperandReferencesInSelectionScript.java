@@ -16,7 +16,11 @@
  */
 //This script creates references on all scalars contained in operands in the
 // current selection. There must be a selection for this script to run.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Operand References In Selection Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

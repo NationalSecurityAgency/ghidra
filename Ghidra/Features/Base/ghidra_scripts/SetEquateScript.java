@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//This script asks for a name and value for an equate and applies it at all scalar operands 
+//This script asks for a name and value for an equate and applies it at all scalar operands
 // in the current selection (if applicable) or the entire program if no selection is made
-//@author
-//@category 
-//@keybinding 
-//@menupath 
-//@toolbar 
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Set Equate Script
+//@__params_end
 
 import ghidra.app.cmd.equate.SetEquateCmd;
 import ghidra.app.script.GhidraScript;

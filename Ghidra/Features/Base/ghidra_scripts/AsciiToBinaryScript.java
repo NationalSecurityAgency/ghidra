@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Converts an ascii hex file into binary file. Works for files with spaces and without. Assumes hex bytes are zero padded so all values are two bytes long.
+//@__params_start
 //@category Conversion
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Ascii To Binary Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

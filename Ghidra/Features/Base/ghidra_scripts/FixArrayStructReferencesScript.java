@@ -24,7 +24,11 @@
 // will update each individual structure element, iterating through
 // the whole array until the end.
 //
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fix Array Struct References Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.database.ProgramDB;

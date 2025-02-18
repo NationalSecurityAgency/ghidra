@@ -15,7 +15,11 @@
  */
 //Removes EMPTY plate comments for all functions in the program or over a selection.
 //"" is considered the default value for the plate comment.
+//@__params_start
 //@category Update
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Delete Empty Plate Comments Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;

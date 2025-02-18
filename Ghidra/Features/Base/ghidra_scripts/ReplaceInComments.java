@@ -30,7 +30,11 @@
 //    - Script scans every address within the program, so it is slow.
 //    - Script doesn't scan param comments.
 //
+//@__params_start
 //@category CustomerSubmission.Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Replace In Comments
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

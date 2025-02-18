@@ -14,12 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This script condenses a sequence of equal bytes into a byte array. Starts at the current address and 
-// looks for bytes equal to the byte at that address in sequence until it encounters a different byte 
+// This script condenses a sequence of equal bytes into a byte array. Starts at the current address and
+// looks for bytes equal to the byte at that address in sequence until it encounters a different byte
 // value
 // does not condense into new memory blocks
 // does not overwrite previously defined code or memory
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Condense Repeating Bytes
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AlignmentDataType;

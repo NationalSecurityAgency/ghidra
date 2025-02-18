@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Shows how to report progress to the GUI. 
-//@author ghidra
+// Shows how to report progress to the GUI.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Progress Example Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

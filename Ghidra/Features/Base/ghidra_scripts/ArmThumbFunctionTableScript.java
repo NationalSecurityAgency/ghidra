@@ -15,8 +15,11 @@
  * limitations under the License.
  */
 //Makes functions out of a run of selected ARM or Thumb function pointers 
-//@category ARM 
-
+//@__params_start
+//@category ARM
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Arm Thumb Function Table Script
+//@__params_end
 
 import ghidra.app.plugin.core.clear.ClearFlowAndRepairCmd;
 import ghidra.app.script.GhidraScript;

@@ -23,7 +23,11 @@
 // Note: Script does not verify that no other member within the structure
 //       is already using the new name.
 //
+//@__params_start
 //@category CustomerSubmission.Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Rename Struct Members
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.DataTypeComponent;

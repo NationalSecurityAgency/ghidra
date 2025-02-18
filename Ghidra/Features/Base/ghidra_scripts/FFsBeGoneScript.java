@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Rid us of those pesky FF's that become bad instructions
+//@__params_start
 //@category Cleanup
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.F Fs Be Gone Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

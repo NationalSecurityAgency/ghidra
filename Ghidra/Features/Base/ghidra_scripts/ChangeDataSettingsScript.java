@@ -15,7 +15,11 @@
  */
 //Changes the dsiplay settings of the current data 
 //from hex to decimal.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Change Data Settings Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.docking.settings.FormatSettingsDefinition;

@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 //This script will replace all comments with values matching the given user search value with the given user replacement value.
+//@__params_start
 //@category Update
-
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find And Replace Comment Script
+//@__params_end
 
 import org.apache.commons.lang3.StringUtils;
 

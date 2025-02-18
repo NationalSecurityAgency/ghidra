@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 //Test assembly of the instruction under the cursor.
+//@__params_start
 //@category Assembly
 //@keybinding CTRL-H
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Assemble Check Dev Script
+//@__params_end
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;

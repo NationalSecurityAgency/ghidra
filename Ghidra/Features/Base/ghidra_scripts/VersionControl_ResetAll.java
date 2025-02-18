@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 //Resets all files under a folder to their first revision.
-//@category    Version Control
-//@menupath    Tools.Version Control.Reset All
+//@__params_start
+//@category Version Control
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Version Control Reset All
+//@__params_end
+
 import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;

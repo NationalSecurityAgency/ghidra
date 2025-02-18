@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Example of a script calling another script.
+//@__params_start
 //@category Examples.Demo
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Call Another Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

@@ -26,8 +26,12 @@
 //USER_DEFINED or IMPORTED).
 // 
 //Feel free to add any other rules!
-// 
+//
+//@__params_start
 //@category Symbol
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Auto Rename Simple Labels
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

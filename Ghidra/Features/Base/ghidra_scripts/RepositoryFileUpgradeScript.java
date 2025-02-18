@@ -18,7 +18,12 @@
 // the script will optionally list any existing checkouts prior to starting
 // the batch upgrade.
 //
+//@__params_start
 //@category Upgrade
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Repository File Upgrade Script
+//@__params_end
+
 import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;

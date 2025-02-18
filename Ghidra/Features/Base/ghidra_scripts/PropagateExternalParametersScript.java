@@ -16,7 +16,11 @@
 // This script propagates Windows external and library function parameter names and types
 // It puts the parameter names and types in the comments next to the pushes before a function call.
 // It currently does not check for branches in the middle of a series of parameters
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Propagate External Parameters Script
+//@__params_end
 
 import java.util.ArrayList;
 import java.util.List;

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 //Create a function after terminal instruction
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Function After Terminals
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

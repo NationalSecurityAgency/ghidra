@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Pdb Xml Files Script
+//@__params_end
+
 import java.io.*;
 import java.util.*;
 
