@@ -21,8 +21,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 
 import javax.swing.*;
 
@@ -40,9 +42,9 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAc
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.format.ByteBlock;
-import ghidra.app.services.DebuggerControlService;
+import ghidra.app.plugin.core.format.ByteBlockAccessException;
+import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
-import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.action.GoToInput;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -165,6 +167,50 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 	}
 
+	protected class ForBytesClipboardProvider extends ByteViewerClipboardProvider {
+		protected class PasteIntoTargetCommand extends PasteByteStringCommand
+				implements PasteIntoTargetMixin {
+			protected PasteIntoTargetCommand(String string) {
+				super(string);
+			}
+
+			@Override
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+				return doHasEnoughSpace(program, address, byteCount);
+			}
+
+			@Override
+			protected boolean pasteBytes(Program program, byte[] bytes) {
+				return doPasteBytes(tool, controlService, consoleService, current, currentLocation,
+					bytes);
+			}
+		}
+
+		protected ForBytesClipboardProvider() {
+			super(DebuggerMemoryBytesProvider.this, DebuggerMemoryBytesProvider.this.tool);
+		}
+
+		@Override
+		public boolean canPaste(DataFlavor[] availableFlavors) {
+			if (controlService == null) {
+				return false;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return false;
+			}
+			if (!controlService.getCurrentMode(trace).canEdit(current)) {
+				return false;
+			}
+			return super.canPaste(availableFlavors);
+		}
+
+		@Override
+		protected boolean pasteByteString(String string) {
+			return tool.execute(new PasteIntoTargetCommand(string), currentProgram);
+		}
+	}
+
 	private final AutoReadMemorySpec defaultReadMemorySpec =
 		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
 
@@ -172,6 +218,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
 	//@AutoServiceConsumed via method
 	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
@@ -272,23 +320,83 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		};
 	}
 
+	/**
+	 * Override where edits are allowed and direct sets through the control service.
+	 */
+	class TargetByteBlock extends MemoryByteBlock {
+		protected TargetByteBlock(Program program, Memory memory, MemoryBlock block) {
+			super(program, memory, block);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 * 
+		 * <p>
+		 * Overridden to ignore existing instructions. Let them be clobbered!
+		 */
+		@Override
+		protected boolean editAllowed(Address addr, long length) {
+			return controlService != null;
+		}
+
+		protected ByteBuffer alloc(int size) {
+			return ByteBuffer.allocate(size)
+					.order(isBigEndian()
+							? ByteOrder.BIG_ENDIAN
+							: ByteOrder.LITTLE_ENDIAN);
+		}
+
+		protected void doSet(Address address, ByteBuffer buffer) throws ByteBlockAccessException {
+			checkEditsAllowed(address, buffer.capacity());
+			try {
+				controlService.createStateEditor(current)
+						.setVariable(address, buffer.array())
+						.get(1, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException | ExecutionException | TimeoutException e) {
+				throw new ByteBlockAccessException("Could not set target memory", e);
+			}
+		}
+
+		@Override
+		public void setByte(BigInteger index, byte value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Byte.BYTES).put(value));
+		}
+
+		@Override
+		public void setShort(BigInteger index, short value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Short.BYTES).putShort(value));
+		}
+
+		@Override
+		public void setInt(BigInteger index, int value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Integer.BYTES).putInt(value));
+		}
+
+		@Override
+		public void setLong(BigInteger index, long value) throws ByteBlockAccessException {
+			doSet(getAddress(index), alloc(Long.BYTES).putLong(value));
+		}
+	}
+
+	class TargetByteBlockSet extends ProgramByteBlockSet {
+		protected TargetByteBlockSet(ByteBlockChangeManager changeManager) {
+			super(DebuggerMemoryBytesProvider.this, DebuggerMemoryBytesProvider.this.program,
+				changeManager);
+		}
+
+		@Override
+		protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
+			return new TargetByteBlock(program, memory, memBlock);
+		}
+	}
+
 	@Override
 	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
 		if (program == null) {
 			return null;
 		}
-		// A bit of work to get it to ignore existing instructions. Let them be clobbered!
-		return new ProgramByteBlockSet(this, program, changeManager) {
-			@Override
-			protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
-				return new MemoryByteBlock(program, memory, memBlock) {
-					@Override
-					protected boolean editAllowed(Address addr, long length) {
-						return true;
-					}
-				};
-			}
-		};
+		return new TargetByteBlockSet(changeManager);
 	}
 
 	/**
@@ -373,22 +481,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	@Override
 	protected ByteViewerClipboardProvider newClipboardProvider() {
-		return new ByteViewerClipboardProvider(this, tool) {
-			@Override
-			public boolean canPaste(DataFlavor[] availableFlavors) {
-				if (controlService == null) {
-					return false;
-				}
-				Trace trace = current.getTrace();
-				if (trace == null) {
-					return false;
-				}
-				if (!controlService.getCurrentMode(trace).canEdit(current)) {
-					return false;
-				}
-				return super.canPaste(availableFlavors);
-			}
-		};
+		return new ForBytesClipboardProvider();
 	}
 
 	@AutoServiceConsumed

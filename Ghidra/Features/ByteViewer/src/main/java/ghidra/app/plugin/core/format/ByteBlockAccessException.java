@@ -18,26 +18,33 @@ package ghidra.app.plugin.core.format;
 import ghidra.util.exception.UsrException;
 
 /**
- * <p>An ByteBlockAccessException indicates that the attempted
- * access is not permitted.  (i.e. Readable/Writeable)</p>
- *
+ * A {@code ByteBlockAccessException} indicates that the attempted access is not permitted. (i.e.
+ * Readable/Writeable)
  */
 public class ByteBlockAccessException extends UsrException {
-    /**
-	 * <p>Constructs an ByteBlockAccessException with no detail message.
+	/**
+	 * Construct an exception with no details
 	 */
-    public ByteBlockAccessException() {
-        super();
-    }
-    
-    
-    /**
-	 * <p>Constructs an ByteBlockAccessException with the specified
-	 * detail message.
+	public ByteBlockAccessException() {
+		super();
+	}
+
+	/**
+	 * Construct an exception with the specified message
 	 *
-	 * @param message The message.
+	 * @param message the message
 	 */
-    public ByteBlockAccessException(String message) {
-        super(message);
-    }
-} 
+	public ByteBlockAccessException(String message) {
+		super(message);
+	}
+
+	/**
+	 * Construct an exception with the specified message and cause
+	 * 
+	 * @param message the message
+	 * @param cause the cause
+	 */
+	public ByteBlockAccessException(String message, Throwable cause) {
+		super(message, cause);
+	}
+}
