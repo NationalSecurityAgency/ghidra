@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,19 +49,24 @@ public abstract class Transaction implements AutoCloseable {
 	}
 
 	/**
-	 * End this transaction if currently active.  
-	 * @param commit true if changes should be commited, false if all changes in this transaction
-	 * should be discarded (i.e., rollback).  If this is a "sub-transaction" and commit is false,
-	 * the larger transaction will rollback upon completion.  
-	 * @return true if changes have been commited or false if nothing to commit or commit parameter 
-	 * was specified as false.
+	 * End this transaction if currently active.
+	 * 
+	 * @param commit true if changes should be committed, false if all changes in this transaction
+	 *            should be discarded (i.e., rollback). If this is a "sub-transaction" and commit is
+	 *            false, the larger transaction will rollback upon completion.
+	 * @return true if changes have been committed or false if nothing to commit or commit parameter
+	 *         was specified as false.
 	 */
 	abstract protected boolean endTransaction(@SuppressWarnings("hiding") boolean commit);
 
 	/**
-	 * Determine if this is a sub-transaction to a larger transaction.  If true is returned the 
-	 * larger transaction will not complete until all sub-transactions have ended.  The larger
-	 * transaction will rollback upon completion if any of the sub-transactions do not commit.
+	 * Determine if this is a sub-transaction to a larger transaction.
+	 * 
+	 * <p>
+	 * If true is returned the larger transaction will not complete until all sub-transactions have
+	 * ended. The larger transaction will rollback upon completion if any of the sub-transactions do
+	 * not commit.
+	 * 
 	 * @return true if this is a sub-transaction, else false.
 	 */
 	public boolean isSubTransaction() {
@@ -69,16 +74,21 @@ public abstract class Transaction implements AutoCloseable {
 	}
 
 	/**
-	 * Mark transaction for rollback/non-commit upon closing.  A subsequent invocation of 
-	 * {@link #commitOnClose()} will alter this state prior to closing.
+	 * Mark transaction for rollback/non-commit upon closing.
+	 * 
+	 * <p>
+	 * A subsequent invocation of {@link #commitOnClose()} will alter this state prior to closing.
 	 */
 	public void abortOnClose() {
 		commit = false;
 	}
 
 	/**
-	 * Mark transaction for commit upon closing.  This state is assumed by default.  A subsequent 
-	 * invocation of {@link #abortOnClose()} will alter this state prior to closing.
+	 * Mark transaction for commit upon closing.
+	 * 
+	 * <p>
+	 * This state is assumed by default. A subsequent invocation of {@link #abortOnClose()} will
+	 * alter this state prior to closing.
 	 */
 	public void commitOnClose() {
 		commit = true;
@@ -106,7 +116,9 @@ public abstract class Transaction implements AutoCloseable {
 
 	/**
 	 * End this transaction if active using the current commit state.
-	 * See {@link #commitOnClose()}, {@link #abortOnClose()}.
+	 * 
+	 * @see #commitOnClose()
+	 * @see #abortOnClose()
 	 */
 	@Override
 	public void close() {
@@ -115,5 +127,4 @@ public abstract class Transaction implements AutoCloseable {
 			endTransaction(commit);
 		}
 	}
-
 }

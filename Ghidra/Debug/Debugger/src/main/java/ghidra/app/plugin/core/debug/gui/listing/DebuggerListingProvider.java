@@ -291,6 +291,24 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	protected class ForListingClipboardProvider extends CodeBrowserClipboardProvider {
+		protected class PasteIntoTargetCommand extends PasteByteStringCommand
+				implements PasteIntoTargetMixin {
+			protected PasteIntoTargetCommand(String string) {
+				super(string);
+			}
+
+			@Override
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+				return doHasEnoughSpace(program, address, byteCount);
+			}
+
+			@Override
+			protected boolean pasteBytes(Program program, byte[] bytes) {
+				return doPasteBytes(tool, controlService, consoleService, current, currentLocation,
+					bytes);
+			}
+		}
+
 		protected ForListingClipboardProvider() {
 			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this);
 		}
@@ -316,6 +334,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				return false;
 			}
 			return super.canPaste(availableFlavors);
+		}
+
+		@Override
+		protected boolean pasteByteString(String string) {
+			return tool.execute(new PasteIntoTargetCommand(string), currentProgram);
 		}
 	}
 

@@ -90,9 +90,15 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	}
 
 	protected static class InvalidObjPathError extends TraceRmiError {
+		public InvalidObjPathError(String path) {
+			super(path);
+		}
 	}
 
 	protected static class NoSuchAddressSpaceError extends TraceRmiError {
+		public NoSuchAddressSpaceError(String name) {
+			super(name);
+		}
 	}
 
 	protected static class InvalidSchemaError extends TraceRmiError {
@@ -292,8 +298,8 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 		synchronized (openTxes) {
 			while (!openTxes.isEmpty()) {
 				Tid nextKey = openTxes.keySet().iterator().next();
-				OpenTx open = openTxes.remove(nextKey);
-				open.tx.close();
+				OpenTx openTx = openTxes.remove(nextKey);
+				openTx.tx.close();
 			}
 		}
 
@@ -309,7 +315,7 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 					// OK. Move on
 				}
 			}
-			open.trace.release(this);
+			open.dispose(this);
 		}
 		closed.complete(null);
 		plugin.listeners.invoke().disconnected(this);
@@ -840,7 +846,7 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	protected ReplyCloseTrace handleCloseTrace(RequestCloseTrace req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		openTraces.removeById(open.doId);
-		open.trace.release(this);
+		open.dispose(this);
 		return ReplyCloseTrace.getDefaultInstance();
 	}
 
@@ -968,13 +974,27 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			Msg.error(this, "Back-end debugger aborted a transaction!");
 			tx.tx.abortOnClose();
 		}
-		tx.tx.close();
+
 		OpenTrace open = requireOpenTrace(tx.txId.doId);
 		if (!tx.undoable) {
-			open.trace.clearUndo();
+			/**
+			 * The listener is invoked via runLater, so we must do the same here, so that events are
+			 * processed in the order emitted.
+			 */
+			Swing.runLater(() -> open.txListener.markNotUndoable());
 		}
-		// TODO: Check for other transactions on the same trace?
-		open.trace.setEventsEnabled(true);
+
+		tx.tx.close();
+
+		final boolean restoreEvents;
+		synchronized (openTxes) {
+			restoreEvents = openTxes.keySet()
+					.stream()
+					.noneMatch(id -> id.doId.domObjId == req.getOid().getId());
+		}
+		if (restoreEvents) {
+			open.trace.setEventsEnabled(true);
+		}
 		return ReplyEndTx.getDefaultInstance();
 	}
 
@@ -1278,7 +1298,7 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 	@Override
 	public void forceCloseTrace(Trace trace) {
 		OpenTrace open = openTraces.removeByTrace(trace);
-		open.trace.release(this);
+		open.dispose(this);
 	}
 
 	@Override

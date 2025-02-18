@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected volatile AddressSetView addressSet;
 	protected boolean forceFullView = false;
 	protected long snap;
-
-	protected LiveMemoryHandler memoryWriteRedirect;
 
 	private static final int CACHE_PAGE_COUNT = 3;
 	protected final ByteCache cache = new ByteCache(CACHE_PAGE_COUNT) {
@@ -160,16 +158,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 	@Override
 	public boolean isBigEndian() {
 		return program.getLanguage().isBigEndian();
-	}
-
-	@Override
-	public void setLiveMemoryHandler(LiveMemoryHandler handler) {
-		this.memoryWriteRedirect = handler;
-	}
-
-	@Override
-	public LiveMemoryHandler getLiveMemoryHandler() {
-		return memoryWriteRedirect;
 	}
 
 	@Override
@@ -339,10 +327,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public void setByte(Address addr, byte value) throws MemoryAccessException {
-		if (memoryWriteRedirect != null) {
-			memoryWriteRedirect.putByte(addr, value);
-			return;
-		}
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(new byte[] { value })) != 1) {
 			throw new MemoryAccessException();
@@ -352,10 +336,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 	@Override
 	public void setBytes(Address addr, byte[] source, int sIndex, int size)
 			throws MemoryAccessException {
-		if (memoryWriteRedirect != null) {
-			memoryWriteRedirect.putBytes(addr, source, sIndex, size);
-			return;
-		}
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(source, sIndex, size)) != size) {
 			throw new MemoryAccessException();
