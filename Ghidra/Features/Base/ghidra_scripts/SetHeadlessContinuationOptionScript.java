@@ -19,7 +19,11 @@
 //
 // See the 'analyzeHeadlessREADME.html' file for more details about continuation options.
 //
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Set Headless Continuation Option Script
+//@__params_end
 
 import ghidra.app.util.headless.HeadlessScript;
 import ghidra.util.Msg;

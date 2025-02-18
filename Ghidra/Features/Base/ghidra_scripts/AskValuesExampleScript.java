@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 // Example script for showing how to use the "AskValues" script method for inputting multiple values
-// @category Examples
+//@__params_start
+//@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Ask Values Example Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.program.model.listing.Program;

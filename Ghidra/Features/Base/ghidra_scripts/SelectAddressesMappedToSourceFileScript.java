@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 // Sets the current selection based on source file and line number parameters
+//@__params_start
 //@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Select Addresses Mapped To Source File Script
+//@__params_end
+
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

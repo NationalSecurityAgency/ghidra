@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 // Reloads the language specification associated with a program at runtime.
+//@__params_start
 // @category sleigh
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Reload Sleigh Language
+//@__params_end
+
 import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;

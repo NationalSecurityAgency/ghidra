@@ -20,7 +20,11 @@
 //representing the PEF header. Including,
 //but not limited to, the ContainerHeader,
 //SectionHeader, etc.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.P E F_script
+//@__params_end
 
 import ghidra.app.cmd.formats.PefBinaryAnalysisCommand;
 import ghidra.app.script.GhidraScript;

@@ -15,7 +15,11 @@
  */
 //Thoroughly test the assembler by attempting to assemble and match EVERY instruction code unit.
 //NOTE: I do not de-duplicate, since the address of the instruction may affect the output.
+//@__params_start
 //@category Assembly
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Assembly Thrasher Dev Script
+//@__params_end
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

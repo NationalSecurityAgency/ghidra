@@ -16,7 +16,11 @@
 //This script applies a meaningful label (based on data type and data representation) on all referenced data that does
 // not already have a meaningful name (ie strings), and pointers
 // This script only makes labels where there currently is a default label or an analysis label. It does not overwrite user or imported labels.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Label Data Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Data;

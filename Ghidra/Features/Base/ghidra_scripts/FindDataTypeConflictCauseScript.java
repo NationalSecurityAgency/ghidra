@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 // Search for the root cause of a datatype conflict based upon a selected datatype.
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Data Type Conflict Cause Script
+//@__params_end
+
 import java.util.*;
 
 import javax.help.UnsupportedOperationException;

@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 // List function names and entry point addresses to a file in JSON format
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Export Function Info Script
+//@__params_end
 
 import java.io.File;
 import java.io.FileWriter;

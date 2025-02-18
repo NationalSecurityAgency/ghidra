@@ -20,6 +20,11 @@
 // script only works on Windows PE programs. The script will only work if the libraries have already  
 // been imported to the project. If it finds more than one match, it will notify the user and use
 // the first found match.
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Associate External P E Libraries Script
+//@__params_end
+
 import java.util.*;
 
 import ghidra.app.script.GhidraScript;

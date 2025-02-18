@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This script creates references on scalar operands which can be directly 
+// This script creates references on scalar operands which can be directly
 // correlated to a symbol or equate via a relocation table entry.  Only symbols within
 // byte-oriented address spaces will be considered.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Relocation Based Operand References
+//@__params_end
 
 import java.util.Iterator;
 import java.util.List;

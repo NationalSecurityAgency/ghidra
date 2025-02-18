@@ -22,7 +22,12 @@
 // the data and deobfuscates each one invoking the "use_string" function for each deobfuscated
 // data.  This script hooks the functions "malloc", "free" and "use_string" where the later
 // simply prints the deobfuscated string passed as an argument.
+//@__params_start
 //@category Examples.Emulation
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Emu X86 Gcc Deobfuscate Hook Example Script
+//@__params_end
+
 import java.util.HashMap;
 import java.util.Map;
 

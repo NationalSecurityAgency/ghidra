@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 //<html>An example using the <code><b>printf()</b></code> method of GhidraScript
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Format Example Script
+//@__params_end
+
 import java.util.Calendar;
 import java.util.Date;
 

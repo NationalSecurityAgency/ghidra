@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//  
-// Reports some basic information about how the binary was disassembled.  If running in 
+//
+// Reports some basic information about how the binary was disassembled.  If running in
 // headless mode it also generates the signature file.
 //
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Turn Off Stack Analysis
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

@@ -17,6 +17,10 @@
 // Converts the '.'s to '_'s in auto-analysis created CODE and FUNCTION labels (some case and switch statements)
 // Use this script for updating pre3.2 files so that exported C code can compile
 // Need to run the UpdateSymbolSourceScript first if the symbols have not been updated yet
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Convert Dot To Dash In Auto Analysis Labels
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.symbol.*;

@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//An example script that shows a few methods for printing a structure, including a nested 
+//An example script that shows a few methods for printing a structure, including a nested
 //printing of structures that contain other structures
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Print Structure Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;

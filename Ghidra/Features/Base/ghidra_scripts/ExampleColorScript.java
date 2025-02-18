@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// An example of how to color the listing background 
+// An example of how to color the listing background
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Example Color Script
+//@__params_end
 
 import java.awt.Color;
 

@@ -18,7 +18,11 @@
 //
 // Your mileage may vary!  This should only be run after existing code has been found.
 // The results should be checked for validity.
+//@__params_start
 // @category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find X86 Relative Calls Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.PseudoDisassembler;

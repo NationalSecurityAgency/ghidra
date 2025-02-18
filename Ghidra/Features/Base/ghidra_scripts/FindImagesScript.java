@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 //Finds PNG and GIF images and applies data type if not already applied
+//@__params_start
 //@category Images
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Images Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.GifDataType;

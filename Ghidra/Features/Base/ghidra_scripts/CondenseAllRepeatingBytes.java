@@ -19,7 +19,12 @@
 // does not condense into new memory blocks
 // does not overwrite previously defined code or memory
 // does not condense into newly referenced areas
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Condense All Repeating Bytes
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AlignmentDataType;

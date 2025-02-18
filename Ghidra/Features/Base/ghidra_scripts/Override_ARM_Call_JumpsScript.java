@@ -23,7 +23,11 @@
 //
 //   This script assumes good flow, that switch stmts are good.
 //
+//@__params_start
 //@category ARM
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Override_ A R M_ Call_ Jumps Script
+//@__params_end
 
 import ghidra.app.cmd.disassemble.SetFlowOverrideCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;

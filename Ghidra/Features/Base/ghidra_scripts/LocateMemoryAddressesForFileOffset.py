@@ -13,13 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-# This example script locates a memory address for a file offset.  
+# This example script locates a memory address for a file offset.
 #Prompt user for a file offset.
 #Print the associated memory address to the Ghidra console
 #Print the file offset as a Ghidra comment at the memory address in the Ghidra Listing
 #If multiple addresses are located, then print the addresses to the console (do not set a Ghidra comment)
-# @category Examples   
-# @runtime Jython
+#@__params_start
+#@category Examples
+#@runtime Jython
+#@toolbar world.png
+#@menupath Tools.Scripts Manager.Locate Memory Addresses For File Offset
+#@__params_end
 
 import sys
 from ghidra.program.model.address import Address

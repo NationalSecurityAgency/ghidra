@@ -20,8 +20,12 @@
 // specified data type and symbol name and converts all "offset(base_register)"
 // references to "symbol_name(base_register)" references.
 //
-//@category CustomerSubmission.Analysis
+//@__params_start
 //@keybinding alt S
+//@category CustomerSubmission.Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Make Stack Refs
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;

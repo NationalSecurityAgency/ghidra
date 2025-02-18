@@ -15,7 +15,11 @@
  */
 // Mark all functions within the current selection as inline with a return type of void
 //
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Make Functions Inline Void Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.DataType;

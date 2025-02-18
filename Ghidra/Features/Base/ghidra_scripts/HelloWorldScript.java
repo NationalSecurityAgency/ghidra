@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 //Writes "Hello World" to console.
+//@__params_start
 //@category    Examples
-//@menupath    Help.Examples.Hello World
 //@keybinding  ctrl shift COMMA
-//@toolbar    world.png
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Hello World Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

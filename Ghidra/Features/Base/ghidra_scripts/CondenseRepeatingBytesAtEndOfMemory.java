@@ -17,7 +17,12 @@
 // This script tries to condense all undefined, unlabeled repeating bytes (ie all 0's or ff's) at
 // the end of the current memory block. If all conditions are met it will create an array of bytes
 // Note: this will not work in uninitialized memory
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Condense Repeating Bytes At End Of Memory
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AlignmentDataType;

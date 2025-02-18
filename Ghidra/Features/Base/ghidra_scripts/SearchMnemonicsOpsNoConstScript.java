@@ -16,7 +16,12 @@
 //The script will use the selected instructions and build a combined mask/value buffer.
 //Memory is then searched looking for this combined value buffer that represents the selected instructions.
 //This automates the process of searching through memory for a particular ordering of instructions by hand.
+//@__params_start
 //@category Search.InstructionPattern
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Search Mnemonics Ops No Const Script
+//@__params_end
+
 public class SearchMnemonicsOpsNoConstScript extends SearchBaseExtended {
 
 	@Override

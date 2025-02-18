@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Example Graph Service Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;

@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Script that removes single quotes from imported and analysis primary symbols only. The main 
-//purpose of this script is to fix up symbols created by pdb or demangler that include the quotes 
-//surrounding strings in the preprocessed name information. 
+//Script that removes single quotes from imported and analysis primary symbols only. The main
+//purpose of this script is to fix up symbols created by pdb or demangler that include the quotes
+//surrounding strings in the preprocessed name information.
+//@__params_start
 //@category Symbol
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Remove Symbol Quotes Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.symbol.*;
 

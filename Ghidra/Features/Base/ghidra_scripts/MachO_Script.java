@@ -19,7 +19,11 @@
 //representing the Mach header. Including,
 //but not limited to, the Mach header,
 //program headers, section headers, etc.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Mach O_ Script
+//@__params_end
 
 import ghidra.app.cmd.formats.MachoBinaryAnalysisCommand;
 import ghidra.app.script.GhidraScript;

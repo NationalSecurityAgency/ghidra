@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//finds and creates strings that end with  '\n'
+//Finds and creates strings that end with  '\n'
+//@__params_start
 //@category Memory
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create String Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

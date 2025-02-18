@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Separates co-mingled n-bit and 64-bit binaries into two folder trees. 
+//Separates co-mingled n-bit and 64-bit binaries into two folder trees.
+//@__params_start
 //@category Project
-//@menupath
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Batch Segregate64bit
+//@__params_end
 
 import java.io.IOException;
 import java.util.Map;

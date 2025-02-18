@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Counts the symbols in the current program and prints the total.
+//@__params_start
 //@category Symbol
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Count Symbols Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.symbol.*;

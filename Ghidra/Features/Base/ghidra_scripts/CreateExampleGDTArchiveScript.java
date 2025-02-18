@@ -24,7 +24,11 @@
 //
 // Then Run DataTypeArchiveTransformer in eclipse to synchronize old data types ID's
 //
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create Example G D T Archive Script
+//@__params_end
 
 import java.io.File;
 import java.io.IOException;

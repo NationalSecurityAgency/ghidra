@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Imports all programs from a selected directory.
+//@__params_start
 //@category Import
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Import All Programs From A Directory Script
+//@__params_end
 
 import java.io.File;
 import java.io.IOException;

@@ -25,7 +25,11 @@
 //
 //   No code, or bad disassembly marks are cleared.
 //
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Shared Return Functions Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.tablechooser.*;

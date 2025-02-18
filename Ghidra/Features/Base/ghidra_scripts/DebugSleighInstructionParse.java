@@ -15,7 +15,12 @@
  */
 // Attempt to parse single instruction from memory bytes at current location.
 // Parse trace output written to Tool Console.
-// @category sleigh
+//@__params_start
+//@category sleigh
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Debug Sleigh Instruction Parse
+//@__params_end
+
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
 import ghidra.app.script.GhidraScript;

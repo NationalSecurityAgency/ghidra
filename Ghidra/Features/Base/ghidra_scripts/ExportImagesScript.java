@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Looks for already defined graphic image data in the program 
-//and writes all selected images to a directory. 
+//Looks for already defined graphic image data in the program
+//and writes all selected images to a directory.
+//@__params_start
 //@category Images
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Export Images Script
+//@__params_end
 
 import java.awt.image.BufferedImage;
 import java.io.File;

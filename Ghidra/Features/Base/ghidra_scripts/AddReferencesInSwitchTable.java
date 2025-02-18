@@ -16,7 +16,11 @@
  */
 //With cursor on switch's "add pc, .." command, this script will add references on the switch offset table to corresponding code.  
 //Make sure your table consists of defined data (db,dw,etc).
+//@__params_start
 //@category ARM
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Add References In Switch Table
+//@__params_end
 
 /*
  * This script has 2 preconditions:

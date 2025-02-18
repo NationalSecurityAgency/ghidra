@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 // Assigns custom storage for params of a golang function to match golang's abi-internal
-// register-based calling convention, or abi0 (all stack based) if abi-internal is not 
+// register-based calling convention, or abi0 (all stack based) if abi-internal is not
 // specified for the arch.
+//@__params_start
 //@category Functions
-//@menupath Tools.Fix Golang Function Param Storage 
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fixup Golang Func Param Storage Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.golang.GoFunctionFixup;
 import ghidra.app.util.bin.format.golang.GoVer;

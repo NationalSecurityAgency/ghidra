@@ -16,16 +16,20 @@
 // This script reads the source map information for the current address and uses it to open
 // a source file in vs code at the appropriate line.  If there are multiple source map entries
 // at the current address, the script displays a table to allow the user to select which ones
-// to send to vs code.  The source file paths can be adjusted via 
-// 
+// to send to vs code.  The source file paths can be adjusted via
+//
 // Window -> Source Files and Transforms
 //
-// from the Code Browser.  The path to the vs code executable can be set via 
+// from the Code Browser.  The path to the vs code executable can be set via
 //
 // Edit -> Tool Options -> Visual Studio Code Integration
 //
 // from the Ghidra Project Manager.
+//@__params_start
 //@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Open Source File At Line In V S Code Script
+//@__params_end
 
 import java.io.File;
 import java.io.FileNotFoundException;

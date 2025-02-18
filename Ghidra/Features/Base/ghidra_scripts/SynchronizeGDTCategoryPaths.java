@@ -17,7 +17,11 @@
 // Synchronize the category path name case from the first archive into the second
 // archive.
 //
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Synchronize G D T Category Paths
+//@__params_end
 
 import java.io.File;
 

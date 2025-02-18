@@ -24,7 +24,12 @@
 // data.  Breakpoints are placed on the call (and just after the call)
 // to the function "deobfuscate" so that the various return values can be recorded with a comment
 // placed just after the call.
+//@__params_start
 //@category Examples.Emulation
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Emu X86 Deobfuscate Example Script
+//@__params_end
+
 import ghidra.app.emulator.EmulatorHelper;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.opinion.ElfLoader;
