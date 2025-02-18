@@ -3581,7 +3581,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol sym = symbolTable.createLabel(addr, name, namespace, SourceType.IMPORTED);
 		if (isPrimary) {
-			checkPrimary(sym);
+			sym = checkPrimary(sym);
 		}
 		if (pinAbsolute && !sym.isPinned()) {
 			sym.setPinned(true);
