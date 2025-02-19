@@ -39,16 +39,77 @@ import mdemangler.typeinfo.*;
 /**
  * This class manages MSFT-compliant virtual function tables and virtual base tables for our
  * program.
- * <p>
+ * <p><p>
  * This class also provide lookup mechanisms for locating the appropriate tables desired for
  * for particular MSFT-compliant classes of the program.  This is particularly useful for
  * determining how classes are laid down in memory and for determining which virtual method
  * gets called for a class.
+ * <p><p>
+ * The {@link #createVirtualTables(CategoryPath, Map, MessageLog, TaskMonitor)} and
+ * {@link #createVirtualTable(CategoryPath, String, Address, TaskMonitor)} methods demangle
+ * the strings and created tables within a owner/parentage tree based on the demangled information.
+ * <p><p>
+ * The {@link #findVbt(ClassID, List)} and {@link #findVft(ClassID, List)} methods attempt
+ * to find the VF/VB tables by finding the appropriate node in the tree based upon owner and
+ * at-times-mismatched parentage information from the user.  This mismatch is not necessarily
+ * the fault of the user, but more due to what parentage is incorporated into the mangled name.
+ * <p><p>
+ * <B> DESIGN of find mechanism</B>
  * <p>
- * The initial design has been shelved for now due to issues.  For now, the design relies on
- * a stinky solution that assumes the order of the tables in memory is that same as the order of
- * the pointers to these tables in the owner class.  This seems true based on limited experience.
- * Hoping to revisit this soon.
+ * One might think that the parentage information used in the mangling scheme is inconsistent, but
+ * we believe that is due to our not having a complete understanding of how the MSFT scheme adds
+ * information to uniquely identify the tables.  Both VB and VF tables use the same parentage
+ * scheme for mangling.  The scheme is one of a namespaced owner (the child class that will have
+ * pointers to the tables) and a parentage that describes which table for the owner.  Once this
+ * scheme is better understood, the information here should get updated.
+ * <p><p>
+ * Without getting into too much detail about the class hierarchy and layouts here, some examples
+ * follow:
+ * <pre>
+ * struct ANS::A : virtual A1NS::A1, virtual A2NS:A2
+ * struct BNS::B : virtual B1NS::B1, virtual B2NS:B2
+ * struct DNS::D : CNS::C, ANS::A, BNS::B
+ * struct ENS::E : ANS::A, BNS::B
+ * struct INS::I : ...
+ * struct JNS::J : ...
+ * struct KNS::K : JNS::J
+ * struct LNS::L : KNS::K
+ * struct MNS::M : ENS::E, DNS::D, INS::I, LNS::L
+ *
+ * For struct M -> struct E -> struct A (nested vbtptr)
+ * We have a mangled VB table coded as owner M and parentage {for A's E}
+ * For struct M -> struct D -> struct C (nested vbtptr)
+ * We have a mangled VB table coded as owner M and parentage {for C}
+ * For struct M -> struct L -> struct K -> struct J (nested vbtptr)
+ * We have a mangled VB table coded as owner M and no parentage
+ * For struct M -> struct E -> struct B (nested vbtptr)
+ * We have a mangled VB table coded as owner M and parentage {for B's E}, but for this case,
+ *  B is a virtual class in E
+ * For struct A -> A1, A2
+ * We have a mangled VF table coded as owner A and parentage {for A}, which is itself.
+ * </pre>
+ * <p>
+ * We view the first example as the most normal example where the base of M contains the base of E
+ * which contains the base of A which contains a vbtptr.  So, as a user trying to find the table
+ * associated with the vbtptr, we could use the nested of the base classes to come up with the
+ * parentage, or we could, from the compile side, look at the class hierarchy.  Either way, if the
+ * user trying to find the table passes in a parentage of {A, E}, we expect to return the obvious.
+ * <p><p>
+ * The second example is similar to the first.  Here, the base of M contains the base of D which
+ * contains the base of D which contains a vbtptr.  If the user tries to pass in the parentage
+ * of {D, C}, we still want to return the appropriate table, but we know the mangled scheme only
+ * showed {C}.
+ * <p><p>
+ * For the third example, based on the nesting of classes, the user will pass in a parentage of
+ * {J, K, L}, but we need the finder to return the table that has no parentage.
+ * <p><p>
+ * For the fourth example, the nesting no longer helps since base B is virtual within class M, but
+ * based on hierarchy (compile-side), we know the M -> E -> B dependency, so if we pass in a
+ * parentage of {B, E}, we expect to get the appropriate result.
+ * <p><p>
+ * For the last example, which is for owner A, the mangled string has also has a parentage of {A},
+ * but a user trying to find the table wouldn't be expected to pass in a parentage of {A}, as A
+ * is the owner.  We expect the finder to still appropriately return the correct table.
  */
 public class MsftVxtManager extends VxtManager {
 
@@ -67,7 +128,8 @@ public class MsftVxtManager extends VxtManager {
 	// These are explicitly used for storing/retrieving the "program" versions which result from
 	//  locating and parsing the mangled strings for these tables.  It is possible that these
 	//  could be used for placeholder or other versions... TBD
-	private ParentageNode mixedRoot; // originally had separate roots for VFT and VBT
+	private ParentageNode vbtRoot;
+	private ParentageNode vftRoot;
 
 	/**
 	 * Constructor for this class
@@ -81,7 +143,8 @@ public class MsftVxtManager extends VxtManager {
 		parentageNodeByMangled = new HashMap<>();
 		vbtsByOwner = new HashMap<>();
 		vftsByOwner = new HashMap<>();
-		mixedRoot = new ParentageNode(null);
+		vbtRoot = new ParentageNode(null);
+		vftRoot = new ParentageNode(null);
 	}
 
 	/**
@@ -168,7 +231,7 @@ public class MsftVxtManager extends VxtManager {
 	 * @return the table
 	 */
 	public VBTable findVbt(ClassID owner, List<ClassID> parentage) {
-		ParentageNode node = findNode(owner, parentage);
+		ParentageNode node = findNode(owner, parentage, vbtRoot);
 		if (node == null) {
 			return null;
 		}
@@ -182,7 +245,7 @@ public class MsftVxtManager extends VxtManager {
 		//  unless we find counter-examples or difficulties with this.
 		// Above, we test of parentage.isEmpty, because this special case comes into play only
 		//  if it was empty
-		node = findNode(owner, List.of(owner));
+		node = findNode(owner, List.of(owner), vbtRoot);
 		if (node == null) {
 			return null;
 		}
@@ -199,7 +262,7 @@ public class MsftVxtManager extends VxtManager {
 	 * @return the table
 	 */
 	public VFTable findVft(ClassID owner, List<ClassID> parentage) {
-		ParentageNode node = findNode(owner, parentage);
+		ParentageNode node = findNode(owner, parentage, vftRoot);
 		if (node == null) {
 			return null;
 		}
@@ -213,7 +276,7 @@ public class MsftVxtManager extends VxtManager {
 		//  unless we find counter-examples or difficulties with this.
 		// Above, we test of parentage.isEmpty, because this special case comes into play only
 		//  if it was empty
-		node = findNode(owner, List.of(owner));
+		node = findNode(owner, List.of(owner), vftRoot);
 		if (node == null) {
 			return null;
 		}
@@ -283,7 +346,8 @@ public class MsftVxtManager extends VxtManager {
 		List<ClassID> parentage = ownerAndParentage.parentage();
 		ParentageNode node = parentageNodeByMangled.get(mangled);
 		if (node == null) {
-			node = getOrAddParentageNode(categoryPath, mixedRoot, demanglerResults);
+			ParentageNode root = demanglerResults.vtType().equals(VtType.VBT) ? vbtRoot : vftRoot;
+			node = getOrAddParentageNode(categoryPath, root, demanglerResults);
 			if (node == null) {
 				return false;
 			}
@@ -339,12 +403,12 @@ public class MsftVxtManager extends VxtManager {
 		map.put(address, vft);
 	}
 
-	private ParentageNode findNode(ClassID owner, List<ClassID> parentage) {
+	private ParentageNode findNode(ClassID owner, List<ClassID> parentage, ParentageNode root) {
 		if (!(owner instanceof ProgramClassID ownerGId)) {
 			return null;
 		}
 		SymbolPath ownerSp = ownerGId.getSymbolPath();
-		ParentageNode ownerNode = mixedRoot.getBranch(ownerSp.toString());
+		ParentageNode ownerNode = root.getBranch(ownerSp.toString());
 		if (ownerNode == null) {
 			return null;
 		}
