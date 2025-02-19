@@ -152,18 +152,6 @@ public interface Memory extends AddressSetView {
 	}
 
 	/**
-	 * Sets the live memory handler
-	 * @param handler the live memory handler
-	 */
-	public void setLiveMemoryHandler(LiveMemoryHandler handler);
-
-	/**
-	 * Returns the live memory handler instance used by this memory.
-	 * @return the live memory handler
-	 */
-	public LiveMemoryHandler getLiveMemoryHandler();
-
-	/**
 	 * Create an initialized memory block based upon a data {@link InputStream} and add it to 
 	 * this Memory.
 	 * <p>
