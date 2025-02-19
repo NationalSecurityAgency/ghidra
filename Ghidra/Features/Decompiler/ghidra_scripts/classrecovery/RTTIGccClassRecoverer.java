@@ -2371,6 +2371,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				if (newStructure == null) {
 					// is a typeinfo that inherits a non class typeinfo so skip it
+					// or there was an issue creating it so skip it
 					continue;
 				}
 
@@ -2741,6 +2742,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		int numBases;
 		try {
 			numBases = api.getInt(typeinfoAddress.add(offsetOfNumBases));
+
+			if (numBases <= 0) {
+				Msg.debug(this, typeinfoAddress.toString() +
+					": VmiTypeinfoStructure has invalid number of bases: " + numBases);
+				return null;
+			}
 		}
 		// if there isn't enough memory to get the int then return null
 		catch (MemoryAccessException | AddressOutOfBoundsException e) {
