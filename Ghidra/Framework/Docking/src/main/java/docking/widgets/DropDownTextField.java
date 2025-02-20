@@ -350,7 +350,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	// for testing so that we can override, otherwise would be private
 	protected List<T> getMatchingData(String searchText) {
-		if (searchText == null || searchText.length() == 0) {
+		if (searchText == null) {
 			return Collections.emptyList();
 		}
 
@@ -370,6 +370,15 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 			return false;
 		}
 		return matchingWindow.isShowing();
+	}
+
+	/**
+	 * Shows the matching list.  This can be used to show all data when the user has not typed any
+	 * text.
+	 */
+	public void showMatchingList() {
+		String text = pendingTextUpdate != null ? pendingTextUpdate : getText();
+		updateDisplayContents(text);
 	}
 
 	/**
