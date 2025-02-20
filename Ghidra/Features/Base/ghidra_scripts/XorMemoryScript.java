@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //XOR's the memory of the current program.
+//@__params_start
 //@category Memory
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Xor Memory Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

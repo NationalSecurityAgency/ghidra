@@ -18,7 +18,11 @@
 //this script will create data structures
 //representing the AppleSingleDouble header and
 //the containing entry descriptors.
+//@__params_start
 //@category Binary
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Apple Single Double Script
+//@__params_end
 
 import ghidra.app.cmd.formats.AppleSingleDoubleBinaryAnalysisCommand;
 import ghidra.app.script.GhidraScript;

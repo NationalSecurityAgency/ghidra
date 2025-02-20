@@ -16,7 +16,12 @@
 //This script searches for references to data with user labels.
 //When a reference is found a new "ptr_labelname" is applied
 //Check the console for a list of references that have been added.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Label Indirect References Script
+//@__params_end
+
 import java.util.*;
 
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;

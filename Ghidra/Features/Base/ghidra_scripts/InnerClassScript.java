@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //A script that uses inner classes.
+//@__params_start
 //@category Examples.Demo
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Inner Class Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 

@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Assemble a single instruction, overwriting the one at the cursor.
+//@__params_start
 //@category Assembly
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Assemble Script
+//@__params_end
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;

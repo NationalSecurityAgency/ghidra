@@ -19,7 +19,11 @@
 //
 // Assumes a program is open.
 //
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Report Percent Disassembled
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.AddressSetView;

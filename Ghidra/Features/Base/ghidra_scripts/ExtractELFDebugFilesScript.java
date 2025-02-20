@@ -15,7 +15,7 @@
  */
 // Bulk extracts ELF external debug files from distro container files (rpm, ddeb, etc) so that
 // the DWARF analyzer can find them using the "Edit | DWARF External Debug Config" location.
-// 
+//
 // When using this script, do not co-mingle different architectures or versions of debug files in
 // the same directory as debug file names may conflict.
 //
@@ -23,7 +23,12 @@
 // so some layout schemes where a single debug binary file is present in both the .build-id directory
 // and the /usr/lib/, /usr/bin/, etc directory will not fully work.
 //
-// @category DWARF
+//@__params_start
+//@category DWARF
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Extract E L F Debug Files Script
+//@__params_end
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;

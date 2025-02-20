@@ -16,7 +16,11 @@
 //This script searches for references to existing strings.
 //When a reference is found a new "ptr_stringname" is applied
 //Check the console for a list of references that have been added.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Label Indirect String References Script
+//@__params_end
 
 import java.util.*;
 

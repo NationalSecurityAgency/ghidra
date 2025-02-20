@@ -15,7 +15,11 @@
  */
 //Counts the number of defined strings in the current selection, or current program if no selection is made,
 //and saves the results to a file.
+//@__params_start
 //@category CustomerSubmission.Strings
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Count And Save Strings
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.*;

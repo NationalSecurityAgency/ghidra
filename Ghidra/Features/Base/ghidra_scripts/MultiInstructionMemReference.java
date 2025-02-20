@@ -36,7 +36,11 @@
 // NOTE: Any values loaded from memory are assumed to be constant.
 // If a reference does not make sense on an operand, then it is added to the mnemonic.
 //
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Multi Instruction Mem Reference
+//@__params_end
 
 import java.math.BigInteger;
 import java.util.Arrays;

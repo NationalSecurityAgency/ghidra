@@ -16,7 +16,11 @@
 //The script will use a selection of multiple instructions and build a combined mask/value buffer.
 //Memory is then searched looking for this combined value buffer that represents the selected instructions.
 //This automates the process of searching through memory for a particular ordering of instructions by hand.
+//@__params_start
 //@category Search.InstructionPattern
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Search Gui Multi
+//@__params_end
 
 import java.awt.Color;
 import java.awt.Component;

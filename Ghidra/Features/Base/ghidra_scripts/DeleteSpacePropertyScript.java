@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Removes space property that used to be inserted by a plugin, that no longer exists.
+//@__params_start
 //@category Update
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Delete Space Property Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

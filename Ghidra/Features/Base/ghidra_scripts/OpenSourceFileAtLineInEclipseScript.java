@@ -16,16 +16,21 @@
 // This script reads the source map information for the current address and uses it to open
 // a source file in eclipse at the appropriate line.  If there are multiple source map entries
 // at the current address, the script displays a table to allow the user to select which ones
-// to send to eclipse.  The source file paths can be adjusted via 
-// 
+// to send to eclipse.  The source file paths can be adjusted via
+//
 // Window -> Source Files and Transforms
 //
-// from the Code Browser.  The path to the eclipse installation directory can be set via 
+// from the Code Browser.  The path to the eclipse installation directory can be set via
 //
 // Edit -> Tool Options -> Eclipse Integration
 //
 // from the Ghidra Project Manager.
+//@__params_start
 //@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Open Source File At Line In Eclipse Script
+//@__params_end
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

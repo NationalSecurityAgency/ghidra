@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 // Produces a list of instructions whose pcode contains a CALLOTHER pcode op.  The list is
-// sorted by number of occurrences of an instruction. When run headlessly, the list is displayed 
+// sorted by number of occurrences of an instruction. When run headlessly, the list is displayed
 // each time a program is processed and the counts are cumulative.
+//@__params_start
 // @category sleigh
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Callother Census Script
+//@__params_end
 
 import java.util.HashMap;
 import java.util.Map;

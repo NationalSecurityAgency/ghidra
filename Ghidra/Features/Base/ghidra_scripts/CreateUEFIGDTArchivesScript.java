@@ -26,7 +26,11 @@
 // Then Run DataTypeArchiveTransformer in eclipse to synchronize old data types ID's
 // if an existing .gdt file is being replaced
 //
+//@__params_start
 //@category Data Types
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Create U E F I G D T Archives Script
+//@__params_end
 
 import java.io.File;
 import java.io.IOException;

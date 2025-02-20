@@ -17,7 +17,11 @@
 //When a reference is found a new "ptr_functionName_refAddress" is applied
 // only works on 32 bit programs
 //Check the console for a list of references that have been added.
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Label Direct Function References Script
+//@__params_end
 
 import java.util.*;
 

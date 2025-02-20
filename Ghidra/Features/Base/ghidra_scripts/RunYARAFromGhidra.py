@@ -22,9 +22,12 @@
 # or a on the file that the user has since moved to a new location.
 # 2. The user has imported the file into Ghidra and the user has since deleted the file.  This Ghidra script attempts to
 # generate the original bytes of the imported file and asks the user to provide a filename to store the bytes.  YARA then runs on that file.
-
+#@__params_start
 #@category Memory.YARA
 #@runtime Jython
+#@toolbar world.png
+#@menupath Tools.Scripts Manager.Run Y A R A From Ghidra
+#@__params_end
 
 import os.path
 import sys

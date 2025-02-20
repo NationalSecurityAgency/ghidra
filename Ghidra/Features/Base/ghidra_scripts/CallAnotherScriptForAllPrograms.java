@@ -15,7 +15,11 @@
  */
 // Shows how to run a script on all of the programs within the current project.
 // NOTE: Script will only process unversioned and checked-out files.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Call Another Script For All Programs
+//@__params_end
 
 import java.io.IOException;
 

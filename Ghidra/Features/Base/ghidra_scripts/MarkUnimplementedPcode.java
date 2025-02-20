@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 // Generate WARNING Bookmarks on instructions which have unimplemented pcode.
-// Similar to disassembler's built-in marking but allows for refresh after 
+// Similar to disassembler's built-in marking but allows for refresh after
 // language update.
-// @category sleigh
+//@__params_start
+//@category sleigh
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Mark Unimplemented Pcode
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.AddressSetView;

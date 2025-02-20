@@ -14,6 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Resolve External References
+//@__params_end
+
 import static generic.util.Beanify.beanify;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Program;

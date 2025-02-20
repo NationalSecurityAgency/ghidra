@@ -14,12 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Script repairs incorrect use of Function Definition applied directly 
+// Script repairs incorrect use of Function Definition applied directly
 // on function parameters/variables when it should be a pointer to a
 // Function Definition.  This resolves variable size errors which
 // result from this bad data state.
 //
+//@__params_start
 //@category Repair
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Repair Func Definition Usage Script
+//@__params_end
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;

@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Script to allow repository admins the ability to terminate multiple file checkouts belonging to a single user.
+//@__params_start
 //@category MultiUser
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Remove User Checkouts Script
+//@__params_end
 
 import java.io.IOException;
 

@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 //Script to compute and print the cyclomatic complexity of the current function.
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Compute Cyclomatic Complexity
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.listing.Function;

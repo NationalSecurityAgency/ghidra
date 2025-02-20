@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 //Example skeleton script that iterates over all strings and sets the translation value for each
+//@__params_start
 //@category Strings
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Translate Strings Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.StringDataInstance;

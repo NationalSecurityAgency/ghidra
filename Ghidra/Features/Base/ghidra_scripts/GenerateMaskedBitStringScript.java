@@ -14,6 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+//@__params_start
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Generate Masked Bit String Script
+//@__params_end
+//
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;

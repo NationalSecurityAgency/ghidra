@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//This script applies labels and comments to the WallaceSrc.exe program for use with GhidraClass exercises 
+//This script applies labels and comments to the WallaceSrc.exe program for use with GhidraClass exercises
+//@__params_start
 //@category Training.GhidraClass
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Markup Wallace Src Script
+//@__params_end
 
 
 import ghidra.app.script.GhidraScript;

@@ -14,9 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Prompts the user for a search string and searches the 
+//Prompts the user for a search string and searches the
 //program listing for the first occurrence of that string.
+//@__params_start
 //@category Search
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Find Text Script
+//@__params_end
 
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;

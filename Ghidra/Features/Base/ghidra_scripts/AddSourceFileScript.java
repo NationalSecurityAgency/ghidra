@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 // Adds a SourceFile with a user-defined path and name to the program.
+//@__params_start
 //@category SourceMapping
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Add Source File Script
+//@__params_end
+
 import java.util.HexFormat;
 
 import org.apache.commons.lang3.StringUtils;

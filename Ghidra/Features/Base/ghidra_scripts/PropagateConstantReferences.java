@@ -19,7 +19,11 @@
 //Any values loaded from memory are assumed to be constant.
 //If a reference does not make sense on an operand, then it is added to the mnemonic.
 //
+//@__params_start
 //@category Analysis
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Propagate Constant References
+//@__params_end
 
 import ghidra.app.plugin.core.analysis.ConstantPropagationContextEvaluator;
 import ghidra.app.script.GhidraScript;

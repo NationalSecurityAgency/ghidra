@@ -16,7 +16,11 @@
 //An example of asking for user input.
 //Note the ability to pre-populate values for some of these variables when AskScript.properties file exists.
 //Also notice how the previous input is saved.
+//@__params_start
 //@category Examples
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Ask Script
+//@__params_end
 
 import java.io.File;
 import java.util.Arrays;

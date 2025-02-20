@@ -19,7 +19,11 @@
 //Any values loaded from memory are assumed to be constant.
 //If a reference does not make sense on an operand, then it is added to the mnemonic.
 //
+//@__params_start
 //@category Analysis.X86
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Propagate X86 Constant References
+//@__params_end
 
 import java.math.BigInteger;
 import java.util.ArrayList;

@@ -31,7 +31,11 @@
 //   You can run this script once, and it will add bookmarks at each potential non-returning
 //   function, and at each location that calls the function in a suspicious way.
 //
+//@__params_start
 //@category Functions
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Fixup No Return Functions Script
+//@__params_end
 
 import java.util.*;
 

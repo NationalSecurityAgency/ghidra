@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 // This script disassembles code in Arm mode
+//@__params_start
 //@category ARM
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Do A R M Disassemble
+//@__params_end
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.script.GhidraScript;

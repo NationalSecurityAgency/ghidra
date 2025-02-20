@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 //Convenience script to quickly clear, edit, and recreate the code or data at the current cursor location.
+//@__params_start
 //@category Memory
-//@keybinding
-//@menupath 
-//@toolbar 
-//
+//@toolbar world.png
+//@menupath Tools.Scripts Manager.Edit Bytes Script
+//@__params_end
 
 import java.util.Map.Entry;
 import java.util.TreeMap;
