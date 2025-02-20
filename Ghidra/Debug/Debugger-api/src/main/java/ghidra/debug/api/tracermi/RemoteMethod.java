@@ -20,6 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
+import javax.swing.Icon;
+
 import ghidra.async.AsyncUtils;
 import ghidra.debug.api.target.ActionName;
 import ghidra.trace.model.Trace;
@@ -61,6 +63,20 @@ public interface RemoteMethod {
 	 * @return the title
 	 */
 	String display();
+
+	/**
+	 * The icon to display in menu's and in the prompt dialog.
+	 * 
+	 * @return the icon
+	 */
+	Icon icon();
+
+	/**
+	 * Text to display in the OK button of any prompt dialog.
+	 * 
+	 * @return the text
+	 */
+	String okText();
 
 	/**
 	 * A description of the method.

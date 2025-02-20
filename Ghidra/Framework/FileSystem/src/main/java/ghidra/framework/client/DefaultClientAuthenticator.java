@@ -72,13 +72,14 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 
 			if (pwd != null) {
 				// Requesting URL specified password
-				return new PasswordAuthentication(userName,	pwd.toCharArray());
+				return new PasswordAuthentication(userName, pwd.toCharArray());
 			}
-			
+
 			NameCallback nameCb = new NameCallback("Name: ", userName);
+			boolean allowUserIDEntry = true;
 			if (!useDefaultUser) {
-				// Prevent modification of user name by password prompting
 				nameCb.setName(userName);
+				allowUserIDEntry = false;
 			}
 
 			// Prompt for password
@@ -89,10 +90,10 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 			PasswordCallback passCb = new PasswordCallback(prompt, false);
 			try {
 				ServerPasswordPrompt pp = new ServerPasswordPrompt("Connection Authentication",
-					"Server", serverName, nameCb, passCb, null, null, null);
+					"Server", serverName, allowUserIDEntry, nameCb, passCb, null, null, null);
 				SystemUtilities.runSwingNow(pp);
 				if (pp.okWasPressed()) {
-					return new PasswordAuthentication(nameCb.getName(),	passCb.getPassword());
+					return new PasswordAuthentication(nameCb.getName(), passCb.getPassword());
 				}
 			}
 			finally {
@@ -135,10 +136,10 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 
 	@Override
 	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
-			NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,
-			AnonymousCallback anonymousCb, String loginError) {
-		ServerPasswordPrompt pp = new ServerPasswordPrompt(title, serverType, serverName, nameCb,
-			passCb, choiceCb, anonymousCb, loginError);
+			boolean allowUserNameEntry, NameCallback nameCb, PasswordCallback passCb,
+			ChoiceCallback choiceCb, AnonymousCallback anonymousCb, String loginError) {
+		ServerPasswordPrompt pp = new ServerPasswordPrompt(title, serverType, serverName,
+			allowUserNameEntry, nameCb, passCb, choiceCb, anonymousCb, loginError);
 		SystemUtilities.runSwingNow(pp);
 		return pp.okWasPressed();
 	}
@@ -172,6 +173,7 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 		private String title;
 		private String serverType; // label for serverName field 
 		private String serverName;
+		private boolean allowUserIDEntry;
 		private NameCallback nameCb;
 		private PasswordCallback passCb;
 		private ChoiceCallback choiceCb;
@@ -180,11 +182,12 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 		private boolean okPressed = false;
 
 		ServerPasswordPrompt(String title, String serverType, String serverName,
-				NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,
-				AnonymousCallback anonymousCb, String errorMsg) {
+				boolean allowUserIDEntry, NameCallback nameCb, PasswordCallback passCb,
+				ChoiceCallback choiceCb, AnonymousCallback anonymousCb, String errorMsg) {
 			this.title = title;
 			this.serverType = serverType;
 			this.serverName = serverName;
+			this.allowUserIDEntry = allowUserIDEntry && (nameCb != null);
 			this.nameCb = nameCb;
 			this.passCb = passCb;
 			this.choiceCb = choiceCb;
@@ -225,20 +228,20 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 			String defaultUserName = null;
 			String namePrompt = null;
 			if (nameCb != null) {
+				namePrompt = nameCb.getPrompt();
 				defaultUserName = nameCb.getName();
-				if (defaultUserName == null) {
-					// Name entry only permitted with name callback where name has not be pre-set
+				if (StringUtils.isBlank(defaultUserName)) {
 					defaultUserName = nameCb.getDefaultName();
-					namePrompt = nameCb.getPrompt();
 				}
 			}
-			if (defaultUserName == null) {
+
+			if (StringUtils.isBlank(defaultUserName)) {
 				defaultUserName = getDefaultUserName();
 			}
 
 			PasswordDialog pwdDialog = new PasswordDialog(title, serverType, serverName,
-				passCb.getPrompt(), namePrompt, defaultUserName, choicePrompt, choices,
-				getDefaultChoice(), anonymousCb != null);
+				passCb.getPrompt(), allowUserIDEntry, namePrompt, defaultUserName, choicePrompt,
+				choices, getDefaultChoice(), anonymousCb != null);
 
 			if (errorMsg != null) {
 				pwdDialog.setErrorText(errorMsg);
@@ -252,7 +255,7 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 				}
 				else {
 					passCb.setPassword(pwdDialog.getPassword());
-					if (nameCb != null) {
+					if (nameCb != null && allowUserIDEntry) {
 						String username = pwdDialog.getUserID();
 						nameCb.setName(username);
 						Preferences.setProperty(NAME_PREFERENCE, username);

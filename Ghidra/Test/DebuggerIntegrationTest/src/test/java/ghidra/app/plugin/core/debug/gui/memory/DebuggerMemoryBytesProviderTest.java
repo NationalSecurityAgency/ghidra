@@ -1178,11 +1178,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(actionPaste, memBytesProvider, false);
 		OptionDialog confirm = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(confirm, "Yes");
-		// TODO: This shouldn't be separate calls per byte!
-		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x42));
-		handleWriteMemInvocation(process, tb.addr(0x55550801), new Bytes(0x53));
-		handleWriteMemInvocation(process, tb.addr(0x55550802), new Bytes(0x64));
-		handleWriteMemInvocation(process, tb.addr(0x55550803), new Bytes(0x75));
+		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x42, 0x53, 0x64, 0x75));
 
 		performAction(actionEdit);
 

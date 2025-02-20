@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class SegmentCommand extends LoadCommand {
 	private long filesize;
 	private int maxprot;
 	private int initprot;
-	private int nsects;
+	private long nsects;
 	private int flags;
 
 	private boolean is32bit;
@@ -69,10 +69,10 @@ public class SegmentCommand extends LoadCommand {
 		}
 		maxprot = reader.readNextInt();
 		initprot = reader.readNextInt();
-		nsects = reader.readNextInt();
+		nsects = checkCount(reader.readNextUnsignedInt());
 		flags = reader.readNextInt();
 
-		for (int i = 0; i < nsects; ++i) {
+		for (long i = 0; i < nsects; ++i) {
 			sections.add(new Section(reader, is32bit));
 		}
 	}
@@ -194,7 +194,7 @@ public class SegmentCommand extends LoadCommand {
 		return (initprot & SegmentConstants.PROTECTION_X) != 0;
 	}
 
-	public int getNumberOfSections() {
+	public long getNumberOfSections() {
 		return nsects;
 	}
 
@@ -204,6 +204,10 @@ public class SegmentCommand extends LoadCommand {
 
 	public boolean isAppleProtected() {
 		return (flags & SegmentConstants.FLAG_APPLE_PROTECTED) != 0;
+	}
+
+	public boolean is32bit() {
+		return is32bit;
 	}
 
 	/**

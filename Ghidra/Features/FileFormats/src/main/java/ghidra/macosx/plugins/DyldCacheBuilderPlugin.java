@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +16,12 @@
 package ghidra.macosx.plugins;
 
 import java.io.IOException;
-import java.util.List;
 
 import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
-import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.opinion.DyldCacheExtractLoader;
-import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.file.formats.ios.dyldcache.DyldCacheFileSystem;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.plugintool.*;
@@ -109,15 +102,8 @@ public class DyldCacheBuilderPlugin extends Plugin {
 
 		try (FileSystemRef fsRef = openDyldCache(program, monitor)) {
 			DyldCacheFileSystem fs = (DyldCacheFileSystem) fsRef.getFilesystem();
-			SplitDyldCache splitDyldCache = fs.getSplitDyldCache();
 			long refAddr = refAddress.getOffset();
-			String fsPath = findInDylibSegment(refAddr, splitDyldCache);
-			if (fsPath == null) {
-				fsPath = findInStubs(refAddr, splitDyldCache);
-			}
-			if (fsPath == null) {
-				fsPath = findInDyldData(refAddr, splitDyldCache);
-			}
+			String fsPath = fs.findAddress(refAddr);
 			if (fsPath != null) {
 				ImporterUtilities.showAddToProgramDialog(fs.getFSRL().appendPath(fsPath), program,
 					tool, monitor);
@@ -130,7 +116,7 @@ public class DyldCacheBuilderPlugin extends Plugin {
 		catch (CancelledException e) {
 			// Do nothing
 		}
-		catch (MachException | IOException e) {
+		catch (IOException e) {
 			Msg.showError(this, null, name, e.getMessage(), e);
 		}
 	}
@@ -157,81 +143,5 @@ public class DyldCacheBuilderPlugin extends Plugin {
 		}
 		FSRLRoot fsrlRoot = fsrl.getFS();
 		return FileSystemService.getInstance().getFilesystem(fsrlRoot, monitor);
-	}
-
-	/**
-	 * Attempts to find the given address in the DYLD Cache's DYLIB segments
-	 * 
-	 * @param addr The address to find
-	 * @param splitDyldCache The {@link SplitDyldCache}
-	 * @return The path of the DYLIB within the {@link DyldCacheFileSystem} that contains the given
-	 *   address, or null if the address was not found
-	 * @throws MachException if there was an error parsing a DYLIB header
-	 * @throws IOException if an IO-related error occurred
-	 */
-	private String findInDylibSegment(long addr, SplitDyldCache splitDyldCache)
-			throws MachException, IOException {
-		for (int i = 0; i < splitDyldCache.size(); i++) {
-			DyldCacheHeader dyldCacheHeader = splitDyldCache.getDyldCacheHeader(i);
-			ByteProvider provider = splitDyldCache.getProvider(i);
-			for (DyldCacheImage mappedImage : dyldCacheHeader.getMappedImages()) {
-				MachHeader machHeader = new MachHeader(provider,
-					mappedImage.getAddress() - dyldCacheHeader.getBaseAddress());
-				for (SegmentCommand segment : machHeader.parseSegments()) {
-					if (segment.contains(addr)) {
-						return mappedImage.getPath();
-					}
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Attempts to find the given address in the DYLD Cache's text stubs
-	 * 
-	 * @param addr The address to find
-	 * @param splitDyldCache The {@link SplitDyldCache}
-	 * @return The path of the text stub within the {@link DyldCacheFileSystem} that contains the 
-	 *   given address, or null if the address was not found
-	 */
-	private String findInStubs(long addr, SplitDyldCache splitDyldCache) {
-		for (int i = 0; i < splitDyldCache.size(); i++) {
-			String dyldCacheName = splitDyldCache.getName(i);
-			DyldCacheHeader dyldCacheHeader = splitDyldCache.getDyldCacheHeader(i);
-			for (DyldCacheMappingAndSlideInfo mappingInfo : dyldCacheHeader
-					.getCacheMappingAndSlideInfos()) {
-				if (mappingInfo.contains(addr) && mappingInfo.isTextStubs()) {
-					return DyldCacheFileSystem.getStubPath(dyldCacheName);
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Attempts to find the given address in the DYLD data
-	 * 
-	 * @param addr The address to find
-	 * @param splitDyldCache The {@link SplitDyldCache}
-	 * @return The path of the Dyld data within the {@link DyldCacheFileSystem} that contains the 
-	 *   given address, or null if the address was not found
-	 */
-	private String findInDyldData(long addr, SplitDyldCache splitDyldCache) {
-		for (int i = 0; i < splitDyldCache.size(); i++) {
-			String dyldCacheName = splitDyldCache.getName(i);
-			if (dyldCacheName.endsWith(".dylddata")) {
-				DyldCacheHeader dyldCacheHeader = splitDyldCache.getDyldCacheHeader(i);
-				List<DyldCacheMappingAndSlideInfo> mappingInfos =
-					dyldCacheHeader.getCacheMappingAndSlideInfos();
-				for (int j = 0; j < mappingInfos.size(); j++) {
-					DyldCacheMappingAndSlideInfo mappingInfo = mappingInfos.get(j);
-					if (mappingInfo.contains(addr)) {
-						return DyldCacheFileSystem.getDyldDataPath(dyldCacheName, j);
-					}
-				}
-			}
-		}
-		return null;
 	}
 }

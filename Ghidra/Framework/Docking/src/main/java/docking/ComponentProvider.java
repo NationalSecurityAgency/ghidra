@@ -22,6 +22,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.action.*;
+import docking.util.AnimationUtils;
 import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -1104,21 +1105,33 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		@Override
 		public void actionPerformed(ActionContext context) {
 
+			Tool tool = getTool();
+			DockingWindowManager myDwm = tool.getWindowManager();
 			boolean isFrustrated = isFrustrated();
 			boolean isFocused = isFocused();
 			if (isFocused && !isFrustrated) {
-				// the user has decided to hide this component and is not madly clicking
-				setVisible(false);
+				// the user has decided to hide this component and is not madly clicking; also, we
+				// don't allow the last component in a window to be closed in order to prevent an
+				// empty window.
+				if (!myDwm.isLastComponentInWindow(ComponentProvider.this)) {
+					setVisible(false);
+				}
 				return;
 			}
 
 			boolean emphasize = getComponent().isShowing() && isFrustrated;
-			Tool tool = getTool();
-			DockingWindowManager myDwm = tool.getWindowManager();
 			myDwm.showComponent(ComponentProvider.this, true, emphasize);
 		}
 
 		private boolean isFrustrated() {
+
+			if (!AnimationUtils.isAnimationEnabled()) {
+				// The use of being frustrated is to emphasize (animate) the window for the user in
+				// order to draw attention to the window.  If animation is off, then no need to 
+				// check for frustration.
+				return false;
+			}
+
 			long time = System.currentTimeMillis();
 			clickTimes.add(time);
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,14 +106,17 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	protected abstract RecordNumber getArgListRecordNumber(AbstractMsType type);
 
 	private boolean setReturnType(FunctionDefinitionDataType functionDefinition,
-			AbstractMsType type) {
+			AbstractMsType type) throws CancelledException, PdbException {
+		DataType returnType;
 		if (isConstructor(type)) {
-			return true;
+			returnType = getThisPointer(type);
 		}
-		RecordNumber returnRecord = getReturnRecordNumber(type);
-		DataType returnType = applicator.getDataType(returnRecord);
-		if (returnType == null) {
-			return false;
+		else {
+			RecordNumber returnRecord = getReturnRecordNumber(type);
+			returnType = applicator.getDataType(returnRecord);
+			if (returnType == null) {
+				return false;
+			}
 		}
 		functionDefinition.setReturnType(returnType);
 		return true;
@@ -211,8 +214,7 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	}
 
 	@Override
-	boolean apply(AbstractMsType type)
-			throws CancelledException, PdbException {
+	boolean apply(AbstractMsType type) throws CancelledException, PdbException {
 
 		if (!precheckOrScheduleDependencies(type)) {
 			return false;

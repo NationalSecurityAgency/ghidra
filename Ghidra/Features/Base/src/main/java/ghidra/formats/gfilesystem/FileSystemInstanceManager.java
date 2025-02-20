@@ -273,10 +273,13 @@ class FileSystemInstanceManager implements FileSystemEventListener {
 	 * @param ref {@link FileSystemRef} to close
 	 */
 	public synchronized void releaseImmediate(FileSystemRef ref) {
-		FSCacheInfo fsci = filesystems.get(ref.getFilesystem().getFSRL());
+		FSRLRoot fsFSRL = ref.getFilesystem().getFSRL();
+		FSCacheInfo fsci = filesystems.get(fsFSRL);
 		ref.close();
 		if (fsci == null) {
-			Msg.warn(this, "Unknown file system reference: " + ref.getFilesystem().getFSRL());
+			if (!rootFSRL.equals(fsFSRL) /* we don't store root FS refs */) {
+				Msg.warn(this, "Unknown file system reference: " + fsFSRL);
+			}
 			return;
 		}
 		FileSystemRefManager refManager = fsci.ref.getFilesystem().getRefManager();

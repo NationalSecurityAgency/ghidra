@@ -223,7 +223,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 					boolean foundLinkEdit = false;
 					for (DyldCacheHeader header : providerMap.keySet()) {
 						for (DyldCacheMappingInfo mappingInfo : header.getMappingInfos()) {
-							if (mappingInfo.contains(linkEdit.getVMaddress())) {
+							if (mappingInfo.contains(linkEdit.getVMaddress(), true)) {
 								analyzeFunctionStarts(program, machoHeader, set, monitor);
 								foundLinkEdit = true;
 								break;

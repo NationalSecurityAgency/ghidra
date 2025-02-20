@@ -2265,7 +2265,7 @@ define pcodeop ExclusiveAccess;
 }
 
 
-:ldrbt^ItCond^".w"    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:ldrbt^ItCond^".w"    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
    build ItCond;
   local tmp = Rn0003 + Immed8;
@@ -2354,7 +2354,7 @@ define pcodeop ExclusiveAccess;
   Rt1215 = zext(val);
 }
 
-:ldrht^ItCond^".w"    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf83 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:ldrht^ItCond^".w"    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf83 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
   build ItCond;
   local tmp = Rn0003 + Immed8;
@@ -2423,7 +2423,7 @@ define pcodeop ExclusiveAccess;
   Rt1215 = sext(val);
 }
 
-:ldrsbt^ItCond^".w"    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf91 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:ldrsbt^ItCond^".w"    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf91 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
   build ItCond;
   local tmp = Rn0003 + Immed8;
@@ -2464,7 +2464,7 @@ define pcodeop ExclusiveAccess;
   Rt1215 = sext(val);
 }
 
-:ldrsht^ItCond^".w"    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf93 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:ldrsht^ItCond^".w"    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf93 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
   build ItCond;
   local tmp = Rn0003 + Immed8;
@@ -2472,7 +2472,7 @@ define pcodeop ExclusiveAccess;
   Rt1215 = sext(val);
 }
 
-:ldrt^ItCond^".w" 	Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf85 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:ldrt^ItCond^".w" 	Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf85 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
   build ItCond;
   local tmp = Rn0003 + Immed8;
@@ -4203,7 +4203,7 @@ th2_shift1: ",asr #32" is imm3_shft=0x0 & imm2_shft=0x0 { }
         Rt0811 = tmp;
 }
 
-:ssat16 Rt0811, "#"^Immed4, part2Rd0003 is
+:ssat16 Rt0811, Immed4, part2Rd0003 is
         TMode=1 & part2op=0x1e & part2S=0x0 & part2cond=0xc & part2c0505=0x1 & part2c0404=0x0 & part2Rd0003;
         op12=0x0 & Rt0811 & thc0407=0x0 & Immed4
 {
@@ -4417,38 +4417,45 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   *RnIndirect2 = tmpRd0002:2;
 }
 
-:strh^ItCond	Rd0002,RnRmIndirect	is TMode=1 & ItCond & op9=0x29 & RnRmIndirect & Rd0002
+:strh^ItCond	Rd0002,RnRmIndirect			is TMode=1 & ItCond & op9=0x29 & RnRmIndirect & Rd0002
 {
-   build ItCond;
-   local tmpRd0002 = Rd0002;
+  build ItCond;
+  local tmpRd0002 = Rd0002;
   *RnRmIndirect = tmpRd0002:2;
+}
+
+:strt^ItCond^".w"	Rt1215,[Rn0003,Immed8]		is TMode=1 & ItCond & op4=0xf84 & Rn0003; Rt1215 & thc0811=14 & Immed8
+{
+  build ItCond;
+  local tmp = Rn0003 + Immed8;
+  *tmp = Rt1215;
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 :str.w^ItCond	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf8c; Rt1215) & RnIndirect12
 {
-   build ItCond;
+  build ItCond;
   *RnIndirect12 = Rt1215;
 }
 
 :str.w^ItCond	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf84; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
 {
-   build ItCond;
-   build RnIndirectPUW;
+  build ItCond;
+  build RnIndirectPUW;
   *RnIndirectPUW = Rt1215;
 }
 
 :str^ItCond^".w"  Rt1215,[Rn0003,Rm0003]             is TMode=1 & ItCond & op4=0xf84 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405=0 & Rm0003
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003 + Rm0003;
   *tmp = Rt1215;
 }
 
 :str^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf84 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003 + (Rm0003 << thc0405);
   *tmp = Rt1215;
 }
@@ -4477,7 +4484,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   *tmp = tmpRt1215:1;
 }
 
-:strbt^ItCond    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf80 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:strbt^ItCond    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf80 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
    build ItCond;
    local tmp = Rn0003 + Immed8;
@@ -4518,7 +4525,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   *tmp = tmpRt1215:2;
 }
 
-:strht^ItCond    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf82 & Rn0003; Rt1215 & thc0811=14 & Immed8
+:strht^ItCond    Rt1215,[Rn0003,Immed8]   is TMode=1 & ItCond & op4=0xf82 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
   build ItCond;
   local tmp = Rn0003 + Immed8;
@@ -5157,7 +5164,7 @@ Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
         Rt0811 = tmp;
 }
 
-:usat16 Rt0811, "#"^Immed4, part2Rd0003 is
+:usat16 Rt0811, Immed4, part2Rd0003 is
         TMode=1 & part2op=0x1e & part2S=0x0 & part2cond=0xe & part2c0505=0x1 & part2c0404=0x0 & part2Rd0003 ;
         op12=0x0 & Rt0811 & thc0407=0x0 & Immed4
 {

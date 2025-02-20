@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,8 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 	public static long DYLD_CACHE_MAPPING_CONST_DATA = 0x4;
 	public static long DYLD_CACHE_MAPPING_TEXT_STUBS = 0x8;
 	public static long DYLD_CACHE_DYNAMIC_CONFIG_DATA = 0x10;
+	public static long DYLD_CACHE_READ_ONLY_DATA = 0x20;
+	public static long DYLD_CACHE_MAPPING_CONST_TPRO_DATA = 0x40;
 
 	private long address;
 	private long size;
@@ -146,6 +148,14 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 		return (flags & DYLD_CACHE_DYNAMIC_CONFIG_DATA) != 0;
 	}
 
+	public boolean isReadOnlyData() {
+		return (flags & DYLD_CACHE_READ_ONLY_DATA) != 0;
+	}
+
+	public boolean isConstTproData() {
+		return (flags & DYLD_CACHE_MAPPING_CONST_TPRO_DATA) != 0;
+	}
+
 	/**
 	 * Returns true if the initial protections include READ.
 	 * 
@@ -177,11 +187,15 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 	 * Returns true if the mapping contains the given address
 	 * 
 	 * @param addr The address to check
+	 * @param isAddr True if the {@code addr} parameter is an address; false if it's a file offset
 	 * @return True if the mapping contains the given address; otherwise, false
 	 */
-	public boolean contains(long addr) {
-		return Long.compareUnsigned(addr, address) >= 0 &&
-			Long.compareUnsigned(addr, address + size) < 0;
+	public boolean contains(long addr, boolean isAddr) {
+		return isAddr
+				? Long.compareUnsigned(addr, address) >= 0 &&
+					Long.compareUnsigned(addr, address + size) < 0
+				: Long.compareUnsigned(addr, fileOffset) >= 0 &&
+					Long.compareUnsigned(addr, fileOffset + size) < 0;
 	}
 
 	@Override

@@ -38,6 +38,7 @@ import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
+import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -81,6 +82,7 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.listing.TraceData;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.Msg;
@@ -511,6 +513,54 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
+	protected Function createFillStackStructProgramX86_64() throws Throwable {
+		createProgram("x86:LE:64:default", "gcc");
+		intoProject(program);
+
+		try (Transaction tx = program.openTransaction("Assemble")) {
+			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+			Structure structure = new StructureDataType("MyStruct", 0, dtm);
+			structure.add(DWordDataType.dataType, "f1", "");
+			structure.add(DWordDataType.dataType, "f2", "");
+			structure.add(QWordDataType.dataType, "f3", "");
+			structure =
+				(Structure) dtm.addDataType(structure, DataTypeConflictHandler.DEFAULT_HANDLER);
+
+			Address entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+
+			Assembler asm = Assemblers.getAssembler(program.getLanguage(), NO_16BIT_CALLS);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			buf.assemble("PUSH RBP");
+			buf.assemble("MOV RBP, RSP");
+			buf.assemble("SUB RSP, 0x20");
+			buf.assemble("MOV dword ptr [RBP + -0x10], 0x4");
+			buf.assemble("MOV dword ptr [RBP + -0xc], 0xdeadbeef");
+			buf.assemble("MOV qword ptr [RBP + -0x8], 0xcafebab");
+			buf.assemble("LEA RDI, [RBP + -0x10]");
+			buf.assemble("CALL 0x00400040");
+			buf.assemble("MOV RSP, RBP");
+			buf.assemble("POP RBP");
+			buf.assemble("RET");
+			Address end = buf.getNext();
+
+			program.getMemory().setBytes(entry, buf.getBytes());
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null);
+
+			Function funFillStruct = program.getFunctionManager()
+					.createFunction("fillStruct", entry, new AddressSet(entry, end.previous()),
+						SourceType.ANALYSIS);
+			funFillStruct.addLocalVariable(new LocalVariableImpl("s", structure, -0x18, program),
+				SourceType.ANALYSIS);
+
+			return funFillStruct;
+		}
+	}
+
 	protected Function createFillStructArrayProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
@@ -587,6 +637,59 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
+	protected Function createInfiniteRecursionProgramArm() throws Throwable {
+		createProgram("ARM:LE:32:v8", "default");
+		intoProject(program);
+		try (Transaction tx = program.openTransaction("Assemble")) {
+			Address entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+
+			Assembler asm = Assemblers.getAssembler(program.getLanguage());
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			Language language = asm.getLanguage();
+			Register regCtx = language.getContextBaseRegister();
+			Register regT = language.getRegister("T");
+			RegisterValue rvDefault = new RegisterValue(regCtx,
+				asm.getContextAt(entry).toBigInteger(regCtx.getNumBytes()));
+			RegisterValue rvThumb = rvDefault.assign(regT, BigInteger.ONE);
+			AssemblyPatternBlock ctxThumb = AssemblyPatternBlock.fromRegisterValue(rvThumb);
+
+			buf.emit(NumericUtilities.convertStringToBytes("00 b5")); // push {lr}
+			buf.emit(NumericUtilities.convertStringToBytes("00 04")); // lsl  r0,r0,#0x10
+			buf.emit(NumericUtilities.convertStringToBytes("00 0c")); // lsr  r0,r0,#0x10
+			buf.assemble("bl   0x%s".formatted(entry), ctxThumb);
+			bodyInstr = buf.getNext();
+			buf.assemble("pop  {r0}", ctxThumb);
+			buf.assemble("bx   r0", ctxThumb);
+
+			byte[] bytes = buf.getBytes();
+			program.getMemory().setBytes(entry, bytes);
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null, rvThumb, false);
+
+			Function func = program.getFunctionManager()
+					.createFunction("recurseInfinitely", entry,
+						new AddressSet(entry, entry.add(bytes.length - 1)),
+						SourceType.USER_DEFINED);
+			return func;
+		}
+	}
+
+	protected void openAndAnalyze(Function function) {
+		GhidraProgramUtilities.markProgramNotToAskToAnalyze(program);
+		programManager.openProgram(program);
+		waitForSwing();
+
+		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
+		tool.executeBackgroundCommand(new AnalysisBackgroundCommand(analysisManager, true),
+			program);
+		analysisManager.reAnalyzeAll(function.getBody());
+		waitForTasks();
+	}
+
 	@Test
 	public void testComputeUnwindInfoX86_32() throws Throwable {
 		addPlugin(tool, CodeBrowserPlugin.class);
@@ -599,13 +702,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindAnalysis ua = new UnwindAnalysis(program);
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
-		assertEquals(
-			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
+		assertEquals(new UnwindInfo(function, 0L, 4L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
-			Map.of(register("EBP"), stack(-4)), new StackUnwindWarningSet(), null), infoAtBody);
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0), -1,
+			Map.of(register("EBP"), stack(-4)), new StackUnwindWarningSet(), null),
+			infoAtBody);
 	}
 
 	@Test
@@ -623,16 +727,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindAnalysis ua = new UnwindAnalysis(program);
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
-		assertEquals(
-			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
+		assertEquals(new UnwindInfo(function, 0L, 4L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(
-			new UnwindInfo(function, -20L, 4L, stack(0), Map.of(register("EBP"), stack(-4)),
-				new StackUnwindWarningSet(new UnspecifiedConventionStackUnwindWarning(myExtern),
-					new UnknownPurgeStackUnwindWarning(myExtern)),
-				null),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0), -1,
+			Map.of(register("EBP"), stack(-4)),
+			new StackUnwindWarningSet(
+				new UnspecifiedConventionStackUnwindWarning(myExtern),
+				new UnknownPurgeStackUnwindWarning(myExtern)),
+			null),
 			infoAtBody);
 	}
 
@@ -649,15 +754,44 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindAnalysis ua = new UnwindAnalysis(program);
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
-		assertEquals(
-			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
+		assertEquals(new UnwindInfo(function, 0L, 4L, stack(0), -1,
+			Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
 		DataType ptr2Undef = new PointerDataType(DataType.DEFAULT, program.getDataTypeManager());
-		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0), -1,
 			Map.of(register("EBP"), stack(-4)),
 			new StackUnwindWarningSet(new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef)), null),
+			infoAtBody);
+	}
+
+	@Test
+	public void testComputeUnwindInfoWithArmBx() throws Throwable {
+		addPlugin(tool, CodeBrowserPlugin.class);
+		addPlugin(tool, AutoAnalysisPlugin.class);
+		addPlugin(tool, DecompilePlugin.class);
+
+		Function function = createInfiniteRecursionProgramArm();
+		openAndAnalyze(function);
+		Address entry = function.getEntryPoint();
+
+		UnwindAnalysis ua = new UnwindAnalysis(program);
+
+		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
+		assertEquals(new UnwindInfo(function, 0L, 0L, register("lr").getAddress(), 0xfffffffeL,
+			Map.of(), new StackUnwindWarningSet(
+				new UnspecifiedConventionStackUnwindWarning(function),
+				new UnknownPurgeStackUnwindWarning(function)),
+			null),
+			infoAtEntry);
+
+		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
+		assertEquals(new UnwindInfo(function, -4L, 0L, stack(-4), 0xfffffffeL,
+			Map.of(), new StackUnwindWarningSet(
+				new UnspecifiedConventionStackUnwindWarning(function),
+				new UnknownPurgeStackUnwindWarning(function)),
+			null),
 			infoAtBody);
 	}
 
@@ -812,6 +946,95 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		WatchValue retVal = frameAfter.getValue(retVar);
 		Msg.debug(this, "Return " + retVal);
 		assertEquals(BigInteger.valueOf(34), retVal.toBigInteger(false));
+	}
+
+	@Test
+	public void testUnwindRecursiveArmThumb() throws Throwable {
+		addPlugin(tool, CodeBrowserPlugin.class);
+		addPlugin(tool, DebuggerListingPlugin.class);
+		addPlugin(tool, DisassemblerPlugin.class);
+		addPlugin(tool, AutoAnalysisPlugin.class);
+		addPlugin(tool, DecompilePlugin.class);
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+
+		Function function = createInfiniteRecursionProgramArm();
+		openAndAnalyze(function);
+		Address entry = function.getEntryPoint();
+
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		DebuggerCoordinates atSetup = traceManager.getCurrent();
+		StackUnwinder unwinder = new StackUnwinder(tool, atSetup.getPlatform());
+
+		TraceMemorySpace regs = tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		Register sp = program.getCompilerSpec().getStackPointer();
+		long spAtSetup = regs.getValue(0, sp).getUnsignedValue().longValueExact();
+
+		TraceBreakpoint bptUnwind;
+		try (Transaction tx = tb.startTransaction()) {
+			bptUnwind = tb.trace.getBreakpointManager()
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), entry, Set.of(),
+						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+			bptUnwind.setEmuSleigh("""
+					if (%s >= 0x%x) goto <skip>;
+					  emu_swi();
+					<skip>
+					emu_exec_decoded();
+					""".formatted(sp, spAtSetup - 0xc));
+		}
+
+		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,
+			Scheduler.oneThread(thread));
+		Msg.debug(this, "Broke after " + result.schedule());
+
+		traceManager.activateTime(result.schedule());
+		waitForTasks();
+		DebuggerCoordinates broke = traceManager.getCurrent();
+
+		AnalysisUnwoundFrame<WatchValue> frameBroke = unwinder.start(broke, monitor);
+		assertEquals(tb.addr(0x00004ff0), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ff0), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x00400000), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor); // Innermost hadn't pushed anything, yet
+		assertEquals(tb.addr(0x00004ff0), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ff4), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00004ff4), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ff8), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00004ff8), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00004ffc), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00004ffc), frameBroke.getStackPointer());
+		assertEquals(tb.addr(0x00005000), frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x0040000a), frameBroke.getProgramCounter());
+
+		frameBroke = frameBroke.unwindNext(monitor);
+		assertEquals(tb.addr(0x00005000), frameBroke.getStackPointer());
+		assertNull(frameBroke.getBasePointer());
+		assertEquals(tb.addr(0x00000000), frameBroke.getProgramCounter());
+
+		assertEquals(5, frameBroke.getLevel());
+
+		try {
+			frameBroke.unwindNext(monitor);
+			fail();
+		}
+		catch (NoSuchElementException e) {
+			// pass
+		}
 	}
 
 	@Test
@@ -1377,7 +1600,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 					if (!(field instanceof ClangTextField clangField)) {
 						continue;
 					}
-					if (!fieldText.equals(field.getText())) {
+					if (!fieldText.equals(field.getText().trim())) {
 						continue;
 					}
 					int numRows = field.getNumRows();
@@ -1561,6 +1784,43 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			RowKey.LOCATION, "Location: 00004fe8:2", RowKey.BYTES, "Bytes: (UNKNOWN) 00 00",
 			RowKey.INTEGER, "Integer: (UNKNOWN) 0", RowKey.VALUE, "Value: (UNKNOWN) 0h",
 			RowKey.WARNINGS, "IGNORED"), table);
+	}
+
+	@Test
+	public void testStructureSetInStackHighVarStructField() throws Throwable {
+		addPlugins();
+		// PC Tracking interferes with goTo
+		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
+		VariableValueHoverPlugin valuesPlugin = addPlugin(tool, VariableValueHoverPlugin.class);
+		VariableValueHoverService valuesService = valuesPlugin.getHoverService();
+		Function function = createFillStackStructProgramX86_64();
+		Address entry = function.getEntryPoint();
+
+		programManager.openProgram(program);
+
+		// Not necessary to actually run. Just examine values at entry.
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		goTo(staticListing, new ProgramLocation(program, entry));
+		HoverLocation loc = findTokenLocation(function, "f1", "s.f1 = 4;");
+		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
+			traceManager.getCurrent(), loc.fLoc, loc.field);
+
+		assertTable(Map.ofEntries(
+			Map.entry(RowKey.NAME, "Name: f1"),
+			Map.entry(RowKey.FRAME, "Frame: 0 fillStruct pc=00400000 sp=00005000 base=00005000"),
+			Map.entry(RowKey.TYPE, "Type: dword"),
+			Map.entry(RowKey.LOCATION, "Location: 00004fe8:4"),
+			Map.entry(RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00"),
+			Map.entry(RowKey.INTEGER, "Integer: (UNKNOWN) 0"),
+			Map.entry(RowKey.VALUE, "Value: (UNKNOWN) 0h"),
+			Map.entry(RowKey.WARNINGS, "IGNORED")),
+			table);
 	}
 
 	@Test

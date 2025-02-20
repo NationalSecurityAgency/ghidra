@@ -1020,8 +1020,7 @@ public class CppCompositeType {
 			ClassID id = new ProgramClassID(t.baseCategoryPath, t.getSymbolPath());
 			cIdParentage.add(id);
 		}
-		ProgramVirtualBaseTable vbt = (ProgramVirtualBaseTable) mvbtm.findPrimaryVbt(mId);
-		//ProgramVirtualBaseTable vbt = (ProgramVirtualBaseTable) mvbtm.findVbt(mId, cIdParentage);
+		ProgramVirtualBaseTable vbt = (ProgramVirtualBaseTable) mvbtm.findVbt(mId, cIdParentage);
 
 		table.setVirtualBaseTable(vbt);
 

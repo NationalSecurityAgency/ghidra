@@ -33,6 +33,14 @@ IF EXIST %GHIDRA_HOME%\ghidra\.git (
 )
 set PYTHONPATH=%PYTHONPATH1%;%PYTHONPATH0%;%PYTHONPATH%
 
+:: NB: This works - a lot of things do not. Don't change unless you know what you're doing!
+set OPT_TARGET_ARGS=%OPT_TARGET_ARGS:"=\"%
+set OPT_TARGET_ARGS=%OPT_TARGET_ARGS:)=^)%
+:: NB: This seems stupid, but there doesn't seem to be a logical way to test before the previous lines
+if %OPT_TARGET_ARGS%=="=\" (
+  set OPT_TARGET_ARGS=\"\"
+)
+
 IF "%OPT_TARGET_IMG%"=="" (
   "%OPT_GDB_PATH%" ^
     -q ^

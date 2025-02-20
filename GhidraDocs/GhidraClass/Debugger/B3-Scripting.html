@@ -99,7 +99,8 @@
  class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
  class="advanced" href="B2-Emulation.html">Emulation</a><a
  class="advanced" href="B3-Scripting.html">Scripting</a><a
- class="advanced" href="B4-Modeling.html">Modeling</a>
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
 </header>
 <header id="title-block-header">
 <h1 class="title">Ghidra Debugger</h1>
@@ -379,7 +380,7 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb7-7"><a href="#cb7-7"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;The current program must be termmines&quot;</span><span class="op">);</span></span>
 <span id="cb7-8"><a href="#cb7-8"></a><span class="op">}</span></span>
 <span id="cb7-9"><a href="#cb7-9"></a></span>
-<span id="cb7-10"><a href="#cb7-10"></a><span class="cf">if</span> <span class="op">(</span><span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">).</span><span class="fu">isRunning</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="cf">if</span> <span class="op">(</span><span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">)</span> <span class="op">!=</span> TraceExecutionState<span class="op">.</span><span class="fu">STOPPED</span><span class="op">)</span> <span class="op">{</span></span>
 <span id="cb7-11"><a href="#cb7-11"></a>    monitor<span class="op">.</span><span class="fu">setMessage</span><span class="op">(</span><span class="st">&quot;Interrupting target and waiting for STOPPED&quot;</span><span class="op">);</span></span>
 <span id="cb7-12"><a href="#cb7-12"></a>    <span class="fu">interrupt</span><span class="op">();</span></span>
 <span id="cb7-13"><a href="#cb7-13"></a>    <span class="fu">waitForBreak</span><span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="bu">TimeUnit</span><span class="op">.</span><span class="fu">SECONDS</span><span class="op">);</span></span>

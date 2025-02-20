@@ -61,7 +61,7 @@ public abstract class AbstractTaintState implements TaintState {
 	protected boolean usesIndex = true;
 	private boolean cancellation;
 
-	private TaskType taskType;
+	private TaskType taskType = TaskType.SET_TAINT;
 
 	public AbstractTaintState(TaintPlugin plugin) {
 		this.plugin = plugin;

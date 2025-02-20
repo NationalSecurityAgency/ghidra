@@ -202,6 +202,9 @@ public class LaunchSupport {
 		if (javaHome != null) {
 			javaHomeDir = new File(javaHome);
 			if (appConfig.isSupportedJavaHomeDir(javaHomeDir, javaFilter)) {
+				if (save) {
+					appConfig.saveJavaHome(javaHomeDir);
+				}
 				System.out.println(javaHomeDir);
 				return EXIT_SUCCESS;
 			}

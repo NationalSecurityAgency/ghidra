@@ -27,10 +27,11 @@ from . import sch
 from . import trace_rmi_pb2 as bufs
 from .util import send_delimited, recv_delimited
 
+
 # This need not be incremented every Ghidra release. When a breaking protocol
 # change is made, this should be updated to match the first Ghidra release that
 # includes the change.
-# 
+#
 # Other places to change:
 # * every pyproject.toml file (incl. deps)
 # * TraceRmiHandler.VERSION
@@ -98,7 +99,8 @@ class Receiver(Thread):
         while not self._is_shutdown:
             #print("Receiving message")
             try:
-                reply = recv_delimited(self.client.s, bufs.RootMessage(), dbg_seq)
+                reply = recv_delimited(
+                    self.client.s, bufs.RootMessage(), dbg_seq)
             except BaseException as e:
                 self._is_shutdown = True
                 return
@@ -448,6 +450,8 @@ class RemoteMethod:
     name: str
     action: str
     display: str
+    icon: str
+    ok_text: str
     description: str
     parameters: List[RemoteParameter]
     return_schema: sch.Schema
@@ -508,30 +512,28 @@ class MethodRegistry(object):
 
     @classmethod
     def create_method(cls, function, name=None, action=None, display=None,
-                      description=None) -> RemoteMethod:
+                      icon=None, ok_text=None, description=None) -> RemoteMethod:
         if name is None:
             name = function.__name__
         if action is None:
             action = name
-        if display is None:
-            display = name
         if description is None:
-            description = function.__doc__ or ''
+            description = function.__doc__
         sig = inspect.signature(function)
         params = []
         for p in sig.parameters.values():
             params.append(cls._make_param(p))
         return_schema = cls._to_schema(sig, sig.return_annotation)
-        return RemoteMethod(name, action, display, description, params,
-                            return_schema, function)
+        return RemoteMethod(name, action, display, icon, ok_text, description,
+                            params, return_schema, function)
 
     def method(self, func=None, *, name=None, action=None, display=None,
-               description='', condition=True):
+               icon=None, ok_text=None, description=None, condition=True):
 
         def _method(func):
             if condition:
                 method = self.create_method(func, name, action, display,
-                                            description)
+                                            icon, ok_text, description)
                 self.register_method(method)
             return func
 
@@ -705,8 +707,10 @@ class Client(object):
     def _write_method(to: bufs.Method, method: RemoteMethod):
         to.name = method.name
         to.action = method.action
-        to.display = method.display
-        to.description = method.description
+        to.display = method.display or ''
+        to.icon = method.icon or ''
+        to.ok_text = method.ok_text or ''
+        to.description = method.description or ''
         Client._write_parameters(to.parameters, method.parameters)
         to.return_type.name = method.return_schema.name
 

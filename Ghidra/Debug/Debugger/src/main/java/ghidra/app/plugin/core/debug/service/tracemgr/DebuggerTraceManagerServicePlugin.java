@@ -731,9 +731,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return CompletableFuture.completedFuture(found);
 		}
 		if (emulationService == null) {
-			throw new IllegalStateException(
-				"Cannot navigate to coordinates with execution schedules, " +
-					"because the emulation service is not available.");
+			Msg.warn(this, "Cannot navigate to coordinates with execution schedules, " +
+				"because the emulation service is not available.");
+			return CompletableFuture.completedFuture(null);
 		}
 		return emulationService.backgroundEmulate(coordinates.getPlatform(), coordinates.getTime());
 	}
@@ -746,6 +746,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return AsyncUtils.nil();
 		}
 		return materialize(coordinates).thenAcceptAsync(snap -> {
+			if (snap == null) {
+				return; // The tool is probably closing
+			}
 			if (!coordinates.equals(current)) {
 				return; // We navigated elsewhere before emulation completed
 			}
