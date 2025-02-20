@@ -1,0 +1,11 @@
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
+apply plugin: 'eclipse'
+eclipse.project.name = 'Processors ARC4'
+
+
+dependencies {
+	compile project(':Base')
+}
+
