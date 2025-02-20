@@ -21,9 +21,10 @@ import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.app.util.opinion.DyldCacheExtractLoader;
 import ghidra.file.formats.ios.dyldcache.DyldCacheFileSystem;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FileSystemRef;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.plugin.importer.ImporterUtilities;
@@ -63,15 +64,15 @@ public class DyldCacheBuilderPlugin extends Plugin {
 	protected void init() {
 		super.init();
 
-		String actionName = "Add To Program";
-		new ActionBuilder(actionName, getName())
+		final String addActionName = "Add To Program";
+		new ActionBuilder(addActionName, getName())
 				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(p -> p.getProgram()
+				.enabledWhen(context -> context.getProgram()
 						.getExecutableFormat()
 						.equals(DyldCacheExtractLoader.DYLD_CACHE_EXTRACT_NAME))
-				.onAction(plac -> TaskLauncher.launchModal(actionName,
-					monitor -> addMissingDyldCacheComponent(plac.getLocation(), monitor)))
-				.popupMenuPath("References", actionName)
+				.onAction(context -> TaskLauncher.launchModal(addActionName,
+					monitor -> addMissingDyldCacheComponent(context.getLocation(), monitor)))
+				.popupMenuPath("References", addActionName)
 				.popupMenuGroup("Add")
 				.helpLocation(new HelpLocation("ImporterPlugin", "Add_To_Program"))
 				.buildAndInstall(tool);
@@ -86,31 +87,35 @@ public class DyldCacheBuilderPlugin extends Plugin {
 	 */
 	private void addMissingDyldCacheComponent(ProgramLocation location, TaskMonitor monitor) {
 		Program program = location.getProgram();
-		Address refAddress = location.getRefAddress();
-		if (refAddress == null) {
-			Msg.showInfo(this, null, name, "No referenced address selected");
-			return;
+		Address address = location.getRefAddress();
+		if (address == null) {
+			AskAddrDialog dialog = new AskAddrDialog(name, "Enter address", program, null);
+			if (dialog.isCanceled()) {
+				return;
+			}
+			address = dialog.getValueAsAddress();
 		}
-		if (refAddress.getAddressSpace().isExternalSpace()) {
+		if (address.getAddressSpace().isExternalSpace()) {
 			Msg.showInfo(this, null, name, "External locations are not currently supported");
 			return;
 		}
-		if (program.getMemory().contains(refAddress)) {
-			Msg.showInfo(this, null, name, "Referenced address already exists in memory");
+		if (program.getMemory().contains(address)) {
+			Msg.showInfo(this, null, name,
+				"Address %s already exists in memory".formatted(address));
 			return;
 		}
 
-		try (FileSystemRef fsRef = openDyldCache(program, monitor)) {
+		try (FileSystemRef fsRef = DyldCacheExtractLoader.openDyldCache(program, monitor)) {
 			DyldCacheFileSystem fs = (DyldCacheFileSystem) fsRef.getFilesystem();
-			long refAddr = refAddress.getOffset();
-			String fsPath = fs.findAddress(refAddr);
+			long offset = address.getOffset();
+			String fsPath = fs.findAddress(offset);
 			if (fsPath != null) {
 				ImporterUtilities.showAddToProgramDialog(fs.getFSRL().appendPath(fsPath), program,
 					tool, monitor);
 			}
 			else {
 				Msg.showInfo(this, null, name,
-					"Address %s not found in %s".formatted(refAddress, fs.toString()));
+					"Address %s not found in %s".formatted(address, fs.toString()));
 			}
 		}
 		catch (CancelledException e) {
@@ -119,29 +124,5 @@ public class DyldCacheBuilderPlugin extends Plugin {
 		catch (IOException e) {
 			Msg.showError(this, null, name, e.getMessage(), e);
 		}
-	}
-
-	/**
-	 * Attempts to open the given {@link Program}'s originating {@link DyldCacheFileSystem}
-	 * 
-	 * @param program The {@link Program}
-	 * @param monitor A {@link TaskMonitor}
-	 * @return A {@link FileSystemRef file system reference} to the open {@link DyldCacheFileSystem}
-	 * @throws IOException if an FSRL or IO-related error occurred
-	 * @throws CancelledException if the user cancelled the operation
-	 */
-	private FileSystemRef openDyldCache(Program program, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		FSRL fsrl = FSRL.fromProgram(program);
-		if (fsrl == null) {
-			throw new IOException("The program does not have an FSRL property");
-		}
-		String requiredProtocol = DyldCacheFileSystem.DYLD_CACHE_FSTYPE;
-		if (!fsrl.getFS().getProtocol().equals(requiredProtocol)) {
-			throw new IOException("The program's FSRL protocol is '%s' but '%s' is required"
-					.formatted(fsrl.getFS().getProtocol(), requiredProtocol));
-		}
-		FSRLRoot fsrlRoot = fsrl.getFS();
-		return FileSystemService.getInstance().getFilesystem(fsrlRoot, monitor);
 	}
 }

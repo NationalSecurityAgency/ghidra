@@ -18,8 +18,7 @@ package ghidra.file.formats.ios.dyldcache;
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.collect.*;
 
@@ -77,7 +76,7 @@ public class DyldCacheFileSystem extends AbstractFileSystem<DyldCacheEntry> {
 	public void mount(TaskMonitor monitor) throws IOException, MachException, CancelledException {
 		splitDyldCache = new SplitDyldCache(provider, false, new MessageLog(), monitor);
 		RangeSet<Long> allDylibRanges = TreeRangeSet.create();
-		
+
 		// Find the DYLIB's and add them as files
 		monitor.initialize(splitDyldCache.size(), "Find DYLD DYLIBs...");
 		for (int i = 0; i < splitDyldCache.size(); i++) {
@@ -97,8 +96,7 @@ public class DyldCacheFileSystem extends AbstractFileSystem<DyldCacheEntry> {
 					new DyldCacheEntry(mappedImage.getPath(), i, rangeSet, null, null, -1);
 				rangeSet.asRanges().forEach(r -> rangeMap.put(r, entry));
 				allDylibRanges.addAll(rangeSet);
-				fsIndex.storeFile(mappedImage.getPath(), fsIndex.getFileCount(), false, -1,
-					entry);
+				fsIndex.storeFile(mappedImage.getPath(), fsIndex.getFileCount(), false, -1, entry);
 			}
 		}
 
@@ -182,6 +180,23 @@ public class DyldCacheFileSystem extends AbstractFileSystem<DyldCacheEntry> {
 		return entry != null ? entry.path() : null;
 	}
 
+	/**
+	 * Gets a {@link List} of {@link GFile files} that have the given mapping flags
+	 * 
+	 * @param flags The desired flags
+	 * @return A {@link List} of {@link GFile files} that have the given mapping flags
+	 */
+	public List<GFile> getFiles(long flags) {
+		List<GFile> files = new ArrayList<>();
+		for (DyldCacheEntry entry : rangeMap.asMapOfRanges().values()) {
+			DyldCacheMappingAndSlideInfo mappingAndSlideInfo = entry.mappingAndSlideInfo();
+			if (mappingAndSlideInfo != null && (flags & mappingAndSlideInfo.getFlags()) != 0) {
+				Optional.ofNullable(lookup(entry.path())).ifPresent(files::add);
+			}
+		}
+		return files;
+	}
+
 	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
@@ -253,6 +268,7 @@ public class DyldCacheFileSystem extends AbstractFileSystem<DyldCacheEntry> {
 	 * 
 	 * @param dyldCacheName The name of the DYLD Cache
 	 * @param mappingInfo the mapping info
+	 * @param mappingAndSlideInfo the mapping and slide info (could be null)
 	 * @param mappingIndex The mapping index
 	 * @return The DYLD component path of the given DYLD component
 	 */
