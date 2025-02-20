@@ -11,7 +11,93 @@
   </HEAD>
 
   <BODY>
-    <H1>Source File Information</H1>
+    <H1><A name="Source_Files_Table_Plugin"></A>Source Files Table Plugin</H1>
+
+    <P>This plugin shows the source file information (described <A href=
+    "#Source_File_Information">below</A>) associated with the current program and allows the user
+    to manage source file path transforms.</P>
+
+    <H2><A name="Source_Files_Table"></A>Source Files Table</H2>
+
+    <BLOCKQUOTE>
+      <P>Each row in this table corresponds to a Source File added to the program's source file
+      manager. The columns show the source file, path, transformed path, and number of source map
+      entries for a source file. If the <I>Transformed Path</I> column is empty for a given source
+      file, then no transformation applies to that file. Note that there are optional columns,
+      hidden by default, to show the SourceFileIdType and identifier of each source file.</P>
+
+      <H3><A name="Reload_Source_Files_Model"></A>Reload Model</H3>
+
+      <P>This action reloads the Source File Table. Note that this can be an expensive operation
+      since the number of source map entries must be computed for each source file. For this
+      reason, the action is only enabled after program events which might change the data shown in
+      the table.</P>
+
+      <H3><A name="Show_Source_Map_Entries"></A>Show Source Map Entries</H3>
+
+      <P>This action brings up a table which displays all of the source map entries for the
+      selected source file.</P>
+
+      <H3><A name="Transform_File"></A>Transform File</H3>
+
+      <P>This action allows you to create a file transform for the selected source file. The input
+      must be an absolute, normalized file path using forward slashes.</P>
+
+      <H3><A name="Transform_Directory"></A>Transform Directory</H3>
+
+      <P>This action allows you to create a directory transform whose source is a user-selected
+      parent directory of the corresponding source file. The input must be an absolute, normalized
+      directory path using forward slashes.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Transforms_Table"></A>Transforms Table</H2>
+
+    <BLOCKQUOTE>
+      <P>This table shows all of the source file transformations defined for a program.</P>
+
+      <H3><A name="Remove_Transform"></A>Remove Transform</H3>
+
+      <P>This action removes the selected transform from the list of transforms.</P>
+
+      <H3><A name="Edit_Transform"></A>Edit Transform</H3>
+
+      <P>This action allows you to change the destination of a transform (but not the source).</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Source_Files_Table_Plugin_Actions"></A>Listing Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3><A name="View_Source"></A>View Source</H3>
+
+      <P>This Listing action is enabled if there is source map information for an address. It will
+      open the corresponding source file at the appropriate line in a source code viewer (currently
+      Eclipse and VS Code are supported). Options for configuring the viewer are described <A href=
+      "#Source_Files_Table_Plugin_Options">below</A>. If there are multiple source map entries
+      defined for an address, the user will be prompted to select which one to send to the viewer.
+      Performing this action on a particular line of the Source Map Listing field will open the
+      corresponding file in the viewer even if there are multiple entries defined at the current
+      address.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Source_Files_Table_Plugin_Options"></A>Plugin Options</H2>
+
+    <P>These options can be changed from the Code Browser via Edit-&gt;-Tool Options-&gt;Source 
+	   Files and Transforms.</P>
+
+    <BLOCKQUOTE>
+      <H3><A name="Use_Existing_As_Default"></A>Use Existing As Default</H3>
+
+      <P>If enabled, the SourcePathTransformer will just return a SourceFile's path if no transform
+      applies to the file.</P>
+
+      <H3><A name="Viewer_for_Source_Files"></A>Viewer for Source Files</H3>
+
+      <P>Selects the viewer to use for source files. The supported viewers are Eclipse and Visual
+      Studio Code. Your viewer of choice must be configured via the appropriate option in the
+      Front-End tool (aka Ghidra Project Window).</P>
+    </BLOCKQUOTE>
+
+    <H1><A name="Source_File_Information"></A>Source File Information</H1>
 
     <P>Ghidra can store information about the source files for a program, including their locations
     in the build environment and the correspondence between lines of source code and addresses in a
@@ -26,8 +112,8 @@
 
     <BLOCKQUOTE>
       <OL>
-        <LI>A path, which must be an absolute, normalized path using forward slashes.
-        E.g., "/usr/src/main/file.c", "/C:/Users/Ghidra/sourceFile.cc".</LI>
+        <LI>A path, which must be an absolute, normalized path using forward slashes. E.g.,
+        "/usr/src/main/file.c", "/C:/Users/Ghidra/sourceFile.cc".</LI>
 
         <LI>A <I>SourceFileIdType</I>, which can be NONE, UNKNOWN, TIMESTAMP_64, MD5, SHA1, SHA256,
         or SHA512.</LI>
@@ -75,15 +161,18 @@
 
     <H2>Source File Manager</H2>
 
-    <P>Source files and source map entries are managed by a program's source file manager (accessed
-    via Program.getSourceFileManager()). A source file must be added to a program before it can
-    used in a source map entry.</P>
+    <P>Source files and source map entries are managed by a program's source file manager. A source
+    file must be added to a program before it can used in a source map entry. The DWARF, PDB, and
+    Go analyzers add source files and source map entries to a program by default. There are no GUI
+    actions to add source files or source map entries to a program, but such information can be
+    added to a program via a Ghidra Script. There are example scripts in the "SourceMapping" script
+    category.</P>
 
     <BLOCKQUOTE>
       <P><IMG src="help/shared/note.png" alt="Note" border="0">Note that adding source files,
-      removing source files, or changing the source map requires an exclusive checkout if
-	  the program is in a shared Ghidra repository. Reading the source file list or source map does 
-	  not require an exclusive checkout.</P>
+      removing source files, or changing the source map requires an exclusive checkout if the
+      program is in a shared Ghidra repository. Reading the source file list or source map does not
+      require an exclusive checkout.</P>
       <BR>
     </BLOCKQUOTE><BR>
      <BR>
@@ -112,8 +201,9 @@
         path.</LI>
 
         <LI><I>Directory Transforms</I>, which replace a parent directory of a source file's path
-        with another directory.  For example, the directory transform "/src/ -> "/usr/test/files/"
-		would transform the path "/src/dir1/file.c" to "/usr/test/files/dir1/file.c".</LI>
+        with another directory. For example, the directory transform "/src/ -&gt;
+        "/usr/test/files/" would transform the path "/src/dir1/file.c" to
+        "/usr/test/files/dir1/file.c".</LI>
       </OL>
     </BLOCKQUOTE><BR>
      <BR>
@@ -130,102 +220,17 @@
     method <I>UserDataPathTransformer.getPathTransformer(Program)</I>. Note that modifications to
     the path transformer are not affected by undo or redo actions in Ghidra.</P>
 
-    <H1><A name="Source_Files_Table_Plugin"></A>Source Files Table Plugin</H1>
-
-    <P>This plugin shows the source file information associated with the current program and allows
-    the user to manage source file path transforms.</P>
-
-    <H2><A name="Source_Files_Table"></A>Source Files Table</H2>
-
-    <BLOCKQUOTE>
-      <P>Each row in this table corresponds to a Source File added to the program's source file
-      manager. The columns show the source file, path, transformed path, and number of source map
-      entries for a source file. If the <I>Transformed Path</I> column is empty for a given source
-      file, then no transformation applies to that file. Note that there are optional columns,
-      hidden by default, to show the SourceFileIdType and identifier of each source file.</P>
-
-      <H3><A name="Reload_Source_Files_Model"></A>Reload Model</H3>
-
-      <P>This action reloads the Source File Table. Note that this can be an expensive operation
-      since the number of source map entries must be computed for each source file. For this
-      reason, the action is only enabled after program events which might change the data shown in
-      the table.</P>
-
-      <H3><A name="Show_Source_Map_Entries"></A>Show Source Map Entries</H3>
-
-      <P>This action brings up a table which displays all of the source map entries for the
-      selected source file.</P>
-
-      <H3><A name="Transform_File"></A>Transform File</H3>
-
-      <P>This action allows you to create a file transform for the selected source file. The input
-      must be an absolute, normalized file path using forward slashes.</P>
-
-      <H3><A name="Transform_Directory"></A>Transform Directory</H3>
-
-      <P>This action allows you to create a directory transform whose source is a user-selected
-      parent directory of the corresponding source file. The input must be an absolute, normalized
-      directory path using forward slashes.</P>
-    </BLOCKQUOTE>
-
-    <H2><A name="Transforms_Table"></A>Transforms Table</H2>
-
-    <BLOCKQUOTE>
-      <P>This table shows all of the source file transformations defined for a program.</P>
-
-      <H3><A name="Remove_Transform"></A>Remove Transform</H3>
-
-      <P>This action removes the selected transform from the list of transforms.</P>
-
-      <H3><A name="Edit_Transform"></A>Edit Transform</H3>
-
-    <P>This action allows you to change the destination of a transform (but not the source).</P>
-	</BLOCKQUOTE>
-	
-	<H2><A name="Source_Files_Table_Plugin_Actions"></A>Listing Actions</H2>
-
-	<BLOCKQUOTE>
-	  <H3><A name="View_Source"></A>View Source</H3>
-
-	  <P>This Listing action is enabled if there is source map information
-		for an address.  It will open the corresponding source file at the
-		appropriate line in a source code viewer (currently Eclipse and VS Code
-		are supported).  Options for configuring the viewer are described 
-		<A href="#Source_Files_Table_Plugin_Options"> below</A>.  If there are 
-		multiple source map entries defined for an address, the user will be 
-		prompted to select which one to send to the viewer.  Performing
-		this action on a particular line of the Source Map Listing field will
-		open the corresponding file in the viewer even if there are multiple 
-		entries defined at the current address.
-	  </P>
-		
-	</BLOCKQUOTE>
-	
-	
-	<H2><A name="Source_Files_Table_Plugin_Options"></A>Plugin Options</H2>
-
-	<BLOCKQUOTE>
-	  <H3><A name="Use_Existing_As_Default"></A>Use Existing As Default</H3>
-
-	  <P>If enabled, the SourcePathTransformer will just return a SourceFile's path if
-		no transform applies to the file.</P>
-
-	  <H3><A name="Viewer_for_Source_Files"></A>Viewer for Source Files</H3>
-	  <P> Selects the viewer to use for source files. The supported viewers are Eclipse
-		and Visual Studio Code.  Your viewer of choice must be configured via the 
-		appropriate option in the Front-End tool.
-		
-	</BLOCKQUOTE>
-
     <P class="relatedtopic">Related Topics:</P>
 
     <UL>
       <LI><A href="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm#Source_Map_Field">Source
       Map Field</A></LI>
-	  <LI><A href="help/topics/EclipseIntegration/EclipseIntegration.htm"> Eclipse Integration</A>
-	  </LI>
-	  <LI><A href="help/topics/VSCodeIntegration/VSCodeIntegration.htm"> Visual Studio Code 
-		Integration</A></LI>
+
+      <LI><A href="help/topics/EclipseIntegration/EclipseIntegration.htm">Eclipse
+      Integration</A></LI>
+
+      <LI><A href="help/topics/VSCodeIntegration/VSCodeIntegration.htm">Visual Studio Code
+      Integration</A></LI>
     </UL><BR>
      <BR>
      <BR>
