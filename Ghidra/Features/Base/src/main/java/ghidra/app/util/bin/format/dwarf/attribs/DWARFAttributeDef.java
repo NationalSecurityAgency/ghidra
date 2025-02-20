@@ -148,10 +148,9 @@ public class DWARFAttributeDef<E extends Enum<E>> {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof DWARFAttributeDef)) {
+		if (!(obj instanceof DWARFAttributeDef other)) {
 			return false;
 		}
-		DWARFAttributeDef other = (DWARFAttributeDef) obj;
 		return attributeForm == other.attributeForm &&
 			Objects.equals(attributeId, other.attributeId) &&
 			implicitValue == other.implicitValue && rawAttributeId == other.rawAttributeId;

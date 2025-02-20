@@ -58,7 +58,7 @@ public class WeakHashMap2<K, V> extends AbstractMap<K, V> {
 				return false;
 			}
 
-			WeakValue other = (WeakValue) o;
+			WeakValue<?> other = (WeakValue<?>) o;
 			return get() == other.get();
 		}
 
@@ -231,7 +231,7 @@ public class WeakHashMap2<K, V> extends AbstractMap<K, V> {
 	}
 
 	public K reverseGet(V value) {
-		WeakValue v = WeakValue.create(value, queue);
+		WeakValue<V> v = WeakValue.create(value, queue);
 		return reverseHash.get(v);
 	}
 
