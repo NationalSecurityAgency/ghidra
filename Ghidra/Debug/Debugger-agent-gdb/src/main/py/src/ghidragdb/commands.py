@@ -495,10 +495,11 @@ def put_bytes(start, end, pages, is_mi, from_tty):
 
 
 def eval_address(address):
+    max_addr = util.compute_max_addr()
     if isinstance(address, int):
-        return address
+        return address & max_addr
     try:
-        return int(gdb.parse_and_eval(address))
+        return int(gdb.parse_and_eval(address)) & max_addr
     except gdb.error as e:
         raise gdb.GdbError("Cannot convert '{}' to address".format(address))
 

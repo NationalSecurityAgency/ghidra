@@ -110,12 +110,12 @@ class ModuleInfoReader(object):
         n = mat['name']
         return None if mat is None else mat['name']
 
-    def section_from_line(self, line):
+    def section_from_line(self, line, max_addr):
         mat = self.section_pattern.fullmatch(line)
         if mat is None:
             return None
-        start = try_hexint(mat['vmaS'], 'section start')
-        end = try_hexint(mat['vmaE'], 'section end')
+        start = try_hexint(mat['vmaS'], 'section start') & max_addr
+        end = try_hexint(mat['vmaE'], 'section end') & max_addr
         offset = try_hexint(mat['offset'], 'section offset')
         name = mat['name']
         attrs = [a for a in mat['attrs'].split(' ') if a != '']
@@ -133,6 +133,7 @@ class ModuleInfoReader(object):
         modules = {}
         index = Index(REGION_INFO_READER.get_regions())
         out = gdb.execute(self.cmd, to_string=True)
+        max_addr = compute_max_addr()
         name = None
         sections = None
         for line in out.split('\n'):
@@ -146,7 +147,7 @@ class ModuleInfoReader(object):
             if name is None:
                 # Don't waste time parsing if no module
                 continue
-            s = self.section_from_line(line)
+            s = self.section_from_line(line, max_addr)
             if s is not None:
                 if s.name in sections:
                     s = s.better(sections[s.name])
@@ -197,12 +198,12 @@ MODULE_INFO_READER = _choose_module_info_reader()
 
 REGIONS_CMD = 'info proc mappings'
 REGION_PATTERN = re.compile("\\s*" +
-                                "0x(?P<start>[0-9,A-F,a-f]+)\\s+" +
-                                "0x(?P<end>[0-9,A-F,a-f]+)\\s+" +
-                                "0x(?P<size>[0-9,A-F,a-f]+)\\s+" +
-                                "0x(?P<offset>[0-9,A-F,a-f]+)\\s+" +
-                                "((?P<perms>[rwsxp\\-]+)?\\s+)?" +
-                                "(?P<objfile>.*)")
+                            "0x(?P<start>[0-9,A-F,a-f]+)\\s+" +
+                            "0x(?P<end>[0-9,A-F,a-f]+)\\s+" +
+                            "0x(?P<size>[0-9,A-F,a-f]+)\\s+" +
+                            "0x(?P<offset>[0-9,A-F,a-f]+)\\s+" +
+                            "((?P<perms>[rwsxp\\-]+)?\\s+)?" +
+                            "(?P<objfile>.*)")
 
 
 class Region(namedtuple('BaseRegion', ['start', 'end', 'offset', 'perms', 'objfile'])):
@@ -212,13 +213,13 @@ class Region(namedtuple('BaseRegion', ['start', 'end', 'offset', 'perms', 'objfi
 class RegionInfoReader(object):
     cmd = REGIONS_CMD
     region_pattern = REGION_PATTERN
-    
-    def region_from_line(self, line):
+
+    def region_from_line(self, line, max_addr):
         mat = self.region_pattern.fullmatch(line)
         if mat is None:
             return None
-        start = try_hexint(mat['start'], 'region start')
-        end = try_hexint(mat['end'], 'region end')
+        start = try_hexint(mat['start'], 'region start') & max_addr
+        end = try_hexint(mat['end'], 'region end') & max_addr
         offset = try_hexint(mat['offset'], 'region offset')
         perms = self.get_region_perms(mat)
         objfile = mat['objfile']
@@ -228,10 +229,11 @@ class RegionInfoReader(object):
         regions = []
         try:
             out = gdb.execute(self.cmd, to_string=True)
+            max_addr = compute_max_addr()
         except:
             return regions
         for line in out.split('\n'):
-            r = self.region_from_line(line)
+            r = self.region_from_line(line, max_addr)
             if r is None:
                 continue
             regions.append(r)
@@ -239,14 +241,14 @@ class RegionInfoReader(object):
 
     def full_mem(self):
         # TODO: This may not work for Harvard architectures
-        sizeptr = int(gdb.parse_and_eval('sizeof(void*)')) * 8
-        return Region(0, 1 << sizeptr, 0, None, 'full memory')
+        max_addr = compute_max_addr()
+        return Region(0, max_addr+1, 0, None, 'full memory')
 
     def have_changed(self, regions):
         if len(regions) == 1 and regions[0].objfile == 'full memory':
             return False, None
         new_regions = self.get_regions()
-        if new_regions == regions:
+        if new_regions == regions and len(new_regions) > 0:
             return False, None
         return True, new_regions
 
@@ -396,3 +398,7 @@ def selected_frame():
     except Exception as e:
         print("No selected frame")
         return None
+
+
+def compute_max_addr():
+    return (1 << (int(gdb.parse_and_eval("sizeof(void*)")) * 8)) - 1
