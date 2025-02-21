@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package ghidra.debug.flatapi;
 
 import java.util.*;
@@ -21,146 +22,132 @@ import java.util.Map.Entry;
 import ghidra.app.services.TraceRmiLauncherService;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
-import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
 public interface FlatDebuggerRmiAPI extends FlatDebuggerAPI {
 
-	/**
-	 * Get the trace-rmi launcher service
-	 * 
-	 * @return the service
-	 */
-	default TraceRmiLauncherService getTraceRmiLauncherService() {
-		return requireService(TraceRmiLauncherService.class);
-	}
+    /**
+     * Retrieves the trace-RMI launcher service instance.
+     *
+     * @return the trace-RMI launcher service
+     */
+    default TraceRmiLauncherService getTraceRmiLauncherService() {
+        return requireService(TraceRmiLauncherService.class);
+    }
 
-	/**
-	 * Get offers for launching the given program
-	 * 
-	 * @param program the program, or null for no image
-	 * @return the offers
-	 */
-	default Collection<TraceRmiLaunchOffer> getLaunchOffers(Program program) {
-		return getTraceRmiLauncherService().getOffers(program);
-	}
+    /**
+     * Gets the launch offers available for the specified program.
+     *
+     * @param program the program for which to get launch offers, or null for no image
+     * @return a collection of launch offers
+     */
+    default Collection<TraceRmiLaunchOffer> getLaunchOffers(Program program) {
+        return getTraceRmiLauncherService().getOffers(program);
+    }
 
-	/**
-	 * Get offers for launching the current program
-	 * 
-	 * @return the offers
-	 */
-	default Collection<TraceRmiLaunchOffer> getLaunchOffers() {
-		return getLaunchOffers(getCurrentProgram());
-	}
+    /**
+     * Gets the launch offers available for the currently loaded program.
+     *
+     * @return a collection of launch offers for the current program
+     */
+    default Collection<TraceRmiLaunchOffer> getLaunchOffers() {
+        return getLaunchOffers(getCurrentProgram());
+    }
 
-	/**
-	 * Get saved offers for launching the given program, ordered by most-recently-saved
-	 * 
-	 * @param program the program, or null for no image
-	 * @return the offers
-	 */
-	default List<TraceRmiLaunchOffer> getSavedLaunchOffers(Program program) {
-		return getTraceRmiLauncherService().getSavedOffers(program);
-	}
+    /**
+     * Retrieves saved launch offers for the specified program, ordered by most recently saved.
+     *
+     * @param program the program for which to get saved launch offers, or null for no image
+     * @return a list of saved launch offers
+     */
+    default List<TraceRmiLaunchOffer> getSavedLaunchOffers(Program program) {
+        return getTraceRmiLauncherService().getSavedOffers(program);
+    }
 
-	/**
-	 * Get saved offers for launching the current program, ordered by most-recently-saved
-	 * 
-	 * @return the offers
-	 */
-	default List<TraceRmiLaunchOffer> getSavedLaunchOffers() {
-		return getSavedLaunchOffers(getCurrentProgram());
-	}
+    /**
+     * Retrieves saved launch offers for the currently loaded program, ordered by most recently saved.
+     *
+     * @return a list of saved launch offers for the current program
+     */
+    default List<TraceRmiLaunchOffer> getSavedLaunchOffers() {
+        return getSavedLaunchOffers(getCurrentProgram());
+    }
 
-	/**
-	 * Get the most-recently-saved launch offer for the given program
-	 * 
-	 * @param program the program, or null for no image
-	 * @return the offer
-	 * @throws NoSuchElementException if no offer's configuration has been saved
-	 */
-	default TraceRmiLaunchOffer requireLastLaunchOffer(Program program) {
-		List<TraceRmiLaunchOffer> offers = getSavedLaunchOffers(program);
-		if (offers.isEmpty()) {
-			throw new NoSuchElementException("No saved offers to launch " + program);
-		}
-		return offers.get(0);
-	}
+    /**
+     * Retrieves the most recently saved launch offer for the specified program.
+     *
+     * @param program the program for which to retrieve the last saved offer, or null for no image
+     * @return the most recently saved launch offer
+     * @throws NoSuchElementException if no offers are saved for the specified program
+     */
+    default TraceRmiLaunchOffer requireLastLaunchOffer(Program program) {
+        List<TraceRmiLaunchOffer> offers = getSavedLaunchOffers(program);
+        if (offers.isEmpty()) {
+            throw new NoSuchElementException("No saved offers to launch " + program);
+        }
+        return offers.get(0);
+    }
 
-	/**
-	 * Get the most-recently-saved launch offer for the current program
-	 * 
-	 * @return the offer
-	 * @throws NoSuchElementException if no offer's configuration has been saved
-	 */
-	default TraceRmiLaunchOffer requireLastLaunchOffer() {
-		return requireLastLaunchOffer(getCurrentProgram());
-	}
+    /**
+     * Retrieves the most recently saved launch offer for the currently loaded program.
+     *
+     * @return the most recently saved launch offer for the current program
+     * @throws NoSuchElementException if no offers are saved for the current program
+     */
+    default TraceRmiLaunchOffer requireLastLaunchOffer() {
+        return requireLastLaunchOffer(getCurrentProgram());
+    }
 
-	/**
-	 * Launch the given offer with the default, saved, and/or overridden arguments
-	 * 
-	 * <p>
-	 * If the offer has saved arguments, those will be loaded. Otherwise, the default arguments will
-	 * be used. If given, specific arguments can be overridden by the caller. The caller may need to
-	 * examine the offer's parameters before overriding any arguments. Conventionally, the argument
-	 * displayed as "Image" gives the path to the executable, and "Args" gives the command-line
-	 * arguments to pass to the target.
-	 * 
-	 * @param offer the offer to launch
-	 * @param monitor a monitor for the launch stages
-	 * @param overrideArgs overridden arguments, which may be empty
-	 * @return the launch result, which may indicate errors
-	 */
-	default LaunchResult launch(TraceRmiLaunchOffer offer, Map<String, ?> overrideArgs,
-			TaskMonitor monitor) {
-		return offer.launchProgram(monitor, new LaunchConfigurator() {
-			@Override
-			public Map<String, ValStr<?>> configureLauncher(TraceRmiLaunchOffer offer,
-					Map<String, ValStr<?>> arguments, RelPrompt relPrompt) {
-				if (arguments.isEmpty()) {
-					return arguments;
-				}
-				Map<String, ValStr<?>> args = new HashMap<>(arguments);
-				for (Entry<String, ?> ent : overrideArgs.entrySet()) {
-					args.put(ent.getKey(), ValStr.from(ent.getValue()));
-				}
-				return args;
-			}
-		});
-	}
+    /**
+     * Launches the specified offer with default, saved, and/or overridden arguments.
+     *
+     * @param offer the launch offer to execute
+     * @param overrideArgs a map of arguments to override, which may be empty
+     * @param monitor a monitor to track the launch stages
+     * @return the result of the launch, which may indicate errors
+     */
+    default LaunchResult launch(TraceRmiLaunchOffer offer, Map<String, ?> overrideArgs, TaskMonitor monitor) {
+        return offer.launchProgram(monitor, new LaunchConfigurator() {
+            @Override
+            public Map<String, ValStr<?>> configureLauncher(TraceRmiLaunchOffer offer,
+                                                             Map<String, ValStr<?>> arguments, RelPrompt relPrompt) {
+                Map<String, ValStr<?>> args = new HashMap<>(arguments);
+                overrideArgs.forEach((key, value) -> args.put(key, ValStr.from(value)));
+                return args;
+            }
+        });
+    }
 
-	/**
-	 * Launch the given offer with the default or saved arguments
-	 * 
-	 * @param offer the offer to launch
-	 * @param monitor a monitor for the launch stages
-	 * @return the launch result, which may indicate errors
-	 */
-	default LaunchResult launch(TraceRmiLaunchOffer offer, TaskMonitor monitor) {
-		return launch(offer, Map.of(), monitor);
-	}
+    /**
+     * Launches the specified offer using default or saved arguments.
+     *
+     * @param offer the launch offer to execute
+     * @param monitor a monitor to track the launch stages
+     * @return the result of the launch, which may indicate errors
+     */
+    default LaunchResult launch(TraceRmiLaunchOffer offer, TaskMonitor monitor) {
+        return launch(offer, Collections.emptyMap(), monitor);
+    }
 
-	/**
-	 * Launch the given program with the most-recently-saved offer
-	 * 
-	 * @param program the program to launch
-	 * @param monitor a monitor for the launch stages
-	 * @return the launch result, which may indicate errors
-	 */
-	default LaunchResult launch(Program program, TaskMonitor monitor) {
-		return launch(requireLastLaunchOffer(program), monitor);
-	}
+    /**
+     * Launches the specified program using the most recently saved launch offer.
+     *
+     * @param program the program to launch
+     * @param monitor a monitor to track the launch stages
+     * @return the result of the launch, which may indicate errors
+     */
+    default LaunchResult launch(Program program, TaskMonitor monitor) {
+        return launch(requireLastLaunchOffer(program), monitor);
+    }
 
-	/**
-	 * Launch the current program with the most-recently-saved offer
-	 * 
-	 * @param monitor a monitor for the launch stages
-	 * @return the launch result, which may indicate errors
-	 */
-	default LaunchResult launch(TaskMonitor monitor) {
-		return launch(requireLastLaunchOffer(), monitor);
-	}
+    /**
+     * Launches the currently loaded program using the most recently saved launch offer.
+     *
+     * @param monitor a monitor to track the launch stages
+     * @return the result of the launch, which may indicate errors
+     */
+    default LaunchResult launch(TaskMonitor monitor) {
+        return launch(requireLastLaunchOffer(), monitor);
+    }
 }
