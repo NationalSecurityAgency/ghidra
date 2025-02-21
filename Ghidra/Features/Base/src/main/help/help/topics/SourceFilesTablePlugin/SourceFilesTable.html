@@ -15,7 +15,7 @@
 
     <P>This plugin shows the source file information (described <A href=
     "#Source_File_Information">below</A>) associated with the current program and allows the user
-    to manage source file path transforms.</P>
+    to manage source file path <A href="#Source_Path_Transformations">transforms</A>.</P>
 
     <H2><A name="Source_Files_Table"></A>Source Files Table</H2>
 
@@ -40,14 +40,12 @@
 
       <H3><A name="Transform_File"></A>Transform File</H3>
 
-      <P>This action allows you to create a file transform for the selected source file. The input
-      must be an absolute, normalized file path using forward slashes.</P>
+      <P>This action allows you to create a file transform for the selected source file.</P>
 
       <H3><A name="Transform_Directory"></A>Transform Directory</H3>
 
       <P>This action allows you to create a directory transform whose source is a user-selected
-      parent directory of the corresponding source file. The input must be an absolute, normalized
-      directory path using forward slashes.</P>
+      parent directory of the corresponding source file.</P>
     </BLOCKQUOTE>
 
     <H2><A name="Transforms_Table"></A>Transforms Table</H2>
@@ -178,7 +176,7 @@
      <BR>
      
 
-    <H2>Source Path Transformations</H2>
+    <H2><A name="Source_Path_Transformations"></A>Source Path Transformations</H2>
 
     <P>Source file path information can be sent to an external tool, such as an IDE. However, there
     is no guarantee that a path recorded for a source file exists on the machine running Ghidra.
