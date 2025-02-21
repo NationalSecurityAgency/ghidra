@@ -92,11 +92,18 @@ x86_compiler_map = {
     'Cygwin': 'windows',
 }
 
+riscv_compiler_map = {
+    'GNU/Linux': 'gcc',
+    'Cygwin': 'gcc',
+}
+
 compiler_map = {
     'DATA:BE:64:default': data64_compiler_map,
     'DATA:LE:64:default': data64_compiler_map,
     'x86:LE:32:default': x86_compiler_map,
     'x86:LE:64:default': x86_compiler_map,
+    'RISCV:LE:32:default': riscv_compiler_map,
+    'RISCV:LE:64:default': riscv_compiler_map,
 }
 
 
