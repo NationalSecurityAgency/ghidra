@@ -23,8 +23,8 @@ import java.util.List;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
-import ghidra.app.util.bin.format.omf.omf166.Omf166RecordTypes;
 import ghidra.app.util.bin.format.omf.omf166.Omf166DepList;
+import ghidra.app.util.bin.format.omf.omf166.Omf166RecordTypes;
 
 /**
  * A class for reading/creating OMF-51 records
@@ -51,9 +51,15 @@ public class Omf51RecordFactory extends AbstractOmfRecordFactory {
 			case Omf166RecordTypes.DEPLST:
 				yield new Omf166DepList(reader);
 			case Content:
-				yield new Omf51Content(reader);
-			case Fixup:
+			case KeilContent:
+				yield new Omf51Content(reader, true);
 			case SegmentDEF:
+				yield new Omf51SegmentDefs(reader, false);
+			case KeilSegmentDEF:
+				yield new Omf51SegmentDefs(reader, true);
+			case KeilFixup:
+				yield new Omf51FixupRecord(reader);
+			case Fixup:
 			case ScopeDEF:
 			case DebugItem:
 			case PublicDEF:
