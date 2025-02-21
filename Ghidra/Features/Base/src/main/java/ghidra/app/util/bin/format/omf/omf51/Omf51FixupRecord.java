@@ -16,68 +16,45 @@
 package ghidra.app.util.bin.format.omf.omf51;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class Omf51Content extends OmfRecord {
-
-	private int segId;
-	private int offset;
-	private long dataIndex;
-	private int dataSize;
-
-	boolean largeSegmentId;
+public class Omf51FixupRecord extends OmfRecord {
 
 	/**
-	 * Creates a new {@link Omf51Content} record
+	 * OMF-51 fixup metadata
+	 * 
+	 * @param refLoc The reference location
+	 * @param refType The reference type
+	 * @param operand the fixup operand
+	 */
+	public static record Omf51Fixup(int refLoc, byte refType, int operand) {}
+
+	private List<Omf51Fixup> fixups = new ArrayList<>();
+
+	/**
+	 * Creates a new {@link Omf51FixupRecord} record
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
-	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51Content(BinaryReader reader, boolean largeSegmentId) throws IOException {
+	public Omf51FixupRecord(BinaryReader reader) throws IOException {
 		super(reader);
-		this.largeSegmentId = largeSegmentId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
-		segId =
-			largeSegmentId ? dataReader.readNextUnsignedShort() : dataReader.readNextUnsignedByte();
-		offset = dataReader.readNextUnsignedShort();
-		dataIndex = dataReader.getPointerIndex();
-		dataSize = (int) (dataEnd - dataIndex);
-	}
-
-	/**
-	 * {@return the segment ID}
-	 */
-	public int getSegId() {
-		return segId;
-	}
-
-	/**
-	 * {@return the offset}
-	 */
-	public int getOffset() {
-		return offset;
-	}
-
-	/**
-	 * {@return the data size in bytes}
-	 */
-	public int getDataSize() {
-		return dataSize;
-	}
-
-	/**
-	 * {@return the start of the data in the reader}
-	 */
-	public long getDataIndex() {
-		return dataIndex;
+		while (dataReader.getPointerIndex() < dataEnd) {
+			int refLoc = dataReader.readNextUnsignedByte();
+			byte refType = dataReader.readNextByte();
+			int operand = dataReader.readNextUnsignedShort();
+			fixups.add(new Omf51Fixup(refLoc, refType, operand));
+		}
 	}
 
 	@Override
@@ -85,14 +62,24 @@ public class Omf51Content extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		struct.add(largeSegmentId ? WORD : BYTE, "SEG ID", null);
-		struct.add(WORD, "offset", null);
-		if (dataSize > 0) {
-			struct.add(new ArrayDataType(BYTE, dataSize, 1), "data", null);
-		}
+		StructureDataType fixupStruct = new StructureDataType("Omf51Fixup", 0);
+		fixupStruct.add(BYTE, "ref_loc", null);
+		fixupStruct.add(BYTE, "ref_type", null);
+		fixupStruct.add(WORD, "operand", null);
+		struct.add(new ArrayDataType(fixupStruct, fixups.size(), fixupStruct.getLength()), "fixup",
+			null);
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
+	}
+
+	/**
+	 * Gets a {@link List} of fixups
+	 * 
+	 * @return A {@link List} of fixups
+	 */
+	public List<Omf51Fixup> getFixups() {
+		return fixups;
 	}
 }

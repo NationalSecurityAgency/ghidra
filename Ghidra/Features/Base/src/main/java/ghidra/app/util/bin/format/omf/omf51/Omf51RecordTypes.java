@@ -40,6 +40,8 @@ public class Omf51RecordTypes {
 
 	// Record types with names ending in "Keil", which are produced by ARM Keil's
 	// 8051 tooling, are only slight variants of the similarly-named record types in the Intel spec.
+	public final static int KeilContent = Content + 1;
+	public final static int KeilFixup = Fixup + 1;
 	public final static int KeilSegmentDEF = SegmentDEF + 1;
 	public final static int KeilScopeDEF = ScopeDEF + 1;
 	public final static int KeilDebugItemOBJ = 0x22;         // Keil debug items, in linker output format

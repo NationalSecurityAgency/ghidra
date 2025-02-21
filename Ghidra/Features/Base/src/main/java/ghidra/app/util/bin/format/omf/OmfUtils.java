@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
@@ -131,5 +132,19 @@ public class OmfUtils {
 		}
 		
 		return records;
+	}
+
+	/**
+	 * Returns a {@link Stream} of {@link OmfRecord records} that match the given class type
+	 * 
+	 * @param <T> The class type
+	 * @param records The {@link List} of all {@link OmfRecord records}
+	 * @param classType The class type to match on
+	 * @return A {@link Stream} of matching (@link OmfRecord records}
+	 */
+	public static <T> Stream<T> filterRecords(List<OmfRecord> records, Class<T> classType) {
+		return records.stream()
+				.filter(classType::isInstance)
+				.map(classType::cast);
 	}
 }

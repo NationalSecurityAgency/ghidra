@@ -16,68 +16,36 @@
 package ghidra.app.util.bin.format.omf.omf51;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class Omf51Content extends OmfRecord {
+public class Omf51SegmentDefs extends OmfRecord {
 
-	private int segId;
-	private int offset;
-	private long dataIndex;
-	private int dataSize;
-
-	boolean largeSegmentId;
-
+	private boolean largeSegmentId;
+	private List<Omf51Segment> segments = new ArrayList<>();
+	
 	/**
-	 * Creates a new {@link Omf51Content} record
+	 * Creates a new {@link Omf51SegmentDefs} record
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
 	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51Content(BinaryReader reader, boolean largeSegmentId) throws IOException {
+	public Omf51SegmentDefs(BinaryReader reader, boolean largeSegmentId) throws IOException {
 		super(reader);
 		this.largeSegmentId = largeSegmentId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
-		segId =
-			largeSegmentId ? dataReader.readNextUnsignedShort() : dataReader.readNextUnsignedByte();
-		offset = dataReader.readNextUnsignedShort();
-		dataIndex = dataReader.getPointerIndex();
-		dataSize = (int) (dataEnd - dataIndex);
-	}
-
-	/**
-	 * {@return the segment ID}
-	 */
-	public int getSegId() {
-		return segId;
-	}
-
-	/**
-	 * {@return the offset}
-	 */
-	public int getOffset() {
-		return offset;
-	}
-
-	/**
-	 * {@return the data size in bytes}
-	 */
-	public int getDataSize() {
-		return dataSize;
-	}
-
-	/**
-	 * {@return the start of the data in the reader}
-	 */
-	public long getDataIndex() {
-		return dataIndex;
+		while (dataReader.getPointerIndex() < dataEnd) {
+			segments.add(new Omf51Segment(dataReader, largeSegmentId));
+		}
 	}
 
 	@Override
@@ -85,14 +53,25 @@ public class Omf51Content extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		struct.add(largeSegmentId ? WORD : BYTE, "SEG ID", null);
-		struct.add(WORD, "offset", null);
-		if (dataSize > 0) {
-			struct.add(new ArrayDataType(BYTE, dataSize, 1), "data", null);
+		for (Omf51Segment segment : segments) {
+			struct.add(largeSegmentId ? WORD : BYTE, "id", null);
+			struct.add(BYTE, "info", null);
+			struct.add(BYTE, "rel type", null);
+			struct.add(BYTE, "unused", null);
+			struct.add(WORD, "base", null);
+			struct.add(WORD, "size", null);
+			struct.add(segment.name().toDataType(), segment.name().getDataTypeSize(), "name", null);
 		}
 		struct.add(BYTE, "checksum", null);
 
 		struct.setCategoryPath(new CategoryPath(OmfUtils.CATEGORY_PATH));
 		return struct;
+	}
+
+	/**
+	 * {@return the list of segments}
+	 */
+	public List<Omf51Segment> getSegments() {
+		return segments;
 	}
 }
