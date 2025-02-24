@@ -110,7 +110,7 @@ public class DyldChainedFixups {
 			}
 
 			fixups.add(new DyldFixup(chainLoc, newChainValue, DyldChainedPtr.getSize(pointerFormat),
-				symbol.getName(), libOrdinal));
+				symbol != null ? symbol.getName() : null, libOrdinal));
 
 			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
 			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
