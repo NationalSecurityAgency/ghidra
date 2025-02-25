@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,18 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.GTreeSlowLoadingNode;
 import ghidra.framework.model.*;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 /**
  * Class to represent a node in the Data tree.
  */
-public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
+public class DomainFolderNode extends GTreeSlowLoadingNode implements Cuttable {
 
 	private static final Icon ENABLED_OPEN_FOLDER = DomainFolder.OPEN_FOLDER_ICON;
 	private static final Icon ENABLED_CLOSED_FOLDER = DomainFolder.CLOSED_FOLDER_ICON;
@@ -127,30 +129,33 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 	}
 
 	@Override
-	protected List<GTreeNode> generateChildren() {
+	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 
 		List<GTreeNode> children = new ArrayList<>();
-		if (domainFolder != null && !domainFolder.isEmpty()) {
+		if (domainFolder == null || domainFolder.isEmpty()) {
+			return children;
+		}
 
-			// NOTE: isEmpty() is used to avoid multiple failed connection attempts on this folder
+		// NOTE: isEmpty() is used to avoid multiple failed connection attempts on this folder
 
-			DomainFolder[] folders = domainFolder.getFolders();
-			for (DomainFolder folder : folders) {
-				children.add(new DomainFolderNode(folder, filter));
+		DomainFolder[] folders = domainFolder.getFolders();
+		for (DomainFolder folder : folders) {
+			monitor.checkCancelled();
+			children.add(new DomainFolderNode(folder, filter));
+		}
+
+		DomainFile[] files = domainFolder.getFiles();
+		for (DomainFile domainFile : files) {
+			monitor.checkCancelled();
+			if (domainFile.isLinkFile() && filter != null && filter.followLinkedFolders()) {
+				DomainFolder folder = domainFile.followLink();
+				if (folder != null) {
+					children.add(new DomainFolderNode(folder, filter));
+					continue;
+				}
 			}
-
-			DomainFile[] files = domainFolder.getFiles();
-			for (DomainFile domainFile : files) {
-				if (domainFile.isLinkFile() && filter != null && filter.followLinkedFolders()) {
-					DomainFolder folder = domainFile.followLink();
-					if (folder != null) {
-						children.add(new DomainFolderNode(folder, filter));
-						continue;
-					}
-				}
-				if (filter == null || filter.accept(domainFile)) {
-					children.add(new DomainFileNode(domainFile));
-				}
+			if (filter == null || filter.accept(domainFile)) {
+				children.add(new DomainFileNode(domainFile));
 			}
 		}
 		Collections.sort(children);
