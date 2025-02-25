@@ -56,8 +56,14 @@ import resources.Icons;
 
 /**
  * Class for creating a JTree that supports filtering, threading, and a progress bar.
+ * <p>
+ * Note: when calling methods on this class to select nodes, if those nodes are threaded, or extend
+ * from {@link GTreeSlowLoadingNode}, then you must first expand the paths you wish to select.  You
+ * can do this by calling {@link #expandAndSelectPaths(List)}.  The various select methods of this 
+ * class will not expand nodes, but they will trigger children to be loaded.  If those nodes are not
+ * threaded, then the tree will add and expand the children by default.  When using threaded nodes, 
+ * the delay in loading prevents the tree from correctly expanding the paths.
  */
-
 public class GTree extends JPanel implements BusyListener {
 	private static final Color BACKGROUND = new GColor("color.bg.tree");
 	private AutoScrollTree tree;
@@ -475,24 +481,34 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	public void expandPath(GTreeNode node) {
-		expandPaths(new TreePath[] { node.getTreePath() });
+		expandPaths(List.of(node.getTreePath()));
 	}
 
 	public void expandPath(TreePath path) {
-		expandPaths(new TreePath[] { path });
+		expandPaths(List.of(path));
 	}
 
 	public void expandPaths(TreePath[] paths) {
-		runTask(new GTreeExpandPathsTask(this, Arrays.asList(paths)));
+		expandPaths(Arrays.asList(paths));
 	}
 
-	public void expandPaths(List<TreePath> pathsList) {
-		TreePath[] treePaths = pathsList.toArray(new TreePath[pathsList.size()]);
-		expandPaths(treePaths);
+	public void expandPaths(List<TreePath> paths) {
+		runTask(new GTreeExpandPathsTask(this, paths));
 	}
 
 	public void clearSelectionPaths() {
 		runTask(new GTreeClearSelectionTask(this, tree));
+	}
+
+	/**
+	 * Expands and then selects the given paths.  You must use this method if your tree is using
+	 * {@link GTreeSlowLoadingNode}s.  Otherwise, if the given paths are not expanded, then the 
+	 * select will not work.  More info at the class javadoc.
+	 * 
+	 * @param paths the paths
+	 */
+	public void expandAndSelectPaths(List<TreePath> paths) {
+		setSelectionPaths(paths, true, EventOrigin.API_GENERATED);
 	}
 
 	public void setSelectedNode(GTreeNode node) {
@@ -568,8 +584,24 @@ public class GTree extends JPanel implements BusyListener {
 		runTask(new GTreeSelectNodeByNameTask(this, tree, namePath, EventOrigin.API_GENERATED));
 	}
 
-	public void setSelectionPaths(TreePath[] path, EventOrigin origin) {
-		runTask(new GTreeSelectPathsTask(this, tree, Arrays.asList(path), origin));
+	public void setSelectionPaths(TreePath[] paths, EventOrigin origin) {
+		setSelectionPaths(Arrays.asList(paths), false, origin);
+	}
+
+	/**
+	 * Selects the given paths, expanding them first if requested.  
+	 * 
+	 * @param paths the paths to select
+	 * @param expandPaths true to expand the paths first; this is only needed for multi-threaded 
+	 * nodes.  Non-threaded nodes should use false, as it increase performance.
+	 * @param origin the event type; use {@link EventOrigin#API_GENERATED} if unsure
+	 */
+	public void setSelectionPaths(List<TreePath> paths, boolean expandPaths, EventOrigin origin) {
+
+		if (expandPaths) {
+			expandPaths(paths);
+		}
+		runTask(new GTreeSelectPathsTask(this, tree, paths, origin));
 	}
 
 	public boolean isCollapsed(TreePath path) {
