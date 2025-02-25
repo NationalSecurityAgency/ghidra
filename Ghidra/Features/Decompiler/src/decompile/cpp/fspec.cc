@@ -431,7 +431,23 @@ int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
 /// \param sz is the size of the parameter to allocated
 /// \param typeAlign is the required byte alignment for the parameter
 /// \return the address of the new parameter (or an invalid address)
-Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign) const
+Address ParamEntry::getAddrBySlot(int4 &slotnum, int4 sz, int4 typeAlign) const
+
+{
+	return getAddrBySlot(slotnum, sz, typeAlign, !isLeftJustified());
+}
+
+/// \brief Calculate the storage address assigned when allocating a parameter of a given size
+///
+/// Assume \b slotnum slots have already been assigned and increment \b slotnum
+/// by the number of slots used.
+/// Return an invalid address if the size is too small or if there are not enough slots left.
+/// \param slotnum is a reference to used slots (which will be updated)
+/// \param sz is the size of the parameter to allocated
+/// \param typeAlign is the required byte alignment for the parameter
+/// \param justifyRight is true if initial bytes are padding for odd data-type sizes
+/// \return the address of the new parameter (or an invalid address)
+Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign, bool justifyRight) const
 
 {
   Address res;			// Start with an invalid result
@@ -471,7 +487,7 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz,int4 typeAlign) const
     res = Address(spaceid, addressbase + index * alignment);
     slotnum += slotsused;	// Inform caller of number of slots used
   }
-  if (!isLeftJustified())   // Adjust for right justified (big endian)
+  if (justifyRight)   // Adjust for right justified (big endian)
     res = res + (spaceused - sz);
   return res;
 }

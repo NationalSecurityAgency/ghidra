@@ -11,7 +11,7 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:BE:32:default">
     <description>PowerPC 32-bit big endian w/Altivec, G2</description>
-    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
     <compiler name="Mac OS X" spec="ppc_32_be_Mac.cspec" id="macosx"/>
     <external_name tool="gnu" name="powerpc:common"/>
     <external_name tool="IDA-PRO" name="ppc"/>
@@ -29,8 +29,8 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:LE:32:default">
     <description>PowerPC 32-bit little endian w/Altivec, G2</description>
-    <compiler name="default" spec="ppc_32_le.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="ppc_32_le.cspec" id="windows"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_32.cspec" id="windows"/>
     <external_name tool="gnu" name="powerpc:common"/>
     <external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -45,7 +45,7 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:BE:64:default">
     <description>PowerPC 64-bit big endian w/Altivec, G2</description>
-    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <compiler name="default" spec="ppc_64_be.cspec" id="default"/>
     <compiler name="Mac OS X" spec="ppc_64_be_Mac.cspec" id="macosx"/>
     <external_name tool="gnu" name="powerpc:common64"/>
     <external_name tool="IDA-PRO" name="ppc"/>
@@ -98,7 +98,7 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:LE:64:default">
     <description>PowerPC 64-bit little endian w/Altivec, G2</description>
-    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <compiler name="default" spec="ppc_64_le.cspec" id="default"/>
     <external_name tool="gnu" name="powerpc:common64"/>
     <external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -115,7 +115,7 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:BE:32:4xx">
     <description>PowerPC 4xx 32-bit big endian embedded core</description>
-    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
 	<external_name tool="gnu" name="powerpc:403"/>
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -132,8 +132,8 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:LE:32:4xx">
     <description>PowerPC 4xx 32-bit little endian embedded core</description>
-    <compiler name="default" spec="ppc_32_le.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="ppc_32_le.cspec" id="windows"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_32.cspec" id="windows"/>
 	<external_name tool="gnu" name="powerpc:403"/>
 	<external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -148,7 +148,7 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:BE:32:MPC8270">
     <description>Freescale MPC8280 32-bit big endian family (PowerQUICC-III)</description>
-    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
     <external_name tool="gnu" name="powerpc:MPC8XX"/>
     <external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -165,7 +165,7 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:BE:32:QUICC">
     <description>PowerQUICC-III 32-bit big endian family</description>
-    <compiler name="default" spec="ppc_32_be.cspec" id="default"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
 	<external_name tool="gnu" name="powerpc:MPC8XX"/>
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -182,8 +182,8 @@
             manualindexfile="../manuals/PowerPC.idx"
             id="PowerPC:LE:32:QUICC">
     <description>PowerQUICC-III 32-bit little endian family</description>
-    <compiler name="default" spec="ppc_32_le.cspec" id="default"/>
-    <compiler name="Visual Studio" spec="ppc_32_le.cspec" id="windows"/>
+    <compiler name="default" spec="ppc_32.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="ppc_32.cspec" id="windows"/>
 	<external_name tool="gnu" name="powerpc:MPC8XX"/>
 	<external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -334,7 +334,7 @@
             manualindexfile="../manuals/PowerISA.idx"
             id="PowerPC:BE:64:A2ALT">
     <description>Power ISA 3.0 Big Endian w/Altivec</description>
-    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <compiler name="default" spec="ppc_64_be.cspec" id="default"/>
 	<external_name tool="gnu" name="powerpc:e500mc"/>
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
@@ -351,7 +351,7 @@
             manualindexfile="../manuals/PowerISA.idx"
             id="PowerPC:LE:64:A2ALT">
     <description>Power ISA 3.0 Little Endian w/Altivec</description>
-    <compiler name="default" spec="ppc_64.cspec" id="default"/>
+    <compiler name="default" spec="ppc_64_le.cspec" id="default"/>
     <external_name tool="gnu" name="powerpc:e500mc"/>
 	<external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>

@@ -227,7 +227,8 @@ public class MultiSlotAssign extends AssignAction {
 				return FAIL;
 			}
 			int grp = stackEntry.getGroup();
-			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param);	// Consume all the space we need	
+			tmpStatus[grp] =
+				stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);	// Consume all the space we need	
 			if (param.address == null) {
 				return FAIL;
 			}
