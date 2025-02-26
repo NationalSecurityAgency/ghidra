@@ -164,6 +164,10 @@ public class RttiUtil {
 			name = name.replace("'", "").replace("`", "");
 			try {
 				symbol.setName(name, symbol.getSource());
+
+				//do this in case the mangled name is currently primary which will cause demangler
+				//to replace the ticks again once demangled since demangler only demangles primary 
+				symbol.setPrimary();
 				return true;
 			}
 			catch (DuplicateNameException e) {
