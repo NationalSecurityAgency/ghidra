@@ -218,7 +218,7 @@ class DockableToolBarManager {
 			}
 
 			// don't allow the last component in a window to be closed to prevent an empty window
-			return !dwm.isLastComponentInWindow(provider);
+			return dwm != null && !dwm.isLastComponentInWindow(provider);
 		}
 	}
 
