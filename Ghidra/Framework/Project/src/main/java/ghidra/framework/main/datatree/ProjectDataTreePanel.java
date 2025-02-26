@@ -188,7 +188,9 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	public void selectDomainFile(DomainFile domainFile) {
-		selectDomainFiles(Set.of(domainFile));
+		if (domainFile != null) {
+			selectDomainFiles(Set.of(domainFile));
+		}
 	}
 
 	public void setHelpLocation(HelpLocation helpLocation) {

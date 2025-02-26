@@ -372,10 +372,8 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		// data tree panel must be created before the combo box
 		JPanel dataTreePanel = createDataTreePanel();
 
-		if (type == CHOOSE_FOLDER) {
-			// this allows users to press the OK button to choose the root folder
-			treePanel.selectRootDataFolder();
-		}
+		// this allows users to press the OK button to choose the root folder
+		treePanel.selectRootDataFolder();
 
 		if (type == OPEN) {
 			JPanel comboPanel = createComboBoxPanel();
