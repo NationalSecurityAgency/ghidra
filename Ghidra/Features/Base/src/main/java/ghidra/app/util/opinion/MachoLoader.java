@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,22 +19,28 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.app.util.*;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.golang.GoConstants;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.macho.*;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.*;
+import ghidra.framework.model.*;
 import ghidra.program.database.mem.FileBytes;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.*;
 import ghidra.util.LittleEndianDataConverter;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 /**
  * A {@link Loader} for Mach-O files.
@@ -43,6 +49,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 	public final static String MACH_O_NAME = "Mac OS X Mach-O";
 	private static final long MIN_BYTE_LENGTH = 4;
+
+	public static final String REEXPORT_OPTION_NAME = "Perform Reexports";
+	static final boolean REEXPORT_OPTION_DEFAULT = true;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -119,6 +128,34 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		catch (Exception e) {
 			throw new IOException(e);
 		}
+	}
+
+	@Override
+	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
+			DomainObject domainObject, boolean loadIntoProgram) {
+		List<Option> list =
+			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+		if (!loadIntoProgram) {
+			list.add(new Option(REEXPORT_OPTION_NAME, REEXPORT_OPTION_DEFAULT,
+				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-reexport"));
+		}
+		return list;
+	}
+
+	@Override
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
+		if (options != null) {
+			for (Option option : options) {
+				String name = option.getName();
+				if (name.equals(REEXPORT_OPTION_NAME)) {
+					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
+						return "Invalid type for option: " + name + " - " + option.getValueClass();
+					}
+				}
+			}
+		}
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override
@@ -216,5 +253,192 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Checks to see if reexports should be performed
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if reexports should be performed; otherwise, false
+	 */
+	private boolean shouldPerformReexports(List<Option> options) {
+		return OptionUtils.getOption(REEXPORT_OPTION_NAME, options, REEXPORT_OPTION_DEFAULT);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * If we aren't loading libraries, we still want to search all paths if the reexport option is 
+	 * set and the Mach-O actually has {@code LC_REEXPORT_DYLIB} entries. 
+	 */
+	@Override
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options) {
+		if (super.shouldSearchAllPaths(program, options)) {
+			return true;
+		}
+		if (shouldPerformReexports(options)) {
+			try {
+				ByteProvider provider = new MemoryByteProvider(program.getMemory(),
+					program.getImageBase());
+				if (new MachHeader(provider).parseAndCheck(LoadCommandTypes.LC_REEXPORT_DYLIB)) {
+					return true;
+				}
+			}
+			catch (IOException | MachException e) {
+				Msg.error(this, "Failed to parse Mach-O header for: " + program.getName());
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The goal here is to add each reexported library to the {@code unprocessed} list at the 
+	 * current {@code depth} to be sure they get loaded. However, if the current depth is 1, we 
+	 * need to marked them as "discard" so we know not to save them in the end (since their actual
+	 * depth would have prevented their save as a normal library)
+	 */
+	@Override
+	protected void processLibrary(Program lib, String libName, FSRL libFsrl, ByteProvider provider,
+			Queue<UnprocessedLibrary> unprocessed, int depth, LoadSpec loadSpec,
+			List<Option> options, MessageLog log, TaskMonitor monitor)
+			throws IOException, CancelledException {
+
+		if (!shouldPerformReexports(options)) {
+			return;
+		}
+
+		try {
+			for (String path : getReexportPaths(lib)) {
+				unprocessed.add(new UnprocessedLibrary(path, depth, depth == 1));
+			}
+		}
+		catch (MachException e) {
+			throw new IOException(e);
+		}
+	}
+
+	/**
+	 * Gets a {@link List} of reexport library paths from the given {@link Program}
+	 *  
+	 * @param program The {@link Program}
+	 * @return A {@link List} of reexport library paths from the given {@link Program}
+	 * @throws MachException if there was a problem parsing the Mach-O {@link Program}
+	 * @throws IOException if there was an IO-related error
+	 */
+	private List<String> getReexportPaths(Program program) throws MachException, IOException {
+		ByteProvider p = new MemoryByteProvider(program.getMemory(), program.getImageBase());
+		return new MachHeader(p).parseReexports()
+				.stream()
+				.map(DynamicLibraryCommand::getDynamicLibrary)
+				.map(DynamicLibrary::getName)
+				.map(LoadCommandString::getString)
+				.toList();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Adds reexported symbols to each {@link Loaded} {@link Program}.
+	 */
+	@Override
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
+			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			throws CancelledException, IOException {
+
+		if (shouldPerformReexports(options)) {
+			
+			List<DomainFolder> searchFolders =
+				getLibrarySearchFolders(loadedPrograms, project, options);
+
+			monitor.initialize(loadedPrograms.size());
+			for (Loaded<Program> loadedProgram : loadedPrograms) {
+				monitor.increment();
+
+				Program program = loadedProgram.getDomainObject();
+				int id = program.startTransaction("Reexporting");
+				try {
+					reexport(program, loadedPrograms, searchFolders, monitor, messageLog);
+				}
+				catch (Exception e) {
+					messageLog.appendException(e);
+				}
+				finally {
+					program.endTransaction(id, true);
+				}
+			}
+		}
+
+		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+	}
+
+	/**
+	 * "Reexports" symbols from to a {@link Program}
+	 * 
+	 * @param program The {@link Program} to receive the reexports
+	 * @param loadedPrograms A {@link List} of {@link Loaded} {@link Program}s to find get the
+	 *   reexportable symbols from
+	 * @param searchFolders A {@link List} of project folders that may contain already-loaded
+	 *   {@link Program}s with reexportable symbols
+	 * @param monitor A cancelable task monitor
+	 * @param messageLog The log
+	 * @throws CancelledException if the user cancelled the load operation
+	 * @throws IOException if there was an IO-related error during the load
+	 */
+	private void reexport(Program program, List<Loaded<Program>> loadedPrograms,
+			List<DomainFolder> searchFolders, TaskMonitor monitor, MessageLog messageLog)
+			throws CancelledException, Exception {
+
+		for (String path : getReexportPaths(program)) {
+			Program programToRelease = null;
+			try {
+				Loaded<Program> match = findLibrary(loadedPrograms, path);
+				Program lib = null;
+				if (match != null) {
+					lib = match.getDomainObject();
+				}
+				if (lib == null) {
+					for (DomainFolder searchFolder : searchFolders) {
+						DomainFile df = findLibrary(path, searchFolder);
+						if (df != null) {
+							DomainObject obj = df.getDomainObject(this, true, true, monitor);
+							if (obj instanceof Program p) {
+								lib = p;
+								programToRelease = p;
+							}
+							break;
+						}
+					}
+				}
+				if (lib == null) {
+					continue;
+				}
+				List<Symbol> reexportedSymbols = CollectionUtils
+						.asStream(lib.getSymbolTable().getExternalEntryPointIterator())
+						.map(lib.getSymbolTable()::getPrimarySymbol)
+						.filter(Objects::nonNull)
+						.toList();
+				Address addr = MachoProgramUtils.addExternalBlock(program,
+					reexportedSymbols.size() * 8, messageLog);
+				for (Symbol symbol : reexportedSymbols) {
+					String name = SymbolUtilities.replaceInvalidChars(symbol.getName(), true);
+					program.getSymbolTable().addExternalEntryPoint(addr);
+					program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
+					Function function = program.getFunctionManager()
+							.createFunction(name, addr, new AddressSet(addr), SourceType.IMPORTED);
+					ExternalLocation loc = program.getExternalManager()
+							.addExtLocation(path, name, null, SourceType.IMPORTED);
+					function.setThunkedFunction(loc.createFunction());
+
+					addr = addr.add(8);
+				}
+			}
+			finally {
+				if (programToRelease != null) {
+					programToRelease.release(this);
+				}
+			}
+		}
 	}
 }
