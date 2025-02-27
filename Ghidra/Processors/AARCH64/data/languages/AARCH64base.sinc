@@ -3041,7 +3041,7 @@ is b_3031=0b10 & b_2529=0b10100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR64 & addrP
 is b_2531=0b0110100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR64 & addrPairIndexed & Rt_GPR64
 {
 	local addrval1:8 = sext(*:4 addrPairIndexed);
-	local addrval2:8 = sext(*:4 (addrPairIndexed + 8));
+	local addrval2:8 = sext(*:4 (addrPairIndexed + 4));
 	Rt_GPR64 = addrval1;
 	Rt2_GPR64 = addrval2;
 }
