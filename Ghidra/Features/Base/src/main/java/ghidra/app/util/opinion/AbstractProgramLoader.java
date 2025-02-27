@@ -17,8 +17,7 @@ package ghidra.app.util.opinion;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
@@ -140,6 +139,16 @@ public abstract class AbstractProgramLoader implements Loader {
 
 			// Subclasses can perform custom post-load fix-ups
 			postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+
+			// Discard unneeded programs
+			Iterator<Loaded<Program>> iter = loadedPrograms.iterator();
+			while (iter.hasNext()) {
+				Loaded<Program> loaded = iter.next();
+				if (loaded.shouldDiscard()) {
+					iter.remove();
+					loaded.release(consumer);
+				}
+			}
 
 			success = true;
 			return new LoadResults<Program>(loadedPrograms);
@@ -513,7 +522,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			Namespace namespace = program.getGlobalNamespace();
 			s = symTable.createLabel(addr, labelname, namespace, SourceType.IMPORTED);
 			if (comment != null) {
-				program.getListing().setComment(address, CodeUnit.EOL_COMMENT, comment);
+				program.getListing().setComment(address, CommentType.EOL, comment);
 			}
 			if (isEntry) {
 				symTable.addExternalEntryPoint(addr);

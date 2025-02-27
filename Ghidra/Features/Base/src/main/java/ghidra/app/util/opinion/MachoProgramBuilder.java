@@ -66,10 +66,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class MachoProgramBuilder {
 
-	public static final String BLOCK_SOURCE_NAME = "Mach-O Loader";
-
 	protected MachHeader machoHeader;
-
 	protected Program program;
 	protected ByteProvider provider;
 	protected FileBytes fileBytes;
@@ -738,39 +735,29 @@ public class MachoProgramBuilder {
 		if (undefinedSymbols.size() == 0) {
 			return;
 		}
-		Address start = getAddress();
 		try {
-			MemoryBlock block = memory.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME,
-				start, undefinedSymbols.size() * machoHeader.getAddressSize(), false);
-			// assume any value in external is writable.
-			block.setWrite(true);
-
-			// Mark block as an artificial fabrication
-			block.setArtificial(true);
-
-			block.setSourceName(BLOCK_SOURCE_NAME);
-			block.setComment(
-				"NOTE: This block is artificial and is used to make relocations work correctly");
+			Address addr = MachoProgramUtils.addExternalBlock(program,
+				undefinedSymbols.size() * machoHeader.getAddressSize(), log);
+			for (NList symbol : undefinedSymbols) {
+				if (monitor.isCancelled()) {
+					return;
+				}
+				try {
+					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+					if (name != null && name.length() > 0) {
+						program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
+						program.getExternalManager()
+								.addExtLocation(Library.UNKNOWN, name, addr, SourceType.IMPORTED);
+					}
+				}
+				catch (Exception e) {
+					log.appendMsg("Unable to create undefined symbol: " + e.getMessage());
+				}
+				addr = addr.add(machoHeader.getAddressSize());
+			}
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create undefined memory block: " + e.getMessage());
-		}
-		for (NList symbol : undefinedSymbols) {
-			if (monitor.isCancelled()) {
-				return;
-			}
-			try {
-				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-				if (name != null && name.length() > 0) {
-					program.getSymbolTable().createLabel(start, name, SourceType.IMPORTED);
-					program.getExternalManager()
-							.addExtLocation(Library.UNKNOWN, name, start, SourceType.IMPORTED);
-				}
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to create undefined symbol: " + e.getMessage());
-			}
-			start = start.add(machoHeader.getAddressSize());
 		}
 	}
 
@@ -802,25 +789,25 @@ public class MachoProgramBuilder {
 		if (absoluteSymbols.size() == 0) {
 			return;
 		}
-		Address start = getAddress();
+		Address start = MachoProgramUtils.getNextAvailableAddress(program);
 		try {
 			memory.createUninitializedBlock("ABSOLUTE", start,
 				absoluteSymbols.size() * machoHeader.getAddressSize(), false);
+			for (NList symbol : absoluteSymbols) {
+				try {
+					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+					if (name != null && name.length() > 0) {
+						program.getSymbolTable().createLabel(start, name, SourceType.IMPORTED);
+					}
+				}
+				catch (Exception e) {
+					log.appendMsg("Unable to create absolute symbol: " + e.getMessage());
+				}
+				start = start.add(machoHeader.getAddressSize());
+			}
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create absolute memory block: " + e.getMessage());
-		}
-		for (NList symbol : absoluteSymbols) {
-			try {
-				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-				if (name != null && name.length() > 0) {
-					program.getSymbolTable().createLabel(start, name, SourceType.IMPORTED);
-				}
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to create absolute symbol: " + e.getMessage());
-			}
-			start = start.add(machoHeader.getAddressSize());
 		}
 	}
 
@@ -1495,24 +1482,6 @@ public class MachoProgramBuilder {
 		catch (Exception e) {
 			log.appendMsg("Unable to add external library name: " + e.getMessage());
 		}
-	}
-
-	private Address getAddress() {
-		Address maxAddress = null;
-		for (MemoryBlock block : program.getMemory().getBlocks()) {
-			if (block.isOverlay()) {
-				continue;
-			}
-			if (maxAddress == null || block.getEnd().compareTo(maxAddress) > 0) {
-				maxAddress = block.getEnd();
-			}
-		}
-		if (maxAddress == null) {
-			return space.getAddress(0x1000);
-		}
-		long maxAddr = maxAddress.getOffset();
-		long remainder = maxAddr % 0x1000;
-		return maxAddress.getNewAddress(maxAddr + 0x1000 - remainder);
 	}
 
 	private MemoryBlock getMemoryBlock(Section section) {
