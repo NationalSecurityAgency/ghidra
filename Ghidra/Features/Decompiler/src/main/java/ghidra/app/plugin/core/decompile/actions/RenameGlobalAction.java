@@ -73,6 +73,7 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 		final ClangToken tokenAtCursor = context.getTokenAtCursor();
 		HighSymbol highSymbol = tokenAtCursor.getHighSymbol(context.getHighFunction());
 		Symbol symbol = null;
+		AddEditDialog dialog = new AddEditDialog("Rename Global", context.getTool());
 		if (highSymbol instanceof HighCodeSymbol) {
 			symbol = ((HighCodeSymbol) highSymbol).getCodeSymbol();
 			if (symbol == null) {
@@ -80,6 +81,11 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 				Address addr = ((HighCodeSymbol) highSymbol).getStorage().getMinAddress();
 				SymbolTable symbolTable = context.getProgram().getSymbolTable();
 				symbol = symbolTable.getPrimarySymbol(addr);
+				if (symbol == null) {
+					// there may be no default primary symbol when it is an offcut reference
+					dialog.addLabel(addr, context.getProgram());
+					return;
+				}
 			}
 		}
 		if (symbol == null) {
@@ -87,7 +93,6 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 				"Memory storage not found for global variable");
 			return;
 		}
-		AddEditDialog dialog = new AddEditDialog("Rename Global", context.getTool());
 		dialog.editLabel(symbol, context.getProgram());
 	}
 }
