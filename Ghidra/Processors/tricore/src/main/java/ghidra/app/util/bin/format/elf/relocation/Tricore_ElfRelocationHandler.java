@@ -355,8 +355,7 @@ public class Tricore_ElfRelocationHandler
 	 */
 	private int relocate_relB(Memory memory, Address relocationAddress, long rv)
 			throws MemoryAccessException {
-		// TODO ff000000..00fffffe?
-		long mask = 0xfffffffeL;
+		long mask = 0x00000001L;
 		long val = ~mask & rv;
 		int iw = memory.getInt(relocationAddress) & 0xff;
 		iw |= ((val & 0x1fffe) << 15);
