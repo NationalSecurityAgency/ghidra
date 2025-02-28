@@ -28,6 +28,18 @@ rootProject.assembleDistribution {
 	}
 }
 
+rootProject.assembleMarkdownToHtml {
+	from (this.project.file("Common/support")) {
+		include "*.md"
+		into "support"
+	}
+	
+	from (this.project.file("Common/server")) {
+		include "*.md"
+		into "server"
+	}
+}
+
 rootProject.PLATFORMS.each { platform ->
 	rootProject.tasks.findAll {it.name == "assembleDistribution_${platform.name}"}.each { t -> 
 		def p = this.project

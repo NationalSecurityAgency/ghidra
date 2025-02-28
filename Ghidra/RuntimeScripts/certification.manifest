@@ -6,7 +6,7 @@ Common/server/jaas.conf||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
 Common/support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
-Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|
+Common/support/analyzeHeadlessREADME.md||GHIDRA||||END|
 Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
 Common/support/debug.log4j.xml||GHIDRA||||END|
 Common/support/gradle/gradle-wrapper.jar||Apache License 2.0||||END|
