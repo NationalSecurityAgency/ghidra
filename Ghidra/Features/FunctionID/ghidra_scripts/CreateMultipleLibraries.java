@@ -58,6 +58,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 	private File commonSymbolsFile = null;
 	private List<String> commonSymbols = null;
 	private LanguageID languageID = null;
+	private boolean disableNamespaceStripping = false;
 
 	private MyFidPopulateResultReporter reporter = null;
 
@@ -280,7 +281,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 
 			FidPopulateResult result = service.createNewLibraryFromPrograms(fidDb,
 				currentLibraryName, currentLibraryVersion, currentLibraryVariant, programs, null,
-				languageID, null, commonSymbols, TaskMonitor.DUMMY);
+				languageID, null, commonSymbols, disableNamespaceStripping, TaskMonitor.DUMMY);
 			reporter.report(result);
 		}
 		catch (CancelledException e) {
@@ -369,6 +370,9 @@ public class CreateMultipleLibraries extends GhidraScript {
 		}
 		String lang = askString("Enter LanguageID To Process", "Language ID: ");
 		languageID = new LanguageID(lang);
+
+		disableNamespaceStripping =
+			askYesNo("Disable namespace stripping", "Do you want to disable namespace stripping?");
 
 		parseSymbols();
 		reporter = new MyFidPopulateResultReporter();

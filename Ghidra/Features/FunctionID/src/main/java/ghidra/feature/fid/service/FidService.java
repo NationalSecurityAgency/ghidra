@@ -182,6 +182,7 @@ public class FidService {
 	 * @param linkLibraries libraries to search for (internally) unresolved symbols
 	 * @param commonSymbols is a list of symbols for which relationships are not generated
 	 * @param monitor a task monitor
+	 * @param disableNamespaceStripping boolean to disable namespace stripping
 	 * @throws MemoryAccessException if bytes are unavailable for a function body
 	 * @throws VersionException if any program cannot be opened without an upgrade
 	 * @throws CancelledException if the user cancels
@@ -191,12 +192,13 @@ public class FidService {
 	public FidPopulateResult createNewLibraryFromPrograms(FidDB fidDb, String libraryFamilyName,
 			String libraryVersion, String libraryVariant, List<DomainFile> programDomainFiles,
 			Predicate<Pair<Function, FidHashQuad>> functionFilter, LanguageID languageId,
-			List<LibraryRecord> linkLibraries, List<String> commonSymbols, TaskMonitor monitor)
+			List<LibraryRecord> linkLibraries, List<String> commonSymbols,
+			boolean disableNamespaceStripping, TaskMonitor monitor)
 			throws MemoryAccessException, VersionException, CancelledException,
 			IllegalStateException, IOException {
 		FidServiceLibraryIngest ingest = new FidServiceLibraryIngest(fidDb, this, libraryFamilyName,
 			libraryVersion, libraryVariant, programDomainFiles, functionFilter, languageId,
-			linkLibraries, monitor);
+			linkLibraries, monitor, disableNamespaceStripping);
 		ingest.markCommonChildReferences(commonSymbols);
 		return ingest.create();
 	}
