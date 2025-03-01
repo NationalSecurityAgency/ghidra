@@ -635,12 +635,12 @@ irf: AN7    is irf_0_4 = 0x13 & AN7 { export AN7; }
     EA = rpa3;
 }
 
-:STEAX (DE+imm8) is op0_7 = 0x48; op0_7 = 0x8b; imm8 & DE {
+:LDEAX (DE+imm8) is op0_7 = 0x48; op0_7 = 0x8b; imm8 & DE {
     local ptr = DE + imm8;
     EA = *:2 ptr;
 }
 
-:STEAX (HL+imm8) is op0_7 = 0x48; op0_7 = 0x8f; imm8 & HL {
+:LDEAX (HL+imm8) is op0_7 = 0x48; op0_7 = 0x8f; imm8 & HL {
     local ptr = HL + imm8;
     EA = *:2 ptr;
 }
