@@ -639,7 +639,7 @@ public class ProgramBuilder {
 		});
 	}
 
-	public Namespace createClassNamespace(String name, String parentNamespace, SourceType type)
+	public GhidraClass createClassNamespace(String name, String parentNamespace, SourceType type)
 			throws Exception {
 		return tx(() -> {
 			Namespace ns = getNamespace(parentNamespace);

@@ -782,6 +782,45 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	/**
+	 * Selects the given data type category in the tree of data types.  This method will cause the
+	 * data type tree to come to the front, scroll to the category and then to select the tree
+	 * node that represents the category.  If the category is null, the selection is cleared.
+	 *
+	 * @param category the category to select; may be null
+	 */
+	public void setCategorySelected(Category category) {
+		DataTypeArchiveGTree gTree = getGTree();
+		if (category == null) { // clear the selection
+			gTree.clearSelectionPaths();
+			return;
+		}
+
+		DataTypeManager dataTypeManager = category.getDataTypeManager();
+		if (dataTypeManager == null) {
+			return;
+		}
+
+		ArchiveRootNode rootNode = (ArchiveRootNode) gTree.getViewRoot();
+		ArchiveNode archiveNode = rootNode.getNodeForManager(dataTypeManager);
+		if (archiveNode == null) {
+			plugin.setStatus("Cannot find archive '" + dataTypeManager.getName() + "'.  It may " +
+				"be filtered out of view or may have been closed (Data Type Manager)");
+			return;
+		}
+
+		// Note: passing 'true' here forces a load if needed.  This could be slow for programs
+		//       with many types.  If this locks the UI, then put this work into a GTreeTask.
+		CategoryNode node = archiveNode.findCategoryNode(category, true);
+		if (node == null) {
+			return;
+		}
+
+		gTree.setSelectedNode(node);
+		gTree.scrollPathToVisible(node.getTreePath());
+		contextChanged();
+	}
+
+	/**
 	 * Returns a list of all the data types selected in the data types tree
 	 * @return a list of all the data types selected in the data types tree
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,6 +51,10 @@ import ghidra.util.task.TaskMonitor;
  * for that address.  The textual representation also maintains information about the field
  * that generated it so that the search can be constrained to specific fields such as the
  * label or comment field.
+ * 
+ * <p> NOTE: This only searches defined instructions or data, which is possibly
+ * a mistake since this is more of a WYSIWYG search. However, searching undefined code units could
+ * make this slow search even more so.
  *
  */
 class ListingDisplaySearcher implements Searcher {

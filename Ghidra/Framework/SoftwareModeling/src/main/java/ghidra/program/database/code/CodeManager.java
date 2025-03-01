@@ -1240,6 +1240,20 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
+	 * Returns the number of addresses that have associated comments.
+	 * @return the number of addresses that have associated comments
+	 */
+	public long getCommentAddressCount() {
+		try {
+			return commentAdapter.getRecordCount();
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+		return 0;
+	}
+
+	/**
 	 * Get a forward iterator over addresses that have comments of the given type.
 	 * @param commentType comment type defined in CodeUnit
 	 * @param set address set (null for all defined memory)
@@ -2969,8 +2983,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				//   flow following issues, for example creating a function body.
 				boolean isFallthrough =
 					(flowType.isJump() && flowAddr.equals(inst.getMaxAddress().next())) &&
-					inst.hasFallthrough();
-				
+						inst.hasFallthrough();
+
 				if (!isFallthrough) {
 					mnemonicPrimaryRef = addDefaultMemoryReferenceIfMissing(inst,
 						Reference.MNEMONIC, flowAddr, flowType, oldRefList, mnemonicPrimaryRef);
@@ -3282,6 +3296,30 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			if (commentRec != null) {
 				return commentRec.getString(commentType);
 			}
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns all the comments at the given address.
+	 * @param address the address to get all comments for
+	 * @return all the comments at the given address
+	 */
+	public CodeUnitComments getAllComments(Address address) {
+		try {
+			long addr = addrMap.getKey(address, false);
+			DBRecord commentRec = getCommentAdapter().getRecord(addr);
+			CommentType[] types = CommentType.values();
+			String[] comments = new String[types.length];
+
+			for (CommentType type : types) {
+				int index = type.ordinal();
+				comments[index] = commentRec.getString(index);
+			}
+			return new CodeUnitComments(comments);
 		}
 		catch (IOException e) {
 			dbError(e);

@@ -126,20 +126,24 @@ public class DataTypeEditorManager implements EditorListener {
 	 * Displays a data type editor for editing the given Structure. If the structure is already 
 	 * being edited then it is brought to the front. Otherwise, a new editor is created and 
 	 * displayed.
-	 * @param structure the structure.
+	 * @param composite the structure.
 	 * @param fieldName the optional name of the field to select in the editor.
 	 */
-	public void edit(Structure structure, String fieldName) {
+	public void edit(Composite composite, String fieldName) {
 
-		StructureEditorProvider editor = (StructureEditorProvider) getEditor(structure);
+		CompositeEditorProvider editor = (CompositeEditorProvider) getEditor(composite);
 		if (editor != null) {
-			reuseExistingEditor(structure);
+			reuseExistingEditor(composite);
 			editor.selectField(fieldName);
 			return;
 		}
-
-		editor = new StructureEditorProvider(plugin, structure,
-			showStructureNumbersInHex());
+		if (composite instanceof Union) {
+			editor = new UnionEditorProvider(plugin, (Union) composite, showUnionNumbersInHex());
+		}
+		else if (composite instanceof Structure) {
+			editor = new StructureEditorProvider(plugin, (Structure) composite,
+				showStructureNumbersInHex());
+		}
 		editor.selectField(fieldName);
 		editor.addEditorListener(this);
 		editorList.add(editor);

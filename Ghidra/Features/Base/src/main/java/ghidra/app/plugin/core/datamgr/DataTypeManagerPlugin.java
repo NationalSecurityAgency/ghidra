@@ -498,8 +498,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public void edit(Structure dt, String fieldName) {
-		editorManager.edit(dt, fieldName);
+	public void edit(Composite composite, String fieldName) {
+		editorManager.edit(composite, fieldName);
 	}
 
 	@Override
@@ -617,6 +617,15 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			// this is a service method, ensure it is on the Swing thread, since it interacts with
 			// Swing components
 			Swing.runIfSwingOrRunLater(() -> provider.setDataTypeSelected(dataType));
+		}
+	}
+
+	@Override
+	public void setCategorySelected(Category category) {
+		if (provider.isVisible()) {
+			// this is a service method, ensure it is on the Swing thread, since it interacts with
+			// Swing components
+			Swing.runIfSwingOrRunLater(() -> provider.setCategorySelected(category));
 		}
 	}
 

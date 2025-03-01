@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class DecompilerCommentsActionFactory extends CommentsActionFactory {
             if (!isCommentSupported(loc)) {
                 return false;
             }
-            return CommentType.isCommentAllowed(getCodeUnit(actionContext), loc);
+            return CommentTypeUtils.isCommentAllowed(getCodeUnit(actionContext), loc);
         }
 
         @Override
@@ -139,7 +139,7 @@ public class DecompilerCommentsActionFactory extends CommentsActionFactory {
                 return CodeUnit.PRE_COMMENT;
             }
             CodeUnit cu = getCodeUnit(context);
-            return CommentType.getCommentType(cu, getLocationForContext(context), CodeUnit.NO_COMMENT);
+            return CommentTypeUtils.getCommentType(cu, getLocationForContext(context), CodeUnit.NO_COMMENT);
         }
     }
 }
