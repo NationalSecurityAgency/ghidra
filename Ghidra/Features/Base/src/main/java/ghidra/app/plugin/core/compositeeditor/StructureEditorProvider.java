@@ -97,12 +97,6 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 		return "DataTypeEditors";
 	}
 
-	public void selectField(String fieldName) {
-		if (fieldName != null) {
-			editorPanel.selectField(fieldName);
-		}
-	}
-
 	@Override
 	protected void closeDependentEditors() {
 		if (bitFieldEditor != null && bitFieldEditor.isVisible()) {

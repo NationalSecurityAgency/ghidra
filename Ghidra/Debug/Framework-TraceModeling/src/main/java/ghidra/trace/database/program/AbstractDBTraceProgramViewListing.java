@@ -440,11 +440,28 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
+	public long getCommentAddressCount() {
+		return program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter().getAddressSetView(Lifespan.at(s)))
+				.getNumAddresses();
+	}
+
+	@Override
 	public String getComment(int commentType, Address address) {
 		try (LockHold hold = program.trace.lockRead()) {
 			return program.viewport.getTop(
 				s -> program.trace.getCommentAdapter().getComment(s, address, commentType));
 		}
+	}
+
+	@Override
+	public CodeUnitComments getAllComments(Address address) {
+		CommentType[] types = CommentType.values();
+		String[] comments = new String[types.length];
+		for (CommentType type : types) {
+			comments[type.ordinal()] = getComment(type, address);
+		}
+		return new CodeUnitComments(comments);
 	}
 
 	@Override

@@ -327,12 +327,13 @@
             <tocdef id="Program Search" sortgroup="p" text="Program Search" target="help/topics/Search/Searching.htm" >
                 <tocdef id="Memory" sortgroup="a" text="Memory" target="help/topics/Search/Search_Memory.htm" />
                 <tocdef id="Text" sortgroup="b" text="Text" target="help/topics/Search/Search_Program_Text.htm" />
-                <tocdef id="Strings" sortgroup="c" text="Strings" target="help/topics/Search/Search_for_Strings.htm" />                                
-                <tocdef id="Scalars" sortgroup="d" text="Scalars" target="help/topics/ScalarSearchPlugin/The_Scalar_Table.htm" />
-                <tocdef id="Instruction Patterns" sortgroup="e" text="Instruction Patterns" target="help/topics/Search/Search_Instruction_Patterns.htm" />
-                <tocdef id="Address Tables" sortgroup="f" text="Address Tables" target="help/topics/Search/Search_for_AddressTables.htm" />
-                <tocdef id="Direct References" sortgroup="g" text="Direct References" target="help/topics/Search/Search_for_DirectReferences.htm" />
-                <tocdef id="Search Results Window" sortgroup="h" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
+                <tocdef id="Search And Replace" sortgroup="c" text="Search and Replace" target="help/topics/Search/SearchAndReplace.htm" />                                
+                <tocdef id="Strings" sortgroup="d" text="Strings" target="help/topics/Search/Search_for_Strings.htm" />                                
+                <tocdef id="Scalars" sortgroup="e" text="Scalars" target="help/topics/ScalarSearchPlugin/The_Scalar_Table.htm" />
+                <tocdef id="Instruction Patterns" sortgroup="f" text="Instruction Patterns" target="help/topics/Search/Search_Instruction_Patterns.htm" />
+                <tocdef id="Address Tables" sortgroup="g" text="Address Tables" target="help/topics/Search/Search_for_AddressTables.htm" />
+                <tocdef id="Direct References" sortgroup="h" text="Direct References" target="help/topics/Search/Search_for_DirectReferences.htm" />
+                <tocdef id="Search Results Window" sortgroup="i" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
             </tocdef>
             
             <tocdef id="DWARF External Debug Files" sortgroup="q" text="DWARF External Debug Files" target="help/topics/DWARFExternalDebugFilesPlugin/DWARFExternalDebugFilesPlugin.html" >

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,14 +96,14 @@ public interface DataTypeManagerService extends DataTypeQueryService, DataTypeAr
 	public void edit(DataType dt);
 
 	/**
-	 * Pop up an editor window for the given structure.
+	 * Pop up an editor window for the given structure or union
 	 * 
-	 * @param structure the structure
-	 * @param fieldName the optional structure field name to select in the editor window
+	 * @param composite the structure or union
+	 * @param fieldName the optional field name to select in the editor window
 	 * @throws IllegalArgumentException if the given has not been resolved by a DataTypeManager;
 	 *         in other words, if {@link DataType#getDataTypeManager()} returns null
 	 */
-	public void edit(Structure structure, String fieldName);
+	public void edit(Composite composite, String fieldName);
 
 	/**
 	 * Selects the given data type in the display of data types.  A null <code>dataType</code>
@@ -112,6 +112,15 @@ public interface DataTypeManagerService extends DataTypeQueryService, DataTypeAr
 	 * @param dataType The data type to select.
 	 */
 	public void setDataTypeSelected(DataType dataType);
+
+	/**
+	 * Selects the given data type category in the tree of data types.  This method will cause the
+	 * data type tree to come to the front, scroll to the category and then to select the tree
+	 * node that represents the category.  If the category is null, the selection is cleared.
+	 *
+	 * @param category the category to select; may be null
+	 */
+	public void setCategorySelected(Category category);
 
 	/**
 	 * Returns the list of data types that are currently selected in the data types tree

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,7 +129,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 	 * @param loc the {@link ProgramLocation} for which to delete the comment
 	 */
 	void deleteComments(Program program, ProgramLocation loc) {
-		int commentType = CommentType.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
+		int commentType = CommentTypeUtils.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
 		SetCommentCmd cmd = new SetCommentCmd(loc.getByteAddress(), commentType, null);
 		tool.execute(cmd, program);
 	}
@@ -138,7 +138,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		if (codeUnit == null) {
 			return false;
 		}
-		int commentType = CommentType.getCommentType(null, loc, CodeUnit.NO_COMMENT);
+		int commentType = CommentTypeUtils.getCommentType(null, loc, CodeUnit.NO_COMMENT);
 		return (commentType != CodeUnit.NO_COMMENT && codeUnit.getComment(commentType) != null);
 	}
 
@@ -215,7 +215,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 				else {
 					historyAction.getPopupMenuData().setMenuPath(HISTORY_MENUPATH);
 				}
-				historyAction.setEnabled(CommentType.isCommentAllowed(context.getCodeUnit(), loc));
+				historyAction.setEnabled(CommentTypeUtils.isCommentAllowed(context.getCodeUnit(), loc));
 				return true;
 			}
 		};
@@ -227,7 +227,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 	private void showCommentHistory(ListingActionContext context) {
 		CodeUnit cu = context.getCodeUnit();
 		ProgramLocation loc = context.getLocation();
-		int commentType = CommentType.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
+		int commentType = CommentTypeUtils.getCommentType(null, loc, CodeUnit.EOL_COMMENT);
 		CommentHistoryDialog historyDialog = new CommentHistoryDialog(cu, commentType);
 		tool.showDialog(historyDialog, context.getComponentProvider());
 	}

@@ -516,7 +516,7 @@ src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/Instruction_Mnemonic_Search.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Query_Results_Dialog.htm||GHIDRA||||END|
-src/main/help/help/topics/Search/Regular_Expressions.htm||GHIDRA||||END|
+src/main/help/help/topics/Search/SearchAndReplace.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Formats.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Instruction_Patterns.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Memory.htm||GHIDRA||||END|
@@ -533,6 +533,8 @@ src/main/help/help/topics/Search/images/MemorySearchProviderWithOptionsOn.png||G
 src/main/help/help/topics/Search/images/MemorySearchProviderWithScanPanelOn.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/MultipleSelectionError.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/QueryResultsSearch.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/SearchAndReplaceDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/SearchAndReplaceResults.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchForAddressTables.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionPatterns.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionPatternsControlPanel.png||GHIDRA||||END|
@@ -579,10 +581,6 @@ src/main/help/help/topics/SymbolTreePlugin/SymbolTree.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/CreateExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/EditExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/SymbolTree.png||GHIDRA||||END|
-src/main/help/help/topics/Tables/GhidraTableHeaders.html||GHIDRA||||END|
-src/main/help/help/topics/Tables/images/BytesSettingsDialog.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Tables/images/MultipleColumnSortDialog.png||GHIDRA||||END|
-src/main/help/help/topics/Tables/images/SelectColumnsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/Configure_Tool.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/Ghidra_Tool_Administration.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/ShowLog.htm||GHIDRA|||References wcbiema in screen snapshot|END|
@@ -604,13 +602,6 @@ src/main/help/help/topics/Tool/images/SetToolAssociations.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/ShowLog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/Tip.png||GHIDRA||||END|
 src/main/help/help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm||GHIDRA||||END|
-src/main/help/help/topics/Trees/GhidraTreeFilter.html||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/Filter.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/FilterClearButton.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/FilterOptions.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/TableColumnFilter.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/TableColumnFilterAfterFilterApplied.png||GHIDRA||||END|
-src/main/help/help/topics/Trees/images/TableColumnFilterDialog.png||GHIDRA||||END|
 src/main/help/help/topics/VSCodeIntegration/VSCodeIntegration.htm||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/ValidateProgram.html||GHIDRA||||END|
 src/main/help/help/topics/ValidateProgram/images/ValidateProgram.png||GHIDRA||||END|

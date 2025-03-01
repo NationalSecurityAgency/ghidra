@@ -214,6 +214,12 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		return new DefaultActionContext(this, null);
 	}
 
+	public void selectField(String fieldName) {
+		if (fieldName != null) {
+			editorPanel.selectField(fieldName);
+		}
+	}
+
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation(getHelpTopic(), getHelpName());
