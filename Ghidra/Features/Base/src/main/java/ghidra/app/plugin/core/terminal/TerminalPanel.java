@@ -39,8 +39,7 @@ import ghidra.app.plugin.core.terminal.TerminalFinder.TextTerminalFinder;
 import ghidra.app.plugin.core.terminal.vt.*;
 import ghidra.app.plugin.core.terminal.vt.VtHandler.*;
 import ghidra.app.services.ClipboardService;
-import ghidra.util.ColorUtils;
-import ghidra.util.Msg;
+import ghidra.util.*;
 
 /**
  * A VT100 terminal emulator in a panel.
@@ -466,9 +465,13 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		 * Prevent the user from doing this. Cursor location is controlled by pty. While we've
 		 * prevented key strokes from causing this, we've not prevented mouse clicks from doing it.
 		 * Next best thing is to just move it back.
+		 * 
+		 * NOTE: We schedule the cursor re-placement for later, because the FieldPanel may be about
+		 * to scroll to the cursor. If we re-place immediately, it will likely scroll to the bottom
+		 * of the terminal. This is especially annoying when the user is trying to make a selection.
 		 */
 		if (trigger == EventTrigger.GUI_ACTION) {
-			placeCursor(false);
+			Swing.runLater(() -> placeCursor(false));
 		}
 	}
 

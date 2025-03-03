@@ -251,7 +251,13 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			addChanged(current.getView().getMemory());
+			for (AddressSpace space : current.getTrace()
+					.getBaseAddressFactory()
+					.getAllAddressSpaces()) {
+				if (space.isRegisterSpace() || space.isMemorySpace()) {
+					addChanged(new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()));
+				}
+			}
 		}
 
 		private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
@@ -388,13 +394,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		contextChanged();
 
 		changeDebouncer.addListener(__ -> doCheckDepsAndReevaluate());
-	}
-
-	private void addChanged(AddressSetView toAdd) {
-		synchronized (changed) {
-			changed.add(toAdd);
-			changeDebouncer.contact(null);
-		}
 	}
 
 	private void addChanged(AddressRange toAdd) {
