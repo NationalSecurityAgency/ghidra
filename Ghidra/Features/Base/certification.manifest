@@ -516,6 +516,7 @@ src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Search/Instruction_Mnemonic_Search.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Query_Results_Dialog.htm||GHIDRA||||END|
+src/main/help/help/topics/Search/SearchAndReplace.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Formats.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Instruction_Patterns.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_Memory.htm||GHIDRA||||END|
@@ -532,6 +533,8 @@ src/main/help/help/topics/Search/images/MemorySearchProviderWithOptionsOn.png||G
 src/main/help/help/topics/Search/images/MemorySearchProviderWithScanPanelOn.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/MultipleSelectionError.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/QueryResultsSearch.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/SearchAndReplaceDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/SearchAndReplaceResults.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchForAddressTables.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionPatterns.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchInstructionPatternsControlPanel.png||GHIDRA||||END|

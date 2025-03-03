@@ -299,9 +299,15 @@ public class UserSearchUtils {
 	}
 
 	/**
-	 * Escapes regex characters, optionally turning globbing characters into valid regex syntax.
+	 * Convert user entered text into a regular expression, escaping regex characters, 
+	 * optionally turning globbing characters into valid regex syntax.
+	 * @param input the user entered text to be converted to a regular expression.
+	 * @param allowGlobbing if true, '*' and '?' will be converted to equivalent regular expression
+	 * syntax for wildcard matching, otherwise they will be treated as literal characters to be 
+	 * part of the search text. 
+	 * @return a converted text string suitable for use in a regular expression.
 	 */
-	private static String convertUserInputToRegex(String input, boolean allowGlobbing) {
+	public static String convertUserInputToRegex(String input, boolean allowGlobbing) {
 
 		String escaped = input;
 		if (allowGlobbing) {
