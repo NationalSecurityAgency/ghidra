@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,8 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 			DebuggerModuleActionContext context) {
 		return context.getSelectedModules()
 				.stream()
-				.flatMap(m -> m.getSections().stream())
+				// snap does not matter for legacy module
+				.flatMap(m -> m.getSections(0).stream())
 				.collect(Collectors.toSet());
 	}
 
@@ -61,7 +62,8 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 			DebuggerModuleActionContext context) {
 		AddressSet sel = new AddressSet();
 		for (TraceModule module : getSelectedModulesFromContext(context)) {
-			sel.add(module.getRange());
+			// snap does not matter for legacy module
+			sel.add(module.getRange(0));
 		}
 		return sel;
 	}
@@ -73,7 +75,6 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 		SHORT_NAME("Name", String.class, ModuleRow::getShortName),
 		NAME("Module Name", String.class, ModuleRow::getName, ModuleRow::setName),
 		MAPPING("Mapping", String.class, ModuleRow::getMapping),
-		LIFESPAN("Lifespan", Lifespan.class, ModuleRow::getLifespan),
 		LENGTH("Length", Long.class, ModuleRow::getLength);
 
 		private final String header;
@@ -251,7 +252,7 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 		moduleTableModel.addAllItems(moduleManager.getAllModules());
 	}
 
-	public void setTrace(Trace trace) {
+	private void setTrace(Trace trace) {
 		if (currentTrace == trace) {
 			return;
 		}

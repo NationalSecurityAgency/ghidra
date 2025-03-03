@@ -23,9 +23,7 @@ import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.*;
-import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A breakpoint in a trace
@@ -55,19 +53,21 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * <p>
 	 * This should be a name suitable for display on the screen
 	 * 
+	 * @param snap the first effective snap
 	 * @param name the new name
 	 */
-	void setName(String name);
+	void setName(long snap, String name);
 
 	/**
 	 * Get the "short name" of this breakpoint
 	 * 
 	 * <p>
-	 * This defaults to the "full name," but can be modified via {@link #setName(String)}
+	 * This defaults to the "full name," but can be modified via {@link #setName(long, String)}
 	 * 
+	 * @param snap the snap
 	 * @return the name
 	 */
-	String getName();
+	String getName(long snap);
 
 	/**
 	 * Get the range covered by this breakpoint
@@ -75,111 +75,44 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * <p>
 	 * Most often, esp. for execution breakpoints, this is a single address.
 	 * 
+	 * @param snap the snap
 	 * @return the range
 	 */
-	AddressRange getRange();
+	AddressRange getRange(long snap);
 
 	/**
 	 * Get the minimum address in this breakpoint's range
 	 * 
-	 * @see #getRange()
+	 * @see #getRange(long)
+	 * @param snap the snap
 	 * @return the minimum address
 	 */
-	Address getMinAddress();
+	Address getMinAddress(long snap);
 
 	/**
 	 * Get the maximum address in this breakpoint's range
 	 * 
-	 * @see #getRange()
+	 * @see #getRange(long)
+	 * @param snap the snap
 	 * @return the maximum address
 	 */
-	Address getMaxAddress();
+	Address getMaxAddress(long snap);
 
 	/**
 	 * Get the length of this breakpoint, usually 1
 	 * 
+	 * @param snap the snap
 	 * @return the length
 	 */
-	long getLength();
-
-	/**
-	 * Get the lifespan of this breakpoint
-	 * 
-	 * @return the lifespan
-	 * @deprecated Either this method no longer makes sense, or we need to wrap a
-	 *             {@link TraceObjectValue} instead. Even then, the attribute values can vary over
-	 *             the lifespan.
-	 */
-	@Deprecated(since = "11.3", forRemoval = true)
-	Lifespan getLifespan();
-
-	/**
-	 * Check if the breakpoint is present at the given snap
-	 * 
-	 * @param snap the snap
-	 * @return true if alive, false if not
-	 */
-	boolean isAlive(long snap);
-
-	/**
-	 * Get the placed snap of this breakpoint
-	 * 
-	 * @return the placed snap, or {@link Long#MIN_VALUE} for "since the beginning of time"
-	 */
-	long getPlacedSnap();
-
-	/**
-	 * Set the cleared snap of this breakpoint
-	 * 
-	 * @param clearedSnap the cleared snap, or {@link Long#MAX_VALUE} for "to the end of time"
-	 * @throws DuplicateNameException if extending the lifespan would cause a naming collision
-	 */
-	void setClearedSnap(long clearedSnap) throws DuplicateNameException;
-
-	/**
-	 * Get the cleared snap of this breakpoint
-	 * 
-	 * @return the cleared snap, or {@link Long#MAX_VALUE} for "to the end of time"
-	 */
-	long getClearedSnap();
-
-	/**
-	 * Split this breakpoint at the given snap, and set the later's fields.
-	 * 
-	 * <p>
-	 * This breakpoint's lifespan must contain the given snap. This method first creates a copy of
-	 * this breakpoint, replacing the copy's placed snap and additional fields. Then, it sets this
-	 * breakpoint's cleared snap to one less than the given snap, so that the two breakpoints do not
-	 * overlap.
-	 * 
-	 * <p>
-	 * Note the following special cases: 1) If the given snap is equal to the placed snap, this
-	 * method simply sets the fields on this breakpoint and returns this. 2) If the field values
-	 * indicate no change, this method does nothing and returns this breakpoint.
-	 * 
-	 * @implNote Listeners on breakpoint changes will see the added record before the lifespan
-	 *           change of the old record, despite those two records having the same path and
-	 *           overlapping in time. This makes it easier for such listeners to distinguish such
-	 *           splits from a breakpoint being cleared.
-	 * 
-	 * @param snap the placed snap for the later breakpoint
-	 * @param enabled true if the later breakpoint is enabled, false if disabled
-	 * @param kinds the kinds of the later breakpoint
-	 * @return the new breakpoint, or this breakpoint (see special case)
-	 */
-	TraceBreakpoint splitAndSet(long snap, boolean enabled, Collection<TraceBreakpointKind> kinds);
+	long getLength(long snap);
 
 	/**
 	 * Set whether this breakpoint was enabled or disabled
 	 * 
-	 * <p>
-	 * This change applies to the entire lifespan of this record. If a breakpoint is enabled for
-	 * some duration and then later disabled, this breakpoint should be split instead. See
-	 * {@link #splitAndSet(long,boolean, Collection)}.
-	 * 
+	 * @param snap the first effective snap
 	 * @param enabled true if enabled, false if disabled
 	 */
-	void setEnabled(boolean enabled);
+	void setEnabled(long snap, boolean enabled);
 
 	/**
 	 * Check whether this breakpoint is enabled or disabled at the given snap
@@ -192,13 +125,10 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	/**
 	 * Set whether this breakpoint is enabled or disabled for emulation
 	 * 
-	 * <p>
-	 * This change applies to the entire lifespan of the record. It's not intended to record a
-	 * history, but to toggle the breakpoint in the integrated emulator.
-	 * 
+	 * @param snap the snap
 	 * @param enabled true if enabled, false if disabled
 	 */
-	void setEmuEnabled(boolean enabled);
+	void setEmuEnabled(long snap, boolean enabled);
 
 	/**
 	 * Check whether this breakpoint is enabled or disabled for emulation at the given snap
@@ -212,14 +142,14 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * Set the kinds included in this breakpoint
 	 * 
 	 * <p>
-	 * See {@link #getKinds()}. Note that it is unusual for a breakpoint to change kinds during its
-	 * life. Nevertheless, in the course of recording a trace, it may happen, or at least appear to
-	 * happen. Rather than require the client to delete and re-create the breakpoint, this allows
-	 * the record to be updated. See also {@link #splitAndSet(long, boolean, Collection)}.
+	 * See {@link #getKinds(long)}. Note that it is unusual for a breakpoint to change kinds during
+	 * its life. Nevertheless, in the course of recording a trace, it may happen, or at least appear
+	 * to happen.
 	 * 
+	 * @param snap the snap
 	 * @param kinds the set of kinds
 	 */
-	void setKinds(Collection<TraceBreakpointKind> kinds);
+	void setKinds(long snap, Collection<TraceBreakpointKind> kinds);
 
 	/**
 	 * Get the kinds included in this breakpoint
@@ -228,9 +158,10 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * For example, an "access breakpoint" or "access watchpoint," depending on terminology, would
 	 * include both {@link TraceBreakpointKind#READ} and {@link TraceBreakpointKind#WRITE}.
 	 * 
+	 * @param snap the snap
 	 * @return the set of kinds
 	 */
-	Set<TraceBreakpointKind> getKinds();
+	Set<TraceBreakpointKind> getKinds(long snap);
 
 	/**
 	 * Get the set of threads to which this breakpoint's application is limited
@@ -238,23 +169,26 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * <p>
 	 * Note, an empty set here implies all contemporary live threads, i.e., the process.
 	 * 
+	 * @param snap the snap
 	 * @return the (possibly empty) set of affected threads
 	 */
-	Set<TraceThread> getThreads();
+	Set<TraceThread> getThreads(long snap);
 
 	/**
 	 * Set a comment on this breakpoint
 	 * 
+	 * @param snap the snap
 	 * @param comment the comment, possibly {@code null}
 	 */
-	void setComment(String comment);
+	void setComment(long snap, String comment);
 
 	/**
 	 * Get the comment on this breakpoint
 	 * 
+	 * @param snap the snap
 	 * @return the comment, possibly {@code null}
 	 */
-	String getComment();
+	String getComment(long snap);
 
 	/**
 	 * Set Sleigh source to replace the breakpointed instruction in emulation
@@ -281,16 +215,25 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * {@link PcodeEmulationLibrary#emu_swi()}
 	 * 
 	 * @see SleighUtils#UNCONDITIONAL_BREAK
+	 * @param snap the snap
 	 * @param sleigh the Sleigh source
 	 */
-	void setEmuSleigh(String sleigh);
+	void setEmuSleigh(long snap, String sleigh);
 
 	/**
 	 * Get the Sleigh source that replaces the breakpointed instruction in emulation
 	 * 
+	 * @param snap the snap
 	 * @return the Sleigh source
 	 */
-	String getEmuSleigh();
+	String getEmuSleigh(long snap);
+
+	/**
+	 * Remove this breakpoint from the given snap on
+	 * 
+	 * @param snap the snap
+	 */
+	void remove(long snap);
 
 	/**
 	 * Delete this breakpoint from the trace
@@ -298,7 +241,7 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	void delete();
 
 	/**
-	 * Check if the breakpoint is valid at the given snapshot
+	 * Check if the breakpoint is present at the given snapshot
 	 * 
 	 * <p>
 	 * In object mode, a breakpoint's life may be disjoint, so checking if the snap occurs between
@@ -310,4 +253,12 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * @return true if valid, false if not
 	 */
 	boolean isValid(long snap);
+
+	/**
+	 * Check if the breakpoint is present for any of the given span
+	 * 
+	 * @param span the span
+	 * @return true if its life intersects the span
+	 */
+	boolean isAlive(Lifespan span);
 }

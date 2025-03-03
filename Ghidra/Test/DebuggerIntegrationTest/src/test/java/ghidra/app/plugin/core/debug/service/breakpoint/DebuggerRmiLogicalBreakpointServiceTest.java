@@ -33,6 +33,8 @@ import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public class DebuggerRmiLogicalBreakpointServiceTest extends
@@ -83,6 +85,9 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		}
 		waitForDomainObject(trace);
 		rmiCx.setLastSnapshot(trace, snapshot.getKey());
+		TraceObject thread1 = Objects.requireNonNull(trace.getObjectManager()
+				.getObjectByCanonicalPath(KeyPath.parse("Processes[1].Threads[1]")));
+		rmiCx.synthActivate(thread1);
 	}
 
 	@Override
@@ -134,9 +139,11 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	protected void addTextMapping(TraceRmiTarget target, TraceObjectMemoryRegion text,
 			Program program) throws Throwable {
 		Trace trace = target.getTrace();
+		long snap = getSnap(target);
 		try (Transaction tx = trace.openTransaction("Add .text mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, text.getLifespan(), text.getMinAddress()),
+				new DefaultTraceLocation(trace, null, Lifespan.nowOn(snap),
+					text.getMinAddress(snap)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x1000,
 				false);
 		}
@@ -157,7 +164,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	@Override
 	protected void addTargetAccessBreakpoint(TraceRmiTarget target, TraceObjectMemoryRegion region)
 			throws Throwable {
-		Address min = region.getMinAddress().add(0x0123);
+		Address min = region.getMinAddress(getSnap(target)).add(0x0123);
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add access breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
@@ -168,12 +175,12 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 
 	@Override
 	protected void addTargetSoftwareBreakpoint(TraceRmiTarget target,
-			TraceObjectMemoryRegion region) throws Throwable {
-		Address min = region.getMinAddress().add(0x0123);
+			TraceObjectMemoryRegion region, int offset, Integer id) throws Throwable {
+		Address min = region.getMinAddress(getSnap(target)).add(offset);
 		Trace trace = target.getTrace();
 		try (Transaction tx = trace.openTransaction("Add software breakpoint")) {
 			addBreakpointAndLoc(trace.getObjectManager(), Lifespan.nowOn(target.getSnap()),
-				tb.range(min, min), TraceBreakpointKindSet.SW_EXECUTE);
+				tb.range(min, min), TraceBreakpointKindSet.SW_EXECUTE, id);
 		}
 		waitForDomainObject(trace);
 	}
@@ -181,11 +188,12 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	@Override
 	protected void removeTargetSoftwareBreakpoint(TraceRmiTarget target) throws Throwable {
 		Trace trace = target.getTrace();
-		Lifespan nowOn = Lifespan.nowOn(target.getSnap());
+		long snap = target.getSnap();
+		Lifespan nowOn = Lifespan.nowOn(snap);
 		List<TraceObjectBreakpointLocation> locsToDel = trace.getBreakpointManager()
 				.getAllBreakpoints()
 				.stream()
-				.filter(bp -> bp.getKinds().equals(TraceBreakpointKindSet.SW_EXECUTE))
+				.filter(bp -> bp.getKinds(snap).equals(TraceBreakpointKindSet.SW_EXECUTE))
 				.filter(bp -> bp instanceof TraceObjectBreakpointLocation)
 				.map(bp -> (TraceObjectBreakpointLocation) bp)
 				.toList();
@@ -208,9 +216,9 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 	}
 
 	@Override
-	protected TraceBreakpoint findLoc(Set<TraceBreakpoint> locs, int index) {
+	protected TraceBreakpoint findLoc(long snap, Set<TraceBreakpoint> locs, int index) {
 		return locs.stream()
-				.filter(b -> b.getName().equals(Integer.toString(index + 1)))
+				.filter(b -> b.getName(snap).equals(Integer.toString(index + 1)))
 				.findAny()
 				.orElseThrow();
 	}
@@ -223,7 +231,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		}
 		Map<String, Object> args = rmiMethodToggleBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.setEnabled(Lifespan.nowOn(0), expectedEn);
+			loc.setEnabled(Lifespan.nowOn(target.getSnap()), expectedEn);
 		}
 		waitForDomainObject(tb.trace);
 		rmiMethodToggleBreak.result(null);
@@ -240,7 +248,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		}
 		Map<String, Object> args = rmiMethodDeleteBreak.expect();
 		try (Transaction tx = tb.startTransaction()) {
-			loc.getObject().remove(Lifespan.nowOn(0));
+			loc.getObject().removeTree(Lifespan.nowOn(target.getSnap()));
 		}
 		waitForDomainObject(tb.trace);
 		rmiMethodDeleteBreak.result(null);

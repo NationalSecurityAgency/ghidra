@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,18 +81,19 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 			return score;
 		}
 
-		public double score(TraceSection section, DebuggerStaticMappingService service) {
+		public double score(TraceSection section, long snap, DebuggerStaticMappingService service) {
 			if (section == null) {
 				return score = 0;
 			}
-			return score = service.proposeSectionMap(section, program, block).computeScore();
+			return score = service.proposeSectionMap(section, snap, program, block).computeScore();
 		}
 
-		public double score(TraceMemoryRegion region, DebuggerStaticMappingService service) {
+		public double score(TraceMemoryRegion region, long snap,
+				DebuggerStaticMappingService service) {
 			if (region == null) {
 				return score = 0;
 			}
-			return score = service.proposeRegionMap(region, program, block).computeScore();
+			return score = service.proposeRegionMap(region, snap, program, block).computeScore();
 		}
 
 		public ProgramLocation getProgramLocation() {
@@ -201,15 +202,15 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 	}
 
 	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceSection section,
-			Collection<Program> programs) {
+			long snap, Collection<Program> programs) {
 		DebuggerStaticMappingService service = tool.getService(DebuggerStaticMappingService.class);
-		return chooseBlock(tool, programs, rec -> rec.score(section, service));
+		return chooseBlock(tool, programs, rec -> rec.score(section, snap, service));
 	}
 
 	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceMemoryRegion region,
-			Collection<Program> programs) {
+			long snap, Collection<Program> programs) {
 		DebuggerStaticMappingService service = tool.getService(DebuggerStaticMappingService.class);
-		return chooseBlock(tool, programs, rec -> rec.score(region, service));
+		return chooseBlock(tool, programs, rec -> rec.score(region, snap, service));
 	}
 
 	protected Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool,

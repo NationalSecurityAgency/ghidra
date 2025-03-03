@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,6 @@ public class DBTraceProgramViewRegisterMemory extends AbstractDBTraceProgramView
 		super(program);
 		this.space = space;
 		this.block = new DBTraceProgramViewRegisterMemoryBlock(program, space);
-		this.addressSet =
-			new AddressSet(new AddressRangeImpl(space.getAddressSpace().getMinAddress(),
-				space.getAddressSpace().getMaxAddress()));
 	}
 
 	@Override
@@ -39,8 +36,10 @@ public class DBTraceProgramViewRegisterMemory extends AbstractDBTraceProgramView
 	}
 
 	@Override
-	protected void recomputeAddressSet() {
+	protected AddressSetView computeAddressSet() {
 		// AddressSet is always full space
+		return new AddressSet(new AddressRangeImpl(space.getAddressSpace().getMinAddress(),
+			space.getAddressSpace().getMaxAddress()));
 	}
 
 	@Override
@@ -63,5 +62,10 @@ public class DBTraceProgramViewRegisterMemory extends AbstractDBTraceProgramView
 	public MemoryBlock[] getBlocks() {
 		// NOTE: Don't cache, to avoid external mutation.
 		return new MemoryBlock[] { block };
+	}
+
+	@Override
+	public AddressSetView getExecuteSet() {
+		return new AddressSet();
 	}
 }

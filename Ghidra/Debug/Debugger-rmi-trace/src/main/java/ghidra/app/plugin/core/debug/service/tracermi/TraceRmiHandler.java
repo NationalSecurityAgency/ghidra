@@ -938,7 +938,8 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 
 		// Want addresses satisfying {@code known | (readOnly & everKnown)}
 		TraceMemoryManager memoryManager = open.trace.getMemoryManager();
-		AddressSetView readOnly = memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite());
+		AddressSetView readOnly =
+			memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite(snap));
 		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(snap),
 			s -> s == TraceMemoryState.KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);

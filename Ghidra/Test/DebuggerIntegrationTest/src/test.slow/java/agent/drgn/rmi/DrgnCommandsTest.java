@@ -17,7 +17,7 @@ package agent.drgn.rmi;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -54,7 +54,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
 public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
-	
+
 	//@Test
 	public void testManual() throws Exception {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
@@ -156,7 +156,7 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 		}
 	}
 
-	@Test 
+	@Test
 	public void testStopTrace() throws Exception {
 		runThrowError(addr -> """
 				%s
@@ -220,26 +220,25 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			extractOutSection(out, "---Disconnect---"));
 	}
 
-	@Test 
+	@Test
 	public void testLcsp() throws Exception {
-		String out = runThrowError(addr ->
-					"""
-					%s
-					ghidra_trace_connect('%s')
-					print('---Import---')
-					ghidra_trace_info_lcsp()
-					print('---Create---')
-					ghidra_trace_create()
-					print('---File---')
-					ghidra_trace_info_lcsp()
-					util.set_convenience_variable('ghidra-language','DATA:BE:64:default')
-					print('---Language---')
-					ghidra_trace_info_lcsp()
-					util.set_convenience_variable('ghidra-compiler','posStack')
-					print('---Compiler---')
-					ghidra_trace_info_lcsp()
-					quit()
-					""".formatted(PREAMBLE, addr));
+		String out = runThrowError(addr -> """
+				%s
+				ghidra_trace_connect('%s')
+				print('---Import---')
+				ghidra_trace_info_lcsp()
+				print('---Create---')
+				ghidra_trace_create()
+				print('---File---')
+				ghidra_trace_info_lcsp()
+				util.set_convenience_variable('ghidra-language','DATA:BE:64:default')
+				print('---Language---')
+				ghidra_trace_info_lcsp()
+				util.set_convenience_variable('ghidra-compiler','posStack')
+				print('---Compiler---')
+				ghidra_trace_info_lcsp()
+				quit()
+				""".formatted(PREAMBLE, addr));
 
 		assertEquals("""
 				Selected Ghidra language: x86:LE:64:default
@@ -858,8 +857,8 @@ public class DrgnCommandsTest extends AbstractDrgnTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modBash =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("helloWorld")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("helloWorld")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 		}
 	}
 

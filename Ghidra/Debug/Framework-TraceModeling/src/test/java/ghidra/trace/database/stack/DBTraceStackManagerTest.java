@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,9 +62,9 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(1, true);
-			stack.setDepth(3, false);
-			stack.setDepth(5, true);
+			stack.setDepth(0, 1, true);
+			stack.setDepth(0, 3, false);
+			stack.setDepth(0, 5, true);
 		}
 		int expectedLevel = 0;
 		for (TraceStackFrame frame : stack.getFrames(0)) {
@@ -73,7 +73,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		assertEquals(5, expectedLevel);
 
 		try (Transaction tx = b.startTransaction()) {
-			stack.setDepth(3, true);
+			stack.setDepth(0, 3, true);
 		}
 
 		expectedLevel = 0;
@@ -83,7 +83,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		assertEquals(3, expectedLevel);
 
 		try (Transaction tx = b.startTransaction()) {
-			stack.setDepth(1, false);
+			stack.setDepth(0, 1, false);
 		}
 
 		expectedLevel = 0;
@@ -137,16 +137,16 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 
 			TraceStack stack1 = stackManager.getStack(thread, 0, true);
-			stack1.setDepth(2, true);
-			frame1a = stack1.getFrame(0, false);
-			frame1b = stack1.getFrame(1, false);
+			stack1.setDepth(0, 2, true);
+			frame1a = stack1.getFrame(0, 0, false);
+			frame1b = stack1.getFrame(0, 1, false);
 			frame1a.setProgramCounter(Lifespan.nowOn(0), b.addr(0x0040100));
 			frame1b.setProgramCounter(Lifespan.nowOn(0), b.addr(0x0040300));
 
 			TraceStack stack2 = stackManager.getStack(thread, 1, true);
-			stack2.setDepth(2, true);
-			frame2a = stack2.getFrame(0, false);
-			frame2b = stack2.getFrame(1, false);
+			stack2.setDepth(0, 2, true);
+			frame2a = stack2.getFrame(0, 0, false);
+			frame2b = stack2.getFrame(0, 1, false);
 			frame2a.setProgramCounter(Lifespan.nowOn(1), b.addr(0x0040200));
 			frame2b.setProgramCounter(Lifespan.nowOn(1), b.addr(0x0040400));
 		}
@@ -172,28 +172,16 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	}
 
 	@Test
-	public void testStackGetSnap() throws Exception {
-		TraceThread thread;
-		TraceStack stack;
-		try (Transaction tx = b.startTransaction()) {
-			thread = b.getOrAddThread("Threads[1]", 0);
-			stack = stackManager.getStack(thread, 2, true);
-		}
-
-		assertEquals(2, stack.getSnap());
-	}
-
-	@Test
 	public void testStackGetDepth() throws Exception {
 		TraceThread thread;
 		TraceStack stack;
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(2, true);
+			stack.setDepth(0, 2, true);
 		}
 
-		assertEquals(2, stack.getDepth());
+		assertEquals(2, stack.getDepth(0));
 	}
 
 	@Test
@@ -203,13 +191,13 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(2, true);
+			stack.setDepth(0, 2, true);
 		}
 
 		List<TraceStackFrame> frames = stack.getFrames(0);
 		assertEquals(2, frames.size());
-		assertEquals(stack.getFrame(0, false), frames.get(0));
-		assertEquals(stack.getFrame(1, false), frames.get(1));
+		assertEquals(stack.getFrame(0, 0, false), frames.get(0));
+		assertEquals(stack.getFrame(0, 1, false), frames.get(1));
 	}
 
 	@Test
@@ -219,7 +207,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(2, true);
+			stack.setDepth(0, 2, true);
 		}
 
 		assertFalse(stack.isDeleted());
@@ -242,7 +230,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			frame = stack.getFrame(0, true);
+			frame = stack.getFrame(0, 0, true);
 		}
 
 		assertEquals(stack, frame.getStack());
@@ -257,9 +245,9 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(2, true);
-			frame0 = stack.getFrame(0, false);
-			frame1 = stack.getFrame(1, false);
+			stack.setDepth(0, 2, true);
+			frame0 = stack.getFrame(0, 0, false);
+			frame1 = stack.getFrame(0, 1, false);
 		}
 
 		assertEquals(0, frame0.getLevel());
@@ -274,8 +262,8 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(1, true);
-			frame = stack.getFrame(0, false);
+			stack.setDepth(0, 1, true);
+			frame = stack.getFrame(0, 0, false);
 
 			assertNull(frame.getProgramCounter(Long.MAX_VALUE));
 			frame.setProgramCounter(Lifespan.ALL, b.addr(0x00400123));
@@ -292,8 +280,8 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
-			stack.setDepth(1, true);
-			frame = stack.getFrame(0, false);
+			stack.setDepth(0, 1, true);
+			frame = stack.getFrame(0, 0, false);
 			// NB. Object-mode sets comment at pc in listing, not on frame itself
 			frame.setProgramCounter(Lifespan.ALL, b.addr(0x00400123));
 

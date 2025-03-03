@@ -27,7 +27,6 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInterface {
 
@@ -103,9 +102,8 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	}
 
 	@Override
-	public String getName() {
-		return TraceObjectInterfaceUtils.getValue(object, getCreationSnap(), KEY_DISPLAY,
-			String.class, "");
+	public String getName(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_DISPLAY, String.class, "");
 	}
 
 	@Override
@@ -114,69 +112,46 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setName(computeSpan(), name);
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
-	public void setCreationSnap(long creationSnap) throws DuplicateNameException {
+	public void setComment(long snap, String comment) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(creationSnap, getDestructionSnap()));
+			object.setValue(Lifespan.nowOn(snap), KEY_COMMENT, comment);
 		}
 	}
 
 	@Override
-	public long getCreationSnap() {
-		return computeMinSnap();
-	}
-
-	@Override
-	public void setDestructionSnap(long destructionSnap) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(getCreationSnap(), destructionSnap));
-		}
-	}
-
-	@Override
-	public long getDestructionSnap() {
-		return computeMaxSnap();
-	}
-
-	@Override
-	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
-		TraceObjectInterfaceUtils.setLifespan(TraceObjectThread.class, object, lifespan);
-	}
-
-	@Override
-	public Lifespan getLifespan() {
-		return computeSpan();
-	}
-
-	@Override
-	public void setComment(String comment) {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), KEY_COMMENT, comment);
-		}
-	}
-
-	@Override
-	public String getComment() {
-		return TraceObjectInterfaceUtils.getValue(object, getCreationSnap(), KEY_COMMENT,
-			String.class, "");
+	public String getComment(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, KEY_COMMENT, String.class, "");
 	}
 
 	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.removeTree(computeSpan());
+			object.removeTree(Lifespan.ALL);
+		}
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		return object.getCanonicalParent(snap) != null;
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public boolean isAlive(Lifespan span) {
+		return object.isAlive(span);
 	}
 
 	@Override

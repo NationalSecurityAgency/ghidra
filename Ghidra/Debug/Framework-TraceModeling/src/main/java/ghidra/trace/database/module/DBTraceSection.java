@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import db.DBRecord;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
@@ -129,7 +130,7 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 	}
 
 	@Override
-	public void setName(String name) throws DuplicateNameException {
+	public void setName(long snap, String name) throws DuplicateNameException {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			if (Objects.equals(this.name, name)) {
 				return;
@@ -146,9 +147,16 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 	}
 
 	@Override
-	public String getName() {
+	public String getName(long snap) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return name;
+		}
+	}
+
+	@Override
+	public AddressRange getRange(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return range;
 		}
 	}
 
@@ -156,5 +164,24 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 	public void delete() {
 		space.sectionMapSpace.deleteData(this);
 		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_DELETED, null, this));
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
+			if (snap <= lifespan.lmin()) {
+				delete();
+			}
+			else if (snap <= lifespan.lmax()) {
+				doSetLifespan(lifespan.withMax(snap - 1));
+			}
+		}
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return lifespan.contains(snap);
+		}
 	}
 }

@@ -193,7 +193,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			}
 			AddressSet sel = new AddressSet();
 			for (TraceMemoryRegion s : regions) {
-				sel.add(s.getRange());
+				sel.add(s.getRange(current.getSnap()));
 			}
 			ProgramSelection ps = new ProgramSelection(sel);
 			listingService.setCurrentSelection(ps);
@@ -403,7 +403,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		Map<?, RegionMapProposal> map = staticMappingService.proposeRegionMaps(regions,
-			List.of(programManager.getAllOpenPrograms()));
+			current.getSnap(), List.of(programManager.getAllOpenPrograms()));
 		Collection<RegionMapEntry> proposal = MapProposal.flatten(map.values());
 		promptRegionProposal(proposal);
 	}
@@ -416,7 +416,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return;
 		}
-		RegionMapProposal map = staticMappingService.proposeRegionMap(regions, program);
+		RegionMapProposal map =
+			staticMappingService.proposeRegionMap(regions, current.getSnap(), program);
 		Collection<RegionMapEntry> proposal = map.computeMap().values();
 		promptRegionProposal(proposal);
 	}
@@ -431,7 +432,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		RegionMapProposal map =
-			staticMappingService.proposeRegionMap(region, location.getProgram(), block);
+			staticMappingService.proposeRegionMap(region, current.getSnap(), location.getProgram(),
+				block);
 		promptRegionProposal(map.computeMap().values());
 	}
 
@@ -548,7 +550,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			Msg.warn(this, "No program manager!");
 			return null;
 		}
-		return blockChooserDialog.chooseBlock(getTool(), region,
+		return blockChooserDialog.chooseBlock(getTool(), region, current.getSnap(),
 			List.of(programManager.getAllOpenPrograms()));
 	}
 

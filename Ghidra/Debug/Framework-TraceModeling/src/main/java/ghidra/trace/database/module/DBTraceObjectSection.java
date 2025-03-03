@@ -79,9 +79,6 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	private final DBTraceObject object;
 	private final SectionTranslator translator;
 
-	// Keep copies here for when the object gets invalidated
-	private AddressRange range;
-
 	public DBTraceObjectSection(DBTraceObject object) {
 		this.object = object;
 
@@ -113,53 +110,52 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setName(computeSpan(), name);
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
-	public String getName() {
+	public String getName(long snap) {
 		String key = object.getCanonicalPath().key();
 		String index = KeyPath.parseIfIndex(key);
-		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TraceObjectInterface.KEY_DISPLAY, String.class, index);
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectInterface.KEY_DISPLAY,
+			String.class, index);
 	}
 
 	@Override
 	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TraceObjectModule.KEY_RANGE, range);
-			this.range = range;
 		}
 	}
 
 	@Override
-	public AddressRange getRange() {
+	public AddressRange getRange(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			if (object.getLife().isEmpty()) {
-				return range;
-			}
-			return range = TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-				TraceObjectModule.KEY_RANGE, AddressRange.class, range);
+			return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectModule.KEY_RANGE,
+				AddressRange.class, null);
 		}
-	}
-
-	@Override
-	public Lifespan computeSpan() {
-		Lifespan span = DBTraceObjectInterface.super.computeSpan();
-		if (span != null) {
-			return span;
-		}
-		return getModule().computeSpan();
 	}
 
 	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.removeTree(computeSpan());
+			object.removeTree(Lifespan.ALL);
 		}
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
+		}
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		return object.isAlive(snap);
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -620,23 +620,26 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 
 	protected String computeRegionString(AddressRange rng) {
 		TraceMemoryManager mm = source.getTrace().getMemoryManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceMemoryRegion> regions =
-			mm.getRegionsIntersecting(Lifespan.at(source.getSnap()), rng);
-		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName();
+			mm.getRegionsIntersecting(Lifespan.at(snap), rng);
+		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName(snap);
 	}
 
 	protected String computeModulesString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceModule> modules =
-			mm.getModulesIntersecting(Lifespan.at(source.getSnap()), rng);
-		return modules.stream().map(m -> m.getName()).collect(Collectors.joining(","));
+			mm.getModulesIntersecting(Lifespan.at(snap), rng);
+		return modules.stream().map(m -> m.getName(snap)).collect(Collectors.joining(","));
 	}
 
 	protected String computeSectionsString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
+		long snap = source.getSnap();
 		Collection<? extends TraceSection> sections =
-			mm.getSectionsIntersecting(Lifespan.at(source.getSnap()), rng);
-		return sections.stream().map(s -> s.getName()).collect(Collectors.joining(","));
+			mm.getSectionsIntersecting(Lifespan.at(snap), rng);
+		return sections.stream().map(s -> s.getName(snap)).collect(Collectors.joining(","));
 	}
 
 	protected void createEntry(Collection<RangeEntry> result, AddressRange srcRange,
@@ -692,10 +695,11 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	protected List<AddressRange> breakRangeByRegions(AddressRange srcRange) {
 		AddressSet remains = new AddressSet(srcRange);
 		List<AddressRange> result = new ArrayList<>();
+		long snap = source.getSnap();
 		for (TraceMemoryRegion region : source.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(Lifespan.at(source.getSnap()), srcRange)) {
-			AddressRange range = region.getRange().intersect(srcRange);
+				.getRegionsIntersecting(Lifespan.at(snap), srcRange)) {
+			AddressRange range = region.getRange(snap).intersect(srcRange);
 			result.add(range);
 			remains.delete(range);
 		}

@@ -192,9 +192,10 @@ class TraceBreakpointSet {
 	 */
 	public String computeSleigh() {
 		String sleigh = null;
+		long snap = getSnap();
 		synchronized (breakpoints) {
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				String s = bpt.obj.getEmuSleigh();
+				String s = bpt.obj.getEmuSleigh(snap);
 				if (sleigh != null && !sleigh.equals(s)) {
 					return null;
 				}
@@ -211,10 +212,11 @@ class TraceBreakpointSet {
 	 */
 	public void setEmuSleigh(String emuSleigh) {
 		this.emuSleigh = emuSleigh;
+		long snap = getSnap();
 		try (Transaction tx = trace.openTransaction("Set breakpoint Sleigh")) {
 			synchronized (breakpoints) {
 				for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-					bpt.obj.setEmuSleigh(emuSleigh);
+					bpt.obj.setEmuSleigh(snap, emuSleigh);
 				}
 			}
 		}
@@ -253,9 +255,10 @@ class TraceBreakpointSet {
 	 * @return true if the set actually changed as a result
 	 */
 	public boolean add(TraceBreakpoint bpt) {
-		if (SleighUtils.UNCONDITIONAL_BREAK.equals(bpt.getEmuSleigh()) && emuSleigh != null) {
+		long snap = getSnap();
+		if (SleighUtils.UNCONDITIONAL_BREAK.equals(bpt.getEmuSleigh(snap)) && emuSleigh != null) {
 			try (Transaction tx = trace.openTransaction("Set breakpoint Sleigh")) {
-				bpt.setEmuSleigh(emuSleigh);
+				bpt.setEmuSleigh(snap, emuSleigh);
 			}
 		}
 		synchronized (breakpoints) {
@@ -276,7 +279,7 @@ class TraceBreakpointSet {
 		if (trace != bpt.getTrace()) {
 			return false;
 		}
-		if (!address.equals(bpt.getMinAddress())) {
+		if (!address.equals(bpt.getMinAddress(getSnap()))) {
 			return false;
 		}
 		return true;
@@ -365,7 +368,7 @@ class TraceBreakpointSet {
 	private void planEnableEmu(BreakpointActionSet actions) {
 		synchronized (breakpoints) {
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				actions.planEnableEmu(bpt.obj);
+				actions.planEnableEmu(bpt.obj, getSnap());
 			}
 		}
 	}
@@ -399,7 +402,7 @@ class TraceBreakpointSet {
 	private void planDisableEmu(BreakpointActionSet actions) {
 		synchronized (breakpoints) {
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				actions.planDisableEmu(bpt.obj);
+				actions.planDisableEmu(bpt.obj, getSnap());
 			}
 		}
 	}
@@ -433,7 +436,7 @@ class TraceBreakpointSet {
 	private void planDeleteEmu(BreakpointActionSet actions) {
 		synchronized (breakpoints) {
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				actions.planDeleteEmu(bpt.obj);
+				actions.planDeleteEmu(bpt.obj, getSnap());
 			}
 		}
 	}

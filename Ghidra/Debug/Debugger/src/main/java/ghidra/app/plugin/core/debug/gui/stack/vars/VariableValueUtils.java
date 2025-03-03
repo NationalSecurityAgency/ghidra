@@ -269,9 +269,10 @@ public enum VariableValueUtils {
 		RegisterValue spRV = regs.getValue(platform, viewSnap, sp);
 		Address spVal = cSpec.getStackBaseSpace().getAddress(spRV.getUnsignedValue().longValue());
 		Address max;
-		TraceMemoryRegion stackRegion = mem.getRegionContaining(coordinates.getSnap(), spVal);
+		long snap = coordinates.getSnap();
+		TraceMemoryRegion stackRegion = mem.getRegionContaining(snap, spVal);
 		if (stackRegion != null) {
-			max = stackRegion.getMaxAddress();
+			max = stackRegion.getMaxAddress(snap);
 		}
 		else {
 			long toMax = spVal.getAddressSpace().getMaxAddress().subtract(spVal);
@@ -408,7 +409,7 @@ public enum VariableValueUtils {
 		if (stack == null) {
 			return null;
 		}
-		TraceStackFrame frame = stack.getFrame(0, false);
+		TraceStackFrame frame = stack.getFrame(snap, 0, false);
 		if (frame == null) {
 			return null;
 		}

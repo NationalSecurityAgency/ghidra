@@ -82,10 +82,6 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	private final DBTraceObject object;
 	private final ModuleChangeTranslator translator;
 
-	// Keep copies here for when the object gets invalidated
-	private AddressRange range;
-	private Lifespan lifespan;
-
 	public DBTraceObjectModule(DBTraceObject object) {
 		this.object = object;
 
@@ -98,8 +94,8 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	}
 
 	@Override
-	public TraceSection addSection(String sectionPath, String sectionName, AddressRange range)
-			throws DuplicateNameException {
+	public TraceSection addSection(long snap, String sectionPath, String sectionName,
+			AddressRange range) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			DBTraceObjectManager manager = object.getManager();
 			KeyPath sectionKeyList = KeyPath.parse(sectionPath);
@@ -107,7 +103,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 				throw new IllegalArgumentException(
 					"Section path must be a successor of this module's path");
 			}
-			return manager.addSection(sectionPath, sectionName, getLifespan(), range);
+			return manager.addSection(sectionPath, sectionName, Lifespan.nowOn(snap), range);
 		}
 	}
 
@@ -122,142 +118,102 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setName(computeSpan(), name);
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
-	public String getName() {
-		return TraceObjectInterfaceUtils.getValue(object, getLoadedSnap(),
-			TraceObjectModule.KEY_MODULE_NAME, String.class, "");
+	public String getName(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectModule.KEY_MODULE_NAME,
+			String.class, "");
 	}
 
 	@Override
 	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TraceObjectModule.KEY_RANGE, range);
-			this.range = range;
 		}
 	}
 
 	@Override
-	public void setRange(AddressRange range) {
+	public void setRange(long snap, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(computeSpan(), range);
+			setRange(Lifespan.nowOn(snap), range);
 		}
 	}
 
 	@Override
-	public AddressRange getRange() {
+	public AddressRange getRange(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			if (object.getLife().isEmpty()) {
-				return range;
-			}
-			return range = TraceObjectInterfaceUtils.getValue(object, getLoadedSnap(),
-				TraceObjectModule.KEY_RANGE, AddressRange.class, range);
+			return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectModule.KEY_RANGE,
+				AddressRange.class, null);
 		}
 	}
 
 	@Override
-	public void setBase(Address base) {
+	public void setBase(long snap, Address base) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(DBTraceUtils.toRange(base, getMaxAddress()));
+			setRange(snap, DBTraceUtils.toRange(base, getMaxAddress(snap)));
 		}
 	}
 
 	@Override
-	public Address getBase() {
-		AddressRange range = getRange();
+	public Address getBase(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? null : range.getMinAddress();
 	}
 
 	@Override
-	public void setMaxAddress(Address max) {
+	public void setMaxAddress(long snap, Address max) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(DBTraceUtils.toRange(getBase(), max));
+			setRange(snap, DBTraceUtils.toRange(getBase(snap), max));
 		}
 	}
 
 	@Override
-	public Address getMaxAddress() {
-		AddressRange range = getRange();
+	public Address getMaxAddress(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? null : range.getMaxAddress();
 	}
 
 	@Override
-	public void setLength(long length) throws AddressOverflowException {
+	public void setLength(long snap, long length) throws AddressOverflowException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(new AddressRangeImpl(getBase(), length));
+			setRange(snap, new AddressRangeImpl(getBase(snap), length));
 		}
 	}
 
 	@Override
-	public long getLength() {
-		return getRange().getLength();
+	public long getLength(long snap) {
+		AddressRange range = getRange(snap);
+		return range == null ? 0 : range.getLength();
 	}
 
 	@Override
-	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			TraceObjectInterfaceUtils.setLifespan(TraceObjectModule.class, object, lifespan);
-			this.lifespan = lifespan;
-			for (TraceObjectSection section : getSections()) {
-				TraceObjectInterfaceUtils.setLifespan(TraceObjectSection.class, section.getObject(),
-					lifespan);
-			}
-		}
-	}
-
-	@Override
-	public Lifespan getLifespan() {
+	public Collection<? extends TraceObjectSection> getSections(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			Lifespan computed = computeSpan();
-			if (computed != null) {
-				lifespan = computed;
-			}
-			return lifespan;
-		}
-	}
-
-	@Override
-	public void setLoadedSnap(long loadedSnap) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(loadedSnap, getUnloadedSnap()));
-		}
-	}
-
-	@Override
-	public long getLoadedSnap() {
-		return computeMinSnap();
-	}
-
-	@Override
-	public void setUnloadedSnap(long unloadedSnap) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(getLoadedSnap(), unloadedSnap));
-		}
-	}
-
-	@Override
-	public long getUnloadedSnap() {
-		return computeMaxSnap();
-	}
-
-	@Override
-	public Collection<? extends TraceObjectSection> getSections() {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.querySuccessorsInterface(getLifespan(), TraceObjectSection.class, true)
+			return object
+					.querySuccessorsInterface(Lifespan.at(snap), TraceObjectSection.class, true)
 					.collect(Collectors.toSet());
 		}
 	}
 
 	@Override
-	public TraceObjectSection getSectionByName(String sectionName) {
+	public Collection<? extends TraceSection> getAllSections() {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return object
+					.querySuccessorsInterface(Lifespan.ALL, TraceObjectSection.class, true)
+					.collect(Collectors.toSet());
+		}
+	}
+
+	@Override
+	public TraceObjectSection getSectionByName(long snap, String sectionName) {
 		PathFilter filter = object.getSchema().searchFor(TraceObjectSection.class, true);
 		PathFilter applied = filter.applyKeys(Align.LEFT, List.of(sectionName));
-		return object.getSuccessors(getLifespan(), applied)
+		return object.getSuccessors(Lifespan.at(snap), applied)
 				.map(p -> p.getDestination(object).queryInterface(TraceObjectSection.class))
 				.findAny()
 				.orElse(null);
@@ -266,8 +222,25 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.removeTree(computeSpan());
+			object.removeTree(Lifespan.ALL);
 		}
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
+		}
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public boolean isAlive(Lifespan span) {
+		return object.isAlive(span);
 	}
 
 	@Override

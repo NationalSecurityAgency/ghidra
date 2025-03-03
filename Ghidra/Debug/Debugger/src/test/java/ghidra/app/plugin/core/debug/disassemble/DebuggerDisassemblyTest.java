@@ -65,8 +65,8 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.iface.TraceObjectEnvironment;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -228,7 +228,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceStackManager manager = tb.trace.getStackManager();
 			TraceStack stack = manager.getStack(thread, snap, true);
-			TraceStackFrame frame = stack.getFrame(0, true);
+			TraceStackFrame frame = stack.getFrame(snap, 0, true);
 			frame.setProgramCounter(Lifespan.nowOn(snap), tb.addr(offset));
 		}
 	}

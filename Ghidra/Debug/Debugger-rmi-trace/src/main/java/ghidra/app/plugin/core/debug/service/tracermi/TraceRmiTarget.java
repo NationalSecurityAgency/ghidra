@@ -1334,7 +1334,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		RemoteParameter paramFrame = writeReg.params.get("frame");
 		if (paramFrame != null) {
 			TraceStack stack = trace.getStackManager().getLatestStack(thread, getSnap());
-			TraceStackFrame frame = stack.getFrame(frameLevel, false);
+			TraceStackFrame frame = stack.getFrame(getSnap(), frameLevel, false);
 			if (!(frame instanceof TraceObjectStackFrame tof)) {
 				Msg.error(this, "Non-object trace with TraceRmi!");
 				return AsyncUtils.nil();
@@ -1568,10 +1568,11 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public boolean isBreakpointValid(TraceBreakpoint breakpoint) {
-		if (breakpoint.getName().endsWith("emu-" + breakpoint.getMinAddress())) {
+		long snap = getSnap();
+		if (breakpoint.getName(snap).endsWith("emu-" + breakpoint.getMinAddress(snap))) {
 			return false;
 		}
-		if (!breakpoint.isAlive(getSnap())) {
+		if (!breakpoint.isValid(snap)) {
 			return false;
 		}
 		return true;

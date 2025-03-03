@@ -21,7 +21,6 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.info.TraceObjectInfo;
-import ghidra.util.exception.DuplicateNameException;
 
 @TraceObjectInfo(
 	schemaName = "BreakpointLocation",
@@ -40,8 +39,6 @@ public interface TraceObjectBreakpointLocation extends TraceBreakpoint, TraceObj
 	String KEY_EMU_SLEIGH = "_emu_sleigh";
 
 	TraceObjectBreakpointSpec getSpecification();
-
-	void setLifespan(Lifespan lifespan) throws DuplicateNameException;
 
 	void setRange(Lifespan lifespan, AddressRange range);
 
