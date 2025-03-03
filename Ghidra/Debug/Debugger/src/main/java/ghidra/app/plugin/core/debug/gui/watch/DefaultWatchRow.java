@@ -133,7 +133,14 @@ public class DefaultWatchRow implements WatchRow {
 			}
 			// Do not accidentally hang the Swing thread on evaluation
 			WatchValue fullValue = compiled.evaluate(executor);
-			byte[] prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
+			byte[] prevValue;
+			try {
+				prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
+			}
+			catch (Exception e) {
+				Msg.trace(this, "Error in evaluating previous value. Ignoring.", e);
+				prevValue = null;
+			}
 			synchronized (lock) {
 				if (executor != provider.asyncWatchExecutor) {
 					return;
