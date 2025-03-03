@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,9 @@ import java.util.Map;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.modules.SectionMapProposal;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 
@@ -50,8 +48,9 @@ public class DefaultSectionMapProposal
 		 * @param program the program containing the matched block
 		 * @param block the matched memory block
 		 */
-		protected DefaultSectionMapEntry(TraceSection section, Program program, MemoryBlock block) {
-			super(section.getTrace(), section, program, block);
+		protected DefaultSectionMapEntry(TraceSection section, long snap, Program program,
+				MemoryBlock block) {
+			super(section.getTrace(), section, snap, program, block);
 		}
 
 		@Override
@@ -60,18 +59,28 @@ public class DefaultSectionMapProposal
 		}
 
 		@Override
+		public String getModuleName() {
+			return getModule().getName(snap);
+		}
+
+		@Override
 		public TraceSection getSection() {
 			return getFromObject();
 		}
 
 		@Override
-		public Lifespan getFromLifespan() {
-			return getModule().getLifespan();
+		public String getSectionName() {
+			return getSection().getName(snap);
+		}
+
+		@Override
+		public Address getSectionStart() {
+			return getSection().getStart(snap);
 		}
 
 		@Override
 		public AddressRange getFromRange() {
-			return getSection().getRange();
+			return getSection().getRange(snap);
 		}
 
 		@Override
@@ -91,13 +100,13 @@ public class DefaultSectionMapProposal
 	}
 
 	protected static class SectionMatcher extends Matcher<TraceSection, MemoryBlock> {
-		public SectionMatcher(TraceSection section, MemoryBlock block) {
-			super(section, block);
+		public SectionMatcher(TraceSection section, long snap, MemoryBlock block) {
+			super(section, snap, block);
 		}
 
 		@Override
 		protected AddressRange getFromRange() {
-			return fromObject == null ? null : fromObject.getRange();
+			return fromObject == null ? null : fromObject.getRange(snap);
 		}
 
 		@Override
@@ -109,14 +118,19 @@ public class DefaultSectionMapProposal
 
 	protected static class SectionMatcherMap
 			extends MatcherMap<String, TraceSection, MemoryBlock, SectionMatcher> {
+
+		public SectionMatcherMap(long snap) {
+			super(snap);
+		}
+
 		@Override
 		protected SectionMatcher newMatcher(TraceSection section, MemoryBlock block) {
-			return new SectionMatcher(section, block);
+			return new SectionMatcher(section, snap, block);
 		}
 
 		@Override
 		protected String getFromJoinKey(TraceSection section) {
-			return section.getName();
+			return section.getName(snap);
 		}
 
 		@Override
@@ -126,18 +140,27 @@ public class DefaultSectionMapProposal
 	}
 
 	protected final TraceModule module;
-	protected final SectionMatcherMap matchers = new SectionMatcherMap();
+	protected final long snap;
 
-	protected DefaultSectionMapProposal(TraceModule module, Program program) {
+	protected final SectionMatcherMap matchers;
+
+	protected DefaultSectionMapProposal(TraceModule module, long snap, Program program) {
 		super(module.getTrace(), program);
 		this.module = module;
+		this.snap = snap;
+
+		this.matchers = new SectionMatcherMap(snap);
 		processModule();
 		processProgram();
 	}
 
-	protected DefaultSectionMapProposal(TraceSection section, Program program, MemoryBlock block) {
+	protected DefaultSectionMapProposal(TraceSection section, long snap, Program program,
+			MemoryBlock block) {
 		super(section.getTrace(), program);
 		this.module = section.getModule();
+		this.snap = snap;
+
+		this.matchers = new SectionMatcherMap(snap);
 		matchers.processFromObject(section);
 		matchers.processToObject(block);
 	}
@@ -148,7 +171,7 @@ public class DefaultSectionMapProposal
 	}
 
 	private void processModule() {
-		for (TraceSection section : module.getSections()) {
+		for (TraceSection section : module.getSections(snap)) {
 			matchers.processFromObject(section);
 		}
 	}
@@ -166,8 +189,8 @@ public class DefaultSectionMapProposal
 
 	@Override
 	public Map<TraceSection, SectionMapEntry> computeMap() {
-		return matchers
-				.computeMap(m -> new DefaultSectionMapEntry(m.fromObject, program, m.toObject));
+		return matchers.computeMap(
+			m -> new DefaultSectionMapEntry(m.fromObject, snap, program, m.toObject));
 	}
 
 	@Override

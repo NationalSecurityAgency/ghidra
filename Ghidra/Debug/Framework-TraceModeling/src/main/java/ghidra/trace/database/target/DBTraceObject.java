@@ -193,6 +193,16 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
+	@Override
+	public boolean isAlive(Lifespan span) {
+		try (LockHold hold = manager.trace.lockRead()) {
+			LifeSet result = ensureCachedLife();
+			synchronized (result) {
+				return result.intersects(span);
+			}
+		}
+	}
+
 	protected DBTraceObject doCreateCanonicalParentObject() {
 		return manager.doCreateObject(path.parent());
 	}

@@ -64,6 +64,9 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	protected static final int TIMEOUT_SECONDS = 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
+
 	protected static boolean didSetupPython = false;
 
 	public static final String INSTRUMENT_STATE = """
@@ -189,8 +192,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		}
 	}
 
-	protected record ExecInPython(Process python, CompletableFuture<PythonResult> future) {
-	}
+	protected record ExecInPython(Process python, CompletableFuture<PythonResult> future) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInPython execInPython(String script) throws IOException {
@@ -349,8 +351,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		return xout.split(head)[1].split("---")[0].replace("(python)", "").trim();
 	}
 
-	record MemDump(long address, byte[] data) {
-	}
+	record MemDump(long address, byte[] data) {}
 
 	protected MemDump parseHexDump(String dump) throws IOException {
 		// First, get the address. Assume contiguous, so only need top line.
@@ -374,8 +375,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		return new MemDump(address, buf.toByteArray());
 	}
 
-	record RegDump() {
-	}
+	record RegDump() {}
 
 	protected RegDump parseRegDump(String dump) {
 		return new RegDump();

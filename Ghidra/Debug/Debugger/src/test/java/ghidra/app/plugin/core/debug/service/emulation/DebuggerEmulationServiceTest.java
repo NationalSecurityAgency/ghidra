@@ -493,7 +493,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), addrI1, Set.of(thread),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
 			// Force "partial instruction"
-			tb.setEmuSleigh("""
+			tb.setEmuSleigh(0, """
 					r1 = 0xbeef;
 					emu_swi();
 					emu_exec_decoded();
@@ -567,7 +567,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), addrI1, Set.of(thread),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
 			// Force "partial instruction"
-			tb.setEmuSleigh("""
+			tb.setEmuSleigh(0, """
 					r1 = 0xbeef;
 					emu_swi();
 					emu_exec_decoded();
@@ -633,7 +633,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), addrI1, Set.of(thread),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
 			// Force "partial instruction"
-			tb.setEmuSleigh("""
+			tb.setEmuSleigh(0, """
 					r1 = 0xbeef;
 					pcodeop_one(r1);
 					emu_exec_decoded();
@@ -707,7 +707,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 			TraceBreakpoint tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
-			tb.setEmuSleigh("""
+			tb.setEmuSleigh(0, """
 					r1 = 0x5678;
 					emu_swi();
 					emu_exec_decoded();
@@ -852,7 +852,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 			TraceBreakpoint tb = trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
-			tb.setEmuSleigh("""
+			tb.setEmuSleigh(0, """
 					r1 = 0x5678;
 					emu_exec_decoded();
 					""");
@@ -970,7 +970,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 
 			TraceThread newTraceThread = ProgramEmulationUtils.doLaunchEmulationThread(tb.trace,
 				newSnap, program, tb.addr(0x00400000), addr(program, 0x00400000));
-			newTraceThread.setName("MyThread");
+			newTraceThread.setName(newSnap, "MyThread");
 
 			@SuppressWarnings("unused")
 			PcodeThread<byte[]> newEmuThread = emulator.newThread(newTraceThread.getPath());

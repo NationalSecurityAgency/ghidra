@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,9 +42,9 @@ public class DebuggerSectionMapProposalDialog
 	protected enum SectionMapTableColumns
 		implements EnumeratedTableColumn<SectionMapTableColumns, SectionMapEntry> {
 		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
-		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
-		SECTION_NAME("Section", String.class, e -> e.getSection().getName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSection().getStart()),
+		MODULE_NAME("Module", String.class, e -> e.getModuleName()),
+		SECTION_NAME("Section", String.class, e -> e.getSectionName()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSectionStart()),
 		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),

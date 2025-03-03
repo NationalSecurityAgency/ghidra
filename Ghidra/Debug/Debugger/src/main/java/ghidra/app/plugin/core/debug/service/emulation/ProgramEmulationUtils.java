@@ -447,14 +447,14 @@ public class ProgramEmulationUtils {
 		}
 
 		PathPattern patRegion = computePatternRegion(trace);
-		String threadName = KeyPath.parseIfIndex(thread.getName());
+		String threadName = KeyPath.parseIfIndex(thread.getName(snap));
 		String path = patRegion.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
 				.getSingletonPath()
 				.toString();
 		TraceMemoryManager mm = trace.getMemoryManager();
 		try {
 			return mm.createRegion(path, snap, alloc,
-				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange(snap);
 		}
 		catch (TraceOverlappedRegionException e) {
 			Msg.showError(ProgramEmulationUtils.class, null, "Stack conflict",
@@ -515,7 +515,7 @@ public class ProgramEmulationUtils {
 		TraceMemoryManager mm = trace.getMemoryManager();
 		try {
 			return mm.createRegion(path, snap, alloc,
-				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange(snap);
 		}
 		catch (TraceOverlappedRegionException e) {
 			Msg.showError(ProgramEmulationUtils.class, null, "Stack conflict",
@@ -581,13 +581,13 @@ public class ProgramEmulationUtils {
 			for (AddressRange candidate : left) {
 				if (Long.compareUnsigned(candidate.getLength(), size) >= 0) {
 					AddressRange alloc = new AddressRangeImpl(candidate.getMinAddress(), size);
-					String threadName = KeyPath.parseIfIndex(thread.getName());
+					String threadName = KeyPath.parseIfIndex(thread.getName(snap));
 					String path = patRegion
 							.applyKeys(alloc.getMinAddress() + "-stack " + threadName)
 							.getSingletonPath()
 							.toString();
 					return mm.createRegion(path, snap, alloc,
-						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange();
+						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE).getRange(snap);
 				}
 			}
 		}
@@ -682,6 +682,13 @@ public class ProgramEmulationUtils {
 	/**
 	 * Same as {@link #doLaunchEmulationThread(Trace, long, Program, Address, Address)}, but within
 	 * a transaction
+	 * 
+	 * @param trace the trace to contain the new thread
+	 * @param snap the creation snap for the new thread
+	 * @param program the program whose context to use for initial register values
+	 * @param tracePc the program counter in the trace's memory map
+	 * @param programPc the program counter in the program's memory map
+	 * @return the new thread
 	 */
 	public static TraceThread launchEmulationThread(Trace trace, long snap, Program program,
 			Address tracePc, Address programPc) {

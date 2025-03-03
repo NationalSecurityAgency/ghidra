@@ -153,22 +153,6 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 		return true;
 	}
 
-	@Override
-	public Lifespan computeSpan() {
-		Lifespan span = DBTraceObjectInterface.super.computeSpan();
-		if (span != null) {
-			return span;
-		}
-		return getStack().computeSpan();
-	}
-
-	protected long snapFor(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceEvents.VALUE_CREATED) {
-			return TraceEvents.VALUE_CREATED.cast(rec).getAffectedObject().getMinSnap();
-		}
-		return computeMinSnap();
-	}
-
 	protected TraceChangeRecord<?, ?> createChangeRecord() {
 		return new TraceChangeRecord<>(TraceEvents.STACK_CHANGED, null, getStack(), 0L,
 			life.bound().lmin());

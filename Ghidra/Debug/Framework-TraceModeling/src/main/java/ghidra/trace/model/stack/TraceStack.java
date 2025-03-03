@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@ package ghidra.trace.model.stack;
 
 import java.util.List;
 
-import ghidra.lifecycle.Experimental;
 import ghidra.lifecycle.Transitional;
 import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.memory.TraceMemoryManager;
@@ -43,18 +42,12 @@ public interface TraceStack extends TraceUniqueObject {
 	TraceThread getThread();
 
 	/**
-	 * Get the snap where this stack is certain
-	 * 
-	 * @return the snap
-	 */
-	long getSnap();
-
-	/**
 	 * Get the depth (as recorded) of this stack
 	 * 
+	 * @param snap the snap
 	 * @return the depth
 	 */
-	int getDepth();
+	int getDepth(long snap);
 
 	/**
 	 * Set the depth of the stack by adding or deleting frames to or from the specified end
@@ -67,20 +60,22 @@ public interface TraceStack extends TraceUniqueObject {
 	 * <p>
 	 * If the experimental object mode is successful, this method should be deleted.
 	 * 
+	 * @param snap the snap
 	 * @param depth the desired depth
 	 * @param atInner true if frames should be "pushed"
 	 */
-	void setDepth(int depth, boolean atInner);
+	void setDepth(long snap, int depth, boolean atInner);
 
 	/**
 	 * Get the frame at the given level
 	 * 
+	 * @param snap the snap
 	 * @param level the level, where 0 indicates the inner-most frame.
 	 * @param ensureDepth true to expand the depth to accomodate the requested frame
 	 * @return the frame, or {@code null} if level exceeds the depth without ensureDepth set
 	 * @throws IndexOutOfBoundsException if the level is negative
 	 */
-	TraceStackFrame getFrame(int level, boolean ensureDepth);
+	TraceStackFrame getFrame(long snap, int level, boolean ensureDepth);
 
 	/**
 	 * Get all (known) frames in this stack
@@ -89,12 +84,27 @@ public interface TraceStack extends TraceUniqueObject {
 	 *            are fixed over the stack's lifetime)
 	 * @return the list of frames
 	 */
-	List<TraceStackFrame> getFrames(@Experimental long snap);
+	List<TraceStackFrame> getFrames(long snap);
 
 	/**
 	 * Delete this stack and its frames
 	 */
 	void delete();
+
+	/**
+	 * Remove this stack and its frame rom the given snapshot on
+	 * 
+	 * @param snap the snapshot key
+	 */
+	void remove(long snap);
+
+	/**
+	 * Check if this stack is valid at the given snap
+	 * 
+	 * @param snap the snap
+	 * @return true if valid
+	 */
+	boolean isValid(long snap);
 
 	/**
 	 * Check if this stack'sframes are fixed for its lifetime

@@ -50,8 +50,8 @@ public interface TraceObjectModule extends TraceModule, TraceObjectInterface {
 	void setRange(Lifespan lifespan, AddressRange range);
 
 	@Override
-	Collection<? extends TraceObjectSection> getSections();
+	Collection<? extends TraceObjectSection> getSections(long snap);
 
 	@Override
-	TraceObjectSection getSectionByName(String sectionName);
+	TraceObjectSection getSectionByName(long snap, String sectionName);
 }

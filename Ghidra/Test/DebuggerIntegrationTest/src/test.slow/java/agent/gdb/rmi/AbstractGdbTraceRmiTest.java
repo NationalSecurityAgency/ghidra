@@ -49,7 +49,8 @@ import ghidra.pty.testutil.DummyProc;
 import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
@@ -90,6 +91,9 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 			  ghidra trace tx-open Running do-set-running
 			end
 			python gdb.events.cont.connect(lambda e: gdb.execute("set-running"))""";
+
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
 
 	protected TraceRmiService traceRmi;
 	private Path gdbPath;

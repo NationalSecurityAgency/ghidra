@@ -46,7 +46,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -92,10 +91,6 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 			set.add(r);
 		}
 		return set;
-	}
-
-	protected boolean nullOrDead(TraceThread thread) {
-		return thread == null || !thread.isAlive();
 	}
 
 	private void populateTrace() throws Exception {

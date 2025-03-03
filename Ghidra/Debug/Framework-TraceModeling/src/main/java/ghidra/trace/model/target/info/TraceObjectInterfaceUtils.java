@@ -22,16 +22,13 @@ import java.util.stream.Stream;
 
 import javax.swing.event.ChangeEvent;
 
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.target.*;
-import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.info.TraceObjectInterfaceFactory.Constructor;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
-import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.exception.DuplicateNameException;
 
 public enum TraceObjectInterfaceUtils {
 	;
@@ -120,29 +117,6 @@ public enum TraceObjectInterfaceUtils {
 	public static Collection<String> getFixedKeys(
 			Class<? extends TraceObjectInterface> traceIf) {
 		return List.of(requireAnnotation(traceIf).fixedKeys());
-	}
-
-	public static void setLifespan(Class<? extends TraceObjectInterface> traceIf,
-			TraceObject object, Lifespan lifespan) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			for (TraceObjectValue val : object.getParents(Lifespan.ALL)) {
-				if (val.isCanonical() && !val.isDeleted()) {
-					val.setLifespan(lifespan, ConflictResolution.DENY);
-				}
-			}
-		}
-		catch (DuplicateKeyException e) {
-			throw new DuplicateNameException(
-				"Duplicate " + getShortName(traceIf) + ": " + e.getMessage());
-		}
-		object.insert(lifespan, ConflictResolution.TRUNCATE);
-		long lower = lifespan.lmin();
-		for (String key : getFixedKeys(traceIf)) {
-			TraceObjectValue val = object.getValue(lower, key);
-			if (val != null) {
-				val.setLifespan(lifespan, ConflictResolution.TRUNCATE);
-			}
-		}
 	}
 
 	public static <T> T getValue(TraceObject object, long snap, String key, Class<T> cls, T def) {

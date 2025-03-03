@@ -330,7 +330,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 					}
 				})
 				.distinct()
-				.filter(l -> expression.equals(l.getExpression()))
+				.filter(l -> expression.equals(l.getExpression(flatDbg.getCurrentSnap())))
 				.count() == 1);
 	}
 
@@ -359,6 +359,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	}
 
 	protected Address navigateToBreakpoint(String expression) {
+		long snap = flatDbg.getCurrentSnap();
 		TraceBreakpoint bp = flatDbg.getAllBreakpoints()
 				.stream()
 				.flatMap(l -> l.getTraceBreakpoints().stream())
@@ -367,10 +368,10 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 						down.accept(oloc);
 					}
 				})
-				.filter(l -> expression.equals(l.getSpecification().getExpression()))
+				.filter(l -> expression.equals(l.getSpecification().getExpression(snap)))
 				.findAny()
 				.get();
-		Address dynAddr = bp.getMinAddress();
+		Address dynAddr = bp.getMinAddress(snap);
 		flatDbg.goToDynamic(dynAddr);
 		return dynAddr;
 	}
@@ -388,9 +389,10 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	protected Program importModule(TraceModule module) throws Throwable {
 		Program prog = null;
 		try {
+			long snap = flatDbg.getCurrentSnap();
 			MessageLog log = new MessageLog();
 			LoadResults<Program> result = AutoImporter.importByUsingBestGuess(
-				new File(module.getName()), env.getProject(), "/", this, log, monitor);
+				new File(module.getName(snap)), env.getProject(), "/", this, log, monitor);
 			result.save(env.getProject(), this, log, monitor);
 			prog = result.getPrimaryDomainObject();
 			GhidraProgramUtilities.markProgramNotToAskToAnalyze(prog);
@@ -435,7 +437,8 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		// This module might be symlinked, so module name and file name may not match.
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
-		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		ModuleMapProposal proposal =
+			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
 		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
@@ -461,7 +464,8 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		// This module might be symlinked, so module name and file name may not match.
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
-		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		ModuleMapProposal proposal =
+			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
 		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
@@ -574,7 +578,8 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		// This module might be symlinked, so module name and file name may not match.
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
-		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		ModuleMapProposal proposal =
+			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
 		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
@@ -596,7 +601,8 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		// This module might be symlinked, so module name and file name may not match.
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
-		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		ModuleMapProposal proposal =
+			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
 		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
@@ -642,14 +648,14 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		RemoteMethod refreshSections = result.connection().getMethods().get("refresh_sections");
 		refreshSections.invoke(Map.of("node", modTermmines.getObject()));
-		TraceSection secTermminesData = modTermmines.getSectionByName(".data");
-		flatDbg.readMemory(secTermminesData.getStart(),
-			(int) secTermminesData.getRange().getLength(), monitor);
+		TraceSection secTermminesData = modTermmines.getSectionByName(snapA, ".data");
+		flatDbg.readMemory(secTermminesData.getStart(snapA),
+			(int) secTermminesData.getRange(snapA).getLength(), monitor);
 
 		flatDbg.resume(); // rand.1
 		Thread.sleep(500);
-		flatDbg.readMemory(secTermminesData.getStart(),
-			(int) secTermminesData.getRange().getLength(), monitor);
+		flatDbg.readMemory(secTermminesData.getStart(snapA),
+			(int) secTermminesData.getRange(snapA).getLength(), monitor);
 
 		performAction("Compare",
 			PluginUtils.getPluginNameFromClass(DebuggerTraceViewDiffPlugin.class), false);
@@ -678,14 +684,15 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		RemoteMethod refreshSections = result.connection().getMethods().get("refresh_sections");
 		refreshSections.invoke(Map.of("node", modTermmines.getObject()));
-		TraceSection secTermminesData = modTermmines.getSectionByName(".data");
-		flatDbg.readMemory(secTermminesData.getStart(),
-			(int) secTermminesData.getRange().getLength(), monitor);
+		TraceSection secTermminesData = modTermmines.getSectionByName(snapA, ".data");
+		flatDbg.readMemory(secTermminesData.getStart(snapA),
+			(int) secTermminesData.getRange(snapA).getLength(), monitor);
 
 		flatDbg.resume(); // rand.1
 		flatDbg.waitForBreak(1000, TimeUnit.MILLISECONDS);
-		flatDbg.readMemory(secTermminesData.getStart(),
-			(int) secTermminesData.getRange().getLength(), monitor);
+		// snapA suffices, since section shouldn't have moved
+		flatDbg.readMemory(secTermminesData.getStart(snapA),
+			(int) secTermminesData.getRange(snapA).getLength(), monitor);
 
 		performAction("Compare",
 			PluginUtils.getPluginNameFromClass(DebuggerTraceViewDiffPlugin.class), false);
@@ -705,10 +712,10 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 			}
 		});
 		waitForCondition(() -> actionNextDiff.isEnabled());
-		flatDbg.goToDynamic(secTermminesData.getStart());
+		flatDbg.goToDynamic(secTermminesData.getStart(snapA));
 		// Because auto-track is a little broken right now
 		Thread.sleep(500);
-		flatDbg.goToDynamic(secTermminesData.getStart());
+		flatDbg.goToDynamic(secTermminesData.getStart(snapA));
 
 		performAction(actionNextDiff);
 
@@ -743,7 +750,8 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		// This module might be symlinked, so module name and file name may not match.
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
-		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		ModuleMapProposal proposal =
+			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
 		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
@@ -757,16 +765,17 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	@Test
 	public void testMemoryMap_CopyNcursesInto() throws Throwable {
 		launchProgramInGdb();
+		long snap = flatDbg.getCurrentSnap();
 		TraceModule modNcurses = flatDbg.getCurrentTrace()
 				.getModuleManager()
 				.getAllModules()
 				.stream()
-				.filter(m -> m.getName().contains("ncurses"))
+				.filter(m -> m.getName(snap).contains("ncurses"))
 				.findAny()
 				.get();
 		DebuggerListingService listings = tool.getService(DebuggerListingService.class);
-		runSwing(() -> listings
-				.setCurrentSelection(new ProgramSelection(new AddressSet(modNcurses.getRange()))));
+		runSwing(() -> listings.setCurrentSelection(
+			new ProgramSelection(new AddressSet(modNcurses.getRange(snap)))));
 		DebuggerListingProvider listingProvider =
 			waitForComponentProvider(DebuggerListingProvider.class);
 		performAction("Copy Into New Program",

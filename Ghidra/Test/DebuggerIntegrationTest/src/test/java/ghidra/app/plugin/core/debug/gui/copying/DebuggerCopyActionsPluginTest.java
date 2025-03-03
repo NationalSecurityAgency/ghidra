@@ -437,7 +437,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerI
 					.addRegion("Processes[1].Memory[.text]", Lifespan.nowOn(0),
 						tb.range(0x55550000, 0x5555ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE))
-					.setName("[.text]");
+					.setName(0, "[.text]");
 		}
 		TraceObject process = tb.obj("Processes[1]");
 		rmiCx.publishTarget(tool, tb.trace);

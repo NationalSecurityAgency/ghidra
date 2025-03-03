@@ -402,13 +402,20 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 				return;
 			}
 			couldHaveChanged = false;
-			String infosThisTime = spec.getInfoForObjects(trace);
+			DebuggerTraceManagerService traceManager =
+				tool.getService(DebuggerTraceManagerService.class);
+			if (traceManager == null) {
+				return;
+			}
+			DebuggerCoordinates current = traceManager.getCurrentFor(trace);
+			long snap = current.getSnap();
+			String infosThisTime = spec.getInfoForObjects(trace, snap);
 			if (Objects.equals(infosThisTime, infosLastTime)) {
 				return;
 			}
 			infosLastTime = infosThisTime;
 
-			spec.runTask(tool, trace);
+			spec.runTask(tool, trace, snap);
 		}
 
 		public void forceMap() {
@@ -593,7 +600,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	boolean filterSectionsByModules = false;
 
 	private final Map<Trace, AutoMapState> autoMapStateByTrace = new WeakHashMap<>();
-	private AutoMapState forMappingListener;
 
 	DockingAction actionImportMissingModule;
 	DockingAction actionMapMissingModule;
@@ -634,7 +640,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 
 	private void importModuleFromFileSystem(TraceModule module) {
 		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
-		chooser.setSelectedFile(new File(module.getName()));
+		chooser.setSelectedFile(new File(module.getName(current.getSnap())));
 		File file = chooser.getSelectedFile();
 		chooser.dispose();
 		if (file == null) { // Perhaps cancelled
@@ -837,7 +843,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			return !ctx.getSelectedModules().isEmpty();
 		}
 		if (context instanceof DebuggerSectionActionContext ctx) {
-			return !ctx.getSelectedSections(false).isEmpty();
+			return !ctx.getSelectedSections(false, current.getSnap()).isEmpty();
 		}
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return !ctx.getObjectValues().isEmpty();
@@ -978,10 +984,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		if (staticMappingService == null) {
 			return;
 		}
+
 		Program program = context.getProgram();
 		Trace trace = context.getTrace();
+		long snap = traceManager.getCurrentFor(trace).getSnap();
+
 		Map<TraceModule, ModuleMapProposal> map = staticMappingService.proposeModuleMaps(
-			trace.getModuleManager().getAllModules(), List.of(program));
+			trace.getModuleManager().getAllModules(), snap, List.of(program));
 		Collection<ModuleMapEntry> proposal = MapProposal.flatten(map.values());
 		promptModuleProposal(proposal, FMT_NO_MODULES_PROPOSAL_RETRY.formatted(
 			trace.getDomainFile().getName(), program.getDomainFile().getName()));
@@ -1022,10 +1031,10 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 
 		Program program = context.getProgram();
 		ModuleMapProposal proposal =
-			staticMappingService.proposeModuleMap(module, program);
+			staticMappingService.proposeModuleMap(module, snap, program);
 		Map<TraceModule, ModuleMapEntry> map = proposal.computeMap();
 		promptModuleProposal(map.values(), FMT_NO_MODULES_PROPOSAL_CURRENT.formatted(
-			module.getName(), program.getDomainFile().getName()));
+			module.getName(snap), program.getDomainFile().getName()));
 	}
 
 	private void activatedMapMissingProgramIdentically(
@@ -1089,16 +1098,16 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			return;
 		}
 
+		long snap = current.getSnap();
 		ProgramSelection progSel = listingService.getCurrentSelection();
 		TraceModuleManager moduleManager = current.getTrace().getModuleManager();
 		if (progSel != null && !progSel.isEmpty()) {
-			long snap = traceManager.getCurrentSnap();
 			Set<TraceModule> modSel = new HashSet<>();
 			Set<TraceSection> sectionSel = new HashSet<>();
 			for (AddressRange range : progSel) {
 				for (TraceModule module : moduleManager
 						.getModulesIntersecting(Lifespan.at(snap), range)) {
-					if (module.getSections().isEmpty()) {
+					if (module.getSections(snap).isEmpty()) {
 						modSel.add(module);
 					}
 				}
@@ -1127,7 +1136,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			TraceModule bestModule = null;
 			for (TraceModule module : moduleManager
 					.getLoadedModules(traceManager.getCurrentSnap())) {
-				Address base = module.getBase();
+				Address base = module.getBase(snap);
 				if (base == null || base.getAddressSpace() != address.getAddressSpace()) {
 					continue;
 				}
@@ -1138,12 +1147,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 				if (base.compareTo(address) > 0) {
 					continue;
 				}
-				if (base.compareTo(bestModule.getBase()) <= 0) {
+				if (base.compareTo(bestModule.getBase(snap)) <= 0) {
 					continue;
 				}
 				bestModule = module;
 			}
-			if (bestModule.getSections().isEmpty()) {
+			if (bestModule.getSections(snap).isEmpty()) {
 				setSelectedModules(Set.of(bestModule));
 				return;
 			}
@@ -1168,8 +1177,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		if (staticMappingService == null) {
 			return;
 		}
-		Map<TraceModule, ModuleMapProposal> map = staticMappingService.proposeModuleMaps(modules,
-			List.of(programManager.getAllOpenPrograms()));
+		Map<TraceModule, ModuleMapProposal> map =
+			staticMappingService.proposeModuleMaps(modules, current.getSnap(),
+				List.of(programManager.getAllOpenPrograms()));
 		Collection<ModuleMapEntry> proposal = MapProposal.flatten(map.values());
 		promptModuleProposal(proposal, NO_MODULES_PROPOSAL_SEL);
 	}
@@ -1182,7 +1192,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		if (program == null) {
 			return;
 		}
-		ModuleMapProposal proposal = staticMappingService.proposeModuleMap(module, program);
+		ModuleMapProposal proposal =
+			staticMappingService.proposeModuleMap(module, current.getSnap(), program);
 		Map<TraceModule, ModuleMapEntry> map = proposal.computeMap();
 		promptModuleProposal(map.values(), NO_MODULES_PROPOSAL_SEL);
 	}
@@ -1209,8 +1220,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		}
 		Set<TraceModule> modules =
 			sections.stream().map(TraceSection::getModule).collect(Collectors.toSet());
-		Map<?, SectionMapProposal> map = staticMappingService.proposeSectionMaps(modules,
-			List.of(programManager.getAllOpenPrograms()));
+		Map<?, SectionMapProposal> map =
+			staticMappingService.proposeSectionMaps(modules, current.getSnap(),
+				List.of(programManager.getAllOpenPrograms()));
 		Collection<SectionMapEntry> proposal = MapProposal.flatten(map.values());
 		Collection<SectionMapEntry> filtered = proposal.stream()
 				.filter(e -> sections.contains(e.getSection()))
@@ -1232,7 +1244,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			return;
 		}
 		TraceModule module = modules.iterator().next();
-		SectionMapProposal map = staticMappingService.proposeSectionMap(module, program);
+		SectionMapProposal map =
+			staticMappingService.proposeSectionMap(module, current.getSnap(), program);
 		Collection<SectionMapEntry> proposal = map.computeMap().values();
 		Collection<SectionMapEntry> filtered = proposal.stream()
 				.filter(e -> sections.contains(e.getSection()))
@@ -1249,8 +1262,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		if (block == null) {
 			return;
 		}
-		SectionMapProposal map =
-			staticMappingService.proposeSectionMap(section, location.getProgram(), block);
+		SectionMapProposal map = staticMappingService.proposeSectionMap(section, current.getSnap(),
+			location.getProgram(), block);
 		promptSectionProposal(map.computeMap().values());
 	}
 
@@ -1444,7 +1457,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			Msg.warn(this, "No program manager!");
 			return null;
 		}
-		return blockChooserDialog.chooseBlock(getTool(), section,
+		return blockChooserDialog.chooseBlock(getTool(), section, current.getSnap(),
 			List.of(programManager.getAllOpenPrograms()));
 	}
 

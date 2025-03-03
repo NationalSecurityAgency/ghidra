@@ -83,7 +83,7 @@ public class DBTraceBreakpointManager
 			if (pc == ignore) {
 				continue;
 			}
-			if (!lifespan.intersects(pc.getLifespan())) {
+			if (!pc.isAlive(lifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException("A breakpoint having path '" + path +
@@ -129,7 +129,7 @@ public class DBTraceBreakpointManager
 		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return getBreakpointsByPath(path).stream()
-					.filter(b -> b.getLifespan().contains(snap))
+					.filter(b -> b.isValid(snap))
 					.findAny()
 					.orElse(null);
 		}

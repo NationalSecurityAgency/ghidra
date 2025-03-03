@@ -16,63 +16,158 @@
 package ghidra.trace.database.program;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.LockHold;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
-	// I think size should be about how many instructions may appear on screen at once.
-	// Double for good measure (in case windows are cloned, maximized, etc.)
-	private static final int REGION_CACHE_BY_ADDRESS_SIZE = 300;
-
-	// Size should be about how many distinct regions are involved in displayed instructions
-	// Probably only about 5, but cost of 30 is still small.
-	private static final int REGION_CACHE_BY_NAME_SIZE = 30;
 
 	// NB. Keep both per-region and force-full (per-space) block sets ready
 	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks =
 		new WeakValueHashMap<>();
 	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks =
 		new WeakValueHashMap<>();
-	private final Map<Address, TraceMemoryRegion> regionCacheByAddress = new LinkedHashMap<>() {
-		protected boolean removeEldestEntry(Map.Entry<Address, TraceMemoryRegion> eldest) {
-			return this.size() > REGION_CACHE_BY_ADDRESS_SIZE;
-		}
-	};
-	private final Map<String, TraceMemoryRegion> regionCacheByName = new LinkedHashMap<>() {
-		protected boolean removeEldestEntry(Map.Entry<String, TraceMemoryRegion> eldest) {
-			return this.size() > REGION_CACHE_BY_NAME_SIZE;
-		}
-	};
+
+	private NavigableMap<Address, RegionEntry> regionsByAddress;
+	private Map<String, RegionEntry> regionsByName;
+	private volatile boolean regionsValid;
 
 	public DBTraceProgramViewMemory(DBTraceProgramView program) {
 		super(program);
 	}
 
-	protected TraceMemoryRegion getTopRegion(Function<Long, TraceMemoryRegion> regFunc) {
-		return program.viewport.getTop(s -> {
-			// TODO: There is probably an early-bail condition I can check for.
-			TraceMemoryRegion reg = regFunc.apply(s);
-			if (reg != null && program.isRegionVisible(reg)) {
-				return reg;
+	protected void forPhysicalSpaces(Consumer<AddressSpace> consumer) {
+		for (AddressSpace space : program.getAddressFactory().getAddressSpaces()) {
+			// NB. Overlay's isMemory depends on its base space
+			// TODO: Allow other?
+			// For some reason "other" is omitted from factory.getAddressSet
+			if (space.isMemorySpace() && space.getType() != AddressSpace.TYPE_OTHER) {
+				consumer.accept(space);
 			}
-			return null;
-		});
+		}
 	}
 
-	protected void forVisibleRegions(Consumer<? super TraceMemoryRegion> action) {
-		for (long s : program.viewport.getOrderedSnaps()) {
-			// NOTE: This is slightly faster than new AddressSet(mm.getRegionsAddressSet(snap))
-			for (TraceMemoryRegion reg : memoryManager.getRegionsAtSnap(s)) {
-				if (program.isRegionVisible(reg)) {
-					action.accept(reg);
+	static class RegionEntry {
+		final TraceMemoryRegion region;
+		final AddressRange range;
+
+		long snap;
+
+		public RegionEntry(TraceMemoryRegion region, long snap) {
+			this.region = region;
+			this.range = region.getRange(snap);
+
+			this.snap = snap;
+		}
+
+		public boolean isSameAtDifferentSnap(RegionEntry that) {
+			if (that == null) {
+				return false;
+			}
+			// Yes, region by identity
+			return this.region == that.region && this.range.equals(that.range);
+		}
+	}
+
+	class RegionsByAddressComputer {
+		TreeMap<Address, RegionEntry> map = new TreeMap<>();
+		Map<TraceMemoryRegion, Address> addressByRegion = new HashMap<>();
+
+		protected void putDeletingOverlaps(RegionEntry newEntry) {
+			// Check if removal is necessary.
+			Address newKey = newEntry.range.getMinAddress();
+			RegionEntry curEntry = map.get(newKey);
+			if (newEntry.isSameAtDifferentSnap(curEntry)) {
+				curEntry.snap = newEntry.snap;
+				return;
+			}
+
+			// Remove all overlapping entries
+			Entry<Address, RegionEntry> floorEntry = map.floorEntry(newKey);
+			final Address min;
+			if (floorEntry != null && floorEntry.getValue().range.contains(newKey)) {
+				min = floorEntry.getKey();
+			}
+			else {
+				min = newKey;
+			}
+			map.subMap(min, true, newEntry.range.getMaxAddress(), true).clear();
+
+			// Remove old entry for the same region, if present
+			Address oldKey = addressByRegion.remove(newEntry.region);
+			if (oldKey != null) {
+				map.remove(oldKey);
+			}
+
+			// Put new entry
+			map.put(newKey, newEntry);
+			addressByRegion.put(newEntry.region, newKey);
+		}
+
+		public NavigableMap<Address, RegionEntry> compute() {
+			/**
+			 * We're banking on the viewport being relatively shallow, and for this to be invoked
+			 * relatively infrequently. We build the view from oldest to newest, clobbering old
+			 * overlaps as we add the new. Additionally, if a region moves, we must not show its old
+			 * position. (NOTE: Philosophically, a region cannot "move", but it's key could be
+			 * reused, depending on the connector.)
+			 */
+			for (long snap : program.viewport.getReversedSnaps()) {
+				for (AddressSpace space : getTrace().getBaseAddressFactory().getPhysicalSpaces()) {
+					AddressRange range =
+						new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress());
+					for (TraceMemoryRegion region : memoryManager
+							.getRegionsIntersecting(Lifespan.at(snap), range)) {
+						RegionEntry entry = new RegionEntry(region, snap);
+						putDeletingOverlaps(entry);
+					}
 				}
 			}
+			return map;
+		}
+	}
+
+	protected NavigableMap<Address, RegionEntry> computeRegionsByAddress() {
+		return new RegionsByAddressComputer().compute();
+	}
+
+	protected Map<String, RegionEntry> computeRegionsByName(Collection<RegionEntry> regions) {
+		Map<String, RegionEntry> result = new HashMap<>();
+		for (RegionEntry entry : regions) {
+			result.put(entry.region.getName(entry.snap), entry);
+		}
+		return result;
+	}
+
+	protected NavigableMap<Address, RegionEntry> getRegionsByAddress() {
+		if (!regionsValid) {
+			NavigableMap<Address, RegionEntry> byAddr = computeRegionsByAddress();
+			regionsByAddress = byAddr;
+			regionsByName = computeRegionsByName(byAddr.values());
+			regionsValid = true;
+		}
+		return regionsByAddress;
+	}
+
+	protected Map<String, RegionEntry> getRegionsByName() {
+		if (!regionsValid) {
+			NavigableMap<Address, RegionEntry> byAddr = computeRegionsByAddress();
+			regionsByAddress = byAddr;
+			regionsByName = computeRegionsByName(byAddr.values());
+			regionsValid = true;
+		}
+		return regionsByName;
+	}
+
+	protected void forVisibleRegions(Consumer<RegionEntry> action) {
+		for (RegionEntry entry : getRegionsByAddress().values()) {
+			action.accept(entry);
 		}
 	}
 
@@ -80,21 +175,35 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	void setSnap(long snap) {
 		super.setSnap(snap);
 		updateBytesChanged(null);
+		invalidateRegions();
+	}
+
+	protected AddressSet computeRegionsAddressSet() {
+		AddressSet result = new AddressSet();
+		try (LockHold hold = program.trace.lockRead()) {
+			forVisibleRegions(e -> result.add(e.range));
+		}
+		return result;
+	}
+
+	protected AddressSet computeSpacesAddressSet() {
+		AddressSet result = new AddressSet();
+		try (LockHold hold = program.trace.lockRead()) {
+			forPhysicalSpaces(space -> result.add(space.getMinAddress(), space.getMaxAddress()));
+		}
+		return result;
 	}
 
 	@Override
-	protected void recomputeAddressSet() {
-		AddressSet temp = new AddressSet();
-		try (LockHold hold = program.trace.lockRead()) {
-			// TODO: Performance test this
-			forVisibleRegions(reg -> temp.add(reg.getRange()));
-		}
-		addressSet = temp;
+	protected AddressSetView computeAddressSet() {
+		return isForceFullView()
+				? computeSpacesAddressSet()
+				: computeRegionsAddressSet();
 	}
 
-	protected MemoryBlock getRegionBlock(TraceMemoryRegion region) {
-		return regionBlocks.computeIfAbsent(region,
-			r -> new DBTraceProgramViewMemoryRegionBlock(program, region));
+	protected MemoryBlock getRegionBlock(RegionEntry entry) {
+		return regionBlocks.computeIfAbsent(entry.region,
+			r -> new DBTraceProgramViewMemoryRegionBlock(program, entry.region, entry.snap));
 	}
 
 	protected MemoryBlock getSpaceBlock(AddressSpace space) {
@@ -104,54 +213,35 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	@Override
 	public MemoryBlock getBlock(Address addr) {
-		if (forceFullView) {
+		if (isForceFullView()) {
 			return getSpaceBlock(addr.getAddressSpace());
 		}
-		TraceMemoryRegion region = regionCacheByAddress.get(addr);
-		if (region != null && !region.isDeleted()) {
-			/**
-			 * TODO: This is assuming: 1) We never fork in non-scratch space. 2) Regions are not
-			 * created in scratch space. These are convention, but weren't originally intended to be
-			 * rules. This makes them rules.
-			 */
-			long s = program.viewport.getReversedSnaps().get(0);
-			if (region.getLifespan().contains(s)) {
-				return getRegionBlock(region);
-			}
+
+		Entry<Address, RegionEntry> entry = getRegionsByAddress().floorEntry(addr);
+		if (entry == null || !entry.getValue().range.contains(addr)) {
+			return null;
 		}
-		region = getTopRegion(s -> memoryManager.getRegionContaining(s, addr));
-		if (region != null) {
-			regionCacheByAddress.put(addr, region);
-			return getRegionBlock(region);
-		}
-		return null;
+		return getRegionBlock(entry.getValue());
 	}
 
 	@Override
 	public MemoryBlock getBlock(String blockName) {
-		if (forceFullView) {
+		if (isForceFullView()) {
 			AddressSpace space = program.getAddressFactory().getAddressSpace(blockName);
 			return space == null ? null : getSpaceBlock(space);
 		}
-		TraceMemoryRegion region = regionCacheByName.get(blockName);
-		if (region != null && !region.isDeleted()) {
-			long s = program.viewport.getReversedSnaps().get(0);
-			if (region.getLifespan().contains(s)) {
-				return getRegionBlock(region);
-			}
+
+		RegionEntry entry = getRegionsByName().get(blockName);
+		if (entry == null) {
+			return null;
 		}
-		region = getTopRegion(s -> memoryManager.getLiveRegionByPath(s, blockName));
-		if (region != null) {
-			regionCacheByName.put(blockName, region);
-			return getRegionBlock(region);
-		}
-		return null;
+		return getRegionBlock(entry);
 	}
 
 	@Override
 	public MemoryBlock[] getBlocks() {
 		List<MemoryBlock> result = new ArrayList<>();
-		if (forceFullView) {
+		if (isForceFullView()) {
 			forPhysicalSpaces(space -> result.add(getSpaceBlock(space)));
 		}
 		else {
@@ -161,27 +251,25 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		return result.toArray(new MemoryBlock[result.size()]);
 	}
 
-	public void updateAddRegionBlock(TraceMemoryRegion region) {
-		// TODO: add block to cache?
-		addRange(region.getRange());
+	@Override
+	public AddressSetView getExecuteSet() {
+		AddressSet result = new AddressSet();
+		forVisibleRegions(e -> {
+			if (e.region.isExecute(e.snap)) {
+				result.add(e.range);
+			}
+		});
+		return result;
 	}
 
-	public void updateChangeRegionBlockName(TraceMemoryRegion region) {
-		// Nothing. Block name is taken from region, uncached
-	}
-
-	public void updateChangeRegionBlockFlags(TraceMemoryRegion region) {
-		// Nothing. Block flags are taken from region, uncached
-	}
-
-	public void updateChangeRegionBlockRange(TraceMemoryRegion region, AddressRange oldRange,
-			AddressRange newRange) {
-		changeRange(oldRange, newRange);
-	}
-
-	public void updateDeleteRegionBlock(TraceMemoryRegion region) {
-		regionBlocks.remove(region);
-		removeRange(region.getRange());
+	protected void invalidateRegions() {
+		regionsValid = false;
+		if (regionBlocks != null) { // <init> order
+			regionBlocks.clear();
+		}
+		if (!isForceFullView()) {
+			invalidateAddressSet();
+		}
 	}
 
 	public void updateAddSpaceBlock(AddressSpace space) {
@@ -193,9 +281,8 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	}
 
 	public void updateRefreshBlocks() {
-		regionBlocks.clear();
+		invalidateRegions();
 		spaceBlocks.clear();
-		recomputeAddressSet();
 	}
 
 	public void updateBytesChanged(AddressRange range) {

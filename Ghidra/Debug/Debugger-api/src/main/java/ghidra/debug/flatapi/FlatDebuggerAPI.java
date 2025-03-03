@@ -1444,8 +1444,10 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionContext createContext(TraceObject object) {
+		Trace trace = object.getTrace();
+		DebuggerCoordinates coords = getTraceManager().getCurrentFor(trace);
 		TraceObjectValue value = object.getCanonicalParents(Lifespan.ALL).findAny().orElseThrow();
-		return new DebuggerObjectActionContext(List.of(value), null, null);
+		return new DebuggerObjectActionContext(List.of(value), null, null, coords.getSnap());
 	}
 
 	default ActionContext createContext(TraceThread thread) {
@@ -1720,8 +1722,7 @@ public interface FlatDebuggerAPI {
 	 * This does not consider the current snap. It only considers a live target thread in the
 	 * present. In other words, if the user rewinds trace history to a point where the thread was
 	 * alive, this method still considers that thread terminated. To compute state with respect to
-	 * trace history, use {@link TraceThread#getLifespan()} and check if it contains the current
-	 * snap.
+	 * trace history, use {@link TraceThread#isValid(long)}.
 	 * 
 	 * @param thread
 	 * @return the thread's execution state

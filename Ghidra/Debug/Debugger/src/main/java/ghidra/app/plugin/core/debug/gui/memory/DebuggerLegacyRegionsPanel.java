@@ -40,7 +40,8 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.*;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.util.TraceEvents;
@@ -53,7 +54,6 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 	protected enum RegionTableColumns
 		implements EnumeratedTableColumn<RegionTableColumns, RegionRow> {
 		NAME("Name", String.class, RegionRow::getName, RegionRow::setName),
-		LIFESPAN("Lifespan", Lifespan.class, RegionRow::getLifespan),
 		START("Start", Address.class, RegionRow::getMinAddress),
 		END("End", Address.class, RegionRow::getMaxAddress),
 		LENGTH("Length", Long.class, RegionRow::getLength),
@@ -159,7 +159,7 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		}
 		AddressSet sel = new AddressSet();
 		for (TraceMemoryRegion s : regions) {
-			sel.add(s.getRange());
+			sel.add(s.getRange(0));
 		}
 		ProgramSelection ps = new ProgramSelection(sel);
 		listingService.setCurrentSelection(ps);

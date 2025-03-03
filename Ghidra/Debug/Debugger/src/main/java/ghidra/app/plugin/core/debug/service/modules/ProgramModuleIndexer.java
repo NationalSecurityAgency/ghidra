@@ -28,6 +28,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 
 // TODO: Consider making this a front-end plugin?
@@ -351,8 +352,8 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 		return projectData.getFileByID(entries.stream().max(comparator).get().dfID);
 	}
 
-	public DomainFile getBestMatch(AddressSpace space, TraceModule module, Program currentProgram,
-			Collection<IndexEntry> entries) {
+	public DomainFile getBestMatch(AddressSpace space, TraceModule module, long snap,
+			Program currentProgram, Collection<IndexEntry> entries) {
 		if (entries.isEmpty()) {
 			return null;
 		}
@@ -361,7 +362,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 				.getStaticMappingManager()
 				.findAllOverlapping(
 					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()),
-					module.getLifespan())
+					Lifespan.at(snap))
 				.stream()
 				.map(m -> ProgramURLUtils.getDomainFileFromOpenProject(project,
 					m.getStaticProgramURL()))
@@ -379,17 +380,17 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 		return selectBest(entries, libraries, folderUses, currentProgram);
 	}
 
-	public DomainFile getBestMatch(TraceModule module, Program currentProgram,
+	public DomainFile getBestMatch(TraceModule module, long snap, Program currentProgram,
 			Collection<IndexEntry> entries) {
-		Address base = module.getBase();
+		Address base = module.getBase(snap);
 		AddressSpace space = base == null
 				? module.getTrace().getBaseAddressFactory().getDefaultAddressSpace()
 				: base.getAddressSpace();
-		return getBestMatch(space, module, currentProgram, entries);
+		return getBestMatch(space, module, snap, currentProgram, entries);
 	}
 
-	public List<IndexEntry> getBestEntries(TraceModule module) {
-		String modulePathName = module.getName().toLowerCase();
+	public List<IndexEntry> getBestEntries(TraceModule module, long snap) {
+		String modulePathName = module.getName(snap).toLowerCase();
 		List<IndexEntry> entries = new ArrayList<>(index.getByName(modulePathName));
 		if (!entries.isEmpty()) {
 			return entries;
@@ -399,8 +400,9 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 		return entries;
 	}
 
-	public DomainFile getBestMatch(AddressSpace space, TraceModule module, Program currentProgram) {
-		return getBestMatch(space, module, currentProgram, getBestEntries(module));
+	public DomainFile getBestMatch(AddressSpace space, TraceModule module, long snap,
+			Program currentProgram) {
+		return getBestMatch(space, module, snap, currentProgram, getBestEntries(module, snap));
 	}
 
 	public Collection<IndexEntry> filter(Collection<IndexEntry> entries,

@@ -61,7 +61,7 @@ public class NoneAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public String getInfoForObjects(Trace trace) {
+	public String getInfoForObjects(Trace trace, long snap) {
 		return "";
 	}
 
@@ -71,7 +71,7 @@ public class NoneAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public void runTask(PluginTool tool, Trace trace) {
+	public void runTask(PluginTool tool, Trace trace, long snap) {
 		// Don't bother launching a task that does nothing
 	}
 
@@ -82,7 +82,7 @@ public class NoneAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			List<Program> programs, TaskMonitor monitor) throws CancelledException {
+			long snap, List<Program> programs, TaskMonitor monitor) throws CancelledException {
 		return false;
 	}
 }

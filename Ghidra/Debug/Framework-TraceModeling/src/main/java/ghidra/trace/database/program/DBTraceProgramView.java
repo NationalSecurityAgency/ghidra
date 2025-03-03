@@ -488,56 +488,26 @@ public class DBTraceProgramView implements TraceProgramView {
 		}
 
 		private void memoryRegionAdded(TraceAddressSpace space, TraceMemoryRegion region) {
-			if (!isRegionVisible(region)) {
-				return;
-			}
-			// NOTE: Register view regions are fixed
-			eventQueues.fireEvent(new ProgramChangeRecord(ProgramEvent.MEMORY_BLOCK_ADDED,
-				region.getMinAddress(), region.getMaxAddress(), null, null, null));
-			// NOTE: MemoryMapDB does this, too. Otherwise, CodeBrowserPlugin does not hear.
-			eventQueues.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
+			// This is handled via another path
 		}
 
 		private void memoryRegionChanged(TraceAddressSpace space, TraceMemoryRegion region) {
-			if (!isRegionVisible(region)) {
-				return;
-			}
-			eventQueues.fireEvent(new ProgramChangeRecord(ProgramEvent.MEMORY_BLOCK_CHANGED,
-				region.getMinAddress(), region.getMaxAddress(), null, null, null));
-			// TODO: Perhaps a bit heavy-handed here. MemoryMapDB does not do this, too.
-			// TODO: Probably want a separate RANGE_CHANGED or MOVED event
+			// Could be a name change, which must get communicated to program.
+			// RESTORED may be duplicative, but should get de-duped by event manager.
 			eventQueues.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 		}
 
 		private void memoryRegionLifespanChanged(TraceAddressSpace space, TraceMemoryRegion region,
 				Lifespan oldSpan, Lifespan newSpan) {
-			boolean inOld = isRegionVisible(region, oldSpan);
-			boolean inNew = isRegionVisible(region, newSpan);
-			if (inOld && !inNew) {
-				eventQueues.fireEvent(new ProgramChangeRecord(ProgramEvent.MEMORY_BLOCK_REMOVED,
-					region.getMinAddress(), region.getMaxAddress(), null, null, null));
-				// NOTE: MemoryMapDB does this, too. Otherwise, CodeBrowserPlugin does not hear.
-				eventQueues.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
-			}
-			if (!inOld && inNew) {
-				eventQueues.fireEvent(new ProgramChangeRecord(ProgramEvent.MEMORY_BLOCK_ADDED,
-					region.getMinAddress(), region.getMaxAddress(), null, null, null));
-				// NOTE: MemoryMapDB does this, too. Otherwise, CodeBrowserPlugin does not hear.
-				eventQueues.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
-			}
+			// This is handled via another path
 		}
 
 		private void memoryRegionDeleted(TraceAddressSpace space, TraceMemoryRegion region) {
 			// HACK
 			listing.fragmentsByRegion.remove(region);
 			// END HACK
-			if (!isRegionVisible(region)) {
-				return;
-			}
-			eventQueues.fireEvent(new ProgramChangeRecord(ProgramEvent.MEMORY_BLOCK_REMOVED,
-				region.getMinAddress(), region.getMaxAddress(), null, null, null));
-			// NOTE: MemoryMapDB does this, too. Otherwise, CodeBrowserPlugin does not hear.
-			eventQueues.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
+
+			// Memory stuff handled via another path
 		}
 
 		private void sourceArchiveAdded(UniversalID id) {
@@ -1466,51 +1436,29 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	public void updateMemoryAddRegionBlock(TraceMemoryRegion region) {
-		if (!isRegionVisible(region)) {
-			return;
-		}
-		memory.updateAddRegionBlock(region);
+		memory.invalidateRegions();
 	}
 
 	public void updateMemoryChangeRegionBlockName(TraceMemoryRegion region) {
-		if (!isRegionVisible(region)) {
-			return;
-		}
-		memory.updateChangeRegionBlockName(region);
+		// Doesn't affect any cache
 	}
 
 	public void updateMemoryChangeRegionBlockFlags(TraceMemoryRegion region, Lifespan lifespan) {
-		if (!isRegionVisible(region, lifespan)) {
-			return;
-		}
-		memory.updateChangeRegionBlockFlags(region);
+		// Doesn't affect any cache
 	}
 
 	public void updateMemoryChangeRegionBlockRange(TraceMemoryRegion region, AddressRange oldRange,
 			AddressRange newRange) {
-		if (!isRegionVisible(region)) {
-			return;
-		}
-		memory.updateChangeRegionBlockRange(region, oldRange, newRange);
+		memory.invalidateRegions();
 	}
 
 	public void updateMemoryChangeRegionBlockLifespan(TraceMemoryRegion region,
 			Lifespan oldLifespan, Lifespan newLifespan) {
-		boolean inOld = isRegionVisible(region, oldLifespan);
-		boolean inNew = isRegionVisible(region, newLifespan);
-		if (inOld && !inNew) {
-			memory.updateDeleteRegionBlock(region);
-		}
-		if (!inOld && inNew) {
-			memory.updateAddRegionBlock(region);
-		}
+		memory.invalidateRegions();
 	}
 
 	public void updateMemoryDeleteRegionBlock(TraceMemoryRegion region) {
-		if (!isRegionVisible(region)) {
-			return;
-		}
-		memory.updateAddRegionBlock(region);
+		memory.invalidateRegions();
 	}
 
 	public void updateMemoryAddSpaceBlock(AddressSpace space) {
@@ -1612,7 +1560,7 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 
 			@Override
-			public AddressRange range(TraceCodeUnit cu) {
+			public AddressRange range(TraceCodeUnit cu, long snap) {
 				return cu.getRange();
 			}
 		};
@@ -1694,25 +1642,5 @@ public class DBTraceProgramView implements TraceProgramView {
 			return null;
 		}
 		return queues;
-	}
-
-	protected Occlusion<TraceMemoryRegion> regionOcclusion = new RangeQueryOcclusion<>() {
-		@Override
-		public Iterable<? extends TraceMemoryRegion> query(AddressRange range, Lifespan span) {
-			return trace.getMemoryManager().getRegionsIntersecting(Lifespan.at(span.lmax()), range);
-		}
-
-		@Override
-		public AddressRange range(TraceMemoryRegion r) {
-			return r.getRange();
-		}
-	};
-
-	protected boolean isRegionVisible(TraceMemoryRegion reg) {
-		return isRegionVisible(reg, reg.getLifespan());
-	}
-
-	protected boolean isRegionVisible(TraceMemoryRegion reg, Lifespan lifespan) {
-		return viewport.isCompletelyVisible(reg.getRange(), lifespan, reg, regionOcclusion);
 	}
 }

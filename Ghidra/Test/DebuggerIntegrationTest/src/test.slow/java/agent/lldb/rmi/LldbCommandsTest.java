@@ -1172,8 +1172,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modExpPrint =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("expPrint")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modExpPrint.getBase()));
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("expPrint")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modExpPrint.getBase(SNAP)));
 		}
 	}
 
