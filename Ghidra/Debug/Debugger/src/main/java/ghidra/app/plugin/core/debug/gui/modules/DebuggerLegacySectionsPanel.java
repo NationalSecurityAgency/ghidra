@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 
 	protected static Set<TraceModule> getSelectedModulesFromContext(
 			DebuggerSectionActionContext context) {
-		return context.getSelectedSections(false)
+		return context.getSelectedSections(false, 0)
 				.stream()
 				.map(r -> r.getModule())
 				.collect(Collectors.toSet());
@@ -56,14 +56,14 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 
 	protected static Set<TraceSection> getSelectedSectionsFromContext(
 			DebuggerSectionActionContext context, boolean allowExpansion) {
-		return context.getSelectedSections(allowExpansion);
+		return context.getSelectedSections(allowExpansion, 0);
 	}
 
 	protected static AddressSetView getSelectedAddressesFromContext(
 			DebuggerSectionActionContext context) {
 		AddressSet sel = new AddressSet();
 		for (TraceSection section : getSelectedSectionsFromContext(context, false)) {
-			sel.add(section.getRange());
+			sel.add(section.getRange(0));
 		}
 		return sel;
 	}

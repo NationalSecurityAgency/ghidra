@@ -980,7 +980,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), entry, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
-			bptUnwind.setEmuSleigh("""
+			bptUnwind.setEmuSleigh(0, """
 					if (%s >= 0x%x) goto <skip>;
 					  emu_swi();
 					<skip>

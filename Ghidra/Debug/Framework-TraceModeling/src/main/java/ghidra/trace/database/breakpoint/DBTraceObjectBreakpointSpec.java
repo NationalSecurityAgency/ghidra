@@ -32,12 +32,10 @@ import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.iface.TraceObjectTogglable;
 import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectBreakpointSpec
 		implements TraceObjectBreakpointSpec, DBTraceObjectInterface {
@@ -69,82 +67,42 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TraceObjectInterface.KEY_DISPLAY, name);
+			object.setValue(Lifespan.nowOn(snap), TraceObjectInterface.KEY_DISPLAY, name);
 		}
 	}
 
 	@Override
-	public String getName() {
-		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-			TraceObjectInterface.KEY_DISPLAY, String.class, "");
+	public String getName(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectInterface.KEY_DISPLAY,
+			String.class, "");
 	}
 
 	@Override
-	public AddressRange getRange() {
+	public AddressRange getRange(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
-	public Address getMinAddress() {
+	public Address getMinAddress(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
-	public Address getMaxAddress() {
+	public Address getMaxAddress(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
-	public long getLength() {
+	public long getLength(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
-	public Lifespan getLifespan() {
-		return computeSpan();
-	}
-
-	@Override
-	public boolean isAlive(long snap) {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.isAlive(snap);
-		}
-	}
-
-	@Override
-	public long getPlacedSnap() {
-		return computeMinSnap();
-	}
-
-	@Override
-	public void setClearedSnap(long clearedSnap) throws DuplicateNameException {
+	public void setEnabled(long snap, boolean enabled) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(getPlacedSnap(), clearedSnap));
-		}
-	}
-
-	@Override
-	public long getClearedSnap() {
-		return computeMaxSnap();
-	}
-
-	@Override
-	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
-		TraceObjectInterfaceUtils.setLifespan(TraceObjectThread.class, object, lifespan);
-	}
-
-	@Override
-	public TraceBreakpoint splitAndSet(long snap, boolean enabled,
-			Collection<TraceBreakpointKind> kinds) {
-		throw new UnsupportedOperationException("Only used by default trace recorder");
-	}
-
-	@Override
-	public void setEnabled(boolean enabled) {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TraceObjectTogglable.KEY_ENABLED,
+			object.setValue(Lifespan.nowOn(snap), TraceObjectTogglable.KEY_ENABLED,
 				enabled ? true : null);
 		}
 	}
@@ -167,15 +125,15 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(long snap, Collection<TraceBreakpointKind> kinds) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setKinds(getLifespan(), kinds);
+			setKinds(Lifespan.nowOn(snap), kinds);
 		}
 	}
 
 	@Override
-	public Set<TraceBreakpointKind> getKinds() {
-		String kindsStr = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+	public Set<TraceBreakpointKind> getKinds(long snap) {
+		String kindsStr = TraceObjectInterfaceUtils.getValue(object, snap,
 			TraceObjectBreakpointSpec.KEY_KINDS, String.class, null);
 		if (kindsStr == null) {
 			return kinds;
@@ -190,28 +148,28 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public String getExpression() {
-		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+	public String getExpression(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap,
 			TraceObjectBreakpointSpec.KEY_EXPRESSION, String.class, null);
 	}
 
 	@Override
-	public Set<TraceThread> getThreads() {
+	public Set<TraceThread> getThreads(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
-	public void setComment(String comment) {
+	public void setComment(long snap, String comment) {
 		throw new UnsupportedOperationException("Set on a location instead");
 	}
 
 	@Override
-	public String getComment() {
+	public String getComment(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
-	public void setEmuEnabled(boolean enabled) {
+	public void setEmuEnabled(long snap, boolean enabled) {
 		throw new UnsupportedOperationException("Set on a location instead");
 	}
 
@@ -221,25 +179,37 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setEmuSleigh(String sleigh) {
+	public void setEmuSleigh(long snap, String sleigh) {
 		throw new UnsupportedOperationException("Set on a location instead");
 	}
 
 	@Override
-	public String getEmuSleigh() {
+	public String getEmuSleigh(long snap) {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}
 
 	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.removeTree(computeSpan());
+			object.removeTree(Lifespan.ALL);
+		}
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		return object.getCanonicalParent(snap) != null;
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public boolean isAlive(Lifespan span) {
+		return object.isAlive(span);
 	}
 
 	@Override
@@ -247,14 +217,16 @@ public class DBTraceObjectBreakpointSpec
 		return object;
 	}
 
-	@Override
-	public Collection<? extends TraceObjectBreakpointLocation> getLocations() {
+	protected Collection<? extends TraceObjectBreakpointLocation> getLocations(Lifespan span) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object
-					.querySuccessorsInterface(getLifespan(), TraceObjectBreakpointLocation.class,
-						true)
+			return object.querySuccessorsInterface(span, TraceObjectBreakpointLocation.class, true)
 					.collect(Collectors.toSet());
 		}
+	}
+
+	@Override
+	public Collection<? extends TraceObjectBreakpointLocation> getLocations(long snap) {
+		return getLocations(Lifespan.at(snap));
 	}
 
 	@Override
@@ -271,9 +243,9 @@ public class DBTraceObjectBreakpointSpec
 			if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
 				return null; // Incomplete object
 			}
-			for (TraceObjectBreakpointLocation loc : getLocations()) {
+			for (TraceObjectBreakpointLocation loc : getLocations(affected.getLifespan())) {
 				DBTraceObjectBreakpointLocation dbLoc = (DBTraceObjectBreakpointLocation) loc;
-				TraceAddressSpace space = dbLoc.getTraceAddressSpace();
+				TraceAddressSpace space = dbLoc.getTraceAddressSpace(affected.getMinSnap());
 				TraceChangeRecord<?, ?> evt =
 					new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, loc, null, null);
 				object.getTrace().setChanged(evt);

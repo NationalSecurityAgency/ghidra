@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 			if (pc == ignore) {
 				continue;
 			}
-			if (!pc.getLifespan().intersects(lifespan)) {
+			if (!pc.isAlive(lifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException(
@@ -149,7 +149,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return threadsByPath.get(path)
 					.stream()
-					.filter(t -> t.getLifespan().contains(snap))
+					.filter(t -> t.isValid(snap))
 					.findAny()
 					.orElse(null);
 		}
@@ -169,9 +169,6 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 		if (objectManager.hasSchema()) {
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
 				return objectManager.queryAllInterface(Lifespan.at(snap), TraceObjectThread.class)
-						// Exclude the destruction
-						.filter(thread -> thread.getCreationSnap() <= snap &&
-							snap < thread.getDestructionSnap())
 						.collect(Collectors.toSet());
 			}
 		}
@@ -180,7 +177,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 			Collection<DBTraceThread> result = new LinkedHashSet<>();
 			for (DBTraceThread thread : threadStore.asMap().values()) {
 				// Don't use .getLifespan().contains(snap). Exclude the destruction.
-				if (thread.getCreationSnap() <= snap && snap < thread.getDestructionSnap()) {
+				if (thread.isValid(snap)) {
 					result.add(thread);
 				}
 			}

@@ -42,8 +42,9 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.TraceObjectManager;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.*;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
@@ -486,8 +487,16 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 		}
 	}
 
-	protected TraceObject findAndCreateFreeBreakpointSpec(TraceObjectManager objs) {
+	protected TraceObject findAndCreateFreeBreakpointSpec(TraceObjectManager objs, Integer id) {
 		KeyPath brkConPath = KeyPath.parse("Processes[1].Breakpoints");
+		if (id != null) {
+			KeyPath path = brkConPath.index(id);
+			TraceObject exists = objs.getObjectByCanonicalPath(path);
+			if (exists != null) {
+				return exists;
+			}
+			return objs.createObject(path);
+		}
 		for (int i = 1; i < 10; i++) {
 			KeyPath path = brkConPath.index(i);
 			TraceObject exists = objs.getObjectByCanonicalPath(path);
@@ -499,9 +508,9 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 	}
 
 	protected TraceObject addBreakpointAndLoc(TraceObjectManager objs, Lifespan lifespan,
-			AddressRange range, Set<TraceBreakpointKind> kinds) {
+			AddressRange range, Set<TraceBreakpointKind> kinds, Integer id) {
 		try (Transaction tx = objs.getTrace().openTransaction("Add breakpoint")) {
-			TraceObject spec = findAndCreateFreeBreakpointSpec(objs);
+			TraceObject spec = findAndCreateFreeBreakpointSpec(objs, id);
 
 			spec.setAttribute(lifespan, "_kinds", TraceBreakpointKindSet.encode(kinds));
 			spec.setAttribute(lifespan, "_expr", "*0x" + range.getMinAddress());
@@ -515,5 +524,10 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			loc.insert(lifespan, ConflictResolution.DENY);
 			return spec;
 		}
+	}
+
+	protected TraceObject addBreakpointAndLoc(TraceObjectManager objs, Lifespan lifespan,
+			AddressRange range, Set<TraceBreakpointKind> kinds) {
+		return addBreakpointAndLoc(objs, lifespan, range, kinds, null);
 	}
 }

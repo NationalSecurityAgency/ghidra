@@ -98,9 +98,9 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 			DBTraceModuleManager mods = tb.trace.getModuleManager();
 			TraceModule modEcho = mods.addLoadedModule("Modules[/bin/echo]", "/bin/echo",
 				tb.range(0x55550000, 0x5556ffff), snap);
-			modEcho.addSection("Modules[/bin/echo].Sections[.text]", ".text",
+			modEcho.addSection(snap, "Modules[/bin/echo].Sections[.text]", ".text",
 				tb.range(0x55550000, 0x5555ffff));
-			modEcho.addSection("Modules[/bin/echo].Sections[.data]", ".data",
+			modEcho.addSection(snap, "Modules[/bin/echo].Sections[.data]", ".data",
 				tb.range(0x55560000, 0x5556ffff));
 
 		}

@@ -48,7 +48,8 @@ import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -1131,8 +1132,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			// Would be nice to control / validate the specifics
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 			TraceModule modBash =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("bash")));
-			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+				Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("bash")));
+			assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 		}
 	}
 

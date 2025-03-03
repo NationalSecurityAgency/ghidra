@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,6 @@ package ghidra.app.plugin.core.debug.gui.modules;
 import db.Transaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.Msg;
@@ -42,7 +40,7 @@ public class SectionRow {
 
 	public void setName(String name) {
 		try (Transaction tx = section.getTrace().openTransaction("Rename section")) {
-			section.setName(name);
+			section.setName(0, name);
 		}
 		catch (DuplicateNameException e) {
 			Msg.showError(this, null, "Rename Section",
@@ -51,31 +49,26 @@ public class SectionRow {
 	}
 
 	public String getName() {
-		return section.getName();
+		return section.getName(0);
 	}
 
 	public String getModuleName() {
-		return section.getModule().getName();
+		return section.getModule().getName(0);
 	}
 
 	public AddressRange getRange() {
-		return section.getRange();
+		return section.getRange(0);
 	}
 
 	public Address getStart() {
-		return section.getStart();
+		return section.getStart(0);
 	}
 
 	public Address getEnd() {
-		return section.getEnd();
+		return section.getEnd(0);
 	}
 
 	public long getLength() {
-		return section.getRange().getLength();
-	}
-
-	public TraceLocation getTraceLocation() {
-		return new DefaultTraceLocation(section.getModule().getTrace(), null,
-			section.getModule().getLifespan(), section.getStart());
+		return section.getRange(0).getLength();
 	}
 }

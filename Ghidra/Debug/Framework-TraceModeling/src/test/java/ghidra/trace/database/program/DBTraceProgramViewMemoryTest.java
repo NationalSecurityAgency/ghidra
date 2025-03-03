@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemoryRegion;
+import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 
 public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -78,7 +79,7 @@ public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrat
 		assertEquals(1, blocks.length);
 
 		MemoryBlock blk = blocks[0];
-		assertSame(blk, vmem.getRegionBlock(io));
+		assertSame(blk, vmem.getRegionBlock(new RegionEntry(io, 0)));
 		assertEquals(".io", blk.getName());
 		assertEquals(tb.addr(os, 0x1000), blk.getStart());
 		assertEquals(tb.addr(os, 0x1fff), blk.getEnd());

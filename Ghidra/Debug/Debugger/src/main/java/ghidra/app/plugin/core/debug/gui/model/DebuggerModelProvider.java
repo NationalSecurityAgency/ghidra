@@ -541,7 +541,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 					.map(n -> n.getValue())
 					.filter(o -> o != null) // Root for no trace would return null
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, objectsTreePanel);
+				DebuggerModelProvider.this, objectsTreePanel, current.getSnap());
 		}
 	}
 
@@ -610,7 +610,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return new DebuggerObjectActionContext(sel.stream()
 					.map(r -> r.getValue())
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, elementsTablePanel);
+				DebuggerModelProvider.this, elementsTablePanel, current.getSnap());
 		}
 	}
 
@@ -664,7 +664,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return new DebuggerObjectActionContext(sel.stream()
 					.map(r -> Objects.requireNonNull(r.getPath().getLastEntry()))
 					.collect(Collectors.toList()),
-				DebuggerModelProvider.this, attributesTablePanel);
+				DebuggerModelProvider.this, attributesTablePanel, current.getSnap());
 		}
 	}
 
@@ -768,7 +768,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return;
 		}
 		Map<String, ActionEntry> actions = target.collectActions(ActionName.REFRESH,
-			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel));
+			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel,
+				current.getSnap()));
 		for (ActionEntry ent : actions.values()) {
 			if (ent.requiresPrompt()) {
 				continue;

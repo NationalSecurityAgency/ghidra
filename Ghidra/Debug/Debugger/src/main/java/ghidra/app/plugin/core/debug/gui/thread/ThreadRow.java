@@ -23,7 +23,8 @@ import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.trace.model.*;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
@@ -46,12 +47,12 @@ public class ThreadRow {
 
 	public void setName(String name) {
 		try (Transaction tx = thread.getTrace().openTransaction("Rename thread")) {
-			thread.setName(name);
+			thread.setName(0, name);
 		}
 	}
 
 	public String getName() {
-		return thread.getName();
+		return thread.getName(0);
 	}
 
 	private Address computeProgramCounter(DebuggerCoordinates coords) {
@@ -82,33 +83,19 @@ public class ThreadRow {
 		return SPLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(), coords);
 	}
 
-	public long getCreationSnap() {
-		return thread.getCreationSnap();
-	}
-
-	// TODO: Use a renderer to make this transformation instead, otherwise sorting is off.
-	public String getDestructionSnap() {
-		long snap = thread.getDestructionSnap();
-		return snap == Long.MAX_VALUE ? "" : Long.toString(snap);
-	}
-
-	public Lifespan getLifespan() {
-		return thread.getLifespan();
-	}
-
 	public void setComment(String comment) {
 		try (Transaction tx = thread.getTrace().openTransaction("Set thread comment")) {
-			thread.setComment(comment);
+			thread.setComment(0, comment);
 		}
 	}
 
 	public String getComment() {
-		return thread.getComment();
+		return thread.getComment(0);
 	}
 
 	public ThreadState getState() {
 		// TODO: Once transition to TraceRmi is complete, this is all in TraceObjectManager
-		if (!thread.isAlive()) {
+		if (!thread.isValid(Long.MAX_VALUE)) {
 			return ThreadState.TERMINATED;
 		}
 		if (provider.targetService == null) {

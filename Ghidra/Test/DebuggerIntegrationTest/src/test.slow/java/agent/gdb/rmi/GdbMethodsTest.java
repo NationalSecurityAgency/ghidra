@@ -405,8 +405,8 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				// Would be nice to control / validate the specifics
 				Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
 				TraceModule modBash =
-					Unique.assertOne(all.stream().filter(m -> m.getName().contains("bash")));
-				assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+					Unique.assertOne(all.stream().filter(m -> m.getName(SNAP).contains("bash")));
+				assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 			}
 		}
 	}

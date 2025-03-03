@@ -73,10 +73,10 @@ public interface TraceObjectRegister extends TraceObjectInterface {
 
 	String getName();
 
-	int getBitLength();
+	int getBitLength(long snap);
 
-	default int getByteLength() {
-		return (getBitLength() + 7) / 8;
+	default int getByteLength(long snap) {
+		return (getBitLength(snap) + 7) / 8;
 	}
 
 	void setValue(Lifespan lifespan, byte[] value);

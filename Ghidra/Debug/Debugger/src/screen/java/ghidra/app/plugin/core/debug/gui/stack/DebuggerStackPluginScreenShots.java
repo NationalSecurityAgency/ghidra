@@ -64,8 +64,8 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.InvalidNameException;
@@ -144,14 +144,14 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 
 			thread = tb.getOrAddThread("Processes[1].Threads[1]", snap);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, snap, true);
-			stack.setDepth(3, true);
+			stack.setDepth(snap, 3, true);
 
 			TraceStackFrame frame;
-			frame = stack.getFrame(0, false);
+			frame = stack.getFrame(snap, 0, false);
 			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
-			frame = stack.getFrame(1, false);
+			frame = stack.getFrame(snap, 1, false);
 			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
-			frame = stack.getFrame(2, false);
+			frame = stack.getFrame(snap, 2, false);
 			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00401001));
 		}
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);

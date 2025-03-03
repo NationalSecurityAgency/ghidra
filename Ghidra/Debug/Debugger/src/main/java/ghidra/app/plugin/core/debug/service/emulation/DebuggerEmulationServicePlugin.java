@@ -664,30 +664,30 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				if (!bpt.isEmuEnabled(snap)) {
 					continue;
 				}
-				Set<TraceBreakpointKind> kinds = bpt.getKinds();
+				Set<TraceBreakpointKind> kinds = bpt.getKinds(snap);
 				boolean isExecute =
 					kinds.contains(TraceBreakpointKind.HW_EXECUTE) ||
 						kinds.contains(TraceBreakpointKind.SW_EXECUTE);
 				boolean isRead = kinds.contains(TraceBreakpointKind.READ);
 				boolean isWrite = kinds.contains(TraceBreakpointKind.WRITE);
 				if (isExecute) {
+					Address minAddress = bpt.getMinAddress(snap);
 					try {
-						emu.inject(bpt.getMinAddress(), bpt.getEmuSleigh());
+						emu.inject(minAddress, bpt.getEmuSleigh(snap));
 					}
 					catch (Exception e) { // This is a bit broad...
-						Msg.error(this,
-							"Error compiling breakpoint Sleigh at " + bpt.getMinAddress(), e);
-						emu.inject(bpt.getMinAddress(), "emu_injection_err();");
+						Msg.error(this, "Error compiling breakpoint Sleigh at " + minAddress, e);
+						emu.inject(minAddress, "emu_injection_err();");
 					}
 				}
 				if (isRead && isWrite) {
-					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.RW);
+					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.RW);
 				}
 				else if (isRead) {
-					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.R);
+					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.R);
 				}
 				else if (isWrite) {
-					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.W);
+					emu.addAccessBreakpoint(bpt.getRange(snap), AccessKind.W);
 				}
 			}
 		}
