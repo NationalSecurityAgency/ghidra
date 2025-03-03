@@ -537,7 +537,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			int row = location.getRow();
 			setCursorPosition(fieldIndex, fieldNum, row, column, EventTrigger.INTERNAL_ONLY);
 			if (panel.getCurrentComponent() == this) {
-				scrollToCursor();
+				goTo(fieldIndex, fieldNum, row, column, false, EventTrigger.INTERNAL_ONLY);
 			}
 
 			return fieldIndex.intValue();
