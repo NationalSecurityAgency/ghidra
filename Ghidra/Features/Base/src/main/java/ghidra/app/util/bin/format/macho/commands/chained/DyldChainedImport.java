@@ -64,7 +64,7 @@ public class DyldChainedImport implements StructConverter {
 				long ival = reader.readNextLong();
 				lib_ordinal = (int) (ival & 0xffff);
 				weak_import = ((ival >> 8) & 1) == 1;
-				name_offset = (ival >> 32 & 0xffffffff);
+				name_offset = ((ival >> 32) & 0xffffffffL);
 				addend = reader.readNextLong();
 				break;
 			}
