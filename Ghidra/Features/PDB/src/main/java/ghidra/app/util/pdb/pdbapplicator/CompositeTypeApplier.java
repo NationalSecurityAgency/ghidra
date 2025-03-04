@@ -137,6 +137,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		}
 		else {
 			applyCpp(combo, type, lists);
+			applicator.markFilledInForBase(type.getRecordNumber());
 		}
 		return true;
 	}
@@ -182,6 +183,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		}
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
 		addClassTypeBaseClasses(composite, classType, lists.bases(), type);
+		// Note: I've seen the situation where there is no vftptr for a class where I expected one.
+		// Situation is where a parent has a vftptr with a vtshape with one entry.  The child
+		// class defines an additional virtual method, and there is an actual table in memory with
+		// with the appropriate mangled label for this class that has two entries, but the list
+		// here does not have the vftptr, and I believe it was due to the fact that new new method
+		// was never called in the code.  Thus... do not count on getting a vtshape in this
+		// situation.  Note that a record of a an appropriate two-entry vtshape was found right
+		// before the class definition, but no pointer to it was created or referred to in the
+		// field list.
 		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
 		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
 
@@ -262,20 +272,31 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	private void applyDirectBaseClass(AbstractBaseClassMsType base, CppCompositeType myClassType,
 			Access defaultAccess) throws PdbException {
-		CppCompositeType underlyingClassType =
-			getUnderlyingClassType(base.getBaseClassRecordNumber());
+		RecordNumber recordNumber = base.getBaseClassRecordNumber();
+		DataType dt = applicator.getDataType(recordNumber);
+		if (!(dt instanceof Composite comp)) {
+			Msg.warn(this, "Composite not found for base class: " + dt);
+			return;
+		}
+		CppCompositeType underlyingClassType = getUnderlyingClassType(recordNumber);
 		if (underlyingClassType == null) {
 			return;
 		}
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int offset = applicator.bigIntegerToInt(base.getOffset());
-		myClassType.addDirectBaseClass(underlyingClassType,
+		myClassType.addDirectBaseClass(comp, underlyingClassType,
 			ClassFieldAttributes.convert(atts, defaultAccess), offset);
 	}
 
 	private void applyDirectVirtualBaseClass(AbstractVirtualBaseClassMsType base,
 			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
-		CppCompositeType underlyingCt = getUnderlyingClassType(base.getBaseClassRecordNumber());
+		RecordNumber recordNumber = base.getBaseClassRecordNumber();
+		DataType dt = applicator.getDataType(recordNumber);
+		if (!(dt instanceof Composite comp)) {
+			Msg.warn(this, "Composite not found for base class: " + dt);
+			return;
+		}
+		CppCompositeType underlyingCt = getUnderlyingClassType(recordNumber);
 		if (underlyingCt == null) {
 			return;
 		}
@@ -284,14 +305,20 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
-		myClassType.addDirectVirtualBaseClass(underlyingCt,
+		myClassType.addDirectVirtualBaseClass(comp, underlyingCt,
 			ClassFieldAttributes.convert(atts, defaultAccess), basePointerOffset, vbtptr,
 			offsetFromVbt);
 	}
 
 	private void applyIndirectVirtualBaseClass(AbstractIndirectVirtualBaseClassMsType base,
 			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
-		CppCompositeType underlyingCt = getUnderlyingClassType(base.getBaseClassRecordNumber());
+		RecordNumber recordNumber = base.getBaseClassRecordNumber();
+		DataType dt = applicator.getDataType(recordNumber);
+		if (!(dt instanceof Composite comp)) {
+			Msg.warn(this, "Composite not found for base class: " + dt);
+			return;
+		}
+		CppCompositeType underlyingCt = getUnderlyingClassType(recordNumber);
 		if (underlyingCt == null) {
 			return;
 		}
@@ -300,7 +327,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
-		myClassType.addIndirectVirtualBaseClass(underlyingCt,
+		myClassType.addIndirectVirtualBaseClass(comp, underlyingCt,
 			ClassFieldAttributes.convert(atts, defaultAccess), basePointerOffset, vbtptr,
 			offsetFromVbt);
 	}
@@ -390,7 +417,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			applicator.checkCancelled();
 			if (base instanceof AbstractBaseClassMsType bc) {
 				RecordNumber recordNumber = bc.getBaseClassRecordNumber();
-				DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+				DataType dt = applicator.getBaseClassDataTypeOrSchedule(recordNumber);
 				if (dt == null) {
 					done = false;
 				}
@@ -402,7 +429,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					done = false;
 				}
 				recordNumber = vbc.getBaseClassRecordNumber();
-				dt = applicator.getDataTypeOrSchedule(recordNumber);
+				dt = applicator.getBaseClassDataTypeOrSchedule(recordNumber);
 				if (dt == null) {
 					done = false;
 				}
@@ -414,7 +441,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					done = false;
 				}
 				recordNumber = ivbc.getBaseClassRecordNumber();
-				dt = applicator.getDataTypeOrSchedule(recordNumber);
+				dt = applicator.getBaseClassDataTypeOrSchedule(recordNumber);
 				if (dt == null) {
 					done = false;
 				}

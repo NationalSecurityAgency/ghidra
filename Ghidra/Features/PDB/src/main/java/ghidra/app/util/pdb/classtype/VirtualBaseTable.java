@@ -24,8 +24,18 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
  * Abstract class for virtual base tables
  */
 public abstract class VirtualBaseTable implements VBTable {
+
 	protected ClassID owner; // Does this belong here in this abstract class?
 	protected List<ClassID> parentage; // Not sure this belongs in this abstract class
+	/**
+	 * The number of entries in the table
+	 */
+	protected Integer numEntries;
+	/**
+	 * This is the offset within the class where we expect to find the pointer that can point to
+	 *  this table
+	 */
+	protected Long ptrOffsetInClass;
 
 	/**
 	 * Virtual Base Table for a base (parent) class within an owner class.  The owner and parent
@@ -84,6 +94,22 @@ public abstract class VirtualBaseTable implements VBTable {
 	}
 
 	/**
+	 * Returns the number of entries in the table
+	 * @return the number of entries; {@code null} if not initialized
+	 */
+	public Integer getNumEntries() {
+		return numEntries;
+	}
+
+	/**
+	 * Gets the offset within the class for the pointer that can point to this table
+	 * @return the offset; {@code null} if not initialized
+	 */
+	public Long getPtrOffsetInClass() {
+		return ptrOffsetInClass;
+	}
+
+	/**
 	 * Sets the owner of the table
 	 * @param ownerArg the class to set as owner
 	 */
@@ -97,6 +123,22 @@ public abstract class VirtualBaseTable implements VBTable {
 	 */
 	public void setParentage(List<ClassID> parentage) {
 		this.parentage = parentage;
+	}
+
+	/**
+	 * Sets the number of entries for the table
+	 * @param numEntriesArg the number of entries
+	 */
+	public void setNumEntries(Integer numEntriesArg) {
+		numEntries = numEntriesArg;
+	}
+
+	/**
+	 * Sets the offset within the class for the pointer that can point to this table
+	 * @param offset the offset
+	 */
+	public void setPtrOffsetInClass(Long offset) {
+		ptrOffsetInClass = offset;
 	}
 
 	void emit(StringBuilder builder) {
