@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,56 +34,30 @@ import java.util.function.Supplier;
  * {@link ScheduledThreadPoolExecutor}.
  * 
  * <p>
- * A delay is achieved using {@link #mark()}, then {@link #after(long)}. For example, within a
- * {@link AsyncUtils#sequence(TypeSpec)}:
+ * A delay is achieved using {@link #mark()}, then {@link Mark#after(long)}.
  * 
  * <pre>
- * timer.mark().after(1000).handle(seq::next);
+ * future.thenCompose(__ -> timer.mark().after(1000))
  * </pre>
  * 
  * <p>
- * {@link #mark()} marks the current system time; all subsequent calls to {@link #after(long)}
- * schedule futures relative to this mark. Using {@link #after(long)} before {@link #mark()} gives
- * undefined behavior. Scheduling a timed sequence of actions is best accomplished using times
- * relative to a single mark. For example:
+ * {@link #mark()} marks the current system time; all calls to the mark's {@link Mark#after(long)}
+ * schedule futures relative to this mark. Scheduling a timed sequence of actions is best
+ * accomplished using times relative to a single mark. For example:
  * 
  * <pre>
- * sequence(TypeSpec.VOID).then((seq) -> {
- * 	timer.mark().after(1000).handle(seq::next);
- * }).then((seq) -> {
- * 	doTaskAtOneSecond().handle(seq::next);
- * }).then((seq) -> {
- * 	timer.after(2000).handle(seq::next);
- * }).then((seq) -> {
- * 	doTaskAtTwoSeconds().handle(seq::next);
- * }).asCompletableFuture();
+ * Mark mark = timer.mark();
+ * mark.after(1000).thenCompose(__ -> {
+ * 	doTaskAtOneSecond();
+ * 	return mark.after(2000);
+ * }).thenAccept(__ -> {
+ * 	doTaskAtTwoSeconds();
+ * });
  * </pre>
  * 
  * <p>
  * This provides slightly more precise scheduling than delaying for a fixed period between tasks.
  * Consider a second example:
- * 
- * <pre>
- * sequence(TypeSpec.VOID).then((seq) -> {
- * 	timer.mark().after(1000).handle(seq::next);
- * }).then((seq) -> {
- * 	doTaskAtOneSecond().handle(seq::next);
- * }).then((seq) -> {
- * 	timer.mark().after(1000).handle(seq::next);
- * }).then((seq) -> {
- * 	doTaskAtTwoSeconds().handle(seq::next);
- * }).asCompletableFuture();
- * </pre>
- * 
- * <p>
- * In the first example, {@code doTaskAtTwoSeconds} executes at 2000ms from the mark + some
- * scheduling overhead. In the second example, {@code doTaskAtTwoSeconds} executes at 1000ms + some
- * scheduling overhead + the time to execute {@code doTaskAtOneSecond} + 1000ms + some more
- * scheduling overhead. Using the second pattern repeatedly can lead to increased inaccuracies as
- * overhead accumulates over time. This may be an issue for some applications. Using the first
- * pattern, there is no accumulation. The actual scheduled time will always be the specified time
- * from the mark + some scheduling overhead. The scheduling overhead is generally bounded to a small
- * constant and depends on the accuracy of the host OS and JVM.
  * 
  * <p>
  * Like {@link Timer}, each {@link AsyncTimer} is backed by a single thread which uses
@@ -108,8 +82,9 @@ public class AsyncTimer {
 		/**
 		 * Schedule a task to run when the given number of milliseconds has passed since this mark
 		 * 
+		 * <p>
 		 * The method returns immediately, giving a future result. The future completes "soon after"
-		 * the requested interval, since the last mark, passes. There is some minimal overhead, but
+		 * the requested interval since the last mark passes. There is some minimal overhead, but
 		 * the scheduler endeavors to complete the future as close to the given time as possible.
 		 * The actual scheduled time will not precede the requested time.
 		 * 

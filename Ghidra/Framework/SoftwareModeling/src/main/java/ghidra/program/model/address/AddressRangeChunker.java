@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,15 @@
  */
 package ghidra.program.model.address;
 
-import java.util.Iterator;
+import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
- * A class to break a range of addresses into 'chunks' of a give size.   This is useful to
- * break-up processing of large swaths of addresses, such as when performing work in a
- * background thread.  Doing this allows the client to iterator over the range, pausing
- * enough to allow the UI to update.
+ * A class to break a range of addresses into 'chunks' of a give size. This is useful to break-up
+ * processing of large swaths of addresses, such as when performing work in a background thread.
+ * Doing this allows the client to iterator over the range, pausing enough to allow the UI to
+ * update.
  */
 public class AddressRangeChunker implements Iterable<AddressRange> {
 
@@ -105,5 +107,23 @@ public class AddressRangeChunker implements Iterable<AddressRange> {
 			}
 
 		};
+	}
+
+	@Override
+	public Spliterator<AddressRange> spliterator() {
+		long countAddrs = end.subtract(nextStartAddress) + 1;
+		long size = Long.divideUnsigned(countAddrs + chunkSize - 1, chunkSize);
+		return Spliterators.spliterator(iterator(), size,
+			Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SORTED |
+				Spliterator.SIZED);
+	}
+
+	/**
+	 * Stream the chunks
+	 * 
+	 * @return the stream
+	 */
+	public Stream<AddressRange> stream() {
+		return StreamSupport.stream(spliterator(), false);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,8 @@
  */
 package ghidra.async;
 
-import java.util.Collection;
 import java.util.concurrent.*;
 
-import ghidra.async.AsyncUtils.TemperamentalRunnable;
-import ghidra.async.AsyncUtils.TemperamentalSupplier;
-import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
 public interface AsyncTestUtils {
@@ -64,48 +60,5 @@ public interface AsyncTestUtils {
 			}
 		});
 		return waitOnNoValidate(validated);
-	}
-
-	default void retryVoid(TemperamentalRunnable runnable,
-			Collection<Class<? extends Throwable>> retriable) throws Throwable {
-		retry(() -> {
-			runnable.run();
-			return null;
-		}, retriable);
-	}
-
-	default <T> T retry(TemperamentalSupplier<T> supplier,
-			Collection<Class<? extends Throwable>> retriable) throws Throwable {
-		return retry(TIMEOUT_MS, supplier, retriable);
-	}
-
-	default <T> T retry(long timeoutMs, TemperamentalSupplier<T> supplier,
-			Collection<Class<? extends Throwable>> retriable) throws Throwable {
-		long retryAttempts = timeoutMs / RETRY_INTERVAL_MS;
-		Throwable lastExc = null;
-		for (int i = 0; i < retryAttempts; i++) {
-			if (i != 0) {
-				Thread.sleep(RETRY_INTERVAL_MS);
-			}
-			try {
-				return supplier.get();
-			}
-			catch (Throwable e) {
-				if (i < 10) {
-					Msg.debug(this, "Retrying after " + e);
-				}
-				lastExc = e;
-				for (Class<? extends Throwable> et : retriable) {
-					if (et.isAssignableFrom(e.getClass())) {
-						e = null;
-						break;
-					}
-				}
-				if (e != null) {
-					throw e;
-				}
-			}
-		}
-		throw lastExc;
 	}
 }

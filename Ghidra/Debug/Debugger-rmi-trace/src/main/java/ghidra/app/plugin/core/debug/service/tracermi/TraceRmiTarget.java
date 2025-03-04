@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.Icon;
 
@@ -32,7 +33,8 @@ import ghidra.app.plugin.core.debug.gui.tracermi.RemoteMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.async.*;
+import ghidra.async.AsyncFence;
+import ghidra.async.AsyncUtils;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
@@ -1086,9 +1088,11 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public CompletableFuture<Void> readMemoryAsync(AddressSetView set, TaskMonitor monitor) {
-		// I still separate into blocks, because I want user to be able to cancel
-		// NOTE: I don't intend to warn about the number of requests.
-		//   They're delivered in serial, and there's a cancel button that works
+		/**
+		 * I still separate into blocks, because I want user to be able to cancel. I don't intend to
+		 * warn about the number of requests. They're delivered in serial, and there's a cancel
+		 * button that works
+		 */
 
 		MatchedMethod readMem =
 			matches.getBest(ReadMemMatcher.class, null, ActionName.READ_MEM, ReadMemMatcher.ALL);
@@ -1113,40 +1117,50 @@ public class TraceRmiTarget extends AbstractTarget {
 		}
 		monitor.initialize(total);
 		monitor.setMessage("Reading memory");
-		// NOTE: Don't read in parallel, lest we overload the connection
-		return AsyncUtils.each(TypeSpec.VOID, quantized.iterator(), (r, loop) -> {
-			AddressRangeChunker blocks = new AddressRangeChunker(r, BLOCK_SIZE);
+
+		/**
+		 * NOTE: Don't read in parallel, lest we overload the connection. This does queue them all
+		 * up in a CF chain, though. Still, a request doesn't go out until the preceding one
+		 * completes.
+		 */
+		return quantized.stream().flatMap(r -> {
 			if (r.getAddressSpace().isRegisterSpace()) {
 				Msg.warn(this, "Request to read registers via readMemory: " + r + ". Ignoring.");
-				loop.repeatWhile(!monitor.isCancelled());
-				return;
+				return Stream.of();
 			}
-			AsyncUtils.each(TypeSpec.VOID, blocks.iterator(), (blk, inner) -> {
+			return new AddressRangeChunker(r, BLOCK_SIZE).stream();
+		}).reduce(AsyncUtils.nil(), (f, blk) -> {
+			if (monitor.isCancelled()) {
+				return f;
+			}
+			final Map<String, Object> args;
+			if (paramProcess != null) {
+				TraceObject process = procsBySpace.computeIfAbsent(blk.getAddressSpace(),
+					this::getProcessForSpace);
+				if (process == null) {
+					return f;
+				}
+				args = Map.ofEntries(
+					Map.entry(paramProcess.name(), process),
+					Map.entry(paramRange.name(), blk));
+			}
+			else {
+				args = Map.ofEntries(
+					Map.entry(paramRange.name(), blk));
+			}
+
+			return f.thenComposeAsync(__ -> {
+				if (monitor.isCancelled()) {
+					return AsyncUtils.nil();
+				}
 				monitor.incrementProgress(1);
-				final Map<String, Object> args;
-				if (paramProcess != null) {
-					TraceObject process = procsBySpace.computeIfAbsent(blk.getAddressSpace(),
-						this::getProcessForSpace);
-					if (process == null) {
-						Msg.warn(this, "Cannot find process containing " + blk.getMinAddress());
-						inner.repeatWhile(!monitor.isCancelled());
-						return;
-					}
-					args = Map.ofEntries(
-						Map.entry(paramProcess.name(), process),
-						Map.entry(paramRange.name(), blk));
-				}
-				else {
-					args = Map.ofEntries(
-						Map.entry(paramRange.name(), blk));
-				}
-				CompletableFuture<Void> future =
-					requestCaches.readBlock(blk.getMinAddress(), readMem.method, args);
-				future.exceptionally(e -> {
-					Msg.error(this, "Could not read " + blk + ": " + e);
-					return null; // Continue looping on errors
-				}).thenApply(__ -> !monitor.isCancelled()).handle(inner::repeatWhile);
-			}).thenApply(v -> !monitor.isCancelled()).handle(loop::repeatWhile);
+				return requestCaches.readBlock(blk.getMinAddress(), readMem.method, args);
+			}, AsyncUtils.FRAMEWORK_EXECUTOR).exceptionally(e -> {
+				Msg.error(this, "Could not read " + blk + ": " + e);
+				return null; // Continue looping on errors
+			});
+		}, (f1, f2) -> {
+			throw new AssertionError("Should be sequential");
 		});
 	}
 
