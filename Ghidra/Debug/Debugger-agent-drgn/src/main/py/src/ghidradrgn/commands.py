@@ -1296,16 +1296,6 @@ def map_address(address):
     return (base, addr)
 
 
-# def ghidra_trace_put_generic(node):
-#     """
-#     Put the current thread's frames into the Ghidra trace
-#     """
-#
-#     STATE.require_tx()
-#     with STATE.client.batch() as b:
-#         put_generic(node)
-
-
 def ghidra_trace_put_all():
     """
     Put everything currently selected into the Ghidra trace
