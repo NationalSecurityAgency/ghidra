@@ -3625,9 +3625,10 @@ is b_31=0 & b_30=1 & b_2429=0b101110 & b_2223=0b11 & b_21=0 & b_1315=0b111 & b_1
 :fccmp Rn_FPR64, Rm_FPR64, NZCVImm_uimm4, CondOp
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & CondOp & b_1011=1 & Rn_FPR64 & fpccmp.op=0 & NZCVImm_uimm4
 {
-	setCC_NZCV(NZCVImm_uimm4:1);
 	local tmp1:1 = ! CondOp:1;
+	setCC_NZCV(NZCVImm_uimm4:1);
 	if (tmp1) goto inst_next;
+	ftestNAN(Rn_FPR64, Rm_FPR64);
 	fcomp(Rn_FPR64, Rm_FPR64);
 }
 
@@ -3640,9 +3641,10 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & CondOp &
 :fccmp Rn_FPR32, Rm_FPR32, NZCVImm_uimm4, CondOp
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & CondOp & b_1011=1 & Rn_FPR32 & fpccmp.op=0 & NZCVImm_uimm4
 {
-	setCC_NZCV(NZCVImm_uimm4:1);
 	local tmp1:1 = ! CondOp:1;
+	setCC_NZCV(NZCVImm_uimm4:1);
 	if (tmp1) goto inst_next;
+	ftestNAN(Rn_FPR32, Rm_FPR32);
 	fcomp(Rn_FPR32, Rm_FPR32);
 }
 
@@ -3655,9 +3657,10 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & CondOp &
 :fccmp Rn_FPR16, Rm_FPR16, NZCVImm_uimm4, CondOp
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & CondOp & b_1011=1 & Rn_FPR16 & fpccmp.op=0 & NZCVImm_uimm4
 {
-	setCC_NZCV(NZCVImm_uimm4:1);
 	local tmp1:1 = ! CondOp:1;
+	setCC_NZCV(NZCVImm_uimm4:1);
 	if (tmp1) goto inst_next;
+	ftestNAN(Rn_FPR16, Rm_FPR16);
 	fcomp(Rn_FPR16, Rm_FPR16);
 }
 
@@ -3670,8 +3673,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & CondOp &
 :fccmpe Rn_FPR64, Rm_FPR64, NZCVImm_uimm4, CondOp
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & CondOp & b_1011=1 & Rn_FPR64 & fpccmp.op=1 & NZCVImm_uimm4
 {
-	setCC_NZCV(NZCVImm_uimm4:1);
 	local tmp1:1 = ! CondOp:1;
+	setCC_NZCV(NZCVImm_uimm4:1);
 	if (tmp1) goto inst_next;
 	ftestNAN(Rn_FPR64, Rm_FPR64);
 	fcomp(Rn_FPR64, Rm_FPR64);
@@ -3686,8 +3689,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & CondOp &
 :fccmpe Rn_FPR32, Rm_FPR32, NZCVImm_uimm4, CondOp
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & CondOp & b_1011=1 & Rn_FPR32 & fpccmp.op=1 & NZCVImm_uimm4
 {
-	setCC_NZCV(NZCVImm_uimm4:1);
 	local tmp1:1 = ! CondOp:1;
+	setCC_NZCV(NZCVImm_uimm4:1);
 	if (tmp1) goto inst_next;
 	ftestNAN(Rn_FPR32, Rm_FPR32);
 	fcomp(Rn_FPR32, Rm_FPR32);
@@ -3702,8 +3705,8 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & CondOp &
 :fccmpe Rn_FPR16, Rm_FPR16, NZCVImm_uimm4, CondOp
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & CondOp & b_1011=1 & Rn_FPR16 & fpccmp.op=1 & NZCVImm_uimm4
 {
-	setCC_NZCV(NZCVImm_uimm4:1);
 	local tmp1:1 = ! CondOp:1;
+	setCC_NZCV(NZCVImm_uimm4:1);
 	if (tmp1) goto inst_next;
 	ftestNAN(Rn_FPR16, Rm_FPR16);
 	fcomp(Rn_FPR16, Rm_FPR16);
@@ -4570,6 +4573,7 @@ is b_31=0 & b_30=1 & b_1029=0b00111011111000111010 & Rd_VPR128.8H & Rn_VPR128.8H
 :fcmp Rn_FPR64, Rm_FPR64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & fpcmp.op=0 & b_1013=0x8 & Rn_FPR64 & fpcmp.opcode2=0x0
 {
+	ftestNAN(Rn_FPR64, Rm_FPR64);
 	fcomp(Rn_FPR64, Rm_FPR64);
 }
 
@@ -4582,6 +4586,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_FPR64 & fpcmp.op
 :fcmp Rn_FPR64, Rm_fpz64
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_fpz64 & fpcmp.op=0 & b_1013=0x8 & Rn_FPR64 & fpcmp.opcode2=0x8
 {
+	ftestNAN(Rn_FPR64, Rm_fpz64);
 	fcomp(Rn_FPR64, Rm_fpz64);
 }
 
@@ -4594,6 +4599,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=1 & b_2121=1 & Rm_fpz64 & fpcmp.op
 :fcmp Rn_FPR32, Rm_fpz32
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_fpz32 & fpcmp.op=0 & b_1013=0x8 & Rn_FPR32 & fpcmp.opcode2=0x8
 {
+	ftestNAN(Rn_FPR32, Rm_fpz32);
 	fcomp(Rn_FPR32, Rm_fpz32);
 }
 
@@ -4606,6 +4612,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_fpz32 & fpcmp.op
 :fcmp Rn_FPR32, Rm_FPR32
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & fpcmp.op=0 & b_1013=0x8 & Rn_FPR32 & fpcmp.opcode2=0x0
 {
+	ftestNAN(Rn_FPR32, Rm_FPR32);
 	fcomp(Rn_FPR32, Rm_FPR32);
 }
 
@@ -4618,6 +4625,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=0 & b_2121=1 & Rm_FPR32 & fpcmp.op
 :fcmp Rn_FPR16, Rm_fpz16
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_fpz16 & fpcmp.op=0 & b_1013=0x8 & Rn_FPR16 & fpcmp.opcode2=0x8
 {
+	ftestNAN(Rn_FPR16, Rm_fpz16);
 	fcomp(Rn_FPR16, Rm_fpz16);
 }
 
@@ -4630,6 +4638,7 @@ is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_fpz16 & fpcmp.op
 :fcmp Rn_FPR16, Rm_FPR16
 is m=0 & b_3030=0 & s=0 & b_2428=0x1e & ftype=3 & b_2121=1 & Rm_FPR16 & fpcmp.op=0 & b_1013=0x8 & Rn_FPR16 & fpcmp.opcode2=0x0
 {
+	ftestNAN(Rn_FPR16, Rm_FPR16);
 	fcomp(Rn_FPR16, Rm_FPR16);
 }
 
