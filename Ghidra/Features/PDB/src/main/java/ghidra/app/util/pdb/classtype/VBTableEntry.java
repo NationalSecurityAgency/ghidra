@@ -24,7 +24,7 @@ public interface VBTableEntry {
 	 * Sets the entry offset value
 	 * @param offset the offset
 	 */
-	public void setOffset(long offset);
+	public void setOffset(Long offset);
 
 	/**
 	 * Gets the entry offset value

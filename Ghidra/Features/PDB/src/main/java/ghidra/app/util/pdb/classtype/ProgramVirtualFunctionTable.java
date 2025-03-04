@@ -68,7 +68,7 @@ public class ProgramVirtualFunctionTable extends VirtualFunctionTable {
 	 * Returns the mangled name
 	 * @return the mangled name
 	 */
-	String getMangledName() {
+	public String getMangledName() {
 		return mangledName;
 	}
 

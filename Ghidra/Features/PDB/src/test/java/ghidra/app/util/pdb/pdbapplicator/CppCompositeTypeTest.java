@@ -1064,7 +1064,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createD_struct32(VxtManager vxtManager, CppCompositeType C_struct) {
 		try {
 			CppCompositeType D_struct = createStruct32("D", 8);
-			D_struct.addDirectBaseClass(C_struct, 0);
+			D_struct.addDirectBaseClass(C_struct.getComposite(), C_struct, 0);
 			D_struct.addMember("d1", u4, false, 4);
 			return D_struct;
 		}
@@ -1078,7 +1078,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createD_struct64(VxtManager vxtManager, CppCompositeType C_struct) {
 		try {
 			CppCompositeType D_struct = createStruct64("D", 8);
-			D_struct.addDirectBaseClass(C_struct, 0);
+			D_struct.addDirectBaseClass(C_struct.getComposite(), C_struct, 0);
 			D_struct.addMember("d1", u4, false, 4);
 			return D_struct;
 		}
@@ -1279,8 +1279,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct) {
 		try {
 			CppCompositeType F_struct = createStruct32("F", 12);
-			F_struct.addDirectBaseClass(C_struct, 0);
-			F_struct.addDirectBaseClass(E_struct, 4);
+			F_struct.addDirectBaseClass(C_struct.getComposite(), C_struct, 0);
+			F_struct.addDirectBaseClass(E_struct.getComposite(), E_struct, 4);
 			F_struct.addMember("f1", u4, false, 8);
 			return F_struct;
 		}
@@ -1295,8 +1295,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct) {
 		try {
 			CppCompositeType F_struct = createStruct64("F", 12);
-			F_struct.addDirectBaseClass(C_struct, 0);
-			F_struct.addDirectBaseClass(E_struct, 4);
+			F_struct.addDirectBaseClass(C_struct.getComposite(), C_struct, 0);
+			F_struct.addDirectBaseClass(E_struct.getComposite(), E_struct, 4);
 			F_struct.addMember("f1", u4, false, 8);
 			return F_struct;
 		}
@@ -1427,7 +1427,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vxtManager);
 			}
-			G_struct.addVirtualSyntacticBaseClass(C_struct);
+			G_struct.addVirtualSyntacticBaseClass(C_struct.getComposite(), C_struct);
 			G_struct.addMember("g1", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -1447,7 +1447,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createG_struct32(VxtManager vxtManager, CppCompositeType C_struct) {
 		try {
 			CppCompositeType G_struct = createStruct32("G", 12);
-			G_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			G_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32, 1);
 			G_struct.addMember("g1", u4, false, 4);
 			return G_struct;
 		}
@@ -1461,7 +1461,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createG_struct64(VxtManager vxtManager, CppCompositeType C_struct) {
 		try {
 			CppCompositeType G_struct = createStruct64("G", 20);
-			G_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			G_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64, 1);
 			G_struct.addMember("g1", u4, false, 8);
 			return G_struct;
 		}
@@ -1601,7 +1601,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vxtManager);
 			}
-			H_struct.addVirtualSyntacticBaseClass(C_struct);
+			H_struct.addVirtualSyntacticBaseClass(C_struct.getComposite(), C_struct);
 			H_struct.addMember("h1", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -1621,7 +1621,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createH_struct32(VxtManager vxtManager, CppCompositeType C_struct) {
 		try {
 			CppCompositeType H_struct = createStruct32("H", 12);
-			H_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			H_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32, 1);
 			H_struct.addMember("h1", u4, false, 4);
 			return H_struct;
 		}
@@ -1635,7 +1635,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createH_struct64(VxtManager vxtManager, CppCompositeType C_struct) {
 		try {
 			CppCompositeType H_struct = createStruct64("H", 20);
-			H_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			H_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64, 1);
 			H_struct.addMember("h1", u4, false, 8);
 			return H_struct;
 		}
@@ -1778,8 +1778,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (E_struct == null) {
 				E_struct = createE_struct32(vxtManager);
 			}
-			G1_struct.addVirtualSyntacticBaseClass(C_struct);
-			G1_struct.addVirtualSyntacticBaseClass(E_struct);
+			G1_struct.addVirtualSyntacticBaseClass(C_struct.getComposite(), C_struct);
+			G1_struct.addVirtualSyntacticBaseClass(E_struct.getComposite(), E_struct);
 			G1_struct.addMember("g11", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -1800,8 +1800,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct) {
 		try {
 			CppCompositeType G1_struct = createStruct32("G1", 16);
-			G1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			G1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			G1_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32, 1);
+			G1_struct.addDirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32, 2);
 			G1_struct.addMember("g11", u4, false, 4);
 			return G1_struct;
 		}
@@ -1816,8 +1816,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct) {
 		try {
 			CppCompositeType G1_struct = createStruct64("G1", 24);
-			G1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			G1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			G1_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64, 1);
+			G1_struct.addDirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64, 2);
 			G1_struct.addMember("g11", u4, false, 8);
 			return G1_struct;
 		}
@@ -1984,8 +1984,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vxtManager);
 			}
-			H1_struct.addVirtualSyntacticBaseClass(E_struct);
-			H1_struct.addVirtualSyntacticBaseClass(C_struct);
+			H1_struct.addVirtualSyntacticBaseClass(E_struct.getComposite(), E_struct);
+			H1_struct.addVirtualSyntacticBaseClass(C_struct.getComposite(), C_struct);
 			H1_struct.addMember("h11", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -2006,8 +2006,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType C_struct) {
 		try {
 			CppCompositeType H1_struct = createStruct32("H1", 16);
-			H1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 1);
-			H1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 2);
+			H1_struct.addDirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32, 1);
+			H1_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32, 2);
 			H1_struct.addMember("h11", u4, false, 4);
 			return H1_struct;
 		}
@@ -2022,8 +2022,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType C_struct) {
 		try {
 			CppCompositeType H1_struct = createStruct64("H1", 24);
-			H1_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 1);
-			H1_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 2);
+			H1_struct.addDirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64, 1);
+			H1_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64, 2);
 			H1_struct.addMember("h11", u4, false, 8);
 			return H1_struct;
 		}
@@ -2187,7 +2187,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct32(vxtManager);
 			}
-			GG1_struct.addVirtualSyntacticBaseClass(CC1_struct);
+			GG1_struct.addVirtualSyntacticBaseClass(CC1_struct.getComposite(), CC1_struct);
 			GG1_struct.addMember("gg11", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -2207,7 +2207,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG1_struct32(VxtManager vxtManager, CppCompositeType CC1_struct) {
 		try {
 			CppCompositeType GG1_struct = createStruct32("GG1", 12);
-			GG1_struct.addDirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 1);
+			GG1_struct.addDirectVirtualBaseClass(CC1_struct.getComposite(), CC1_struct, 0, vbtptr32,
+				1);
 			GG1_struct.addMember("gg11", u4, false, 4);
 			return GG1_struct;
 		}
@@ -2221,7 +2222,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG1_struct64(VxtManager vxtManager, CppCompositeType CC1_struct) {
 		try {
 			CppCompositeType GG1_struct = createStruct64("GG1", 20);
-			GG1_struct.addDirectVirtualBaseClass(CC1_struct, 0, vbtptr64, 1);
+			GG1_struct.addDirectVirtualBaseClass(CC1_struct.getComposite(), CC1_struct, 0, vbtptr64,
+				1);
 			GG1_struct.addMember("gg11", u4, false, 8);
 			return GG1_struct;
 		}
@@ -2361,7 +2363,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vxtManager);
 			}
-			GG2_struct.addVirtualSyntacticBaseClass(CC2_struct);
+			GG2_struct.addVirtualSyntacticBaseClass(CC2_struct.getComposite(), CC2_struct);
 			GG2_struct.addMember("gg21", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -2381,7 +2383,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG2_struct32(VxtManager vxtManager, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType GG2_struct = createStruct32("GG2", 12);
-			GG2_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 1);
+			GG2_struct.addDirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0, vbtptr32,
+				1);
 			GG2_struct.addMember("gg21", u4, false, 4);
 			return GG2_struct;
 		}
@@ -2395,7 +2398,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG2_struct64(VxtManager vxtManager, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType GG2_struct = createStruct64("GG2", 20);
-			GG2_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 1);
+			GG2_struct.addDirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0, vbtptr64,
+				1);
 			GG2_struct.addMember("gg21", u4, false, 8);
 			return GG2_struct;
 		}
@@ -2535,7 +2539,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vxtManager);
 			}
-			GG3_struct.addVirtualSyntacticBaseClass(CC2_struct);
+			GG3_struct.addVirtualSyntacticBaseClass(CC2_struct.getComposite(), CC2_struct);
 			GG3_struct.addMember("gg31", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -2555,7 +2559,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG3_struct32(VxtManager vxtManager, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType GG3_struct = createStruct32("GG3", 12);
-			GG3_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 1);
+			GG3_struct.addDirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0, vbtptr32,
+				1);
 			GG3_struct.addMember("gg31", u4, false, 4);
 			return GG3_struct;
 		}
@@ -2569,7 +2574,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG3_struct64(VxtManager vxtManager, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType GG3_struct = createStruct64("GG3", 20);
-			GG3_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 1);
+			GG3_struct.addDirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0, vbtptr64,
+				1);
 			GG3_struct.addMember("gg31", u4, false, 8);
 			return GG3_struct;
 		}
@@ -2707,7 +2713,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG4_struct32(VxtManager vxtManager, CppCompositeType CC3_struct) {
 		try {
 			CppCompositeType GG4_struct = createStruct32("GG4", 8);
-			GG4_struct.addDirectVirtualBaseClass(CC3_struct, 0, vbtptr32, 1);
+			GG4_struct.addDirectVirtualBaseClass(CC3_struct.getComposite(), CC3_struct, 0, vbtptr32,
+				1);
 			GG4_struct.addMember("gg41", u4, false, 4);
 			return GG4_struct;
 		}
@@ -2721,7 +2728,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	static CppCompositeType createGG4_struct64(VxtManager vxtManager, CppCompositeType CC3_struct) {
 		try {
 			CppCompositeType GG4_struct = createStruct64("GG4", 16);
-			GG4_struct.addDirectVirtualBaseClass(CC3_struct, 0, vbtptr64, 1);
+			GG4_struct.addDirectVirtualBaseClass(CC3_struct.getComposite(), CC3_struct, 0, vbtptr64,
+				1);
 			GG4_struct.addMember("gg41", u4, false, 8);
 			return GG4_struct;
 		}
@@ -2860,8 +2868,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (H_struct == null) {
 				H_struct = createH_struct32(vxtManager, C_struct);
 			}
-			I_struct.addDirectSyntacticBaseClass(G_struct);
-			I_struct.addDirectSyntacticBaseClass(H_struct);
+			I_struct.addDirectSyntacticBaseClass(G_struct.getComposite(), G_struct);
+			I_struct.addDirectSyntacticBaseClass(H_struct.getComposite(), H_struct);
 			I_struct.addMember("i1", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -2882,9 +2890,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I_struct = createStruct32("I", 24);
-			I_struct.addDirectBaseClass(G_struct, 0);
-			I_struct.addDirectBaseClass(H_struct, 8);
-			I_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I_struct.addDirectBaseClass(G_struct.getComposite(), G_struct, 0);
+			I_struct.addDirectBaseClass(H_struct.getComposite(), H_struct, 8);
+			I_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32, 1);
 			I_struct.addMember("i1", u4, false, 16);
 			return I_struct;
 		}
@@ -2899,9 +2907,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I_struct = createStruct64("I", 44);
-			I_struct.addDirectBaseClass(G_struct, 0);
-			I_struct.addDirectBaseClass(H_struct, 16);
-			I_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I_struct.addDirectBaseClass(G_struct.getComposite(), G_struct, 0);
+			I_struct.addDirectBaseClass(H_struct.getComposite(), H_struct, 16);
+			I_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64, 1);
 			I_struct.addMember("i1", u4, false, 32);
 			return I_struct;
 		}
@@ -3097,10 +3105,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
 		try {
 			CppCompositeType I1_struct = createStruct32("I1", 28);
-			I1_struct.addDirectBaseClass(G1_struct, 0);
-			I1_struct.addDirectBaseClass(H_struct, 8);
-			I1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I1_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I1_struct.addDirectBaseClass(H_struct.getComposite(), H_struct, 8);
+			I1_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			I1_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
 			I1_struct.addMember("i11", u4, false, 16);
 			return I1_struct;
 		}
@@ -3115,10 +3125,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
 		try {
 			CppCompositeType I1_struct = createStruct64("I1", 48);
-			I1_struct.addDirectBaseClass(G1_struct, 0);
-			I1_struct.addDirectBaseClass(H_struct, 16);
-			I1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I1_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I1_struct.addDirectBaseClass(H_struct.getComposite(), H_struct, 16);
+			I1_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			I1_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
 			I1_struct.addMember("i11", u4, false, 32);
 			return I1_struct;
 		}
@@ -3337,10 +3349,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
 		try {
 			CppCompositeType I2_struct = createStruct32("I2", 28);
-			I2_struct.addDirectBaseClass(G_struct, 0);
-			I2_struct.addDirectBaseClass(H1_struct, 8);
-			I2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I2_struct.addDirectBaseClass(G_struct.getComposite(), G_struct, 0);
+			I2_struct.addDirectBaseClass(H1_struct.getComposite(), H1_struct, 8);
+			I2_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			I2_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
 			I2_struct.addMember("i21", u4, false, 16);
 			return I2_struct;
 		}
@@ -3355,10 +3369,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
 		try {
 			CppCompositeType I2_struct = createStruct64("I2", 48);
-			I2_struct.addDirectBaseClass(G_struct, 0);
-			I2_struct.addDirectBaseClass(H1_struct, 16);
-			I2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I2_struct.addDirectBaseClass(G_struct.getComposite(), G_struct, 0);
+			I2_struct.addDirectBaseClass(H1_struct.getComposite(), H1_struct, 16);
+			I2_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			I2_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
 			I2_struct.addMember("i21", u4, false, 32);
 			return I2_struct;
 		}
@@ -3589,8 +3605,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (H1_struct == null) {
 				H1_struct = createH1_struct32(vxtManager, E_struct, C_struct);
 			}
-			I3_struct.addDirectSyntacticBaseClass(G1_struct);
-			I3_struct.addDirectSyntacticBaseClass(H1_struct);
+			I3_struct.addDirectSyntacticBaseClass(G1_struct.getComposite(), G1_struct);
+			I3_struct.addDirectSyntacticBaseClass(H1_struct.getComposite(), H1_struct);
 			I3_struct.addMember("i31", u4, false, 0);
 		}
 		catch (Exception e) {
@@ -3612,10 +3628,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I3_struct = createStruct32("I3", 28);
-			I3_struct.addDirectBaseClass(G1_struct, 0);
-			I3_struct.addDirectBaseClass(H1_struct, 8);
-			I3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			I3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			I3_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I3_struct.addDirectBaseClass(H1_struct.getComposite(), H1_struct, 8);
+			I3_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			I3_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
 			I3_struct.addMember("i31", u4, false, 16);
 			return I3_struct;
 		}
@@ -3630,10 +3648,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType H1_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I3_struct = createStruct64("I3", 48);
-			I3_struct.addDirectBaseClass(G1_struct, 0);
-			I3_struct.addDirectBaseClass(H1_struct, 16);
-			I3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			I3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			I3_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I3_struct.addDirectBaseClass(H1_struct.getComposite(), H1_struct, 16);
+			I3_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			I3_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
 			I3_struct.addMember("i31", u4, false, 32);
 			return I3_struct;
 		}
@@ -3852,9 +3872,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I4_struct = createStruct32("I4", 20);
-			I4_struct.addDirectBaseClass(G1_struct, 0);
-			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			I4_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I4_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I4_struct.addDirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32, 2);
+			I4_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32, 1);
 			I4_struct.addMember("i41", u4, false, 8);
 			return I4_struct;
 		}
@@ -3869,9 +3889,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType C_struct) {
 		CppCompositeType I4_struct = createStruct64("I4", 32);
 		try {
-			I4_struct.addDirectBaseClass(G1_struct, 0);
-			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			I4_struct.addDirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I4_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I4_struct.addDirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64, 2);
+			I4_struct.addDirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64, 1);
 			I4_struct.addMember("i41", u4, false, 16);
 		}
 		catch (Exception e) {
@@ -4054,9 +4074,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I5_struct = createStruct32("I5", 20);
-			I5_struct.addDirectBaseClass(G1_struct, 0);
-			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2); // check this and I4...TODO
-			I5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
+			I5_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I5_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2); // check this and I4...TODO
+			I5_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
 			I5_struct.addMember("i51", u4, false, 8);
 			return I5_struct;
 		}
@@ -4071,9 +4093,11 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType I5_struct = createStruct64("I5", 32);
-			I5_struct.addDirectBaseClass(G1_struct, 0);
-			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2); // check this and I4...TODO
-			I5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
+			I5_struct.addDirectBaseClass(G1_struct.getComposite(), G1_struct, 0);
+			I5_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2); // check this and I4...TODO
+			I5_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
 			I5_struct.addMember("i51", u4, false, 16);
 			return I5_struct;
 		}
@@ -4358,10 +4382,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType I2_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType J1_struct = createStruct32("J1", 52);
-			J1_struct.addDirectBaseClass(I1_struct, 0);
-			J1_struct.addDirectBaseClass(I2_struct, 20);
-			J1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J1_struct.addDirectBaseClass(I1_struct.getComposite(), I1_struct, 0);
+			J1_struct.addDirectBaseClass(I2_struct.getComposite(), I2_struct, 20);
+			J1_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			J1_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
 			J1_struct.addMember("j11", u4, false, 40);
 			return J1_struct;
 		}
@@ -4376,10 +4402,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType I2_struct, CppCompositeType E_struct, CppCompositeType C_struct) {
 		try {
 			CppCompositeType J1_struct = createStruct64("J1", 96);
-			J1_struct.addDirectBaseClass(I1_struct, 0);
-			J1_struct.addDirectBaseClass(I2_struct, 40);
-			J1_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J1_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J1_struct.addDirectBaseClass(I1_struct.getComposite(), I1_struct, 0);
+			J1_struct.addDirectBaseClass(I2_struct.getComposite(), I2_struct, 40);
+			J1_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			J1_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
 			J1_struct.addMember("j11", u4, false, 80);
 			return J1_struct;
 		}
@@ -4711,10 +4739,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType I1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
 		try {
 			CppCompositeType J2_struct = createStruct32("J2", 52);
-			J2_struct.addDirectBaseClass(I2_struct, 0);
-			J2_struct.addDirectBaseClass(I1_struct, 20);
-			J2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J2_struct.addDirectBaseClass(I2_struct.getComposite(), I2_struct, 0);
+			J2_struct.addDirectBaseClass(I1_struct.getComposite(), I1_struct, 20);
+			J2_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			J2_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
 			J2_struct.addMember("j21", u4, false, 40);
 			return J2_struct;
 		}
@@ -4729,10 +4759,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType I1_struct, CppCompositeType C_struct, CppCompositeType E_struct) {
 		try {
 			CppCompositeType J2_struct = createStruct64("J2", 96);
-			J2_struct.addDirectBaseClass(I2_struct, 0);
-			J2_struct.addDirectBaseClass(I1_struct, 40);
-			J2_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J2_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J2_struct.addDirectBaseClass(I2_struct.getComposite(), I2_struct, 0);
+			J2_struct.addDirectBaseClass(I1_struct.getComposite(), I1_struct, 40);
+			J2_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			J2_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
 			J2_struct.addMember("j21", u4, false, 80);
 			return J2_struct;
 		}
@@ -5066,11 +5098,13 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct) {
 		try {
 			CppCompositeType J3_struct = createStruct32("J3", 60);
-			J3_struct.addDirectBaseClass(I2_struct, 0);
-			J3_struct.addDirectBaseClass(I1_struct, 20);
-			J3_struct.addDirectBaseClass(A_struct, 40);
-			J3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
+			J3_struct.addDirectBaseClass(I2_struct.getComposite(), I2_struct, 0);
+			J3_struct.addDirectBaseClass(I1_struct.getComposite(), I1_struct, 20);
+			J3_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 40);
+			J3_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			J3_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
 			J3_struct.addMember("j31", u4, false, 48);
 			return J3_struct;
 		}
@@ -5086,11 +5120,13 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct) {
 		try {
 			CppCompositeType J3_struct = createStruct64("J3", 104);
-			J3_struct.addDirectBaseClass(I2_struct, 0);
-			J3_struct.addDirectBaseClass(I1_struct, 40);
-			J3_struct.addDirectBaseClass(A_struct, 80);
-			J3_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J3_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
+			J3_struct.addDirectBaseClass(I2_struct.getComposite(), I2_struct, 0);
+			J3_struct.addDirectBaseClass(I1_struct.getComposite(), I1_struct, 40);
+			J3_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 80);
+			J3_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			J3_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
 			J3_struct.addMember("j31", u4, false, 88);
 			return J3_struct;
 		}
@@ -5455,16 +5491,22 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType J4_struct = createStruct32("J4", 92);
-			J4_struct.addDirectBaseClass(I3_struct, 0);
-			J4_struct.addDirectBaseClass(GG1_struct, 20);
-			J4_struct.addDirectBaseClass(I_struct, 28);
-			J4_struct.addDirectBaseClass(A_struct, 48);
-			J4_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 5);
-			J4_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 6);
-			J4_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J4_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J4_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 3);
-			J4_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 4);
+			J4_struct.addDirectBaseClass(I3_struct.getComposite(), I3_struct, 0);
+			J4_struct.addDirectBaseClass(GG1_struct.getComposite(), GG1_struct, 20);
+			J4_struct.addDirectBaseClass(I_struct.getComposite(), I_struct, 28);
+			J4_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 48);
+			J4_struct.addDirectVirtualBaseClass(GG2_struct.getComposite(), GG2_struct, 0, vbtptr32,
+				5);
+			J4_struct.addDirectVirtualBaseClass(GG3_struct.getComposite(), GG3_struct, 0, vbtptr32,
+				6);
+			J4_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			J4_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
+			J4_struct.addIndirectVirtualBaseClass(CC1_struct.getComposite(), CC1_struct, 0,
+				vbtptr32, 3);
+			J4_struct.addIndirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0,
+				vbtptr32, 4);
 			J4_struct.addMember("j41", u4, false, 56);
 			return J4_struct;
 		}
@@ -5481,16 +5523,22 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType J4_struct = createStruct64("J4", 160);
-			J4_struct.addDirectBaseClass(I3_struct, 0);
-			J4_struct.addDirectBaseClass(GG1_struct, 40);
-			J4_struct.addDirectBaseClass(I_struct, 56);
-			J4_struct.addDirectBaseClass(A_struct, 96);
-			J4_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr64, 5);
-			J4_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr64, 6);
-			J4_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr64, 1);
-			J4_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr64, 2);
-			J4_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr64, 3);
-			J4_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr64, 4);
+			J4_struct.addDirectBaseClass(I3_struct.getComposite(), I3_struct, 0);
+			J4_struct.addDirectBaseClass(GG1_struct.getComposite(), GG1_struct, 40);
+			J4_struct.addDirectBaseClass(I_struct.getComposite(), I_struct, 56);
+			J4_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 96);
+			J4_struct.addDirectVirtualBaseClass(GG2_struct.getComposite(), GG2_struct, 0, vbtptr64,
+				5);
+			J4_struct.addDirectVirtualBaseClass(GG3_struct.getComposite(), GG3_struct, 0, vbtptr64,
+				6);
+			J4_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr64,
+				1);
+			J4_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr64,
+				2);
+			J4_struct.addIndirectVirtualBaseClass(CC1_struct.getComposite(), CC1_struct, 0,
+				vbtptr64, 3);
+			J4_struct.addIndirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0,
+				vbtptr64, 4);
 			J4_struct.addMember("j41", u4, false, 104);
 			return J4_struct;
 		}
@@ -6043,12 +6091,12 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_syntactic_struct32(vxtManager, CC2_struct);
 			}
-			J5_struct.addVirtualSyntacticBaseClass(GG2_struct);
-			J5_struct.addVirtualSyntacticBaseClass(GG3_struct);
-			J5_struct.addDirectSyntacticBaseClass(I3_struct);
-			J5_struct.addDirectSyntacticBaseClass(GG1_struct);
-			J5_struct.addDirectSyntacticBaseClass(I_struct);
-			J5_struct.addDirectSyntacticBaseClass(A_struct);
+			J5_struct.addVirtualSyntacticBaseClass(GG2_struct.getComposite(), GG2_struct);
+			J5_struct.addVirtualSyntacticBaseClass(GG3_struct.getComposite(), GG3_struct);
+			J5_struct.addDirectSyntacticBaseClass(I3_struct.getComposite(), I3_struct);
+			J5_struct.addDirectSyntacticBaseClass(GG1_struct.getComposite(), GG1_struct);
+			J5_struct.addDirectSyntacticBaseClass(I_struct.getComposite(), I_struct);
+			J5_struct.addDirectSyntacticBaseClass(A_struct.getComposite(), A_struct);
 			J5_struct.addMember("j51", u4, false, 0); // TODO nned syntactic without index
 		}
 		catch (Exception e) {
@@ -6077,16 +6125,22 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType J5_struct = createStruct32("J5", 92);
-			J5_struct.addDirectBaseClass(I3_struct, 0);
-			J5_struct.addDirectBaseClass(GG1_struct, 20);
-			J5_struct.addDirectBaseClass(I_struct, 28);
-			J5_struct.addDirectBaseClass(A_struct, 48);
-			J5_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 4);
-			J5_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 5);
-			J5_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 3);
-			J5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J5_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 6);
+			J5_struct.addDirectBaseClass(I3_struct.getComposite(), I3_struct, 0);
+			J5_struct.addDirectBaseClass(GG1_struct.getComposite(), GG1_struct, 20);
+			J5_struct.addDirectBaseClass(I_struct.getComposite(), I_struct, 28);
+			J5_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 48);
+			J5_struct.addDirectVirtualBaseClass(GG2_struct.getComposite(), GG2_struct, 0, vbtptr32,
+				4);
+			J5_struct.addDirectVirtualBaseClass(GG3_struct.getComposite(), GG3_struct, 0, vbtptr32,
+				5);
+			J5_struct.addIndirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0,
+				vbtptr32, 3);
+			J5_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			J5_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
+			J5_struct.addIndirectVirtualBaseClass(CC1_struct.getComposite(), CC1_struct, 0,
+				vbtptr32, 6);
 			J5_struct.addMember("j51", u4, false, 56);
 			return J5_struct;
 		}
@@ -6103,16 +6157,22 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType E_struct, CppCompositeType CC1_struct, CppCompositeType CC2_struct) {
 		try {
 			CppCompositeType J5_struct = createStruct64("J5", 164);
-			J5_struct.addDirectBaseClass(I3_struct, 0);
-			J5_struct.addDirectBaseClass(GG1_struct, 40);
-			J5_struct.addDirectBaseClass(I_struct, 56);
-			J5_struct.addDirectBaseClass(A_struct, 96);
-			J5_struct.addDirectVirtualBaseClass(GG2_struct, 0, vbtptr32, 4);
-			J5_struct.addDirectVirtualBaseClass(GG3_struct, 0, vbtptr32, 5);
-			J5_struct.addIndirectVirtualBaseClass(CC2_struct, 0, vbtptr32, 3);
-			J5_struct.addIndirectVirtualBaseClass(C_struct, 0, vbtptr32, 1);
-			J5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbtptr32, 2);
-			J5_struct.addIndirectVirtualBaseClass(CC1_struct, 0, vbtptr32, 6);
+			J5_struct.addDirectBaseClass(I3_struct.getComposite(), I3_struct, 0);
+			J5_struct.addDirectBaseClass(GG1_struct.getComposite(), GG1_struct, 40);
+			J5_struct.addDirectBaseClass(I_struct.getComposite(), I_struct, 56);
+			J5_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 96);
+			J5_struct.addDirectVirtualBaseClass(GG2_struct.getComposite(), GG2_struct, 0, vbtptr32,
+				4);
+			J5_struct.addDirectVirtualBaseClass(GG3_struct.getComposite(), GG3_struct, 0, vbtptr32,
+				5);
+			J5_struct.addIndirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 0,
+				vbtptr32, 3);
+			J5_struct.addIndirectVirtualBaseClass(C_struct.getComposite(), C_struct, 0, vbtptr32,
+				1);
+			J5_struct.addIndirectVirtualBaseClass(E_struct.getComposite(), E_struct, 0, vbtptr32,
+				2);
+			J5_struct.addIndirectVirtualBaseClass(CC1_struct.getComposite(), CC1_struct, 0,
+				vbtptr32, 6);
 			J5_struct.addMember("j51", u4, false, 104);
 			return J5_struct;
 		}
@@ -6645,11 +6705,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType CC3_struct) {
 		try {
 			CppCompositeType J6_struct = createStruct32("J6", 36);
-			J6_struct.addDirectBaseClass(A_struct, 0);
-			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbtptr32, 2);
-			J6_struct.addDirectVirtualBaseClass(GG3_struct, 8, vbtptr32, 4);
-			J6_struct.addIndirectVirtualBaseClass(CC3_struct, 8, vbtptr32, 1);
-			J6_struct.addIndirectVirtualBaseClass(CC2_struct, 8, vbtptr32, 3);
+			J6_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 0);
+			J6_struct.addDirectVirtualBaseClass(GG4_struct.getComposite(), GG4_struct, 8, vbtptr32,
+				2);
+			J6_struct.addDirectVirtualBaseClass(GG3_struct.getComposite(), GG3_struct, 8, vbtptr32,
+				4);
+			J6_struct.addIndirectVirtualBaseClass(CC3_struct.getComposite(), CC3_struct, 8,
+				vbtptr32, 1);
+			J6_struct.addIndirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 8,
+				vbtptr32, 3);
 			J6_struct.addMember("j61", u4, false, 12);
 			return J6_struct;
 		}
@@ -6665,11 +6729,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			CppCompositeType CC3_struct) {
 		try {
 			CppCompositeType J6_struct = createStruct64("J6", 64);
-			J6_struct.addDirectBaseClass(A_struct, 0);
-			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbtptr64, 2);
-			J6_struct.addDirectVirtualBaseClass(GG3_struct, 8, vbtptr64, 4);
-			J6_struct.addIndirectVirtualBaseClass(CC3_struct, 8, vbtptr64, 1);
-			J6_struct.addIndirectVirtualBaseClass(CC2_struct, 8, vbtptr64, 3);
+			J6_struct.addDirectBaseClass(A_struct.getComposite(), A_struct, 0);
+			J6_struct.addDirectVirtualBaseClass(GG4_struct.getComposite(), GG4_struct, 8, vbtptr64,
+				2);
+			J6_struct.addDirectVirtualBaseClass(GG3_struct.getComposite(), GG3_struct, 8, vbtptr64,
+				4);
+			J6_struct.addIndirectVirtualBaseClass(CC3_struct.getComposite(), CC3_struct, 8,
+				vbtptr64, 1);
+			J6_struct.addIndirectVirtualBaseClass(CC2_struct.getComposite(), CC2_struct, 8,
+				vbtptr64, 3);
 			J6_struct.addMember("j61", u4, false, 16);
 			return J6_struct;
 		}
