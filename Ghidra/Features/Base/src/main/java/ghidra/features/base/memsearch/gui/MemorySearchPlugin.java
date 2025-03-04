@@ -231,13 +231,16 @@ public class MemorySearchPlugin extends Plugin implements MemorySearchService {
 			if (match != null) {
 				lastSearchAddress = match.getAddress();
 				Program program = navigatable.getProgram();
-				navigatable.goTo(program, new BytesFieldLocation(program, match.getAddress()));
+				GoToService service = tool.getService(GoToService.class);
+				service.goTo(navigatable, new BytesFieldLocation(program, match.getAddress()),
+					program);
 			}
 			else {
 				Msg.showWarn(this, null, "Match Not Found",
 					"No match found going forward for " + lastByteMatcher.getInput());
 			}
 		}
+
 	}
 
 	public void setShowOptionsPanel(boolean show) {
