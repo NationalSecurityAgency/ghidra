@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,6 +59,7 @@ public class AsyncFence {
 	 * Calling this method after {@link #ready()} will yield undefined results.
 	 * 
 	 * @param future the participant to add
+	 * @return this fence
 	 */
 	public synchronized AsyncFence include(CompletableFuture<?> future) {
 		if (ready != null) {
@@ -84,11 +85,9 @@ public class AsyncFence {
 	}
 
 	/**
-	 * TODO
+	 * Diagnostic: Get the participants which have not yet completed
 	 * 
-	 * Diagnostic
-	 * 
-	 * @return
+	 * @return the pending participants
 	 */
 	public Set<CompletableFuture<?>> getPending() {
 		return participants.stream().filter(f -> !f.isDone()).collect(Collectors.toSet());
