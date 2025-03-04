@@ -118,6 +118,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			panel.add(buildFontNamePanel());
 			panel.add(buildSizePanel());
 			panel.add(buildStylePanel());
+			panel.getAccessibleContext().setAccessibleName("Font Name Size Style");
 			return panel;
 		}
 
@@ -127,6 +128,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			previewLabel.setVerticalAlignment(SwingConstants.CENTER);
 			previewLabel.setMinimumSize(new Dimension(300, 50));
+			previewLabel.getAccessibleContext().setAccessibleName("Preview");
 			return previewLabel;
 		}
 
@@ -134,6 +136,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel styleLabel = new GDLabel("Styles");
+			styleLabel.getAccessibleContext().setAccessibleName("Styles");
 			Gui.registerFont(styleLabel, Font.BOLD);
 			styleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(styleLabel);
@@ -142,8 +145,9 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 				new GComboBox<>(new String[] { "PLAIN", "BOLD", "ITALIC", "BOLD & ITALIC" });
 			styleCombo.setMaximumRowCount(9);
 			styleCombo.addActionListener(actionListener);
+			styleCombo.getAccessibleContext().setAccessibleName("Style");
 			panel.add(styleCombo);
-
+			panel.getAccessibleContext().setAccessibleName("Style");
 			return panel;
 		}
 
@@ -151,6 +155,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel sizeLabel = new GDLabel("Sizes");
+			sizeLabel.getAccessibleContext().setAccessibleName("Sizes");
 			Gui.registerFont(sizeLabel, Font.BOLD);
 			sizeLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(sizeLabel);
@@ -159,8 +164,9 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 				new GComboBox<>(IntStream.rangeClosed(1, 72).boxed().toArray(Integer[]::new));
 			sizeCombo.setMaximumRowCount(9);
 			sizeCombo.addActionListener(actionListener);
+			sizeCombo.getAccessibleContext().setAccessibleName("Size");
 			panel.add(sizeCombo);
-
+			panel.getAccessibleContext().setAccessibleName("Size");
 			return panel;
 		}
 
@@ -168,6 +174,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel fontLabel = new GDLabel("Fonts");
+			fontLabel.getAccessibleContext().setAccessibleName("Fonts");
 			Gui.registerFont(fontLabel, Font.BOLD);
 			fontLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(fontLabel);
@@ -176,8 +183,9 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			fontCombo = new GComboBox<>(systemFontNames.toArray(new FontWrapper[0]));
 			fontCombo.setMaximumRowCount(9);
 			fontCombo.addActionListener(actionListener);
+			fontCombo.getAccessibleContext().setAccessibleName("Font");
 			panel.add(fontCombo);
-
+			panel.getAccessibleContext().setAccessibleName("Font");
 			return panel;
 		}
 

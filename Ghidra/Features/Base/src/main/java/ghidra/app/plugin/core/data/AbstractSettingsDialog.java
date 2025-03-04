@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,8 +155,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			if (settingsDefinition instanceof NumberSettingsDefinition) {
 				String propertyName = getHexModePropertyName(settingsDefinition);
 				boolean hexMode = Boolean
-						.valueOf(
-							Preferences.getProperty(propertyName, Boolean.FALSE.toString()));
+						.valueOf(Preferences.getProperty(propertyName, Boolean.FALSE.toString()));
 				intHexModeMap.put(settingsDefinition.getName(), hexMode);
 			}
 		}
@@ -223,7 +222,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		if (hasImmutableSettings) {
 			workPanel.add(new JLabel("* Immutable setting"), BorderLayout.SOUTH);
 		}
-
+		workPanel.getAccessibleContext().setAccessibleName("Settings");
 		return workPanel;
 	}
 

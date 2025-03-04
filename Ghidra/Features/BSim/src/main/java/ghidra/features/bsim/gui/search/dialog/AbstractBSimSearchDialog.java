@@ -86,6 +86,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildNorthPanel(), BorderLayout.NORTH);
 		panel.add(buildCenterPanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("BSim Search");
 		return panel;
 	}
 
@@ -93,6 +94,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new VerticalLayout(10));
 		panel.add(buildServerPanel());
 		panel.add(createTitledPanel("Options", buildOptionsPanel(), false));
+		panel.getAccessibleContext().setAccessibleName("Server and Options");
 		return panel;
 	}
 
@@ -104,6 +106,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout(10, 10));
 		panel.add(new JLabel("BSim Server:"));
 		panel.add(buildServerComponent());
+		panel.getAccessibleContext().setAccessibleName("Server");
 		return panel;
 	}
 
@@ -129,6 +132,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		panel.add(similarityField);
 		panel.add(confidenceLabel);
 		panel.add(confidenceField);
+		panel.getAccessibleContext().setAccessibleName("Options");
 		return panel;
 	}
 

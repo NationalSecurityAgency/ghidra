@@ -60,6 +60,7 @@ public class AboutDialog extends DialogComponentProvider {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.setBorder(BorderFactory.createRaisedBevelBorder());
 		mainPanel.setBackground(Colors.BACKGROUND);
+		mainPanel.getAccessibleContext().setAccessibleName("About");
 		mainPanel.add(createInfoComponent(), BorderLayout.CENTER);
 		return mainPanel;
 	}

@@ -122,11 +122,13 @@ public class SelectFromListDialog<T> extends DialogComponentProvider {
 		listPanel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		listPanel.setSelectedIndex(0);
 		listPanel.setDoubleClickActionListener(e -> okCallback());
+		listPanel.getAccessibleContext().setAccessibleName("List");
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		MultiLineLabel mll = new MultiLineLabel("\n" + prompt + ":");
 		workPanel.add(mll, BorderLayout.NORTH);
 		workPanel.add(listPanel, BorderLayout.CENTER);
+		workPanel.getAccessibleContext().setAccessibleName("Select From List");
 		return workPanel;
 	}
 }

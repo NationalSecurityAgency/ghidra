@@ -74,6 +74,7 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 
 	private JPanel create() {
 		recentChoices = new GhidraComboBox<>();
+		recentChoices.getAccessibleContext().setAccessibleName("Recent Choices");
 		recentChoices.setEditable(true);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
@@ -81,7 +82,7 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 
 		Border border = BorderFactory.createTitledBorder("Data Field Name");
 		topPanel.setBorder(border);
-
+		topPanel.getAccessibleContext().setAccessibleName("Recent Choices");
 		mainPanel.add(topPanel, BorderLayout.NORTH);
 
 		topPanel.add(recentChoices, BorderLayout.NORTH);
@@ -93,7 +94,7 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 			}
 		});
 		mainPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Rename Data Field");
 		return mainPanel;
 	}
 

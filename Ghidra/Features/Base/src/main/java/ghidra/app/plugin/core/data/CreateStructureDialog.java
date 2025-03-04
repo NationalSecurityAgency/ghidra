@@ -105,7 +105,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 
 		setStatusJustification(SwingConstants.LEFT);
 		setCreateStructureByName(true);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Create Structure");
 		return mainPanel;
 	}
 
@@ -131,6 +131,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				nameTextField.requestFocus();
 			}
 		});
+		nameTextField.getAccessibleContext().setAccessibleName("Name Text");
 		namePanel.add(nameTextField);
 
 		nameTextField.getDocument().addDocumentListener(new DocumentListener() {
@@ -166,7 +167,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				}
 			}
 		});
-
+		namePanel.getAccessibleContext().setAccessibleName("Name Text");
 		return namePanel;
 	}
 
@@ -188,13 +189,15 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		};
 
 		JScrollPane scrollPane = new JScrollPane(table);
+		scrollPane.getAccessibleContext().setAccessibleName("Scroll");
 		structurePanel.add(scrollPane);
 		structurePanel.add(Box.createVerticalStrut(10));
+		filterPanel.getAccessibleContext().setAccessibleName("Structure Filter");
 		structurePanel.add(filterPanel);
 		structurePanel.add(Box.createVerticalStrut(10));
 		structurePanel.add(buildMatchingStyelPanel());
 		structurePanel.add(Box.createVerticalStrut(10));
-
+		structurePanel.getAccessibleContext().setAccessibleName("Matching Structure");
 		return structurePanel;
 	}
 
@@ -223,8 +226,9 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 					!(sourceListSelectionModel.isSelectionEmpty())) {
 					// show the user that the structure choice is now
 					// coming from the list of current structures
-					Structure structure = ((StructureWrapper) matchingStructuresTable.getValueAt(
-						matchingStructuresTable.getSelectedRow(), 0)).getStructure();
+					Structure structure = ((StructureWrapper) matchingStructuresTable
+							.getValueAt(matchingStructuresTable.getSelectedRow(), 0))
+									.getStructure();
 					updateStatusText(false, structure.getName());
 					setCreateStructureByName(false);
 				}
@@ -234,7 +238,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				}
 			}
 		});
-
+		matchingStructuresTable.getAccessibleContext().setAccessibleName("Matching Structures");
 		return matchingStructuresTable;
 	}
 
@@ -246,11 +250,13 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			}
 		};
 		matchingStylePanel.setLayout(new BoxLayout(matchingStylePanel, BoxLayout.X_AXIS));
-		matchingStylePanel.setBorder(
-			new TitledBorder(BorderFactory.createEmptyBorder(), "Matching: "));
+		matchingStylePanel
+				.setBorder(new TitledBorder(BorderFactory.createEmptyBorder(), "Matching: "));
 
 		exactMatchButton = new GRadioButton("Exact");
+		exactMatchButton.getAccessibleContext().setAccessibleName("Exact Match");
 		sizeMatchButton = new GRadioButton("Size");
+		sizeMatchButton.getAccessibleContext().setAccessibleName("Size Match");
 
 		exactMatchButton.setToolTipText(
 			"Match structures with the same " + "number and type of data elements");
@@ -269,7 +275,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 
 		matchingStylePanel.add(exactMatchButton);
 		matchingStylePanel.add(sizeMatchButton);
-
+		matchingStylePanel.getAccessibleContext().setAccessibleName("Matching Style");
 		return matchingStylePanel;
 	}
 
@@ -485,8 +491,8 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		}
 		else {
 			// get the selected object in the table
-			currentStructure = ((StructureWrapper) matchingStructuresTable.getValueAt(
-				matchingStructuresTable.getSelectedRow(), 0)).getStructure();
+			currentStructure = ((StructureWrapper) matchingStructuresTable
+					.getValueAt(matchingStructuresTable.getSelectedRow(), 0)).getStructure();
 		}
 
 		close();

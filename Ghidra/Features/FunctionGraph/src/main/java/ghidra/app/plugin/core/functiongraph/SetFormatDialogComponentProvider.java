@@ -79,7 +79,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		listingPanel.showHeader(true);
 
 		container.add(listingPanel);
-
+		container.getAccessibleContext().setAccessibleName("Set Format");
 		return container;
 	}
 
@@ -87,6 +87,7 @@ public class SetFormatDialogComponentProvider extends DialogComponentProvider {
 		FormatManager formatManagerCopy = currentFormatManager.createClone();
 		ListingPanel panel = new ListingPanel(formatManagerCopy, program);
 		panel.setView(view);
+		panel.getAccessibleContext().setAccessibleName("Listing");
 		return panel;
 	}
 

@@ -111,18 +111,21 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		panel.add(buildFilePanel());
 		panel.add(new GLabel("Include Defaults:", SwingConstants.RIGHT));
 		panel.add(buildIncludeDefaultsCheckbox());
+		panel.getAccessibleContext().setAccessibleName("Export Theme");
 		return panel;
 	}
 
 	private Component buildNameField() {
 		nameField = new JTextField(25);
 		nameField.setText(themeManager.getActiveTheme().getName());
+		nameField.getAccessibleContext().setAccessibleName("Name");
 		return nameField;
 	}
 
 	private Component buildIncludeDefaultsCheckbox() {
 		includeDefaultsCheckbox = new GCheckBox();
 		includeDefaultsCheckbox.setSelected(true);
+		includeDefaultsCheckbox.getAccessibleContext().setAccessibleName("Include Defaults");
 		return includeDefaultsCheckbox;
 	}
 
@@ -138,18 +141,22 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		fileTextField.setText(file.getAbsolutePath());
 		fileTextField.setEditable(false);
 		fileTextField.setFocusable(false);
+		fileTextField.getAccessibleContext().setAccessibleName("File");
 		JButton folderButton = new BrowseButton();
 		folderButton.addActionListener(e -> chooseFile());
+		folderButton.getAccessibleContext().setAccessibleName("Folder");
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(fileTextField, BorderLayout.CENTER);
 		panel.add(folderButton, BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("File");
 		return panel;
 	}
 
 	private void chooseFile() {
 		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
 		chooser.setTitle("Choose Theme File");
+		chooser.getComponent().getAccessibleContext().setAccessibleName("File Theme");
 		chooser.setApproveButtonToolTipText("Select File");
 		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		chooser.setSelectedFileFilter(GhidraFileFilter.ALL);

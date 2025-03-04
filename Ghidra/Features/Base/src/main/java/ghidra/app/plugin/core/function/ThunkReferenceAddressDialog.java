@@ -358,11 +358,12 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 
 		JPanel mainPanel = new JPanel(new PairLayout(5, 5));
 		refFunctionField = new JTextField(20);
+		refFunctionField.getAccessibleContext().setAccessibleName("Reference Function");
 		mainPanel.add(new GLabel("Destination Function/Address:"));
 		mainPanel.add(refFunctionField);
 
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Think Reference Address");
 		return mainPanel;
 	}
 

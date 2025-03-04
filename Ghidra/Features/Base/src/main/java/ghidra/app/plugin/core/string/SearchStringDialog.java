@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,7 +117,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 		panel.add(buildLeftPanel(), BorderLayout.WEST);
 		panel.add(Box.createHorizontalStrut(10), BorderLayout.CENTER);
 		panel.add(buildRightPanel(), BorderLayout.EAST);
-
+		panel.getAccessibleContext().setAccessibleName("Search String");
 		return panel;
 	}
 
@@ -130,7 +130,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 		panel.add(buildOptionsPanelLeft(), BorderLayout.NORTH);
 		panel.add(Box.createVerticalStrut(15), BorderLayout.CENTER);
 		panel.add(buildMemoryBlocksPanel(), BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Memory Block Search");
 		return panel;
 	}
 
@@ -144,7 +144,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 		panel.add(buildOptionsPanelRight(), BorderLayout.NORTH);
 		panel.add(Box.createVerticalStrut(15), BorderLayout.CENTER);
 		panel.add(buildSelectionScopePanel(), BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Selection Scope Search");
 		return panel;
 	}
 
@@ -159,12 +159,14 @@ public class SearchStringDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new GridLayout(3, 1, 10, 14));
 
 		nullTerminateCheckbox = new GCheckBox("Require Null Termination");
+		nullTerminateCheckbox.getAccessibleContext().setAccessibleName("Require Null Termination");
 		pascalStringsCheckbox = new GCheckBox("Pascal Strings");
+		pascalStringsCheckbox.getAccessibleContext().setAccessibleName("Pascal Strings");
 		nullTerminateCheckbox.setSelected(true);
 
 		panel.add(nullTerminateCheckbox);
 		panel.add(pascalStringsCheckbox);
-
+		panel.getAccessibleContext().setAccessibleName("Options");
 		return panel;
 	}
 
@@ -181,6 +183,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		JLabel minLengthLabel = new GLabel("Minimum Length: ");
 		minLengthLabel.setName("minLen");
+		minLengthLabel.getAccessibleContext().setAccessibleName("Minimum Length");
 		minLengthLabel.setToolTipText("<html>Searches for valid ascii or ascii unicode strings " +
 			"greater or equal to minimum search length.<br> The null characters are not included " +
 			"in the minimum string length.");
@@ -188,10 +191,12 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		minLengthField = new IntegerTextField(5, 5L);
 		minLengthField.getComponent().setName("minDefault");
+		minLengthField.getComponent().getAccessibleContext().setAccessibleName("Minimum Length");
 		panel.add(minLengthField.getComponent());
 
 		JLabel alignLabel = new GLabel("Alignment: ");
 		alignLabel.setName("alignment");
+		alignLabel.getAccessibleContext().setAccessibleName("Alignment");
 		alignLabel
 				.setToolTipText("<html>Searches for strings that start on the given alignment<br>" +
 					"value. The default alignment is processor dependent.");
@@ -199,10 +204,11 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		alignField = new IntegerTextField(5, 1L);
 		alignField.getComponent().setName("alignDefault");
+		alignField.getComponent().getAccessibleContext().setAccessibleName("Align");
 		panel.add(alignField.getComponent());
 
 		createModelFieldPanel(panel);
-
+		panel.getAccessibleContext().setAccessibleName("Options");
 		return panel;
 	}
 
@@ -265,7 +271,9 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		ButtonGroup memoryBlockGroup = new ButtonGroup();
 		loadedBlocksRB = new GRadioButton("Loaded Blocks", true);
+		loadedBlocksRB.getAccessibleContext().setAccessibleName("Loaded Bocks");
 		allBlocksRB = new GRadioButton("All Blocks", false);
+		allBlocksRB.getAccessibleContext().setAccessibleName("All Blocks");
 		memoryBlockGroup.add(loadedBlocksRB);
 		memoryBlockGroup.add(allBlocksRB);
 
@@ -278,7 +286,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		panel.add(loadedBlocksRB);
 		panel.add(allBlocksRB);
-
+		panel.getAccessibleContext().setAccessibleName("Memory Blocks");
 		return panel;
 	}
 
@@ -294,7 +302,9 @@ public class SearchStringDialog extends DialogComponentProvider {
 		panel.setBorder(new TitledBorder("Selection Scope"));
 
 		searchSelectionRB = new GRadioButton("Search Selection");
+		searchSelectionRB.getAccessibleContext().setAccessibleName("Search Selection");
 		searchAllRB = new GRadioButton("Search All");
+		searchAllRB.getAccessibleContext().setAccessibleName("Search All");
 
 		ButtonGroup buttonGroup = new ButtonGroup();
 		buttonGroup.add(searchSelectionRB);
@@ -311,7 +321,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 		JPanel selectionPanel = new JPanel();
 		selectionPanel.setLayout(new BorderLayout());
 		selectionPanel.add(panel, BorderLayout.NORTH);
-
+		selectionPanel.getAccessibleContext().setAccessibleName("Selections Scope");
 		return selectionPanel;
 	}
 
