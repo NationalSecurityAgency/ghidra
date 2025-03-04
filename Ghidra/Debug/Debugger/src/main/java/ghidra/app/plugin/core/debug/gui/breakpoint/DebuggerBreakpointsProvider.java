@@ -46,6 +46,7 @@ import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.*;
@@ -327,7 +328,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				return stub;
 			}
 			List<DockingActionIf> result = new ArrayList<>();
-			for (ActionEntry entry : target.collectActions(ActionName.BREAK_EXT, context)
+			for (ActionEntry entry : target
+					.collectActions(ActionName.BREAK_EXT, context,
+						ObjectArgumentPolicy.CURRENT_AND_RELATED)
 					.values()) {
 				result.add(new GenericSetBreakpointAction(entry));
 			}
