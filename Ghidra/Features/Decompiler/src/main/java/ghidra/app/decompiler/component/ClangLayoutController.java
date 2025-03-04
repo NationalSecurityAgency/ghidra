@@ -206,13 +206,20 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		if (token instanceof ClangFuncNameToken clangFunctionToken) {
 			Program program = decompilerPanel.getProgram();
 			Function function = DecompilerUtils.getFunction(program, clangFunctionToken);
-			if (function == null || function instanceof UndefinedFunction) {
-				return null;
+			if (isValidFunction(function)) {
+				Symbol symbol = function.getSymbol();
+				tokenColor = symbolInspector.getColor(symbol);
 			}
-			Symbol symbol = function.getSymbol();
-			return symbolInspector.getColor(symbol);
 		}
-		return tokenColor;
+
+		if (tokenColor != null) {
+			return tokenColor;
+		}
+		return syntaxColor[ClangToken.ERROR_COLOR];
+	}
+
+	private boolean isValidFunction(Function f) {
+		return f != null && !(f instanceof UndefinedFunction);
 	}
 
 	/**
