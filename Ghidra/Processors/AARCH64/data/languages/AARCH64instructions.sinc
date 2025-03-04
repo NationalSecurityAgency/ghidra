@@ -3862,12 +3862,20 @@ macro fcomp(a, b)
 	OV = 0;
 }
 
+# this sets NG, ZR, CY, and OV to the values the processor
+# uses to indicate an unordered comparison.  If at least 
+# one of the inputs is NaN, it skips to the next instruction.
+# A use of this macro should be followed by a use of the
+# fcomp macro, which will set the flags according to an 
+# ordered comparison.  Basically, set the flags to the "unordered"
+# values, check for unordered, and if not set the flags again with
+# fcomp.
 macro ftestNAN(a, b)
 {
 	NG = 0;
 	ZR = 0;
-	CY = 0;
-	OV = 0;
+	CY = 1;
+	OV = 1;
 	tst:1 = nan(a) || nan(b);
 	if (tst) goto inst_next;
 }
