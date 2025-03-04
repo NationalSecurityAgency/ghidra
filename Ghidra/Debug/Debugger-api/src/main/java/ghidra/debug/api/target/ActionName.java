@@ -183,6 +183,7 @@ public record ActionName(String name, Show show, Enabler enabler, String display
 
 	public static final ActionName REFRESH =
 		create("refresh", Show.EXTENDED, Enabler.ALWAYS, "Refresh", ICON_REFRESH, "Refresh");
+
 	/**
 	 * Activate a given object and optionally a time
 	 * 
@@ -191,6 +192,7 @@ public record ActionName(String name, Show show, Enabler enabler, String display
 	 */
 	public static final ActionName ACTIVATE =
 		create("activate", Show.BUILTIN, Enabler.ALWAYS, "Activate", null, "Activate");
+
 	/**
 	 * A weaker form of activate.
 	 * 
@@ -262,6 +264,7 @@ public record ActionName(String name, Show show, Enabler enabler, String display
 		create("step_over", Show.BUILTIN, Enabler.NOT_RUNNING, "Step Over", ICON_STEP_OVER, "Step");
 	public static final ActionName STEP_OUT =
 		create("step_out", Show.BUILTIN, Enabler.NOT_RUNNING, "Step Out", ICON_STEP_OUT, "Step");
+
 	/**
 	 * Skip is not typically available, except in emulators. If the back-end debugger does not have
 	 * a command for this action out-of-the-box, we do not recommend trying to implement it
@@ -270,12 +273,14 @@ public record ActionName(String name, Show show, Enabler enabler, String display
 	 */
 	public static final ActionName STEP_SKIP =
 		create("step_skip", Show.BUILTIN, Enabler.NOT_RUNNING, "Skip Over", ICON_SKIP_OVER, "Skip");
+
 	/**
 	 * Step back is not typically available, except in emulators and timeless (or time-travel)
 	 * debuggers.
 	 */
 	public static final ActionName STEP_BACK =
 		create("step_back", Show.BUILTIN, Enabler.NOT_RUNNING, "Step Back", ICON_STEP_BACK, "Back");
+
 	/**
 	 * The action for steps that don't fit one of the common stepping actions.
 	 */
@@ -315,6 +320,7 @@ public record ActionName(String name, Show show, Enabler enabler, String display
 	 */
 	public static final ActionName READ_MEM =
 		create("read_mem", Show.BUILTIN, Enabler.ALWAYS, "Read Memory", null, "Read");
+
 	/**
 	 * Forms: (addr:ADDRESS,data:BYTES)
 	 */

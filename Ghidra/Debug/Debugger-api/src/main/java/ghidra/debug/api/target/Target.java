@@ -182,6 +182,78 @@ public interface Target {
 	}
 
 	/**
+	 * Specifies how object arguments are derived
+	 */
+	public enum ObjectArgumentPolicy {
+		/**
+		 * The object should be taken exactly from the action context, if applicable, present, and
+		 * matching in schema.
+		 */
+		CONTEXT_ONLY {
+			@Override
+			public boolean allowContextObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return false;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return false;
+			}
+		},
+		/**
+		 * The object should be taken from the current (active) object in the tool, or a suitable
+		 * relative having the correct schema.
+		 */
+		CURRENT_AND_RELATED {
+			@Override
+			public boolean allowContextObject() {
+				return false;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return true;
+			}
+		},
+		/**
+		 * The object can be taken from the given context, or the current (active) object in the
+		 * tool, or a suitable relative having the correct schema.
+		 */
+		EITHER_AND_RELATED {
+			@Override
+			public boolean allowContextObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return true;
+			}
+		};
+
+		public abstract boolean allowContextObject();
+
+		public abstract boolean allowCoordsObject();
+
+		public abstract boolean allowSuitableRelative();
+	}
+
+	/**
 	 * Describe the target for display in the UI
 	 * 
 	 * @return the description
@@ -216,11 +288,17 @@ public interface Target {
 	/**
 	 * Collect all actions that implement the given common debugger command
 	 * 
+	 * <p>
+	 * Note that if the context provides a program location (i.e., address), the object policy is
+	 * ignored. It will use current and related objects.
+	 * 
 	 * @param name the action name
 	 * @param context applicable context from the UI
+	 * @param policy determines how objects may be found
 	 * @return the collected actions
 	 */
-	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context);
+	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy);
 
 	/**
 	 * @see #execute(String, boolean)
