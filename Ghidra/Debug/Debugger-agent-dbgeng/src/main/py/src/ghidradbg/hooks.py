@@ -57,12 +57,12 @@ class ProcessState(object):
         self.visited = set()
         self.waiting = False
 
-    def record(self, description=None):
+    def record(self, description=None, snap=None):
         # print("RECORDING")
         first = self.first
         self.first = False
         if description is not None:
-            commands.STATE.trace.snapshot(description)
+            commands.STATE.trace.snapshot(description, snap=snap)
         if first:
             if util.is_kernel():
                 commands.create_generic("Sessions")
@@ -71,6 +71,9 @@ class ProcessState(object):
             commands.put_processes()
             commands.put_environment()
             commands.put_threads()
+            if util.is_trace():
+                commands.init_ttd()
+                #commands.put_events()
         if self.threads:
             commands.put_threads()
             self.threads = False
@@ -106,10 +109,10 @@ class ProcessState(object):
         commands.put_processes(running=True)
         commands.put_threads(running=True)
 
-    def record_exited(self, exit_code, description=None):
+    def record_exited(self, exit_code, description=None, snap=None):
         # print("RECORD_EXITED")
         if description is not None:
-            commands.STATE.trace.snapshot(description)
+            commands.STATE.trace.snapshot(description, snap=snap)
         proc = util.selected_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc)
         procobj = commands.STATE.trace.proxy_object_path(ipath)
@@ -381,13 +384,37 @@ def on_stop(*args):
         return
     state = PROC_STATE[proc]
     state.visited.clear()
+    snap = update_position()
     with commands.STATE.client.batch():
         with trace.open_tx("Stopped"):
-            state.record("Stopped")
+            state.record("Stopped", snap)
             commands.put_event_thread()
             commands.activate()
 
 
+def update_position():
+    """Update the position"""
+    cursor = util.get_cursor()
+    if cursor is None:
+        return None
+    pos = cursor.get_position()
+    lpos = util.get_last_position()
+    rng = range(pos.major, lpos.major)
+    if pos.major > lpos.major:
+        rng = range(lpos.major, pos.major)
+    for i in rng:
+        type =  util.get_event_type(i)
+        if type == "modload" or type == "modunload":
+            on_modules_changed()
+            break
+    for i in rng:
+        type =  util.get_event_type(i)
+        if type == "threadcreated" or type == "threadterm":
+            on_threads_changed()
+    util.set_last_position(pos)
+    return util.pos2snap(pos)
+
+        
 def on_exited(proc):
     # print("ON EXITED")
     if proc not in PROC_STATE:

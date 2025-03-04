@@ -2,7 +2,7 @@
 	<schema name="DbgRoot" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<attribute name="Sessions" schema="SessionContainer" required="yes" fixed="yes" />
 		<attribute name="Settings" schema="ANY" />
-		<attribute name="State" schema="ANY" />
+		<attribute name="State" schema="State" />
 		<attribute-alias from="_state" to="State" />
 		<attribute name="Utility" schema="ANY" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
@@ -25,6 +25,11 @@
 		<attribute name="_event_thread" schema="OBJECT" hidden="yes" />
 		<attribute name="_focus" schema="Selectable" required="yes" hidden="yes" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="ANY"/>
+	</schema>
+	<schema name="State" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="VOID" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="ANY"/>
 	</schema>
