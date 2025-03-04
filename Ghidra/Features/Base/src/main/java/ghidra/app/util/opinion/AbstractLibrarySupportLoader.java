@@ -526,7 +526,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<FileSystemSearchPath> customSearchPaths =
 			getCustomLibrarySearchPaths(provider, options, log, monitor);
 		List<FileSystemSearchPath> searchPaths =
-			getLibrarySearchPaths(provider, program, options, log, monitor);
+			getLibrarySearchPaths(provider, program, desiredLoadSpec, options, log, monitor);
 		DomainFolder linkSearchFolder =
 			getLinkSearchFolder(project, program, projectFolderPath, options);
 		String libraryDestFolderPath =
@@ -611,6 +611,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							fsSearchPath.fsRef().close();
 						}
 					});
+			FileSystemService.getInstance().closeUnusedFileSystems();
 		}
 	}
 
@@ -1040,11 +1041,28 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
+	 * Checks to make sure the given search path {@link FSRL} is valid before processing it.
+	 * Subclasses can override it as needed.
+	 * 
+	 * @param fsrl The search path {@link FSRL}
+	 * @param loadSpec The {@link LoadSpec} to use during load.
+	 * @param monitor A cancelable task monitor
+	 * @return True is the search path is valid; otherwise, false
+	 * @throws CancelledException if the user cancelled the load
+	 */
+	protected boolean isValidSearchPath(FSRL fsrl, LoadSpec loadSpec, TaskMonitor monitor)
+			throws CancelledException {
+		monitor.checkCancelled();
+		return true;
+	}
+
+	/**
 	 * Gets a {@link List} of priority-ordered {@link FileSystemSearchPath}s used to search for 
 	 * libraries
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
 	 * @param program The {@link Program} being loaded
+	 * @param loadSpec The {@link LoadSpec} to use during load
 	 * @param options The options
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
@@ -1053,7 +1071,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load
 	 */
 	private List<FileSystemSearchPath> getLibrarySearchPaths(ByteProvider provider, Program program,
-			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
+			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
+			throws CancelledException {
 		if (!isLoadLibraries(options) && !shouldSearchAllPaths(program, options)) {
 			return List.of();
 		}
@@ -1064,6 +1083,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		try {
 			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(provider, program, log,
 				monitor)) {
+
+				if (!isValidSearchPath(fsrl, loadSpec, monitor)) {
+					continue;
+				}
+
 				if (fsService.isLocal(fsrl)) {
 					try {
 						FileSystemRef fileRef =

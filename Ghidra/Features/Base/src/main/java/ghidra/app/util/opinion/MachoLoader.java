@@ -25,6 +25,8 @@ import ghidra.app.util.bin.format.golang.GoConstants;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
@@ -33,6 +35,7 @@ import ghidra.framework.model.*;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -161,6 +164,36 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public String getName() {
 		return MACH_O_NAME;
+	}
+
+	@Override
+	protected boolean isValidSearchPath(FSRL fsrl, LoadSpec loadSpec, TaskMonitor monitor)
+			throws CancelledException {
+		FileSystemService fsService = FileSystemService.getInstance();
+		try (ByteProvider provider = fsService.getByteProvider(fsrl, loggingDisabled, monitor)) {
+			if (!DyldCacheUtils.isDyldCache(provider)) {
+				return true;
+			}
+			DyldCacheHeader header = new DyldCacheHeader(new BinaryReader(provider, true));
+			DyldArchitecture dyld = header.getArchitecture();
+			LanguageCompilerSpecPair lcs = loadSpec.getLanguageCompilerSpec();
+			String processor = lcs.getLanguage().getProcessor().toString().toLowerCase();
+			boolean is64bit = lcs.getLanguage()
+					.getAddressFactory()
+					.getDefaultAddressSpace()
+					.getPointerSize() == 8;
+			return switch (processor) {
+				case "x86" -> dyld.isX86() && is64bit == dyld.is64bit();
+				case "aarch64" -> dyld.isARM() && dyld.is64bit();
+				case "arm" -> dyld.isARM() && !dyld.is64bit();
+				case "powerpc" -> dyld.isPowerPC();
+				default -> false;
+			};
+		}
+		catch (IOException e) {
+			// Problem occurred...assume it's valid
+			return true;
+		}
 	}
 
 	/**
