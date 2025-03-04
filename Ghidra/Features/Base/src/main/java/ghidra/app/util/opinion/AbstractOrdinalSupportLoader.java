@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
 import generic.jar.ResourceFile;
 import ghidra.app.util.Option;
@@ -71,13 +71,14 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean shouldSearchAllPaths(List<Option> options) {
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options) {
 		return shouldPerformOrdinalLookup(options);
 	}
 
 	@Override
 	protected void processLibrary(Program lib, String libName, FSRL libFsrl, ByteProvider provider,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
+			Queue<UnprocessedLibrary> unprocessed, int depth, LoadSpec loadSpec,
+			List<Option> options, MessageLog log, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
 		ResourceFile existingExportsFile = LibraryLookupTable.getExistingExportsFile(libName, size);
@@ -128,10 +129,12 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
 			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		monitor.initialize(loadedPrograms.size());
 
 		if (shouldPerformOrdinalLookup(options)) {
-			for (Loaded<Program> loadedProgram : loadedPrograms) {
+			List<Loaded<Program>> saveablePrograms =
+				loadedPrograms.stream().filter(Predicate.not(Loaded::shouldDiscard)).toList();
+			monitor.initialize(saveablePrograms.size());
+			for (Loaded<Program> loadedProgram : saveablePrograms) {
 				monitor.checkCancelled();
 				Program program = loadedProgram.getDomainObject();
 				int id = program.startTransaction("Ordinal fixups");

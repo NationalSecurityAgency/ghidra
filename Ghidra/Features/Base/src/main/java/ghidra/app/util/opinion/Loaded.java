@@ -28,6 +28,9 @@ import ghidra.util.task.TaskMonitor;
  * A loaded {@link DomainObject} produced by a {@link Loader}.  In addition to storing the loaded
  * {@link DomainObject}, it also stores the {@link Loader}'s desired name and project folder path 
  * for the loaded {@link DomainObject}, should it get saved to a project.
+ * <p>
+ * NOTE: If an object of this type is marked as {@link #setDiscard(boolean) discardable}, it should
+ * be {@link #release(Object) released} and not saved. 
  * 
  * @param <T> The type of {@link DomainObject} that was loaded
  */
@@ -39,6 +42,7 @@ public class Loaded<T extends DomainObject> {
 
 	private DomainFile domainFile;
 	private boolean ignoreSave;
+	private boolean discard;
 
 	/**
 	 * Creates a new {@link Loaded} object
@@ -212,6 +216,27 @@ public class Loaded<T extends DomainObject> {
 		}
 		return domainFile;
 	}
+
+	/**
+	 * Checks to see if this {@link Loaded} {@link DomainObject} should be discarded (not saved)
+	 * 
+	 * @return True if this {@link Loaded} {@link DomainObject} should be discarded; otherwise, 
+	 *   false
+	 */
+	public boolean shouldDiscard() {
+		return discard;
+	}
+
+	/**
+	 * Sets whether or not this {@link Loaded} {@link DomainObject} should be discarded (not saved)
+	 * 
+	 * @param discard True if this {@link Loaded} {@link DomainObject} should be discarded;
+	 *   otherwise, false
+	 */
+	public void setDiscard(boolean discard) {
+		this.discard = discard;
+	}
+
 
 	/**
 	 * Deletes the loaded {@link DomainObject}'s associated {@link DomainFile} that was
