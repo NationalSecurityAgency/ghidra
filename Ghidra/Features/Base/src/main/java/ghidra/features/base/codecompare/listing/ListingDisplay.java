@@ -85,7 +85,7 @@ public class ListingDisplay implements ListingDiffChangeListener {
 		listingPanel.addHoverService(new ReferenceListingHover(tool, () -> formatManager));
 		listingPanel.addHoverService(new DataTypeListingHover(tool));
 		listingPanel.addHoverService(new TruncatedTextListingHover(tool));
-		listingPanel.addHoverService(new FunctionNameListingHover(tool));
+		listingPanel.addHoverService(new LabelListingHover(tool));
 
 		listingDiff.addListingDiffChangeListener(this);
 		setHoverMode(true);

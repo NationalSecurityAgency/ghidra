@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class ListingMergePanel extends JPanel
 	private ReferenceListingHover referenceHoverService;
 	private DataTypeListingHover dataTypeHoverService;
 	private TruncatedTextListingHover truncatedTextHoverService;
-	private FunctionNameListingHover functionNameHoverService;
+	private LabelListingHover labelListingHoverService;
 
 	public ListingMergePanel(PluginTool tool, Program original, Program result, Program myChanges,
 			Program latest, boolean showListings) {
@@ -133,7 +133,7 @@ public class ListingMergePanel extends JPanel
 		referenceHoverService = new ReferenceListingHover(tool, this);
 		dataTypeHoverService = new DataTypeListingHover(tool);
 		truncatedTextHoverService = new TruncatedTextListingHover(tool);
-		functionNameHoverService = new FunctionNameListingHover(tool);
+		labelListingHoverService = new LabelListingHover(tool);
 
 		initializeListingHoverService(listingPanels[RESULT]);
 		initializeListingHoverService(listingPanels[LATEST]);
@@ -145,7 +145,7 @@ public class ListingMergePanel extends JPanel
 		listingPanel.addHoverService(referenceHoverService);
 		listingPanel.addHoverService(dataTypeHoverService);
 		listingPanel.addHoverService(truncatedTextHoverService);
-		listingPanel.addHoverService(functionNameHoverService);
+		listingPanel.addHoverService(labelListingHoverService);
 		listingPanel.setHoverMode(true);
 	}
 
