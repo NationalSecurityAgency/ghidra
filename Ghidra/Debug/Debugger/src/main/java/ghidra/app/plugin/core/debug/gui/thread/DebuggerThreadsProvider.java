@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,6 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 import javax.swing.*;
-
-import org.apache.commons.lang3.ArrayUtils;
 
 import docking.ActionContext;
 import docking.WindowPosition;
@@ -107,7 +105,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 	JPopupMenu traceTabPopupMenu;
 	DebuggerThreadsPanel panel;
-	DebuggerLegacyThreadsPanel legacyPanel;
 
 	ActionContext myActionContext;
 
@@ -144,24 +141,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 		current = coordinates;
 
-		if (Trace.isLegacy(coordinates.getTrace())) {
-			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			legacyPanel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), legacyPanel) == -1) {
-				mainPanel.remove(panel);
-				mainPanel.add(legacyPanel);
-				mainPanel.validate();
-			}
-		}
-		else {
-			legacyPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			panel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), panel) == -1) {
-				mainPanel.remove(legacyPanel);
-				mainPanel.add(panel);
-				mainPanel.validate();
-			}
-		}
+		panel.coordinatesActivated(coordinates);
 
 		forSnapsListener.setTrace(coordinates.getTrace());
 
@@ -178,10 +158,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		myActionContext = panel.getActionContext();
 	}
 
-	void legacyThreadsPanelContextChanged() {
-		myActionContext = legacyPanel.getActionContext();
-	}
-
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (myActionContext == null) {
@@ -196,7 +172,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		mainPanel = new JPanel(new BorderLayout());
 
 		panel = new DebuggerThreadsPanel(this);
-		legacyPanel = new DebuggerLegacyThreadsPanel(plugin, this);
 		mainPanel.add(panel);
 	}
 

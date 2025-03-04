@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import docking.*;
 import docking.action.*;
 import docking.action.builder.*;
@@ -426,12 +424,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	}
 
 	protected static Set<TraceModule> getSelectedModules(ActionContext context) {
-		if (context instanceof DebuggerModuleActionContext ctx) {
-			return DebuggerLegacyModulesPanel.getSelectedModulesFromContext(ctx);
-		}
-		if (context instanceof DebuggerSectionActionContext ctx) {
-			return DebuggerLegacySectionsPanel.getSelectedModulesFromContext(ctx);
-		}
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return DebuggerModulesPanel.getSelectedModulesFromContext(ctx);
 		}
@@ -440,12 +432,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 
 	protected static Set<TraceSection> getSelectedSections(ActionContext context,
 			boolean allowExpansion) {
-		if (context instanceof DebuggerModuleActionContext ctx) {
-			return DebuggerLegacyModulesPanel.getSelectedSectionsFromContext(ctx);
-		}
-		if (context instanceof DebuggerSectionActionContext ctx) {
-			return DebuggerLegacySectionsPanel.getSelectedSectionsFromContext(ctx, allowExpansion);
-		}
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return DebuggerModulesPanel.getSelectedSectionsFromContext(ctx);
 		}
@@ -453,12 +439,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	}
 
 	protected static AddressSetView getSelectedAddresses(ActionContext context) {
-		if (context instanceof DebuggerModuleActionContext ctx) {
-			return DebuggerLegacyModulesPanel.getSelectedAddressesFromContext(ctx);
-		}
-		if (context instanceof DebuggerSectionActionContext ctx) {
-			return DebuggerLegacySectionsPanel.getSelectedAddressesFromContext(ctx);
-		}
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return DebuggerModulesPanel.getSelectedAddressesFromContext(ctx);
 		}
@@ -565,9 +545,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	private final int defaultDividerSize = mainPanel.getDividerSize();
 
 	DebuggerModulesPanel modulesPanel;
-	DebuggerLegacyModulesPanel legacyModulesPanel;
 	DebuggerSectionsPanel sectionsPanel;
-	DebuggerLegacySectionsPanel legacySectionsPanel;
 
 	// TODO: Lazy construction of these dialogs?
 	private final DebuggerBlockChooserDialog blockChooserDialog;
@@ -713,21 +691,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		contextChanged();
 	}
 
-	void legacyModulesPanelContextChanged() {
-		myActionContext = legacyModulesPanel.getActionContext();
-		if (isFilterSectionsByModules()) {
-			legacySectionsPanel.loadSections();
-		}
-		contextChanged();
-	}
-
 	void sectionsPanelContextChanged() {
 		myActionContext = sectionsPanel.getActionContext();
-		contextChanged();
-	}
-
-	void legacySectionsPanelContextChanged() {
-		myActionContext = legacySectionsPanel.getActionContext();
 		contextChanged();
 	}
 
@@ -736,11 +701,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 
 		modulesPanel = new DebuggerModulesPanel(this);
 		mainPanel.setLeftComponent(modulesPanel);
-		legacyModulesPanel = new DebuggerLegacyModulesPanel(this);
 
 		sectionsPanel = new DebuggerSectionsPanel(this);
 		mainPanel.setRightComponent(sectionsPanel);
-		legacySectionsPanel = new DebuggerLegacySectionsPanel(this);
 
 		mainPanel.setResizeWeight(0.5);
 	}
@@ -1071,7 +1034,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		actionShowSectionsTable.setSelected(showSectionsTable);
 		mainPanel.setDividerSize(showSectionsTable ? defaultDividerSize : 0);
 		sectionsPanel.setVisible(showSectionsTable);
-		legacySectionsPanel.setVisible(showSectionsTable);
 		mainPanel.resetToPreferredSizes();
 	}
 
@@ -1090,7 +1052,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 		this.filterSectionsByModules = filterSectionsByModules;
 		actionFilterSectionsByModules.setSelected(filterSectionsByModules);
 		sectionsPanel.setFilteredBySelectedModules(filterSectionsByModules);
-		legacySectionsPanel.setFilteredBySelectedModules(filterSectionsByModules);
 	}
 
 	private void activatedSelectCurrent(ActionContext ignored) {
@@ -1387,52 +1348,18 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 			setAutoMapSpec(amState.spec);
 		}
 
-		if (Trace.isLegacy(newTrace)) {
-			modulesPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			sectionsPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			legacyModulesPanel.coordinatesActivated(coordinates);
-			legacySectionsPanel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), legacyModulesPanel) == -1) {
-				mainPanel.remove(modulesPanel);
-				mainPanel.remove(sectionsPanel);
-				mainPanel.setLeftComponent(legacyModulesPanel);
-				mainPanel.setRightComponent(legacySectionsPanel);
-				mainPanel.validate();
-			}
-		}
-		else {
-			legacyModulesPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			legacySectionsPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			modulesPanel.coordinatesActivated(coordinates);
-			sectionsPanel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), modulesPanel) == -1) {
-				mainPanel.remove(legacyModulesPanel);
-				mainPanel.remove(legacySectionsPanel);
-				mainPanel.setLeftComponent(modulesPanel);
-				mainPanel.setRightComponent(sectionsPanel);
-				mainPanel.validate();
-			}
-		}
+		modulesPanel.coordinatesActivated(coordinates);
+		sectionsPanel.coordinatesActivated(coordinates);
 
 		contextChanged();
 	}
 
 	public void setSelectedModules(Set<TraceModule> sel) {
-		if (Trace.isLegacy(current.getTrace())) {
-			legacyModulesPanel.setSelectedModules(sel);
-		}
-		else {
-			modulesPanel.setSelectedModules(sel);
-		}
+		modulesPanel.setSelectedModules(sel);
 	}
 
 	public void setSelectedSections(Set<TraceSection> sel) {
-		if (Trace.isLegacy(current.getTrace())) {
-			legacySectionsPanel.setSelectedSections(sel);
-		}
-		else {
-			sectionsPanel.setSelectedSections(sel);
-		}
+		sectionsPanel.setSelectedSections(sel);
 	}
 
 	private DataTreeDialog getProgramChooserDialog() {
