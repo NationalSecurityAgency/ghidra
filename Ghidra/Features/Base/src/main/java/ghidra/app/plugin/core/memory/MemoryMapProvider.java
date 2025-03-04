@@ -497,41 +497,55 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		TableColumn column = table.getColumn(MemoryMapModel.READ_COL);
 		int width = 25;
 		int maxWidth = resizable ? Integer.MAX_VALUE : width;
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.WRITE_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
 		width = 65;
 		maxWidth = resizable ? Integer.MAX_VALUE : width;
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.ARTIFICIAL_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 		column = table.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
 		width = 25;
 		maxWidth = resizable ? Integer.MAX_VALUE : width;
-		column.setMinWidth(width);
+		if (column != null) {
+			column.setMinWidth(width);
+		}
 
 		column = table.getColumn(MemoryMapModel.INIT_COL);
-		column.setMaxWidth(maxWidth);
-		column.setMinWidth(width);
-		column.setResizable(resizable);
+		if (column != null) {
+			column.setMaxWidth(maxWidth);
+			column.setMinWidth(width);
+			column.setResizable(resizable);
+		}
 
 	}
 
