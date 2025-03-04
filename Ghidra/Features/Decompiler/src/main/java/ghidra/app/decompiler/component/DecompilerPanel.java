@@ -262,6 +262,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 		}
 
+		// exclude tokens that users do not want to highlight
+		if (token instanceof ClangSyntaxToken || token instanceof ClangOpToken) {
+			return;
+		}
+
 		ActiveMiddleMouse newMiddleMouse = new ActiveMiddleMouse(token.getText());
 		newMiddleMouse.apply();
 		activeMiddleMouse = newMiddleMouse;
