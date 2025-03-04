@@ -955,38 +955,21 @@ exdi:CLSID={29f9906e-9dbe-4d4b-b0fb-6acf7fb6d014},Kd=Guess,DataBreaks=Exdi
     values are detected. If anyone understand how to extend this search (or knows how to set the
     base address to sidestep the scan), we would really love some guidance.</P>
 
-    <H3><A name="dbgeng_ttd"></A>TTD (Time-Travel Debugging)</H3>
+    <H3><A name="dbgeng_trace"></A>TTD (Time-Travel Debugging)</H3>
 
     <P>This is a nascent extension to our launcher for the Windows Debugger. The launcher itself
-    functions well, but lacks full integration. It is not yet properly packaged for the Ghidra
-    distribution, but is available in development environments. It also needs some additional
-    protocol support, namely to integrate its notion of time travel with Ghidra's notion. For the
-    time being, we map our time specifications as follows. MS TTD uses a tuple for its time specs,
-    both displayed in hexadecimal, e.g., "B5:1A". The first is the "major," which we believe counts
-    the events that warrant a snapshot. The second is the "minor," which we believe counts
-    instructions executed since the major event. Thus, we would like to map the major to a Ghidra
-    trace snapshot and the minor to steps of p-code emulation. For example, the "B5:1A" notation
-    would map to "181:26". It should be no surprise the notations are similar, since both MS TTD
-    and Ghidra (as well as several other "timeless" debuggers) use a snapshot-replay strategy to
-    recover past machine states. However, we have not yet worked out how to have Ghidra cooperate
-    with a back end in the replay part of this strategy. Currently, Ghidra will always apply p-code
-    emulation, despite having a perfectly good and performant back end available. So, for the time
-    being, we multiply the major number by 1000, thus reserving that many Ghidra snapshots between
-    major events for MS TTD minor steps. Thus, the notation "B5:1A" will actually map to "181026",
-    that is snapshot 181026 with no steps of p-code emulation. This hack will fall short if you
-    visit a time where the minor number exceeds 999.</P>
-
-    <P>Furthermore, if you use the Ghidra Debugger UI to visit a past snapshot, the back end is not
-    yet informed of your intent. You will probably only see stale records of the machine state.
-    Instead, please use the kd commands from the Terminal to navigate through time. The back end
-    (MS TTD) will perform the replay, record the snapshot, and command Ghidra to navigate
-    there.</P>
+    functions, but lacks full integration. In particular, Ghidra's concept of time is not
+	mapped directly to the TTD concept of time. TTD uses a major/minor scheme for ordering events,
+    where the major index changes when TTD must record a change in state.  Events, including thread
+	creation/termination, module loads/unloads, syscalls, and other asynchronous changes, merit 
+    new major indices. When you step forward or backward in a trace, the dbgeng API will increment
+	and decrement correspondingly.  Ghidra, on the other hand, will only increment.</P>
 
     <H4>Options</H4>
 
-    <P>This launcher has the same options as the WinDbg launcher, except that the DLL path must
-    contain <TT>dbgmodel.dll</TT> and the scripts that implement TTD. These are most easily
-    obtained by installing WinDbg Preview or later.</P>
+    <P>This launcher has basically the same options as the WinDbg launcher, except that arguments 
+	are not included and the DLL path must contain <TT>TTDReplay.dll</TT>
+	and the scripts that implement TTD. These are most easily obtained by installing WinDbg Preview or later.</P>
 
     <H2>Stock Java Launchers</H2>
 

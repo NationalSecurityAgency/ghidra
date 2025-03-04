@@ -112,11 +112,14 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			!(region instanceof TraceObjectMemoryRegion objRegion)) {
 			return;
 		}
-
+	
 		TraceObject obj = objRegion.getObject();
 		obj.getOrderedValues(Lifespan.ALL, TraceObjectMemoryRegion.KEY_RANGE, true).forEach(v -> {
+			if (region.getName(v.getMinSnap()).equals("full memory")) {
+				return;
+			}
 			MemoryBox box = new MemoryBox("Region " + region.getName(v.getMinSnap()),
-				MemviewBoxType.VIRTUAL_ALLOC, v.castValue(), v.getLifespan());
+				MemviewBoxType.REGION, v.castValue(), v.getLifespan());
 			updateList.add(box);
 		});
 		updateLabelDebouncer.contact(null);

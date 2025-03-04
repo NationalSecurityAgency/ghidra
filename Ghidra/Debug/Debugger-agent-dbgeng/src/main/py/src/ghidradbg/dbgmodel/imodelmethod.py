@@ -15,7 +15,7 @@
 ##
 from ctypes import *
 
-from comtypes import BSTR
+from comtypes import COMError
 from comtypes.gen import DbgMod
 from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
@@ -23,28 +23,23 @@ from pybag.dbgeng import exception
 from . import imodelobject as mo
 
 
-class RawEnumerator(object):
-    def __init__(self, keys, kind):
-        self._keys = keys
-        self._kind = kind
-        exception.wrap_comclass(self._keys)
+class ModelMethod(object):
+    def __init__(self, method):
+        self._method = method
+        method.AddRef()
 
-    def Release(self):
-        cnt = self._keys.Release()
-        if cnt == 0:
-            self._keys = None
-        return cnt
+    # ModelMethod
 
-    # RawEnumerator
+    def Call(self, object, argcount=0, arguments=None):
+        if argcount == 0:
+            arguments = POINTER(DbgMod.IModelObject)()
+        result = POINTER(DbgMod.IModelObject)()
+        metadata = POINTER(DbgMod.IKeyStore)()
+        try:
+            self._method.Call(byref(object), argcount, byref(arguments),
+                               byref(result), byref(metadata))
+        except COMError as ce:
+            return None
 
-    def GetNext(self):
-        key = BSTR()
-        value = POINTER(DbgMod.IModelObject)()
-        hr = self._keys.GetNext(byref(key), byref(self._kind), byref(value))
-        if hr != S_OK:
-            return (None, None)
-        return (key, mo.ModelObject(value))
-
-    def Reset(self):
-        hr = self._keys.Reset()
-        exception.check_err(hr)
+        return mo.ModelObject(result)
+ 

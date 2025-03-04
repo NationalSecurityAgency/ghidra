@@ -38,8 +38,8 @@ from pybag.dbgeng.callbacks import DbgEngCallbacks
 from pybag.dbgeng.idebugclient import DebugClient
 
 from ghidradbg.dbgmodel.ihostdatamodelaccess import HostDataModelAccess
+from ghidradbg.dbgmodel.imodelmethod import ModelMethod
 from _winapi import STILL_ACTIVE
-
 
 DbgVersion = namedtuple('DbgVersion', ['full', 'name', 'dotted', 'arch'])
 
@@ -81,6 +81,7 @@ class StdInputCallbacks(CoClass):
 
 
 class _Worker(threading.Thread):
+
     def __init__(self, new_base, work_queue, dispatch):
         super().__init__(name='DbgWorker', daemon=True)
         self.new_base = new_base
@@ -109,6 +110,7 @@ class _Worker(threading.Thread):
 # https://github.com/python/cpython/blob/main/Lib/concurrent/futures/thread.py
 # accessed 9 Jan 2024
 class _WorkItem(object):
+
     def __init__(self, future, fn, args, kwargs):
         self.future = future
         self.fn = fn
@@ -131,6 +133,7 @@ class DebuggeeRunningException(BaseException):
 
 
 class DbgExecutor(object):
+
     def __init__(self, ghidra_dbg):
         self._ghidra_dbg = ghidra_dbg
         self._work_queue = queue.SimpleQueue()
@@ -139,12 +142,12 @@ class DbgExecutor(object):
         self._thread.start()
         self._executing = False
 
-    def submit(self, fn, /, *args, **kwargs):
+    def submit(self, fn, / , *args, **kwargs):
         f = self._submit_no_exit(fn, *args, **kwargs)
         self._ghidra_dbg.exit_dispatch()
         return f
 
-    def _submit_no_exit(self, fn, /, *args, **kwargs):
+    def _submit_no_exit(self, fn, / , *args, **kwargs):
         f = Future()
         if self._executing and self._ghidra_dbg.IS_REMOTE == False:
             f.set_exception(DebuggeeRunningException("Debuggee is Running"))
@@ -199,6 +202,7 @@ class AllDbg(pydbg.DebuggerBase):
 
 
 class GhidraDbg(object):
+
     def __init__(self):
         self._queue = DbgExecutor(self)
         self._thread = self._queue._thread
@@ -239,10 +243,11 @@ class GhidraDbg(object):
                      'load_dump'
                      ]:
             setattr(self, name, self.eng_thread(getattr(base, name)))
-            self.IS_KERNEL = False
-            self.IS_EXDI = False
-            self.IS_REMOTE = os.getenv('OPT_CONNECT_STRING') is not None
-
+        self.IS_KERNEL = False
+        self.IS_EXDI = False
+        self.IS_REMOTE = os.getenv('OPT_CONNECT_STRING') is not None
+        self.IS_TRACE = os.getenv('USE_TTD') == "true"
+            
     def _new_base(self):
         remote = os.getenv('OPT_CONNECT_STRING')
         if remote is not None:
@@ -252,14 +257,12 @@ class GhidraDbg(object):
         else:
             self._protected_base = AllDbg()
             
-            
     def _generate_client(self, original):
         cli = POINTER(DbgEng.IDebugClient)()
         cliptr = POINTER(POINTER(DbgEng.IDebugClient))(cli)
         hr = original.CreateClient(cliptr)
         exception.check_err(hr)
         return DebugClient(client=cli)
-           
 
     @property
     def _base(self):
@@ -289,12 +292,14 @@ class GhidraDbg(object):
         For methods inside of GhidraDbg, ensure it runs on the dbgeng
         thread
         '''
+
         @functools.wraps(func)
         def _func(self, *args, **kwargs):
             if threading.current_thread() is self._thread:
                 return func(self, *args, **kwargs)
             else:
                 return self.run(func, self, *args, **kwargs)
+
         return _func
 
     def eng_thread(self, func):
@@ -302,12 +307,14 @@ class GhidraDbg(object):
         For methods and functions outside of GhidraDbg, ensure it
         runs on this GhidraDbg's dbgeng thread
         '''
+
         @functools.wraps(func)
         def _func(*args, **kwargs):
             if threading.current_thread() is self._thread:
                 return func(*args, **kwargs)
             else:
                 return self.run(func, *args, **kwargs)
+
         return _func
 
     def _ces_exec_status(self, argument):
@@ -325,6 +332,7 @@ class GhidraDbg(object):
     def _dispatch_events(self, timeout=DbgEng.WAIT_INFINITE):
         # NB: pybag's impl doesn't heed standalone
         self._protected_base._client.DispatchCallbacks(timeout)
+
     dispatch_events = check_thread(_dispatch_events)
 
     # no check_thread. Must allow reentry
@@ -393,7 +401,23 @@ class GhidraDbg(object):
             return None
 
 
+class TTDState(object):
+
+    def __init__(self):
+        self._cursor = None
+        self._first = None
+        self._last = None
+        self._lastmajor = None
+        self._lastpos = None
+        self.breakpoints = []
+        self.events = {}
+        self.evttypes = {}
+        self.starts = {}
+        self.stops = {}
+
+
 dbg = GhidraDbg()
+ttd = TTDState()
 
 
 @dbg.eng_thread
@@ -750,18 +774,12 @@ def get_proc_id(pid):
 
 
 def full_mem():
-    sizeptr = 64; #int(gdb.parse_and_eval('sizeof(void*)')) * 8
-    infoLow = DbgEng._MEMORY_BASIC_INFORMATION64()
-    infoLow.BaseAddress = 0
-    infoLow.RegionSize = (1 << (sizeptr-1))
-    infoLow.Protect = 0xFFF
-    infoLow.Name = "UMEM"
-    infoHigh = DbgEng._MEMORY_BASIC_INFORMATION64()
-    infoHigh.BaseAddress = 1 << (sizeptr-1)
-    infoHigh.RegionSize = (1 << (sizeptr-1))
-    infoHigh.Protect = 0xFFF
-    infoHigh.Name = "KMEM"
-    return [ infoLow, infoHigh ]
+    info = DbgEng._MEMORY_BASIC_INFORMATION64()
+    info.BaseAddress = 0
+    info.RegionSize = (1 << 64) - 1
+    info.Protect = 0xFFF
+    info.Name = "full memory"
+    return [ info ]
 
 
 @dbg.eng_thread
@@ -778,6 +796,16 @@ def get_thread_id(tid):
     except Exception:
         pass
     return None
+
+
+@dbg.eng_thread
+def open_trace_or_dump(filename):
+    """Open a trace or dump file"""
+    _cli = dbg._base._client._cli
+    if isinstance(filename, str):
+        filename = filename.encode()
+    hr = _cli.OpenDumpFile(filename)
+    exception.check_err(hr)
 
 
 def split_path(pathString):
@@ -800,6 +828,11 @@ def IHostDataModelAccess():
         dbg._base._client._cli.QueryInterface(interface=DbgMod.IHostDataModelAccess))
 
 
+def IModelMethod(method_ptr):
+    return ModelMethod(
+        method_ptr.GetIntrinsicValue().value.QueryInterface(interface=DbgMod.IModelMethod))
+
+
 @dbg.eng_thread
 def get_object(relpath):
     """Get the list of all threads"""
@@ -810,10 +843,25 @@ def get_object(relpath):
     root = mgr.GetRootNamespace()
     pathstr = "Debugger"
     if relpath != '':
-        pathstr += "."+relpath
+        pathstr += "." + relpath
     path = split_path(pathstr)
     # print(f"PATH: {pathstr}")
     return root.GetOffspring(path)
+
+
+@dbg.eng_thread
+def get_method(context_path, method_name):
+    """Get the list of all threads"""
+    obj = get_object(context_path)
+    keys = obj.EnumerateKeys()
+    (k, v) = keys.GetNext()
+    while k is not None:
+        if k.value == method_name:
+            break
+        (k, v) = keys.GetNext()
+    if k is None:
+        return None
+    return IModelMethod(v)
 
 
 @dbg.eng_thread
@@ -826,7 +874,7 @@ def get_attributes(obj):
 
 @dbg.eng_thread
 def get_elements(obj):
-    """Get the list of all threads"""
+    """Get the list of elements"""
     if obj is None:
         return None
     return obj.GetElements()
@@ -834,7 +882,7 @@ def get_elements(obj):
 
 @dbg.eng_thread
 def get_kind(obj):
-    """Get the list of all threads"""
+    """Get the kind"""
     if obj is None:
         return None
     kind = obj.GetKind()
@@ -845,7 +893,7 @@ def get_kind(obj):
 
 @dbg.eng_thread
 def get_type(obj):
-    """Get the list of all threads"""
+    """Get the type"""
     if obj is None:
         return None
     return obj.GetTypeKind()
@@ -853,7 +901,7 @@ def get_type(obj):
 
 @dbg.eng_thread
 def get_value(obj):
-    """Get the list of all threads"""
+    """Get the value"""
     if obj is None:
         return None
     return obj.GetValue()
@@ -861,7 +909,7 @@ def get_value(obj):
 
 @dbg.eng_thread
 def get_intrinsic_value(obj):
-    """Get the list of all threads"""
+    """Get the intrinsic value"""
     if obj is None:
         return None
     return obj.GetIntrinsicValue()
@@ -869,7 +917,7 @@ def get_intrinsic_value(obj):
 
 @dbg.eng_thread
 def get_target_info(obj):
-    """Get the list of all threads"""
+    """Get the target info"""
     if obj is None:
         return None
     return obj.GetTargetInfo()
@@ -877,7 +925,7 @@ def get_target_info(obj):
 
 @dbg.eng_thread
 def get_type_info(obj):
-    """Get the list of all threads"""
+    """Get the type info"""
     if obj is None:
         return None
     return obj.GetTypeInfo()
@@ -885,7 +933,7 @@ def get_type_info(obj):
 
 @dbg.eng_thread
 def get_name(obj):
-    """Get the list of all threads"""
+    """Get the name"""
     if obj is None:
         return None
     return obj.GetName().value
@@ -893,7 +941,7 @@ def get_name(obj):
 
 @dbg.eng_thread
 def to_display_string(obj):
-    """Get the list of all threads"""
+    """Get the display string"""
     if obj is None:
         return None
     return obj.ToDisplayString()
@@ -901,7 +949,7 @@ def to_display_string(obj):
 
 @dbg.eng_thread
 def get_location(obj):
-    """Get the list of all threads"""
+    """Get the location"""
     if obj is None:
         return None
     try:
@@ -923,6 +971,45 @@ def get_convenience_variable(id):
     if val is None:
         return "auto"
     return val
+
+
+def get_cursor():
+    return ttd._cursor
+
+
+def get_last_position():
+    return ttd._lastpos
+
+
+def set_last_position(pos):
+    ttd._lastpos = pos
+
+
+def get_event_type(rng):
+     if ttd.evttypes.__contains__(rng):
+         return ttd.evttypes[rng]
+
+
+def pos2snap(pos):
+    pmap = get_attributes(pos)
+    major = get_value(pmap["Sequence"])
+    minor = get_value(pmap["Steps"])
+    return mm2snap(major, minor)
+
+
+def mm2snap(major, minor):
+    index = int(major)
+    if index < 0 or index >= ttd.MAX_STEP:
+        return int(ttd._lastmajor) # << 32
+    snap = index # << 32 + int(minor)
+    return snap
+
+
+def pos2split(pos):
+    pmap = get_attributes(pos)
+    major = get_value(pmap["Sequence"])
+    minor = get_value(pmap["Steps"])
+    return (major, minor)
 
 
 def set_convenience_variable(id, value):
@@ -952,4 +1039,11 @@ def set_remote(value):
 def is_remote():
     return dbg.IS_REMOTE
     
+    
+def set_trace(value):
+    dbg.IS_TRACE = value
+    
+    
+def is_trace():
+    return dbg.IS_TRACE
 		

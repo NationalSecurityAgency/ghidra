@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -348,7 +348,7 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 		for (MemoryBox memoryBox : boxes) {
 			aval = memoryBox.getId();
 		}
-		return vertical ? tval + ":" + aval : aval + ":" + tval;
+		return vertical ? tval + " : " + aval : aval + " : " + tval;
 	}
 
 	private void parseBoxes(Collection<MemoryBox> boxes) {
@@ -487,7 +487,8 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 	public String getTagForTick(long tick) {
 		String tval = "";
 		if (0 <= tick && tick < timesArray.length) {
-			tval = Long.toString(timesArray[(int) tick]);
+			Long time = timesArray[(int) tick];
+			tval = Long.toString(time, 16);
 		}
 		return tval;
 	}

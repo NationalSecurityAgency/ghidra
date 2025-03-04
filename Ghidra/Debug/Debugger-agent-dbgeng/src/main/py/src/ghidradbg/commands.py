@@ -24,15 +24,16 @@ import time
 
 from comtypes import c_ulong
 from ghidratrace import sch
-from ghidratrace.client import Client, Address, AddressRange, TraceObject
+from ghidratrace.client import Client, Address, AddressRange, Lifespan, TraceObject
 from pybag import pydbg, userdbg, kerneldbg
 from pybag.dbgeng import core as DbgEng
 from pybag.dbgeng import exception
 
 from . import util, arch, methods, hooks
 from .dbgmodel.imodelobject import ModelObjectKind
+
 if util.is_exdi():
-	from .exdi import exdi_commands, exdi_methods
+    from .exdi import exdi_commands, exdi_methods
 
 STILL_ACTIVE = 259
 PAGE_SIZE = 4096
@@ -65,6 +66,9 @@ SECTIONS_ADD_PATTERN = '.Sections'
 SECTION_KEY_PATTERN = '[{secname}]'
 SECTION_ADD_PATTERN = SECTIONS_ADD_PATTERN + SECTION_KEY_PATTERN
 GENERIC_KEY_PATTERN = '[{key}]'
+TTD_PATTERN = 'State.DebuggerVariables.{var}.TTD'
+
+DESCRIPTION_PATTERN = '[{major}] {type}'
 
 # TODO: Symbols
 
@@ -221,7 +225,8 @@ def start_trace(name):
     variant = " (dbgmodel)" if using_dbgmodel else " (dbgeng)"
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'DbgRoot')
-        root.set_value('_display', util.DBG_VERSION.full + ' via pybag' + variant)
+        root.set_value('_display', util.DBG_VERSION.full + 
+                       ' via pybag' + variant)
         if util.dbg.use_generics:
             put_generic(root)
     util.set_convenience_variable('_ghidra_tracing', "true")
@@ -294,7 +299,8 @@ def ghidra_trace_create_ext(command=None, initialDirectory='.', envVariables="\0
             envVariables = None
         if envVariables is not None and envVariables.endswith("/0/0") is False:
             envVariables += "/0/0"
-        dbg._client.CreateProcess2(command, options, initialDirectory, envVariables)
+        dbg._client.CreateProcess2(
+            command, options, initialDirectory, envVariables)
         dbg._control.AddEngineOptions(int(engine_options))
     if start_trace:
         ghidra_trace_start(command)
@@ -312,9 +318,9 @@ def ghidra_trace_attach(pid=None, attach_flags='0', initial_break=True, timeout=
     if attach_flags == None:
         attach_flags = '0'
     if pid != None:
-        dbg._client.AttachProcess(int(pid,0), int(attach_flags,0))
+        dbg._client.AttachProcess(int(pid, 0), int(attach_flags, 0))
     if start_trace:
-        ghidra_trace_start("pid_"+pid)
+        ghidra_trace_start("pid_" + pid)
 
 
 @util.dbg.eng_thread
@@ -349,6 +355,19 @@ def ghidra_trace_connect_server(options=None):
 
 
 @util.dbg.eng_thread
+def ghidra_trace_open(command=None, initial_break=True, timeout=DbgEng.WAIT_INFINITE, start_trace=True):
+    """
+    Create a session.
+    """
+
+    dbg = util.dbg._base
+    if command != None:
+        util.open_trace_or_dump(command)
+    if start_trace:
+        ghidra_trace_start(command)
+
+
+@util.dbg.eng_thread
 def ghidra_trace_kill():
     """
     Kill a session.
@@ -370,7 +389,7 @@ def ghidra_trace_info():
         print("Not connected to Ghidra")
         return
     host, port = STATE.client.s.getpeername()
-    print(f"Connected to {STATE.client.description} at {host}:{port}")
+    print(f"Connected to {STATE.client.description} at {host}: {port}")
     if STATE.trace is None:
         print("No trace")
         return
@@ -585,7 +604,7 @@ def putreg():
         nframe = util.selected_frame()
         # NB: We're going to update the Register View for non-zero stack frames
         if nframe == 0:
-        	return {'missing': STATE.trace.put_registers(rpath, values)}
+            return {'missing': STATE.trace.put_registers(rpath, values)}
 
     nproc = util.selected_process()
     if nproc < 0:
@@ -601,13 +620,13 @@ def putreg():
     for i in range(0, len(regs)):
         name = regs._reg.GetDescription(i)[0]
         try:
-        	value = regs._get_register_by_index(i)
+            value = regs._get_register_by_index(i)
         except Exception:
-        	value = 0
+            value = 0
         try:
             values.append(mapper.map_value(nproc, name, value))
             if util.dbg.use_generics is False:
-            	robj.set_value(name, hex(value))
+                robj.set_value(name, hex(value))
         except Exception:
             pass
     return {'missing': STATE.trace.put_registers(space, values)}
@@ -903,9 +922,10 @@ def activate(path=None):
             else:
                 frame = util.selected_frame()
                 if frame is None:
-                	path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                    path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
                 else:
-                	path = FRAME_PATTERN.format(procnum=nproc, tnum=nthrd, level=frame)
+                    path = FRAME_PATTERN.format(
+                        procnum=nproc, tnum=nthrd, level=frame)
     trace.proxy_object_path(path).activate()
 
 
@@ -1198,11 +1218,11 @@ def put_regions():
         regobj.set_value('AllocationBase', hex(r.AllocationBase))
         regobj.set_value('Protect', hex(r.Protect))
         regobj.set_value('Type', hex(r.Type))
-        if hasattr(r, 'Name') and  r.Name is not None:
+        if hasattr(r, 'Name') and r.Name is not None:
             regobj.set_value('_display', r.Name)
         regobj.insert()
-    STATE.trace.proxy_object_path(
-        MEMORY_PATTERN.format(procnum=nproc)).retain_values(keys)
+    #STATE.trace.proxy_object_path(
+    #    MEMORY_PATTERN.format(procnum=nproc)).retain_values(keys)
 
 
 def ghidra_trace_put_regions():
@@ -1255,6 +1275,24 @@ def put_modules():
 
     STATE.trace.proxy_object_path(MODULES_PATTERN.format(
         procnum=nproc)).retain_values(mod_keys)
+
+
+def get_module(key, mod):
+    nproc = util.selected_process()
+    modmap = util.get_attributes(mod)
+    base = util.get_value(modmap["Address"])
+    size = util.get_value(modmap["Size"])
+    name = util.get_value(modmap["Name"])
+    mpath = MODULE_PATTERN.format(procnum=nproc, modpath=hex(base))
+    modobj = STATE.trace.create_object(mpath)
+    mapper = STATE.trace.memory_mapper
+    base_base, base_addr = mapper.map(nproc, base)
+    if base_base != base_addr.space:
+        STATE.trace.create_overlay_space(base_base, base_addr.space)
+    modobj.set_value('Range', base_addr.extend(size))
+    modobj.set_value('Name', name)
+    modobj.set_value('_display','{} {:x} {}'.format(key, base, name))
+    return modobj
 
 
 def ghidra_trace_put_modules():
@@ -1334,6 +1372,24 @@ def put_event_thread(nthrd=None):
     STATE.trace.proxy_object_path('').set_value('_event_thread', tobj)
 
 
+def get_thread(key, thread):
+    pid = util.selected_process()
+    tmap = util.get_attributes(thread)
+    tid = int(key[1:len(key)-1])
+    radix = util.get_convenience_variable('output-radix')
+    if radix == 'auto':
+        radix = 16
+    tpath = THREAD_PATTERN.format(procnum=pid, tnum=tid)
+    tobj = STATE.trace.create_object(tpath)
+    tobj.set_value('TID', tid, span=Lifespan(0))
+    tidstr = ('0x{:x}' if radix == 16 else '0{:o}' if radix == 
+              8 else '{}').format(tid)
+    tobj.set_value('_short_display', '[{}:{}]'.format(
+        pid, tidstr), span=Lifespan(0))
+    tobj.set_value('_display', '[{}]'.format(tidstr), span=Lifespan(0))
+    return tobj
+
+
 def ghidra_trace_put_threads():
     """
     Put the current process's threads into the Ghidra trace
@@ -1358,7 +1414,7 @@ def put_frames():
         (values, keys) = create_generic(path)
         STATE.trace.proxy_object_path(path).retain_values(keys)
         # NB: some flavors of dbgmodel lack Attributes, so we grab Instruction Offset regardless
-        #return
+        # return
 
     mapper = STATE.trace.memory_mapper
     keys = []
@@ -1373,18 +1429,18 @@ def put_frames():
             STATE.trace.create_overlay_space(base, offset_inst.space)
         fobj.set_value('Instruction Offset', offset_inst)
         if not util.dbg.use_generics:
-	        base, offset_stack = mapper.map(nproc, f.StackOffset)
-	        if base != offset_stack.space:
-	            STATE.trace.create_overlay_space(base, offset_stack.space)
-	        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
-	        if base != offset_ret.space:
-	            STATE.trace.create_overlay_space(base, offset_ret.space)
-	        base, offset_frame = mapper.map(nproc, f.FrameOffset)
-	        if base != offset_frame.space:
-	            STATE.trace.create_overlay_space(base, offset_frame.space)
-	        fobj.set_value('Stack Offset', offset_stack)
-	        fobj.set_value('Return Offset', offset_ret)
-	        fobj.set_value('Frame Offset', offset_frame)
+            base, offset_stack = mapper.map(nproc, f.StackOffset)
+            if base != offset_stack.space:
+                STATE.trace.create_overlay_space(base, offset_stack.space)
+            base, offset_ret = mapper.map(nproc, f.ReturnOffset)
+            if base != offset_ret.space:
+                STATE.trace.create_overlay_space(base, offset_ret.space)
+            base, offset_frame = mapper.map(nproc, f.FrameOffset)
+            if base != offset_frame.space:
+                STATE.trace.create_overlay_space(base, offset_frame.space)
+            fobj.set_value('Stack Offset', offset_stack)
+            fobj.set_value('Return Offset', offset_ret)
+            fobj.set_value('Frame Offset', offset_frame)
         fobj.set_value('_display', "#{} {}".format(
             f.FrameNumber, offset_inst.offset))
         fobj.insert()
@@ -1402,79 +1458,105 @@ def ghidra_trace_put_frames():
         put_frames()
 
 
-def update_by_container(np, keyval, obj):
-    index = keyval[0]
-    key = ''
+def update_key(np, keyval):
+    """
+    This should set the modified key
+    """
+    key = keyval[0]
+    if np.endswith("Modules"):
+        key = '[{:d}]'.format(key)
+        mo = util.get_object(np+key+".BaseAddress")
+        key = hex(util.get_value(mo))
+    return key
+
+
+def update_by_container(np, keyval, to):
+    """
+    Sets non-generic variables by container
+    """
+    key = keyval[0]
+    disp = ''
     if np.endswith("Processes") or np.endswith("Threads"):
-        istate = compute_proc_state(index)
-        obj.set_value('State', istate)
+        istate = compute_proc_state(key)
+        to.set_value('State', istate)
     if np.endswith("Sessions"):
-        key = '[{:x}]'.format(index)
+        disp = '[{:x}]'.format(key)
     if np.endswith("Processes"):
-        create_generic(obj.path)
-        obj.set_value('PID', index)
-        create_generic(obj.path + ".Memory")
+        create_generic(to.path)
+        to.set_value('PID', key)
+        create_generic(to.path + ".Memory")
         if util.is_kernel():
-            key = '[{:x}]'.format(index)
+            disp = '[{:x}]'.format(key)
         else:
-            id = util.get_proc_id(index)
-            key = '{:x} [{:x}]'.format(id, index)
+            id = util.get_proc_id(key)
+            disp = '{:x} [{:x}]'.format(id, key)
     if np.endswith("Breakpoints"):
-        create_generic(obj.path)
+        create_generic(to.path)
     if np.endswith("Threads"):
-        create_generic(obj.path)
-        obj.set_value('TID', index)
+        create_generic(to.path)
+        to.set_value('TID', key)
         if util.is_kernel():
-            key = '[{:x}]'.format(index)
+            disp = '[{:x}]'.format(key)
         else:
-            id = util.get_thread_id(index)
-            key = '{:x} [{:x}]'.format(id, index)
+            id = util.get_thread_id(key)
+            disp = '{:x} [{:x}]'.format(id, key)
     if np.endswith("Frames"):
-        mo = util.get_object(obj.path)
+        mo = util.get_object(to.path)
         map = util.get_attributes(mo)
         if 'Attributes' in map:
             attr = map["Attributes"]
             if attr is not None:
-                map = util.get_attributes(attr)        
+                map = util.get_attributes(attr)
                 pc = util.get_value(map["InstructionOffset"])
                 (pc_base, pc_addr) = map_address(pc)
-                obj.set_value('Instruction Offset', pc_addr)
-                key = '#{:x} 0x{:x}'.format(index, pc)
+                to.set_value('Instruction Offset', pc_addr)
+                disp = '#{:x} 0x{:x}'.format(key, pc)
     if np.endswith("Modules"):
-        create_generic(obj.path)
-        mo = util.get_object(obj.path)
+        modobjpath=np+'[{:d}]'.format(key)
+        create_generic(to.path, modobjpath=modobjpath)
+        mo = util.get_object(modobjpath)
         map = util.get_attributes(mo)
         base = util.get_value(map["BaseAddress"])
         size = util.get_value(map["Size"])
         name = util.get_value(map["Name"])
-        obj.set_value('Name', '{}'.format(name))
+        to.set_value('Name', '{}'.format(name))
         (base_base, base_addr) = map_address(base)
-        obj.set_value('Range', base_addr.extend(size))
-        key = '{:x} {:x} {}'.format(index, base, name)
-    disp = util.to_display_string(keyval[1])
-    if disp is not None:
-        key += " " + disp
-    if key is not None and key != "":
-        obj.set_value('_display', key)
+        to.set_value('Range', base_addr.extend(size))
+        disp = '{:x} {:x} {}'.format(key, base, name)
+    disp0 = util.to_display_string(keyval[1])
+    if disp0 is not None:
+        disp += " " + disp0
+    if disp is not None and disp != "":
+        to.set_value('_display', disp)
 
 
-def create_generic(path):
+def create_generic(path, modobjpath=None):
     obj = STATE.trace.create_object(path)
+    result = put_generic(obj, modobjpath)
     obj.insert()
-    result = put_generic(obj)
     return result
 
 
-def put_generic(node):
+def put_generic_from_node(node):
+    obj = STATE.trace.create_object(node.path)
+    result = put_generic(obj, None)
+    obj.insert()
+    return result
+
+
+def put_generic(node, modobjpath=None):
     # print(f"put_generic: {node}")
     nproc = util.selected_process()
     if nproc is None:
         return
     nthrd = util.selected_thread()
 
-    mo = util.get_object(node.path)
+    if modobjpath is None:
+        mo = util.get_object(node.path)
+    else:
+        mo = util.get_object(modobjpath)
     mapper = STATE.trace.register_mapper
-    
+
     attributes = util.get_attributes(mo)
     # print(f"ATTR={attributes}")
     values = []
@@ -1508,8 +1590,8 @@ def put_generic(node):
     keys = []
     if elements is not None:
         for el in elements:
-            index = el[0]
-            key = GENERIC_KEY_PATTERN.format(key=index)
+            key = update_key(node.path, el)
+            key = GENERIC_KEY_PATTERN.format(key=key)
             lpath = node.path + key
             lobj = STATE.trace.create_object(lpath)
             update_by_container(node.path, el, lobj)
@@ -1534,7 +1616,7 @@ def set_display(key, value, obj):
         if hloc is not None:
             key += " @ " + str(hloc)
             obj.set_value('_display', key)
-            (hloc_base, hloc_addr) = map_address(int(hloc,0))
+            (hloc_base, hloc_addr) = map_address(int(hloc, 0))
             obj.set_value('_address', hloc_addr, schema=Address)
     if vstr is not None:
         key += " : " + str(vstr)
@@ -1557,9 +1639,134 @@ def ghidra_trace_put_generic(node):
 
     STATE.require_tx()
     with STATE.client.batch() as b:
-        put_generic(node)
+        put_generic_from_node(node)
 
 
+def init_ttd():
+    # print(f"put_events: {node}")
+    with open_tracked_tx('Init TTDState'):
+        ttd = util.ttd
+        nproc = util.selected_process()
+        path = TTD_PATTERN.format(var="curprocess")+".Lifetime"
+        (values, keys) = create_generic(path)
+        lifetime = util.get_object(path)
+        map = util.get_attributes(lifetime)
+        ttd._first = map["MinPosition"]
+        ttd._last = map["MaxPosition"]
+        ttd._lastmajor = util.pos2split(ttd._last)[0]
+        ttd._lastpos = ttd._first
+        ttd.MAX_STEP = 0xFFFFFFFFFFFFFFFE
+        ghidra_trace_set_snap(util.pos2snap(ttd._first))
+
+
+def put_events():
+    ttd = util.ttd
+    nproc = util.selected_process()
+    path = TTD_PATTERN.format(var="curprocess")+".Events"
+    (values, keys) = create_generic(path)
+    for k in keys:
+        event = util.get_object(path+k)
+        map = util.get_attributes(event)
+        type = util.get_value(map["Type"])
+        pos = map["Position"]
+        (major, minor) = util.pos2split(pos)
+        ttd.events[major] = event
+        ttd.evttypes[major] = type
+        with open_tracked_tx('Populate events'):
+            index = util.pos2snap(pos)
+            STATE.trace.snapshot(DESCRIPTION_PATTERN.format(major=major, type=type), snap=index)
+            if type == "ModuleLoaded" or type == "ModuleUnloaded":
+                mod = map["Module"]
+                mobj = get_module(k, mod)
+                if type == "ModuleLoaded":
+                    mobj.insert(span=Lifespan(index))
+                else:
+                    mobj.remove(span=Lifespan(index))
+            if type == "ThreadCreated" or type == "ThreadTerminated":
+                t = map["Thread"]
+                tobj = get_thread(k, t)
+                if type == "ThreadCreated":
+                    tobj.insert(span=Lifespan(index))
+                else:
+                    tobj.remove(span=Lifespan(index))
+    hooks.on_stop()
+
+
+def ghidra_trace_put_events(node):
+    """
+    Put the event set the Ghidra trace
+    """
+
+    STATE.require_tx()
+    with STATE.client.batch() as b:
+    	put_events()
+ 
+ 
+def put_events_custom(prefix, cmd):
+    result = util.dbg.cmd("{prefix}.{cmd}".format(prefix=prefix, cmd=cmd))
+    if result.startswith("Error"):
+        print(result)
+        return
+    nproc = util.selected_process()
+    mapper = STATE.trace.memory_mapper
+    path = TTD_PATTERN.format(var="cursession")+".CustomEvents"
+    obj = STATE.trace.create_object(path)
+    index = 0
+    addr = size = start = stop = None
+    attrs = {}
+    keys = []
+    for l in result.split('\n'):
+        split = l.split(":")
+        id = split[0].strip()
+        if id == "Address":
+            addr = int(split[1].strip(),16)
+        elif id == "Size":
+            size = int(split[1].strip(),16)
+        elif id == "TimeStart":
+            start = util.mm2snap(int(split[1],16), int(split[2],16))
+        elif id == "TimeEnd":
+            stop = util.mm2snap(int(split[1],16), int(split[2],16))
+        elif " : " in l:
+            attrs[id] = l[l.index(":"):].strip()
+        if addr is not None and size is not None and start is not None and stop is not None:
+            with open_tracked_tx('Populate events'):
+                key = "[{:x}]".format(addr)
+                STATE.trace.snapshot("[{:x}] EventCreated {} ".format(start, key), snap=start)
+                if start > stop:
+                    print(f"ERROR: {start}:{stop}")
+                    continue
+                span=Lifespan(start, stop)
+                rpath = REGION_PATTERN.format(procnum=nproc, start=addr)
+                keys.append(REGION_KEY_PATTERN.format(start=addr))
+                regobj = STATE.trace.create_object(rpath)
+                (start_base, start_addr) = map_address(addr)
+                rng = start_addr.extend(size)
+                regobj.set_value('Range', rng, span=span)
+                regobj.set_value('_range', rng, span=span)
+                regobj.set_value('_display', hex(addr), span=span)
+                regobj.set_value('_cmd', cmd)
+                for (k,v) in attrs.items():
+                    regobj.set_value(k, v, span=span)
+                regobj.insert(span=span)
+                keys.append(key)
+            index += 1
+            addr = size = start = stop = None
+            attrs = {}
+    obj.insert()
+    STATE.trace.proxy_object_path(TTD_PATTERN.format(var="cursession")).retain_values(keys)
+    hooks.on_stop()
+
+
+def ghidra_trace_put_events_custom(prefix, cmd):
+    """
+    Generate events by cmd and put them into the Ghidra trace
+    """
+
+    STATE.require_tx()
+    with STATE.client.batch() as b:
+        put_events_custom(prefix, cmd)
+ 
+ 
 def ghidra_trace_put_all():
     """
     Put everything currently selected into the Ghidra trace
