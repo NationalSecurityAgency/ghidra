@@ -34,6 +34,7 @@ import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -1473,7 +1474,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionEntry findAction(Target target, ActionName action, ActionContext context) {
-		return target.collectActions(action, context)
+		return target.collectActions(action, context, ObjectArgumentPolicy.EITHER_AND_RELATED)
 				.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())

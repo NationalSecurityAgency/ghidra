@@ -24,6 +24,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.framework.plugintool.PluginTool;
 
 class TargetDockingAction extends DockingAction {
@@ -51,7 +52,7 @@ class TargetDockingAction extends DockingAction {
 		if (target == null) {
 			return null;
 		}
-		return target.collectActions(action, context)
+		return target.collectActions(action, context, ObjectArgumentPolicy.CURRENT_AND_RELATED)
 				.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())

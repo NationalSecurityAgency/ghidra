@@ -28,13 +28,15 @@ import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.iface.*;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.util.Msg;
@@ -53,7 +55,8 @@ public interface ObjectDefaultActionsMixin {
 		}
 		Target target = getCurrent().getTarget();
 		Map<String, ActionEntry> actions = target.collectActions(ActionName.TOGGLE,
-			new DebuggerSingleObjectPathActionContext(object.getCanonicalPath()));
+			new DebuggerSingleObjectPathActionContext(object.getCanonicalPath()),
+			ObjectArgumentPolicy.CONTEXT_ONLY);
 		ActionEntry action = actions.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())

@@ -42,6 +42,7 @@ import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -282,7 +283,10 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected void addTargetStepExtActions(Target target) {
-		for (ActionEntry entry : target.collectActions(ActionName.STEP_EXT, context).values()) {
+		for (ActionEntry entry : target
+				.collectActions(ActionName.STEP_EXT, context,
+					ObjectArgumentPolicy.CURRENT_AND_RELATED)
+				.values()) {
 			if (entry.requiresPrompt()) {
 				continue;
 			}
