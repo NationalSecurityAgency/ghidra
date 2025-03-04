@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -171,7 +171,7 @@ public class AsyncLazyMap<K, V> {
 	 * <p>
 	 * This will replace the behavior of any previous value-testing predicate.
 	 * 
-	 * @param predicate
+	 * @param predicate the rule for forgetting entries
 	 * @return this lazy map
 	 */
 	public synchronized AsyncLazyMap<K, V> forgetValues(
@@ -184,7 +184,7 @@ public class AsyncLazyMap<K, V> {
 	 * Sets a predicate to determine which values to remember
 	 * 
 	 * @see #forgetValues(BiPredicate)
-	 * @param predicate
+	 * @param predicate the rule for <em>not</em> forgetting entries
 	 * @return this lazy map
 	 */
 	public synchronized AsyncLazyMap<K, V> rememberValues(
@@ -322,6 +322,7 @@ public class AsyncLazyMap<K, V> {
 	 * Remove a key from the map, canceling any pending computation
 	 * 
 	 * @param key the key to remove
+	 * @return the previous value, if completed
 	 */
 	public V remove(K key) {
 		KeyedFuture<K, V> f;
