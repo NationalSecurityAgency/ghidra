@@ -36,8 +36,6 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	private Boolean createdFromMemory = null;
 	private Boolean createdFromCompiled = null;
 
-	private int numEntries = 0;
-
 	private int maxIndexSeen = -1;
 	private Map<Integer, VBTableEntry> entriesByIndex = new HashMap<>();
 
@@ -47,7 +45,7 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	 * @param parentage the parentage of the base class(es) of the table
 	 * @param program the program
 	 * @param address the address of the table
-	 * @param entrySize the size for each table entry
+	 * @param entrySize the size of the index field for each table entry in memory
 	 * @param ctm the class type manager
 	 * @param mangledName the mangled name of the table
 	 */
@@ -76,7 +74,7 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	 * Returns the mangled name
 	 * @return the mangled name
 	 */
-	String getMangledName() {
+	public String getMangledName() {
 		return mangledName;
 	}
 
@@ -136,16 +134,16 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 		return entry;
 	}
 
-	// Need to decide if we want to allow this to overwrite existing entry.
-	public void setBaseClassId(int index, ClassID baseId) throws PdbException {
+	public void setBaseClassId(int index, ClassID baseId) {
 		VBTableEntry entry = entriesByIndex.get(index);
-		if (entry != null) {
-			throw new PdbException(
-				"Entry already exists in Virtual Base Table for index: " + index);
+		if (entry == null) {
+			entry = new VirtualBaseTableEntry(baseId);
+			entriesByIndex.put(index, entry);
 		}
-		entry = new VirtualBaseTableEntry(baseId);
-		entriesByIndex.put(index, entry);
-		maxIndexSeen = Integer.max(maxIndexSeen, index); // do we want this here with a "set" method?
+		else {
+			entry.setClassId(baseId);
+		}
+		maxIndexSeen = Integer.max(maxIndexSeen, index);
 	}
 
 }

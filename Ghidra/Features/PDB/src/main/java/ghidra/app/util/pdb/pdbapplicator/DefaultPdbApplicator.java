@@ -220,6 +220,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//  a second PDB analyzer to do the "deferred" processing of functions.  Then a mandatory
 	//  second PDB analyzer would, at a minimum, remove the map from the analysis state.
 	private Map<RecordNumber, DataType> dataTypeByMsTypeNum;
+	private Set<RecordNumber> filledInStructure;
 	private Map<RecordNumber, CppCompositeType> classTypeByMsTypeNum;
 	private ComplexTypeMapper complexTypeMapper;
 	/**
@@ -267,7 +268,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
-		this.monitor = (monitor != null) ? monitor : TaskMonitor.DUMMY;
+		this.monitor = TaskMonitor.dummyIfNull(monitor);
 
 		// FIXME: should not support use of DataTypeManager-only since it will not have the correct
 		// data organization if it corresponds to a data type archive.  Need to evaluate archive
@@ -591,6 +592,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		pdbPeHeaderInfoManager = new PdbPeHeaderInfoManager(this);
 
 		multiphaseResolver = new MultiphaseDataTypeResolver(this);
+
+		// Following should not need to be part of analysis state because types are filled in
+		// during first round of processing
+		filledInStructure = new HashSet<>();
 
 		classTypeManager = new ClassTypeManager(dataTypeManager);
 
@@ -1055,6 +1060,17 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	/**
+	 * Stores whether the structure referenced by the record number has been filled in such that
+	 * it can be used as a base class
+	 * @param recordNumber record number of type record
+	 * @param dataType the data type to store
+	 */
+	void markFilledInForBase(RecordNumber recordNumber) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		filledInStructure.add(mappedNumber);
+	}
+
+	/**
 	 * Returns the Ghidra data type associated with the PDB data type.
 	 * This method is intended to be used by appliers that work on this specific type, not by
 	 *  appliers that need the data type
@@ -1091,6 +1107,26 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
 		DataType dt = dataTypeByMsTypeNum.get(mappedNumber);
 		if (dt != null) {
+			return dt;
+		}
+		multiphaseResolver.scheduleTodo(mappedNumber);
+		return null;
+	}
+
+	/**
+	 * Returns the Ghidra data type associated with the PDB record number for the base class
+	 * of another class.  In this case, we require the base class structure to be completed
+	 * in order for the child class to be constructed
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param recordNumber the PDB type record number
+	 * @return the Ghidra DB data type of the base class
+	 */
+	DataType getBaseClassDataTypeOrSchedule(RecordNumber recordNumber) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		boolean filledIn = filledInStructure.contains(mappedNumber);
+		DataType dt = dataTypeByMsTypeNum.get(mappedNumber);
+		if (dt != null && filledIn) {
 			return dt;
 		}
 		multiphaseResolver.scheduleTodo(mappedNumber);

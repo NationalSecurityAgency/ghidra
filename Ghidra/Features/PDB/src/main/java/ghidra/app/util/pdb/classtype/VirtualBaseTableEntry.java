@@ -24,21 +24,21 @@ public class VirtualBaseTableEntry implements VBTableEntry {
 
 	// Re-evaluate which constructors and setters we need
 
-	VirtualBaseTableEntry(long offset) {
+	public VirtualBaseTableEntry(Long offset) {
 		this(offset, null);
 	}
 
-	VirtualBaseTableEntry(ClassID baseId) {
+	public VirtualBaseTableEntry(ClassID baseId) {
 		this(null, baseId);
 	}
 
-	VirtualBaseTableEntry(Long offset, ClassID baseId) {
+	public VirtualBaseTableEntry(Long offset, ClassID baseId) {
 		this.offset = offset;
 		this.baseId = baseId;
 	}
 
 	@Override
-	public void setOffset(long offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 
