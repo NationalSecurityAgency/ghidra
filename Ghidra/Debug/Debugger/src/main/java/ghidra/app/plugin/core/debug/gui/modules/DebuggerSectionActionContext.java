@@ -16,27 +16,16 @@
 package ghidra.app.plugin.core.debug.gui.modules;
 
 import java.awt.Component;
-import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import docking.ComponentProvider;
 import docking.DefaultActionContext;
-import docking.widgets.table.GTable;
 import ghidra.trace.model.modules.TraceSection;
 
 public class DebuggerSectionActionContext extends DefaultActionContext {
 	private final Set<TraceSection> selectedSections;
 	private final boolean forcedSingle;
-
-	private static Set<TraceSection> toSections(Collection<SectionRow> rows) {
-		return rows.stream().map(SectionRow::getSection).collect(Collectors.toUnmodifiableSet());
-	}
-
-	public DebuggerSectionActionContext(DebuggerModulesProvider provider,
-			Collection<SectionRow> rows, GTable table) {
-		this(provider, toSections(rows), table, false);
-	}
 
 	public DebuggerSectionActionContext(ComponentProvider provider,
 			Set<TraceSection> selected, Component sourceComponent, boolean forcedSingle) {
