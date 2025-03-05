@@ -9,7 +9,7 @@
 ::@desc </body></html>
 ::@menu-group local
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#lldb
+::@help lldb#local
 ::@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 ::@env OPT_TARGET_IMG:file="" "Image" "The target binary executable image"
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"

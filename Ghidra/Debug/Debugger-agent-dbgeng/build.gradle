@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Not technically a Java project, but required to be a Help project
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/hasPythonPackage.gradle"
 
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgeng'
+
+dependencies {
+	// Only for Help :/
+	api project(':Debugger-rmi-trace')
+}
 
 ext.tlb = file("build/os/win_x86_64/dbgmodel.tlb")
 

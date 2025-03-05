@@ -25,7 +25,7 @@
 #@desc </body></html>
 #@menu-group local
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
+#@help gdb#local
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :file "Image" "The target binary executable image, empty for no target"

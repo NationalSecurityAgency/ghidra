@@ -8,7 +8,7 @@
 ::@desc </body></html>
 ::@menu-group local
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#dbgeng_trace
+::@help dbgeng#ttd
 ::@env OPT_PYTHON_EXE:file!="python" "Python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 :: Use env instead of args, because "all args except first" is terrible to implement in batch
 ::@env OPT_TARGET_TRACE:file="" "Trace (.run)" "The target trace image"
