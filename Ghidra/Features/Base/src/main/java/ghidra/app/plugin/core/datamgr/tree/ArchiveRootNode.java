@@ -48,6 +48,15 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 		return archiveManager;
 	}
 
+	/**
+	 * Returns the modification count for any changes to any category or datatype in any
+	 * open archive including the program.
+	 * @return the modification count
+	 */
+	public long getModificationCount() {
+		return archiveManager.getModificationCount();
+	}
+
 	public void setFilterState(DtFilterState dtFilterState) {
 		this.dtFilterState = dtFilterState;
 	}
