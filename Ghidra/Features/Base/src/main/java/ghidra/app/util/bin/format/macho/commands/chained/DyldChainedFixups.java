@@ -139,8 +139,9 @@ public class DyldChainedFixups {
 			return fixedAddrs;
 		}
 		Memory memory = program.getMemory();
+		monitor.initialize(fixups.size(), "Fixing up chained pointers...");
 		for (DyldFixup fixup : fixups) {
-			monitor.checkCancelled();
+			monitor.increment();
 			Status status = Status.FAILURE;
 			Address addr = imagebase.add(fixup.offset());
 			try {
