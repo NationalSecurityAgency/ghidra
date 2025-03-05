@@ -309,6 +309,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	public void testGettingStarted_DisassemblyAfterLaunch() throws Throwable {
 		launchProgramInGdb();
 
+		Thread.sleep(7000);
 		captureToolWindow(1920, 1080);
 	}
 
@@ -354,7 +355,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		launchProgramInGdb();
 		placeBreakpointsSRandRand();
 
-		tool.setSize(1920, 1080);
+		runSwing(() -> tool.setSize(1920, 1080));
 		captureProvider(DebuggerBreakpointsProvider.class);
 	}
 
