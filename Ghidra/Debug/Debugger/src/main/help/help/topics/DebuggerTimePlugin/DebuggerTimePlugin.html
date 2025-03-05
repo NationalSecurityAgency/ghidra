@@ -61,18 +61,16 @@
 
     <H3><A name="goto_time"></A>Go To Time</H3>
 
-    <P>This action is available when a trace is active. It prompts for a <EM>time schedule</EM>.
-    This is the same form as the notation in the sub-title of the <A href=
-    "help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html">Threads</A> window. In many
-    cases, it is simply the snapshot number, e.g., <CODE>3</CODE>, which will go to the snapshot
-    with key 3. It may optionally include an emulation schedule. For example, <CODE>3:10</CODE>
-    will use snapshot 3 for an emulator's initial state and step 10 machine instructions on
-    snapshot 3's event thread. If the snapshot does not give an event thread, then the thread must
-    be specified in the expression, e.g., <CODE>3:t1-10</CODE>. That expression will start at
-    snapshot 3, get the thread with key 1, and step it 10 machine instructions. The stepping
-    commands can be repeated any number of times, separated by semicolons, to step threads in a
-    specified sequence. For example, <CODE>3:t1-10;t2-5</CODE> will do the same as before, then get
-    thread 2 and step it 5 times.</P>
+    <P>This action is available when a trace is active. It prompts for a <EM>time schedule</EM>. In
+    many cases, it is simply the snapshot number, e.g., <CODE>3</CODE>, which will go to the
+    snapshot with key 3. It may optionally include an emulation schedule. For example,
+    <CODE>3:10</CODE> will use snapshot 3 for an emulator's initial state and step 10 machine
+    instructions on snapshot 3's event thread. If the snapshot does not give an event thread, then
+    the thread must be specified in the expression, e.g., <CODE>3:t1-10</CODE>. That expression
+    will start at snapshot 3, get the thread with key 1, and step it 10 machine instructions. The
+    stepping commands can be repeated any number of times, separated by semicolons, to step threads
+    in a specified sequence. For example, <CODE>3:t1-10;t2-5</CODE> will do the same as before,
+    then get thread 2 and step it 5 times.</P>
 
     <P>The emulator's state can also be patched by the schedule. Instead of specifying the number
     of steps, write a <EM>Sleigh</EM> statement, e.g., <CODE>3:t1-{r0=0x1234};10</CODE>. This will

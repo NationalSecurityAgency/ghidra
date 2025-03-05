@@ -145,7 +145,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 		forSnapsListener.setTrace(coordinates.getTrace());
 
-		setSubTitle(coordinates.getTime().toString());
 		contextChanged();
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,11 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerTraceFileActionContext;
-import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.TargetPublicationListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -117,7 +117,17 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 	}
 
 	private String getNameForTrace(Trace trace) {
-		return DomainObjectDisplayUtils.getTabText(trace);
+		String name = DomainObjectDisplayUtils.getTabText(trace);
+		DebuggerCoordinates current = traceManager.getCurrentFor(trace);
+		if (current == DebuggerCoordinates.NOWHERE) {
+			// TODO: Could use view's snap and time table's schedule
+			return name + " (?)";
+		}
+		String schedule = current.getTime().toString();
+		if (schedule.length() > 15) {
+			schedule = "..." + schedule.substring(schedule.length() - 12);
+		}
+		return name + " (" + schedule + ")";
 	}
 
 	private Icon getIconForTrace(Trace trace) {
@@ -179,6 +189,7 @@ public class DebuggerTraceTabPanel extends GTabPanel<Trace>
 			Trace trace = evt.getActiveCoordinates().getTrace();
 			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
 				selectTab(trace);
+				refreshTab(trace);
 			}
 		}
 		else if (event instanceof TraceClosedPluginEvent evt) {
