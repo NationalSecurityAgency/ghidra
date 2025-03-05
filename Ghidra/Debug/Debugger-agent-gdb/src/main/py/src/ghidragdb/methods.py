@@ -520,6 +520,12 @@ def resume(inferior: sch.Schema('Inferior')):
     gdb.execute('continue')
 
 
+@REGISTRY.method(action='step_ext', icon='icon.debugger.resume.back', condition=util.IS_TRACE)
+def resume_back(thread: sch.Schema('Inferior')):
+    """Continue execution of the inferior backwards."""
+    gdb.execute('reverse-continue')
+
+
 # Technically, inferior is not required, but it hints that the affected object
 # is the current inferior. This in turn queues the UI to enable or disable the
 # button appropriately
@@ -567,6 +573,18 @@ def step_return(thread: sch.Schema('Thread'), value: int=None):
         gdb.execute('return')
     else:
         gdb.execute(f'return {value}')
+
+
+@REGISTRY.method(action='step_ext', icon='icon.debugger.step.back.into', condition=util.IS_TRACE)
+def step_back_into(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
+    """Step backwards one instruction exactly (reverse-stepi)."""
+    gdb.execute('reverse-stepi')
+
+
+@REGISTRY.method(action='step_ext', icon='icon.debugger.step.back.over', condition=util.IS_TRACE)
+def step_back_over(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
+    """Step one instruction backwards, but proceed through subroutine calls (reverse-nexti)."""
+    gdb.execute('reverse-nexti')
 
 
 @REGISTRY.method(action='break_sw_execute')

@@ -34,6 +34,7 @@ def _compute_gdb_ver():
 
 
 GDB_VERSION = _compute_gdb_ver()
+IS_TRACE = gdb.convenience_variable('use_trace').string() == "true"
 
 MODULES_CMD_V8 = 'maintenance info sections ALLOBJ'
 MODULES_CMD_V11 = 'maintenance info sections -all-objects'
