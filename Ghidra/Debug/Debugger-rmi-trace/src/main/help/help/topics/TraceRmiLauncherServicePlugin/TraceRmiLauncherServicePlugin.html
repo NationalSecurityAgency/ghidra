@@ -525,6 +525,22 @@ target remote [host]:[port]
       <TT>gdb-multiarch</TT>.</LI>
     </UL>
 
+    <H3><A name="gdb_rr"></A>rr + GDB</H3>
+
+    <P>This launcher runs <TT>rr</TT> in a <TT>gdb</TT> session on Linux for replaying rr-generated traces.</P>
+
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Trace Dir</B>: This is the path to the trace directory, stored by default in the user's home 
+		directory in <TT>.local/share/rr/target_name</TT>.</LI>
+
+      <LI><B><TT>rr</TT> command</B>: This is the command or path to <TT>rr</TT>.</LI>
+
+      <LI><B>Other options are the same as in GDB.</LI>
+    </UL>
+
     <H2>Stock LLDB Launchers</H2>
 
     <P>The following launchers based on the LLDB Debugger are included out of the box:</P>
