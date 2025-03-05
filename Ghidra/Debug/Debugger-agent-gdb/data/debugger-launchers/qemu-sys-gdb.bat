@@ -10,7 +10,7 @@
 ::@desc </body></html>
 ::@menu-group cross
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#gdb_qemu
+::@help gdb#qemu
 ::@enum Endian:str auto big little
 ::@env OPT_TARGET_IMG:file!="" "Image" "The target binary executable image"
 ::@env GHIDRA_LANG_EXTTOOL_qemu_system:file="" "QEMU command" "The path to qemu-system for the target architecture."

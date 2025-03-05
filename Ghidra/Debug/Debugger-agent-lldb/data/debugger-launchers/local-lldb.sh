@@ -25,7 +25,7 @@
 #@desc </body></html>
 #@menu-group local
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#lldb
+#@help lldb#local
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"

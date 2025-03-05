@@ -8,7 +8,7 @@
 ::@desc </body></html>
 ::@menu-group remote
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#lldb_remote
+::@help lldb#remote
 ::@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 ::@env OPT_PORT:str="9999" "Port" "The host's listening port"
 ::@env OPT_ARCH:str="" "Architecture" "Target architecture override"

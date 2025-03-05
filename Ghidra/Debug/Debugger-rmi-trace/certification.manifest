@@ -10,7 +10,6 @@ src/main/help/help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionMana
 src/main/help/help/topics/TraceRmiConnectionManagerPlugin/images/ConnectDialog.png||GHIDRA||||END|
 src/main/help/help/topics/TraceRmiConnectionManagerPlugin/images/TraceRmiConnectionManagerPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/TraceRmiLauncherServicePlugin/TraceRmiLauncherServicePlugin.html||GHIDRA||||END|
-src/main/help/help/topics/TraceRmiLauncherServicePlugin/images/GdbLauncher.png||GHIDRA||||END|
 src/main/help/help/topics/TraceRmiLauncherServicePlugin/images/GdbTerminal.png||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|

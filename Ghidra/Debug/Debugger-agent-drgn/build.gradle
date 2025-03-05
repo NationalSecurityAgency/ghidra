@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Not technically a Java project, but required to be a Help project
+apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/hasPythonPackage.gradle"
 
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-drgn'
+
+dependencies {
+	// Only for Help :/
+	api project(':Debugger-rmi-trace')
+}

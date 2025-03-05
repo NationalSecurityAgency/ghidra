@@ -10,7 +10,7 @@
 ::@desc </body></html>
 ::@menu-group remote
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#lldb_ssh
+::@help lldb#ssh
 ::@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 ::@enum Endian:str auto big little
 ::@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image on the remote system"

@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<!-- See Base's TOC_Source.xml for help -->
+<tocroot>
+	<tocref id="TraceRmiLauncherServicePlugin">
+		<tocdef id="gdb" text="GDB Integration"
+			target="help/topics/gdb/gdb.html">
+
+			<tocdef id="gdb_local" text="Local"
+				target="help/topics/gdb/gdb.html#local" />
+
+			<tocdef id="gdb_ssh" text="Via SSH"
+				target="help/topics/gdb/gdb.html#ssh" />
+
+			<tocdef id="gdb_gdbserver_ssh" text="gdbserver via SSH"
+				target="help/topics/gdb/gdb.html#gdbserver_ssh" />
+
+			<tocdef id="gdb_qemu" text="QEMU"
+				target="help/topics/gdb/gdb.html#qemu" />
+
+			<tocdef id="gdb_wine" text="Wine"
+				target="help/topics/gdb/gdb.html#wine" />
+
+			<tocdef id="gdb_remote" text="Remote"
+				target="help/topics/gdb/gdb.html#remote" />
+
+			<tocdef id="gdb_rr" text="rr"
+				target="help/topics/gdb/gdb.html#rr" />
+
+		</tocdef>
+	</tocref>
+</tocroot>
