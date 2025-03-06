@@ -156,25 +156,23 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 * @param oldDt             affected datatype which has been removed or replaced
 	 * @param newDt             replacement datatype
 	 * @return                  true if bitfield component was modified
-	 * @throws InvalidDataTypeException if bitfield was based upon oldDt but new
-	 *                                  datatype is invalid for a bitfield
 	 */
 	protected boolean updateBitFieldDataType(DataTypeComponentDB bitfieldComponent, DataType oldDt,
-			DataType newDt) throws InvalidDataTypeException {
+			DataType newDt) {
 		if (!bitfieldComponent.isBitFieldComponent()) {
 			throw new AssertException("expected bitfield component");
 		}
 
 		BitFieldDBDataType bitfieldDt = (BitFieldDBDataType) bitfieldComponent.getDataType();
-		if (bitfieldDt.getBaseDataType() != oldDt) {
+		if (bitfieldDt.getBaseDataType() != oldDt || !BitFieldDataType.isValidBaseDataType(newDt)) {
 			return false;
 		}
 
 		if (newDt != null) {
-			BitFieldDataType.checkBaseDataType(newDt);
 			int maxBitSize = 8 * newDt.getLength();
 			if (bitfieldDt.getBitSize() > maxBitSize) {
-				throw new InvalidDataTypeException("Replacement datatype too small for bitfield");
+				// Replacement datatype too small for bitfield
+				return false;
 			}
 		}
 
@@ -186,7 +184,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 			newDt.addParent(this);
 		}
 		catch (InvalidDataTypeException e) {
-			throw new AssertException("unexpected");
+			throw new AssertException(e); // unexpected
 		}
 
 		return true;

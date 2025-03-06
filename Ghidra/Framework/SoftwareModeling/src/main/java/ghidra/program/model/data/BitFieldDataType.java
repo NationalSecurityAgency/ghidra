@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,8 @@ public class BitFieldDataType extends AbstractDataType {
 	 * bit size may be reduced based upon the specified base datatype size.
 	 * @param bitOffset right shift factor within storage unit when viewed as a big-endian dd
 	 * scalar value.  Based upon minimal storage bitOffset should be in the range 0 to 7.
-	 * @throws InvalidDataTypeException 
+	 * @throws InvalidDataTypeException if invalid base datatype has been specified or an 
+	 * invalid bitSize or bitOffset has been specified
 	 */
 	protected BitFieldDataType(DataType baseDataType, int bitSize, int bitOffset)
 			throws InvalidDataTypeException {
@@ -92,7 +93,7 @@ public class BitFieldDataType extends AbstractDataType {
 	protected BitFieldDataType(DataType baseDataType, int bitSize) throws InvalidDataTypeException {
 		this(baseDataType, bitSize, 0);
 	}
-	
+
 	@Override
 	public boolean isZeroLength() {
 		return bitSize == 0;
@@ -234,8 +235,8 @@ public class BitFieldDataType extends AbstractDataType {
 	public AbstractIntegerDataType getPrimitiveBaseDataType() {
 		// assumes proper enforcement during construction
 		DataType dt = baseDataType;
-		if (baseDataType instanceof TypeDef) {
-			dt = ((TypeDef) baseDataType).getBaseDataType();
+		while (dt instanceof TypeDef typeDef) {
+			dt = typeDef.getBaseDataType();
 		}
 		if (dt instanceof Enum) {
 			// TODO: uncertain if we should use signed or unsigned, although size
@@ -417,8 +418,8 @@ public class BitFieldDataType extends AbstractDataType {
 			return ((Enum) dt).getRepresentation(big, settings, effectiveBitSize);
 		}
 		AbstractIntegerDataType intDT = (AbstractIntegerDataType) dt;
-		if (intDT.getFormatSettingsDefinition().getFormat(
-			settings) == FormatSettingsDefinition.CHAR) {
+		if (intDT.getFormatSettingsDefinition()
+				.getFormat(settings) == FormatSettingsDefinition.CHAR) {
 			if (big.signum() < 0) {
 				big = big.add(BigInteger.valueOf(2).pow(effectiveBitSize));
 			}

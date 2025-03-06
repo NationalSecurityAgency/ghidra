@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -170,8 +170,8 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 						String title = getConflictType() + " Merge Information";
 						String msg = infoBuf.toString();
 						ReadTextDialog dialog = new ReadTextDialog(title, msg);
-						mergeManager.getMergeTool().showDialog(dialog,
-							mergeManager.getMergeTool().getToolFrame());
+						mergeManager.getMergeTool()
+								.showDialog(dialog, mergeManager.getMergeTool().getToolFrame());
 					}
 				});
 			}
@@ -195,11 +195,11 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 
 		if (mergeManager != null) {
 			latestResolvedSymbols = (LongLongHashtable) mergeManager
-				.getResolveInformation(MergeConstants.RESOLVED_LATEST_SYMBOLS);
+					.getResolveInformation(MergeConstants.RESOLVED_LATEST_SYMBOLS);
 			myResolvedSymbols = (LongLongHashtable) mergeManager
-				.getResolveInformation(MergeConstants.RESOLVED_MY_SYMBOLS);
+					.getResolveInformation(MergeConstants.RESOLVED_MY_SYMBOLS);
 			originalResolvedSymbols = (LongLongHashtable) mergeManager
-				.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_SYMBOLS);
+					.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_SYMBOLS);
 
 			// Populate the reverse maps.
 			mapResultsToOriginalLibs();
@@ -913,7 +913,7 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 					isExternalUserDefined(program2, libName2));
 			}
 			catch (InvalidInputException e) {
-				Msg.showError(this, null, "Error Setting External Program Name",
+				MergeManager.showBlockingError("Error Setting External Program Name",
 					"Couldn't set path to '" + em2.getExternalLibraryPath(libName2) +
 						"' for external program name '" + libName2 + "'");
 			}
@@ -922,7 +922,7 @@ public class ExternalProgramMerger implements MergeResolver, ListingMergeConstan
 			if (libName1 != null && em1.contains(libName1)) {
 				boolean removed = em1.removeExternalLibrary(libName1);
 				if (!removed) {
-					Msg.showError(this, null, "Error Removing External Program Name",
+					MergeManager.showBlockingError("Error Removing External Program Name",
 						"Couldn't remove external program name '" + libName1 + "'");
 				}
 			}

@@ -15,16 +15,15 @@
  */
 package ghidra.app.merge.listing;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import generic.stl.Pair;
 import ghidra.app.merge.MergeConstants;
+import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.app.util.NamespaceUtils;
@@ -436,7 +435,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				thunkChoice = choiceForFunctionConflict;
 				break;
 			default:
-				Msg.showError(this, listingMergePanel, "Unrecognized External Conflict Type",
+				MergeManager.showBlockingError("Unrecognized External Conflict Type",
 					"Unrecognized indicator (" + externalConflictType +
 						") for external conflict type to merge.");
 		}
@@ -1246,12 +1245,10 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				originalResolvedSymbols.put(originalID, resultID);
 			}
 			catch (DuplicateNameException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Merging External Location", e.getMessage());
+				MergeManager.showBlockingError("Error Merging External Location", e.getMessage());
 			}
 			catch (InvalidInputException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Merging External Location", e.getMessage());
+				MergeManager.showBlockingError("Error Merging External Location", e.getMessage());
 			}
 
 			mergeManager.updateProgress((++changeNum / totalChanges) * 100);
@@ -1392,8 +1389,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		ExternalLocation chosenExternalLocation;
 		if ((chosenConflictOption & KEEP_ORIGINAL) != 0) {
 //			chosenExternalLocation = externalLocations[ORIGINAL];
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Merging External Location",
+			MergeManager.showBlockingError("Error Merging External Location",
 				"Can't currently merge external data type from ORIGINAL program." +
 					((externalLocations[ORIGINAL] != null)
 							? (" ORIGINAL external was " + externalLocations[ORIGINAL].getLabel() +
@@ -1409,8 +1405,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		}
 		else {
 //			chosenExternalLocation = null;
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Merging External Location",
+			MergeManager.showBlockingError("Error Merging External Location",
 				"Can only merge external data type from LATEST or MY program." +
 					((externalLocations[RESULT] != null)
 							? (" RESULT external was " + externalLocations[RESULT].getLabel() + ".")
@@ -3376,14 +3371,14 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			resultExternalLocation = addExternal(myExternalLocation, monitor);
 		}
 		catch (DuplicateNameException e) {
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Merging External Location", "Couldn't merge external '" +
-					myExternalLocation.getLabel() + "'. " + e.getMessage());
+			MergeManager.showBlockingError("Error Merging External Location",
+				"Couldn't merge external '" + myExternalLocation.getLabel() + "'. " +
+					e.getMessage());
 		}
 		catch (InvalidInputException e) {
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Merging External Location", "Couldn't merge external '" +
-					myExternalLocation.getLabel() + "'. " + e.getMessage());
+			MergeManager.showBlockingError("Error Merging External Location",
+				"Couldn't merge external '" + myExternalLocation.getLabel() + "'. " +
+					e.getMessage());
 		}
 		return resultExternalLocation;
 	}
@@ -3742,12 +3737,10 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			}
 		}
 		catch (DuplicateNameException e) {
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Merging External Location", e.getMessage());
+			MergeManager.showBlockingError("Error Merging External Location", e.getMessage());
 		}
 		catch (InvalidInputException e) {
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Merging External Location", e.getMessage());
+			MergeManager.showBlockingError("Error Merging External Location", e.getMessage());
 		}
 	}
 
@@ -4087,17 +4080,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		this.currentMonitor = monitor;
 		this.currentConflictPanel = (ConflictPanel) conflictPanel;
 
-		try {
-			SwingUtilities.invokeAndWait(() -> addConflictPanel.setBottomComponent(conflictPanel));
-		}
-		catch (InterruptedException e) {
-			Msg.showError(this, null, "Error Displaying Conflict Panel", e);
-			return;
-		}
-		catch (InvocationTargetException e) {
-			Msg.showError(this, null, "Error Displaying Conflict Panel", e);
-			return;
-		}
+		Swing.runNow(() -> addConflictPanel.setBottomComponent(conflictPanel));
+
 		if (mergeManager != null) {
 			mergeManager.setApplyEnabled(false);
 			addConflictPanel.setConflictInfo(conflictIndex, latestLocation, myLocation);
@@ -4123,7 +4107,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			final TaskMonitor monitor) {
 
 		if (conflictPanel == null) {
-			Msg.showError(this, null, "Error Displaying Conflict Panel",
+			MergeManager.showBlockingError("Error Displaying Conflict Panel",
 				"The conflict panel could not be created.");
 			return;
 		}
@@ -4131,23 +4115,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		this.currentMonitor = monitor;
 		this.currentConflictPanel = conflictPanel;
 
-		try {
-			SwingUtilities.invokeAndWait(() -> listingPanel.setBottomComponent(conflictPanel));
-			SwingUtilities.invokeLater(() -> {
-				// Set background color of function entry point code unit
-//					listingPanel.clearAllBackgrounds();
-//					listingPanel.paintAllBackgrounds(new AddressSet(resultAddressFactory,
-//						entryPtAddr, entryPtAddr));
-			});
-		}
-		catch (InterruptedException e) {
-			Msg.showError(this, null, "Error Displaying Conflict Panel", e);
-			return;
-		}
-		catch (InvocationTargetException e) {
-			Msg.showError(this, null, "Error Displaying Conflict Panel", e);
-			return;
-		}
+		Swing.runNow(() -> listingPanel.setBottomComponent(conflictPanel));
+
 		if (mergeManager != null) {
 			mergeManager.setApplyEnabled(false);
 

@@ -251,7 +251,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				// identify index of first defined-component to be removed
 				int index = Collections.binarySearch(components, Integer.valueOf(len),
 					OffsetComparator.INSTANCE);
-				
+
 				if (index < 0) {
 					index = -index - 1;
 				}
@@ -280,7 +280,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			lock.release();
 		}
 	}
-	
+
 	@Override
 	public void growStructure(int amount) {
 		if (amount < 0) {
@@ -1836,20 +1836,30 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int n = components.size();
 			for (int i = n - 1; i >= 0; i--) {
 				DataTypeComponentDB dtc = components.get(i);
-				boolean removeBitFieldComponent = false;
 				if (dtc.isBitFieldComponent()) {
+					// Do not allow bitfield to be destroyed
+					// If base type is removed - revert to primitive type
 					BitFieldDataType bitfieldDt = (BitFieldDataType) dtc.getDataType();
-					removeBitFieldComponent = bitfieldDt.getBaseDataType() == dt;
+					if (bitfieldDt.getBaseDataType() == dt) {
+						AbstractIntegerDataType primitiveDt = bitfieldDt.getPrimitiveBaseDataType();
+						dataMgr.blockDataTypeRemoval(primitiveDt);
+						if (primitiveDt != dt && updateBitFieldDataType(dtc, dt, primitiveDt)) {
+							dtc.setComment(
+								prependComment("Type '" + dt.getDisplayName() + "' was deleted",
+									dtc.getComment()));
+							changed = true;
+						}
+					}
 				}
-				if (removeBitFieldComponent || dtc.getDataType() == dt) {
-					doDelete(i);
-					// for non-packed offsets of remaining components will not change
-					shiftOffsets(i, dtc.getLength() - 1, 0); // ordinals only
-					--numComponents; // may be revised by repack
+				else if (dtc.getDataType() == dt) {
+					setComponentDataType(dtc, BadDataType.dataType, i);
+					dtc.setComment(prependComment("Type '" + dt.getDisplayName() + "' was deleted",
+						dtc.getComment()));
 					changed = true;
 				}
 			}
-			if (changed && !repack(false, true)) {
+			// repack not needed for non-packed structure - nothing should move
+			if (changed && (!isPackingEnabled() || !repack(false, true))) {
 				dataMgr.dataTypeChanged(this, false);
 			}
 		}
@@ -2344,7 +2354,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			checkDeleted();
 			DataType replacementDt = newDt;
 			try {
-				validateDataType(replacementDt);
+				replacementDt = validateDataType(replacementDt); // blocks DEFAULT use for packed
 				replacementDt = resolve(replacementDt);
 				checkAncestry(replacementDt);
 			}
@@ -2355,39 +2365,12 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 			boolean changed = false;
 			for (int i = components.size() - 1; i >= 0; i--) {
-
 				DataTypeComponentDB comp = components.get(i);
-
-				boolean remove = false;
 				if (comp.isBitFieldComponent()) {
-					try {
-						changed |= updateBitFieldDataType(comp, oldDt, replacementDt);
-					}
-					catch (InvalidDataTypeException e) {
-						Msg.error(this,
-							"Invalid bitfield replacement type " + newDt.getName() +
-								", removing bitfield " + comp.getDataType().getName() + ": " +
-								getPathName());
-						remove = true;
-					}
+					changed |= updateBitFieldDataType(comp, oldDt, replacementDt);
 				}
 				else if (comp.getDataType() == oldDt) {
-					if (replacementDt == DEFAULT && isPackingEnabled()) {
-						Msg.error(this,
-							"Invalid replacement type " + newDt.getName() +
-								", removing component " + comp.getDataType().getName() + ": " +
-								getPathName());
-						remove = true;
-					}
-					else {
-						setComponentDataType(comp, replacementDt, i);
-						changed = true;
-					}
-				}
-				if (remove) {
-					// error case - remove component
-					doDelete(i);
-					shiftOffsets(i, comp.getLength() - 1, 0); // ordinals only
+					setComponentDataType(comp, replacementDt, i);
 					changed = true;
 				}
 			}

@@ -23,6 +23,7 @@ import org.apache.commons.compress.utils.Sets;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.util.task.TaskMonitorAdapter;
 
 public class StructureDataTypeTest extends AbstractGenericTest {
 
@@ -1043,40 +1044,40 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 		assertEquals(10, comps[3].getOffset());
 		assertEquals(7, comps[3].getOrdinal());
 	}
-	
+
 	@Test
 	public void testSetLength() {
 
 		assertEquals(8, struct.getLength());
 		assertEquals(4, struct.getNumComponents());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		struct.setLength(20);
 		assertEquals(20, struct.getLength());
 		assertEquals(16, struct.getNumComponents());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		// new length is offcut within 3rd component at offset 0x3 which should get cleared
 		struct.setLength(4);
 		assertEquals(4, struct.getLength());
 		assertEquals(3, struct.getNumComponents());
 		assertEquals(2, struct.getNumDefinedComponents());
-		
+
 		// Maximum length supported by GUI editor is ~Integer.MAX_VALUE/10
 		int len = Integer.MAX_VALUE / 10;
 		struct.setLength(len);
 		assertEquals(len, struct.getLength());
 		assertEquals(len - 1, struct.getNumComponents());
 		assertEquals(2, struct.getNumDefinedComponents());
-		
+
 		len /= 2;
-		struct.replaceAtOffset(len-2, WordDataType.dataType, -1, "x", null); // will be preserved below
-		struct.replaceAtOffset(len+2, WordDataType.dataType, -1, "y", null); // will be cleared below
+		struct.replaceAtOffset(len - 2, WordDataType.dataType, -1, "x", null); // will be preserved below
+		struct.replaceAtOffset(len + 2, WordDataType.dataType, -1, "y", null); // will be cleared below
 		struct.setLength(len);
 		assertEquals(len, struct.getLength());
 		assertEquals(len - 2, struct.getNumComponents());
 		assertEquals(3, struct.getNumDefinedComponents());
-		
+
 	}
 
 	@Test
@@ -1393,15 +1394,34 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 
 		struct.add(s);
 
-		DataTypeComponent[] dtc = struct.getComponents();
-		assertEquals(5, dtc.length);
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"pack(disabled)\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   test1   5      \"\"\n" + 
+			"}\n" + 
+			"Length: 13 Alignment: 1", struct);
+		//@formatter:on
 
 		struct.dataTypeDeleted(s);
 
-		dtc = struct.getComponents();
-		assertEquals(9, dtc.length);
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
+			"pack(disabled)\n" + 
+			"Structure TestStruct {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   -BAD-   5      \"\"\n" + 
+			"}\n" + 
+			"Length: 13 Alignment: 1", struct);
+		//@formatter:on
 
-		assertEquals(9, struct.getNumComponents());
 	}
 
 	@Test

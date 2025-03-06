@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,15 +74,8 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 	@Override
 	protected ProgramMultiUserMergeManager createMergeManager(ProgramChangeSet resultChangeSet,
 			ProgramChangeSet myChangeSet) {
-
-		// NOTE: this makes the tests faster.  If you need visual debugging, then make this true
-		boolean showListingPanels = false;
-
-		ProgramMultiUserMergeManager mergeManger =
-			new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
-				latestProgram, resultChangeSet, myChangeSet, showListingPanels);
-
-		return mergeManger;
+		return new ProgramMultiUserMergeManager(resultProgram, myProgram, originalProgram,
+			latestProgram, resultChangeSet, myChangeSet);
 	}
 
 	@Test
@@ -2103,8 +2096,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		Symbol blue = getUniqueSymbol(resultProgram, namespace1, myNamespace);
 		Symbol blueConflict =
 			getUniqueSymbol(resultProgram, namespace1 + "_conflict1", myNamespace);
@@ -2167,8 +2161,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2221,8 +2216,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label1, myNamespace);
 		Symbol oranges = getUniqueSymbol(resultProgram, label2, myNamespace);
@@ -2296,8 +2292,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2361,8 +2358,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2501,8 +2499,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2585,8 +2584,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2780,8 +2780,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2863,8 +2864,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, label, myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, label + "_conflict1", myNamespace);
@@ -2948,8 +2950,9 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 		Namespace externalLibrary =
 			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol(libname).getObject();
 		assertNotNull(externalLibrary);
-		Namespace myNamespace = (Namespace) getUniqueSymbol(resultProgram, parentNamespace,
-			externalLibrary).getObject();
+		Namespace myNamespace =
+			(Namespace) getUniqueSymbol(resultProgram, parentNamespace, externalLibrary)
+					.getObject();
 
 		List<Symbol> symbols = symbolTable.getSymbols(label, myNamespace);
 		assertEquals(2, symbols.size());

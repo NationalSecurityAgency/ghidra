@@ -1153,13 +1153,34 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(8, struct.getLength());
 
 		struct.add(new ArrayDataType(IntegerDataType.dataType, 0, -1), "flex", "FlexComment");
-		assertEquals(5, struct.getNumComponents());
-		assertEquals(8, struct.getLength());
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   int[0]   0   flex   \"FlexComment\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 1", struct);
+		//@formatter:on
 
 		dataMgr.remove(dataMgr.resolve(IntegerDataType.dataType, null), TaskMonitor.DUMMY);
 
-		assertEquals(4, struct.getNumComponents());
-		assertEquals(8, struct.getLength());
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   -BAD-   0   flex   \"Type 'int[0]' was deleted; FlexComment\"\n" + 
+			"}\n" + 
+			"Length: 8 Alignment: 1", struct);
+		//@formatter:on
 	}
 
 	@Test
@@ -1197,9 +1218,9 @@ public class StructureDBTest extends AbstractGenericTest {
 			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1      \"\"\n" + 
-//			"   9   undefined   1      \"\"\n" + 
-//			"   10   undefined   1      \"\"\n" + 
+			"   8   int:4(0)   1   MyBit1   \"Type 'Foo' was deleted; bitComment\"\n" + 
+			"   9   int:3(0)   1   MyBit2   \"Type 'Foo' was deleted; bitComment\"\n" + 
+			"   10   int:2(0)   1   MyBit3   \"Type 'Foo' was deleted; bitComment\"\n" + 
 			"}\n" + 
 			"Length: 11 Alignment: 1", struct);
 		//@formatter:on
@@ -1807,14 +1828,33 @@ public class StructureDBTest extends AbstractGenericTest {
 		DataType dt = struct.getDataTypeManager().getDataType(struct.getCategoryPath(), "test1");
 		assertNotNull(dt);
 
-		DataTypeComponent[] dtc = struct.getComponents();
-		assertEquals(5, dtc.length);
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   test1   5      \"\"\n" + 
+			"}\n" + 
+			"Length: 13 Alignment: 1", struct);
+		//@formatter:on
 
 		dt.getDataTypeManager().remove(dt, new TaskMonitorAdapter());
-		dtc = struct.getComponents();
-		assertEquals(9, dtc.length);
 
-		assertEquals(9, struct.getNumComponents());
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this, "/Test\n" + 
+			"pack(disabled)\n" + 
+			"Structure Test {\n" + 
+			"   0   byte   1   field1   \"Comment1\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
+			"   3   dword   4   field3   \"\"\n" + 
+			"   7   byte   1   field4   \"Comment4\"\n" + 
+			"   8   -BAD-   5      \"Type 'test1' was deleted\"\n" + 
+			"}\n" + 
+			"Length: 13 Alignment: 1", struct);
+		//@formatter:on
 	}
 
 	@Test

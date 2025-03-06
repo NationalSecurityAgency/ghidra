@@ -109,6 +109,8 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		init(complexUnion, tempCat, false);
 
 		int num = model.getNumComponents();
+		int len = model.getLength();
+
 		// Clone the data types we want to hold onto for comparison later, since reload can close the viewDTM.
 		DataType dt18 = getDataType(18).clone(programDTM);
 		DataType dt20 = getDataType(20).clone(programDTM);
@@ -128,9 +130,13 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		dialog = null;
 
 		// refUnion* gets removed
-		assertEquals(num - 1, model.getNumComponents());
+		assertEquals(num, model.getNumComponents());
+		assertEquals(len, model.getLength());
 		assertTrue(dt18.isEquivalent(getDataType(18)));
-		assertTrue(dt20.isEquivalent(getDataType(19)));
+		assertEquals(4, getLength(19));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(19)));
+		assertEquals("Type 'refUnion *' was deleted", getComment(19));
+		assertTrue(dt20.isEquivalent(getDataType(20)));
 	}
 
 	@Test
@@ -303,10 +309,38 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		init(complexUnion, pgmTestCat, false);
 
 		assertEquals(21, model.getNumComponents());
+		assertEquals(4, getLength(5));
+		assertEquals(0x57, getLength(12));
+		assertEquals(0x38, getLength(13));
+		assertEquals(0x1d, getLength(15));
+		assertEquals(0x18, getLength(17));
+		assertEquals(0x1d, getLength(20));
+		assertEquals(21, model.getNumComponents());
+		assertEquals(0x57, model.getLength());
+
 		SwingUtilities.invokeLater(
 			() -> complexUnion.getDataTypeManager().remove(simpleStructure, TaskMonitor.DUMMY));
 		waitForSwing();
-		assertEquals(15, model.getNumComponents());
+
+		assertEquals(21, model.getNumComponents());
+		assertEquals(4, getLength(5));
+		assertEquals(0x57, getLength(12));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(12)));
+		assertEquals("Type 'simpleStructure[3]' was deleted", getComment(12));
+		assertEquals(0x38, getLength(13));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(13)));
+		assertEquals("Type 'simpleStructure *[7]' was deleted", getComment(13));
+		assertEquals(0x1d, getLength(15));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(15)));
+		assertEquals("Type 'simpleStructureTypedef' was deleted", getComment(15));
+		assertEquals(0x18, getLength(17));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(17)));
+		assertEquals("Type 'simpleStructureTypedef * *[2][3]' was deleted", getComment(17));
+		assertEquals(0x1d, getLength(20));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(20)));
+		assertEquals("Type 'simpleStructure' was deleted", getComment(20));
+		assertEquals(21, model.getNumComponents());
+		assertEquals(0x57, model.getLength());
 	}
 
 	@Test
@@ -322,12 +356,20 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			}
 		});
 		waitForSwing();
+		assertEquals(1, model.getNumComponents());
 		assertTrue(simpleUnion.isEquivalent(getDataType(0)));
+		assertEquals(8, getLength(0));
+		assertEquals(8, model.getLength());
 
 		SwingUtilities.invokeLater(
 			() -> simpleUnion.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
 		waitForSwing();
-		assertEquals(0, model.getNumComponents());
+
+		assertEquals(1, model.getNumComponents());
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(0)));
+		assertEquals("Type 'simpleUnion' was deleted", getComment(0));
+		assertEquals(8, getLength(0));
+		assertEquals(8, model.getLength());
 	}
 
 	@Test
@@ -335,6 +377,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		init(complexUnion, pgmTestCat, false);
 
 		int num = model.getNumComponents();
+		int len = model.getLength();
 
 		// Clone the data types we want to hold onto for comparison later, since reload can close the viewDTM.
 		DataType dt18 = getDataType(18).clone(programDTM);
@@ -347,19 +390,38 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		SwingUtilities.invokeLater(() -> dtm.remove(refUnion, TaskMonitor.DUMMY)); // remove refUnion
 		waitForSwing();
 
-		// refUnion* gets removed (1 component)
-		num -= 1;
+		// refUnion* gets removed
+		assertEquals(len, model.getLength());
 		assertEquals(num, model.getNumComponents());
+
+		assertEquals(1, getLength(8)); // weird length
+
 		assertTrue(dt18.isEquivalent(getDataType(18)));
-		assertTrue(dt20.isEquivalent(getDataType(19)));
+		assertEquals(4, getLength(19));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(19)));
+		assertEquals("Type 'refUnion *' was deleted", getComment(19));
+		assertTrue(dt20.isEquivalent(getDataType(20)));
 
 		SwingUtilities.invokeLater(
 			() -> simpleUnion.getDataTypeManager().remove(simpleUnion, TaskMonitor.DUMMY));
 		waitForSwing();
 
-		// All components (3 total) which were dependent upon simpleUnion are removed
-		num -= 3;
+		assertEquals(len, model.getLength());
 		assertEquals(num, model.getNumComponents());
+
+		assertEquals(8, getLength(3));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(3)));
+		assertEquals("Type 'simpleUnion' was deleted", getComment(3));
+		assertEquals(1, getLength(8)); // length was weird to start with
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(8)));
+		assertEquals("Type 'simpleUnion *' was deleted", getComment(8));
+		assertEquals(8, getLength(16));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(16)));
+		assertEquals("Type 'simpleUnionTypedef' was deleted", getComment(16));
+		assertEquals(4, getLength(19));
+		assertTrue(BadDataType.dataType.isEquivalent(getDataType(19)));
+		assertEquals("Type 'refUnion *' was deleted", getComment(19));
+
 	}
 
 	@Test
