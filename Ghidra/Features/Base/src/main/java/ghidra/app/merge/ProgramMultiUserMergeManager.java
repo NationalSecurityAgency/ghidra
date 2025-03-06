@@ -41,6 +41,7 @@ import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 import help.Help;
 import help.HelpService;
 
@@ -54,25 +55,19 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 	private GoToAddressLabelPlugin goToPlugin;
 	private ListingMergePanel mergePanel;
 	private boolean isShowingListingMergePanel = false;
-	private boolean showListingPanels = true;
 	MergeNavigatable navigatable;
+
+	private final boolean showListingPanels;
 
 	public ProgramMultiUserMergeManager(Program resultProgram, Program myProgram,
 			Program originalProgram, Program latestProgram, ProgramChangeSet latestChangeSet,
 			ProgramChangeSet myChangeSet) {
 		super(resultProgram, myProgram, originalProgram, latestProgram, latestChangeSet,
 			myChangeSet);
-	}
 
-	public ProgramMultiUserMergeManager(Program resultProgram, Program myProgram,
-			Program originalProgram, Program latestProgram, ProgramChangeSet latestChangeSet,
-			ProgramChangeSet myChangeSet, boolean showListingPanels) {
-		super(resultProgram, myProgram, originalProgram, latestProgram, latestChangeSet,
-			myChangeSet);
-
-		// True signals to show the Listing panels (the default); false signals to leave the
-		// panels empty.
-		this.showListingPanels = showListingPanels;
+		// Disable multi-listing panel rendering when running in batch test mode for
+		// improved performance.
+		showListingPanels = !SystemUtilities.isInTestingBatchMode();
 	}
 
 	@Override

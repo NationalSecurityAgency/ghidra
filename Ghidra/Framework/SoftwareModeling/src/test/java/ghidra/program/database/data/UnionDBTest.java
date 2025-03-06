@@ -280,6 +280,8 @@ public class UnionDBTest extends AbstractGenericTest {
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
 			"   0   word   2      \"Comment2\"\n" + 
+			"   0   int:4(0)   1   bf1   \"Type 'Foo' was deleted; bf1Comment\"\n" + 
+			"   0   int:4(0)   1   bf2   \"Type 'Foo' was deleted; bf2Comment\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.dialogs.ReadTextDialog;
 import generic.stl.Pair;
-import ghidra.app.merge.MergeConstants;
-import ghidra.app.merge.ProgramMultiUserMergeManager;
+import ghidra.app.merge.*;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.framework.plugintool.PluginTool;
@@ -267,9 +266,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 				switch (type) {
 					case FUNC_RETURN_ADDRESS_OFFSET:
 						return (latestStack.getReturnAddressOffset() == myStack
-								.getReturnAddressOffset())
-										? 0
-										: type;
+								.getReturnAddressOffset()) ? 0 : type;
 // For now, we are not allowing you to set the parameter offset or local size outright.
 //					case FUNC_PARAMETER_OFFSET:
 //						return (latestStack.getParameterOffset() == myStack.getParameterOffset()) ? 0
@@ -278,9 +275,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //						return (latestStack.getLocalSize() == myStack.getLocalSize()) ? 0 : type;
 					case FUNC_STACK_PURGE_SIZE:
 						return (functions[LATEST].getStackPurgeSize() == functions[MY]
-								.getStackPurgeSize())
-										? 0
-										: type;
+								.getStackPurgeSize()) ? 0 : type;
 					case FUNC_NAME:
 						return hasUnresolvedFunctionNameConflict(functions, monitor) ? type : 0;
 					case FUNC_INLINE:
@@ -294,13 +289,10 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //								: type;
 					case FUNC_CALLING_CONVENTION:
 						return (functions[LATEST].getCallingConventionName()
-								.equals(
-									functions[MY].getCallingConventionName())) ? 0 : type;
+								.equals(functions[MY].getCallingConventionName())) ? 0 : type;
 					case FUNC_SIGNATURE_SOURCE:
 						return (functions[LATEST].getSignatureSource() == functions[MY]
-								.getSignatureSource())
-										? 0
-										: type;
+								.getSignatureSource()) ? 0 : type;
 					default:
 						throw new IllegalArgumentException("type = " + type);
 				}
@@ -1372,10 +1364,8 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	protected void mergeParamInfo(Address entryPt, List<ParamInfoConflict> paramInfoConflicts,
 			int chosenConflictOption, TaskMonitor monitor) throws CancelledException {
-		Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
-		while (iter.hasNext()) {
+		for (ParamInfoConflict pc : paramInfoConflicts) {
 			monitor.checkCancelled();
-			ParamInfoConflict pc = iter.next();
 			mergeParamInfo(entryPt, pc, chosenConflictOption, monitor);
 		}
 	}
@@ -1404,10 +1394,8 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	protected void mergeParamInfo(Function[] functions, List<ParamInfoConflict> paramInfoConflicts,
 			int chosenConflictOption, TaskMonitor monitor) throws CancelledException {
 
-		Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
-		while (iter.hasNext()) {
+		for (ParamInfoConflict pc : paramInfoConflicts) {
 			monitor.checkCancelled();
-			ParamInfoConflict pc = iter.next();
 			mergeParamInfo(functions, pc, chosenConflictOption, monitor);
 		}
 	}
@@ -1435,10 +1423,8 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	protected void mergeLocals(Address entryPt, List<LocalVariableConflict> localVarConflicts,
 			int chosenConflictOption, TaskMonitor monitor) throws CancelledException {
-		Iterator<LocalVariableConflict> iter = localVarConflicts.iterator();
-		while (iter.hasNext()) {
+		for (LocalVariableConflict lvc : localVarConflicts) {
 			monitor.checkCancelled();
-			LocalVariableConflict lvc = iter.next();
 			mergeLocal(entryPt, lvc, chosenConflictOption, monitor);
 		}
 	}
@@ -1629,7 +1615,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			final Address entryPt, final TaskMonitor monitor) {
 
 		if (conflictPanel == null) {
-			Msg.showError(this, null, "Error Displaying Conflict Panel",
+			MergeManager.showBlockingError("Error Displaying Conflict Panel",
 				"The conflict panel could not be created.");
 			return;
 		}
@@ -1666,8 +1652,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	private void showConflictPanelException(final Address entryPt, Exception e) {
 		String message = "Couldn't display conflict for function at " + entryPt.toString(true) +
 			".\n " + e.getMessage();
-		Msg.showError(this, mergeManager.getMergeTool().getToolFrame(), "Function Merge Error",
-			message, e);
+		MergeManager.showBlockingError("Function Merge Error", message, e);
 		// Should this just put a message on errorBuf instead?
 	}
 
@@ -1990,16 +1975,13 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 				}
 			}
 			catch (DuplicateNameException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
+				MergeManager.showBlockingError("Error Setting Function Namespace", e.getMessage());
 			}
 			catch (InvalidInputException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
+				MergeManager.showBlockingError("Error Setting Function Namespace", e.getMessage());
 			}
 			catch (CircularDependencyException e) {
-				Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-					"Error Setting Function Namespace", e.getMessage());
+				MergeManager.showBlockingError("Error Setting Function Namespace", e.getMessage());
 			}
 		}
 	}
@@ -2141,8 +2123,8 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			final TaskMonitor monitor) {
 
 		if (functions[RESULT] == null) {
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Creating Function Conflict Panel", "RESULT function is null.");
+			MergeManager.showBlockingError("Error Creating Function Conflict Panel",
+				"RESULT function is null.");
 			return null;
 		}
 		Address myEntryPoint = functions[MY].getEntryPoint();
@@ -2157,8 +2139,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			conflictCount = funcConflicts.get(myEntryPoint);
 		}
 		catch (NoValueException e) {
-			Msg.showError(this, mergeManager.getMergeTool().getToolFrame(),
-				"Error Creating Function Conflict Panel",
+			MergeManager.showBlockingError("Error Creating Function Conflict Panel",
 				"Couldn't get conflict information for MY function at " +
 					myEntryPoint.toString(true) + ".");
 			return null;
@@ -2306,9 +2287,11 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 				getReturnInfo(programs[LATEST],
 					getReturnString(functions[LATEST], hasCustomerStorage), "Use ", " version"),
 				LATEST_BUTTON_NAME, KEEP_LATEST, changeListener);
-			verticalConflictPanel.addRadioButtonRow(getReturnInfo(programs[MY],
-				getReturnString(functions[MY], hasCustomerStorage), "Use ", " version"),
-				CHECKED_OUT_BUTTON_NAME, KEEP_MY, changeListener);
+			verticalConflictPanel
+					.addRadioButtonRow(
+						getReturnInfo(programs[MY],
+							getReturnString(functions[MY], hasCustomerStorage), "Use ", " version"),
+						CHECKED_OUT_BUTTON_NAME, KEEP_MY, changeListener);
 			verticalConflictPanel.addInfoRow(getReturnInfo(programs[ORIGINAL],
 				getReturnString(functions[ORIGINAL], hasCustomerStorage), "", " version"));
 
@@ -2351,7 +2334,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 					String msg = "Failed to resolve variable '" +
 						((lvc.vars[ORIGINAL_VAR] != null) ? lvc.vars[ORIGINAL_VAR].getName() : "") +
 						"'.";
-					Msg.showError(this, null, "Resolve Variable Error", msg, e1);
+					MergeManager.showBlockingError("Resolve Variable Error", msg, e1);
 				}
 				showResolveInfo(getInfoTitle());
 			}

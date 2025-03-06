@@ -156,6 +156,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private LinkedList<Pair<DataType, DataType>> typesToReplace = new LinkedList<>();
 	private List<DataType> favoritesList = new ArrayList<>();
 
+	/**
+	 * Set of {@link AbstractIntegerDataType} IDs whose removal has been blocked
+	 * to allow persistence of defined bitfields.  
+	 * See {@link #blockDataTypeRemoval(AbstractIntegerDataType)}
+	 */
+	private Set<Long> blockedRemovalsByID;
+
 	// TODO: idsToDataTypeMap may have issue since there could be a one to many mapping
 	// (e.g., type with same UniversalID could be in multiple categories unless specifically 
 	// prevented during resolve)
@@ -2300,6 +2307,26 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
+	 * Register a {@link AbstractIntegerDataType}, during an invocation of 
+	 * {@link StructureDB#dataTypeDeleted(DataType)} or {@link UnionDB#dataTypeDeleted(DataType)},
+	 * to block final removal of the specified datatype since it is required for persistence of a 
+	 * defined bitfield. It is required that this be done within the same thread where this manager 
+	 * has initiated the removal and callbacks.
+	 * @param dt integer datatype which should be retained and not deleted
+	 */
+	void blockDataTypeRemoval(AbstractIntegerDataType dt) {
+		long id = getID(dt);
+		if (id == NULL_DATATYPE_ID) {
+			throw new IllegalArgumentException(
+				"Datatype instance is not associated with this manager");
+		}
+		if (blockedRemovalsByID == null) {
+			blockedRemovalsByID = new HashSet<>();
+		}
+		blockedRemovalsByID.add(id);
+	}
+
+	/**
 	 * Remove the given datatype from this manager (assumes the lock has already been acquired).
 	 * 
 	 * @param dataType the dataType to be removed
@@ -2335,8 +2362,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		// perform actual database updates (e.g., record removal, change notifications, etc.)
 		for (long id : deletedIds) {
+			if (blockedRemovalsByID != null && blockedRemovalsByID.contains(id)) {
+				DataType dt = getDataType(id);
+				Msg.warn(this, "The datatype '" + dt.getDisplayName() +
+					"' has been retained for use by defined bitfields");
+				continue;
+			}
 			deleteDataType(id);
 		}
+		blockedRemovalsByID = null;
 	}
 
 	/**
@@ -2367,14 +2401,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	public boolean remove(DataType dataType, TaskMonitor monitor) {
 		lock.acquire();
 		try {
-			if (contains(dataType)) {
-				return removeInternal(dataType);
-			}
+			return removeInternal(dataType);
 		}
 		finally {
 			lock.release();
 		}
-		return false;
 	}
 
 	@Override

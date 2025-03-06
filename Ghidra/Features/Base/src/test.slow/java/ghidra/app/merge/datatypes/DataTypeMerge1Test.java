@@ -99,8 +99,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				// change the name
 				Category c = program.getDataTypeManager()
-						.getCategory(
-							new CategoryPath("/Category1/Category2/Category5"));
+						.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.createCategory("AnotherCategory");
 				}
@@ -261,8 +260,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				// change the name
 				Category c = program.getDataTypeManager()
-						.getCategory(
-							new CategoryPath("/Category1/Category2/Category5"));
+						.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.createCategory("AnotherCategory");
 					Structure dt = new StructureDataType("Test", 0);
@@ -315,8 +313,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				// change the name
 				Category c = program.getDataTypeManager()
-						.getCategory(
-							new CategoryPath("/Category1/Category2/Category5"));
+						.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.createCategory("AnotherCategory");
 					StructureDataType dt = new StructureDataType("Test", 0);
@@ -541,18 +538,32 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				foo.insert(1, dt);
 			}
 		});
-		executeMerge(DataTypeMergeManager.OPTION_MY);
+
+		executeMerge();
+
+		dismissUnresolvedDataTypesPopup();
+
+		waitForCompletion();
+
 		// CoolUnion should not have been added back in
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 		assertNull(dt);
 
 		Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-		DataTypeComponent[] dtcs = foo.getComponents();
-		// components 1-97 should be default data types
-		for (int i = 1; i < 97; i++) {
-			assertEquals(DataType.DEFAULT, dtcs[i].getDataType());
-		}
+		assertNotNull(foo);
+		//@formatter:off
+		assertEquals("/MISC/Foo\n" + 
+			"pack(disabled)\n" + 
+			"Structure Foo {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   -BAD-   96      \"Failed to apply 'CoolUnion'\"\n" + 
+			"   97   byte   1      \"\"\n" + 
+			"   98   word   2      \"\"\n" + 
+			"   100   Bar   6      \"\"\n" + 
+			"}\n" + 
+			"Length: 106 Alignment: 1\n", foo.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -951,9 +962,8 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		Structure s =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
-				"IntStruct");
+		Structure s = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category3"), "IntStruct");
 		DataTypeComponent dtc = s.getComponent(2);
 		assertEquals("My_Field_Three", dtc.getFieldName());
 		assertEquals("my comments for Field 3", dtc.getComment());

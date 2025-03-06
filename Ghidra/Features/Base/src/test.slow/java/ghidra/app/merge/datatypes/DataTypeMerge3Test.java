@@ -70,22 +70,39 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
+		assertNotNull(union);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   -BAD-   96      \"Type 'DLL_Table' was deleted\"\n" + 
+			"   0   -BAD-   4      \"Type 'DLL_Table *' was deleted\"\n" + 
+			"}\n" + 
+			"Length: 96 Alignment: 1\n", union.toString());
+		//@formatter:on;
 
 		// DLL_Table should have a Word data type as the last component
 		Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-		DataTypeComponent dtc = s.getComponent(s.getNumComponents() - 1);
-		assertTrue(dtc.getDataType().isEquivalent(new WordDataType()));
-
-		// CoolUnion should not have DLL_Table components
-		DataTypeComponent[] dtcs = union.getComponents();
-		assertEquals(3, dtcs.length);
-		DataType dt = dtcs[2].getDataType();
-		assertTrue(dt instanceof Pointer);
-
-		// DLL_Table should have Word added to it
-		dtcs = s.getDefinedComponents();
-		assertEquals(9, dtcs.length);
-		assertTrue(dtcs[8].getDataType().isEquivalent(new WordDataType()));
+		assertNotNull(s);
+		//@formatter:off
+		assertEquals("/DLL_Table\n" + 
+			"pack(disabled)\n" + 
+			"Structure DLL_Table {\n" + 
+			"   0   string   13   COMDLG32   \"\"\n" + 
+			"   13   string   12   SHELL32   \"\"\n" + 
+			"   25   string   11   MSVCRT   \"\"\n" + 
+			"   36   string   13   ADVAPI32   \"\"\n" + 
+			"   49   string   13   KERNEL32   \"\"\n" + 
+			"   62   string   10   GDI32   \"\"\n" + 
+			"   72   string   11   USER32   \"\"\n" + 
+			"   83   string   13   WINSPOOL32   \"\"\n" + 
+			"   96   word   2      \"\"\n" + 
+			"}\n" + 
+			"Length: 98 Alignment: 1\n", s.toString());
+		//@formatter:on;
 	}
 
 	@Test
@@ -97,7 +114,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 				dtm.remove(s, TaskMonitor.DUMMY);
-				// 2 components should get removed from CoolUnion
+				// 2 components should be bad in CoolUnion
 			}
 
 			@Override
@@ -127,23 +144,33 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		// MY CoolUnion
 		chooseOption(DataTypeMergeManager.OPTION_MY);
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
+		assertNotNull(union);
 
 		// DLL_Table should not exist
 		assertNull(dtm.getDataType(CategoryPath.ROOT, "DLL_Table"));
 
-		// CoolUnion should not have DLL_Table components but should have Float 
-		DataTypeComponent[] dtcs = union.getComponents();
-		assertEquals(4, dtcs.length);
-		DataType dt = dtcs[3].getDataType();
-		assertTrue(dt.isEquivalent(new FloatDataType()));
-		assertEquals("my comments", dtcs[3].getComment());
-		assertEquals("Float_Field", dtcs[3].getFieldName());
+		// CoolUnion should not have DLL_Table components but should have Float
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   -BAD-   98      \"Failed to apply 'DLL_Table'\"\n" + 
+			"   0   -BAD-   4      \"Failed to apply 'DLL_Table *'\"\n" + 
+			"   0   float   4   Float_Field   \"my comments\"\n" + 
+			"}\n" + 
+			"Length: 98 Alignment: 1\n", union.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -231,7 +258,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		executeMerge();
 
-		close(waitForWindow("Structure Update Failed")); // expected dependency error on Foo
+		pressButtonByName(waitForWindow("Structure Update Failed"), "OK"); // expected dependency error on Foo
 
 		waitForCompletion();
 
@@ -257,7 +284,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		// original CoolUnion becomes CoolUnion.conflict.
 		assertEquals("float", fooComps[5].getDataType().getDisplayName());
 		assertTrue(fooComps[4].getDataType() instanceof BadDataType);
-		assertTrue(fooComps[4].getComment().startsWith("Couldn't add CoolUnion here."));
+		assertEquals("Failed to apply 'CoolUnion', Data type CoolUnion has Foo within it.",
+			fooComps[4].getComment());
 	}
 
 	@Test
@@ -295,7 +323,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY Foo
 
-		close(waitForWindow("Structure Update Failed")); // expected dependency error on Foo
+		pressButtonByName(waitForWindow("Structure Update Failed"), "OK"); // expected dependency error on Foo
 
 		waitForCompletion();
 
@@ -305,23 +333,40 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		Union coolUnion =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-		DataTypeComponent[] coolUnionComps = coolUnion.getComponents();
-		assertEquals(6, coolUnionComps.length);
-
-		Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-		DataTypeComponent[] fooComps = foo.getComponents();
-		assertEquals(6, fooComps.length);
+		assertNotNull(coolUnion);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   DLL_Table   96      \"\"\n" + 
+			"   0   DLL_Table *32   4      \"\"\n" + 
+			"   0   Foo   110      \"\"\n" + 
+			"}\n" + 
+			"Length: 110 Alignment: 1\n", coolUnion.toString());
+		//@formatter:on
 
 		// Foo should not contain CoolUnion because CoolUnion already 
 		// contains Foo (from Latest)
-		assertEquals("Foo", coolUnionComps[5].getDataType().getDisplayName());
 
-		// Foo.conflict should contain CoolUnion.conflict because CoolUnion already 
-		// contains Foo (from Latest), so Foo (From My) becomes Foo.conflict and its
-		// original CoolUnion becomes CoolUnion.conflict.
-		assertEquals("float", fooComps[5].getDataType().getDisplayName());
-		assertTrue(fooComps[4].getDataType() instanceof BadDataType);
-		assertTrue(fooComps[4].getComment().startsWith("Couldn't add CoolUnion here."));
+		Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+		assertNotNull(foo);
+		//@formatter:off
+		assertEquals("/MISC/Foo\n" + 
+			"pack(disabled)\n" + 
+			"Structure Foo {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   byte   1      \"\"\n" + 
+			"   2   word   2      \"\"\n" + 
+			"   4   Bar   6      \"\"\n" + 
+			"   10   -BAD-   96      \"Failed to apply 'CoolUnion', Data type CoolUnion has Foo within it.\"\n" + 
+			"   106   float   4      \"\"\n" + 
+			"}\n" + 
+			"Length: 110 Alignment: 1\n", foo.toString());
+		//@formatter:on
+
 	}
 
 	@Test
@@ -409,7 +454,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// My Bar
 
-		close(waitForWindow("Structure Update Failed")); // expected dependency error on Bar
+		pressButtonByName(waitForWindow("Structure Update Failed"), "OK"); // expected dependency error on Bar
 
 		waitForCompletion();
 
@@ -419,21 +464,33 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		Union coolUnion =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 		assertNotNull(coolUnion);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   DLL_Table   96      \"\"\n" + 
+			"   0   DLL_Table *32   4      \"\"\n" + 
+			"   0   Bar   102   My_field_name   \"My comments\"\n" + 
+			"}\n" + 
+			"Length: 102 Alignment: 1\n", coolUnion.toString());
+		//@formatter:on
+
+		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 		assertNotNull(bar);
-
-		DataTypeComponent[] coolUnionComps = coolUnion.getComponents();
-		assertEquals(6, coolUnionComps.length);
-		DataTypeComponent[] barComps = bar.getDefinedComponents();
-		assertEquals(3, barComps.length);
-
-		assertEquals(bar, coolUnionComps[5].getDataType());
-		assertEquals("My_field_name", coolUnionComps[5].getFieldName());
-		assertEquals("My comments", coolUnionComps[5].getComment());
-
-		assertTrue(barComps[2].getDataType() instanceof BadDataType);
-		assertTrue(barComps[2].getComment().startsWith("Couldn't add CoolUnion here."));
+		//@formatter:off
+		assertEquals("/MISC/Bar\n" + 
+			"pack(disabled)\n" + 
+			"Structure Bar {\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   2   Structure_1 *32   4      \"\"\n" + 
+			"   6   -BAD-   96      \"Failed to apply 'CoolUnion', Data type CoolUnion has Bar within it.\"\n" + 
+			"}\n" + 
+			"Length: 102 Alignment: 1\n", bar.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -587,18 +644,25 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delele Structure_1 (choose Structure_1 from MY)
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// Bar should contain undefined to replace Structure_1
 		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-		assertEquals(7, bar.getLength());
-		DataTypeComponent[] dtcs = bar.getComponents();
-		assertEquals(6, dtcs.length);
-		for (int i = 1; i < 5; i++) {
-			assertEquals(DataType.DEFAULT, dtcs[i].getDataType());
-		}
+		assertNotNull(bar);
+		//@formatter:off
+		assertEquals("/MISC/Bar\n" + 
+			"pack(disabled)\n" + 
+			"Structure Bar {\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   2   -BAD-   4      \"Failed to apply 'Structure_1 *'\"\n" + 
+			"   6   byte   1      \"\"\n" + 
+			"}\n" + 
+			"Length: 7 Alignment: 1\n", bar.toString());
+		//@formatter:on;
 
 		// Structure_1 should have been deleted
 		Structure s1 =
@@ -606,9 +670,20 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		assertNull(s1);
 
 		Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-		dtcs = foo.getDefinedComponents();
-		assertEquals(5, dtcs.length);
-		assertEquals(bar, dtcs[3].getDataType());
+		assertNotNull(foo);
+		//@formatter:off
+		assertEquals("/MISC/Foo\n" + 
+			"pack(disabled)\n" + 
+			"Structure Foo {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   byte   1      \"\"\n" + 
+			"   2   word   2      \"\"\n" + 
+			"   4   Bar   7      \"\"\n" + 
+			"   11   float   4      \"\"\n" + 
+			"}\n" + 
+			"Length: 15 Alignment: 1\n", foo.toString());
+		//@formatter:on;
+
 		checkConflictCount(0);
 	}
 
@@ -644,14 +719,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				Structure fs =
 					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category5"),
 						"FloatStruct");
-				Structure s = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
+				Structure a = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
 				Structure ms = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 					"MyStruct");
-				s.add(new FloatDataType());
+				a.add(new FloatDataType());
 
 				Structure mys1 = new StructureDataType(
 					new CategoryPath("/Category1/Category2/Category5"), "my_s1", 0);
-				mys1.add(s);
+				mys1.add(a);
 
 				mys1 = (Structure) dtm.addDataType(mys1, DataTypeConflictHandler.DEFAULT_HANDLER);
 				// edit FloatStruct
@@ -673,12 +748,15 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		// conflict on FloatStruct (2)
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete FloatStruct
 
+		dismissUnresolvedDataTypesPopup();
+
+		waitForCompletion();
+
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		assertNull(
 			dtm.getDataType(new CategoryPath("/Category1/Category2/Category5"), "FloatStruct"));
 
-		waitForCompletion();
 		Structure fs = (Structure) dtm
 				.getDataType(new CategoryPath("/Category1/Category2/Category5"), "FloatStruct");
 		assertNull(fs);
@@ -686,16 +764,33 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		// MyStruct should have a FloatDataType and a Word
 		Structure ms =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"), "MyStruct");
-		DataTypeComponent[] dtcs = ms.getDefinedComponents();
-		assertEquals(4, dtcs.length);
-
-		assertTrue(dtcs[2].getDataType().isEquivalent(new FloatDataType()));
-		assertTrue(dtcs[3].getDataType().isEquivalent(new WordDataType()));
+		assertNotNull(ms);
+		//@formatter:off
+		assertEquals("/Category1/Category2/MyStruct\n" + 
+			"pack(disabled)\n" + 
+			"Structure MyStruct {\n" + 
+			"   0   -BAD-   120      \"Failed to apply 'FloatStruct[10]'\"\n" + 
+			"   120   IntStruct[3]   45      \"\"\n" + 
+			"   165   CharStruct * * *   4      \"\"\n" + 
+			"   169   float   4      \"\"\n" + 
+			"   173   word   2      \"\"\n" + 
+			"}\n" + 
+			"Length: 175 Alignment: 1\n", ms.toString());
+		//@formatter:on;
 
 		// ArrayStruct should have 3 components
 		Structure a = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "ArrayStruct");
-		dtcs = a.getDefinedComponents();
-		assertEquals(3, dtcs.length);
+		assertNotNull(a);
+		//@formatter:off
+		assertEquals("/MISC/ArrayStruct\n" + 
+			"pack(disabled)\n" + 
+			"Structure ArrayStruct {\n" + 
+			"   0   IntStruct * *[10]   40      \"\"\n" + 
+			"   40   IntStruct[3]   45      \"\"\n" + 
+			"   85   undefined * * * * *   4      \"\"\n" + 
+			"}\n" + 
+			"Length: 89 Alignment: 1\n", a.toString());
+		//@formatter:on;
 	}
 
 	@Test
@@ -728,6 +823,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				try {
 					s1.insertBitFieldAt(3, 2, 6, td, 2, "bf1", "my bf1");
 					s1.insertBitFieldAt(3, 2, 4, td, 2, "bf2", "my bf2");
+
+					// foo grows but does alter size of existing component in s1
 					foo.add(new FloatDataType());
 				}
 				catch (Exception e) {
@@ -739,45 +836,46 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		// bitfield silently transitions to int since typedef BF was removed
 
-		executeMerge(true);
+		executeMerge();
+
+		dismissUnresolvedDataTypesPopup();
+
+		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Structure s1 =
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 		assertNotNull(s1);
-		DataTypeComponent[] dtcs = s1.getComponents();
-		assertEquals(7, dtcs.length);
-
-		assertEquals(4, dtcs[3].getOffset()); // base on original 2-byte length 1st byte remains undefined
-		assertEquals("bf1", dtcs[3].getFieldName());
-		assertEquals("my bf1", dtcs[3].getComment());
-
-		DataType dt = dtcs[3].getDataType();
-		assertTrue(dt instanceof BitFieldDataType);
-		BitFieldDataType bfDt = (BitFieldDataType) dt;
-		assertTrue(bfDt.getBaseDataType() instanceof IntegerDataType);
-		assertEquals(2, bfDt.getDeclaredBitSize());
-		assertEquals(6, bfDt.getBitOffset());
-
-		assertEquals(4, dtcs[4].getOffset()); // base on original 2-byte length 1st byte remains undefined
-		assertEquals("bf2", dtcs[4].getFieldName());
-		assertEquals("my bf2", dtcs[4].getComment());
-
-		dt = dtcs[4].getDataType();
-		assertTrue(dt instanceof BitFieldDataType);
-		bfDt = (BitFieldDataType) dt;
-		assertTrue(bfDt.getBaseDataType() instanceof IntegerDataType);
-		assertEquals(2, bfDt.getDeclaredBitSize());
-		assertEquals(4, bfDt.getBitOffset());
+		//@formatter:off
+		assertEquals("/Category1/Category2/Structure_1\n" + 
+			"pack(disabled)\n" + 
+			"Structure Structure_1 {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   word   2      \"\"\n" + 
+			"   4   int:2(6)   1   bf1   \"Failed to apply 'BF'; my bf1\"\n" + 
+			"   4   int:2(4)   1   bf2   \"Failed to apply 'BF'; my bf2\"\n" + 
+			"   5   Foo   10      \"\"\n" + 
+			"   15   byte   1      \"\"\n" + 
+			"}\n" + 
+			"Length: 16 Alignment: 1\n", s1.toString());
+		//@formatter:on
 
 		Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-		// Structure_1 should contain MY Foo
-		assertEquals(foo, dtcs[5].getDataType());
+		assertNotNull(foo);
+		//@formatter:off
+		assertEquals("/MISC/Foo\n" + 
+			"pack(disabled)\n" + 
+			"Structure Foo {\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"   1   byte   1      \"\"\n" + 
+			"   2   word   2      \"\"\n" + 
+			"   4   Bar   6      \"\"\n" + 
+			"   10   float   4      \"\"\n" + 
+			"}\n" + 
+			"Length: 14 Alignment: 1\n", foo.toString());
+		//@formatter:on
 
-		dtcs = foo.getComponents();
-		assertEquals(5, dtcs.length);
-		assertTrue(dtcs[4].getDataType().isEquivalent(new FloatDataType()));
 		checkConflictCount(0);
 	}
 
@@ -1215,6 +1313,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
@@ -1228,16 +1328,31 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		Union union =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "AnotherUnion");
 		assertNotNull(union);
-
-		DataTypeComponent[] dtcs = union.getComponents();
-		assertEquals(1, dtcs.length);
-		assertTrue(dtcs[0].getDataType().isEquivalent(new ByteDataType()));
+		//@formatter:off
+		assertEquals("/Category1/Category2/AnotherUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union AnotherUnion {\n" + 
+			"   0   -BAD-   98      \"Failed to apply 'DLL_Table'\"\n" + 
+			"   0   byte   1      \"\"\n" + 
+			"}\n" + 
+			"Length: 98 Alignment: 1\n", union.toString());
+		//@formatter:on;
 
 		union = (Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-		dtcs = union.getComponents();
-		assertEquals(4, dtcs.length);
-		assertEquals("my comments", dtcs[3].getComment());
-		assertEquals("Float_Field", dtcs[3].getFieldName());
+		assertNotNull(union);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   -BAD-   98      \"Failed to apply 'DLL_Table'\"\n" + 
+			"   0   -BAD-   4      \"Failed to apply 'DLL_Table *'\"\n" + 
+			"   0   float   4   Float_Field   \"my comments\"\n" + 
+			"}\n" + 
+			"Length: 98 Alignment: 1\n", union.toString());
+		//@formatter:on;
 	}
 
 	@Test
@@ -1363,6 +1478,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
@@ -1371,18 +1488,24 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		Union union =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 		assertNotNull(union);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   -BAD-   98      \"Failed to apply 'DLL_Table'\"\n" + 
+			"   0   -BAD-   4      \"Failed to apply 'DLL_Table *'\"\n" + 
+			"   0   float   4   Float_Field   \"my comments\"\n" + 
+			"   0   MyEnum   1      \"\"\n" + 
+			"}\n" + 
+			"Length: 98 Alignment: 1\n", union.toString());
+		//@formatter:on;
 
 		// DLL_Table should be null
 		Structure dll = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 		assertNull(dll);
-
-		DataTypeComponent[] dtcs = union.getComponents();
-		assertEquals(5, dtcs.length);
-
-		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/Category1"), "MyEnum");
-		assertNotNull(enumm);
-		assertEquals(enumm, dtcs[4].getDataType());
-		assertTrue(dtcs[3].getDataType().isEquivalent(new FloatDataType()));
 
 	}
 
@@ -1515,24 +1638,49 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
+		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/Category1"), "MyEnum");
+		assertNotNull(enumm);
+
+		TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/Category1"), "TD_MyEnum");
+		assertNotNull(td);
+
 		// CoolUnion should not be null
 		Union union =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 		assertNotNull(union);
+		//@formatter:off
+		assertEquals("/Category1/Category2/CoolUnion\n" + 
+			"pack(disabled)\n" + 
+			"Union CoolUnion {\n" + 
+			"   0   qword   8      \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   DLL_Table   96      \"\"\n" + 
+			"   0   DLL_Table *32   4      \"\"\n" + 
+			"   0   float   4   Float_Field   \"my comments\"\n" + 
+			"   0   TD_MyEnum   1      \"\"\n" + 
+			"}\n" + 
+			"Length: 96 Alignment: 1\n", union.toString());
+		//@formatter:on;
 
 		// DLL_Table should not be null
 		Structure dll = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 		assertNotNull(dll);
-
-		DataTypeComponent[] dtcs = union.getComponents();
-		assertEquals(7, dtcs.length);
-
-		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/Category1"), "MyEnum");
-		assertNotNull(enumm);
-		TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/Category1"), "TD_MyEnum");
-		assertNotNull(td);
-		assertEquals(td, dtcs[6].getDataType());
-		assertEquals(dll, dtcs[3].getDataType());
+		//@formatter:off
+		assertEquals("/DLL_Table\n" + 
+			"pack(disabled)\n" + 
+			"Structure DLL_Table {\n" + 
+			"   0   string   13   COMDLG32   \"\"\n" + 
+			"   13   string   12   SHELL32   \"\"\n" + 
+			"   25   string   11   MSVCRT   \"\"\n" + 
+			"   36   string   13   ADVAPI32   \"\"\n" + 
+			"   49   string   13   KERNEL32   \"\"\n" + 
+			"   62   string   10   GDI32   \"\"\n" + 
+			"   72   string   11   USER32   \"\"\n" + 
+			"   83   string   13   WINSPOOL32   \"\"\n" + 
+			"}\n" + 
+			"Length: 96 Alignment: 1\n", dll.toString());
+		//@formatter:on;
 
 		checkConflictCount(0);
 	}
@@ -1778,6 +1926,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY bitfields w/ enum
 
+		dismissUnresolvedDataTypesPopup();
+
 		waitForCompletion();
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
@@ -1790,8 +1940,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			"pack(disabled)\n" + 
 			"Union CoolUnion {\n" + 
 			"   0   qword   8      \"\"\n" + 
-			"   0   byte:4(4)   1   BF1   \"my bf1\"\n" + 
-			"   0   byte:2(6)   1   BF2   \"my bf2\"\n" + 
+			"   0   byte:4(4)   1   BF1   \"Failed to apply 'XYZ'; my bf1\"\n" + 
+			"   0   byte:2(6)   1   BF2   \"Failed to apply 'XYZ'; my bf2\"\n" + 
 			"   0   word   2      \"\"\n" + 
 			"   0   undefined * * * * *   4      \"\"\n" + 
 			"   0   DLL_Table   96      \"\"\n" + 
