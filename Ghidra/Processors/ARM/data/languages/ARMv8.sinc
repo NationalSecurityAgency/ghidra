@@ -1327,7 +1327,7 @@ vselcond: "ge"
 vselcond: "gt"
 	is ((TMode=0 &     c2021=0b11)
 	|   (TMode=1 & thv_c2021=0b11))
-	{ tmp:1 = (!ZR); export tmp; }
+	{ tmp:1 = (!ZR && NG==OV); export tmp; }
 vselcond: "vs"
 	is ((TMode=0 &     c2021=0b01)
 	|   (TMode=1 & thv_c2021=0b01))
