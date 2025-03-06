@@ -85,7 +85,7 @@ def _setup_project(
 ) -> Tuple["GhidraProject", "Program"]:
     from ghidra.base.project import GhidraProject
     from java.lang import ClassLoader  # type:ignore @UnresolvedImport
-    from java.io import IOException # type:ignore @UnresolvedImport
+    from ghidra.framework.model import ProjectLocator # type:ignore @UnresolvedImport
     if binary_path is not None:
         binary_path = Path(binary_path)
     if project_location:
@@ -95,7 +95,6 @@ def _setup_project(
     if not project_name:
         project_name = f"{binary_path.name}_ghidra"
     project_location /= project_name
-    project_location.mkdir(exist_ok=True, parents=True)
 
     if isinstance(loader, str):
         from java.lang import ClassNotFoundException # type:ignore @UnresolvedImport
@@ -113,13 +112,14 @@ def _setup_project(
 
     # Open/Create project
     program: "Program" = None
-    try:
+    if ProjectLocator(project_location, project_name).exists():
         project = GhidraProject.openProject(project_location, project_name, True)
-        if binary_path is not None:
-            if project.getRootFolder().getFile(binary_path.name):
-                program = project.openProgram("/", binary_path.name, False)
-    except IOException:
-        project = GhidraProject.createProject(project_location, project_name, False)
+    else:
+        project_location.mkdir(exist_ok=True, parents=True)
+        project = GhidraProject.createProject(project_location, project_name, False)      
+    if binary_path is not None:
+        if project.getRootFolder().getFile(binary_path.name):
+            program = project.openProgram("/", binary_path.name, False)
 
     # NOTE: GhidraProject.importProgram behaves differently when a loader is provided
     # loaderClass may not be null so we must use the correct method override
