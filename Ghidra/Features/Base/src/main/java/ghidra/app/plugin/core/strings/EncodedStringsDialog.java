@@ -435,8 +435,8 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		table.getSelectionModel().addListSelectionListener(e -> selectedRowChange());
 
 		table.installNavigation(tool);
-		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 	}
 
 	private void buildCharsetPickerComponents() {
