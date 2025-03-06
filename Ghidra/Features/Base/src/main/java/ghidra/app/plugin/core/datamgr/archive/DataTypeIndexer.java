@@ -23,10 +23,11 @@ import ghidra.program.model.data.*;
 import ghidra.util.task.*;
 
 /**
- * A class that stores a sorted list of all the {@link DataType} objects in the current data type
- * manager plugin.  This class does its work lazily such that no work is done until
- * {@link #getSortedDataTypeList()} is called.  Even when that method is called no work will be
- * done if the state of the data types in the system hasn't changed.
+ * A class that stores a sorted list of all the {@link DataType} and a list of all the 
+ * {@link CategoryPath} objects in the current data type manager plugin.  This class does its work 
+ * lazily such that no work is done until {@link #getSortedDataTypeList()} is called. Even when that
+ * method is called no work will be done if the state of the data types in the system hasn't 
+ * changed.
  */
 public class DataTypeIndexer {
 	private List<DataTypeManager> dataTypeManagers = new ArrayList<>();
@@ -34,6 +35,7 @@ public class DataTypeIndexer {
 	private DataTypeIndexUpdateListener listener = new DataTypeIndexUpdateListener();
 
 	private volatile boolean isStale = true;
+	private List<CategoryPath> categoryPathList = Collections.emptyList();
 
 	// Note: synchronizing here prevents concurrent mod issues with the managers list
 	public synchronized void addDataTypeManager(DataTypeManager dataTypeManager) {
@@ -79,6 +81,18 @@ public class DataTypeIndexer {
 		return Collections.unmodifiableList(newList);
 	}
 
+	/**
+	 * Returns a list of the unique Category Paths ({@link CategoryPath}) as utilized by the 
+	 * data types open in the current tool.  
+	 * 
+	 * @return a list of the {@link CategoryPath} associated with the data types open in the 
+	 * current tool.
+	 */
+	public List<CategoryPath> getSortedCategoryPathList() {
+		updateDataTypeList(); // the category list is quietly updated in the background 
+		return categoryPathList;
+	}
+
 	private List<DataType> updateDataTypeList() {
 		if (!isStale) {
 			return dataTypeList;
@@ -95,8 +109,9 @@ public class DataTypeIndexer {
 			task.run(TaskMonitor.DUMMY);
 		}
 
-		List<DataType> newList = task.getList();
-		return newList;
+		List<DataType> newDataTypeList = task.getList();
+		categoryPathList = task.getCategoryPathList();
+		return newDataTypeList;
 	}
 
 	// Note: purposefully not synchronized for speed
@@ -107,6 +122,7 @@ public class DataTypeIndexer {
 		// is possible that once marked stale, we may never have another request for this data
 		// again.
 		dataTypeList = Collections.emptyList();
+		categoryPathList = Collections.emptyList();
 	}
 
 //==================================================================================================
@@ -155,7 +171,8 @@ public class DataTypeIndexer {
 
 	private class IndexerTask extends Task {
 
-		private List<DataType> list = new ArrayList<>();
+		private List<DataType> dataTypes = new ArrayList<>();
+		private List<CategoryPath> categories;
 
 		IndexerTask() {
 			super("Data Type Indexer Task", false, true, true);
@@ -169,15 +186,32 @@ public class DataTypeIndexer {
 
 			for (DataTypeManager dataTypeManager : dataTypeManagers) {
 				monitor.setMessage("Searching " + dataTypeManager.getName());
-				dataTypeManager.getAllDataTypes(list);
+				dataTypeManager.getAllDataTypes(dataTypes);
 				monitor.incrementProgress(1);
 			}
 
-			Collections.sort(list, new CaseInsensitiveDataTypeComparator());
+			Collections.sort(dataTypes, new CaseInsensitiveDataTypeComparator());
+			populateCategoryList(dataTypes);
+		}
+
+		private void populateCategoryList(List<DataType> dataTypes) {
+
+			Set<CategoryPath> set = new HashSet<>();
+			for (DataType dt : dataTypes) {
+				CategoryPath path = dt.getCategoryPath();
+				set.add(path);
+			}
+
+			categories = new ArrayList<>(set);
+			Collections.sort(categories);
 		}
 
 		List<DataType> getList() {
-			return list;
+			return dataTypes;
+		}
+
+		List<CategoryPath> getCategoryPathList() {
+			return categories;
 		}
 	}
 
@@ -266,4 +300,5 @@ public class DataTypeIndexer {
 			markStale();
 		}
 	}
+
 }

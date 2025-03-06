@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.data;
 
-import java.awt.Component;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -28,25 +28,26 @@ import javax.swing.table.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.table.*;
-import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
+import ghidra.app.util.datatype.CategoryPathSelectionEditor;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.layout.PairLayout;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
 /**
  * A dialog that allows the user to create a new structure based upon providing
  * a new name or by using the name of an existing structure.
- *
- *
  */
 public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	private static final String NEW_STRUCTURE_STATUS_PREFIX = "Creating new structure: ";
@@ -56,14 +57,15 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	private static final String PATH_COLUMN_NAME = "Path";
 
 	private JTextField nameTextField;
+	private CategoryPathSelectionEditor categoryPathEditor;
 	private GhidraTable matchingStructuresTable;
 	private StructureTableModel structureTableModel;
 	private Structure currentStructure;
 	private Program currentProgram;
 	private PluginTool pluginTool;
 
-	private TitledBorder nameBorder;
-	private TitledBorder structureBorder;
+	private JRadioButton createNewStructButton;
+	private JRadioButton useExistingStructButton;
 	private JRadioButton exactMatchButton;
 	private JRadioButton sizeMatchButton;
 	private GhidraTableFilterPanel<StructureWrapper> filterPanel;
@@ -97,23 +99,65 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	private JPanel buildMainPanel() {
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-
-		mainPanel.add(buildNameTextFieldPanel());
-		mainPanel.add(Box.createVerticalStrut(10));
-
-		mainPanel.add(buildMatchingStructurePanel());
-
+		mainPanel.add(createChoicePanel());
 		setStatusJustification(SwingConstants.LEFT);
-		setCreateStructureByName(true);
-		mainPanel.getAccessibleContext().setAccessibleName("Create Structure");
 		return mainPanel;
 	}
 
-	private JPanel buildNameTextFieldPanel() {
-		JPanel namePanel = new JPanel();
-		namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.Y_AXIS));
-		nameBorder = BorderFactory.createTitledBorder("Create Structure By Name");
-		namePanel.setBorder(nameBorder);
+	private JPanel createChoicePanel() {
+		JPanel radioChoicePanel = new JPanel(new BorderLayout());
+
+		createNewStructButton = new GRadioButton("Create New");
+		createNewStructButton.getAccessibleContext().setAccessibleName("Create New");
+		useExistingStructButton = new GRadioButton("Use Existing");
+		useExistingStructButton.getAccessibleContext().setAccessibleName("Use Existing");
+
+		ButtonGroup buttonGroup = new ButtonGroup();
+		buttonGroup.add(createNewStructButton);
+		buttonGroup.add(useExistingStructButton);
+		createNewStructButton.setSelected(true);
+		ItemListener choiceListener = event -> updateEnablement();
+		createNewStructButton.addItemListener(choiceListener);
+		useExistingStructButton.addItemListener(choiceListener);
+
+		JPanel createNewStructPanel = new JPanel();
+		createNewStructPanel.setLayout(new BoxLayout(createNewStructPanel, BoxLayout.Y_AXIS));
+		// force the radio button to the left for clarity
+		createNewStructPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		// indent everything under the radio button
+		createNewStructPanel.setBorder(BorderFactory.createEmptyBorder(5, 30, 15, 5));
+
+		JPanel useExistingStructPanel = new JPanel();
+		useExistingStructPanel.setLayout(new BoxLayout(useExistingStructPanel, BoxLayout.Y_AXIS));
+		useExistingStructPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		useExistingStructPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 10, 5));
+
+		createNewStructPanel.add(buildCreateNewStructPanel());
+		useExistingStructPanel.add(buildMatchingStructPanel());
+
+		JPanel top = new JPanel();
+		top.setLayout(new BoxLayout(top, BoxLayout.PAGE_AXIS));
+		top.add(createNewStructButton);
+		top.add(createNewStructPanel);
+
+		JPanel center = new JPanel();
+		center.setLayout(new BoxLayout(center, BoxLayout.PAGE_AXIS));
+		center.add(useExistingStructButton);
+		center.add(useExistingStructPanel);
+
+		// we would like the structure table to get all extra space, so put it in the center
+		radioChoicePanel.add(top, BorderLayout.NORTH);
+		radioChoicePanel.add(center, BorderLayout.CENTER);
+
+		return radioChoicePanel;
+	}
+
+	private JPanel buildCreateNewStructPanel() {
+		JPanel newStructPanel = new JPanel();
+		newStructPanel.setLayout(new PairLayout());
+		newStructPanel.setToolTipText("Enter a name and category (optional)");
+
+		JLabel nameLabel = new JLabel("Name: ");
 
 		nameTextField = new JTextField() {
 			// make sure our height doesn't stretch
@@ -124,16 +168,15 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				return d;
 			}
 		};
+		// Allow user to click on the text field to re-activate "create new" panel without forcing
+		// a click on the radio button
 		nameTextField.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent event) {
-				setCreateStructureByName(true);
-				nameTextField.requestFocus();
+				createNewStructButton.setSelected(true);
+				updateEnablement();
 			}
 		});
-		nameTextField.getAccessibleContext().setAccessibleName("Name Text");
-		namePanel.add(nameTextField);
-
 		nameTextField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent event) {
@@ -153,7 +196,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			private void checkText(Document document) {
 				try {
 					String text = document.getText(0, document.getLength());
-					if ((text == null) || (text.trim().length() == 0)) {
+					if (StringUtils.isBlank(text)) {
 						okButton.setEnabled(false);
 						updateStatusText(true, null);
 					}
@@ -167,17 +210,82 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				}
 			}
 		});
-		namePanel.getAccessibleContext().setAccessibleName("Name Text");
-		return namePanel;
+
+		JLabel categoryLabel = new JLabel("Category: ");
+		buildCategoryPathEditor();
+
+		newStructPanel.add(nameLabel);
+		newStructPanel.add(nameTextField);
+		newStructPanel.add(categoryLabel);
+		newStructPanel.add(categoryPathEditor.getEditorComponent());
+
+		return newStructPanel;
 	}
 
-	private JPanel buildMatchingStructurePanel() {
+	private void buildCategoryPathEditor() {
+		categoryPathEditor = new CategoryPathSelectionEditor(pluginTool);
+		categoryPathEditor.getEditorComponent()
+				.getAccessibleContext()
+				.setAccessibleName("Category");
+		// make sure the "Category: " text field size matches the "Name: " text field size
+		categoryPathEditor.getEditorComponent().setMaximumSize(nameTextField.getMaximumSize());
+		categoryPathEditor.addDocumentListener(new DocumentListener() {
+			@Override
+			public void changedUpdate(DocumentEvent event) {
+				updateStatus(event.getDocument());
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent event) {
+				updateStatus(event.getDocument());
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent event) {
+				updateStatus(event.getDocument());
+			}
+
+			private void updateStatus(Document document) {
+				try {
+					String text = document.getText(0, document.getLength());
+					if (StringUtils.isBlank(text)) {
+						updateStatusText(true, null);
+					}
+					else {
+						updateStatusText(true, "Using category: " + text);
+					}
+				}
+				catch (BadLocationException ble) {
+					// nothing we can do here
+				}
+			}
+		});
+		// Allow the user to re-activate the "new struct" panel without forcing toggle click. Use 
+		// FocusListener because @CategoryPathSelectionEditor.java already contains a mouse listener
+		// and would override this one.
+		categoryPathEditor.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				createNewStructButton.setSelected(true);
+				updateEnablement();
+			}
+		});
+	}
+
+	private JPanel buildMatchingStructPanel() {
 		JPanel structurePanel = new JPanel();
 		structurePanel.setLayout(new BoxLayout(structurePanel, BoxLayout.Y_AXIS));
-		structureBorder = BorderFactory.createTitledBorder("Use Existing Structure");
-		structurePanel.setBorder(structureBorder);
 
 		GTable table = buildMatchingStructuresTable();
+		// allow user to re-activate the "use existing" panel without forcing a radio button click.
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent event) {
+				useExistingStructButton.setSelected(true);
+				updateEnablement();
+			}
+		});
+
 		filterPanel = new GhidraTableFilterPanel<>(table, structureTableModel) {
 			// make sure our height doesn't stretch
 			@Override
@@ -190,14 +298,13 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 
 		JScrollPane scrollPane = new JScrollPane(table);
 		scrollPane.getAccessibleContext().setAccessibleName("Scroll");
+
 		structurePanel.add(scrollPane);
 		structurePanel.add(Box.createVerticalStrut(10));
-		filterPanel.getAccessibleContext().setAccessibleName("Structure Filter");
 		structurePanel.add(filterPanel);
 		structurePanel.add(Box.createVerticalStrut(10));
 		structurePanel.add(buildMatchingStyelPanel());
 		structurePanel.add(Box.createVerticalStrut(10));
-		structurePanel.getAccessibleContext().setAccessibleName("Matching Structure");
 		return structurePanel;
 	}
 
@@ -216,30 +323,39 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			TableColumn column = columnModel.getColumn(i);
 			column.setCellRenderer(cellRenderer);
 		}
-		matchingStructuresTable.getColumnModel().getColumn(0);
 
 		ListSelectionModel lsm = matchingStructuresTable.getSelectionModel();
 		lsm.addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting()) {
-				ListSelectionModel sourceListSelectionModel = (ListSelectionModel) e.getSource();
-				if ((sourceListSelectionModel != null) &&
-					!(sourceListSelectionModel.isSelectionEmpty())) {
-					// show the user that the structure choice is now
-					// coming from the list of current structures
-					Structure structure = ((StructureWrapper) matchingStructuresTable
-							.getValueAt(matchingStructuresTable.getSelectedRow(), 0))
-									.getStructure();
-					updateStatusText(false, structure.getName());
-					setCreateStructureByName(false);
-				}
-				else {
-					updateStatusText(true, nameTextField.getText());
-					setCreateStructureByName(true);
-				}
+			if (e.getValueIsAdjusting()) {
+				return;
 			}
+
+			ListSelectionModel selectionModel = (ListSelectionModel) e.getSource();
+			if (selectionModel != null && !selectionModel.isSelectionEmpty()) {
+				// Show the user that the structure choice is now coming from the table
+				useExistingStructButton.setSelected(true);
+			}
+
+			updateEnablement();
 		});
+
 		matchingStructuresTable.getAccessibleContext().setAccessibleName("Matching Structures");
 		return matchingStructuresTable;
+	}
+
+	private void updateStatus() {
+
+		clearStatusText();
+
+		if (useExistingStructButton.isSelected()) {
+			Structure structure = getSelectedStructure();
+			if (structure != null) {
+				updateStatusText(false, structure.getName());
+			}
+		}
+		else {
+			updateStatusText(true, nameTextField.getText());
+		}
 	}
 
 	private JPanel buildMatchingStyelPanel() {
@@ -275,51 +391,49 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 
 		matchingStylePanel.add(exactMatchButton);
 		matchingStylePanel.add(sizeMatchButton);
-		matchingStylePanel.getAccessibleContext().setAccessibleName("Matching Style");
 		return matchingStylePanel;
 	}
 
-	// toggles whether the structure being created is new, based upon the name field, or a current
-	// structure, based upon a structure in the table.  This method updates the GUI to reflect the
-	// current creation state.
-	private void setCreateStructureByName(boolean createStructureByName) {
-		if (createStructureByName) {
-			nameBorder.setTitleColor(Colors.FOREGROUND);
-			structureBorder.setTitleColor(Colors.FOREGROUND_DISABLED);
-		}
-		else {
-			nameBorder.setTitleColor(Colors.FOREGROUND_DISABLED);
-			structureBorder.setTitleColor(Colors.FOREGROUND);
-		}
-
-		nameTextField.setEnabled(createStructureByName);
-
-		if (createStructureByName) {
+	// Toggles whether the structure being created is new, based upon the name field, or existing,
+	// based upon a structure in the table. 
+	private void updateEnablement() {
+		if (createNewStructButton.isSelected()) {
+			nameTextField.setEnabled(true);
+			categoryPathEditor.setEnabled(true);
+			matchingStructuresTable.setEnabled(false);
+			exactMatchButton.setEnabled(false);
+			sizeMatchButton.setEnabled(false);
 			matchingStructuresTable.clearSelection();
 		}
-
+		else {
+			nameTextField.setEnabled(false);
+			categoryPathEditor.setEnabled(false);
+			matchingStructuresTable.setEnabled(true);
+			exactMatchButton.setEnabled(true);
+			sizeMatchButton.setEnabled(true);
+		}
 		rootPanel.repaint();
+
+		updateStatus();
 	}
 
-	// populates the table with structures that match the one the passed to
-	// this class in terms of data contained
+	// Populates the table with structures that match the one the passed to this class in terms of 
+	// data contained
 	private void searchForMatchingStructures(final Program program, final Structure structure) {
 
-		Swing.runLater(() -> {
-			// Get the structures from the DataTypeManagers of the
-			// DataTypeManagerService
-			DataTypeManagerService service = pluginTool.getService(DataTypeManagerService.class);
-			DataTypeManager[] dataTypeManagers = null;
+		// Get the structures from the DataTypeManagers of the DataTypeManagerService
+		DataTypeManagerService service = pluginTool.getService(DataTypeManagerService.class);
 
-			if (service != null) {
-				dataTypeManagers = service.getDataTypeManagers();
-			}
-			else {
-				dataTypeManagers = new DataTypeManager[] { program.getDataTypeManager() };
-			}
+		DataTypeManager[] dataTypeManagers = null;
 
-			getMatchingStructuresFromDataTypeManagers(structure, dataTypeManagers);
-		});
+		if (service != null) {
+			dataTypeManagers = service.getDataTypeManagers();
+		}
+		else {
+			dataTypeManagers = new DataTypeManager[] { program.getDataTypeManager() };
+		}
+
+		getMatchingStructuresFromDataTypeManagers(structure, dataTypeManagers);
 	}
 
 	private void getMatchingStructuresFromDataTypeManagers(Structure structure,
@@ -330,8 +444,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			Iterator<Structure> structureIterator = dataTypeManager.getAllStructures();
 
 			while (structureIterator.hasNext()) {
-				// only add structures that match the one that was
-				// passed to this dialog
+				// only add structures that match the one that was passed to this dialog
 				Structure nextStructure = structureIterator.next();
 
 				if (compareStructures(nextStructure, structure)) {
@@ -343,8 +456,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		structureTableModel.setData(dataList);
 	}
 
-	// compares structures depending upon the type of matching that is being
-	// used
+	// compares structures depending upon the type of matching that is being used
 	private boolean compareStructures(Structure structureA, Structure structureB) {
 		if (sizeMatchButton.isSelected()) {
 			return compareStructuresBySize(structureA, structureB);
@@ -358,9 +470,9 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		return (structureA.getLength() == structureB.getLength());
 	}
 
-	// Compares the two structures based upon the data contained.  This method
-	// is used instead of isEquivalent() to avoid the comparison of data field
-	// names, which is not a concern for this class.
+	// Compares the two structures based upon the data contained.  This method is used instead of 
+	// isEquivalent() to avoid the comparison of data field names, which is not a concern for this 
+	// class.
 	private boolean compareStructuresByData(Structure structureA, Structure structureB) {
 
 		if (structureA.getLength() != structureB.getLength()) {
@@ -382,12 +494,11 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		return false;
 	}
 
-	// called by compareStructures() to compare the data that the structures
-	// contain
+	// called by compareStructures() to compare the data that the structures contain
 	private boolean compareDataTypeComponents(DataTypeComponent dtcA, DataTypeComponent dtcB) {
 
-		// be sure to do the easiest comparisons first, those based on
-		// equality and then do the possibly recursive calls last
+		// be sure to do the easiest comparisons first, those based on equality and then do the 
+		// possibly recursive calls last
 		if ((dtcA.getLength() == dtcB.getLength()) && (dtcA.getOffset() == dtcB.getOffset()) &&
 			(dtcA.getOrdinal() == dtcB.getOrdinal()) &&
 			compareDataTypes(dtcA.getDataType(), dtcB.getDataType())) {
@@ -397,12 +508,10 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		return false;
 	}
 
-	// called by compareDataTypeComponents() in order to compare the data
-	// types of the components
+	// called by compareDataTypeComponents() in order to compare the data types of the components
 	private boolean compareDataTypes(DataType typeA, DataType typeB) {
 
-		// make sure the name and length are the same and then compare
-		// the data types recursively
+		// make sure the name and length are the same and then compare the data types recursively
 		if (typeA instanceof Structure) {
 			if (typeB instanceof Structure) {
 				return compareStructuresByData((Structure) typeA, (Structure) typeB);
@@ -445,13 +554,11 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 				"Non-null structure is required when showing the Create Structure dialog.");
 		}
 
-		// init the return value, which will be updated if the user presses
-		// the OK button
+		// init the return value, which will be updated if the user presses the OK button
 		currentStructure = structure;
 
 		nameTextField.setText(currentStructure.getName());
 		updateStatusText(true, currentStructure.getName());
-
 		searchForMatchingStructures(program, structure);
 
 		// modal block
@@ -467,15 +574,16 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		super.cancelCallback();
 	}
 
-	/**
-	 * The callback method for when the "OK" button is pressed.
-	 */
 	@Override
 	protected void okCallback() {
 
 		if (nameTextField.isEnabled()) {
 			// just use the name set by the user
 			String nameText = nameTextField.getText();
+
+			if (!setCategoryPath()) {
+				return;
+			}
 
 			try {
 				currentStructure.setName(nameText);
@@ -491,15 +599,87 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		}
 		else {
 			// get the selected object in the table
-			currentStructure = ((StructureWrapper) matchingStructuresTable
-					.getValueAt(matchingStructuresTable.getSelectedRow(), 0)).getStructure();
+			currentStructure = getSelectedStructure();
 		}
 
 		close();
 	}
 
-	// a table model that is used to allow for the easy updating of the
-	// table with new List data and to disable editing
+	private Structure getSelectedStructure() {
+		int row = matchingStructuresTable.getSelectedRow();
+		if (row < 0) {
+			return null;
+		}
+
+		Object cellValue = matchingStructuresTable.getValueAt(row, 0);
+		return ((StructureWrapper) cellValue).getStructure();
+	}
+
+	private boolean setCategoryPath() {
+		CategoryPath path = categoryPathEditor.getCellEditorValue();
+		// First see if a category from the list was chosen and make sure the user didn't modify it.
+		// If they did, path needs to be parsed separately.
+		if (path != null && path.getPath().equals(categoryPathEditor.getCellEditorValueAsText())) {
+			try {
+				currentStructure.setCategoryPath(path);
+			}
+			catch (DuplicateNameException dne) {
+				setStatusText(dne.getMessage(), MessageType.ERROR);
+				return false;
+			}
+			return true;
+		}
+
+		String categoryText = categoryPathEditor.getCellEditorValueAsText();
+		// Selecting/entering a category is optional; root is default
+		if (!categoryText.isBlank()) {
+			try {
+				CategoryPath parsedPath = parseEnteredCategoryPath(categoryText);
+				currentStructure.setCategoryPath(parsedPath);
+			}
+			catch (DuplicateNameException dne) {
+				setStatusText(dne.getMessage(), MessageType.ERROR);
+				return false;
+			}
+		}
+		else {
+			try {
+				currentStructure.setCategoryPath(CategoryPath.ROOT);
+			}
+			catch (DuplicateNameException dne) {
+				setStatusText(dne.getMessage(), MessageType.ERROR);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private CategoryPath parseEnteredCategoryPath(String categoryText) {
+		// entering a leading slash is optional, path is still generated accordingly  
+		if (categoryText.startsWith(CategoryPath.DELIMITER_STRING)) {
+			return generateCategoryPath(categoryText.substring(1));
+		}
+		return generateCategoryPath(categoryText);
+	}
+
+	private CategoryPath generateCategoryPath(String categoryText) {
+		if (!categoryText.contains(CategoryPath.DELIMITER_STRING)) {
+			return new CategoryPath(CategoryPath.ROOT, categoryText);
+		}
+
+		// Additional slashes need parsed as branch(es) and final leaf
+		List<String> parts = split(categoryText);
+		return new CategoryPath(CategoryPath.ROOT, parts);
+	}
+
+	private List<String> split(String categoryText) {
+		List<String> parts = new ArrayList<String>(
+			Arrays.asList(categoryText.split(CategoryPath.DELIMITER_STRING)));
+		return parts;
+	}
+
+	// a table model that is used to allow for the easy updating of the table with new List data 
+	// and to disable editing
 	/*package*/class StructureTableModel extends AbstractSortedTableModel<StructureWrapper> {
 		private List<StructureWrapper> data = Collections.emptyList();
 
@@ -570,19 +750,17 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			return;
 		}
 
-		String message = null;
+		String prefix = EXISITING_STRUCTURE_STATUS_PREFIX;
 		if (creatingNew) {
-			message = NEW_STRUCTURE_STATUS_PREFIX;
-		}
-		else {
-			message = EXISITING_STRUCTURE_STATUS_PREFIX;
+			prefix = NEW_STRUCTURE_STATUS_PREFIX;
 		}
 
-		setStatusText("<html>" + message + "<BR>\"" + HTMLUtilities.escapeHTML(name) + "\"");
+		String escapeName = HTMLUtilities.escapeHTML(name);
+		String message = "<html>%s'%s'".formatted(prefix, escapeName);
+		setStatusText(message);
 	}
 
-	// this class is used instead of a cell renderer so that sorting will
-	// work on the table
+	// this class is used instead of a cell renderer so that sorting will work on the table
 	/*package*/class StructureWrapper {
 		private Structure structure;
 

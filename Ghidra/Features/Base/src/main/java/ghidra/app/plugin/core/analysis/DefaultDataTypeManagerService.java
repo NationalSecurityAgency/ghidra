@@ -94,6 +94,11 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 	}
 
 	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public List<DataType> getFavorites() {
 		throw new UnsupportedOperationException();
 	}
@@ -109,6 +114,11 @@ public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
 			builtInDataTypesManager.getDataTypes(BuiltInSourceArchive.INSTANCE);
 		dataTypes.sort(DataTypeComparator.INSTANCE);
 		return dataTypes;
+	}
+
+	@Override
+	public List<CategoryPath> getSortedCategoryPathList() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
