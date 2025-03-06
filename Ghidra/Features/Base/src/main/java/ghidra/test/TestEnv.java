@@ -590,9 +590,9 @@ public class TestEnv {
 	 * A convenience method to close and then reopen the default project created by this TestEnv
 	 * instance.  This will not delete the project between opening and closing and will restore
 	 * the project to its previous state.
-	 * @throws IOException if any exception occurs while saving and reopening
+	 * @throws Exception if any exception occurs while saving and reopening
 	 */
-	public void closeAndReopenProject() throws IOException {
+	public void closeAndReopenProject() throws Exception {
 		gp.setDeleteOnClose(false);
 		Project project = gp.getProject();
 		ProjectLocator projectLocator = project.getProjectLocator();
