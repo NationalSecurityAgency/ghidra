@@ -306,6 +306,10 @@ import pdb   # imports Python's pdb
 import pdb_  # imports Ghidra's pdb
 ```
 ## Change History
+__2.0.2:__
+* [`pyghidra.open_program()`](#pyghidraopen_program) now properly throws an exception if the project
+  exists and is locked.
+  
 __2.0.1:__
 * PyGhidra now respects the `application.settingsdir` property set in Ghidra's `launch.properties`
   file.
