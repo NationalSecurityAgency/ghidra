@@ -1,13 +1,16 @@
 <?xml version='1.0' encoding='ISO-8859-1'?>
 <!-- See Base's TOC_Source.xml for help -->
 <tocroot>
-	<tocref id="Debugger">
-		<tocdef id="TraceRmiConnectionManagerPlugin" text="Connection Manager"
-			sortgroup="mm"
-			target="help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html" />
+		<tocref id="Debugger" >
+			
+			<tocdef id="TraceRmiLauncherServicePlugin" text="Launchers"
+			        sortgroup="a1"
+			        target="help/topics/TraceRmiLauncherServicePlugin/TraceRmiLauncherServicePlugin.html" />
 
-		<tocdef id="TraceRmiLauncherServicePlugin" text="Launchers"
-			sortgroup="ga"
-			target="help/topics/TraceRmiLauncherServicePlugin/TraceRmiLauncherServicePlugin.html" />
-	</tocref>
+		
+			<tocdef id="TraceRmiConnectionManagerPlugin" text="Connection Manager"
+			        sortgroup="a2"
+			        target="help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html" />
+
+		</tocref>
 </tocroot>
