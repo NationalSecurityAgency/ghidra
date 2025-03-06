@@ -91,6 +91,10 @@ public class DataTypeManagerHandler {
 	private DataTypeManagerListenerDelegate listenerDelegate;
 	private MyFolderListener folderListener;
 
+	// Updated anytime any datatype or category changes in any open archive, including the program
+	// archive. Currently used by data type tree nodes to know if their tooltip cache is stale.
+	private long modCount = 0;
+
 	public DataTypeManagerHandler(DataTypeManagerPlugin plugin) {
 		this.plugin = plugin;
 		this.tool = plugin.getTool();
@@ -124,6 +128,16 @@ public class DataTypeManagerHandler {
 		dataTypeIndexer.removeDataTypeManager(builtInDataTypesManager);
 		builtInDataTypesManager.removeDataTypeManagerListener(listenerDelegate);
 		tool.getProject().getProjectData().removeDomainFolderChangeListener(folderListener);
+	}
+
+	/**
+	 * Returns the current modification count which is incremented anytime any archive or any
+	 * category or datatype it contains is changed in any way. This includes the datatypes in
+	 * the current program.
+	 * @return the current modification id.
+	 */
+	public long getModificationCount() {
+		return modCount;
 	}
 
 	/**
@@ -1138,6 +1152,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void categoryAdded(DataTypeManager dtm, CategoryPath path) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.categoryAdded(dtm, path);
 			}
@@ -1145,6 +1160,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.categoryMoved(dtm, oldPath, newPath);
 			}
@@ -1152,6 +1168,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.categoryRemoved(dtm, path);
 			}
@@ -1160,6 +1177,7 @@ public class DataTypeManagerHandler {
 		@Override
 		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
 				CategoryPath newPath) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.categoryRenamed(dtm, oldPath, newPath);
 			}
@@ -1167,6 +1185,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void dataTypeAdded(DataTypeManager dtm, DataTypePath path) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.dataTypeAdded(dtm, path);
 			}
@@ -1174,6 +1193,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.dataTypeChanged(dtm, path);
 			}
@@ -1181,6 +1201,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.dataTypeMoved(dtm, oldPath, newPath);
 			}
@@ -1188,6 +1209,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.dataTypeRemoved(dtm, path);
 			}
@@ -1196,6 +1218,7 @@ public class DataTypeManagerHandler {
 		@Override
 		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
 				DataTypePath newPath) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.dataTypeRenamed(dtm, oldPath, newPath);
 			}
@@ -1204,6 +1227,7 @@ public class DataTypeManagerHandler {
 		@Override
 		public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath,
 				DataTypePath newPath, DataType newDataType) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.dataTypeReplaced(dtm, oldPath, newPath, newDataType);
 			}
@@ -1211,6 +1235,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void favoritesChanged(DataTypeManager dtm, DataTypePath path, boolean isFavorite) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.favoritesChanged(dtm, path, isFavorite);
 			}
@@ -1219,6 +1244,7 @@ public class DataTypeManagerHandler {
 		@Override
 		public void sourceArchiveAdded(DataTypeManager dataTypeManager,
 				SourceArchive dataTypeSource) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.sourceArchiveAdded(dataTypeManager, dataTypeSource);
 			}
@@ -1227,6 +1253,7 @@ public class DataTypeManagerHandler {
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dataTypeManager,
 				SourceArchive dataTypeSource) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.sourceArchiveChanged(dataTypeManager, dataTypeSource);
 			}
@@ -1234,6 +1261,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.programArchitectureChanged(dataTypeManager);
 			}
@@ -1241,6 +1269,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void restored(DataTypeManager dataTypeManager) {
+			modCount++;
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.restored(dataTypeManager);
 			}
