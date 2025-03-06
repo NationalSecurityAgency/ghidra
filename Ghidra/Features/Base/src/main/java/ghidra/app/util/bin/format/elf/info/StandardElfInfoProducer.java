@@ -26,7 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -133,16 +133,19 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 			br.align(4);	// fix any notes with non-aligned size payloads
 			long noteLength = br.getPointerIndex() - start;
 
-			try {
-				StructureDataType struct = note.toStructure(program.getDataTypeManager());
-				DataUtilities.createData(program, noteAddr, struct, -1, false,
-					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-				String comment =
-					"ELF Note \"%s\", %xh".formatted(note.getName(), note.getVendorType());
-				program.getListing().setComment(noteAddr, CodeUnit.EOL_COMMENT, comment);
-			}
-			catch (CodeUnitInsertionException e) {
-				elfLoadHelper.log("Failed to markup ELF Note at " + noteAddr + ": data conflict");
+			if (DataUtilities.isUndefinedData(program, noteAddr)) {
+				try {
+					StructureDataType struct = note.toStructure(program.getDataTypeManager());
+					DataUtilities.createData(program, noteAddr, struct, -1, false,
+						ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+					String comment =
+						"ELF Note \"%s\", %xh".formatted(note.getName(), note.getVendorType());
+					program.getListing().setComment(noteAddr, CommentType.EOL, comment);
+				}
+				catch (CodeUnitInsertionException e) {
+					elfLoadHelper
+							.log("Failed to markup ELF Note at " + noteAddr + ": data conflict");
+				}
 			}
 
 			noteAddr = noteAddr.add(noteLength);
