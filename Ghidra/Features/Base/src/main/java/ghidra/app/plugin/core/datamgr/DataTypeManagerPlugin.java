@@ -595,6 +595,18 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
+	public CategoryPath getCategoryPath(TreePath selectedPath) {
+		DataTypeChooserDialog dialog = new DataTypeChooserDialog(this);
+		dialog.setCategorySelectionMode(true);
+
+		if (selectedPath != null) {
+			dialog.setSelectedPath(selectedPath);
+		}
+		tool.showDialog(dialog);
+		return dialog.getSelectedCategoryPath();
+	}
+
+	@Override
 	public DataTypeManager[] getDataTypeManagers() {
 		return dataTypeManagerHandler.getDataTypeManagers();
 	}
@@ -662,6 +674,11 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public List<DataType> getSortedDataTypeList() {
 		return dataTypeManagerHandler.getDataTypeIndexer().getSortedDataTypeList();
+	}
+
+	@Override
+	public List<CategoryPath> getSortedCategoryPathList() {
+		return dataTypeManagerHandler.getDataTypeIndexer().getSortedCategoryPathList();
 	}
 
 	@Override

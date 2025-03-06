@@ -41,6 +41,18 @@ public interface DataTypeQueryService {
 	public List<DataType> getSortedDataTypeList();
 
 	/**
+	 * Prompts the user for a data type.  The optional filter text will be used to filter the tree
+	 * of available types.
+	 * Gets the sorted list of all category paths known by this service via its owned 
+	 * DataTypeManagers.  This method can be called frequently, as the underlying data is indexed 
+	 * and only updated as changes are made.  The sorting of the list is done using the 
+	 * natural sort of the {@link CategoryPath} objects.
+	 * 
+	 * @return the sorted list of known category paths.
+	 */
+	public List<CategoryPath> getSortedCategoryPathList();
+
+	/**
 	 * This method simply calls {@link #promptForDataType(String)}
 	 * @deprecated use {@link #promptForDataType(String)}
 	 */
@@ -49,8 +61,10 @@ public interface DataTypeQueryService {
 	public DataType getDataType(String filterText);
 
 	/**
-	 * Prompts the user for a data type.  The optional filter text will be used to filter the tree
-	 * of available types.
+	 * Obtain the preferred datatype which corresponds to the specified 
+	 * datatype specified by filterText.  A tool-based service provider
+	 * may prompt the user to select a datatype if more than one possibility
+	 * exists.
 	 * 
 	 * @param filterText If not null, this text filters the visible data types to only show those
 	 *                   that start with the given text
