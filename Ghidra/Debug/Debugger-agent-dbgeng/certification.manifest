@@ -10,6 +10,8 @@ data/debugger-launchers/local-dbgeng-trace.bat||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng.bat||GHIDRA||||END|
 data/debugger-launchers/remote-dbgeng.bat||GHIDRA||||END|
 data/debugger-launchers/svrcx-dbgeng.bat||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/dbgeng/dbgeng.html||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|

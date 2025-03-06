@@ -1,0 +1,277 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Launchers: Windows Debugger (WinDbg, dbgeng.dll)</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger Launchers: Windows Debugger (WinDbg, dbgeng.dll)</H1>
+
+    <P>Integration with WinDbg is achieved by implementing a console debugger in Python 3 based on
+    <TT>dbgeng.dll</TT> (via pybag). This DLL represents the Microsoft Windows Debugger engine, and
+    so is best suited for debugging Windows user-space targets. This DLL also backs WinDbg and
+    several other debuggers on Windows. By default, the launcher will search for this DLL in an
+    installation of the Windows Debugging Kits version 10. If it does not find it there, it will
+    probably crash with a message in the Terminal.</P>
+
+    <P>The following launchers based on Microsoft's <TT>dbgeng.dll</TT> are included out of the
+    box:</P>
+
+    <H2><A name="local"></A>Local</H2>
+
+    <P>The plain "<TT>dbgeng</TT>" defaults to launching the current program as a user-mode process
+    on the local system. If there is no current program, this launcher cannot be used. Clearing the
+    <B>Image</B> option will cause this launcher to fail.</P>
+
+    <P>Please note on some system configurations, one of the debugger's dependencies
+    <TT>dbghelp.dll</TT> may get loaded from the system directory instead of from the WinDbg
+    installation, usually because a security product has pre-loaded it into the Python process. You
+    might work around this by copying the affected DLLs from your WinDbg installation into your
+    Python installation.</P>
+
+    <H3><A name="setup"></A>Setup</H3>
+
+    <P>Installing WinDbg is highly recommended. If you wish to forego installing WinDbg, you can
+    use the DLL provided with Windows, which is substantially less capable, by manually pointing
+    this connector to <TT>C:\Windows\system32</TT>. If you do this, some commands, e.g.
+    <TT>.server</TT>, will not be available.</P>
+
+    <P>If you have access to PyPI, setting up your Python 3 environment is done using Pip. Please
+    note the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install pybag protobuf==3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd C:\path\to\ghidra_<EM>
+version</EM>\Ghidra\Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace\pypkg\dist -f Debugger-agent-dbgeng\pypkg\dist pybag protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you get an import error regarding <TT>distutils</TT>, it is due to a transitive
+    dependency on a buggy version of <TT>capstone</TT>. Work around it by installing
+    <TT>setuptools</TT>.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B><TT>python</TT> command</B>: This is the command or path to the Python interpreter. It
+      must be version 3. Python 2 is not supported.</LI>
+
+      <LI><B>Image</B>: This is the path to the target binary image (EXE file). Ghidra will try to
+      fill this in based on information gathered when the current program was imported. If the file
+      exists and is executable on the local machine, it will be filled in automatically. Otherwise,
+      it is up to you to locate it. <B>NOTE:</B> If you have patched the current program database,
+      these changes are <EM>not</EM> applied to the target. You can either 1) apply the same
+      patches to the target once it is running, or 2) export a patched copy of your image and
+      direct this launcher to run it.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
+      These are passed as is into WinDbg's "<TT>CreateProcess</TT>" function.</LI>
+
+      <LI><B>Use <TT>dbgmodel</TT></B>: If <TT>dbgmodel.dll</TT> is available on the system, this
+      launcher will use it to populate the trace's object model. Without that DLL, the launcher
+      will invent its own model, roughly approximating the same, using just the information
+      available from <TT>dbgeng.dll</TT>. Disabling this option will prevent the launcher from
+      using <TT>dbgmodel.dll</TT>, even when it is available.</LI>
+
+      <LI><B>Path to <TT>dbgeng.dll</TT> directory</B>: By default, the launcher allows the
+      underlying <TT>pybag</TT> package to locate the Windows Debugger DLLs. This is typically
+      found by examining the registry for a Windows Kits 10 installation. Otherwise, it may check
+      its typical installation directory. This will <EM>not</EM> search the Windows system
+      directory, but you can configure it manually here. This option allows you to override this
+      search. For example, if you have installed WinDbg Preview or later from the Microsoft Store
+      and wish to use its DLLs, you will need to fill in this option.</LI>
+    </UL>
+
+    <P>Once running, you are presented with a command-line interface in Ghidra's Terminal. This CLI
+    accepts your usual WinDbg (kd) commands. You can escape from this CLI and enter a Python 3 REPL
+    by entering "<TT>.exit</TT>". This is not an actual kd command, but our implementation
+    understands this to mean exit the kd REPL. From the Python 3 REPL, you can access the
+    underlying Python-based API <TT>pybag</TT>. This is an uncommon need, but may be useful for
+    diagnostics and/or workarounds. To re-enter the kd REPL, enter "<TT>repl()</TT>".
+    Alternatively, if you are trying to quit, but typed "<TT>.exit</TT>", just type
+    "<TT>quit()</TT>" to terminate the session.</P>
+
+    <H2><A name="ext"></A>Extended Local</H2>
+
+    <P>The "<TT>dbgeng-ext</TT>" launcher extends the base <TT>dbgeng</TT> launcher adding extra
+    options (a la <TT>IDebugClient</TT>'s <TT>CreateProcess2</TT>).</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Dir</B>: This is the starting directory for the process.</LI>
+
+      <LI><B>Env</B>: This is a composite string containg Environment Variable entries delineated
+      by '/0' separators. For example, you could redefine USERNAME and USERPROFILE with the entry
+      'USERNAME=SomeUser/0USERPROFILE=C:\Users\SomeUser'.</LI>
+
+      <LI><B>CreateFlags</B>: Flags used when creating the process, typically either
+      DEBUG_PROCESS(1) or DEBUG_ONLY_THIS_PROCESS(2) if you do not wish to follow spawned
+      processes. Other possible values are defined by processes.h's
+      CreateProcessCreationFlags.</LI>
+
+      <LI><B>CreateFlags (Engine)</B>: Engine-specific flags used when creating the process
+      (defined in dbgeng.h). Typically, these are set to 0.</LI>
+
+      <LI><B>VerifierFlags (Engine)</B>: Flags used by the Application Verifier. Typically unused,
+      but, if desired, CreateEngineFlags must include
+      DEBUG_ECREATE_PROCESS_USE_VERIFIER_FLAGS(2).</LI>
+    </UL>
+
+    <H2><A name="attach"></A>Attach</H2>
+
+    <P>This launcher allows the user to attach to a local running process. Options are the same as
+    those for the base dbgeng, except for ProcessId and AttachFlags</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>ProcessId</B>: The pid of the process you wish to attach to.</LI>
+
+      <LI><B>AttachFlags</B>: Flags used when attaching to the target process, typically
+      DEBUG_ATTACH_PROCESS(0). Other possible values are defined in dbgeng.h and determine whether
+      the attach should be invasive or not and the status of the process after attaching.</LI>
+    </UL>
+
+    <H2><A name="remote"></A>Remote</H2>
+
+    <P>This launcher connects to a remote debugger that has opened a port for remote control.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI>
+        <B>Connection</B>: This is the connection string specifying the transport options for
+        communicating with the remote debugger. A typical example might be
+        'tcp:port=12345,server=192.168.0.2' for a debugger that has issued the command 
+<PRE>
+.server tcp:port=12345
+</PRE>
+      </LI>
+    </UL>
+
+    <H2><A name="svrcx"></A>Process Server</H2>
+
+    <P>The "<TT>dbgeng-svrcx</TT>" launcher extends the base dbgeng launcher adding an option for
+    connecting through a remote process server.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI>
+        <B>Connection</B>: This is the connection string specifying the transport options for
+        communicating with the remote server. A typical example might be
+        'tcp:port=12345,server=192.168.0.2' for a process server launched on the machine at
+        192.168.0.2 using: 
+<PRE>
+        dbgsrv -t tcp:port=12345
+       
+</PRE>
+      </LI>
+    </UL>
+
+    <H2><A name="win_kernel"></A>Windows Kernel</H2>
+
+    <P>This version of the dbgeng should be used for kernel-debugging of a remote machine. Options
+    are the same as the base dbgeng, except for the connection-string arguments. For remote
+    debugging, the target machine should be booted with the appropriate options, set using BCDEDIT
+    or the equivalent, such as:</P>
+
+    <UL style='list-style-type: none'>
+      <LI>
+<PRE>
+bcdedit /debug ON
+bdcedit /dbgsettings NET HOSTIP:IP PORT:54321 KEY:1.1.1.1
+</PRE>
+      </LI>
+    </UL>
+
+    <P>where IP= the address of the machine runing Ghidra.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Arguments</B>: This is the connection string specifying the transport options for
+      communicating with the remote target. A typical example might be
+      'net:port=54321,key=1.1.1.1'.'</LI>
+    </UL>
+
+    <UL>
+      <LI><B>Type</B>: The type of kernel connection, either "Remote", "Local", or "EXDI".
+      "Remote", the most common type, indicates two-machine debugging over various possible
+      connection media, e.g. Ethernet, serial, USB, etc. "Local" is used for limited introspection
+      into the target on which the debugger is running. "EXDI" is arguably the most exotic type -
+      it essentially simulates the normal "Remote" connection using the gdb Remote Serial Protocol.
+      It can be used when connecting to gdbstubs in platforms, such as QEMU, VMWare, Trace32,
+      etc.</LI>
+    </UL>
+
+    <H3>EXDI</H3>
+
+    <P>Setup for EXDI connections is fairly complicated and difficult to get correct. The argument
+    string typically should be something like:</P>
+
+    <UL style='list-style-type: none'>
+      <LI>
+<PRE>
+exdi:CLSID={29f9906e-9dbe-4d4b-b0fb-6acf7fb6d014},Kd=Guess,DataBreaks=Exdi
+</PRE>
+      </LI>
+    </UL>
+
+    <P>The CLSID here should match the CLSID in the <B>exdiConfigData.xml</B> file in the debugger
+    architectural directory. If windbg has been run using EXDI at some point, there will also be an
+    entry in the System Registry for this CLSID. The InprocServer32 subentry for this CLSID in the
+    Registry should point to a copy of ExdiGdbSrv.dll, typically the one in the same directory.
+    This DLL must reside somewhere that the debugger has permission to load from, i.e. not in the
+    WindowsApps directory tree. The <B>exdiConfigData</B> file should be configured for the target
+    you're using. We heavily recommend using <B>displayCommPackets==yes</B>, as many of the tasks
+    take considerable time, and this is the only indicator of progress.</P>
+
+    <P>The <B>Kd=Guess</B> parameter causes the underlying engine to scan memory for the kernel's
+    base address, which will probably not be provided by the gdbstub. (<B>Kd=NtBaseAddr</B> is also
+    a valid option, as is eliminating the parameter, but, currently, we have no idea how to point
+    the configuration at a correct value. Using this option will cause the load to spin
+    pointlessly.) If you can, we highly recommend breaking the target near the base address, as the
+    search proceeds down through memory starting at the current program counter. If the difference
+    between the PC and the base address is large, the loading process will punt before useful
+    values are detected. If anyone understand how to extend this search (or knows how to set the
+    base address to sidestep the scan), we would really love some guidance.</P>
+
+    <H2><A name="ttd"></A>TTD (Time-Travel Debugging)</H2>
+
+    <P>This is a nascent extension to our launcher for the Windows Debugger. The launcher itself
+    functions, but lacks full integration. In particular, Ghidra's concept of time is not mapped
+    directly to the TTD concept of time. TTD uses a major/minor scheme for ordering events, where
+    the major index changes when TTD must record a change in state. Events, including thread
+    creation/termination, module loads/unloads, syscalls, and other asynchronous changes, merit new
+    major indices. When you step forward or backward in a trace, the dbgeng API will increment and
+    decrement correspondingly. Ghidra, on the other hand, will only increment.</P>
+
+    <H3>Options</H3>
+
+    <P>This launcher has basically the same options as the WinDbg launcher, except that arguments
+    are not included and the DLL path must contain <TT>TTDReplay.dll</TT> and the scripts that
+    implement TTD. These are most easily obtained by installing WinDbg Preview or later.</P>
+  </BODY>
+</HTML>

@@ -24,7 +24,7 @@
 #@desc </body></html>
 #@menu-group drgn
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#drgn-core
+#@help drgn#core
 #@env OPT_TARGET_IMG:file!="" "Core dump" "The target core dump"
 
 export OPT_TARGET_KIND="coredump" 

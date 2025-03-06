@@ -24,7 +24,7 @@
 #@desc </body></html>
 #@menu-group local
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb_rr
+#@help gdb#rr
 #@enum StartCmd:str run start starti
 #@enum Endian:str auto big little
 #@arg :file "Trace Dir" "The target trace directory (e.g. .local/share/rr/trace)"

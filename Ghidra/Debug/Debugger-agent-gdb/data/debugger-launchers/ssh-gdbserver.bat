@@ -10,7 +10,7 @@
 ::@desc </body></html>
 ::@menu-group remote
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#gdb_gdbserver_ssh
+::@help gdb#gdbserver_ssh
 ::@enum Endian:str auto big little
 ::@env OPT_TARGET_IMG:str!="" "Image" "The target binary executable image on the remote system"
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"

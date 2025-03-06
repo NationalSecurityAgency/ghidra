@@ -10,7 +10,7 @@
 ::@desc </body></html>
 ::@menu-group remote
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#gdb_ssh
+::@help gdb#ssh
 ::@enum StartCmd:str run start starti
 ::@enum Endian:str auto big little
 ::@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image on the remote system"
