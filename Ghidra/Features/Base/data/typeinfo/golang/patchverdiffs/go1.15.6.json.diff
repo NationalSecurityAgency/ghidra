@@ -1,0 +1,225 @@
+@ ["all","Funcs","net/http/fcgi.(*response).Write","Params",1,"Name"]
+- "data"
++ "p"
+@ ["all","Funcs","net/http/fcgi.(*response).Write","Results",0,"Name"]
+- ""
++ "n"
+@ ["all","Funcs","net/http/fcgi.(*response).Write","Results",1,"Name"]
+- ""
++ "err"
+@ ["all","Funcs","runtime.msigsave"]
+- {"Flags":0,"Params":[{"DataType":"*runtime.m","Name":"mp"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.(*testPrinter).Fprint"]
+- {"Flags":4,"Params":[{"DataType":"*testing.testPrinter","Name":"p"},{"DataType":"io.Writer","Name":"w"},{"DataType":"string","Name":"testName"},{"DataType":"string","Name":"out"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.(*testPrinter).Print"]
+- {"Flags":4,"Params":[{"DataType":"*testing.testPrinter","Name":"p"},{"DataType":"string","Name":"testName"},{"DataType":"string","Name":"out"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.newTestPrinter"]
+- {"Flags":0,"Params":[{"DataType":"bool","Name":"chatty"}],"Results":[{"DataType":"*testing.testPrinter","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","internal/bytealg.IndexString"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http/cgi.(*response).writeCGIHeader"]
++ {"Flags":4,"Params":[{"DataType":"*net/http/cgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http/fcgi.(*response).writeCGIHeader"]
++ {"Flags":4,"Params":[{"DataType":"*net/http/fcgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.(*pageAlloc).tryChunkOf"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.pageAlloc","Name":"s"},{"DataType":"runtime.chunkIdx","Name":"ci"}],"Results":[{"DataType":"*runtime.pallocData","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.(*pollDesc).makeArg"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.pollDesc","Name":"pd"}],"Results":[{"DataType":"interface {}","Name":"i"}],"TypeParams":[]}
+@ ["all","Funcs","runtime.sigsave"]
++ {"Flags":0,"Params":[{"DataType":"*runtime.sigset","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.(*chattyPrinter).Printf"]
++ {"Flags":4,"Params":[{"DataType":"*testing.chattyPrinter","Name":"p"},{"DataType":"string","Name":"testName"},{"DataType":"string","Name":"format"},{"DataType":"[]interface {}","Name":"args"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.(*chattyPrinter).Updatef"]
++ {"Flags":4,"Params":[{"DataType":"*testing.chattyPrinter","Name":"p"},{"DataType":"string","Name":"testName"},{"DataType":"string","Name":"format"},{"DataType":"[]interface {}","Name":"args"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","testing.newChattyPrinter"]
++ {"Flags":0,"Params":[{"DataType":"io.Writer","Name":"w"}],"Results":[{"DataType":"*testing.chattyPrinter","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(error)","Params",0,"Name"]
+- ""
++ "err"
+@ ["all","Types","net/http/cgi.response","Fields",2]
+  {"DataType":"net/http.Header","Name":"header"}
++ {"DataType":"int","Name":"code"}
++ {"DataType":"bool","Name":"wroteHeader"}
++ {"DataType":"bool","Name":"wroteCGIHeader"}
+  {"DataType":"*bufio.Writer","Name":"bufw"}
+@ ["all","Types","net/http/cgi.response","Fields",6]
+  {"DataType":"*bufio.Writer","Name":"bufw"}
+- {"DataType":"bool","Name":"headerSent"}
+]
+@ ["all","Types","net/http/fcgi.response","Fields",2]
+  {"DataType":"net/http.Header","Name":"header"}
++ {"DataType":"int","Name":"code"}
++ {"DataType":"bool","Name":"wroteHeader"}
++ {"DataType":"bool","Name":"wroteCGIHeader"}
+  {"DataType":"*net/http/fcgi.bufWriter","Name":"w"}
+@ ["all","Types","net/http/fcgi.response","Fields",6]
+  {"DataType":"*net/http/fcgi.bufWriter","Name":"w"}
+- {"DataType":"bool","Name":"wroteHeader"}
+]
+@ ["all","Types","runtime.g","Fields",25]
+  {"DataType":"bool","Name":"activeStackChans"}
++ {"DataType":"uint8","Name":"parkingOnChan"}
+  {"DataType":"int8","Name":"raceignore"}
+@ ["all","Types","runtime.pollDesc","Fields",14]
+  {"DataType":"int64","Name":"wd"}
++ {"DataType":"*runtime.pollDesc","Name":"self"}
+]
+@ ["all","Types","testing.common","Fields",11,"DataType"]
+- "bool"
++ "*testing.chattyPrinter"
+@ ["all","Types","testing.testPrinter"]
+- {"Fields":[{"DataType":"bool","Name":"chatty"},{"DataType":"sync.Mutex","Name":"lastNameMu"},{"DataType":"string","Name":"lastName"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","testing.chattyPrinter"]
++ {"Fields":[{"DataType":"io.Writer","Name":"w"},{"DataType":"sync.Mutex","Name":"lastNameMu"},{"DataType":"string","Name":"lastName"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-amd64-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["linux","Funcs","internal/poll.kernelVersion"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"int","Name":"major"},{"DataType":"int","Name":"minor"}],"TypeParams":[]}
+@ ["linux-386","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"substr"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-386","Funcs","runtime.call16","Params",0]
+[
++ {"DataType":"unsafe.Pointer","Name":"typ"}
+  {"DataType":"unsafe.Pointer","Name":"fn"}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-386","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"substr"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Funcs","runtime.call16","Params",0]
+[
++ {"DataType":"unsafe.Pointer","Name":"typ"}
+  {"DataType":"unsafe.Pointer","Name":"fn"}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"substr"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Funcs","runtime.call16","Params",0]
+[
++ {"DataType":"unsafe.Pointer","Name":"typ"}
+  {"DataType":"unsafe.Pointer","Name":"fn"}
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"substr"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Funcs","runtime.call16","Params",0]
+[
++ {"DataType":"unsafe.Pointer","Name":"typ"}
+  {"DataType":"unsafe.Pointer","Name":"fn"}
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","internal/poll.ignoringEINTR","Params",0,"DataType"]
+- "func(int, []byte) int, error"
++ "func() int, error"
+@ ["unix","Funcs","internal/poll.ignoringEINTR","Params",1]
+  {"DataType":"func() int, error","Name":"fn"}
+- {"DataType":"int","Name":"fd"}
+- {"DataType":"[]byte","Name":"p"}
+]
+@ ["unix","Types","func(int, []byte) int, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"int","Name":"fd"},{"DataType":"[]byte","Name":"p"}],"Results":[{"DataType":"int","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["unix","Types","func() int, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[],"Results":[{"DataType":"int","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows","Funcs","runtime.isWindowsService"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["windows-386","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"substr"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["windows-386","Funcs","runtime.call16","Params",0]
+[
++ {"DataType":"unsafe.Pointer","Name":"typ"}
+  {"DataType":"unsafe.Pointer","Name":"fn"}
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"substr"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Funcs","runtime.call16","Params",0]
+[
++ {"DataType":"unsafe.Pointer","Name":"typ"}
+  {"DataType":"unsafe.Pointer","Name":"fn"}
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Funcs","internal/bytealg.IndexString"]
+- {"Flags":0,"Params":[{"DataType":"string","Name":"a"},{"DataType":"string","Name":"b"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""

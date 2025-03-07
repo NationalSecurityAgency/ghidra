@@ -35,6 +35,7 @@ public class GoRegisterInfo {
 
 	public enum RegType { INT, FLOAT }
 
+	private final GoVerSet validVersions;
 	private final List<Register> intRegisters;
 	private final List<Register> floatRegisters;
 	private final int stackInitialOffset;
@@ -47,10 +48,14 @@ public class GoRegisterInfo {
 	private final Register duffzeroZeroParam;	// if duffzero has 2nd param
 	private final RegType duffzeroZeroParamType;
 
+	private final Register closureContextRegister;
+
 	GoRegisterInfo(List<Register> intRegisters, List<Register> floatRegisters,
 			int stackInitialOffset, int maxAlign, Register currentGoroutineRegister,
 			Register zeroRegister, boolean zeroRegisterIsBuiltin, Register duffzeroDestParam,
-			Register duffzeroZeroParam, RegType duffzeroZeroParamType) {
+			Register duffzeroZeroParam, RegType duffzeroZeroParamType,
+			Register closureContextRegister, GoVerSet validVersions) {
+		this.validVersions = validVersions;
 		this.intRegisters = intRegisters;
 		this.floatRegisters = floatRegisters;
 		this.stackInitialOffset = stackInitialOffset;
@@ -62,6 +67,12 @@ public class GoRegisterInfo {
 		this.duffzeroDestParam = duffzeroDestParam;
 		this.duffzeroZeroParam = duffzeroZeroParam;
 		this.duffzeroZeroParamType = duffzeroZeroParamType;
+
+		this.closureContextRegister = closureContextRegister;
+	}
+	
+	public GoVerSet getValidVersions() {
+		return validVersions;
 	}
 
 	public int getIntRegisterSize() {
@@ -125,7 +136,10 @@ public class GoRegisterInfo {
 		catch (InvalidInputException e) {
 			return List.of();
 		}
+	}
 
+	public Register getClosureContextRegister() {
+		return closureContextRegister;
 	}
 
 	private VariableStorage getStorageForReg(Program program, Register reg, int len)

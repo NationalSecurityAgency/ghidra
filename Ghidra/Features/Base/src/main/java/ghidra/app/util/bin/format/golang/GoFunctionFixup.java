@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,43 +27,35 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Utility class to fix Golang function parameter storage
+ * Utility class that fixes golang function parameter storage using each function's current
+ * parameter list (formal info only) as starting information.
+ * 
+ * TODO: verify GoFuncData.argsize property against what we calculate here 
  */
 public class GoFunctionFixup {
 
-	/**
-	 * Assigns custom storage for a function's parameters, using the function's current
-	 * parameter list (formal info only) as starting information.
-	 *  
-	 * @param func Ghidra {@link Function} to fix
-	 * @throws DuplicateNameException if invalid parameter names
-	 * @throws InvalidInputException if invalid data types or storage
-	 */
-	public static void fixupFunction(Function func)
-			throws DuplicateNameException, InvalidInputException {
-		Program program = func.getProgram();
-		GoVer goVersion = GoVer.fromProgramProperties(program);
-		fixupFunction(func, goVersion);
-	}
+	private final Program program;
+	private final Function func;
+	private final GoParamStorageAllocator storageAllocator;
+	private final FunctionSignature newSignature;
+	private final String newCallingConv;
+	private final DataTypeManager dtm;
 
-	/**
-	 * Assigns custom storage for a function's parameters, using the function's current
-	 * parameter list (formal info only) as starting information.
-	 *  
-	 * @param func Ghidra {@link Function} to fix
-	 * @param goVersion {@link GoVer} enum
-	 * @throws DuplicateNameException if invalid parameter names
-	 * @throws InvalidInputException if invalid data types or storage
-	 */
-	public static void fixupFunction(Function func, GoVer goVersion)
-			throws DuplicateNameException, InvalidInputException {
-		Program program = func.getProgram();
-		GoParamStorageAllocator storageAllocator = new GoParamStorageAllocator(program, goVersion);
+	public GoFunctionFixup(Function func, GoVer goVersion) {
+		this.program = func.getProgram();
+		this.dtm = program.getDataTypeManager();
+		this.func = func;
+		this.storageAllocator = new GoParamStorageAllocator(program, goVersion);
+		this.newSignature = func.getSignature();
+		this.newCallingConv = null;
 
 		if (isGolangAbi0Func(func)) {
 			// Some (typically lower level) functions in the binary will be marked with a 
@@ -71,24 +63,51 @@ public class GoFunctionFixup {
 			// Throw away all registers and force stack allocation for everything 
 			storageAllocator.setAbi0Mode();
 		}
-
-		fixupFunction(func, storageAllocator);
 	}
 
-	private static void fixupFunction(Function func, GoParamStorageAllocator storageAllocator)
-			throws DuplicateNameException, InvalidInputException {
-		List<ParameterImpl> spillVars = new ArrayList<>();
-		Program program = func.getProgram();
+	public GoFunctionFixup(Function func, FunctionSignature newSignature, String newCallingConv,
+			GoParamStorageAllocator storageAllocator) {
+		this.program = func.getProgram();
+		this.dtm = program.getDataTypeManager();
+		this.func = func;
+		this.storageAllocator = storageAllocator;
+		this.newSignature = newSignature;
+		this.newCallingConv = newCallingConv;
+	}
+
+	public static boolean isClosureContext(ParameterDefinition p) {
+		// TODO: could also check the data type of the param to insure its a struct { F... }
+		return GoConstants.GOLANG_CLOSURE_CONTEXT_NAME.equals(p.getName()) &&
+			p.getDataType() instanceof Pointer;
+	}
+
+	public static boolean isClosureContext(Parameter p) {
+		// TODO: could also check the data type of the param to insure its a struct { F... }
+		return GoConstants.GOLANG_CLOSURE_CONTEXT_NAME.equals(p.getName()) &&
+			p.getDataType() instanceof Pointer;
+	}
+
+	public void apply() throws DuplicateNameException, InvalidInputException {
+
+		List<Integer> spillVars = new ArrayList<>();
 
 		// for each parameter in the function's param list, calculate custom storage for it
-		List<ParameterImpl> newParams = new ArrayList<>();
-		for (Parameter oldParam : func.getParameters()) {
-			DataType dt = oldParam.getFormalDataType();
+		List<Parameter> newParams = new ArrayList<>();
+		for (ParameterDefinition param : newSignature.getArguments()) {
+			DataType dt = param.getDataType();
 			ParameterImpl newParam = null;
-			List<Register> regStorage = storageAllocator.getRegistersFor(dt);
+			boolean isClosure =
+				isClosureContext(param) && storageAllocator.getClosureContextRegister() != null;
+
+			List<Register> regStorage = isClosure
+					? List.of(storageAllocator.getClosureContextRegister())
+					: storageAllocator.getRegistersFor(dt);
 			if (regStorage != null && !regStorage.isEmpty()) {
-				newParam = updateParamWithCustomRegisterStorage(oldParam, regStorage);
-				spillVars.add(newParam);
+				newParam =
+					createParamWithCustomStorage(param.getName(), param.getDataType(), regStorage);
+				if (!isClosure) {
+					spillVars.add(param.getOrdinal());
+				}
 				if (dt instanceof Structure &&
 					newParam.getVariableStorage().size() != dt.getLength()) {
 					MarkupSession.logWarningAt(program, func.getEntryPoint(),
@@ -97,7 +116,7 @@ public class GoFunctionFixup {
 				}
 			}
 			else {
-				newParam = updateParamWithStackStorage(oldParam, storageAllocator);
+				newParam = createParamWithStackStorage(param.getName(), param.getDataType());
 			}
 			newParams.add(newParam);
 		}
@@ -106,34 +125,30 @@ public class GoFunctionFixup {
 		storageAllocator.alignStack();
 		storageAllocator.resetRegAllocation();
 
-		DataType returnDT = func.getReturnType();
+		DataType returnDT = newSignature.getReturnType();
 		List<LocalVariable> returnResultAliasVars = new ArrayList<>();
 		ReturnParameterImpl returnParam = returnDT != null
-				? updateReturn(func, storageAllocator, returnResultAliasVars)
+				? updateReturn(returnResultAliasVars)
 				: null;
 
 		storageAllocator.alignStack();
 
-		if (returnParam == null && newParams.isEmpty()) {
-			// its better to do nothing than lock the signature down
-			return;
-		}
-
-		// Update the function in Ghidra
-		try {
-			func.updateFunction(null, returnParam, newParams, FunctionUpdateType.CUSTOM_STORAGE,
-				true, SourceType.USER_DEFINED);
-		}
-		catch (DuplicateNameException | InvalidInputException e) {
-			MarkupSession.logWarningAt(program, func.getEntryPoint(),
-				"Failed to update function signature: " + e.getMessage());
-			return;
+		// Check if the func's current params / storage is same
+		if (!isEquivStorage(newParams, returnParam)) {
+			// modify the function's signature to match the new info.
+			// First try just changing the callingconv.  If that doesn't produce the correct
+			// storage, then resort to forcing the storage
+			func.updateFunction(newCallingConv, returnParam, newParams,
+				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
+			if (!isEquivStorage(newParams, returnParam)) {
+				func.updateFunction(newCallingConv, returnParam, newParams,
+					FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
+			}
 		}
 
 		// Remove any old local vars that are in the callers stack instead of in the local stack area
 		for (Variable localVar : func.getLocalVariables()) {
-			if (localVar.isStackVariable() &&
-				!isInLocalVarStorageArea(func, localVar.getStackOffset())) {
+			if (localVar.isStackVariable() && !isInLocalVarStorageArea(localVar.getStackOffset())) {
 				func.removeVariable(localVar);
 			}
 		}
@@ -142,23 +157,46 @@ public class GoFunctionFixup {
 		// space on the stack for the parameter value to be used when the register is overwritten.
 		// Ghidra decompilation results are improved if those storage locations are covered
 		// by variables that we create artificially.
-		for (ParameterImpl param : spillVars) {
+		for (int paramOrdinal : spillVars) {
+			Parameter param = func.getParameter(paramOrdinal);
 			DataType paramDT = param.getFormalDataType();
 			long stackOffset = storageAllocator.getStackAllocation(paramDT);
 			Varnode stackVarnode =
 				new Varnode(program.getAddressFactory().getStackSpace().getAddress(stackOffset),
 					paramDT.getLength());
 			VariableStorage varStorage = new VariableStorage(program, List.of(stackVarnode));
+			String paramName = param.getName();
+			if (paramName == null) {
+				paramName = SymbolUtilities.getDefaultParamName(paramOrdinal);
+			}
 			LocalVariableImpl localVar =
-				new LocalVariableImpl(param.getName() + "_spill", 0, paramDT, varStorage, program);
+				new LocalVariableImpl(paramName + "_spill", 0, paramDT, varStorage, program);
 
 			// TODO: needs more thought
-			func.addLocalVariable(localVar, SourceType.USER_DEFINED);
+			func.addLocalVariable(localVar, SourceType.IMPORTED);
 		}
 
 		for (LocalVariable returnResultAliasVar : returnResultAliasVars) {
-			func.addLocalVariable(returnResultAliasVar, SourceType.USER_DEFINED);
+			func.addLocalVariable(returnResultAliasVar, SourceType.IMPORTED);
 		}
+
+		if (newSignature.hasNoReturn()) {
+			func.setNoReturn(true);
+		}
+	}
+
+	private boolean isEquivStorage(List<Parameter> newParams, Parameter returnParam) {
+		boolean equivStorage = newParams.size() == func.getParameterCount();
+		for (int i = 0; equivStorage && i < newParams.size(); i++) {
+			Parameter currentParam = func.getParameter(i);
+			Parameter newParam = newParams.get(i);
+			equivStorage = currentParam.getDataType().isEquivalent(newParam.getDataType()) &&
+				currentParam.getVariableStorage().equals(newParam.getVariableStorage());
+		}
+		equivStorage = equivStorage && returnParam != null && func.getReturn() != null &&
+			func.getReturn().getVariableStorage().equals(returnParam.getVariableStorage());
+
+		return equivStorage;
 	}
 
 	/**
@@ -170,55 +208,49 @@ public class GoFunctionFixup {
 	 */
 	public static DataType makeEmptyArrayDataType(DataType dt) {
 		StructureDataType struct = new StructureDataType(dt.getCategoryPath(),
-			"empty_" + dt.getName(), 0, dt.getDataTypeManager());
+			".empty_" + dt.getName(), 0, dt.getDataTypeManager());
 		struct.setToDefaultPacking();
 		return struct;
 	}
 
-	private static ParameterImpl updateParamWithCustomRegisterStorage(Parameter oldParam,
+	private ParameterImpl createParamWithCustomStorage(String name, DataType dt,
 			List<Register> regStorage) throws InvalidInputException {
-		Program program = oldParam.getProgram();
-		DataType dt = oldParam.getDataType();
 		List<Varnode> varnodes =
 			DWARFUtil.convertRegisterListToVarnodeStorage(regStorage, dt.getLength());
-		VariableStorage varStorage =
-			new VariableStorage(program, varnodes.toArray(Varnode[]::new));
-		ParameterImpl newParam =
-			new ParameterImpl(oldParam.getName(), Parameter.UNASSIGNED_ORDINAL, dt,
-				varStorage, true, program, SourceType.USER_DEFINED);
+		VariableStorage varStorage = new VariableStorage(program, varnodes.toArray(Varnode[]::new));
+		ParameterImpl newParam = new ParameterImpl(name, Parameter.UNASSIGNED_ORDINAL, dt,
+			varStorage, true, program, SourceType.IMPORTED);
 		return newParam;
 	}
 
-	private static ParameterImpl updateParamWithStackStorage(Parameter oldParam,
-			GoParamStorageAllocator storageAllocator) throws InvalidInputException {
-		DataType dt = oldParam.getDataType();
-		Program program = oldParam.getProgram();
+	private ParameterImpl createParamWithStackStorage(String name, DataType dt)
+			throws InvalidInputException {
 		if (!DWARFUtil.isZeroByteDataType(dt)) {
 			long stackOffset = storageAllocator.getStackAllocation(dt);
-			return new ParameterImpl(oldParam.getName(), dt, (int) stackOffset, program);
+			return new ParameterImpl(name, dt, (int) stackOffset, program);
 		}
 		if (DWARFUtil.isEmptyArray(dt)) {
 			dt = makeEmptyArrayDataType(dt);
 		}
 		Address zerobaseAddress = GoRttiMapper.getZerobaseAddress(program);
-		return new ParameterImpl(oldParam.getName(), dt, zerobaseAddress, program,
-			SourceType.USER_DEFINED);
+		return new ParameterImpl(name, dt, zerobaseAddress, program, SourceType.IMPORTED);
 
 	}
 
-	private static ReturnParameterImpl updateReturn(Function func,
-			GoParamStorageAllocator storageAllocator, List<LocalVariable> returnResultAliasVars)
+	private ReturnParameterImpl updateReturn(List<LocalVariable> returnResultAliasVars)
 			throws InvalidInputException {
 
-		Program program = func.getProgram();
-		DataTypeManager dtm = program.getDataTypeManager();
-		DataType returnDT = func.getReturnType();
+		DataType returnDT = newSignature.getReturnType();
 		List<Varnode> varnodes = new ArrayList<>();
 
-		if (returnDT == null || Undefined.isUndefined(returnDT) || DWARFUtil.isVoid(returnDT)) {
+		if (returnDT == null || Undefined.isUndefined(returnDT)) {
 			return null;
 		}
-		
+		if (DWARFUtil.isVoid(returnDT)) {
+			return new ReturnParameterImpl(VoidDataType.dataType, VariableStorage.VOID_STORAGE,
+				program);
+		}
+
 		GoFunctionMultiReturn multiReturn;
 		if ((multiReturn =
 			GoFunctionMultiReturn.fromStructure(returnDT, dtm, storageAllocator)) != null) {
@@ -228,16 +260,11 @@ public class GoFunctionFixup {
 			// because we will do it manually
 			returnDT = multiReturn.getStruct();
 
-			for (DataTypeComponent dtc : multiReturn.getNormalStorageComponents()) {
-				allocateReturnStorage(program, dtc.getFieldName() + "_return_result_alias",
-					dtc.getDataType(), storageAllocator, varnodes, returnResultAliasVars,
-					false);
+			for (DataTypeComponent dtc : multiReturn.getComponentsInOriginalOrder()) {
+				allocateReturnStorage(dtc.getFieldName() + "_return_result_alias",
+					dtc.getDataType(), varnodes, returnResultAliasVars, false);
 			}
-			for (DataTypeComponent dtc : multiReturn.getStackStorageComponents()) {
-				allocateReturnStorage(program, dtc.getFieldName() + "_return_result_alias",
-					dtc.getDataType(), storageAllocator, varnodes, returnResultAliasVars,
-					false);
-			}
+
 			if (!program.getMemory().isBigEndian()) {
 				reverseNonStackStorageLocations(varnodes);
 			}
@@ -249,51 +276,58 @@ public class GoFunctionFixup {
 			varnodes.add(new Varnode(GoRttiMapper.getZerobaseAddress(program), 1));
 		}
 		else {
-			allocateReturnStorage(program, "return_value_alias_variable", returnDT,
-				storageAllocator, varnodes, returnResultAliasVars, true);
+			allocateReturnStorage("return_value_alias_variable", returnDT, varnodes,
+				returnResultAliasVars, true);
 		}
 
 		if (varnodes.isEmpty()) {
 			return null;
 		}
-		VariableStorage varStorage =
-			new VariableStorage(program, varnodes.toArray(Varnode[]::new));
+		VariableStorage varStorage = new VariableStorage(program, varnodes.toArray(Varnode[]::new));
 		return new ReturnParameterImpl(returnDT, varStorage, true, program);
 	}
 
-	private static void allocateReturnStorage(Program program, String name_unused, DataType dt,
-			GoParamStorageAllocator storageAllocator, List<Varnode> varnodes,
+	private void allocateReturnStorage(String name_unused, DataType dt, List<Varnode> varnodes,
 			List<LocalVariable> returnResultAliasVars, boolean allowEndianFixups)
 			throws InvalidInputException {
+		if (DWARFUtil.isZeroByteDataType(dt)) {
+			return;
+		}
+
 		List<Register> regStorage = storageAllocator.getRegistersFor(dt, allowEndianFixups);
 		if (regStorage != null && !regStorage.isEmpty()) {
-			varnodes.addAll(
-				DWARFUtil.convertRegisterListToVarnodeStorage(regStorage, dt.getLength()));
+			List<Varnode> nodes =
+				DWARFUtil.convertRegisterListToVarnodeStorage(regStorage, dt.getLength());
+			varnodes.addAll(nodes);
 		}
 		else {
-			if (!DWARFUtil.isZeroByteDataType(dt)) {
-				long stackOffset = storageAllocator.getStackAllocation(dt);
-				Varnode prev = !varnodes.isEmpty() ? varnodes.get(varnodes.size() - 1) : null;
-				if (prev != null && prev.getAddress().isStackAddress()) {
-//					if ( prev.getAddress().getOffset() + prev.getSize() != stackOffset ) {
-//						throw new InvalidInputException("Non-adjacent stack storage");
-//					}
+			long stackOffset = storageAllocator.getStackAllocation(dt);
+			// when the return value is on the stack, the decompiler's output is improved
+			// when the function has something at the stack location
+			LocalVariableImpl returnAliasLocalVar = new LocalVariableImpl(name_unused, dt,
+				(int) stackOffset, program, SourceType.USER_DEFINED);
+			returnResultAliasVars.add(returnAliasLocalVar);
+
+			if (!varnodes.isEmpty()) {
+				int prevIndex = storageAllocator.isBigEndian()
+						? varnodes.size() - 1
+						: 0;
+				Varnode prev = varnodes.get(prevIndex);
+				if (prev.getAddress().isStackAddress()) {
+					// if ( prev.getAddress().getOffset() + prev.getSize() != stackOffset ) {
+					//	throw new InvalidInputException("Non-adjacent stack storage");
+					// }
+
 					Varnode updatedVN =
 						new Varnode(prev.getAddress(), prev.getSize() + dt.getLength());
-					varnodes.set(varnodes.size() - 1, updatedVN);
+					varnodes.set(prevIndex, updatedVN);
+					return;
 				}
-				else {
-					varnodes.add(new Varnode(
-						program.getAddressFactory().getStackSpace().getAddress(stackOffset),
-						dt.getLength()));
-				}
-
-				// when the return value is on the stack, the decompiler's output is improved
-				// when the function has something at the stack location
-				LocalVariableImpl returnAliasLocalVar = new LocalVariableImpl(name_unused, dt,
-					(int) stackOffset, program, SourceType.USER_DEFINED);
-				returnResultAliasVars.add(returnAliasLocalVar);
+				// fall thru and add a new varnode
 			}
+			varnodes.add(!storageAllocator.isBigEndian() ? 0 : varnodes.size(),
+				new Varnode(program.getAddressFactory().getStackSpace().getAddress(stackOffset),
+					dt.getLength()));
 		}
 	}
 
@@ -311,8 +345,7 @@ public class GoFunctionFixup {
 		return false;
 	}
 
-	public static boolean isInLocalVarStorageArea(Function func, long stackOffset) {
-		Program program = func.getProgram();
+	private boolean isInLocalVarStorageArea(long stackOffset) {
 		boolean paramsHavePositiveOffset = program.getCompilerSpec().stackGrowsNegative();
 		return (paramsHavePositiveOffset && stackOffset < 0) ||
 			(!paramsHavePositiveOffset && stackOffset >= 0);
@@ -339,4 +372,5 @@ public class GoFunctionFixup {
 		}
 
 	}
+
 }

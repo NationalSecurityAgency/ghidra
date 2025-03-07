@@ -1,0 +1,400 @@
+@ ["all","Funcs","net.(*Resolver).LookupAddr","Results",0,"Name"]
+- "names"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupAddr","Results",1,"Name"]
+- "err"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupCNAME","Results",0,"Name"]
+- "cname"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupCNAME","Results",1,"Name"]
+- "err"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupSRV","Results",0,"Name"]
+- "cname"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupSRV","Results",1,"Name"]
+- "addrs"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupSRV","Results",2,"Name"]
+- "err"
++ ""
+@ ["all","Funcs","net/http.(*http2ClientConn).awaitOpenSlotForRequest"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).encodeTrailers","Params",1,"DataType"]
+- "*net/http.Request"
++ "net/http.Header"
+@ ["all","Funcs","net/http.(*http2ClientConn).encodeTrailers","Params",1,"Name"]
+- "req"
++ "trailer"
+@ ["all","Funcs","net/http.(*http2ClientConn).frameScratchBuffer"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).newStream"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"*net/http.http2clientStream","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).putFrameScratchBuffer"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"[]byte","Name":"buf"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).roundTrip"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"*net/http.Response","Name":"res"},{"DataType":"bool","Name":"gotErrAfterReqBodyWrite"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).streamByID"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"uint32","Name":"id"},{"DataType":"bool","Name":"andRemove"}],"Results":[{"DataType":"*net/http.http2clientStream","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2Transport).dialClientConn","Params",1]
+  {"DataType":"*net/http.http2Transport","Name":"t"}
++ {"DataType":"context.Context","Name":"ctx"}
+  {"DataType":"string","Name":"addr"}
+@ ["all","Funcs","net/http.(*http2Transport).dialTLS","Params",1]
+  {"DataType":"*net/http.http2Transport","Name":"t"}
++ {"DataType":"context.Context","Name":"ctx"}
+]
+@ ["all","Funcs","net/http.(*http2Transport).dialTLSDefault"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2Transport","Name":"t"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"},{"DataType":"*crypto/tls.Config","Name":"cfg"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2Transport).getBodyWriterState"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2Transport","Name":"t"},{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"io.Reader","Name":"body"}],"Results":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientConnPool).getStartDialLocked","Params",1]
+  {"DataType":"*net/http.http2clientConnPool","Name":"p"}
++ {"DataType":"context.Context","Name":"ctx"}
+  {"DataType":"string","Name":"addr"}
+@ ["all","Funcs","net/http.(*http2clientConnPool).shouldTraceGetConn"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientConnPool","Name":"p"},{"DataType":"net/http.http2clientConnIdleState","Name":"st"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).abortRequestBodyWrite","Params",1]
+  {"DataType":"*net/http.http2clientStream","Name":"cs"}
+- {"DataType":"error","Name":"err"}
+]
+@ ["all","Funcs","net/http.(*http2clientStream).awaitRequestCancel"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).cancelStream"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).checkResetOrDone"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).getStartedWrite"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequestBody","Params",1,"DataType"]
+- "io.Reader"
++ "*net/http.Request"
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequestBody","Params",1,"Name"]
+- "body"
++ "req"
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequestBody","Params",2]
+  {"DataType":"*net/http.Request","Name":"req"}
+- {"DataType":"io.Closer","Name":"bodyCloser"}
+]
+@ ["all","Funcs","net/http.(*http2dialCall).dial","Params",1]
+  {"DataType":"*net/http.http2dialCall","Name":"c"}
++ {"DataType":"context.Context","Name":"ctx"}
+  {"DataType":"string","Name":"addr"}
+@ ["all","Funcs","net/http.http2awaitRequestCancel"]
+- {"Flags":0,"Params":[{"DataType":"*net/http.Request","Name":"req"},{"DataType":"\u003c-chan struct {}","Name":"done"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2bodyWriterState.cancel"]
+- {"Flags":4,"Params":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2bodyWriterState.on100"]
+- {"Flags":4,"Params":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2bodyWriterState.scheduleBodyWrite"]
+- {"Flags":4,"Params":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2lowerHeader","Results",0,"Name"]
+- ""
++ "lower"
+@ ["all","Funcs","net/http.http2lowerHeader","Results",1]
+  {"DataType":"string","Name":"lower"}
++ {"DataType":"bool","Name":"ascii"}
+]
+@ ["all","Funcs","net/http.http2shouldRetryRequest","Params",2]
+  {"DataType":"error","Name":"err"}
+- {"DataType":"bool","Name":"afterBodyWrite"}
+]
+@ ["all","Funcs","runtime.dodeltimer","Results",0]
+[
++ {"DataType":"int","Name":""}
+]
+@ ["all","Funcs","runtime.siftupTimer","Results",0]
+[
++ {"DataType":"int","Name":""}
+]
+@ ["all","Funcs","time.tzset","Results",4]
+  {"DataType":"int64","Name":"end"}
++ {"DataType":"bool","Name":"isDST"}
+  {"DataType":"bool","Name":"ok"}
+@ ["all","Funcs","net/http.(*http2ClientConn).ReserveNewRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).SetDoNotReuse"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).addStreamLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).awaitOpenSlotForStreamLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).decrStreamReservations"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).decrStreamReservationsLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).isDoNotReuseAndIdle"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientConnReadLoop).processSettingsNoWrite"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientConnReadLoop","Name":"rl"},{"DataType":"*net/http.http2SettingsFrame","Name":"f"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientConnReadLoop).streamByID"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientConnReadLoop","Name":"rl"},{"DataType":"uint32","Name":"id"}],"Results":[{"DataType":"*net/http.http2clientStream","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).abortStream"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).abortStreamLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).cleanupWriteRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).doRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).encodeAndWriteHeaders"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).frameScratchBufferLen"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"int","Name":"maxFrameSize"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2pipe).setBuffer"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2pipe","Name":"p"},{"DataType":"net/http.http2pipeBuffer","Name":"b"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2asciiEqualFold"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"string","Name":"t"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2asciiToLower"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"s"}],"Results":[{"DataType":"string","Name":"lower"},{"DataType":"bool","Name":"ok"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2isASCIIPrint"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"s"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2lower"]
++ {"Flags":0,"Params":[{"DataType":"byte","Name":"b"}],"Results":[{"DataType":"byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2missingBody.Close"]
++ {"Flags":4,"Params":[{"DataType":"net/http.http2missingBody","Name":"self"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2missingBody.Read"]
++ {"Flags":4,"Params":[{"DataType":"net/http.http2missingBody","Name":"self"},{"DataType":"[]byte","Name":""}],"Results":[{"DataType":"int","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2shouldRetryDial"]
++ {"Flags":0,"Params":[{"DataType":"*net/http.http2dialCall","Name":"call"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.mDoFixupAndOSYield"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","time.findZone"]
++ {"Flags":0,"Params":[{"DataType":"[]time.zone","Name":"zones"},{"DataType":"string","Name":"name"},{"DataType":"int","Name":"offset"},{"DataType":"bool","Name":"isDST"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Types","archive/zip.fileListEntry","Fields",2]
+  {"DataType":"*archive/zip.File","Name":"file"}
++ {"DataType":"bool","Name":"isDir"}
+]
+@ ["all","Types","func(error)","Params",0,"Name"]
+- "err"
++ ""
+@ ["all","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","net/http.http2ClientConn","Fields",5]
+  {"DataType":"bool","Name":"singleUse"}
++ {"DataType":"bool","Name":"getConnCalled"}
+  {"DataType":"chan struct {}","Name":"readerDone"}
+@ ["all","Types","net/http.http2ClientConn","Fields",14]
+  {"DataType":"net/http.http2flow","Name":"inflow"}
++ {"DataType":"bool","Name":"doNotReuse"}
+  {"DataType":"bool","Name":"closing"}
+@ ["all","Types","net/http.http2ClientConn","Fields",17]
+  {"DataType":"bool","Name":"closed"}
++ {"DataType":"bool","Name":"seenSettings"}
+  {"DataType":"bool","Name":"wantSettingsAck"}
+@ ["all","Types","net/http.http2ClientConn","Fields",22]
+  {"DataType":"map[uint32]*net/http.http2clientStream","Name":"streams"}
++ {"DataType":"int","Name":"streamsReserved"}
+  {"DataType":"uint32","Name":"nextStreamID"}
+@ ["all","Types","net/http.http2ClientConn","Fields",26]
+  {"DataType":"map[[8]byte]chan struct {}","Name":"pings"}
+- {"DataType":"*bufio.Writer","Name":"bw"}
+  {"DataType":"*bufio.Reader","Name":"br"}
+@ ["all","Types","net/http.http2ClientConn","Fields",27]
+  {"DataType":"*bufio.Reader","Name":"br"}
+- {"DataType":"*net/http.http2Framer","Name":"fr"}
+  {"DataType":"time.Time","Name":"lastActive"}
+@ ["all","Types","net/http.http2ClientConn","Fields",33]
+  {"DataType":"uint32","Name":"initialWindowSize"}
++ {"DataType":"chan struct {}","Name":"reqHeaderMu"}
++ {"DataType":"sync.Mutex","Name":"wmu"}
++ {"DataType":"*bufio.Writer","Name":"bw"}
++ {"DataType":"*net/http.http2Framer","Name":"fr"}
++ {"DataType":"error","Name":"werr"}
+  {"DataType":"bytes.Buffer","Name":"hbuf"}
+@ ["all","Types","net/http.http2ClientConn","Fields",40]
+  {"DataType":"*vendor/golang.org/x/net/http2/hpack.Encoder","Name":"henc"}
+- {"DataType":"[][]byte","Name":"freeBuf"}
+- {"DataType":"sync.Mutex","Name":"wmu"}
+- {"DataType":"error","Name":"werr"}
+]
+@ ["all","Types","net/http.http2bodyWriterState"]
+- {"Fields":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*time.Timer","Name":"timer"},{"DataType":"*sync.Once","Name":"fnonce"},{"DataType":"func()","Name":"fn"},{"DataType":"chan error","Name":"resc"},{"DataType":"time.Duration","Name":"delay"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","net/http.http2clientConnIdleState","Fields",1]
+  {"DataType":"bool","Name":"canTakeNewRequest"}
+- {"DataType":"bool","Name":"freshConn"}
+]
+@ ["all","Types","net/http.http2clientConnReadLoop","Fields",2]
+  {"DataType":"*net/http.http2ClientConn","Name":"cc"}
+- {"DataType":"bool","Name":"closeWhenIdle"}
+]
+@ ["all","Types","net/http.http2clientStream","Fields",1,"DataType"]
+- "*net/http.Request"
++ "context.Context"
+@ ["all","Types","net/http.http2clientStream","Fields",1,"Name"]
+- "req"
++ "ctx"
+@ ["all","Types","net/http.http2clientStream","Fields",2]
+  {"DataType":"context.Context","Name":"ctx"}
++ {"DataType":"\u003c-chan struct {}","Name":"reqCancel"}
+  {"DataType":"*net/http/httptrace.ClientTrace","Name":"trace"}
+@ ["all","Types","net/http.http2clientStream","Fields",5]
+  {"DataType":"uint32","Name":"ID"}
+- {"DataType":"chan net/http.http2resAndError","Name":"resc"}
+  {"DataType":"net/http.http2pipe","Name":"bufPipe"}
+@ ["all","Types","net/http.http2clientStream","Fields",6]
+  {"DataType":"net/http.http2pipe","Name":"bufPipe"}
+- {"DataType":"bool","Name":"startedWrite"}
+  {"DataType":"bool","Name":"requestedGzip"}
+@ ["all","Types","net/http.http2clientStream","Fields",7,"DataType"]
+- "func()"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",7,"Name"]
+- "on100"
++ "isHead"
+@ ["all","Types","net/http.http2clientStream","Fields",8]
+  {"DataType":"bool","Name":"isHead"}
++ {"DataType":"sync.Once","Name":"abortOnce"}
++ {"DataType":"chan struct {}","Name":"abort"}
++ {"DataType":"error","Name":"abortErr"}
++ {"DataType":"chan struct {}","Name":"peerClosed"}
++ {"DataType":"chan struct {}","Name":"donec"}
++ {"DataType":"chan struct {}","Name":"on100"}
++ {"DataType":"chan struct {}","Name":"respHeaderRecv"}
++ {"DataType":"*net/http.Response","Name":"res"}
+  {"DataType":"net/http.http2flow","Name":"flow"}
+@ ["all","Types","net/http.http2clientStream","Fields",20,"DataType"]
+- "error"
++ "io.ReadCloser"
+@ ["all","Types","net/http.http2clientStream","Fields",20,"Name"]
+- "stopReqBody"
++ "reqBody"
+@ ["all","Types","net/http.http2clientStream","Fields",21,"DataType"]
+- "bool"
++ "int64"
+@ ["all","Types","net/http.http2clientStream","Fields",21,"Name"]
+- "didReset"
++ "reqBodyContentLength"
+@ ["all","Types","net/http.http2clientStream","Fields",22,"DataType"]
+- "chan struct {}"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",22,"Name"]
+- "peerReset"
++ "reqBodyClosed"
+@ ["all","Types","net/http.http2clientStream","Fields",23,"DataType"]
+- "error"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",23,"Name"]
+- "resetErr"
++ "sentEndStream"
+@ ["all","Types","net/http.http2clientStream","Fields",24,"DataType"]
+- "chan struct {}"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",24,"Name"]
+- "done"
++ "sentHeaders"
+@ ["all","Types","net/http.http2clientStream","Fields",29]
+  {"DataType":"uint8","Name":"num1xx"}
++ {"DataType":"bool","Name":"readClosed"}
++ {"DataType":"bool","Name":"readAborted"}
+  {"DataType":"net/http.Header","Name":"trailer"}
+@ ["all","Types","net/http.http2dialCall","Fields",2]
+  {"DataType":"*net/http.http2clientConnPool","Name":"p"}
++ {"DataType":"context.Context","Name":"ctx"}
+  {"DataType":"chan struct {}","Name":"done"}
+@ ["all","Types","runtime.m","Fields",50,"DataType"]
+- "struct { lock runtime.mutex; fn func(bool) bool }"
++ "struct { lock runtime.mutex; used uint32; fn func(bool) bool }"
+@ ["all","Types","runtime.p","Fields",41]
+  {"DataType":"uint32","Name":"numTimers"}
+- {"DataType":"uint32","Name":"adjustTimers"}
+  {"DataType":"uint32","Name":"deletedTimers"}
+@ ["all","Types","struct { lock runtime.mutex; fn func(bool) bool }"]
+- {"Fields":[{"DataType":"runtime.mutex","Name":"lock"},{"DataType":"func(bool) bool","Name":"fn"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","text/template.common","Fields",1]
+  {"DataType":"map[string]*text/template.Template","Name":"tmpl"}
++ {"DataType":"sync.RWMutex","Name":"muTmpl"}
+  {"DataType":"text/template.option","Name":"option"}
+@ ["all","Types","net/http.http2missingBody"]
++ {"Fields":[],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","struct { lock runtime.mutex; used uint32; fn func(bool) bool }"]
++ {"Fields":[{"DataType":"runtime.mutex","Name":"lock"},{"DataType":"uint32","Name":"used"},{"DataType":"func(bool) bool","Name":"fn"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows","Funcs","syscall.CreateIoCompletionPort","Results",0,"Name"]
+- "handle"
++ ""
+@ ["windows","Funcs","syscall.CreateIoCompletionPort","Results",1,"Name"]
+- "err"
++ ""
+@ ["windows","Funcs","syscall.GetQueuedCompletionStatus","Results",0,"Name"]
+- "err"
++ ""
+@ ["windows","Funcs","syscall.PostQueuedCompletionStatus","Results",0,"Name"]
+- "err"
++ ""
+@ ["windows","Funcs","syscall.createIoCompletionPort"]
++ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"filehandle"},{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uintptr","Name":"key"},{"DataType":"uint32","Name":"threadcnt"}],"Results":[{"DataType":"syscall.Handle","Name":"handle"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows","Funcs","syscall.getQueuedCompletionStatus"]
++ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"*uint32","Name":"qty"},{"DataType":"*uintptr","Name":"key"},{"DataType":"**syscall.Overlapped","Name":"overlapped"},{"DataType":"uint32","Name":"timeout"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows","Funcs","syscall.postQueuedCompletionStatus"]
++ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uint32","Name":"qty"},{"DataType":"uintptr","Name":"key"},{"DataType":"*syscall.Overlapped","Name":"overlapped"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}

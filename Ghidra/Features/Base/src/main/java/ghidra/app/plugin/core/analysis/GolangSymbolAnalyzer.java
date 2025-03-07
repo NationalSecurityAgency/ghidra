@@ -29,13 +29,14 @@ import java.util.function.Consumer;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.comments.SetCommentCmd;
-import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.format.golang.*;
 import ghidra.app.util.bin.format.golang.rtti.*;
-import ghidra.app.util.bin.format.golang.rtti.types.GoMethod.GoMethodInfo;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper.FuncDefFlags;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper.FuncDefResult;
 import ghidra.app.util.bin.format.golang.rtti.types.GoType;
+import ghidra.app.util.bin.format.golang.rtti.types.GoTypeBridge;
 import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
@@ -43,6 +44,7 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -62,8 +64,15 @@ import utilities.util.FileUtilities;
 /**
  * Analyzes Golang binaries for RTTI and function symbol information by following references from
  * the root GoModuleData instance.
+ * 
  */
 public class GolangSymbolAnalyzer extends AbstractAnalyzer {
+	private static final AnalysisPriority GOLANG_ANALYSIS_PRIORITY =
+		AnalysisPriority.FORMAT_ANALYSIS.after().after();
+	private static final AnalysisPriority PROP_RTTI_PRIORITY =
+		AnalysisPriority.REFERENCE_ANALYSIS.after();
+	private static final AnalysisPriority FIX_CLOSURES_PRIORITY = PROP_RTTI_PRIORITY.after();
+	static final AnalysisPriority STRINGS_PRIORITY = FIX_CLOSURES_PRIORITY.after();
 
 	private final static String NAME = "Golang Symbols";
 	private final static String DESCRIPTION = """
@@ -75,13 +84,15 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	private GolangAnalyzerOptions analyzerOptions = new GolangAnalyzerOptions();
 
 	private GoRttiMapper goBinary;
+	private GoTypeManager goTypes;
+	private Program program;
 	private MarkupSession markupSession;
 	private AutoAnalysisManager aam;
 	private long lastTxId = -1;
 
 	public GolangSymbolAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
-		setPriority(AnalysisPriority.FORMAT_ANALYSIS.after().after());
+		setPriority(GOLANG_ANALYSIS_PRIORITY);
 		setDefaultEnablement(true);
 	}
 
@@ -107,6 +118,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		monitor.setMessage("Golang symbol analyzer");
 
+		this.program = program;
 		aam = AutoAnalysisManager.getAnalysisManager(program);
 
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
@@ -115,8 +127,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
+		goTypes = goBinary.getGoTypes();
+
 		try {
-			goBinary.initTypeInfoIfNeeded(monitor);
 			goBinary.initMethodInfoIfNeeded();
 
 			markupSession = goBinary.createMarkupSession(monitor);
@@ -126,19 +139,32 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				markupSession.markup(firstModule, false);
 			}
 
+			for (GoType goType : goTypes.allTypes()) {
+				// markup all gotype structs.  Most will already be markedup because they
+				// were referenced from the firstModule struct
+				markupSession.markup(goType, false);
+			}
+
 			markupWellknownSymbols();
 			setupProgramContext();
-			goBinary.recoverDataTypes(monitor);
+			recoverDataTypes(monitor);
 			markupGoFunctions(monitor);
 			if (analyzerOptions.fixupDuffFunctions) {
 				fixDuffFunctions();
+			}
+			if (analyzerOptions.fixupGcWriteBarierFunctions) {
+				fixGcWriteBarrierFunctions();
 			}
 
 			if (analyzerOptions.propagateRtti) {
 				Msg.info(this,
 					"Golang symbol analyzer: scheduling RTTI propagation after reference analysis");
 				aam.schedule(new PropagateRttiBackgroundCommand(goBinary),
-					AnalysisPriority.REFERENCE_ANALYSIS.after().priority());
+					PROP_RTTI_PRIORITY.priority());
+				Msg.info(this,
+					"Golang symbol analyzer: scheduling closure function fixup");
+				aam.schedule(new FixClosureFuncArgsBackgroundCommand(goBinary),
+					FIX_CLOSURES_PRIORITY.priority());
 			}
 
 			if (analyzerOptions.createBootstrapDatatypeArchive) {
@@ -156,37 +182,47 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-		options.registerOption(GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_OPTIONNAME,
-			analyzerOptions.createBootstrapDatatypeArchive, null,
-			GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_DESC);
-		options.registerOption(GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_OPTIONNAME,
-			analyzerOptions.outputSourceInfo, null, GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_DESC);
-		options.registerOption(GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_OPTIONNAME,
-			analyzerOptions.fixupDuffFunctions, null, GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_DESC);
-		options.registerOption(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME,
-			analyzerOptions.propagateRtti, null, GolangAnalyzerOptions.PROP_RTTI_DESC);
+		analyzerOptions.registerOptions(options, program);
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		analyzerOptions.createBootstrapDatatypeArchive =
-			options.getBoolean(GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_OPTIONNAME,
-				analyzerOptions.createBootstrapDatatypeArchive);
-		analyzerOptions.outputSourceInfo = options.getBoolean(
-			GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_OPTIONNAME, analyzerOptions.outputSourceInfo);
+		analyzerOptions.optionsChanged(options, program);
 	}
 
 	private void markupWellknownSymbols() throws IOException {
 		Symbol g0 = goBinary.getGoSymbol("runtime.g0");
-		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
+		Structure gStruct = goTypes.getGhidraDataType("runtime.g", Structure.class);
 		if (g0 != null && gStruct != null) {
 			markupSession.markupAddressIfUndefined(g0.getAddress(), gStruct);
 		}
 
 		Symbol m0 = goBinary.getGoSymbol("runtime.m0");
-		Structure mStruct = goBinary.getGhidraDataType("runtime.m", Structure.class);
+		Structure mStruct = goTypes.getGhidraDataType("runtime.m", Structure.class);
 		if (m0 != null && mStruct != null) {
 			markupSession.markupAddressIfUndefined(m0.getAddress(), mStruct);
+		}
+	}
+
+	/**
+	 * Converts all discovered golang rtti type records to Ghidra data types, placing them
+	 * in the program's DTM in /golang-recovered
+	 * 
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException error converting a golang type to a Ghidra type
+	 * @throws CancelledException if the user cancelled the import
+	 */
+	private void recoverDataTypes(TaskMonitor monitor) throws IOException, CancelledException {
+		List<Long> typeOffsets = goTypes.allTypeOffsets();
+		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
+		monitor.initialize(typeOffsets.size(), "Converting Golang types to Ghidra data types");
+		for (Long typeOffset : typeOffsets) {
+			monitor.increment();
+			GoType typ = goTypes.getType(typeOffset);
+			DataType dt = goTypes.getGhidraDataType(typ);
+			if (dtm.getDataType(dt.getDataTypePath()) == null) {
+				dtm.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
+			}
 		}
 	}
 
@@ -195,9 +231,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int noreturnFuncCount = 0;
 		int functionSignatureFromBootstrap = 0;
 		int functionSignatureFromMethod = 0;
-		int partialFunctionSignatureFromMethod = 0;
+		String abiIntCCName =
+			goBinary.hasCallingConvention(GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME)
+					? GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME
+					: null;
 
 		List<GoFuncData> funcs = goBinary.getAllFunctions();
+
 		monitor.initialize(funcs.size(), "Fixing golang function signatures");
 		for (GoFuncData funcdata : funcs) {
 			monitor.increment();
@@ -205,30 +245,30 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			Address funcAddr = funcdata.getFuncAddress();
 			GoSymbolName funcSymbolNameInfo = funcdata.getSymbolName();
 			String funcname =
-				SymbolUtilities.replaceInvalidChars(funcSymbolNameInfo.getSymbolName(), true);
-			Namespace funcns = funcSymbolNameInfo.getSymbolNamespace(goBinary.getProgram());
+				SymbolUtilities.replaceInvalidChars(funcSymbolNameInfo.asString(), true);
+			Namespace funcns = funcSymbolNameInfo.getSymbolNamespace(program);
 
-			if ("go:buildid".equals(funcSymbolNameInfo.getSymbolName())) {
+			if ("go:buildid".equals(funcSymbolNameInfo.asString())) {
 				// this funcdata entry is a bogus element that points to the go buildid string.  skip
 				continue;
 			}
 
 			Function func = markupSession.createFunctionIfMissing(funcname, funcns, funcAddr);
-			if (func == null) {
+			if (func == null ||
+				func.getSignatureSource().isHigherPriorityThan(SourceType.IMPORTED)) {
 				continue;
 			}
 
-			boolean existingFuncSignature =
-				func.getParameterCount() != 0 || !Undefined.isUndefined(func.getReturnType());
+			boolean prevNoReturnFlag = func.hasNoReturn();
 
 			markupSession.appendComment(func, "Golang function info: ",
 				AddressAnnotatedStringHandler.createAddressAnnotationString(
 					funcdata.getStructureContext().getStructureAddress(),
 					"Flags: %s".formatted(funcdata.getFlags())));
 
-			if (!funcSymbolNameInfo.getSymbolName().equals(funcname)) {
+			if (!funcSymbolNameInfo.asString().equals(funcname)) {
 				markupSession.appendComment(func, "Golang original name: ",
-					funcSymbolNameInfo.getSymbolName());
+					funcSymbolNameInfo.asString());
 			}
 
 			GoSourceFileInfo sfi = null;
@@ -244,56 +284,66 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 			// Try to get a function definition signature from:
 			// 1) Methods (with full info) attached to a type that point to this func
-			// 2) Signature found in the bootstrap gdt file (matched by name)
-			// 3) Artificial partial func signatures constructed from the go type method that points here
-			GoMethodInfo boundMethod = funcdata.findMethodInfo();
-			FunctionDefinition funcdef = boundMethod != null ? boundMethod.getSignature() : null;
-			FunctionDefinition partialFuncdef =
-				boundMethod != null && funcdef == null ? boundMethod.getPartialSignature() : null;
-
-			if (funcdef == null) {
-				funcdef = goBinary.getBootstrapFunctionDefintion(funcname);
-				if (funcdef != null) {
+			// 2) Snapshot json file
+			// 3) Partial signature with receiver or closure context info params
+			FuncDefResult funcDefResult = goBinary.getFuncDefFor(funcdata);
+			if (funcDefResult != null) {
+				Set<FuncDefFlags> flags = funcDefResult.flags();
+				String flagStr = !flags.isEmpty() ? " " + flags.toString().toLowerCase() : "";
+				String snapshotStr = funcDefResult.funcDefStr();
+				if (!flagStr.isEmpty() || !snapshotStr.isEmpty()) {
+					markupSession.appendComment(func, null,
+						"Golang signature%s: %s".formatted(flagStr, snapshotStr));
+				}
+				if (flags.contains(FuncDefFlags.FROM_SNAPSHOT)) {
 					functionSignatureFromBootstrap++;
 				}
-			}
-			else {
-				functionSignatureFromMethod++;
-			}
-			if (funcdef == null && partialFuncdef != null && !existingFuncSignature) {
-				// use partial funcdef that only has a receiver 'this' parameter
-				funcdef = partialFuncdef;
-				partialFunctionSignatureFromMethod++;
-			}
-			if (funcdef != null) {
-				ApplyFunctionSignatureCmd cmd =
-					new ApplyFunctionSignatureCmd(funcAddr, funcdef, SourceType.ANALYSIS);
-				cmd.applyTo(goBinary.getProgram());
-				try {
-					GoFunctionFixup.fixupFunction(func, goBinary.getGolangVersion());
+				if (flags.contains(FuncDefFlags.FROM_RTTI_METHOD)) {
+					functionSignatureFromMethod++;
 				}
-				catch (DuplicateNameException | InvalidInputException e) {
-					Msg.error(this, "Failed to fix function custom storage", e);
+
+				GoParamStorageAllocator storageAllocator = goBinary.newStorageAllocator();
+
+				boolean regAbi = !storageAllocator.isAbi0Mode() && !goBinary.isGolangAbi0Func(func);
+				String ccName = regAbi ? abiIntCCName : null;
+
+				GoFunctionFixup ff =
+					new GoFunctionFixup(func, funcDefResult.funcDef(), ccName, storageAllocator);
+
+				try {
+					ff.apply();
+				}
+				catch (DuplicateNameException | InvalidInputException
+						| IllegalArgumentException e) {
+					MarkupSession.logWarningAt(program, func.getEntryPoint(),
+						"Failed to update function signature: " + e.getMessage());
+					continue;
+				}
+
+				if (funcDefResult.symbolName().hasReceiver()) {
+					GoType recvType = funcDefResult.recvType();
+					Address typeStructAddr = recvType != null && !(recvType instanceof GoTypeBridge)
+							? recvType.getStructureContext().getStructureAddress()
+							: null;
+					String typeStr = typeStructAddr != null
+							? AddressAnnotatedStringHandler.createAddressAnnotationString(
+								typeStructAddr,
+								recvType.getName())
+							: funcDefResult.symbolName().receiverString();
+					markupSession.appendComment(func, "",
+						"Golang method in type %s".formatted(typeStr));
 				}
 			}
 
 			if (noreturnFuncNames.contains(funcname)) {
 				if (!func.hasNoReturn()) {
 					func.setNoReturn(true);
-					noreturnFuncCount++;
 				}
 			}
 
-			if (boundMethod != null) {
-				String addrAnnotation = AddressAnnotatedStringHandler.createAddressAnnotationString(
-					boundMethod.getType().getStructureContext().getStructureAddress(),
-					boundMethod.getType().getName());
-				String methodComment = "Golang method in type %s%s: ".formatted(addrAnnotation,
-					partialFuncdef != null ? " [partial]" : "");
-				markupSession.appendComment(func, "",
-					methodComment + (partialFuncdef != null ? partialFuncdef : funcdef));
+			if (func.hasNoReturn() && func.hasNoReturn() != prevNoReturnFlag) {
+				noreturnFuncCount++;
 			}
-
 		}
 
 		Msg.info(this, "Marked %d golang funcs as NoReturn".formatted(noreturnFuncCount));
@@ -301,8 +351,98 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				.formatted(functionSignatureFromBootstrap));
 		Msg.info(this, "Fixed %d golang function signatures from method info"
 				.formatted(functionSignatureFromMethod));
-		Msg.info(this, "Fixed %d golang function signatures from partial method info"
-				.formatted(partialFunctionSignatureFromMethod));
+	}
+
+	private void fixGcWriteBarrierFunctions() {
+		if (GoConstants.GCWRITE_BUFFERED_VERS.contains(goBinary.getGoVer())) {
+			fixGcWriteBarrierBufferedFunctions();
+		}
+		else if (GoConstants.GCWRITE_BATCH_VERS.contains(goBinary.getGoVer())) {
+			fixGcWriteBarrierBatchFunctions();
+		}
+	}
+
+	private void fixGcWriteBarrierBatchFunctions() {
+		// gcWriteBarrier scheme for versions 1.21+
+		// Signature is: gcWriteBarrier[1-8]() uintptr
+		String ccname = GoConstants.GOLANG_GCWRITE_BATCH_CALLINGCONVENTION_NAME;
+		if (!goBinary.hasCallingConvention(ccname)) {
+			Msg.warn(this, "Missing " + ccname + " from this arch's .cspec");
+			return;
+		}
+		try {
+			ReturnParameterImpl retVal =
+				new ReturnParameterImpl(goTypes.getDTM().getPointer(null), program);
+
+			GoFuncData funcData = goBinary.getFunctionByName("gcWriteBarrier");
+			Function func = funcData != null ? funcData.getFunction() : null;
+			if (func != null) {
+				List<ParameterImpl> params = List.of(new ParameterImpl("numbytes",
+					goTypes.getUintDT(), program, SourceType.ANALYSIS));
+
+				func.updateFunction(ccname, retVal, params,
+					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+			}
+			for (int i = 1; i <= 8; i++) {
+				funcData = goBinary.getFunctionByName("runtime.gcWriteBarrier" + i);
+				func = funcData != null ? funcData.getFunction() : null;
+				if (func != null) {
+					func.updateFunction(ccname, retVal, List.of(),
+						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
+						SourceType.ANALYSIS);
+				}
+			}
+		}
+		catch (InvalidInputException | DuplicateNameException e) {
+			Msg.error(this, "Failed to update gcwrite function", e);
+		}
+	}
+
+	private void fixGcWriteBarrierBufferedFunctions() {
+		// gcWriteBarrier scheme for versions up to 1.20
+		// Signature is: gcWriteBarrier(val,dest)
+		String ccname = GoConstants.GOLANG_GCWRITE_BUFFERED_CALLINGCONVENTION_NAME;
+		if (!goBinary.hasCallingConvention(ccname)) {
+			Msg.warn(this, "Missing " + ccname + " from this arch's .cspec");
+			return;
+		}
+		try {
+			DataType voidPtr = goTypes.getDTM().getPointer(null);
+			ReturnParameterImpl retVal = new ReturnParameterImpl(VoidDataType.dataType, program);
+			List<ParameterImpl> params =
+				List.of(new ParameterImpl("value", voidPtr, program, SourceType.ANALYSIS),
+					new ParameterImpl("dest", voidPtr, program, SourceType.ANALYSIS));
+
+			GoFuncData funcData = goBinary.getFunctionByName("runtime.gcWriteBarrier");
+			Function func = funcData != null ? funcData.getFunction() : null;
+			if (func != null) {
+				func.updateFunction(ccname, retVal, params,
+					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+			}
+
+			if (goBinary.getBuildInfo().getGOARCH(program).equals("amd64")) {
+				// fix the amd64 specific variants such as gcWriteBarrierBX, etc
+				Language lang = program.getLanguage();
+				Register destReg = lang.getRegister("RDI"); // TODO: could also get name from cspec
+				for (String regName : GoConstants.GCWRITE_BUFFERED_x86_64_Regs) {
+					String gregName = regName.startsWith("R") ? regName : "R" + regName;
+					funcData = goBinary.getFunctionByName("runtime.gcWriteBarrier" + regName);
+					func = funcData != null ? funcData.getFunction() : null;
+					Register reg = lang.getRegister(gregName);
+					if (func != null && reg != null) {
+						params = List.of(
+							new ParameterImpl("value", voidPtr, reg, program, SourceType.ANALYSIS),
+							new ParameterImpl("dest", voidPtr, destReg, program,
+								SourceType.ANALYSIS));
+						func.updateFunction(ccname, retVal, params,
+							FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
+					}
+				}
+			}
+		}
+		catch (InvalidInputException | DuplicateNameException e) {
+			Msg.error(this, "Failed to update gcwrite function", e);
+		}
 	}
 
 	/**
@@ -313,13 +453,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	 * FixupDuffAlternateEntryPointsBackgroundCommand.
 	 */
 	private void fixDuffFunctions() {
-		Program program = goBinary.getProgram();
+		FunctionManager funcMgr = program.getFunctionManager();
 		GoRegisterInfo regInfo = goBinary.getRegInfo();
 		DataType voidPtr = program.getDataTypeManager().getPointer(VoidDataType.dataType);
 
 		GoFuncData duffzeroFuncdata = goBinary.getFunctionByName("runtime.duffzero");
 		Function duffzeroFunc = duffzeroFuncdata != null
-				? program.getFunctionManager().getFunctionAt(duffzeroFuncdata.getFuncAddress())
+				? funcMgr.getFunctionAt(duffzeroFuncdata.getFuncAddress())
 				: null;
 		List<Variable> duffzeroParams = regInfo.getDuffzeroParams(program);
 		if (duffzeroFunc != null && !duffzeroParams.isEmpty()) {
@@ -340,7 +480,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					"Golang special function: duffzero");
 
 				aam.schedule(new FixupDuffAlternateEntryPointsBackgroundCommand(duffzeroFuncdata,
-					duffzeroFunc), AnalysisPriority.FUNCTION_ANALYSIS.after().priority());
+					duffzeroFunc), PROP_RTTI_PRIORITY.priority());
 			}
 			catch (InvalidInputException | DuplicateNameException e) {
 				Msg.error(this, "Failed to update main duffzero function", e);
@@ -348,13 +488,14 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 			GoFuncData duffcopyFuncdata = goBinary.getFunctionByName("runtime.duffcopy");
 			Function duffcopyFunc = duffcopyFuncdata != null
-					? program.getFunctionManager().getFunctionAt(duffcopyFuncdata.getFuncAddress())
+					? funcMgr.getFunctionAt(duffcopyFuncdata.getFuncAddress())
 					: null;
 			if (duffcopyFuncdata != null &&
 				goBinary.hasCallingConvention(GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME)) {
 				try {
-					List<Variable> params = List.of(new ParameterImpl("dest", voidPtr, program),
-						new ParameterImpl("src", voidPtr, program));
+					List<Variable> params =
+						List.of(new ParameterImpl("dest", voidPtr, program),
+							new ParameterImpl("src", voidPtr, program));
 					duffcopyFunc.updateFunction(GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME,
 						new ReturnParameterImpl(VoidDataType.dataType, program), params,
 						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
@@ -377,7 +518,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 	private Set<String> readNoReturnFuncNames() {
 		Set<String> noreturnFuncnames = new HashSet<>();
-		Program program = goBinary.getProgram();
 		try {
 			for (ResourceFile file : NonReturningFunctionNames.findDataFiles(program)) {
 				FileUtilities.getLines(file)
@@ -393,7 +533,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		return noreturnFuncnames;
 	}
 
-	private Address createFakeContextMemory(Program program, long len) {
+	private Address createFakeContextMemory(long len) {
 		long offset_from_eom = 0x100_000;
 		Address max = program.getAddressFactory().getDefaultAddressSpace().getMaxAddress();
 		Address mbStart = max.subtract(offset_from_eom + len - 1);
@@ -406,7 +546,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void setupProgramContext() throws IOException {
-		Program program = goBinary.getProgram();
 		GoRegisterInfo goRegInfo = goBinary.getRegInfo();
 
 		if (goRegInfo.getZeroRegister() != null && !goRegInfo.isZeroRegisterIsBuiltin()) {
@@ -432,19 +571,18 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				: 0;
 
 		long gStructOffset = sizeNeeded;
-		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
+		Structure gStruct = goTypes.getGhidraDataType("runtime.g", Structure.class);
 		sizeNeeded += gStruct != null
 				? NumericUtilities.getUnsignedAlignedValue(gStruct.getLength(), alignment)
 				: 0;
 
 		long mStructOffset = sizeNeeded;
-		Structure mStruct = goBinary.getGhidraDataType("runtime.m", Structure.class);
+		Structure mStruct = goTypes.getGhidraDataType("runtime.m", Structure.class);
 		sizeNeeded += mStruct != null
 				? NumericUtilities.getUnsignedAlignedValue(mStruct.getLength(), alignment)
 				: 0;
 
-		Address contextMemoryAddr =
-			sizeNeeded > 0 ? createFakeContextMemory(program, sizeNeeded) : null;
+		Address contextMemoryAddr = sizeNeeded > 0 ? createFakeContextMemory(sizeNeeded) : null;
 
 		if (zerobase == null) {
 			markupSession.labelAddress(contextMemoryAddr.add(zerobaseSymbol),
@@ -480,9 +618,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void createBootstrapGDT(TaskMonitor monitor) throws IOException, CancelledException {
-		Program program = goBinary.getProgram();
-		GoVer goVer = goBinary.getGolangVersion();
-		String osName = GoRttiMapper.getGolangOSString(program);
+		GoVer goVer = goBinary.getGoVer();
+		String osName = goBinary.getBuildInfo().getGOOS(program);
 		String gdtFilename = GoRttiMapper.getGDTFilename(goVer, goBinary.getPtrSize(), osName);
 		gdtFilename = gdtFilename.replace(".gdt", "_%d.gdt".formatted(System.currentTimeMillis()));
 		File gdt = new File(System.getProperty("user.home"), gdtFilename);
@@ -519,7 +656,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			AddressSet funcBody = new AddressSet(funcData.getBody());
 			String duffComment = program.getListing()
 					.getCodeUnitAt(duffFunc.getEntryPoint())
-					.getComment(CodeUnit.PLATE_COMMENT);
+					.getComment(CommentType.PLATE);
 
 			monitor.setMessage("Fixing alternate duffzero/duffcopy entry points");
 			for (FunctionIterator funcIt =
@@ -554,6 +691,214 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 	//--------------------------------------------------------------------------------------------
 	/**
+	 * Partially fixup closure func signatures by matching a closure func (*.func1) with a
+	 * closure struct ( struct { F uintptr; X0 blah... } ), and giving the func a context param
+	 */
+	private static class FixClosureFuncArgsBackgroundCommand extends BackgroundCommand<Program> {
+		private GoRttiMapper goBinary;
+		private Program program;
+		private ReferenceManager refMgr;
+		private Register closureContextRegister;
+		private GoTypeManager goTypes;
+		private int closureTypeCount;
+		private int methodWrapperTypeCount;
+		private int closureFuncsFixed;
+		private int methodWrapperFuncsFixed;
+
+		public FixClosureFuncArgsBackgroundCommand(GoRttiMapper goBinary) {
+			this.goBinary = goBinary;
+			this.goTypes = goBinary.getGoTypes();
+			this.program = goBinary.getProgram();
+			this.refMgr = program.getReferenceManager();
+			this.closureContextRegister = goBinary.getRegInfo().getClosureContextRegister();
+		}
+
+		@Override
+		public boolean applyTo(Program obj, TaskMonitor monitor) {
+
+			for (GoType closureType : goTypes.getClosureTypes()) {
+				if (monitor.isCancelled()) {
+					return false;
+				}
+				fixupFuncsWithClosureRefsToTypeStruct(closureType, false, monitor);
+				closureTypeCount++;
+			}
+
+			for (GoType closureType : goTypes.getMethodWrapperClosureTypes()) {
+				if (monitor.isCancelled()) {
+					return false;
+				}
+				fixupFuncsWithClosureRefsToTypeStruct(closureType, true, monitor);
+				methodWrapperTypeCount++;
+			}
+
+			Msg.info(this, "Golang closure/method wrapper types found: %d/%d"
+					.formatted(closureTypeCount, methodWrapperTypeCount));
+			Msg.info(this, "Golang closure/method wrapper funcs fixed: %d/%d"
+					.formatted(closureFuncsFixed, methodWrapperFuncsFixed));
+
+			return true;
+		}
+
+		private void fixupFuncsWithClosureRefsToTypeStruct(GoType closureStructType,
+				boolean isMethodWrapper, TaskMonitor monitor) {
+			Address typStructAddr = closureStructType.getStructureContext().getStructureAddress();
+			Set<Address> funcsProcessed = new HashSet<>();
+
+			// TODO: this catches most closure funcs because refs to the func will be closely
+			// correlated with refs to the closure struct itself.  However, when a closure instance
+			// is reused to call another closure func, this simplistic scheme fails
+			stream(refMgr.getReferencesTo(typStructAddr).spliterator(), false) //
+					.filter(ref -> !monitor.isCancelled() && ref != null &&
+						ref.getReferenceType().isData())
+					.map(ref -> getNextClosureFuncRef(ref.getFromAddress(), isMethodWrapper, 50))
+					.filter(funcData -> funcData != null &&
+						!funcsProcessed.contains(funcData.getFuncAddress()))
+					.forEach(funcData -> {
+						Address addr = funcData.getFuncAddress();
+						funcsProcessed.add(addr);
+						Function func = program.getFunctionManager().getFunctionAt(addr);
+						if (func != null) {
+							if (!isOverwriteableClosureFunc(func)) {
+								return;
+							}
+							if (isMethodWrapper) {
+								fixupMethodWrapperClosureFunc(funcData, func, closureStructType);
+							}
+							else {
+								fixupClosureFunc(funcData, func, closureStructType);
+							}
+						}
+					});
+		}
+
+		private boolean isOverwriteableClosureFunc(Function func) {
+			Parameter[] params = func.getParameters();
+			return params.length == 0 ||
+				(params.length == 1 && GoFunctionFixup.isClosureContext(params[0]));
+		}
+
+		private GoFuncData getNextClosureFuncRef(Address startAddr, boolean isMethodWrapper,
+				int maxRange) {
+			if (!startAddr.isMemoryAddress()) {
+				return null;
+			}
+			// Returns the function that is being used as the destination of a closure struct{}.F
+			// This works off of a pattern of references (no decompilation pcode needed)
+			// 1) Refs to closure struct { } rtti type
+			// 2) ref is followed by call to runtime.newobject
+			// 3) the new closure struct{}.F returned by newobject() is initialized with
+			// address of a closure function (as determined by the name of the func: foo.func1)
+			// The above steps are matched by the pattern of references, not by pcode or value 
+			// propagation.
+			Address maxAddr = startAddr.add(maxRange);
+			for (Address refAddr : refMgr.getReferenceSourceIterator(startAddr, true)) {
+				if (refAddr.compareTo(maxAddr) > 0) {
+					break;
+				}
+				for (Reference ref : refMgr.getReferencesFrom(refAddr)) {
+					if (ref.getReferenceType().isData()) {
+						Address destAddr = ref.getToAddress();
+						GoFuncData funcData = goBinary.getFunctionData(destAddr);
+						GoSymbolName funcName = funcData != null ? funcData.getSymbolName() : null;
+						if (funcName == null) {
+							continue;
+						}
+						GoSymbolNameType nameType = funcName.getNameType();
+						if (isMethodWrapper && nameType == GoSymbolNameType.METHOD_WRAPPER) {
+							return funcData;
+						}
+						if (!isMethodWrapper && nameType != null && nameType.isClosure()) {
+							return funcData;
+						}
+					}
+				}
+			}
+			return null;
+		}
+
+		private void fixupClosureFunc(GoFuncData funcData, Function func,
+				GoType closureStructType) {
+			try {
+				DataType closureStructDT = goTypes.getGhidraDataType(closureStructType);
+
+				List<Variable> closureParams =
+					List.of(new ParameterImpl(GOLANG_CLOSURE_CONTEXT_NAME,
+						goBinary.getDTM().getPointer(closureStructDT), closureContextRegister,
+						program, SourceType.ANALYSIS));
+
+				func.updateFunction(null, null, closureParams, FunctionUpdateType.CUSTOM_STORAGE,
+					true, SourceType.ANALYSIS);
+
+				closureFuncsFixed++;
+			}
+			catch (IOException | InvalidInputException | DuplicateNameException e) {
+				Msg.error(this, "Failed to update closure func signature %s@%s"
+						.formatted(func.getName(), func.getEntryPoint()),
+					e);
+			}
+		}
+
+		private void fixupMethodWrapperClosureFunc(GoFuncData funcData, Function func,
+				GoType closureStructType) {
+			// method wrappers (funcs that end with "-fm") are closures that take the same args as
+			// the same-named method, but instead of taking a recv pointer as first arg, it takes
+			// a closure pointer with the typical closure sruct layout, and with the
+			// context payload being the expected recvr pointer.
+			String methodName = func.getName();
+			methodName = methodName.substring(0, methodName.length() - "-fm".length());
+			GoFuncData methodFuncData = goBinary.getFunctionByName(methodName);
+			if (methodFuncData == null) {
+				try {
+					DataType closureStructDT = goTypes.getGhidraDataType(closureStructType);
+					List<Variable> closureParams =
+						List.of(new ParameterImpl(GOLANG_CLOSURE_CONTEXT_NAME,
+							goBinary.getDTM().getPointer(closureStructDT), closureContextRegister,
+							program, SourceType.ANALYSIS));
+
+					func.updateFunction(null, null, closureParams,
+						FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
+
+					methodWrapperFuncsFixed++;
+
+					return;
+				}
+				catch (InvalidInputException | DuplicateNameException | IOException e) {
+					Msg.error(this, "Failed to update closure func signature %s@%s"
+							.formatted(func.getName(), func.getEntryPoint()),
+						e);
+				}
+			}
+
+			// If the base method is present in the binary (ie. for foo-fm, foo exists), copy
+			// its arguments and replace its receiver param with the closure context struct
+			Function methodFunc =
+				program.getFunctionManager().getFunctionAt(methodFuncData.getFuncAddress());
+			if (methodFunc == null) {
+				return;
+			}
+
+			try {
+				DataType closureStructDT = goTypes.getGhidraDataType(closureStructType);
+
+				Parameter methodReturn = methodFunc.getReturn();
+				Parameter[] methodParams = methodFunc.getParameters();
+				methodParams[0] = new ParameterImpl(GOLANG_CLOSURE_CONTEXT_NAME,
+					goBinary.getDTM().getPointer(closureStructDT), closureContextRegister, program,
+					SourceType.ANALYSIS);
+				func.updateFunction(null, methodReturn, FunctionUpdateType.CUSTOM_STORAGE, true,
+					SourceType.ANALYSIS, methodParams);
+				methodWrapperFuncsFixed++;
+			}
+			catch (IOException | InvalidInputException | DuplicateNameException e) {
+				Msg.error(this, "Failed to update closure func signature %s@%s"
+						.formatted(func.getName(), func.getEntryPoint()),
+					e);
+			}
+		}
+	}
+
+	/**
 	 * A background command that runs after reference analysis, it applies functions signature
 	 * overrides to callsites that have a RTTI type parameter that return a specialized
 	 * type instead of a void*.
@@ -569,10 +914,11 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 
 		record CallSiteInfo(Reference ref, Function callingFunc, Function calledFunc,
-				Register register, java.util.function.Function<GoType, DataType> returnTypeMapper) {
-		}
+				Register register,
+				java.util.function.Function<GoType, DataType> returnTypeMapper) {}
 
 		private GoRttiMapper goBinary;
+		private Program program;
 		private MarkupSession markupSession;
 		int totalCallsiteCount;
 		int fixedCallsiteCount;
@@ -582,6 +928,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		public PropagateRttiBackgroundCommand(GoRttiMapper goBinary) {
 			super("Golang RTTI Propagation (deferred)", true, true, false);
 			this.goBinary = goBinary;
+			this.program = goBinary.getProgram();
 		}
 
 		@Override
@@ -613,11 +960,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		private void fixupRttiCallsitesInFunc(Function callingFunc, List<CallSiteInfo> callsites,
 				TaskMonitor monitor) throws CancelledException {
-			Program program = goBinary.getProgram();
-
 			monitor.setMessage("Propagating RTTI from callsites in %s@%s"
 					.formatted(callingFunc.getName(), callingFunc.getEntryPoint()));
 
+			GoTypeManager goTypes = goBinary.getGoTypes();
 			ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, true);
 			SymbolicPropogator symEval = new SymbolicPropogator(program);
 			symEval.flowConstants(callingFunc.getEntryPoint(), callingFunc.getBody(), eval, true,
@@ -639,10 +985,10 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 				long goTypeOffset = val.getValue();
 				try {
-					GoType goType = goBinary.getCachedGoType(goTypeOffset);
+					GoType goType = goTypes.getType(goTypeOffset, true);
 					if (goType == null) {
 						// if it was previously not discovered (usually closure anon types), also mark it up
-						goType = goBinary.getGoType(goTypeOffset);
+						goType = goTypes.getType(goTypeOffset);
 						markupSession.markup(goType, false);
 					}
 					DataType newReturnType =
@@ -677,7 +1023,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			Map<Function, List<CallSiteInfo>> result = List.of(
 				new RttiFuncInfo("runtime.newobject", 0, this::getReturnTypeForNewObjectFunc),
 				new RttiFuncInfo("runtime.makeslice", 0, this::getReturnTypeForSliceFunc),
-				new RttiFuncInfo("runtime.growslice", 4, this::getReturnTypeForSliceFunc),	// won't work unless func signature for growslice is applied, which is a future "todo" 
+				new RttiFuncInfo("runtime.growslice", 4, this::getReturnTypeForSliceFunc), 
 				new RttiFuncInfo("runtime.makeslicecopy", 0, this::getReturnTypeForSliceFunc))
 					.stream()
 					.mapMulti(getReferencesToRttiFuncWithMonitor)
@@ -690,7 +1036,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		private void getReferencesToRttiFunc(RttiFuncInfo rfi, Consumer<CallSiteInfo> consumer,
 				TaskMonitor monitor) {
-			Program program = goBinary.getProgram();
 			FunctionManager funcMgr = program.getFunctionManager();
 			ReferenceManager refMgr = program.getReferenceManager();
 
@@ -721,7 +1066,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		private DataType getReturnTypeForNewObjectFunc(GoType goType) {
 			try {
 				DataTypeManager dtm = goBinary.getDTM();
-				DataType dt = goBinary.getRecoveredType(goType);
+				DataType dt = goBinary.getGoTypes().getGhidraDataType(goType);
 				return dtm.getPointer(dt);
 			}
 			catch (IOException e) {
@@ -731,8 +1076,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		private DataType getReturnTypeForSliceFunc(GoType goType) {
 			try {
-				GoType sliceGoType = goBinary.findGoType("[]" + goType.getNameWithPackageString());
-				DataType dt = sliceGoType != null ? goBinary.getRecoveredType(sliceGoType) : null;
+				GoTypeManager goTypes = goBinary.getGoTypes();
+				GoType sliceGoType = goTypes.findGoType("[]" + goTypes.getTypeName(goType));
+				DataType dt = sliceGoType != null ? goTypes.getGhidraDataType(sliceGoType) : null;
 				return dt;
 			}
 			catch (IOException e) {
@@ -748,7 +1094,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				// This will not be needed once param info for the alloc methods is applied before
 				// we get to this step.
 				// This only works with the rtti funcs that pass the gotype ref in first param 
-				return storageAllocator.getRegistersFor(goBinary.getUintptrDT());
+				return storageAllocator.getRegistersFor(goBinary.getGoTypes().getUintptrDT());
 			}
 			for (int i = 0; i < params.length; i++) {
 				DataType paramDT = params[i].getDataType();
@@ -794,6 +1140,44 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				reference to a Golang type record to have a return type of that specific Golang \
 				type.""";
 		boolean propagateRtti = true;
+
+		static final String FIXUP_GCWRITEBARRIER_OPTIONNAME = "Fixup gcWriteBarrier Functions";
+		static final String FIXUP_GCWRITEBARRIER_FUNCS_DESC = """
+				Fixup gcWriteBarrier functions \
+				(requires gcwrite calling convention defined for the program's arch)""";
+
+		boolean fixupGcWriteBarierFunctions = true;
+
+		void registerOptions(Options options, Program program) {
+			options.registerOption(GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_OPTIONNAME,
+				createBootstrapDatatypeArchive, null,
+				GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_DESC);
+			options.registerOption(GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_OPTIONNAME,
+				outputSourceInfo, null, GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_DESC);
+			options.registerOption(GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_OPTIONNAME,
+				fixupDuffFunctions, null, GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_DESC);
+			options.registerOption(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME, propagateRtti, null,
+				GolangAnalyzerOptions.PROP_RTTI_DESC);
+			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME,
+				fixupGcWriteBarierFunctions, null,
+				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FUNCS_DESC);
+		}
+
+		void optionsChanged(Options options, Program program) {
+			createBootstrapDatatypeArchive =
+				options.getBoolean(GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_OPTIONNAME,
+					createBootstrapDatatypeArchive);
+			outputSourceInfo = options.getBoolean(
+				GolangAnalyzerOptions.OUTPUT_SOURCE_INFO_OPTIONNAME, outputSourceInfo);
+
+			fixupDuffFunctions = options.getBoolean(
+				GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_OPTIONNAME, fixupDuffFunctions);
+			propagateRtti =
+				options.getBoolean(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME, propagateRtti);
+			fixupGcWriteBarierFunctions = options.getBoolean(
+				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME, fixupGcWriteBarierFunctions);
+		}
+
 	}
 
 	/**
