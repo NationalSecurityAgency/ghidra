@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
+import util.CollectionUtils;
 
 /**
  * Class for showing plate comments
@@ -142,12 +143,14 @@ public class PlateFieldFactory extends FieldFactory {
 		CodeUnit cu = (CodeUnit) proxy.getObject();
 		boolean isClipped = false;
 		List<FieldElement> elements = new ArrayList<>();
-		String commentText = getCommentText(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.PLATE);
+		String commentText = getCommentText(cu, offcutComments);
+
 		if (StringUtils.isBlank(commentText)) {
 			getDefaultFieldElements(cu, elements);
 		}
 		else {
-			isClipped = getFormattedFieldElements(cu, elements);
+			isClipped = getFormattedFieldElements(cu, elements, offcutComments);
 		}
 
 		if (elements.isEmpty()) {
@@ -170,14 +173,15 @@ public class PlateFieldFactory extends FieldFactory {
 		return listingField;
 	}
 
-	private boolean getFormattedFieldElements(CodeUnit cu, List<FieldElement> elements) {
+	private boolean getFormattedFieldElements(CodeUnit cu, List<FieldElement> elements,
+			List<String> offcutComments) {
 
 		int numberBlankLines = getNumberBlankLines(cu, true);
 
 		addBlankLines(elements, numberBlankLines, cu);
 
 		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
-		return generateFormattedPlateComment(elements, comments, cu.getProgram());
+		return generateFormattedPlateComment(elements, comments, offcutComments, cu.getProgram());
 	}
 
 	private void getDefaultFieldElements(CodeUnit cu, List<FieldElement> elements) {
@@ -205,7 +209,7 @@ public class PlateFieldFactory extends FieldFactory {
 		return false;
 	}
 
-	private String getCommentText(CodeUnit cu) {
+	private String getCommentText(CodeUnit cu, List<String> offcutComments) {
 		String[] comments = cu.getCommentAsArray(CodeUnit.PLATE_COMMENT);
 		if (comments == null) {
 			return null;
@@ -218,6 +222,12 @@ public class PlateFieldFactory extends FieldFactory {
 			}
 			buffy.append(comment);
 		}
+		for (String offcut : offcutComments) {
+			if (buffy.length() != 0) {
+				buffy.append('\n');
+			}
+			buffy.append(offcut);
+		}
 		return buffy.toString();
 	}
 
@@ -226,8 +236,8 @@ public class PlateFieldFactory extends FieldFactory {
 	 * data is clipped because it is too long to display.
 	 */
 	private boolean generateFormattedPlateComment(List<FieldElement> elements, String[] comments,
-			Program p) {
-		if (comments == null || comments.length == 0) {
+			List<String> offcutComments, Program p) {
+		if (offcutComments.isEmpty() && CollectionUtils.isBlank(comments)) {
 			return false;
 		}
 
@@ -244,6 +254,11 @@ public class PlateFieldFactory extends FieldFactory {
 		List<FieldElement> commentsList = new ArrayList<>();
 		for (String c : comments) {
 			commentsList.add(CommentUtils.parseTextForAnnotations(c, p, prototype, row++));
+		}
+		for (String offcut : offcutComments) {
+			AttributedString as = new AttributedString(offcut, CommentColors.OFFCUT,
+				getMetrics(style), false, null);
+			commentsList.add(new TextFieldElement(as, commentsList.size(), 0));
 		}
 
 		if (isWordWrap) {
@@ -554,7 +569,8 @@ public class PlateFieldFactory extends FieldFactory {
 		 */
 
 		CodeUnit cu = (CodeUnit) obj;
-		String commentText = getCommentText(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.PLATE);
+		String commentText = getCommentText(cu, offcutComments);
 		boolean hasComment = true;
 		if (StringUtils.isBlank(commentText)) {
 			String defaultComment = getDefaultComment(cu);
