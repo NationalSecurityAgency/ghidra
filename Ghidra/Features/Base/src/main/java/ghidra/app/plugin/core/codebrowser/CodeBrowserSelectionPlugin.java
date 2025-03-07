@@ -92,6 +92,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
 				.withContext(CodeViewerActionContext.class, true)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.enabledWhen(c -> c.hasSelection())
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
 						.setSelection(new ProgramSelection()))
 				.buildAndInstall(tool);
