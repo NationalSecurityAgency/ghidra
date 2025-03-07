@@ -278,11 +278,18 @@ public class RecoveredClassHelper {
 			program.getSymbolTable().getSymbolIterator("*vftable*", true);
 
 		List<Symbol> vftableSymbolList = new ArrayList<Symbol>();
+		List<Address> foundAddresses = new ArrayList<>();
 		while (vftableSymbols.hasNext()) {
 			monitor.checkCancelled();
 			Symbol vftableSymbol = vftableSymbols.next();
+
+			if (foundAddresses.contains(vftableSymbol.getAddress())) {
+				continue;
+			}
+
 			if (vftableSymbol.getName().equals("vftable")) {
 				vftableSymbolList.add(vftableSymbol);
+				foundAddresses.add(vftableSymbol.getAddress());
 			}
 			// check for ones that are pdb that start with ' and may or may not end with '
 			// can't just get all that contain vftable because that would get some strings
@@ -291,6 +298,7 @@ public class RecoveredClassHelper {
 				name = name.substring(1, name.length());
 				if (name.startsWith("vftable")) {
 					vftableSymbolList.add(vftableSymbol);
+					foundAddresses.add(vftableSymbol.getAddress());
 				}
 			}
 		}
@@ -8463,15 +8471,23 @@ public class RecoveredClassHelper {
 		List<Symbol> vftableSymbols = new ArrayList<Symbol>();
 
 		SymbolIterator symbols = symbolTable.getSymbols(classNamespace);
+		List<Address> uniqueVftableAddresses = new ArrayList<>();
+
 		while (symbols.hasNext()) {
 
 			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
+
+			// make sure to only keep one vftable symbol per address 
+			if (uniqueVftableAddresses.contains(symbol.getAddress())) {
+				continue;
+			}
 			if (symbol.getName().equals("vftable") ||
 				symbol.getName().substring(1).startsWith("vftable") ||
 				symbol.getName().contains("vftable_for_") ||
 				symbol.getName().contains("vftable{for")) {
 				vftableSymbols.add(symbol);
+				uniqueVftableAddresses.add(symbol.getAddress());
 			}
 
 		}
