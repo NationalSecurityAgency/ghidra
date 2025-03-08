@@ -1251,6 +1251,7 @@ AttributeId ATTRIB_TYPELOCK = AttributeId("typelock",23);
 AttributeId ATTRIB_VAL = AttributeId("val",24);
 AttributeId ATTRIB_VALUE = AttributeId("value",25);
 AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
+AttributeId ATTRIB_RENAME = AttributeId("rename",27);
 AttributeId ATTRIB_STORAGE = AttributeId("storage",149);
 AttributeId ATTRIB_STACKSPILL = AttributeId("stackspill",150);
 
