@@ -32,6 +32,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.GThemeDefaults.Colors.Tables;
 import generic.theme.laf.FontChangeListener;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import util.CollectionUtils;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -76,6 +77,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel implements FontC
 	protected Font fixedWidthFont;
 	protected Font boldFont;
 	protected Font italicFont;
+	private boolean showedFontWarning;
 	protected int dropRow = -1;
 
 	private boolean instanceAlternateRowColors = true;
@@ -216,6 +218,15 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel implements FontC
 	}
 
 	protected void checkForInvalidSetFont(Font f) {
+
+		if (!SystemUtilities.isInDevelopmentMode()) {
+			return;
+		}
+
+		if (showedFontWarning) {
+			return;
+		}
+
 		//
 		// Due to the nature of how setFont() is typically used (external client setup vs internal
 		// rendering), we created setBaseFontId() to allow external clients to set the base font in
@@ -231,6 +242,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel implements FontC
 			return; // the UI will set fonts while the theme is updating
 		}
 
+		showedFontWarning = true;
 		String caller = ReflectionUtilities
 				.getClassNameOlderThan(AbstractGCellRenderer.class.getName(), "generic.theme");
 		Msg.debug(this, "Calling setFont() on the renderer is discouraged.  " +
