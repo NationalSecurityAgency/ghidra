@@ -38,7 +38,11 @@ import ghidra.xml.XmlParseException;
 public class RustUtilities {
 	/**
 	 * Checks if a given {@link MemoryBlock} contains a Rust signature
-	 * 
+	 *
+	 * This is used in the loader to determine if a program was compiled with rust.
+	 * If the program is determined to be rust, then the compiler property is set to
+	 * {@Link RustConstants.RUST_COMPILER}.
+	 *
 	 * @param block The {@link MemoryBlock} to scan for Rust signatures
 	 * @return True if the given {@link MemoryBlock} is not null and contains a Rust signature; 
 	 *   otherwise, false
@@ -53,6 +57,9 @@ public class RustUtilities {
 			return true;
 		}
 		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_2)) {
+			return true;
+		}
+		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_3)) {
 			return true;
 		}
 		return false;
