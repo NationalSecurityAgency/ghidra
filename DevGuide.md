@@ -1,104 +1,120 @@
 # Developer's Guide
 
 ## Environment
-* Primary Language: [Java][java]
-* Secondary Languages: [C++][cpp], [Sleigh][sleigh], [Python 3][python] [Jython 2.7][jython]
-* Integrated Development Environment: [Eclipse][eclipse]
-* Build System: [Gradle][gradle]
-* Source Control: [Git][git]
 
-For specific information on required versions and download links please see the 
+- Primary Language: [Java][java]
+- Secondary Languages: [C++][cpp], [Sleigh][sleigh], [Python 3][python] [Jython 2.7][jython]
+- Integrated Development Environment: [Eclipse][eclipse]
+- Build System: [Gradle][gradle]
+- Source Control: [Git][git]
+
+For specific information on required versions and download links, please see the
 [README.md](README.md) file.
 
 ## Quickstart
+
 Follow the [Advanced Development](README.md#advanced-development) instructions in the [
-README.md](README.md) file to get your development environment setup quickly. 
+README.md](README.md) file to get your development environment setup quickly.
 
 ## Licensing and Copyright
-* Primary License: [Apache License 2.0][apache]
-* Secondary Licenses: [See licenses directory](licenses)
 
-If possible please try to stick to the [Apache License 2.0][apache]
-license when developing for Ghidra.  At times it may be necessary to incorporate other compatible 
-licenses into Ghidra.  Any GPL code must live in the top-level `GPL/` directory as a totally 
-standalone, independently buildable Ghidra module.
+- Primary License: [Apache License 2.0][apache]
+- Secondary Licenses: [See licenses directory](licenses)
 
-If you are contributing code to the Ghidra project, the preferred way to receive credit/recognition 
-is Git commit authorship.  Please ensure your Git credentials are properly linked to your GitHub 
-account so you appear as a Ghidra contributor on GitHub.  We do not have a standard for putting 
+If possible, please try to stick to the [Apache License 2.0][apache]
+license when developing for Ghidra. At times, it may be necessary to incorporate other compatible
+licenses into Ghidra. Any GPL code must live in the top-level `GPL/` directory as a standalone, independently buildable Ghidra module.
+
+If you are contributing code to the Ghidra project, the preferred way to receive credit/recognition
+is Git commit authorship. Please ensure your Git credentials are properly linked to your GitHub
+account so you appear as a Ghidra contributor on GitHub. We do not have a standard for putting
 authors' names directly in the source code, so it is discouraged.
 
 ## Common Gradle Tasks
-Download non-Maven Central dependencies.  This creates a `dependencies` directory in the repository
+
+Download non-Maven Central dependencies. This creates a `dependencies` directory in the repository
 root.
+
 ```
 gradle -I gradle/support/fetchDependencies.gradle
 ```
 
-Download Maven Central dependencies and setup the repository for development.  By default, these 
+Download Maven Central dependencies and setup the repository for development. By default, these
 will be stored at `$HOME/.gradle/`.
+
 ```
 gradle prepdev
 ```
 
-Generate nested Eclipse project files which can then be imported into Eclipse as "existing 
+Generate nested Eclipse project files, which can then be imported into Eclipse as "existing
 projects".
+
 ```
 gradle cleanEclipse eclipse
 ```
 
-Build native components for your current platform.  Requires native tool chains to be present.
+Build native components for your current platform. Requires native tool chains to be present.
+
 ```
 gradle buildNatives
 ```
 
 Manually compile sleigh files. Ghidra will also do this at runtime when necessary.
+
 ```
 gradle sleighCompile
 ```
 
 Build Javadoc:
+
 ```
 gradle createJavadocs
 ```
 
 Build Python3 packages for PyGhidra and the Debugger:
+
 ```
 gradle buildPyPackage
 ```
 
-Build Ghidra to `build/dist` in an uncompressed form.  This will be a distribution intended only to 
+Build Ghidra to `build/dist` in an uncompressed form. This will be a distribution intended only to
 run on the platform on which it was built.
+
 ```
 gradle assembleAll
 ```
 
-Build Ghidra to `build/dist` in a compressed form.  This will be a distribution intended only to run
+Build Ghidra to `build/dist` in a compressed form. This will be a distribution intended only to run
 on the platform on which it was built.
+
 ```
 gradle buildGhidra
 ```
 
-**Tip:**  You may want to skip certain Gradle tasks to speed up your build, or to deal with
-a problem later.  For example, perhaps you added some new source files and the build is failing 
-because of unresolved IP header issues.  You can use the Gradle `-x <task>` command line argument to
+**Tip:** You may want to skip certain Gradle tasks to speed up your build or to deal with
+a problem later. For example, perhaps you added some new source files and the build is failing
+because of unresolved IP header issues. You can use the Gradle `-x <task>` command line argument to
 prevent specific tasks from running:
+
 ```
 gradle buildGhidra -x ip
 ```
 
 ## PyGhidra Development
+
 The supported way to develop and debug PyGhidra is with the _[PyDev][pydev]_ plugin for Eclipse.
 When PyDev is installed and configured, several new Eclipse run configurations will appear that
 enable running and debugging PyGhidra from both _GUI_ and _Interpreter_ modes.
 
 To prepare PyGhidra for development and/or debugging, first execute the following gradle task:
+
 ```
 gradle prepPyGhidra
 ```
-This sets up a Python virtual environment at `build/venv/`, and installs an editable PyGhidra
+
+This sets up a Python virtual environment at `build/venv/` and installs an editable PyGhidra
 module (and its dependencies) into it. PyDev should be pointed at this virtual environment so it has
-access to the editable PyGhidra module, as well as the typing/stub information. From Eclipse 
+access to the editable PyGhidra module, as well as the typing/stub information. From Eclipse
 (with PyDev installed):
 
 1. _Settings -> PyDev -> Interpreters -> Python Interpreter_
@@ -112,97 +128,106 @@ access to the editable PyGhidra module, as well as the typing/stub information. 
 9. Click _Apply and Close_
 
 ## GhidraDev Eclipse Plugin Development
-Developing the GhidraDev Eclipse plugin requires the 
+
+Developing the GhidraDev Eclipse plugin requires the
 _Eclipse PDE (Plug-in Development Environment)_, which can be installed via the Eclipse marketplace.
-It is also included in the _Eclipse IDE for RCP and RAP Developers_. To generate the GhidraDev 
+It is also included in the _Eclipse IDE for RCP and RAP Developers_. To generate the GhidraDev
 Eclipse projects and prepare the necessary dependencies, execute:
 
 ```
 gradle prepGhidraDev eclipse -PeclipsePDE
 ```
 
-Import the newly generated GhidraDev projects into an Eclipse that supports this type of project. 
+Import the newly generated GhidraDev projects into an Eclipse that supports this type of project.
 
-__Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's 
+**Note:** If you are getting compilation errors related to PyDev and CDT, go into Eclipse's
 preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
 
 See [Building GhidraDev](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/README.md#building)
 for instructions on how to build the GhidraDev plugin.
 
 ## Offline Development Environment
+
 Sometimes you may want to move the Ghidra repository to an offline network and do development there.
-These are the recommended steps to ensure that you not only move the source repository, but all 
+These are the recommended steps to ensure that you not only move the source repository, but all
 downloaded dependencies as well:
 
 1. `gradle -I gradle/support/fetchDependencies.gradle`
 2. `gradle -g dependencies/gradle prepdev`
-3. Move ghidra directory to different system
+3. Move ghidra directory to a different system
 4. `gradle -g dependencies/gradle buildGhidra` (on offline system)
 
 **NOTE**: The `-g` flag specifies the Gradle user home directory. The default is the `.gradle`
-directory in the user’s home directory.  Overriding it to be inside the Ghidra repository will
+directory in the user’s home directory. Overriding it to be inside the Ghidra repository will
 ensure that all maven central dependencies that were fetched during the `prepdev` task will be moved
 along with the rest of the repo.
 
 ## Running tests
+
 To run unit tests, do:
+
 ```
 gradle unitTestReport
 ```
 
 For more complex integration tests, do:
+
 ```
 gradle integrationTest
 ```
 
-For running both unit and integration tests and to generate a report do:
+To run both unit and integration tests and to generate a report do:
+
 ```
 gradle combinedTestReport
 ```
 
 ## Setup build in CI
 
-For running tests in headless mode on Linux, in a CI environment, or in Docker, first do:
+To run tests in headless mode on Linux, in a CI environment, or in Docker, first do:
+
 ```
 Xvfb :99 -nolisten tcp &
 export DISPLAY=:99
 ```
+
 This is required to make AWT happy.
 
 ## Building Supporting Data
 
-Some features of Ghidra require the curation of rather extensive databases. These include the Data 
+Some features of Ghidra require the curation of rather extensive databases. These include the Data
 Type Archives and Function ID Databases, both of which require collecting header files and libraries
 for the relevant SDKs and platforms. Much of this work is done by hand. The archives included in our
 official builds can be found in the [ghidra-data] repository.
 
 ### Building Data Type Archives
 
-This task is often done manually from the Ghidra GUI, and the archives included in our official 
-build require a fair bit of fine tuning.
-1. From the CodeBrowser, select __File -> Parse C Source__
-2. From here you can create and configure
-parsing profiles, which lists headers and pre-processor options.
+This task is often done manually from the Ghidra GUI, and the archives included in our official
+build requires a fair bit of fine-tuning.
+
+1. From the CodeBrowser, select **File -> Parse C Source**
+2. From here, you can create and configure
+   parsing profiles, which lists headers and pre-processor options.
 3. Click _Parse to File_ to create the Data Type Archive.
-4. The result can be added to an installation or source tree by copying it to 
-`Ghidra/Features/Base/data/typeinfo`.
+4. The result can be added to an installation or source tree by copying it to
+   `Ghidra/Features/Base/data/typeinfo`.
 
 ### Building FID Databases
 
-This task is often done manually from the Ghidra GUI, and the archives included in our official 
-build require a fair bit of fine tuning. You will first need to import the relevant libraries from 
+This task is often done manually from the Ghidra GUI, and the archives included in our official
+build requires a fair bit of fine-tuning. You will first need to import the relevant libraries from
 which you'd like to produce a FID database. This is often a set of libraries from an SDK. We include
 a variety of Visual Studio platforms in the official build. The official .fidb files can be found in
 the [ghidra-data][ghidra-data] repository.
 
-1. From the CodeBrowser, select __File -> Configure__
-2. Enable the "Function ID" plugins, and close the dialog.
-3. From the CodeBrowser, select __Tools -> Function ID -> Create new empty FidDb__.
+1. From the CodeBrowser, select **File -> Configure**
+2. Enable the "Function ID" plugins and close the dialog.
+3. From the CodeBrowser, select **Tools -> Function ID -> Create new empty FidDb**.
 4. Choose a destination file.
-5. Select __Tools -> Function ID -> Populate FidDb__ from programs.
+5. Select **Tools -> Function ID -> Populate FidDb** from programs.
 6. Fill out the options appropriately and click OK.
 
-If you'd like some details of our fine tuning, take a look at [building_fid.txt](Ghidra/Features/FunctionID/data/building_fid.txt).
+If you'd like some details of our fine-tuning, take a look at [building_fid.txt](Ghidra/Features/FunctionID/data/building_fid.txt).
 
 ## Debugger Development
 
@@ -215,9 +240,9 @@ Instead, we use Python3 and a protobuf-based TCP connection for back-end integra
 
 In addition to Ghidra's normal dependencies, you may want the following:
 
- * WinDbg for Windows x64
- * GDB 13 or later for Linux
- * LLDB 10 or later for macOS
+- WinDbg for Windows x64
+- GDB 13 or later for Linux
+- LLDB 10 or later for macOS
 
 The others (e.g., JNA) are handled by Gradle via Maven Central.
 
@@ -225,23 +250,23 @@ The others (e.g., JNA) are handled by Gradle via Maven Central.
 
 There are several Eclipse projects each fitting into a larger architectural picture.
 These all currently reside in the `Ghidra/Debug` directory, but will likely be re-factored into the
-`Framework` and `Feature` directories later. Each project is listed "bottom up" with a brief 
+`Framework` and `Feature` directories later. Each project is listed "bottom up" with a brief
 description and status.
 
- * ProposedUtils - a collection of utilities proposed to be moved to other respective projects.
- * AnnotationValidator - an experimental annotation processor for database access objects.
- * Framework-TraceModeling - a database schema and set of interfaces for storing machine state over
- time.
- * Framework-AsyncComm - a collection of utilities for asynchronous communication (packet formats
- and completable-future conveniences).
- * Debugger-api - the interfaces for interacting with the Debugger UI.
- * Debugger - the collection of Ghidra plugins and services comprising the Debugger UI implementation.
- * Debugger-isf - A service providing access to Ghidra's DataTypes via ISF.
- * Debugger-rmi-trace - the wire protocol, client, services, and UI components for Trace RMI, the new back-end architecture.
- * Debugger-agent-dbgeng - the connector for WinDbg (via dbgeng.dll and dbgmodel.dll) on Windows x64.
- * Debugger-agent-gdb - the connector for GDB (13 or later recommended) on UNIX and Windows.
- * Debugger-agent-lldb - the connector for LLDB (10 or later recommended) on macOS, UNIX, and Windows.
- * Debugger-jpda - an in-development connector for Java and Dalvik debugging via JDI (i.e., JDWP). This is deprecated and not yet replaced.
+- ProposedUtils - a collection of utilities proposed to be moved to other respective projects.
+- AnnotationValidator - an experimental annotation processor for database access objects.
+- Framework-TraceModeling - a database schema and set of interfaces for storing machine state over
+  time.
+- Framework-AsyncComm - a collection of utilities for asynchronous communication (packet formats
+  and completable-future conveniences).
+- Debugger-api - the interfaces for interacting with the Debugger UI.
+- Debugger - the collection of Ghidra plugins and services comprising the Debugger UI implementation.
+- Debugger-isf - A service providing access to Ghidra's DataTypes via ISF.
+- Debugger-rmi-trace - the wire protocol, client, services, and UI components for Trace RMI, the new back-end architecture.
+- Debugger-agent-dbgeng - the connector for WinDbg (via dbgeng.dll and dbgmodel.dll) on Windows x64.
+- Debugger-agent-gdb - the connector for GDB (13 or later recommended) on UNIX and Windows.
+- Debugger-agent-lldb - the connector for LLDB (10 or later recommended) on macOS, UNIX, and Windows.
+- Debugger-jpda - an in-development connector for Java and Dalvik debugging via JDI (i.e., JDWP). This is deprecated and not yet replaced.
 
 The Trace Modeling schema records machine state and markup over time.
 It rests on the same database framework as Programs, allowing trace recordings to be stored in a Ghidra project and shared via a server, if desired.
@@ -263,7 +288,7 @@ The client is also available in Java, but it depends heavily on Ghidra's code ba
 A back-end implementation may be a stand-alone executable or script that accesses the native debugger's API, or a script or plugin for the native debugger.
 It then connects to Ghidra via Trace RMI to populate the trace database with information gleaned from that API.
 It should provide a set of diagnostic commands to control and monitor that connection.
-It should also use the native API to detect session and target changes so that Ghidra's UI consistently reflects the debugging session.
+It should also use the native API to detect the session and target changes so that Ghidra's UI consistently reflects the debugging session.
 It is the back-end's responsibility to discover targets in the session and map them to traces in the proper Ghidra language.
 Typically, it examines the target's architecture and immediately creates a trace upon connection.
 
@@ -299,9 +324,9 @@ We no longer provide abstract classes that prescribe requirements.
 Instead, we just provide GDB as an example or template.
 Usually, we split our tests into three categories:
 
- * Commands
- * Methods
- * Hooks
+- Commands
+- Methods
+- Hooks
 
 The Commands tests check that the user CLI commands, conventionally implemented in `commands.py`, work correctly.
 In general, do the minimum connection setup, execute the command, and check that it produces the expected output and causes the expected effects.
@@ -312,7 +337,7 @@ These work similarly to the commands test, except that they invoke methods inste
 Check the return value (rarely applicable) and that it causes the expected effects.
 
 The Hooks tests check that the back end is able to listen for session and target changes, e.g., knowing when the target stops.
-*The test should not "cheat" by executing commands or invoking methods that should instead be triggered by the hook.*
+_The test should not "cheat" by executing commands or invoking methods that should instead be triggered by the hook._
 It should execute the minimal commands to setup the test, then trigger an event.
 It should then check that the event in turn triggered the expected effects, e.g., updating PC upon the target stopping.
 
@@ -347,7 +372,7 @@ Naturally, you'll want to test the special cases, preferably in automated tests.
 The most obvious integration path for 3rd-party emulators is to write a "connector."
 However, p-code emulation is an integral feature of the Ghidra UI, and it has a fairly accessible API.
 Namely, for interpolation between machines states recorded in a trace, and extrapolation into future machine states.
-Integration of such emulators may still be useful to you, but we recommend trying the p-code emulator to see if it suits your needs for emulation in Ghidra before pursuing integration of another emulator.
+The integration of such emulators may still be useful to you, but we recommend trying the p-code emulator to see if it suits your needs for emulation in Ghidra before pursuing the integration of another emulator.
 We also provide out-of-the-box QEMU integration via GDB.
 
 ### Contributing
@@ -357,55 +382,60 @@ When submitting help tickets and pull requests, please tag those related to the 
 ## Troubleshooting and Help
 
 ### Eclipse Issues
+
 After pulling or syncing with the latest Ghidra source repository, you might run into the following
 issues in Eclipse:
 
-* __Problem:__ _There are Eclipse compilation errors that I don't know how to deal with...I give up!_
-  * __Solution:__
-    * From Eclipse, collapse all projects in the _Package Explorer_ or _Project Explorer_ by
+- **Problem:** _There are Eclipse compilation errors that I don't know how to deal with...I give up!_
+
+  - **Solution:**
+
+    - From Eclipse, collapse all projects in the _Package Explorer_ or _Project Explorer_ by
       clicking the `⊟` icon in that frame
-    * Locate any projects in the _Package Explorer_ or _Project Explorer_ that have little `?` icons
+    - Locate any projects in the _Package Explorer_ or _Project Explorer_ that have little `?` icons
       on them (these projects should no longer be in source control)
-    * Right-click on __only them__, and then click _Delete_.
-    * __CHECK__ the _"Delete project contents on disk"_ checkbox.
-    * Click _OK_ (confirm git does not contain any new unstaged files for delete)
-    * Select all projects in the _Package Explorer_ or _Project Explorer_
-    * Right-click on them, and then click _Delete_ (this may not work if projects are not collapsed)
-    * Leave _"Delete project contents on disk"_ checkbox __UNCHECKED__
-    * Click _OK_.  You should now have an empty _Package Explorer_ or _Project Explorer_.
-    * `gradle -I gradle/support/fetchDependencies.gradle`
-    * `gradle prepdev cleanEclipse eclipse buildNatives`
-    * From Eclipse, _File -> Import..._
-    * _General | Existing Projects into Workspace_
-    * Select root directory to be your downloaded or cloned ghidra source repository
-    * Check _"Search for nested projects"_
-    * Click _Finish_
-    
+    - Right-click on **only them**, and then click _Delete_.
+    - **CHECK** the _"Delete project contents on disk"_ checkbox.
+    - Click _OK_ (confirm git does not contain any new unstaged files for delete)
+    - Select all projects in the _Package Explorer_ or _Project Explorer_
+    - Right-click on them, and then click _Delete_ (this may not work if projects are not collapsed)
+    - Leave _"Delete project contents on disk"_ checkbox **UNCHECKED**
+    - Click _OK_. You should now have an empty _Package Explorer_ or _Project Explorer_.
+    - `gradle -I gradle/support/fetchDependencies.gradle`
+    - `gradle prepdev cleanEclipse eclipse buildNatives`
+    - From Eclipse, _File -> Import..._
+    - _General | Existing Projects into Workspace_
+    - Select the root directory to be your downloaded or cloned Ghidra source repository
+    - Check _"Search for nested projects"_
+    - Click _Finish_
+
     This should get Eclipse back to a fresh state. There should never be a need to re-clone the
     repository.
 
-* __Problem:__ _The Ghidra run configurations (launchers) are missing_.
-  * __Solution:__
-    The Ghidra run configurations are kept under source control in various modules' `.launch/` 
-    directories (i.e., `Ghidra/Features/Base/.launch/`). As long as the corresponding module 
+- **Problem:** _The Ghidra run configurations (launchers) are missing_.
+
+  - **Solution:**
+    The Ghidra run configurations are kept under source control in various modules' `.launch/`
+    directories (i.e., `Ghidra/Features/Base/.launch/`). As long as the corresponding module
     project is imported into Eclipse (i.e., `Features Base`), the run configurations should be
-    available in Eclipse under _Run -> Run Configurations_.  If they aren't there and the 
-    projects are imported, try closing and reopening Eclipse. 
-    
-    __NOTE:__ Sometimes you have to launch Ghidra via the _Run -> Run Configurations..._ window one
-    time for the run configuration to show up under the favorites menu in the main Eclipse button 
+    available in Eclipse under _Run -> Run Configurations_. If they aren't there and the
+    projects are imported, try closing and reopening Eclipse.
+
+    **NOTE:** Sometimes you have to launch Ghidra via the _Run -> Run Configurations..._ window one
+    time for the run configuration to show up under the favorites menu in the main Eclipse button
     bar.
-    
-    __NOTE:__ Never address missing run configurations by manually importing them via _File -> 
-    Import... -> Run/Debug -> Launch Configurations._ This avoids the real issue and will 
+
+    **NOTE:** Never address missing run configurations by manually importing them via _File ->
+    Import... -> Run/Debug -> Launch Configurations._ This avoids the real issue and will
     inevitably result in duplicate run configurations showing up one day, which can cause
     additional confusion.
 
 ## Known Issues
-* There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
-  if a non-English system locale is being used. As a workaround, set the following environment 
-  variable prior to running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
-* If the Ghidra build is only finding versions of Python that do not have access to `pip`, it may
+
+- There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux
+  if a non-English system locale is being used. As a workaround, set the following environment
+  variable before running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
+- If the Ghidra build is only finding versions of Python that do not have access to `pip`, it may
   be necessary to perform the build from a Python [virtual environment][venv].
 
 [java]: https://dev.java
