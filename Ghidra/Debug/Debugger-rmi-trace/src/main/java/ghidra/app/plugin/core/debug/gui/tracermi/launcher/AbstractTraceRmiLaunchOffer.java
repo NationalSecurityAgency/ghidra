@@ -224,8 +224,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected void saveState(SaveState state) {
+		plugin.writeToolLaunchConfig(getConfigName(), state);
 		if (program == null) {
-			plugin.writeToolLaunchConfig(getConfigName(), state);
 			return;
 		}
 		plugin.writeProgramLaunchConfig(program, getConfigName(), state);
@@ -415,10 +415,15 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected SaveState loadState(boolean forPrompt) {
+		SaveState state = plugin.readToolLaunchConfig(getConfigName());
 		if (program == null) {
-			return plugin.readToolLaunchConfig(getConfigName());
+			return state;
 		}
-		return plugin.readProgramLaunchConfig(program, getConfigName(), forPrompt);
+		SaveState pstate = plugin.readProgramLaunchConfig(program, getConfigName(), forPrompt);
+		if (!pstate.isEmpty()) {
+			state = pstate;
+		}
+		return state;
 	}
 
 	/**
