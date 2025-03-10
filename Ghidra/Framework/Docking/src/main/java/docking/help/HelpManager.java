@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -462,7 +462,7 @@ public class HelpManager implements HelpService {
 			//		                an invokeLater() will work as long as the model loading is
 			//                      relatively quick.
 			//
-			SystemUtilities.runSwingLater(() -> displayHelp(help, owner));
+			Swing.runLater(() -> displayHelp(help, owner));
 			return;
 		}
 
@@ -596,7 +596,10 @@ public class HelpManager implements HelpService {
 			return;
 		}
 
-		((DockingHelpBroker) mainHB).reloadHelpPage(validateUrl(helpURL));
+		// Let the URL dictate where the page scrolls to.  If we do not do this, then there is an
+		// odd effect of having the page load and then jump to a previous location.
+		boolean preserveLocation = false;
+		((DockingHelpBroker) mainHB).reloadHelpPage(validateUrl(helpURL), preserveLocation);
 	}
 
 	private URL getURLForID(ID ID) {

@@ -573,7 +573,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 		/**
 		 * Returns true if there is a {@link CodeUnit} for the address
-		 * wrapped by this info.  If not, then we do not have a valid addreess.
+		 * wrapped by this info.  If not, then we do not have a valid address.
 		 * 
 		 * @return true if there is a {@link CodeUnit} for the address
 		 *         wrapped by this info.
