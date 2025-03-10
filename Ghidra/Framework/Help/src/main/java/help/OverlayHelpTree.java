@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -224,10 +224,41 @@ public class OverlayHelpTree {
 			writer.println(item.generateTOCItemTag(linkDatabase, children.isEmpty(), indentLevel));
 			if (!children.isEmpty()) {
 
+				validateChildrenSortGroups();
+
 				for (OverlayNode node : children) {
 					node.print(sourceFileID, writer, indentLevel + 1);
 				}
 				writer.println(item.generateEndTag(indentLevel));
+			}
+		}
+
+		// Note: this method will validate all TOC files for a given module, including its 
+		// dependencies.  If module A has a dependent B, A and B will be checked for re-used sort
+		// groups.  This will not get sibling TOC issues that are found at runtime.  In this case,
+		// considering module A with dependents B1 and B2, in separate unrelated modules, then if
+		// B1 and B2 share a sort group, this method will not detected that.  This is because when
+		// building either B1 or B2, the other module is not available, since it is not a dependent
+		// module.
+		private void validateChildrenSortGroups() {
+			Map<String, OverlayNode> sortPreferences = new HashMap<>();
+			for (OverlayNode child : children) {
+				String sortPreference = child.item.getSortPreference();
+				OverlayNode existingNode = sortPreferences.get(sortPreference);
+				if (existingNode != null) {
+
+					String message = """
+								Found multiple child nodes with the same 'sortgroup' value.
+								Sort values must be unique.  Duplicated value: '%s'
+								Parent: %s
+								First child: %s
+								Second child: %s
+							""".formatted(sortPreference, toString(), existingNode.toString(),
+						child.toString());
+					throw new RuntimeException(message);
+				}
+
+				sortPreferences.put(sortPreference, child);
 			}
 		}
 
@@ -256,7 +287,6 @@ public class OverlayHelpTree {
 		}
 	}
 
-	// TODO LOOKIE
 	private static final Comparator<OverlayNode> CHILD_SORT_COMPARATOR =
 		new Comparator<OverlayNode>() {
 			@Override
