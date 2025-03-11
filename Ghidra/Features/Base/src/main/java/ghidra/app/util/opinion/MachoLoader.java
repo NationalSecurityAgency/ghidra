@@ -424,6 +424,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			throws CancelledException, Exception {
 
 		for (String path : getReexportPaths(program)) {
+			monitor.checkCancelled();
 			Program programToRelease = null;
 			try {
 				Loaded<Program> match = findLibrary(loadedPrograms, path);
@@ -454,7 +455,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 						.toList();
 				Address addr = MachoProgramUtils.addExternalBlock(program,
 					reexportedSymbols.size() * 8, messageLog);
+				monitor.initialize(reexportedSymbols.size(), "Reexporting symbols...");
 				for (Symbol symbol : reexportedSymbols) {
+					monitor.increment();
 					String name = SymbolUtilities.replaceInvalidChars(symbol.getName(), true);
 					program.getSymbolTable().addExternalEntryPoint(addr);
 					program.getSymbolTable().createLabel(addr, name, SourceType.IMPORTED);
