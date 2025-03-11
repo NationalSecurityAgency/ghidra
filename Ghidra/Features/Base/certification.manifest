@@ -308,6 +308,7 @@ src/main/help/help/topics/DataPlugin/images/CreateStructureDialog.png||GHIDRA|||
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialogWithTableSelection.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/DataSelectionSettings.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/DefaultSettings.png||GHIDRA||||END|
+src/main/help/help/topics/DataPlugin/images/EditFieldDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/InstanceSettings.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/DataTypeSelectionDialog.htm||GHIDRA||||END|
 src/main/help/help/topics/DataTypeEditors/EnumEditor.htm||GHIDRA||||END|
