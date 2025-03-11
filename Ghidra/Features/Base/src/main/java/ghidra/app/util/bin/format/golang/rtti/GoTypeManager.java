@@ -42,7 +42,7 @@ public class GoTypeManager {
 		"*runtime.funcval", "func()" // alias for closure
 	);
 	private static final Pattern TYPENAME_SPLITTER_REGEX =
-		Pattern.compile("(\\*|\\[\\]|\\[[0-9.]\\])(.*)");
+		Pattern.compile("(\\*|\\[\\]|\\[[0-9.]+\\])(.*)");
 
 	static class TypeRec {
 		GoType type;
@@ -647,6 +647,10 @@ public class GoTypeManager {
 		return genericDictDT;
 	}
 
+	public Structure getGenericInterfaceDT() {
+		return goBinary.getStructureDataType(GoIface.class);
+	}
+
 	public DataType getMethodClosureType(String recvType) throws IOException {
 		//struct struct { F uintptr; R *atomic.Uint64 }
 		GoType closureType = findGoType("struct { F uintptr; R %s }".formatted(recvType));
@@ -717,7 +721,7 @@ public class GoTypeManager {
 		if (typeName.startsWith("*")) {
 			return new GoTypeBridge(typeName, dtm.getPointer(null), goBinary);
 		}
-		else if (typeName.startsWith("[]")) {
+		else if (typeName.startsWith("[]") || typeName.equals("runtime.slice")) {
 			return new GoTypeBridge(typeName, getGenericSliceDT(), goBinary);
 		}
 		else if (typeName.startsWith("map[")) {
@@ -729,6 +733,9 @@ public class GoTypeManager {
 		else if (typeName.startsWith("func(")) {
 			DataType closureType = getDefaultClosureType();
 			return new GoTypeBridge(typeName, dtm.getPointer(closureType), goBinary);
+		}
+		else if (typeName.equals("runtime.iface")) {
+			return new GoTypeBridge(typeName, getGenericInterfaceDT(), goBinary);
 		}
 		return null;
 	}
