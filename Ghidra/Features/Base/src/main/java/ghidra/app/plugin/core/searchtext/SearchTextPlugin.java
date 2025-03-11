@@ -383,7 +383,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		new ActionBuilder("Search Text", getName())
 				.menuPath("&Search", "Program &Text...")
 				.menuGroup("search", subGroup)
-				.keyBinding("ctrl shift E")
+				.keyBinding("ctrl F")
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class, true)
