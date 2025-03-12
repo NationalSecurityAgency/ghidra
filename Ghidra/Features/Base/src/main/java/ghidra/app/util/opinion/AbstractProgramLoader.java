@@ -19,12 +19,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.framework.model.*;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
@@ -138,7 +141,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 
 			// Subclasses can perform custom post-load fix-ups
-			postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+			postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog, monitor);
 
 			// Discard unneeded programs
 			Iterator<Loaded<Program>> iter = loadedPrograms.iterator();
@@ -218,6 +221,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 *
 	 * @param loadedPrograms The {@link Loaded loaded programs} to be fixed up.
 	 * @param project The {@link Project} to load into.  Could be null if there is no project.
+	 * @param loadSpec The {@link LoadSpec} to use during load.
 	 * @param options The load options.
 	 * @param messageLog The message log.
 	 * @param monitor A cancelable task monitor.
@@ -225,7 +229,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		// Default behavior is to do nothing
 	}
@@ -255,32 +259,18 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * Concatenates the given path elements to form a single path.  Empty and null path elements
-	 * are ignored.
+	 * Joins the given path elements to form a single path.  Empty and null path elements
+	 * are ignored. The returned path's separators are converted to unix-style and
+	 * windows-specific characters like {@code :} are stripped out, making the path suitable
+	 * to be a project path
 	 * 
 	 * @param pathElements The path elements to append to one another
 	 * @return A single path consisting of the given path elements appended together
+	 * @see FSUtilities#appendPath(String...)
 	 */
-	protected String concatenatePaths(String... pathElements) {
-		StringBuilder sb = new StringBuilder();
-		for (String pathElement : pathElements) {
-			if (pathElement == null || pathElement.isEmpty()) {
-				continue;
-			}
-			boolean sbEndsWithSlash =
-				sb.length() > 0 && "/\\".indexOf(sb.charAt(sb.length() - 1)) != -1;
-			boolean elementStartsWithSlash = "/\\".indexOf(pathElement.charAt(0)) != -1;
-
-			if (!sbEndsWithSlash && !elementStartsWithSlash && sb.length() > 0) {
-				sb.append("/");
-			}
-			else if (elementStartsWithSlash && sbEndsWithSlash) {
-				pathElement = pathElement.substring(1);
-			}
-			sb.append(pathElement);
-		}
-
-		return sb.toString();
+	protected String joinPaths(String... pathElements) {
+		String str = FSUtilities.appendPath(pathElements);
+		return str != null ? FilenameUtils.separatorsToUnix(str).replaceAll(":", "") : null;
 	}
 
 	/**

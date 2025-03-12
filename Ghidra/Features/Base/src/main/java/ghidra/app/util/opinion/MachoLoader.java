@@ -16,8 +16,9 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
+
+import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
@@ -255,25 +256,29 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * <p>
 	 * might be found at:
 	 * <p>
-	 * {@code /System/Library/Frameworks/Foundation.framework//Versions/C/Foundation}
+	 * {@code /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation}
 	 * <hr>
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected FSRL resolveLibraryFile(GFileSystem fs, Path libraryParentPath, String libraryName)
-			throws IOException {
-		GFile libraryParentDir =
-			fs.lookup(libraryParentPath != null ? libraryParentPath.toString() : null);
+	protected FSRL resolveLibraryFile(GFileSystem fs, String library) throws IOException {
+		FSRL fsrl = super.resolveLibraryFile(fs, library);
+		if (fsrl != null) {
+			return fsrl;
+		}
+		String libraryParentPath = FilenameUtils.getFullPath(library);
+		String libraryName = FilenameUtils.getName(library);
+		GFile libraryParentDir = fs.lookup(libraryParentPath);
 		if (libraryParentDir != null) {
 			for (GFile file : fs.getListing(libraryParentDir)) {
 				if (file.isDirectory() && file.getName().equals("Versions")) {
-					Path versionsPath = libraryParentPath.resolve(file.getName());
+					String versionsPath = joinPaths(libraryParentPath, file.getName());
 					List<GFile> versionListion = fs.getListing(file);
 					if (!versionListion.isEmpty()) {
 						GFile specificVersionDir = versionListion.get(0);
 						if (specificVersionDir.isDirectory()) {
 							return resolveLibraryFile(fs,
-								versionsPath.resolve(specificVersionDir.getName()), libraryName);
+								joinPaths(versionsPath, specificVersionDir.getName(), libraryName));
 						}
 					}
 				}
@@ -377,13 +382,17 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 */
 	@Override
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		if (shouldPerformReexports(options)) {
 			
 			List<DomainFolder> searchFolders =
 				getLibrarySearchFolders(loadedPrograms, project, options);
+
+			List<LibrarySearchPath> searchPaths =
+				getLibrarySearchPaths(loadedPrograms.getFirst().getDomainObject(), loadSpec,
+					options, messageLog, monitor);
 
 			monitor.initialize(loadedPrograms.size());
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
@@ -392,7 +401,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				Program program = loadedProgram.getDomainObject();
 				int id = program.startTransaction("Reexporting");
 				try {
-					reexport(program, loadedPrograms, searchFolders, monitor, messageLog);
+					reexport(program, loadedPrograms, searchFolders, searchPaths, options, monitor,
+						messageLog);
 				}
 				catch (Exception e) {
 					messageLog.appendException(e);
@@ -403,7 +413,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 
-		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog,
+			monitor);
 	}
 
 	/**
@@ -414,27 +425,31 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 *   reexportable symbols from
 	 * @param searchFolders A {@link List} of project folders that may contain already-loaded
 	 *   {@link Program}s with reexportable symbols
+	 * @param searchPaths A {@link List} of file system search paths that will be searched
+	 * @param options The load options
 	 * @param monitor A cancelable task monitor
 	 * @param messageLog The log
 	 * @throws CancelledException if the user cancelled the load operation
 	 * @throws IOException if there was an IO-related error during the load
 	 */
 	private void reexport(Program program, List<Loaded<Program>> loadedPrograms,
-			List<DomainFolder> searchFolders, TaskMonitor monitor, MessageLog messageLog)
+			List<DomainFolder> searchFolders, List<LibrarySearchPath> searchPaths,
+			List<Option> options, TaskMonitor monitor, MessageLog messageLog)
 			throws CancelledException, Exception {
 
 		for (String path : getReexportPaths(program)) {
 			monitor.checkCancelled();
 			Program programToRelease = null;
 			try {
-				Loaded<Program> match = findLibrary(loadedPrograms, path);
+				Loaded<Program> match = findLibraryInLoadedList(loadedPrograms, path);
 				Program lib = null;
 				if (match != null) {
 					lib = match.getDomainObject();
 				}
 				if (lib == null) {
 					for (DomainFolder searchFolder : searchFolders) {
-						DomainFile df = findLibrary(path, searchFolder);
+						DomainFile df =
+							findLibraryInProject(path, searchFolder, searchPaths, options, monitor);
 						if (df != null) {
 							DomainObject obj = df.getDomainObject(this, true, true, monitor);
 							if (obj instanceof Program p) {

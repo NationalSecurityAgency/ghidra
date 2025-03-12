@@ -127,7 +127,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 
 	@Override
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		if (shouldPerformOrdinalLookup(options)) {
@@ -148,7 +148,8 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 			}
 		}
 
-		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog,
+			monitor);
 	}
 
 	@Override

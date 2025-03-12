@@ -115,7 +115,7 @@ public class Loaded<T extends DomainObject> {
 	 *   project folder will be used.
 	 */
 	public void setProjectFolderPath(String projectFolderPath) {
-		if (projectFolderPath == null) {
+		if (projectFolderPath == null || projectFolderPath.isBlank()) {
 			projectFolderPath = "/";
 		}
 		else if (!projectFolderPath.endsWith("/")) {
