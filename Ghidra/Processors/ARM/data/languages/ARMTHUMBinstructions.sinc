@@ -2968,7 +2968,7 @@ define pcodeop setStackMode;
 # TODO: not sure about the following semantics  
   b = isThreadMode();
   if (!b) goto inst_next;
-  stackMode:1 = isUsingMainStack() == 1:1;
+  stackMode:1 = (Rn0003 & 2) != 0;
   setStackMode(stackMode);
 # TODO: should we set sp ?
 }
