@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import util.CollectionUtils;
  * 
  * <p>This class maintains the following types of highlights:
  * <UL>
- * 	<LI> Context Highlights - triggered by user clicking and some user actions; considered transient
+ * 	<LI>Context Highlights - triggered by user clicking and some user actions; considered transient
  *  	and get cleared whenever the location changes.  These highlights show state such as the
  * 		current field, impact of a variable (via a slicing action), or related syntax (such as
  * 		matching braces)
@@ -52,9 +52,10 @@ import util.CollectionUtils;
  *   	<B>These highlights apply to the function in use when the highlight is created.  Thus,
  *  	each function has a unique set of highlights that is maintained between decompilation.</B>
  *  </LI>
- *  <LI>Global Highlights - triggered by clients of the {@link DecompilerHighlightService}; they
- *  	will stay until the client of the service clears the highlight.
- *  	<B>These highlights apply to every function that is decompiler.</B>
+ *  <LI>Service Highlights - triggered by clients of the {@link DecompilerHighlightService}; they
+ *  	will be stored in this class until the client of the service clears the highlight.  These
+ *      can be global (applied to all functions) or specific to a given function.  Each user 
+ *      highlight will be called to generate highlights when a function is first decompiled.
  *  </LI>
  * </UL>
  * 
@@ -82,6 +83,10 @@ public abstract class ClangHighlightController {
 	 * A counter to track updates so that clients know when a buffered highlight request is invalid
 	 */
 	private long updateId;
+
+	// arbitrary value chosen by guessing; this can be changed if needed
+	private int maxColorBlendSize = 5;
+	private boolean isRebuilding;
 
 	private List<ClangHighlightListener> listeners = new ArrayList<>();
 
@@ -147,13 +152,51 @@ public abstract class ClangHighlightController {
 	}
 
 	/**
-	 * Returns all global highlighters installed in this controller.  The global highlighters apply
-	 * to all functions.  This is in contrast to secondary highlighters, which are
-	 * function-specific.
+	 * Returns all highlight service highlighters installed in this controller.  The global
+	 * highlighters apply to all functions.  This is in contrast to secondary highlighters, which 
+	 * are function-specific.
 	 * @return the highlighters
 	 */
-	public Set<DecompilerHighlighter> getGlobalHighlighters() {
-		return userHighlights.getGlobalHighlighters();
+	public Set<DecompilerHighlighter> getServiceHighlighters() {
+		return userHighlights.getServiceHighlighters();
+	}
+
+	public void reapplyAllHighlights(Function function) {
+		//
+		// Under normal operation, we rebuild colors as highlighters are added and removed.  Doing
+		// this for one highlighter is fast.  Doing it for a large number of highlighters can be 
+		// slow.  When rebuilding all highlights, disable color calculation until the rebuild is
+		// finished.  This allows all highlights to calculate their matches without the color 
+		// blending affecting performance.
+		//
+		isRebuilding = true;
+		Set<DecompilerHighlighter> service = getServiceHighlighters();
+		Set<DecompilerHighlighter> secondary = getSecondaryHighlighters(function);
+		Iterable<DecompilerHighlighter> it = CollectionUtils.asIterable(service, secondary);
+
+		try {
+			for (DecompilerHighlighter highlighter : it) {
+				highlighter.clearHighlights();
+				highlighter.applyHighlights();
+			}
+		}
+		finally {
+			isRebuilding = false;
+		}
+
+		// gather all highlighted tokens and then update their color
+		Set<ClangToken> allTokens = new HashSet<>();
+		it = CollectionUtils.asIterable(service, secondary);
+		for (DecompilerHighlighter highlighter : it) {
+			TokenHighlights hlTokens = userHighlights.add(highlighter);
+			for (HighlightToken hlToken : hlTokens) {
+				allTokens.add(hlToken.getToken());
+			}
+		}
+
+		for (ClangToken token : allTokens) {
+			updateHighlightColor(token);
+		}
 	}
 
 	/**
@@ -378,18 +421,23 @@ public abstract class ClangHighlightController {
 	}
 
 	private void updateHighlightColor(ClangToken t) {
+
+		if (isRebuilding) {
+			return;
+		}
+
 		// set the color to the current combined value of all highlight types
 		Color combinedColor = getCombinedColor(t);
 		t.setHighlight(combinedColor);
 	}
 
-	private void add(List<Color> colors, HighlightToken hlToken) {
+	private void add(Set<Color> colors, HighlightToken hlToken) {
 		if (hlToken != null) {
 			colors.add(hlToken.getColor());
 		}
 	}
 
-	private void add(List<Color> colors, Color c) {
+	private void add(Set<Color> colors, Color c) {
 		if (c != null) {
 			colors.add(c);
 		}
@@ -409,30 +457,25 @@ public abstract class ClangHighlightController {
 		HighlightToken primaryHl = contextHighlightTokens.get(t);
 		Color blendedHlColor = blendHighlighterColors(t);
 
-		List<Color> allColors = new ArrayList<>();
+		Set<Color> allColors = new HashSet<>();
 		add(allColors, primaryHl);
 		add(allColors, blendedHlColor);
 
-		Color blended = blend(allColors);
-		return blended;
+		return blend(allColors);
 	}
 
-	public Color blend(List<Color> colors) {
+	public Color blend(Set<Color> colors) {
 
 		if (colors.isEmpty()) {
 			return null;
 		}
 
-		if (colors.size() == 1) {
-			return CollectionUtils.any(colors);
-		}
-
-		Color lastColor = colors.get(0);
-		for (int i = 1; i < colors.size(); i++) {
-			Color nextColor = colors.get(i);
+		Iterator<Color> it = colors.iterator();
+		Color lastColor = it.next();
+		while (it.hasNext()) {
+			Color nextColor = it.next();
 			lastColor = ColorUtils.blend(lastColor, nextColor, .8f);
 		}
-
 		return lastColor;
 	}
 
@@ -443,10 +486,10 @@ public abstract class ClangHighlightController {
 			return null; // not sure if this can happen
 		}
 
-		Set<DecompilerHighlighter> global = getGlobalHighlighters();
+		Set<DecompilerHighlighter> service = getServiceHighlighters();
 		Set<DecompilerHighlighter> secondary = getSecondaryHighlighters(function);
-		Iterable<DecompilerHighlighter> it = CollectionUtils.asIterable(global, secondary);
-		Color lastColor = null;
+		Iterable<DecompilerHighlighter> it = CollectionUtils.asIterable(service, secondary);
+		Set<Color> colors = new HashSet<>();
 		for (DecompilerHighlighter highlighter : it) {
 			TokenHighlights highlights = userHighlights.get(highlighter);
 			HighlightToken hlToken = highlights.get(token);
@@ -455,15 +498,13 @@ public abstract class ClangHighlightController {
 			}
 
 			Color nextColor = hlToken.getColor();
-			if (lastColor != null) {
-				lastColor = ColorUtils.blend(lastColor, nextColor, .8f);
-			}
-			else {
-				lastColor = nextColor;
+			colors.add(nextColor);
+			if (colors.size() == maxColorBlendSize) {
+				break;
 			}
 		}
 
-		return lastColor;
+		return blend(colors);
 	}
 
 	private Function getFunction(ClangToken t) {
