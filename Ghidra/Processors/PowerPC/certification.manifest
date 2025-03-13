@@ -44,6 +44,7 @@ data/languages/ppc_64.pspec||GHIDRA||||END|
 data/languages/ppc_64_32.cspec||GHIDRA||||END|
 data/languages/ppc_64_be.slaspec||GHIDRA||||END|
 data/languages/ppc_64_be_Mac.cspec||GHIDRA||||END|
+data/languages/ppc_64_cellbe.pspec||GHIDRA||||END|
 data/languages/ppc_64_isa_altivec_be.slaspec||GHIDRA||||END|
 data/languages/ppc_64_isa_altivec_le.slaspec||GHIDRA||||END|
 data/languages/ppc_64_isa_altivec_vle_be.slaspec||GHIDRA||||END|
