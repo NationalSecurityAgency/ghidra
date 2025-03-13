@@ -676,16 +676,16 @@ public class MachoProgramBuilder {
 				monitor.increment();
 				int symbolIndex = indirectSymbols.get(i);
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				if (symbol == null) {
-					continue;
-				}
-				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-				if (name != null && name.length() > 0) {
-					Function stubFunc = createOneByteFunction(name, startAddr);
-					if (stubFunc != null) {
-						ExternalLocation loc = program.getExternalManager()
-								.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
-						stubFunc.setThunkedFunction(loc.createFunction());
+				if (symbol != null) {
+					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+					if (name != null && name.length() > 0) {
+						Function stubFunc = createOneByteFunction(name, startAddr);
+						if (stubFunc != null) {
+							ExternalLocation loc = program.getExternalManager()
+									.addExtLocation(Library.UNKNOWN, name, null,
+										SourceType.IMPORTED);
+							stubFunc.setThunkedFunction(loc.createFunction());
+						}
 					}
 				}
 

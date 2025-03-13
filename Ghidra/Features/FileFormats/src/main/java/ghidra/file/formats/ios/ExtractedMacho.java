@@ -225,8 +225,8 @@ public class ExtractedMacho {
 				List<NList> symbols = symbolTable.getSymbols();
 				byte[] packedSymbolStringTable = new byte[NList.getSize(symbols)];
 				int nlistIndex = 0;
-				int stringIndex = symbols.get(0).getSize() * symbols.size();
-				int stringIndexOrig = stringIndex;
+				int stringIndexOrig = symbols.get(0).getSize() * symbols.size();
+				int stringIndex = stringIndexOrig + 1; // First byte is always 0
 				for (NList nlist : symbols) {
 					byte[] nlistArray = nlistToArray(nlist, stringIndex - stringIndexOrig);
 					byte[] stringArray = nlist.getString().getBytes(StandardCharsets.US_ASCII);
