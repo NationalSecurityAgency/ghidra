@@ -156,7 +156,6 @@ public class LabelFieldFactory extends FieldFactory {
 
 		// check to see if there is an offcut reference to this code unit
 		// if there is, then create a "OFF" label
-		//
 		List<Address> offcuts = getOffcutReferenceAddress(cu);
 		boolean hasOffcuts = offcuts.size() > 0;
 
@@ -269,11 +268,16 @@ public class LabelFieldFactory extends FieldFactory {
 
 	private List<Address> getOffcutReferenceAddress(CodeUnit cu) {
 
+		Address startAddr = cu.getMinAddress();
+		if (!startAddr.isMemoryAddress()) {
+			return Collections.emptyList();
+		}
+
 		Program prog = cu.getProgram();
 		if (cu.getLength() == 1) {
 			return Collections.emptyList();
 		}
-		Address nextAddr = cu.getMinAddress().next();
+		Address nextAddr = startAddr.next();
 		if (nextAddr == null) {
 			return Collections.emptyList();
 		}

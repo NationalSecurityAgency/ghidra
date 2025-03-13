@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,7 +106,6 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 		ListingMergeManager listingMergeManager =
 			new ListingMergeManager(this, resultProgram, originalProgram, latestProgram, myProgram,
 				(ProgramChangeSet) latestChangeSet, (ProgramChangeSet) myChangeSet);
-		listingMergeManager.setShowListingPanel(showListingPanels);
 		mergeResolvers[idx++] = listingMergeManager;
 
 		mergeResolvers[idx++] =
@@ -404,6 +403,15 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 	 */
 	public boolean isShowingListingMergePanel() {
 		return isShowingListingMergePanel;
+	}
+
+	/**
+	 * Determine if the listing panels should be rendered.
+	 * NOTE: This is provided for testing performance reasons only.
+	 * @return true if listing panels should be rendered
+	 */
+	public boolean isShowListingPanel() {
+		return showListingPanels;
 	}
 
 }
