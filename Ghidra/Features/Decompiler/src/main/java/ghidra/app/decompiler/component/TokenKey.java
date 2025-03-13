@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,20 +22,50 @@ import ghidra.app.decompiler.ClangToken;
 
 // a key that allows us to equate tokens that are not the same instance
 class TokenKey {
+
 	private ClangToken token;
+	private int hash;
+	private int lineNumber = -1;
+	private int indexInParent = Integer.MAX_VALUE;
 
 	TokenKey(ClangToken token) {
 		this.token = Objects.requireNonNull(token);
+
+		ClangLine lineParent = token.getLineParent();
+		if (lineParent != null) {
+			lineNumber = lineParent.getLineNumber();
+		}
+
+		// have the hash be more than just the token text, otherwise, the number of hash collisions
+		// can become quite large if the user is matching on the same token text for multiple tokens
+		hash = Objects.hash(token.getText());
+		hash += lineNumber;
 	}
 
 	public TokenKey(HighlightToken t) {
 		this(t.getToken());
 	}
 
+	private int getIndexInParent() {
+		if (indexInParent == Integer.MAX_VALUE) {
+			ClangLine lineParent = token.getLineParent();
+			if (lineParent != null) {
+				indexInParent = lineParent.indexOfToken(token);
+			}
+			else {
+				indexInParent = -1;
+			}
+		}
+		return indexInParent;
+	}
+
+	public ClangToken getToken() {
+		return token;
+	}
+
 	@Override
 	public int hashCode() {
-		String text = token.getText();
-		return text == null ? 0 : text.hashCode();
+		return hash;
 	}
 
 	@Override
@@ -48,7 +78,8 @@ class TokenKey {
 			return false;
 		}
 
-		ClangToken otherToken = ((TokenKey) obj).token;
+		TokenKey otherKey = (TokenKey) obj;
+		ClangToken otherToken = otherKey.token;
 		if (token.getClass() != otherToken.getClass()) {
 			return false;
 		}
@@ -57,33 +88,11 @@ class TokenKey {
 			return false;
 		}
 
-		ClangLine lineParent = token.getLineParent();
-		ClangLine otherLineParent = otherToken.getLineParent();
-		if (!sameLines(lineParent, otherLineParent)) {
-			return false;
-		}
-		if (lineParent == null) {
+		if (lineNumber != otherKey.lineNumber) {
 			return false;
 		}
 
-		int positionInLine = lineParent.indexOfToken(token);
-		int otherPositionInLine = otherLineParent.indexOfToken(otherToken);
-		return positionInLine == otherPositionInLine;
-	}
-
-	private boolean sameLines(ClangLine l1, ClangLine l2) {
-
-		if (l1 == null) {
-			if (l2 != null) {
-				return false;
-			}
-			return true;
-		}
-		else if (l2 == null) {
-			return false;
-		}
-
-		return l1.getLineNumber() == l2.getLineNumber();
+		return getIndexInParent() == otherKey.getIndexInParent();
 	}
 
 	@Override
