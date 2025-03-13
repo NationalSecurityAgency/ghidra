@@ -384,6 +384,12 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			return;
 		}
 
+		if (w instanceof DockingDialog dialog) {
+			DialogComponentProvider component = dialog.getDialogComponent();
+			close(component);
+			return;
+		}
+
 		boolean wait = !isOnlyFrame(w);
 		runSwing(() -> w.setVisible(false), wait);
 	}
