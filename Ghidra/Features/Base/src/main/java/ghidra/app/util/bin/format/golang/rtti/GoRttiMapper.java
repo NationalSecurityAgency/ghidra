@@ -94,8 +94,8 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 	 * automatically {@link #close() closed} when the current analysis session is finished.
 	 * <p>
 	 * NOTE: Only valid during an analysis session.  If outside of an analysis session, use
-	 * {@link #getGoBinary(Program)} to create a new instance if you need to use this outside 
-	 * of an analyzer.
+	 * {@link #getGoBinary(Program, TaskMonitor)} to create a new instance if you need to use this 
+	 * outside of an analyzer.
 	 *   
 	 * @param program golang {@link Program} 
 	 * @param monitor {@link TaskMonitor}

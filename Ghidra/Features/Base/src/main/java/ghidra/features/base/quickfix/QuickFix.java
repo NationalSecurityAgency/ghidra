@@ -193,7 +193,8 @@ public abstract class QuickFix {
 
 	/**
 	 * QuickFix items can override this method if they want to do some special navigation when the
-	 * table selection changes or the user double clicks (or presses <return> key) to navigate.
+	 * table selection changes or the user double clicks (or presses {@code <return>} key) to 
+	 * navigate.
 	 * @param services the tool service provider
 	 * @param fromSelectionChange true if this call was caused by the table selection changing
 	 * @return true if this item handles the navigation and false if the QuickFix did not

@@ -273,8 +273,7 @@ public class GoTypeManager {
 	}
 
 	/**
-	 * Finds a go type by its go-type name, from the list of 
-	 * {@link #discoverGoTypes(TaskMonitor) discovered} go types.
+	 * Finds a go type by its go-type name
 	 *  
 	 * @param typeName name string
 	 * @return {@link GoType}, or null if not found
@@ -622,7 +621,7 @@ public class GoTypeManager {
 	/**
 	 * Returns category path that should be used to place recovered golang types.
 	
-	 * @param packagePath optional package path of the type (eg. "utf/utf8", or "runtime")
+	 * @param symbolName the symbol from which to get the package path
 	 * @return {@link CategoryPath} to use when creating recovered golang types
 	 */
 	public CategoryPath getCP(GoSymbolName symbolName) {
