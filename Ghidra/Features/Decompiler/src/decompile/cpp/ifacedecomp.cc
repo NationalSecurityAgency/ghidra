@@ -3372,7 +3372,7 @@ void IfcLoadTestFile::execute(istream &s)
   if (dcp->conf != (Architecture *)0)
     throw IfaceExecutionError("Load image already present");
   s >> filename;
-  dcp->testCollection = new FunctionTestCollection(status);
+  dcp->testCollection = new FunctionTestCollection(status, false);
   dcp->testCollection->loadTest(filename);
 #ifdef OPACTION_DEBUG
   dcp->conf->setDebugStream(status->fileoptr);
