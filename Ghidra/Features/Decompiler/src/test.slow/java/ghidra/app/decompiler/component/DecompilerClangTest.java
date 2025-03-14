@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,8 +45,8 @@ import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.util.AddEditDialog;
 import ghidra.framework.options.ToolOptions;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.util.Msg;
+import ghidra.program.model.listing.CommentType;
+import ghidra.program.model.listing.Function;
 
 public class DecompilerClangTest extends AbstractDecompilerTest {
 
@@ -191,7 +191,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		String linkDisplayText = "function _call_structure_A()";
 		String linkAddress = "100000e10";
 		String annotation = "{@addr " + linkAddress + " \"" + linkDisplayText + "\"}";
-		setComment(commentAddress, CodeUnit.PRE_COMMENT, "This is calling " + annotation + ".");
+		setComment(commentAddress, CommentType.PRE, "This is calling " + annotation + ".");
 
 		decompile("100000d60"); // _call_structure_A()
 
@@ -403,8 +403,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		line = 5;
 		charPosition = 2;
 		setDecompilerLocation(line, charPosition);
-
-		Msg.debug(this, "test - remove");
 
 		removeSecondaryHighlight(); // remove "printf" highlight
 
@@ -1869,6 +1867,141 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertNoFieldsSecondaryHighlighted(hlText);
 	}
 
+	@Test
+	public void testHighlightService_FunctionSpecificHighlights() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		String hlText = "_printf";
+		Color hlColor = Palette.PINK;
+		CTokenHighlightMatcher hlMatcher = token -> {
+			if (token.getText().contains(hlText)) {
+				return hlColor;
+			}
+			return null;
+		};
+		SpyCTokenHighlightMatcher spyMatcher = new SpyCTokenHighlightMatcher(hlMatcher);
+		DecompilerHighlightService hlService = getHighlightService();
+		Function function = getCurrentFunction();
+		DecompilerHighlighter highlighter = hlService.createHighlighter(function, spyMatcher);
+		highlighter.applyHighlights();
+
+		assertAllHighlighterFieldsHighlighted(spyMatcher, hlText, hlColor);
+
+		spyMatcher.clear();
+
+		// this function also has calls to '_printf'
+		decompile("100000e10"); // '_call_structure_B'
+
+		// this function should NOT show any highlights, since is not the same function that was 
+		// used to create the highlights
+		assertTrue(spyMatcher.getMatchingTokens().isEmpty());
+
+		// go back to the original function and verify the highlights are there
+		spyMatcher.clear();
+		decompile("100000d60");
+		assertAllHighlighterFieldsHighlighted(spyMatcher, hlText, hlColor);
+
+		highlighter.dispose();
+		assertNoFieldsSecondaryHighlighted(hlText);
+	}
+
+	@Test
+	public void testHighlightService_FunctionSpecificHighlights_WithGlobalHighlights() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		DecompilerHighlightService hlService = getHighlightService();
+		String globalHlText = "structure";
+		Color globalHlColor = Palette.ORANGE;
+		CTokenHighlightMatcher globalHlMatcher = token -> {
+			if (token.getText().contains(globalHlText)) {
+				return globalHlColor;
+			}
+			return null;
+		};
+		SpyCTokenHighlightMatcher globalSpyMatcher = new SpyCTokenHighlightMatcher(globalHlMatcher);
+		DecompilerHighlighter globalHighlighter = hlService.createHighlighter(globalSpyMatcher);
+		globalHighlighter.applyHighlights();
+
+		String hlText = "_printf";
+		Color hlColor = Palette.PINK;
+		CTokenHighlightMatcher hlMatcher = token -> {
+			if (token.getText().contains(hlText)) {
+				return hlColor;
+			}
+			return null;
+		};
+		SpyCTokenHighlightMatcher spyMatcher = new SpyCTokenHighlightMatcher(hlMatcher);
+		Function function = getCurrentFunction();
+		DecompilerHighlighter highlighter = hlService.createHighlighter(function, spyMatcher);
+		highlighter.applyHighlights();
+
+		assertAllHighlighterFieldsHighlighted(globalSpyMatcher, globalHlText, globalHlColor);
+		assertAllHighlighterFieldsHighlighted(spyMatcher, hlText, hlColor);
+
+		globalSpyMatcher.clear();
+		spyMatcher.clear();
+
+		// this function also has calls to '_printf' (function-specific) and 'structure' (global)
+		decompile("100000e10"); // '_call_structure_B'
+
+		// this function should NOT show function-specific highlights, since is not the same 
+		// function that was used to create the highlights, but should show global highlights
+		assertAllHighlighterFieldsHighlighted(globalSpyMatcher, globalHlText, globalHlColor);
+		assertTrue(spyMatcher.getMatchingTokens().isEmpty());
+
+		// go back to the original function and verify the highlights are there
+		globalSpyMatcher.clear();
+		spyMatcher.clear();
+		decompile("100000d60");
+		assertAllHighlighterFieldsHighlighted(globalSpyMatcher, globalHlText, globalHlColor);
+		assertAllHighlighterFieldsHighlighted(spyMatcher, hlText, hlColor);
+
+		globalHighlighter.dispose();
+		highlighter.dispose();
+		assertNoFieldsSecondaryHighlighted(globalHlText);
+		assertNoFieldsSecondaryHighlighted(hlText);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -1946,7 +2079,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	private Color getBlendedColor(Color... colors) {
 		DecompilerPanel panel = provider.getController().getDecompilerPanel();
 		ClangHighlightController highlightController = panel.getHighlightController();
-		List<Color> colorList = Arrays.asList(colors);
+		Set<Color> colorList = Set.of(colors);
 		return highlightController.blend(colorList);
 	}
 
@@ -2216,7 +2349,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 			ClangToken token = entry.getKey();
 			HighlightToken hlToken = providerHighlights.get(token);
-			assertNotNull("Provider is missing highlighted token", hlToken);
+			assertNotNull("Provider is missing highlighted token: " + token, hlToken);
 			Color color = entry.getValue();
 			Color combinedColor = getCombinedHighlightColor(theProvider, token);
 			ColorMatcher cm = new ColorMatcher(color, combinedColor);
@@ -2316,8 +2449,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		fail("Could not find Decompiler Copy action");
 	}
 
-	private void setComment(String address, int type, String comment) {
-		applyCmd(program, new SetCommentCmd(addr(address), type, comment));
+	private void setComment(String address, CommentType type, String comment) {
+		applyCmd(program, new SetCommentCmd(addr(address), type.ordinal(), comment));
 	}
 
 	private void assertNextTokenIndex(int expectedIndex, int line, int... cols) {

@@ -294,13 +294,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 //==================================================================================================
 
 	@Override
-	public DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
-		return getDecompilerPanel().createHighlighter(tm);
+	public DecompilerHighlighter createHighlighter(Function f, CTokenHighlightMatcher tm) {
+		return getDecompilerPanel().createHighlighter(f, tm);
 	}
 
 	@Override
-	public DecompilerHighlighter createHighlighter(String id, CTokenHighlightMatcher tm) {
-		return getDecompilerPanel().createHighlighter(id, tm);
+	public DecompilerHighlighter createHighlighter(String id, Function f,
+			CTokenHighlightMatcher tm) {
+		return getDecompilerPanel().createHighlighter(id, f, tm);
 	}
 
 //==================================================================================================
