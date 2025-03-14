@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -143,7 +143,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		DataType dt = dtcs[3].getDataType();
 		assertTrue(dt.isEquivalent(new FloatDataType()));
 		assertEquals("my comments", dtcs[3].getComment());
-		assertEquals("Float Field", dtcs[3].getFieldName());
+		assertEquals("Float_Field", dtcs[3].getFieldName());
 	}
 
 	@Test
@@ -201,7 +201,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		DataType dt = dtcs[5].getDataType();
 		assertTrue(dt.isEquivalent(new FloatDataType()));
 		assertEquals("my comments", dtcs[5].getComment());
-		assertEquals("Float Field", dtcs[5].getFieldName());
+		assertEquals("Float_Field", dtcs[5].getFieldName());
 	}
 
 	@Test
@@ -429,7 +429,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		assertEquals(3, barComps.length);
 
 		assertEquals(bar, coolUnionComps[5].getDataType());
-		assertEquals("My field name", coolUnionComps[5].getFieldName());
+		assertEquals("My_field_name", coolUnionComps[5].getFieldName());
 		assertEquals("My comments", coolUnionComps[5].getComment());
 
 		assertTrue(barComps[2].getDataType() instanceof BadDataType);
@@ -1168,7 +1168,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		dtcs = union.getComponents();
 		assertEquals(6, dtcs.length);
 		assertEquals("my comments", dtcs[5].getComment());
-		assertEquals("Float Field", dtcs[5].getFieldName());
+		assertEquals("Float_Field", dtcs[5].getFieldName());
 
 	}
 
@@ -1237,7 +1237,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		dtcs = union.getComponents();
 		assertEquals(4, dtcs.length);
 		assertEquals("my comments", dtcs[3].getComment());
-		assertEquals("Float Field", dtcs[3].getFieldName());
+		assertEquals("Float_Field", dtcs[3].getFieldName());
 	}
 
 	@Test
