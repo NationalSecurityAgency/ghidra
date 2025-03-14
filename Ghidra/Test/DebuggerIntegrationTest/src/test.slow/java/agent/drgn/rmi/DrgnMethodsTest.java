@@ -15,9 +15,9 @@
  */
 package agent.drgn.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeFalse;
 
 import java.util.*;
 
@@ -49,7 +49,7 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 			assertEquals(false, execute.parameters().get("to_string").getDefaultValue());
 			assertEquals("11\n",
 				execute.invoke(Map.of(
-					"cmd", "print(3+4*2)", 
+					"cmd", "print(3+4*2)",
 					"to_string", true)));
 		}
 	}
@@ -83,17 +83,17 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertEquals(1, list.size());
-				
+
 				ResourceFile rf = Application.getModuleDataFile("TestResources", CORE);
 				attachCore.invoke(Map.of("processes", processes, "core", rf.getAbsolutePath()));
 				refreshProcesses.invoke(Map.of("node", processes));
-				
+
 				list = tb.trace.getObjectManager()
 						.getValuePaths(Lifespan.at(getMaxSnap()), PathFilter.parse("Processes[]"))
 						.map(p -> p.getDestination(null))
 						.toList();
 				assertEquals(2, list.size());
-				
+
 			}
 		}
 	}
@@ -237,9 +237,9 @@ public class DrgnMethodsTest extends AbstractDrgnTraceRmiTest {
 
 				// Would be nice to control / validate the specifics
 				Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
-				TraceModule mod =
-					Unique.assertOne(all.stream().filter(m -> m.getName().contains("helloWorld")));
-				assertNotEquals(tb.addr(0), Objects.requireNonNull(mod.getBase()));
+				TraceModule mod = Unique.assertOne(
+					all.stream().filter(m -> m.getName(SNAP).contains("helloWorld")));
+				assertNotEquals(tb.addr(0), Objects.requireNonNull(mod.getBase(SNAP)));
 			}
 		}
 	}

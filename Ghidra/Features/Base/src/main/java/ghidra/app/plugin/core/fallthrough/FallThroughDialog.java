@@ -142,6 +142,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		addrField.addActionListener(e -> model.setCurrentFallthrough(addrField.getAddress()));
 		panel.add(createHomePanel(), BorderLayout.NORTH);
 		panel.add(createAddressPanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Override Fallthrough");
 		return panel;
 	}
 
@@ -151,6 +152,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		panel.add(addrField, BorderLayout.NORTH);
 		panel.add(createRadioButtonPanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Address");
 		return panel;
 	}
 
@@ -168,7 +170,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		homeButton = createButton("Home");
 		homeButton.addActionListener(e -> plugin.goTo(model.getAddress()));
-
+		homeButton.getAccessibleContext().setAccessibleName("Home");
 		JPanel innerPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(innerPanel, BoxLayout.X_AXIS);
 		innerPanel.setLayout(bl);
@@ -180,7 +182,9 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		innerPanel.add(Box.createHorizontalStrut(20));
 		innerPanel.add(instLabel);
 		innerPanel.add(Box.createHorizontalStrut(10));
+		innerPanel.getAccessibleContext().setAccessibleName("Home Content");
 		panel.add(innerPanel, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Home");
 		return panel;
 	}
 
@@ -194,19 +198,21 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		defaultRB = new GRadioButton("Default", true);
 		defaultRB.addActionListener(ev -> model.defaultSelected());
 		defaultRB.setToolTipText("Use default fallthrough address");
+		defaultRB.getAccessibleContext().setAccessibleName("Default");
 
 		userRB = new GRadioButton("User", false);
 		userRB.addActionListener(ev -> model.userSelected());
 		userRB.setToolTipText("Override default fallthrough address");
-
+		userRB.getAccessibleContext().setAccessibleName("User");
 		group.add(defaultRB);
 		group.add(userRB);
 
 		panel.add(defaultRB);
 		panel.add(userRB);
-
+		panel.getAccessibleContext().setAccessibleName("Radio Buttons");
 		JPanel outerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		outerPanel.add(panel);
+		outerPanel.getAccessibleContext().setAccessibleName("Radio Button");
 		return outerPanel;
 	}
 
@@ -218,6 +224,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		button.setMargin(noInsets);
 
 		button.setToolTipText("Go back to home address");
+		button.getAccessibleContext().setAccessibleName("Home");
 		return button;
 	}
 

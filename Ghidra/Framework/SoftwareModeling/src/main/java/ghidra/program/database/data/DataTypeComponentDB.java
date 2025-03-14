@@ -455,11 +455,8 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		return InternalDataTypeComponent.toString(this);
 	}
 
-	/**
-	 * Determine if component is an undefined filler component
-	 * @return true if undefined filler component, else false
-	 */
-	boolean isUndefined() {
+	@Override
+	public boolean isUndefined() {
 		return record == null && cachedDataType == null;
 	}
 

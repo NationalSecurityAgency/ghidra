@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -318,7 +318,7 @@ public class FrontEndPlugin extends Plugin
 					r.run();
 				}
 				else {
-					SwingUtilities.invokeLater(r);
+					Swing.runLater(r);
 				}
 			}
 		}
@@ -415,12 +415,12 @@ public class FrontEndPlugin extends Plugin
 
 	@Override
 	public void viewedProjectAdded(URL projectView) {
-		SwingUtilities.invokeLater(() -> rebuildRecentMenus());
+		Swing.runLater(() -> rebuildRecentMenus());
 	}
 
 	@Override
 	public void viewedProjectRemoved(URL projectView) {
-		SwingUtilities.invokeLater(() -> rebuildRecentMenus());
+		Swing.runLater(() -> rebuildRecentMenus());
 	}
 
 	/**
@@ -536,7 +536,7 @@ public class FrontEndPlugin extends Plugin
 	void selectFiles(final Set<DomainFile> files) {
 		// Do this later in case any of the given files are newly created, which means that the
 		// GUIs may have not yet been notified.
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			// there was a delete bug; make the set unmodifiable to catch this earlier
 			Set<DomainFile> unmodifiableFiles = Collections.unmodifiableSet(files);
 			if (dataTablePanel.isCapacityExceeded()) {
@@ -552,7 +552,7 @@ public class FrontEndPlugin extends Plugin
 	void selectFolder(final DomainFolder folder) {
 		// Do this later in case any of the given files are newly created, which means that the
 		// GUIs may have not yet been notified.
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			projectDataPanel.showTree();
 			dataTreePanel.selectDomainFolder(folder);
 		});

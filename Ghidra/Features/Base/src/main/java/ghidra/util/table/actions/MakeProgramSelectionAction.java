@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class MakeProgramSelectionAction extends DockingAction {
 	public MakeProgramSelectionAction(String owner, GhidraTable table) {
 		super("Make Selection", owner, KeyBindingType.SHARED);
 		this.table = Objects.requireNonNull(table);
-		init();
+		init(null);
 	}
 
 	/**
@@ -74,10 +74,24 @@ public class MakeProgramSelectionAction extends DockingAction {
 	 * @param table the table needed for this action
 	 */
 	public MakeProgramSelectionAction(Navigatable navigatable, String owner, GhidraTable table) {
+		this(navigatable, owner, table, null);
+	}
+
+	/**
+	 * Special constructor for clients that do not have a plugin.  Clients using this 
+	 * constructor must override {@link #makeProgramSelection(ProgramSelection, ActionContext)}.
+	 * 
+	 * @param navigatable the navigatable that will be used to make selections; may not be null
+	 * @param owner the action's owner
+	 * @param table the table needed for this action
+	 * @param menuGroup The popup menu group for this action
+	 */
+	public MakeProgramSelectionAction(Navigatable navigatable, String owner, GhidraTable table,
+			String menuGroup) {
 		super("Make Selection", owner, KeyBindingType.SHARED);
 		this.navigatable = Objects.requireNonNull(navigatable);
 		this.table = Objects.requireNonNull(table);
-		init();
+		init(menuGroup);
 	}
 
 	/**
@@ -91,12 +105,12 @@ public class MakeProgramSelectionAction extends DockingAction {
 		super("Make Selection", plugin.getName(), KeyBindingType.SHARED);
 		this.plugin = Objects.requireNonNull(plugin);
 		this.table = Objects.requireNonNull(table);
-		init();
+		init(null);
 	}
 
-	private void init() {
+	private void init(String menuGroup) {
 		setPopupMenuData(
-			new MenuData(new String[] { "Make Selection" }, Icons.MAKE_SELECTION_ICON));
+			new MenuData(new String[] { "Make Selection" }, Icons.MAKE_SELECTION_ICON, menuGroup));
 		setToolBarData(new ToolBarData(Icons.MAKE_SELECTION_ICON));
 		setDescription("Make a program selection from the selected rows");
 

@@ -1119,17 +1119,8 @@ class StructureEditorModel extends CompEditorModel {
 		}
 
 		DataTypeManager originalDtm = getOriginalDataTypeManager();
-		String baseName = "struct";
 		CategoryPath originalCategoryPath = getOriginalCategoryPath();
-		String uniqueName = viewDTM.getUniqueName(originalCategoryPath, baseName);
-		DataType conflictingDt = originalDtm.getDataType(originalCategoryPath, uniqueName);
-		while (conflictingDt != null) {
-			// pull the data type into the view data type manager with the conflicting name.
-			viewDTM.resolve(conflictingDt, DataTypeConflictHandler.DEFAULT_HANDLER);
-			// Try to get another unique name.
-			uniqueName = viewDTM.getUniqueName(originalCategoryPath, baseName);
-			conflictingDt = originalDtm.getDataType(originalCategoryPath, uniqueName);
-		}
+		String uniqueName = getUniqueDataTypeName(originalCategoryPath, "struct");
 
 		String specifiedName =
 			showNameDialog(uniqueName, originalCategoryPath, viewComposite.getName(), originalDtm);
@@ -1146,6 +1137,39 @@ class StructureEditorModel extends CompEditorModel {
 				setStatus(e.getMessage(), true);
 			}
 		});
+	}
+
+	/**
+	 * Get a unique datatype name.  Method based on the logic used by 
+	 * {@link DataTypeManager#getUniqueName(CategoryPath, String)} but 
+	 * checks both the original and view DTMs for uniqueness.
+	 * @param path category path
+	 * @param baseName datatype name
+	 * @return unique datatype name
+	 */
+	private String getUniqueDataTypeName(CategoryPath path, String baseName) {
+		int pos = baseName.lastIndexOf('_');
+		int oneUpNumber = 0;
+		String name = baseName;
+		if (pos > 0) {
+			String numString = baseName.substring(pos + 1);
+			try {
+				oneUpNumber = Integer.parseInt(numString);
+				name = baseName;
+				baseName = baseName.substring(0, pos);
+			}
+			catch (NumberFormatException e) {
+				// the number will get updated below
+			}
+		}
+		DataTypeManager originalDtm = getOriginalDataTypeManager();
+		// Pick a name not used within either original or view DTM
+		while (originalDtm.getDataType(path, name) != null ||
+			viewDTM.getDataType(path, name) != null) {
+			++oneUpNumber;
+			name = baseName + "_" + oneUpNumber;
+		}
+		return name;
 	}
 
 	private void doCreateInternalStructure(DataTypeManager dtm, CategoryPath categoryPath,

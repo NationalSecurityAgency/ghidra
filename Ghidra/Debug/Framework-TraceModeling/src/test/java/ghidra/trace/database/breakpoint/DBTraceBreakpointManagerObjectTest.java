@@ -19,8 +19,8 @@ import org.junit.Before;
 
 import db.Transaction;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 
 public class DBTraceBreakpointManagerObjectTest extends DBTraceBreakpointManagerTest {
 
@@ -55,10 +55,5 @@ public class DBTraceBreakpointManagerObjectTest extends DBTraceBreakpointManager
 		try (Transaction tx = b.startTransaction()) {
 			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
-	}
-
-	@Override
-	public void testSplitAndSet() throws Exception {
-		// This method is not supported in objects mode.
 	}
 }

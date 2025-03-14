@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,14 +85,14 @@ public class GHelpBroker extends DefaultHelpBroker {
 	}
 
 	/* Perform some shenanigans to force Java Help to reload the given URL */
-	protected void reloadHelpPage(URL url) {
+	protected void reloadHelpPage(URL url, boolean preserveLocation) {
 
 		clearContentViewer();
 		showNavigationAid(url);
 		try {
 			// Page loading is asynchronous.  Listen for the page to be loaded and then restore the
 			// users current view state.
-			htmlEditorPane.addPropertyChangeListener(new PageLocationUpdater());
+			htmlEditorPane.addPropertyChangeListener(new PageLocationUpdater(preserveLocation));
 			htmlEditorPane.setPage(url);
 		}
 		catch (IOException e) {
@@ -102,7 +102,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 	}
 
 	private void reloadHelpPage() {
-		reloadHelpPage(getCurrentURL());
+		reloadHelpPage(getCurrentURL(), true);
 	}
 
 	public void reload() {
@@ -378,8 +378,10 @@ public class GHelpBroker extends DefaultHelpBroker {
 		private URL url;
 		private int caretPosition;
 		private Rectangle viewPosition;
+		private boolean preserveLocation;
 
-		PageLocationUpdater() {
+		PageLocationUpdater(boolean preserveLocation) {
+			this.preserveLocation = preserveLocation;
 			url = getCurrentURL();
 			caretPosition = htmlEditorPane.getCaretPosition();
 			viewPosition = htmlEditorPane.getVisibleRect();
@@ -397,6 +399,10 @@ public class GHelpBroker extends DefaultHelpBroker {
 			URL currentUrl = getCurrentURL();
 			if (!Objects.equals(currentUrl, url)) {
 				return; // new page loaded; ignore
+			}
+
+			if (!preserveLocation) {
+				return;
 			}
 
 			htmlEditorPane.setCaretPosition(caretPosition);

@@ -218,6 +218,30 @@ public class MachHeader implements StructConverter {
 	}
 
 	/**
+	 * Parses only this {@link MachHeader}'s {@link DynamicLibraryCommand reexport load commands}
+	 * 
+	 * @return A {@link List} of this {@link MachHeader}'s 
+	 *   {@link DynamicLibraryCommand reexport load commands}
+	 * @throws IOException If there was an IO-related error
+	 */
+	public List<DynamicLibraryCommand> parseReexports() throws IOException {
+		List<DynamicLibraryCommand> cmds = new ArrayList<>();
+		_reader.setPointerIndex(_commandIndex);
+		for (int i = 0; i < nCmds; ++i) {
+			int type = _reader.peekNextInt();
+			if (type == LoadCommandTypes.LC_REEXPORT_DYLIB) {
+				DynamicLibraryCommand cmd = new DynamicLibraryCommand(_reader);
+				cmds.add(cmd);
+				_reader.setPointerIndex(cmd.getStartIndex());
+			}
+			type = _reader.readNextInt();
+			long size = _reader.readNextUnsignedInt();
+			_reader.setPointerIndex(_reader.getPointerIndex() + size - 8);
+		}
+		return cmds;
+	}
+
+	/**
 	 * Parses only this {@link MachHeader}'s {@link LoadCommand}s to check to see if one of the
 	 * given type exists
 	 * 

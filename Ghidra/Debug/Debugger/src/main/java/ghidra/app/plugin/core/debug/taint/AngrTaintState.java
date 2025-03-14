@@ -39,8 +39,8 @@ import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 /**
- * Container for all the decompiler elements the users "selects" via the menu.
- * This data is used to build queries.
+ * Container for all the decompiler elements the users "selects" via the menu. This data is used to
+ * build queries.
  */
 public class AngrTaintState extends AbstractTaintState {
 
@@ -158,7 +158,7 @@ public class AngrTaintState extends AbstractTaintState {
 		Collection<? extends TraceMemoryRegion> allRegions =
 			memoryManager.getRegionsAtSnap(current.getSnap());
 		for (TraceMemoryRegion region : allRegions) {
-			AddressRange range = region.getRange();
+			AddressRange range = region.getRange(current.getSnap());
 			Address min = range.getMinAddress();
 			int len = (int) range.getLength();
 			byte[] bytes = new byte[len];

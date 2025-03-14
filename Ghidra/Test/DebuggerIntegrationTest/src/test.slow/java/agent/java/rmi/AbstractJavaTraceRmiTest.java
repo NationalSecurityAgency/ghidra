@@ -90,6 +90,9 @@ public abstract class AbstractJavaTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected static final long EXT_TIMEOUT_MS = 5000;
 	protected static final long EXT_RETRY_MS = 500;
 
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
+
 	protected TraceRmiService traceRmi;
 	private Path jshellPath;
 	private Path outFile;

@@ -46,6 +46,7 @@ import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.*;
@@ -327,7 +328,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				return stub;
 			}
 			List<DockingActionIf> result = new ArrayList<>();
-			for (ActionEntry entry : target.collectActions(ActionName.BREAK_EXT, context)
+			for (ActionEntry entry : target
+					.collectActions(ActionName.BREAK_EXT, context,
+						ObjectArgumentPolicy.CURRENT_AND_RELATED)
 					.values()) {
 				result.add(new GenericSetBreakpointAction(entry));
 			}
@@ -699,7 +702,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		private boolean isVisible(TraceBreakpoint location) {
 			long snap = traceManager.getCurrentFor(trace).getSnap();
-			return location.isAlive(snap);
+			return location.isValid(snap);
 		}
 
 		private void locationAdded(TraceBreakpoint location) {
@@ -1336,7 +1339,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 		else if (ctx instanceof DebuggerBreakpointLocationsActionContext locCtx) {
 			for (TraceBreakpoint tb : locCtx.getLocations()) {
-				if (!EXECUTE_KINDS.containsAll(tb.getKinds())) {
+				long snap = traceManager.getCurrentFor(tb.getTrace()).getSnap();
+				if (!EXECUTE_KINDS.containsAll(tb.getKinds(snap))) {
 					return false;
 				}
 			}
@@ -1368,7 +1372,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 		else if (ctx instanceof DebuggerBreakpointLocationsActionContext locCtx) {
 			for (TraceBreakpoint tb : locCtx.getLocations()) {
-				String s = tb.getEmuSleigh();
+				long snap = traceManager.getCurrentFor(tb.getTrace()).getSnap();
+				String s = tb.getEmuSleigh(snap);
 				if (sleigh != null && !sleigh.equals(s)) {
 					return null;
 				}
@@ -1393,7 +1398,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		}
 		else if (ctx instanceof DebuggerBreakpointLocationsActionContext locCtx) {
 			for (TraceBreakpoint tb : locCtx.getLocations()) {
-				tb.setEmuSleigh(sleigh);
+				long snap = traceManager.getCurrentFor(tb.getTrace()).getSnap();
+				tb.setEmuSleigh(snap, sleigh);
 			}
 		}
 		else {

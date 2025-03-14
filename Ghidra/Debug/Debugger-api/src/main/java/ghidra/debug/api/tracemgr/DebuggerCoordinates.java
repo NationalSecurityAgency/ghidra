@@ -320,8 +320,9 @@ public class DebuggerCoordinates {
 				return objThread.getCanonicalPath();
 			}
 			TraceStack stack;
+			long snap = time.getSnap();
 			try {
-				stack = thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+				stack = thread.getTrace().getStackManager().getStack(thread, snap, false);
 			}
 			catch (IllegalStateException e) {
 				// Schema does not specify a stack
@@ -330,7 +331,7 @@ public class DebuggerCoordinates {
 			if (stack == null) {
 				return objThread.getCanonicalPath();
 			}
-			TraceStackFrame frame = stack.getFrame(frameLevel, false);
+			TraceStackFrame frame = stack.getFrame(snap, frameLevel, false);
 			if (frame == null) {
 				return objThread.getCanonicalPath();
 			}
@@ -406,9 +407,8 @@ public class DebuggerCoordinates {
 			return NOWHERE;
 		}
 		long snap = newTime.getSnap();
-		Lifespan threadLifespan = thread == null ? null : thread.getLifespan();
-		TraceThread newThread = threadLifespan != null && threadLifespan.contains(snap) ? thread
-				: resolveThread(trace, target, newTime);
+		boolean isThreadValid = thread == null ? false : thread.isValid(snap);
+		TraceThread newThread = isThreadValid ? thread : resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
 		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);

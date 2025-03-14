@@ -1,0 +1,100 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Launchers: Java</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger Launchers: Java</H1>
+
+    <P>Our Java Debugger is implemented using the JDK's built-in JPDA/JDI API. We currently have a
+    mode which embeds it in a <TT>jshell</TT> for CLI-based diagnostics. It is well-suited for Java
+    and Dalvik (Android VM) targets.</P>
+
+    <P>The following launchers based on the Java Debugger are included out of the box:</P>
+
+    <H2><A name="local"></A>Local</H2>
+
+    <P>The plain "<TT>java</TT>" launcher uses the native Java Debug Interface (JDI) to launch the
+    current <TT>.class</TT> file locally.</P>
+
+    <H3>Setup</H3>
+
+    <P>You must have Java installed on the local system. No additional setup is required.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target.</LI>
+
+      <LI><B>Arch</B>: The architecture (currently, either "JVM" or "Dalvik").</LI>
+
+      <LI><B>Suspend</B>: Should the target be suspended on launch.</LI>
+
+      <LI><B>Include virtual threads</B>: As described.</LI>
+
+      <LI><B>JShell cmd</B>: If desired, the path to the jshell binary that will host
+      execution.</LI>
+    </UL>
+
+    <H2><A name="attach_port"></A>Attach by JDWP</H2>
+
+    <P>This launcher uses the native Java Debug Interface (JDI) to attach to a running java program
+    launched with an open Java Debug Wire Port (JDWP) over TCP, e.g.:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:54321 Target.class
+</PRE>
+      </LI>
+    </UL>
+
+    <H3>Setup</H3>
+
+    <P>Identical to that for the java launcher.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Arch</B>: The architecture (currently, either "JVM" or "Dalvik").</LI>
+
+      <LI><B>Host</B>: The host IP where the target is running.</LI>
+
+      <LI><B>Port</B>: The open JDWP port used by the target.</LI>
+
+      <LI><B>Timeout</B>: How long to wait for a connection attempt.</LI>
+
+      <LI><B>JShell cmd</B>: If desired, the path to the jshell binary that will host
+      execution.</LI>
+    </UL>
+
+    <H2><A name="attach_pid"></A>Attach by PID</H2>
+
+    <P>This launcher uses the native Java Debug Interface (JDI) to attach to a running java program
+    launched with a Java Debug Wire Port (JDWP) identified by process id.</P>
+
+    <H3>Setup</H3>
+
+    <P>Identical to that for the java launcher.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Arch</B>: The architecture (currently, either "JVM" or "Dalvik").</LI>
+
+      <LI><B>Pid</B>: The target process's ID.</LI>
+
+      <LI><B>Timeout</B>: How long to wait for a connection attempt.</LI>
+
+      <LI><B>JShell cmd</B>: If desired, the path to the jshell binary that will host
+      execution.</LI>
+    </UL>
+  </BODY>
+</HTML>

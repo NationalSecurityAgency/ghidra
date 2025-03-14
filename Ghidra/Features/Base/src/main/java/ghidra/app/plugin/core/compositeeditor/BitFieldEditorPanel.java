@@ -751,7 +751,7 @@ public class BitFieldEditorPanel extends JPanel {
 	}
 
 	ActionContext getActionContext(MouseEvent event) {
-		if (placementComponent == event.getSource()) {
+		if (event != null && placementComponent == event.getSource()) {
 			Point p = event.getPoint();
 			return new BitFieldEditorContext(getDataTypeComponent(p),
 				placementComponent.getBitOffset(p));

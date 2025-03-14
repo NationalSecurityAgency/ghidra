@@ -38,6 +38,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.database.program.DBTraceProgramViewMemory.RegionEntry;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
@@ -440,11 +441,28 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
+	public long getCommentAddressCount() {
+		return program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter().getAddressSetView(Lifespan.at(s)))
+				.getNumAddresses();
+	}
+
+	@Override
 	public String getComment(int commentType, Address address) {
 		try (LockHold hold = program.trace.lockRead()) {
 			return program.viewport.getTop(
 				s -> program.trace.getCommentAdapter().getComment(s, address, commentType));
 		}
+	}
+
+	@Override
+	public CodeUnitComments getAllComments(Address address) {
+		CommentType[] types = CommentType.values();
+		String[] comments = new String[types.length];
+		for (CommentType type : types) {
+			comments[type.ordinal()] = getComment(type, address);
+		}
+		return new CodeUnitComments(comments);
 	}
 
 	@Override
@@ -783,13 +801,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, Address addr) {
-		TraceMemoryRegion region = program.memory.getTopRegion(
-			s -> program.trace.getMemoryManager().getRegionContaining(s, addr));
-		if (region == null) {
+		RegionEntry entry = program.memory.getRegionsByAddress().get(addr);
+		if (entry == null || !entry.range.contains(addr)) {
 			return null;
 		}
-		return fragmentsByRegion.computeIfAbsent(region,
-			r -> new DBTraceProgramViewFragment(this, r));
+		return fragmentsByRegion.computeIfAbsent(entry.region,
+			r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 	}
 
 	@Override
@@ -802,13 +819,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		TraceMemoryRegion region = program.memory.getTopRegion(
-			s -> program.trace.getMemoryManager().getLiveRegionByPath(s, name));
-		if (region == null) {
+		RegionEntry entry = program.memory.getRegionsByName().get(name);
+		if (entry == null) {
 			return null;
 		}
-		return fragmentsByRegion.computeIfAbsent(region,
-			r -> new DBTraceProgramViewFragment(this, r));
+		return fragmentsByRegion.computeIfAbsent(entry.region,
+			r -> new DBTraceProgramViewFragment(this, r, entry.snap));
 	}
 
 	@Override

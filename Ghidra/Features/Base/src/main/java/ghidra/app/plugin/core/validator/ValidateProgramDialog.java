@@ -37,6 +37,7 @@ public class ValidateProgramDialog extends DialogComponentProvider {
 
 		conditionTestPanel = new ConditionTestPanel(list);
 		conditionTestPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		conditionTestPanel.getAccessibleContext().setAccessibleName("Condition Test");
 
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 		mainPanel.setLayout(new BorderLayout());
@@ -44,12 +45,14 @@ public class ValidateProgramDialog extends DialogComponentProvider {
 		JPanel runButtonPanel = new JPanel();
 		runButtonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
 		runButtonPanel.setLayout(new FlowLayout());
+		runButtonPanel.getAccessibleContext().setAccessibleName("Run Tests");
 		JButton runTestsButton = new JButton("Run Validators");
 		runTestsButton.addActionListener(e -> conditionTestPanel.runTests());
+		runTestsButton.getAccessibleContext().setAccessibleName("Run Tests");
 		runButtonPanel.add(runTestsButton);
 		mainPanel.add(conditionTestPanel, BorderLayout.CENTER);
 		mainPanel.add(runButtonPanel, BorderLayout.SOUTH);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Validate Program");
 		addWorkPanel(mainPanel);
 		addOKButton();
 		setOkEnabled(true);

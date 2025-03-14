@@ -28,8 +28,8 @@ import docking.widgets.fieldpanel.field.*;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
 import ghidra.app.util.NamespaceUtils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.StringUtilities;
@@ -438,6 +438,51 @@ public class CommentUtils {
 
 	/*package*/ static Set<String> getAnnotationNames() {
 		return Collections.unmodifiableSet(getAnnotatedStringHandlerMap().keySet());
+	}
+
+	/**
+	 * Returns a list of offcut comments for the given code unit. All the offcut comments from 
+	 * possibly multiple addresses will be combined into a single list of comment lines.
+	 * @param cu the code unit to get offcut comments for
+	 * @param type the type of comment to retrieve (EOL, PRE, PLATE, POST)
+	 * @return a list of all offcut comments for the given code unit.
+	 */
+	public static List<String> getOffcutComments(CodeUnit cu, CommentType type) {
+		// internal data items handle EOL comments, so ignore EOL comments on items that
+		// have sub-components
+		if (type == CommentType.EOL && cu instanceof Data data) {
+			if (data.getNumComponents() > 0) {
+				return Collections.emptyList();
+			}
+		}
+
+		Address start = cu.getMinAddress().next();
+		Address end = cu.getMaxAddress();
+		if (start == null || start.compareTo(end) > 0) {
+			return Collections.emptyList();
+		}
+
+		Listing listing = cu.getProgram().getListing();
+		AddressSet addrSet = new AddressSet(start, cu.getMaxAddress());
+		AddressIterator it = listing.getCommentAddressIterator(type, addrSet, true);
+
+		if (!it.hasNext()) {
+			return Collections.emptyList();
+		}
+
+		List<String> offcutComments = new ArrayList<>();
+
+		while (it.hasNext()) {
+			Address next = it.next();
+			String comment = listing.getComment(type, next);
+			if (comment != null) {
+				String[] lines = StringUtilities.toLines(comment);
+				for (String line : lines) {
+					offcutComments.add(line);
+				}
+			}
+		}
+		return offcutComments;
 	}
 
 }

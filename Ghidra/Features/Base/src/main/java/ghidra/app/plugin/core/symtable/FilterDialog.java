@@ -97,6 +97,7 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 
 	private JComponent buildWorkPanel() {
 		advancedFilterCheckbox = new GCheckBox("Use Advanced Filters");
+		advancedFilterCheckbox.getAccessibleContext().setAccessibleName("Advanced Filter");
 		advancedFilterCheckbox.setToolTipText(HTMLUtilities.toHTML(
 			"Show advance filters.  Advanced filters eliminate all appropriate\n" +
 				"symbols that don't match the filter.  Selecting mutually exclusive filters\n" +
@@ -116,9 +117,9 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 		});
 
 		JPanel mainPanel = new JPanel(new VerticalLayout(15));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Symtable Filter");
 		JPanel filterPanel = new JPanel(new BorderLayout());
-
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		JPanel leftPanel = new JPanel(new VerticalLayout(20));
 		leftPanel.add(buildSourcePanel());
 		leftPanel.add(buildTypesPanel());
@@ -150,9 +151,11 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 			checkBoxMap.put(sourceName, cb);
 			cb.addItemListener(sourceItemListener);
 			cb.setToolTipText(HTMLUtilities.toHTML(filter.getFilterDescription(sourceName)));
+			cb.getAccessibleContext().setAccessibleName(sourceName);
 			panel.add(cb);
 		}
 		panel.setBorder(BorderFactory.createTitledBorder("Symbol Source"));
+		panel.getAccessibleContext().setAccessibleName("Source");
 		return panel;
 	}
 
@@ -161,7 +164,7 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 
 		JPanel infoPanel = new JPanel(new HorizontalLayout(20));
 		Icon icon = Icons.INFO_ICON;
-
+		infoPanel.getAccessibleContext().setAccessibleName("Info");
 		infoPanel.add(new GIconLabel(icon));
 		infoPanel.add(new GHtmlLabel(
 			HTMLUtilities.toHTML("Advanced filters do not apply to all symbol types.\n" +
@@ -173,6 +176,7 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 				"symbol types are disabled.")));
 
 		JPanel filtersPanel = new JPanel(new GridLayout(0, 2));
+		filtersPanel.getAccessibleContext().setAccessibleName("Filters");
 //		Border outer = BorderFactory.createEmptyBorder(0,40,0,0);
 //		Border inner = BorderFactory.createTitledBorder("Advanced Filters");
 		filtersPanel.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
@@ -182,12 +186,14 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 			checkBoxMap.put(filterName, cb);
 			cb.addItemListener(checkboxListener);
 			cb.setToolTipText(HTMLUtilities.toHTML(filter.getFilterDescription(filterName)));
+			cb.getAccessibleContext().setAccessibleName(filterName);
 			filtersPanel.add(cb);
 		}
 		advancedFilterPanel = new JPanel(new VerticalLayout(10));
 		advancedFilterPanel.setBorder(BorderFactory.createTitledBorder("Advanced Filters"));
 		advancedFilterPanel.add(filtersPanel);
 		advancedFilterPanel.add(infoPanel);
+		advancedPanel.getAccessibleContext().setAccessibleName("Advanced");
 		return advancedPanel;
 	}
 
@@ -199,6 +205,7 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 		panel.add(buildLabelTypesPanel("Non-label Symbols", filter.getNonLabelTypeFilterNames()),
 			BorderLayout.EAST);
 		panel.add(buildSelectButtonPanel(), BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("Types");
 		return panel;
 	}
 
@@ -235,12 +242,15 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 		panel.add(innerPanel);
 
 		JButton b1 = new JButton("Select All");
+		b1.getAccessibleContext().setAccessibleName("Select All");
 		JButton b2 = new JButton("Clear All");
+		b2.getAccessibleContext().setAccessibleName("Clear All");
 		b1.addActionListener(e -> setTypeFiltersActive(true));
 		b2.addActionListener(e -> setTypeFiltersActive(false));
 		innerPanel.add(b1);
 		innerPanel.add(b2);
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+		panel.getAccessibleContext().setAccessibleName("Select Button");
 		return panel;
 
 	}
@@ -249,6 +259,7 @@ public class FilterDialog extends ReusableDialogComponentProvider {
 		JPanel panel = new JPanel(new MiddleLayout());
 		JPanel panel2 = new JPanel(new GridLayout(1, 0, 20, 0));
 		JButton button1 = new JButton("Reset Filters");
+		button1.getAccessibleContext().setAccessibleName("Reset Filters");
 		button1.addActionListener(e -> {
 			setStatusText("");
 			filter.setFilterDefaults();

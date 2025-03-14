@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -152,73 +152,29 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testSetGetName() throws Exception {
 		addBreakpoints();
-		assertEquals("Breakpoints[0]", breakMain.getName());
+		assertEquals("Breakpoints[0]", breakMain.getName(0));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.setName("bpt 0");
-			assertEquals("bpt 0", breakMain.getName());
+			breakMain.setName(0, "bpt 0");
+			assertEquals("bpt 0", breakMain.getName(0));
 		}
-		assertEquals("bpt 0", breakMain.getName());
+		assertEquals("bpt 0", breakMain.getName(0));
 	}
 
 	@Test
 	public void testGetThreads() throws Exception {
 		addBreakpoints();
-		assertEquals(Set.of(thread), Set.copyOf(breakMain.getThreads()));
-		assertEquals(Set.of(thread), Set.copyOf(breakVarA.getThreads()));
-		assertEquals(Set.of(thread), Set.copyOf(breakVarB.getThreads()));
+		assertEquals(Set.of(thread), Set.copyOf(breakMain.getThreads(0)));
+		assertEquals(Set.of(thread), Set.copyOf(breakVarA.getThreads(0)));
+		assertEquals(Set.of(thread), Set.copyOf(breakVarB.getThreads(0)));
 	}
 
 	@Test
 	public void testGetRange() throws Exception {
 		addBreakpoints();
-		assertEquals(b.addr(0x00400000), breakMain.getMinAddress());
-		assertEquals(b.addr(0x00400000), breakMain.getMaxAddress());
-		assertEquals(b.range(0x00400000, 0x00400000), breakMain.getRange());
-		assertEquals(1, breakMain.getLength());
-	}
-
-	@Test
-	public void testGetLifespan() throws Exception {
-		addBreakpoints();
-		assertEquals(0, breakMain.getPlacedSnap());
-		assertEquals(10, breakMain.getClearedSnap());
-		assertEquals(Lifespan.span(0, 10), breakMain.getLifespan());
-	}
-
-	@Test
-	public void testSetCleared() throws Exception {
-		addBreakpoints();
-		try (Transaction tx = b.startTransaction()) {
-			breakMain.setClearedSnap(5);
-			assertEquals(5, breakMain.getClearedSnap());
-		}
-		assertEquals(0, breakMain.getPlacedSnap());
-		assertEquals(5, breakMain.getClearedSnap());
-		assertEquals(Lifespan.span(0, 5), breakMain.getLifespan());
-	}
-
-	@Test
-	public void testSplitAndSet() throws Exception {
-		addBreakpoints();
-
-		TraceBreakpoint disMain;
-		try (Transaction tx = b.startTransaction()) {
-			TraceBreakpoint oopsMain =
-				breakMain.splitAndSet(0, true, Set.of(TraceBreakpointKind.HW_EXECUTE));
-			assertSame(breakMain, oopsMain);
-			disMain =
-				breakMain.splitAndSet(6, false, Set.of(TraceBreakpointKind.HW_EXECUTE));
-			assertNotSame(breakMain, disMain);
-			TraceBreakpoint sameDis =
-				disMain.splitAndSet(8, false, Set.of(TraceBreakpointKind.HW_EXECUTE));
-			assertSame(disMain, sameDis);
-		}
-
-		assertTrue(breakMain.isEnabled(0));
-		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds()));
-
-		assertFalse(disMain.isEnabled(6));
-		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(disMain.getKinds()));
+		assertEquals(b.addr(0x00400000), breakMain.getMinAddress(0));
+		assertEquals(b.addr(0x00400000), breakMain.getMaxAddress(0));
+		assertEquals(b.range(0x00400000, 0x00400000), breakMain.getRange(0));
+		assertEquals(1, breakMain.getLength(0));
 	}
 
 	@Test
@@ -226,12 +182,12 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		addBreakpoints();
 		assertTrue(breakMain.isEnabled(0));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.setEnabled(false);
+			breakMain.setEnabled(0, false);
 			assertFalse(breakMain.isEnabled(0));
 		}
 		assertFalse(breakMain.isEnabled(0));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.setEnabled(true);
+			breakMain.setEnabled(0, true);
 			assertTrue(breakMain.isEnabled(0));
 		}
 		assertTrue(breakMain.isEnabled(0));
@@ -240,23 +196,23 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testSetGetKinds() throws Exception {
 		addBreakpoints();
-		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), Set.copyOf(breakMain.getKinds()));
+		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.setKinds(Set.of(TraceBreakpointKind.HW_EXECUTE));
-			assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds()));
+			breakMain.setKinds(0, Set.of(TraceBreakpointKind.HW_EXECUTE));
+			assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
 		}
-		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds()));
+		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds(0)));
 	}
 
 	@Test
 	public void testSetGetComment() throws Exception {
 		addBreakpoints();
-		assertEquals("main", breakMain.getComment());
+		assertEquals("main", breakMain.getComment(0));
 		try (Transaction tx = b.startTransaction()) {
-			breakMain.setComment("WinMain");
-			assertEquals("WinMain", breakMain.getComment());
+			breakMain.setComment(0, "WinMain");
+			assertEquals("WinMain", breakMain.getComment(0));
 		}
-		assertEquals("WinMain", breakMain.getComment());
+		assertEquals("WinMain", breakMain.getComment(0));
 	}
 
 	protected static class InvalidBreakpointMatcher extends BaseMatcher<TraceBreakpoint> {

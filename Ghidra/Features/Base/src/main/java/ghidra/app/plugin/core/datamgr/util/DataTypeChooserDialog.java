@@ -110,9 +110,10 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		messageLabel = new GLabel("Choose the data type you wish to use.");
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 2));
+		messageLabel.getAccessibleContext().setAccessibleName("Message");
 		panel.add(messageLabel, BorderLayout.NORTH);
 		panel.add(this.tree, BorderLayout.CENTER);
-
+		panel.getAccessibleContext().setAccessibleName("Data Type Chooser");
 		return panel;
 	}
 

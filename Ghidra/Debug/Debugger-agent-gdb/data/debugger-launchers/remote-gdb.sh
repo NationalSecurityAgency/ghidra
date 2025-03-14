@@ -24,7 +24,7 @@
 #@desc </body></html>
 #@menu-group remote
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb_remote
+#@help gdb#remote
 #@enum TargetType:str remote extended-remote
 #@enum Endian:str auto big little
 #@env OPT_TARGET_TYPE:TargetType="remote" "Target" "The type of remote target"

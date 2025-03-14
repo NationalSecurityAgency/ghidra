@@ -32,7 +32,6 @@ import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
 import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTraceObjectInterface {
 
@@ -128,10 +127,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	private final DBTraceObject object;
 	private final RegionChangeTranslator translator;
 
-	// Keep copies here for when the object gets invalidated
-	private AddressRange range;
-	private Lifespan lifespan;
-
 	public DBTraceObjectMemoryRegion(DBTraceObject object) {
 		this.object = object;
 
@@ -154,101 +149,44 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setName(computeSpan(), name);
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
-	public String getName() {
-		TraceObjectValue value =
-			object.getValue(getCreationSnap(), TraceObjectInterface.KEY_DISPLAY);
+	public String getName(long snap) {
+		TraceObjectValue value = object.getValue(snap, TraceObjectInterface.KEY_DISPLAY);
 		return value == null ? "" : (String) value.getValue();
-	}
-
-	@Override
-	public void setLifespan(Lifespan newLifespan) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			TraceObjectInterfaceUtils.setLifespan(TraceObjectMemoryRegion.class, object,
-				newLifespan);
-			this.lifespan = newLifespan;
-		}
-	}
-
-	@Override
-	public Lifespan getLifespan() {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			Lifespan computed = computeSpan();
-			if (computed != null) {
-				lifespan = computed;
-			}
-			return lifespan;
-		}
-	}
-
-	@Override
-	public void setCreationSnap(long creationSnap) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(creationSnap, getDestructionSnap()));
-		}
-	}
-
-	@Override
-	public long getCreationSnap() {
-		return computeMinSnap();
-	}
-
-	@Override
-	public void setDestructionSnap(long destructionSnap) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(getCreationSnap(), destructionSnap));
-		}
-	}
-
-	@Override
-	public long getDestructionSnap() {
-		return computeMaxSnap();
 	}
 
 	@Override
 	public void setRange(Lifespan lifespan, AddressRange newRange) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TraceObjectMemoryRegion.KEY_RANGE, newRange);
-			this.range = newRange;
 		}
 	}
 
 	@Override
-	public void setRange(AddressRange newRange) {
+	public void setRange(long snap, AddressRange newRange) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(computeSpan(), newRange);
+			setRange(Lifespan.nowOn(snap), newRange);
 		}
 	}
 
 	@Override
 	public AddressRange getRange(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			// TODO: Caching without regard to snap seems bad
-			return range = TraceObjectInterfaceUtils.getValue(object, snap,
-				TraceObjectMemoryRegion.KEY_RANGE, AddressRange.class, range);
+			return TraceObjectInterfaceUtils.getValue(object, snap,
+				TraceObjectMemoryRegion.KEY_RANGE, AddressRange.class, null);
 		}
 	}
 
 	@Override
-	public AddressRange getRange() {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			if (object.getLife().isEmpty()) {
-				return range;
-			}
-			return getRange(getCreationSnap());
-		}
-	}
-
-	@Override
-	public void setMinAddress(Address min) {
+	public void setMinAddress(long snap, Address min) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(DBTraceUtils.toRange(min, getMaxAddress()));
+			setRange(Lifespan.nowOn(snap), DBTraceUtils.toRange(min, getMaxAddress(snap)));
 		}
 	}
 
@@ -259,15 +197,9 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public Address getMinAddress() {
-		AddressRange range = getRange();
-		return range == null ? null : range.getMinAddress();
-	}
-
-	@Override
-	public void setMaxAddress(Address max) {
+	public void setMaxAddress(long snap, Address max) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(DBTraceUtils.toRange(getMinAddress(), max));
+			setRange(Lifespan.nowOn(snap), DBTraceUtils.toRange(getMinAddress(snap), max));
 		}
 	}
 
@@ -278,21 +210,16 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public Address getMaxAddress() {
-		AddressRange range = getRange();
-		return range == null ? null : range.getMaxAddress();
-	}
-
-	@Override
-	public void setLength(long length) throws AddressOverflowException {
+	public void setLength(long snap, long length) throws AddressOverflowException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setRange(new AddressRangeImpl(getMinAddress(), length));
+			setRange(Lifespan.nowOn(snap), new AddressRangeImpl(getMinAddress(snap), length));
 		}
 	}
 
 	@Override
-	public long getLength() {
-		return getRange().getLength();
+	public long getLength(long snap) {
+		AddressRange range = getRange(snap);
+		return range == null ? 0 : range.getLength();
 	}
 
 	protected static String keyForFlag(TraceMemoryFlag flag) {
@@ -333,23 +260,23 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void setFlags(Collection<TraceMemoryFlag> flags) {
+	public void setFlags(long snap, Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setFlags(getLifespan(), flags);
+			setFlags(Lifespan.nowOn(snap), flags);
 		}
 	}
 
 	@Override
-	public void addFlags(Collection<TraceMemoryFlag> flags) {
+	public void addFlags(long snap, Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			addFlags(getLifespan(), flags);
+			addFlags(Lifespan.nowOn(snap), flags);
 		}
 	}
 
 	@Override
-	public void clearFlags(Collection<TraceMemoryFlag> flags) {
+	public void clearFlags(long snap, Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			clearFlags(getLifespan(), flags);
+			clearFlags(Lifespan.nowOn(snap), flags);
 		}
 	}
 
@@ -366,22 +293,22 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public Set<TraceMemoryFlag> getFlags() {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			return getFlags(getCreationSnap());
+	public void delete() {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.ALL);
 		}
 	}
 
 	@Override
-	public void delete() {
+	public void remove(long snap) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.removeTree(computeSpan());
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		return object.getCanonicalParent(snap) != null;
+		return object.isAlive(snap);
 	}
 
 	@Override

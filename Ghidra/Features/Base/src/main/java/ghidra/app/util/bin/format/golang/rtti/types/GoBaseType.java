@@ -35,7 +35,7 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
  * </pre>
  */
 @StructureMapping(structureName = {"runtime._type", "internal/abi.Type"})
-public class GoBaseType {
+public class GoBaseType implements StructureVerifier {
 
 	@ContextField
 	private StructureContext<GoBaseType> context;
@@ -139,6 +139,12 @@ public class GoBaseType {
 	 */
 	@Markup
 	public GoType getPtrToThis() throws IOException {
-		return programContext.resolveTypeOff(context.getStructureStart(), ptrToThis);
+		return programContext.getGoTypes().resolveTypeOff(context.getStructureStart(), ptrToThis);
+	}
+
+	@Override
+	public boolean isValid() {
+		return 0 <= ptrdata && ptrdata <= size && getKind() != GoKind.invalid &&
+			GoTypeFlag.isValid(tflag);
 	}
 }

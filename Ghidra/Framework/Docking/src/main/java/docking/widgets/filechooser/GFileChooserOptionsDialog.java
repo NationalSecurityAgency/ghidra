@@ -48,15 +48,17 @@ class GFileChooserOptionsDialog extends ReusableDialogComponentProvider {
 		JPanel panel = new JPanel(new PairLayout());
 
 		showDotFilesCheckBox = new GCheckBox();
+		showDotFilesCheckBox.getAccessibleContext().setAccessibleName("Show Dot Files");
 		showDotFilesCheckBox.setSelected(true);
 
 		JLabel label = new GLabel("Show '.' files");
+		label.getAccessibleContext().setAccessibleName("Show Files");
 		label.setToolTipText("When toggled on the file chooser will show files " +
 			"with names that begin with a '.' character");
 
 		panel.add(showDotFilesCheckBox);
 		panel.add(label);
-
+		panel.getAccessibleContext().setAccessibleName("GFile Chooser Options");
 		return panel;
 	}
 

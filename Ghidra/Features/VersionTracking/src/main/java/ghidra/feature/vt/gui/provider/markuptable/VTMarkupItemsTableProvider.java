@@ -145,16 +145,19 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	private JComponent createComponent() {
 
 		markupPanel = new JPanel(new BorderLayout());
+		markupPanel.getAccessibleContext().setAccessibleName("Markup");
 		markupItemsTable = createMarkupItemTable();
 		markupItemsTablePanel = new JPanel(new BorderLayout());
-
+		markupItemsTablePanel.getAccessibleContext().setAccessibleName("Markup Item Table");
 		JPanel filterAreaPanel = createFilterArea();
+		filterAreaPanel.getAccessibleContext().setAccessibleName("Filter Area");
 		markupItemsTablePanel.add(tablePanel, BorderLayout.CENTER);
 		markupItemsTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
 
 		functionComparisonPanel = new FunctionComparisonPanel(tool, getOwner());
 		addSpecificCodeComparisonActions();
 		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
+		functionComparisonPanel.getAccessibleContext().setAccessibleName("Function Comparison");
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 		ListingCodeComparisonPanel dualListingPanel = functionComparisonPanel.getDualListingPanel();
 		if (dualListingPanel != null) {
@@ -178,6 +181,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, markupItemsTablePanel,
 			functionComparisonPanel);
 		splitPane.setResizeWeight(0.4);
+		splitPane.getAccessibleContext().setAccessibleName("Markup Items and Function Comparison");
 		markupPanel.add(splitPane, BorderLayout.CENTER);
 
 		markupItemsTable.setAccessibleNamePrefix("Markup Items");
@@ -316,10 +320,11 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 
 		// ...account for the scroll bar width
 		JScrollBar scrollBar = new JScrollBar(Adjustable.VERTICAL);
+		scrollBar.getAccessibleContext().setAccessibleName("Markup Item Table");
 		Dimension scrollBarSize = scrollBar.getMinimumSize();
 		size.width = preferredSize.width + scrollBarSize.width;
 		table.setPreferredScrollableViewportSize(size);
-
+		table.getAccessibleContext().setAccessibleName("Markup Item");
 		return table;
 	}
 
@@ -405,9 +410,11 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		JPanel parentPanel = new JPanel(new BorderLayout());
 
 		JComponent nameFilterPanel = createTextFilterPanel();
+		nameFilterPanel.getAccessibleContext().setAccessibleName("Name Filter");
 		parentPanel.add(nameFilterPanel, BorderLayout.CENTER);
 
 		ancillaryFilterButton = new JButton(FILTER_ICON);
+		ancillaryFilterButton.getAccessibleContext().setAccessibleName("Ancillary");
 		ancillaryFilterButton
 				.addActionListener(e -> tool.showDialog(ancillaryFilterDialog, component));
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
@@ -423,7 +430,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(parentPanel, filterHelpLocation);
 		helpService.registerHelp(ancillaryFilterButton, filterHelpLocation);
-
+		parentPanel.getAccessibleContext().setAccessibleName("Filter Area");
 		return parentPanel;
 	}
 

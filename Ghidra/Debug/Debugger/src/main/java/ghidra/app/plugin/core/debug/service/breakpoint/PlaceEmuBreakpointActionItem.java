@@ -112,8 +112,8 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 			TraceBreakpoint bpt = trace.getBreakpointManager()
 					.addBreakpoint(computePath(), Lifespan.at(snap),
 						BreakpointActionItem.range(address, length), Set.of(), kinds, false, null);
-			bpt.setName(createName(address));
-			bpt.setEmuSleigh(emuSleigh);
+			bpt.setName(snap, createName(address));
+			bpt.setEmuSleigh(snap, emuSleigh);
 			return AsyncUtils.nil();
 		}
 		catch (DuplicateNameException e) {

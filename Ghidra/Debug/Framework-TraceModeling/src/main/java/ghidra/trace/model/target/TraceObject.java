@@ -192,6 +192,14 @@ public interface TraceObject extends TraceUniqueObject {
 	boolean isAlive(long snap);
 
 	/**
+	 * Check if the object is alive at all in the given span
+	 * 
+	 * @param span the span
+	 * @return true if alive, false if not
+	 */
+	boolean isAlive(Lifespan span);
+
+	/**
 	 * Inserts this object at its canonical path for the given lifespan
 	 * 
 	 * <p>

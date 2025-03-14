@@ -112,7 +112,7 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 
 		newMainPanel.setLayout(new BorderLayout());
 		newMainPanel.add(buildSearchLayout(), BorderLayout.NORTH);
-
+		newMainPanel.getAccessibleContext().setAccessibleName("Scalar Search");
 		return newMainPanel;
 	}
 
@@ -124,7 +124,7 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 
 		finalPanel.add(searchLayout, BorderLayout.NORTH);
 		finalPanel.add(buildSelectionPanel(), BorderLayout.SOUTH);
-
+		finalPanel.getAccessibleContext().setAccessibleName("Search");
 		return finalPanel;
 	}
 
@@ -143,10 +143,11 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setBorder(new TitledBorder("Search Scope"));
-
+		panel.getAccessibleContext().setAccessibleName("Search Choice");
 		searchSelectionRadioButton = new GRadioButton("Search Selection");
+		searchSelectionRadioButton.getAccessibleContext().setAccessibleName("Search Selection");
 		searchAllRadioButton = new GRadioButton("Search All");
-
+		searchAllRadioButton.getAccessibleContext().setAccessibleName("Search All");
 		searchSelectionRadioButton.setToolTipText("Search only the current selection");
 		searchAllRadioButton.setToolTipText("Search the entire program");
 
@@ -173,7 +174,7 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(selectionPanel,
 			new HelpLocation(plugin.getName(), "Scalar_Selection_Scope"));
-
+		selectionPanel.getAccessibleContext().setAccessibleName("Selection");
 		return selectionPanel;
 	}
 
@@ -182,6 +183,7 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 		beginSearchButton = new JButton("Search");
 		beginSearchButton.setMnemonic('B');
 		beginSearchButton.addActionListener(ev -> searchCallback());
+		beginSearchButton.getAccessibleContext().setAccessibleName("Begin Search");
 		this.addButton(beginSearchButton);
 	}
 
@@ -260,7 +262,9 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 			setBorder(new TitledBorder("Search Type"));
 
 			searchAllScalars = new GRadioButton("Scalars in Range:");
+			searchAllScalars.getAccessibleContext().setAccessibleName("Search All Scalars");
 			searchAScalar = new GRadioButton("Specific Scalar:");
+			searchAScalar.getAccessibleContext().setAccessibleName("Search Specific Scalar");
 
 			searchAllScalars.setToolTipText(
 				"Search program (or selection) for scalar operands or defined scalar data types with values in the following range:");
@@ -290,17 +294,18 @@ public class ScalarSearchDialog extends DialogComponentProvider {
 			JPanel allScalarsPanel = new JPanel();
 			allScalarsPanel.setLayout(new BorderLayout());
 			allScalarsPanel.add(searchAllScalars, BorderLayout.NORTH);
-
+			allScalarsPanel.getAccessibleContext().setAccessibleName("All Scalars");
 			rangeFilter = new RangeFilter();
+			rangeFilter.getAccessibleContext().setAccessibleName("All Scalar");
 			allScalarsPanel.add(Box.createHorizontalStrut(18), BorderLayout.WEST);
 			allScalarsPanel.add(rangeFilter, BorderLayout.CENTER);
 
 			JPanel aScalarPanel = new JPanel();
 			aScalarPanel.setLayout(new BorderLayout());
 			aScalarPanel.add(searchAScalar, BorderLayout.NORTH);
-
+			aScalarPanel.getAccessibleContext().setAccessibleName("Specifc Scalar");
 			exactValueField = new IntegerTextField(8);
-
+			exactValueField.getComponent().getAccessibleContext().setAccessibleName("Exact Value");
 			aScalarPanel.add(Box.createHorizontalStrut(18), BorderLayout.WEST);
 			aScalarPanel.add(exactValueField.getComponent(), BorderLayout.CENTER);
 

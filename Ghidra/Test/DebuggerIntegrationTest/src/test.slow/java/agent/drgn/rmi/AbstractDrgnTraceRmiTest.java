@@ -15,8 +15,9 @@
  */
 package agent.drgn.rmi;
 
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -59,11 +60,14 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 			os.environ['OPT_TARGET_IMG'] = '$CORE'
 			from ghidradrgn.commands import *
 			""";
-	
+
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
 	protected static final int TIMEOUT_SECONDS = 30000;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
+
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
 
 	protected static boolean didSetupPython = false;
 
@@ -147,7 +151,8 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected record PythonResult(boolean timedOut, int exitCode, String stdout, String stderr) {
 		protected String handle() {
-			if (stderr.contains("RuntimeError") || stderr.contains(" Error") || (0 != exitCode && 1 != exitCode && 143 != exitCode)) {
+			if (stderr.contains("RuntimeError") || stderr.contains(" Error") ||
+				(0 != exitCode && 1 != exitCode && 143 != exitCode)) {
 				throw new PythonError(exitCode, stdout, stderr);
 			}
 			System.out.println("--stdout--");
@@ -158,8 +163,7 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 		}
 	}
 
-	protected record ExecInDrgn(Process python, CompletableFuture<PythonResult> future) {
-	}
+	protected record ExecInDrgn(Process python, CompletableFuture<PythonResult> future) {}
 
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInDrgn execInDrgn(String script) throws IOException {
@@ -169,7 +173,7 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 		FileWriter fw = new FileWriter(fp.toFile());
 		fw.write(script);
 		fw.close();
-		ProcessBuilder pb = new ProcessBuilder(pythonPath.toString(), "-c", 
+		ProcessBuilder pb = new ProcessBuilder(pythonPath.toString(), "-c",
 			rf.getAbsolutePath(), fp.toFile().getAbsolutePath());
 		setPythonPath(pb);
 
@@ -374,6 +378,5 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 
 		throw new AssertionFailedError(failureMessage);
 	}
-
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,8 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.NotFoundException;
 
 /**
  * <code>X86_64_ElfRelocationContext</code> provides ability to generate a
@@ -160,7 +161,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocat
 		}
 
 		if (gotElfSymbol != null && gotElfSymbol.getValue() != 0) {
-			throw new AssertException(ElfConstants.GOT_SYMBOL_NAME + " already allocated");
+			loadHelper
+					.log("GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " already defined");
+			return null;
 		}
 
 		int alignment = getLoadAdapter().getLinkageBlockAlignment();
@@ -283,7 +286,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocat
 			}
 		}
 		catch (MemoryAccessException e) {
-			throw new AssertException(e); // unexpected
+			String msg = "Failed to create GOT at " + allocatedGotAddress;
+			loadHelper.log(msg);
+			Msg.error(this, msg, e);
 		}
 	}
 

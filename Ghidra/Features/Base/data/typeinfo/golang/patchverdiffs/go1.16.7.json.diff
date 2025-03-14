@@ -1,0 +1,132 @@
+@ ["all","Funcs","net.(*Resolver).LookupAddr","Results",0,"Name"]
+- "names"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupAddr","Results",1,"Name"]
+- "err"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupCNAME","Results",0,"Name"]
+- "cname"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupCNAME","Results",1,"Name"]
+- "err"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupSRV","Results",0,"Name"]
+- "cname"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupSRV","Results",1,"Name"]
+- "addrs"
++ ""
+@ ["all","Funcs","net.(*Resolver).LookupSRV","Results",2,"Name"]
+- "err"
++ ""
+@ ["all","Funcs","time.tzset","Results",4]
+  {"DataType":"int64","Name":"end"}
++ {"DataType":"bool","Name":"isDST"}
+  {"DataType":"bool","Name":"ok"}
+@ ["all","Funcs","runtime.mDoFixupAndOSYield"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","time.findZone"]
++ {"Flags":0,"Params":[{"DataType":"[]time.zone","Name":"zones"},{"DataType":"string","Name":"name"},{"DataType":"int","Name":"offset"},{"DataType":"bool","Name":"isDST"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Types","archive/zip.fileListEntry","Fields",2]
+  {"DataType":"*archive/zip.File","Name":"file"}
++ {"DataType":"bool","Name":"isDir"}
+]
+@ ["all","Types","func(error)","Params",0,"Name"]
+- "err"
++ ""
+@ ["all","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","runtime.m","Fields",50,"DataType"]
+- "struct { lock runtime.mutex; fn func(bool) bool }"
++ "struct { lock runtime.mutex; used uint32; fn func(bool) bool }"
+@ ["all","Types","runtime.p","Fields",41]
+  {"DataType":"uint32","Name":"numTimers"}
+- {"DataType":"uint32","Name":"adjustTimers"}
+  {"DataType":"uint32","Name":"deletedTimers"}
+@ ["all","Types","struct { lock runtime.mutex; fn func(bool) bool }"]
+- {"Fields":[{"DataType":"runtime.mutex","Name":"lock"},{"DataType":"func(bool) bool","Name":"fn"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","struct { lock runtime.mutex; used uint32; fn func(bool) bool }"]
++ {"Fields":[{"DataType":"runtime.mutex","Name":"lock"},{"DataType":"uint32","Name":"used"},{"DataType":"func(bool) bool","Name":"fn"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows","Funcs","syscall.CreateIoCompletionPort","Results",0,"Name"]
+- "handle"
++ ""
+@ ["windows","Funcs","syscall.CreateIoCompletionPort","Results",1,"Name"]
+- "err"
++ ""
+@ ["windows","Funcs","syscall.GetQueuedCompletionStatus","Results",0,"Name"]
+- "err"
++ ""
+@ ["windows","Funcs","syscall.PostQueuedCompletionStatus","Results",0,"Name"]
+- "err"
++ ""
+@ ["windows","Funcs","syscall.createIoCompletionPort"]
++ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"filehandle"},{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uintptr","Name":"key"},{"DataType":"uint32","Name":"threadcnt"}],"Results":[{"DataType":"syscall.Handle","Name":"handle"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows","Funcs","syscall.getQueuedCompletionStatus"]
++ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"*uint32","Name":"qty"},{"DataType":"*uintptr","Name":"key"},{"DataType":"**syscall.Overlapped","Name":"overlapped"},{"DataType":"uint32","Name":"timeout"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows","Funcs","syscall.postQueuedCompletionStatus"]
++ {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"cphandle"},{"DataType":"uint32","Name":"qty"},{"DataType":"uintptr","Name":"key"},{"DataType":"*syscall.Overlapped","Name":"overlapped"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}

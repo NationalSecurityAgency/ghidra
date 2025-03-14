@@ -17,6 +17,9 @@ package ghidra.app.plugin.core.sourcefilestable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
@@ -305,14 +308,15 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 			UserDataPathTransformer.getPathTransformer(sourceFilesTableModel.getProgram());
 		String source = transformRecord.source();
 		GValuesMap valueMap = new GValuesMap();
-		valueMap.defineString(DESTINATION, transformRecord.target());
+		valueMap.defineDirectory(DESTINATION, new File(transformRecord.target()));
 		valueMap.setValidator((map, status) -> {
-			String path = valueMap.getString(DESTINATION);
-			try {
-				UserDataPathTransformer.validateDirectoryPath(path);
+			File directory = valueMap.getFile(DESTINATION);
+			if (directory == null || !directory.exists()) {
+				status.setStatusText("Directory does not exist", MessageType.ERROR);
+				return false;
 			}
-			catch (IllegalArgumentException e) {
-				status.setStatusText(e.getMessage(), MessageType.ERROR);
+			if (!directory.isDirectory()) {
+				status.setStatusText("Must select a directory", MessageType.ERROR);
 				return false;
 			}
 			return true;
@@ -324,8 +328,19 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 		if (results == null) {
 			return;
 		}
-		String path = results.getString(DESTINATION);
-		pathTransformer.addDirectoryTransform(source, path);
+		try {
+			String canonical = results.getFile(DESTINATION).getCanonicalPath();
+			URI uri = new File(canonical).toURI().normalize();
+			String transformedPath = uri.getPath();
+			if (!transformedPath.endsWith("/")) {
+				transformedPath = transformedPath + "/";
+			}
+			pathTransformer.addDirectoryTransform(source, transformedPath);
+		}
+		catch (IOException e) {
+			Msg.showError(this, sourceFilesTable, "IOException getting canonical path",
+				e.getMessage());
+		}
 
 		sourceFilesTableModel.refresh();
 		transformsModel.reload();
@@ -344,14 +359,15 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 			parentDirs.add(latest + directories[i] + "/");
 		}
 		valueMap.defineChoice(SOURCE, parentDirs.getLast(), parentDirs.toArray(new String[0]));
-		valueMap.defineString(DESTINATION);
+		valueMap.defineDirectory(DESTINATION, null);
 		valueMap.setValidator((map, status) -> {
-			String enteredPath = valueMap.getString(DESTINATION);
-			try {
-				UserDataPathTransformer.validateDirectoryPath(enteredPath);
+			File directory = valueMap.getFile(DESTINATION);
+			if (directory == null || !directory.exists()) {
+				status.setStatusText("Directory does not exist", MessageType.ERROR);
+				return false;
 			}
-			catch (IllegalArgumentException e) {
-				status.setStatusText(e.getMessage(), MessageType.ERROR);
+			if (!directory.isDirectory()) {
+				status.setStatusText("Must select a directory", MessageType.ERROR);
 				return false;
 			}
 			return true;
@@ -366,8 +382,19 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 		SourcePathTransformer pathTransformer =
 			UserDataPathTransformer.getPathTransformer(sourceFilesTableModel.getProgram());
 		String source = results.getChoice(SOURCE);
-		String destination = results.getString(DESTINATION);
-		pathTransformer.addDirectoryTransform(source, destination);
+		try {
+			String canonical = results.getFile(DESTINATION).getCanonicalPath();
+			URI uri = new File(canonical).toURI().normalize();
+			String transformedPath = uri.getPath();
+			if (!transformedPath.endsWith("/")) {
+				transformedPath = transformedPath + "/";
+			}
+			pathTransformer.addDirectoryTransform(source, transformedPath);
+		}
+		catch (IOException e) {
+			Msg.showError(this, sourceFilesTable, "IOException getting canonical path",
+				e.getMessage());
+		}
 
 		sourceFilesTableModel.refresh();
 		transformsModel.reload();
@@ -383,18 +410,15 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 			UserDataPathTransformer.getPathTransformer(sourceFilesTableModel.getProgram());
 		String existing = pathTransformer.getTransformedPath(sourceFile, true);
 		GValuesMap valueMap = new GValuesMap();
-		valueMap.defineString(DESTINATION, existing);
+		valueMap.defineFile(DESTINATION, new File(existing));
 		valueMap.setValidator((map, status) -> {
-			String path = valueMap.getString(DESTINATION);
-			try {
-				String normalized = new SourceFile(path).getPath();
-				if (!normalized.equals(path)) {
-					status.setStatusText("Path not normalized", MessageType.ERROR);
-					return false;
-				}
+			File targetFile = valueMap.getFile(DESTINATION);
+			if (targetFile == null || !targetFile.exists()) {
+				status.setStatusText("File does not exist", MessageType.ERROR);
+				return false;
 			}
-			catch (IllegalArgumentException e) {
-				status.setStatusText(e.getMessage(), MessageType.ERROR);
+			if (targetFile.isDirectory()) {
+				status.setStatusText("Must specify a file", MessageType.ERROR);
 				return false;
 			}
 			return true;
@@ -406,8 +430,17 @@ public class SourceFilesTableProvider extends ComponentProviderAdapter {
 		if (results == null) {
 			return;
 		}
-		String path = results.getString(DESTINATION);
-		pathTransformer.addFileTransform(sourceFile, path);
+
+		try {
+			String path = results.getFile(DESTINATION).getCanonicalPath();
+			URI uri = new File(path).toURI().normalize();
+			pathTransformer.addFileTransform(sourceFile, uri.getPath());
+		}
+		catch (IOException e) {
+			Msg.showError(this, sourceFilesTable, "IOException getting canonical path",
+				e.getMessage());
+		}
+
 		sourceFilesTableModel.refresh();
 		transformsModel.reload();
 	}

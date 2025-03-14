@@ -457,4 +457,8 @@ class MemorySearchControlPanel extends JPanel {
 		}
 	}
 
+	Component getDefaultFocusComponent() {
+		return searchInputField;
+	}
+
 }

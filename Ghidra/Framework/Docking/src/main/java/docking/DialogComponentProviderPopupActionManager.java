@@ -89,6 +89,7 @@ public class DialogComponentProviderPopupActionManager {
 
 		// Popup menu if items are available
 		JPopupMenu popupMenu = menuMgr.getPopupMenu();
+		popupMenu.getAccessibleContext().setAccessibleName("Popup");
 		Component c = (Component) e.getSource();
 		popupMenu.addPopupMenuListener(popupMenuHandler);
 		popupMenu.show(c, e.getX(), e.getY());

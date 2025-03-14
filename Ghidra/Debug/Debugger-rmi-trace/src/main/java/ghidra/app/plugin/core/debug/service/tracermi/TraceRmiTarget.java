@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.Icon;
 
@@ -32,7 +33,8 @@ import ghidra.app.plugin.core.debug.gui.tracermi.RemoteMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.async.*;
+import ghidra.async.AsyncFence;
+import ghidra.async.AsyncUtils;
 import ghidra.debug.api.ValStr;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
@@ -56,6 +58,7 @@ import ghidra.trace.model.target.info.TraceObjectInterfaceUtils;
 import ghidra.trace.model.target.path.*;
 import ghidra.trace.model.target.path.PathFilter.Align;
 import ghidra.trace.model.target.schema.*;
+import ghidra.trace.model.target.schema.PrimitiveTraceObjectSchema.MinimalSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.thread.*;
 import ghidra.util.Msg;
@@ -75,7 +78,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			this.args = args;
 
 			this.requiresPrompt = args.values().contains(Missing.MISSING);
-			this.specificity = computeSpecificity(args);
+			this.specificity = computeSpecificity(method, args);
 			this.first = getFirstObjectArgument(method, args);
 		}
 
@@ -197,9 +200,8 @@ public class TraceRmiTarget extends AbstractTarget {
 				.orElse(null);
 	}
 
-	protected TraceObject findObject(ActionContext context, boolean allowContextObject,
-			boolean allowCoordsObject) {
-		if (allowContextObject) {
+	protected TraceObject findObject(ActionContext context, ObjectArgumentPolicy policy) {
+		if (policy.allowContextObject()) {
 			if (context instanceof DebuggerObjectActionContext ctx) {
 				List<TraceObjectValue> values = ctx.getObjectValues();
 				if (values.size() == 1) {
@@ -224,7 +226,7 @@ public class TraceRmiTarget extends AbstractTarget {
 				}
 			}
 		}
-		if (allowCoordsObject) {
+		if (policy.allowCoordsObject()) {
 			DebuggerTraceManagerService traceManager =
 				tool.getService(DebuggerTraceManagerService.class);
 			if (traceManager == null) {
@@ -246,16 +248,15 @@ public class TraceRmiTarget extends AbstractTarget {
 	 * @param action the action name, so this is only applied to {@link ActionName#TOGGLE}
 	 * @param context the context in which to find the object whose current state is to be
 	 *            considered
-	 * @param allowContextObject true to allow the object to come from context
-	 * @param allowCoordsObject true to allow the object to come from the current coordinates
+	 * @param policy how object arguments can be found
 	 * @return a value if found, null if not
 	 */
-	protected Boolean findBool(ActionName action, ActionContext context, boolean allowContextObject,
-			boolean allowCoordsObject) {
+	protected Boolean findBool(ActionName action, ActionContext context,
+			ObjectArgumentPolicy policy) {
 		if (!Objects.equals(action, ActionName.TOGGLE)) {
 			return null;
 		}
-		TraceObject object = findObject(context, allowContextObject, allowCoordsObject);
+		TraceObject object = findObject(context, policy);
 		if (object == null) {
 			return null;
 		}
@@ -266,22 +267,21 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected Object findArgumentForSchema(ActionName action, ActionContext context,
-			TraceObjectSchema schema, boolean allowContextObject, boolean allowCoordsObject,
-			boolean allowSuitableObject) {
+			TraceObjectSchema schema, ObjectArgumentPolicy policy) {
 		if (schema instanceof PrimitiveTraceObjectSchema prim) {
 			return switch (prim) {
-				case OBJECT -> findObject(context, allowContextObject, allowCoordsObject);
+				case OBJECT -> findObject(context, policy);
 				case ADDRESS -> findAddress(context);
 				case RANGE -> findRange(context);
-				case BOOL -> findBool(action, context, allowContextObject, allowCoordsObject);
+				case BOOL -> findBool(action, context, policy);
 				default -> null;
 			};
 		}
-		TraceObject object = findObject(context, allowContextObject, allowCoordsObject);
+		TraceObject object = findObject(context, policy);
 		if (object == null) {
 			return null;
 		}
-		if (allowSuitableObject) {
+		if (policy.allowSuitableRelative()) {
 			return object.findSuitableSchema(schema);
 		}
 		if (object.getSchema() == schema) {
@@ -299,8 +299,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected Object findArgument(ActionName action, RemoteParameter parameter,
-			ActionContext context, boolean allowContextObject, boolean allowCoordsObject,
-			boolean allowSuitableObject) {
+			ActionContext context, ObjectArgumentPolicy policy) {
 		SchemaName type = parameter.type();
 		SchemaContext ctx = getSchemaContext();
 		if (ctx == null) {
@@ -312,8 +311,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.error(this, "Schema " + type + " not in trace! " + trace);
 			return null;
 		}
-		Object arg = findArgumentForSchema(action, context, schema, allowContextObject,
-			allowCoordsObject, allowSuitableObject);
+		Object arg = findArgumentForSchema(action, context, schema, policy);
 		if (arg != null) {
 			return arg;
 		}
@@ -324,11 +322,10 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected Map<String, Object> collectArguments(RemoteMethod method, ActionContext context,
-			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
+			ObjectArgumentPolicy policy) {
 		Map<String, Object> args = new HashMap<>();
 		for (RemoteParameter param : method.parameters().values()) {
-			Object found = findArgument(method.action(), param, context, allowContextObject,
-				allowCoordsObject, allowSuitableObject);
+			Object found = findArgument(method.action(), param, context, policy);
 			if (found != null) {
 				args.put(param.name(), found);
 			}
@@ -336,8 +333,36 @@ public class TraceRmiTarget extends AbstractTarget {
 		return args;
 	}
 
-	protected static long computeSpecificity(Map<String, Object> args) {
+	/**
+	 * Compute the specificity of the entry.
+	 * 
+	 * More specific is generally preferred. There are two sorts of specificity here. 1) The
+	 * specificity of the methods formal parameters. A parameter having a non-primitive schema is
+	 * more specific than one having an ANY or OBJECT schema. 2) The specificity of the objects
+	 * selected as arguments. This is crudely computed as the length of the canonical path.
+	 * 
+	 * @param method the method
+	 * @param args the arguments
+	 * @return the specificity
+	 */
+	protected static long computeSpecificity(RemoteMethod method, Map<String, Object> args) {
 		long score = 0;
+		for (RemoteParameter param : method.parameters().values()) {
+			score += switch (MinimalSchemaContext.INSTANCE.getSchemaOrNull(param.type())) {
+				case PrimitiveTraceObjectSchema prim -> switch (prim) {
+					case ANY -> 0; // Absolutely not specific
+					case OBJECT -> 1; // well, it is better than ANY
+					default -> 2; // real primitives
+				};
+				/**
+				 * Because we're using the "minimal" schema, not the actual one, anything
+				 * user-defined will be null.
+				 */
+				case null -> 100;
+				default -> 100;
+			};
+		}
+		score *= 1000;
 		for (Object o : args.values()) {
 			if (o instanceof TraceObject obj) {
 				score += obj.getCanonicalPath().size();
@@ -408,19 +433,16 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected ActionEntry createEntry(RemoteMethod method, ActionContext context,
-			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
-		Map<String, Object> args = collectArguments(method, context, allowContextObject,
-			allowCoordsObject, allowSuitableObject);
+			ObjectArgumentPolicy policy) {
+		Map<String, Object> args = collectArguments(method, context, policy);
 		return new TraceRmiActionEntry(method, args);
 	}
 
 	protected Map<String, ActionEntry> collectFromMethods(Collection<RemoteMethod> methods,
-			ActionContext context, boolean allowContextObject, boolean allowCoordsObject,
-			boolean allowSuitableObject) {
+			ActionContext context, ObjectArgumentPolicy policy) {
 		Map<String, ActionEntry> result = new HashMap<>();
 		for (RemoteMethod m : methods) {
-			ActionEntry entry = createEntry(m, context, allowContextObject, allowCoordsObject,
-				allowSuitableObject);
+			ActionEntry entry = createEntry(m, context, policy);
 			result.put(m.name(), entry);
 		}
 		return result;
@@ -442,7 +464,6 @@ public class TraceRmiTarget extends AbstractTarget {
 				.count() == 1;
 	}
 
-	@Override
 	protected Map<String, ActionEntry> collectAddressActions(ProgramLocationActionContext context) {
 		SchemaContext ctx = getSchemaContext();
 		Map<String, ActionEntry> result = new HashMap<>();
@@ -450,78 +471,31 @@ public class TraceRmiTarget extends AbstractTarget {
 			if (!isAddressMethod(m, ctx)) {
 				continue;
 			}
-			result.put(m.name(), createEntry(m, context, true, true, true));
+			result.put(m.name(), createEntry(m, context, ObjectArgumentPolicy.CURRENT_AND_RELATED));
 		}
 		return result;
 	}
 
-	@Override
-	protected Map<String, ActionEntry> collectAllActions(ActionContext context) {
-		return collectFromMethods(connection.getMethods().all().values(), context, true, false,
-			false);
+	protected Map<String, ActionEntry> collectAllActions(ActionContext context,
+			ObjectArgumentPolicy policy) {
+		return collectFromMethods(connection.getMethods().all().values(), context, policy);
 	}
 
-	protected Map<String, ActionEntry> collectByName(ActionName name, ActionContext context) {
-		return collectFromMethods(connection.getMethods().getByAction(name), context, false, true,
-			true);
+	protected Map<String, ActionEntry> collectByName(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy) {
+		return collectFromMethods(connection.getMethods().getByAction(name), context, policy);
 	}
 
 	@Override
-	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context) {
+	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy) {
 		if (name == null) {
 			if (context instanceof ProgramLocationActionContext ctx) {
 				return collectAddressActions(ctx);
 			}
-			return collectAllActions(context);
+			return collectAllActions(context, policy);
 		}
-		return collectByName(name, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectResumeActions(ActionContext context) {
-		return collectByName(ActionName.RESUME, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectInterruptActions(ActionContext context) {
-		return collectByName(ActionName.INTERRUPT, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectKillActions(ActionContext context) {
-		return collectByName(ActionName.KILL, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectStepIntoActions(ActionContext context) {
-		return collectByName(ActionName.STEP_INTO, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectStepOverActions(ActionContext context) {
-		return collectByName(ActionName.STEP_OVER, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectStepOutActions(ActionContext context) {
-		return collectByName(ActionName.STEP_OUT, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectStepExtActions(ActionContext context) {
-		return collectByName(ActionName.STEP_EXT, context);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
-		return collectFromMethods(connection.getMethods().getByAction(ActionName.REFRESH), context,
-			true, false, false);
-	}
-
-	@Override
-	protected Map<String, ActionEntry> collectToggleActions(ActionContext context) {
-		return collectFromMethods(connection.getMethods().getByAction(ActionName.TOGGLE), context,
-			true, false, false);
+		return collectByName(name, context, policy);
 	}
 
 	@Override
@@ -1086,9 +1060,11 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public CompletableFuture<Void> readMemoryAsync(AddressSetView set, TaskMonitor monitor) {
-		// I still separate into blocks, because I want user to be able to cancel
-		// NOTE: I don't intend to warn about the number of requests.
-		//   They're delivered in serial, and there's a cancel button that works
+		/**
+		 * I still separate into blocks, because I want user to be able to cancel. I don't intend to
+		 * warn about the number of requests. They're delivered in serial, and there's a cancel
+		 * button that works
+		 */
 
 		MatchedMethod readMem =
 			matches.getBest(ReadMemMatcher.class, null, ActionName.READ_MEM, ReadMemMatcher.ALL);
@@ -1113,40 +1089,50 @@ public class TraceRmiTarget extends AbstractTarget {
 		}
 		monitor.initialize(total);
 		monitor.setMessage("Reading memory");
-		// NOTE: Don't read in parallel, lest we overload the connection
-		return AsyncUtils.each(TypeSpec.VOID, quantized.iterator(), (r, loop) -> {
-			AddressRangeChunker blocks = new AddressRangeChunker(r, BLOCK_SIZE);
+
+		/**
+		 * NOTE: Don't read in parallel, lest we overload the connection. This does queue them all
+		 * up in a CF chain, though. Still, a request doesn't go out until the preceding one
+		 * completes.
+		 */
+		return quantized.stream().flatMap(r -> {
 			if (r.getAddressSpace().isRegisterSpace()) {
 				Msg.warn(this, "Request to read registers via readMemory: " + r + ". Ignoring.");
-				loop.repeatWhile(!monitor.isCancelled());
-				return;
+				return Stream.of();
 			}
-			AsyncUtils.each(TypeSpec.VOID, blocks.iterator(), (blk, inner) -> {
+			return new AddressRangeChunker(r, BLOCK_SIZE).stream();
+		}).reduce(AsyncUtils.nil(), (f, blk) -> {
+			if (monitor.isCancelled()) {
+				return f;
+			}
+			final Map<String, Object> args;
+			if (paramProcess != null) {
+				TraceObject process = procsBySpace.computeIfAbsent(blk.getAddressSpace(),
+					this::getProcessForSpace);
+				if (process == null) {
+					return f;
+				}
+				args = Map.ofEntries(
+					Map.entry(paramProcess.name(), process),
+					Map.entry(paramRange.name(), blk));
+			}
+			else {
+				args = Map.ofEntries(
+					Map.entry(paramRange.name(), blk));
+			}
+
+			return f.thenComposeAsync(__ -> {
+				if (monitor.isCancelled()) {
+					return AsyncUtils.nil();
+				}
 				monitor.incrementProgress(1);
-				final Map<String, Object> args;
-				if (paramProcess != null) {
-					TraceObject process = procsBySpace.computeIfAbsent(blk.getAddressSpace(),
-						this::getProcessForSpace);
-					if (process == null) {
-						Msg.warn(this, "Cannot find process containing " + blk.getMinAddress());
-						inner.repeatWhile(!monitor.isCancelled());
-						return;
-					}
-					args = Map.ofEntries(
-						Map.entry(paramProcess.name(), process),
-						Map.entry(paramRange.name(), blk));
-				}
-				else {
-					args = Map.ofEntries(
-						Map.entry(paramRange.name(), blk));
-				}
-				CompletableFuture<Void> future =
-					requestCaches.readBlock(blk.getMinAddress(), readMem.method, args);
-				future.exceptionally(e -> {
-					Msg.error(this, "Could not read " + blk + ": " + e);
-					return null; // Continue looping on errors
-				}).thenApply(__ -> !monitor.isCancelled()).handle(inner::repeatWhile);
-			}).thenApply(v -> !monitor.isCancelled()).handle(loop::repeatWhile);
+				return requestCaches.readBlock(blk.getMinAddress(), readMem.method, args);
+			}, AsyncUtils.FRAMEWORK_EXECUTOR).exceptionally(e -> {
+				Msg.error(this, "Could not read " + blk + ": " + e);
+				return null; // Continue looping on errors
+			});
+		}, (f1, f2) -> {
+			throw new AssertionError("Should be sequential");
 		});
 	}
 
@@ -1334,7 +1320,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		RemoteParameter paramFrame = writeReg.params.get("frame");
 		if (paramFrame != null) {
 			TraceStack stack = trace.getStackManager().getLatestStack(thread, getSnap());
-			TraceStackFrame frame = stack.getFrame(frameLevel, false);
+			TraceStackFrame frame = stack.getFrame(getSnap(), frameLevel, false);
 			if (!(frame instanceof TraceObjectStackFrame tof)) {
 				Msg.error(this, "Non-object trace with TraceRmi!");
 				return AsyncUtils.nil();
@@ -1420,7 +1406,8 @@ public class TraceRmiTarget extends AbstractTarget {
 		RemoteParameter paramProc = brk.params.get("process");
 		if (paramProc != null) {
 			Object proc = findArgumentForSchema(null, null,
-				getSchemaContext().getSchema(paramProc.type()), true, true, true);
+				getSchemaContext().getSchema(paramProc.type()),
+				ObjectArgumentPolicy.CURRENT_AND_RELATED);
 			if (proc == null) {
 				Msg.error(this, "Cannot find required process argument for " + brk.method);
 			}
@@ -1568,10 +1555,11 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public boolean isBreakpointValid(TraceBreakpoint breakpoint) {
-		if (breakpoint.getName().endsWith("emu-" + breakpoint.getMinAddress())) {
+		long snap = getSnap();
+		if (breakpoint.getName(snap).endsWith("emu-" + breakpoint.getMinAddress(snap))) {
 			return false;
 		}
-		if (!breakpoint.isAlive(getSnap())) {
+		if (!breakpoint.isValid(snap)) {
 			return false;
 		}
 		return true;
@@ -1674,7 +1662,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public CompletableFuture<Void> forceTerminateAsync() {
-		Map<String, ActionEntry> kills = collectKillActions(null);
+		Map<String, ActionEntry> kills =
+			collectByName(ActionName.KILL, null, ObjectArgumentPolicy.CURRENT_AND_RELATED);
 		for (ActionEntry kill : kills.values()) {
 			if (kill.requiresPrompt()) {
 				continue;

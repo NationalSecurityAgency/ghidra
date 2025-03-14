@@ -61,20 +61,23 @@ public class DebuggerAddRegionDialog extends ReusableDialogComponentProvider {
 		panel.add(fieldPath);
 
 		panel.add(new JLabel("Range: "));
+		fieldRange.getAccessibleContext().setAccessibleName("Range");
 		panel.add(fieldRange);
 
 		panel.add(new JLabel("Length: "));
 		fieldLength.setFont(Font.decode("monospaced"));
+		fieldLength.getAccessibleContext().setAccessibleName("Length");
 		panel.add(fieldLength);
 
 		panel.add(new JLabel("Lifespan: "));
+		fieldLifespan.getAccessibleContext().setAccessibleName("Lifespan");
 		panel.add(fieldLifespan);
 
 		MiscellaneousUtils.rigFocusAndEnter(fieldRange, this::rangeChanged);
 		MiscellaneousUtils.rigFocusAndEnter(fieldLength, this::lengthChanged);
 
 		fieldLifespan.setLifespan(Lifespan.nowOn(0));
-
+		panel.getAccessibleContext().setAccessibleName("Debugger Region Addition");
 		addWorkPanel(panel);
 
 		addOKButton();

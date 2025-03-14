@@ -33,6 +33,7 @@ import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -119,7 +120,9 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 		}
 
 		List<DockingActionIf> result = new ArrayList<>();
-		for (ActionEntry entry : target.collectActions(null, context).values()) {
+		for (ActionEntry entry : target
+				.collectActions(null, context, ObjectArgumentPolicy.CONTEXT_ONLY)
+				.values()) {
 			//if (entry.requiresPrompt() || entry.builtIn()) {
 			if (!entry.isEnabled() || !entry.getShow().isShowing(context)) {
 				continue;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,15 @@ import javax.swing.tree.TreeSelectionModel;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.widgets.tree.GTreeNode;
+import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import help.Help;
 import help.HelpService;
 
@@ -100,6 +102,10 @@ public class ProjectDataTreePanel extends JPanel {
 	 * @param projectData data that has the root folder for the project
 	 */
 	public void setProjectData(String projectName, ProjectData projectData) {
+		if (this.projectData == projectData) {
+			return; // this can happen during setup if listeners get activated
+		}
+
 		if (this.projectData != null) {
 			this.projectData.removeDomainFolderChangeListener(changeMgr);
 		}
@@ -138,19 +144,6 @@ public class ProjectDataTreePanel extends JPanel {
 		oldRoot.removeAll();
 	}
 
-	/**
-	 * Select the root data folder (not root node in the tree which
-	 * shows the project name).
-	 */
-	public void selectRootDataFolder() {
-		tree.setSelectionPath(root.getTreePath());
-	}
-
-	public void selectDomainFolder(DomainFolder domainFolder) {
-		TreePath treePath = getTreePath(domainFolder);
-		tree.setSelectionPath(treePath);
-	}
-
 	private List<TreePath> getTreePaths(Set<DomainFile> files) {
 		List<TreePath> results = new ArrayList<>();
 		for (DomainFile file : files) {
@@ -177,23 +170,26 @@ public class ProjectDataTreePanel extends JPanel {
 
 	}
 
+	/**
+	 * Select the root data folder (not root node in the tree which shows the project name).
+	 */
+	public void selectRootDataFolder() {
+		tree.setSelectionPath(root.getTreePath());
+	}
+
+	public void selectDomainFolder(DomainFolder domainFolder) {
+		TreePath treePath = getTreePath(domainFolder);
+		tree.expandAndSelectPaths(List.of(treePath));
+	}
+
 	public void selectDomainFiles(Set<DomainFile> files) {
 		List<TreePath> treePaths = getTreePaths(files);
-		tree.setSelectionPaths(treePaths);
+		tree.expandAndSelectPaths(treePaths);
 	}
 
 	public void selectDomainFile(DomainFile domainFile) {
-		Iterator<GTreeNode> it = root.iterator(true);
-		while (it.hasNext()) {
-			GTreeNode child = it.next();
-			if (child instanceof DomainFileNode) {
-				DomainFile nodeFile = ((DomainFileNode) child).getDomainFile();
-				if (nodeFile.equals(domainFile)) {
-					tree.expandPath(child);
-					tree.setSelectedNode(child);
-					return;
-				}
-			}
+		if (domainFile != null) {
+			selectDomainFiles(Set.of(domainFile));
 		}
 	}
 
@@ -487,21 +483,40 @@ public class ProjectDataTreePanel extends JPanel {
 	 * @param s node name
 	 */
 	public void findAndSelect(String s) {
-		if (projectData.getFileCount() < MAX_PROJECT_SIZE_TO_SEARCH) {
-			tree.expandTree(root);
+		FindAndSelectTask task = new FindAndSelectTask(tree, s);
+		tree.runTask(task);
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
+	private class FindAndSelectTask extends GTreeTask {
+
+		private String text;
+
+		FindAndSelectTask(GTree gTree, String text) {
+			super(gTree);
+			this.text = text;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			if (projectData.getFileCount() > MAX_PROJECT_SIZE_TO_SEARCH) {
+				return;
+			}
+
 			for (Iterator<GTreeNode> it = root.iterator(true); it.hasNext();) {
+				monitor.checkCancelled();
 				GTreeNode node = it.next();
-				if (node.getName().equals(s)) {
+				if (node.getName().equals(text)) {
 					tree.setSelectedNode(node);
 					return;
 				}
 			}
 		}
 	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
 
 	private class MyMouseListener extends MouseAdapter {
 		@Override

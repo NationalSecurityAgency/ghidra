@@ -206,13 +206,19 @@ class DockableToolBarManager {
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
+			DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
 			ComponentProvider provider = context.getComponentProvider();
 			if (provider == null) {
 				// Some context providers do not specify the provider when creating a contexts
-				DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
 				provider = dwm.getActiveComponentProvider();
 			}
-			return provider == dockableComponent.getComponentProvider();
+
+			if (provider != dockableComponent.getComponentProvider()) {
+				return false;
+			}
+
+			// don't allow the last component in a window to be closed to prevent an empty window
+			return dwm != null && !dwm.isLastComponentInWindow(provider);
 		}
 	}
 

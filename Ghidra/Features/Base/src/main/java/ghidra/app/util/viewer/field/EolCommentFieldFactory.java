@@ -64,6 +64,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private int repeatableCommentStyle;
 	private int automaticCommentStyle;
 	private int refRepeatableCommentStyle;
+	private int offcutCommentStyle;
 
 	private EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
 
@@ -292,6 +293,14 @@ public class EolCommentFieldFactory extends FieldFactory {
 			elementList.addAll(elements);
 		}
 
+		if (comments.isShowingOffcutComments()) {
+			prefix = createPrefix(CommentStyle.OFFCUT);
+			int row = getNextRow(elementList);
+			List<String> offcuts = comments.getOffcutEolComments();
+			List<FieldElement> elements = convertToFieldElements(program, offcuts, prefix, row);
+			elementList.addAll(elements);
+		}
+
 		if (elementList.isEmpty()) {
 			return null;
 		}
@@ -316,11 +325,16 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return new AttributedString(SEMICOLON_PREFIX, CommentColors.AUTO,
 				getMetrics(automaticCommentStyle), false, null);
 		}
+		if (commentStyle == CommentStyle.OFFCUT) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.OFFCUT,
+				getMetrics(style), false, null);
+		}
+
 		throw new AssertException("Unexected comment style: " + commentStyle);
 	}
 
 	private enum CommentStyle {
-		EOL, REPEATABLE, REF_REPEATABLE, AUTO;
+		EOL, REPEATABLE, REF_REPEATABLE, AUTO, OFFCUT;
 	}
 
 	private int getNextRow(List<FieldElement> elementList) {

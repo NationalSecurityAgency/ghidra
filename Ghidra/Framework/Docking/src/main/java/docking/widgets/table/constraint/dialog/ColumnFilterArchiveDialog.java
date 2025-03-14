@@ -79,13 +79,13 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 
 		JComponent component = buildFilterTable();
 		component.setPreferredSize(new Dimension(100, 200));
-
 		JSplitPane splitter =
 			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, component, buildPreviewPanel());
 		splitter.setResizeWeight(.25);
-
+		splitter.getAccessibleContext().setAccessibleDescription("Filters and Preview");
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(splitter, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleDescription("Column Filter Archive");
 		return panel;
 	}
 
@@ -108,6 +108,7 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(buildFilterList(), BorderLayout.CENTER);
 		panel.add(buildActionPanel(), BorderLayout.SOUTH);
+		panel.getAccessibleContext().setAccessibleName("Filter Table");
 		return panel;
 	}
 
@@ -128,8 +129,9 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 			}
 		});
 		updateList();
-
+		jList.getAccessibleContext().setAccessibleDescription("Filters");
 		panel.add(new JScrollPane(jList));
+		panel.getAccessibleContext().setAccessibleName("Filters");
 		return panel;
 	}
 
@@ -139,10 +141,12 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 		removeSelectedFiltersButton = new JButton("Remove", icon);
 		removeSelectedFiltersButton.setEnabled(false);
 		removeSelectedFiltersButton.addActionListener(e -> removeSelectedFilter());
+		removeSelectedFiltersButton.getAccessibleContext()
+				.setAccessibleDescription("Remove Selections");
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(removeSelectedFiltersButton, BorderLayout.EAST);
-
+		panel.getAccessibleContext().setAccessibleName("Actions");
 		return panel;
 	}
 
@@ -154,6 +158,7 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 		previewLabel = new GDHtmlLabel();
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);
 		panel.add(new JScrollPane(previewLabel));
+		panel.getAccessibleContext().setAccessibleName("Preview");
 		return panel;
 	}
 

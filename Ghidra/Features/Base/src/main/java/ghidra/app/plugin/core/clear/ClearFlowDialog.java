@@ -91,16 +91,20 @@ public class ClearFlowDialog extends DialogComponentProvider {
 
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout(10, 10));
-
+		panel.getAccessibleContext().setAccessibleName("Clear Flow Options");
 		panel.add(new GLabel("Clear Flow Options:"), BorderLayout.NORTH);
 
 		JPanel cbPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(cbPanel, BoxLayout.Y_AXIS);
 		cbPanel.setLayout(bl);
+		cbPanel.getAccessibleContext().setAccessibleName("Checkboxes");
 
 		symbolsCb = new GCheckBox("Clear Symbols");
+		symbolsCb.getAccessibleContext().setAccessibleName("Clear Symbols");
 		dataCb = new GCheckBox("Clear Data");
+		dataCb.getAccessibleContext().setAccessibleName("Clear Data");
 		repairCb = new GCheckBox("Repair Flow");
+		repairCb.getAccessibleContext().setAccessibleName("Repair Flow");
 
 		symbolsCb.setSelected(false);
 		symbolsCb.addKeyListener(listener);

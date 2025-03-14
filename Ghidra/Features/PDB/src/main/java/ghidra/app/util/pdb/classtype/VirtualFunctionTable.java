@@ -26,6 +26,15 @@ public abstract class VirtualFunctionTable implements VFTable {
 
 	protected ClassID owner;
 	protected List<ClassID> parentage;
+	/**
+	 * The number of entries in the table
+	 */
+	protected int numEntries;
+	/**
+	 * This is the offset within the class where we expect to find the pointer that can point to
+	 *  this table
+	 */
+	protected int ptrOffsetInClass;
 
 	/**
 	 * Virtual Function Table for a base (parent) class within an owner class.  The owner and parent
@@ -37,6 +46,7 @@ public abstract class VirtualFunctionTable implements VFTable {
 	VirtualFunctionTable(ClassID owner, List<ClassID> parentage) {
 		this.owner = owner;
 		this.parentage = new ArrayList<>(parentage);
+		numEntries = 0;
 	}
 
 	/**
@@ -72,6 +82,22 @@ public abstract class VirtualFunctionTable implements VFTable {
 	}
 
 	/**
+	 * Returns the number of entries in the table
+	 * @return the number of entries
+	 */
+	public int getNumEntries() {
+		return numEntries;
+	}
+
+	/**
+	 * Gets the offset within the class for the pointer that can point to this table
+	 * @return the offset
+	 */
+	public int getPtrOffsetInClass() {
+		return ptrOffsetInClass;
+	}
+
+	/**
 	 * Sets the owner of the table
 	 * @param ownerArg the class to set as owner
 	 */
@@ -85,6 +111,22 @@ public abstract class VirtualFunctionTable implements VFTable {
 	 */
 	public void setParentage(List<ClassID> parentage) {
 		this.parentage = parentage;
+	}
+
+	/**
+	 * Sets the number of entries for the table
+	 * @param numEntriesArg the number of entries
+	 */
+	public void setNumEntries(int numEntriesArg) {
+		numEntries = numEntriesArg;
+	}
+
+	/**
+	 * Sets the offset within the class for the pointer that can point to this table
+	 * @param offset the offset
+	 */
+	public void setPtrOffsetInClass(int offset) {
+		ptrOffsetInClass = offset;
 	}
 
 	void emit(StringBuilder builder) {

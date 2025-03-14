@@ -32,16 +32,19 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeTask;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionListener;
-import ghidra.framework.main.datatree.DialogProjectTreeContext;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Base dialog for choosing DomainFiles. Provides and manages the base data tree panel. Subclasses
@@ -68,7 +71,6 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	private DataTreeDialogType type;
 	private Component parent;
 
-	private String searchString;
 	private boolean cancelled = false;
 
 	private ProjectDataExpandAction<DialogProjectTreeContext> expandAction;
@@ -183,13 +185,20 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		show();
 	}
 
+	public GTree getTree() {
+		return treePanel.getDataTree();
+	}
+
 	public String getNameText() {
 		return nameField.getText();
 	}
 
 	public void setNameText(String name) {
-		nameField.setText(name.trim());
-		nameField.selectAll();
+		// We need to run this code in a task since the tree may already be processing other tasks
+		// that would override this setting when they are run.  But putting this task in the queue, 
+		// we get the correct UI update ordering.
+		DataTree tree = treePanel.getDataTree();
+		tree.runTask(new SetNameTextTask(tree, name));
 	}
 
 	/**
@@ -328,13 +337,6 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	}
 
 	/**
-	 * Select the root folder in the tree.
-	 */
-	public void selectRootDataFolder() {
-		Swing.runLater(() -> treePanel.selectRootDataFolder());
-	}
-
-	/**
 	 * Select a folder in the tree.
 	 * @param folder the folder to select
 	 */
@@ -369,13 +371,12 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 
 		// data tree panel must be created before the combo box
 		JPanel dataTreePanel = createDataTreePanel();
-		ProjectData pd = project.getProjectData();
-		treePanel.setProjectData(project.getName(), pd);
+
+		// this allows users to press the OK button to choose the root folder
 		treePanel.selectRootDataFolder();
 
 		if (type == OPEN) {
 			JPanel comboPanel = createComboBoxPanel();
-
 			panel.add(comboPanel, BorderLayout.NORTH);
 			populateProjectModel();
 		}
@@ -578,7 +579,7 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 	}
 
 	public void setSearchText(String s) {
-		if (searchString != null) {
+		if (s != null) {
 			treePanel.findAndSelect(s);
 		}
 	}
@@ -604,4 +605,21 @@ public abstract class AbstractDataTreeDialog extends DialogComponentProvider
 		}
 	}
 
+	private class SetNameTextTask extends GTreeTask {
+
+		private String text;
+
+		SetNameTextTask(GTree gTree, String text) {
+			super(gTree);
+			this.text = text;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			runOnSwingThread(() -> {
+				nameField.setText(text.trim());
+				nameField.selectAll();
+			});
+		}
+	}
 }

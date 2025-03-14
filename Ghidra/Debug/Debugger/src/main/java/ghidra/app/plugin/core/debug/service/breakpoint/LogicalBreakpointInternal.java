@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,10 +56,11 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * breakpoint history provider handles displaying records from the past, including dead traces.
 	 * 
 	 * @param breakpoint the trace breakpoint to check
+	 * @param snap the snap
 	 * @return true if it can be aggregated.
 	 * @throws TrackedTooSoonException if the containing trace is still being added to the manager
 	 */
-	boolean canMerge(TraceBreakpoint breakpoint) throws TrackedTooSoonException;
+	boolean canMerge(TraceBreakpoint breakpoint, long snap) throws TrackedTooSoonException;
 
 	boolean trackBreakpoint(Bookmark bookmark);
 
@@ -74,7 +75,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
-	 * @return a future which completes when the actions are populated
 	 */
 	void planEnable(BreakpointActionSet actions, Trace trace);
 
@@ -83,7 +83,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
-	 * @return a future which completes when the actions are populated
 	 */
 	void planDisable(BreakpointActionSet actions, Trace trace);
 
@@ -92,7 +91,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
-	 * @return a future which completes when the actions are populated
 	 */
 	void planDelete(BreakpointActionSet actions, Trace trace);
 }

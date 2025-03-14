@@ -1,0 +1,478 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Search And Replace</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <META name="generator" content="Microsoft FrontPage 4.0">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <BLOCKQUOTE>
+      <A name="Search_And_Replace"></A> 
+
+      <H1>Search And Replace</H1>
+
+      <P>The search and replace feature allows to users to search for specific text sequences in
+      various Ghidra elements and replace that text sequence with a different text sequence. Using
+      this feature, many different elements in Ghidra can be renamed including labels, functions,
+      namespaces, parameters, datatypes, field elements, enum values, and others. This feature can
+      also be used to change comments placed on items such as instructions or data, structure field
+      element, or enum values.</P>
+
+      <P>By default, the search matches the text anywhere in an element ("contains"), but it has
+      full <A href="Search_Formats.htm#RegularExpressions">regular expression</A> support where
+      users can easily perform a "starts with" or "ends with" search. Regular expression capture
+      groups are also supported which allows for complex replacing of disjoint strings. See the <A
+      href="#Examples">examples</A> section below for details.</P>
+
+      <P>To initiate a search and replace operation, select <B>Search</B> <IMG alt="" border="0"
+      src="help/shared/arrow.gif"><B>Search and Replace</B> from the main tool menu.</P>
+
+      <H2>Search and Replace Dialog</H2>
+
+      <BLOCKQUOTE>
+        <P>The Search and Replace Dialog provides controls and options for performing and search
+        and replace operation.</P>
+      </BLOCKQUOTE>
+
+      <P align="center"><IMG src="images/SearchAndReplaceDialog.png" border="0" alt=""> &nbsp;</P>
+
+      <P align="center"><I>Search and Replace Dialog</I></P>
+
+      <BLOCKQUOTE>
+        <H3>Find</H3>
+
+        <BLOCKQUOTE>
+          <P>This is a text field for entering the text to be searched for in the selected Ghidra
+          elements. Elements are either the names of things such as labels, functions, datatypes,
+          or a comment associated with some item such as an instruction comment or structure field
+          comment.</P>
+
+          <P>Ghidra will find all the elements that contain the given text. To perform a "starts
+          with" or "ends with" search, you must enter a regular expression here and select the
+          regular expression option below.</P>
+
+          <P>There is also a drop down list of recent searches for this Ghidra session.</P>
+        </BLOCKQUOTE>
+
+        <H3>Replace</H3>
+
+        <BLOCKQUOTE>
+          <P>This is a text field for entering the replacement text. This text will be used to
+          replace the text that matched the search text. For example, if a function was named
+          "startCat" and the goal was to change it to "startDog", you would enter "Cat" in the
+          Find field and "Dog" in this field.</P>
+
+          <P>This field also include a drop drow of the most recently enter replacement
+          strings.</P>
+        </BLOCKQUOTE>
+
+        <H3>Options</H3>
+
+        <BLOCKQUOTE>
+          <H4>Regular Expression</H4>
+
+          <BLOCKQUOTE>
+            <P>If selected, the search text will be interpreted as a regular expression. This
+            allows for complex search and replace operations. See the general section on <A href=
+            "Search_Formats.htm#RegularExpressions">regular expressions</A> for more information. If
+            you want to anything other than a "contains" search, you must use a regular expression.
+            See below for examples on how to do this.</P>
+          </BLOCKQUOTE>
+
+          <H4>Case Sensitive</H4>
+
+          <BLOCKQUOTE>
+            <P>If selected, the entered search text must match exactly. Otherwise, the entered
+            search text can match regardless of the case of the search text or the target text.</P>
+          </BLOCKQUOTE>
+
+          <H4>Whole Word</H4>
+
+          <BLOCKQUOTE>
+            <P>If selected, the target text must be an entire word. In other words it must be
+            surrounded by white space or must be the first or last word in a word sequence. So,
+            when applied to renaming elements, the search text must match the entire name of the
+            element since element names cannot contain whitespace. But for comments, the search
+            text must entirely match one word withing the comment.</P>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+
+        <H3>Search For</H3>
+
+        <BLOCKQUOTE>
+          <P>This section contains a group of checkboxes used to turn on or off the type of Ghidra
+          elements to search. There are also buttons for selecting and deselecting all the element
+          checkboxes. At least one checkbox must be selected to perform a search.</P>
+
+          <UL>
+            <LI><B>Classes</B> - Search the names of classes.</LI>
+
+            <LI><B>Comments</B> - Search instruction or data comments. This includes pre-comments,
+            plate comments, end of line comments, post-comments, and repeatable comments.</LI>
+
+            <LI><B>Datatype Categories</B> - Search for the names of categories in the data types
+            tree.</LI>
+
+            <LI><B>Datatype Comments</B> - Search comments associated with datatypes. This includes
+            descriptions on enums and structures, datatype field comments, and enum value
+            comments.</LI>
+
+            <LI><B>Datatype Fields</B> - Search the names of structure or union field elements.</LI>
+
+            <LI><B>Datatypes</B> - Search the names of any nameable datatype (i.e., does 
+            not search built-in datatypes such as byte, word, string, etc.)</LI>
+ 
+            <LI><B>Enum Values</B> - Search the names of enum values.</LI>
+
+            <LI><B>Functions</B> - Search the names of functions. (Note: This search does not
+            include external function names.)</LI>
+
+            <LI><B>Labels</B> - Search the names of labels. (Note: This search does not include
+            external labels.)</LI>
+
+            <LI><B>Local Variables</B> - Search the names of function local variables. (Note: This
+            does not include local variables derived by the decompiler that haven't been committed
+            to the database.)</LI>
+
+            <LI><B>Memory Blocks</B> - Search the names of Memory Blocks.</LI>
+
+            <LI><B>Namespaces</B> - Search the names of namespaces.</LI>
+
+            <LI><B>Parameters</B> - Search the names of function parameters.</LI>
+
+            <LI><B>Program Trees</B> - Search the names of modules and fragments defined in program
+            trees.</LI>
+          </UL>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+  <A name="Search_And_Replace_Results"></A> 
+  <H2>Results Window</H2>
+
+      <BLOCKQUOTE>
+        <P>After initiating a search and replace action, a results window will appear containing a
+        table showing each search match as an entry in the table. At this point, no changes have
+        been made to the program. This provides an opportunity to review the pending changes before
+        they are applied. The changes can now be applied all at once or individually.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <P align="center"><IMG src="images/SearchAndReplaceResults.png" border="0" alt=""> &nbsp;</P>
+
+    <P align="center"><I>Search and Replace Results Window</I></P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <H3>Table information</H3>
+
+        <BLOCKQUOTE>
+          <P>Each entry in the table represents one changes that can be applied.</P>
+
+          <H4>Standard Columns</H4>
+
+          <UL>
+            <LI><B>Original</B> - This column displays the original value of the matched
+            element.</LI>
+
+            <LI><B>Preview</B> - This column displays a preview of the value if this change is
+            applied.</LI>
+
+            <LI><B>Action</B> - The change to be applied. (either Rename for names or Update for
+            comments changes.)</LI>
+
+            <LI><B>Type</B> - This column displays the type of element being changed (label,
+            function, comment, etc.)</LI>
+
+            <LI><B>Status</B> - The icon displayed in this column indicates the status of this
+            change.</LI>
+          </UL>
+
+          <H4>Status Icons</H4>
+
+          <BLOCKQUOTE>
+            <P>The status column will have one of the following icons to indicate item's
+            status:</P>
+          </BLOCKQUOTE>
+
+          <UL>
+            <LI><B>Blank</B> - The change has not been applied.</LI>
+
+            <LI><IMG alt="" src="Icons.WARNING_ICON"> - The change has some associated warning.
+            Hover on the status to get a detailed message of the issue.</LI>
+
+            <LI><IMG alt="" src="Icons.ERROR_ICON"> - The change can't be applied. This status can
+            appear either before or after an attempt to apply has been made. Hover on the status
+            for more information.</LI>
+
+            <LI><IMG alt="" src="icon.base.plugin.quickfix.done"> - The changes has been applied.</LI>
+          </UL>
+
+          <H4>Optional Columns</H4>
+
+          <UL>
+            <LI>Current - Displays the current value of the element.</LI>
+
+            <LI>Address - Displays the elements address if applicable, blank otherwise</LI>
+
+            <LI>Path - Displays any path associated with the element, if applicable. The type of
+            path varies greatly with the element type.</LI>
+          </UL>
+
+          <H4>Path Column Information</H4>
+
+          <BLOCKQUOTE>
+            <P>The Path column shows different path information depending on the element type:</P>
+          </BLOCKQUOTE>
+
+          <UL>
+            <LI>Classes - the namespace path.</LI>
+
+            <LI>Datatype Categories - the parent category path.</LI>
+
+            <LI>Datatype Comments - the parent category path.</LI>
+
+            <LI>Datatype Names - the parent category path.</LI>
+
+            <LI>Enum Values - the category path of the enum.</LI>
+
+            <LI>Field Names - the category path of the structure or union.</LI>
+
+            <LI>Functions - the namespace path.</LI>
+
+            <LI>Labels - the namespace path.</LI>
+
+            <LI>Local Variables - the namespace path.</LI>
+
+            <LI>Namespaces - the parent namespace path.</LI>
+
+            <LI>Parameters - the namespace path.</LI>
+
+            <LI>Program Trees - the program tree module path</LI>
+          </UL>
+        </BLOCKQUOTE>
+
+        <H3>Applying Changes</H3>
+
+        <BLOCKQUOTE>
+          <P>Changes can be applied in bulk or individually.</P>
+
+          <H4>Apply All Button</H4>
+
+          <BLOCKQUOTE>
+            <P>Press this button to apply all items in the table, regardless of what is
+            selected.</P>
+          </BLOCKQUOTE>
+
+ 		  <A name="Apply_Selected"></A> 
+          <H4>Apply Selected Action</H4>
+ 
+          <BLOCKQUOTE>
+            <P>Press the <IMG alt="" src="icon.base.plugin.quickfix.done"> toolbar button or use the
+            popup action <B>Execute Selected Action(s)</B> to apply just the selected entries in
+            the table. If only one item is selected when this this is done, the selected item will
+            move to the next item in the table to facilitate a one at a time workflow.</P>
+          </BLOCKQUOTE>
+
+ 		  <A name="Auto_Delete"></A> 
+          <P><IMG alt="" border="0" src="help/shared/note.png"> There is also a popup toggle action
+          to turn on an option to auto delete applied entries from the table.</P>
+        </BLOCKQUOTE>
+
+        <H3>Navigation</H3>
+
+        <BLOCKQUOTE>
+          <P>If the <IMG alt="" src="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON"> toolbar button is
+          selected, selecting items in the table will attempt to navigate to that item in the tool
+          if possible.</P>
+
+          <P>Double clicking (or pressing return key) will also attempt to navigate the tool to the
+          selected item. In addition, if the item is related to a datatype, an editor for that
+          datatype will be shown.</P>
+        </BLOCKQUOTE><A name="Examples"></A> 
+
+        <H2>Search Examples</H2>
+
+        <BLOCKQUOTE>
+          <H3>Basic Searches</H3>
+
+          <BLOCKQUOTE>
+            <P>Without using regular expressions, you can find matches that contain the search text
+            or fully match the search text by turning on the "whole word" option. However, to
+            perform a "starts with" or "ends with" search, you must use a regular expression. Also,
+            you can do advanced match and replace using regular expressions capture groups.</P>
+
+            <P>The following examples assume we are trying to replace label names and we have the
+            following labels in our program:</P>
+
+            <UL>
+              <LI>Apple</LI>
+
+              <LI>myApple</LI>
+
+              <LI>AppleJuice</LI>
+            </UL>
+
+            <BLOCKQUOTE>
+              <TABLE border="1" cellspacing="2" cellpadding="6">
+                <TBODY>
+                  <TR>
+                    <TH valign="top" bgcolor="#c0c0c0" width="300">Search Type<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="5">RegEx<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="5">Whole Word<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Search For<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Replace With<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Matches<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Results<BR>
+                    </TH>
+                  </TR>
+
+                  <TR>
+                    <TD><B>Contains</B></TD>
+
+                    <TD>Off</TD>
+
+                    <TD>Off</TD>
+
+                    <TD>Apple</TD>
+
+                    <TD>Pear</TD>
+
+                    <TD>Apple, myApple, AppleJuice</TD>
+
+                    <TD>Pear, myPear, PearJuice</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><B>Matches Fully</B></TD>
+
+                    <TD>Off</TD>
+
+                    <TD>On</TD>
+
+                    <TD>Apple</TD>
+
+                    <TD>Pear</TD>
+
+                    <TD>Apple</TD>
+
+                    <TD>Pear</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><B>Starts With</B></TD>
+
+                    <TD>On</TD>
+
+                    <TD>N/A</TD>
+
+                    <TD>^Apple</TD>
+
+                    <TD>Pear</TD>
+
+                    <TD>Apple, AppleJuice</TD>
+
+                    <TD>Pear, PearJuice</TD>
+                  </TR>
+
+                  <TR>
+                    <TD><B>Ends With</B></TD>
+
+                    <TD>On</TD>
+
+                    <TD>N/A</TD>
+
+                    <TD>Apple$</TD>
+
+                    <TD>Pear</TD>
+
+                    <TD>Apple, MyApple</TD>
+
+                    <TD>Pear, MyPear</TD>
+                  </TR>
+                </TBODY>
+              </TABLE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+
+          <H3>Advanced RegEx Searches</H3>
+
+          <BLOCKQUOTE>
+            <P>Regular Expression can do many advanced types of matching and replacing which is
+            beyond the scope of this document. However, a simple example using capture groups will
+            be given as follows:</P>
+
+            <BLOCKQUOTE>
+              <TABLE border="1" cellspacing="2" cellpadding="6">
+                <TBODY>
+                  <TR>
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Search For<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Replace With<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Matches<BR>
+                    </TH>
+
+                    <TH valign="top" bgcolor="#c0c0c0" width="10">Results<BR>
+                    </TH>
+                  </TR>
+
+                  <TR>
+                    <TD>Red(.*)Blue(.*)</TD>
+
+                    <TD>Green$1Purple$2</TD>
+
+                    <TD>RedApplesBlueBerries</TD>
+
+                    <TD>GreenApplesPurpleBerries</TD>
+                  </TR>
+                </TBODY>
+              </TABLE>
+            </BLOCKQUOTE>
+          </BLOCKQUOTE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+	<P class="providedbyplugin">Provided by: <I>SearchAndReplacePlugin</I><BR>
+	 </P>
+
+	 <P class="relatedtopic">Related Topics:</P>
+
+	 <UL>
+		<LI>
+		  <P class="relatedtopic"><A href=
+		  "help/topics/Search/Searching.htm">Searching</A></P>
+		</LI>
+	   <LI>
+	     <P class="relatedtopic"><A href=
+	     "help/topics/Search/Search_Program_Text.htm">Search Program Text</A></P>
+	   </LI>
+
+	 </UL><BR>
+	  <BR>
+	  <BR>
+	  <BR>
+	  <BR>
+	  <BR>
+
+  </BODY>
+</HTML>

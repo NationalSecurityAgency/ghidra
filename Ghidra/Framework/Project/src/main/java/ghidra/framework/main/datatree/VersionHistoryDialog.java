@@ -41,6 +41,7 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
 		setHelpLocation(new HelpLocation(GenericHelpTopics.VERSION_CONTROL, "Show_History"));
 		versionPanel = new VersionHistoryPanel(frontEndTool, null, true);
+		versionPanel.getAccessibleContext().setAccessibleName("Version History");
 		addWorkPanel(versionPanel);
 		addDismissButton();
 

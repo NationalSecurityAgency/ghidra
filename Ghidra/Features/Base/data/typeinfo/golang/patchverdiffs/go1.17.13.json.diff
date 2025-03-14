@@ -1,0 +1,499 @@
+@ ["all","Funcs","encoding/gob.(*Decoder).decIgnoreOpFor","Params",3]
+  {"DataType":"map[encoding/gob.typeId]*encoding/gob.decOp","Name":"inProgress"}
++ {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","encoding/pem.decodeError"]
+- {"Flags":0,"Params":[{"DataType":"[]byte","Name":"data"},{"DataType":"[]byte","Name":"rest"}],"Results":[{"DataType":"*encoding/pem.Block","Name":""},{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","encoding/xml.(*Decoder).unmarshal","Params",3]
+  {"DataType":"*encoding/xml.StartElement","Name":"start"}
++ {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","encoding/xml.(*Decoder).unmarshalPath","Params",5]
+  {"DataType":"*encoding/xml.StartElement","Name":"start"}
++ {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","net/http.(*http2ClientConn).awaitOpenSlotForRequest"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).encodeTrailers","Params",1,"DataType"]
+- "*net/http.Request"
++ "net/http.Header"
+@ ["all","Funcs","net/http.(*http2ClientConn).encodeTrailers","Params",1,"Name"]
+- "req"
++ "trailer"
+@ ["all","Funcs","net/http.(*http2ClientConn).frameScratchBuffer"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).newStream"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"*net/http.http2clientStream","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).putFrameScratchBuffer"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"[]byte","Name":"buf"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).roundTrip"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"*net/http.Response","Name":"res"},{"DataType":"bool","Name":"gotErrAfterReqBodyWrite"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).streamByID"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"uint32","Name":"id"},{"DataType":"bool","Name":"andRemove"}],"Results":[{"DataType":"*net/http.http2clientStream","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2Transport).getBodyWriterState"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2Transport","Name":"t"},{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"io.Reader","Name":"body"}],"Results":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientConnPool).shouldTraceGetConn"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientConnPool","Name":"p"},{"DataType":"net/http.http2clientConnIdleState","Name":"st"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).abortRequestBodyWrite","Params",1]
+  {"DataType":"*net/http.http2clientStream","Name":"cs"}
+- {"DataType":"error","Name":"err"}
+]
+@ ["all","Funcs","net/http.(*http2clientStream).awaitRequestCancel"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).cancelStream"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).checkResetOrDone"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).getStartedWrite"]
+- {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequestBody","Params",1,"DataType"]
+- "io.Reader"
++ "*net/http.Request"
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequestBody","Params",1,"Name"]
+- "body"
++ "req"
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequestBody","Params",2]
+  {"DataType":"*net/http.Request","Name":"req"}
+- {"DataType":"io.Closer","Name":"bodyCloser"}
+]
+@ ["all","Funcs","net/http.http2awaitRequestCancel"]
+- {"Flags":0,"Params":[{"DataType":"*net/http.Request","Name":"req"},{"DataType":"\u003c-chan struct {}","Name":"done"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2bodyWriterState.cancel"]
+- {"Flags":4,"Params":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2bodyWriterState.on100"]
+- {"Flags":4,"Params":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2bodyWriterState.scheduleBodyWrite"]
+- {"Flags":4,"Params":[{"DataType":"net/http.http2bodyWriterState","Name":"s"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2shouldRetryRequest","Params",2]
+  {"DataType":"error","Name":"err"}
+- {"DataType":"bool","Name":"afterBodyWrite"}
+]
+@ ["all","Funcs","net/http/httptest.(*Server).forgetConn"]
+- {"Flags":4,"Params":[{"DataType":"*net/http/httptest.Server","Name":"s"},{"DataType":"net.Conn","Name":"c"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.dodeltimer","Results",0]
+[
++ {"DataType":"int","Name":""}
+]
+@ ["all","Funcs","runtime.siftupTimer","Results",0]
+[
++ {"DataType":"int","Name":""}
+]
+@ ["all","Funcs","time.formatNano","Params",2,"Name"]
+- "n"
++ "std"
+@ ["all","Funcs","time.formatNano","Params",3]
+  {"DataType":"int","Name":"std"}
+- {"DataType":"bool","Name":"trim"}
+]
+@ ["all","Funcs","crypto/rand.batched"]
++ {"Flags":0,"Params":[{"DataType":"func([]byte) error","Name":"f"},{"DataType":"int","Name":"readMax"}],"Results":[{"DataType":"func([]byte) error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","go/parser.decNestLev"]
++ {"Flags":0,"Params":[{"DataType":"*go/parser.parser","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","go/parser.incNestLev"]
++ {"Flags":0,"Params":[{"DataType":"*go/parser.parser","Name":"p"}],"Results":[{"DataType":"*go/parser.parser","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","internal/abi.(*RegArgs).Dump"]
++ {"Flags":4,"Params":[{"DataType":"*internal/abi.RegArgs","Name":"r"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","io/fs.globWithLimit"]
++ {"Flags":0,"Params":[{"DataType":"io/fs.FS","Name":"fsys"},{"DataType":"string","Name":"pattern"},{"DataType":"int","Name":"depth"}],"Results":[{"DataType":"[]string","Name":"matches"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).ReserveNewRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).SetDoNotReuse"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).addStreamLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).awaitOpenSlotForStreamLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"},{"DataType":"*net/http.http2clientStream","Name":"cs"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).decrStreamReservations"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).decrStreamReservationsLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2ClientConn).isDoNotReuseAndIdle"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2ClientConn","Name":"cc"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientConnReadLoop).processSettingsNoWrite"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientConnReadLoop","Name":"rl"},{"DataType":"*net/http.http2SettingsFrame","Name":"f"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientConnReadLoop).streamByID"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientConnReadLoop","Name":"rl"},{"DataType":"uint32","Name":"id"}],"Results":[{"DataType":"*net/http.http2clientStream","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).abortStream"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).abortStreamLocked"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).cleanupWriteRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).doRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).encodeAndWriteHeaders"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).frameScratchBufferLen"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"int","Name":"maxFrameSize"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2clientStream).writeRequest"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*net/http.Request","Name":"req"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","net/http.(*http2pipe).setBuffer"]
++ {"Flags":4,"Params":[{"DataType":"*net/http.http2pipe","Name":"p"},{"DataType":"net/http.http2pipeBuffer","Name":"b"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2missingBody.Close"]
++ {"Flags":4,"Params":[{"DataType":"net/http.http2missingBody","Name":"self"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","net/http.http2missingBody.Read"]
++ {"Flags":4,"Params":[{"DataType":"net/http.http2missingBody","Name":"self"},{"DataType":"[]byte","Name":""}],"Results":[{"DataType":"int","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","path/filepath.globWithLimit"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"pattern"},{"DataType":"int","Name":"depth"}],"Results":[{"DataType":"[]string","Name":"matches"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","regexp/syntax.(*parser).calcHeight"]
++ {"Flags":4,"Params":[{"DataType":"*regexp/syntax.parser","Name":"p"},{"DataType":"*regexp/syntax.Regexp","Name":"re"},{"DataType":"bool","Name":"force"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","regexp/syntax.(*parser).checkHeight"]
++ {"Flags":4,"Params":[{"DataType":"*regexp/syntax.parser","Name":"p"},{"DataType":"*regexp/syntax.Regexp","Name":"re"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","regexp/syntax.parse"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"s"},{"DataType":"regexp/syntax.Flags","Name":"flags"}],"Results":[{"DataType":"*regexp/syntax.Regexp","Name":"_"},{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["all","Funcs","runtime.(*pollDesc).info"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.pollDesc","Name":"pd"}],"Results":[{"DataType":"runtime.pollInfo","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.(*pollDesc).publishInfo"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.pollDesc","Name":"pd"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.(*pollDesc).setEventErr"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.pollDesc","Name":"pd"},{"DataType":"bool","Name":"b"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.metricsLock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.metricsUnlock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.pollInfo.closing"]
++ {"Flags":4,"Params":[{"DataType":"runtime.pollInfo","Name":"i"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.pollInfo.eventErr"]
++ {"Flags":4,"Params":[{"DataType":"runtime.pollInfo","Name":"i"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.pollInfo.expiredReadDeadline"]
++ {"Flags":4,"Params":[{"DataType":"runtime.pollInfo","Name":"i"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.pollInfo.expiredWriteDeadline"]
++ {"Flags":4,"Params":[{"DataType":"runtime.pollInfo","Name":"i"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","time.digitsLen"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"std"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","time.separator"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"std"}],"Results":[{"DataType":"byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","time.stdFracSecond"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"code"},{"DataType":"int","Name":"n"},{"DataType":"int","Name":"c"}],"Results":[{"DataType":"int","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","func(string, []interface {})","Params",0,"Name"]
+- "format"
++ ""
+@ ["all","Types","func(string, []interface {})","Params",1,"Name"]
+- "args"
++ ""
+@ ["all","Types","go/parser.bailout","Fields",0]
+[
++ {"DataType":"go/token.Pos","Name":"pos"}
++ {"DataType":"string","Name":"msg"}
+]
+@ ["all","Types","go/parser.parser","Fields",17]
+  {"DataType":"[]*go/ast.ImportSpec","Name":"imports"}
++ {"DataType":"int","Name":"nestLev"}
+]
+@ ["all","Types","go/parser.resolver","Fields",5]
+  {"DataType":"[]*go/ast.Ident","Name":"unresolved"}
++ {"DataType":"int","Name":"depth"}
+  {"DataType":"*go/ast.Scope","Name":"labelScope"}
+@ ["all","Types","net/http.http2ClientConn","Fields",5]
+  {"DataType":"bool","Name":"singleUse"}
++ {"DataType":"bool","Name":"getConnCalled"}
+  {"DataType":"chan struct {}","Name":"readerDone"}
+@ ["all","Types","net/http.http2ClientConn","Fields",14]
+  {"DataType":"net/http.http2flow","Name":"inflow"}
++ {"DataType":"bool","Name":"doNotReuse"}
+  {"DataType":"bool","Name":"closing"}
+@ ["all","Types","net/http.http2ClientConn","Fields",17]
+  {"DataType":"bool","Name":"closed"}
++ {"DataType":"bool","Name":"seenSettings"}
+  {"DataType":"bool","Name":"wantSettingsAck"}
+@ ["all","Types","net/http.http2ClientConn","Fields",22]
+  {"DataType":"map[uint32]*net/http.http2clientStream","Name":"streams"}
++ {"DataType":"int","Name":"streamsReserved"}
+  {"DataType":"uint32","Name":"nextStreamID"}
+@ ["all","Types","net/http.http2ClientConn","Fields",26]
+  {"DataType":"map[[8]byte]chan struct {}","Name":"pings"}
+- {"DataType":"*bufio.Writer","Name":"bw"}
+  {"DataType":"*bufio.Reader","Name":"br"}
+@ ["all","Types","net/http.http2ClientConn","Fields",27]
+  {"DataType":"*bufio.Reader","Name":"br"}
+- {"DataType":"*net/http.http2Framer","Name":"fr"}
+  {"DataType":"time.Time","Name":"lastActive"}
+@ ["all","Types","net/http.http2ClientConn","Fields",33]
+  {"DataType":"uint32","Name":"initialWindowSize"}
++ {"DataType":"chan struct {}","Name":"reqHeaderMu"}
++ {"DataType":"sync.Mutex","Name":"wmu"}
++ {"DataType":"*bufio.Writer","Name":"bw"}
++ {"DataType":"*net/http.http2Framer","Name":"fr"}
++ {"DataType":"error","Name":"werr"}
+  {"DataType":"bytes.Buffer","Name":"hbuf"}
+@ ["all","Types","net/http.http2ClientConn","Fields",40]
+  {"DataType":"*vendor/golang.org/x/net/http2/hpack.Encoder","Name":"henc"}
+- {"DataType":"[][]byte","Name":"freeBuf"}
+- {"DataType":"sync.Mutex","Name":"wmu"}
+- {"DataType":"error","Name":"werr"}
+]
+@ ["all","Types","net/http.http2bodyWriterState"]
+- {"Fields":[{"DataType":"*net/http.http2clientStream","Name":"cs"},{"DataType":"*time.Timer","Name":"timer"},{"DataType":"*sync.Once","Name":"fnonce"},{"DataType":"func()","Name":"fn"},{"DataType":"chan error","Name":"resc"},{"DataType":"time.Duration","Name":"delay"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","net/http.http2clientConnIdleState","Fields",1]
+  {"DataType":"bool","Name":"canTakeNewRequest"}
+- {"DataType":"bool","Name":"freshConn"}
+]
+@ ["all","Types","net/http.http2clientConnReadLoop","Fields",2]
+  {"DataType":"*net/http.http2ClientConn","Name":"cc"}
+- {"DataType":"bool","Name":"closeWhenIdle"}
+]
+@ ["all","Types","net/http.http2clientStream","Fields",1,"DataType"]
+- "*net/http.Request"
++ "context.Context"
+@ ["all","Types","net/http.http2clientStream","Fields",1,"Name"]
+- "req"
++ "ctx"
+@ ["all","Types","net/http.http2clientStream","Fields",2]
+  {"DataType":"context.Context","Name":"ctx"}
++ {"DataType":"\u003c-chan struct {}","Name":"reqCancel"}
+  {"DataType":"*net/http/httptrace.ClientTrace","Name":"trace"}
+@ ["all","Types","net/http.http2clientStream","Fields",5]
+  {"DataType":"uint32","Name":"ID"}
+- {"DataType":"chan net/http.http2resAndError","Name":"resc"}
+  {"DataType":"net/http.http2pipe","Name":"bufPipe"}
+@ ["all","Types","net/http.http2clientStream","Fields",6]
+  {"DataType":"net/http.http2pipe","Name":"bufPipe"}
+- {"DataType":"bool","Name":"startedWrite"}
+  {"DataType":"bool","Name":"requestedGzip"}
+@ ["all","Types","net/http.http2clientStream","Fields",7,"DataType"]
+- "func()"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",7,"Name"]
+- "on100"
++ "isHead"
+@ ["all","Types","net/http.http2clientStream","Fields",8]
+  {"DataType":"bool","Name":"isHead"}
++ {"DataType":"sync.Once","Name":"abortOnce"}
++ {"DataType":"chan struct {}","Name":"abort"}
++ {"DataType":"error","Name":"abortErr"}
++ {"DataType":"chan struct {}","Name":"peerClosed"}
++ {"DataType":"chan struct {}","Name":"donec"}
++ {"DataType":"chan struct {}","Name":"on100"}
++ {"DataType":"chan struct {}","Name":"respHeaderRecv"}
++ {"DataType":"*net/http.Response","Name":"res"}
+  {"DataType":"net/http.http2flow","Name":"flow"}
+@ ["all","Types","net/http.http2clientStream","Fields",20,"DataType"]
+- "error"
++ "io.ReadCloser"
+@ ["all","Types","net/http.http2clientStream","Fields",20,"Name"]
+- "stopReqBody"
++ "reqBody"
+@ ["all","Types","net/http.http2clientStream","Fields",21,"DataType"]
+- "bool"
++ "int64"
+@ ["all","Types","net/http.http2clientStream","Fields",21,"Name"]
+- "didReset"
++ "reqBodyContentLength"
+@ ["all","Types","net/http.http2clientStream","Fields",22,"DataType"]
+- "chan struct {}"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",22,"Name"]
+- "peerReset"
++ "reqBodyClosed"
+@ ["all","Types","net/http.http2clientStream","Fields",23,"DataType"]
+- "error"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",23,"Name"]
+- "resetErr"
++ "sentEndStream"
+@ ["all","Types","net/http.http2clientStream","Fields",24,"DataType"]
+- "chan struct {}"
++ "bool"
+@ ["all","Types","net/http.http2clientStream","Fields",24,"Name"]
+- "done"
++ "sentHeaders"
+@ ["all","Types","net/http.http2clientStream","Fields",29]
+  {"DataType":"uint8","Name":"num1xx"}
++ {"DataType":"bool","Name":"readClosed"}
++ {"DataType":"bool","Name":"readAborted"}
+  {"DataType":"net/http.Header","Name":"trailer"}
+@ ["all","Types","regexp/syntax.parser","Fields",6]
+  {"DataType":"[]rune","Name":"tmpClass"}
++ {"DataType":"int","Name":"numRegexp"}
++ {"DataType":"map[*regexp/syntax.Regexp]int","Name":"height"}
+]
+@ ["all","Types","runtime.pollDesc","Fields",1]
+  {"DataType":"*runtime.pollDesc","Name":"link"}
++ {"DataType":"uintptr","Name":"fd"}
++ {"DataType":"uint32","Name":"atomicInfo"}
++ {"DataType":"uintptr","Name":"rg"}
++ {"DataType":"uintptr","Name":"wg"}
+  {"DataType":"runtime.mutex","Name":"lock"}
+@ ["all","Types","runtime.pollDesc","Fields",6]
+  {"DataType":"runtime.mutex","Name":"lock"}
+- {"DataType":"uintptr","Name":"fd"}
+  {"DataType":"bool","Name":"closing"}
+@ ["all","Types","runtime.pollDesc","Fields",7]
+  {"DataType":"bool","Name":"closing"}
+- {"DataType":"bool","Name":"everr"}
+  {"DataType":"uint32","Name":"user"}
+@ ["all","Types","runtime.pollDesc","Fields",9]
+  {"DataType":"uintptr","Name":"rseq"}
+- {"DataType":"uintptr","Name":"rg"}
+  {"DataType":"runtime.timer","Name":"rt"}
+@ ["all","Types","runtime.pollDesc","Fields",12]
+  {"DataType":"uintptr","Name":"wseq"}
+- {"DataType":"uintptr","Name":"wg"}
+  {"DataType":"runtime.timer","Name":"wt"}
+@ ["all","Types","net/http.http2missingBody"]
++ {"Fields":[],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","runtime.heapStatsDelta"]
++ {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uint64","Name":"tinyAllocCount"},{"DataType":"uint64","Name":"largeAlloc"},{"DataType":"uint64","Name":"largeAllocCount"},{"DataType":"[68]uint64","Name":"smallAllocCount"},{"DataType":"uint64","Name":"largeFree"},{"DataType":"uint64","Name":"largeFreeCount"},{"DataType":"[68]uint64","Name":"smallFreeCount"}],"Kind":"struct","TypeParams":[]}
+@ ["all","Types","runtime.pollInfo"]
++ {"DataType":"uint32","Kind":"basic"}
+@ ["darwin","Funcs","crypto/rand.getEntropy","Results",0,"DataType"]
+- "bool"
++ "error"
+@ ["darwin","Funcs","crypto/rand.getEntropy","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-amd64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-arm64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["darwin-arm64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux","Funcs","crypto/rand.batched"]
+- {"Flags":0,"Params":[{"DataType":"func([]byte) bool","Name":"f"},{"DataType":"int","Name":"readMax"}],"Results":[{"DataType":"func([]byte) bool","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","crypto/rand.getRandomBatch","Results",0,"DataType"]
+- "bool"
++ "error"
+@ ["linux","Funcs","crypto/rand.getRandomBatch","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux","Types","func([]byte) bool"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"[]byte","Name":""}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-386","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-386","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-386-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-amd64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-amd64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-amd64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-arm64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows","Funcs","runtime.cbsLock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows","Funcs","runtime.cbsUnlock"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["windows-386","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-386","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["windows-386-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[1]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["windows-amd64","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-amd64","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","runtime.heapStatsDelta"]
+- {"Fields":[{"DataType":"int64","Name":"committed"},{"DataType":"int64","Name":"released"},{"DataType":"int64","Name":"inHeap"},{"DataType":"int64","Name":"inStacks"},{"DataType":"int64","Name":"inWorkBufs"},{"DataType":"int64","Name":"inPtrScalarBits"},{"DataType":"uintptr","Name":"tinyAllocCount"},{"DataType":"uintptr","Name":"largeAlloc"},{"DataType":"uintptr","Name":"largeAllocCount"},{"DataType":"[68]uintptr","Name":"smallAllocCount"},{"DataType":"uintptr","Name":"largeFree"},{"DataType":"uintptr","Name":"largeFreeCount"},{"DataType":"[68]uintptr","Name":"smallFreeCount"},{"DataType":"[0]uint32","Name":"_"}],"Kind":"struct","TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}

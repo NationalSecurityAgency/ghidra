@@ -34,7 +34,7 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.iface.TraceObjectInterface;
 import ghidra.trace.model.target.path.KeyPath;
 
@@ -115,7 +115,8 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 		List<ValueRow> sel = getSelectedItems();
 		if (!sel.isEmpty()) {
 			myActionContext = new DebuggerObjectActionContext(
-				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, table);
+				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, table,
+				current.getSnap());
 		}
 	}
 

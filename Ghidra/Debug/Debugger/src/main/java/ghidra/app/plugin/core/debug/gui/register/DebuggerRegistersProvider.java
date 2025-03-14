@@ -783,7 +783,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		return curThread == null ? "" : curThread.getName();
+		return curThread == null ? "" : curThread.getName(current.getSnap());
 	}
 
 	protected void updateSubTitle() {

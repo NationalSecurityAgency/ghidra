@@ -552,6 +552,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			return;
 		}
 
+		selectSymbol(symbol);
+	}
+
+	public void selectSymbol(Symbol symbol) {
 		SymbolTreeRootNode rootNode = (SymbolTreeRootNode) tree.getViewRoot();
 		tree.runTask(new SearchTask(tree, rootNode, symbol));
 	}
@@ -805,4 +809,5 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			}
 		}
 	}
+
 }

@@ -63,13 +63,16 @@ public class BitsInputDialogComponentProvider extends InputDialogComponentProvid
 		mainPanel.add(new GLabel(TOTAL_BITS_LABEL));
 		totalBitsBox = new IntegerTextField();
 		totalBitsBox.setValue(DEFAULT_TOTAL_BITS);
+		totalBitsBox.getComponent().getAccessibleContext().setAccessibleName("Total Bits");
 		mainPanel.add(totalBitsBox.getComponent());
 
 		mainPanel.add(new GLabel(POST_BITS_LABEL));
 		preBitsBox = new IntegerTextField();
 		preBitsBox.setValue(DEFAULT_POST_BITS);
+		preBitsBox.getComponent().getAccessibleContext().setAccessibleName("Pre Bits");
 		mainPanel.add(preBitsBox.getComponent());
 
+		mainPanel.getAccessibleContext().setAccessibleName("Bits Input Provider");
 		return mainPanel;
 	}
 

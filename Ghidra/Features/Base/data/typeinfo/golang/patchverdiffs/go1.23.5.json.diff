@@ -1,0 +1,256 @@
+@ ["all","Funcs","encoding/gob.(*Decoder).decIgnoreOpFor","Params",3]
+  {"DataType":"map[encoding/gob.typeId]*encoding/gob.decOp","Name":"inProgress"}
+- {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","go/build/constraint.parsePlusBuildExpr","Results",1]
+  {"DataType":"go/build/constraint.Expr","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","net/http.(*Client).makeHeadersCopier","Results",0,"DataType"]
+- "func(*net/http.Request)"
++ "func(*net/http.Request, bool)"
+@ ["all","Funcs","net/http.shouldCopyHeaderOnRedirect","Params",0]
+[
+- {"DataType":"string","Name":"headerKey"}
+  {"DataType":"*net/url.URL","Name":"initial"}
+@ ["all","Funcs","os.ensurePidfd","Results",1]
+  {"DataType":"*syscall.SysProcAttr","Name":""}
++ {"DataType":"bool","Name":""}
+]
+@ ["all","Funcs","go/types.versionMax"]
++ {"Flags":0,"Params":[{"DataType":"go/types.goVersion","Name":"a"},{"DataType":"go/types.goVersion","Name":"b"}],"Results":[{"DataType":"go/types.goVersion","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","internal/abi.TypeFor"]
++ {"Flags":2,"Params":[],"Results":[{"DataType":"*internal/abi.Type","Name":""}],"TypeParams":["T"]}
+@ ["all","Funcs","runtime.gcParkStrongFromWeak"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"*runtime.m","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","runtime.gcWakeAllStrongFromWeak"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.sameSizeGrowForIssue69110Test"]
++ {"Flags":0,"Params":[{"DataType":"*runtime.hmap","Name":"h"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Types","encoding/gob.Decoder","Fields",9]
+  {"DataType":"error","Name":"err"}
++ {"DataType":"int","Name":"ignoreDepth"}
+]
+@ ["all","Types","func(error)","Params",0,"Name"]
+- ""
++ "err"
+@ ["all","Types","go/build/constraint.exprParser","Fields",5]
+  {"DataType":"int","Name":"pos"}
++ {"DataType":"int","Name":"size"}
+]
+@ ["all","Types","runtime.m","Fields",32]
+  {"DataType":"bool","Name":"needextram"}
++ {"DataType":"bool","Name":"g0StackAccurate"}
+  {"DataType":"uint8","Name":"traceback"}
+@ ["all","Types","runtime.timer","Fields",12]
+  {"DataType":"runtime.mutex","Name":"sendLock"}
++ {"DataType":"internal/runtime/atomic.Int32","Name":"isSending"}
+]
+@ ["all","Types","runtime.workType","Fields",30]
+  {"DataType":"struct { lock runtime.mutex; list runtime.gList }","Name":"sweepWaiters"}
++ {"DataType":"struct { block bool; lock runtime.mutex; q runtime.gQueue }","Name":"strongFromWeak"}
+  {"DataType":"internal/runtime/atomic.Uint32","Name":"cycles"}
+@ ["all","Types","func(any, uintptr, int64)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","struct { block bool; lock runtime.mutex; q runtime.gQueue }"]
++ {"Fields":[{"DataType":"bool","Name":"block"},{"DataType":"runtime.mutex","Name":"lock"},{"DataType":"runtime.gQueue","Name":"q"}],"Kind":"struct","TypeParams":[]}
+@ ["darwin-amd64","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["darwin-amd64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["darwin-amd64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["darwin-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["darwin-arm64","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["darwin-arm64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["darwin-arm64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"sysAttr"}
++ {"DataType":"bool","Name":"needDup"}
+]
+@ ["linux","Funcs","os.checkClonePidfd"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux","Funcs","os.ignoreSIGSYS"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux","Funcs","os.restoreSIGSYS"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["linux","Funcs","syscall.doCheckClonePidfd"]
++ {"Flags":0,"Params":[{"DataType":"*int32","Name":"pidfd"}],"Results":[{"DataType":"uintptr","Name":"pid"},{"DataType":"syscall.Errno","Name":"errno"}],"TypeParams":[]}
+@ ["linux","Funcs","syscall.os_checkClonePidfd"]
++ {"Flags":0,"Params":[],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-386-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-amd64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-amd64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-arm-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["unix","Funcs","runtime.(*sigctxt).sigFromSeccomp"]
++ {"Flags":4,"Params":[{"DataType":"*runtime.sigctxt","Name":"c"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","runtime.ignoreSIGSYS"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","runtime.restoreSIGSYS"]
++ {"Flags":0,"Params":[],"Results":[],"TypeParams":[]}
+@ ["unix","Funcs","syscall.forkAndExecFailureCleanup"]
++ {"Flags":0,"Params":[{"DataType":"*syscall.ProcAttr","Name":"attr"},{"DataType":"*syscall.SysProcAttr","Name":"sys"}],"Results":[],"TypeParams":[]}
+@ ["windows","Funcs","runtime.syscall_syscalln"]
++ {"Flags":1,"Params":[{"DataType":"uintptr","Name":"fn"},{"DataType":"uintptr","Name":"n"},{"DataType":"[]uintptr","Name":"args"}],"Results":[{"DataType":"uintptr","Name":"r1"},{"DataType":"uintptr","Name":"r2"},{"DataType":"uintptr","Name":"err"}],"TypeParams":[]}
+@ ["windows-386","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["windows-386","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["windows-386-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["windows-386-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-386-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-386-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-amd64","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["windows-amd64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-amd64-cgo","Funcs","os.getPidfd","Params",1]
+  {"DataType":"*syscall.SysProcAttr","Name":"_"}
++ {"DataType":"bool","Name":"_"}
+]
+@ ["windows-amd64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"

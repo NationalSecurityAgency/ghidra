@@ -9,6 +9,8 @@ data/debugger-launchers/kernel-lldb.bat||GHIDRA||||END|
 data/debugger-launchers/local-lldb.bat||GHIDRA||||END|
 data/debugger-launchers/remote-lldb.bat||GHIDRA||||END|
 data/debugger-launchers/ssh-lldb.bat||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/lldb/lldb.html||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/MANIFEST.in||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|

@@ -106,6 +106,9 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	protected static final int TIMEOUT_SECONDS = 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
+	/** Some snapshot likely to exceed the latest */
+	protected static final long SNAP = 100;
+
 	protected TraceRmiService traceRmi;
 	private Path lldbPath;
 

@@ -392,6 +392,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			// we need to do some custom rendering
 			contentList.setCellRenderer(new GListCellRenderer<DisassembledAddressInfo>() {
 
+				{
+					setBaseFontId(FieldFactory.BASE_LISTING_FONT_ID);
+				}
+
 				@Override
 				protected String getItemText(DisassembledAddressInfo value) {
 					return value.getAddressPreview(addressPreviewFormat);
@@ -405,8 +409,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 					super.getListCellRendererComponent(list, value, index, isSelected,
 						cellHasFocus);
-
-					setFont(Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID));
 
 					setToolTipText(TOOLTIP_TEXT_PREPEND +
 						HTMLUtilities.escapeHTML(currentLocation.getAddress().toString()));
@@ -571,7 +573,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 		/**
 		 * Returns true if there is a {@link CodeUnit} for the address
-		 * wrapped by this info.  If not, then we do not have a valid addreess.
+		 * wrapped by this info.  If not, then we do not have a valid address.
 		 * 
 		 * @return true if there is a {@link CodeUnit} for the address
 		 *         wrapped by this info.

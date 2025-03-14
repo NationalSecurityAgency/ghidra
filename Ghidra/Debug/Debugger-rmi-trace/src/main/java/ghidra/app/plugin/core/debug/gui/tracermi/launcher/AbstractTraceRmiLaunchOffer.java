@@ -190,7 +190,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			return false;
 		}
 
-		if (spec.performMapping(mappingService, trace, List.of(program), monitor)) {
+		long snap = connection.getLastSnapshot(trace);
+		if (spec.performMapping(mappingService, trace, snap, List.of(program), monitor)) {
 			return true;
 		}
 
@@ -206,7 +207,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			return true; // Probably shouldn't happen, but if it does, say "success"
 		}
 		ProgramLocation probe = new ProgramLocation(program, probeAddress);
-		long snap = connection.getLastSnapshot(trace);
+
 		return mappingService.getOpenMappedLocation(trace, probe, snap) != null;
 	}
 

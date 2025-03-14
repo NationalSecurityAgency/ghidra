@@ -9,7 +9,7 @@
 //@desc </body></html>
 //@menu-group attach
 //@icon icon.debugger
-//@help TraceRmiLauncherServicePlugin#java_attach
+//@help jpda#attach_port
 //@enum Arch:str JVM Dalvik
 //@env OPT_ARCH:Arch="JVM" "Arch" "Target architecture"
 //@env OPT_HOST:str="localhost" "Host" "The hostname of the target"

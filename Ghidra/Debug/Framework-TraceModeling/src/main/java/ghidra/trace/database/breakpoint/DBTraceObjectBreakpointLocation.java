@@ -33,7 +33,6 @@ import ghidra.trace.model.target.schema.TraceObjectSchema;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
-import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectBreakpointLocation
 		implements TraceObjectBreakpointLocation, DBTraceObjectInterface {
@@ -85,10 +84,6 @@ public class DBTraceObjectBreakpointLocation
 	private final DBTraceObject object;
 	private final BreakpointChangeTranslator translator;
 
-	// Keep copies here for when the object gets invalidated
-	private AddressRange range;
-	private Lifespan lifespan;
-
 	public DBTraceObjectBreakpointLocation(DBTraceObject object) {
 		this.object = object;
 
@@ -111,17 +106,17 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setName(String name) {
+	public void setName(long snap, String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setName(getLifespan(), name);
+			setName(Lifespan.nowOn(snap), name);
 		}
 	}
 
 	@Override
-	public String getName() {
+	public String getName(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			String display = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-				KEY_DISPLAY, String.class, null);
+			String display =
+				TraceObjectInterfaceUtils.getValue(object, snap, KEY_DISPLAY, String.class, null);
 			if (display != null) {
 				return display;
 			}
@@ -143,107 +138,33 @@ public class DBTraceObjectBreakpointLocation
 	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, KEY_RANGE, range);
-			this.range = range;
 		}
 	}
 
 	@Override
-	public AddressRange getRange() {
+	public AddressRange getRange(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			if (object.getLife().isEmpty()) {
-				return range;
-			}
-			return range = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-				KEY_RANGE, AddressRange.class, range);
+			return TraceObjectInterfaceUtils.getValue(object, snap, KEY_RANGE, AddressRange.class,
+				null);
 		}
 	}
 
 	@Override
-	public Address getMinAddress() {
-		AddressRange range = getRange();
+	public Address getMinAddress(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? null : range.getMinAddress();
 	}
 
 	@Override
-	public Address getMaxAddress() {
-		AddressRange range = getRange();
+	public Address getMaxAddress(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? null : range.getMaxAddress();
 	}
 
 	@Override
-	public long getLength() {
-		AddressRange range = getRange();
+	public long getLength(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? 0 : range.getLength();
-	}
-
-	@Override
-	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			TraceObjectInterfaceUtils.setLifespan(TraceObjectBreakpointLocation.class, object,
-				lifespan);
-			this.lifespan = lifespan;
-		}
-	}
-
-	@Override
-	public Lifespan getLifespan() {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			Lifespan computed = computeSpan();
-			if (computed != null) {
-				lifespan = computed;
-			}
-			return lifespan;
-		}
-	}
-
-	@Override
-	public boolean isAlive(long snap) {
-		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.isAlive(snap);
-		}
-	}
-
-	@Override
-	public Lifespan computeSpan() {
-		Lifespan span = TraceObjectBreakpointLocation.super.computeSpan();
-		if (span != null) {
-			return span;
-		}
-		return getSpecification().computeSpan();
-	}
-
-	@Override
-	public long getPlacedSnap() {
-		return getLifespan().lmin();
-	}
-
-	@Override
-	public void setClearedSnap(long clearedSnap) throws DuplicateNameException {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(Lifespan.span(getPlacedSnap(), clearedSnap));
-		}
-	}
-
-	@Override
-	public long getClearedSnap() {
-		return getLifespan().lmax();
-	}
-
-	@Override
-	public TraceBreakpoint splitAndSet(long snap, boolean enabled,
-			Collection<TraceBreakpointKind> kinds) {
-		try (LockHold hold = object.getTrace().lockWrite()) {
-			if (enabled != isEnabled(snap)) {
-				object.setValue(Lifespan.span(snap, getClearedSnap()),
-					TraceObjectTogglable.KEY_ENABLED, enabled);
-			}
-			Set<TraceBreakpointKind> asSet =
-				kinds instanceof Set<TraceBreakpointKind> yes ? yes : Set.copyOf(kinds);
-			if (!Objects.equals(asSet, getKinds())) {
-				this.setKinds(Lifespan.span(snap, getClearedSnap()), asSet);
-			}
-			return this;
-		}
 	}
 
 	@Override
@@ -252,9 +173,9 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setEnabled(boolean enabled) {
+	public void setEnabled(long snap, boolean enabled) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setEnabled(getLifespan(), enabled);
+			setEnabled(Lifespan.nowOn(snap), enabled);
 		}
 	}
 
@@ -282,37 +203,37 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(long snap, Collection<TraceBreakpointKind> kinds) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setKinds(getLifespan(), kinds);
+			setKinds(Lifespan.nowOn(snap), kinds);
 		}
 	}
 
 	@Override
-	public Set<TraceBreakpointKind> getKinds() {
+	public Set<TraceBreakpointKind> getKinds(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return getSpecification().getKinds();
+			return getSpecification().getKinds(snap);
 		}
 	}
 
 	@Override
-	public Set<TraceThread> getThreads() {
+	public Set<TraceThread> getThreads(long snap) {
 		// TODO: Delete this? It's sort of deprecated out the gate anyway....
 		DBTraceObjectManager manager = object.getManager();
 		TraceObjectSchema schema = manager.getRootSchema();
 		try (LockHold hold = object.getTrace().lockRead()) {
 			Set<TraceThread> threads =
-				object.queryAncestorsInterface(getLifespan(), TraceObjectThread.class)
+				object.queryAncestorsInterface(Lifespan.at(snap), TraceObjectThread.class)
 						.collect(Collectors.toSet());
 			if (!threads.isEmpty()) {
 				return threads;
 			}
 
 			PathFilter procFilter = schema.searchFor(TraceObjectProcess.class, false);
-			return object.getAncestorsRoot(getLifespan(), procFilter)
+			Lifespan lifespan = Lifespan.at(snap);
+			return object.getAncestorsRoot(lifespan, procFilter)
 					.flatMap(proc -> proc.getSource(object)
-							.querySuccessorsInterface(getLifespan(),
-								TraceObjectThread.class, true))
+							.querySuccessorsInterface(lifespan, TraceObjectThread.class, true))
 					.collect(Collectors.toSet());
 		}
 	}
@@ -323,17 +244,17 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setComment(String comment) {
+	public void setComment(long snap, String comment) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setComment(getLifespan(), comment);
+			setComment(Lifespan.nowOn(snap), comment);
 		}
 	}
 
 	@Override
-	public String getComment() {
+	public String getComment(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			String comment = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-				KEY_COMMENT, String.class, "");
+			String comment =
+				TraceObjectInterfaceUtils.getValue(object, snap, KEY_COMMENT, String.class, "");
 			if (!comment.isBlank()) {
 				return comment;
 			}
@@ -341,7 +262,7 @@ public class DBTraceObjectBreakpointLocation
 			if (spec == null) {
 				return "";
 			}
-			return spec.getExpression();
+			return spec.getExpression(snap);
 		}
 	}
 
@@ -351,17 +272,17 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setEmuEnabled(boolean emuEnabled) {
+	public void setEmuEnabled(long snap, boolean emuEnabled) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setEmuEnabled(getLifespan(), emuEnabled);
+			setEmuEnabled(Lifespan.nowOn(snap), emuEnabled);
 		}
 	}
 
 	@Override
 	public boolean isEmuEnabled(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_EMU_ENABLED,
-				Boolean.class, true);
+			return TraceObjectInterfaceUtils.getValue(object, snap, KEY_EMU_ENABLED, Boolean.class,
+				true);
 		}
 	}
 
@@ -376,30 +297,42 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setEmuSleigh(String sleigh) {
+	public void setEmuSleigh(long snap, String sleigh) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setEmuSleigh(getLifespan(), sleigh);
+			setEmuSleigh(Lifespan.nowOn(snap), sleigh);
 		}
 	}
 
 	@Override
-	public String getEmuSleigh() {
+	public String getEmuSleigh(long snap) {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_EMU_SLEIGH,
-				String.class, SleighUtils.UNCONDITIONAL_BREAK);
+			return TraceObjectInterfaceUtils.getValue(object, snap, KEY_EMU_SLEIGH, String.class,
+				SleighUtils.UNCONDITIONAL_BREAK);
 		}
 	}
 
 	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.removeTree(computeSpan());
+			object.removeTree(Lifespan.ALL);
+		}
+	}
+
+	@Override
+	public void remove(long snap) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(Lifespan.nowOn(snap));
 		}
 	}
 
 	@Override
 	public boolean isValid(long snap) {
-		return object.getCanonicalParent(snap) != null;
+		return object.isAlive(snap);
+	}
+
+	@Override
+	public boolean isAlive(Lifespan span) {
+		return object.isAlive(span);
 	}
 
 	@Override
@@ -420,8 +353,8 @@ public class DBTraceObjectBreakpointLocation
 		}
 	}
 
-	public TraceAddressSpace getTraceAddressSpace() {
-		return spaceForValue(computeMinSnap(), KEY_RANGE);
+	public TraceAddressSpace getTraceAddressSpace(long snap) {
+		return spaceForValue(snap, KEY_RANGE);
 	}
 
 	@Override

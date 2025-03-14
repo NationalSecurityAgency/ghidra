@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataService;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.docking.settings.SettingsDefinition;
@@ -100,7 +101,6 @@ public class DataPlugin extends Plugin implements DataService {
 	private DockingAction editDataTypeAction;
 	private CreateStructureAction createStructureAction;
 	private CreateArrayAction createArrayAction;
-	private RenameDataFieldAction renameDataFieldAction;
 
 	private List<DataAction> favoriteActions = new ArrayList<>();
 
@@ -113,7 +113,7 @@ public class DataPlugin extends Plugin implements DataService {
 	public DataPlugin(PluginTool tool) {
 		super(tool);
 
-		addActions();
+		createActions();
 
 		favoritesUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateFavoriteActions());
 	}
@@ -135,7 +135,7 @@ public class DataPlugin extends Plugin implements DataService {
 	/**
 	 * Add actions
 	 */
-	private void addActions() {
+	private void createActions() {
 		recentlyUsedAction = new RecentlyUsedAction(this);
 		recentlyUsedAction.setEnabled(false);
 
@@ -147,11 +147,16 @@ public class DataPlugin extends Plugin implements DataService {
 		createArrayAction = new CreateArrayAction(this);
 		tool.addAction(createArrayAction);
 
-		renameDataFieldAction = new RenameDataFieldAction(this);
-		tool.addAction(renameDataFieldAction);
-
 		pointerAction = new PointerDataAction(this);
 		tool.addAction(pointerAction);
+
+		new ActionBuilder("Edit Field", getName())
+				.popupMenuPath("Data", "Edit Field")
+				.keyBinding("ctrl shift E")
+				.withContext(ListingActionContext.class)
+				.enabledWhen(this::canEditField)
+				.onAction(this::editField)
+				.buildAndInstall(tool);
 
 		// Data instance settings action based upon data selection in listing
 		new ActionBuilder("Data Settings", getName()).sharedKeyBinding()
@@ -830,6 +835,29 @@ public class DataPlugin extends Plugin implements DataService {
 			return false;
 		}
 		return true;
+	}
+
+	public DataType pickDataType() {
+		return dtmService.getDataType("");
+	}
+
+	private boolean canEditField(ListingActionContext context) {
+		ProgramLocation location = context.getLocation();
+		int[] componentPath = location.getComponentPath();
+		return componentPath != null && componentPath.length > 0;
+	}
+
+	private void editField(ListingActionContext context) {
+		Program program = context.getProgram();
+		ProgramLocation location = context.getLocation();
+		Address address = location.getAddress();
+		int[] path = location.getComponentPath();
+		DataTypeComponent component = DataTypeUtils.getDataTypeComponent(program, address, path);
+		if (component != null) {
+			EditDataFieldDialog dialog =
+				new EditDataFieldDialog(tool, dtmService, location, component);
+			tool.showDialog(dialog);
+		}
 	}
 
 }

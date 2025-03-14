@@ -110,10 +110,12 @@ src/main/resources/images/record.png||GHIDRA||||END|
 src/main/resources/images/register-marker.png||GHIDRA||||END|
 src/main/resources/images/registers.png||GHIDRA||||END|
 src/main/resources/images/resume.png||GHIDRA||||END|
+src/main/resources/images/resumeback.png||GHIDRA||||END|
 src/main/resources/images/seek-present.png||GHIDRA||||END|
 src/main/resources/images/select-registers.png||GHIDRA||||END|
 src/main/resources/images/skipover.png||GHIDRA||||END|
 src/main/resources/images/stepback.png||GHIDRA||||END|
+src/main/resources/images/stepbackinto.png||GHIDRA||||END|
 src/main/resources/images/stepinto.png||GHIDRA||||END|
 src/main/resources/images/steplast.png||GHIDRA||||END|
 src/main/resources/images/stepout.png||GHIDRA||||END|
@@ -163,11 +165,13 @@ src/main/svg/record.svg||GHIDRA||||END|
 src/main/svg/register-marker.svg||GHIDRA||||END|
 src/main/svg/registers.svg||GHIDRA||||END|
 src/main/svg/resume.svg||GHIDRA||||END|
+src/main/svg/resumeback.svg||GHIDRA||||END|
 src/main/svg/seek-present.svg||GHIDRA||||END|
 src/main/svg/select-registers.svg||GHIDRA||||END|
 src/main/svg/skipover.svg||GHIDRA||||END|
 src/main/svg/stack.svg||GHIDRA||||END|
 src/main/svg/stepback.svg||GHIDRA||||END|
+src/main/svg/stepbackinto.svg||GHIDRA||||END|
 src/main/svg/stepinto.svg||GHIDRA||||END|
 src/main/svg/steplast.svg||GHIDRA||||END|
 src/main/svg/stepout.svg||GHIDRA||||END|

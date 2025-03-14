@@ -24,31 +24,38 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class Omf51Content extends OmfRecord {
 
-	private byte segId;
+	private int segId;
 	private int offset;
-	private byte[] dataBytes;
+	private long dataIndex;
+	private int dataSize;
+
+	boolean largeSegmentId;
 
 	/**
 	 * Creates a new {@link Omf51Content} record
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @param largeSegmentId True if the segment ID is 2 bytes; false if 1 byte
 	 * @throws IOException if an IO-related error occurred
 	 */
-	public Omf51Content(BinaryReader reader) throws IOException {
+	public Omf51Content(BinaryReader reader, boolean largeSegmentId) throws IOException {
 		super(reader);
+		this.largeSegmentId = largeSegmentId;
 	}
 
 	@Override
 	public void parseData() throws IOException, OmfException {
-		segId = dataReader.readNextByte();
+		segId =
+			largeSegmentId ? dataReader.readNextUnsignedShort() : dataReader.readNextUnsignedByte();
 		offset = dataReader.readNextUnsignedShort();
-		dataBytes = dataReader.readNextByteArray((int) (dataEnd - dataReader.getPointerIndex()));
+		dataIndex = dataReader.getPointerIndex();
+		dataSize = (int) (dataEnd - dataIndex);
 	}
 
 	/**
 	 * {@return the segment ID}
 	 */
-	public byte getSegId() {
+	public int getSegId() {
 		return segId;
 	}
 
@@ -60,10 +67,17 @@ public class Omf51Content extends OmfRecord {
 	}
 
 	/**
-	 * {@return the data}
+	 * {@return the data size in bytes}
 	 */
-	public byte[] getDataBytes() {
-		return dataBytes;
+	public int getDataSize() {
+		return dataSize;
+	}
+
+	/**
+	 * {@return the start of the data in the reader}
+	 */
+	public long getDataIndex() {
+		return dataIndex;
 	}
 
 	@Override
@@ -71,10 +85,10 @@ public class Omf51Content extends OmfRecord {
 		StructureDataType struct = new StructureDataType(Omf51RecordTypes.getName(recordType), 0);
 		struct.add(BYTE, "type", null);
 		struct.add(WORD, "length", null);
-		struct.add(BYTE, "SEG ID", null);
+		struct.add(largeSegmentId ? WORD : BYTE, "SEG ID", null);
 		struct.add(WORD, "offset", null);
-		if (dataBytes.length > 0) {
-			struct.add(new ArrayDataType(BYTE, dataBytes.length, 1), "data", null);
+		if (dataSize > 0) {
+			struct.add(new ArrayDataType(BYTE, dataSize, 1), "data", null);
 		}
 		struct.add(BYTE, "checksum", null);
 

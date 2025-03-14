@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		Collection<? extends TraceModule> modules =
 			trace.getModuleManager().getModulesAt(snap, first.getMinAddress());
 		Msg.debug(this, "Disassembling in modules: " +
-			modules.stream().map(TraceModule::getName).collect(Collectors.joining(",")));
+			modules.stream().map(m -> m.getName(snap)).collect(Collectors.joining(",")));
 		Set<Mode> modes = modules.stream()
 				.map(m -> modeForModule(target, trace, snap, m))
 				.filter(m -> m != Mode.UNK)
@@ -101,7 +101,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 			TraceModule module) {
 		if (target != null && target.getSnap() == snap) {
 			AddressSet set = new AddressSet();
-			set.add(module.getBase(), module.getBase()); // Recorder should read page
+			set.add(module.getBase(snap), module.getBase(snap)); // Recorder should read page
 			try {
 				target.readMemory(set, TaskMonitor.DUMMY);
 				trace.flushEvents();
@@ -110,7 +110,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 				throw new AssertionError(e);
 			}
 		}
-		MemBuffer bufferAt = trace.getMemoryManager().getBufferAt(snap, module.getBase());
+		MemBuffer bufferAt = trace.getMemoryManager().getBufferAt(snap, module.getBase(snap));
 		try (ByteProvider bp = new MemBufferByteProvider(bufferAt)) {
 			PortableExecutable pe = new PortableExecutable(bp, SectionLayout.MEMORY, false, false);
 			NTHeader ntHeader = pe.getNTHeader();

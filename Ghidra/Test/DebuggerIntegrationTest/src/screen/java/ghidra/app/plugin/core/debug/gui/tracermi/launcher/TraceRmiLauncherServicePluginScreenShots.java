@@ -65,7 +65,7 @@ public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGe
 
 		TraceRmiLaunchOffer offer = servicePlugin.getOffers(null)
 				.stream()
-				.filter(o -> "raw gdb".equals(o.getTitle()))
+				.filter(o -> "gdb".equals(o.getTitle()))
 				.findAny()
 				.orElseThrow();
 

@@ -43,8 +43,8 @@ import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.schema.SchemaContext;
-import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
+import ghidra.trace.model.target.schema.XmlSchemaContext;
 import ghidra.util.Msg;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
@@ -690,6 +690,6 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 		TraceModule modBash = objModBash.queryInterface(TraceObjectModule.class);
 		assertEquals(Map.of(),
-			mappingService.proposeModuleMaps(List.of(modBash), List.of(program)));
+			mappingService.proposeModuleMaps(List.of(modBash), 0, List.of(program)));
 	}
 }

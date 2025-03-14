@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,8 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 		}
 		Target target = coordinates.getTarget();
 		TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
-		AddressSetView alreadyKnown = mm.getAddressesWithState(coordinates.getSnap(), visible,
+		long snap = coordinates.getSnap();
+		AddressSetView alreadyKnown = mm.getAddressesWithState(snap, visible,
 			s -> s == TraceMemoryState.KNOWN || s == TraceMemoryState.ERROR);
 		AddressSet toRead = visible.subtract(alreadyKnown);
 
@@ -70,19 +71,18 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 
 		AddressSet everKnown = new AddressSet();
 		for (AddressRange range : visible) {
-			for (Entry<TraceAddressSnapRange, TraceMemoryState> ent : mm
-					.getMostRecentStates(coordinates.getSnap(), range)) {
+			for (Entry<TraceAddressSnapRange, TraceMemoryState> ent : mm.getMostRecentStates(snap,
+				range)) {
 				everKnown.add(ent.getKey().getRange());
 			}
 		}
 		AddressSet readOnly = new AddressSet();
 		for (AddressRange range : visible) {
-			for (TraceMemoryRegion region : mm
-					.getRegionsIntersecting(Lifespan.at(coordinates.getSnap()), range)) {
-				if (region.isWrite()) {
+			for (TraceMemoryRegion region : mm.getRegionsIntersecting(Lifespan.at(snap), range)) {
+				if (region.isWrite(snap)) {
 					continue;
 				}
-				readOnly.add(region.getRange());
+				readOnly.add(region.getRange(snap));
 			}
 		}
 		toRead.delete(everKnown.intersect(readOnly));

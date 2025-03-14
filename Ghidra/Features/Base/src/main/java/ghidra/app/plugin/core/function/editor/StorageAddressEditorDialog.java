@@ -125,6 +125,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(buildInfoPanel(service), BorderLayout.NORTH);
 		panel.add(buildTablePanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Storage Address Editor");
 		return panel;
 	}
 
@@ -195,9 +196,12 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 		final DropDownSelectionTextField<DataType> textField = dataTypeEditor.getTextField();
 		textField.setBorder((new JTextField()).getBorder()); // restore default border
+		textField.getAccessibleContext().setAccessibleName("Data Type Editor");
 
 		JButton chooserButton = dataTypeEditor.getChooserButton();
+		chooserButton.getAccessibleContext().setAccessibleName("Choose");
 		JButton defaultButton = new JButton(); // restore default border/background
+		defaultButton.getAccessibleContext().setAccessibleName("Default");
 		chooserButton.setBorder(defaultButton.getBorder());
 		chooserButton.setBackground(defaultButton.getBackground());
 
@@ -223,13 +227,15 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		panel.add(dataTypeEditComponent);
 		panel.add(new GLabel("Datatype Size: "));
 		sizeLabel = new GDLabel(Integer.toString(size));
+		sizeLabel.getAccessibleContext().setAccessibleName("Size");
 		panel.add(sizeLabel);
 		panel.add(new GLabel("Allocated Size:"));
 		currentSizeLabel = new GDLabel("");
+		currentSizeLabel.getAccessibleContext().setAccessibleName("Current Size");
 		panel.add(currentSizeLabel);
 
 		setFocusComponent(textField);
-
+		panel.getAccessibleContext().setAccessibleName("Info");
 		return panel;
 	}
 
@@ -238,6 +244,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		panel.setBorder(BorderFactory.createTitledBorder("Storage Locations"));
 		varnodeTableModel = new VarnodeTableModel(model);
 		varnodeTable = new GTable(varnodeTableModel);
+		varnodeTable.getAccessibleContext().setAccessibleName("Varnode");
 		selectionListener = new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
@@ -258,8 +265,10 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		varnodeTable.setSurrendersFocusOnKeystroke(true);
 
 		JScrollPane scroll = new JScrollPane(varnodeTable);
+		scroll.getAccessibleContext().setAccessibleName("Varnode");
 		panel.add(scroll, BorderLayout.CENTER);
 		panel.add(buildButtonPanel(), BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Table");
 		return panel;
 	}
 
@@ -267,9 +276,13 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		addButton = new JButton("Add");
+		addButton.getAccessibleContext().setAccessibleName("Add");
 		removeButton = new JButton("Remove");
+		removeButton.getAccessibleContext().setAccessibleName("Remove");
 		upButton = new JButton("Up");
+		upButton.getAccessibleContext().setAccessibleName("Up");
 		downButton = new JButton("Down");
+		downButton.getAccessibleContext().setAccessibleName("Down");
 
 		addButton.addActionListener(new ActionListener() {
 			@Override
@@ -301,6 +314,7 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		panel.add(new JSeparator());
 		panel.add(upButton);
 		panel.add(downButton);
+		panel.getAccessibleContext().setAccessibleName("Button");
 		return panel;
 	}
 
