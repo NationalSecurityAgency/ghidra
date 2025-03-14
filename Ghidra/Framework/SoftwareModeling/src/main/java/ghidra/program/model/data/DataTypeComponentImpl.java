@@ -58,7 +58,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		this.ordinal = ordinal;
 		this.offset = offset;
 		this.length = length;
-		this.fieldName = fieldName;
+		this.fieldName = cleanupFieldName(fieldName);
 		setDataType(dataType);
 		setComment(comment);
 	}
@@ -130,32 +130,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
-		this.fieldName = checkFieldName(name);
-	}
-
-	private void checkDuplicateName(String name) throws DuplicateNameException {
-		checkDefaultFieldName(name);
-		if (parent == null) {
-			return; // Bad situation
-		}
-		for (DataTypeComponent comp : parent.getDefinedComponents()) {
-			if (comp != this && name.equals(comp.getFieldName())) {
-				throw new DuplicateNameException("Duplicate field name: " + name);
-			}
-		}
-	}
-
-	private String checkFieldName(String name) throws DuplicateNameException {
-		if (name != null) {
-			name = name.trim();
-			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-				name = null;
-			}
-			else {
-				checkDuplicateName(name);
-			}
-		}
-		return name;
+		this.fieldName = cleanupFieldName(name);
 	}
 
 	public static void checkDefaultFieldName(String fieldName) throws DuplicateNameException {
@@ -192,22 +167,20 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	/**
 	 * Perform special-case component update that does not result in size or alignment changes. 
 	 * @param name new component name
-	 * @param dt new resolved datatype
-	 * @param cmt new comment
+	 * @param newDataType new resolved datatype
+	 * @param newComment new comment
 	 */
-	void update(String name, DataType dt, String cmt) {
-		// TODO: Need to check field name and throw DuplicateNameException
-		// this.fieldName =  = checkFieldName(name);
-		this.fieldName = name;
-		this.dataType = dt;
-		this.comment = StringUtils.isBlank(cmt) ? null : cmt;
+	void update(String name, DataType newDataType, String newComment) {
+		this.fieldName = cleanupFieldName(name);
+		this.dataType = newDataType;
+		this.comment = StringUtils.isBlank(newComment) ? null : newComment;
 	}
 
 	@Override
-	public void update(int ordinal, int offset, int length) {
-		this.ordinal = ordinal;
-		this.offset = offset;
-		this.length = length;
+	public void update(int newOrdinal, int newOffset, int newLength) {
+		this.ordinal = newOrdinal;
+		this.offset = newOffset;
+		this.length = newLength;
 	}
 
 	/**
