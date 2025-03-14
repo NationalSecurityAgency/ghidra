@@ -34,14 +34,14 @@ import javax.swing.JComponent;
  * To create a wizard dialog, the developer needs to create the following:<br>
  * <OL>
  *    <LI> A class that extends this WizardModel. </LI>
- *    <LI> One or more classes that extend {@link WizardStep}<br>
- *    <LI> A data class that holds that data being collected by this wizard.<br> 
+ *    <LI> One or more classes that extend {@link WizardStep}</LI>
+ *    <LI> A data class that holds that data being collected by this wizard.</LI> 
  * </OL>
  *
  * Subclasses must at a minimum implement two methods.
  * <OL>
  * 	   <LI> AddWizardSteps() - This is where the model defines the ordered list of
- * 			 {@link WizardStep} for this wizard.
+ * 			 {@link WizardStep} for this wizard.</LI>
  * 	   <LI> doFinish() - This is where the model should perform the main action of the wizard. This
  * 			will be called when the user presses the <B>Finish</B> button and all the panels have
  * 			had a chance to update the wizard data object.</LI>

@@ -127,7 +127,6 @@ public class GoFuncType extends GoType {
 	 * Returns a string that describes the function type as a golang-ish function decl.
 	 * 
 	 * @param funcName optional name of a function
-	 * @param receiverString optional receiver decl string
 	 * @return golang func decl string
 	 */
 	public String getFuncPrototypeString(String funcName) {
