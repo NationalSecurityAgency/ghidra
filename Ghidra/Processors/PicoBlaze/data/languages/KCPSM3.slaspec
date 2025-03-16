@@ -3,14 +3,7 @@
 # Known differences from actual KCPSM3:
 # - PC should be a 10-bit value with wraparound, Ghidra cannot handle non byte-aligned space sizes
 
-define endian=big;
-define alignment=3;
-
-# This should be rom_space but thats not actually supported in the sleigh compiler
-define space rom            type=ram_space      size=3   wordsize=1 default;
-define space scratchpad     type=ram_space      size=1   wordsize=1;
-define space stack_buffer   type=ram_space      size=1   wordsize=1;
-define space register       type=register_space size=1;
+@include "picoblaze_common.sinc"
 
 
 define token opcode(24)
@@ -32,27 +25,16 @@ define token opcode(24)
 	reg4_7 = (4, 7)
 ;
 
-define register offset=0x00 size=1 [
-	s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 sA sB sC sD sE sF 
-    SP
-    flags
-];
-
-define bitrange Z=flags[0,1]
-                C=flags[1,1]
-;
-
 attach variables [ reg8_11 reg4_7 ] [
 	s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 sA sB sC sD sE sF
 ];
 
-define pcodeop enable_interrupt;
-define pcodeop disable_interrupt;
 
 macro push(v) {
     *[stack_buffer]:2 SP = v;
     SP = (SP + 1) % 32;
 }
+
 
 # JUMP
 
@@ -64,19 +46,19 @@ jtgt: tgt is op0_9 [ tgt = op0_9 * 3; ] {
 # Conditional
 with jcond: op12=1 {
     :"Z"  is op10_11=0b00 {
-        local v:1 = Z == 0;
-        export v;
-    }
-    :"NZ"  is op10_11=0b01 {
         local v:1 = Z != 0;
         export v;
     }
+    :"NZ"  is op10_11=0b01 {
+        local v:1 = Z == 0;
+        export v;
+    }
     :"C"  is op10_11=0b10 {
-        local v:1 = C == 0;
+        local v:1 = C != 0;
         export v;
     }
     :"NC" is op10_11=0b11 {
-        local v:1 = C != 0;
+        local v:1 = C == 0;
         export v;
     }
 }

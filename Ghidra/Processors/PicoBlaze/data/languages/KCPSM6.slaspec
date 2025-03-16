@@ -1,0 +1,400 @@
+# Specification for the PicoBlaze KCPSM6 processor
+# Implementation based on this spec: https://web.archive.org/web/20240817205135/https://www.eng.auburn.edu/~nelsovp/courses/elec4200/PicoBlaze/kcpsm6.pdf
+
+# Known differences from actual KCPSM6:
+# - Stack overflows are not checked, on real implementations they cause a reset
+# - As in KCPSM3, PC wraparound is not supported
+
+@include "picoblaze_common.sinc"
+
+
+define token opcode(24)
+	opc=(12,17)
+	sX=(8,11)
+	sY=(4,7)
+	op0_3=(0,3)
+	kk=(0,7) 
+	kk2=(4,11)
+	p=(0,3)
+	ins=(0,17)
+	aaa=(0,11)
+	
+	op12_13=(12,13)
+	op14_16=(14,16)
+	op17=(17,17)
+;
+
+
+attach variables [ sX sY  ] [
+	s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 sA sB sC sD sE sF
+];
+
+define bitrange regBank=flags[2,1];
+
+macro push(v) {
+	# In KCPSM6 stack overflow is a reset rather than a wraparound
+    *[stack_buffer]:2 SP = v;
+}
+
+# Loading
+
+:LOAD sX, sY is opc=0x00 & sX & sY & op0_3=0 {
+	sX = sY;
+}
+
+:LOAD sX, kk is opc=0x01 & sX & kk {
+	sX = kk;
+}
+
+define pcodeop move_banks;
+
+:STAR sX, sY is opc=0x16 & sX & sY & op0_3=0 {
+	move_banks(sX, sY);
+}
+
+# Logical
+
+:AND sX, sY is opc=0x02 & sX & sY & op0_3=0 {
+	sX = sX & sY;
+	C = 0;
+	Z = sX == 0;
+}
+:AND sX, kk is opc=0x03 & sX & kk {
+	sX = sX & kk;
+	C = 0;
+	Z = sX == 0;
+}
+
+:OR sX, sY is opc=0x04 & sX & sY & op0_3=0 {
+	sX = sX | sY;
+	C = 0;
+	Z = sX == 0;
+}
+:OR sX, kk is opc=0x05 & sX & kk {
+	sX = sX | kk;
+	C = 0;
+	Z = sX == 0;
+}
+
+:XOR sX, sY is opc=0x06 & sX & sY & op0_3=0 {
+	sX = sX ^ sY;
+	C = 0;
+	Z = sX == 0;
+}
+:XOR sX, kk is opc=0x07 & sX & kk {
+	sX = sX ^ kk;
+	C = 0;
+	Z = sX == 0;
+}
+
+# Arithmetic
+
+:ADD sX, sY is opc=0x10 & sX & sY & op0_3=0 {
+	C = carry(sX, sY);
+	sX = sX + sY;
+	Z = sX == 0;
+}
+:ADD sX, kk is opc=0x11 & sX & kk {
+	C = carry(sX, kk);
+	sX = sX + kk;
+	Z = sX == 0;
+}
+
+:ADDCY sX, sY is opc=0x12 & sX & sY & op0_3=0 {
+	local tmp:2 = zext(sX) + zext(sY) + zext(C);
+	C = tmp > 0xFF;
+	sX = tmp:1;
+	Z = (sX == 0) & Z;
+}
+:ADDCY sX, kk is opc=0x13 & sX & kk {
+	local tmp:2 = zext(sX) + zext(kk:1) + zext(C);
+	C = tmp > 0xFF;
+	sX = tmp:1;
+	Z = (sX == 0) & Z;
+}
+
+:SUB sX, sY is opc=0x18 & sX & sY & op0_3=0 {
+	C = scarry(sX, sY);
+	sX = sX - sY;
+	Z = sX == 0;
+}
+:SUB sX, kk is opc=0x19 & sX & kk {
+	C = scarry(sX, kk);
+	sX = sX - kk;
+	Z = sX == 0;
+}
+
+:SUBCY sX, sY is opc=0x1A & sX & sY & op0_3=0 {
+	local tmp:2 = zext(sX) - zext(sY) - zext(C);
+	C = tmp s< 0;
+	sX = tmp:1;
+	Z = (sX == 0) & Z;
+}
+:SUBCY sX, kk is opc=0x1B & sX & kk {
+	local tmp:2 = zext(sX) - zext(kk:1) - zext(C);
+	C = tmp s< 0;
+	sX = tmp:1;
+	Z = (sX == 0) & Z;
+}
+
+# Test and compare
+
+define pcodeop odd_parity;
+
+:TEST sX, sY is opc=0x0C & sX & sY & op0_3=0 {
+	local tmp:1 = sX & sY;
+    Z = tmp == 0;
+    C = odd_parity(tmp);
+}
+:TEST sX, kk is opc=0x0D & sX & kk {
+	local tmp:1 = sX & kk;
+    Z = tmp == 0;
+    C = odd_parity(tmp);
+}
+
+:TESTCY sX, sY is opc=0x0E & sX & sY & op0_3=0 {
+	local tmp:1 = sX & sY;
+    Z = (tmp == 0) & Z;
+    C = odd_parity(tmp, C);
+}
+:TESTCY sX, kk is opc=0x0F & sX & kk {
+	local tmp:1 = sX & kk;
+    Z = (tmp == 0) & Z;
+    C = odd_parity(tmp, C);
+}
+
+:COMPARE sX, sY is opc=0x1C & sX & sY & op0_3=0 {
+	local tmp:1 = sX - sY;
+    Z = (tmp == 0);
+    C = scarry(sX, sY);
+}
+:COMPARE sX, kk is opc=0x1D & sX & kk {
+	local tmp:1 = sX - kk;
+    Z = (tmp == 0);
+    C = scarry(sX, kk);
+}
+
+:COMPARECY sX, sY is opc=0x1E & sX & sY & op0_3=0 {
+	local tmp:2 = zext(sX) - zext(sY) - zext(C);
+    Z = (tmp:1 == 0) & Z;
+    C = tmp s< 0;
+}
+:COMPARECY sX, kk is opc=0x1F & sX & kk {
+	local tmp:2 = zext(sX) - zext(kk:1) - zext(C);
+    Z = (tmp:1 == 0) & Z;
+    C = tmp s< 0;
+}
+
+# Shift and Rotate
+
+:SL0 sX is opc=0x14 & sX & kk=0x06 {
+	C = sX >> 7;
+    sX = sX << 1;
+    Z = sX == 0;
+}
+:SL1 sX is opc=0x14 & sX & kk=0x07 {
+	Z = 0;
+    C = sX >> 7;
+    sX = (1 | ( sX << 1));
+}
+:SLX sX is opc=0x14 & sX & kk=0x04 {
+	C = sX >> 7;
+    sX = (( sX & 1) | ( sX << 1));
+    Z = sX == 0;
+}
+:SLA sX is opc=0x14 & sX & kk=0x00 {
+	local tmp:1 = sX >> 7;
+    sX = ( C | ( sX << 1));
+    C = tmp;
+    Z = sX == 0;
+}
+:RL sX is opc=0x14 & sX & kk=0x02 {
+	C = sX >> 7;
+    sX = (( C ) | ( sX << 1));
+    Z = sX == 0;
+}
+
+:SR0 sX is opc=0x14 & sX & kk=0x0E {
+	C = sX & 1;
+    sX = sX >> 1;
+    Z = sX == 0;
+}
+:SR1 sX is opc=0x14 & sX & kk=0x0F {
+	Z = 0;
+    C = sX & 1;
+    sX = (0b10000000 | ( sX >> 1));
+}
+:SRX sX is opc=0x14 & sX & kk=0x0A {
+	C = sX & 1;
+    sX = (( sX & 0b10000000) | ( sX >> 1));
+    Z = sX == 0;
+}
+:SRA sX is opc=0x14 & sX & kk=0x08 {
+	local tmp:1 = sX & 1;
+    sX = (( C << 7) | ( sX >> 1));
+    C = tmp;
+    Z = sX == 0;
+}
+:RR sX is opc=0x14 & sX & kk=0x0C {
+	C = sX & 1;
+    sX = (( C << 7) | ( sX >> 1));
+    Z = sX == 0;
+}
+
+# Register Bank
+
+define pcodeop regbank_a;
+define pcodeop regbank_b;
+
+:"REGBANK A" is ins=0x37000 {
+    regbank_a();
+}
+
+:"REGBANK B" is ins=0x37001 {
+    regbank_b();
+}
+
+# Input and Output
+
+define pcodeop input;
+define pcodeop output;
+
+:INPUT sX, sY is opc=0x08 & sX & sY & op0_3=0 {
+	sX = input(sY);
+}
+:INPUT sX, kk is opc=0x09 & sX & kk {
+	sX = input(kk:1);
+}
+
+:OUTPUT sX, sY is opc=0x2C & sX & sY & op0_3=0 {
+	output(sX, sY);
+}
+:OUTPUT sX, kk is opc=0x2D & sX & kk {
+	output(sX, kk:1);
+}
+
+:OUTPUTK kk2, p is opc=0x2B & kk2 & p {
+	output(kk2:1, p:1);
+}
+
+# Scratch pad memory
+
+:STORE sX, sY is opc=0x2E & sX & sY & op0_3=0 {
+	*[scratchpad]:1 sX = sY;
+}
+
+:STORE sX, kk is opc=0x2F & sX & kk {
+	*[scratchpad]:1 kk:1 = sX;
+}
+
+:FETCH sX, sY is opc=0x0A & sX & sY & op0_3=0 {
+	sX = *[scratchpad]:1 sY;
+}
+
+:FETCH sX, kk is opc=0x0B & sX & kk {
+	sX = *[scratchpad]:1 kk:1;
+}
+
+# Interrupt handling
+
+:DISABLE_INTERRUPT is ins=0x28000 {
+    disable_interrupt();
+}
+:ENABLE_INTERRUPT is ins=0x28001 {
+    enable_interrupt();
+}
+
+# On interrupt Z, C and REGBANK are pushed with PC, on RETURNI they are restored
+# This simulates that, as we don't model the interrupt "push" side of this  
+define pcodeop restore_interrupt_flags;
+:RETURNI_DISABLE is ins=0x29000 {
+    SP = SP - 1;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    disable_interrupt();
+    flags = restore_interrupt_flags();
+    return [tmp];
+}
+:RETURNI_ENABLE is ins=0x29001 {
+    SP = SP - 1;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    enable_interrupt();
+    flags = restore_interrupt_flags();
+    return [tmp];
+}
+
+# Jump
+
+jcond:"Z" is op14_16=0b100 { local a:1 = Z != 0; export a; }
+jcond:"NZ" is op14_16=0b101 { local a:1 = Z == 0; export a; }
+jcond:"C" is op14_16=0b110 { local a:1 = C != 0; export a; }
+jcond:"NC" is op14_16=0b111 { local a:1 = C == 0; export a; }  
+
+:JUMP tgt is op12_13=0b10 & op14_16=0b000 & op17=1 & aaa [tgt = aaa * 3;] {
+	local a:2 = tgt;
+	goto [a];
+}
+:JUMP jcond, tgt is op12_13=0b10 & jcond & op17=1 & aaa [tgt = aaa * 3;]  {
+	if(jcond == 0) goto <end>;
+		local a:2 = tgt;
+		goto [a];
+	<end>
+}
+:JUMP@ (sX, sY) is opc=0x26 & sX & sY & op0_3=0 {
+	local tmp:2 = zext(sY) | ((zext(sX) & 0xF) << 8);
+	tmp = tmp * 3;
+	goto [tmp];
+}
+
+:CALL tgt is op12_13=0b00 & op14_16=0b000 & op17=1 & aaa [tgt = aaa * 3;] {
+	local tmp:2 = inst_start;
+    push(tmp);
+    local a:2 = tgt;
+    call [a];
+}
+:CALL jcond, tgt is op12_13=0b00 & jcond & op17=1 & aaa [tgt = aaa * 3;] {
+	if(jcond == 0) goto <end>;
+	    local tmp:2 = inst_start;
+	    push(tmp);
+	    local a:2 = tgt;
+	    call [a];
+    <end>
+}
+:CALL@ (sX, sY) is opc=0x24 & sX & sY & op0_3=1 {
+	local tmp:2 = inst_start;
+    push(tmp);
+	local tmp2:2 = zext(sY) | ((zext(sX) & 0xF) << 8);
+	call [tmp2];
+}
+
+:RETURN is ins=0x25000 {
+    SP = SP - 1;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    tmp = tmp + 3;
+    return [tmp];
+}
+:RETURN jcond is op12_13=0b01 & jcond & op17=1 & aaa=0 {
+	if(jcond == 0) goto <end>;
+        SP = SP - 1;
+        local tmp:2 = *[stack_buffer]:2 SP;
+        tmp = tmp + 3;
+        return [tmp];
+    <end>
+}
+:LOAD_RETURN sX, kk is opc=0x21 & sX & kk {
+	sX = kk;
+	
+	SP = SP - 1;
+    local tmp:2 = *[stack_buffer]:2 SP;
+    tmp = tmp + 3;
+    return [tmp];
+}
+
+# Version control
+
+define pcodeop hwbuild;
+
+:HWBUILD sX is opc=0x14 & sX & kk=0x80 {
+	C = 1;
+	sX = hwbuild();
+	Z = sX == 0;
+}
