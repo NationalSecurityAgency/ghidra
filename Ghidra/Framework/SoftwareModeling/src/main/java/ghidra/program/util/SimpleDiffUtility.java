@@ -432,12 +432,19 @@ public class SimpleDiffUtility {
 
 	private static class ExternalReferenceCount implements Comparable<ExternalReferenceCount> {
 
+		static final int ADDRESS_RANK = 3;
+		static final int NAME_RANK = 2;
+		static final int NAMESPACE_RANK = 1;
+		static final int MANGLED_NAME_RANK = NAME_RANK + NAMESPACE_RANK;
+
 		final ExternalLocation extLoc;
+		final ExternalMatchType matchType;
 		int refCount = 1;
 		int rank;
 
-		ExternalReferenceCount(ExternalLocation extLoc) {
+		ExternalReferenceCount(ExternalLocation extLoc, ExternalMatchType matchType) {
 			this.extLoc = extLoc;
+			this.matchType = matchType;
 		}
 
 		ExternalLocation getExternalLocation() {
@@ -478,26 +485,111 @@ public class SimpleDiffUtility {
 			return getSymbol().getName(true).compareTo(other.getSymbol().getName(true));
 		}
 
-		public void setRelativeRank(Address targetAddr, String targetNamespace, String targetName) {
+		/**
+		 * Generate relative rank when a non-default name match occurs.
+		 * Method should not be invoked when either location symbol has a default source type.
+		 * @param targetAddr
+		 * @param targetNamespace
+		 * @param targetName
+		 * @param targetOrigImportedName
+		 */
+		void setRelativeRank(Address targetAddr, String targetNamespace, String targetName,
+				String targetOrigImportedName) {
 			rank = 0;
+
+			if (matchType == ExternalMatchType.ADDRESS) {
+				rank = ADDRESS_RANK;
+				return;
+			}
+
 			if (targetAddr != null) {
 				Address myAddr = extLoc.getAddress();
-				if (myAddr != null && targetAddr.equals(extLoc.getAddress())) {
-					rank += 3; // address match
+				if (myAddr != null && targetAddr.equals(myAddr)) {
+					rank += ADDRESS_RANK; // address match
 				}
 				else if (myAddr != null) {
 					// If memory addresses both specified and differ - reduce rank
-					rank -= 3;
+					rank -= ADDRESS_RANK;
 				}
 			}
-			if (targetName != null && targetName.equals(getSymbolName())) {
-				rank += 2; // non-default name match
-				if (targetNamespace != null && targetNamespace.equals(getFullNamespaceName())) {
-					rank += 1; // non-default namespace match improves name match
-				}
+
+			if (matchType == ExternalMatchType.MANGLED_NAME) {
+				rank += MANGLED_NAME_RANK;
+				return;
+			}
+
+			if (matchType != ExternalMatchType.NAME) {
+				return;
+			}
+
+			// Impose mangled name mismatch penalty
+			String myOrigImportedName = extLoc.getOriginalImportedName();
+			if (targetOrigImportedName != null && myOrigImportedName != null) {
+				rank -= MANGLED_NAME_RANK;
+				return;
+			}
+
+			// assume NAME match
+			rank += NAME_RANK;
+
+			if (targetNamespace != null && targetNamespace.equals(getFullNamespaceName())) {
+				rank += NAMESPACE_RANK; // non-default namespace match improves name match
 			}
 		}
 
+	}
+
+	private enum ExternalMatchType {
+		NONE, NAME, MANGLED_NAME, ADDRESS;
+	}
+
+	private static ExternalMatchType testExternalMatch(ExternalLocation extLoc1,
+			ExternalLocation extLoc2) {
+		ExternalMatchType matchType = testExternalNameMatch(extLoc1, extLoc2);
+		if (matchType == ExternalMatchType.NONE) {
+			return hasExternalAddressMatch(extLoc1, extLoc2) ? ExternalMatchType.ADDRESS
+					: ExternalMatchType.NONE;
+		}
+		return matchType;
+	}
+
+	private static boolean hasExternalAddressMatch(ExternalLocation extLoc1,
+			ExternalLocation extLoc2) {
+		Address addr1 = extLoc1.getAddress();
+		return addr1 != null && addr1.equals(extLoc2.getAddress());
+	}
+
+	private static ExternalMatchType testExternalNameMatch(ExternalLocation extLoc1,
+			ExternalLocation extLoc2) {
+		boolean isDefaul1 = extLoc1.getSymbol().getSource() == SourceType.DEFAULT;
+		boolean isDefaul2 = extLoc2.getSymbol().getSource() == SourceType.DEFAULT;
+		if (isDefaul1 || isDefaul2) {
+			return ExternalMatchType.NONE;
+		}
+		if (!extLoc1.getLibraryName().equals(extLoc2.getLibraryName())) {
+			return ExternalMatchType.NONE; // assume this prevails over Namespace
+		}
+
+		String name1 = extLoc1.getLabel();
+		String name2 = extLoc2.getLabel();
+		String origName1 = extLoc1.getOriginalImportedName();
+		String origName2 = extLoc2.getOriginalImportedName();
+		if (origName1 != null) {
+			if (origName2 != null) {
+				// assume mangled names if both known must match
+				return origName1.equals(origName2) ? ExternalMatchType.MANGLED_NAME
+						: ExternalMatchType.NONE;
+			}
+			// mangled name must be in root namespace of library
+			if (extLoc2.getSymbol().getParentNamespace().isLibrary() && origName1.equals(name2)) {
+				return ExternalMatchType.MANGLED_NAME;
+			}
+		}
+		else if (origName2 != null && extLoc1.getSymbol().getParentNamespace().isLibrary() &&
+			origName2.equals(name1)) {
+			return ExternalMatchType.MANGLED_NAME;
+		}
+		return name1.equals(name2) ? ExternalMatchType.NAME : ExternalMatchType.NONE;
 	}
 
 	/**
@@ -527,6 +619,7 @@ public class SimpleDiffUtility {
 		ExternalLocation extLoc = extMgr.getExternalLocation(symbol);
 
 		String targetName = symbol.getSource() != SourceType.DEFAULT ? symbol.getName() : null;
+		String targetOrigImportedName = extLoc.getOriginalImportedName();
 		String targetNamespace = symbol.getParentNamespace().getName(true);
 		if (targetNamespace.startsWith(Library.UNKNOWN)) {
 			targetNamespace = null;
@@ -557,8 +650,12 @@ public class SimpleDiffUtility {
 					continue;
 				}
 				ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
-				refMatch = new ExternalReferenceCount(otherExtLoc);
-				refMatch.setRelativeRank(targetAddr, targetNamespace, targetName);
+				ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+				refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
+				if (matchType != ExternalMatchType.NONE) {
+					refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
+						targetOrigImportedName);
+				}
 				matchesMap.put(otherExtAddr, refMatch);
 			}
 			else {
@@ -593,8 +690,12 @@ public class SimpleDiffUtility {
 						}
 						ExternalLocation otherExtLoc =
 							otherExtMgr.getExternalLocation(otherThunkedFunc.getSymbol());
-						refMatch = new ExternalReferenceCount(otherExtLoc);
-						refMatch.setRelativeRank(targetAddr, targetNamespace, targetName);
+						ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+						refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
+						if (matchType != ExternalMatchType.NONE) {
+							refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
+								targetOrigImportedName);
+						}
 						matchesMap.put(otherThunkedFunc.getEntryPoint(), refMatch);
 					}
 					else {
@@ -612,22 +713,16 @@ public class SimpleDiffUtility {
 					!otherRestrictedSymbolIds.contains(otherSym.getID())) {
 					continue;
 				}
-				boolean addIt = false;
-				if (targetAddr != null) {
-					ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
-					Address otherAddr = otherExtLoc.getAddress();
-					if (otherAddr != null && targetAddr.equals(otherAddr) &&
-						originalNamesDontConflict(extLoc, otherExtLoc)) {
-						addIt = true;
+				ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
+				if (otherExtLoc != null) {
+					ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+					if (matchType == ExternalMatchType.NONE) {
+						continue;
 					}
-				}
-				if (!addIt && targetName != null && targetName.equals(otherSym.getName())) {
-					addIt = true;
-				}
-				if (addIt) {
 					ExternalReferenceCount refMatch =
-						new ExternalReferenceCount(otherExtMgr.getExternalLocation(otherSym));
-					refMatch.setRelativeRank(targetAddr, targetNamespace, targetName);
+						new ExternalReferenceCount(otherExtLoc, matchType);
+					refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
+						targetOrigImportedName);
 					matchesMap.put(otherSym.getAddress(), refMatch);
 				}
 			}
@@ -646,17 +741,6 @@ public class SimpleDiffUtility {
 		// If multiple matches, rank > 0 required (i.e., must match on name and/or addr)
 		Arrays.sort(matches);
 		return matches[0].rank > 0 ? matches[0].getSymbol() : null;
-	}
-
-	private static boolean originalNamesDontConflict(ExternalLocation extLoc,
-			ExternalLocation otherExtLoc) {
-		if (extLoc.getOriginalImportedName() == null) {
-			return true;
-		}
-		if (otherExtLoc.getOriginalImportedName() == null) {
-			return true;
-		}
-		return extLoc.getOriginalImportedName().equals(otherExtLoc.getOriginalImportedName());
 	}
 
 	/**
