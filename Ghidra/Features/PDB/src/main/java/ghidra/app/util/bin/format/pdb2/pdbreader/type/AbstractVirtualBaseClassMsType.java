@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,15 +63,16 @@ public abstract class AbstractVirtualBaseClassMsType extends AbstractMsType impl
 
 	/**
 	 * Returns the offset of the base base pointer within the class.
-	 * @return the offset;
+	 * @return the offset
 	 */
 	public BigInteger getBasePointerOffset() {
 		return virtualBasePointerOffsetFromAddressPoint;
 	}
 
 	/**
-	 * Returns the virtual base offset from VB table.
-	 * @return the offset;
+	 * Returns the virtual base offset from VB table.  This seems more like an "index" into
+	 * an integer array having values such as 1, 2, 3
+	 * @return the offset
 	 */
 	public BigInteger getBaseOffsetFromVbt() {
 		return virtualBaseOffsetFromVBTable;
