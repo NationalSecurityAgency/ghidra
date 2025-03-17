@@ -119,6 +119,14 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 		});
 
 		waitForSwing();
+
+		// Verify the Close Union Editor? dialog is displayed.
+		Window dialog = waitForWindow("Close Union Editor?");
+		assertNotNull(dialog);
+		pressButtonByText(dialog, "No");
+		dialog.dispose();
+		dialog = null;
+
 		// refUnion* gets removed
 		assertEquals(num - 1, model.getNumComponents());
 		assertTrue(dt18.isEquivalent(getDataType(18)));
