@@ -158,6 +158,9 @@ public class DecompilerTextFinder {
 			}
 
 			ClangTokenGroup tokens = results.getCCodeMarkup();
+			if (tokens == null) {
+				return null;
+			}
 			List<ClangLine> lines = DecompilerUtils.toLines(tokens);
 
 			// (?s) - enable dot all mode
