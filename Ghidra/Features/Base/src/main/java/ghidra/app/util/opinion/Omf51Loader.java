@@ -186,11 +186,13 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		
 		int externalSize = defs.size();
 		
+		if (externalSize == 0) return map;
+		
 		Address codeEndAddr = Arrays.stream(program.getMemory().getBlocks())
 			.filter(block -> block.getSourceName().equals("CODE"))
 			.map(block -> block.getEnd())
-			.sorted((a, b) -> a.compareTo(b))
-			.reduce((a, b) -> b)
+			.sorted((a, b) -> b.compareTo(a))
+			.findFirst()
 			.get();
 		
 		int availableSize = (int)(program.getAddressFactory()
@@ -203,6 +205,10 @@ public class Omf51Loader extends AbstractProgramWrapperLoader {
 		// Create an artificial 'EXTERNAL' block in CODE space.
 		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program, false, "EXTERNAL",
 				codeEndAddr.add(1), externalSize, "", "CODE", false, false, true, log);
+		
+		if (block == null) {
+			throw new Exception("Couldn't create EXTERNAL block");
+		}
 		
 		block.setArtificial(true);
 		block.setComment("NOTE: This block is artificial and allows external fixups to work correctly");
