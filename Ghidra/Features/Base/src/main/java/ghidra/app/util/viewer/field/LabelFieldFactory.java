@@ -26,6 +26,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GIcon;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
+import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.*;
 import ghidra.program.model.address.Address;
@@ -191,6 +192,32 @@ public class LabelFieldFactory extends FieldFactory {
 						getMetrics(inspector.getOffcutSymbolStyle()), false, null);
 				}
 				elements.add(new TextFieldElement(as, elements.size(), 0));
+			}
+		}
+
+		if (currAddr.isExternalAddress() && length == 1) {
+			// Show extenal address and original imported name (not supported by field location)
+			ExternalLocation extLoc = prog.getExternalManager().getExternalLocation(symbols[0]);
+			if (extLoc != null) {
+				StringBuilder externalLocationDetails = new StringBuilder();
+				Address addr = extLoc.getAddress();
+				if (addr != null) {
+					externalLocationDetails.append(addr.toString());
+				}
+				String origImportedName = extLoc.getOriginalImportedName();
+				if (origImportedName != null) {
+					if (!externalLocationDetails.isEmpty()) {
+						externalLocationDetails.append(": ");
+					}
+					externalLocationDetails.append(origImportedName);
+				}
+				if (!externalLocationDetails.isEmpty()) {
+					AttributedString as =
+						new AttributedString(EMPTY_ICON, externalLocationDetails.toString(),
+							OptionsGui.LABELS_NON_PRIMARY.getColor(),
+							getMetrics(OptionsGui.LABELS_NON_PRIMARY.getStyle()), false, null);
+					elements.add(new TextFieldElement(as, elements.size(), 0));
+				}
 			}
 		}
 

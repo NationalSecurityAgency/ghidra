@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,8 +113,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -170,8 +169,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -288,8 +286,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -356,8 +353,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -430,8 +426,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -507,8 +502,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -585,8 +579,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -663,8 +656,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1027,7 +1019,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", ListingMergeConstants.LATEST_BUTTON_NAME);
+		chooseButtonAndApply("Resolve External Add Conflict",
+			ListingMergeConstants.LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
 
 		Function thunkFunction = getFunction(resultProgram, THUNK_A_ENTRY);
@@ -1095,7 +1088,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", ListingMergeConstants.CHECKED_OUT_BUTTON_NAME);
+		chooseButtonAndApply("Resolve External Add Conflict",
+			ListingMergeConstants.CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
 		Function thunkFunction = getFunction(resultProgram, THUNK_A_ENTRY);
@@ -1162,7 +1156,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseRadioButton("Resolve External Add Conflict", KEEP_BOTH_BUTTON); // keep both externals causes thunk conflict
 		chooseRadioButton("Resolve Thunk Function Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
@@ -1230,7 +1223,6 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseRadioButton("Resolve External Add Conflict", KEEP_BOTH_BUTTON); // keep both externals causes thunk conflict
 		chooseRadioButton("Resolve Thunk Function Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
@@ -1303,8 +1295,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1380,8 +1371,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1462,8 +1452,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);
@@ -1547,8 +1536,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
-		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
+		AddressSetView functionDifferences = programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 
 		executeMerge(ASK_USER);

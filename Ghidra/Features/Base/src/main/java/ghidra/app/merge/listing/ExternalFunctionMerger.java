@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -455,19 +455,19 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 
 		if (mergeManager != null) {
-			latestResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_LATEST_DTS);
-			myResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_MY_DTS);
-			origResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_ORIGINAL_DTS);
+			latestResolvedDts = (Map<Long, DataType>) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_LATEST_DTS);
+			myResolvedDts = (Map<Long, DataType>) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_MY_DTS);
+			origResolvedDts = (Map<Long, DataType>) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_DTS);
 
-			latestResolvedSymbols = (LongLongHashtable) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_LATEST_SYMBOLS);
-			myResolvedSymbols = (LongLongHashtable) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_MY_SYMBOLS);
-			originalResolvedSymbols = (LongLongHashtable) mergeManager.getResolveInformation(
-				MergeConstants.RESOLVED_ORIGINAL_SYMBOLS);
+			latestResolvedSymbols = (LongLongHashtable) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_LATEST_SYMBOLS);
+			myResolvedSymbols = (LongLongHashtable) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_MY_SYMBOLS);
+			originalResolvedSymbols = (LongLongHashtable) mergeManager
+					.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_SYMBOLS);
 		}
 
 		initializeAutoMerge("Auto-merging External Labels and Functions and determining conflicts.",
@@ -546,6 +546,9 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	}
 
 	private void fixupLatestChangeIDsMarkedAsRemovesAndAdds(TaskMonitor monitor) {
+		// NOTE: Things get rather complicated when an external location transitions to
+		// a function since it is conveyed as a symbol removal and an add even though it
+		// is really the same external location.
 		@SuppressWarnings("unchecked")
 		HashSet<Long> latestRemovedIDs = (HashSet<Long>) latestRemovedOriginalIDs.clone();
 		for (Long id : latestRemovedIDs) {
@@ -873,6 +876,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		Symbol symbol2 = externalLocation2.getSymbol();
 		SymbolType symbolType2 = symbol2.getSymbolType();
 		Function function2 = externalLocation2.getFunction();
+
+		// TODO: Does not consider original imported name
 
 		if (!equivalentNamespaces(namespace1, namespace2)) {
 			conflicts |= EXTERNAL_NAMESPACE;
@@ -1818,8 +1823,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		if (originalImportedName != null) {
 			try {
 				resultExternalLocation.getSymbol()
-						.setNameAndNamespace(externalLocation.getLabel(),
-							resolvedNamespace, externalLocation.getSource());
+						.setNameAndNamespace(externalLocation.getLabel(), resolvedNamespace,
+							externalLocation.getSource());
 			}
 			catch (CircularDependencyException e) {
 				throw new AssertException(e);
@@ -2210,10 +2215,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 					mergeParamInfo(functions, paramInfoConflicts, parameterInfoChoice, monitor);
 				}
 				else if (askUser && mergeManager != null) {
-					Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
-					while (iter.hasNext()) {
+					for (ParamInfoConflict pc : paramInfoConflicts) {
 						monitor.checkCancelled();
-						ParamInfoConflict pc = iter.next();
 						boolean useForAll = (parameterInfoChoice != ASK_USER);
 						if (useForAll) {
 							mergeParamInfo(functions, pc, parameterInfoChoice, monitor);
