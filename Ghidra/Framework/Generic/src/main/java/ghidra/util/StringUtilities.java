@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1206,5 +1206,18 @@ public class StringUtilities {
 	 */
 	public static String wrapToWidth(String str, int width) {
 		return new LineWrapper(width).append(str).finish();
+	}
+
+	/**
+	 * Removes any whitespace from start or end of string, then replaces any non-printable
+	 * character (< 32) or spaces (32) with an underscore.
+	 * @param s the string to adjust
+	 * @return a new trimmed string with underscores replacing any non-printable characters.
+	 */
+	public static String whitespaceToUnderscores(String s) {
+		if (s == null) {
+			return null;
+		}
+		return s.trim().replaceAll("[\\x00-\\x20]", "_");
 	}
 }

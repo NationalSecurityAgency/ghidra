@@ -26,6 +26,7 @@ import com.google.common.collect.Sets;
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
@@ -1449,35 +1450,35 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(dtc1, barStruct.getComponent(6));
 
 	}
-	
+
 	@Test
 	public void testSetLength() {
 
 		assertEquals(8, struct.getLength());
 		assertEquals(4, struct.getNumComponents());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		struct.setLength(20);
 		assertEquals(20, struct.getLength());
 		assertEquals(16, struct.getNumComponents());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		// new length is offcut within 3rd component at offset 0x3 which should get cleared
 		struct.setLength(4);
 		assertEquals(4, struct.getLength());
 		assertEquals(3, struct.getNumComponents());
 		assertEquals(2, struct.getNumDefinedComponents());
-		
+
 		// Maximum length supported by GUI editor is ~Integer.MAX_VALUE/10
 		int len = Integer.MAX_VALUE / 10;
 		struct.setLength(len);
 		assertEquals(len, struct.getLength());
 		assertEquals(len - 1, struct.getNumComponents());
 		assertEquals(2, struct.getNumDefinedComponents());
-		
+
 		len /= 2;
-		struct.replaceAtOffset(len-2, WordDataType.dataType, -1, "x", null); // will be preserved below
-		struct.replaceAtOffset(len+2, WordDataType.dataType, -1, "y", null); // will be cleared below
+		struct.replaceAtOffset(len - 2, WordDataType.dataType, -1, "x", null); // will be preserved below
+		struct.replaceAtOffset(len + 2, WordDataType.dataType, -1, "y", null); // will be cleared below
 		struct.setLength(len);
 		assertEquals(len, struct.getLength());
 		assertEquals(len - 2, struct.getNumComponents());
@@ -2614,6 +2615,25 @@ public class StructureDBTest extends AbstractGenericTest {
 		catch (IllegalArgumentException e) {
 			// expected
 		}
+	}
+
+	@Test
+	public void testFieldNameWhitespaceConvertedToUnderscores() throws DuplicateNameException {
+		StructureDataType newStruct = new StructureDataType("Test", 0);
+		DataTypeComponent component = newStruct.add(new ByteDataType(), " name with spaces", null);
+		assertEquals("name_with_spaces", component.getFieldName());
+
+		struct = (StructureDB) dataMgr.resolve(newStruct, null);
+		component = struct.getComponent(0);
+		component.setFieldName("name in db with spaces");
+		assertEquals("name_in_db_with_spaces", component.getFieldName());
+
+		component = struct.add(new ByteDataType(), "another test", null);
+		assertEquals("another_test", component.getFieldName());
+
+		struct.insert(0, new ByteDataType(), 1, "insert test", "");
+		component = struct.getComponent(0);
+		assertEquals("insert_test", component.getFieldName());
 	}
 
 }

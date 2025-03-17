@@ -183,10 +183,11 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 
 	boolean hasNameChange() {
 		String newName = getNewFieldName();
-		if (newName.equals(component.getFieldName())) {
-			return false;
+		String currentName = component.getFieldName();
+		if (currentName == null) {
+			currentName = component.getDefaultFieldName();
 		}
-		if (newName.equals(component.getDefaultFieldName())) {
+		if (newName.equals(currentName)) {
 			return false;
 		}
 		return true;
