@@ -1023,8 +1023,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected List<LibrarySearchPath> getLibrarySearchPaths(Program program, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
-		if (!isLoadLibraries(options) && !isLinkExistingLibraries(options) &&
-			!shouldSearchAllPaths(program, options)) {
+		if (!isLoadLibraries(options) && !shouldSearchAllPaths(program, options)) {
 			return List.of();
 		}
 
