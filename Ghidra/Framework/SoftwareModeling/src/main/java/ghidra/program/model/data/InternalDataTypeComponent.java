@@ -64,7 +64,7 @@ public interface InternalDataTypeComponent extends DataTypeComponent {
 	public default String cleanupFieldName(String name) {
 		// For now, silently convert whitespace to underscores
 		String fieldName = StringUtilities.whitespaceToUnderscores(name);
-		if (StringUtils.isBlank(fieldName) || fieldName.equals(getDefaultFieldName())) {
+		if (StringUtils.isBlank(fieldName)) {
 			fieldName = null;
 		}
 		return fieldName;
