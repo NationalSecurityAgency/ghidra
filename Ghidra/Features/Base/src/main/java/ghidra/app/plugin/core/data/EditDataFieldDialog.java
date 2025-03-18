@@ -138,7 +138,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	private void initializeFields() {
 		String name = component.getFieldName();
 		if (StringUtils.isBlank(name)) {
-			name = component.getDefaultFieldName();
+			name = "";
 		}
 		nameField.setText(name);
 		commentField.setText(component.getComment());
