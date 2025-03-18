@@ -350,7 +350,7 @@ SysCall:  imm is imm { export *[syscall]:1 imm; }
     call SysCall;
 }
 
-disp32: reloc is imm [ reloc = inst_next + imm; ] { export *:4 reloc; }
+disp32: reloc is imm [ reloc = inst_next + imm * 8; ] { export *:4 reloc; }
 
 :CALL disp32 is imm & src=1 & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 & disp32 {
     call disp32;
