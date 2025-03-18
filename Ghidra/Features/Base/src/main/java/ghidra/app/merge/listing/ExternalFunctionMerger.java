@@ -556,7 +556,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			Symbol originalSymbol = symbolTables[ORIGINAL].getSymbol(originalID);
 			Address originalAddress = originalSymbol.getAddress();
 			Symbol latestSymbol = SimpleDiffUtility.getMatchingExternalSymbol(programs[ORIGINAL],
-				originalSymbol, programs[LATEST], latestAddIDs);
+				originalSymbol, programs[LATEST], false, latestAddIDs);
 			if (latestSymbol != null) {
 				Address latestAddress = latestSymbol.getAddress();
 				// Check the external space addresses to ensure they are the same.
@@ -577,7 +577,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			Symbol originalSymbol = symbolTables[ORIGINAL].getSymbol(originalID);
 			Address originalAddress = originalSymbol.getAddress();
 			Symbol mySymbol = SimpleDiffUtility.getMatchingExternalSymbol(programs[ORIGINAL],
-				originalSymbol, programs[MY], myAddIDs);
+				originalSymbol, programs[MY], false, myAddIDs);
 			if (mySymbol != null) {
 				Address myAddress = mySymbol.getAddress();
 				// Check the external space addresses to ensure they are the same.
@@ -1560,7 +1560,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			// Get the external symbol in LATEST that we think most likely matches MY external.
 			// Only try to match it with externals that were also added in LATEST.
 			Symbol latestSymbol = SimpleDiffUtility.getMatchingExternalSymbol(programs[MY],
-				mySymbol, programs[LATEST], latestAddIDs);
+				mySymbol, programs[LATEST], false, latestAddIDs);
 			ExternalLocation latestExternalLocation = null;
 			if (latestSymbol != null) {
 				// We have a possible matching external from LATEST.
@@ -4045,7 +4045,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 	 */
 	private void removeExternal(Program sourceProgram, ExternalLocation sourceExternalLocation) {
 		ExternalLocation resultExternalLocation = SimpleDiffUtility.getMatchingExternalLocation(
-			sourceProgram, sourceExternalLocation, programs[RESULT]);
+			sourceProgram, sourceExternalLocation, programs[RESULT], false);
 		if (resultExternalLocation == null) {
 			return;
 		}
@@ -4054,7 +4054,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 			functionManagers[RESULT].removeFunction(externalSpaceAddress);
 			// See if the location is now just a label.
 			resultExternalLocation = SimpleDiffUtility.getMatchingExternalLocation(sourceProgram,
-				sourceExternalLocation, programs[RESULT]);
+				sourceExternalLocation, programs[RESULT], false);
 			if (resultExternalLocation == null) {
 				return;
 			}

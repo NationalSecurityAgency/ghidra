@@ -1317,7 +1317,7 @@ public class ProgramMerge {
 			Program fromPgm = fromExtLoc.getSymbol().getProgram();
 			Namespace toNamespace = DiffUtility.createNamespace(fromPgm, fromNamespace, toPgm);
 			ExternalLocation toExternalLocation =
-				SimpleDiffUtility.getMatchingExternalLocation(fromPgm, fromExtLoc, toPgm);
+				SimpleDiffUtility.getMatchingExternalLocation(fromPgm, fromExtLoc, toPgm, false);
 			if (toExternalLocation == null) {
 				toExtMgr.addExtLocation(toNamespace, fromExtLabel, fromExtAddr, fromSourceType);
 			}

@@ -929,7 +929,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
+		// Two diiferent external program addresses for the same external location (name match)
 		chooseButtonAndApply("Resolve External Add Conflict", KEEP_BOTH_BUTTON);
+		chooseButtonAndApply("Resolve Thunk Function Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
 		Function thunkFunction = getFunction(resultProgram, THUNK_A_ENTRY);

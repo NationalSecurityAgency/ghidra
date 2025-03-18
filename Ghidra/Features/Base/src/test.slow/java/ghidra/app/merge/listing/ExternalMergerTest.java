@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -242,13 +242,16 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", LATEST_BUTTON);// Add Conflict
+		// NOTE: Duplicate external program address is not treated as conflict, bot external
+		// locations will be added.
+		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON);// Add Conflict
 		waitForMergeCompletion();
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		ExternalLocation extLocApples =
 			externalManager.getUniqueExternalLocation("advapi32.dll", "apples");
-		assertNull(extLocApples);
+		assertNotNull(extLocApples);
+
 		ExternalLocation extLocOranges =
 			externalManager.getUniqueExternalLocation("advapi32.dll", "oranges");
 		assertNotNull(extLocOranges);
@@ -303,16 +306,19 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", MY_BUTTON);// Add Conflict
+		// NOTE: Duplicate external program address is not treated as conflict, bot external
+		// locations will be added.
+		chooseButtonAndApply("Resolve Reference Conflict", MY_BUTTON);// Add Conflict
 		waitForMergeCompletion();
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
 		ExternalLocation extLocApples =
 			externalManager.getUniqueExternalLocation("advapi32.dll", "apples");
 		assertNotNull(extLocApples);
+
 		ExternalLocation extLocOranges =
 			externalManager.getUniqueExternalLocation("advapi32.dll", "oranges");
-		assertNull(extLocOranges);
+		assertNotNull(extLocOranges);
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
 		Reference[] refs;
@@ -1406,7 +1412,7 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 	public void testExtLabelRefAddDiffAddressConflictPickMy() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {

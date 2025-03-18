@@ -190,7 +190,14 @@ public class SimpleDiffUtility {
 
 	/**
 	 * Convert an address from the specified program to a comparable address in the
-	 * specified otherProgram.
+	 * specified otherProgram.  
+	 * <br>
+	 * For external locations the match-up is very fuzzy and
+	 * will use correlated references.  If an exact match is required for an external location
+	 * the {@link #getMatchingExternalLocation(Program, ExternalLocation, Program, boolean)} or 
+	 * {@link #getMatchingExternalSymbol(Program, Symbol, Program, boolean, Set)} should be used 
+	 * directly.
+	 * 
 	 * @param program program which contains the specified address instance
 	 * @param addr address in program
 	 * @param otherProgram other program
@@ -250,7 +257,7 @@ public class SimpleDiffUtility {
 		else if (addr.isExternalAddress()) {
 			Symbol s = program.getSymbolTable().getPrimarySymbol(addr);
 			if (s != null && s.isExternal()) {
-				s = getMatchingExternalSymbol(program, s, otherProgram, null);
+				s = getMatchingExternalSymbol(program, s, otherProgram, true, null);
 				if (s != null) {
 					return s.getAddress();
 				}
@@ -314,6 +321,10 @@ public class SimpleDiffUtility {
 	/**
 	 * Given a symbol for a specified program, get the corresponding symbol from the
 	 * specified otherProgram.
+	 * <br>
+	 * In the case of external locations this performs an exact match based upon symbol name, 
+	 * namespace and symbol type.
+	 * 
 	 * @param symbol symbol to look for
 	 * @param otherProgram other program
 	 * @return corresponding symbol for otherProgram or null if no such symbol exists.
@@ -404,6 +415,12 @@ public class SimpleDiffUtility {
 			Namespace otherNamespace) {
 
 		ExternalLocation external = getExternalLocation(symbol);
+
+		// TODO: This match-up is exact based upon name and namespace and does not consider 
+		// the original imported name or address, however these attributes must match. 
+
+		// TODO: It is rather confusing to have two sets of methods for finding external
+		// locations.  This should be simplified.  getOther... getMatchingExternal...
 
 		SymbolTable otherSymbolTable = otherProgram.getSymbolTable();
 		List<Symbol> otherSymbols = otherSymbolTable.getSymbols(symbol.getName(), otherNamespace);
@@ -595,16 +612,24 @@ public class SimpleDiffUtility {
 	/**
 	 * Given an external symbol for a specified program, get the corresponding symbol,
 	 * which has the same name and path,  from the specified otherProgram.<br>
-	 * Note: The type of the returned symbol may be different than the type of the symbol
+	 * Note: In The type of the returned symbol may be different than the type of the symbol
+	 * (i.e., Function vs Label).
 	 * @param program program which contains the specified symbol instance
 	 * @param symbol symbol to look for
 	 * @param otherProgram other program
+	 * @param allowInferredMatch if true an inferred match may be performed using reference
+	 * correlation (NOTE: reference correlation is only possible if the exact same binary
+	 * is in use).  This option is ignored if the two programs do not have the same 
+	 * original binary hash. 
 	 * @param otherRestrictedSymbolIds an optional set of symbol ID's from the other program
 	 * which will be treated as the exclusive set of candidate symbols to consider.
 	 * @return corresponding external symbol for otherProgram or null if no such symbol exists.
 	 */
 	public static Symbol getMatchingExternalSymbol(Program program, Symbol symbol,
-			Program otherProgram, Set<Long> otherRestrictedSymbolIds) {
+			Program otherProgram, boolean allowInferredMatch, Set<Long> otherRestrictedSymbolIds) {
+
+		// TODO: It is rather confusing to have two sets of methods for finding external
+		// locations.  This should be simplified.  getOther... getMatchingExternal...
 
 		if (symbol == null) {
 			return null;
@@ -614,7 +639,13 @@ public class SimpleDiffUtility {
 			return null;
 		}
 
-		ReferenceManager refMgr = program.getReferenceManager();
+		if (allowInferredMatch) {
+			// Inferred reference-based match only valid for the same program (i.e., multi-user merge)
+			if (program.getUniqueProgramID() != otherProgram.getUniqueProgramID()) {
+				allowInferredMatch = false;
+			}
+		}
+
 		ExternalManager extMgr = program.getExternalManager();
 		ExternalLocation extLoc = extMgr.getExternalLocation(symbol);
 
@@ -626,80 +657,111 @@ public class SimpleDiffUtility {
 		}
 		Address targetAddr = extLoc.getAddress();
 
-		ReferenceManager otherRefMgr = otherProgram.getReferenceManager();
 		SymbolTable otherSymbMgr = otherProgram.getSymbolTable();
 		ExternalManager otherExtMgr = otherProgram.getExternalManager();
 
-		// Process references
-		ReferenceIterator refIter = refMgr.getReferencesTo(symbol.getAddress());
 		HashMap<Address, ExternalReferenceCount> matchesMap = new HashMap<>();
-		int totalMatchCnt = 0;
-		while (refIter.hasNext()) {
-			Reference ref = refIter.next();
-			Reference otherRef =
-				otherRefMgr.getPrimaryReferenceFrom(ref.getFromAddress(), ref.getOperandIndex());
-			if (otherRef == null || !otherRef.isExternalReference()) {
-				continue;
-			}
-			Address otherExtAddr = otherRef.getToAddress();
-			ExternalReferenceCount refMatch = matchesMap.get(otherExtAddr);
-			if (refMatch == null) {
-				Symbol otherSym = otherSymbMgr.getPrimarySymbol(otherExtAddr);
-				if (otherRestrictedSymbolIds != null &&
-					!otherRestrictedSymbolIds.contains(otherSym.getID())) {
-					continue;
+
+		// Search by name
+		if (symbol.getSource() != SourceType.DEFAULT) {
+
+			// TODO: Need to improve support for lookup based upon other fields
+			// Need separate Symbol DB indexing of ExternalLocation fields (address,originalImportName)
+
+			Symbol otherParent = getSymbol(symbol.getParentSymbol(), otherProgram);
+			if (otherParent != null) {
+				SymbolIterator symbols =
+					otherProgram.getSymbolTable().getExternalSymbols(symbol.getName());
+				for (Symbol otherSym : symbols) {
+					ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
+					if (otherExtLoc != null) {
+						ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+						if (matchType == ExternalMatchType.NONE) {
+							continue;
+						}
+						ExternalReferenceCount refMatch =
+							new ExternalReferenceCount(otherExtLoc, matchType);
+						refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
+							targetOrigImportedName);
+						matchesMap.put(otherSym.getAddress(), refMatch);
+					}
 				}
-				ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
-				ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
-				refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
-				if (matchType != ExternalMatchType.NONE) {
-					refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
-						targetOrigImportedName);
-				}
-				matchesMap.put(otherExtAddr, refMatch);
-			}
-			else {
-				++refMatch.refCount;
-			}
-			if (++totalMatchCnt == 20) {
-				break;
 			}
 		}
 
-		// Process thunk-references (include all)
-		if (extLoc.isFunction()) {
-			Address[] thunkAddrs = extLoc.getFunction().getFunctionThunkAddresses();
-			if (thunkAddrs != null) {
-				for (Address thunkAddr : thunkAddrs) {
-					Symbol otherThunkSym = otherSymbMgr.getPrimarySymbol(thunkAddr);
-					if (otherThunkSym == null ||
-						otherThunkSym.getSymbolType() != SymbolType.FUNCTION) {
+		if (allowInferredMatch && matchesMap.isEmpty()) {
+			// Process references
+			ReferenceManager refMgr = program.getReferenceManager();
+			ReferenceManager otherRefMgr = otherProgram.getReferenceManager();
+			ReferenceIterator refIter = refMgr.getReferencesTo(symbol.getAddress());
+			int totalMatchCnt = 0;
+			while (refIter.hasNext()) {
+				Reference ref = refIter.next();
+				Reference otherRef = otherRefMgr.getPrimaryReferenceFrom(ref.getFromAddress(),
+					ref.getOperandIndex());
+				if (otherRef == null || !otherRef.isExternalReference()) {
+					continue;
+				}
+				Address otherExtAddr = otherRef.getToAddress();
+				ExternalReferenceCount refMatch = matchesMap.get(otherExtAddr);
+				if (refMatch == null) {
+					Symbol otherSym = otherSymbMgr.getPrimarySymbol(otherExtAddr);
+					if (otherRestrictedSymbolIds != null &&
+						!otherRestrictedSymbolIds.contains(otherSym.getID())) {
 						continue;
 					}
-					Function otherFunc = (Function) otherThunkSym.getObject();
-					Function otherThunkedFunc = otherFunc.getThunkedFunction(false);
-					if (otherThunkedFunc == null || !otherThunkedFunc.isExternal()) {
-						continue;
+					ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
+					ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+					refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
+					if (matchType != ExternalMatchType.NONE) {
+						refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
+							targetOrigImportedName);
 					}
-					ExternalReferenceCount refMatch =
-						matchesMap.get(otherThunkedFunc.getEntryPoint());
-					if (refMatch == null) {
-						if (otherRestrictedSymbolIds != null &&
-							!otherRestrictedSymbolIds.contains(otherThunkedFunc.getID())) {
+					matchesMap.put(otherExtAddr, refMatch);
+				}
+				else {
+					++refMatch.refCount;
+				}
+				if (++totalMatchCnt == 20) {
+					break;
+				}
+			}
+
+			// Process thunk-references (include all)
+			if (extLoc.isFunction()) {
+				Address[] thunkAddrs = extLoc.getFunction().getFunctionThunkAddresses();
+				if (thunkAddrs != null) {
+					for (Address thunkAddr : thunkAddrs) {
+						Symbol otherThunkSym = otherSymbMgr.getPrimarySymbol(thunkAddr);
+						if (otherThunkSym == null ||
+							otherThunkSym.getSymbolType() != SymbolType.FUNCTION) {
 							continue;
 						}
-						ExternalLocation otherExtLoc =
-							otherExtMgr.getExternalLocation(otherThunkedFunc.getSymbol());
-						ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
-						refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
-						if (matchType != ExternalMatchType.NONE) {
-							refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
-								targetOrigImportedName);
+						Function otherFunc = (Function) otherThunkSym.getObject();
+						Function otherThunkedFunc = otherFunc.getThunkedFunction(false);
+						if (otherThunkedFunc == null || !otherThunkedFunc.isExternal()) {
+							continue;
 						}
-						matchesMap.put(otherThunkedFunc.getEntryPoint(), refMatch);
-					}
-					else {
-						++refMatch.refCount;
+						ExternalReferenceCount refMatch =
+							matchesMap.get(otherThunkedFunc.getEntryPoint());
+						if (refMatch == null) {
+							if (otherRestrictedSymbolIds != null &&
+								!otherRestrictedSymbolIds.contains(otherThunkedFunc.getID())) {
+								continue;
+							}
+							ExternalLocation otherExtLoc =
+								otherExtMgr.getExternalLocation(otherThunkedFunc.getSymbol());
+							ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+							refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
+							if (matchType != ExternalMatchType.NONE) {
+								refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
+									targetOrigImportedName);
+							}
+							matchesMap.put(otherThunkedFunc.getEntryPoint(), refMatch);
+						}
+						else {
+							++refMatch.refCount;
+						}
 					}
 				}
 			}
@@ -751,10 +813,14 @@ public class SimpleDiffUtility {
 	 * @param program program which contains the specified external location instance
 	 * @param externalLocation external location to look for
 	 * @param otherProgram other program
+	 * @param allowInferredMatch if true an inferred match may be performed using reference
+	 * correlation.  NOTE: reference correlation is only possible if the exact same binary
+	 * is in use.  This option is ignored if the two programs do not have the same 
+	 * original binary hash and reference correlation will not be performed.
 	 * @return corresponding external location for otherProgram or null if no such external location exists.
 	 */
 	public static ExternalLocation getMatchingExternalLocation(Program program,
-			ExternalLocation externalLocation, Program otherProgram) {
+			ExternalLocation externalLocation, Program otherProgram, boolean allowInferredMatch) {
 		if (externalLocation == null) {
 			return null;
 		}
@@ -763,7 +829,7 @@ public class SimpleDiffUtility {
 			return null;
 		}
 		Symbol matchingExternalSymbol =
-			getMatchingExternalSymbol(program, symbol, otherProgram, null);
+			getMatchingExternalSymbol(program, symbol, otherProgram, allowInferredMatch, null);
 		if (matchingExternalSymbol == null) {
 			return null;
 		}
