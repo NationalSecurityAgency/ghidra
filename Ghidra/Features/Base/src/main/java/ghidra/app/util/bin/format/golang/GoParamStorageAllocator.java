@@ -261,12 +261,12 @@ public class GoParamStorageAllocator {
 			return false;
 		}
 		if (dt instanceof Structure struct) {
-			DataTypeComponent prevDTC = null;
+//			DataTypeComponent prevDTC = null;
 			for (DataTypeComponent dtc : struct.getDefinedComponents()) {
-				int padding = prevDTC != null ? dtc.getOffset() - prevDTC.getOffset() : 0;
-				if (padding != 0) {
-
-				}
+//				int padding = prevDTC != null ? dtc.getOffset() - prevDTC.getOffset() : 0;
+//				if (padding != 0) {
+//
+//				}
 				if (!countRegistersFor(dtc.getDataType(), result)) {
 					return false;
 				}

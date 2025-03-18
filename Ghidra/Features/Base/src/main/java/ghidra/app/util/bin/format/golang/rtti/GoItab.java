@@ -19,10 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod;
+import ghidra.app.util.bin.format.golang.rtti.types.*;
 import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod.GoIMethodInfo;
-import ghidra.app.util.bin.format.golang.rtti.types.GoInterfaceType;
-import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
@@ -167,6 +165,9 @@ public class GoItab implements StructureMarkup<GoItab> {
 
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException {
+		// TODO: would be nice if we could override the base structure data type used to markup
+		// ourself, and use a specialized itab (as created by the GoInterfaceType).
+
 		GoSlice funSlice = getFunSlice();
 		List<Address> funcAddrs = Arrays.stream(funSlice.readUIntList(programContext.getPtrSize()))
 				.mapToObj(offset -> programContext.getCodeAddress(offset))
@@ -197,6 +198,22 @@ public class GoItab implements StructureMarkup<GoItab> {
 		}
 		catch (IOException e) {
 			return super.toString();
+		}
+	}
+
+	public void discoverGoTypes(Set<Long> discoveredTypes) {
+		try {
+			GoInterfaceType ifaceType = getInterfaceType();
+			if (ifaceType != null) {
+				ifaceType.discoverGoTypes(discoveredTypes);
+			}
+			GoType type = getType();
+			if (type != null) {
+				type.discoverGoTypes(discoveredTypes);
+			}
+		}
+		catch (IOException e) {
+			// fail, don't discover the ref'd types
 		}
 	}
 

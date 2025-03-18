@@ -121,7 +121,7 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 		return result != null ? result : new GoSymbolName(s);
 	}
 
-	public static GoSymbolName _parse(String s) {
+	private static GoSymbolName _parse(String s) {
 		if (s.startsWith("go:")) {
 			// don't try to parse "go:...." symbols
 			return null;
@@ -451,9 +451,9 @@ public record GoSymbolName(String symbolName, String packagePath, String package
 	 * <p>
 	 * Nesting is delimited by '(', '{', '[' chars and their matching closing element.
 	 *  
-	 * @param s
-	 * @param splitChar
-	 * @return
+	 * @param s string to split
+	 * @param splitChar char to split the string on
+	 * @return list of strings that are each part of the original string
 	 */
 	private static List<String> splitNestedStringOn(String s, char splitChar) {
 		// TODO: may also have to skip chars in quoted field comments 

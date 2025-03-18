@@ -74,7 +74,7 @@ public class GoTypeManager {
 	private DataType int32DT;
 	private DataType uint32DT;
 	private DataType uint8DT;
-	private DataType stringDT;
+	private DataType voidPtrDT;
 
 	public GoTypeManager(GoRttiMapper goBinary, GoApiSnapshot apiSnapshot) {
 		this.goBinary = goBinary;
@@ -89,6 +89,7 @@ public class GoTypeManager {
 	 * @throws IOException if error reading data or cancelled
 	 */
 	public void init(TaskMonitor monitor) throws IOException {
+		this.voidPtrDT = dtm.getPointer(VoidDataType.dataType);
 		this.uintptrDT = goBinary.getTypeOrDefault("uintptr", DataType.class,
 			AbstractIntegerDataType.getUnsignedDataType(goBinary.getPtrSize(), dtm));
 		this.uintDT = goBinary.getTypeOrDefault("uint", DataType.class,
@@ -100,7 +101,6 @@ public class GoTypeManager {
 			AbstractIntegerDataType.getUnsignedDataType(4, null));
 		this.uint8DT = goBinary.getTypeOrDefault("uint8", DataType.class,
 			AbstractIntegerDataType.getUnsignedDataType(1, null));
-		this.stringDT = goBinary.getTypeOrDefault("string", Structure.class, null);
 
 		this.genericDictDT = dtm.getPointer(dtm.getPointer(uintptrDT));
 
@@ -141,9 +141,13 @@ public class GoTypeManager {
 					rec.interfaces = new ArrayList<>();
 				}
 				rec.interfaces.add(itab);
+				TypeRec ifaceRec = getTypeRec(itab.getInterfaceType());
+				if (ifaceRec.interfaces == null) {
+					ifaceRec.interfaces = new ArrayList<>();
+				}
+				ifaceRec.interfaces.add(itab);
 
-				itab.getInterfaceType().discoverGoTypes(discoveredTypes);
-				itab.getType().discoverGoTypes(discoveredTypes);
+				itab.discoverGoTypes(discoveredTypes);
 			}
 
 			findUnindexedClosureStructTypes(monitor);
@@ -197,6 +201,7 @@ public class GoTypeManager {
 					gapStart += typeStructAlign;
 					continue;
 				}
+				@SuppressWarnings("unused")
 				TypeRec newTypeRec = getTypeRec(goType); // add to index
 				gapStart = getAlignedEndOfTypeInfo(goType, typeStructAlign);
 				foundCount++;
@@ -273,7 +278,7 @@ public class GoTypeManager {
 	}
 
 	/**
-	 * Finds a go type by its go-type name
+	 * Finds a go type by its go-type name, from the list of discovered go types.
 	 *  
 	 * @param typeName name string
 	 * @return {@link GoType}, or null if not found
@@ -421,7 +426,7 @@ public class GoTypeManager {
 	/**
 	 * Returns the go type that represents a generic map argument value.
 	 * 
-	 * @return
+	 * @return {@link GoType} 
 	 */
 	public GoType getMapArgGoType() {
 		return mapArgGoType;
@@ -439,10 +444,14 @@ public class GoTypeManager {
 	/**
 	 * Returns the go type that represents a generic chan argument value.
 	 * 
-	 * @return
+	 * @return golang type for chan args
 	 */
 	public GoType getChanArgGoType() {
 		return chanArgGoType;
+	}
+
+	public DataType getUint8DT() {
+		return uint8DT;
 	}
 
 	public DataType getUintDT() {
@@ -476,6 +485,10 @@ public class GoTypeManager {
 		return uint32DT;
 	}
 
+	public DataType getVoidPtrDT() {
+		return voidPtrDT;
+	}
+
 	/**
 	 * Returns the name of a gotype.
 	 * 
@@ -507,15 +520,14 @@ public class GoTypeManager {
 	 */
 	public List<GoItab> getInterfacesImplementedByType(GoType type) {
 		TypeRec rec = getTypeRec(type);
-		return rec.interfaces != null ? rec.interfaces : List.of();
+		List<GoItab> itabs = rec.interfaces != null ? rec.interfaces : List.of();
+		return itabs.stream().filter(itab -> itab._type == type.getTypeOffset()).toList();
 	}
 
-	public void markTypeWithInterface(GoItab itab) throws IOException {
-		TypeRec rec = getTypeRec(itab.getType());
-		if (rec.interfaces == null) {
-			rec.interfaces = new ArrayList<>();
-		}
-		rec.interfaces.add(itab);
+	public List<GoItab> getTypesThatImplementInterface(GoInterfaceType iface) {
+		TypeRec rec = getTypeRec(iface);
+		List<GoItab> itabs = rec.interfaces != null ? rec.interfaces : List.of();
+		return itabs.stream().filter(itab -> itab.inter == iface.getTypeOffset()).toList();
 	}
 
 	/**
@@ -620,8 +632,7 @@ public class GoTypeManager {
 
 	/**
 	 * Returns category path that should be used to place recovered golang types.
-	
-	 * @param symbolName the symbol from which to get the package path
+	 * @param symbolName {@link GoSymbolName} to convert to a category path 
 	 * @return {@link CategoryPath} to use when creating recovered golang types
 	 */
 	public CategoryPath getCP(GoSymbolName symbolName) {
@@ -648,6 +659,10 @@ public class GoTypeManager {
 
 	public Structure getGenericInterfaceDT() {
 		return goBinary.getStructureDataType(GoIface.class);
+	}
+
+	public Structure getGenericITabDT() {
+		return goBinary.getStructureDataType(GoItab.class);
 	}
 
 	public DataType getMethodClosureType(String recvType) throws IOException {
@@ -679,8 +694,7 @@ public class GoTypeManager {
 			funcDef.setArguments(params);
 
 			closureDT.add(dtm.getPointer(funcDef), "F", null);
-			closureDT.add(new ArrayDataType(AbstractIntegerDataType.getUnsignedDataType(1, dtm), 0),
-				"context", null);
+			closureDT.add(new ArrayDataType(uint8DT, 0), "context", null);
 
 			defaultClosureType =
 				(Structure) dtm.addDataType(closureDT, DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -701,7 +715,7 @@ public class GoTypeManager {
 			funcDef.setArguments(params);
 
 			closureDT.add(dtm.getPointer(funcDef), "F", null);
-			closureDT.add(dtm.getPointer(null), "R", "method receiver");
+			closureDT.add(voidPtrDT, "R", "method receiver");
 
 			defaultMethodWrapperType =
 				(Structure) dtm.addDataType(closureDT, DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -718,7 +732,7 @@ public class GoTypeManager {
 
 	public GoType getSubstitutionType(String typeName) {
 		if (typeName.startsWith("*")) {
-			return new GoTypeBridge(typeName, dtm.getPointer(null), goBinary);
+			return new GoTypeBridge(typeName, getVoidPtrDT(), goBinary);
 		}
 		else if (typeName.startsWith("[]") || typeName.equals("runtime.slice")) {
 			return new GoTypeBridge(typeName, getGenericSliceDT(), goBinary);
