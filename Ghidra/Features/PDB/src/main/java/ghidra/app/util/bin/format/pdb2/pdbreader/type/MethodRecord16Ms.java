@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,10 @@ public class MethodRecord16Ms extends AbstractMethodRecordMs {
 		super(pdb, reader);
 		attributes = new ClassFieldMsAttributes(reader);
 		procedureRecordNumber = RecordNumber.parse(pdb, reader, RecordCategory.TYPE, 16);
-		if (attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO) {
+		// See comment in MethodRecordMs... we are adding INTRO_PURE as it might also occur, and
+		//  there should be no harm on doing this
+		if (attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO ||
+			attributes.getProperty() == ClassFieldMsAttributes.Property.INTRO_PURE) {
 			optionalOffset = reader.parseUnsignedIntVal();
 		}
 		else {
