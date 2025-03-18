@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,10 @@ import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+
 
 /**
  * A {@link Loader} for processing executable and linking files (ELF).
@@ -152,23 +156,52 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		super.postLoadProgramFixups(loadedPrograms, project, loadSpec, options, messageLog,
-			monitor);
+protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
+        List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+        throws CancelledException, IOException {
+    super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
 
-		ProjectData projectData = project != null ? project.getProjectData() : null;
-		try (ExternalSymbolResolver esr = new ExternalSymbolResolver(projectData, monitor)) {
-			for (Loaded<Program> loadedProgram : loadedPrograms) {
-				esr.addProgramToFixup(
-					loadedProgram.getProjectFolderPath() + loadedProgram.getName(),
-					loadedProgram.getDomainObject());
-			}
-			esr.fixUnresolvedExternalSymbols();
-			esr.logInfo(messageLog::appendMsg, true);
-		}
-	}
+    ProjectData projectData = project != null ? project.getProjectData() : null;
+    try (ExternalSymbolResolver esr = new ExternalSymbolResolver(projectData, monitor)) {
+        for (Loaded<Program> loadedProgram : loadedPrograms) {
+            esr.addProgramToFixup(
+                loadedProgram.getProjectFolderPath() + loadedProgram.getName(),
+                loadedProgram.getDomainObject());
+
+            // ✅ Rust detection logic
+            Program program = loadedProgram.getDomainObject();
+            SymbolTable symbolTable = program.getSymbolTable();
+            SymbolIterator symbols = symbolTable.getAllSymbols(true);
+
+            boolean isRustDetected = false;
+
+            while (symbols.hasNext()) {
+                Symbol symbol = symbols.next();
+                String name = symbol.getName();
+                if (name == null) continue;
+
+                if (name.startsWith("_ZN") ||
+                    name.contains("rust_eh_personality") ||
+                    name.contains("core::") ||
+                    name.contains("alloc::") ||
+                    name.contains("std::")) {
+
+                    isRustDetected = true;
+                    messageLog.appendMsg("[RustDetector] Found Rust symbol: " + name);
+                    break;
+                }
+            }
+
+            if (isRustDetected) {
+                messageLog.appendMsg("[RustDetector] Rust binary detected!");
+            }
+        }
+
+        esr.fixUnresolvedExternalSymbols();
+        esr.logInfo(messageLog::appendMsg, true);
+    }
+}
+
 
 	@Override
 	public String getName() {
