@@ -743,7 +743,7 @@ class BlockSwitch : public BlockGraph {
   struct CaseOrder {
     FlowBlock *block;		///< The structured \e case block
     const FlowBlock *basicblock;	///< The first basic-block to execute within the \e case block
-    uintb label;		///< The \e label for this case, as an untyped constant
+    Address addr;		///< The \e address for this case
     int4 depth;			///< How deep in a fall-thru chain we are
     int4 chain;			///< Who we immediately chain to, expressed as caseblocks index, -1 for no chaining
     int4 outindex;		///< Index coming out of switch to this case
@@ -777,6 +777,7 @@ public:
   bool isDefaultCase(int4 i) const { return caseblocks[i].isdefault; }	///< Is the i-th \e case the \e default case
   uint4 getGotoType(int4 i) const { return caseblocks[i].gototype; }	///< Get the edge type for the i-th \e case block
   bool isExit(int4 i) const { return caseblocks[i].isexit; }		///< Does the i-th \e case block exit the switch?
+  //Address getAddress(int4 i,int4 j) const { return jump->getAddressByBlock(jump->getIndexByBlock(caseblocks[i].basicblock,j)); }
   const Datatype *getSwitchType(void) const;				///< Get the data-type of the switch variable
   virtual block_type getType(void) const { return t_switch; }
   virtual void markUnstructured(void);
@@ -884,15 +885,15 @@ inline bool FlowBlock::compareBlockIndex(const FlowBlock *bl1,const FlowBlock *b
   return (bl1->getIndex() < bl2->getIndex());
 }
 
-/// Cases are compared by their label
+/// Cases are compared by their address
 /// \param a is the first case to compare
 /// \param b is the second
 /// \return \b true if the first comes before the second
 inline bool BlockSwitch::CaseOrder::compare(const CaseOrder &a,const CaseOrder &b)
 
 {
-  if (a.label != b.label)
-    return (a.label < b.label);
+  if (a.addr != b.addr)
+    return (a.addr < b.addr);
   return (a.depth < b.depth);
 }
 
