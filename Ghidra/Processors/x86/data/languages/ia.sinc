@@ -4096,8 +4096,8 @@ define pcodeop swap_bytes;
 @endif
 
 :POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop22(val); Rmr16 = val; }
-:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop22(val); Rmr16 = val; }
-:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop44(val); Rmr32 = val; }
+:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop42(val); Rmr16 = val; }
+:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop24(val); Rmr32 = val; }
 :POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop44(val); Rmr32 = val; }
 @ifdef IA64
 :POP Rmr16      is $(LONGMODE_ON) & vexMode=0 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop82(val); Rmr16 = val; }
