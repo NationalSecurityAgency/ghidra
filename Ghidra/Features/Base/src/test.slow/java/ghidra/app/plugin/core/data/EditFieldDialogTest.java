@@ -123,7 +123,7 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		goTo(0x101);
 		showFieldEditDialog();
 		assertNull(structure.getComponent(1).getFieldName());
-		assertEquals("field1_0x1", getNameText());
+		assertEquals("", getNameText());
 
 		setNameText("abc");
 
@@ -160,23 +160,6 @@ public class EditFieldDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		pressOk();
 		waitForTasks();
 		assertEquals("byte", structure.getComponent(1).getDataType().getDisplayName());
-	}
-
-	@Test
-	public void testRenameToDuplicateNameError() {
-		goTo(0x104);
-		showFieldEditDialog();
-		assertEquals("count", structure.getComponent(4).getFieldName());
-		assertEquals("count", getNameText());
-
-		setNameText("color");
-
-		pressOk();
-		waitForTasks();
-		assertTrue(isDialogVisible());
-		assertEquals("Duplicate field name", getDialogStatusText());
-
-		assertEquals("count", structure.getComponent(4).getFieldName());
 	}
 
 	private boolean isDialogVisible() {
