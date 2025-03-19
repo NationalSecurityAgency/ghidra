@@ -16,24 +16,14 @@
 package ghidra.app.util.bin.format.unixaout;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
@@ -45,8 +35,8 @@ public class UnixAoutRelocationTable implements Iterable<UnixAoutRelocation>, St
 	private final List<UnixAoutRelocation> relocations;
 	private final UnixAoutSymbolTable symtab;
 
-	public UnixAoutRelocationTable(BinaryReader reader, long fileOffset, long fileSize, UnixAoutSymbolTable symtab)
-			throws IOException {
+	public UnixAoutRelocationTable(BinaryReader reader, long fileOffset, long fileSize,
+			UnixAoutSymbolTable symtab) throws IOException {
 		this.fileSize = fileSize;
 		this.relocations = new ArrayList<>();
 		this.symtab = symtab;
@@ -58,7 +48,8 @@ public class UnixAoutRelocationTable implements Iterable<UnixAoutRelocation>, St
 			long address = reader.readNextUnsignedInt();
 			long flags = reader.readNextUnsignedInt();
 
-			UnixAoutRelocation relocation = new UnixAoutRelocation(address, flags, reader.isBigEndian());
+			UnixAoutRelocation relocation =
+				new UnixAoutRelocation(address, flags, reader.isBigEndian());
 			relocations.add(relocation);
 		}
 	}
@@ -83,7 +74,8 @@ public class UnixAoutRelocationTable implements Iterable<UnixAoutRelocation>, St
 			struct.addBitField(BYTE, 1, "r_jmptable", null);
 			struct.addBitField(BYTE, 1, "r_relative", null);
 			struct.addBitField(BYTE, 1, "r_copy", null);
-		} catch (InvalidDataTypeException e) {
+		}
+		catch (InvalidDataTypeException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -101,7 +93,7 @@ public class UnixAoutRelocationTable implements Iterable<UnixAoutRelocation>, St
 
 			if (!StringUtils.isBlank(name)) {
 				Data structData = array.getComponent(idx);
-				structData.setComment(CodeUnit.EOL_COMMENT, name);
+				structData.setComment(CommentType.EOL, name);
 			}
 
 			idx++;

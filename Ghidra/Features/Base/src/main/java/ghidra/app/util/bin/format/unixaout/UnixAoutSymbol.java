@@ -38,55 +38,29 @@ public class UnixAoutSymbol {
 	public long value;
 	public boolean isExt;
 
-	public UnixAoutSymbol(long nameStringOffset, byte typeByte, byte otherByte,
-			short desc, long value) {
+	public UnixAoutSymbol(long nameStringOffset, byte typeByte, byte otherByte, short desc,
+			long value) {
 		this.nameStringOffset = nameStringOffset;
 		this.otherByte = otherByte;
 		this.desc = desc;
 		this.value = value;
 		this.isExt = (typeByte & 1) == 1;
 
-		switch (typeByte & 0xfe) {
-			case 0:
-				type = SymbolType.N_UNDF;
-				break;
-			case 2:
-				type = SymbolType.N_ABS;
-				break;
-			case 4:
-				type = SymbolType.N_TEXT;
-				break;
-			case 6:
-				type = SymbolType.N_DATA;
-				break;
-			case 8:
-				type = SymbolType.N_BSS;
-				break;
-			case 10:
-				type = SymbolType.N_INDR;
-				break;
-			default:
-				if ((typeByte & 0xfe) >= 0x20) {
-					type = SymbolType.N_STAB;
-				} else {
-					type = SymbolType.UNKNOWN;
-				}
-				break;
-		}
+		this.type = switch (typeByte & 0xfe) {
+			case 0 -> SymbolType.N_UNDF;
+			case 2 -> SymbolType.N_ABS;
+			case 4 -> SymbolType.N_TEXT;
+			case 6 -> SymbolType.N_DATA;
+			case 8 -> SymbolType.N_BSS;
+			case 10 -> SymbolType.N_INDR;
+			default -> (typeByte & 0xfe) >= 0x20 ? SymbolType.N_STAB : SymbolType.UNKNOWN;
+		};
 
-		switch (otherByte & 0x0f) {
-			case 1:
-				kind = SymbolKind.AUX_OBJECT;
-				break;
-			case 2:
-				kind = SymbolKind.AUX_FUNC;
-				break;
-			case 3:
-				kind = SymbolKind.AUX_LABEL;
-				break;
-			default:
-				kind = SymbolKind.UNKNOWN;
-				break;
-		}
+		this.kind = switch (otherByte & 0x0f) {
+			case 1 -> SymbolKind.AUX_OBJECT;
+			case 2 -> SymbolKind.AUX_FUNC;
+			case 3 -> SymbolKind.AUX_LABEL;
+			default -> SymbolKind.UNKNOWN;
+		};
 	}
 }
