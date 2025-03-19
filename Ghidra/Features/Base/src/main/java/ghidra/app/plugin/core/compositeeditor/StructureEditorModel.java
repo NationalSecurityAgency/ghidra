@@ -309,7 +309,7 @@ class StructureEditorModel extends CompEditorModel {
 
 	private int[] convertRowsToOrdinals(int[] rows) {
 		int[] ordinals = new int[rows.length];
-		DataTypeComponent[] definedComponents = ((Structure) viewComposite).getDefinedComponents();
+		DataTypeComponent[] definedComponents = viewComposite.getDefinedComponents();
 		for (int i = rows.length - 1; i >= 0; i--) {
 			ordinals[i] = definedComponents[rows[i]].getOrdinal();
 		}
@@ -328,7 +328,7 @@ class StructureEditorModel extends CompEditorModel {
 		if (isShowingUndefinedBytes()) {
 			return rowIndex;
 		}
-		DataTypeComponent[] definedComponents = ((Structure) viewComposite).getDefinedComponents();
+		DataTypeComponent[] definedComponents = viewComposite.getDefinedComponents();
 		return definedComponents[rowIndex].getOrdinal();
 	}
 
@@ -737,16 +737,16 @@ class StructureEditorModel extends CompEditorModel {
 		catch (InvalidDataTypeException e) {
 			return false;
 		}
-		
+
 		if (isPackingEnabled() || isAtEnd(rowIndex)) {
 			return true;
 		}
-		
+
 		int undefSize = getNumUndefinedBytesAfter(dtc);
 		if (undefSize < 0) {
 			return true;
 		}
-		
+
 		int numAvailable = dtc.getLength() + undefSize;
 		return dataType.getLength() <= numAvailable;
 	}
@@ -806,7 +806,7 @@ class StructureEditorModel extends CompEditorModel {
 		if (isPackingEnabled() || isAtEnd(currentIndex)) {
 			return Integer.MAX_VALUE;
 		}
-		
+
 		// Can only replace with what fits unless at last component or empty last line.
 		DataTypeComponent comp = getComponent(currentIndex);
 		int numComponents = getNumComponents();
@@ -820,9 +820,9 @@ class StructureEditorModel extends CompEditorModel {
 		// Otherwise, get size of component and number of Undefined bytes after it.
 		FieldRange currentRange = getSelectedRangeContaining(currentIndex);
 		boolean isOneComponent =
-				(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
-					1 == currentRange.getEnd().getIndex().intValue());
-		
+			(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
+				1 == currentRange.getEnd().getIndex().intValue());
+
 		if (isOneComponent) {
 			return comp.getLength() + getNumUndefinedBytesAfter(comp);
 		}
@@ -860,7 +860,7 @@ class StructureEditorModel extends CompEditorModel {
 			return viewDTM.withTransaction("Insert Component", () -> {
 				DataTypeComponent dtc;
 				if (isPackingEnabled() || !(dataType instanceof BitFieldDataType)) {
-					dtc = ((Structure) viewComposite).insert(rowIndex, dataType, length, name,
+					dtc = viewComposite.insert(rowIndex, dataType, length, name,
 						comment);
 				}
 				else {
@@ -957,7 +957,8 @@ class StructureEditorModel extends CompEditorModel {
 							struct.growStructure(length - avail);
 						}
 					}
-					return ((Structure) viewComposite).replace(componentOrdinal, dataType, length, name, comment);
+					return ((Structure) viewComposite).replace(componentOrdinal, dataType, length,
+						name, comment);
 				});
 			}
 			return dtc;
@@ -1266,8 +1267,9 @@ class StructureEditorModel extends CompEditorModel {
 				dialog.setStatusText("The name cannot match the external structure name.");
 				return false;
 			}
-			DataTypeManager originalDTM = getOriginalDataTypeManager();
-			DataType conflictingDt = originalDTM.getDataType(getOriginalCategoryPath(), name);
+
+			DataTypeManager originalDtm = getOriginalDataTypeManager();
+			DataType conflictingDt = originalDtm.getDataType(getOriginalCategoryPath(), name);
 			if (conflictingDt != null) {
 				dialog.setStatusText("A data type named \"" + name + "\" already exists.");
 				return false;
