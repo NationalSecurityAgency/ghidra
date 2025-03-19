@@ -86,9 +86,9 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
-		name: "postgresql-15.10.tar.gz",
-		url: "https://ftp.postgresql.org/pub/source/v15.10/postgresql-15.10.tar.gz",
-		sha256: "173366605259a83dc189c4327ff4c37254afed65b4f866cbd8a5ef2ea449e8f3",
+		name: "postgresql-17.0.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v17.0/postgresql-17.0.tar.gz",
+		sha256: "bf81c0c5161e456a886ede5f1f4133f43af000637e377156a02e7e83569081ad",
 		destination: file("${DEPS_DIR}/BSim")
 	],
 	[
