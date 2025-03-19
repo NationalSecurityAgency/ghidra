@@ -21,6 +21,8 @@ import static ghidra.app.util.bin.format.golang.rtti.GoRttiMapper.FuncDefFlags.*
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -1371,6 +1373,18 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		return funcdataByName.get(funcName);
 	}
 
+	public List<GoFuncData> getFunctionsByNamePattern(Pattern pattern) {
+		List<GoFuncData> results = new ArrayList<>();
+		for (Entry<String, GoFuncData> entry : funcdataByName.entrySet()) {
+			String name = entry.getKey();
+			GoFuncData func = entry.getValue();
+			if (pattern.matcher(name).matches()) {
+				results.add(func);
+			}
+		}
+		return results;
+	}
+
 	/**
 	 * Return a list of all functions
 	 * 
@@ -1464,6 +1478,14 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		AddressSet result = new AddressSet();
 		for (GoModuledata moduledata : modules) {
 			result.add(moduledata.getTextRange());
+		}
+		return result;
+	}
+
+	public AddressSetView getUninitializedNoPtrDataRange() {
+		AddressSet result = new AddressSet();
+		for (GoModuledata moduledata : modules) {
+			result.add(moduledata.getUninitializedNoPtrDataRange());
 		}
 		return result;
 	}
