@@ -37,8 +37,8 @@ public class UnixAoutRelocation {
 	/**
 	 * 
 	 * @param address First of the two words in the table entry (a 32-bit address)
-	 * @param flags   Second of the two words in the table entry (containing several
-	 *                bitfields)
+	 * @param flags Second of the two words in the table entry (containing several bitfields)
+	 * @param bigEndian True if big endian; otherwise, false
 	 */
 	public UnixAoutRelocation(long address, long flags, boolean bigEndian) {
 		this.address = (0xFFFFFFFF & address);
@@ -53,7 +53,8 @@ public class UnixAoutRelocation {
 			this.jmpTable = ((flags & 0x4) != 0);
 			this.relative = ((flags & 0x2) != 0);
 			this.copy = ((flags & 0x1) != 0);
-		} else {
+		}
+		else {
 			this.symbolNum = (int) (flags & 0x00FFFFFF);
 			this.flags = (byte) ((flags & 0xFF000000) >> 24);
 			this.pcRelativeAddressing = ((this.flags & 0x01) != 0);
@@ -67,17 +68,16 @@ public class UnixAoutRelocation {
 	}
 
 	public String getSymbolName(UnixAoutSymbolTable symtab) {
-		if (extern == true && symbolNum < symtab.size()) {
+		if (extern && symbolNum < symtab.size()) {
 			return symtab.get(symbolNum).name;
-		} else if (extern == false) {
-			switch (symbolNum) {
-				case 4:
-					return UnixAoutProgramLoader.dot_text;
-				case 6:
-					return UnixAoutProgramLoader.dot_data;
-				case 8:
-					return UnixAoutProgramLoader.dot_bss;
-			}
+		}
+		else if (!extern) {
+			return switch (symbolNum) {
+				case 4 -> UnixAoutProgramLoader.dot_text;
+				case 6 -> UnixAoutProgramLoader.dot_data;
+				case 8 -> UnixAoutProgramLoader.dot_bss;
+				default -> null;
+			};
 		}
 
 		return null;

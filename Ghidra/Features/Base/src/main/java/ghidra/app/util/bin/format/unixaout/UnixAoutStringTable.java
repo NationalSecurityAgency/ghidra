@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.TerminatedStringDataType;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 
@@ -42,7 +40,8 @@ public class UnixAoutStringTable {
 		}
 		try {
 			return reader.readUtf8String(fileOffset + stringOffset).trim();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			// FIXME
 		}
 		return null;

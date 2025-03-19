@@ -16,9 +16,7 @@
 package ghidra.app.util.bin.format.unixaout;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,15 +24,8 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.UnixAoutProgramLoader;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
@@ -45,8 +36,8 @@ public class UnixAoutSymbolTable implements Iterable<UnixAoutSymbol>, StructConv
 	private final long fileSize;
 	private List<UnixAoutSymbol> symbols;
 
-	public UnixAoutSymbolTable(BinaryReader reader, long fileOffset, long fileSize, UnixAoutStringTable strtab, MessageLog log)
-			throws IOException {
+	public UnixAoutSymbolTable(BinaryReader reader, long fileOffset, long fileSize,
+			UnixAoutStringTable strtab, MessageLog log) throws IOException {
 		this.fileSize = fileSize;
 		this.symbols = new ArrayList<>();
 
@@ -63,7 +54,8 @@ public class UnixAoutSymbolTable implements Iterable<UnixAoutSymbol>, StructConv
 
 			UnixAoutSymbol symbol = new UnixAoutSymbol(strOffset, typeByte, otherByte, desc, value);
 			if (symbol.type == UnixAoutSymbol.SymbolType.UNKNOWN) {
-				log.appendMsg(UnixAoutProgramLoader.dot_symtab, String.format("Unknown symbol type 0x%02x at symbol index %d", typeByte, idx));
+				log.appendMsg(UnixAoutProgramLoader.dot_symtab,
+					String.format("Unknown symbol type 0x%02x at symbol index %d", typeByte, idx));
 			}
 			symbols.add(symbol);
 
@@ -93,15 +85,16 @@ public class UnixAoutSymbolTable implements Iterable<UnixAoutSymbol>, StructConv
 		return new ArrayDataType(struct, (int) (fileSize / ENTRY_SIZE), ENTRY_SIZE);
 	}
 
-    public UnixAoutSymbol get(int symbolNum) {
-        return symbols.get(symbolNum);
-    }
+	public UnixAoutSymbol get(int symbolNum) {
+		return symbols.get(symbolNum);
+	}
 
-    public long size() {
-        return symbols.size();
-    }
+	public long size() {
+		return symbols.size();
+	}
 
-	public void markup(Program program, MemoryBlock block) throws CodeUnitInsertionException, DuplicateNameException, IOException {
+	public void markup(Program program, MemoryBlock block)
+			throws CodeUnitInsertionException, DuplicateNameException, IOException {
 		Listing listing = program.getListing();
 		Data array = listing.createData(block.getStart(), toDataType());
 
@@ -111,7 +104,7 @@ public class UnixAoutSymbolTable implements Iterable<UnixAoutSymbol>, StructConv
 				Data structData = array.getComponent(idx);
 
 				if (structData != null) {
-					structData.setComment(CodeUnit.EOL_COMMENT, symbol.name);
+					structData.setComment(CommentType.EOL, symbol.name);
 				}
 			}
 
