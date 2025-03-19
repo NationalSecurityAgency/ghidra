@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -42,15 +43,18 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.options.Options;
+import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.*;
 import ghidra.program.util.SymbolicPropogator.Value;
 import ghidra.util.Msg;
@@ -73,6 +77,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		AnalysisPriority.REFERENCE_ANALYSIS.after();
 	private static final AnalysisPriority FIX_CLOSURES_PRIORITY = PROP_RTTI_PRIORITY.after();
 	static final AnalysisPriority STRINGS_PRIORITY = FIX_CLOSURES_PRIORITY.after();
+	private static final AnalysisPriority FIX_GCWRITEBARRIER_PRIORITY = STRINGS_PRIORITY.after();
 
 	private final static String NAME = "Golang Symbols";
 	private final static String DESCRIPTION = """
@@ -152,19 +157,24 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			if (analyzerOptions.fixupDuffFunctions) {
 				fixDuffFunctions();
 			}
-			if (analyzerOptions.fixupGcWriteBarierFunctions) {
+			if (analyzerOptions.fixupGcWriteBarrierFunctions) {
 				fixGcWriteBarrierFunctions();
 			}
 
 			if (analyzerOptions.propagateRtti) {
 				Msg.info(this,
 					"Golang symbol analyzer: scheduling RTTI propagation after reference analysis");
-				aam.schedule(new PropagateRttiBackgroundCommand(goBinary),
+				aam.schedule(new PropagateRttiBackgroundCommand(goBinary, markupSession),
 					PROP_RTTI_PRIORITY.priority());
 				Msg.info(this,
 					"Golang symbol analyzer: scheduling closure function fixup");
 				aam.schedule(new FixClosureFuncArgsBackgroundCommand(goBinary),
 					FIX_CLOSURES_PRIORITY.priority());
+			}
+			if (analyzerOptions.fixupGcWriteBarrierFlag) {
+				Msg.info(this, "Golang symbol analyzer: scheduling gcWriteBarrier flag fixup");
+				aam.schedule(new FixGcWriteBarrierFlagBackgroundCommand(goBinary, markupSession),
+					FIX_GCWRITEBARRIER_PRIORITY.priority());
 			}
 
 			if (analyzerOptions.createBootstrapDatatypeArchive) {
@@ -231,10 +241,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int noreturnFuncCount = 0;
 		int functionSignatureFromBootstrap = 0;
 		int functionSignatureFromMethod = 0;
-		String abiIntCCName =
-			goBinary.hasCallingConvention(GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME)
-					? GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME
-					: null;
 
 		List<GoFuncData> funcs = goBinary.getAllFunctions();
 
@@ -347,6 +353,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Msg.info(this, "Fixed %d golang function signatures from method info"
 				.formatted(functionSignatureFromMethod));
 	}
+
 
 	private void fixGcWriteBarrierFunctions() {
 		if (GoConstants.GCWRITE_BUFFERED_VERS.contains(goBinary.getGoVer())) {
@@ -637,6 +644,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		public FixupDuffAlternateEntryPointsBackgroundCommand(GoFuncData funcData,
 				Function duffFunc) {
+			super("Golang duffzero/duffcopy fixups (deferred)", true, true, false);
 			this.funcData = funcData;
 			this.duffFunc = duffFunc;
 		}
@@ -685,6 +693,164 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	}
 
 	//--------------------------------------------------------------------------------------------
+	/*
+	 *  Sets the bytes occupied by the runtime.writeBarrier enabled flag to 0 so the decompiler
+	 *  can eliminate some boilerplate code.
+	 *  
+	 *  The runtime.writeBarrier flag is embedded inside an anon go struct defined something like
+	 *  struct { enabled bool; 3 bytes padding, etc. }, and is located in a uninitialized data 
+	 *  section.
+	 */
+	private static class FixGcWriteBarrierFlagBackgroundCommand extends BackgroundCommand<Program> {
+		private GoRttiMapper goBinary;
+		private Program program;
+		private ReferenceManager refMgr;
+		private MarkupSession markupSession;
+		private AddressSetView searchAddrs;
+
+		public FixGcWriteBarrierFlagBackgroundCommand(GoRttiMapper goBinary,
+				MarkupSession markupSession) {
+			super("Golang writeBarrier flag fixup (deferred)", true, true, false);
+			this.goBinary = goBinary;
+			this.markupSession = markupSession;
+			this.program = goBinary.getProgram();
+			this.refMgr = program.getReferenceManager();
+			this.searchAddrs = goBinary.getUninitializedNoPtrDataRange();
+		}
+
+		@Override
+		public boolean applyTo(Program obj, TaskMonitor monitor) {
+			Memory memory = program.getMemory();
+
+			Address flagAddr = getGcWriteBarrierFlagAddr();
+			if (flagAddr == null) {
+				Msg.warn(this, "Could not find runtime.writeBarrier, unable to fixup");
+				return true;
+			}
+			MemoryBlock memBlk = memory.getBlock(flagAddr);
+			if (!memBlk.isInitialized()) {
+				// split the uninitialized memory block into 3 pieces (leading, 4 byte flag, trailing)
+				try {
+					memory.split(memBlk, flagAddr);
+					memBlk = memory.getBlock(flagAddr);
+					Address afterFlag = flagAddr.add(4 /* sizeof(bool + padding) */);
+					memory.split(memBlk, afterFlag);
+					memory.convertToInitialized(memBlk, (byte) 0);
+					memBlk.setName(memBlk.getName().replaceFirst("\\.split$", ".writeBarrierFlag"));
+					memBlk = memory.getBlock(afterFlag);
+					memBlk.setName(memBlk.getName().replaceFirst("(\\.split)+$", ".part2"));
+				}
+				catch (MemoryBlockException | LockException | NotFoundException e) {
+					Msg.error(this, "Failed to fixup runtime.writeBarrier flag", e);
+				}
+			}
+			else {
+				// this codepath probably shouldn't be possible, the runtime.writeBarrier value
+				// typically will be in an uninit'd mem block
+				try {
+					memory.setBytes(flagAddr, new byte[4]);
+				}
+				catch (MemoryAccessException e) {
+					Msg.error(this, "Failed to set runtime.writeBarrier flag bytes to 0");
+				}
+			}
+			// mark the 4 bytes of the flag with a data type and set it to constant mutability.
+			try {
+				Data flagData = DataUtilities.createData(program, flagAddr,
+					AbstractIntegerDataType.getUnsignedDataType(4, null), 4,
+					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+				MutabilitySettingsDefinition.DEF.setChoice(flagData,
+					MutabilitySettingsDefinition.CONSTANT);
+				markupSession.labelAddress(flagAddr, "runtime.writeBarrier.discovered");
+			}
+			catch (CodeUnitInsertionException | IOException e) {
+				Msg.error(this, "Failed to markup runtime.writeBarrier flag", e);
+			}
+			return true;
+		}
+
+		private Address getGcWriteBarrierFlagAddr() {
+			Symbol writeBarrierSym = goBinary.getGoSymbol("runtime.writeBarrier");
+			if (writeBarrierSym != null) {
+				return writeBarrierSym.getAddress();
+			}
+
+			// for each runtime.gcWriteBarrier*() func
+			//   for each call ref to wb func
+			//     iterate refs to func backwards starting at callsite (max 50'ish bytes)
+			//     looking for data ref to global uninit addr
+			//     followed by conditional jmp
+			Map<Address, Integer> candidateFlagAddrs = new HashMap<>();
+
+			for (Address wbFunc : getGcWriteBarrierFuncAddrs()) {
+				for (Reference callSiteRef : refMgr.getReferencesTo(wbFunc)) {
+					if (callSiteRef.getReferenceType().isCall()) {
+						getGcWriteBarrierFlagAddrGuesses(callSiteRef.getFromAddress(),
+							candidateFlagAddrs);
+					}
+				}
+			}
+			if (candidateFlagAddrs.size() > 1) {
+				Msg.debug(this, "runtime.writeBarrier flag candidates: " + candidateFlagAddrs);
+			}
+
+			Optional<Entry<Address, Integer>> mostHits = candidateFlagAddrs.entrySet()
+					.stream()
+					.sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue()))
+					.findFirst();
+
+			return mostHits.isPresent() ? mostHits.get().getKey() : null;
+		}
+
+		// max number of bytes to search backwards from callsites to gcWriteBarrier
+		private static final int MAX_REFSEARCH_BYTES = 50;
+
+		private void getGcWriteBarrierFlagAddrGuesses(Address wbFuncCallSite,
+				Map<Address, Integer> candidateFlagAddrs) {
+			Address minAddr = wbFuncCallSite.subtract(MAX_REFSEARCH_BYTES);
+
+			for (Address refAddr : refMgr.getReferenceSourceIterator(wbFuncCallSite, false)) {
+				if (refAddr.compareTo(minAddr) < 0) {
+					break;
+				}
+				for (Reference ref : refMgr.getReferencesFrom(refAddr)) {
+					if (ref.getReferenceType().isData() && ref.getReferenceType().isRead() &&
+						ref.isMemoryReference() && searchAddrs.contains(ref.getToAddress())) {
+						if (hasTrailingConditionalRef(refAddr, wbFuncCallSite)) {
+							candidateFlagAddrs.compute(ref.getToAddress(),
+								(k, v) -> v == null ? 1 : v + 1);
+						}
+					}
+				}
+			}
+		}
+
+		private boolean hasTrailingConditionalRef(Address addr, Address maxAddr) {
+			for (Address refAddr : refMgr.getReferenceSourceIterator(addr, true)) {
+				if (refAddr.compareTo(maxAddr) > 0) {
+					break;
+				}
+				for (Reference ref : refMgr.getReferencesFrom(refAddr)) {
+					if (ref.getReferenceType().isConditional() && ref.getReferenceType().isJump()) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		private static final Pattern GCWRITEBARRIER_FUNCNAMES =
+			Pattern.compile("runtime\\.gcWriteBarrier.*");
+
+		private List<Address> getGcWriteBarrierFuncAddrs() {
+			return goBinary.getFunctionsByNamePattern(GCWRITEBARRIER_FUNCNAMES)
+					.stream()
+					.map(GoFuncData::getFuncAddress)
+					.toList();
+		}
+
+	}
+
 	/**
 	 * Partially fixup closure func signatures by matching a closure func (*.func1) with a
 	 * closure struct ( struct { F uintptr; X0 blah... } ), and giving the func a context param
@@ -701,6 +867,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		private int methodWrapperFuncsFixed;
 
 		public FixClosureFuncArgsBackgroundCommand(GoRttiMapper goBinary) {
+			super("Golang closure func arg (deferred)", true, true, false);
 			this.goBinary = goBinary;
 			this.goTypes = goBinary.getGoTypes();
 			this.program = goBinary.getProgram();
@@ -920,10 +1087,11 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int unfixedCallsiteCount;
 		int callingFunctionCount;
 
-		public PropagateRttiBackgroundCommand(GoRttiMapper goBinary) {
+		public PropagateRttiBackgroundCommand(GoRttiMapper goBinary, MarkupSession markupSession) {
 			super("Golang RTTI Propagation (deferred)", true, true, false);
 			this.goBinary = goBinary;
 			this.program = goBinary.getProgram();
+			this.markupSession = markupSession;
 		}
 
 		@Override
@@ -934,7 +1102,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 			try {
-				this.markupSession = goBinary.createMarkupSession(monitor);
 				Set<Entry<Function, List<CallSiteInfo>>> callsiteInfo =
 					getInformationAboutCallsites(monitor);
 
@@ -1141,7 +1308,15 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				Fixup gcWriteBarrier functions \
 				(requires gcwrite calling convention defined for the program's arch)""";
 
-		boolean fixupGcWriteBarierFunctions = true;
+		boolean fixupGcWriteBarrierFunctions = true;
+
+		static final String FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME = "Fixup gcWriteBarrier Flag";
+		static final String FIXUP_GCWRITEBARRIER_FLAG_DESC = """
+				Fixup global writeBarrier flag so decompiler can eliminate some code paths.
+				The un-initialized memory block the flag is located in will be split to enable
+				initializing the flag byte to 0.""";
+
+		public boolean fixupGcWriteBarrierFlag = true;
 
 		void registerOptions(Options options, Program program) {
 			options.registerOption(GolangAnalyzerOptions.CREATE_BOOTSTRAP_GDT_OPTIONNAME,
@@ -1154,8 +1329,11 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			options.registerOption(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME, propagateRtti, null,
 				GolangAnalyzerOptions.PROP_RTTI_DESC);
 			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME,
-				fixupGcWriteBarierFunctions, null,
+				fixupGcWriteBarrierFunctions, null,
 				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FUNCS_DESC);
+			options.registerOption(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME,
+				fixupGcWriteBarrierFlag, null,
+				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_DESC);
 		}
 
 		void optionsChanged(Options options, Program program) {
@@ -1169,8 +1347,12 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				GolangAnalyzerOptions.FIXUP_DUFF_FUNCS_OPTIONNAME, fixupDuffFunctions);
 			propagateRtti =
 				options.getBoolean(GolangAnalyzerOptions.PROP_RTTI_OPTIONNAME, propagateRtti);
-			fixupGcWriteBarierFunctions = options.getBoolean(
-				GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME, fixupGcWriteBarierFunctions);
+			fixupGcWriteBarrierFunctions =
+				options.getBoolean(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_OPTIONNAME,
+					fixupGcWriteBarrierFunctions);
+			fixupGcWriteBarrierFlag =
+				options.getBoolean(GolangAnalyzerOptions.FIXUP_GCWRITEBARRIER_FLAG_OPTIONNAME,
+					fixupGcWriteBarrierFlag);
 		}
 
 	}
