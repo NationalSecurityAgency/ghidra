@@ -2285,7 +2285,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 
 			if (specialTypeinfo.isInProgramMemory()) {
-				applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				Data struct =
+					applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
+				if (struct == null) {
+					Msg.error(this,
+						specialTypeinfo.getNamespace().getName() + ": cannot apply structure");
+					continue;
+				}
 				typeinfoToStructuretypeMap.put(specialTypeinfo.getAddress(),
 					SI_CLASS_TYPE_INFO_STRUCTURE);
 			}
@@ -2725,13 +2731,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)
-			throws CancelledException, AddressOutOfBoundsException, Exception {
+	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress) {
 
-		api.clearListing(typeinfoAddress, typeinfoAddress.add(typeInfoStructure.getLength() - 1));
-		Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+		try {
+			api.clearListing(typeinfoAddress,
+				typeinfoAddress.add(typeInfoStructure.getLength() - 1));
+			Data newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+			return newStructure;
+		}
+		catch (CodeUnitInsertionException | CancelledException e) {
+			Msg.warn(this, "Could not apply typeinfo struct at " + typeinfoAddress.toString());
+			return null;
+		}
 
-		return newStructure;
 	}
 
 	private Structure getOrCreateVmiTypeinfoStructure(Address typeinfoAddress,
