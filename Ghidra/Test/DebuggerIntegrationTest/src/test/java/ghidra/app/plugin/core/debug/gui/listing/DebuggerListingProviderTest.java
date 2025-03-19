@@ -1192,7 +1192,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 			TraceModule bin = tb.trace.getModuleManager()
 					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
-			bin.addSection("bash[.text]", tb.range(0x00400000, 0x0040ffff));
+			bin.addSection(0, "bash[.text]", tb.range(0x00400000, 0x0040ffff));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateTrace(tb.trace);
@@ -1265,7 +1265,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		waitForPass(() -> assertEquals("modExe", listingProvider.locationLabel.getText()));
 
 		try (Transaction tx = tb.startTransaction()) {
-			modExe.addSection(".text", tb.range(0x55550000, 0x555500ff));
+			modExe.addSection(0, ".text", tb.range(0x55550000, 0x555500ff));
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe:.text", listingProvider.locationLabel.getText()));
@@ -1389,8 +1389,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 			thread = tb.getOrAddThread("Thread 1", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
-			stack.getFrame(1, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
+			stack.getFrame(0, 0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
+			stack.getFrame(0, 1, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1455,7 +1455,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 			DBTraceStackManager sm = tb.trace.getStackManager();
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true);
+			stack.getFrame(0, 0, true);
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
@@ -1486,7 +1486,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
+			stack.getFrame(0, 0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1496,7 +1496,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 		try (Transaction tx = tb.startTransaction()) {
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
+			stack.getFrame(0, 0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 

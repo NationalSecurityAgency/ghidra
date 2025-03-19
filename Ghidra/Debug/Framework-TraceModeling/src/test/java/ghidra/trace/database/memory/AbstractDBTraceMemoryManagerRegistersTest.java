@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,10 +66,10 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 			assertEquals(new BigInteger("FEDCBA98", 16), regs.getValue(0, r0l).getUnsignedValue());
 
 			TraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
-			stack.setDepth(2, true);
-			assertSame(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, false), false));
+			stack.setDepth(0, 2, true);
+			assertSame(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, 0, false), false));
 			DBTraceMemorySpace frame =
-				memory.getMemoryRegisterSpace(stack.getFrame(1, false), true);
+				memory.getMemoryRegisterSpace(stack.getFrame(0, 1, false), true);
 			if (isRegistersPerFrame()) {
 				assertNotSame(regs, frame);
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.*;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -64,8 +65,7 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (reg == null) {
 			return null;
 		}
-		Lifespan lifespan = thread.getLifespan();
-		if (lifespan == null || !lifespan.contains(snap)) {
+		if (!thread.isValid(snap)) {
 			return null;
 		}
 		TraceMemorySpace regs = reg.getAddressSpace().isRegisterSpace()

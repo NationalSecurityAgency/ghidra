@@ -29,7 +29,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
-import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.ModuleMapProposalGenerator;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.*;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.*;
@@ -362,7 +362,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			try (Transaction tx = ent.getKey().openTransaction("Memorize module mapping")) {
 				for (ModuleMapEntry entry : ent.getValue()) {
 					ProgramModuleIndexer.addModulePaths(entry.getToProgram(),
-						List.of(entry.getModule().getName()));
+						List.of(entry.getModuleName()));
 				}
 			}
 		}
@@ -561,71 +561,75 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public DomainFile findBestModuleProgram(AddressSpace space, TraceModule module) {
-		return programModuleIndexer.getBestMatch(space, module, programManager.getCurrentProgram());
+	public DomainFile findBestModuleProgram(AddressSpace space, TraceModule module, long snap) {
+		return programModuleIndexer.getBestMatch(space, module, snap,
+			programManager.getCurrentProgram());
 	}
 
 	@Override
-	public ModuleMapProposal proposeModuleMap(TraceModule module, Program program) {
-		return moduleMapProposalGenerator.proposeMap(module, program);
+	public ModuleMapProposal proposeModuleMap(TraceModule module, long snap, Program program) {
+		return moduleMapProposalGenerator.proposeMap(module, snap, program);
 	}
 
 	@Override
-	public ModuleMapProposal proposeModuleMap(TraceModule module,
+	public ModuleMapProposal proposeModuleMap(TraceModule module, long snap,
 			Collection<? extends Program> programs) {
-		return moduleMapProposalGenerator.proposeBestMap(module, orderCurrentFirst(programs));
+		return moduleMapProposalGenerator.proposeBestMap(module, snap, orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, ModuleMapProposal> proposeModuleMaps(
-			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return moduleMapProposalGenerator.proposeBestMaps(modules, orderCurrentFirst(programs));
-	}
-
-	@Override
-	public SectionMapProposal proposeSectionMap(TraceSection section, Program program,
-			MemoryBlock block) {
-		return new DefaultSectionMapProposal(section, program, block);
-	}
-
-	@Override
-	public SectionMapProposal proposeSectionMap(TraceModule module, Program program) {
-		return DebuggerStaticMappingProposals.SECTIONS.proposeMap(module, program);
-	}
-
-	@Override
-	public SectionMapProposal proposeSectionMap(TraceModule module,
+			Collection<? extends TraceModule> modules, long snap,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.SECTIONS.proposeBestMap(module,
+		return moduleMapProposalGenerator.proposeBestMaps(modules, snap,
+			orderCurrentFirst(programs));
+	}
+
+	@Override
+	public SectionMapProposal proposeSectionMap(TraceSection section, long snap, Program program,
+			MemoryBlock block) {
+		return new DefaultSectionMapProposal(section, snap, program, block);
+	}
+
+	@Override
+	public SectionMapProposal proposeSectionMap(TraceModule module, long snap, Program program) {
+		return new SectionMapProposalGenerator(snap).proposeMap(module, program);
+	}
+
+	@Override
+	public SectionMapProposal proposeSectionMap(TraceModule module, long snap,
+			Collection<? extends Program> programs) {
+		return new SectionMapProposalGenerator(snap).proposeBestMap(module,
 			orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, SectionMapProposal> proposeSectionMaps(
-			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.SECTIONS.proposeBestMaps(modules,
+			Collection<? extends TraceModule> modules, long snap,
+			Collection<? extends Program> programs) {
+		return new SectionMapProposalGenerator(snap).proposeBestMaps(modules,
 			orderCurrentFirst(programs));
 	}
 
 	@Override
-	public RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
+	public RegionMapProposal proposeRegionMap(TraceMemoryRegion region, long snap, Program program,
 			MemoryBlock block) {
-		return new DefaultRegionMapProposal(region, program, block);
+		return new DefaultRegionMapProposal(region, snap, program, block);
 	}
 
 	@Override
 	public RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions,
-			Program program) {
-		return DebuggerStaticMappingProposals.REGIONS
+			long snap, Program program) {
+		return new RegionMapProposalGenerator(snap)
 				.proposeMap(Collections.unmodifiableCollection(regions), program);
 	}
 
 	@Override
 	public Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
-			Collection<? extends TraceMemoryRegion> regions,
+			Collection<? extends TraceMemoryRegion> regions, long snap,
 			Collection<? extends Program> programs) {
 		Set<Set<TraceMemoryRegion>> groups =
 			DebuggerStaticMappingProposals.groupRegionsByLikelyModule(regions);
-		return DebuggerStaticMappingProposals.REGIONS.proposeBestMaps(groups, programs);
+		return new RegionMapProposalGenerator(snap).proposeBestMaps(groups, programs);
 	}
 }

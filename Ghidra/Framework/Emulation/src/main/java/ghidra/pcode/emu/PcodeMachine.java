@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -234,7 +234,7 @@ public interface PcodeMachine<T> {
 	 * <p>
 	 * This will attempt to compile the given source against this machine's userop library and then
 	 * inject it at the given address. The resulting p-code <em>replaces</em> that which would be
-	 * executed by decoding the instruction at the given address. The means the machine will not
+	 * executed by decoding the instruction at the given address. That means the machine will not
 	 * decode, nor advance its counter, unless the Sleigh causes it. In most cases, the Sleigh will
 	 * call {@link PcodeEmulationLibrary#emu_exec_decoded()} to cause the machine to decode and
 	 * execute the overridden instruction.
@@ -253,6 +253,14 @@ public interface PcodeMachine<T> {
 	 * @param source the Sleigh source to compile and inject
 	 */
 	void inject(Address address, String source);
+
+	/**
+	 * Check for a p-code injection (override) at the given address
+	 * 
+	 * @param address the address, usually the program counter
+	 * @return the injected program, most likely {@code null}
+	 */
+	PcodeProgram getInject(Address address);
 
 	/**
 	 * Remove the inject, if present, at the given address

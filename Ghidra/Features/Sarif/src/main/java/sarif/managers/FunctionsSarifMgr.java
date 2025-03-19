@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,7 @@
 package sarif.managers;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.Icon;
 
@@ -32,42 +29,15 @@ import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.function.OverlappingFunctionException;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFormatException;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.BuiltInDataTypeManager;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Undefined;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.BookmarkManager;
-import ghidra.program.model.listing.BookmarkType;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.listing.FunctionIterator;
-import ghidra.program.model.listing.Library;
-import ghidra.program.model.listing.LocalVariableImpl;
-import ghidra.program.model.listing.ParameterImpl;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramContext;
-import ghidra.program.model.listing.ReturnParameterImpl;
-import ghidra.program.model.listing.StackFrame;
-import ghidra.program.model.listing.Variable;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.listing.VariableUtilities;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import sarif.SarifProgramOptions;
@@ -144,7 +114,6 @@ public class FunctionsSarifMgr extends SarifMgr {
 	 * &lt;!ELEMENT FUNCTION (RETURN_TYPE?, ADDRESS_RANGE*, REGULAR_CMT?, REPEATABLE_CMT?, TYPEINFO_CMT?, STACK_FRAME?, REGISTER_VAR*)&gt;
 	 * </code>
 	 * </pre>
-	 * <p>
 	 * 
 	 * @param result             the parser
 	 * @param overwriteConflicts true to overwrite any conflicts

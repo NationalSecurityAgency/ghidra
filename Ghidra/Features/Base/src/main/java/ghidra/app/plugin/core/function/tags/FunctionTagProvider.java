@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.FunctionLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
 
@@ -107,6 +108,8 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	// this we would need to reload from file on each new program activation.
 	private Set<FunctionTag> tagsFromFile;
 
+	private FunctionTagPlugin plugin;
+
 	/**
 	 * Constructor
 	 *
@@ -115,16 +118,24 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	 */
 	public FunctionTagProvider(FunctionTagPlugin plugin, Program program) {
 		super(plugin.getTool(), "Function Tags", plugin.getName(), ProgramActionContext.class);
-
+		this.plugin = plugin;
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		this.program = program;
 		mainPanel = createWorkPanel();
 		addToTool();
+		createActions();
 	}
+
+
 
 	@Override
 	public void componentShown() {
 		updateView();
+	}
+
+	@Override
+	public void componentHidden() {
+		allFunctionsPanel.getTable().clearSelection();
 	}
 
 	@Override
@@ -406,7 +417,6 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		if (!sTags.isEmpty()) {
 			allFunctionsPanel.refresh(sTags);
 		}
-
 		Function function = getFunction(currentLocation);
 		sourcePanel.refresh(function);
 		targetPanel.refresh(function);
@@ -495,4 +505,10 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 
 		return inputPanel;
 	}
+
+	private void createActions() {
+		tool.addLocalAction(this,
+			new MakeProgramSelectionAction(plugin, allFunctionsPanel.getTable()));
+	}
+
 }

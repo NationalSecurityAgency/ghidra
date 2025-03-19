@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 
@@ -27,15 +28,13 @@ import ghidra.program.model.mem.MemoryAccessException;
  */
 public class ProgramVirtualBaseTable extends VirtualBaseTable {
 
-	private Memory memory;
+	private Program program;
 	private Address address;
 	private int entrySize;
 	private String mangledName; // remove?
 
 	private Boolean createdFromMemory = null;
 	private Boolean createdFromCompiled = null;
-
-	private int numEntries = 0;
 
 	private int maxIndexSeen = -1;
 	private Map<Integer, VBTableEntry> entriesByIndex = new HashMap<>();
@@ -44,19 +43,19 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	 * Constructor
 	 * @param owner the class that owns the table
 	 * @param parentage the parentage of the base class(es) of the table
-	 * @param memory the program memory
+	 * @param program the program
 	 * @param address the address of the table
-	 * @param entrySize the size for each table entry
+	 * @param entrySize the size of the index field for each table entry in memory
 	 * @param ctm the class type manager
 	 * @param mangledName the mangled name of the table
 	 */
-	public ProgramVirtualBaseTable(ClassID owner, List<ClassID> parentage, Memory memory,
+	public ProgramVirtualBaseTable(ClassID owner, List<ClassID> parentage, Program program,
 			Address address, int entrySize, ClassTypeManager ctm, String mangledName) {
 		super(owner, parentage);
 		if (entrySize != 4 && entrySize != 8) {
 			throw new IllegalArgumentException("Invalid size (" + entrySize + "): must be 4 or 8.");
 		}
-		this.memory = memory;
+		this.program = program;
 		this.address = address;
 		this.entrySize = entrySize;
 		this.mangledName = mangledName;
@@ -75,7 +74,7 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 	 * Returns the mangled name
 	 * @return the mangled name
 	 */
-	String getMangledName() {
+	public String getMangledName() {
 		return mangledName;
 	}
 
@@ -98,6 +97,7 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 
 	@Override
 	public Long getBaseOffset(int index) throws PdbException {
+		Memory memory = program.getMemory();
 		Address entryAddress = address.add(index * entrySize);
 		try {
 			Long offset = (entrySize == 4) ? (long) memory.getInt(entryAddress)
@@ -134,16 +134,16 @@ public class ProgramVirtualBaseTable extends VirtualBaseTable {
 		return entry;
 	}
 
-	// Need to decide if we want to allow this to overwrite existing entry.
-	public void setBaseClassId(int index, ClassID baseId) throws PdbException {
+	public void setBaseClassId(int index, ClassID baseId) {
 		VBTableEntry entry = entriesByIndex.get(index);
-		if (entry != null) {
-			throw new PdbException(
-				"Entry already exists in Virtual Base Table for index: " + index);
+		if (entry == null) {
+			entry = new VirtualBaseTableEntry(baseId);
+			entriesByIndex.put(index, entry);
 		}
-		entry = new VirtualBaseTableEntry(baseId);
-		entriesByIndex.put(index, entry);
-		maxIndexSeen = Integer.max(maxIndexSeen, index); // do we want this here with a "set" method?
+		else {
+			entry.setClassId(baseId);
+		}
+		maxIndexSeen = Integer.max(maxIndexSeen, index);
 	}
 
 }

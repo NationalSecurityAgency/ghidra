@@ -1,0 +1,219 @@
+@ ["all","Funcs","encoding/gob.(*Decoder).decIgnoreOpFor","Params",3]
+  {"DataType":"map[encoding/gob.typeId]*encoding/gob.decOp","Name":"inProgress"}
+- {"DataType":"int","Name":"depth"}
+]
+@ ["all","Funcs","go/build/constraint.parsePlusBuildExpr","Results",1]
+  {"DataType":"go/build/constraint.Expr","Name":""}
++ {"DataType":"error","Name":""}
+]
+@ ["all","Funcs","go/types.versionMax"]
++ {"Flags":0,"Params":[{"DataType":"go/types.goVersion","Name":"a"},{"DataType":"go/types.goVersion","Name":"b"}],"Results":[{"DataType":"go/types.goVersion","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","internal/abi.TypeFor"]
++ {"Flags":2,"Params":[],"Results":[{"DataType":"*internal/abi.Type","Name":""}],"TypeParams":["T"]}
+@ ["all","Types","encoding/gob.Decoder","Fields",9]
+  {"DataType":"error","Name":"err"}
++ {"DataType":"int","Name":"ignoreDepth"}
+]
+@ ["all","Types","go/build/constraint.exprParser","Fields",5]
+  {"DataType":"int","Name":"pos"}
++ {"DataType":"int","Name":"size"}
+]
+@ ["all","Types","func(any, uintptr, int64)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["darwin-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["darwin-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-amd64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["darwin-arm64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-arm64","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["darwin-arm64","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["darwin-arm64","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-arm64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-386","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-386","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-386","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-386","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-386-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-386-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-386-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-386-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-amd64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-amd64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-arm","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-arm","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-arm","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-arm","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-arm-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["windows-386","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["windows-386","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-386","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-386","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["windows-386-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":""},{"DataType":"uintptr","Name":""},{"DataType":"int64","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["windows-amd64-cgo","Types","func(any, uintptr, int64)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"any","Name":"arg"},{"DataType":"uintptr","Name":"seq"},{"DataType":"int64","Name":"delay"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["windows-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"

@@ -50,10 +50,10 @@ task generateProtoPy {
 		if (!isCurrentWindows()) {
 			exe.setExecutable(true)
 		}
-		exec {
+		providers.exec {
 			commandLine exe, "--python_out=$outdir", "-I$srcdir"
 			args src
-		}
+		}.result.get()
 	}
 }
 

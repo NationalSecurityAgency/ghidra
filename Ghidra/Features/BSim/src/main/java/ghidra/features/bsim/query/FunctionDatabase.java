@@ -183,10 +183,6 @@ public interface FunctionDatabase extends AutoCloseable {
 	 */
 	public BSimServerInfo getServerInfo();
 
-	/**
-	 * Get the 
-	 * @return
-	 */
 	@Deprecated
 	public String getURLString();
 
@@ -379,7 +375,7 @@ public interface FunctionDatabase extends AutoCloseable {
 
 	/**
 	 * Determines if a given xml file is a config template. This is done by opening the file
-	 * and checking for the presence of a <dbconfig> root tag.
+	 * and checking for the presence of a {@code <dbconfig>} root tag.
 	 * 
 	 * @param file the file to inspect
 	 * @return true if the file is config template

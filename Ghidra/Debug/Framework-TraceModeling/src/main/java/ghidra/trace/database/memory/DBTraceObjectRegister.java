@@ -56,14 +56,14 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public int getBitLength() {
-		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TraceObjectRegister.KEY_BITLENGTH, Integer.class, 0);
+	public int getBitLength(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap, TraceObjectRegister.KEY_BITLENGTH,
+			Integer.class, 0);
 	}
 
 	@Override
 	public void setValue(Lifespan lifespan, byte[] value) {
-		int length = getByteLength();
+		int length = getByteLength(lifespan.lmin());
 		if (length != 0 && value.length != length) {
 			throw new IllegalArgumentException("Length must match the register");
 		}
@@ -77,14 +77,14 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 			return null;
 		}
 		Object val = ov.getValue();
-		if (val instanceof byte[]) {
+		if (val instanceof byte[] arr) {
 			// TODO: Should I correct mismatched size?
-			return (byte[]) val;
+			return arr;
 		}
-		if (val instanceof String) {
+		if (val instanceof String str) {
 			// Always base 16. Model API says byte array for register value is big endian.
-			BigInteger bigVal = new BigInteger((String) val, 16);
-			return Utils.bigIntegerToBytes(bigVal, getByteLength(), true);
+			BigInteger bigVal = new BigInteger(str, 16);
+			return Utils.bigIntegerToBytes(bigVal, getByteLength(snap), true);
 		}
 		throw new ClassCastException("Cannot convert " + val + " to byte array for register value");
 	}

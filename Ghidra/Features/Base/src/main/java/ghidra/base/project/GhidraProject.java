@@ -40,7 +40,6 @@ import ghidra.test.ProjectTestUtils;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Helper class for using Ghidra in a "batch" mode. This class provides methods
@@ -67,10 +66,14 @@ public class GhidraProject {
 	 * @param projectsDir the directory containing the Ghidra project.
 	 * @param projectName the name of the ghidra project.
 	 * @return an open ghidra project.
-	 * @throws IOException if there was a problem accessing the project
+	 * @throws NotFoundException if the file for the project was
+	 * not found.
+	 * @throws NotOwnerException if the project owner is not the user
+	 * @throws LockException if the project is already opened by another user
+	 * @throws IOException if an IO-related problem occurred
 	 */
 	public static GhidraProject openProject(String projectsDir, String projectName)
-			throws IOException {
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 		return new GhidraProject(projectsDir, projectName, false);
 	}
 
@@ -82,15 +85,19 @@ public class GhidraProject {
 	 * @param projectName the name of the ghidra project.
 	 * @param restoreProject if true the project tool state is restored
 	 * @return an open ghidra project.
-	 * @throws IOException if there was a problem accessing the project
+	 * @throws NotFoundException if the file for the project was not found.
+	 * @throws NotOwnerException if the project owner is not the user
+	 * @throws LockException if the project is already opened by another user
+	 * @throws IOException if an IO-related problem occurred
 	 */
 	public static GhidraProject openProject(String projectsDir, String projectName,
-			boolean restoreProject) throws IOException {
+			boolean restoreProject)
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 		return new GhidraProject(projectsDir, projectName, restoreProject);
 	}
 
 	private GhidraProject(String projectParentDir, String projectName, boolean restoreProject)
-			throws IOException {
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 		if (!ghidra.framework.Application.isInitialized()) {
 			throw new AssertException("The GhidraProject requires the system to be " +
 				"initialized before usage.  See GhidraApplication.initialize() for more " +
@@ -98,25 +105,8 @@ public class GhidraProject {
 		}
 
 		ProjectLocator projectLocator = new ProjectLocator(projectParentDir, projectName);
-		try {
-			project = projectManager.openProject(projectLocator, restoreProject, false);
-			if (project == null) {
-				throw new IOException("Failed to open project: " + projectName);
-			}
-			projectData = project.getProjectData();
-		}
-		catch (MalformedURLException e) {
-			throw new IOException("Bad Project URL: " + projectLocator, e);
-		}
-		catch (NotFoundException e) {
-			throw new IOException("Project not found: " + projectLocator, e);
-		}
-		catch (NotOwnerException e) {
-			throw new IOException("Not project owner: " + projectName, e);
-		}
-		catch (LockException e) {
-			throw new IOException("Project is locked: " + projectName, e);
-		}
+		project = projectManager.openProject(projectLocator, restoreProject, false);
+		projectData = project.getProjectData();
 	}
 
 	/**
@@ -146,9 +136,10 @@ public class GhidraProject {
 	 * 
 	 * @param host Ghidra Server host
 	 * @param port Ghidra Server port (0 = use default port)
-	 * @param repositoryName
+	 * @param repositoryName The repository name
 	 * @param createIfNeeded if true repository will be created if it does not exist
-	 * @throws DuplicateNameException
+	 * @throws DuplicateNameException if the repository name already exists
+	 * @return A {@link RepositoryAdapter handle} to the new repository
 	 */
 	public static RepositoryAdapter getServerRepository(String host, int port,
 			String repositoryName, boolean createIfNeeded) throws DuplicateNameException {
@@ -226,15 +217,15 @@ public class GhidraProject {
 	}
 
 	/**
-	 * Returns the underlying Project instance or null if project was opened for
-	 * READ access only.
+	 * {@return the underlying Project instance or null if project was opened for
+	 * READ access only.}
 	 */
 	public Project getProject() {
 		return project;
 	}
 
 	/**
-	 * Returns the underlying ProjectData instance.
+	 * {@return the underlying ProjectData instance.}
 	 */
 	public ProjectData getProjectData() {
 		return projectData;
@@ -376,7 +367,7 @@ public class GhidraProject {
 	}
 
 	/**
-	 * Get the root folder for the Ghidra project.
+	 * {@return the root folder for the Ghidra project.}
 	 */
 	public DomainFolder getRootFolder() {
 		return projectData.getRootFolder();
@@ -490,7 +481,7 @@ public class GhidraProject {
 					throw new DuplicateFileException("File already exists: " + file);
 				}
 			}
-			program.saveToPackedFile(file, TaskMonitorAdapter.DUMMY);
+			program.saveToPackedFile(file, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e1) {
 			throw new IOException("Cancelled");
@@ -563,9 +554,9 @@ public class GhidraProject {
 	}
 
 	/**
-	 * Returns a PropertList containing all the analysis option properties that
+	 * {@return a PropertList containing all the analysis option properties that
 	 * can be set. Changing the value of the analysis properties will affect
-	 * what happens when the analyze call is made.
+	 * what happens when the analyze call is made.}
 	 *
 	 * @param program
 	 *            the program whose analysis options are to be set.

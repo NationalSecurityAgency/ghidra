@@ -37,8 +37,6 @@ import pdb.symbolserver.SymbolServer.MutableTrust;
 
 /**
  * A {@link SymbolServer} that is accessed via HTTP.
- * <p>
- * 
  */
 public class HttpSymbolServer extends AbstractSymbolServer implements MutableTrust {
 	private static final String GHIDRA_USER_AGENT = "Ghidra_HttpSymbolServer_client";

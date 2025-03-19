@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.opinion.Loader;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.Platform;
@@ -53,15 +52,14 @@ public class LibrarySearchPathManager {
 	/**
 	 * Returns a {@link List} of {@link FSRL}s to search for libraries
 	 * 
-	 * @param provider The {@link ByteProvider} of the program being loaded
 	 * @param program The {@link Program} being loaded
 	 * @param log The log
 	 * @param monitor A cancellable monitor
 	 * @return a {@link List} of {@link FSRL}s to search for libraries
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public static synchronized List<FSRL> getLibraryFsrlList(ByteProvider provider, Program program,
-			MessageLog log, TaskMonitor monitor) throws CancelledException {
+	public static synchronized List<FSRL> getLibraryFsrlList(Program program, MessageLog log,
+			TaskMonitor monitor) throws CancelledException {
 		FileSystemService fsService = FileSystemService.getInstance();
 		List<FSRL> fsrlList = new ArrayList<>();
 		for (String path : pathSet) {
@@ -70,10 +68,7 @@ public class LibrarySearchPathManager {
 			FSRL fsrl = null;
 			try {
 				if (path.equals(".")) {
-					FSRL providerFsrl = provider.getFSRL();
-					if (providerFsrl == null) {
-						providerFsrl = FSRL.fromProgram(program);
-					}
+					FSRL providerFsrl = FSRL.fromProgram(program);
 					if (providerFsrl != null) {
 						try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
 							GFile parentFile = fileRef.file.getParentFile();

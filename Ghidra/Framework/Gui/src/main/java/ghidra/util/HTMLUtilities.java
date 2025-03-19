@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import utilities.util.reflection.ReflectionUtilities;
  *
  * <P>Many clients use this class to render content as HTML.  Below are a few use cases along
  * with the method that should be used for each.
- * <TABLE BORDER="1"><caption></caption>
+ * <TABLE BORDER="1">
  * 		<TR>
  * 			<TH>Use Case</TH><TH>Function</TH><TH>Description</TH>
  * 		</TR>
@@ -539,7 +539,7 @@ public class HTMLUtilities {
 	 *
 	 * <P>For example, consider the following<br><br>
 	 *
-	 * <table border=1><caption></caption>
+	 * <table border=1>
 	 * 		<tr>
 	 * 			<th>Input</th><th>Output</th><th>Rendered as</th><th>(Without Friendly Encoding)</th>
 	 * 		</tr>

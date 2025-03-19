@@ -2827,7 +2827,6 @@ define pcodeop vunpcklps_avx ;
 }
 
 # VBROADCAST 5-12 PAGE 1836 LINE 94913
-define pcodeop vbroadcastsd_avx ;
 :VBROADCASTSD YmmReg1, XmmReg2_m64 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x19; (YmmReg1 & ZmmReg1) ... & XmmReg2_m64
 {
 	local val:8 = XmmReg2_m64[0,64];
@@ -2839,7 +2838,6 @@ define pcodeop vbroadcastsd_avx ;
 }
 
 # VBROADCAST 5-12 PAGE 1836 LINE 94915
-define pcodeop vbroadcastf128_avx ;
 :VBROADCASTF128 YmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x1A; (YmmReg1 & ZmmReg1) ... & XmmReg2_m128
 {
 	local val:16 = XmmReg2_m128;

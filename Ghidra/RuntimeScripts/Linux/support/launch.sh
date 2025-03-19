@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 
 umask 027
@@ -21,31 +21,30 @@ function showUsage() {
 
 	echo "Usage: $0 <mode> <java-type> <name> <max-memory> \"<vmarg-list>\" <app-classname> <app-args>... "
 	echo "   <mode>: fg   run as foreground process in current shell"
-	echo "           bg   run as background process in new shell"
-	echo "           debug   run as foreground process in current shell in debug mode (suspend=n)"
-	echo "           debug-suspend   run as foreground process in current shell in debug mode (suspend=y)"
-	echo "           NOTE: for all debug modes environment variable DEBUG_ADDRESS may be set to "
-	echo "                 override default debug address of 127.0.0.1:18001"
+	echo "		   bg   run as background process in new shell"
+	echo "		   debug   run as foreground process in current shell in debug mode (suspend=n)"
+	echo "		   debug-suspend   run as foreground process in current shell in debug mode (suspend=y)"
+	echo "		   NOTE: for all debug modes environment variable DEBUG_ADDRESS may be set to "
+	echo "				 override default debug address of 127.0.0.1:18001"
 	echo "   <java-type>: jdk  requires JDK to run"
-	echo "                jre  JRE is sufficient to run (JDK works too)"
+	echo "				jre  JRE is sufficient to run (JDK works too)"
 	echo "   <name>: application name used for naming console window"
 	echo "   <max-memory>: maximum memory heap size in MB (e.g., 768M or 2G).  Use empty \"\" if default"
-	echo "                 should be used.  This will generally be upto 1/4 of the physical memory available"
-	echo "                 to the OS."
+	echo "				 should be used.  This will generally be upto 1/4 of the physical memory available"
+	echo "				 to the OS."
 	echo "   <vmarg-list>: pass-thru args (e.g.,  \"-Xmx512M -Dmyvar=1 -DanotherVar=2\"). Use"
-	echo "                 empty \"\" if vmargs not needed.  Spaces are not supported."
+	echo "				 empty \"\" if vmargs not needed.  Spaces are not supported."
 	echo "   <app-classname>: application classname (e.g., ghidra.GhidraRun )"
 	echo "   <app-args>...: arguments to be passed to the application"
 	echo " "
 	echo "   Example:"
-	echo "      \"$0\" debug jdk Ghidra 4G \"\" ghidra.GhidraRun"
+	echo "	  \"$0\" debug jdk Ghidra 4G \"\" ghidra.GhidraRun"
 
 	exit 1
 }
 
-
-VMARGS_FROM_CALLER=         # Passed in from the outer script as one long string, no spaces
-VMARGS_FROM_LAUNCH_SH=()    # Defined in this script, added to array
+VMARGS_FROM_CALLER=		 # Passed in from the outer script as one long string, no spaces
+VMARGS_FROM_LAUNCH_SH=()	# Defined in this script, added to array
 VMARGS_FROM_LAUNCH_PROPS=() # Retrieved from LaunchSupport, added to array
 
 ARGS=()
@@ -97,7 +96,7 @@ fi
 SUPPORT_DIR="${0%/*}"
 
 # Ensure Ghidra path doesn't contain illegal characters
-if [[ "$SUPPORT_DIR" = *"!"* ]]; then
+if [[ "${SUPPORT_DIR}" = *"!"* ]]; then
 	echo "Ghidra path cannot contain a \"!\" character."
 	exit 1
 fi
@@ -119,46 +118,61 @@ else
 		CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/build/libs/Utility.jar"
 		LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/build/libs/LaunchSupport.jar"
 		if ! [ -f "${LS_CPATH}" ]; then
-			echo "Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle."
+			echo "ERROR: Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle."
 			exit 1
 		fi
 	fi
 	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/Common/support/debug.log4j.xml"
 fi
 
-# Make sure some kind of java is on the path.  It's required to run the LaunchSupport program.
-if ! [ -x "$(command -v java)" ] ; then
-	echo "Java runtime not found.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+# Identify java command from either JAVA_HOME or PATH, try PATH first
+JAVA_CMD=
+if [ -x "$(command -v java)" ] ; then
+	JAVA_CMD=java
+elif [ -n "${JAVA_HOME}" ] ; then
+	JAVA_CMD="${JAVA_HOME}/bin/java"
+	if [ ! -x "${JAVA_CMD}" ] ; then
+		echo "WARNING: JAVA_HOME environment variable is set to an invalid directory: ${JAVA_HOME}"
+		JAVA_CMD=
+	fi
+fi
+
+if [ "${JAVA_CMD}" == "" ]; then
+	echo
+	echo "ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME."
+	echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
 	exit 1
 fi
 
 # Get the JDK that will be used to launch Ghidra
-JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
+LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
 if [ ! $? -eq 0 ]; then
 	# If fd 0 (stdin) isn't a tty, fail because we can't prompt the user
 	if [ ! -t 0 ]; then
 		echo
-		echo "Unable to prompt user for JDK path, no TTY detected.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		echo "ERROR: Unable to prompt user for JDK path, no TTY detected."
+		echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
 		exit 1
 	fi
 	
 	# No JDK has been setup yet.  Let the user choose one.
-	java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
+	"${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
 	
 	# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
+	LS_JAVA_HOME="$("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
 	if [ ! $? -eq 0 ]; then
 		echo
-		echo "Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		echo "ERROR: Failed to find a supported JDK."
+		echo "Please refer to the Ghidra Installation Guide's Troubleshooting section."
 		exit 1
 	fi
 fi
-JAVA_CMD="${JAVA_HOME}/bin/java"
+JAVA_CMD="${LS_JAVA_HOME}/bin/java"
 
 # Get the configurable VM arguments from the launch properties
 while IFS=$'\r\n' read -r line; do
 	VMARGS_FROM_LAUNCH_PROPS+=("$line")
-done < <(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)
+done < <("${JAVA_CMD}" -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)
 
 # Add extra macOS VM arguments
 if [ "$(uname -s)" = "Darwin" ]; then
@@ -194,7 +208,7 @@ elif [ "${MODE}" = "bg" ]; then
 	BACKGROUND=true
 
 else
-	echo "Incorrect launch usage - invalid launch mode: ${MODE}"
+	echo "ERROR: Incorrect launch usage - invalid launch mode: ${MODE}"
 	exit 1
 fi
 

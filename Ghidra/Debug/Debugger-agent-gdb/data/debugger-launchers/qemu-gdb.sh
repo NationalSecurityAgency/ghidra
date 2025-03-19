@@ -26,7 +26,7 @@
 #@desc </body></html>
 #@menu-group cross
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb_qemu
+#@help gdb#qemu
 #@enum Endian:str auto big little
 #@arg :file! "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"

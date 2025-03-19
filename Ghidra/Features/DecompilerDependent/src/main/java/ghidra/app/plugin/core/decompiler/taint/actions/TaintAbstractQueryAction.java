@@ -20,6 +20,7 @@ import javax.swing.Icon;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompiler.taint.*;
+import ghidra.app.plugin.core.decompiler.taint.TaintPlugin.TaintFormat;
 import ghidra.app.plugin.core.decompiler.taint.TaintState.QueryType;
 import ghidra.app.plugin.core.decompiler.taint.sarif.SarifTaintGraphRunHandler;
 import ghidra.framework.plugintool.PluginTool;
@@ -37,22 +38,22 @@ import sarif.SarifService;
 public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAction {
 
 	protected TaintPlugin plugin;
-	protected TaintState state;
 	protected String desc;
+	protected String title;
 
 	protected String executeTaintQueryIconString;
 	protected Icon executeTaintQueryIcon;
 	protected QueryType queryType;
 
-	public TaintAbstractQueryAction(TaintPlugin plugin, TaintState state, String desc, String cmd) {
+	public TaintAbstractQueryAction(TaintPlugin plugin, String desc, String title, String cmd) {
 		super(cmd);
 
 		setHelpLocation(new HelpLocation(TaintPlugin.HELP_LOCATION, "Taint"+desc));
 		setMenuBarData(new MenuData(new String[] { "Source-Sink", getName() }));
 
 		this.plugin = plugin;
-		this.state = state;
 		this.desc = desc;
+		this.title = title;
 	}
 
 	/*
@@ -60,6 +61,9 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 	 */
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
+		if (plugin.getTaintState() == null) {
+			return false;
+		}
 		return true;
 	}
 
@@ -68,9 +72,10 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 		Program program = context.getProgram();
 		PluginTool tool = context.getTool();
 
-		Task defaultQueryTask = new Task("Source-Sink Query Task", true, true, true, true) {
+		Task defaultQueryTask = new Task(title, true, true, true, true) {
 			@Override
 			public void run(TaskMonitor monitor) {
+				TaintState state = plugin.getTaintState();
 				state.setCancellation(false);
 				monitor.initialize(program.getFunctionManager().getFunctionCount());
 				state.queryIndex(program, tool, queryType);
@@ -85,10 +90,14 @@ public abstract class TaintAbstractQueryAction extends TaintAbstractDecompilerAc
 		// We still get a progress bar and option to cancel.
 		tool.execute(defaultQueryTask);
 
+		TaintState state = plugin.getTaintState();
 		if (!state.wasCancelled()) {
-			SarifService sarifService = plugin.getSarifService();
-			sarifService.getController().setDefaultGraphHander(SarifTaintGraphRunHandler.class);
-			sarifService.showSarif(desc, state.getData());
+			TaintFormat format = state.getOptions().getTaintOutputForm();
+			if (!format.equals(TaintFormat.NONE)) {
+				SarifService sarifService = plugin.getSarifService();
+				sarifService.getController().setDefaultGraphHander(SarifTaintGraphRunHandler.class);
+				sarifService.showSarif(desc, state.getData());
+			}
 
 			plugin.consoleMessage("executing query...");
 			TaintProvider provider = plugin.getProvider();

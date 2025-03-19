@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,13 +46,14 @@ bool CastStrategy::markExplicitUnsigned(PcodeOp *op,int4 slot) const
   if (!vn->isConstant()) return false;
   Datatype *dt = vn->getHighTypeReadFacing(op);
   type_metatype meta = dt->getMetatype();
-  if ((meta != TYPE_UINT)&&(meta != TYPE_UNKNOWN)) return false;
+  if (meta != TYPE_UINT && meta != TYPE_UNKNOWN && meta != TYPE_PARTIALSTRUCT && meta != TYPE_PARTIALUNION)
+    return false;
   if (dt->isCharPrint()) return false;
   if (dt->isEnumType()) return false;
   if ((op->numInput() == 2) && !inheritsFirstParamOnly) {
     Varnode *firstvn = op->getIn(1-slot);
     meta = firstvn->getHighTypeReadFacing(op)->getMetatype();
-    if ((meta == TYPE_UINT)||(meta == TYPE_UNKNOWN))
+    if (meta == TYPE_UINT || meta == TYPE_UNKNOWN || meta == TYPE_PARTIALSTRUCT || meta == TYPE_PARTIALUNION)
       return false;		// Other side of the operation will force the unsigned
   }
   // Check if type is going to get forced anyway
@@ -85,7 +86,9 @@ bool CastStrategy::markExplicitLongSize(PcodeOp *op,int4 slot) const
   if (vn->getSize() <= promoteSize) return false;
   Datatype *dt = vn->getHigh()->getType();
   type_metatype meta = dt->getMetatype();
-  if ((meta != TYPE_UINT)&&(meta != TYPE_INT)&&(meta != TYPE_UNKNOWN)) return false;
+  if (meta != TYPE_UINT && meta != TYPE_INT && meta != TYPE_UNKNOWN &&
+      meta != TYPE_PARTIALSTRUCT && meta != TYPE_PARTIALUNION)
+    return false;
   uintb off = vn->getOffset();
   if (meta == TYPE_INT && signbit_negative(off, vn->getSize())) {
     off = uintb_negate(off, vn->getSize());
@@ -138,8 +141,9 @@ int4 CastStrategyC::localExtensionType(const Varnode *vn,const PcodeOp *op) cons
 
 {
   type_metatype meta = vn->getHighTypeReadFacing(op)->getMetatype();
-  int4 natural;		// 1= natural zero extension, 2= natural sign extension
-  if ((meta == TYPE_UINT)||(meta == TYPE_BOOL)||(meta == TYPE_UNKNOWN))
+  int4 natural;
+  if (meta == TYPE_UINT || meta == TYPE_BOOL || meta == TYPE_UNKNOWN ||
+      meta == TYPE_PARTIALSTRUCT || meta == TYPE_PARTIALUNION)
     natural = UNSIGNED_EXTENSION;
   else if (meta == TYPE_INT)
     natural = SIGNED_EXTENSION;
@@ -331,20 +335,23 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
   }
   switch(reqbase->getMetatype()) {
   case TYPE_UNKNOWN:
+  case TYPE_PARTIALSTRUCT:	// As they are ultimately stripped, treat partials as undefined
+  case TYPE_PARTIALUNION:
     return (Datatype *)0;
   case TYPE_UINT:
     if (!care_uint_int) {
       type_metatype meta = curbase->getMetatype();
       // Note: meta can be TYPE_UINT if curbase is typedef/enumerated
-      if ((meta==TYPE_UNKNOWN)||(meta==TYPE_INT)||(meta==TYPE_UINT)||(meta==TYPE_BOOL))
+      if (meta==TYPE_UNKNOWN || meta==TYPE_INT || meta==TYPE_UINT || meta==TYPE_BOOL ||
+	  meta==TYPE_PARTIALSTRUCT || meta==TYPE_PARTIALUNION)
 	return (Datatype *)0;
     }
     else {
       type_metatype meta = curbase->getMetatype();
       if ((meta == TYPE_UINT)||(meta==TYPE_BOOL))	// Can be TYPE_UINT for typedef/enumerated
 	return (Datatype *)0;
-      if (isptr && (meta==TYPE_UNKNOWN)) // Don't cast pointers to unknown
-	return (Datatype *)0;
+      if (isptr && (meta==TYPE_UNKNOWN || meta==TYPE_PARTIALSTRUCT || meta==TYPE_PARTIALUNION))
+	return (Datatype *)0;	// Don't cast pointers to unknown
     }
     if ((!care_ptr_uint)&&(curbase->getMetatype()==TYPE_PTR))
       return (Datatype *)0;
@@ -353,15 +360,16 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
     if (!care_uint_int) {
       type_metatype meta = curbase->getMetatype();
       // Note: meta can be TYPE_INT if curbase is an enumerated type
-      if ((meta==TYPE_UNKNOWN)||(meta==TYPE_INT)||(meta==TYPE_UINT)||(meta==TYPE_BOOL))
+      if (meta==TYPE_UNKNOWN || meta==TYPE_INT || meta==TYPE_UINT || meta==TYPE_BOOL ||
+	  meta==TYPE_PARTIALSTRUCT || meta==TYPE_PARTIALUNION)
 	return (Datatype *)0;
     }
     else {
       type_metatype meta = curbase->getMetatype();
       if ((meta == TYPE_INT)||(meta == TYPE_BOOL))
 	return (Datatype *)0;	// Can be TYPE_INT for typedef/enumerated/char
-      if (isptr && (meta==TYPE_UNKNOWN)) // Don't cast pointers to unknown
-	return (Datatype *)0;
+      if (isptr && (meta==TYPE_UNKNOWN || meta==TYPE_PARTIALSTRUCT || meta==TYPE_PARTIALUNION))
+	return (Datatype *)0;	 // Don't cast pointers to unknown
     }
     break;
   case TYPE_CODE:
@@ -402,24 +410,19 @@ bool CastStrategyC::isSubpieceCast(Datatype *outtype,Datatype *intype,uint4 offs
 {
   if (offset != 0) return false;
   type_metatype inmeta = intype->getMetatype();
-  if ((inmeta!=TYPE_INT)&&
-      (inmeta!=TYPE_UINT)&&
-      (inmeta!=TYPE_UNKNOWN)&&
-      (inmeta!=TYPE_PTR))
+  if (inmeta!=TYPE_INT && inmeta!=TYPE_UINT && inmeta!=TYPE_UNKNOWN && inmeta!=TYPE_PTR &&
+      inmeta!=TYPE_PARTIALSTRUCT && inmeta!=TYPE_PARTIALUNION)
     return false;
   type_metatype outmeta = outtype->getMetatype();
-  if ((outmeta!=TYPE_INT)&&
-      (outmeta!=TYPE_UINT)&&
-      (outmeta!=TYPE_UNKNOWN)&&
-      (outmeta!=TYPE_PTR)&&
-      (outmeta!=TYPE_FLOAT))
+  if (outmeta!=TYPE_INT && outmeta!=TYPE_UINT && outmeta!=TYPE_UNKNOWN &&
+      outmeta!=TYPE_PTR && outmeta!=TYPE_FLOAT)
     return false;
   if (inmeta==TYPE_PTR) {
     if (outmeta == TYPE_PTR) {
       if (outtype->getSize() < intype->getSize())
 	return true;		// Cast from far pointer to near pointer
     }
-    if ((outmeta!=TYPE_INT) && (outmeta!=TYPE_UINT))
+    if (outmeta!=TYPE_INT && outmeta!=TYPE_UINT)
       return false; //other casts don't make sense for pointers
   }
   return true;
@@ -477,12 +480,15 @@ Datatype *CastStrategyJava::castStandard(Datatype *reqtype,Datatype *curtype,
   if (reqbase->getSize() != curbase->getSize()) return reqtype; // Always cast change in size
   switch(reqbase->getMetatype()) {
   case TYPE_UNKNOWN:
+  case TYPE_PARTIALSTRUCT:	// As they are ultimately stripped, treat partials as undefined
+  case TYPE_PARTIALUNION:
     return (Datatype *)0;
   case TYPE_UINT:
     if (!care_uint_int) {
       type_metatype meta = curbase->getMetatype();
       // Note: meta can be TYPE_UINT if curbase is typedef/enumerated
-      if ((meta==TYPE_UNKNOWN)||(meta==TYPE_INT)||(meta==TYPE_UINT)||(meta==TYPE_BOOL))
+      if (meta==TYPE_UNKNOWN || meta==TYPE_INT || meta==TYPE_UINT || meta==TYPE_BOOL ||
+	  meta==TYPE_PARTIALSTRUCT || meta==TYPE_PARTIALUNION)
 	return (Datatype *)0;
     }
     else {
@@ -495,7 +501,8 @@ Datatype *CastStrategyJava::castStandard(Datatype *reqtype,Datatype *curtype,
     if (!care_uint_int) {
       type_metatype meta = curbase->getMetatype();
       // Note: meta can be TYPE_INT if curbase is an enumerated type
-      if ((meta==TYPE_UNKNOWN)||(meta==TYPE_INT)||(meta==TYPE_UINT)||(meta==TYPE_BOOL))
+      if (meta==TYPE_UNKNOWN || meta==TYPE_INT || meta==TYPE_UINT || meta==TYPE_BOOL ||
+	  meta==TYPE_PARTIALSTRUCT || meta==TYPE_PARTIALUNION)
 	return (Datatype *)0;
     }
     else {

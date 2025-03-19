@@ -1418,7 +1418,8 @@ public:
 class RuleConditionalMove : public Rule {
   static Varnode *checkBoolean(Varnode *vn);			///< Check for boolean expression
   static bool gatherExpression(Varnode *vn,vector<PcodeOp *> &ops,FlowBlock *root,FlowBlock *branch);
-  static Varnode *constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data);	///< Construct the expression after the merge
+  static Varnode *constructBool(Varnode *vn,PcodeOp *insertop,vector<PcodeOp *> &ops,Funcdata &data);
+  /// \brief Sort PcodeOps based only on order within a basic block
   static bool compareOp(PcodeOp *op0,PcodeOp *op1) { return op0->getSeqNum().getOrder() < op1->getSeqNum().getOrder(); }
 public:
   RuleConditionalMove(const string &g) : Rule( g, 0, "conditionalmove") {}	///< Constructor

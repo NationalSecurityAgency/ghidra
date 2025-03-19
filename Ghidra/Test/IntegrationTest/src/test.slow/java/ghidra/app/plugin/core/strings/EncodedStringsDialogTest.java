@@ -41,7 +41,6 @@ public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 	private EncodedStringsTableModel tableModel;
 	private EncodedStringsPlugin plugin;
 
-
 	@Before
 	public void setUp() throws Exception {
 		initialize();
@@ -177,7 +176,6 @@ public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 		Swing.runNow(() -> dialog.getCreateButton().doClick());
 
 		waitForSwing();
-
 		data = program.getListing().getDataAt(addr(0x100));
 		assertNotNull(data);
 		assertTrue(data.getDataType() instanceof AbstractStringDataType);

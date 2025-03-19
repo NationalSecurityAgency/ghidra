@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,16 +27,22 @@ import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
+import utility.function.Callback;
 
+/**
+ * A dialog used to perform text searches on a text display.
+ */
 public class FindDialog extends ReusableDialogComponentProvider {
 
-	private GhidraComboBox<String> comboBox;
+	protected GhidraComboBox<String> comboBox;
 
 	protected FindDialogSearcher searcher;
 	private JButton nextButton;
 	private JButton previousButton;
 	private JRadioButton stringRadioButton;
 	private JRadioButton regexRadioButton;
+
+	private Callback closedCallback = Callback.dummy();
 
 	public FindDialog(String title, FindDialogSearcher searcher) {
 		super(title, false, true, true, true);
@@ -46,15 +52,27 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		buildButtons();
 	}
 
+	@Override
+	public void dispose() {
+		searcher.dispose();
+		super.dispose();
+	}
+
+	public void setClosedCallback(Callback c) {
+		this.closedCallback = Callback.dummyIfNull(c);
+	}
+
 	private void buildButtons() {
 		nextButton = new JButton("Next");
 		nextButton.setMnemonic('N');
+		nextButton.getAccessibleContext().setAccessibleName("Next");
 		nextButton.addActionListener(ev -> doSearch(true));
 		addButton(nextButton);
 		setDefaultButton(nextButton);
 
 		previousButton = new JButton("Previous");
 		previousButton.setMnemonic('P');
+		previousButton.getAccessibleContext().setAccessibleName("Previous");
 		previousButton.addActionListener(ev -> doSearch(false));
 		addButton(previousButton);
 
@@ -65,14 +83,16 @@ public class FindDialog extends ReusableDialogComponentProvider {
 
 		ButtonGroup formatGroup = new ButtonGroup();
 		stringRadioButton = new GRadioButton("String", true);
+		stringRadioButton.getAccessibleContext().setAccessibleName("String");
 		regexRadioButton = new GRadioButton("Regular Expression", false);
+		regexRadioButton.getAccessibleContext().setAccessibleName("Regular Expresion");
 		formatGroup.add(stringRadioButton);
 		formatGroup.add(regexRadioButton);
 
 		comboBox = new GhidraComboBox<>();
 		comboBox.setEditable(true);
 		comboBox.addActionListener(e -> doSearch(true));
-
+		comboBox.getAccessibleContext().setAccessibleName("Checkboxes");
 		comboBox.setColumns(20);
 		comboBox.addDocumentListener(new DocumentListener() {
 			@Override
@@ -97,23 +117,24 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		});
 
 		JLabel findLabel = new GLabel("Find: ");
-
+		findLabel.getAccessibleContext().setAccessibleName("Find");
 		// associate this label with a mnemonic key that activates the text field
 		findLabel.setDisplayedMnemonic(KeyEvent.VK_N);
 		comboBox.associateLabel(findLabel);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel textPanel = new JPanel();
+		textPanel.getAccessibleContext().setAccessibleName("Find Label and Checkboxes");
 		textPanel.add(findLabel);
 		textPanel.add(comboBox);
 		mainPanel.add(textPanel, BorderLayout.NORTH);
 		mainPanel.add(buildFormatPanel(), BorderLayout.SOUTH);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Find");
 		return mainPanel;
 	}
 
-	private void enableButtons(boolean b) {
+	protected void enableButtons(boolean b) {
 		nextButton.setEnabled(b);
 		previousButton.setEnabled(b);
 	}
@@ -124,12 +145,15 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		formatPanel.setLayout(new BoxLayout(formatPanel, BoxLayout.Y_AXIS));
 		formatPanel.add(stringRadioButton);
 		formatPanel.add(regexRadioButton);
+		formatPanel.getAccessibleContext().setAccessibleName("Format");
 		return formatPanel;
 	}
 
 	@Override
 	protected void dialogClosed() {
 		comboBox.setText("");
+		searcher.clearHighlights();
+		closedCallback.call();
 	}
 
 	public void next() {
@@ -206,12 +230,19 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		// -don't allow searching again while notifying
 		// -make sure the user can see it
 		enableButtons(false);
-		alertMessage(() -> enableButtons(true));
+		alertMessage(() -> {
+			String text = comboBox.getText();
+			enableButtons(text.length() != 0);
+		});
 	}
 
 	@Override
 	protected void dialogShown() {
 		clearStatusText();
+	}
+
+	public FindDialogSearcher getSearcher() {
+		return searcher;
 	}
 
 	String getText() {

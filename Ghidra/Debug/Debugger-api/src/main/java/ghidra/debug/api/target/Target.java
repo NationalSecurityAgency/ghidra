@@ -18,16 +18,17 @@ package ghidra.debug.api.target;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
+
+import javax.swing.Icon;
 
 import docking.ActionContext;
+import ghidra.debug.api.target.ActionName.Show;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
@@ -58,28 +59,72 @@ public interface Target {
 	 * just invoked implicitly. Often, the two suppliers are implemented using lambda functions, and
 	 * those functions will keep whatever some means of querying UI and/or target context in their
 	 * closures.
-	 * 
-	 * @param display the text to display on UI actions associated with this entry
-	 * @param name the name of a common debugger command this action implements
-	 * @param details text providing more details, usually displayed in a tool tip
-	 * @param requiresPrompt true if invoking the action requires further user interaction
-	 * @param specificity a relative score of specificity. These are only meaningful when compared
-	 *            among entries returned in the same collection.
-	 * @param enabled a supplier to determine whether an associated action in the UI is enabled.
-	 * @param action a function for invoking this action asynchronously
 	 */
-	record ActionEntry(String display, ActionName name, String details, boolean requiresPrompt,
-			long specificity, BooleanSupplier enabled,
-			Function<Boolean, CompletableFuture<?>> action) {
+	interface ActionEntry {
+
+		/**
+		 * Get the text to display on UI actions associated with this entry
+		 * 
+		 * @return the display
+		 */
+		String display();
+
+		/**
+		 * Get the name of a common debugger command this action implements
+		 * 
+		 * @return the name
+		 */
+		ActionName name();
+
+		/**
+		 * Get the icon to display in menus and dialogs
+		 * 
+		 * @return the icon
+		 */
+		Icon icon();
+
+		/**
+		 * Get the text providing more details, usually displayed in a tool tip
+		 * 
+		 * @return the details
+		 */
+		String details();
+
+		/**
+		 * Check whether invoking the action requires further user interaction
+		 * 
+		 * @return true if prompting is required
+		 */
+		boolean requiresPrompt();
+
+		/**
+		 * Get a relative score of specificity.
+		 * 
+		 * <p>
+		 * These are only meaningful when compared among entries returned in the same collection.
+		 * 
+		 * @return the specificity
+		 */
+		long specificity();
+
+		/**
+		 * Invoke the action asynchronously, prompting if desired.
+		 * 
+		 * <p>
+		 * The implementation is not required to provide a timeout; however, downstream components
+		 * may.
+		 * 
+		 * @param prompt whether or not to prompt the user for arguments
+		 * @return the future result, often {@link Void}
+		 */
+		CompletableFuture<?> invokeAsyncWithoutTimeout(boolean prompt);
 
 		/**
 		 * Check if this action is currently enabled
 		 * 
 		 * @return true if enabled
 		 */
-		public boolean isEnabled() {
-			return enabled.getAsBoolean();
-		}
+		boolean isEnabled();
 
 		/**
 		 * Invoke the action asynchronously, prompting if desired
@@ -90,8 +135,9 @@ public interface Target {
 		 * @param prompt whether or not to prompt the user for arguments
 		 * @return the future result, often {@link Void}
 		 */
-		public CompletableFuture<?> invokeAsync(boolean prompt) {
-			return action.apply(prompt).orTimeout(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		default CompletableFuture<?> invokeAsync(boolean prompt) {
+			return invokeAsyncWithoutTimeout(prompt).orTimeout(TIMEOUT_MILLIS,
+				TimeUnit.MILLISECONDS);
 		}
 
 		/**
@@ -103,7 +149,7 @@ public interface Target {
 		 * 
 		 * @param prompt whether or not to prompt the user for arguments
 		 */
-		public void run(boolean prompt) {
+		default void run(boolean prompt) {
 			get(prompt);
 		}
 
@@ -113,7 +159,7 @@ public interface Target {
 		 * @param prompt whether or not to prompt the user for arguments
 		 * @return the resulting value, if applicable
 		 */
-		public Object get(boolean prompt) {
+		default Object get(boolean prompt) {
 			if (Swing.isSwingThread()) {
 				throw new AssertionError("Refusing to block the Swing thread. Use a Task.");
 			}
@@ -130,9 +176,81 @@ public interface Target {
 		 * 
 		 * @return true if built in.
 		 */
-		public boolean builtIn() {
-			return name != null && name.builtIn();
+		default Show getShow() {
+			return name() == null ? Show.EXTENDED : name().show();
 		}
+	}
+
+	/**
+	 * Specifies how object arguments are derived
+	 */
+	public enum ObjectArgumentPolicy {
+		/**
+		 * The object should be taken exactly from the action context, if applicable, present, and
+		 * matching in schema.
+		 */
+		CONTEXT_ONLY {
+			@Override
+			public boolean allowContextObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return false;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return false;
+			}
+		},
+		/**
+		 * The object should be taken from the current (active) object in the tool, or a suitable
+		 * relative having the correct schema.
+		 */
+		CURRENT_AND_RELATED {
+			@Override
+			public boolean allowContextObject() {
+				return false;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return true;
+			}
+		},
+		/**
+		 * The object can be taken from the given context, or the current (active) object in the
+		 * tool, or a suitable relative having the correct schema.
+		 */
+		EITHER_AND_RELATED {
+			@Override
+			public boolean allowContextObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowCoordsObject() {
+				return true;
+			}
+
+			@Override
+			public boolean allowSuitableRelative() {
+				return true;
+			}
+		};
+
+		public abstract boolean allowContextObject();
+
+		public abstract boolean allowCoordsObject();
+
+		public abstract boolean allowSuitableRelative();
 	}
 
 	/**
@@ -170,11 +288,17 @@ public interface Target {
 	/**
 	 * Collect all actions that implement the given common debugger command
 	 * 
+	 * <p>
+	 * Note that if the context provides a program location (i.e., address), the object policy is
+	 * ignored. It will use current and related objects.
+	 * 
 	 * @param name the action name
 	 * @param context applicable context from the UI
+	 * @param policy determines how objects may be found
 	 * @return the collected actions
 	 */
-	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context);
+	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy);
 
 	/**
 	 * @see #execute(String, boolean)

@@ -725,7 +725,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		f = f.createFolder("A");
 		f = f.createFolder("B");
 		f = f.createFolder("C");
-		waitForSwing();
+		waitForTree();
 
 		setSelectionPath(rootNode.getTreePath());
 		DockingActionIf selectAction = getAction("Select All");

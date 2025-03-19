@@ -55,10 +55,15 @@ public class DyldCacheAnalyzer extends FileFormatAnalyzer {
 		createFragment(program, headerDataType.getName(), headerData.getMinAddress(),
 			headerData.getMaxAddress().add(1));
 
-		reader.setPointerIndex(header.getImagesOffset());
-		Address address = toAddr(program, header.getImagesOffset());
+		int imagesOffset = header.getImagesOffset() != 0 ? header.getImagesOffset()
+				: header.getImagesOffsetOld();
+		int imagesCount = header.getImagesOffset() != 0 ? header.getImagesCount()
+				: header.getImagesCountOld();
 
-		for (int i = 0; i < header.getImagesCount(); ++i) {
+		reader.setPointerIndex(imagesOffset);
+		Address address = toAddr(program, imagesOffset);
+
+		for (int i = 0; i < imagesCount; ++i) {
 
 			if (monitor.isCancelled()) {
 				break;

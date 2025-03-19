@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,17 +35,23 @@ import ghidra.util.datastruct.Duo.Side;
 
 public class DecompilerDiffViewFindAction extends DockingAction {
 
-	private Duo<FindDialog> findDialogs;
+	private Duo<FindDialog> findDialogs = new Duo<>();
 	private PluginTool tool;
 
 	public DecompilerDiffViewFindAction(String owner, PluginTool tool) {
-		super("Find", owner, true);
+		super("Find", owner, KeyBindingType.SHARED);
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		setPopupMenuData(new MenuData(new String[] { "Find..." }, "Decompile"));
 		setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_F, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		setEnabled(true);
 		this.tool = tool;
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		findDialogs.each(dialog -> dialog.dispose());
 	}
 
 	@Override

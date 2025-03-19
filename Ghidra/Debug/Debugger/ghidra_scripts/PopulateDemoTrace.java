@@ -288,9 +288,8 @@ public class PopulateDemoTrace extends GhidraScript {
 		int pc2 = 0;
 
 		/**
-		 * For clarity, I will add each tick to the trace in its own transaction. The
-		 * Transaction class eases the syntax and reduces errors in starting and ending
-		 * transactions.
+		 * For clarity, I will add each tick to the trace in its own transaction. The Transaction
+		 * class eases the syntax and reduces errors in starting and ending transactions.
 		 */
 		try (Transaction tx = trace.openTransaction("Populate First Snapshot")) {
 			/**
@@ -699,7 +698,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: CALL exit").getKey();
 
-			thread2.setDestructionSnap(snap);
+			thread2.remove(snap);
 		}
 
 		/**
@@ -709,7 +708,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: CALL exit").getKey();
 
-			thread1.setDestructionSnap(snap);
+			thread1.remove(snap);
 		}
 
 		/**

@@ -1,0 +1,242 @@
+@ ["all","Funcs","go/types.newUnifier","Params",2]
+  {"DataType":"[]go/types.Type","Name":"targs"}
++ {"DataType":"bool","Name":"enableInterfaceInference"}
+]
+@ ["all","Funcs","os.(*dirInfo).close"]
+- {"Flags":4,"Params":[{"DataType":"*os.dirInfo","Name":"d"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.(*scavengeIndex).setNoHugePage","Results",0]
+[
+- {"DataType":"bool","Name":""}
+]
+@ ["all","Funcs","crypto/tls.checkKeySize"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"n"}],"Results":[{"DataType":"int","Name":"max"},{"DataType":"bool","Name":"ok"}],"TypeParams":[]}
+@ ["all","Funcs","encoding/gob.idToType"]
++ {"Flags":0,"Params":[{"DataType":"encoding/gob.typeId","Name":"id"}],"Results":[{"DataType":"encoding/gob.gobType","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","html/template.containsSpecialScriptTag"]
++ {"Flags":0,"Params":[{"DataType":"[]byte","Name":"s"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","html/template.escapeSpecialScriptTags"]
++ {"Flags":0,"Params":[{"DataType":"[]byte","Name":"s"}],"Results":[{"DataType":"[]byte","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","html/template.isInScriptLiteral"]
++ {"Flags":0,"Params":[{"DataType":"html/template.state","Name":"s"}],"Results":[{"DataType":"bool","Name":""}],"TypeParams":[]}
+@ ["all","Funcs","path/filepath.(*lazybuf).prepend"]
++ {"Flags":4,"Params":[{"DataType":"*path/filepath.lazybuf","Name":"b"},{"DataType":"[]byte","Name":"prefix"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.sysHugePageCollapse"]
++ {"Flags":0,"Params":[{"DataType":"unsafe.Pointer","Name":"v"},{"DataType":"uintptr","Name":"n"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","runtime.sysHugePageCollapseOS"]
++ {"Flags":0,"Params":[{"DataType":"unsafe.Pointer","Name":"v"},{"DataType":"uintptr","Name":"n"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","func(string) io.ReadCloser, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","go/types.unifier","Fields",2]
+  {"DataType":"int","Name":"depth"}
++ {"DataType":"bool","Name":"enableInterfaceInference"}
+]
+@ ["all","Types","func(error)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["darwin-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["darwin-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-arm64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-arm64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-386","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-arm64","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-arm64","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-arm64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","os.(*dirInfo).close"]
++ {"Flags":4,"Params":[{"DataType":"*os.dirInfo","Name":"d"}],"Results":[],"TypeParams":[]}
+@ ["windows","Funcs","internal/syscall/windows.GetVolumeInformationByHandle"]
+- {"Flags":0,"Params":[{"DataType":"syscall.Handle","Name":"file"},{"DataType":"*uint16","Name":"volumeNameBuffer"},{"DataType":"uint32","Name":"volumeNameSize"},{"DataType":"*uint32","Name":"volumeNameSerialNumber"},{"DataType":"*uint32","Name":"maximumComponentLength"},{"DataType":"*uint32","Name":"fileSystemFlags"},{"DataType":"*uint16","Name":"fileSystemNameBuffer"},{"DataType":"uint32","Name":"fileSystemNameSize"}],"Results":[{"DataType":"error","Name":"err"}],"TypeParams":[]}
+@ ["windows","Funcs","os.newFileStatFromFileIDBothDirInfo"]
+- {"Flags":0,"Params":[{"DataType":"*internal/syscall/windows.FILE_ID_BOTH_DIR_INFO","Name":"d"}],"Results":[{"DataType":"*os.fileStat","Name":""}],"TypeParams":[]}
+@ ["windows","Funcs","os.(*dirInfo).close"]
++ {"Flags":4,"Params":[{"DataType":"*os.dirInfo","Name":"d"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows","Funcs","os.openDir"]
++ {"Flags":0,"Params":[{"DataType":"string","Name":"name"}],"Results":[{"DataType":"*os.dirInfo","Name":"d"},{"DataType":"error","Name":"e"}],"TypeParams":[]}
+@ ["windows","Types","internal/syscall/windows.FILE_ID_BOTH_DIR_INFO"]
+- {"Fields":[{"DataType":"uint32","Name":"NextEntryOffset"},{"DataType":"uint32","Name":"FileIndex"},{"DataType":"syscall.Filetime","Name":"CreationTime"},{"DataType":"syscall.Filetime","Name":"LastAccessTime"},{"DataType":"syscall.Filetime","Name":"LastWriteTime"},{"DataType":"syscall.Filetime","Name":"ChangeTime"},{"DataType":"uint64","Name":"EndOfFile"},{"DataType":"uint64","Name":"AllocationSize"},{"DataType":"uint32","Name":"FileAttributes"},{"DataType":"uint32","Name":"FileNameLength"},{"DataType":"uint32","Name":"EaSize"},{"DataType":"uint32","Name":"ShortNameLength"},{"DataType":"[12]uint16","Name":"ShortName"},{"DataType":"uint64","Name":"FileID"},{"DataType":"[1]uint16","Name":"FileName"}],"Kind":"struct","TypeParams":[]}
+@ ["windows","Types","os.dirInfo","Fields",0,"DataType"]
+- "*[]byte"
++ "syscall.Handle"
+@ ["windows","Types","os.dirInfo","Fields",0,"Name"]
+- "buf"
++ "h"
+@ ["windows","Types","os.dirInfo","Fields",1,"DataType"]
+- "int"
++ "syscall.Win32finddata"
+@ ["windows","Types","os.dirInfo","Fields",1,"Name"]
+- "bufp"
++ "data"
+@ ["windows","Types","os.dirInfo","Fields",2,"DataType"]
+- "uint32"
++ "string"
+@ ["windows","Types","os.dirInfo","Fields",2,"Name"]
+- "vol"
++ "path"
+@ ["windows","Types","os.dirInfo","Fields",3]
+  {"DataType":"string","Name":"path"}
++ {"DataType":"bool","Name":"isempty"}
+]
+@ ["windows","Types","os.fileStat","Fields",14]
+  {"DataType":"uint32","Name":"idxlo"}
++ {"DataType":"bool","Name":"appendNameToPath"}
+]
+@ ["windows-386","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-386","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-386","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"path"}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["windows-386-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":"err"}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-386-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-amd64","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["windows-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["windows-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["windows-amd64","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(error)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"error","Name":""}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"io.ReadCloser","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}

@@ -60,7 +60,8 @@ import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectManager;
-import ghidra.trace.model.target.path.*;
+import ghidra.trace.model.target.path.PathFilter;
+import ghidra.trace.model.target.path.PathPattern;
 import ghidra.trace.model.target.schema.SchemaContext;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 import ghidra.trace.model.target.schema.XmlSchemaContext;
@@ -364,7 +365,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		MemoryBlock block = addBlock();
 		try (Transaction tx = program.openTransaction("Change name")) {
-			program.setName(modExe.getName());
+			program.setName(modExe.getName(0));
 		}
 		waitForDomainObject(program);
 		waitForPass(() -> assertSectionTableSize(4));
@@ -524,7 +525,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
-			program.setName(modExe.getName());
+			program.setName(modExe.getName(0));
 
 			addBlock(); // So the program has a size
 		}
@@ -591,7 +592,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		MemoryBlock block = addBlock();
 		try (Transaction tx = program.openTransaction("Change name")) {
-			program.setName(modExe.getName());
+			program.setName(modExe.getName(0));
 		}
 		waitForDomainObject(program);
 		waitForTasks();
@@ -680,7 +681,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		try (Transaction tx = tb.startTransaction()) {
-			modExe.setName("/bin/echo"); // File has to exist
+			modExe.setName(0, "/bin/echo"); // File has to exist
 		}
 		waitForPass(() -> assertModuleTableSize(2));
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,6 @@ class FlowArrowPanel extends JPanel {
 	private Point pendingMouseClickPoint;
 
 	FlowArrowPanel(FlowArrowPlugin p) {
-		super();
 		this.plugin = p;
 		setMinimumSize(new Dimension(0, 0));
 		setPreferredSize(new Dimension(32, 1));
@@ -164,7 +163,6 @@ class FlowArrowPanel extends JPanel {
 		ScrollingCallback callback = new ScrollingCallback(start, end);
 		Animator animator = AnimationUtils.executeSwingAnimationCallback(callback);
 		callback.setAnimator(animator);
-
 	}
 
 	private void processSingleClick(Point point) {
@@ -322,7 +320,9 @@ class FlowArrowPanel extends JPanel {
 
 			if (current.equals(end)) {
 				// we are done!
-				animator.stop();
+				if (animator != null) {
+					animator.stop();
+				}
 				return;
 			}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,7 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
@@ -108,7 +107,7 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 
 		List<GFile> tmp = new ArrayList<>(localFiles.length);
 		FSRL dirFSRL = directory.getFSRL();
-		String relPath = FSUtilities.normalizeNativePath(directory.getPath());
+		String relPath = directory.getPath(); // this is the clean relative path assigned to the dir GFile earlier
 
 		for (File f : localFiles) {
 			boolean isSymlink = FSUtilities.isSymlink(f); // check this manually to allow broken symlinks to appear in listing
@@ -155,8 +154,13 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 
 	@Override
 	public GFile lookup(String path) throws IOException {
-		File f = LocalFileSystem.lookupFile(localfsRootDir, path, null);
-		if ( f == null ) {
+		return lookup(path, null);
+	}
+
+	@Override
+	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		File f = LocalFileSystem.lookupFile(localfsRootDir, path, nameComp);
+		if (f == null) {
 			return null;
 		}
 		GFile result = getGFile(f);

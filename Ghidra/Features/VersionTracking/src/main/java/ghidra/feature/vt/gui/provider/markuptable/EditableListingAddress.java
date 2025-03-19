@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,8 +55,7 @@ public class EditableListingAddress extends DisplayableListingAddress implements
 		private void buildPanel() {
 			setLayout(new PairLayout(5, 5, 50));
 
-			addressField = new AddressInput();
-			addressField.setAddressFactory(program.getAddressFactory());
+			addressField = new AddressInput(program);
 			if (address != null) {
 				addressField.setAddress(address);
 			}
@@ -78,7 +77,7 @@ public class EditableListingAddress extends DisplayableListingAddress implements
 			Address selectedAddress = addressField.getAddress();
 			if (selectedAddress == null) {
 				throw new InvalidInputException(
-					"\"" + addressField.getValue() + "\" is not a valid address.");
+					"\"" + addressField.getText() + "\" is not a valid address.");
 			}
 			if (!program.getMemory().contains(selectedAddress)) {
 				throw new InvalidInputException(

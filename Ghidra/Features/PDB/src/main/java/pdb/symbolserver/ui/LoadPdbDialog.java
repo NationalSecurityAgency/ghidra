@@ -336,7 +336,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private void buildSymbolFilePanel() {
 		// panel will be added in layoutAdvanced()
 		symbolFilePanel = new SymbolFilePanel(this::searchForPdbs);
-
+		symbolFilePanel.getAccessibleContext().setAccessibleName("Symbol File");
 		symbolFilePanel.getTable()
 				.getSelectionModel()
 				.addListSelectionListener(e -> updateSelectedRow());
@@ -372,12 +372,12 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		programNameTextField = new BetterNonEditableTextField(20);
 		programNameTextField.setEditable(false);
 		programNameTextField.setText(program.getName());
-
+		programNameTextField.getAccessibleContext().setAccessibleName("Program Name");
 		pdbPathTextField = new BetterNonEditableTextField(20, "Missing", Colors.ERROR);
 		pdbPathTextField.setEditable(false);
 		pdbPathTextField.setText(programSymbolFileInfo.getPath());
 		pdbPathTextField.getDocument().addDocumentListener(docListener);
-
+		pdbPathTextField.getAccessibleContext().setAccessibleName("PDB Path");
 		overridePdbPathCheckBox = new GCheckBox();
 		overridePdbPathCheckBox.setVisible(false);
 		overridePdbPathCheckBox.setToolTipText("Override PDB name (when searching).");
@@ -390,6 +390,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				pdbPathTextField.setText(programSymbolFileInfo.getPath());
 			}
 		});
+		overridePdbPathCheckBox.getAccessibleContext().setAccessibleName("Override PDB Path");
 		DockingWindowManager.getHelpService()
 				.registerHelp(overridePdbPathCheckBox, new HelpLocation(
 					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
@@ -401,7 +402,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			"&nbsp;&nbsp;<b>'012345678-0123-0123-0123-0123456789ABC'</b> (with or without dashes) or<br>" +
 			"PDB Signature ID - 8 hexadecimal characters:<br>" + "&nbsp;&nbsp;<b>'11223344'</b>");
 		pdbUniqueIdTextField.getDocument().addDocumentListener(docListener);
-
+		pdbUniqueIdTextField.getAccessibleContext().setAccessibleName("PDB Unique ID");
 		overridePdbUniqueIdCheckBox = new GCheckBox();
 		overridePdbUniqueIdCheckBox.setVisible(false);
 		overridePdbUniqueIdCheckBox.setToolTipText("Override PDB Unique ID (when searching).");
@@ -414,6 +415,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqifierString());
 			}
 		});
+		overridePdbUniqueIdCheckBox.getAccessibleContext()
+				.setAccessibleName("Override PDB Unique ID");
 		DockingWindowManager.getHelpService()
 				.registerHelp(overridePdbUniqueIdCheckBox, new HelpLocation(
 					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
@@ -424,7 +427,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		pdbAgeTextField.setValue(programSymbolFileInfo.getIdentifiers().getAge());
 		pdbAgeTextField.setEditable(false);
 		pdbAgeTextField.getDocument().addDocumentListener(docListener);
-
+		pdbAgeTextField.getAccessibleContext().setAccessibleName("PDB Age");
 		overridePdbAgeCheckBox = new GCheckBox();
 		overridePdbAgeCheckBox.setVisible(false);
 		overridePdbAgeCheckBox.setToolTipText("Override PDB age (when searching).");
@@ -437,6 +440,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				pdbAgeTextField.setValue(programSymbolFileInfo.getIdentifiers().getAge());
 			}
 		});
+		overridePdbAgeCheckBox.getAccessibleContext().setAccessibleName("Override PDB Age");
 		DockingWindowManager.getHelpService()
 				.registerHelp(overridePdbAgeCheckBox, new HelpLocation(
 					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
@@ -458,23 +462,26 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			join(null, new GLabel("PDB Age:", SwingConstants.RIGHT), overridePdbAgeCheckBox));
 		programPdbPanel.add(join(pdbAgeTextField, new JPanel(), null));
 
+		programPdbPanel.getAccessibleContext().setAccessibleName("Program PDB");
 		return programPdbPanel;
 	}
 
 	private JPanel buildPdbLocationPanel() {
 		pdbLocationTextField = new HintTextField("Browse [...] for PDB file or use 'Advanced'");
 		pdbLocationTextField.setEditable(false);
+		pdbLocationTextField.getAccessibleContext().setAccessibleName("PDB Location");
 
 		choosePdbLocationButton = new BrowseButton();
 		choosePdbLocationButton.addActionListener(e -> choosePdbFile());
-
+		choosePdbLocationButton.getAccessibleContext().setAccessibleName("Choose PDB Location");
 		exactMatchIconLabel = new GIconLabel(Icons.EMPTY_ICON);
-
+		exactMatchIconLabel.getAccessibleContext().setAccessibleName("Exact Match");
 		pdbLocationPanel = new JPanel(new PairLayout(5, 5));
 		pdbLocationPanel.setBorder(BorderFactory.createTitledBorder("PDB Location"));
 		pdbLocationPanel.add(new GLabel("PDB Location:", SwingConstants.RIGHT));
 		pdbLocationPanel
 				.add(join(exactMatchIconLabel, pdbLocationTextField, choosePdbLocationButton));
+		pdbLocationPanel.getAccessibleContext().setAccessibleName("PDB Location");
 		return pdbLocationPanel;
 	}
 
@@ -513,9 +520,11 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		universalParserButton = new JRadioButton("Universal");
 		universalParserButton
 				.setToolTipText("Platform-independent PDB analyzer (No PDB.XML support).");
+		universalParserButton.getAccessibleContext().setAccessibleName("Universal");
 		msdiaParserButton = new JRadioButton("MSDIA");
 		msdiaParserButton.setToolTipText("<html>Legacy PDB Analyzer.<br>" +
 			"Requires MS DIA-SDK for raw PDB processing (Windows only), or preprocessed PDB.XML file.");
+		msdiaParserButton.getAccessibleContext().setAccessibleName("MSDIA");
 		universalParserButton.setSelected(true);
 		universalParserButton.addActionListener(l);
 		msdiaParserButton.addActionListener(l);
@@ -527,11 +536,11 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		JPanel radioButtons = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		radioButtons.add(universalParserButton);
 		radioButtons.add(msdiaParserButton);
-
+		radioButtons.getAccessibleContext().setAccessibleName("Radio Buttons");
 		applicatorControlCombo = new GComboBox<>(PdbApplicatorControl.values());
 		applicatorControlCombo.setToolTipText("Selects which subsets of information to parse.");
 		applicatorControlCombo.setSelectedItem(PdbApplicatorControl.ALL);
-
+		applicatorControlCombo.getAccessibleContext().setAccessibleName("Applicator Controls");
 		parserOptionsPanel = new JPanel(new PairLayout(5, 5));
 		parserOptionsPanel.setBorder(BorderFactory.createTitledBorder("PDB Parser"));
 		DockingWindowManager.getHelpService()
@@ -543,7 +552,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 		parserOptionsPanel.add(new GLabel("Control:"));
 		parserOptionsPanel.add(applicatorControlCombo);
-
+		parserOptionsPanel.getAccessibleContext().setAccessibleName("Parser Options");
 		return parserOptionsPanel;
 	}
 
@@ -551,7 +560,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 		loadPdbButton = new JButton("Load");
 		loadPdbButton.setName("Load");
-
+		loadPdbButton.getAccessibleContext().setAccessibleName("Load");
 		loadPdbButton.addActionListener(e -> {
 			if (selectedSymbolFile == null || (!selectedSymbolFile
 					.isExactMatch(programSymbolFileInfo) &&
@@ -578,11 +587,14 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				searchForPdbs(false);
 			}
 		});
+		configButton.getAccessibleContext().setAccessibleName("Configuration");
 		addButton(configButton);
 
 		advancedToggleButton = new JToggleButton("Advanced >>");
 		advancedToggleButton.addActionListener(e -> toggleAdvancedSearch());
+		advancedToggleButton.getAccessibleContext().setAccessibleName("Advanced Toggle");
 		buttonPanel.add(advancedToggleButton);
+		buttonPanel.getAccessibleContext().setAccessibleName("Button");
 	}
 
 	private void prepareSelectedSymbolFileAndClose(TaskMonitor monitor) {

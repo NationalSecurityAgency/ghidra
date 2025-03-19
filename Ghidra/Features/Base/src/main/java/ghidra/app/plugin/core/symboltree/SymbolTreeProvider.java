@@ -150,10 +150,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private SymbolGTree createTree(SymbolTreeRootNode rootNode) {
 		if (tree != null) {
-			GTreeNode oldRootNode = tree.getModelRoot();
 			tree.setRootNode(rootNode);
-
-			oldRootNode.removeAll();// assist in cleanup a bit
 			return tree;
 		}
 
@@ -555,6 +552,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			return;
 		}
 
+		selectSymbol(symbol);
+	}
+
+	public void selectSymbol(Symbol symbol) {
 		SymbolTreeRootNode rootNode = (SymbolTreeRootNode) tree.getViewRoot();
 		tree.runTask(new SearchTask(tree, rootNode, symbol));
 	}
@@ -808,4 +809,5 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			}
 		}
 	}
+
 }

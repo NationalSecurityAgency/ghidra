@@ -1,26 +1,26 @@
 ## ###
-#  IP: GHIDRA
-# 
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#  
-#       http://www.apache.org/licenses/LICENSE-2.0
-#  
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+# IP: GHIDRA
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 ##
 from concurrent.futures import Future, ThreadPoolExecutor
 import re
 import sys
 
+import lldb
+
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
-
-import lldb
 
 from . import commands, util
 
@@ -33,13 +33,12 @@ def extre(base, ext):
 
 
 AVAILABLE_PATTERN = re.compile('Available\[(?P<pid>\\d*)\]')
-WATCHPOINT_PATTERN = re.compile('Watchpoints\[(?P<watchnum>\\d*)\]')
-BREAKPOINT_PATTERN = re.compile('Breakpoints\[(?P<breaknum>\\d*)\]')
-BREAK_LOC_PATTERN = extre(BREAKPOINT_PATTERN, '\[(?P<locnum>\\d*)\]')
 PROCESS_PATTERN = re.compile('Processes\[(?P<procnum>\\d*)\]')
 PROC_BREAKS_PATTERN = extre(PROCESS_PATTERN, '\.Breakpoints')
+PROC_BREAK_PATTERN = extre(PROC_BREAKS_PATTERN, '\[(?P<breaknum>\\d*)\]')
+PROC_BREAKLOC_PATTERN = extre(PROC_BREAK_PATTERN, '\[(?P<locnum>\\d*)\]')
 PROC_WATCHES_PATTERN = extre(PROCESS_PATTERN, '\.Watchpoints')
-PROC_WATCHLOC_PATTERN = extre(PROC_WATCHES_PATTERN, '\[(?P<watchnum>\\d*)\]')
+PROC_WATCH_PATTERN = extre(PROC_WATCHES_PATTERN, '\[(?P<watchnum>\\d*)\]')
 ENV_PATTERN = extre(PROCESS_PATTERN, '\.Environment')
 THREADS_PATTERN = extre(PROCESS_PATTERN, '\.Threads')
 THREAD_PATTERN = extre(THREADS_PATTERN, '\[(?P<tnum>\\d*)\]')
@@ -183,7 +182,7 @@ def find_bpt_by_pattern(pattern, object, err_msg):
 
 
 def find_bpt_by_obj(object):
-    return find_bpt_by_pattern(BREAKPOINT_PATTERN, object, "a BreakpointSpec")
+    return find_bpt_by_pattern(PROC_BREAK_PATTERN, object, "a BreakpointSpec")
 
 
 # Oof. no lldb/Python method to get breakpoint by number
@@ -206,7 +205,7 @@ def find_wpt_by_pattern(pattern, object, err_msg):
 
 
 def find_wpt_by_obj(object):
-    return find_wpt_by_pattern(PROC_WATCHLOC_PATTERN, object, "a WatchpointSpec")
+    return find_wpt_by_pattern(PROC_WATCH_PATTERN, object, "a WatchpointSpec")
 
 
 def find_bptlocnum_by_pattern(pattern, object, err_msg):
@@ -219,7 +218,7 @@ def find_bptlocnum_by_pattern(pattern, object, err_msg):
 
 
 def find_bptlocnum_by_obj(object):
-    return find_bptlocnum_by_pattern(BREAK_LOC_PATTERN, object,
+    return find_bptlocnum_by_pattern(PROC_BREAKLOC_PATTERN, object,
                                      "a BreakpointLocation")
 
 
@@ -249,7 +248,7 @@ def execute(cmd: str, to_string: bool=False):
     return exec_convert_errors(cmd, to_string)
 
 
-@REGISTRY.method
+@REGISTRY.method(display='Evaluate')
 def evaluate(expr: str):
     """Evaluate an expression."""
     value = util.get_target().EvaluateExpression(expr)
@@ -258,7 +257,7 @@ def evaluate(expr: str):
     return commands.convert_value(value)
 
 
-@REGISTRY.method
+@REGISTRY.method(display="Python Evaluate")
 def pyeval(expr: str):
     return eval(expr)
 
@@ -270,16 +269,6 @@ def refresh_available(node: sch.Schema('AvailableContainer')):
         exec_convert_errors('ghidra trace put-available')
 
 
-@REGISTRY.method(action='refresh', display="Refresh Breakpoints")
-def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
-    """
-    Refresh the list of breakpoints (including locations for the current
-    process).
-    """
-    with commands.open_tracked_tx('Refresh Breakpoints'):
-        exec_convert_errors('ghidra trace put-breakpoints')
-
-
 @REGISTRY.method(action='refresh', display="Refresh Processes")
 def refresh_processes(node: sch.Schema('ProcessContainer')):
     """Refresh the list of processes."""
@@ -288,7 +277,7 @@ def refresh_processes(node: sch.Schema('ProcessContainer')):
 
 
 @REGISTRY.method(action='refresh', display="Refresh Breakpoints")
-def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
+def refresh_proc_breakpoints(node: sch.Schema('BreakpointContainer')):
     """
     Refresh the breakpoints for the process.
     """
@@ -356,28 +345,28 @@ def refresh_modules(node: sch.Schema('ModuleContainer')):
         exec_convert_errors('ghidra trace put-modules')
 
 
-@REGISTRY.method(action='activate')
+@REGISTRY.method(action='activate', display='Activate Process')
 def activate_process(process: sch.Schema('Process')):
     """Switch to the process."""
     # TODO
     return
 
 
-@REGISTRY.method(action='activate')
+@REGISTRY.method(action='activate', display='Activate Thread')
 def activate_thread(thread: sch.Schema('Thread')):
     """Switch to the thread."""
     t = find_thread_by_obj(thread)
     t.process.SetSelectedThread(t)
 
 
-@REGISTRY.method(action='activate')
+@REGISTRY.method(action='activate', display='Activate Frame')
 def activate_frame(frame: sch.Schema('StackFrame')):
     """Select the frame."""
     f = find_frame_by_obj(frame)
     f.thread.SetSelectedFrame(f.GetFrameID())
 
 
-@REGISTRY.method(action='delete')
+@REGISTRY.method(action='delete', display='Remove Process')
 def remove_process(process: sch.Schema('Process')):
     """Remove the process."""
     proc = find_proc_by_obj(process)
@@ -453,7 +442,7 @@ def kill(process: sch.Schema('Process')):
     exec_convert_errors('process kill')
 
 
-@REGISTRY.method(name='continue', action='resume')
+@REGISTRY.method(name='continue', action='resume', display="Continue")
 def _continue(process: sch.Schema('Process')):
     """Continue execution of the process."""
     exec_convert_errors('process continue')
@@ -521,7 +510,7 @@ def break_address(process: sch.Schema('Process'), address: Address):
     exec_convert_errors(f'breakpoint set -a 0x{offset:x}')
 
 
-@REGISTRY.method(action='break_sw_execute')
+@REGISTRY.method(action='break_ext', display='Set Breakpoint')
 def break_expression(expression: str):
     """Set a breakpoint."""
     # TODO: Escape?
@@ -536,7 +525,7 @@ def break_hw_address(process: sch.Schema('Process'), address: Address):
     exec_convert_errors(f'breakpoint set -H -a 0x{offset:x}')
 
 
-@REGISTRY.method(action='break_hw_execute')
+@REGISTRY.method(action='break_ext', display='Set Hardware Breakpoint')
 def break_hw_expression(expression: str):
     """Set a hardware-assisted breakpoint."""
     # TODO: Escape?
@@ -554,7 +543,7 @@ def break_read_range(process: sch.Schema('Process'), range: AddressRange):
         f'watchpoint set expression -s {sz} -w read -- {offset_start}')
 
 
-@REGISTRY.method(action='break_read')
+@REGISTRY.method(action='break_ext', display='Set Read Watchpoint')
 def break_read_expression(expression: str, size=None):
     """Set a read watchpoint."""
     size_part = '' if size is None else f'-s {size}'
@@ -573,7 +562,7 @@ def break_write_range(process: sch.Schema('Process'), range: AddressRange):
         f'watchpoint set expression -s {sz} -- {offset_start}')
 
 
-@REGISTRY.method(action='break_write')
+@REGISTRY.method(action='break_ext', display='Set Watchpoint')
 def break_write_expression(expression: str, size=None):
     """Set a watchpoint."""
     size_part = '' if size is None else f'-s {size}'
@@ -583,7 +572,7 @@ def break_write_expression(expression: str, size=None):
 
 @REGISTRY.method(action='break_access')
 def break_access_range(process: sch.Schema('Process'), range: AddressRange):
-    """Set an access watchpoint."""
+    """Set a read/write watchpoint."""
     proc = find_proc_by_obj(process)
     offset_start = process.trace.memory_mapper.map_back(
         proc, Address(range.space, range.min))
@@ -592,9 +581,9 @@ def break_access_range(process: sch.Schema('Process'), range: AddressRange):
         f'watchpoint set expression -s {sz} -w read_write -- {offset_start}')
 
 
-@REGISTRY.method(action='break_access')
+@REGISTRY.method(action='break_ext', display='Set Read/Write Watchpoint')
 def break_access_expression(expression: str, size=None):
-    """Set an access watchpoint."""
+    """Set a read/write watchpoint."""
     size_part = '' if size is None else f'-s {size}'
     exec_convert_errors(
         f'watchpoint set expression {size_part} -w read_write -- {expression}')
@@ -606,21 +595,24 @@ def break_exception(lang: str):
     exec_convert_errors(f'breakpoint set -E {lang}')
 
 
-@REGISTRY.method(action='toggle')
-def toggle_watchpoint(breakpoint: sch.Schema('WatchpointSpec'), enabled: bool):
+@REGISTRY.method(action='toggle', display='Toggle Watchpoint')
+def toggle_watchpoint(watchpoint: sch.Schema('WatchpointSpec'), enabled: bool):
     """Toggle a watchpoint."""
     wpt = find_wpt_by_obj(watchpoint)
     wpt.enabled = enabled
+    cmd = 'enable' if enabled else 'disable'
+    exec_convert_errors(f'watchpoint {cmd} {wpt.GetID()}')
 
 
-@REGISTRY.method(action='toggle')
+@REGISTRY.method(action='toggle', display='Toggle Breakpoint')
 def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
     """Toggle a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)
-    bpt.enabled = enabled
+    cmd = 'enable' if enabled else 'disable'
+    exec_convert_errors(f'breakpoint {cmd} {bpt.GetID()}')
 
 
-@REGISTRY.method(action='toggle')
+@REGISTRY.method(action='toggle', display='Toggle Breakpoint Location')
 def toggle_breakpoint_location(location: sch.Schema('BreakpointLocation'), enabled: bool):
     """Toggle a breakpoint location."""
     bptnum, locnum = find_bptlocnum_by_obj(location)
@@ -628,7 +620,7 @@ def toggle_breakpoint_location(location: sch.Schema('BreakpointLocation'), enabl
     exec_convert_errors(f'breakpoint {cmd} {bptnum}.{locnum}')
 
 
-@REGISTRY.method(action='delete')
+@REGISTRY.method(action='delete', display='Delete Watchpoint')
 def delete_watchpoint(watchpoint: sch.Schema('WatchpointSpec')):
     """Delete a watchpoint."""
     wpt = find_wpt_by_obj(watchpoint)
@@ -636,7 +628,7 @@ def delete_watchpoint(watchpoint: sch.Schema('WatchpointSpec')):
     exec_convert_errors(f'watchpoint delete {wptnum}')
 
 
-@REGISTRY.method(action='delete')
+@REGISTRY.method(action='delete', display='Delete Breakpoint')
 def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
     """Delete a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)

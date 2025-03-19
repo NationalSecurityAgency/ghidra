@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,12 +15,16 @@
  */
 package ghidra.app.plugin.core.debug.disassemble;
 
+import java.util.concurrent.*;
+
 import docking.ActionContext;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField;
 import ghidra.app.plugin.core.assembler.PatchInstructionAction;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.CodeUnit;
@@ -118,12 +122,25 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 		if (view == null) {
 			return;
 		}
+		DebuggerControlService controlService = tool.getService(DebuggerControlService.class);
+		if (controlService == null) {
+			return;
+		}
+		StateEditor editor = controlService.createStateEditor(view);
 		Address address = getAddress();
-		// Get code unit and dependencies before invalidating it, just in case.
+
+		// Get code unit and dependencies before invalidating it.
 		CodeUnit cu = getCodeUnit();
 		RegisterValue contextValue = getContextValue(cu);
 		TracePlatform platform = getPlatform(cu);
-		view.getMemory().setBytes(address, data); // This invalidates cu
+
+		try {
+			editor.setVariable(address, data).get(1, TimeUnit.SECONDS);
+		}
+		catch (InterruptedException | ExecutionException | TimeoutException e) {
+			throw new MemoryAccessException("Couldn't patch", e);
+		}
+
 		AddressSetView set = new AddressSet(address, address.add(data.length - 1));
 		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, address, set);
 		if (contextValue != null) {

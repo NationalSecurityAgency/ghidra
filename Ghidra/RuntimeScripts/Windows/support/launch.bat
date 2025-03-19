@@ -42,7 +42,7 @@ set "SUPPORT_DIR=%SUPPORT_DIR:~0,-1%"
 
 :: Ensure Ghidra path doesn't contain illegal characters
 if not "%SUPPORT_DIR:!=%"=="%SUPPORT_DIR%" (
-	echo Ghidra path cannot contain a "!" character.
+	echo ERROR: Ghidra path cannot contain a "!" character.
 	set ERRORLEVEL=1
 	goto exit1
 )
@@ -73,7 +73,7 @@ IF DEFINED ARG (
 )
 
 if not "%CLASSNAME%" == "" (goto continue1)
-echo Incorrect launch usage - missing argument^(s^)
+echo ERROR: Incorrect launch usage - missing argument^(s^)
 goto showUsage
 
 :continue1
@@ -99,7 +99,7 @@ if not exist "%LS_CPATH%" (
 	set "LS_CPATH=%INSTALL_DIR%\GhidraBuild\LaunchSupport\build\libs\LaunchSupport.jar"
 )
 if not exist "%LS_CPATH%" (
-	echo Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
+	echo ERROR: Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
 	set ERRORLEVEL=1
 	goto exit1
 )
@@ -112,33 +112,49 @@ if exist "%USERPROFILE%" (
 	set VMARG_LIST=%VMARG_LIST% -Duser.home="%USERPROFILE%"
 )
 
-:: Make sure some kind of java is on the path.  It's required to run the LaunchSupport program.
-java -version >nul 2>nul
-if not %ERRORLEVEL% == 0 (
-	echo Java runtime not found.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
-	goto exit1
-)
+:: check for java based upon PATH
+set JAVA_CMD=java.exe
+java.exe -version >NUL 2>&1
+if %ERRORLEVEL% equ 0 goto continue3
+
+:: check for java based upon JAVA_HOME environment variable
+if not defined JAVA_HOME goto javaNotFound
+set "JAVA_CMD=%JAVA_HOME%\bin\java.exe"
+"%JAVA_CMD%" -version >NUL 2>&1
+if %ERRORLEVEL% equ 0 goto continue3
+echo WARNING: JAVA_HOME environment variable is set to an invalid directory: %JAVA_HOME%
+
+:javaNotFound
+echo.
+echo ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME.
+echo Please refer to the Ghidra Installation Guide's Troubleshooting section.
+set ERRORLEVEL=1
+goto exit1
+
+:: Use LaunchSupport to locate supported java runtime
+:continue3
 
 :: Get the JDK that will be used to launch Ghidra
-set JAVA_HOME=
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -save') do set JAVA_HOME=%%i
-if "%JAVA_HOME%" == "" (
+set LS_JAVA_HOME=
+for /f "delims=*" %%i in ('call "%JAVA_CMD%" -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -save') do set LS_JAVA_HOME=%%i
+if "%LS_JAVA_HOME%" == "" (
 	:: No JDK has been setup yet.  Let the user choose one.
-	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -ask
+	"%JAVA_CMD%" -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -ask
 	
 	:: Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -save') do set JAVA_HOME=%%i
-	if "!JAVA_HOME!" == "" (
+	for /f "delims=*" %%i in ('call "%JAVA_CMD%" -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -save') do set LS_JAVA_HOME=%%i
+	if "!LS_JAVA_HOME!" == "" (
 		echo.
-		echo Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
+		echo ERROR: Failed to find a supported JDK.
+		echo Please refer to the Ghidra Installation Guide's Troubleshooting section.
 		set ERRORLEVEL=1
 		goto exit1
 	)
 )
-set "JAVA_CMD=%JAVA_HOME%\bin\java"
+set "JAVA_CMD=%LS_JAVA_HOME%\bin\java"
 
 :: Get the configurable VM arguments from the launch properties
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=!VMARG_LIST! %%i
+for /f "delims=*" %%i in ('call "%JAVA_CMD%" -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=!VMARG_LIST! %%i
 
 :: Set Max Heap Size if specified
 if not "%MAXMEM%"=="" (
@@ -165,22 +181,22 @@ if "%DEBUG%"=="y" (
 		
 	set VMARG_LIST=!VMARG_LIST! -Dlog4j.configurationFile="!DEBUG_LOG4J!"	
 	set VMARG_LIST=!VMARG_LIST! -agentlib:jdwp=transport=dt_socket,server=y,suspend=!SUSPEND!,address=!DEBUG_ADDRESS!
-	goto continue3
+	goto continue4
 )
 
 if "%MODE%"=="fg" (
-	goto continue3
+	goto continue4
 )
 
 if "%MODE%"=="bg" (
 	set BACKGROUND=y
-	goto continue3
+	goto continue4
 )
 
-echo "Incorrect launch usage - invalid launch mode: %MODE%"
+echo "ERROR: Incorrect launch usage - invalid launch mode: %MODE%"
 exit /B 1
 
-:continue3
+:continue4
 
 set CMD_ARGS=%FORCE_JAVA_VERSION% %JAVA_USER_HOME_DIR_OVERRIDE% %VMARG_LIST% -cp "%CPATH%" ghidra.Ghidra %CLASSNAME% %ARGS%
 

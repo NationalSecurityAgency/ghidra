@@ -464,6 +464,7 @@ public:
   void opUninsert(PcodeOp *op);					///< Remove the given PcodeOp from its basic block
   void opUnlink(PcodeOp *op);					///< Unset inputs/output and remove given PcodeOP from its basic block
   void opDestroy(PcodeOp *op);					///< Remove given PcodeOp and destroy its Varnode operands
+  void opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch);	///< Remove a PcodeOp and recursively remove ops producing its inputs
   void opDestroyRaw(PcodeOp *op);				///< Remove the given \e raw PcodeOp
   void opDeadAndGone(PcodeOp *op) { obank.destroy(op); }	///< Free resources for the given \e dead PcodeOp
   void opSetAllInput(PcodeOp *op,const vector<Varnode *> &vvec);	///< Set all input Varnodes for the given PcodeOp simultaneously
@@ -626,7 +627,7 @@ class CloneBlockOps {
     PcodeOp *origOp;		///< Original op that was cloned
     ClonePair(PcodeOp *c,PcodeOp *o) { cloneOp = c; origOp = o; }	///< Constructor
   };
-  Funcdata &data;
+  Funcdata &data;		///< Function containing ops to clone
   vector<ClonePair> cloneList;	///< List of cloned ops
   map<PcodeOp *,PcodeOp *> origToClone;	///< Map from original p-code op to its clone
   PcodeOp *buildOpClone(PcodeOp *op);	///< Produce a skeleton copy of the given PcodeOp

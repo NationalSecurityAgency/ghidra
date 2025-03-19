@@ -221,6 +221,31 @@ void Funcdata::opDestroy(PcodeOp *op)
   }
 }
 
+/// The given PcodeOp is always removed.  PcodeOps are recursively removed, if the only data-flow
+/// path of their output is to the given op, and they are not a CALL or are otherwise special.
+/// \param op is the given PcodeOp to remove
+/// \param scratch is scratch space for holding PcodeOps being examined
+void Funcdata::opDestroyRecursive(PcodeOp *op,vector<PcodeOp *> &scratch)
+
+{
+  scratch.clear();
+  scratch.push_back(op);
+  int4 pos = 0;
+  while(pos < scratch.size()) {
+    op = scratch[pos];
+    pos += 1;
+    for(int4 i=0;i<op->numInput();++i) {
+      Varnode *vn = op->getIn(i);
+      if (!vn->isWritten() || vn->isAutoLive()) continue;
+      if (vn->loneDescend() == (PcodeOp *)0) continue;
+      PcodeOp *defOp = vn->getDef();
+      if (defOp->isCall() || defOp->isIndirectSource()) continue;
+      scratch.push_back(defOp);
+    }
+    opDestroy(op);
+  }
+}
+
 /// This is a specialized routine for deleting an op during flow generation that has
 /// been replaced by something else.  The op is expected to be \e dead with none of its inputs
 /// or outputs linked to anything else.  Both the PcodeOp and all the input/output Varnodes are destroyed.
@@ -530,6 +555,7 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
 ///
 /// \param vn is the given Varnode
 /// \param op is the point at which to insert the BOOL_NEGATE op
+/// \param insertafter is \b true if the BOOL_NEGATE is inserted after, otherwise its inserted before
 /// \return the result Varnode
 Varnode *Funcdata::opBoolNegate(Varnode *vn,PcodeOp *op,bool insertafter)
 
@@ -1248,7 +1274,6 @@ int4 Funcdata::opFlipInPlaceTest(PcodeOp *op,vector<PcodeOp *> &fliplist)
 ///
 /// The precomputed list of PcodeOps have their op-codes modified to
 /// facilitate the flip.
-/// \param data is the function being modified
 /// \param fliplist is the list of PcodeOps to modify
 void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
 

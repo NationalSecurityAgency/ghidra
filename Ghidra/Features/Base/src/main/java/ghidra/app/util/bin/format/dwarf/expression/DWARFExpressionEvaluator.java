@@ -34,7 +34,6 @@ import ghidra.program.model.lang.Register;
  * Can only specify offset from register for framebase and stack relative<br>
  * <p>
  * Result can be a numeric value (ie. static address) or a register 'name' or a stack based offset.
- * <p>
  */
 public class DWARFExpressionEvaluator {
 
@@ -121,7 +120,7 @@ public class DWARFExpressionEvaluator {
 	 * <p>
 	 * Note, you should check {@link #isDeref()} to see if the register is just a pointer
 	 * to the object instead of the object itself.
-	 * <p>
+	 * 
 	 * @return
 	 */
 	public Register getTerminalRegister() {

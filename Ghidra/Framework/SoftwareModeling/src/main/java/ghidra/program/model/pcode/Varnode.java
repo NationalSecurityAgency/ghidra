@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -173,6 +173,29 @@ public class Varnode {
 			endOtherOffset = varnode.offset + varnode.size - 1;
 		}
 		return rangeIntersects(varnode.offset, endOtherOffset);
+	}
+
+	/**
+	 * Is this contiguous (as the most significant piece) with the given Varnode
+	 * @param lo is the other Varnode to compare with
+	 * @param bigEndian is true for big endian significance ordering
+	 * @return true if the two byte ranges are contiguous and in order
+	 */
+	public boolean isContiguous(Varnode lo, boolean bigEndian) {
+		AddressSpace spc = address.getAddressSpace();
+		if (spc != lo.address.getAddressSpace())
+			return false;
+		if (bigEndian) {
+			long nextoff = spc.truncateOffset(offset + size);
+			if (nextoff == lo.offset)
+				return true;
+		}
+		else {
+			long nextoff = spc.truncateOffset(lo.offset + lo.size);
+			if (nextoff == offset)
+				return true;
+		}
+		return false;
 	}
 
 	private boolean rangeIntersects(long otherOffset, long otherEndOffset) {

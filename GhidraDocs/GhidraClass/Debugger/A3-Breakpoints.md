@@ -17,10 +17,11 @@ From here, you can toggle and delete existing breakpoints.
 There are several ways to set a new breakpoint:
 
 1. From any static or dynamic listing window, including Disassembly, Memory/Hex, and the Decompiler, right-click and select ![set breakpoint](images/breakpoint-enable.png) Set Breakpoint, press **`K`** on the keyboard, or double-click the margin.
+1. From the Breakpoints window, use the **Set Breakpoint** dropdown to to access the various breakpoint actions defined by GDB.
 1. From the Terminal window, use the GDB command, e.g., `break main`.
 
 The advantage of using the listings is that you can quickly set a breakpoint at any address.
-The advantage of using the Terminal window is that you can specify something other than an address.
+The advantage of using the dropdown action or Terminal window is that you can specify something other than an address.
 Often, those specifications still resolve to addresses, and Ghidra will display them.
 Ghidra will memorize breakpoints by recording them as special bookmarks in the program database.
 There is some iconography to communicate the various states of a breakpoint.
@@ -96,6 +97,7 @@ There are several ways to toggle a breakpoint:
 
 1. In any listing, as in setting a breakpoint, right-click and select a toggle action, press **`K`** on the keyboard, or double-click its icon in the margin.
 1. From the Model window, expand the *Breakpoints* node and double-click a breakpoint, or select one with the keyboard and press **`ENTER`**.
+   For GDB, this must be done from the top-level *Breakpoints* node, not the one subordinate to the *inferior*.
 1. From the Breakpoints window, single-click the breakpoint's status icon, right-click an entry and select a toggle action, or create a selection and use a toggling action from the local toolbar.
    Either panel works, but the top panel is preferred to keep the breakpoints consistent.
    The local toolbar also has actions for toggling all breakpoints in the session.
@@ -138,10 +140,13 @@ Once imported, the Breakpoints window should update to reflect the static addres
 #### Troubleshooting
 
 If it seems nothing has changed, except now you have a second program database open, then the new module may not be successfully mapped.
+Try one or more of the following:
 
 1. Re-check the Debug Console window and verify the note has been removed.
 1. If not, it might be because the module is symlinked in the file system, so the name of the module and the name of the program database do not match.
 1. Ensure that `libc` is the current program (tab) in the Static Listing.
+1. Wait for auto-analysis of `libc` to complete.
+   Yeah, it may take a moment, but auto-mapping is queued as a background task, and so it cannot map things until auto-analysis is done.
 1. In the Modules window, right-click on `libc`, and select **Map Module to libc**. (Names and titles will likely differ.)
 
 ### Capturing the Random Seed
@@ -214,6 +219,6 @@ Because, as we have now confirmed, `termmines` is importing its random number ge
 Further, because we can capture the seed, and we know the placement algorithm, we can perfectly replicate the sequence of game boards for any `termmines` session.
 
 Write a program that takes a seed from the user and prints a diagram of the first game board with the mines indicated.
-Optionally, have it print each subsequent game board when the user presses **ENTER**.
+Optionally, have it print each subsequent game board when the user presses **`ENTER`**.
 Check your work by re-launching `termmines`, capturing its seed, inputting it into your program, and then winning the game.
 Optionally, win 2 more games in the same session.

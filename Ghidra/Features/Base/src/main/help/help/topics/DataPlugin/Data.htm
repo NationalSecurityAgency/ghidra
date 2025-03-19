@@ -970,20 +970,13 @@
         quickly changing the name of a single member:</P>
 
         <OL>
-          <LI>Right mouse click on the field name of a structure member in the Code Browser</LI>
+          <LI>Right mouse click on a structure member in the Listing</LI>
 
-          <LI>Choose the <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Rename Field</B>
-          option</LI>
+          <LI>Choose the <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Edit Field</B>
+          action to bring the up the <A href=
+          "#Edit_Field_Dialog">Edit Field Dialog</A> </LI>
 
-          <LI>Enter a new name in the <B>Rename Data Field</B> dialog</LI>
         </OL>
-
-        <BLOCKQUOTE>
-          <P><IMG src="help/shared/note.png">The&nbsp; "Field Name" field must be added to the
-          "Open Data" tab in the Code Browser <A href=
-          "../CodeBrowserPlugin/Browser_Field_Formatter.htm">header</A> in order for the
-          data structure field names to show up in the Code Browser.</P>
-        </BLOCKQUOTE>
 
         <P>The second way is more useful for changing the names of multiple members:</P>
 
@@ -996,10 +989,6 @@
           <LI>Edit the field name for the structure member</LI>
         </OL>
 
-        <BLOCKQUOTE>
-          <P><IMG src="help/shared/note.png"> You cannot set the field name of undefined
-          member</P>
-        </BLOCKQUOTE>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 
@@ -1373,6 +1362,27 @@
       according to the information in the program.</P>
     </BLOCKQUOTE>
           </BLOCKQUOTE>
+          
+    <H2><A name="Edit_Field"></A>Quick Editing of a Structure or Union Field</H2>
+    <BLOCKQUOTE>
+    <P>As a convenience, a structure or union field can be edited directly from the listing without
+    bringing up the entire structure or union editor. To edit a field, click anywhere on the line
+    displaying that field in the listing and then right click and select <B>Data</B><IMG 
+    src="help/shared/arrow.gif"> <B>Edit Field</B> from the popup context menu.</P>
+    <H3><A name="Edit_Field_Dialog"></A>Edit Field Dialog</H3>
+          <P align="center"><IMG src="images/EditFieldDialog.png" alt=""> &nbsp;</P>
+    <UL>
+    	<LI><B>Field Name</B>: The name of the structure or union field can be changed here.</LI>
+    	<LI><B>Comment</B>: The comment for the field can be entered or changed here.</LI>
+    	<LI><B>DataType</B>: The data can be changed here. The text field is read only so you must
+    	press the ... button to bring up the datatype chooser to change the datatype.</LI>
+         <P><IMG src="help/shared/note.png"> If a default field (a field with an undefined
+         datatype (??)) is named or given a comment, the datatype will be set to <B>undefined1</B> if
+         no specific datatype is set. This is because undefined fields are not stored and therefore
+         can't have an associated name or comment.</P>
+    
+    </BLOCKQUOTE>
+    
 
     <P class="providedbyplugin">Provided By: <I>Data</I> Plugin</P>
 

@@ -74,6 +74,8 @@ GhidraClass/Debugger/B3-Scripting.html||GHIDRA||||END|
 GhidraClass/Debugger/B3-Scripting.md||GHIDRA||||END|
 GhidraClass/Debugger/B4-Modeling.html||GHIDRA||||END|
 GhidraClass/Debugger/B4-Modeling.md||GHIDRA||||END|
+GhidraClass/Debugger/B5-AddingDebuggers.html||GHIDRA||||END|
+GhidraClass/Debugger/B5-AddingDebuggers.md||GHIDRA||||END|
 GhidraClass/Debugger/Makefile||GHIDRA||||END|
 GhidraClass/Debugger/README.html||GHIDRA||||END|
 GhidraClass/Debugger/README.md||GHIDRA||||END|

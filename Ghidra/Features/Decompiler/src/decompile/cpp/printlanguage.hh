@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -365,14 +365,20 @@ protected:
   /// \brief Push a variable that represents only part of a symbol onto the RPN stack
   ///
   /// Generally \e member syntax specifying a field within a structure gets emitted.
+  /// Nested structures may result in multiple fields being emitted to get to the final size.
+  /// If the final size requires truncating a data-type that is not a structure, this method
+  /// can optionally emit a final cast to represent the truncation, otherwise an artificial
+  /// field representing the truncation is emitted. Any \e union encountered is resolved using
+  /// the given PcodeOp and slot.
   /// \param sym is the root Symbol
   /// \param off is the byte offset, within the Symbol, of the partial variable
   /// \param sz is the number of bytes in the partial variable
   /// \param vn is the Varnode holding the partial value
   /// \param op is a PcodeOp associate with the Varnode
-  /// \param inslot is the input slot of \b vn with \b op, or -1 if \b op writes \b vn
+  /// \param slot is the slot to use (relative to \b op) for any data-type requiring resolution
+  /// \param allowCast is \b true if a final truncation should be printed as a cast
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,int4 inslot)=0;
+				 const Varnode *vn,const PcodeOp *op,int4 slot,bool allowCast)=0;
 
   /// \brief Push an identifier for a variable that mismatches with its Symbol
   ///

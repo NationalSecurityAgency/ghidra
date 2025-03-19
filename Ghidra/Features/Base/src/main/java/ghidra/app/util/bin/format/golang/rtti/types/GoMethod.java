@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.golang.rtti.*;
+import ghidra.app.util.bin.format.golang.rtti.GoName;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
+import ghidra.app.util.bin.format.golang.rtti.MethodInfo;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.FunctionDefinition;
 import ghidra.util.NumericUtilities;
 
 /**
@@ -85,13 +86,16 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 
 	/**
 	 * Return the {@link GoType} that defines the funcdef / func signature.
+	 * <p>
+	 * Commonly will return {@code null} because the RTTI does not have any data for
+	 * the method.
 	 * 
 	 * @return {@link GoType} that defines the funcdef / func signature
 	 * @throws IOException if error reading data
 	 */
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.resolveTypeOff(context.getStructureStart(), mtyp);
+		return programContext.getGoTypes().resolveTypeOff(context.getStructureStart(), mtyp);
 	}
 
 	@Override
@@ -150,7 +154,7 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 
 	//----------------------------------------------------------------------------------------
 
-	public class GoMethodInfo extends MethodInfo {
+	public static class GoMethodInfo extends MethodInfo {
 		GoType type;
 		GoMethod method;
 
@@ -160,12 +164,31 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 			this.method = method;
 		}
 
+		/**
+		 * GoType that defined the method.  (eg. the receiver/"this" type of the method)
+		 * 
+		 * @return {@link GoType}
+		 */
 		public GoType getType() {
 			return type;
 		}
 
+		/**
+		 * {@link GoMethod} which contains the funcdef of this method
+		 * 
+		 * @return {@link GoMethod}
+		 */
 		public GoMethod getMethod() {
 			return method;
+		}
+
+		public GoFuncType getMethodFuncType() {
+			try {
+				return method.getType() instanceof GoFuncType funcType ? funcType : null;
+			}
+			catch (IOException e) {
+				return null;
+			}
 		}
 
 		public boolean isIfn(Address funcAddr) {
@@ -175,15 +198,9 @@ public class GoMethod implements StructureMarkup<GoMethod> {
 		public boolean isTfn(Address funcAddr) {
 			return funcAddr.equals(method.getTfn());
 		}
-
-		@Override
-		public FunctionDefinition getSignature() throws IOException {
-			return type.getMethodSignature(method, false);
+		
+		public String toString() {
+			return type.getMethodPrototypeString(method.getName(), getMethodFuncType());
 		}
-
-		public FunctionDefinition getPartialSignature() throws IOException {
-			return type.getMethodSignature(method, true);
-		}
-
 	}
 }

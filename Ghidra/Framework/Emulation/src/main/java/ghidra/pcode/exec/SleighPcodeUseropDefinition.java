@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.exec;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -86,6 +87,8 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 
 		/**
 		 * @see #params(Collection)
+		 * @param additionalParams the additional parameter names
+		 * @return this builder
 		 */
 		public Builder params(String... additionalParams) {
 			return this.params(Arrays.asList(additionalParams));
@@ -95,6 +98,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		 * Add Sleigh source to the body
 		 * 
 		 * @param additionalBody the additional source
+		 * @return this builder
 		 */
 		public Builder body(CharSequence additionalBody) {
 			body.append(additionalBody);
@@ -187,5 +191,30 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 	 */
 	public String getBody() {
 		return body;
+	}
+
+	@Override
+	public boolean isFunctional() {
+		return false;
+	}
+
+	@Override
+	public boolean hasSideEffects() {
+		return true;
+	}
+
+	@Override
+	public boolean canInlinePcode() {
+		return true;
+	}
+
+	@Override
+	public Method getJavaMethod() {
+		return null;
+	}
+
+	@Override
+	public PcodeUseropLibrary<T> getDefiningLibrary() {
+		return null;
 	}
 }

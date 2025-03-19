@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.GoVer;
+import ghidra.app.util.bin.format.golang.GoVerRange;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 import ghidra.util.BigEndianDataConverter;
@@ -34,6 +35,8 @@ import ghidra.util.BigEndianDataConverter;
  */
 @StructureMapping(structureName = "GoVarlenString")
 public class GoVarlenString implements StructureReader<GoVarlenString> {
+	
+	private static final GoVerRange VERSIONS_THAT_USE_LEB128 = GoVerRange.parse("1.17+");
 
 	@ContextField
 	private StructureContext<GoVarlenString> context;
@@ -55,8 +58,8 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 	}
 
 	private boolean useLEB128() {
-		return ((GoRttiMapper) context.getDataTypeMapper()).getGolangVersion()
-				.isAtLeast(GoVer.V1_17);
+		GoVer ver = ((GoRttiMapper) context.getDataTypeMapper()).getGoVer();
+		return VERSIONS_THAT_USE_LEB128.contains(ver);
 	}
 
 	private void readFrom(BinaryReader reader) throws IOException {

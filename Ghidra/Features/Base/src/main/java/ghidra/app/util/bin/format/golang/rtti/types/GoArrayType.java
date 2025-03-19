@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.Set;
 
+import ghidra.app.util.bin.format.golang.rtti.GoTypeManager;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.*;
@@ -51,7 +52,7 @@ public class GoArrayType extends GoType {
 	 */
 	@Markup
 	public GoType getElement() throws IOException {
-		return programContext.getGoType(elem);
+		return programContext.getGoTypes().getType(elem);
 	}
 
 	/**
@@ -61,13 +62,13 @@ public class GoArrayType extends GoType {
 	 */
 	@Markup
 	public GoType getSliceType() throws IOException {
-		return programContext.getGoType(slice);
+		return programContext.getGoTypes().getType(slice);
 	}
 
 	@Override
-	public DataType recoverDataType() throws IOException {
-		DataType elementDt = programContext.getRecoveredType(getElement());
-		DataType self = programContext.getCachedRecoveredDataType(this);
+	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
+		DataType elementDt = goTypes.getGhidraDataType(getElement());
+		DataType self = goTypes.getGhidraDataType(this, DataType.class, true);
 		if (self != null) {
 			return self;
 		}
@@ -80,6 +81,22 @@ public class GoArrayType extends GoType {
 
 	private boolean isValidLength() {
 		return 0 <= len && len <= Integer.MAX_VALUE;
+	}
+	
+	@Override
+	public String getPackagePathString() {
+		String ppStr = super.getPackagePathString();
+		if ( ppStr == null || ppStr.isEmpty() ) {
+			try {
+				GoType elemType = getElement();
+				if ( elemType != null ) {
+					ppStr = elemType.getPackagePathString();
+				}
+			} catch (IOException e) {
+				// fall thru
+			}
+		}
+		return ppStr;
 	}
 
 	@Override
@@ -115,7 +132,7 @@ public class GoArrayType extends GoType {
 	protected String getTypeDeclString() throws IOException {
 		// type CustomArraytype [elementcount]elementType
 		String selfName = typ.getName();
-		String elemName = programContext.getGoTypeName(elem);
+		String elemName = getElement().getName();
 		String arrayDefStr = "[%d]%s".formatted(len, elemName);
 		String defStrWithLinks = "[%d]%s".formatted(len,
 			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));

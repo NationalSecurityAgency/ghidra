@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,11 +29,13 @@ import ghidra.trace.model.memory.*;
 public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramViewMemoryBlock {
 
 	private final TraceMemoryRegion region;
+	private final long snap; // Snap may be in viewport, not current
 
 	public DBTraceProgramViewMemoryRegionBlock(DBTraceProgramView program,
-			TraceMemoryRegion region) {
+			TraceMemoryRegion region, long snap) {
 		super(program);
 		this.region = region;
+		this.snap = snap;
 	}
 
 	@Override
@@ -43,25 +45,37 @@ public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramV
 
 	@Override
 	protected AddressSpace getAddressSpace() {
-		return region.getRange().getAddressSpace();
+		return region.getRange(snap).getAddressSpace();
 	}
 
 	@Override
 	public AddressRange getAddressRange() {
-		return region.getRange();
+		return region.getRange(snap);
+	}
+
+	protected void checkSnapOnSet() {
+		long snap = program.getSnap();
+		if (snap != this.snap) {
+			/**
+			 * TODO: Copy the region to here? It would immediately invalidate this block, but I
+			 * suppose that's okay, as long as the UI updates appropriately.
+			 */
+			throw new UnsupportedOperationException("Region is from a forked snapshot");
+		}
 	}
 
 	@Override
 	public void setPermissions(boolean read, boolean write, boolean execute) {
-		region.setRead(read);
-		region.setWrite(write);
-		region.setExecute(execute);
+		checkSnapOnSet();
+		region.setRead(snap, read);
+		region.setWrite(snap, write);
+		region.setExecute(snap, execute);
 	}
 
 	@Override
 	public int getFlags() {
 		int bits = 0;
-		for (TraceMemoryFlag flag : region.getFlags()) {
+		for (TraceMemoryFlag flag : region.getFlags(snap)) {
 			bits |= flag.getBits();
 		}
 		return bits;
@@ -69,7 +83,7 @@ public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramV
 
 	@Override
 	public InputStream getData() {
-		AddressRange range = region.getRange();
+		AddressRange range = region.getRange(snap);
 		DBTraceMemorySpace space =
 			program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
 		if (space == null) {
@@ -80,72 +94,77 @@ public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramV
 
 	@Override
 	public Address getStart() {
-		return region.getRange().getMinAddress();
+		return region.getRange(snap).getMinAddress();
 	}
 
 	@Override
 	public Address getEnd() {
-		return region.getRange().getMaxAddress();
+		return region.getRange(snap).getMaxAddress();
 	}
 
 	@Override
 	public long getSize() {
-		return region.getRange().getLength();
+		return region.getRange(snap).getLength();
 	}
 
 	@Override
 	public BigInteger getSizeAsBigInteger() {
-		return region.getRange().getBigLength();
+		return region.getRange(snap).getBigLength();
 	}
 
 	@Override
 	public String getName() {
-		return region.getName();
+		return region.getName(snap);
 	}
 
 	@Override
 	public void setName(String name) throws LockException {
-		region.setName(name);
+		checkSnapOnSet();
+		region.setName(snap, name);
 	}
 
 	@Override
 	public boolean isRead() {
-		return region.isRead();
+		return region.isRead(snap);
 	}
 
 	@Override
 	public void setRead(boolean r) {
-		region.setRead(r);
+		checkSnapOnSet();
+		region.setRead(snap, r);
 	}
 
 	@Override
 	public boolean isWrite() {
-		return region.isWrite();
+		return region.isWrite(snap);
 	}
 
 	@Override
 	public void setWrite(boolean w) {
-		region.setWrite(w);
+		checkSnapOnSet();
+		region.setWrite(snap, w);
 	}
 
 	@Override
 	public boolean isExecute() {
-		return region.isExecute();
+		return region.isExecute(snap);
 	}
 
 	@Override
 	public void setExecute(boolean e) {
-		region.setExecute(e);
+		checkSnapOnSet();
+		region.setExecute(snap, e);
 	}
 
 	@Override
 	public boolean isVolatile() {
-		return region.isVolatile();
+		return region.isVolatile(snap);
 	}
 
 	@Override
 	public void setVolatile(boolean v) {
-		region.setVolatile(v);
+		checkSnapOnSet();
+		region.setVolatile(snap, v);
 	}
 
 	@Override

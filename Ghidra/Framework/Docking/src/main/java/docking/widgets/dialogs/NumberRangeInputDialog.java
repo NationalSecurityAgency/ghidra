@@ -49,8 +49,7 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 	private KeyListener keyListener;
 
 	public NumberRangeInputDialog(String title, String label) {
-		super(title, true, true/* status */, true /* buttons */,
-			false /* no tasks */);
+		super(title, true, true/* status */, true /* buttons */, false /* no tasks */);
 
 		keyListener = new KeyAdapter() {
 			@Override
@@ -95,10 +94,12 @@ public class NumberRangeInputDialog extends DialogComponentProvider {
 		textField.setText(initialValue);
 		textField.addKeyListener(keyListener);
 		textField.setName("number.range.input.dialog.text.field");
+		textField.getAccessibleContext().setAccessibleName("Number Range Input");
 		panel.add(new GLabel(inputLabel, SwingConstants.RIGHT));
 		panel.add(textField);
 
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		panel.getAccessibleContext().setAccessibleName("Number Range Input");
 		this.addWorkPanel(panel);
 	}
 

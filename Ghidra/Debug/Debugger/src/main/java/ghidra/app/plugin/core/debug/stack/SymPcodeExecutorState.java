@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,16 +79,16 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	public String toString() {
 		return String.format("""
 				%s[
-				    cSpec=%s
-				    stack=%s
-				    registers=%s
-				    unique=%s
+				  cSpec=%s
+				  stack=%s
+				  registers=%s
+				  unique=%s
 				]
 				""", getClass().getSimpleName(),
 			cSpec.toString(),
-			stackSpace.toString("    ", language),
-			registerSpace.toString("    ", language),
-			uniqueSpace.toString("    ", language));
+			stackSpace.toString("  ", language),
+			registerSpace.toString("  ", language),
+			uniqueSpace.toString("  ", language));
 	}
 
 	@Override
@@ -218,17 +218,37 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	 * <li>PC:Deref => location is [Stack]:PC.offset
 	 * </ul>
 	 * 
-	 * @return
+	 * @return the address (stack offset or register) of the return address
 	 */
 	public Address computeAddressOfReturn() {
-		Sym expr = getVar(language.getProgramCounter(), Reason.INSPECT);
-		if (expr instanceof StackDerefSym stackVar) {
-			return cSpec.getStackSpace().getAddress(stackVar.offset());
-		}
-		if (expr instanceof RegisterSym regVar) {
-			return regVar.register().getAddress();
-		}
-		return null;
+		return switch (getVar(language.getProgramCounter(), Reason.INSPECT)) {
+			case StackDerefSym stackVar -> cSpec.getStackSpace().getAddress(stackVar.offset());
+			case RegisterSym regVar -> regVar.register().getAddress();
+			default -> null;
+		};
+	}
+
+	/**
+	 * Examine this state's PC to determine how the return address is masked
+	 * 
+	 * <p>
+	 * This is only applicable in cases where {@link #computeAddressOfReturn()} returns a non-null
+	 * address. This is to handle architectures where the low bits indicate an ISA mode, and the
+	 * higher bits form the actual address. Often, the sleigh specifications for these processors
+	 * will mask off those low bits when setting the PC. If that has happened, and the symbolic
+	 * expression stored in the PC is otherwise understood to come from the stack or a register,
+	 * this will return that mask. Most often, this will return -1, indicating that all bits are
+	 * relevant to the actual address. If the symbolic expression does not indicate the stack or a
+	 * register, this still returns -1.
+	 * 
+	 * @return the mask, often -1
+	 */
+	public long computeMaskOfReturn() {
+		return switch (getVar(language.getProgramCounter(), Reason.INSPECT)) {
+			case StackDerefSym stackVar -> stackVar.mask();
+			case RegisterSym regVar -> regVar.mask();
+			default -> -1;
+		};
 	}
 
 	/**

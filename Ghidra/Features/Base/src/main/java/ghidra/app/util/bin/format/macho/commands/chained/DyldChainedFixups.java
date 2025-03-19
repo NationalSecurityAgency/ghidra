@@ -110,7 +110,7 @@ public class DyldChainedFixups {
 			}
 
 			fixups.add(new DyldFixup(chainLoc, newChainValue, DyldChainedPtr.getSize(pointerFormat),
-				symbol, libOrdinal));
+				symbol != null ? symbol.getName() : null, libOrdinal));
 
 			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
 			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
@@ -139,8 +139,9 @@ public class DyldChainedFixups {
 			return fixedAddrs;
 		}
 		Memory memory = program.getMemory();
+		monitor.initialize(fixups.size(), "Fixing up chained pointers...");
 		for (DyldFixup fixup : fixups) {
-			monitor.checkCancelled();
+			monitor.increment();
 			Status status = Status.FAILURE;
 			Address addr = imagebase.add(fixup.offset());
 			try {
@@ -161,7 +162,7 @@ public class DyldChainedFixups {
 			finally {
 				program.getRelocationTable()
 						.add(addr, status, 0, new long[] { fixup.value() }, fixup.size(),
-							fixup.symbol() != null ? fixup.symbol().getName() : null);
+							fixup.symbol() != null ? fixup.symbol() : null);
 			}
 			if (fixup.symbol() != null && fixup.libOrdinal() != null) {
 				try {
@@ -170,7 +171,7 @@ public class DyldChainedFixups {
 				}
 				catch (Exception e) {
 					log.appendMsg("WARNING: Problem fixing up symbol '%s' - %s"
-							.formatted(fixup.symbol().getName(), e.getMessage()));
+							.formatted(fixup.symbol(), e.getMessage()));
 				}
 			}
 		}

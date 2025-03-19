@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.util.bin.format.golang.rtti.types.*;
+import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod;
 import ghidra.app.util.bin.format.golang.rtti.types.GoIMethod.GoIMethodInfo;
+import ghidra.app.util.bin.format.golang.rtti.types.GoInterfaceType;
+import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinition;
 import ghidra.util.Msg;
 
 /**
@@ -32,7 +33,7 @@ import ghidra.util.Msg;
  * the interface.
  */
 @PlateComment
-@StructureMapping(structureName = "runtime.itab")
+@StructureMapping(structureName = {"runtime.itab", "internal/abi.ITab"})
 public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
 	private GoRttiMapper programContext;
@@ -40,11 +41,11 @@ public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
 	private StructureContext<GoItab> context;
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"inter", "Inter"})
 	@MarkupReference("getInterfaceType")
 	long inter;	// runtime.interfacetype * 
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"_type", "Type"})
 	@MarkupReference("getType")
 	long _type;	// runtime._type *
 
@@ -59,7 +60,8 @@ public class GoItab implements StructureMarkup<GoItab> {
 	 */
 	@Markup
 	public GoInterfaceType getInterfaceType() throws IOException {
-		return programContext.readStructure(GoInterfaceType.class, inter);
+		GoType result = programContext.getGoTypes().getType(inter);
+		return result instanceof GoInterfaceType ifaceType ? ifaceType : null;
 	}
 
 	/**
@@ -70,7 +72,7 @@ public class GoItab implements StructureMarkup<GoItab> {
 	 */
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.getGoType(_type);
+		return programContext.getGoTypes().getType(_type);
 	}
 
 	/**
@@ -142,25 +144,6 @@ public class GoItab implements StructureMarkup<GoItab> {
 		return results;
 	}
 
-	/**
-	 * Returns a {@link FunctionDefinition} for the specified method of this itab.
-	 * 
-	 * @param imethod info about an interface method
-	 * @return {@link FunctionDefinition} for the specified method of this itab
-	 * @throws IOException if error reading required info
-	 */
-	public FunctionDefinition getSignatureFor(GoIMethod imethod) throws IOException {
-		GoType receiverType = getType();
-		DataType receiverDT = programContext.getRecoveredType(receiverType);
-
-		GoType methodType = imethod.getType();
-		if (methodType == null) {
-			return null;
-		}
-		return programContext.getSpecializedMethodSignature(imethod.getName(), methodType,
-			receiverDT, false);
-	}
-
 	@Override
 	public String getStructureName() throws IOException {
 		return "%s__implements__%s".formatted(getType().getName(),
@@ -170,6 +153,16 @@ public class GoItab implements StructureMarkup<GoItab> {
 	@Override
 	public StructureContext<GoItab> getStructureContext() {
 		return context;
+	}
+
+	@Override
+	public String getStructureLabel() throws IOException {
+		return "%s__itab".formatted(getStructureName());
+	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		return getType().getStructureNamespace();
 	}
 
 	@Override
@@ -185,8 +178,8 @@ public class GoItab implements StructureMarkup<GoItab> {
 
 		GoSlice extraFunSlice =
 			funSlice.getSubSlice(1, funSlice.getLen() - 1, programContext.getPtrSize());
-		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions", null,
-			(DataType) null, true, session);
+		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions",
+			getStructureNamespace(), (DataType) null, true, session);
 	}
 
 	@Override
@@ -208,14 +201,4 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 }
-/*
-struct runtime.itab  
-Length: 20  Alignment: 4
-{ 
-  runtime.interfacetype *  inter    
-  runtime._type *                _type   
-  uint32                                hash    
-  uint8[4]                             _          
-  uintptr[1]                         fun       
-} pack()
-*/
+

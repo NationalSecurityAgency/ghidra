@@ -39,22 +39,25 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	private final static char[] BADPASSWORD = "".toCharArray();
 
 	private static Object sshPrivateKey;
-	private static String defaultUserName = ClientUtil.getUserName();
+	private static String preferredName = null;
 	private static boolean passwordPromptAllowed;
 
+	/**
+	 * Simple authentication handler using a default authenticator which may be passed to
+	 * {@link Authenticator#setDefault(Authenticator)}.  The preferred username must be set by 
+	 * invoking {@link #installHeadlessClientAuthenticator(String, String, boolean)} or
+	 * stipulated by the requesting URL.  The {@link ClientUtil#getUserName()} identity is never 
+	 * used.
+	 */
 	private Authenticator authenticator = new Authenticator() {
 		@Override
 		protected PasswordAuthentication getPasswordAuthentication() {
-			
-			if (defaultUserName == null) {
-				throw new IllegalStateException("Default user name is unknown");
-			}
 
 			String serverName = getRequestingHost();
 			URL requestingURL = getRequestingURL(); // may be null
 
 			String pwd = null;
-			String userName = defaultUserName;
+			String name = preferredName;
 
 			if (requestingURL != null) {
 				String userInfo = requestingURL.getUserInfo();
@@ -62,12 +65,12 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 					// Use user info from URL
 					int pwdSep = userInfo.indexOf(':');
 					if (pwdSep < 0) {
-						userName = userInfo;
+						name = userInfo;
 					}
 					else {
 						pwd = userInfo.substring(pwdSep + 1);
 						if (pwdSep != 0) {
-							userName = userInfo.substring(0, pwdSep);
+							name = userInfo.substring(0, pwdSep);
 						}
 					}
 				}
@@ -77,20 +80,24 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 					serverName = minimalURL.toExternalForm();
 				}
 			}
-			
+
 			Msg.debug(this, "PasswordAuthentication requested for " + serverName);
+
+			if (StringUtils.isBlank(name)) {
+				throw new IllegalStateException("Connection user name is unknown");
+			}
 
 			if (pwd != null) {
 				// Requesting URL specified password
-				return new PasswordAuthentication(userName, pwd.toCharArray());
+				return new PasswordAuthentication(name, pwd.toCharArray());
 			}
 
 			String usage = "Access password requested for " + serverName;
 			String prompt = getRequestingPrompt();
 			if (StringUtils.isBlank(prompt) || "security".equals(prompt)) {
-				prompt = "Password for " + userName +":";
+				prompt = "Password for " + name + ":";
 			}
-			return new PasswordAuthentication(userName, getPassword(usage, prompt));
+			return new PasswordAuthentication(name, getPassword(usage, prompt));
 		}
 	};
 
@@ -103,7 +110,9 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	}
 
 	/**
-	 * Install headless client authenticator for Ghidra Server
+	 * Install headless client authenticator for Ghidra Server and when http/https 
+	 * connections require authentication and have not specified user information.
+	 * 
 	 * @param username optional username to be used with a Ghidra Server which
 	 * allows username to be specified.  If null, {@link ClientUtil#getUserName()} 
 	 * will be used.
@@ -118,7 +127,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			boolean allowPasswordPrompt) throws IOException {
 		passwordPromptAllowed = allowPasswordPrompt;
 		if (username != null) {
-			defaultUserName = username;
+			preferredName = username;
 		}
 
 		// clear existing key store settings
@@ -247,45 +256,48 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 
 	@Override
 	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
-			NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,
-			AnonymousCallback anonymousCb, String loginError) {
+			boolean allowUserNameEntry, NameCallback nameCb, PasswordCallback passCb,
+			ChoiceCallback choiceCb, AnonymousCallback anonymousCb, String loginError) {
 		if (anonymousCb != null && !passwordPromptAllowed) {
 			// Assume that login error will not occur with anonymous login
 			anonymousCb.setAnonymousAccessRequested(true);
 			return true;
 		}
-		
-		if (defaultUserName == null) {
-			throw new IllegalStateException("Default user name is unknown");
-		}
-		
+
 		if (choiceCb != null) {
 			choiceCb.setSelectedIndex(1);
 		}
-		
+
 		String userName = null;
 		if (nameCb != null) {
-			userName = nameCb.getName();
-			if (userName == null) {
-				userName = nameCb.getDefaultName();
+			if (allowUserNameEntry) {
+				// use preferred login name 
+				userName = preferredName;
+			}
+			if (StringUtils.isBlank(userName)) {
+				// check for default login name in order of precedence
+				userName = nameCb.getName();
+				if (StringUtils.isBlank(userName)) {
+					userName = nameCb.getDefaultName();
+				}
+			}
+			if (allowUserNameEntry) {
+				nameCb.setName(userName);
 			}
 		}
-		if (userName == null) {
-			userName = defaultUserName;
-		}
 
-		if (nameCb != null) {
-			nameCb.setName(defaultUserName);
+		if (StringUtils.isBlank(userName)) {
+			userName = ClientUtil.getUserName();
 		}
 
 		String usage = null;
 		if (serverName != null) {
 			usage = serverType + ": " + serverName;
 		}
-		
+
 		// Ignore prompt specified by passCb
-		String prompt = "Password for " + userName +":";
-		
+		String prompt = "Password for " + userName + ":";
+
 		char[] password = getPassword(usage, prompt);
 		passCb.setPassword(password);
 		return password != null;
@@ -321,7 +333,18 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 			return false;
 		}
 		if (nameCb != null) {
-			nameCb.setName(defaultUserName);
+			// presence of NameCallback implies user is allowed to specify name
+			String userName = preferredName;
+			if (StringUtils.isBlank(userName)) {
+				userName = nameCb.getName();
+				if (StringUtils.isBlank(userName)) {
+					userName = nameCb.getDefaultName();
+				}
+				if (!StringUtils.isBlank(userName)) {
+					userName = ClientUtil.getUserName();
+				}
+			}
+			nameCb.setName(userName);
 		}
 		try {
 			sshCb.sign(sshPrivateKey);

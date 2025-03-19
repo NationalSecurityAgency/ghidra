@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import java.nio.file.AccessMode;
 import java.util.*;
 
 import org.apache.commons.collections4.map.ReferenceMap;
+import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.FileByteProvider;
@@ -61,7 +62,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	private final FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private final ReferenceMap<FileFingerprintRec, String> fileFingerprintToMD5Map =
 		new ReferenceMap<>();
-	private final boolean needsListRoots =
+	private final boolean isWindows =
 		OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS;
 
 	private LocalFileSystem(FSRLRoot fsrl) {
@@ -126,7 +127,25 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 	 * @return The {@link FSRL}
 	 */
 	public FSRL getLocalFSRL(File f) {
-		return fsFSRL.withPath(FSUtilities.normalizeNativePath(f.getAbsolutePath()));
+		String absPath = f.getAbsolutePath();
+		if (isWindows) {
+			// only force on windows... unix paths can have backslashes as part of filenames
+			absPath = FilenameUtils.separatorsToUnix(absPath);
+		}
+		String fsrlPath = FSUtilities.appendPath("/", absPath);
+		return fsFSRL.withPath(fsrlPath);
+	}
+
+	private GFile getGFile(File f) {
+		List<File> parts = LocalFileSystem.getFilePathParts(f); // [/subdir/subroot/file, /subdir/subroot, /subdir, /]
+		GFile current = rootDir;
+		for (int i = parts.size() - 2; i >= 0; i--) {
+			File part = parts.get(i);
+			FSRL childFSRL = getLocalFSRL(part);
+			current =
+				GFileImpl.fromFSRL(this, current, childFSRL, part.isDirectory(), part.length());
+		}
+		return current;
 	}
 
 	@Override
@@ -149,10 +168,9 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		List<GFile> results = new ArrayList<>();
 		directory = Objects.requireNonNullElse(directory, rootDir);
 
-		if (directory.equals(rootDir) && needsListRoots) {
+		if (directory.equals(rootDir) && isWindows) {
 			for (File f : File.listRoots()) {
-				FSRL rootElemFSRL = fsFSRL.withPath(FSUtilities.normalizeNativePath(f.getName()));
-				results.add(GFileImpl.fromFSRL(this, null, rootElemFSRL, f.isDirectory(), -1));
+				results.add(GFileImpl.fromFSRL(this, null, getLocalFSRL(f), f.isDirectory(), -1));
 			}
 		}
 		else {
@@ -213,9 +231,13 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	@Override
 	public GFile lookup(String path) throws IOException {
-		File f = lookupFile(null, path, null);
-		return f != null ? GFileImpl.fromPathString(this,
-			FSUtilities.normalizeNativePath(f.getPath()), null, f.isDirectory(), f.length()) : null;
+		return lookup(path, null);
+	}
+
+	@Override
+	public GFile lookup(String path, Comparator<String> nameComp) throws IOException {
+		File f = lookupFile(null, path, nameComp);
+		return f != null ? getGFile(f) : null;
 	}
 
 	@Override
@@ -254,9 +276,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		if (f.equals(canonicalFile)) {
 			return file;
 		}
-		return GFileImpl.fromPathString(this,
-			FSUtilities.normalizeNativePath(canonicalFile.getPath()), null,
-			canonicalFile.isDirectory(), canonicalFile.length());
+		return getGFile(canonicalFile);
 	}
 
 	@Override
@@ -327,24 +347,8 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 				// If not using a comparator, or if the requested path is a 
 				// root element (eg "/", or "c:\\"), don't do per-directory-path lookups.
 
-				if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-					// On windows, getCanonicalFile() will return a corrected path using the case of 
-					// the file element on the file system (eg. "c:/users" -> "c:/Users"), if the
-					// element exists.
-					// We don't want to do this on unix-ish file systems as it will follow symlinks
-					f = f.getCanonicalFile();
-				}
-				return FSUtilities.isSymlink(f) || f.exists() ? f : null;
-			}
-
-			// Test the file's path using the name comparator
-			if (f.exists() && baseDir == null) {
-				// try to short-cut by comparing the entire path string 
-				File canonicalFile = f.getCanonicalFile();
-				if (nameComp.compare(path,
-					FSUtilities.normalizeNativePath((canonicalFile.getPath()))) == 0) {
-					return canonicalFile;
-				}
+				f = updateCaseInsensitiveFilePath(f);
+				return (FSUtilities.isSymlink(f) || f.exists()) ? f : null;
 			}
 
 			// For path "/subdir/file", pathParts will contain, in reverse order:
@@ -375,7 +379,28 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		}
 	}
 
-	static File findInDir(File dir, String name, Comparator<String> nameComp) {
+	static File updateCaseInsensitiveFilePath(File f) throws IOException {
+		// On Windows, getCanonicalFile() will return a corrected path using the case of 
+		// the actual file element on the file system (eg. "c:/users" -> "c:/Users"), if the
+		// element exists.
+		return OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS
+				? f.getCanonicalFile()
+				: f;
+	}
+
+	static File findInDir(File dir, String name, Comparator<String> nameComp) throws IOException {
+		File exact = new File(dir, name);
+		if (exact.exists()) {
+			// Skip listing entire dir contents if exact match exists and the match agrees with
+			// the caller's comparator.  The comparator could reject this test, for example
+			// if it was an exact case compare and the requested filename's case didn't match
+			// the actual file's case (on windows).
+			exact = updateCaseInsensitiveFilePath(exact);
+			if (nameComp.compare(exact.getName(), name) == 0) {
+				return exact;
+			}
+		}
+
 		// Searches for "name" in the list of files found in the directory.
 		// Because a case-insensitive comparator could match on several files in the same directory,
 		// query for all the files before picking a match: either an exact string match, or
@@ -393,7 +418,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 				}
 			}
 		}
-		Collections.sort(candidateMatches);
+		Collections.sort(candidateMatches); // ensures stable results regardless if OS mutates order of listing on different runs
 		return !candidateMatches.isEmpty() ? candidateMatches.get(0) : null;
 	}
 

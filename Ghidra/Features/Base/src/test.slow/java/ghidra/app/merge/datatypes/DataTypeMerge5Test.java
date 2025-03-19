@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
 public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 	@Test
-    public void testTypeDefUndefined() throws Exception {
+	public void testTypeDefUndefined() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
@@ -118,7 +118,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs() throws Exception {
+	public void testTypeDefs() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
@@ -219,7 +219,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs2() throws Exception {
+	public void testTypeDefs2() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 
@@ -300,7 +300,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(7, dtcs.length);
-		assertEquals("typedef field name TD_MyEnumPointer", dtcs[6].getFieldName());
+		assertEquals("typedef_field_name_TD_MyEnumPointer", dtcs[6].getFieldName());
 		assertEquals("a typedef", dtcs[6].getComment());
 
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/Category1"), "MyEnum");
@@ -328,7 +328,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs3() throws Exception {
+	public void testTypeDefs3() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
@@ -420,7 +420,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(7, dtcs.length);
-		assertEquals("typedef field name TD_MyEnumPointer", dtcs[6].getFieldName());
+		assertEquals("typedef_field_name_TD_MyEnumPointer", dtcs[6].getFieldName());
 		assertEquals("a typedef", dtcs[6].getComment());
 
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
@@ -451,7 +451,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs4() throws Exception {
+	public void testTypeDefs4() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
@@ -541,7 +541,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(7, dtcs.length);
-		assertEquals("typedef field name TD_MyEnumPointer", dtcs[6].getFieldName());
+		assertEquals("typedef_field_name_TD_MyEnumPointer", dtcs[6].getFieldName());
 		assertEquals("a typedef", dtcs[6].getComment());
 
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
@@ -572,14 +572,14 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs5() throws Exception {
+	public void testTypeDefs5() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 				dtm.remove(s, TaskMonitor.DUMMY);
 				DataType dt =
@@ -667,7 +667,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(6, dtcs.length);
-		assertEquals("Float Field", dtcs[5].getFieldName());
+		assertEquals("Float_Field", dtcs[5].getFieldName());
 		assertEquals("my comments", dtcs[5].getComment());
 
 		TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/Category1"), "TD_MyEnumPointer");
@@ -681,14 +681,14 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs6() throws Exception {
+	public void testTypeDefs6() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 				dtm.remove(s, TaskMonitor.DUMMY);
 				DataType dt =
@@ -773,7 +773,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(7, dtcs.length);
-		assertEquals("typedef field name TD_MyEnumPointer *", dtcs[6].getFieldName());
+		assertEquals("typedef_field_name_TD_MyEnumPointer_*", dtcs[6].getFieldName());
 		assertEquals("a pointer to a typedef", dtcs[6].getComment());
 
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
@@ -806,7 +806,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs7() throws Exception {
+	public void testTypeDefs7() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
@@ -901,7 +901,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(7, dtcs.length);
-		assertEquals("typedef field name", dtcs[6].getFieldName());
+		assertEquals("typedef_field_name", dtcs[6].getFieldName());
 		assertEquals("a typedef on a pointer to a typedef", dtcs[6].getComment());
 
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
@@ -941,10 +941,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs8() throws Exception {
+	public void testTypeDefs8() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
-			
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
@@ -1039,7 +1039,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(7, dtcs.length);
-		assertEquals("array of typedef field name", dtcs[6].getFieldName());
+		assertEquals("array_of_typedef_field_name", dtcs[6].getFieldName());
 		assertEquals("an array of typedefs on a pointer to a typedef", dtcs[6].getComment());
 
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
@@ -1083,7 +1083,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testTypeDefs9() throws Exception {
+	public void testTypeDefs9() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
@@ -1221,7 +1221,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				// must specify datatype manager when constructing to allow for settings to be made
 				Pointer p = dtm.getPointer(CharDataType.dataType);
 				TypeDef td =
@@ -1242,7 +1242,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"), "PtrTypeDef");
 
 				Settings settings = td.getDefaultSettings();
@@ -1320,7 +1320,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				try {
 					TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"),
 						"Foo * " + formatAttributes("image-base-relative"));
@@ -1342,7 +1342,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				try {
 					TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"),
 						"Foo * " + formatAttributes("image-base-relative"));
@@ -1396,7 +1396,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				// must specify datatype manager when constructing to allow for settings to be made
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				PointerTypedef td =
@@ -1408,7 +1408,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				
+
 				try {
 					TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"),
 						"Foo * " + formatAttributes("image-base-relative"));
@@ -1459,7 +1459,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testArrays() throws Exception {
+	public void testArrays() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 

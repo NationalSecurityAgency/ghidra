@@ -24,14 +24,14 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.database.sourcemap.SourceFileIdType;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.sourcemap.SourceFileManager;
 import ghidra.util.Msg;
 import ghidra.util.SourceFileUtils;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Helper class to PdbApplicator for applying source line information
@@ -81,9 +81,10 @@ public class PdbSourceLinesApplicator {
 	//==============================================================================================
 	/**
 	 * Process all Module line information
+	 * @param monitor the task monitor
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void process() throws CancelledException {
+	public void process(TaskMonitor monitor) throws CancelledException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			Msg.info(this, "PDB: Missing DebugInfo - cannot process line numbers.");
@@ -98,11 +99,14 @@ public class PdbSourceLinesApplicator {
 		// Not processing user defined "Types" source information.  TODO: ???
 
 		int numModules = debugInfo.getNumModules();
+		monitor.initialize(numModules);
+		monitor.setMessage("PDB: Importing module function source line information...");
 		for (int num = 1; num <= numModules; num++) {
-			pdb.checkCancelled();
+			monitor.checkCancelled();
 			Module module = debugInfo.getModule(num);
 			processC11Lines(module);
 			processC13Sections(module);
+			monitor.incrementProgress(1);
 		}
 	}
 
@@ -382,6 +386,12 @@ public class PdbSourceLinesApplicator {
 
 	//==============================================================================================
 	private void applyRecord(SourceFile sourceFile, Address address, int start, int length) {
+		// Throw out values that do not make sense
+		if (!address.isMemoryAddress() || start < 0 || length < 0) {
+			log.appendMsg("PDB", "Invalid source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
+			return;
+		}
 		// Need to use getCodeUnitContaining(address) instead of getCodeUnitAt(address) because
 		//  there is a situation where the PDB associates a line number with the base part of an
 		//  instructions instead of the prefix part, such as with MSFT tool-chain emits a
@@ -409,7 +419,12 @@ public class PdbSourceLinesApplicator {
 		catch (IllegalArgumentException e) {
 			// thrown by SourceFileManager.addSourceMapEntry if the new entry conflicts
 			// with an existing entry or if sourceFile is not associated with manager
-			log.appendMsg("PDB", e.getMessage());
+			log.appendMsg("PDB", "IllegalArgumentException for source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
+		}
+		catch (AddressOutOfBoundsException e) {
+			log.appendMsg("PDB", "AddressOutOfBoundsException for source map info: %s, %d, %s, %d"
+					.formatted(sourceFile.getPath(), start, address.toString(), length));
 		}
 	}
 

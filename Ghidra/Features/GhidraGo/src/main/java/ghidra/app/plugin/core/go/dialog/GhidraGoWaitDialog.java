@@ -42,6 +42,7 @@ public abstract class GhidraGoWaitDialog extends DialogComponentProvider {
 		addWorkPanel(buildMainPanel(msgText));
 
 		JButton waitButton = new JButton("Wait");
+		waitButton.getAccessibleContext().setAccessibleName("Wait");
 		waitButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -53,6 +54,7 @@ public abstract class GhidraGoWaitDialog extends DialogComponentProvider {
 		addButton(waitButton);
 
 		JButton noWaitButton = new JButton("No");
+		noWaitButton.getAccessibleContext().setAccessibleName("No Wait");
 		noWaitButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -91,15 +93,18 @@ public abstract class GhidraGoWaitDialog extends DialogComponentProvider {
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
+		msgPanel.getAccessibleContext().setAccessibleName("Message");
 		msgPanel.add(
 			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE)),
 			BorderLayout.WEST);
 
 		MultiLineLabel msgText = new MultiLineLabel(msgTextString);
+		msgText.getAccessibleContext().setAccessibleName("Message Text");
 		msgText.setMaximumSize(msgText.getPreferredSize());
 		msgPanel.add(msgText, BorderLayout.CENTER);
 
 		innerPanel.add(msgPanel, BorderLayout.CENTER);
+		innerPanel.getAccessibleContext().setAccessibleName("Ghidra Go Wait");
 		return innerPanel;
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,9 +135,11 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		JPanel settingsPanel = new JPanel();
 		settingsPanel.add(createDiffPanel());
+		settingsPanel.getAccessibleContext().setAccessibleName("Settings");
 		panel.add(settingsPanel, BorderLayout.NORTH);
 		panel.add(createAddressPanel(), BorderLayout.CENTER);
 		setDiffFilter(diff);
+		panel.getAccessibleContext().setAccessibleName("Excecute Differences");
 		return panel;
 	}
 
@@ -149,6 +151,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 		TitledBorder border = new TitledBorder("Do Differences On");
 		panel.setBorder(border);
 		panel.add(createDiffFilterPanel());
+		panel.getAccessibleContext().setAccessibleName("Difference");
 		return panel;
 	}
 
@@ -159,12 +162,13 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 		addressPanel.add(createLimitPanel(), BorderLayout.NORTH);
 		addressText = new JTextArea(5, 30);
 		addressText.setName("AddressTextArea");
+		addressText.getAccessibleContext().setAccessibleName("Address Text Area");
 		addressText.setEditable(false);
 		DockingUtils.setTransparent(addressText);
 		addressText.setText(getAddressText());
 		JScrollPane scrolledAddresses = new JScrollPane(addressText);
 		addressPanel.add(scrolledAddresses, BorderLayout.CENTER);
-
+		addressPanel.getAccessibleContext().setAccessibleName("Address");
 		return addressPanel;
 	}
 
@@ -184,7 +188,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 		});
 
 		panel.add(limitToSelectionCB);
-
+		panel.getAccessibleContext().setAccessibleName("Limit");
 		return panel;
 	}
 
@@ -220,6 +224,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 		checkBoxPanel.add(diffSourceMapCB);
 
 		JPanel buttonPanel = new JPanel();
+		buttonPanel.getAccessibleContext().setAccessibleName("Button");
 		createSelectAllButton();
 		buttonPanel.add(selectAllButton);
 		createDeselectAllButton();
@@ -228,13 +233,14 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(checkBoxPanel, BorderLayout.CENTER);
 		panel.add(buttonPanel, BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Difference Filter");
 		return panel;
 	}
 
 	private void createBytesCheckBox() {
 		diffBytesCB = new GCheckBox("Bytes", diffBytes);
 		diffBytesCB.setName("BytesDiffCB");
+		diffBytesCB.getAccessibleContext().setAccessibleName("Byte Differences");
 		diffBytesCB.setToolTipText("Highlight byte differences.");
 		diffBytesCB.addItemListener(event -> {
 			diffBytes = (event.getStateChange() == ItemEvent.SELECTED);
@@ -246,6 +252,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createLabelsCheckBox() {
 		diffLabelsCB = new GCheckBox("Labels", diffLabels);
 		diffLabelsCB.setName("LabelsDiffCB");
+		diffLabelsCB.getAccessibleContext().setAccessibleName("Label Differences");
 		diffLabelsCB.setToolTipText("Highlight label differences.");
 		diffLabelsCB.addItemListener(event -> {
 			diffLabels = (event.getStateChange() == ItemEvent.SELECTED);
@@ -257,6 +264,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createCodeUnitsCheckBox() {
 		diffCodeUnitsCB = new GCheckBox("Code Units", diffCodeUnits);
 		diffCodeUnitsCB.setName("CodeUnitsDiffCB");
+		diffCodeUnitsCB.getAccessibleContext().setAccessibleName("Code Unit Differences");
 		diffCodeUnitsCB
 				.setToolTipText("Highlight the instruction, data, " + "and equate differences.");
 		diffCodeUnitsCB.addItemListener(event -> {
@@ -270,6 +278,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createReferencesCheckBox() {
 		diffReferencesCB = new GCheckBox("References", diffReferences);
 		diffReferencesCB.setName("ReferencesDiffCB");
+		diffReferencesCB.getAccessibleContext().setAccessibleName("Reference Differences");
 		diffReferencesCB.setToolTipText("Highlight the reference differences.");
 		diffReferencesCB.addItemListener(event -> {
 			diffReferences = (event.getStateChange() == ItemEvent.SELECTED);
@@ -281,6 +290,8 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createProgramContextCheckBox() {
 		diffProgramContextCB = new GCheckBox("Program Context", diffProgramContext);
 		diffProgramContextCB.setName("ProgramContextDiffCB");
+		diffProgramContextCB.getAccessibleContext()
+				.setAccessibleName("Program Context Differences");
 		diffProgramContextCB.setToolTipText("Highlight the program context register differences.");
 		diffProgramContextCB.addItemListener(event -> {
 			diffProgramContext = (event.getStateChange() == ItemEvent.SELECTED);
@@ -292,6 +303,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createCommentsCheckBox() {
 		diffCommentsCB = new GCheckBox("Comments", diffComments);
 		diffCommentsCB.setName("CommentsDiffCB");
+		diffCommentsCB.getAccessibleContext().setAccessibleName("Comment Differences");
 		diffCommentsCB.setToolTipText("Highlight comment differences.");
 		diffCommentsCB.addItemListener(event -> {
 			diffComments = (event.getStateChange() == ItemEvent.SELECTED);
@@ -303,6 +315,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createBookmarksCheckBox() {
 		diffBookmarksCB = new GCheckBox("Bookmarks", diffBookmarks);
 		diffBookmarksCB.setName("BookmarksDiffCB");
+		diffBookmarksCB.getAccessibleContext().setAccessibleName("Bookmark Differences");
 		diffBookmarksCB.setToolTipText(
 			"Highlight bookmark differences. " + "(for example, bookmark differences)");
 		diffBookmarksCB.addItemListener(event -> {
@@ -315,6 +328,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createPropertiesCheckBox() {
 		diffPropertiesCB = new GCheckBox("Properties", diffProperties);
 		diffPropertiesCB.setName("PropertiesDiffCB");
+		diffPropertiesCB.getAccessibleContext().setAccessibleName("Property Differences");
 		diffPropertiesCB.setToolTipText("Highlight user defined property differences. " +
 			"(for example, Format (space) differences)");
 		diffPropertiesCB.addItemListener(event -> {
@@ -327,6 +341,7 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createFunctionsCheckBox() {
 		diffFunctionsCB = new GCheckBox("Functions", diffFunctions);
 		diffFunctionsCB.setName("FunctionsDiffCB");
+		diffFunctionsCB.getAccessibleContext().setAccessibleName("Function Differences");
 		diffFunctionsCB.setToolTipText("Highlight function differences.");
 		diffFunctionsCB.addItemListener(event -> {
 			diffFunctions = (event.getStateChange() == ItemEvent.SELECTED);
@@ -351,11 +366,13 @@ public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 	private void createSelectAllButton() {
 		selectAllButton.addActionListener(e -> setSelectAll(true));
 		selectAllButton.setMnemonic('S');
+		selectAllButton.getAccessibleContext().setAccessibleName("Select All");
 	}
 
 	private void createDeselectAllButton() {
 		deselectAllButton.addActionListener(e -> setSelectAll(false));
 		deselectAllButton.setMnemonic('D');
+		deselectAllButton.getAccessibleContext().setAccessibleName("Deselect All");
 	}
 
 	protected void setSelectAll(boolean selected) {

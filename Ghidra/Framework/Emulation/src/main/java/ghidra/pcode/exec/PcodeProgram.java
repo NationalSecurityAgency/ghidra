@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,17 @@ import ghidra.util.exception.NotFoundException;
  */
 public class PcodeProgram {
 	protected static class MyAppender extends AbstractAppender<String> {
+		protected int opIdx = 0;
 		protected final PcodeProgram program;
+		protected final boolean numberOps;
+
 		protected final StringBuffer buf = new StringBuffer();
 
-		public MyAppender(PcodeProgram program, Language language) {
+		public MyAppender(PcodeProgram program, Language language, boolean numberOps) {
 			super(language, true);
 			this.program = program;
+			this.numberOps = numberOps;
+
 			buf.append("<" + program.getHead() + ":\n");
 		}
 
@@ -70,18 +75,34 @@ public class PcodeProgram {
 			buf.append(">");
 			return buf.toString();
 		}
+
+		@Override
+		public void appendIndent() {
+			super.appendIndent();
+			if (numberOps) {
+				PcodeOp op = program.getCode().get(opIdx);
+				buf.append(opIdx++);
+				buf.append(",");
+				buf.append(op.getSeqnum().getTarget());
+				buf.append(".");
+				buf.append(op.getSeqnum().getTime());
+				buf.append(": ");
+			}
+		}
 	}
 
 	protected static class MyFormatter extends AbstractPcodeFormatter<String, MyAppender> {
 		protected final PcodeProgram program;
+		protected final boolean numberOps;
 
-		public MyFormatter(PcodeProgram program) {
+		public MyFormatter(PcodeProgram program, boolean numberOps) {
 			this.program = program;
+			this.numberOps = numberOps;
 		}
 
 		@Override
 		protected MyAppender createAppender(Language language, boolean indent) {
-			return new MyAppender(program, language);
+			return new MyAppender(program, language, numberOps);
 		}
 
 		@Override
@@ -111,12 +132,11 @@ public class PcodeProgram {
 	 */
 	public static PcodeProgram fromInstruction(Instruction instruction, boolean includeOverrides) {
 		Language language = instruction.getPrototype().getLanguage();
-		if (!(language instanceof SleighLanguage)) {
+		if (!(language instanceof SleighLanguage slang)) {
 			throw new IllegalArgumentException("Instruction must be parsed using Sleigh");
 		}
 		PcodeOp[] pcode = instruction.getPcode(includeOverrides);
-		return new PcodeProgram((SleighLanguage) language, List.of(pcode),
-			Map.of());
+		return new PcodeProgram(slang, List.of(pcode), Map.of());
 	}
 
 	/**
@@ -143,7 +163,7 @@ public class PcodeProgram {
 
 	protected final SleighLanguage language;
 	protected final List<PcodeOp> code;
-	protected final Map<Integer, String> useropNames = new HashMap<>();
+	protected final Map<Integer, String> useropNames;
 
 	/**
 	 * Construct a p-code program with the given bindings
@@ -156,6 +176,7 @@ public class PcodeProgram {
 			Map<Integer, UserOpSymbol> useropSymbols) {
 		this.language = language;
 		this.code = code;
+		this.useropNames = new HashMap<>();
 		int langOpCount = language.getNumberOfUserDefinedOpNames();
 		for (Map.Entry<Integer, UserOpSymbol> ent : useropSymbols.entrySet()) {
 			int index = ent.getKey();
@@ -166,6 +187,19 @@ public class PcodeProgram {
 				useropNames.put(index, ent.getValue().getName());
 			}
 		}
+	}
+
+	/**
+	 * Construct a p-code program from a derivative of the given one
+	 * 
+	 * @param program the original program
+	 * @param code the code portion for this program
+	 */
+	public PcodeProgram(PcodeProgram program, List<PcodeOp> code) {
+		assert !code.isEmpty();
+		this.language = program.language;
+		this.code = code;
+		this.useropNames = program.useropNames;
 	}
 
 	/**
@@ -203,6 +237,14 @@ public class PcodeProgram {
 
 	@Override
 	public String toString() {
-		return new MyFormatter(this).formatOps(language, code);
+		return format();
+	}
+
+	public String format(boolean numberOps) {
+		return new MyFormatter(this, numberOps).formatOps(language, code);
+	}
+
+	public String format() {
+		return format(false);
 	}
 }

@@ -270,14 +270,14 @@ public class ModelingScript extends GhidraScript {
 		}
 
 		@Override
-		public Expr modBeforeStore(int sizeout, int sizeinAddress, Expr inAddress, int sizeinValue,
-				Expr inValue) {
+		public Expr modBeforeStore(int sizeinOffset, AddressSpace space, Expr inOffset,
+				int sizeinValue, Expr inValue) {
 			return inValue;
 		}
 
 		@Override
-		public Expr modAfterLoad(int sizeout, int sizeinAddress, Expr inAddress, int sizeinValue,
-				Expr inValue) {
+		public Expr modAfterLoad(int sizeinOffset, AddressSpace space, Expr inOffset,
+				int sizeinValue, Expr inValue) {
 			return inValue;
 		}
 

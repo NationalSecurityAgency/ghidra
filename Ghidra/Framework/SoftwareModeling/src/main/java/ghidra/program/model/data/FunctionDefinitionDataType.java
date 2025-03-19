@@ -189,7 +189,8 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 
 		if (GenericCallingConvention
 				.getGenericCallingConvention(conventionName) == GenericCallingConvention.unknown &&
-			!dataMgr.getKnownCallingConventionNames().contains(name)) {
+			(dataMgr == null ||
+				!dataMgr.getKnownCallingConventionNames().contains(conventionName))) {
 			throw new InvalidInputException("Unknown calling convention name: " + conventionName);
 		}
 

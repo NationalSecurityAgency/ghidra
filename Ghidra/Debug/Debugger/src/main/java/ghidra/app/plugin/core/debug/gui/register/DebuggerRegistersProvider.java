@@ -783,7 +783,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected String computeSubTitle() {
 		TraceThread curThread = current.getThread();
-		return curThread == null ? "" : curThread.getName();
+		return curThread == null ? "" : curThread.getName(current.getSnap());
 	}
 
 	protected void updateSubTitle() {
@@ -888,7 +888,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		CompletableFuture<Void> future = editor.setRegister(rv);
 		future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			reportError("Edit Register", "Could not write target register", ex);
+			reportError(null, "Could not write target register", ex);
 			return null;
 		});
 		return;

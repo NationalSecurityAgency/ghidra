@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,11 @@ import ghidra.app.plugin.assembler.sleigh.AbstractSleighAssemblerBuilder;
 import ghidra.app.plugin.assembler.sleigh.SleighAssemblerBuilder;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
-import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedBackfill;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
-import ghidra.app.plugin.processors.sleigh.Constructor;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
+import ghidra.app.plugin.languages.sleigh.InputContextScraper;
+import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 import ghidra.asm.wild.grammars.WildAssemblyProduction;
 import ghidra.asm.wild.sem.WildAssemblyResolutionFactory;
@@ -49,6 +49,7 @@ public class WildSleighAssemblerBuilder
 		extends AbstractSleighAssemblerBuilder<WildAssemblyResolvedPatterns, WildSleighAssembler> {
 
 	protected final Map<AssemblySymbol, AssemblyNonTerminal> wildNTs = new HashMap<>();
+	protected Set<AssemblyPatternBlock> inputContexts;
 
 	/**
 	 * Construct a builder for the given language
@@ -62,6 +63,19 @@ public class WildSleighAssemblerBuilder
 	 */
 	public WildSleighAssemblerBuilder(SleighLanguage lang) {
 		super(lang);
+	}
+
+	@Override
+	protected void generateAssembler() throws SleighException {
+		super.generateAssembler();
+		buildInputContexts();
+	}
+
+	protected void buildInputContexts() {
+		try (DbgCtx dc = dbg.start("Building input contexts")) {
+			InputContextScraper scraper = new InputContextScraper(lang);
+			this.inputContexts = scraper.scrapeInputContexts();
+		}
 	}
 
 	@Override
@@ -139,12 +153,13 @@ public class WildSleighAssemblerBuilder
 
 	@Override
 	protected WildSleighAssembler newAssembler(AssemblySelector selector) {
-		return new WildSleighAssembler(factory, selector, lang, parser, defaultContext, ctxGraph);
+		return new WildSleighAssembler(factory, selector, lang, parser, defaultContext,
+			inputContexts, ctxGraph);
 	}
 
 	@Override
 	protected WildSleighAssembler newAssembler(AssemblySelector selector, Program program) {
 		return new WildSleighAssembler(factory, selector, program, parser, defaultContext,
-			ctxGraph);
+			inputContexts, ctxGraph);
 	}
 }

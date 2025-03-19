@@ -15,8 +15,7 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
@@ -347,13 +346,13 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	public void testOnBreakpointModified() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			start(conn, getSpecimenPrint());
-			assertEquals(0, tb.objValues(lastSnap(conn), "Breakpoints[]").size());
+			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
 			//conn.execute("script lldb.debugger.SetAsync(False)");
 			conn.execute("breakpoint set -n main");
 			conn.execute("stepi");
 			TraceObject brk = waitForPass(() -> {
-				List<Object> brks = tb.objValues(lastSnap(conn), "Breakpoints[]");
+				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});

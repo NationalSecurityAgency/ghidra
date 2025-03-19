@@ -57,7 +57,7 @@ def main():
         print(f"RegMapFile: {os.getenv('EXDI_SYSTEM_REGISTERS_MAP_XML_FILE')}")
         util.set_convenience_variable('output-radix', 16)
         flags = 2
-    args = os.getenv('OPT_TARGET_ARGS')
+    args = os.getenv('OPT_KCONNECT_STRING')
     cmd.ghidra_trace_attach_kernel(args, flags, start_trace=False)
     
     # TODO: HACK

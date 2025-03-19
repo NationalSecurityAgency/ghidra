@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -564,7 +564,6 @@ public class MIPS_ElfExtension extends ElfExtension {
 			processMipsOptions(elfLoadHelper, mipsOptionsAddr);
 		}
 		if (regInfoAddr != null) {
-			// TODO: don't do this if mips options present and processed
 			processMipsRegInfo(elfLoadHelper, regInfoAddr);
 		}
 	}
@@ -645,7 +644,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			}
 		}
 		catch (AddressOutOfBoundsException | MemoryAccessException e) {
-			// ignore
+			// Ignore - No memory defined - possible *.debug file
 		}
 	}
 
@@ -723,6 +722,10 @@ public class MIPS_ElfExtension extends ElfExtension {
 			try {
 				// Create gp0 symbol in default space which represents a constant value (pinned)
 				Scalar gp0Value = gpValueComponent.getScalar(0);
+				if (gp0Value == null) {
+					// No memory defined - possible *.debug file
+					return;
+				}
 				long gp0 = gp0Value.getUnsignedValue();
 				if (multipleGp0.get() || otherGp0Value != null) {
 					if (multipleGp0.get() || gp0 != otherGp0Value) {

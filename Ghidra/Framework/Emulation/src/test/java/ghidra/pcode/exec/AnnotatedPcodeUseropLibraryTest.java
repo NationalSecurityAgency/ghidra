@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@ package ghidra.pcode.exec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
@@ -119,6 +120,26 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 
 		executeSleigh(library, "__testop(1234:4);");
 		assertBytes(1234, 4, library.input);
+	}
+
+	@Test
+	public void testIntInputIntOutput() throws Exception {
+		var library = new TestUseropLibrary() {
+			int input;
+
+			@PcodeUserop
+			private int __testop(int input) {
+				this.input = input;
+				return 5678;
+			}
+		};
+
+		PcodeExecutor<byte[]> executor = createBytesExecutor();
+		Register r0 = executor.getLanguage().getRegister("r0");
+
+		executeSleigh(executor, library, "r0 = __testop(1234:4);");
+		assertEquals(1234, library.input);
+		assertBytes(5678, 8, executor.getState().getVar(r0, Reason.INSPECT));
 	}
 
 	@Test
@@ -331,7 +352,7 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	public void testErrReturnType() throws Exception {
 		new TestUseropLibrary() {
 			@PcodeUserop
-			private int __testop() {
+			private char __testop() {
 				return 0;
 			}
 		};
@@ -341,7 +362,7 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	public void testErrInputType() throws Exception {
 		new TestUseropLibrary() {
 			@PcodeUserop
-			private void __testop(int in0) {
+			private void __testop(char in0) {
 			}
 		};
 	}

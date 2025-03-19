@@ -1,0 +1,226 @@
+@ ["all","Funcs","encoding/gob.isSent","Params",0]
+[
++ {"DataType":"reflect.Type","Name":"struct_"}
+  {"DataType":"*reflect.StructField","Name":"field"}
+@ ["all","Funcs","net/http.(*http2Framer).readMetaFrame","Results",0,"DataType"]
+- "*net/http.http2MetaHeadersFrame"
++ "net/http.http2Frame"
+@ ["all","Funcs","net/mail.isAtext","Params",2]
+  {"DataType":"bool","Name":"dot"}
+- {"DataType":"bool","Name":"permissive"}
+]
+@ ["all","Funcs","net/textproto.(*Reader).readContinuedLineSlice","Params",1]
+  {"DataType":"*net/textproto.Reader","Name":"r"}
++ {"DataType":"int64","Name":"lim"}
+  {"DataType":"func([]byte) error","Name":"validateFirstLine"}
+@ ["all","Funcs","net/textproto.(*Reader).readLineSlice","Params",1]
+  {"DataType":"*net/textproto.Reader","Name":"r"}
++ {"DataType":"int64","Name":"lim"}
+]
+@ ["all","Funcs","go/types.unalias"]
++ {"Flags":0,"Params":[{"DataType":"*go/types.Alias","Name":"a0"}],"Results":[{"DataType":"go/types.Type","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(context.Context, string, string) net.Conn, error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","func(error)","Params",0,"Name"]
+- "err"
++ ""
+@ ["all","Types","func(string) error"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"field"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["all","Types","os/exec.Cmd","Fields",22]
+  {"DataType":"error","Name":"lookPathErr"}
++ {"DataType":"string","Name":"cachedLookExtensions"}
+]
+@ ["darwin-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["darwin-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["darwin-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["darwin-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"field"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-amd64-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["darwin-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["darwin-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["darwin-arm64-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-386","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-386","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-386","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-386-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"field"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"field"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["linux-amd64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["linux-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-amd64-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-arm","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-arm","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-arm","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-arm-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-arm-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"field"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",0,"Name"]
+- "key"
++ "recv"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Params",1,"Name"]
+- "value"
++ "name"
+@ ["linux-arm64-cgo","Types","func(string, string) bool","Results",0,"Name"]
+- ""
++ "ok"
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"address"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["linux-arm64-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"field"}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","os.openFdAt"]
+- {"Flags":0,"Params":[{"DataType":"int","Name":"dirfd"},{"DataType":"string","Name":"name"}],"Results":[{"DataType":"*os.File","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["unix","Funcs","os.openDirAt"]
++ {"Flags":0,"Params":[{"DataType":"int","Name":"dirfd"},{"DataType":"string","Name":"name"}],"Results":[{"DataType":"*os.File","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["windows-386","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["windows-386","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["windows-386","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["windows-386-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-386-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-amd64","Types","func(string, string) bool","Params",0,"Name"]
+- "recv"
++ "key"
+@ ["windows-amd64","Types","func(string, string) bool","Params",1,"Name"]
+- "name"
++ "value"
+@ ["windows-amd64","Types","func(string, string) bool","Results",0,"Name"]
+- "ok"
++ ""
+@ ["windows-amd64","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["windows-amd64-cgo","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["windows-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"context.Context","Name":"ctx"},{"DataType":"string","Name":"network"},{"DataType":"string","Name":"addr"}],"Results":[{"DataType":"net.Conn","Name":""},{"DataType":"error","Name":""}],"TypeParams":[]}
+@ ["windows-amd64-cgo","Types","func(string) error"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":""}],"Results":[{"DataType":"error","Name":""}],"TypeParams":[]}

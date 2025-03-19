@@ -269,9 +269,10 @@ public enum VariableValueUtils {
 		RegisterValue spRV = regs.getValue(platform, viewSnap, sp);
 		Address spVal = cSpec.getStackBaseSpace().getAddress(spRV.getUnsignedValue().longValue());
 		Address max;
-		TraceMemoryRegion stackRegion = mem.getRegionContaining(coordinates.getSnap(), spVal);
+		long snap = coordinates.getSnap();
+		TraceMemoryRegion stackRegion = mem.getRegionContaining(snap, spVal);
 		if (stackRegion != null) {
-			max = stackRegion.getMaxAddress();
+			max = stackRegion.getMaxAddress(snap);
 		}
 		else {
 			long toMax = spVal.getAddressSpace().getMaxAddress().subtract(spVal);
@@ -363,15 +364,30 @@ public enum VariableValueUtils {
 	}
 
 	/**
+	 * Check if evaluation of the given varnode will require a frame
+	 * 
+	 * @param program the program containing the variable storage
+	 * @param varnode the varnode to evaluate
+	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
+	 *            {@link #collectSymbolStorage(ClangLine)}
+	 * @return true if a frame is required, false otherwise
+	 */
+	public static boolean requiresFrame(Program program, Varnode varnode,
+			AddressSetView symbolStorage) {
+		return new RequiresFrameEvaluator(symbolStorage).evaluateVarnode(program, varnode);
+	}
+
+	/**
 	 * Check if evaluation of the given p-code op will require a frame
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param op the op whose output to evaluation
 	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
 	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(PcodeOp op, AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateOp(null, op);
+	public static boolean requiresFrame(Program program, PcodeOp op, AddressSetView symbolStorage) {
+		return new RequiresFrameEvaluator(symbolStorage).evaluateOp(program, op);
 	}
 
 	/**
@@ -393,7 +409,7 @@ public enum VariableValueUtils {
 		if (stack == null) {
 			return null;
 		}
-		TraceStackFrame frame = stack.getFrame(0, false);
+		TraceStackFrame frame = stack.getFrame(snap, 0, false);
 		if (frame == null) {
 			return null;
 		}
@@ -523,7 +539,7 @@ public enum VariableValueUtils {
 	 * It's not the greatest, but any variable to be evaluated should only be expressed in terms of
 	 * symbols on the same line (at least by the decompiler's definition, wrapping shouldn't count
 	 * against us). This can be used to determine where evaluation should cease descending into
-	 * defining p-code ops. See {@link #requiresFrame(PcodeOp, AddressSetView)}, and
+	 * defining p-code ops. See {@link #requiresFrame(Program, PcodeOp, AddressSetView)}, and
 	 * {@link UnwoundFrame#evaluate(Program, PcodeOp, AddressSetView)}.
 	 * 
 	 * @param line the line
@@ -879,7 +895,11 @@ public enum VariableValueUtils {
 			}
 			Settings settings = type.getDefaultSettings();
 			if (address.isStackAddress()) {
-				address = frame.getBasePointer().add(address.getOffset());
+				Address base = frame.getBasePointer();
+				if (base == null) {
+					return null;
+				}
+				address = base.add(address.getOffset());
 				if (frame instanceof ListingUnwoundFrame listingFrame) {
 					settings = listingFrame.getComponentContaining(address);
 				}

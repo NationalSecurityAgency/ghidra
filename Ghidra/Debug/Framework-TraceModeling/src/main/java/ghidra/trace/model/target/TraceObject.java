@@ -181,6 +181,25 @@ public interface TraceObject extends TraceUniqueObject {
 	LifeSet getLife();
 
 	/**
+	 * Check if the object is alive at the given snap
+	 * 
+	 * <p>
+	 * This is preferable to {@link #getLife()}, when we only need to check one snap
+	 * 
+	 * @param snap the snap
+	 * @return true if alive, false if not
+	 */
+	boolean isAlive(long snap);
+
+	/**
+	 * Check if the object is alive at all in the given span
+	 * 
+	 * @param span the span
+	 * @return true if alive, false if not
+	 */
+	boolean isAlive(Lifespan span);
+
+	/**
 	 * Inserts this object at its canonical path for the given lifespan
 	 * 
 	 * <p>
@@ -491,7 +510,8 @@ public interface TraceObject extends TraceUniqueObject {
 	 * <p>
 	 * If an object has a disjoint life, i.e., multiple canonical parents, then only the
 	 * least-recent of those is traversed. Aliased keys are excluded; those can't be canonical
-	 * anyway.
+	 * anyway. By definition, a primitive value is not canonical, even if it is the final value in
+	 * the path.
 	 * 
 	 * @param relativeFilter filter on the relative path from this object to desired successors
 	 * @return the stream of value paths

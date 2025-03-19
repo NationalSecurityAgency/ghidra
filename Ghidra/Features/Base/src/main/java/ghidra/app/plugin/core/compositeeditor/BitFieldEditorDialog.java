@@ -145,7 +145,6 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 
 			BitFieldEditorPanel.BitFieldEditorContext editorContext =
 				(BitFieldEditorPanel.BitFieldEditorContext) context;
-
 			bitFieldEditorPanel.initAdd(null, editorContext.getAllocationOffset(),
 				editorContext.getSelectedBitOffset(), true);
 			setApplyEnabled(true);
@@ -279,6 +278,7 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		else {
 			initEdit(editOrdinal, false);
 		}
+		bitFieldEditorPanel.getAccessibleContext().setAccessibleName("Bit Field Editor");
 		return bitFieldEditorPanel;
 	}
 

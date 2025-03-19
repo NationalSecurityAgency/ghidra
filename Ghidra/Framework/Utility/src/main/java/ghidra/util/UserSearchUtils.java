@@ -230,7 +230,6 @@ public class UserSearchUtils {
 	 * <b>match exactly</b> the given input string.
 	 * <p>
 	 * This method can be used with {@link Matcher#matches()} or {@link Matcher#find()}.
-	 * <p>
 	 *
 	 * @param input
 	 * 			the string that you want to your matched strings to exactly match.
@@ -261,7 +260,6 @@ public class UserSearchUtils {
 	 * all strings that match the given input string.
 	 * <p>
 	 * This method can be used with {@link Matcher#matches()} or {@link Matcher#find()}.
-	 * <p>
 	 *
 	 * @param input
 	 * 			the string that you want to your matched strings to exactly match.
@@ -301,9 +299,15 @@ public class UserSearchUtils {
 	}
 
 	/**
-	 * Escapes regex characters, optionally turning globbing characters into valid regex syntax.
+	 * Convert user entered text into a regular expression, escaping regex characters, 
+	 * optionally turning globbing characters into valid regex syntax.
+	 * @param input the user entered text to be converted to a regular expression.
+	 * @param allowGlobbing if true, '*' and '?' will be converted to equivalent regular expression
+	 * syntax for wildcard matching, otherwise they will be treated as literal characters to be 
+	 * part of the search text. 
+	 * @return a converted text string suitable for use in a regular expression.
 	 */
-	private static String convertUserInputToRegex(String input, boolean allowGlobbing) {
+	public static String convertUserInputToRegex(String input, boolean allowGlobbing) {
 
 		String escaped = input;
 		if (allowGlobbing) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,6 +69,8 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * 
 	 * @param offset the offset
 	 * @param val the value
+	 * @param srcOffset offset within val to start
+	 * @param length the number of bytes to write
 	 */
 	public void write(long offset, byte[] val, int srcOffset, int length) {
 		bytes.putData(offset, val, srcOffset, length);
@@ -161,6 +163,26 @@ public class BytesPcodeExecutorStateSpace<B> {
 	}
 
 	/**
+	 * Compute the uninitialized span set, considering possible wrap-around
+	 * 
+	 * @param offset the offset
+	 * @param size the number of bytes
+	 * @return the uninitialized offset ranges
+	 */
+	protected ULongSpanSet computeUninitialized(long offset, int size) {
+		long max = offset + size - 1;
+		if (Long.compareUnsigned(max, space.getMaxAddress().getOffset()) <= 0 &&
+			Long.compareUnsigned(offset, max) <= 0) {
+			return bytes.getUninitialized(offset, max);
+		}
+		long end = space.getMinAddress().getOffset() + max - space.getMaxAddress().getOffset() - 1;
+		MutableULongSpanSet result = new DefaultULongSpanSet();
+		result.addAll(bytes.getUninitialized(offset, space.getMaxAddress().getOffset()));
+		result.addAll(bytes.getUninitialized(space.getMinAddress().getOffset(), end));
+		return result;
+	}
+
+	/**
 	 * Read a value from the space at the given offset
 	 * 
 	 * <p>
@@ -174,7 +196,7 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @return the bytes read
 	 */
 	public byte[] read(long offset, int size, Reason reason) {
-		ULongSpanSet uninitialized = bytes.getUninitialized(offset, offset + size - 1);
+		ULongSpanSet uninitialized = computeUninitialized(offset, size);
 		if (uninitialized.isEmpty()) {
 			return readBytes(offset, size, reason);
 		}

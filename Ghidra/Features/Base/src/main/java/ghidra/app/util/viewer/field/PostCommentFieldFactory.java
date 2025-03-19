@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,21 +137,22 @@ public class PostCommentFieldFactory extends FieldFactory {
 		}
 
 		String[] autoComment = getAutoPostComment(cu);
+		List<String> offcutComments = CommentUtils.getOffcutComments(cu, CommentType.POST);
 
 		String[] comments = cu.getCommentAsArray(CodeUnit.POST_COMMENT);
 		if (comments != null && comments.length > 0 && (cu instanceof Data)) {
-			return getTextField(comments, autoComment, proxy, x, false);
+			return getTextField(comments, autoComment, offcutComments, proxy, x, false);
 		}
 		if (cu instanceof Instruction) {
 			Instruction instr = (Instruction) cu;
 			if (instr.getDelaySlotDepth() > 0) {
 				if (comments != null && comments.length > 0) {
-					return getTextField(comments, null, proxy, x, false);
+					return getTextField(comments, null, offcutComments, proxy, x, false);
 				}
 				return null;
 			}
 			// check field options
-			return getTextFieldForOptions(instr, comments, autoComment, proxy, x);
+			return getTextFieldForOptions(instr, comments, autoComment, offcutComments, proxy, x);
 		}
 		return null;
 	}
@@ -386,7 +387,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 	}
 
 	private ListingTextField getTextFieldForOptions(Instruction instr, String[] comments,
-			String[] autoComment, ProxyObj<?> proxy, int xStart) {
+			String[] autoComment, List<String> offcutComments, ProxyObj<?> proxy, int xStart) {
 		Listing listing = instr.getProgram().getListing();
 		Address addr = instr.getMinAddress();
 		FlowType flowType = instr.getFlowType();
@@ -405,14 +406,14 @@ public class PostCommentFieldFactory extends FieldFactory {
 						String[] str = new String[] {
 							FUN_EXIT_FLAG_LEADER + function.getName() + FUN_EXIT_FLAG_TAIL };
 
-						return getTextField(str, autoComment, proxy, xStart, true);
+						return getTextField(str, autoComment, offcutComments, proxy, xStart, true);
 					}
 				}
 			}
 			// Add Jump/Terminator
 			if (flagJMPsRETs && !instr.hasFallthrough()) {
 				String[] str = new String[] { DEFAULT_FLAG_COMMENT };
-				return getTextField(str, autoComment, proxy, xStart, true);
+				return getTextField(str, autoComment, offcutComments, proxy, xStart, true);
 			}
 		}
 
@@ -472,11 +473,12 @@ public class PostCommentFieldFactory extends FieldFactory {
 				}
 			}
 		}
-		return getTextField(comments, autoComment, proxy, xStart, false);
+		return getTextField(comments, autoComment, offcutComments, proxy, xStart, false);
 	}
 
 	private ListingTextField getTextField(String[] comments, String[] autoComment,
-			ProxyObj<?> proxy, int xStart, boolean useLinesAfterBlock) {
+			List<String> offcutComments, ProxyObj<?> proxy, int xStart,
+			boolean useLinesAfterBlock) {
 
 		if (comments == null) {
 			comments = EMPTY_STRING_ARRAY;
@@ -489,7 +491,8 @@ public class PostCommentFieldFactory extends FieldFactory {
 			((comments.length == 0 && !useLinesAfterBlock) || alwaysShowAutomatic)
 					? autoComment.length
 					: 0;
-		if (!useLinesAfterBlock && comments.length == 0 && nLinesAutoComment == 0) {
+		if (!useLinesAfterBlock && comments.length == 0 && nLinesAutoComment == 0 &&
+			offcutComments.isEmpty()) {
 			return null;
 		}
 
@@ -506,6 +509,11 @@ public class PostCommentFieldFactory extends FieldFactory {
 		for (String comment : comments) {
 			fields.add(CommentUtils.parseTextForAnnotations(comment, program, prototypeString,
 				fields.size()));
+		}
+		for (String offcutComment : offcutComments) {
+			AttributedString as = new AttributedString(offcutComment, CommentColors.OFFCUT,
+				getMetrics(style), false, null);
+			fields.add(new TextFieldElement(as, fields.size(), 0));
 		}
 		if (isWordWrap) {
 			fields = FieldUtils.wrap(fields, width);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,18 +73,19 @@ public class GoInterfaceType extends GoType {
 
 	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
-		mhdr.markupArray(null, getStructureNamespace(), GoIMethod.class, false, session);
+		super.additionalMarkup(session);
+		mhdr.markupArray(getStructureLabel() + "_methods", getStructureNamespace(), GoIMethod.class,
+			false, session);
 		mhdr.markupArrayElements(GoIMethod.class, session);
 	}
 
 	@Override
-	public DataType recoverDataType() throws IOException {
+	public DataType recoverDataType(GoTypeManager goTypes) throws IOException {
 		DataType dt = programContext.getStructureDataType(GoIface.class);
 
-		String name = getUniqueTypename();
+		String name = goTypes.getTypeName(this);
 		if (!dt.getName().equals(name)) {
-			dt = new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
-				name, dt, programContext.getDTM());
+			dt = new TypedefDataType(goTypes.getCP(this), name, dt, goTypes.getDTM());
 		}
 		return dt;
 	}
@@ -92,24 +93,18 @@ public class GoInterfaceType extends GoType {
 	@Override
 	public String getMethodListString() throws IOException {
 		StringBuilder sb = new StringBuilder();
-		String ifaceName = getNameWithPackageString();
 		for (GoIMethod imethod : getMethods()) {
 			if (!sb.isEmpty()) {
 				sb.append("\n");
 			}
-			String methodStr = imethod.getName();
-			GoType type = imethod.getType();
-			if (type instanceof GoFuncType funcType) {
-				methodStr = funcType.getFuncPrototypeString(methodStr, ifaceName);
-			}
-			else {
-				methodStr = "func %s()".formatted(methodStr);
-			}
-			sb.append(methodStr);
+			String paramListStr = imethod.getType() instanceof GoFuncType funcdefType
+					? funcdefType.getParamListString()
+					: "(???)";
+			sb.append(imethod.getName()).append(paramListStr);
 		}
 		return sb.toString();
 	}
-
+	
 	@Override
 	public boolean discoverGoTypes(Set<Long> discoveredTypes) throws IOException {
 		if (!super.discoverGoTypes(discoveredTypes)) {
@@ -122,6 +117,11 @@ public class GoInterfaceType extends GoType {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isValid() {
+		return super.isValid() && typ.getSize() == programContext.getPtrSize() * 2; // runtime.iface?
 	}
 
 }

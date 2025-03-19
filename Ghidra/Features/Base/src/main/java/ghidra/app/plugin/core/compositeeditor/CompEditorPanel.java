@@ -195,9 +195,6 @@ public class CompEditorPanel extends CompositeEditorPanel {
 					model.setSelection(new int[] { dtc.getOrdinal() });
 					table.scrollToSelectedRow();
 				}
-				else {
-					model.setSelection(new FieldSelection());
-				}
 			}
 		});
 

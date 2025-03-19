@@ -144,19 +144,9 @@ public class JdiConnector {
 	}
 
 	public void registerRemoteMethod(JdiMethods methods, java.lang.reflect.Method m, String name) {
-		String action = name;
-		String display = name;
-		String description = name;
 		TraceMethod annot = m.getAnnotation(TraceMethod.class);
 		if (annot == null) {
 			return;
-		}
-		action = annot.action();
-		if (annot.display() != null) {
-			display = annot.display();
-		}
-		if (annot.description() != null) {
-			description = annot.description();
 		}
 		int pcount = m.getParameterCount();
 		if (pcount < 1) {
@@ -167,8 +157,8 @@ public class JdiConnector {
 		 * collection routines currently use the return type, so just use ANY for now.
 		 */
 		TraceObjectSchema schema = PrimitiveTraceObjectSchema.ANY;
-		RmiRemoteMethod method = new RmiRemoteMethod(rootSchema.getContext(), name, action, display,
-			description, schema, methods, m);
+		RmiRemoteMethod method = new RmiRemoteMethod(rootSchema.getContext(), name, annot.action(),
+			annot.display(), annot.description(), annot.okText(), annot.icon(), schema, methods, m);
 		remoteMethodRegistry.putMethod(name, method);
 	}
 

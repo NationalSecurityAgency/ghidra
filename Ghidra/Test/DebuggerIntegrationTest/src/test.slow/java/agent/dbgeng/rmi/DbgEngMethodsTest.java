@@ -343,9 +343,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				// Would be nice to control / validate the specifics
 				Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
-				TraceModule modBash =
-					Unique.assertOne(all.stream().filter(m -> m.getName().contains("notepad.exe")));
-				assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase()));
+				TraceModule modBash = Unique.assertOne(
+					all.stream().filter(m -> m.getName(SNAP).contains("notepad.exe")));
+				assertNotEquals(tb.addr(0), Objects.requireNonNull(modBash.getBase(SNAP)));
 			}
 		}
 	}

@@ -41,7 +41,8 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.target.path.PathFilter;
 import ghidra.trace.model.thread.TraceThread;
@@ -894,9 +895,9 @@ public class JavaCommandsTest extends AbstractJavaTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/HelloWorld.class")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			Collection<? extends TraceModule> all = tb.trace.getModuleManager().getAllModules();
-			TraceModule mod =
-				Unique.assertOne(all.stream().filter(m -> m.getName().contains("Thread.class")));
-			assertEquals(tb.addr(0x1000), Objects.requireNonNull(mod.getBase()));
+			TraceModule mod = Unique.assertOne(
+				all.stream().filter(m -> m.getName(SNAP).contains("Thread.class")));
+			assertEquals(tb.addr(0x1000), Objects.requireNonNull(mod.getBase(SNAP)));
 		}
 	}
 

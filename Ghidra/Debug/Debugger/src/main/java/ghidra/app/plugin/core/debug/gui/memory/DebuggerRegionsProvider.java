@@ -22,8 +22,6 @@ import java.util.Map.Entry;
 
 import javax.swing.*;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import db.Transaction;
 import docking.ActionContext;
 import docking.WindowPosition;
@@ -193,7 +191,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			}
 			AddressSet sel = new AddressSet();
 			for (TraceMemoryRegion s : regions) {
-				sel.add(s.getRange());
+				sel.add(s.getRange(current.getSnap()));
 			}
 			ProgramSelection ps = new ProgramSelection(sel);
 			listingService.setCurrentSelection(ps);
@@ -226,7 +224,6 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	private final JPanel mainPanel = new JPanel(new BorderLayout());
 
 	DebuggerRegionsPanel panel;
-	DebuggerLegacyRegionsPanel legacyPanel;
 
 	// TODO: Lazy construction of these dialogs?
 	private final DebuggerBlockChooserDialog blockChooserDialog;
@@ -273,7 +270,6 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	protected void buildMainPanel() {
 		panel = new DebuggerRegionsPanel(this);
 		mainPanel.add(panel);
-		legacyPanel = new DebuggerLegacyRegionsPanel(this);
 	}
 
 	protected void createActions() {
@@ -317,13 +313,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		final ActionContext context;
-		if (Trace.isLegacy(current.getTrace())) {
-			context = legacyPanel.getActionContext();
-		}
-		else {
-			context = panel.getActionContext();
-		}
+		final ActionContext context = panel.getActionContext();
 		if (context != null) {
 			return context;
 		}
@@ -331,10 +321,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	private boolean isContextNonEmpty(ActionContext context) {
-		if (context instanceof DebuggerRegionActionContext ctx) {
-			return legacyPanel.isContextNonEmpty(ctx);
-		}
-		else if (context instanceof DebuggerObjectActionContext ctx) {
+		if (context instanceof DebuggerObjectActionContext ctx) {
 			return panel.isContextNonEmpty(ctx);
 		}
 		return false;
@@ -353,10 +340,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	private Set<TraceMemoryRegion> getSelectedRegions(ActionContext context) {
-		if (context instanceof DebuggerRegionActionContext ctx) {
-			return DebuggerLegacyRegionsPanel.getSelectedRegions(ctx);
-		}
-		else if (context instanceof DebuggerObjectActionContext ctx) {
+		if (context instanceof DebuggerObjectActionContext ctx) {
 			return panel.getSelectedRegions(ctx);
 		}
 		return null;
@@ -403,7 +387,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		Map<?, RegionMapProposal> map = staticMappingService.proposeRegionMaps(regions,
-			List.of(programManager.getAllOpenPrograms()));
+			current.getSnap(), List.of(programManager.getAllOpenPrograms()));
 		Collection<RegionMapEntry> proposal = MapProposal.flatten(map.values());
 		promptRegionProposal(proposal);
 	}
@@ -416,7 +400,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return;
 		}
-		RegionMapProposal map = staticMappingService.proposeRegionMap(regions, program);
+		RegionMapProposal map =
+			staticMappingService.proposeRegionMap(regions, current.getSnap(), program);
 		Collection<RegionMapEntry> proposal = map.computeMap().values();
 		promptRegionProposal(proposal);
 	}
@@ -431,7 +416,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		RegionMapProposal map =
-			staticMappingService.proposeRegionMap(region, location.getProgram(), block);
+			staticMappingService.proposeRegionMap(region, current.getSnap(), location.getProgram(),
+				block);
 		promptRegionProposal(map.computeMap().values());
 	}
 
@@ -493,12 +479,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	public void setSelectedRegions(Set<TraceMemoryRegion> sel) {
-		if (Trace.isLegacy(current.getTrace())) {
-			legacyPanel.setSelectedRegions(sel);
-		}
-		else {
-			panel.setSelectedRegions(sel);
-		}
+		panel.setSelectedRegions(sel);
 	}
 
 	@Override
@@ -548,7 +529,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			Msg.warn(this, "No program manager!");
 			return null;
 		}
-		return blockChooserDialog.chooseBlock(getTool(), region,
+		return blockChooserDialog.chooseBlock(getTool(), region, current.getSnap(),
 			List.of(programManager.getAllOpenPrograms()));
 	}
 
@@ -559,25 +540,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		}
 
 		current = coordinates;
-
-		if (Trace.isLegacy(coordinates.getTrace())) {
-			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			legacyPanel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), legacyPanel) == -1) {
-				mainPanel.remove(panel);
-				mainPanel.add(legacyPanel);
-				mainPanel.validate();
-			}
-		}
-		else {
-			legacyPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
-			panel.coordinatesActivated(coordinates);
-			if (ArrayUtils.indexOf(mainPanel.getComponents(), panel) == -1) {
-				mainPanel.remove(legacyPanel);
-				mainPanel.add(panel);
-				mainPanel.validate();
-			}
-		}
+		panel.coordinatesActivated(coordinates);
 
 		contextChanged();
 	}

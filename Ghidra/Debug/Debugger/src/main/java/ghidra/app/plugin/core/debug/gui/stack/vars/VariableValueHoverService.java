@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -261,8 +261,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			}
 		}
 
-		record MappedLocation(Program stProg, Address stAddr, Address dynAddr) {
-		}
+		record MappedLocation(Program stProg, Address stAddr, Address dynAddr) {}
 
 		protected MappedLocation mapLocation(Program programOrView, Address address) {
 			if (programOrView instanceof TraceProgramView view) {
@@ -400,7 +399,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		public CompletableFuture<VariableValueTable> fillOperand(OperandFieldLocation opLoc,
 				Instruction ins) {
 			RefType refType = ins.getOperandRefType(opLoc.getOperandIndex());
-			if (refType.isFlow()) {
+			if (refType != null && refType.isFlow()) {
 				return null;
 			}
 			Object operand = ins.getDefaultOperandRepresentationList(opLoc.getOperandIndex())
@@ -409,7 +408,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				return fillRegister(ins, register);
 			}
 			Address refAddress = opLoc.getRefAddress();
-			if (operand instanceof Scalar scalar && refAddress != null) {
+			if (operand instanceof Scalar && refAddress != null) {
 				return fillReference(ins, refAddress);
 			}
 			if (operand instanceof Address address) {
@@ -432,11 +431,14 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 
 		public CompletableFuture<VariableValueTable> fillPcodeOp(Function function, String name,
 				DataType type, PcodeOp op, AddressSetView symbolStorage) {
+			Program program = function.getProgram();
+			boolean requiresFrame = applyCopyHeuristic(program, op, symbolStorage,
+				VariableValueUtils::requiresFrame, VariableValueUtils::requiresFrame);
 			return executeBackground(monitor -> {
-				UnwoundFrame<WatchValue> frame = VariableValueUtils.requiresFrame(op, symbolStorage)
+				UnwoundFrame<WatchValue> frame = requiresFrame
 						? eval.getStackFrame(function, warnings, monitor, true)
 						: eval.getGlobalsFakeFrame();
-				return fillFrameOp(frame, function.getProgram(), name, type, op, symbolStorage);
+				return fillFrameOp(frame, program, name, type, op, symbolStorage);
 			});
 		}
 
@@ -449,7 +451,9 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			table.add(new IntegerRow(value));
 			if (type != DataType.DEFAULT) {
 				String repr = eval.getRepresentation(frame, address, value, type);
-				table.add(new ValueRow(repr, value.state()));
+				if (repr != null) {
+					table.add(new ValueRow(repr, value.state()));
+				}
 			}
 			return table;
 		}
@@ -466,6 +470,33 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			return fillWatchValue(frame, storage.getMinAddress(), type, value);
 		}
 
+		interface CopyCase<T> {
+			T evaluate(Program program, Varnode varnode, AddressSetView symbolStorage);
+		}
+
+		interface DefaultCase<T> {
+			T evaluate(Program program, PcodeOp op, AddressSetView symbolStorage);
+		}
+
+		/**
+		 * XXX: This is a heuristic I'm not sure about. I'm going to assume a token whose p-code op
+		 * is a {@link PcodeOp#COPY} is an assignment statement. I suppose I could check that I'm on
+		 * the LHS of an assignment operator, but that could be difficult and complex.... In any
+		 * case, if it's an assignment, I'm going to evaluate the output of the output operand
+		 * instead. Trouble is, that may just traverse back over the copy, as the copy is the
+		 * defining operator. It might only work if I can guarantee the output is part of the symbol
+		 * storage.
+		 * 
+		 */
+		protected <T> T applyCopyHeuristic(Program program, PcodeOp op,
+				AddressSetView symbolStorage,
+				CopyCase<T> copyCase, DefaultCase<T> defaultCase) {
+			return switch (op.getOpcode()) {
+				case PcodeOp.COPY -> copyCase.evaluate(program, op.getOutput(), symbolStorage);
+				default -> defaultCase.evaluate(program, op, symbolStorage);
+			};
+		}
+
 		public VariableValueTable fillFrameOp(UnwoundFrame<WatchValue> frame, Program program,
 				String name, DataType type, PcodeOp op, AddressSetView symbolStorage) {
 			table.add(new NameRow(name));
@@ -473,7 +504,10 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				table.add(new FrameRow(frame));
 			}
 			table.add(new TypeRow(type));
-			WatchValue value = frame.evaluate(program, op, symbolStorage);
+
+			WatchValue value =
+				applyCopyHeuristic(program, op, symbolStorage, frame::evaluate, frame::evaluate);
+
 			// TODO: What if the type is dynamic with non-fixed size?
 			if (type.getLength() != value.length()) {
 				value = frame.zext(value, type.getLength());

@@ -41,8 +41,8 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 	 * require that a language be loaded or a program be opened and not all options require an
 	 * AddressFactory.  If null, address based options will not be available.
 	 */
-	public OptionsDialog(List<Option> originalOptions,
-			OptionValidator validator, AddressFactoryService addressFactoryService) {
+	public OptionsDialog(List<Option> originalOptions, OptionValidator validator,
+			AddressFactoryService addressFactoryService) {
 		super("Options");
 
 		this.validator = validator;
@@ -57,7 +57,7 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 		}
 
 		optionRenderer = new OptionsEditorPanel(options, addressFactoryService);
-
+		optionRenderer.getAccessibleContext().setAccessibleName("Options");
 		addOKButton();
 		addCancelButton();
 		addWorkPanel(optionRenderer);

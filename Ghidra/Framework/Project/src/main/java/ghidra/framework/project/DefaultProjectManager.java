@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,12 +119,12 @@ public class DefaultProjectManager implements ProjectManager {
 
 	@Override
 	public Project openProject(ProjectLocator projectLocator, boolean doRestore, boolean resetOwner)
-			throws NotFoundException, NotOwnerException, LockException {
+			throws NotFoundException, NotOwnerException, LockException, IOException {
 
 		if (currentProject != null) {
-			Msg.error(this,
-				"Current project must be closed before establishing a new active project");
-			return null;
+			String msg = "Current project must be closed before establishing a new active project";
+			Msg.error(this, msg);
+			throw new LockException(msg);
 		}
 
 		if (!projectLocator.getMarkerFile().exists()) {
@@ -141,7 +141,6 @@ public class DefaultProjectManager implements ProjectManager {
 
 		try {
 			currentProject = new DefaultProject(this, projectLocator, resetOwner);
-			AppInfo.setActiveProject(currentProject);
 			if (doRestore) {
 				currentProject.restore();
 			}
@@ -152,17 +151,22 @@ public class DefaultProjectManager implements ProjectManager {
 			return currentProject;
 		}
 		catch (LockException e) {
-			return null;
+			Msg.showError(LOG, null, "Locked Project!",
+				"Cannot open locked project: " + projectLocator, e);
+			throw e;
 		}
 		catch (ReadOnlyException e) {
 			Msg.showError(LOG, null, "Read-only Project!",
-				"Cannot open project for update: " + projectLocator);
+				"Could not open project for update: " + projectLocator, e);
+			throw e;
 		}
 		catch (IOException e) {
 			Msg.showError(LOG, null, "Open Project Failed!",
-				"Could not open project " + projectLocator + "\n \nCAUSE: " + e.getMessage());
+				"Could not open project " + projectLocator + "\n \nCAUSE: " + e.getMessage(), e);
+			throw e;
 		}
 		finally {
+			AppInfo.setActiveProject(currentProject);
 			if (currentProject == null) {
 				File dirFile = projectLocator.getProjectDir();
 				if (!dirFile.exists() || !dirFile.isDirectory()) {
@@ -170,8 +174,6 @@ public class DefaultProjectManager implements ProjectManager {
 				}
 			}
 		}
-		AppInfo.setActiveProject(null);
-		return null;
 	}
 
 	/**

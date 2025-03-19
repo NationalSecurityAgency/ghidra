@@ -34,6 +34,7 @@ import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -49,7 +50,8 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
@@ -1443,8 +1445,10 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionContext createContext(TraceObject object) {
+		Trace trace = object.getTrace();
+		DebuggerCoordinates coords = getTraceManager().getCurrentFor(trace);
 		TraceObjectValue value = object.getCanonicalParents(Lifespan.ALL).findAny().orElseThrow();
-		return new DebuggerObjectActionContext(List.of(value), null, null);
+		return new DebuggerObjectActionContext(List.of(value), null, null, coords.getSnap());
 	}
 
 	default ActionContext createContext(TraceThread thread) {
@@ -1470,7 +1474,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	default ActionEntry findAction(Target target, ActionName action, ActionContext context) {
-		return target.collectActions(action, context)
+		return target.collectActions(action, context, ObjectArgumentPolicy.EITHER_AND_RELATED)
 				.values()
 				.stream()
 				.filter(e -> !e.requiresPrompt())
@@ -1719,8 +1723,7 @@ public interface FlatDebuggerAPI {
 	 * This does not consider the current snap. It only considers a live target thread in the
 	 * present. In other words, if the user rewinds trace history to a point where the thread was
 	 * alive, this method still considers that thread terminated. To compute state with respect to
-	 * trace history, use {@link TraceThread#getLifespan()} and check if it contains the current
-	 * snap.
+	 * trace history, use {@link TraceThread#isValid(long)}.
 	 * 
 	 * @param thread
 	 * @return the thread's execution state
@@ -1740,7 +1743,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if alive
 	 */
 	default boolean isTargetAlive(Trace trace) {
-		return getExecutionState(trace).isAlive();
+		return getExecutionState(trace) != TraceExecutionState.TERMINATED;
 	}
 
 	/**
@@ -1763,7 +1766,7 @@ public interface FlatDebuggerAPI {
 	 * @return true if alive
 	 */
 	default boolean isThreadAlive(TraceThread thread) {
-		return getExecutionState(thread).isAlive();
+		return getExecutionState(thread) != TraceExecutionState.TERMINATED;
 	}
 
 	/**
@@ -1792,7 +1795,7 @@ public interface FlatDebuggerAPI {
 	 * @throws TimeoutException if the timeout expires
 	 */
 	default void waitForBreak(Trace trace, long timeout, TimeUnit unit) throws TimeoutException {
-		if (!getExecutionState(trace).isRunning()) {
+		if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 			return;
 		}
 		var listener = new DomainObjectListener() {
@@ -1800,14 +1803,14 @@ public interface FlatDebuggerAPI {
 
 			@Override
 			public void domainObjectChanged(DomainObjectChangedEvent ev) {
-				if (!getExecutionState(trace).isRunning()) {
+				if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 					future.complete(null);
 				}
 			}
 		};
 		trace.addListener(listener);
 		try {
-			if (!getExecutionState(trace).isRunning()) {
+			if (getExecutionState(trace) != TraceExecutionState.RUNNING) {
 				return;
 			}
 			listener.future.get(timeout, unit);

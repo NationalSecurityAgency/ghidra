@@ -99,7 +99,8 @@
  class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
  class="advanced" href="B2-Emulation.html">Emulation</a><a
  class="advanced" href="B3-Scripting.html">Scripting</a><a
- class="advanced" href="B4-Modeling.html">Modeling</a>
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
 </header>
 <header id="title-block-header">
 <h1 class="title">Ghidra Debugger</h1>
@@ -160,22 +161,26 @@ Memory/Hex, and the Decompiler, right-click and select <img
 src="images/breakpoint-enable.png" alt="set breakpoint" /> Set
 Breakpoint, press <strong><code>K</code></strong> on the keyboard, or
 double-click the margin.</li>
+<li>From the Breakpoints window, use the <strong>Set Breakpoint</strong>
+dropdown to to access the various breakpoint actions defined by
+GDB.</li>
 <li>From the Terminal window, use the GDB command, e.g.,
 <code>break main</code>.</li>
 </ol>
 <p>The advantage of using the listings is that you can quickly set a
-breakpoint at any address. The advantage of using the Terminal window is
-that you can specify something other than an address. Often, those
-specifications still resolve to addresses, and Ghidra will display them.
-Ghidra will memorize breakpoints by recording them as special bookmarks
-in the program database. There is some iconography to communicate the
-various states of a breakpoint. When all is well and normal, you should
-only see enabled <img src="images/breakpoint-enable.png"
-alt="enabled breakpoint" /> and disabled <img
-src="images/breakpoint-disable.png" alt="disabled breakpoint" />
-breakpoints. If the target is terminated (or not launched yet), you may
-also see ineffective <img src="images/breakpoint-enable-ineff.png"
-alt="ineffective breakpoint" /> breakpoints.</p>
+breakpoint at any address. The advantage of using the dropdown action or
+Terminal window is that you can specify something other than an address.
+Often, those specifications still resolve to addresses, and Ghidra will
+display them. Ghidra will memorize breakpoints by recording them as
+special bookmarks in the program database. There is some iconography to
+communicate the various states of a breakpoint. When all is well and
+normal, you should only see enabled <img
+src="images/breakpoint-enable.png" alt="enabled breakpoint" /> and
+disabled <img src="images/breakpoint-disable.png"
+alt="disabled breakpoint" /> breakpoints. If the target is terminated
+(or not launched yet), you may also see ineffective <img
+src="images/breakpoint-enable-ineff.png" alt="ineffective breakpoint" />
+breakpoints.</p>
 </section>
 <section id="examining-minesweeper-board-setup" class="level2">
 <h2>Examining Minesweeper Board Setup</h2>
@@ -273,7 +278,9 @@ toggle action, press <strong><code>K</code></strong> on the keyboard, or
 double-click its icon in the margin.</li>
 <li>From the Model window, expand the <em>Breakpoints</em> node and
 double-click a breakpoint, or select one with the keyboard and press
-<strong><code>ENTER</code></strong>.</li>
+<strong><code>ENTER</code></strong>. For GDB, this must be done from the
+top-level <em>Breakpoints</em> node, not the one subordinate to the
+<em>inferior</em>.</li>
 <li>From the Breakpoints window, single-click the breakpoint’s status
 icon, right-click an entry and select a toggle action, or create a
 selection and use a toggling action from the local toolbar. Either panel
@@ -340,7 +347,8 @@ synchronized after importing libc</figcaption>
 <section id="troubleshooting" class="level4">
 <h4>Troubleshooting</h4>
 <p>If it seems nothing has changed, except now you have a second program
-database open, then the new module may not be successfully mapped.</p>
+database open, then the new module may not be successfully mapped. Try
+one or more of the following:</p>
 <ol type="1">
 <li>Re-check the Debug Console window and verify the note has been
 removed.</li>
@@ -349,6 +357,9 @@ system, so the name of the module and the name of the program database
 do not match.</li>
 <li>Ensure that <code>libc</code> is the current program (tab) in the
 Static Listing.</li>
+<li>Wait for auto-analysis of <code>libc</code> to complete. Yeah, it
+may take a moment, but auto-mapping is queued as a background task, and
+so it cannot map things until auto-analysis is done.</li>
 <li>In the Modules window, right-click on <code>libc</code>, and select
 <strong>Map Module to libc</strong>. (Names and titles will likely
 differ.)</li>
@@ -446,7 +457,7 @@ boards for any <code>termmines</code> session.</p>
 <p>Write a program that takes a seed from the user and prints a diagram
 of the first game board with the mines indicated. Optionally, have it
 print each subsequent game board when the user presses
-<strong>ENTER</strong>. Check your work by re-launching
+<strong><code>ENTER</code></strong>. Check your work by re-launching
 <code>termmines</code>, capturing its seed, inputting it into your
 program, and then winning the game. Optionally, win 2 more games in the
 same session.</p>

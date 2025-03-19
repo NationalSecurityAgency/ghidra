@@ -62,6 +62,7 @@ public class ChooseColumnsDialog extends DialogComponentProvider {
 
 		ghidraTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 		ghidraTable.setAutoLookupColumn(1);
+		ghidraTable.getAccessibleContext().setAccessibleName("Columns");
 		TableColumn enabledColumn = ghidraTable.getColumnModel().getColumn(0);
 		int enabledColumnWidth = 50;
 		enabledColumn.setPreferredWidth(enabledColumnWidth);//visible column
@@ -75,7 +76,9 @@ public class ChooseColumnsDialog extends DialogComponentProvider {
 		setRememberSize(true);
 
 		JPanel buttonPanel = new JPanel();
+		buttonPanel.getAccessibleContext().setAccessibleName("Buttons");
 		JButton selectAllButton = new JButton("Select All");
+		selectAllButton.getAccessibleContext().setAccessibleName("Select All");
 		selectAllButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -84,6 +87,7 @@ public class ChooseColumnsDialog extends DialogComponentProvider {
 		});
 
 		JButton deselectAllButton = new JButton("Deselect All");
+		deselectAllButton.getAccessibleContext().setAccessibleName("Deselect All");
 		deselectAllButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -96,6 +100,8 @@ public class ChooseColumnsDialog extends DialogComponentProvider {
 
 		JPanel panel = new JPanel(new BorderLayout());
 		JScrollPane scrollPane = new JScrollPane(ghidraTable);
+		panel.getAccessibleContext().setAccessibleName("Select Columns");
+		scrollPane.getAccessibleContext().setAccessibleName("Scroll");
 		panel.add(scrollPane);
 		panel.add(buttonPanel, BorderLayout.SOUTH);
 		addWorkPanel(panel);
@@ -190,13 +196,11 @@ public class ChooseColumnsDialog extends DialogComponentProvider {
 			JComponent renderer = null;
 			if (column == 0) {
 				TableCellRenderer booleanRenderer = table.getDefaultRenderer(Boolean.class);
-				renderer =
-					(JComponent) booleanRenderer.getTableCellRendererComponent(table, value,
-						isSelected, hasFocus, row, column);
+				renderer = (JComponent) booleanRenderer.getTableCellRendererComponent(table, value,
+					isSelected, hasFocus, row, column);
 			}
 			else {
-				renderer =
-					(JComponent) super.getTableCellRendererComponent(data);
+				renderer = (JComponent) super.getTableCellRendererComponent(data);
 			}
 
 			if (isSelected) {

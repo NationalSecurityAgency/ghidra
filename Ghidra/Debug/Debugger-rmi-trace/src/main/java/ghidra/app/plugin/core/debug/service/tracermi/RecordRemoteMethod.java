@@ -17,14 +17,33 @@ package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.util.Map;
 
+import javax.swing.Icon;
+
 import ghidra.debug.api.target.ActionName;
-import ghidra.debug.api.tracermi.*;
+import ghidra.debug.api.tracermi.RemoteMethod;
+import ghidra.debug.api.tracermi.RemoteParameter;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.schema.TraceObjectSchema.SchemaName;
 
 public record RecordRemoteMethod(TraceRmiHandler handler, String name, ActionName action,
-		String display, String description, Map<String, RemoteParameter> parameters,
-		SchemaName retType) implements RemoteMethod {
+		String display, Icon icon, String okText, String description,
+		Map<String, RemoteParameter> parameters, SchemaName retType) implements RemoteMethod {
+
+	public RecordRemoteMethod {
+		if (display == null || display.isBlank()) {
+			display = action.display();
+		}
+		if (display == null || display.isBlank()) { // still
+			display = name;
+		}
+		if (icon == null) {
+			icon = action.icon();
+		}
+		if (okText.isEmpty() || okText.isBlank()) {
+			okText = action.okText();
+		}
+	}
+
 	@Override
 	public DefaultRemoteAsyncResult invokeAsync(Map<String, Object> arguments) {
 		Trace trace = validate(arguments);

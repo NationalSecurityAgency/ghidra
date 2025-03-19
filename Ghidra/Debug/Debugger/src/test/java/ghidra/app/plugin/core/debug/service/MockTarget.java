@@ -27,8 +27,8 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceExecutionState;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
@@ -71,7 +71,8 @@ public class MockTarget implements Target {
 	}
 
 	@Override
-	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context) {
+	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context,
+			ObjectArgumentPolicy policy) {
 		return Map.of();
 	}
 

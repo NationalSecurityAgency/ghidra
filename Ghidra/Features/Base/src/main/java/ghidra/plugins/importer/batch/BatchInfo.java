@@ -174,7 +174,7 @@ public class BatchInfo {
 	 * <p>
 	 * If the file is a container for other files, this method will iterate through those
 	 * child files and recursively try to add them using this method.
-	 * <p>
+	 * 
 	 * @param fsrl {@link FSRL} of the file to add.
 	 * @param taskMonitor {@link TaskMonitor} to watch and update with progress.
 	 * @return boolean true if something in the file produced something to import.
@@ -207,7 +207,7 @@ public class BatchInfo {
 	 * <p>
 	 * The file is probed for high-priority filesystems first, then if no matches,
 	 * Ghidra loaders, and then if no matches, all filesystems.
-	 * <p>
+	 * 
 	 * @param fsrl {@link FSRL} of the file to probe and process
 	 * @param taskMonitor {@link TaskMonitor} to watch and update.
 	 * @return boolean true if something in the file produced something to import.
@@ -421,7 +421,7 @@ public class BatchInfo {
 	 * <p>
 	 * Doing this requires rescanning all original user-added source files and stopping
 	 * at the new max depth.
-	 * <p>
+	 * 
 	 * @param newMaxDepth new value for the max depth
 	 */
 	public void setMaxDepth(int newMaxDepth) {

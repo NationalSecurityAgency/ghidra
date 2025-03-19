@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import docking.widgets.OptionDialog;
 import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import docking.wizard.WizardManager;
-import generic.theme.GIcon;
+import docking.wizard.WizardDialog;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ConvertFileSystem;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.wizard.project.ProjectChooseRepositoryWizardModel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.PluginToolAccessUtils;
@@ -56,7 +56,6 @@ import help.HelpService;
  */
 public class ProjectInfoDialog extends DialogComponentProvider {
 
-	private final static Icon CONVERT_ICON = new GIcon("icon.project.info.convert");
 	public final static String CHANGE = "Change Shared Project Info...";
 	final static String CONVERT = "Convert to Shared...";
 
@@ -118,7 +117,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		mainPanel.add(buildInfoPanel());
 		mainPanel.add(buildRepositoryInfoPanel());
 		mainPanel.add(buildButtonPanel());
-
+		mainPanel.getAccessibleContext().setAccessibleName("Project Info");
 		return mainPanel;
 	}
 
@@ -134,8 +133,10 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		JLabel dirLabel = new GLabel("Directory Location:", SwingConstants.RIGHT);
 		dirLabel.setToolTipText("Directory where your project files reside.");
+		dirLabel.getAccessibleContext().setAccessibleName("Directory");
 		infoPanel.add(dirLabel);
 		projectDirLabel = new GDLabel(dir.getAbsolutePath());
+		projectDirLabel.getAccessibleContext().setAccessibleName("Project Directory");
 		infoPanel.add(projectDirLabel);
 
 		infoPanel.add(new GLabel("Project Storage Type:", SwingConstants.RIGHT));
@@ -153,20 +154,24 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		JLabel label = new GLabel(fsClassName);
 		label.setName("Project Storage Type");
+		label.getAccessibleContext().setAccessibleName("Info");
 		infoPanel.add(label);
 		infoPanel.add(new GLabel("Project Name:", SwingConstants.RIGHT));
 		label = new GLabel(project.getName());
 		label.setName("Project Name");
 		infoPanel.add(label);
+		infoPanel.getAccessibleContext().setAccessibleName("Info");
 
 		outerPanel.add(infoPanel);
+		outerPanel.getAccessibleContext().setAccessibleName("Info");
 		return outerPanel;
 	}
 
 	private JPanel buildButtonPanel() {
 		JPanel buttonPanel = new JPanel(new BorderLayout());
-
+		buttonPanel.getAccessibleContext().setAccessibleName("Buttons");
 		changeConvertButton = new JButton(repository != null ? CHANGE : CONVERT);
+		changeConvertButton.getAccessibleContext().setAccessibleName("Change Convert");
 		changeConvertButton.addActionListener(e -> {
 			if (changeConvertButton.getText().equals(CONVERT)) {
 				convertToShared();
@@ -201,9 +206,11 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 				new HelpLocation(GenericHelpTopics.FRONT_END, "Convert_Project_Storage"));
 			convertStorageButton
 					.setToolTipText("Convert/Upgrade project storage to latest Indexed Filesystem");
+			convertStorageButton.getAccessibleContext().setAccessibleName("Convert Storage");
 		}
 
 		JPanel p = new JPanel(new FlowLayout());
+		p.getAccessibleContext().setAccessibleName("Convert Storage");
 		p.add(changeConvertButton);
 		if (convertStorageButton != null) {
 			p.add(convertStorageButton);
@@ -233,32 +240,41 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 		JPanel panel = new JPanel(new PairLayout(5, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+		panel.getAccessibleContext().setAccessibleName("Repository Info");
 
 		JLabel sLabel = new GDLabel("Server Name:", SwingConstants.RIGHT);
+		sLabel.getAccessibleContext().setAccessibleName("Server Name");
 		panel.add(sLabel);
 		serverLabel = new GDLabel(serverName);
 		serverLabel.setName("Server Name");
+		serverLabel.getAccessibleContext().setAccessibleName("Server Name");
 		panel.add(serverLabel);
 
 		JLabel pLabel = new GDLabel("Port Number:", SwingConstants.RIGHT);
+		pLabel.getAccessibleContext().setAccessibleName("Port Number");
 		panel.add(pLabel);
 		portLabel = new GDLabel(portNumberStr);
 		portLabel.setName("Port Number");
+		portLabel.getAccessibleContext().setAccessibleName("Port Number");
 		panel.add(portLabel);
 
 		JLabel repLabel = new GDLabel("Repository Name:", SwingConstants.RIGHT);
+		repLabel.getAccessibleContext().setAccessibleName("Repository Name");
 		panel.add(repLabel);
 		repNameLabel = new GDLabel(repositoryName);
 		repNameLabel.setName("Repository Name");
+		repNameLabel.getAccessibleContext().setAccessibleName("Repository Name");
 		panel.add(repNameLabel);
 
 		JLabel connectLabel = new GDLabel("Connection Status:", SwingConstants.RIGHT);
+		connectLabel.getAccessibleContext().setAccessibleName("Connection Status");
 		panel.add(connectLabel);
 
 		connectionButton = new GButton(
 			isConnected ? FrontEndPlugin.CONNECTED_ICON : FrontEndPlugin.DISCONNECTED_ICON);
 		connectionButton.addActionListener(e -> connect());
 		connectionButton.setName("Connect Button");
+		connectionButton.getAccessibleContext().setAccessibleName("Connect");
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
 		connectionButton
@@ -272,10 +288,12 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder());
 		buttonPanel.add(connectionButton);
+		buttonPanel.getAccessibleContext().setAccessibleName("Button");
 		panel.add(buttonPanel);
 
 		JLabel userLabel = new GDLabel("User Access Level:", SwingConstants.RIGHT);
 		userLabel.setToolTipText("Indicates your privileges in the shared repository");
+		userLabel.getAccessibleContext().setAccessibleName("User Access Level");
 		panel.add(userLabel);
 		User user = null;
 		if (isConnected) {
@@ -288,6 +306,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		}
 		userAccessLabel = new GDLabel(getAccessString(user));
 		userAccessLabel.setName("User Access Level");
+		userAccessLabel.getAccessibleContext().setAccessibleName("User Access Level");
 		panel.add(userLabel);
 		panel.add(userAccessLabel);
 
@@ -301,6 +320,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			connectionButton.setEnabled(false);
 			userLabel.setEnabled(false);
 		}
+		outerPanel.getAccessibleContext().setAccessibleName("Repository Info");
 		return outerPanel;
 	}
 
@@ -354,15 +374,16 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		if (!checkToolsClose()) {
 			return;
 		}
+		RepositoryAdapter currentRepository = project.getRepository();
+		ServerInfo serverInfo = currentRepository.getServerInfo();
+		ProjectChooseRepositoryWizardModel model =
+			new ProjectChooseRepositoryWizardModel(plugin.getTool(),
+				"Change Shared Project Information", serverInfo);
+		WizardDialog dialog = new WizardDialog(model);
+		dialog.show(getComponent());
+		RepositoryAdapter rep = model.getRepository();
 
-		SetupProjectPanelManager panelManager =
-			new SetupProjectPanelManager(plugin.getTool(), project.getRepository().getServerInfo());
-		WizardManager wm = new WizardManager("Change Shared Project Information", true,
-			panelManager, CONVERT_ICON);
-		wm.showWizard(getComponent());
-		RepositoryAdapter rep = panelManager.getProjectRepository();
 		if (rep != null) {
-			RepositoryAdapter currentRepository = project.getRepository();
 			if (currentRepository.getServerInfo().equals(rep.getServerInfo()) &&
 				currentRepository.getName().equals(rep.getName())) {
 				Msg.showInfo(getClass(), getComponent(), "No Changes Made",
@@ -458,12 +479,12 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		if (!checkToolsClose()) {
 			return;
 		}
+		ProjectChooseRepositoryWizardModel model =
+			new ProjectChooseRepositoryWizardModel(plugin.getTool(), "Convert Project");
+		WizardDialog dialog = new WizardDialog(model);
+		dialog.show(getComponent());
 
-		SetupProjectPanelManager panelManager =
-			new SetupProjectPanelManager(plugin.getTool(), null);
-		WizardManager wm = new WizardManager("Convert Project", true, panelManager, CONVERT_ICON);
-		wm.showWizard(getComponent());
-		RepositoryAdapter rep = panelManager.getProjectRepository();
+		RepositoryAdapter rep = model.getRepository();
 		if (rep != null) {
 			StringBuffer confirmMsg = new StringBuffer();
 			confirmMsg.append("All version history on your files will be\n" +

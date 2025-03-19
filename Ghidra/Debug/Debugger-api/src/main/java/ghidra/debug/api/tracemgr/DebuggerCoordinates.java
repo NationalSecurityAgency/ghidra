@@ -66,7 +66,7 @@ public class DebuggerCoordinates {
 	private static final String KEY_FRAME = "Frame";
 	private static final String KEY_OBJ_PATH = "ObjectPath";
 
-	public static boolean equalsIgnoreRecorderAndView(DebuggerCoordinates a,
+	public static boolean equalsIgnoreTargetAndView(DebuggerCoordinates a,
 			DebuggerCoordinates b) {
 		if (!Objects.equals(a.trace, b.trace)) {
 			return false;
@@ -320,8 +320,9 @@ public class DebuggerCoordinates {
 				return objThread.getCanonicalPath();
 			}
 			TraceStack stack;
+			long snap = time.getSnap();
 			try {
-				stack = thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+				stack = thread.getTrace().getStackManager().getStack(thread, snap, false);
 			}
 			catch (IllegalStateException e) {
 				// Schema does not specify a stack
@@ -330,7 +331,7 @@ public class DebuggerCoordinates {
 			if (stack == null) {
 				return objThread.getCanonicalPath();
 			}
-			TraceStackFrame frame = stack.getFrame(frameLevel, false);
+			TraceStackFrame frame = stack.getFrame(snap, frameLevel, false);
 			if (frame == null) {
 				return objThread.getCanonicalPath();
 			}
@@ -406,15 +407,44 @@ public class DebuggerCoordinates {
 			return NOWHERE;
 		}
 		long snap = newTime.getSnap();
-		Lifespan threadLifespan = thread == null ? null : thread.getLifespan();
-		TraceThread newThread = threadLifespan != null && threadLifespan.contains(snap) ? thread
-				: resolveThread(trace, target, newTime);
+		boolean isThreadValid = thread == null ? false : thread.isValid(snap);
+		TraceThread newThread = isThreadValid ? thread : resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
 		KeyPath threadOrFramePath = resolvePath(newThread, newFrame, newTime);
 		KeyPath newPath = choose(path, threadOrFramePath);
 		return new DebuggerCoordinates(trace, platform, target, newThread, view, newTime,
 			newFrame, newPath);
+	}
+
+	/**
+	 * Checks if the given coordinates are the same as this but with an extra or differing patch.
+	 * 
+	 * @param that the other coordinates
+	 * @return true if the difference is only in the final patch step
+	 */
+	public boolean differsOnlyByPatch(DebuggerCoordinates that) {
+		if (!Objects.equals(this.trace, that.trace)) {
+			return false;
+		}
+
+		if (!Objects.equals(this.platform, that.platform)) {
+			return false;
+		}
+		if (!Objects.equals(this.thread, that.thread)) {
+			return false;
+		}
+		// Consider defaults
+		if (!Objects.equals(this.getFrame(), that.getFrame())) {
+			return false;
+		}
+		if (!Objects.equals(this.getObject(), that.getObject())) {
+			return false;
+		}
+		if (!this.getTime().differsOnlyByPatch(that.getTime())) {
+			return false;
+		}
+		return true;
 	}
 
 	public DebuggerCoordinates frame(int newFrame) {
@@ -621,7 +651,11 @@ public class DebuggerCoordinates {
 		if (registerContainer != null) {
 			return registerContainer;
 		}
-		return registerContainer = getObject().findRegisterContainer(getFrame());
+		TraceObject object = getObject();
+		if (object == null) {
+			return null;
+		}
+		return registerContainer = object.findRegisterContainer(getFrame());
 	}
 
 	public synchronized long getViewSnap() {

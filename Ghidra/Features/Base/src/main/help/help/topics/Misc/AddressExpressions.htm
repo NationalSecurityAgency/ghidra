@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Address Expressions</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Address_Expressions"></A>Address Expressions<BR>
+    </H1>
+
+    <BLOCKQUOTE>
+      <P>An address expression is an arithmetic expression that is entered into an address input
+      field and can include symbol names or memory block names that when evaluated results in a
+      program address.</P>
+
+      <H2>Operands</H2>
+
+      <BLOCKQUOTE>
+        <P>Operands can be either a number or a name that evaluates to an address.</P>
+
+        <H3>Names</H3>
+
+        <BLOCKQUOTE>
+          <P>If the operand is a name, then an attempt will be made to find a unique label or
+          function name in the current program for that name. If that fails, then memory blocks
+          will be searched looking for a memory block with that name. In either case, the associated
+          address for that label, function, or memory block will be used in evaluating the
+          expression.</P>
+
+          <P>Generally, symbols (addresses) must be the left operand for a binary operator and will
+          generate a address as the result (maintaining the address space). The one exception is
+          you can subtract two addresses and the result is a number.</P>
+        </BLOCKQUOTE>
+
+        <H3>Numbers</H3>
+
+        <BLOCKQUOTE>
+          <P>Numeric operands will be evaluated as either a hex number or decimal number, depending
+          on the <B>Hex/Decimal Mode</B> of the input field.</P>
+
+          <P>When in hex mode, undecorated numbers will be interpreted as if they are hex values.
+          (so "100" would evaluate to the number 256). If in decimal mode, hex numbers can still be
+          entered by prefixing them with "0x".</P>
+
+          <P>For fields that support either mode, the current mode will be displayed as "hint text"
+          in the lower right corner of the field. The mode can be toggled between decimal and hex
+          by pressing &lt;CTRL&gt; M.</P>
+
+          <P>When in hex mode, there is no corresponding prefix to use to specify a number as being
+          decimal. So if you want to have a mixed mode expression, use decimal mode and use the
+          "0x" prefix for any hex numbers in the expression.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>Operators</H2>
+
+      <BLOCKQUOTE>
+        <P>Most standard operators are supported, but not all operators are supported for all
+        operands. Also order of operands is important when mixing numbers and addresses. For
+        example,a number can be added to an address, but an address can't be added to a number.</P>
+
+        <P>Operator precedence is the standard precedence defined by the "C" programming
+        language.</P>
+
+        <H3>Math Operators</H3>
+
+        <BLOCKQUOTE>
+          <P>Supported math operators are "+ - * /". These operators generate either a number or
+          address result depending on the operands.</P>
+        </BLOCKQUOTE>
+
+        <H3>Logical and Relational Operators</H3>
+
+        <BLOCKQUOTE>
+          <P>Supported logical operators are "&lt; &gt; &lt;= &gt;= == != || &amp;&amp; and !".
+          These operators generator a numeric value of 0 or 1.</P>
+        </BLOCKQUOTE>
+
+        <H3>Bit Operators</H3>
+
+        <BLOCKQUOTE>
+          <P>Supported bit operators are &lt;&lt;, &gt;&gt;, &amp;, |, ^, and ~. These operators
+          generate either a number or address result depending on the operands.</P>
+        </BLOCKQUOTE>
+
+        <H3>Groups Operators</H3>
+
+        <BLOCKQUOTE>
+          <P>Parenthesis can be used to group sub-expressions to control the order of
+          operations</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <H2>Result</H2>
+
+      <BLOCKQUOTE>
+        <P>The result of the expression is always an address or a number. If the result is a
+        number, it is converted to an address using the selected address space (in the case where
+        there are multiple possible address spaces, a combo is shown for choosing the desired
+        address space, otherwise the default address space is used)</P>
+      </BLOCKQUOTE>
+
+      <H2>Examples</H2>
+
+      <BLOCKQUOTE>
+        <TABLE width=95% border="1">
+          <TR>
+            <TH valign="top" bgcolor="#c0c0c0">Expression<BR>
+            </TH>
+
+            <TH valign="top" bgcolor="#c0c0c0">Result<BR>
+            </TH>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>ENTRY+10</B></TD>
+
+            <TD valign="top">Address 0x10 higher than the symbol "ENTRY"</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>10+ENTRY</B></TD>
+
+            <TD valign="top">Error (Can't add an address to a number)</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>100000+30</B></TD>
+
+            <TD valign="top">Address 0x100030 (hex mode)</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>0x100000+30</B></TD>
+
+            <TD valign="top">Address 0x100030 (hex mode)</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>0x100000+30</B></TD>
+
+            <TD valign="top">Address 0x10001e (decimal mode)</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>0x100000+(2*10)</B></TD>
+
+            <TD valign="top">Address 0x100020</TD>
+          </TR>
+
+          <TR>
+            <TD valign="top"><B>ENTRY + 1&lt;&lt;4</B></TD>
+
+            <TD valign="top">Address that is 16 higher than the symbol "ENTRY"</TD>
+          </TR>
+          <TR>
+            <TD valign="top"><B>X - (X > 100) * 100</B></TD>
+
+            <TD valign="top">If symbol "X" address > 100, Result is 100 less than X; Otherwise X</TD>
+          </TR>
+          <TR>
+            <TD valign="top"><B>ENTRY | FF</B></TD>
+
+            <TD valign="top">Address that is the symbol "ENTRY" with its last 8 bits set to FF</TD>
+          </TR>
+        </TABLE>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

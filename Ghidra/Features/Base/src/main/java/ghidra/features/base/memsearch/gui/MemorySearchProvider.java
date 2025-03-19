@@ -139,6 +139,7 @@ public class MemorySearchProvider extends ComponentProviderAdapter
 		setVisible(true);
 
 		createActions(plugin.getName());
+		setDefaultFocusComponent(searchPanel.getDefaultFocusComponent());
 
 		tool.addContextListener(this);
 		navigatable.addNavigatableListener(this);

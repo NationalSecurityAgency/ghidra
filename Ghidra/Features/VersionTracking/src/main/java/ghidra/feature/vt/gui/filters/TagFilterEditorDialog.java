@@ -49,8 +49,10 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		JPanel mainPanel = new JPanel(new BorderLayout());
 
 		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.getAccessibleContext().setAccessibleName("Tag List");
 		listModel = new TagListModel(allTags, excludedTags);
 		final JList list = new JList(listModel);
+		list.getAccessibleContext().setAccessibleName("Tag");
 		list.setBackground(scrollPane.getBackground());
 		list.setCellRenderer(new TagRenderer());
 		list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -75,6 +77,7 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
 
 		JButton editButton = new JButton("Manage Tags");
+		editButton.getAccessibleContext().setAccessibleName("Edit");
 		editButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -92,10 +95,11 @@ public class TagFilterEditorDialog extends DialogComponentProvider implements Ta
 		});
 
 		JPanel editPanel = new JPanel();
+		editPanel.getAccessibleContext().setAccessibleName("Edit");
 		editPanel.add(editButton);
 
 		mainPanel.add(editPanel, BorderLayout.SOUTH);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Tag Filter Editor");
 		return mainPanel;
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -496,6 +496,11 @@ class ListingDB implements Listing {
 	}
 
 	@Override
+	public long getCommentAddressCount() {
+		return codeMgr.getCommentAddressCount();
+	}
+
+	@Override
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
 		return codeMgr.getCommentAddressIterator(addrSet, forward);
 	}
@@ -503,6 +508,11 @@ class ListingDB implements Listing {
 	@Override
 	public String getComment(int commentType, Address address) {
 		return codeMgr.getComment(commentType, address);
+	}
+
+	@Override
+	public CodeUnitComments getAllComments(Address address) {
+		return codeMgr.getAllComments(address);
 	}
 
 	@Override

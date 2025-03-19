@@ -1,0 +1,209 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Launchers: LLDB</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger Launchers: LLDB</H1>
+
+    <P>Integration with LLDB is achieved using a plugin for LLDB's Python Scripting Bridge. It is
+    well-suited for debuging user-space targets on a variety of platforms. It is the <EM>de
+    facto</EM> debugger for macOS. It can be obtained by installing Xcode from the App Store.
+    Though it may require a bit more careful configuration, it can also be obtained from other
+    repositories like <TT>brew</TT>.</P>
+
+    <P>The following launchers based on the LLDB Debugger are included out of the box:</P>
+
+    <H2><A name="local"></A>Local</H2>
+
+    <P>The plain "<TT>lldb</TT>" launch script defaults to launching the current program as a
+    user-mode process on the local system. If there is no current program, or if you clear the
+    <B>Image</B> option, this launcher will only start <TT>lldb</TT> and get it connected to a
+    Ghidra trace. You may then manually start or connect to your target. Note that this may also
+    require manual mapping of your program database(s) to the target memory.</P>
+
+    <H3><A name="setup"></A>Setup</H3>
+
+    <P>You must have LLDB installed on the local system, and it must support Python 3 scripting. If
+    you have access to PyPI, setting up your Python 3 environment is done using Pip. Please note
+    the version specifier for Protobuf.</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+python3 -m pip install psutil protobuf==3.20.3
+</PRE>
+      </LI>
+    </UL>
+
+    <P>If you are offline, or would like to use our provided packages, we still use Pip, but with a
+    more complicated invocation:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+cd /path/to/ghidra_<EM>
+version</EM>/Ghidra/Debug
+python3 -m pip install --no-index -f Debugger-rmi-trace/pypkg/dist -f Debugger-agent-lldb/pypkg/dist psutil protobuf
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Beware that LLDB may embed a different Python interpreter than your system's default. If you
+    are still getting import errors, check the version that LLDB embeds:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+(bash)$ lldb
+(lldb) script
+&gt;&gt;&gt; import sys
+&gt;&gt;&gt; sys.version
+</PRE>
+      </LI>
+    </UL>
+
+    <P>Note the version and ensure that you are invoking Pip with that version. Supposing
+    <TT>sys.version</TT> indicates 3.10, you should invoke Pip using <TT>python3.10 -m
+    pip</TT>.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Image</B>: This is the path to the target binary image (executable). Ghidra will try
+      to fill this in based on information gathered when the current program was imported. If the
+      file exists and is executable on the local machine, it will be filled in automatically.
+      Otherwise, it is up to you to locate it. <B>NOTE:</B> If you have patched the current program
+      database, these changes are <EM>not</EM> applied to the target. You can either 1) apply the
+      same patches to the target once it is running, or 2) export a patched copy of your image and
+      direct this launcher to run it.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target. These are
+      passed as is to LLDB's "<TT>settings set target.run-args ...</TT>" command.</LI>
+
+      <LI><B><TT>lldb</TT> command</B>: This is the command or path to LLDB. We recommend version
+      15 or later.</LI>
+
+      <LI><B>Run command</B>: This is the LLDB command to actually launch the target. In most cases
+      this should include "<TT>--stop-at-entry</TT>", since this will assure you an initial break
+      and a chance to enable your breakpoints.</LI>
+
+      <LI><B>Target TTY</B>: Depending on your target and/or personal preference, you may opt to
+      separate the debugger's and the target's I/O. If you check this box, the launcher will use
+      LLDB's "<TT>setting set target.output-path ...</TT>" command (and similar for the input) to
+      direct the target's I/O to a second Terminal window.</LI>
+    </UL>
+
+    <P>Once running, you are presented with LLDB's command-line interface in Ghidra's Terminal.
+    This is the <EM>bona fide</EM> LLDB command-line interface, so it has all the functionality you
+    would expect. If you command LLDB from this shell, the plugin will keep Ghidra in sync. The
+    terminal can be used to interact with the target application when it is running. The plugin
+    provides an additional set of commands for managing the connection to Ghidra, as well as
+    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" category. You can use
+    tab completion to enumerate the available commands and LLDB's "<TT>help</TT>" command to
+    examine their documentation.</P>
+
+    <H2><A name="remote"></A>Remote</H2>
+
+    <P>This launcher can target any TCP-based GDB stub that is compatible with a local copy of
+    <TT>lldb</TT>. Essentially, it just starts <TT>lldb</TT> and then enters</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+gdb-remote [host]:[port]
+</PRE>
+      </LI>
+    </UL>
+
+    <P>into it. It is best to test this command outside of Ghidra to be sure everything is
+    compatible before using this launcher. This launcher does not require an image, nor does it
+    create your target. Thus, it can be used without a current program.</P>
+
+    <H3>Setup</H3>
+
+    <P>On your local system, follow the steps given in <A href="#setup">LLDB Setup</A>. Your
+    version of LLDB must be compatible with the stub (e.g., <TT>gdbserver</TT>) on the target
+    system. There are no additional requirements on the target system.</P>
+
+    <P><B>NOTE:</B> The target program image must match that imported in Ghidra, or else things may
+    not map or synchronize correctly.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Host</B>: The host name of the target stub.</LI>
+
+      <LI><B>Port</B>: The TCP port of the target stub.</LI>
+
+      <LI><B>Architecture</B> (optional): If the stub does not describe its architecture to LLDB,
+      you must set it before connecting. This is passed as is to "<TT>settings set
+      target.default-arch ...</TT>" immediately before the "<TT>gdb-remote ...</TT>" command.</LI>
+
+      <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
+    </UL>
+
+    <H2><A name="macos_kernel"></A>macOS Kernel</H2>
+
+    <P>This launcher connects to macOS kernels booted in debug-mode using <TT>lldb</TT>.
+    Essentially, it just starts <TT>lldb</TT> and then enters</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+kdp-remote [host]
+</PRE>
+      </LI>
+    </UL>
+
+    <P>It is best to test this command outside of Ghidra to be sure everything is compatible before
+    using this launcher. This launcher does not require an image, nor does it create your target.
+    Thus, it can be used without a current program.</P>
+
+    <H3>Setup</H3>
+
+    <P>On your local system, follow the steps given in <A href="#setup">LLDB Setup</A>. Before
+    connecting to the target kernel, you must force an NMI on the target to ready the connection.
+    On actual hardware, this is typically achieved by some button sequence, e.g. <B>L/R-Options +
+    Power</B> or <B>Command+Option+Control+Shift+Esc</B>. In a VM, you may have to pause the VM and
+    modify its state. For example, by cd'ing to the VM's container and issuing the command:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+perl -i -pe 's/(?&lt;=pendingNMI\x00{4})\x00/\x01/' macOS_15-1234567.vmss
+</PRE>
+      </LI>
+    </UL>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI><B>Host</B>: The host IP of the target kernel.</LI>
+
+      <LI><B>Architecture</B> (optional): If the kernel does not describe its architecture to LLDB,
+      you must set it before connecting. This is passed as is to "<TT>settings set
+      target.default-arch ...</TT>" immediately before the "<TT>kdp-remote ...</TT>" command.</LI>
+
+      <LI><B><TT>lldb</TT> command</B>: This works the same as in LLDB.</LI>
+    </UL>
+
+    <H2><A name="ssh"></A>Via SSH</H2>
+
+    <P>This works the same as the <A href="help/topics/gdb/gdb.html#ssh">GDB via SSH</A> launcher,
+    but runs <TT>lldb</TT> on a remote system via <TT>ssh</TT>.</P>
+
+    <H2><A name="android"></A>Android</H2>
+
+    <P>This has the same options as the <A href="#ssh">LLDB via SSH</A> launcher, which are
+    necessary for connecting to the Android debugger, but executes via the normal lldb
+    mechanism.</P>
+  </BODY>
+</HTML>

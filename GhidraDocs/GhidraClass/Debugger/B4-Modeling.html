@@ -99,7 +99,8 @@
  class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
  class="advanced" href="B2-Emulation.html">Emulation</a><a
  class="advanced" href="B3-Scripting.html">Scripting</a><a
- class="advanced" href="B4-Modeling.html">Modeling</a>
+ class="advanced" href="B4-Modeling.html">Modeling</a><a
+ class="advanced" href="B5-AddingDebuggers.html">Adding Debuggers</a>
 </header>
 <header id="title-block-header">
 <h1 class="title">Ghidra Debugger</h1>
@@ -634,14 +635,14 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb7-39"><a href="#cb7-39"></a>    <span class="op">}</span></span>
 <span id="cb7-40"><a href="#cb7-40"></a></span>
 <span id="cb7-41"><a href="#cb7-41"></a>    <span class="at">@Override</span></span>
-<span id="cb7-42"><a href="#cb7-42"></a>    <span class="kw">public</span> Expr <span class="fu">modBeforeStore</span><span class="op">(</span><span class="dt">int</span> sizeout<span class="op">,</span> <span class="dt">int</span> sizeinAddress<span class="op">,</span> Expr inAddress<span class="op">,</span> <span class="dt">int</span> sizeinValue<span class="op">,</span></span>
-<span id="cb7-43"><a href="#cb7-43"></a>            Expr inValue<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-42"><a href="#cb7-42"></a>    <span class="kw">public</span> Expr <span class="fu">modBeforeStore</span><span class="op">(</span><span class="dt">int</span> sizeinOffset<span class="op">,</span> AddressSpace space<span class="op">,</span> Expr inOffset<span class="op">,</span></span>
+<span id="cb7-43"><a href="#cb7-43"></a>            <span class="dt">int</span> sizeinValue<span class="op">,</span> Expr inValue<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb7-44"><a href="#cb7-44"></a>        <span class="cf">return</span> inValue<span class="op">;</span></span>
 <span id="cb7-45"><a href="#cb7-45"></a>    <span class="op">}</span></span>
 <span id="cb7-46"><a href="#cb7-46"></a></span>
 <span id="cb7-47"><a href="#cb7-47"></a>    <span class="at">@Override</span></span>
-<span id="cb7-48"><a href="#cb7-48"></a>    <span class="kw">public</span> Expr <span class="fu">modAfterLoad</span><span class="op">(</span><span class="dt">int</span> sizeout<span class="op">,</span> <span class="dt">int</span> sizeinAddress<span class="op">,</span> Expr inAddress<span class="op">,</span> <span class="dt">int</span> sizeinValue<span class="op">,</span></span>
-<span id="cb7-49"><a href="#cb7-49"></a>            Expr inValue<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-48"><a href="#cb7-48"></a>    <span class="kw">public</span> Expr <span class="fu">modAfterLoad</span><span class="op">(</span><span class="dt">int</span> sizeinOffset<span class="op">,</span> AddressSpace space<span class="op">,</span> Expr inOffset<span class="op">,</span></span>
+<span id="cb7-49"><a href="#cb7-49"></a>            <span class="dt">int</span> sizeinValue<span class="op">,</span> Expr inValue<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb7-50"><a href="#cb7-50"></a>        <span class="cf">return</span> inValue<span class="op">;</span></span>
 <span id="cb7-51"><a href="#cb7-51"></a>    <span class="op">}</span></span>
 <span id="cb7-52"><a href="#cb7-52"></a></span>
@@ -707,11 +708,10 @@ storage mechanism. For example, were this a dynamic taint analyzer, we
 could use <code>modAfterLoad()</code> to record that a value was
 retrieved via a tainted address. The <code>inValue</code> parameter
 gives the <code>Expr</code> actually retrieved from the emulator’s
-storage, and <code>inAddress</code> gives the address (really just the
-<code>Expr</code> piece) used to retrieve it. Conversely, in
-<code>modBeforeStore()</code>, <code>inValue</code> gives the value
-about to be stored, and <code>inAddress</code> gives the address used to
-store it.</p>
+storage, and <code>inOffset</code> gives the offset used to retrieve it.
+Conversely, in <code>modBeforeStore()</code>, <code>inValue</code> gives
+the value about to be stored, and <code>inOffset</code> gives the offset
+used to store it.</p>
 <p>We implement neither <code>toConcrete()</code> nor
 <code>sizeOf()</code>. Since we will be augmenting a concrete emulator,
 these methods will be provided by the concrete piece. If this model is

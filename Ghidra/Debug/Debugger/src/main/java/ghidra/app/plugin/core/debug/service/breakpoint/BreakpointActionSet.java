@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,8 @@ public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
 	/**
 	 * Add an item to enable a target breakpoint
 	 * 
-	 * @param loc the target breakpoint
+	 * @param target the target
+	 * @param bpt the target breakpoint
 	 * @return the added item
 	 */
 	public EnableTargetBreakpointActionItem planEnableTarget(Target target, TraceBreakpoint bpt) {
@@ -49,10 +50,11 @@ public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
 	 * Add an item to enable an emulated breakpoint
 	 * 
 	 * @param bpt the trace breakpoint
+	 * @param snap the snap
 	 * @return the added item
 	 */
-	public EnableEmuBreakpointActionItem planEnableEmu(TraceBreakpoint bpt) {
-		EnableEmuBreakpointActionItem action = new EnableEmuBreakpointActionItem(bpt);
+	public EnableEmuBreakpointActionItem planEnableEmu(TraceBreakpoint bpt, long snap) {
+		EnableEmuBreakpointActionItem action = new EnableEmuBreakpointActionItem(bpt, snap);
 		add(action);
 		return action;
 	}
@@ -60,7 +62,8 @@ public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
 	/**
 	 * Add an item to disable a target breakpoint
 	 * 
-	 * @param loc the target breakpoint
+	 * @param target the target
+	 * @param bpt the target breakpoint
 	 * @return the added item
 	 */
 	public DisableTargetBreakpointActionItem planDisableTarget(Target target, TraceBreakpoint bpt) {
@@ -74,10 +77,11 @@ public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
 	 * Add an item to disable an emulated breakpoint
 	 * 
 	 * @param bpt the trace breakpoint
+	 * @param snap the snap
 	 * @return the added item
 	 */
-	public DisableEmuBreakpointActionItem planDisableEmu(TraceBreakpoint bpt) {
-		DisableEmuBreakpointActionItem action = new DisableEmuBreakpointActionItem(bpt);
+	public DisableEmuBreakpointActionItem planDisableEmu(TraceBreakpoint bpt, long snap) {
+		DisableEmuBreakpointActionItem action = new DisableEmuBreakpointActionItem(bpt, snap);
 		add(action);
 		return action;
 	}
@@ -85,7 +89,8 @@ public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
 	/**
 	 * Add an item to delete a target breakpoint
 	 * 
-	 * @param loc the target breakpoint
+	 * @param target the target
+	 * @param bpt the target breakpoint
 	 * @return the added item
 	 */
 	public DeleteTargetBreakpointActionItem planDeleteTarget(Target target, TraceBreakpoint bpt) {
@@ -98,10 +103,11 @@ public class BreakpointActionSet extends LinkedHashSet<BreakpointActionItem> {
 	 * Add an item to delete an emulated breakpoint
 	 * 
 	 * @param bpt the trace breakpoint
+	 * @param snap the snap
 	 * @return the added item
 	 */
-	public DeleteEmuBreakpointActionItem planDeleteEmu(TraceBreakpoint bpt) {
-		DeleteEmuBreakpointActionItem action = new DeleteEmuBreakpointActionItem(bpt);
+	public DeleteEmuBreakpointActionItem planDeleteEmu(TraceBreakpoint bpt, long snap) {
+		DeleteEmuBreakpointActionItem action = new DeleteEmuBreakpointActionItem(bpt, snap);
 		add(action);
 		return action;
 	}

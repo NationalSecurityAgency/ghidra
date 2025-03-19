@@ -15,8 +15,8 @@
  */
 package ghidra.util;
 
-import static ghidra.util.ComparatorMath.cmax;
-import static ghidra.util.ComparatorMath.cmin;
+import static ghidra.util.MathUtilities.cmax;
+import static ghidra.util.MathUtilities.cmin;
 
 import java.util.Iterator;
 import java.util.Map.Entry;

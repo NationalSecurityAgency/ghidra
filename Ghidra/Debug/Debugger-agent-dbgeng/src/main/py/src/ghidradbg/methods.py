@@ -26,7 +26,6 @@ from pybag.dbgeng import core as DbgEng, exception
 
 from . import util, commands
 
-
 REGISTRY = MethodRegistry(ThreadPoolExecutor(
     max_workers=1, thread_name_prefix='MethodRegistry'))
 
@@ -144,8 +143,8 @@ def find_thread_by_regs_obj(object):
 def find_frame_by_level(level):
     for f in util.dbg._base.backtrace_list():
         if f.FrameNumber == level:
-        	return f
-    #return dbg().backtrace_list()[level]
+            return f
+    # return dbg().backtrace_list()[level]
 
 
 def find_frame_by_pattern(pattern, object, err_msg):
@@ -206,15 +205,15 @@ def execute(cmd: str, to_string: bool=False):
 @REGISTRY.method(action='evaluate', display='Evaluate')
 # @util.dbg.eng_thread
 def evaluate(
-	session: sch.Schema('Session'),
- 	expr: ParamDesc(str, display='Expr')):
+        session: sch.Schema('Session'),
+        expr: ParamDesc(str, display='Expr')):
     """Evaluate a Python3 expression."""
     return str(eval(expr, shared_globals))
 
 
 @REGISTRY.method(action='refresh', display="Refresh", condition=util.dbg.use_generics)
 def refresh_generic(node: sch.OBJECT):
-    """List processes on pydbg's host system."""
+    """List the children for a generic node."""
     with commands.open_tracked_tx('Refresh Generic'):
         commands.ghidra_trace_put_generic(node)
 
@@ -294,6 +293,15 @@ def refresh_modules(node: sch.Schema('ModuleContainer')):
         commands.ghidra_trace_put_modules()
 
 
+@REGISTRY.method(action='refresh', display='Refresh Events')
+def refresh_events(node: sch.Schema('State')):
+    """
+    Refresh the events list for a trace.
+    """
+    with commands.open_tracked_tx('Refresh Events'):
+        commands.ghidra_trace_put_events(node)
+
+
 @REGISTRY.method(action='activate')
 def activate_process(process: sch.Schema('Process')):
     """Switch to the process."""
@@ -328,8 +336,8 @@ def remove_process(process: sch.Schema('Process')):
 @REGISTRY.method(action='connect', display='Connect')
 @util.dbg.eng_thread
 def target(
-	session: sch.Schema('Session'), 
-	cmd: ParamDesc(str, display='Command')):
+        session: sch.Schema('Session'),
+        cmd: ParamDesc(str, display='Command')):
     """Connect to a target machine or process."""
     dbg().attach_kernel(cmd)
 
@@ -345,8 +353,8 @@ def attach_obj(target: sch.Schema('Attachable')):
 @REGISTRY.method(action='attach', display='Attach by pid')
 @util.dbg.eng_thread
 def attach_pid(
-	session: sch.Schema('Session'), 
-	pid: ParamDesc(str, display='PID')):
+        session: sch.Schema('Session'),
+        pid: ParamDesc(str, display='PID')):
     """Attach the process to the given target."""
     dbg().attach_proc(int(pid))
 
@@ -354,8 +362,8 @@ def attach_pid(
 @REGISTRY.method(action='attach', display='Attach by name')
 @util.dbg.eng_thread
 def attach_name(
-	session: sch.Schema('Session'), 
-	name: ParamDesc(str, display='Name')):
+        session: sch.Schema('Session'),
+        name: ParamDesc(str, display='Name')):
     """Attach the process to the given target."""
     dbg().attach_proc(name)
 
@@ -369,7 +377,7 @@ def detach(process: sch.Schema('Process')):
 
 @REGISTRY.method(action='launch', display='Launch')
 def launch_loader(
-		session: sch.Schema('Session'),
+        session: sch.Schema('Session'),
         file: ParamDesc(str, display='File'),
         args: ParamDesc(str, display='Arguments')=''):
     """
@@ -377,13 +385,13 @@ def launch_loader(
     """
     command = file
     if args != None:
-        command += " "+args
+        command += " " + args
     commands.ghidra_trace_create(command=file, start_trace=False)
 
 
 @REGISTRY.method(action='launch', display='LaunchEx')
 def launch(
-		session: sch.Schema('Session'),
+        session: sch.Schema('Session'),
         file: ParamDesc(str, display='File'),
         args: ParamDesc(str, display='Arguments')='',
         initial_break: ParamDesc(bool, display='Initial Break')=True,
@@ -393,7 +401,7 @@ def launch(
     """
     command = file
     if args != None:
-        command += " "+args
+        command += " " + args
     commands.ghidra_trace_create(
         command, initial_break=initial_break, timeout=timeout, start_trace=False)
 
@@ -405,10 +413,18 @@ def kill(process: sch.Schema('Process')):
     commands.ghidra_trace_kill()
 
 
-@REGISTRY.method(action='resume')
+@REGISTRY.method(action='resume', display="Go")
 def go(process: sch.Schema('Process')):
     """Continue execution of the process."""
     util.dbg.run_async(lambda: dbg().go())
+
+
+@REGISTRY.method(action='step_ext', display='Go (backwards)', icon='icon.debugger.resume.back', condition=util.dbg.IS_TRACE)
+@util.dbg.eng_thread
+def go_back(thread: sch.Schema('Process')):
+    """Continue execution of the process backwards."""
+    dbg().cmd("g-")
+    dbg().wait()
 
 
 @REGISTRY.method
@@ -433,6 +449,22 @@ def step_over(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
     util.dbg.run_async(lambda: dbg().stepo(n))
 
 
+@REGISTRY.method(action='step_ext', display='Step Into (backwards)', icon='icon.debugger.step.back.into', condition=util.dbg.IS_TRACE)
+@util.dbg.eng_thread
+def step_back_into(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
+    """Step one instruction backward exactly."""
+    dbg().cmd("t- " + str(n))
+    dbg().wait()
+
+
+@REGISTRY.method(action='step_ext', display='Step Over (backwards)', icon='icon.debugger.step.back.over', condition=util.dbg.IS_TRACE)
+@util.dbg.eng_thread
+def step_back_over(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
+    """Step one instruction backward, but proceed through subroutine calls."""
+    dbg().cmd("p- " + str(n))
+    dbg().wait()
+
+
 @REGISTRY.method(action='step_out')
 def step_out(thread: sch.Schema('Thread')):
     """Execute until the current stack frame returns."""
@@ -448,6 +480,14 @@ def step_to(thread: sch.Schema('Thread'), address: Address, max=None):
     util.dbg.run_async(lambda: dbg().stepto(address.offset, max))
 
 
+@REGISTRY.method(action='go_to_time', display='Go To (event)', condition=util.dbg.IS_TRACE)
+@util.dbg.eng_thread
+def go_to_time(node: sch.Schema('State'), evt: ParamDesc(str, display='Event')):
+    """Reset the trace to a specific time."""
+    dbg().cmd("!tt " + evt)
+    dbg().wait()
+
+
 @REGISTRY.method(action='break_sw_execute')
 @util.dbg.eng_thread
 def break_address(process: sch.Schema('Process'), address: Address):
@@ -456,7 +496,7 @@ def break_address(process: sch.Schema('Process'), address: Address):
     dbg().bp(expr=address.offset)
 
 
-@REGISTRY.method(action='break_sw_execute')
+@REGISTRY.method(action='break_ext', display='Set Breakpoint')
 @util.dbg.eng_thread
 def break_expression(expression: str):
     """Set a breakpoint."""
@@ -472,7 +512,7 @@ def break_hw_address(process: sch.Schema('Process'), address: Address):
     dbg().ba(expr=address.offset)
 
 
-@REGISTRY.method(action='break_hw_execute')
+@REGISTRY.method(action='break_ext', display='Set Hardware Breakpoint')
 @util.dbg.eng_thread
 def break_hw_expression(expression: str):
     """Set a hardware-assisted breakpoint."""
@@ -482,50 +522,50 @@ def break_hw_expression(expression: str):
 @REGISTRY.method(action='break_read')
 @util.dbg.eng_thread
 def break_read_range(process: sch.Schema('Process'), range: AddressRange):
-    """Set a read watchpoint."""
+    """Set a read breakpoint."""
     find_proc_by_obj(process)
     dbg().ba(expr=range.min, size=range.length(), access=DbgEng.DEBUG_BREAK_READ)
 
 
-@REGISTRY.method(action='break_read')
+@REGISTRY.method(action='break_ext', display='Set Read Breakpoint')
 @util.dbg.eng_thread
 def break_read_expression(expression: str):
-    """Set a read watchpoint."""
+    """Set a read breakpoint."""
     dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_READ)
 
 
 @REGISTRY.method(action='break_write')
 @util.dbg.eng_thread
 def break_write_range(process: sch.Schema('Process'), range: AddressRange):
-    """Set a watchpoint."""
+    """Set a write breakpoint."""
     find_proc_by_obj(process)
     dbg().ba(expr=range.min, size=range.length(), access=DbgEng.DEBUG_BREAK_WRITE)
 
 
-@REGISTRY.method(action='break_write')
+@REGISTRY.method(action='break_ext', display='Set Write Breakpoint')
 @util.dbg.eng_thread
 def break_write_expression(expression: str):
-    """Set a watchpoint."""
+    """Set a write breakpoint."""
     dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_WRITE)
 
 
 @REGISTRY.method(action='break_access')
 @util.dbg.eng_thread
 def break_access_range(process: sch.Schema('Process'), range: AddressRange):
-    """Set an access watchpoint."""
+    """Set an access breakpoint."""
     find_proc_by_obj(process)
     dbg().ba(expr=range.min, size=range.length(),
              access=DbgEng.DEBUG_BREAK_READ | DbgEng.DEBUG_BREAK_WRITE)
 
 
-@REGISTRY.method(action='break_access')
+@REGISTRY.method(action='break_ext', display='Set Access Breakpoint')
 @util.dbg.eng_thread
 def break_access_expression(expression: str):
-    """Set an access watchpoint."""
+    """Set an access breakpoint."""
     dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_READ | DbgEng.DEBUG_BREAK_WRITE)
 
 
-@REGISTRY.method(action='toggle')
+@REGISTRY.method(action='toggle', display='Toggle Breakpoint')
 @util.dbg.eng_thread
 def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
     """Toggle a breakpoint."""
@@ -536,7 +576,7 @@ def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
         dbg().bd(bpt.GetId())
 
 
-@REGISTRY.method(action='delete')
+@REGISTRY.method(action='delete', display='Delete Breakpoint')
 @util.dbg.eng_thread
 def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
     """Delete a breakpoint."""
@@ -557,7 +597,7 @@ def read_mem(process: sch.Schema('Process'), range: AddressRange):
             offset_start, offset_start + range.length() - 1, pages=True, display_result=False)
         if result['count'] == 0:
             commands.putmem_state(
-                offset_start, offset_start+range.length() - 1, 'error')
+                offset_start, offset_start + range.length() - 1, 'error')
 
 
 @REGISTRY.method
@@ -576,6 +616,15 @@ def write_reg(frame: sch.Schema('StackFrame'), name: str, value: bytes):
     util.select_frame()
     nproc = pydbg.selected_process()
     dbg().reg._set_register(name, value)
+
+
+@REGISTRY.method(display='Refresh Events (custom)', condition=util.dbg.IS_TRACE)
+@util.dbg.eng_thread
+def refresh_events_custom(node: sch.Schema('State'), cmd: ParamDesc(str, display='Cmd'), 
+                          prefix: ParamDesc(str, display='Prefix')="dx -r2 @$cursession.TTD"):
+    """Parse TTD objects generated from a LINQ command."""
+    with commands.open_tracked_tx('Put Events (custom)'):
+        commands.ghidra_trace_put_events_custom(prefix, cmd)
 
 
 def dbg():

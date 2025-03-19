@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,7 +98,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	/**
 	 * Returns the address where the item described by this object is used.  For example, for
 	 * data types, the address is where a data type is applied; for references, this value is the
-	 * <tt>from</tt> address.
+	 * {@code from} address.
 	 *
 	 * @return  the address where the item described by this object is used.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,16 @@
  */
 package docking.widgets.textfield;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import docking.DockingUtils;
-import docking.util.GraphicsUtils;
-import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.Gui;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -63,12 +59,11 @@ import ghidra.util.SystemUtilities;
  */
 
 public class IntegerTextField {
-	private JTextField textField;
+	private HexDecimalModeTextField textField;
 
 	private boolean isHexMode = false;
 	private boolean allowsNegative = true;
 	private boolean allowsHexPrefix = true;
-	private boolean showNumbericDecoration = true;
 	private BigInteger maxValue;
 	private BigInteger minValue;
 
@@ -109,9 +104,13 @@ public class IntegerTextField {
 	 * @param initialValue the initial value
 	 */
 	public IntegerTextField(int columns, BigInteger initialValue) {
-		textField = new MyTextField(columns);
+		textField = new HexDecimalModeTextField(columns, b -> textFieldHexModeChanged(b));
+
+		AbstractDocument document = (AbstractDocument) textField.getDocument();
+		document.setDocumentFilter(new HexDecimalDocumentFilter());
 		setValue(initialValue);
-		textField.getDocument().addDocumentListener(new DocumentListener() {
+
+		document.addDocumentListener(new DocumentListener() {
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
@@ -266,8 +265,7 @@ public class IntegerTextField {
 	 * @param show true to show the radix mode.
 	 */
 	public void setShowNumberMode(boolean show) {
-		this.showNumbericDecoration = show;
-		textField.repaint();
+		textField.setShowNumberMode(show);
 	}
 
 	/**
@@ -278,9 +276,15 @@ public class IntegerTextField {
 	 * the current value from decimal to hex.
 	 */
 	public void setHexMode() {
-		BigInteger currentValue = getValue();
-		isHexMode = true;
-		updateTextField(currentValue);
+		BigInteger value = getValue();
+		setHexMode(true);
+		setValue(value);
+
+	}
+
+	private void setHexMode(boolean hexMode) {
+		this.isHexMode = hexMode;
+		textField.setHexMode(hexMode);
 	}
 
 	/**
@@ -291,9 +295,9 @@ public class IntegerTextField {
 	 * current value from hex to decimal.
 	 */
 	public void setDecimalMode() {
-		BigInteger currentValue = getValue();
-		isHexMode = false;
-		updateTextField(currentValue);
+		BigInteger value = getValue();
+		setHexMode(false);
+		setValue(value);
 	}
 
 	/**
@@ -477,6 +481,12 @@ public class IntegerTextField {
 		textField.setHorizontalAlignment(alignment);
 	}
 
+	private void textFieldHexModeChanged(boolean hexMode) {
+		BigInteger value = getValue();
+		this.isHexMode = hexMode;
+		setValue(value);
+	}
+
 	private String computeTextForValue(BigInteger value) {
 		if (value == null) {
 			return "";
@@ -522,15 +532,6 @@ public class IntegerTextField {
 	private void valueChanged() {
 		for (ChangeListener listener : listeners) {
 			listener.stateChanged(new ChangeEvent(this));
-		}
-	}
-
-	private void toggleMode() {
-		if (isHexMode) {
-			setDecimalMode();
-		}
-		else {
-			setHexMode();
 		}
 	}
 
@@ -648,7 +649,7 @@ public class IntegerTextField {
 			if (isValidPrefix(valueString)) {
 				// When the input is valid, update the hex mode to match how the text was parsed.
 				// See parseAsHex variable comment above.
-				isHexMode = parseAsHex;
+				setHexMode(parseAsHex);
 				return true;
 			}
 
@@ -661,7 +662,7 @@ public class IntegerTextField {
 				if (passesMaxCheck(value) && passesMinCheck(value)) {
 					// When the input is valid, update the hex mode to match how the text was parsed.
 					// See parseAsHex variable comment above.
-					isHexMode = parseAsHex;
+					setHexMode(parseAsHex);
 					return true;
 				}
 			}
@@ -692,76 +693,4 @@ public class IntegerTextField {
 		// so we don't allow negatives
 		return value.signum() < 0;
 	}
-
-	/**
-	 * Overrides the JTextField mainly to allow hint painting for the current radix mode.
-	 */
-	private class MyTextField extends JTextField {
-
-		private static final String FONT_ID = "font.input.hint";
-		private int hintWidth;
-
-		public MyTextField(int columns) {
-			super(columns);
-
-			FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
-			String mode = isHexMode ? "Hex" : "Dec";
-			hintWidth = fontMetrics.stringWidth(mode);
-
-			AbstractDocument document = (AbstractDocument) getDocument();
-			document.setDocumentFilter(new HexDecimalDocumentFilter());
-
-			addKeyListener(new KeyAdapter() {
-				@Override
-				public void keyPressed(KeyEvent e) {
-					if (e.getKeyCode() == KeyEvent.VK_M && DockingUtils.isControlModifier(e)) {
-						toggleMode();
-						repaint();
-					}
-				}
-			});
-
-			// make sure tooltips will be activated
-			ToolTipManager.sharedInstance().registerComponent(this);
-		}
-
-		@Override
-		public String getToolTipText(MouseEvent event) {
-
-			int hintStart = getBounds().width - hintWidth;
-			if (event.getX() > hintStart) {
-				String key = DockingUtils.CONTROL_KEY_NAME;
-				return "Press '" + key + "-M' to toggle Hex or Decimal Mode";
-			}
-
-			return null;
-		}
-
-		@Override
-		protected void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			if (!showNumbericDecoration) {
-				return;
-			}
-
-			Font savedFont = g.getFont();
-			g.setFont(Gui.getFont(FONT_ID));
-			g.setColor(Messages.HINT);
-
-			Dimension size = getSize();
-			Insets insets = getInsets();
-			int x;
-			if (getHorizontalAlignment() == RIGHT) {
-				x = insets.left;
-			}
-			else {
-				x = size.width - insets.right - hintWidth;
-			}
-			int y = size.height - insets.bottom - 1;
-			String mode = isHexMode ? "Hex" : "Dec";
-			GraphicsUtils.drawString(this, g, mode, x, y);
-			g.setFont(savedFont);
-		}
-	}
-
 }

@@ -119,7 +119,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
-		setBackground(options.getBackgroundColor());
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -139,6 +138,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				validate();
 			}
 		});
+
+		setBackground(options.getBackgroundColor());
 
 		decompilerHoverProvider = new DecompilerHoverProvider();
 
@@ -261,6 +262,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 		}
 
+		// exclude tokens that users do not want to highlight
+		if (token instanceof ClangSyntaxToken || token instanceof ClangOpToken) {
+			return;
+		}
+
 		ActiveMiddleMouse newMiddleMouse = new ActiveMiddleMouse(token.getText());
 		newMiddleMouse.apply();
 		activeMiddleMouse = newMiddleMouse;
@@ -275,19 +281,25 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		highlightController.removeHighlighterHighlights(highlighter);
 	}
 
-	public DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
-		UUID uuId = UUID.randomUUID();
-		String id = uuId.toString();
-		return createHighlighter(id, tm);
+	private DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
+		Function function = decompileData.getFunction();
+		return createHighlighter(function, tm);
 	}
 
-	public DecompilerHighlighter createHighlighter(String id, CTokenHighlightMatcher tm) {
+	public DecompilerHighlighter createHighlighter(Function f, CTokenHighlightMatcher tm) {
+		UUID uuId = UUID.randomUUID();
+		String id = uuId.toString();
+		return createHighlighter(id, f, tm);
+	}
+
+	public DecompilerHighlighter createHighlighter(String id, Function f,
+			CTokenHighlightMatcher tm) {
 		DecompilerHighlighter currentHighlighter = highlightersById.get(id);
 		if (currentHighlighter != null) {
 			currentHighlighter.dispose();
 		}
 
-		ClangDecompilerHighlighter newHighlighter = new ClangDecompilerHighlighter(id, this, tm);
+		ClangDecompilerHighlighter newHighlighter = new ClangDecompilerHighlighter(id, this, f, tm);
 		highlightersById.put(id, newHighlighter);
 		highlightController.addHighlighter(newHighlighter);
 		return newHighlighter;
@@ -382,11 +394,12 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		});
 	}
 
-	private void cloneGlobalHighlighters(DecompilerPanel sourcePanel) {
+	private void cloneServiceHiglighters(DecompilerPanel sourcePanel) {
 
-		Set<DecompilerHighlighter> globalHighlighters =
-			sourcePanel.highlightController.getGlobalHighlighters();
-		for (DecompilerHighlighter otherHighlighter : globalHighlighters) {
+		Set<DecompilerHighlighter> serviceHighlighters =
+			sourcePanel.highlightController.getServiceHighlighters();
+
+		for (DecompilerHighlighter otherHighlighter : serviceHighlighters) {
 
 			if (!(otherHighlighter instanceof ClangDecompilerHighlighter clangHighlighter)) {
 				continue;
@@ -416,13 +429,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 */
 	public void cloneHighlights(DecompilerPanel sourcePanel) {
 
-		cloneGlobalHighlighters(sourcePanel);
+		Function function = decompileData.getFunction();
+		cloneServiceHiglighters(sourcePanel);
 
 		//
 		// Keep only those secondary highlighters for the current function.  This ensures that the
 		// clone will match the cloned decompiler.
 		//
-		Function function = decompileData.getFunction();
 		Set<DecompilerHighlighter> secondaryHighlighters =
 			sourcePanel.getSecondaryHighlihgtersByFunction(function);
 
@@ -454,6 +467,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 		if (fieldPanel != null) {
 			fieldPanel.setBackgroundColor(bg);
+			scroller.setBackground(bg);
 		}
 		super.setBackground(bg);
 	}
@@ -498,36 +512,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		// don't highlight search results across functions
 		currentSearchLocation = null;
 
-		reapplySecondaryHighlights();
-		reapplyGlobalHighlights();
-	}
-
-	private void reapplyGlobalHighlights() {
-
-		Function function = decompileData.getFunction();
-		if (function == null) {
-			return;
-		}
-
-		Set<DecompilerHighlighter> globalHighlighters = highlightController.getGlobalHighlighters();
-		for (DecompilerHighlighter highlighter : globalHighlighters) {
-			highlighter.clearHighlights();
-			highlighter.applyHighlights();
-		}
-	}
-
-	private void reapplySecondaryHighlights() {
-
-		Function function = decompileData.getFunction();
-		if (function == null) {
-			return;
-		}
-
-		Set<DecompilerHighlighter> secondaryHighlighters =
-			getSecondaryHighlihgtersByFunction(function);
-		for (DecompilerHighlighter highlighter : secondaryHighlighters) {
-			highlighter.clearHighlights();
-			highlighter.applyHighlights();
+		if (function != null) {
+			highlightController.reapplyAllHighlights(function);
 		}
 	}
 

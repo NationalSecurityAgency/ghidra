@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -122,7 +122,13 @@ class ShowComponentAction extends DockingAction
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		winMgr.showComponent(info, true, true, true);
+		// Note: we use the emphasize feature as a callout when users are frustratedly pressing the
+		// button to show a provider, as it implies they are not seeing the provider as it is being
+		// shown.  Since this action is a menu item, the user cannot click it fast enough to show
+		// frustration.   For now, turn off the emphasis.  We can think of a better way to determine
+		// frustration in this use case later if we think it improves the user experience.
+		boolean emphasize = false;
+		winMgr.showComponent(info, true, true, emphasize);
 	}
 
 	@Override

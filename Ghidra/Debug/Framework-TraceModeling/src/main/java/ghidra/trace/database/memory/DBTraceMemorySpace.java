@@ -653,8 +653,8 @@ public class DBTraceMemorySpace
 		int pos = buf.position();
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 
-			ByteBuffer oldBytes = ByteBuffer.allocate(buf.remaining());
-			getBytes(snap, start, oldBytes);
+			ByteBuffer oldBuf = ByteBuffer.allocate(buf.remaining());
+			getBytes(snap, start, oldBuf);
 
 			OutSnap lastSnap = new OutSnap(snap);
 			Set<TraceAddressSnapRange> changed = new HashSet<>();
@@ -665,16 +665,18 @@ public class DBTraceMemorySpace
 
 				// Read back the written bytes and fire event
 				byte[] bytes = new byte[result];
+				byte[] oldBytes = new byte[result];
 				buf.get(pos, bytes);
+				oldBuf.get(0, oldBytes);
 				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
 					start.add(result - 1), snap, lastSnap.snap);
 				trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, this, tasr,
-					oldBytes.array(), bytes));
+					oldBytes, bytes));
 
 				// Fixup affected code units
 				DBTraceCodeSpace codeSpace = trace.getCodeManager().get(this, false);
 				if (codeSpace != null) {
-					codeSpace.bytesChanged(changed, snap, start, oldBytes.array(), bytes);
+					codeSpace.bytesChanged(changed, snap, start, oldBytes, bytes);
 				}
 				// Clear program view caches
 				trace.updateViewsBytesChanged(tasr.getRange());

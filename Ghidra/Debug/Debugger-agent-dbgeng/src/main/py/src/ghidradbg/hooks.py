@@ -57,12 +57,12 @@ class ProcessState(object):
         self.visited = set()
         self.waiting = False
 
-    def record(self, description=None):
+    def record(self, description=None, snap=None):
         # print("RECORDING")
         first = self.first
         self.first = False
         if description is not None:
-            commands.STATE.trace.snapshot(description)
+            commands.STATE.trace.snapshot(description, snap=snap)
         if first:
             if util.is_kernel():
                 commands.create_generic("Sessions")
@@ -71,6 +71,9 @@ class ProcessState(object):
             commands.put_processes()
             commands.put_environment()
             commands.put_threads()
+            if util.is_trace():
+                commands.init_ttd()
+                #commands.put_events()
         if self.threads:
             commands.put_threads()
             self.threads = False
@@ -106,10 +109,10 @@ class ProcessState(object):
         commands.put_processes(running=True)
         commands.put_threads(running=True)
 
-    def record_exited(self, exit_code, description=None):
+    def record_exited(self, exit_code, description=None, snap=None):
         # print("RECORD_EXITED")
         if description is not None:
-            commands.STATE.trace.snapshot(description)
+            commands.STATE.trace.snapshot(description, snap=snap)
         proc = util.selected_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc)
         procobj = commands.STATE.trace.proxy_object_path(ipath)
@@ -162,7 +165,7 @@ def log_errors(func):
 
 @log_errors
 def on_state_changed(*args):
-    # print("ON_STATE_CHANGED")
+	# print("ON_STATE_CHANGED")
     # print(args)
     if args[0] == DbgEng.DEBUG_CES_CURRENT_THREAD:
         return on_thread_selected(args)
@@ -176,7 +179,7 @@ def on_state_changed(*args):
         proc = util.selected_process()
         if args[1] & DbgEng.DEBUG_STATUS_INSIDE_WAIT:
             if proc in PROC_STATE:
-                # Process may have exited (so deleted) first
+				# Process may have exited (so deleted) first
                 PROC_STATE[proc].waiting = True
             return S_OK
         if proc in PROC_STATE:
@@ -381,13 +384,37 @@ def on_stop(*args):
         return
     state = PROC_STATE[proc]
     state.visited.clear()
+    snap = update_position()
     with commands.STATE.client.batch():
         with trace.open_tx("Stopped"):
-            state.record("Stopped")
+            state.record("Stopped", snap)
             commands.put_event_thread()
             commands.activate()
 
 
+def update_position():
+    """Update the position"""
+    cursor = util.get_cursor()
+    if cursor is None:
+        return None
+    pos = cursor.get_position()
+    lpos = util.get_last_position()
+    rng = range(pos.major, lpos.major)
+    if pos.major > lpos.major:
+        rng = range(lpos.major, pos.major)
+    for i in rng:
+        type =  util.get_event_type(i)
+        if type == "modload" or type == "modunload":
+            on_modules_changed()
+            break
+    for i in rng:
+        type =  util.get_event_type(i)
+        if type == "threadcreated" or type == "threadterm":
+            on_threads_changed()
+    util.set_last_position(pos)
+    return util.pos2snap(pos)
+
+        
 def on_exited(proc):
     # print("ON EXITED")
     if proc not in PROC_STATE:
@@ -482,28 +509,45 @@ def on_exception(*args):
 
 @util.dbg.eng_thread
 def install_hooks():
-    # print("Installing hooks")
-    if HOOK_STATE.installed:
-        return
-    HOOK_STATE.installed = True
+	# print("Installing hooks")
+	if HOOK_STATE.installed:
+		return
+	HOOK_STATE.installed = True
 
-    events = util.dbg._base.events
+	events = util.dbg._base.events
+   
+	if util.is_remote():
+		events.engine_state(handler=on_state_changed_async)
+		events.debuggee_state(handler=on_debuggee_changed_async)
+		events.session_status(handler=on_session_status_changed_async)
+		events.symbol_state(handler=on_symbol_state_changed_async)
+		events.system_error(handler=on_system_error_async)
 
-    events.engine_state(handler=on_state_changed)
-    events.debuggee_state(handler=on_debuggee_changed)
-    events.session_status(handler=on_session_status_changed)
-    events.symbol_state(handler=on_symbol_state_changed)
-    events.system_error(handler=on_system_error)
+		events.create_process(handler=on_new_process_async)
+		events.exit_process(handler=on_process_deleted_async)
+		events.create_thread(handler=on_threads_changed_async)
+		events.exit_thread(handler=on_threads_changed_async)
+		events.module_load(handler=on_modules_changed_async)
+		events.unload_module(handler=on_modules_changed_async)
 
-    events.create_process(handler=on_new_process)
-    events.exit_process(handler=on_process_deleted)
-    events.create_thread(handler=on_threads_changed)
-    events.exit_thread(handler=on_threads_changed)
-    events.module_load(handler=on_modules_changed)
-    events.unload_module(handler=on_modules_changed)
+		events.breakpoint(handler=on_breakpoint_hit_async)
+		events.exception(handler=on_exception_async)
+	else:
+		events.engine_state(handler=on_state_changed)
+		events.debuggee_state(handler=on_debuggee_changed)
+		events.session_status(handler=on_session_status_changed)
+		events.symbol_state(handler=on_symbol_state_changed)
+		events.system_error(handler=on_system_error)
 
-    events.breakpoint(handler=on_breakpoint_hit)
-    events.exception(handler=on_exception)
+		events.create_process(handler=on_new_process)
+		events.exit_process(handler=on_process_deleted)
+		events.create_thread(handler=on_threads_changed)
+		events.exit_thread(handler=on_threads_changed)
+		events.module_load(handler=on_modules_changed)
+		events.unload_module(handler=on_modules_changed)
+
+		events.breakpoint(handler=on_breakpoint_hit)
+		events.exception(handler=on_exception)
 
 
 @util.dbg.eng_thread
@@ -527,3 +571,59 @@ def disable_current_process():
     if proc in PROC_STATE:
         # Silently ignore already disabled
         del PROC_STATE[proc]
+
+
+@log_errors
+def on_state_changed_async(*args):
+	util.dbg.run_async(on_state_changed, *args)
+
+
+@log_errors
+def on_debuggee_changed_async(*args):
+	util.dbg.run_async(on_debuggee_changed, *args)
+
+
+@log_errors
+def on_session_status_changed_async(*args):
+	util.dbg.run_async(on_session_status_changed, *args)
+
+
+@log_errors
+def on_symbol_state_changed_async(*args):
+	util.dbg.run_async(on_symbol_state_changed, *args)
+
+
+@log_errors
+def on_system_error_async(*args):
+	util.dbg.run_async(on_system_error, *args)
+
+
+@log_errors
+def on_new_process_async(*args):
+	util.dbg.run_async(on_new_process, *args)
+
+
+@log_errors
+def on_process_deleted_async(*args):
+	util.dbg.run_async(on_process_deleted, *args)
+
+
+@log_errors
+def on_threads_changed_async(*args):
+	util.dbg.run_async(on_threads_changed, *args)
+
+
+@log_errors
+def on_modules_changed_async(*args):
+	util.dbg.run_async(on_modules_changed, *args)
+
+
+@log_errors
+def on_breakpoint_hit_async(*args):
+	util.dbg.run_async(on_breakpoint_hit, *args)
+
+
+@log_errors
+def on_exception_async(*args):
+	util.dbg.run_async(on_exception, *args)
+

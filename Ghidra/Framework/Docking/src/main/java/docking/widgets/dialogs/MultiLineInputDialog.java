@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,6 +57,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 
 		JPanel dataPanel = new JPanel(new BorderLayout());
 		inputTextArea = new JTextArea(10, 50);
+		inputTextArea.getAccessibleContext().setAccessibleName("Text Input");
 
 		DockingUtils.installUndoRedo(inputTextArea);
 
@@ -80,6 +81,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		JLabel messageLabel = new GDLabel();
 		messageLabel.setText(messageText);
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+		messageLabel.getAccessibleContext().setAccessibleName("Message");
 
 		String metaKeyText = "Control";
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
@@ -90,6 +92,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		hintLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		Gui.registerFont(hintLabel, FONT_ID);
 		hintLabel.setForeground(Messages.HINT);
+		hintLabel.getAccessibleContext().setAccessibleName("Hint");
 
 		dataPanel.add(messageLabel, BorderLayout.NORTH);
 		dataPanel.add(new JScrollPane(inputTextArea), BorderLayout.CENTER);
@@ -98,19 +101,21 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		JLabel iconLabel = new GDLabel();
 		iconLabel.setIcon(icon);
 		iconLabel.setVerticalAlignment(SwingConstants.TOP);
+		iconLabel.getAccessibleContext().setAccessibleName("Icon");
 
 		JPanel separatorPanel = new JPanel();
 		separatorPanel.setPreferredSize(new Dimension(15, 1));
-
+		separatorPanel.getAccessibleContext().setAccessibleName("Separator");
 		JPanel iconPanel = new JPanel(new BorderLayout());
 		iconPanel.add(iconLabel, BorderLayout.CENTER);
 		iconPanel.add(separatorPanel, BorderLayout.EAST);
+		iconPanel.getAccessibleContext().setAccessibleName("Icon");
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		workPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		workPanel.add(iconPanel, BorderLayout.WEST);
 		workPanel.add(dataPanel, BorderLayout.CENTER);
-
+		workPanel.getAccessibleContext().setAccessibleName("Muliti Line Input");
 		return workPanel;
 	}
 

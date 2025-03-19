@@ -47,7 +47,7 @@ public class SymbolServerService {
 
 	/**
 	 * Creates a new SymbolServerService instance.
-	 * <p>
+	 * 
 	 * @param symbolStore a {@link SymbolStore} - where all remote files are placed when 
 	 * downloaded. Also treated as a SymbolServer and searched first
 	 * @param symbolServers  a list of {@link SymbolServer symbol servers} - searched in order
@@ -110,7 +110,6 @@ public class SymbolServerService {
 	 * <p>
 	 * Use {@link SymbolFileLocation#isExactMatch(SymbolFileInfo)} to test elements in the
 	 * result list for exactness.
-	 * <p>
 	 * 
 	 * @param symbolFileInfo Pdb file info to search for
 	 * @param findOptions set of {@link FindOption} to control the search.

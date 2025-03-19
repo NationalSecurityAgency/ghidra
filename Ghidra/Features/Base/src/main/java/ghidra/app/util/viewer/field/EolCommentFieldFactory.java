@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,6 +64,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private int repeatableCommentStyle;
 	private int automaticCommentStyle;
 	private int refRepeatableCommentStyle;
+	private int offcutCommentStyle;
 
 	private EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
 
@@ -292,6 +293,14 @@ public class EolCommentFieldFactory extends FieldFactory {
 			elementList.addAll(elements);
 		}
 
+		if (comments.isShowingOffcutComments()) {
+			prefix = createPrefix(CommentStyle.OFFCUT);
+			int row = getNextRow(elementList);
+			List<String> offcuts = comments.getOffcutEolComments();
+			List<FieldElement> elements = convertToFieldElements(program, offcuts, prefix, row);
+			elementList.addAll(elements);
+		}
+
 		if (elementList.isEmpty()) {
 			return null;
 		}
@@ -316,11 +325,16 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return new AttributedString(SEMICOLON_PREFIX, CommentColors.AUTO,
 				getMetrics(automaticCommentStyle), false, null);
 		}
+		if (commentStyle == CommentStyle.OFFCUT) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.OFFCUT,
+				getMetrics(style), false, null);
+		}
+
 		throw new AssertException("Unexected comment style: " + commentStyle);
 	}
 
 	private enum CommentStyle {
-		EOL, REPEATABLE, REF_REPEATABLE, AUTO;
+		EOL, REPEATABLE, REF_REPEATABLE, AUTO, OFFCUT;
 	}
 
 	private int getNextRow(List<FieldElement> elementList) {
@@ -388,9 +402,11 @@ public class EolCommentFieldFactory extends FieldFactory {
 			RowColLocation startRowCol = commentElement.getDataLocationForCharacterIndex(0);
 			int encodedRow = startRowCol.row();
 			int encodedCol = startRowCol.col();
-			Annotation annotation = new Annotation(refAddrComment, currentPrefixString, program);
+			Annotation annotation = new Annotation(refAddrComment, program);
 			FieldElement addressElement =
-				new AnnotatedTextFieldElement(annotation, encodedRow, encodedCol);
+				new AnnotatedTextFieldElement(annotation, currentPrefixString, program, encodedRow,
+					encodedCol);
+
 			// Space character
 			AttributedString spaceStr = new AttributedString(" ", currentPrefixString.getColor(0),
 				currentPrefixString.getFontMetrics(0), false, null);

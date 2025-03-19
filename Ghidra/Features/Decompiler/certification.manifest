@@ -15,6 +15,7 @@ src/decompile/cpp/Makefile||GHIDRA||||END|
 src/decompile/datatests/boolless.xml||GHIDRA||||END|
 src/decompile/datatests/ccmp.xml||GHIDRA||||END|
 src/decompile/datatests/concat.xml||GHIDRA||||END|
+src/decompile/datatests/concatsplit.xml||GHIDRA||||END|
 src/decompile/datatests/condconst.xml||GHIDRA||||END|
 src/decompile/datatests/condmulti.xml||GHIDRA||||END|
 src/decompile/datatests/convert.xml||GHIDRA||||END|

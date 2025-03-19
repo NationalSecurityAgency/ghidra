@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,8 +98,9 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change the name
-				Category c = program.getDataTypeManager().getCategory(
-					new CategoryPath("/Category1/Category2/Category5"));
+				Category c = program.getDataTypeManager()
+						.getCategory(
+							new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.createCategory("AnotherCategory");
 				}
@@ -259,8 +260,9 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change the name
-				Category c = program.getDataTypeManager().getCategory(
-					new CategoryPath("/Category1/Category2/Category5"));
+				Category c = program.getDataTypeManager()
+						.getCategory(
+							new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.createCategory("AnotherCategory");
 					Structure dt = new StructureDataType("Test", 0);
@@ -312,8 +314,9 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change the name
-				Category c = program.getDataTypeManager().getCategory(
-					new CategoryPath("/Category1/Category2/Category5"));
+				Category c = program.getDataTypeManager()
+						.getCategory(
+							new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.createCategory("AnotherCategory");
 					StructureDataType dt = new StructureDataType("Test", 0);
@@ -442,7 +445,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-					dtm.remove(dt, TaskMonitor.DUMMY);
+				dtm.remove(dt, TaskMonitor.DUMMY);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -525,7 +528,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				DataType dt =
-				dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
+					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 				dtm.remove(dt, TaskMonitor.DUMMY);
 			}
 
@@ -603,7 +606,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				// /Category1/Category2/Category3
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-				
+
 				try {
 					dt.setName("MyIntStruct");
 				}
@@ -952,7 +955,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 				"IntStruct");
 		DataTypeComponent dtc = s.getComponent(2);
-		assertEquals("My Field Three", dtc.getFieldName());
+		assertEquals("My_Field_Three", dtc.getFieldName());
 		assertEquals("my comments for Field 3", dtc.getComment());
 
 		dtc = s.getComponent(0);

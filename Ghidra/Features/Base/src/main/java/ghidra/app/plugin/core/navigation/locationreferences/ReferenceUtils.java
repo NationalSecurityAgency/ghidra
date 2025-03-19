@@ -173,7 +173,7 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be a
+	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
 	 * {@link Composite} to search for a field.
 	 * @param program The program from within which to find references.
 	 * @param monitor A task monitor to be updated as data is searched; if this is null, then a
@@ -198,7 +198,7 @@ public final class ReferenceUtils {
 	 *
 	 * @param accumulator the results storage.
 	 * @param dataType The datatype for which to find references.
-	 * @param fieldName optional field name for which to search; the <tt>dataType</tt> must be a
+	 * @param fieldName optional field name for which to search; the {@code dataType} must be a
 	 * {@link Composite} to search for a field.
 	 * @param program The program from within which to find references.
 	 * @param discoverTypes if true, the {@link DataTypeReferenceFinder} service will be used to

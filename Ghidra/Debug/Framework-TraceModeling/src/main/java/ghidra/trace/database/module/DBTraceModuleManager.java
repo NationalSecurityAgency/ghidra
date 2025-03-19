@@ -65,7 +65,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 			if (pc == ignore) {
 				continue;
 			}
-			if (!pc.getLifespan().intersects(moduleLifespan)) {
+			if (!pc.isAlive(moduleLifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException(
@@ -85,7 +85,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 			 * so have the same lifespan, no? I suppose this logic is only true in objects mode...,
 			 * and there, the logic is performed by the value key duplicate check.
 			 */
-			if (!pc.getModule().getLifespan().intersects(moduleLifespan)) {
+			if (!pc.getModule().isAlive(moduleLifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException("Section with path '" + sectionPath +
@@ -131,7 +131,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return doGetModulesByPath(modulePath).stream()
-					.filter(m -> m.getLifespan().contains(snap))
+					.filter(m -> m.isValid(snap))
 					.findAny()
 					.orElse(null);
 		}
@@ -272,7 +272,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return doGetSectionsByPath(sectionPath).stream()
-					.filter(s -> s.getModule().getLifespan().contains(snap))
+					.filter(s -> s.getModule().isValid(snap))
 					.findAny()
 					.orElse(null);
 		}

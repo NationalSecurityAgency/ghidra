@@ -64,18 +64,18 @@ public class ByRegionAutoMapSpec implements AutoMapSpec {
 		return value.getParent().queryInterface(TraceObjectMemoryRegion.class) != null;
 	}
 
-	static String getInfoForRegions(Trace trace) {
+	static String getInfoForRegions(Trace trace, long snap) {
 		return trace.getMemoryManager()
-				.getAllRegions()
+				.getRegionsAtSnap(snap)
 				.stream()
-				.map(r -> r.getName() + ":" + r.getMinAddress())
+				.map(r -> r.getName(snap) + ":" + r.getMinAddress(snap))
 				.sorted()
 				.collect(Collectors.joining(","));
 	}
 
 	@Override
-	public String getInfoForObjects(Trace trace) {
-		return getInfoForRegions(trace);
+	public String getInfoForObjects(Trace trace, long snap) {
+		return getInfoForRegions(trace, snap);
 	}
 
 	@Override
@@ -85,9 +85,9 @@ public class ByRegionAutoMapSpec implements AutoMapSpec {
 
 	@Override
 	public boolean performMapping(DebuggerStaticMappingService mappingService, Trace trace,
-			List<Program> programs, TaskMonitor monitor) throws CancelledException {
+			long snap, List<Program> programs, TaskMonitor monitor) throws CancelledException {
 		Map<?, RegionMapProposal> maps = mappingService
-				.proposeRegionMaps(trace.getMemoryManager().getAllRegions(), programs);
+				.proposeRegionMaps(trace.getMemoryManager().getRegionsAtSnap(snap), snap, programs);
 		Collection<RegionMapEntry> entries = MapProposal.flatten(maps.values());
 		entries = MapProposal.removeOverlapping(entries);
 		mappingService.addRegionMappings(entries, monitor, false);

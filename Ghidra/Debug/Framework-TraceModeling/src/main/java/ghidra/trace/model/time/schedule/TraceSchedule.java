@@ -673,4 +673,20 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public TraceSchedule assumeRecorded() {
 		return new TraceSchedule(snap, steps, pSteps, Source.RECORD);
 	}
+
+	public boolean differsOnlyByPatch(TraceSchedule that) {
+		if (this.snap != that.snap) {
+			return false;
+		}
+		if (this.pSteps.isNop() != that.pSteps.isNop()) {
+			return false;
+		}
+		if (this.pSteps.isNop()) {
+			return this.steps.differsOnlyByPatch(that.steps);
+		}
+		if (!this.steps.equals(that.steps)) {
+			return false;
+		}
+		return this.pSteps.differsOnlyByPatch(that.pSteps);
+	}
 }

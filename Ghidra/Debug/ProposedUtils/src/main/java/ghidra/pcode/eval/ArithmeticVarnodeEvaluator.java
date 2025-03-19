@@ -43,7 +43,7 @@ public abstract class ArithmeticVarnodeEvaluator<T> extends AbstractVarnodeEvalu
 	 * SLEIGH: {@code shift} the left piece then {@code or} it with the right piece.
 	 * 
 	 * @param <T> the type of values
-	 * @param arithmetic the p-code arithmetic for values of type {@link T}
+	 * @param arithmetic the p-code arithmetic for values of type {@code T}
 	 * @param sizeTotal the expected output size in bytes
 	 * @param upper the value of the left (more significant) piece
 	 * @param lower the value of the right (less significant) piece
@@ -143,8 +143,6 @@ public abstract class ArithmeticVarnodeEvaluator<T> extends AbstractVarnodeEvalu
 		T offset = evaluateVarnode(program, inOffset, already);
 		Varnode outVar = op.getOutput(); // Only for measuring size
 		T out = evaluateAbstract(program, space, offset, outVar.getSize(), already);
-		return arithmetic.modAfterLoad(outVar.getSize(),
-			inOffset.getSize(), offset,
-			outVar.getSize(), out);
+		return arithmetic.modAfterLoad(op, space, offset, out);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +15,17 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
-import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.Msg;
 
 /**
@@ -43,32 +40,6 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 		"@symbol annotation must have a valid " + "symbol name or address";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "symbol", "sym" };
 
-	public static String convertAnnotationSymbolToAddress(String[] annotationParts, String rawText,
-			Program program) {
-		if (annotationParts.length <= 1) {
-			return null;
-		}
-
-		if (program == null) { // this can happen during merge operations
-			return null;
-		}
-
-		Address address = program.getAddressFactory().getAddress(annotationParts[1]);
-		if (address != null) {
-			return null; // nothing to do
-		}
-
-		String originalValue = annotationParts[1];
-		List<Symbol> symbols = getSymbols(originalValue, program);
-		if (symbols.size() != 1) {
-			// no unique symbol, so leave it as string name
-			return null;
-		}
-
-		Address symbolAddress = symbols.get(0).getAddress();
-		return rawText.replaceFirst(Pattern.quote(originalValue), symbolAddress.toString());
-	}
-
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) {
@@ -82,7 +53,7 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 			return createUndecoratedString(prototypeString, text);
 		}
 
-		List<Symbol> symbols = getSymbols(text[1], program);
+		List<Symbol> symbols = CommentUtils.getSymbols(text[1], program);
 
 		// check for a symbol of the given name first
 		if (symbols.size() >= 1) {
@@ -106,25 +77,6 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 			prototypeString.getFontMetrics(0));
 	}
 
-	private static List<Symbol> getSymbols(String rawText, Program program) {
-		List<Symbol> list = NamespaceUtils.getSymbols(rawText, program);
-		if (!list.isEmpty()) {
-			return list;
-		}
-
-		// if we get here, then see if the value is an address
-		Address address = program.getAddressFactory().getAddress(rawText);
-		if (address != null) {
-			SymbolTable symbolTable = program.getSymbolTable();
-			Symbol symbol = symbolTable.getPrimarySymbol(address);
-			if (symbol != null) {
-				return Arrays.asList(symbol);
-			}
-		}
-
-		return Collections.emptyList();
-	}
-
 	@Override
 	public String[] getSupportedAnnotations() {
 		return SUPPORTED_ANNOTATIONS;
@@ -136,7 +88,7 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 
 		String symbolText = annotationParts[1];
 		Program program = sourceNavigatable.getProgram();
-		List<Symbol> symbols = getSymbols(symbolText, program);
+		List<Symbol> symbols = CommentUtils.getSymbols(symbolText, program);
 
 		GoToService goToService = serviceProvider.getService(GoToService.class);
 

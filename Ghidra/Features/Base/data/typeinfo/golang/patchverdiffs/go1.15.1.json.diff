@@ -1,0 +1,85 @@
+@ ["all","Funcs","net/http/fcgi.(*response).Write","Params",1,"Name"]
+- "data"
++ "p"
+@ ["all","Funcs","net/http/fcgi.(*response).Write","Results",0,"Name"]
+- ""
++ "n"
+@ ["all","Funcs","net/http/fcgi.(*response).Write","Results",1,"Name"]
+- ""
++ "err"
+@ ["all","Funcs","net/http/cgi.(*response).writeCGIHeader"]
++ {"Flags":4,"Params":[{"DataType":"*net/http/cgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Funcs","net/http/fcgi.(*response).writeCGIHeader"]
++ {"Flags":4,"Params":[{"DataType":"*net/http/fcgi.response","Name":"r"},{"DataType":"[]byte","Name":"p"}],"Results":[],"TypeParams":[]}
+@ ["all","Types","net/http/cgi.response","Fields",2]
+  {"DataType":"net/http.Header","Name":"header"}
++ {"DataType":"int","Name":"code"}
++ {"DataType":"bool","Name":"wroteHeader"}
++ {"DataType":"bool","Name":"wroteCGIHeader"}
+  {"DataType":"*bufio.Writer","Name":"bufw"}
+@ ["all","Types","net/http/cgi.response","Fields",6]
+  {"DataType":"*bufio.Writer","Name":"bufw"}
+- {"DataType":"bool","Name":"headerSent"}
+]
+@ ["all","Types","net/http/fcgi.response","Fields",2]
+  {"DataType":"net/http.Header","Name":"header"}
++ {"DataType":"int","Name":"code"}
++ {"DataType":"bool","Name":"wroteHeader"}
++ {"DataType":"bool","Name":"wroteCGIHeader"}
+  {"DataType":"*net/http/fcgi.bufWriter","Name":"w"}
+@ ["all","Types","net/http/fcgi.response","Fields",6]
+  {"DataType":"*net/http/fcgi.bufWriter","Name":"w"}
+- {"DataType":"bool","Name":"wroteHeader"}
+]
+@ ["darwin-amd64","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["darwin-amd64","Types","func(string)","Params",0,"Name"]
+- "hostPort"
++ "name"
+@ ["darwin-amd64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["darwin-amd64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["darwin-amd64-cgo","Types","func(string)"]
++ {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"hostPort"}],"Results":[],"TypeParams":[]}
+@ ["darwin-cgo","Types","func(string)"]
+- {"Flags":0,"Kind":"funcdef","Params":[{"DataType":"string","Name":"name"}],"Results":[],"TypeParams":[]}
+@ ["linux-386","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-386","Types","func(rune) rune","Params",0,"Name"]
+- "r"
++ ""
+@ ["linux-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- "path"
++ ""
+@ ["linux-amd64","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "address"
++ "addr"
+@ ["linux-arm","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"
+@ ["linux-arm-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm64","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["linux-arm64-cgo","Types","func(context.Context, string, string) net.Conn, error","Params",2,"Name"]
+- "addr"
++ "address"
+@ ["linux-arm64-cgo","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(rune) rune","Params",0,"Name"]
+- ""
++ "r"
+@ ["windows-386","Types","func(string) io.ReadCloser, error","Params",0,"Name"]
+- ""
++ "path"

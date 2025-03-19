@@ -34,6 +34,7 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompiler.taint.TaintPlugin.Highlighter;
+import ghidra.app.plugin.core.decompiler.taint.TaintState.TaskType;
 import ghidra.app.plugin.core.decompiler.taint.actions.*;
 import ghidra.app.services.CodeViewerService;
 import ghidra.framework.options.OptionsChangeListener;
@@ -60,11 +61,7 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 	private DecompilerProvider decompilerProvider;
 	private Navigatable navigatable;
 
-	private TaintState state;
-
 	private DecompilerHighlighter highlighter;
-
-	private Boolean allAccess;
 
 	private TaintCTokenHighlighterPalette highlightPalette;
 	private int paletteIndex;
@@ -85,7 +82,6 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 		super(plugin.getTool(), "TaintProvider", plugin.getName(), DecompilerActionContext.class);
 		this.plugin = plugin;
 		this.taintOptions = new TaintOptions(this);
-		this.state = plugin.getTaintState();
 		this.cachedHighlightsByToken = new HashMap<>();
 		this.cachedHighlightByAddress = new HashMap<>();
 		this.highlightPalette = new TaintCTokenHighlighterPalette(256);
@@ -109,34 +105,37 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 		// These actions are only available in the drop-down window
 
-		TaintSourceAction taintSourceAction = new TaintSourceAction(plugin, state);
+		TaintSourceAction taintSourceAction = new TaintSourceAction(plugin);
 		setGroupInfo(taintSourceAction, variableGroup, subGroupPosition++);
 
 		TaintSourceBySymbolAction taintSourceBySymbolAction =
-			new TaintSourceBySymbolAction(plugin, state);
+			new TaintSourceBySymbolAction(plugin);
 		setGroupInfo(taintSourceBySymbolAction, variableGroup, subGroupPosition++);
 
-		TaintSinkAction taintSinkAction = new TaintSinkAction(plugin, state);
+		TaintSinkAction taintSinkAction = new TaintSinkAction(plugin);
 		setGroupInfo(taintSinkAction, variableGroup, subGroupPosition++);
 
 		TaintSinkBySymbolAction taintSinkBySymbolAction =
-			new TaintSinkBySymbolAction(plugin, state);
+			new TaintSinkBySymbolAction(plugin);
 		setGroupInfo(taintSinkBySymbolAction, variableGroup, subGroupPosition++);
 
-		TaintGateAction taintGateAction = new TaintGateAction(plugin, state);
+		TaintGateAction taintGateAction = new TaintGateAction(plugin);
 		setGroupInfo(taintGateAction, variableGroup, subGroupPosition++);
 
-		TaintClearAction taintClearAction = new TaintClearAction(plugin, state);
+		TaintClearAction taintClearAction = new TaintClearAction(plugin);
 		setGroupInfo(taintClearAction, variableGroup, subGroupPosition++);
 
-		// These actions have an icon and a drop-down menu option in the decompiler window.
-		TaintQueryAction taintQueryAction = new TaintQueryAction(plugin, state);
-		TaintQueryDefaultAction taintQueryDefaultAction =
-			new TaintQueryDefaultAction(plugin, state);
-		TaintQueryCustomAction taintQueryCustomAction = new TaintQueryCustomAction(plugin, state);
-		TaintLoadAction taintLoadAction = new TaintLoadAction(plugin, state);
+		TaintSetSizeAction taintSizeAction = new TaintSetSizeAction(plugin);
+		setGroupInfo(taintSizeAction, variableGroup, subGroupPosition++);
 
-		TaintSliceTreeAction taintSliceTreeAction = new TaintSliceTreeAction(plugin, state);
+		// These actions have an icon and a drop-down menu option in the decompiler window.
+		TaintQueryAction taintQueryAction = new TaintQueryAction(plugin);
+		TaintQueryDefaultAction taintQueryDefaultAction =
+			new TaintQueryDefaultAction(plugin);
+		TaintQueryCustomAction taintQueryCustomAction = new TaintQueryCustomAction(plugin);
+		TaintLoadAction taintLoadAction = new TaintLoadAction(plugin);
+
+		TaintSliceTreeAction taintSliceTreeAction = new TaintSliceTreeAction(plugin);
 
 		DockingAction taintLabelTableAction = new DockingAction("TaintShowLabels", TaintPlugin.HELP_LOCATION) {
 
@@ -154,7 +153,8 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				return state.hasMarks();
+				TaintState state = plugin.getTaintState();
+				return state == null ? false : state.hasMarks();
 			}
 
 		};
@@ -176,6 +176,7 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 		provider.addLocalAction(taintQueryCustomAction);
 		provider.addLocalAction(taintLoadAction);
 		provider.addLocalAction(taintClearAction);
+		provider.addLocalAction(taintSizeAction);
 	}
 
 	/**
@@ -250,12 +251,19 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 	 * <p>
 	 * TODO: We could limit our taint addresses to those in this function...? TODO:
 	 * We should reset the palette cache to start coloring from the start.
+	 * 
+	 * @param taskType subtract previous result
 	 */
-	public void setTaint() {
+	public void setTaint(TaskType taskType) {
+		TaintState state = plugin.getTaintState();
+		if (state == null) {
+			return;
+		}
 		if (navigatable == null) {
 			navigatable = tool.getService(CodeViewerService.class).getNavigatable();
 		}
 
+		state.setTaskType(taskType);
 		AddressSet taintAddressSet = state.getTaintAddressSet();
 		Msg.info(this, "setTaint(): " + taintAddressSet.toString());
 
@@ -274,14 +282,21 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 		// apply highlights to the decompiler window.
 		highlighter.applyHighlights();
+		state.setTaskType(TaskType.SET_TAINT);
+	}
+	
+	public void setTaint() {
+		setTaint(TaskType.SET_TAINT);
 	}
 
 	public boolean matchOn(ClangToken token) {
+		
+		TaintState state = plugin.getTaintState();
+		if (state == null) {
+			return false;
+		}
 
-		Map<Address, Set<TaintQueryResult>> taintVarnodeMap = state.getTaintVarnodeMap();
-
-		if (taintVarnodeMap == null || taintVarnodeMap.isEmpty() ||
-			token instanceof ClangBreak ||
+		if (token instanceof ClangBreak ||
 			token instanceof ClangTypeToken ||
 			token instanceof ClangSyntaxToken ||
 			token instanceof ClangCommentToken) {
@@ -298,7 +313,8 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 		Address tokenFuncEntryAddr = hf.getFunction().getEntryPoint();
 
 		// Just the tainted elements that are in this function.
-		Set<TaintQueryResult> funcTaintSet = taintVarnodeMap.get(tokenFuncEntryAddr);
+		Set<TaintQueryResult> funcTaintSet = state.getQuerySet(tokenFuncEntryAddr);
+		//Set<TaintQueryResult> funcTaintSet = taintVarnodeMap.get(tokenFuncEntryAddr);
 		if (funcTaintSet == null || funcTaintSet.isEmpty()) {
 			return false;
 		}
@@ -367,7 +383,7 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 		Msg.info(this,
 			"TaintProvider: clearTaint() - state clearTaint() and highligher apply highlights.");
 		matchCount = 0;
-		state.clearTaint();
+		plugin.getTaintState().clearTaint();
 		highlighter.clearHighlights();
 		cachedHighlightByAddress.clear();
 		cachedHighlightsByToken.clear();
@@ -456,14 +472,6 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 
 	public void changeHighlighter(Highlighter hl) {
 		plugin.changeHighlighter(hl);
-	}
-
-	public boolean isAllAccess() {
-		return allAccess;
-	}
-
-	public void setAllAccess(String taintAllAccess, Boolean allAccess) {
-		this.allAccess = allAccess;
 	}
 
 	public int getTokenCount() {

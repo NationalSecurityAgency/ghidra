@@ -2029,13 +2029,13 @@ void StaticAssert() : {
   Token t, message=null;
 }
 {
-  ( ( t=<STATICASSERT> ) "(" expr=ConstantExpression() [ "," message=<STRING_LITERAL> ] ")" )
+  ( ( t=<STATICASSERT> ) "(" expr=ConstantExpression() [ "," (message=<STRING_LITERAL> | ("#" <IDENTIFIER>) )+ ] ")" )
     {
         if (expr != null) {
           Integer evalue = getConstantValue(expr,1);
           if (evalue == 0) {
             String smessage = (message == null ? "" : message.image);
-              addNearParseMessage("Static_Asssert has failed " + " \"" + smessage + "\"");
+              addNearParseMessage("Warning: Static_Assert possibly failed " + " \"" + smessage + "\"");
           }
         }
     }

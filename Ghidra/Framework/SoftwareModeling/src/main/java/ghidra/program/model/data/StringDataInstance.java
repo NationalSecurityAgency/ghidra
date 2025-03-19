@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,6 @@ import ghidra.util.*;
  * bytes in the membuffer into a java native String, and converting the raw String into a formatted
  * human-readable version, according to the various {@link SettingsDefinition}s attached to the
  * string data location.
- * <p>
  */
 public class StringDataInstance {
 
@@ -72,7 +71,6 @@ public class StringDataInstance {
 	 * <p>
 	 * Arrays of char-like elements (see {@link ArrayStringable}) are treated as string data types.
 	 * The actual data instance needs to be inspected to determine if the array is an actual string.
-	 * <p>
 	 * 
 	 * @param dt DataType to test
 	 * @return boolean true if data type is or could be a string
@@ -103,7 +101,6 @@ public class StringDataInstance {
 	/**
 	 * Returns a string representation of the character(s) contained in the byte array, suitable for
 	 * display as a single character, or as a sequence of characters.
-	 * <p>
 	 * 
 	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a
 	 *            ByteDataType)
@@ -150,7 +147,6 @@ public class StringDataInstance {
 
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the data codeunit.
-	 * <p>
 	 * 
 	 * @param data {@link Data} item
 	 * @return new {@link StringDataInstance}, never NULL. See {@link #NULL_INSTANCE}.
@@ -176,7 +172,6 @@ public class StringDataInstance {
 
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the MemBuffer.
-	 * <p>
 	 * 
 	 * @param dataType {@link DataType} of the bytes in the buffer.
 	 * @param buf memory buffer containing the bytes.
@@ -907,7 +902,6 @@ public class StringDataInstance {
 	 * Returns the value of the stored
 	 * {@link TranslationSettingsDefinition#getTranslatedValue(Data) translated settings}
 	 * string.
-	 * <p>
 	 * 
 	 * @return previously translated string.
 	 */
@@ -928,7 +922,6 @@ public class StringDataInstance {
 	/**
 	 * Convert a char value (or sequence of char values) in memory into its canonical unicode
 	 * representation, using attached charset and encoding information.
-	 * <p>
 	 *
 	 * @return String containing the representation of the char.
 	 */
@@ -988,7 +981,6 @@ public class StringDataInstance {
 	 * {@code byteOffset} from the start of this instance.
 	 * <p>
 	 * If the requested offset is not valid, StringDataInstance.NULL_INSTANCE is returned.
-	 * <p>
 	 * 
 	 * @param byteOffset number of bytes from start of data instance to start new instance.
 	 * @return new StringDataInstance, or <code>StringDataInstance.NULL_INSTANCE</code> if 
@@ -1011,7 +1003,6 @@ public class StringDataInstance {
 	/**
 	 * Create a new {@link StringDataInstance} that points to a portion of this instance, starting
 	 * at a character offset (whereever that may be) into the data.
-	 * <p>
 	 * 
 	 * @param offsetChars number of characters from the beginning of the string to start the new
 	 *            StringDataInstance.
@@ -1056,7 +1047,6 @@ public class StringDataInstance {
 	 * this type of data.
 	 * <p>
 	 * I dare myself to type Type one more time.
-	 * <p>
 	 * 
 	 * @return {@link DataType}, defaulting to {@link StringDataType} if no direct match found.
 	 */

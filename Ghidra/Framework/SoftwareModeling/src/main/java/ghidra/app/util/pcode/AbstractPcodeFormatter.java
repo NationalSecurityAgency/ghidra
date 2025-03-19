@@ -31,6 +31,7 @@ import ghidra.util.Msg;
  * {@link #formatOpTemplate(Appender, OpTpl)}. Otherwise, most formatting logic is implemented by
  * the appender.
  *
+ * @see StringPcodeFormatter for an example
  * @param <T> the type of this formatter's output, e.g., {@link String}
  * @param <A> the type of the appender
  * @see AbstractAppender

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import java.io.IOException;
 import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.FunctionDefinition;
 
 @StructureMapping(structureName = {"runtime.imethod", "internal/abi.Imethod"})
 public class GoIMethod implements StructureMarkup<GoIMethod> {
@@ -52,7 +51,7 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 
 	@Markup
 	public GoType getType() throws IOException {
-		return programContext.resolveTypeOff(context.getStructureStart(), ityp);
+		return programContext.getGoTypes().resolveTypeOff(context.getStructureStart(), ityp);
 	}
 
 	@Override
@@ -87,11 +86,6 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 
 		public GoIMethod getImethod() {
 			return imethod;
-		}
-
-		@Override
-		public FunctionDefinition getSignature() throws IOException {
-			return itab.getSignatureFor(imethod);
 		}
 	}
 }

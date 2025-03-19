@@ -58,44 +58,49 @@ public interface TraceSection extends TraceUniqueObject {
 	 * The given name should be the section's name from its module's image, which is considered
 	 * suitable for display on the screen.
 	 * 
+	 * @param snap the snap
 	 * @param name the name
 	 * @throws DuplicateNameException if the specified name would conflict with another section's in
 	 *             this module
 	 */
-	void setName(String name) throws DuplicateNameException;
+	void setName(long snap, String name) throws DuplicateNameException;
 
 	/**
 	 * Get the "short name" of this section
 	 * 
 	 * <p>
-	 * This defaults to the "full name," but can be modified via {@link #setName(String)}
+	 * This defaults to the "full name," but can be modified via {@link #setName(long, String)}
 	 * 
+	 * @param snap the snap
 	 * @return the name
 	 */
-	String getName();
+	String getName(long snap);
 
 	/**
 	 * Get the virtual memory address range of this section
 	 * 
+	 * @param snap the snap
 	 * @return the address range
 	 */
-	AddressRange getRange();
+	AddressRange getRange(long snap);
 
 	/**
-	 * @see #getRange()
+	 * @see #getRange(long)
+	 * @param snap the snap
 	 * @return the min address in the range
 	 */
-	default Address getStart() {
-		AddressRange range = getRange();
+	default Address getStart(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? null : range.getMinAddress();
 	}
 
 	/**
-	 * @see #getRange()
+	 * @see #getRange(long)
+	 * @param snap the snap
 	 * @return the max address in the range
 	 */
-	default Address getEnd() {
-		AddressRange range = getRange();
+	default Address getEnd(long snap) {
+		AddressRange range = getRange(snap);
 		return range == null ? null : range.getMaxAddress();
 	}
 
@@ -103,4 +108,19 @@ public interface TraceSection extends TraceUniqueObject {
 	 * Delete this section from the trace
 	 */
 	void delete();
+
+	/**
+	 * Remove this section from the given snap on
+	 * 
+	 * @param snap the snap
+	 */
+	void remove(long snap);
+
+	/**
+	 * Check if the section is valid at the given snapshot
+	 * 
+	 * @param snap the snapshot key
+	 * @return true if valid, false if not
+	 */
+	boolean isValid(long snap);
 }

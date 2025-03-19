@@ -190,7 +190,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			TraceObject child = value.getChild();
 			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
 			if (module != null) {
-				result.addAll(module.getSections());
+				result.addAll(module.getSections(ctx.getSnap()));
 				continue;
 			}
 			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
@@ -208,12 +208,12 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			TraceObject child = value.getChild();
 			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
 			if (module != null) {
-				result.add(module.getRange());
+				result.add(module.getRange(ctx.getSnap()));
 				continue;
 			}
 			TraceObjectSection section = child.queryInterface(TraceObjectSection.class);
 			if (section != null) {
-				result.add(section.getRange());
+				result.add(section.getRange(ctx.getSnap()));
 				continue;
 			}
 		}

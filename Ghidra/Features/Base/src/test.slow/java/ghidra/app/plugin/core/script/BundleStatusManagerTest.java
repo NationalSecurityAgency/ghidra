@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -265,7 +265,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		int initialSize = statuses.size();
 
 		DockingActionIf removeBundlesAction =
-			getActionByName(bundleStatusProvider, "RemoveBundles");
+			getActionByName(bundleStatusProvider, "Remove Bundles");
 		performAction(removeBundlesAction);
 		waitForSwing();
 
@@ -364,7 +364,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 	private void addBundlesViaGUI(File... bundleFiles) throws Exception {
 		assertTrue("addBundlesViaGUI called with no arguments", bundleFiles.length > 0);
 
-		DockingActionIf addBundlesAction = getActionByName(bundleStatusProvider, "AddBundles");
+		DockingActionIf addBundlesAction = getActionByName(bundleStatusProvider, "Add Bundles");
 		performAction(addBundlesAction, false);
 		waitForSwing();
 

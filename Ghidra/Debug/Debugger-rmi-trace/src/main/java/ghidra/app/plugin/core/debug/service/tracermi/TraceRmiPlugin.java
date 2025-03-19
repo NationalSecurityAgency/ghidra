@@ -108,9 +108,11 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 			}
 		}
 
-		for (ConnAndTarget cat : targets) {
-			targetService.publishTarget(cat.target);
-			listeners.invoke().targetPublished(cat.conn, cat.target);
+		if (targetService != null) {
+			for (ConnAndTarget cat : targets) {
+				targetService.publishTarget(cat.target);
+				listeners.invoke().targetPublished(cat.conn, cat.target);
+			}
 		}
 	}
 

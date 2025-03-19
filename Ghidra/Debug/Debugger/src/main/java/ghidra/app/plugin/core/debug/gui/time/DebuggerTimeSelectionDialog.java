@@ -71,6 +71,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			hbox.setBorder(BorderFactory.createTitledBorder("Schedule"));
 			hbox.add(new JLabel("Expression: "));
 			scheduleText = new JTextField();
+			scheduleText.getAccessibleContext().setAccessibleName("Schedule");
 			hbox.add(scheduleText);
 			hbox.add(new JLabel("Ticks: "));
 			hbox.add(tickBack = new GButton(DebuggerResources.ICON_STEP_BACK));
@@ -78,6 +79,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			hbox.add(new JLabel("Ops: "));
 			hbox.add(opBack = new GButton(DebuggerResources.ICON_STEP_BACK));
 			hbox.add(opStep = new GButton(DebuggerResources.ICON_STEP_INTO));
+			hbox.getAccessibleContext().setAccessibleName("Schedule");
 			workPanel.add(hbox, BorderLayout.NORTH);
 		}
 
@@ -88,6 +90,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 
 		{
 			snapshotPanel = new DebuggerSnapshotTablePanel(tool);
+			snapshotPanel.getAccessibleContext().setAccessibleName("Snapshot");
 			workPanel.add(snapshotPanel, BorderLayout.CENTER);
 		}
 
@@ -118,7 +121,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 				scheduleTextChanged();
 			}
 		});
-
+		workPanel.getAccessibleContext().setAccessibleName("Debugger Time Selection");
 		addWorkPanel(workPanel);
 		addOKButton();
 		addCancelButton();

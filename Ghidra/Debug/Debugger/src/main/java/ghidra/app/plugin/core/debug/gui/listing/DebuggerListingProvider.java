@@ -235,7 +235,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
 				DebuggerListingProvider.this);
 
-			getListingPanel().addIndexMapChangeListener(e -> this.doTrack());
+			getListingPanel().addIndexMapChangeListener(e -> this.doTrack(TrackCause.DB_CHANGE));
 		}
 
 		@Override
@@ -291,6 +291,24 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	protected class ForListingClipboardProvider extends CodeBrowserClipboardProvider {
+		protected class PasteIntoTargetCommand extends PasteByteStringCommand
+				implements PasteIntoTargetMixin {
+			protected PasteIntoTargetCommand(String string) {
+				super(string);
+			}
+
+			@Override
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+				return doHasEnoughSpace(program, address, byteCount);
+			}
+
+			@Override
+			protected boolean pasteBytes(Program program, byte[] bytes) {
+				return doPasteBytes(tool, controlService, consoleService, current, currentLocation,
+					bytes);
+			}
+		}
+
 		protected ForListingClipboardProvider() {
 			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this);
 		}
@@ -316,6 +334,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				return false;
 			}
 			return super.canPaste(availableFlavors);
+		}
+
+		@Override
+		protected boolean pasteByteString(String string) {
+			return tool.execute(new PasteIntoTargetCommand(string), currentProgram);
 		}
 	}
 
@@ -1058,13 +1081,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		Set<DomainFile> toOpen = new HashSet<>();
 		TraceModuleManager modMan = trace.getModuleManager();
 		Collection<TraceModule> modules = Stream.concat(
-			modMan.getModulesAt(snap, address).stream().filter(m -> m.getSections().isEmpty()),
+			modMan.getModulesAt(snap, address).stream().filter(m -> m.getSections(snap).isEmpty()),
 			modMan.getSectionsAt(snap, address).stream().map(s -> s.getModule()))
 				.collect(Collectors.toSet());
 
 		// Attempt to open probable matches. All others, list to import
 		for (TraceModule mod : modules) {
-			DomainFile match = mappingService.findBestModuleProgram(space, mod);
+			DomainFile match = mappingService.findBestModuleProgram(space, mod, snap);
 			if (match == null) {
 				missing.add(mod);
 			}
@@ -1085,7 +1108,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		for (TraceModule mod : missing) {
 			consoleService.log(DebuggerResources.ICON_LOG_ERROR,
-				"<html>The module <b><tt>" + HTMLUtilities.escapeHTML(mod.getName()) +
+				"<html>The module <b><tt>" + HTMLUtilities.escapeHTML(mod.getName(snap)) +
 					"</tt></b> was not found in the project</html>",
 				new DebuggerMissingModuleActionContext(mod));
 		}
@@ -1116,12 +1139,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			if (!affectedTraces.contains(module.getTrace())) {
 				continue;
 			}
-			if (isMapped(module.getRange())) {
+			long snap = traceManager.getCurrentFor(module.getTrace()).getSnap();
+			if (isMapped(module.getRange(snap))) {
 				consoleService.removeFromLog(mmCtx);
 				continue;
 			}
-			for (TraceSection section : module.getSections()) {
-				if (isMapped(section.getRange())) {
+			for (TraceSection section : module.getSections(snap)) {
+				if (isMapped(section.getRange(snap))) {
 					consoleService.removeFromLog(mmCtx);
 					continue nextCtx;
 				}

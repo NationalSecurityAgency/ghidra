@@ -73,12 +73,12 @@ If the emulated target reads a variable that Ghidra has not yet captured into th
 
 ### Stepping Schedules
 
-If you had not noticed before, the subtitle of the Threads window gives the current snapshot number.
+If you had not noticed before, the trace tabs include the current snapshot number.
 If you have stepped in the emulator, it will also contain the sequence of steps emulated.
 Recall the *time* element of the Debugger's *coordinates*.
 (See the [Navigation](A5-Navigation.md) module if you need a refresher.)
 The time element, called the *schedule*, consists of both the current snapshot and the sequence of steps to emulate.
-The subtitle displays that schedule.
+The tab displays that schedule.
 If you have done any patching of the emulator's state, you may notice some more complicated "steps" in the schedule.
 The syntax is:
 
@@ -377,7 +377,7 @@ After you have written your Sleigh code:
 1. Click ![resume button](images/resume.png) **Resume**.
 
 Stubbing any remaining external calls is left as an exercise.
-You are successful when the emulator crashes with `pc = 00000000`.
+You are successful when the emulator crashes with "pc = 00000000".
 
 Clear or disable your breakpoint and invalidate the emulator cache again before proceeding to the next technique.
 
@@ -412,7 +412,7 @@ return [RIP];
 Notice that we cannot just write `RET`, but instead must write the Sleigh code to mimic a `RET`.
 As with the `CALL` override technique, you must now invalidate the emulator cache and resume.
 Stubbing any remaining external functions is left as an exercise.
-You are successful when the emulator crashes with `pc = 00000000`.
+You are successful when the emulator crashes with "pc = 00000000".
 
 ### Wrapping Up
 
