@@ -39,6 +39,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 class VarnodeLocationCellEditor extends AbstractCellEditor
 		implements TableCellEditor, FocusableEditor {
@@ -193,6 +194,9 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 		registerEntryTextField = new DropDownSelectionTextField<>(registerModel);
 		registerEntryTextField.setBorder(null);
 
+		// this allows us to show the matching list when there is no text in the editor
+		registerEntryTextField.setShowMatchingListOnEmptyText(true);
+
 		AtomicReference<Register> currentReg = new AtomicReference<>();
 
 		Address address = varnode.getAddress();
@@ -219,7 +223,12 @@ class VarnodeLocationCellEditor extends AbstractCellEditor
 
 		registerEntryTextField.addActionListener(e -> stopCellEditing());
 
-		registerEntryTextField.showMatchingList();
+		// Note: need to do this later.  At the time of construction, this text field is not yet
+		// showing.  The text field has checks to avoid showing the list if it is not showing.  By
+		// running later, this call will happen once the widget has been added to the table.
+		Swing.runLater(() -> {
+			registerEntryTextField.showMatchingList();
+		});
 
 		return registerEntryTextField;
 	}
