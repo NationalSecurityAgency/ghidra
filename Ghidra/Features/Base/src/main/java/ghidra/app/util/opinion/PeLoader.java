@@ -975,16 +975,20 @@ public class PeLoader extends AbstractPeDebugLoader {
 			DOSHeader dh = pe.getDOSHeader();
 
 			// Check for Rust.  Program object is required, which may be null.
-			if (program != null && RustUtilities.isRust(program.getMemory().getBlock(".rdata"))) {
-				try {
+			try {
+				if (program != null && RustUtilities.isRust(program,
+					program.getMemory().getBlock(".rdata"), monitor)) {
 					int extensionCount = RustUtilities.addExtensions(program, monitor,
 						RustConstants.RUST_EXTENSIONS_WINDOWS);
 					log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
 				}
-				catch (IOException e) {
-					log.appendMsg("Rust error: " + e.getMessage());
-				}
 				return CompilerEnum.Rustc;
+			}
+			catch (CancelledException e) {
+				// Move on
+			}
+			catch (IOException e) {
+				log.appendMsg("Rust error: " + e.getMessage());
 			}
 			
 			// Check for Swift
