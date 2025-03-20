@@ -2341,6 +2341,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 
+				// test to see if there is a string at the typeinfo name location in the would be
+				// typeinfo structure
+				if (!hasStringAtTypeinfoNameLocation(typeinfoAddress)) {
+					continue;
+				}
+
 				Data newStructure = null;
 				String specialTypeinfoNamespaceName = null;
 
@@ -2434,6 +2440,36 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		updateTypeinfosWithBases(typeinfos, typeinfoMap);
 
 		return typeinfos;
+	}
+
+	/**
+	 * Method to validate the second member of the typeinfo struct is a string
+	 * @param typeinfoAddress the address of the potential typeinfo struct
+	 * @return true if what is pointed to by the typeinfoName pointer is a valid string, false otherwise
+	 */
+	private boolean hasStringAtTypeinfoNameLocation(Address typeinfoAddress) {
+
+		// first get the referenced address and verify it is an address
+		Address typeinfoNameAddress =
+			extendedFlatAPI.getPointer(typeinfoAddress.add(defaultPointerSize));
+		if (typeinfoNameAddress == null) {
+			return false;
+		}
+
+		// get defined string if defined already
+		String definedString = getDefinedStringAt(typeinfoNameAddress);
+		if (definedString != null) {
+			return true;
+		}
+
+		// get string from memory if not defined to see if ascii there
+		String stringInMem = getStringFromMemory(typeinfoNameAddress);
+		if (stringInMem != null) {
+			return true;
+		}
+
+		return false;
+
 	}
 
 	private GccTypeinfo getTypeinfo(String namespaceName, List<GccTypeinfo> typeinfos)
