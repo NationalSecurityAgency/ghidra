@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,6 @@ import org.junit.After;
 import org.junit.Before;
 
 import docking.test.AbstractDockingTest;
-import ghidra.util.Msg;
 
 public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTest {
 
@@ -234,10 +233,10 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 
 	protected void hideWindowPressKeyThenValidate(int keyCode) {
 		JWindow matchingWindow = textField.getActiveMatchingWindow();
-		matchingWindow.setVisible(false);
+		runSwing(() -> matchingWindow.setVisible(false));
 		waitForSwing();
-		assertTrue("The completion window is showing after a call to setVisible(false).",
-			!matchingWindow.isShowing());
+		assertFalse("The completion window is showing after a call to setVisible(false).",
+			matchingWindow.isShowing());
 		tpyeActionKey(keyCode);
 		assertTrue("The completion window is not showing after being trigger by a navigation key.",
 			matchingWindow.isShowing());
@@ -307,10 +306,6 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 			waitForSwing();
 			assertFalse("Window was showing when it should not be.", matchingWindow.isShowing());
 			return;
-		}
-
-		if (!matchingWindow.isShowing()) {
-			Msg.debug(this, "");
 		}
 
 		assertTrue("Window is not showing when it should be", matchingWindow.isShowing());
