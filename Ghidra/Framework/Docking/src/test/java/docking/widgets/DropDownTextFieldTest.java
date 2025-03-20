@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -434,5 +434,43 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		JWindow matchingWindow = textField.getActiveMatchingWindow();
 		Dimension windowSize = matchingWindow.getSize();
 		assertEquals(newSize, windowSize.height);
+	}
+
+	@Test
+	public void testShowMatchingListOnEmptyText() {
+
+		runSwing(() -> textField.setShowMatchingListOnEmptyText(false));
+
+		// insert some text and make sure the window is created
+		typeText("d", true);
+		assertMatchingWindowShowing();
+
+		// with this setting off, the list stays visible on empty text
+		clearText();
+		assertMatchingWindowHidden();
+
+		// even with this setting off, this method should always force the list to show
+		showMatchingList();
+		assertMatchingWindowShowing();
+
+		runSwing(() -> textField.setShowMatchingListOnEmptyText(true));
+
+		showMatchingList();
+		assertMatchingWindowShowing();
+
+		typeText("d", true);
+		assertMatchingWindowShowing();
+
+		// with this setting on, the list stays visible on empty text
+		clearText();
+		assertMatchingWindowShowing();
+
+		// with this setting on, this method should always force the list to show
+		showMatchingList();
+		assertMatchingWindowShowing();
+	}
+
+	private void showMatchingList() {
+		runSwing(() -> textField.showMatchingList());
 	}
 }
