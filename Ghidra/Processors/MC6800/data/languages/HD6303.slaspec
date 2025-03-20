@@ -273,7 +273,7 @@ macro Pull2(op) {
 # Misc math
 :MUL                is (op=0x3D)                    { D = zext(A) * zext(B); C_flag = D[15,1]; }
 :CLR OP3            is (op0_3=0xF) ... & OP3        { clear(OP3); }
-:COM OP3            is (op0_3=0x2) ... & OP3        { complement(OP3); }
+:COM OP3            is (op0_3=0x3) ... & OP3        { complement(OP3); }
 :NEG OP3            is (op0_3=0x00) ... & OP3       { negate(OP3); }
 :DAA                is op=0x19 {
    local highA:1 = A >> 4;
