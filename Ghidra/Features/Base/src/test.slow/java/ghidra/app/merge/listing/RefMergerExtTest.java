@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -146,7 +146,6 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		// 010013f0: no ref (has string)
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -656,8 +655,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -678,8 +676,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -741,8 +738,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -828,8 +824,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -913,8 +908,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -949,7 +943,8 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", LATEST_BUTTON);
+		// The two external locations are not in conflict and can both exist
+		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -999,8 +994,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -1035,7 +1029,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", MY_BUTTON);
+		chooseButtonAndApply("Resolve Reference Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -1084,8 +1078,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -1130,7 +1123,6 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", KEEP_BOTH_BUTTON);
 		chooseRadioButton("Resolve Reference Conflict", LATEST_BUTTON);// Since kept both, now choose reference conflict.
 		waitForMergeCompletion();
 
@@ -1188,8 +1180,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -1234,7 +1225,6 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", KEEP_BOTH_BUTTON);
 		chooseRadioButton("Resolve Reference Conflict", MY_BUTTON);// Since kept both, now choose reference conflict.
 		waitForMergeCompletion();
 
@@ -1280,8 +1270,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -1316,9 +1305,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", MERGE_BOTH_BUTTON);
-		chooseVariousOptionsForConflictType("Resolve External Detail Conflict",
-			new int[] { INFO_ROW, KEEP_LATEST, KEEP_MY });// Namespace, Name
+		chooseButtonAndApply("Resolve Reference Conflict", MY_BUTTON);
+		// NOTE: Locations are not considered conflicts since both get added
+//		chooseVariousOptionsForConflictType("Resolve External Detail Conflict",
+//			new int[] { INFO_ROW, KEEP_LATEST, KEEP_MY });// Namespace, Name
 		waitForMergeCompletion();
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -1333,11 +1323,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);
-		assertEquals("ADVAPI32.DLL::getName",
+		assertEquals("USER32.DLL::getName",
 			((ExternalReference) refs[0]).getExternalLocation().toString());
-		assertEquals("77db2233",
-			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertEquals(SourceType.DEFAULT, refs[0].getSource());
+		assertNull(((ExternalReference) refs[0]).getExternalLocation().getAddress());
+		assertEquals(SourceType.USER_DEFINED, refs[0].getSource());
 	}
 
 	@Test
@@ -1357,8 +1346,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013cc"), 0);
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x10013cc"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
+						addr(program, "0x01234567"), SourceType.USER_DEFINED, 0, RefType.DATA);
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x10013d8"), 0);
 					assertEquals(0, refs.length);
@@ -1393,9 +1381,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		chooseButtonAndApply("Resolve External Add Conflict", MERGE_BOTH_BUTTON);
-		chooseVariousOptionsForConflictType("Resolve External Detail Conflict",
-			new int[] { INFO_ROW, KEEP_MY, KEEP_LATEST });// Namespace, Name
+		// NOTE: Locations are not considered conflicts since both get added
+		chooseButtonAndApply("Resolve Reference Conflict", LATEST_BUTTON);
+//		chooseVariousOptionsForConflictType("Resolve External Detail Conflict",
+//			new int[] { INFO_ROW, KEEP_MY, KEEP_LATEST });// Namespace, Name
 		waitForMergeCompletion();
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -1410,7 +1399,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);
-		assertEquals("USER32.DLL::EXT_77db2233",
+		assertEquals("ADVAPI32.DLL::EXT_77db2233",
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("77db2233",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());

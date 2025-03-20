@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -212,12 +212,12 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 	public void autoMerge(int progressMin, int progressMax, TaskMonitor monitor)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 
-		latestResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_LATEST_DTS);
-		myResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_MY_DTS);
-		origResolvedDts = (Map<Long, DataType>) mergeManager.getResolveInformation(
-			MergeConstants.RESOLVED_ORIGINAL_DTS);
+		latestResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_LATEST_DTS);
+		myResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_MY_DTS);
+		origResolvedDts = (Map<Long, DataType>) mergeManager
+				.getResolveInformation(MergeConstants.RESOLVED_ORIGINAL_DTS);
 
 		initializeAutoMerge("Auto-merging Functions and determining conflicts.", progressMin,
 			progressMax, monitor);
@@ -450,8 +450,8 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 						conflictingMyEntries.add(latestOnly.intersect(changeMy));
 						if (!conflictingMyEntries.isEmpty()) {
 							entryConflictSet.add(latestBody); // Add Latest function's body.
-							entryConflictSet.add(
-								getBodies(functionManagers[MY], conflictingMyEntries)); // Add My conflicting function bodies.
+							entryConflictSet
+									.add(getBodies(functionManagers[MY], conflictingMyEntries)); // Add My conflicting function bodies.
 						}
 						newEntries.add(conflictingMyEntries);
 					}
@@ -613,7 +613,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 		Function myThunkedFunction = functions[MY].getThunkedFunction(false);
 		Address myThunkedEntry = myThunkedFunction.getEntryPoint();
 		Address myThunkedEntryAsLatest = SimpleDiffUtility.getCompatibleAddress(
-			functions[MY].getProgram(), myThunkedEntry, functions[LATEST].getProgram());
+			functions[MY].getProgram(), myThunkedEntry, functions[RESULT].getProgram());
 		if (!latestThunkedEntry.equals(myThunkedEntryAsLatest)) {
 			// Save the thunk conflict
 			saveThunkConflict(functions[RESULT]);
@@ -1065,10 +1065,8 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 				mergeParamInfo(addr, paramInfoConflicts, parameterInfoChoice, monitor);
 			}
 			else if (askUser && mergeManager != null) {
-				Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
-				while (iter.hasNext()) {
+				for (ParamInfoConflict pc : paramInfoConflicts) {
 					monitor.checkCancelled();
-					ParamInfoConflict pc = iter.next();
 					boolean useForAll = (parameterInfoChoice != ASK_USER);
 					if (useForAll) {
 						mergeParamInfo(addr, pc, parameterInfoChoice, monitor);
@@ -1356,11 +1354,9 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 
 	protected void mergeParameters(Address entryPtAddress, int chosenConflictOption,
 			TaskMonitor monitor) {
-		Function resultFunction =
-			listingMergeManager.mergeLatest.getResultProgram()
-					.getFunctionManager()
-					.getFunctionAt(
-						entryPtAddress);
+		Function resultFunction = listingMergeManager.mergeLatest.getResultProgram()
+				.getFunctionManager()
+				.getFunctionAt(entryPtAddress);
 		if (resultFunction == null) {
 			return;
 		}
