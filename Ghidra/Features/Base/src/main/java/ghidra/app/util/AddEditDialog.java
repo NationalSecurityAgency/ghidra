@@ -397,11 +397,6 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 	 * </ul>
 	 */
 	private void selectNamespace() {
-		if (symbol != null && symbol.getParentNamespace() != null) {
-			namespaceChoices.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
-			return;
-		}
-
 		SymbolTable symbolTable = program.getSymbolTable();
 		Namespace localNamespace = symbolTable.getNamespace(addr);
 		FunctionSymbol functionSymbol = getFunctionSymbol(addr);
