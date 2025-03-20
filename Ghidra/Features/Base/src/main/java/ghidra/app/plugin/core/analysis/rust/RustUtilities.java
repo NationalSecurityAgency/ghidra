@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,11 @@ import ghidra.xml.XmlParseException;
 public class RustUtilities {
 	/**
 	 * Checks if a given {@link MemoryBlock} contains a Rust signature
-	 * 
+	 * <p>
+	 * This may be used by loaders to determine if a program was compiled with rust.
+	 * If the program is determined to be rust, then the compiler property is set to
+	 * {@link RustConstants#RUST_COMPILER}.
+	 *
 	 * @param block The {@link MemoryBlock} to scan for Rust signatures
 	 * @return True if the given {@link MemoryBlock} is not null and contains a Rust signature; 
 	 *   otherwise, false
@@ -53,6 +57,9 @@ public class RustUtilities {
 			return true;
 		}
 		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_2)) {
+			return true;
+		}
+		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_3)) {
 			return true;
 		}
 		return false;
