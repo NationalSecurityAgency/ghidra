@@ -71,7 +71,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean shouldSearchAllPaths(Program program, List<Option> options) {
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
 		return shouldPerformOrdinalLookup(options);
 	}
 

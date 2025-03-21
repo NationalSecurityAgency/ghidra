@@ -66,6 +66,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class MachoProgramBuilder {
 
+	public static final String HEADER_SYMBOL = "MACH_HEADER";
+
 	protected MachHeader machoHeader;
 	protected Program program;
 	protected ByteProvider provider;
@@ -975,6 +977,7 @@ public class MachoProgramBuilder {
 		try {
 			DataUtilities.createData(program, headerAddr, header.toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			program.getSymbolTable().createLabel(headerAddr, HEADER_SYMBOL, SourceType.IMPORTED);
 
 			monitor.initialize(header.getLoadCommands().size(), "Marking up header...");
 			for (LoadCommand loadCommand : header.getLoadCommands()) {
