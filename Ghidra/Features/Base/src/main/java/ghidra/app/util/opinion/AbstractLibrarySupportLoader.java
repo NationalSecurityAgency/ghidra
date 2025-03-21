@@ -159,7 +159,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	@Override
 	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		if (loadedPrograms.isEmpty() ||
 			(!isLinkExistingLibraries(options) && !isLoadLibraries(options))) {
@@ -167,10 +167,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		}
 
 		List<DomainFolder> searchFolders =
-			getLibrarySearchFolders(loadedPrograms, project, options);
+			getLibrarySearchFolders(loadedPrograms, project, options, log);
 
 		List<LibrarySearchPath> searchPaths = getLibrarySearchPaths(
-			loadedPrograms.getFirst().getDomainObject(), loadSpec, options, messageLog, monitor);
+			loadedPrograms.getFirst().getDomainObject(), loadSpec, options, log, monitor);
 
 		List<Loaded<Program>> saveablePrograms =
 			loadedPrograms.stream().filter(Predicate.not(Loaded::shouldDiscard)).toList();
@@ -191,7 +191,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			int id = program.startTransaction("Resolving external references");
 			try {
 				resolveExternalLibraries(program, saveablePrograms, searchFolders, searchPaths,
-					options, monitor, messageLog);
+					options, monitor, log);
 			}
 			finally {
 				program.endTransaction(id, true);
@@ -286,12 +286,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param projectFolderPath The project folder path the program will get saved to. Could be null
 	 *   if the program is not getting saved to the project.
 	 * @param options a {@link List} of {@link Option}s
+	 * @param log The log
 	 * @return The path of the project folder to search for existing libraries, or null if no
 	 *   project folders can be or should be searched
 	 */
 	protected DomainFolder getLinkSearchFolder(Project project, Program program,
-			String projectFolderPath, List<Option> options) {
-		if (!shouldSearchAllPaths(program, options) && !isLinkExistingLibraries(options)) {
+			String projectFolderPath, List<Option> options, MessageLog log) {
+		if (!shouldSearchAllPaths(program, options, log) && !isLinkExistingLibraries(options)) {
 			return null;
 		}
 		if (project == null) {
@@ -401,18 +402,19 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param loadedPrograms the list of {@link Loaded} {@link Program}s
 	 * @param project The {@link Project} to load into. Could be null if there is no project.
 	 * @param options The {@link List} of {@link Option}s
+	 * @param log The log
 	 * @return A {@link List} of library search {@link DomainFolder folders} based on the current
 	 * options
 	 */
 	protected List<DomainFolder> getLibrarySearchFolders(List<Loaded<Program>> loadedPrograms,
-			Project project, List<Option> options) {
+			Project project, List<Option> options, MessageLog log) {
 		List<DomainFolder> searchFolders = new ArrayList<>();
 		String projectFolderPath = loadedPrograms.get(0).getProjectFolderPath();
 		String destPath = getLibraryDestinationFolderPath(project, projectFolderPath, options);
 		DomainFolder destSearchFolder =
 			getLibraryDestinationSearchFolder(project, destPath, options);
 		DomainFolder linkSearchFolder = getLinkSearchFolder(project,
-			loadedPrograms.getFirst().getDomainObject(), projectFolderPath, options);
+			loadedPrograms.getFirst().getDomainObject(), projectFolderPath, options, log);
 		Optional.ofNullable(destSearchFolder).ifPresent(searchFolders::add);
 		Optional.ofNullable(linkSearchFolder).ifPresent(searchFolders::add);
 		return searchFolders;
@@ -424,9 +426,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * 
 	 * @param program The {@link Program} being loaded
 	 * @param options a {@link List} of {@link Option}s
+	 * @param log The log
 	 * @return True if all possible search paths should be used, regardless of what options are set
 	 */
-	protected boolean shouldSearchAllPaths(Program program, List<Option> options) {
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
 		return false;
 	}
 
@@ -527,7 +530,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<LibrarySearchPath> searchPaths =
 			getLibrarySearchPaths(program, desiredLoadSpec, options, log, monitor);
 		DomainFolder linkSearchFolder =
-			getLinkSearchFolder(project, program, projectFolderPath, options);
+			getLinkSearchFolder(project, program, projectFolderPath, options, log);
 		String libraryDestFolderPath =
 			getLibraryDestinationFolderPath(project, projectFolderPath, options);
 		DomainFolder libraryDestFolder =
@@ -554,7 +557,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					log.appendMsg("Found %s in %s...".formatted(library, linkSearchFolder));
 					log.appendMsg("------------------------------------------------\n");
 				}
-				else if (isLoadLibraries(options) || shouldSearchAllPaths(program, options)) {
+				else if (isLoadLibraries(options) || shouldSearchAllPaths(program, options, log)) {
 					Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(library, provider,
 						customSearchPaths, libraryDestFolderPath, unprocessed, depth,
 						desiredLoadSpec, options, log, consumer, monitor);
@@ -894,13 +897,12 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 	private void resolveExternalLibraries(Program program, List<Loaded<Program>> loadedPrograms,
 			List<DomainFolder> searchFolders, List<LibrarySearchPath> fsSearchPaths,
-			List<Option> options, TaskMonitor monitor, MessageLog messageLog)
+			List<Option> options, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 		ExternalManager extManager = program.getExternalManager();
 		String[] extLibNames = extManager.getExternalLibraryNames();
-		messageLog.appendMsg(
-			"Linking the External Programs of '%s' to imported libraries..."
-					.formatted(program.getName()));
+		log.appendMsg("Linking the External Programs of '%s' to imported libraries..."
+				.formatted(program.getName()));
 		for (String externalLibName : extLibNames) {
 			if (Library.UNKNOWN.equals(externalLibName)) {
 				continue;
@@ -911,7 +913,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				if (match != null) {
 					String path = match.getProjectFolderPath() + match.getName();
 					extManager.setExternalPath(externalLibName, path, false);
-					messageLog.appendMsg("  [" + externalLibName + "] -> [" + path + "]");
+					log.appendMsg("  [" + externalLibName + "] -> [" + path + "]");
 				}
 				else {
 					boolean found = false;
@@ -921,14 +923,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						if (alreadyImportedLib != null) {
 							extManager.setExternalPath(externalLibName,
 								alreadyImportedLib.getPathname(), false);
-							messageLog.appendMsg("  [" + externalLibName + "] -> [" +
+							log.appendMsg("  [" + externalLibName + "] -> [" +
 								alreadyImportedLib.getPathname() + "] (previously imported)");
 							found = true;
 							break;
 						}
 					}
 					if (!found) {
-						messageLog.appendMsg("  [" + externalLibName + "] -> not found in project");
+						log.appendMsg("  [" + externalLibName + "] -> not found in project");
 					}
 				}
 			}
@@ -936,7 +938,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				Msg.error(this, "Bad library name: " + externalLibName, e);
 			}
 		}
-		messageLog.appendMsg("------------------------------------------------\n");
+		log.appendMsg("------------------------------------------------\n");
 	}
 
 	/**
@@ -1023,7 +1025,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected List<LibrarySearchPath> getLibrarySearchPaths(Program program, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
-		if (!isLoadLibraries(options) && !shouldSearchAllPaths(program, options)) {
+		if (!isLoadLibraries(options) && !shouldSearchAllPaths(program, options, log)) {
 			return List.of();
 		}
 
