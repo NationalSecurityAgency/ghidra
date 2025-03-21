@@ -16,18 +16,12 @@
 package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StringUTF8DataType;
-import ghidra.program.model.data.Structure;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -76,6 +70,18 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@FieldMapping
 	private long edata;
+
+	@FieldMapping
+	private long bss;
+
+	@FieldMapping
+	private long ebss;
+
+	@FieldMapping
+	private long noptrbss;
+
+	@FieldMapping
+	private long enoptrbss;
 
 	@FieldMapping
 	@MarkupReference
@@ -165,6 +171,18 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		Address dataStart = programContext.getCodeAddress(data);
 		Address dataEnd = programContext.getCodeAddress(edata);
 		return new AddressRangeImpl(dataStart, dataEnd);
+	}
+
+	public AddressRange getUninitializedDataRange() {
+		Address rangeStart = programContext.getCodeAddress(bss);
+		Address rangeEnd = programContext.getCodeAddress(ebss);
+		return new AddressRangeImpl(rangeStart, rangeEnd);
+	}
+
+	public AddressRange getUninitializedNoPtrDataRange() {
+		Address rangeStart = programContext.getCodeAddress(noptrbss);
+		Address rangeEnd = programContext.getCodeAddress(enoptrbss);
+		return new AddressRangeImpl(rangeStart, rangeEnd);
 	}
 
 	/**
@@ -466,4 +484,5 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		// the pclntab structure.
 		return moduleData.matchesPcHeader(pcHeader) ? moduleData : null;
 	}
+
 }
