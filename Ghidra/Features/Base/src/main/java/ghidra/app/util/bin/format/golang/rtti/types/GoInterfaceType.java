@@ -112,7 +112,9 @@ public class GoInterfaceType extends GoType {
 		StructureDataType itabStruct = new StructureDataType(ifaceCP, ifaceName + "_itab", 0, dtm);
 		itabStruct.replaceWith(genericItabStruct);
 
-		int funDTCOrdinal = 4; // a bit of a hack, could also lookup by name "Fun"
+		FieldMappingInfo<GoItab> funFMI =
+			programContext.getStructureMappingInfo(GoItab.class).getFieldInfo("fun");
+		int funDTCOrdinal = funFMI.getDtc().getOrdinal();
 		//DataTypeComponentImpl funDtc = itabStruct.getComponent(funDTCOrdinal);
 		itabStruct.delete(funDTCOrdinal);
 

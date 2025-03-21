@@ -130,6 +130,15 @@ public class StructureMappingInfo<T> {
 		return fields;
 	}
 
+	public FieldMappingInfo<T> getFieldInfo(String javaFieldName) throws IOException {
+		for (FieldMappingInfo<T> fmi : fields) {
+			if (fmi.getField().getName().equals(javaFieldName)) {
+				return fmi;
+			}
+		}
+		throw new IOException("Java field name not found: " + javaFieldName);
+	}
+
 	public List<Method> getAfterMethods() {
 		return afterMethods;
 	}
