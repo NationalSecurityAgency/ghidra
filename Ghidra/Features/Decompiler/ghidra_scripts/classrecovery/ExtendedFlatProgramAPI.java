@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,52 +16,21 @@
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.IsolatedEntrySubModel;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.IBO32DataType;
-import ghidra.program.model.data.LongDataType;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.Undefined4DataType;
-import ghidra.program.model.data.Undefined8DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -131,6 +100,97 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		catch (AddressOutOfBoundsException e) {
 			return null;
 		}
+	}
+
+	/**
+	 * Method to determine if the given address contains a possible function pointer
+	 * @param program the given program
+	 * 
+	 * @param address the given address
+	 * @return true if the given address contains a possible function pointer or
+	 *         false otherwise
+	 * @throws CancelledException if cancelled
+	 */
+	public boolean isPossibleFunctionPointer(Program program, Address address)
+			throws CancelledException {
+
+		Address referencedAddress = getPointer(address);
+
+		if (referencedAddress == null) {
+			return false;
+		}
+
+		Address normalizedReferencedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, referencedAddress);
+
+		if (normalizedReferencedAddress == null) {
+			return false;
+		}
+
+		Function function = getFunctionAt(normalizedReferencedAddress);
+		if (function != null) {
+			return true;
+		}
+
+		AddressSetView executeSet = program.getMemory().getExecuteSet();
+
+		if (!executeSet.contains(normalizedReferencedAddress)) {
+			return false;
+		}
+
+		Instruction instruction = getInstructionAt(normalizedReferencedAddress);
+		if (instruction != null) {
+			createFunction(normalizedReferencedAddress, null);
+			return true;
+
+		}
+
+		boolean disassemble = disassemble(normalizedReferencedAddress);
+		if (disassemble) {
+
+			Listing listing = program.getListing();
+
+			// check for the case where there is conflicting data at the thumb offset function
+			// pointer and if so clear the data and redisassemble and remove the bad bookmark
+			//	long originalLongValue = extendedFlatAPI.getLongValueAt(address);
+			if (!referencedAddress.equals(normalizedReferencedAddress)) {
+
+				Data dataAt = listing.getDataAt(referencedAddress);
+				if (dataAt != null && dataAt.isDefined()) {
+					clearListing(referencedAddress);
+					disassemble = disassemble(address);
+
+					Bookmark bookmark =
+						getBookmarkAt(program, normalizedReferencedAddress, BookmarkType.ERROR,
+							"Bad Instruction", "conflicting data");
+					if (bookmark != null) {
+						removeBookmark(bookmark);
+					}
+				}
+			}
+
+			createFunction(normalizedReferencedAddress, null);
+			return true;
+		}
+		return false;
+	}
+
+	public Bookmark getBookmarkAt(Program program, Address address, String bookmarkType,
+			String category,
+			String commentContains) throws CancelledException {
+
+		Bookmark[] bookmarks = program.getBookmarkManager().getBookmarks(address);
+
+		for (Bookmark bookmark : bookmarks) {
+			monitor.checkCancelled();
+
+			if (bookmark.getType().getTypeString().equals(bookmarkType) &&
+				bookmark.getCategory().equals(category) &&
+				bookmark.getComment().contains(commentContains)) {
+				return bookmark;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -254,18 +314,16 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		if (referencesFrom.size() != 1) {
 			return null;
 		}
-		
-		
 
 		Address functionAddress = referencesFrom.get(0);
-		
+
 		Register lowBitCodeMode = currentProgram.getRegister("LowBitCodeMode");
-		if(lowBitCodeMode != null) {
+		if (lowBitCodeMode != null) {
 			long longValue = functionAddress.getOffset();
 			longValue = longValue & ~0x1;
 			functionAddress = functionAddress.getNewAddress(longValue);
 		}
-		
+
 		Function function = getFunctionAt(functionAddress);
 		if (function == null) {
 			// try to create function
@@ -581,7 +639,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return subroutineAddresses;
 	}
 
-
 	/**
 	 * Method to get a list of symbols either matching exactly (if exact flag is true) or containing (if exact flag is false) the given symbol name
 	 * @param addressSet the address set to find matching symbols in
@@ -641,7 +698,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			if (addressSize == 32) {
 				long offset32 = getInt(address);
 				Address newAddr = address.getNewAddress(offset32);
-				if(currentProgram.getMemory().contains(newAddr)) {
+				if (currentProgram.getMemory().contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -651,7 +708,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 				long offset64 = getLong(address);
 				Address newAddr = address.getNewAddress(offset64);
-				if(currentProgram.getMemory().contains(newAddr)) {
+				if (currentProgram.getMemory().contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -666,11 +723,11 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		}
 
 	}
-	
+
 	public long getLongValueAt(Address address) {
-		
+
 		MemBuffer buf = new DumbMemBufferImpl(currentProgram.getMemory(), address);
-		
+
 		LongDataType longDT = new LongDataType();
 
 		Scalar value =
@@ -855,7 +912,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		}
 		return false;
 	}
-
 
 	/**
 	 * Method to retrieve a single referenced address from the given address
@@ -1362,6 +1418,5 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		}
 		return buffer.toString();
 	}
-
 
 }
