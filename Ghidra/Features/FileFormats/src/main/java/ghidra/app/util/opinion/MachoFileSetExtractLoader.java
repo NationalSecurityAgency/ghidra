@@ -102,7 +102,7 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 	}
 
 	@Override
-	protected boolean shouldSearchAllPaths(Program program, List<Option> options) {
+	protected boolean shouldSearchAllPaths(Program program, List<Option> options, MessageLog log) {
 		return false;
 	}
 
