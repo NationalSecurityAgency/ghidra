@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -31,7 +32,6 @@ import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
@@ -4431,68 +4431,59 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private boolean isPossibleFunctionPointer(Address address) throws CancelledException {
 
-		// TODO: make one that works for all casea in helper
-
-		long longValue = extendedFlatAPI.getLongValueAt(address);
-
-		Register lowBitCodeMode = program.getRegister("LowBitCodeMode");
-		if (lowBitCodeMode != null) {
-			longValue = longValue & ~0x1;
-		}
-
-		Address possibleFunctionPointer = null;
-
-		try {
-			possibleFunctionPointer = address.getNewAddress(longValue);
-		}
-		catch (AddressOutOfBoundsException e) {
+		Address referencedAddress = extendedFlatAPI.getSingleReferencedAddress(address);
+		if (referencedAddress == null) {
 			return false;
 		}
 
-		if (possibleFunctionPointer == null) {
+		Address normalizedReferencedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, referencedAddress);
+
+		if (normalizedReferencedAddress == null) {
 			return false;
 		}
 
-		Function function = api.getFunctionAt(possibleFunctionPointer);
+		Function function = api.getFunctionAt(normalizedReferencedAddress);
 		if (function != null) {
 			return true;
 		}
 
 		AddressSetView executeSet = program.getMemory().getExecuteSet();
 
-		if (!executeSet.contains(possibleFunctionPointer)) {
+		if (!executeSet.contains(normalizedReferencedAddress)) {
 			return false;
 		}
 
-		Instruction instruction = api.getInstructionAt(possibleFunctionPointer);
+		Instruction instruction = api.getInstructionAt(normalizedReferencedAddress);
 		if (instruction != null) {
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 
 		}
 
-		boolean disassemble = api.disassemble(possibleFunctionPointer);
+		boolean disassemble = api.disassemble(normalizedReferencedAddress);
 		if (disassemble) {
 
 			// check for the case where there is conflicting data at the thumb offset function
 			// pointer and if so clear the data and redisassemble and remove the bad bookmark
-			long originalLongValue = extendedFlatAPI.getLongValueAt(address);
-			if (originalLongValue != longValue) {
-				Address offsetPointer = address.getNewAddress(originalLongValue);
-				Data dataAt = listing.getDataAt(offsetPointer);
+			//	long originalLongValue = extendedFlatAPI.getLongValueAt(address);
+			if (!referencedAddress.equals(normalizedReferencedAddress)) {
+
+				Data dataAt = listing.getDataAt(referencedAddress);
 				if (dataAt != null && dataAt.isDefined()) {
-					api.clearListing(offsetPointer);
+					api.clearListing(referencedAddress);
 					disassemble = api.disassemble(address);
 
-					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR,
-						"Bad Instruction", "conflicting data");
+					Bookmark bookmark =
+						getBookmarkAt(normalizedReferencedAddress, BookmarkType.ERROR,
+							"Bad Instruction", "conflicting data");
 					if (bookmark != null) {
 						api.removeBookmark(bookmark);
 					}
 				}
 			}
 
-			api.createFunction(possibleFunctionPointer, null);
+			api.createFunction(normalizedReferencedAddress, null);
 			return true;
 		}
 		return false;
