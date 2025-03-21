@@ -16,6 +16,9 @@
 package ghidra.app.plugin.core.data;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.util.Date;
 
 import javax.swing.*;
 
@@ -32,8 +35,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.HelpLocation;
-import ghidra.util.MessageType;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.layout.PairLayout;
 
@@ -51,6 +53,8 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	private DataType newDataType;
 	private ProgramLocation programLocation;
 	private DataTypeManagerService dtmService;
+	private JCheckBox addressCheckBox;
+	private JCheckBox dateCheckBox;
 
 	/**
 	 * Constructor
@@ -58,9 +62,12 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	 * @param dtmService the DataTypeManagerService used for choosing datatypes
 	 * @param location the location of the field being edited
 	 * @param dataTypeComponent the component of the field being edited
+	 * @param addDate selects the addDate checkbox
+	 * @param addAddress selects the addDate checkbox
 	 */
 	public EditDataFieldDialog(PluginTool tool, DataTypeManagerService dtmService,
-			ProgramLocation location, DataTypeComponent dataTypeComponent) {
+			ProgramLocation location, DataTypeComponent dataTypeComponent, boolean addAddress,
+			boolean addDate) {
 		super("Edit Field Dialog", true, true, true, false);
 		this.tool = tool;
 		this.dtmService = dtmService;
@@ -69,7 +76,7 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		setTitle(generateTitle());
 
 		addWorkPanel(buildMainPanel());
-		initializeFields();
+		initializeFields(addAddress, addDate);
 		setFocusComponent(nameField);
 		setHelpLocation(new HelpLocation("DataPlugin", "Edit_Field_Dialog"));
 
@@ -135,14 +142,43 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		updateDataTypeTextField();
 	}
 
-	private void initializeFields() {
+	/**
+	 * Returns true if the Add Address checkbox is selected.
+	 * @return  true if the Add Address checkbox is selected
+	 */
+	public boolean isAddAddressSelected() {
+		return addressCheckBox.isSelected();
+	}
+
+	/**
+	 * Returns true if the Add Date checkbox is selected.
+	 * @return  true if the Add Address checkbox is selected
+	 */
+	public boolean isAddDateSelected() {
+		return dateCheckBox.isSelected();
+	}
+
+	private void initializeFields(boolean addAddress, boolean addDate) {
 		String name = component.getFieldName();
 		if (StringUtils.isBlank(name)) {
 			name = "";
 		}
 		nameField.setText(name);
-		commentField.setText(component.getComment());
+		String comment = component.getComment();
+		if (comment == null) {
+			comment = "";
+		}
+		commentField.setText(comment);
 		dataTypeTextField.setText(component.getDataType().getDisplayName());
+
+		if (addAddress) {
+			addressCheckBox.setSelected(true);
+			addTextToComment(getCurrentAddressString());
+		}
+		if (addDate) {
+			dateCheckBox.setSelected(true);
+			addTextToComment(getTodaysDate());
+		}
 	}
 
 	@Override
@@ -202,6 +238,27 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 	}
 
 	private JPanel buildMainPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(buildNameValuePanel(), BorderLayout.NORTH);
+		panel.add(buildCheckboxPanel(), BorderLayout.SOUTH);
+		return panel;
+	}
+
+	private JPanel buildCheckboxPanel() {
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
+
+		addressCheckBox = new JCheckBox("Add Current Address");
+		addressCheckBox.addActionListener(this::addressCheckBoxChanged);
+
+		dateCheckBox = new JCheckBox("Add Today's Date");
+		dateCheckBox.addActionListener(this::dateCheckBoxChanged);
+
+		panel.add(addressCheckBox);
+		panel.add(dateCheckBox);
+		return panel;
+	}
+
+	private JPanel buildNameValuePanel() {
 		JPanel panel = new JPanel(new PairLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -214,10 +271,10 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 
 		panel.add(new JLabel("Field Name:", SwingConstants.LEFT));
 		panel.add(nameField);
-		panel.add(new JLabel("Comment:", SwingConstants.LEFT));
-		panel.add(commentField);
 		panel.add(new JLabel("Datatype:", SwingConstants.LEFT));
 		panel.add(buildDataTypeChooserPanel());
+		panel.add(new JLabel("Comment:", SwingConstants.LEFT));
+		panel.add(commentField);
 
 		return panel;
 	}
@@ -254,6 +311,58 @@ public class EditDataFieldDialog extends DialogComponentProvider {
 		DataType parent = component.getParent();
 		String compositeName = parent.getName();
 		return "Edit " + compositeName + ", Field " + component.getOrdinal();
+	}
+
+	private void dateCheckBoxChanged(ActionEvent e) {
+		String today = getTodaysDate();
+		if (dateCheckBox.isSelected()) {
+			addTextToComment(today);
+		}
+		else {
+			removeTextFromComment(today);
+		}
+	}
+
+	private void addressCheckBoxChanged(ActionEvent e) {
+		String address = getCurrentAddressString();
+		if (addressCheckBox.isSelected()) {
+			addTextToComment(address);
+		}
+		else {
+			removeTextFromComment(address);
+		}
+	}
+
+	private void removeTextFromComment(String text) {
+		String comment = commentField.getText().trim();
+		int index = comment.indexOf(text);
+		if (index < 0) {
+			return;
+		}
+
+		// remove the given text and any spaces that follow it.
+		comment = comment.replaceAll(text + "\\s*", "");
+		commentField.setText(comment.trim());
+	}
+
+	private String getTodaysDate() {
+		return DateUtils.formatCompactDate(new Date());
+	}
+
+	private String getCurrentAddressString() {
+		return programLocation.getAddress().toString();
+	}
+
+	private void addTextToComment(String text) {
+		String comment = commentField.getText().trim();
+		if (comment.contains(text)) {
+			return;
+		}
+		if (!comment.isBlank()) {
+			comment += " ";
+		}
+		comment += text;
+		commentField.setText(comment.trim());
 	}
 
 	public String getDataTypeText() {

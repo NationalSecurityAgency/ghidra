@@ -109,6 +109,8 @@ public class DataPlugin extends Plugin implements DataService {
 	private DataTypeManagerChangeListenerAdapter adapter;
 
 	private SwingUpdateManager favoritesUpdateManager;
+	private boolean addAddress;
+	private boolean addDate;
 
 	public DataPlugin(PluginTool tool) {
 		super(tool);
@@ -855,8 +857,10 @@ public class DataPlugin extends Plugin implements DataService {
 		DataTypeComponent component = DataTypeUtils.getDataTypeComponent(program, address, path);
 		if (component != null) {
 			EditDataFieldDialog dialog =
-				new EditDataFieldDialog(tool, dtmService, location, component);
+				new EditDataFieldDialog(tool, dtmService, location, component, addAddress, addDate);
 			tool.showDialog(dialog);
+			addAddress = dialog.isAddAddressSelected();
+			addDate = dialog.isAddDateSelected();
 		}
 	}
 
