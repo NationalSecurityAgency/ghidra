@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
@@ -52,8 +53,7 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
-import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 
 public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
 	/**
@@ -71,7 +71,7 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
-	protected static final int TIMEOUT_SECONDS = 300;
+	protected static final int TIMEOUT_SECONDS = 10;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 	public static final String INSTRUMENT_STOPPED = """
 			ghidra trace tx-open "Fake" 'ghidra trace create-obj Inferiors[1]'
@@ -95,18 +95,29 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 	/** Some snapshot likely to exceed the latest */
 	protected static final long SNAP = 100;
 
+	protected static boolean didSetupPython = false;
+
 	protected TraceRmiService traceRmi;
 	private Path gdbPath;
 	private Path outFile;
 	private Path errFile;
 
-	// @BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle", "Debugger-agent-gdb:assemblePyPackage")
+		if (didSetupPython) {
+			// Only do this once when running the full suite.
+			return;
+		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
+		new ProcessBuilder("gradle", "assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()
 				.waitFor();
+		didSetupPython = true;
 	}
 
 	protected void setPythonPath(ProcessBuilder pb) throws IOException {

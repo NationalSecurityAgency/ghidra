@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,6 +131,26 @@ public class DBTraceTimeManager implements TraceTimeManager, DBTraceManager {
 	@Override
 	public Collection<? extends TraceSnapshot> getSnapshotsWithSchedule(TraceSchedule schedule) {
 		return snapshotsBySchedule.get(schedule.toString());
+	}
+
+	@Override
+	public TraceSnapshot findScratchSnapshot(TraceSchedule schedule) {
+		Collection<? extends TraceSnapshot> exist = getSnapshotsWithSchedule(schedule);
+		if (!exist.isEmpty()) {
+			return exist.iterator().next();
+		}
+		/**
+		 * TODO: This could be more sophisticated.... Does it need to be, though? Ideally, we'd only
+		 * keep state around that has annotations, e.g., bookmarks and code units. That needs a new
+		 * query (latestStartSince) on those managers, though. It must find the latest start tick
+		 * since a given snap. We consider only start snaps because placed code units go "from now
+		 * on out".
+		 */
+		TraceSnapshot last = getMostRecentSnapshot(-1);
+		long snap = last == null ? Long.MIN_VALUE : last.getKey() + 1;
+		TraceSnapshot snapshot = getSnapshot(snap, true);
+		snapshot.setSchedule(schedule);
+		return snapshot;
 	}
 
 	@Override

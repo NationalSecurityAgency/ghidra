@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from concurrent.futures import Future
 from contextlib import contextmanager
 import functools
 import inspect
@@ -22,6 +23,8 @@ import shlex
 import socket
 import sys
 import time
+from typing import (Any, Callable, Dict, Generator, List, Literal,
+                    Optional, Tuple, TypeVar, Union, cast)
 
 try:
     import psutil
@@ -29,7 +32,9 @@ except ImportError:
     print("Unable to import 'psutil' - check that it has been installed")
 
 from ghidratrace import sch
-from ghidratrace.client import Client, Address, AddressRange, TraceObject
+from ghidratrace.client import (Client, Address, AddressRange, Trace, Schedule,
+                                TraceObject, Transaction)
+from ghidratrace.display import print_tabular_values, wait
 import lldb
 
 from . import arch, hooks, methods, util
@@ -71,52 +76,67 @@ SECTIONS_ADD_PATTERN = '.Sections'
 SECTION_KEY_PATTERN = '[{secname}]'
 SECTION_ADD_PATTERN = SECTIONS_ADD_PATTERN + SECTION_KEY_PATTERN
 
-# TODO: Symbols
+
+class Extra(object):
+    def __init__(self) -> None:
+        self.memory_mapper: Optional[arch.DefaultMemoryMapper] = None
+        self.register_mapper: Optional[arch.DefaultRegisterMapper] = None
+
+    def require_mm(self) -> arch.DefaultMemoryMapper:
+        if self.memory_mapper is None:
+            raise RuntimeError("No memory mapper")
+        return self.memory_mapper
+
+    def require_rm(self) -> arch.DefaultRegisterMapper:
+        if self.register_mapper is None:
+            raise RuntimeError("No register mapper")
+        return self.register_mapper
 
 
 class State(object):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset_client()
 
-    def require_client(self):
+    def require_client(self) -> Client:
         if self.client is None:
             raise RuntimeError("Not connected")
         return self.client
 
-    def require_no_client(self):
+    def require_no_client(self) -> None:
         if self.client is not None:
             raise RuntimeError("Already connected")
 
-    def reset_client(self):
-        self.client = None
+    def reset_client(self) -> None:
+        self.client: Optional[Client] = None
         self.reset_trace()
 
-    def require_trace(self):
+    def require_trace(self) -> Trace[Extra]:
         if self.trace is None:
             raise RuntimeError("No trace active")
         return self.trace
 
-    def require_no_trace(self):
+    def require_no_trace(self) -> None:
         if self.trace is not None:
             raise RuntimeError("Trace already started")
 
-    def reset_trace(self):
-        self.trace = None
+    def reset_trace(self) -> None:
+        self.trace: Optional[Trace[Extra]] = None
         util.set_convenience_variable('_ghidra_tracing', "false")
         self.reset_tx()
 
-    def require_tx(self):
+    def require_tx(self) -> Tuple[Trace[Extra], Transaction]:
+        trace = self.require_trace()
         if self.tx is None:
             raise RuntimeError("No transaction")
-        return self.tx
+        return trace, self.tx
 
-    def require_no_tx(self):
+    def require_no_tx(self) -> None:
         if self.tx is not None:
             raise RuntimeError("Transaction already started")
 
-    def reset_tx(self):
-        self.tx = None
+    def reset_tx(self) -> None:
+        self.tx: Optional[Transaction] = None
 
 
 STATE = State()
@@ -160,8 +180,6 @@ elif lldb.debugger:
         'command script add -f ghidralldb.commands.ghidra_trace_save            ghidra trace save')
     lldb.debugger.HandleCommand(
         'command script add -f ghidralldb.commands.ghidra_trace_new_snap        ghidra trace new-snap')
-    lldb.debugger.HandleCommand(
-        'command script add -f ghidralldb.commands.ghidra_trace_set_snap        ghidra trace set-snap')
     lldb.debugger.HandleCommand(
         'command script add -f ghidralldb.commands.ghidra_trace_putmem          ghidra trace putmem')
     lldb.debugger.HandleCommand(
@@ -226,27 +244,33 @@ elif lldb.debugger:
         'command script add -f ghidralldb.commands.ghidra_trace_sync_synth_stopped    ghidra trace sync-synth-stopped')
     lldb.debugger.HandleCommand(
         'command script add -f ghidralldb.commands.ghidra_util_wait_stopped     ghidra util wait-stopped')
-    #lldb.debugger.HandleCommand('target stop-hook add -P ghidralldb.hooks.StopHook')
+    # lldb.debugger.HandleCommand('target stop-hook add -P ghidralldb.hooks.StopHook')
     lldb.debugger.SetAsync(True)
     print("Commands loaded.")
 
 
-def convert_errors(func):
+C = TypeVar('C', bound=Callable)
+
+
+def convert_errors(func: C) -> C:
     @functools.wraps(func)
-    def _func(debugger, command, result, internal_dict):
+    def _func(debugger: lldb.SBDebugger, command: str,
+              result: lldb.SBCommandReturnObject,
+              internal_dict: Dict[str, Any]) -> None:
         result.Clear()
         try:
             func(debugger, command, result, internal_dict)
             result.SetStatus(lldb.eReturnStatusSuccessFinishNoResult)
         except BaseException as e:
             result.SetError(str(e))
-    return _func
+    return cast(C, _func)
 
 
 @convert_errors
-def ghidra_trace_connect(debugger, command, result, internal_dict):
-    """
-    Connect LLDB to Ghidra for tracing
+def ghidra_trace_connect(debugger: lldb.SBDebugger, command: str,
+                         result: lldb.SBCommandReturnObject,
+                         internal_dict: Dict[str, Any]) -> None:
+    """Connect LLDB to Ghidra for tracing.
 
     Usage: ghidra trace connect ADDRESS
         ADDRESS must be HOST:PORT
@@ -275,9 +299,10 @@ def ghidra_trace_connect(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_listen(debugger, command, result, internal_dict):
-    """
-    Listen for Ghidra to connect for tracing
+def ghidra_trace_listen(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Listen for Ghidra to connect for tracing.
 
     Usage: ghidra trace listen [ADDRESS]
         ADDRESS must be PORT or HOST:PORT
@@ -290,6 +315,8 @@ def ghidra_trace_listen(debugger, command, result, internal_dict):
     """
 
     args = shlex.split(command)
+    host: str
+    port: Union[str, int]
     if len(args) == 0:
         host, port = '0.0.0.0', 0
     elif len(args) == 1:
@@ -302,7 +329,7 @@ def ghidra_trace_listen(debugger, command, result, internal_dict):
         else:
             raise RuntimeError("ADDRESS must be PORT or HOST:PORT")
     else:
-        raise RuntimError("Usage: ghidra trace listen [ADDRESS]")
+        raise RuntimeError("Usage: ghidra trace listen [ADDRESS]")
 
     STATE.require_no_client()
     try:
@@ -321,9 +348,10 @@ def ghidra_trace_listen(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_disconnect(debugger, command, result, internal_dict):
-    """
-    Disconnect LLDB from Ghidra for tracing
+def ghidra_trace_disconnect(debugger: lldb.SBDebugger, command: str,
+                            result: lldb.SBCommandReturnObject,
+                            internal_dict: Dict[str, Any]) -> None:
+    """Disconnect LLDB from Ghidra for tracing.
 
     Usage: ghidra trace disconnect
     """
@@ -336,7 +364,7 @@ def ghidra_trace_disconnect(debugger, command, result, internal_dict):
     STATE.reset_client()
 
 
-def compute_name():
+def compute_name() -> str:
     target = lldb.debugger.GetTargetAtIndex(0)
     progname = target.executable.basename
     if progname is None:
@@ -345,14 +373,18 @@ def compute_name():
         return 'lldb/' + progname.split('/')[-1]
 
 
-def start_trace(name):
+def start_trace(name: str) -> None:
     language, compiler = arch.compute_ghidra_lcsp()
-    STATE.trace = STATE.client.create_trace(name, language, compiler)
+    STATE.trace = STATE.require_client().create_trace(
+        name, language, compiler, extra=Extra())
     # TODO: Is adding an attribute like this recommended in Python?
-    STATE.trace.memory_mapper = arch.compute_memory_mapper(language)
-    STATE.trace.register_mapper = arch.compute_register_mapper(language)
+    STATE.trace.extra.memory_mapper = arch.compute_memory_mapper(language)
+    STATE.trace.extra.register_mapper = arch.compute_register_mapper(language)
 
-    parent = os.path.dirname(inspect.getfile(inspect.currentframe()))
+    frame = inspect.currentframe()
+    if frame is None:
+        raise AssertionError("cannot locate schema.xml")
+    parent = os.path.dirname(inspect.getfile(frame))
     schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
@@ -365,9 +397,10 @@ def start_trace(name):
 
 
 @convert_errors
-def ghidra_trace_start(debugger, command, result, internal_dict):
-    """
-    Start a Trace in Ghidra
+def ghidra_trace_start(debugger: lldb.SBDebugger, command: str,
+                       result: lldb.SBCommandReturnObject,
+                       internal_dict: Dict[str, Any]) -> None:
+    """Start a Trace in Ghidra.
 
     Usage: ghidra trace start [NAME]
 
@@ -389,9 +422,10 @@ def ghidra_trace_start(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_stop(debugger, command, result, internal_dict):
-    """
-    Stop the Trace in Ghidra
+def ghidra_trace_stop(debugger: lldb.SBDebugger, command: str,
+                      result: lldb.SBCommandReturnObject,
+                      internal_dict: Dict[str, Any]) -> None:
+    """Stop the Trace in Ghidra.
 
     Usage: ghidra trace stop
     """
@@ -405,9 +439,10 @@ def ghidra_trace_stop(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_restart(debugger, command, result, internal_dict):
-    """
-    Restart or start the Trace in Ghidra
+def ghidra_trace_restart(debugger: lldb.SBDebugger, command: str,
+                         result: lldb.SBCommandReturnObject,
+                         internal_dict: Dict[str, Any]) -> None:
+    """Restart or start the Trace in Ghidra.
 
     Usage: ghidra trace restart [NAME]
 
@@ -431,9 +466,10 @@ def ghidra_trace_restart(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_info(debugger, command, result, internal_dict):
-    """
-    Get info about the Ghidra connection
+def ghidra_trace_info(debugger: lldb.SBDebugger, command: str,
+                      result: lldb.SBCommandReturnObject,
+                      internal_dict: Dict[str, Any]) -> None:
+    """Get info about the Ghidra connection.
 
     Usage: ghidra trace info
     """
@@ -456,9 +492,10 @@ def ghidra_trace_info(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_info_lcsp(debugger, command, result, internal_dict):
-    """
-    Get the selected Ghidra language-compiler-spec pair
+def ghidra_trace_info_lcsp(debugger: lldb.SBDebugger, command: str,
+                           result: lldb.SBCommandReturnObject,
+                           internal_dict: Dict[str, Any]) -> None:
+    """Get the selected Ghidra language-compiler-spec pair.
 
     Usage: ghidra trace info-lcsp
 
@@ -476,9 +513,10 @@ def ghidra_trace_info_lcsp(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_txstart(debugger, command, result, internal_dict):
-    """
-    Start a transaction on the trace
+def ghidra_trace_txstart(debugger: lldb.SBDebugger, command: str,
+                         result: lldb.SBCommandReturnObject,
+                         internal_dict: Dict[str, Any]) -> None:
+    """Start a transaction on the trace.
 
     Usage: ghidra trace tx-start DESCRIPTION
         DESCRIPTION must be in quotes if it contains spaces
@@ -494,9 +532,10 @@ def ghidra_trace_txstart(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_txcommit(debugger, command, result, internal_dict):
-    """
-    Commit the current transaction
+def ghidra_trace_txcommit(debugger: lldb.SBDebugger, command: str,
+                          result: lldb.SBCommandReturnObject,
+                          internal_dict: Dict[str, Any]) -> None:
+    """Commit the current transaction.
 
     Usage: ghidra trace tx-commit
     """
@@ -505,14 +544,15 @@ def ghidra_trace_txcommit(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace tx-commit")
 
-    STATE.require_tx().commit()
+    STATE.require_tx()[1].commit()
     STATE.reset_tx()
 
 
 @convert_errors
-def ghidra_trace_txabort(debugger, command, result, internal_dict):
-    """
-    Abort the current transaction
+def ghidra_trace_txabort(debugger: lldb.SBDebugger, command: str,
+                         result: lldb.SBCommandReturnObject,
+                         internal_dict: Dict[str, Any]) -> None:
+    """Abort the current transaction.
 
     Usage: ghidra trace tx-abort
 
@@ -524,14 +564,14 @@ def ghidra_trace_txabort(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace tx-abort")
 
-    tx = STATE.require_tx()
+    trace, tx = STATE.require_tx()
     print("Aborting trace transaction!")
     tx.abort()
     STATE.reset_tx()
 
 
 @contextmanager
-def open_tracked_tx(description):
+def open_tracked_tx(description: str) -> Generator[Transaction, None, None]:
     with STATE.require_trace().open_tx(description) as tx:
         STATE.tx = tx
         yield tx
@@ -539,9 +579,10 @@ def open_tracked_tx(description):
 
 
 @convert_errors
-def ghidra_trace_txopen(debugger, command, result, internal_dict):
-    """
-    Run a command with an open transaction
+def ghidra_trace_txopen(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Run a command with an open transaction.
 
     Usage: ghidra trace tx-open DESCRIPTION COMMAND
 
@@ -561,9 +602,10 @@ def ghidra_trace_txopen(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_save(debugger, command, result, internal_dict):
-    """
-    Save the current trace
+def ghidra_trace_save(debugger: lldb.SBDebugger, command: str,
+                      result: lldb.SBCommandReturnObject,
+                      internal_dict: Dict[str, Any]) -> None:
+    """Save the current trace.
 
     Usage: ghidra trace save
     """
@@ -576,46 +618,34 @@ def ghidra_trace_save(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_new_snap(debugger, command, result, internal_dict):
-    """
-    Create a new snapshot
+def ghidra_trace_new_snap(debugger: lldb.SBDebugger, command: str,
+                          result: lldb.SBCommandReturnObject,
+                          internal_dict: Dict[str, Any]) -> None:
+    """Create a new snapshot.
 
-    Usage: ghidra trace new-snap DESCRIPTION
+    Usage: ghidra trace new-snap [SNAP] DESCRIPTION
 
     Subsequent modifications to machine state will affect the new snapshot.
     """
 
     args = shlex.split(command)
-    if len(args) != 1:
-        raise RuntimeError("Usage: ghidra trace new-snap DESCRIPTION")
-    description = args[0]
-
-    STATE.require_trace().snapshot(description)
-
-
-@convert_errors
-def ghidra_trace_set_snap(debugger, command, result, internal_dict):
-    """
-    Go to a snapshot
-
-    Usage: ghidra trace set-snap SNAP
-
-    Subsequent modifications to machine state will affect the given snapshot.
-    """
-
-    args = shlex.split(command)
-    if len(args) != 1:
-        raise RuntimeError("Usage: ghidra trace set-snap SNAP")
-    snap = util.get_eval(args[0])
-
-    STATE.require_trace().set_snap(snap.signed)
+    if len(args) == 1:
+        time = None
+        description = args[0]
+    elif len(args) == 2:
+        time = Schedule(int(args[0]))
+        description = args[1]
+    else:
+        raise RuntimeError("Usage: ghidra trace new-snap [SNAP] DESCRIPTION")
+    STATE.require_trace().snapshot(description, time=time)
 
 
-def quantize_pages(start, end):
+def quantize_pages(start: int, end: int) -> Tuple[int, int]:
     return (start // PAGE_SIZE * PAGE_SIZE, (end+PAGE_SIZE-1) // PAGE_SIZE*PAGE_SIZE)
 
 
-def put_bytes(start, end, result, pages):
+def put_bytes(start: int, end: int, result: lldb.SBCommandReturnObject,
+              pages: bool) -> None:
     trace = STATE.require_trace()
     if pages:
         start, end = quantize_pages(start, end)
@@ -625,26 +655,34 @@ def put_bytes(start, end, result, pages):
         return
     buf = proc.ReadMemory(start, end - start, error)
 
-    count = 0
     if error.Success() and buf is not None:
-        base, addr = trace.memory_mapper.map(proc, start)
+        base, addr = trace.extra.require_mm().map(proc, start)
         if base != addr.space:
             trace.create_overlay_space(base, addr.space)
         count = trace.put_bytes(addr, buf)
-        if result is not None:
+        if result is None:
+            pass
+        elif isinstance(count, Future):
+            if count.done():
+                result.PutCString(f"Wrote {count.result()} bytes")
+            else:
+                count.add_done_callback(lambda c: print(f"Wrong {c} bytes"))
+                result.PutCString(
+                    f"Wrong {len(buf)} bytes, perhaps in the future")
+        else:
             result.PutCString(f"Wrote {count} bytes")
     else:
         raise RuntimeError(f"Cannot read memory at {start:x}")
 
 
-def eval_address(address):
+def eval_address(address: str) -> int:
     try:
         return util.parse_and_eval(address)
     except BaseException as e:
         raise RuntimeError(f"Cannot convert '{address}' to address: {e}")
 
 
-def eval_range(address, length):
+def eval_range(address: str, length: str) -> Tuple[int, int]:
     start = eval_address(address)
     try:
         end = start + util.parse_and_eval(length)
@@ -653,15 +691,17 @@ def eval_range(address, length):
     return start, end
 
 
-def putmem(address, length, result, pages=True):
+def putmem(address: str, length: str, result: lldb.SBCommandReturnObject,
+           pages: bool = True) -> None:
     start, end = eval_range(address, length)
     put_bytes(start, end, result, pages)
 
 
 @convert_errors
-def ghidra_trace_putmem(debugger, command, result, internal_dict):
-    """
-    Record the given block of memory into the Ghidra trace
+def ghidra_trace_putmem(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Record the given block of memory into the Ghidra trace.
 
     Usage: ghidra trace putmem ADDRESS LENGTH [PAGES]
 
@@ -689,9 +729,10 @@ def ghidra_trace_putmem(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_putval(debugger, command, result, internal_dict):
-    """
-    Record the given value into the Ghidra trace, if it's in memory
+def ghidra_trace_putval(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Record the given value into the Ghidra trace, if it's in memory.
 
     Usage: ghidra trace putval EXPRESSION [PAGES]
 
@@ -723,7 +764,7 @@ def ghidra_trace_putval(debugger, command, result, internal_dict):
     try:
         value = util.get_eval(expression)
         address = value.addr
-    except BaseExcepion as e:
+    except BaseException as e:
         raise RuntimeError(f"Could not evaluate {expression}: {e}")
     if not address.IsValid():
         raise RuntimeError(f"Expression {expression} does not have an address")
@@ -732,22 +773,25 @@ def ghidra_trace_putval(debugger, command, result, internal_dict):
     return put_bytes(start, end, result, pages)
 
 
-def putmem_state(address, length, state, pages=True):
-    STATE.trace.validate_state(state)
+def putmem_state(address: str, length: str, state: str,
+                 pages: bool = True) -> None:
+    trace = STATE.require_trace()
+    trace.validate_state(state)
     start, end = eval_range(address, length)
     if pages:
         start, end = quantize_pages(start, end)
     proc = util.get_process()
-    base, addr = STATE.trace.memory_mapper.map(proc, start)
+    base, addr = trace.extra.require_mm().map(proc, start)
     if base != addr.space:
-        STATE.trace.create_overlay_space(base, addr.space)
-    STATE.trace.set_memory_state(addr.extend(end - start), state)
+        trace.create_overlay_space(base, addr.space)
+    trace.set_memory_state(addr.extend(end - start), state)
 
 
 @convert_errors
-def ghidra_trace_putmem_state(debugger, command, result, internal_dict):
-    """
-    Set the state of the given range of memory in the Ghidra trace
+def ghidra_trace_putmem_state(debugger: lldb.SBDebugger, command: str,
+                              result: lldb.SBCommandReturnObject,
+                              internal_dict: Dict[str, Any]) -> None:
+    """Set the state of the given range of memory in the Ghidra trace.
 
     Usage: ghidra trace putmem-state ADDRESS LENGTH STATE [PAGES]
         STATE is one of known, unknown, or error
@@ -779,9 +823,10 @@ def ghidra_trace_putmem_state(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_delmem(debugger, command, result, internal_dict):
-    """
-    Delete the given range of memory from the Ghidra trace
+def ghidra_trace_delmem(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Delete the given range of memory from the Ghidra trace.
 
     Usage: ghidra trace delmem ADDRESS LENGTH
 
@@ -792,6 +837,7 @@ def ghidra_trace_delmem(debugger, command, result, internal_dict):
     more bytes than intended. Expand the range manually, if you must.
     """
 
+    trace = STATE.require_trace()
     args = shlex.split(command)
     if len(args) != 2:
         raise RuntimeError("Usage: ghidra trace delmem ADDRESS LENGTH")
@@ -801,12 +847,13 @@ def ghidra_trace_delmem(debugger, command, result, internal_dict):
     STATE.require_tx()
     start, end = eval_range(address, length)
     proc = util.get_process()
-    base, addr = STATE.trace.memory_mapper.map(proc, start)
+    base, addr = trace.extra.require_mm().map(proc, start)
     # Do not create the space. We're deleting stuff.
-    STATE.trace.delete_bytes(addr.extend(end - start))
+    trace.delete_bytes(addr.extend(end - start))
 
 
-def putreg(frame, bank):
+# Yes, lldb puts each full bank in a "value", with chilren for each reg
+def putreg(frame: lldb.SBFrame, bank: lldb.SBValue) -> None:
     proc = util.get_process()
     space = REGS_PATTERN.format(procnum=proc.GetProcessID(),
                                 tnum=util.selected_thread().GetThreadID(),
@@ -814,12 +861,13 @@ def putreg(frame, bank):
     bank_path = BANK_PATTERN.format(procnum=proc.GetProcessID(),
                                     tnum=util.selected_thread().GetThreadID(),
                                     level=frame.GetFrameID(), bank=bank.name)
-    STATE.trace.create_overlay_space('register', space)
-    robj = STATE.trace.create_object(space)
+    trace = STATE.require_trace()
+    trace.create_overlay_space('register', space)
+    robj = trace.create_object(space)
     robj.insert()
-    bobj = STATE.trace.create_object(bank_path)
+    bobj = trace.create_object(bank_path)
     bobj.insert()
-    mapper = STATE.trace.register_mapper
+    mapper = trace.extra.require_rm()
     values = []
     for i in range(bank.GetNumChildren()):
         item = bank.GetChildAtIndex(i, lldb.eDynamicCanRunTarget, True)
@@ -828,19 +876,22 @@ def putreg(frame, bank):
         # In the tree, just use the human-friendly display value
         bobj.set_value(item.GetName(), item.value)
     # TODO: Memorize registers that failed for this arch, and omit later.
-    STATE.trace.put_registers(space, values)
+    trace.put_registers(space, values)
 
 
 @convert_errors
-def ghidra_trace_putreg(debugger, command, result, internal_dict):
-    """
-    Record the given register group for the current frame into the Ghidra trace
+def ghidra_trace_putreg(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Record the given register group for the current frame into the Ghidra
+    trace.
 
     Usage: ghidra trace putreg [GROUP]
 
     If no group is specified, 'all' is assumed.
     """
 
+    trace, tx = STATE.require_tx()
     args = shlex.split(command)
     if len(args) == 0:
         group = 'all'
@@ -849,10 +900,9 @@ def ghidra_trace_putreg(debugger, command, result, internal_dict):
     else:
         raise RuntimeError("Usage: ghidra trace putreg [GROUP]")
 
-    STATE.require_tx()
     frame = util.selected_frame()
     regs = frame.GetRegisters()
-    with STATE.client.batch() as b:
+    with trace.client.batch() as b:
         if group != 'all':
             bank = regs.GetFirstValueByName(group)
             putreg(frame, bank)
@@ -863,17 +913,21 @@ def ghidra_trace_putreg(debugger, command, result, internal_dict):
             putreg(frame, bank)
 
 
-def collect_mapped_names(names, proc, bank):
-    mapper = STATE.trace.register_mapper
+def collect_mapped_names(names: List[str], proc: lldb.SBProcess,
+                         bank: lldb.SBValue) -> None:
+    trace = STATE.require_trace()
+    mapper = trace.extra.require_rm()
     for i in range(bank.GetNumChildren()):
         item = bank.GetChildAtIndex(i, lldb.eDynamicCanRunTarget, True)
         names.append(mapper.map_name(proc, item.GetName()))
 
 
 @convert_errors
-def ghidra_trace_delreg(debugger, command, result, internal_dict):
-    """
-    Delete the given register group for the current frame from the Ghidra trace
+def ghidra_trace_delreg(debugger: lldb.SBDebugger, command: str,
+                        result: lldb.SBCommandReturnObject,
+                        internal_dict: Dict[str, Any]) -> None:
+    """Delete the given register group for the current frame from the Ghidra
+    trace.
 
     Usage: ghidra trace delreg [GROUP]
 
@@ -891,13 +945,13 @@ def ghidra_trace_delreg(debugger, command, result, internal_dict):
     else:
         raise RuntimeError("Usage: ghidra trace delreg [GROUP]")
 
-    STATE.require_tx()
+    trace, tx = STATE.require_tx()
     proc = util.get_process()
     frame = util.selected_frame()
     regs = frame.GetRegisters()
     space = REGS_PATTERN.format(procnum=proc.GetProcessID(), tnum=util.selected_thread().GetThreadID(),
                                 level=frame.GetFrameID())
-    names = []
+    names: List[str] = []
     if group != 'all':
         bank = regs.GetFirstValueByName(group)
         collect_mapped_names(names, proc, bank)
@@ -905,13 +959,14 @@ def ghidra_trace_delreg(debugger, command, result, internal_dict):
         for i in range(regs.GetSize()):
             bank = regs.GetValueAtIndex(i)
             collect_mapped_names(names, proc, bank)
-    STATE.trace.delete_registers(space, names)
+    trace.delete_registers(space, names)
 
 
 @convert_errors
-def ghidra_trace_create_obj(debugger, command, result, internal_dict):
-    """
-    Create an object in the Ghidra trace
+def ghidra_trace_create_obj(debugger: lldb.SBDebugger, command: str,
+                            result: lldb.SBCommandReturnObject,
+                            internal_dict: Dict[str, Any]) -> None:
+    """Create an object in the Ghidra trace.
 
     Usage: ghidra trace create-obj PATH
 
@@ -928,16 +983,17 @@ def ghidra_trace_create_obj(debugger, command, result, internal_dict):
         raise RuntimeError("Usage: ghidra trace create-obj PATH")
     path = args[0]
 
-    STATE.require_tx()
-    obj = STATE.trace.create_object(path)
+    trace, tx = STATE.require_tx()
+    obj = trace.create_object(path)
     obj.insert()
     result.PutCString(f"Created object: id={obj.id}, path='{obj.path}'")
 
 
 @convert_errors
-def ghidra_trace_insert_obj(debugger, command, result, internal_dict):
-    """
-    Insert an object into the Ghidra trace
+def ghidra_trace_insert_obj(debugger: lldb.SBDebugger, command: str,
+                            result: lldb.SBCommandReturnObject,
+                            internal_dict: Dict[str, Any]) -> None:
+    """Insert an object into the Ghidra trace.
 
     Usage: ghidra trace insert-obj PATH
 
@@ -953,15 +1009,16 @@ def ghidra_trace_insert_obj(debugger, command, result, internal_dict):
 
     # NOTE: id parameter is probably not necessary, since this command is for
     # humans.
-    STATE.require_tx()
-    span = STATE.trace.proxy_object_path(path).insert()
+    trace, tx = STATE.require_tx()
+    span = trace.proxy_object_path(path).insert()
     result.PutCString(f"Inserted object: lifespan={span}")
 
 
 @convert_errors
-def ghidra_trace_remove_obj(debugger, command, result, internal_dict):
-    """
-    Remove an object from the Ghidra trace.
+def ghidra_trace_remove_obj(debugger: lldb.SBDebugger, command: str,
+                            result: lldb.SBCommandReturnObject,
+                            internal_dict: Dict[str, Any]) -> None:
+    """Remove an object from the Ghidra trace.
 
     Usage: ghidra trace remove-obj PATH
 
@@ -976,38 +1033,42 @@ def ghidra_trace_remove_obj(debugger, command, result, internal_dict):
 
     # NOTE: id parameter is probably not necessary, since this command is for
     # humans.
-    STATE.require_tx()
-    STATE.trace.proxy_object_path(path).remove()
+    trace, tx = STATE.require_tx()
+    trace.proxy_object_path(path).remove()
 
 
-def to_bytes(value, type):
+def to_bytes(value: lldb.SBValue) -> bytes:
     n = value.GetNumChildren()
-    return bytes(int(value.GetChildAtIndex(i).GetValueAsUnsigned()) for i in range(0, n))
+    return bytes(int(value.GetChildAtIndex(i).GetValueAsUnsigned())
+                 for i in range(0, n))
 
 
-def to_string(value, type, encoding, full):
+def to_string(value: lldb.SBValue, encoding: str) -> str:
     n = value.GetNumChildren()
     b = bytes(int(value.GetChildAtIndex(i).GetValueAsUnsigned())
               for i in range(0, n))
     return str(b, encoding)
 
 
-def to_bool_list(value, type):
+def to_bool_list(value: lldb.SBValue) -> List[bool]:
     n = value.GetNumChildren()
-    return [bool(int(value.GetChildAtIndex(i).GetValueAsUnsigned())) for i in range(0, n)]
+    return [bool(int(value.GetChildAtIndex(i).GetValueAsUnsigned()))
+            for i in range(0, n)]
 
 
-def to_int_list(value, type):
+def to_int_list(value: lldb.SBValue) -> List[int]:
     n = value.GetNumChildren()
-    return [int(value.GetChildAtIndex(i).GetValueAsUnsigned()) for i in range(0, n)]
+    return [int(value.GetChildAtIndex(i).GetValueAsUnsigned())
+            for i in range(0, n)]
 
 
-def to_short_list(value, type):
+def to_short_list(value: lldb.SBValue) -> List[int]:
     n = value.GetNumChildren()
-    return [int(value.GetChildAtIndex(i).GetValueAsUnsigned()) for i in range(0, n)]
+    return [int(value.GetChildAtIndex(i).GetValueAsUnsigned())
+            for i in range(0, n)]
 
 
-def get_byte_order(order):
+def get_byte_order(order: int) -> Literal['big', 'little']:
     if order == lldb.eByteOrderBig:
         return 'big'
     elif order == lldb.eByteOrderLittle:
@@ -1018,23 +1079,28 @@ def get_byte_order(order):
         raise ValueError(f"Unrecognized order: {order}")
 
 
-def data_to_int(data):
+def data_to_int(data: lldb.SBData) -> int:
     order = get_byte_order(data.byte_order)
     return int.from_bytes(data.uint8s, order)
 
 
-def data_to_reg_bytes(data):
+def data_to_reg_bytes(data: lldb.SBData) -> bytes:
     order = get_byte_order(data.byte_order)
     if order == 'little':
         return bytes(reversed(data.uint8s))
     return bytes(data.uint8s)
 
 
-def eval_value(expr, schema=None):
-    return convert_value(util.get_eval(expr), schema)
+def eval_value(expr: str, schema: Optional[sch.Schema] = None) -> Tuple[Union[
+        bool, int, float, bytes, Tuple[str, Address], List[bool], List[int],
+        str, None], Optional[sch.Schema]]:
+    return convert_value(expr, util.get_eval(expr), schema)
 
 
-def convert_value(val, schema=None):
+def convert_value(expr: str, val: lldb.SBValue,
+                  schema: Optional[sch.Schema] = None) -> Tuple[Union[
+        bool, int, float, bytes, Tuple[str, Address], List[bool], List[int],
+        str, None], Optional[sch.Schema]]:
     type = val.GetType()
     while type.IsTypedefType():
         type = type.GetTypedefedType()
@@ -1042,7 +1108,9 @@ def convert_value(val, schema=None):
     code = type.GetBasicType()
     if code == lldb.eBasicTypeVoid:
         return None, sch.VOID
-    if code == lldb.eBasicTypeChar or code == lldb.eBasicTypeSignedChar or code == lldb.eBasicTypeUnsignedChar:
+    if (code == lldb.eBasicTypeChar or
+        code == lldb.eBasicTypeSignedChar or
+            code == lldb.eBasicTypeUnsignedChar):
         if not "\\x" in val.GetValue():
             return int(val.GetValueAsUnsigned()), sch.CHAR
         return int(val.GetValueAsUnsigned()), sch.BYTE
@@ -1070,51 +1138,59 @@ def convert_value(val, schema=None):
             etype = etype.GetTypedefedType()
         ecode = etype.GetBasicType()
         if ecode == lldb.eBasicTypeBool:
-            return to_bool_list(val, type), sch.BOOL_ARR
-        elif ecode == lldb.eBasicTypeChar or ecode == lldb.eBasicTypeSignedChar or ecode == lldb.eBasicTypeUnsignedChar:
+            return to_bool_list(val), sch.BOOL_ARR
+        elif (ecode == lldb.eBasicTypeChar or
+              ecode == lldb.eBasicTypeSignedChar or
+              ecode == lldb.eBasicTypeUnsignedChar):
             if schema == sch.BYTE_ARR:
-                return to_bytes(val, type), schema
+                return to_bytes(val), schema
             elif schema == sch.CHAR_ARR:
-                return to_string(val, type, 'utf-8', full=True), schema
-            return to_string(val, type, 'utf-8', full=False), sch.STRING
-        elif ecode == lldb.eBasicTypeShort or ecode == lldb.eBasicTypeUnsignedShort:
+                return to_string(val, 'utf-8'), schema
+            return to_string(val, 'utf-8'), sch.STRING
+        elif (ecode == lldb.eBasicTypeShort or
+              ecode == lldb.eBasicTypeUnsignedShort):
             if schema is None:
                 if etype.name == 'wchar_t':
-                    return to_string(val, type, 'utf-16', full=False), sch.STRING
+                    return to_string(val, 'utf-16'), sch.STRING
                 schema = sch.SHORT_ARR
             elif schema == sch.CHAR_ARR:
-                return to_string(val, type, 'utf-16', full=True), schema
-            return to_int_list(val, type), schema
-        elif ecode == lldb.eBasicTypeSignedWChar or ecode == lldb.eBasicTypeUnsignedWChar:
+                return to_string(val, 'utf-16'), schema
+            return to_int_list(val), schema
+        elif (ecode == lldb.eBasicTypeSignedWChar or
+              ecode == lldb.eBasicTypeUnsignedWChar):
             if schema is not None and schema != sch.CHAR_ARR:
-                return to_short_list(val, type), schema
+                return to_short_list(val), schema
             else:
-                return to_string(val, type, 'utf-16', full=False), sch.STRING
+                return to_string(val, 'utf-16'), sch.STRING
         elif ecode == lldb.eBasicTypeInt or ecode == lldb.eBasicTypeUnsignedInt:
             if schema is None:
                 if etype.name == 'wchar_t':
-                    return to_string(val, type, 'utf-32', full=False), sch.STRING
+                    return to_string(val, 'utf-32'), sch.STRING
                 schema = sch.INT_ARR
             elif schema == sch.CHAR_ARR:
-                return to_string(val, type, 'utf-32', full=True), schema
-            return to_int_list(val, type), schema
-        elif ecode == lldb.eBasicTypeLong or ecode == lldb.eBasicTypeUnsignedLong or ecode == lldb.eBasicTypeLongLong or ecode == lldb.eBasicTypeUnsignedLongLong:
+                return to_string(val, 'utf-32'), schema
+            return to_int_list(val), schema
+        elif (ecode == lldb.eBasicTypeLong or
+              ecode == lldb.eBasicTypeUnsignedLong or
+              ecode == lldb.eBasicTypeLongLong or
+              ecode == lldb.eBasicTypeUnsignedLongLong):
             if schema is not None:
-                return to_int_list(val, type), schema
+                return to_int_list(val), schema
             else:
-                return to_int_list(val, type), sch.LONG_ARR
+                return to_int_list(val), sch.LONG_ARR
     elif type.IsPointerType():
         offset = data_to_int(val.data)
         proc = util.get_process()
-        base, addr = STATE.trace.memory_mapper.map(proc, offset)
+        base, addr = STATE.require_trace().extra.require_mm().map(proc, offset)
         return (base, addr), sch.ADDRESS
-    raise ValueError(f"Cannot convert ({schema}): '{value}', value='{val}'")
+    raise ValueError(f"Cannot convert ({schema}): '{expr}', value='{val}'")
 
 
 @convert_errors
-def ghidra_trace_set_value(debugger, command, result, internal_dict):
-    """
-    Set a value (attribute or element) in the Ghidra trace's object tree
+def ghidra_trace_set_value(debugger: lldb.SBDebugger, command: str,
+                           result: lldb.SBCommandReturnObject,
+                           internal_dict: Dict[str, Any]) -> None:
+    """Set a value (attribute or element) in the Ghidra trace's object tree.
 
     Usage: ghidra trace set-value PATH KEY VALUE [SCHEMA]
 
@@ -1150,17 +1226,19 @@ def ghidra_trace_set_value(debugger, command, result, internal_dict):
         raise RuntimeError(
             "Usage: ghidra trace set-value PATH KEY VALUE [SCHEMA]")
 
-    STATE.require_tx()
+    trace, tx = STATE.require_tx()
     if schema == sch.OBJECT:
-        val = STATE.trace.proxy_object_path(value)
+        val: Union[bool, int, float, bytes, Tuple[str, Address], List[bool],
+                   List[int], str, TraceObject, Address,
+                   None] = trace.proxy_object_path(value)
     else:
         val, schema = eval_value(value, schema)
-        if schema == sch.ADDRESS:
+        if schema == sch.ADDRESS and isinstance(val, tuple):
             base, addr = val
             val = addr
             if base != addr.space:
                 trace.create_overlay_space(base, addr.space)
-    STATE.trace.proxy_object_path(path).set_value(key, val, schema)
+    trace.proxy_object_path(path).set_value(key, val, schema)
 
 
 retain_values_parser = optparse.OptionParser(prog='ghidra trace retain-values',
@@ -1178,9 +1256,10 @@ retain_values_parser.add_option(
 
 
 @convert_errors
-def ghidra_trace_retain_values(debugger, command, result, internal_dict):
-    """
-    Retain only those keys listed, setting all others to null
+def ghidra_trace_retain_values(debugger: lldb.SBDebugger, command: str,
+                               result: lldb.SBCommandReturnObject,
+                               internal_dict: Dict[str, Any]) -> None:
+    """Retain only those keys listed, setting all others to null.
 
     Usage: ghidra trace retain-values [OPTIONS] PATH [KEYS...]
 
@@ -1201,15 +1280,15 @@ def ghidra_trace_retain_values(debugger, command, result, internal_dict):
     path = args[0]
     keys = args[1:]
 
-    STATE.require_tx()
-    STATE.trace.proxy_object_path(
-        path).retain_values(keys, kinds=options.kinds)
+    trace, tx = STATE.require_tx()
+    trace.proxy_object_path(path).retain_values(keys, kinds=options.kinds)
 
 
 @convert_errors
-def ghidra_trace_get_obj(debugger, command, result, internal_dict):
-    """
-    Get an object descriptor by its canonical path
+def ghidra_trace_get_obj(debugger: lldb.SBDebugger, command: str,
+                         result: lldb.SBCommandReturnObject,
+                         internal_dict: Dict[str, Any]) -> None:
+    """Get an object descriptor by its canonical path.
 
     Usage: ghidra trace get-obj PATH
 
@@ -1227,60 +1306,11 @@ def ghidra_trace_get_obj(debugger, command, result, internal_dict):
     result.PutCString(f"{object.id}\t{object.path}")
 
 
-class TableColumn(object):
-    def __init__(self, head):
-        self.head = head
-        self.contents = [head]
-        self.is_last = False
-
-    def add_data(self, data):
-        self.contents.append(str(data))
-
-    def finish(self):
-        self.width = max(len(d) for d in self.contents) + 1
-
-    def format_cell(self, i):
-        return self.contents[i] if self.is_last else self.contents[i].ljust(self.width)
-
-
-class Tabular(object):
-    def __init__(self, heads):
-        self.columns = [TableColumn(h) for h in heads]
-        self.columns[-1].is_last = True
-        self.num_rows = 1
-
-    def add_row(self, datas):
-        for c, d in zip(self.columns, datas):
-            c.add_data(d)
-        self.num_rows += 1
-
-    def print_table(self, printfn):
-        for c in self.columns:
-            c.finish()
-        for rn in range(self.num_rows):
-            printfn(''.join(c.format_cell(rn) for c in self.columns))
-
-
-def val_repr(value):
-    if isinstance(value, TraceObject):
-        return value.path
-    elif isinstance(value, Address):
-        return f'{value.space}:{value.offset:08x}'
-    return repr(value)
-
-
-def print_values(values, printfn):
-    table = Tabular(['Parent', 'Key', 'Span', 'Value', 'Type'])
-    for v in values:
-        table.add_row(
-            [v.parent.path, v.key, v.span, val_repr(v.value), v.schema])
-    table.print_table(printfn)
-
-
 @convert_errors
-def ghidra_trace_get_values(debugger, command, result, internal_dict):
-    """
-    List all values matching a given path pattern
+def ghidra_trace_get_values(debugger: lldb.SBDebugger, command: str,
+                            result: lldb.SBCommandReturnObject,
+                            internal_dict: Dict[str, Any]) -> None:
+    """List all values matching a given path pattern.
 
     Usage: ghidra trace get-values PATTERN
 
@@ -1291,7 +1321,7 @@ def ghidra_trace_get_values(debugger, command, result, internal_dict):
        Processes[0].Threads[]  To get all threads in the first process
        Processes[].Threads[]   To get all threads from all processes
        Processes[0].           (Note the trailing period) to get all attributes
-                               of the first process 
+                               of the first process
     """
 
     args = shlex.split(command)
@@ -1300,18 +1330,20 @@ def ghidra_trace_get_values(debugger, command, result, internal_dict):
     pattern = args[0]
 
     trace = STATE.require_trace()
-    values = trace.get_values(pattern)
-    print_values(values, result.PutCString)
+    values = wait(trace.get_values(pattern))
+    print_tabular_values(values, result.PutCString)
 
 
 @convert_errors
-def ghidra_trace_get_values_rng(debugger, command, result, internal_dict):
-    """
-    List all values intersecting a given address range
+def ghidra_trace_get_values_rng(debugger: lldb.SBDebugger, command: str,
+                                result: lldb.SBCommandReturnObject,
+                                internal_dict: Dict[str, Any]) -> None:
+    """List all values intersecting a given address range.
 
     Usage: ghidra trace get-values-rng ADDRESS LENGTH
 
     This can only retrieve values of type ADDRESS or RANGE.
+    NOTE: Even in batch mode, this request will block for the result.
     """
 
     args = shlex.split(command)
@@ -1323,34 +1355,35 @@ def ghidra_trace_get_values_rng(debugger, command, result, internal_dict):
     trace = STATE.require_trace()
     start, end = eval_range(address, length)
     proc = util.get_process()
-    base, addr = trace.memory_mapper.map(proc, start)
+    base, addr = trace.extra.require_mm().map(proc, start)
     # Do not create the space. We're querying. No tx.
-    values = trace.get_values_intersecting(addr.extend(end - start))
-    print_values(values, result.PutCString)
+    values = wait(trace.get_values_intersecting(addr.extend(end - start)))
+    print_tabular_values(values, result.PutCString)
 
 
-def activate(path=None):
+def activate(path: Optional[str] = None) -> None:
     trace = STATE.require_trace()
     if path is None:
         proc = util.get_process()
         t = util.selected_thread()
-        if t is None:
-            path = PROCESS_PATTERN.format(procnum=proc.GetProcessID())
+        frame = util.selected_frame()
+        if frame is not None:
+            path = FRAME_PATTERN.format(
+                procnum=proc.GetProcessID(), tnum=t.GetThreadID(),
+                level=frame.GetFrameID())
+        elif t is not None:
+            path = THREAD_PATTERN.format(
+                procnum=proc.GetProcessID(), tnum=t.GetThreadID())
         else:
-            frame = util.selected_frame()
-            if frame is None:
-                path = THREAD_PATTERN.format(
-                    procnum=proc.GetProcessID(), tnum=t.GetThreadID())
-            else:
-                path = FRAME_PATTERN.format(
-                    procnum=proc.GetProcessID(), tnum=t.GetThreadID(), level=frame.GetFrameID())
+            path = PROCESS_PATTERN.format(procnum=proc.GetProcessID())
         trace.proxy_object_path(path).activate()
 
 
 @convert_errors
-def ghidra_trace_activate(debugger, command, result, internal_dict):
-    """
-    Activate an object in Ghidra's GUI
+def ghidra_trace_activate(debugger: lldb.SBDebugger, command: str,
+                          result: lldb.SBCommandReturnObject,
+                          internal_dict: Dict[str, Any]) -> None:
+    """Activate an object in Ghidra's GUI.
 
     Usage: ghidra trace activate [PATH]
 
@@ -1370,9 +1403,10 @@ def ghidra_trace_activate(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_disassemble(debugger, command, result, internal_dict):
-    """
-    Disassemble starting at the given seed
+def ghidra_trace_disassemble(debugger: lldb.SBDebugger, command: str,
+                             result: lldb.SBCommandReturnObject,
+                             internal_dict: Dict[str, Any]) -> None:
+    """Disassemble starting at the given seed.
 
     Usage: ghidra trace disassemble ADDRESS
 
@@ -1385,49 +1419,52 @@ def ghidra_trace_disassemble(debugger, command, result, internal_dict):
         raise RuntimeError("Usage: ghidra trace disassemble ADDRESS")
     address = args[0]
 
-    STATE.require_tx()
+    trace, tx = STATE.require_tx()
     start = eval_address(address)
     proc = util.get_process()
-    base, addr = STATE.trace.memory_mapper.map(proc, start)
+    base, addr = trace.extra.require_mm().map(proc, start)
     if base != addr.space:
         trace.create_overlay_space(base, addr.space)
 
-    length = STATE.trace.disassemble(addr)
+    length = trace.disassemble(addr)
     result.PutCString(f"Disassembled {length} bytes")
 
 
-def compute_proc_state(proc=None):
+def compute_proc_state(proc: lldb.SBProcess) -> str:
     if proc.is_running:
         return 'RUNNING'
     return 'STOPPED'
 
 
-def put_processes():
+def put_processes() -> None:
+    trace = STATE.require_trace()
     keys = []
     proc = util.get_process()
     ipath = PROCESS_PATTERN.format(procnum=proc.GetProcessID())
     keys.append(PROCESS_KEY_PATTERN.format(procnum=proc.GetProcessID()))
-    procobj = STATE.trace.create_object(ipath)
+    procobj = trace.create_object(ipath)
     istate = compute_proc_state(proc)
     procobj.set_value('State', istate)
     procobj.insert()
-    STATE.trace.proxy_object_path(PROCESSES_PATH).retain_values(keys)
+    trace.proxy_object_path(PROCESSES_PATH).retain_values(keys)
 
 
-def put_state(event_process):
+def put_state(event_process: lldb.SBProcess) -> None:
     ipath = PROCESS_PATTERN.format(procnum=event_process.GetProcessID())
-    with STATE.client.batch():
-        with STATE.require_trace().open_tx('State'):
-            procobj = STATE.trace.create_object(ipath)
+    trace = STATE.require_trace()
+    with trace.client.batch():
+        with trace.open_tx('State'):
+            procobj = trace.create_object(ipath)
             state = "STOPPED" if event_process.is_stopped else "RUNNING"
             procobj.set_value('State', state)
             procobj.insert()
 
 
 @convert_errors
-def ghidra_trace_put_processes(debugger, command, result, internal_dict):
-    """
-    Put the list of processes into the trace's Processes list
+def ghidra_trace_put_processes(debugger: lldb.SBDebugger, command: str,
+                               result: lldb.SBCommandReturnObject,
+                               internal_dict: Dict[str, Any]) -> None:
+    """Put the list of processes into the trace's Processes list.
 
     Usage: ghidra trace put-processes
     """
@@ -1436,27 +1473,29 @@ def ghidra_trace_put_processes(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-processes")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_processes()
 
 
-def put_available():
+def put_available() -> None:
+    trace = STATE.require_trace()
     keys = []
     for proc in psutil.process_iter():
         ppath = AVAILABLE_PATTERN.format(pid=proc.pid)
-        procobj = STATE.trace.create_object(ppath)
+        procobj = trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
         procobj.set_value('PID', proc.pid)
         procobj.set_value('_display', f'{proc.pid} {proc.name()}')
         procobj.insert()
-    STATE.trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
+    trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 
 
 @convert_errors
-def ghidra_trace_put_available(debugger, command, result, internal_dict):
-    """
-    Put the list of available processes into the trace's Available list
+def ghidra_trace_put_available(debugger: lldb.SBDebugger, command: str,
+                               result: lldb.SBCommandReturnObject,
+                               internal_dict: Dict[str, Any]) -> None:
+    """Put the list of available processes into the trace's Available list.
 
     Usage: ghidra trace put-available
     """
@@ -1465,16 +1504,17 @@ def ghidra_trace_put_available(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-available")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_available()
 
 
-def put_single_breakpoint(b, proc):
-    mapper = STATE.trace.memory_mapper
+def put_single_breakpoint(b: lldb.SBBreakpoint, proc: lldb.SBProcess) -> None:
+    trace = STATE.require_trace()
+    mapper = trace.extra.require_mm()
     bpt_path = PROC_BREAK_PATTERN.format(
         procnum=proc.GetProcessID(), breaknum=b.GetID())
-    bpt_obj = STATE.trace.create_object(bpt_path)
+    bpt_obj = trace.create_object(bpt_path)
     if b.IsHardware():
         bpt_obj.set_value('Expression', util.get_description(b))
         bpt_obj.set_value('Kinds', 'HW_EXECUTE')
@@ -1499,11 +1539,11 @@ def put_single_breakpoint(b, proc):
         # Retain the key, even if not for this process
         k = BREAK_LOC_KEY_PATTERN.format(locnum=i+1)
         loc_keys.append(k)
-        loc_obj = STATE.trace.create_object(bpt_path + k)
+        loc_obj = trace.create_object(bpt_path + k)
         if b.location is not None:  # Implies execution break
             base, addr = mapper.map(proc, l.GetLoadAddress())
             if base != addr.space:
-                STATE.trace.create_overlay_space(base, addr.space)
+                trace.create_overlay_space(base, addr.space)
             loc_obj.set_value('Range', addr.extend(1))
             loc_obj.set_value('Enabled', l.IsEnabled())
         else:  # I guess it's a catchpoint
@@ -1513,11 +1553,12 @@ def put_single_breakpoint(b, proc):
     bpt_obj.insert()
 
 
-def put_single_watchpoint(w, proc):
-    mapper = STATE.trace.memory_mapper
+def put_single_watchpoint(w: lldb.SBWatchpoint, proc: lldb.SBProcess) -> None:
+    trace = STATE.require_trace()
+    mapper = trace.extra.require_mm()
     wpt_path = PROC_WATCH_PATTERN.format(
         procnum=proc.GetProcessID(), watchnum=w.GetID())
-    wpt_obj = STATE.trace.create_object(wpt_path)
+    wpt_obj = trace.create_object(wpt_path)
     desc = util.get_description(w, level=0)
     wpt_obj.set_value('Expression', desc)
     wpt_obj.set_value('Kinds', 'WRITE')
@@ -1527,7 +1568,7 @@ def put_single_watchpoint(w, proc):
         wpt_obj.set_value('Kinds', 'READ,WRITE')
     base, addr = mapper.map(proc, w.GetWatchAddress())
     if base != addr.space:
-        STATE.trace.create_overlay_space(base, addr.space)
+        trace.create_overlay_space(base, addr.space)
     wpt_obj.set_value('Range', addr.extend(w.GetWatchSize()))
     if w.GetCondition():
         wpt_obj.set_value('Condition', w.GetCondition())
@@ -1540,11 +1581,11 @@ def put_single_watchpoint(w, proc):
     wpt_obj.insert()
 
 
-def put_breakpoints():
+def put_breakpoints() -> None:
     target = util.get_target()
     proc = util.get_process()
     cont_path = PROC_BREAKS_PATTERN.format(procnum=proc.GetProcessID())
-    cont_obj = STATE.trace.create_object(cont_path)
+    cont_obj = STATE.require_trace().create_object(cont_path)
     keys = []
     for i in range(0, target.GetNumBreakpoints()):
         b = target.GetBreakpointAtIndex(i)
@@ -1554,11 +1595,11 @@ def put_breakpoints():
     cont_obj.retain_values(keys)
 
 
-def put_watchpoints():
+def put_watchpoints() -> None:
     target = util.get_target()
     proc = util.get_process()
     cont_path = PROC_WATCHES_PATTERN.format(procnum=proc.GetProcessID())
-    cont_obj = STATE.trace.create_object(cont_path)
+    cont_obj = STATE.require_trace().create_object(cont_path)
     keys = []
     for i in range(0, target.GetNumWatchpoints()):
         b = target.GetWatchpointAtIndex(i)
@@ -1569,9 +1610,10 @@ def put_watchpoints():
 
 
 @convert_errors
-def ghidra_trace_put_breakpoints(debugger, command, result, internal_dict):
-    """
-    Put the current process's breakpoints into the trace
+def ghidra_trace_put_breakpoints(debugger: lldb.SBDebugger, command: str,
+                                 result: lldb.SBCommandReturnObject,
+                                 internal_dict: Dict[str, Any]) -> None:
+    """Put the current process's breakpoints into the trace.
 
     Usage: ghidra trace put-breakpoints
     """
@@ -1580,15 +1622,16 @@ def ghidra_trace_put_breakpoints(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-breakpoints")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_breakpoints()
 
 
 @convert_errors
-def ghidra_trace_put_watchpoints(debugger, command, result, internal_dict):
-    """
-    Put the current process's watchpoints into the trace
+def ghidra_trace_put_watchpoints(debugger: lldb.SBDebugger, command: str,
+                                 result: lldb.SBCommandReturnObject,
+                                 internal_dict: Dict[str, Any]) -> None:
+    """Put the current process's watchpoints into the trace.
 
     Usage: ghidra trace put-watchpoints
     """
@@ -1597,15 +1640,15 @@ def ghidra_trace_put_watchpoints(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-watchpoints")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_watchpoints()
 
 
-def put_environment():
+def put_environment() -> None:
     proc = util.get_process()
     epath = ENV_PATTERN.format(procnum=proc.GetProcessID())
-    envobj = STATE.trace.create_object(epath)
+    envobj = STATE.require_trace().create_object(epath)
     envobj.set_value('Debugger', 'lldb')
     envobj.set_value('Arch', arch.get_arch())
     envobj.set_value('OS', arch.get_osabi())
@@ -1614,9 +1657,10 @@ def put_environment():
 
 
 @convert_errors
-def ghidra_trace_put_environment(debugger, command, result, internal_dict):
-    """
-    Put some environment indicators into the Ghidra trace
+def ghidra_trace_put_environment(debugger: lldb.SBDebugger, command: str,
+                                 result: lldb.SBCommandReturnObject,
+                                 internal_dict: Dict[str, Any]) -> None:
+    """Put some environment indicators into the Ghidra trace.
 
     Usage: ghidra trace put-environment
     """
@@ -1625,20 +1669,19 @@ def ghidra_trace_put_environment(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-environment")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_environment()
 
 
-def should_update_regions():
-    '''
-    It's possible some targets don't support regions.
+def should_update_regions() -> bool:
+    """It's possible some targets don't support regions.
 
-    There is also a bug in LLDB that can cause its gdb-remote client
-    to drop support. We need to account for this second case while
-    still ensuring we populate the full range for targets that
-    genuinely don't support it.
-    '''
+    There is also a bug in LLDB that can cause its gdb-remote client to
+    drop support. We need to account for this second case while still
+    ensuring we populate the full range for targets that genuinely don't
+    support it.
+    """
     # somewhat crappy heuristic to distinguish remote from local
     tgt = util.get_target()
     if tgt.GetNumModules() == 0:
@@ -1653,7 +1696,7 @@ def should_update_regions():
     return result.Success()
 
 
-def put_regions():
+def put_regions() -> None:
     if not should_update_regions():
         return
     proc = util.get_process()
@@ -1663,16 +1706,17 @@ def put_regions():
         regions = []
     if len(regions) == 0 and util.selected_thread() is not None:
         regions = [util.REGION_INFO_READER.full_mem()]
-    mapper = STATE.trace.memory_mapper
+    trace = STATE.require_trace()
+    mapper = trace.extra.require_mm()
     keys = []
     for r in regions:
         rpath = REGION_PATTERN.format(
             procnum=proc.GetProcessID(), start=r.start)
         keys.append(REGION_KEY_PATTERN.format(start=r.start))
-        regobj = STATE.trace.create_object(rpath)
+        regobj = trace.create_object(rpath)
         start_base, start_addr = mapper.map(proc, r.start)
         if start_base != start_addr.space:
-            STATE.trace.create_overlay_space(start_base, start_addr.space)
+            trace.create_overlay_space(start_base, start_addr.space)
         regobj.set_value('Range', start_addr.extend(r.end - r.start))
         if r.perms != None:
             regobj.set_value('Permissions', r.perms)
@@ -1682,14 +1726,15 @@ def put_regions():
         regobj.set_value('Offset', hex(r.offset))
         regobj.set_value('Object File', r.objfile)
         regobj.insert()
-    STATE.trace.proxy_object_path(
+    trace.proxy_object_path(
         MEMORY_PATTERN.format(procnum=proc.GetProcessID())).retain_values(keys)
 
 
 @convert_errors
-def ghidra_trace_put_regions(debugger, command, result, internal_dict):
-    """
-    Read the memory map, if applicable, and write to the trace's Regions
+def ghidra_trace_put_regions(debugger: lldb.SBDebugger, command: str,
+                             result: lldb.SBCommandReturnObject,
+                             internal_dict: Dict[str, Any]) -> None:
+    """Read the memory map, if applicable, and write to the trace's Regions.
 
     Usage: ghidra trace put-regions
     """
@@ -1698,35 +1743,36 @@ def ghidra_trace_put_regions(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-regions")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_regions()
 
 
-def put_modules():
+def put_modules() -> None:
     target = util.get_target()
     proc = util.get_process()
     modules = util.MODULE_INFO_READER.get_modules()
-    mapper = STATE.trace.memory_mapper
+    trace = STATE.require_trace()
+    mapper = trace.extra.require_mm()
     mod_keys = []
     for mk, m in modules.items():
         mpath = MODULE_PATTERN.format(procnum=proc.GetProcessID(), modpath=mk)
-        modobj = STATE.trace.create_object(mpath)
+        modobj = trace.create_object(mpath)
         mod_keys.append(MODULE_KEY_PATTERN.format(modpath=mk))
         modobj.set_value('Name', m.name)
         base_base, base_addr = mapper.map(proc, m.base)
         if base_base != base_addr.space:
-            STATE.trace.create_overlay_space(base_base, base_addr.space)
+            trace.create_overlay_space(base_base, base_addr.space)
         if m.max > m.base:
             modobj.set_value('Range', base_addr.extend(m.max - m.base + 1))
         sec_keys = []
         for sk, s in m.sections.items():
             spath = mpath + SECTION_ADD_PATTERN.format(secname=sk)
-            secobj = STATE.trace.create_object(spath)
+            secobj = trace.create_object(spath)
             sec_keys.append(SECTION_KEY_PATTERN.format(secname=sk))
             start_base, start_addr = mapper.map(proc, s.start)
             if start_base != start_addr.space:
-                STATE.trace.create_overlay_space(
+                trace.create_overlay_space(
                     start_base, start_addr.space)
             secobj.set_value('Range', start_addr.extend(s.end - s.start + 1))
             secobj.set_value('Offset', hex(s.offset))
@@ -1734,16 +1780,17 @@ def put_modules():
             secobj.insert()
         # In case there are no sections, we must still insert the module
         modobj.insert()
-        STATE.trace.proxy_object_path(
+        trace.proxy_object_path(
             mpath + SECTIONS_ADD_PATTERN).retain_values(sec_keys)
-    STATE.trace.proxy_object_path(MODULES_PATTERN.format(
+    trace.proxy_object_path(MODULES_PATTERN.format(
         procnum=proc.GetProcessID())).retain_values(mod_keys)
 
 
 @convert_errors
-def ghidra_trace_put_modules(debugger, command, result, internal_dict):
-    """
-    Gather object files, if applicable, and write to the trace's Modules
+def ghidra_trace_put_modules(debugger: lldb.SBDebugger, command: str,
+                             result: lldb.SBCommandReturnObject,
+                             internal_dict: Dict[str, Any]) -> None:
+    """Gather object files, if applicable, and write to the trace's Modules.
 
     Usage: ghidra trace put-modules
     """
@@ -1752,12 +1799,12 @@ def ghidra_trace_put_modules(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-modules")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_modules()
 
 
-def convert_state(t):
+def convert_state(t: lldb.SBThread) -> str:
     # TODO: This does not seem to work - currently supplanted by proc.is_running
     if t.IsSuspended():
         return 'SUSPENDED'
@@ -1766,33 +1813,20 @@ def convert_state(t):
     return 'RUNNING'
 
 
-def convert_tid(t):
-    if t[1] == 0:
-        return t[2]
-    return t[1]
-
-
-@contextmanager
-def restore_frame():
-    f = util.selected_frame()
-    yield
-    f.select()
-
-
-def compute_thread_display(t):
+def compute_thread_display(t: lldb.SBThread) -> str:
     return util.get_description(t)
 
 
-def put_threads():
-    radix = util.get_convenience_variable('output-radix')
-    if radix == 'auto':
-        radix = 16
+def put_threads() -> None:
+    radix_raw = util.get_convenience_variable('output-radix')
+    radix = 16 if radix_raw == 'auto' else int(radix_raw)
     proc = util.get_process()
     keys = []
+    trace = STATE.require_trace()
     for t in proc.threads:
         tpath = THREAD_PATTERN.format(
             procnum=proc.GetProcessID(), tnum=t.GetThreadID())
-        tobj = STATE.trace.create_object(tpath)
+        tobj = trace.create_object(tpath)
         keys.append(THREAD_KEY_PATTERN.format(tnum=t.GetThreadID()))
         tobj.set_value('State', compute_proc_state(proc))
         tobj.set_value('Name', t.GetName())
@@ -1803,27 +1837,29 @@ def put_threads():
                        f'[{proc.GetProcessID()}.{t.GetThreadID()}:{tidstr}]')
         tobj.set_value('_display', compute_thread_display(t))
         tobj.insert()
-    STATE.trace.proxy_object_path(
+    trace.proxy_object_path(
         THREADS_PATTERN.format(procnum=proc.GetProcessID())).retain_values(keys)
 
 
-def put_event_thread():
+def put_event_thread() -> None:
     proc = util.get_process()
     # Assumption: Event thread is selected by lldb upon stopping
     t = util.selected_thread()
+    trace = STATE.require_trace()
     if t is not None:
         tpath = THREAD_PATTERN.format(
             procnum=proc.GetProcessID(), tnum=t.GetThreadID())
-        tobj = STATE.trace.proxy_object_path(tpath)
+        tobj = trace.proxy_object_path(tpath)
     else:
         tobj = None
-    STATE.trace.proxy_object_path('').set_value('_event_thread', tobj)
+    trace.proxy_object_path('').set_value('_event_thread', tobj)
 
 
 @convert_errors
-def ghidra_trace_put_threads(debugger, command, result, internal_dict):
-    """
-    Put the current process's threads into the Ghidra trace
+def ghidra_trace_put_threads(debugger: lldb.SBDebugger, command: str,
+                             result: lldb.SBCommandReturnObject,
+                             internal_dict: Dict[str, Any]) -> None:
+    """Put the current process's threads into the Ghidra trace.
 
     Usage: ghidra trace put-threads
     """
@@ -1832,14 +1868,15 @@ def ghidra_trace_put_threads(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-threads")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_threads()
 
 
-def put_frames():
+def put_frames() -> None:
     proc = util.get_process()
-    mapper = STATE.trace.memory_mapper
+    trace = STATE.require_trace()
+    mapper = trace.extra.require_mm()
     t = util.selected_thread()
     if t is None:
         return
@@ -1848,25 +1885,26 @@ def put_frames():
         f = t.GetFrameAtIndex(i)
         fpath = FRAME_PATTERN.format(
             procnum=proc.GetProcessID(), tnum=t.GetThreadID(), level=f.GetFrameID())
-        fobj = STATE.trace.create_object(fpath)
+        fobj = trace.create_object(fpath)
         keys.append(FRAME_KEY_PATTERN.format(level=f.GetFrameID()))
         base, pc = mapper.map(proc, f.GetPC())
         if base != pc.space:
-            STATE.trace.create_overlay_space(base, pc.space)
+            trace.create_overlay_space(base, pc.space)
         fobj.set_value('PC', pc)
         fobj.set_value('Function', str(f.GetFunctionName()))
         fobj.set_value('_display', util.get_description(f))
         fobj.insert()
-        robj = STATE.trace.create_object(fpath+".Registers")
+        robj = trace.create_object(fpath+".Registers")
         robj.insert()
-    STATE.trace.proxy_object_path(STACK_PATTERN.format(
+    trace.proxy_object_path(STACK_PATTERN.format(
         procnum=proc.GetProcessID(), tnum=t.GetThreadID())).retain_values(keys)
 
 
 @convert_errors
-def ghidra_trace_put_frames(debugger, command, result, internal_dict):
-    """
-    Put the current thread's frames into the Ghidra trace
+def ghidra_trace_put_frames(debugger: lldb.SBDebugger, command: str,
+                            result: lldb.SBCommandReturnObject,
+                            internal_dict: Dict[str, Any]) -> None:
+    """Put the current thread's frames into the Ghidra trace.
 
     Usage: ghidra trace put-frames
     """
@@ -1875,15 +1913,16 @@ def ghidra_trace_put_frames(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-frames")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         put_frames()
 
 
 @convert_errors
-def ghidra_trace_put_all(debugger, command, result, internal_dict):
-    """
-    Put everything currently selected into the Ghidra trace
+def ghidra_trace_put_all(debugger: lldb.SBDebugger, command: str,
+                         result: lldb.SBCommandReturnObject,
+                         internal_dict: Dict[str, Any]) -> None:
+    """Put everything currently selected into the Ghidra trace.
 
     Usage: ghidra trace put-all
     """
@@ -1892,8 +1931,8 @@ def ghidra_trace_put_all(debugger, command, result, internal_dict):
     if len(args) != 0:
         raise RuntimeError("Usage: ghidra trace put-all")
 
-    STATE.require_tx()
-    with STATE.client.batch() as b:
+    trace, tx = STATE.require_tx()
+    with trace.client.batch() as b:
         ghidra_trace_putreg(debugger, DEFAULT_REGISTER_BANK,
                             result, internal_dict)
         ghidra_trace_putmem(debugger, "$pc 1", result, internal_dict)
@@ -1910,9 +1949,10 @@ def ghidra_trace_put_all(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_install_hooks(debugger, command, result, internal_dict):
-    """
-    Install hooks to trace in Ghidra
+def ghidra_trace_install_hooks(debugger: lldb.SBDebugger, command: str,
+                               result: lldb.SBCommandReturnObject,
+                               internal_dict: Dict[str, Any]) -> None:
+    """Install hooks to trace in Ghidra.
 
     Usage: ghidra trace install-hooks
     """
@@ -1925,9 +1965,10 @@ def ghidra_trace_install_hooks(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_remove_hooks(debugger, command, result, internal_dict):
-    """
-    Remove hooks to trace in Ghidra
+def ghidra_trace_remove_hooks(debugger: lldb.SBDebugger, command: str,
+                              result: lldb.SBCommandReturnObject,
+                              internal_dict: Dict[str, Any]) -> None:
+    """Remove hooks to trace in Ghidra.
 
     Usage: ghidra trace remove-hooks
 
@@ -1944,9 +1985,10 @@ def ghidra_trace_remove_hooks(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_sync_enable(debugger, command, result, internal_dict):
-    """
-    Synchronize the current process with the Ghidra trace
+def ghidra_trace_sync_enable(debugger: lldb.SBDebugger, command: str,
+                             result: lldb.SBCommandReturnObject,
+                             internal_dict: Dict[str, Any]) -> None:
+    """Synchronize the current process with the Ghidra trace.
 
     Usage: ghidra trace sync-enable
 
@@ -1968,9 +2010,10 @@ def ghidra_trace_sync_enable(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_sync_disable(debugger, command, result, internal_dict):
-    """
-    Cease synchronizing the current process with the Ghidra trace
+def ghidra_trace_sync_disable(debugger: lldb.SBDebugger, command: str,
+                              result: lldb.SBCommandReturnObject,
+                              internal_dict: Dict[str, Any]) -> None:
+    """Cease synchronizing the current process with the Ghidra trace.
 
     Usage: ghidra trace sync-disable
 
@@ -1986,21 +2029,24 @@ def ghidra_trace_sync_disable(debugger, command, result, internal_dict):
 
 
 @convert_errors
-def ghidra_trace_sync_synth_stopped(debugger, command, result, internal_dict):
-    """
-    Act as though the target has just stopped.
+def ghidra_trace_sync_synth_stopped(debugger: lldb.SBDebugger, command: str,
+                                    result: lldb.SBCommandReturnObject,
+                                    internal_dict: Dict[str, Any]) -> None:
+    """Act as though the target has just stopped.
 
-    This may need to be invoked immediately after 'ghidra trace sync-enable',
-    to ensure the first snapshot displays the initial/current target state.
+    This may need to be invoked immediately after 'ghidra trace sync-
+    enable', to ensure the first snapshot displays the initial/current
+    target state.
     """
 
     hooks.on_stop(None)  # Pass a fake event
 
 
 @convert_errors
-def ghidra_util_wait_stopped(debugger, command, result, internal_dict):
-    """
-    Spin wait until the selected thread is stopped
+def ghidra_util_wait_stopped(debugger: lldb.SBDebugger, command: str,
+                             result: lldb.SBCommandReturnObject,
+                             internal_dict: Dict[str, Any]) -> None:
+    """Spin wait until the selected thread is stopped.
 
     Usage: ghidra util wait-stopped [SECONDS]
 
@@ -2017,10 +2063,10 @@ def ghidra_util_wait_stopped(debugger, command, result, internal_dict):
         raise RuntimeError("Usage: ghidra util wait-stopped [SECONDS]")
 
     start = time.time()
-    p = util.selected_process()
+    p = util.get_process()
     while p is not None and p.state == lldb.eStateRunnig:
         time.sleep(0.1)
-        p = util.selected_process()  # I suppose it could change
+        p = util.get_process()  # I suppose it could change
         if time.time() - start > timeout:
             raise RuntimeError('Timed out waiting for thread to stop')
     print(f"Finished wait. State={p.state}")

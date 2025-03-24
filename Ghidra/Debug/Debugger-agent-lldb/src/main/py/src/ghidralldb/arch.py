@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from typing import Dict, List, Optional, Tuple
 from ghidratrace.client import Address, RegVal
 import lldb
 
@@ -20,8 +21,9 @@ from . import util
 
 
 # NOTE: This map is derived from the ldefs using a script
-language_map = {
-    'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
+language_map: Dict[str, List[str]] = {
+    'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon',
+                'AARCH64:LE:64:v8A'],
     'arm': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
     'armv4': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],
     'armv4t': ['ARM:BE:32:v4t', 'ARM:LE:32:v4t'],
@@ -50,8 +52,10 @@ language_map = {
     'thumbv7em': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],
     'armv8': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
     'armv8l': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
-    'arm64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
-    'arm64e': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
+    'arm64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon',
+              'AARCH64:LE:64:v8A'],
+    'arm64e': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon',
+               'AARCH64:LE:64:v8A'],
     'arm64_32': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
     'mips': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mipsr2': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
@@ -102,8 +106,11 @@ language_map = {
     'hexagon': [],
     'hexagonv4': [],
     'hexagonv5': [],
-    'riscv32': ['RISCV:LE:32:RV32G', 'RISCV:LE:32:RV32GC', 'RISCV:LE:32:RV32I', 'RISCV:LE:32:RV32IC', 'RISCV:LE:32:RV32IMC', 'RISCV:LE:32:default'],
-    'riscv64': ['RISCV:LE:64:RV64G', 'RISCV:LE:64:RV64GC', 'RISCV:LE:64:RV64I', 'RISCV:LE:64:RV64IC', 'RISCV:LE:64:default'],
+    'riscv32': ['RISCV:LE:32:RV32G', 'RISCV:LE:32:RV32GC', 'RISCV:LE:32:RV32I',
+                'RISCV:LE:32:RV32IC', 'RISCV:LE:32:RV32IMC',
+                'RISCV:LE:32:default'],
+    'riscv64': ['RISCV:LE:64:RV64G', 'RISCV:LE:64:RV64GC', 'RISCV:LE:64:RV64I',
+                'RISCV:LE:64:RV64IC', 'RISCV:LE:64:default'],
     'unknown-mach-32': ['DATA:LE:32:default', 'DATA:LE:32:default'],
     'unknown-mach-64': ['DATA:LE:64:default', 'DATA:LE:64:default'],
     'arc': [],
@@ -111,19 +118,20 @@ language_map = {
     'wasm32': ['x86:LE:32:default'],
 }
 
-data64_compiler_map = {
+data64_compiler_map: Dict[Optional[str], str] = {
     None: 'pointer64',
 }
 
-x86_compiler_map = {
+x86_compiler_map: Dict[Optional[str], str] = {
     'windows': 'windows',
     'Cygwin': 'windows',
-    'linux' : 'gcc',
+    'linux': 'gcc',
     'default': 'gcc',
     'unknown': 'gcc',
+    None: 'gcc',
 }
 
-default_compiler_map = {
+default_compiler_map: Dict[Optional[str], str] = {
     'freebsd': 'gcc',
     'linux': 'gcc',
     'netbsd': 'gcc',
@@ -138,7 +146,7 @@ default_compiler_map = {
     'unknown': 'default',
 }
 
-compiler_map = {
+compiler_map: Dict[str, Dict[Optional[str], str]] = {
     'DATA:BE:64:': data64_compiler_map,
     'DATA:LE:64:': data64_compiler_map,
     'x86:LE:32:': x86_compiler_map,
@@ -148,7 +156,7 @@ compiler_map = {
 }
 
 
-def find_host_triple():
+def find_host_triple() -> str:
     dbg = util.get_debugger()
     for i in range(dbg.GetNumPlatforms()):
         platform = dbg.GetPlatformAtIndex(i)
@@ -157,19 +165,19 @@ def find_host_triple():
     return 'unrecognized'
 
 
-def find_triple():
+def find_triple() -> str:
     triple = util.get_target().triple
     if triple is not None:
         return triple
     return find_host_triple()
 
 
-def get_arch():
+def get_arch() -> str:
     triple = find_triple()
     return triple.split('-')[0]
 
 
-def get_endian():
+def get_endian() -> str:
     parm = util.get_convenience_variable('endian')
     if parm != 'auto':
         return parm
@@ -183,7 +191,7 @@ def get_endian():
     return 'unrecognized'
 
 
-def get_osabi():
+def get_osabi() -> str:
     parm = util.get_convenience_variable('osabi')
     if not parm in ['auto', 'default']:
         return parm
@@ -195,7 +203,7 @@ def get_osabi():
     return triple.split('-')[2]
 
 
-def compute_ghidra_language():
+def compute_ghidra_language() -> str:
     # First, check if the parameter is set
     lang = util.get_convenience_variable('ghidra-language')
     if lang != 'auto':
@@ -223,37 +231,33 @@ def compute_ghidra_language():
     return 'DATA' + lebe + '64:default'
 
 
-def compute_ghidra_compiler(lang):
+def compute_ghidra_compiler(lang: str) -> str:
     # First, check if the parameter is set
     comp = util.get_convenience_variable('ghidra-compiler')
     if comp != 'auto':
         return comp
 
     # Check if the selected lang has specific compiler recommendations
-    matched_lang = sorted(
-        (l for l in compiler_map if l in lang),
-        key=lambda l: compiler_map[l]
-    )
-    if len(matched_lang) == 0:
+    # NOTE: Unlike other agents, we put prefixes in map keys
+    matches = [l for l in compiler_map if lang.startswith(l)]
+    if len(matches) == 0:
         print(f"{lang} not found in compiler map - using default compiler")
         return 'default'
-    
-    comp_map = compiler_map[matched_lang[0]]
+    comp_map = compiler_map[matches[0]]
     if comp_map == data64_compiler_map:
         print(f"Using the DATA64 compiler map")
     osabi = get_osabi()
     if osabi in comp_map:
         return comp_map[osabi]
-    if lang.startswith("x86:"):
-        print(f"{osabi} not found in compiler map - using gcc")
-        return 'gcc'
     if None in comp_map:
-        return comp_map[None]
+        def_comp = comp_map[None]
+        print(f"{osabi} not found in compiler map - using {def_comp} compiler")
+        return def_comp
     print(f"{osabi} not found in compiler map - using default compiler")
     return 'default'
 
 
-def compute_ghidra_lcsp():
+def compute_ghidra_lcsp() -> Tuple[str, str]:
     lang = compute_ghidra_language()
     comp = compute_ghidra_compiler(lang)
     return lang, comp
@@ -261,10 +265,10 @@ def compute_ghidra_lcsp():
 
 class DefaultMemoryMapper(object):
 
-    def __init__(self, defaultSpace):
+    def __init__(self, defaultSpace: str) -> None:
         self.defaultSpace = defaultSpace
 
-    def map(self, proc: lldb.SBProcess, offset: int):
+    def map(self, proc: lldb.SBProcess, offset: int) -> Tuple[str, Address]:
         space = self.defaultSpace
         return self.defaultSpace, Address(space, offset)
 
@@ -277,10 +281,10 @@ class DefaultMemoryMapper(object):
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
 
-memory_mappers = {}
+memory_mappers: Dict[str, DefaultMemoryMapper] = {}
 
 
-def compute_memory_mapper(lang):
+def compute_memory_mapper(lang: str) -> DefaultMemoryMapper:
     if not lang in memory_mappers:
         return DEFAULT_MEMORY_MAPPER
     return memory_mappers[lang]
@@ -288,31 +292,31 @@ def compute_memory_mapper(lang):
 
 class DefaultRegisterMapper(object):
 
-    def __init__(self, byte_order):
+    def __init__(self, byte_order: str) -> None:
         if not byte_order in ['big', 'little']:
             raise ValueError("Invalid byte_order: {}".format(byte_order))
         self.byte_order = byte_order
-        self.union_winners = {}
 
-    def map_name(self, proc, name):
+    def map_name(self, proc: lldb.SBProcess, name: str) -> str:
         return name
 
-    def map_value(self, proc, name, value):
+    def map_value(self, proc: lldb.SBProcess, name: str, value: bytes) -> RegVal:
         return RegVal(self.map_name(proc, name), value)
 
-    def map_name_back(self, proc, name):
+    def map_name_back(self, proc: lldb.SBProcess, name: str) -> str:
         return name
 
-    def map_value_back(self, proc, name, value):
+    def map_value_back(self, proc: lldb.SBProcess, name: str,
+                       value: bytes) -> RegVal:
         return RegVal(self.map_name_back(proc, name), value)
 
 
 class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('little')
 
-    def map_name(self, proc, name):
+    def map_name(self, proc: lldb.SBProcess, name: str) -> str:
         if name is None:
             return 'UNKNOWN'
         if name == 'eflags':
@@ -322,26 +326,27 @@ class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
             return 'ymm' + name[3:]
         return super().map_name(proc, name)
 
-    def map_value(self, proc, name, value):
+    def map_value(self, proc: lldb.SBProcess, name: str, value: bytes) -> RegVal:
         rv = super().map_value(proc, name, value)
         if rv.name.startswith('ymm') and len(rv.value) > 32:
             return RegVal(rv.name, rv.value[-32:])
         return rv
 
-    def map_name_back(self, proc, name):
+    def map_name_back(self, proc: lldb.SBProcess, name: str) -> str:
         if name == 'rflags':
             return 'eflags'
+        return super().map_name_back(proc, name)
 
 
 DEFAULT_BE_REGISTER_MAPPER = DefaultRegisterMapper('big')
 DEFAULT_LE_REGISTER_MAPPER = DefaultRegisterMapper('little')
 
-register_mappers = {
+register_mappers: Dict[str, DefaultRegisterMapper] = {
     'x86:LE:64:default': Intel_x86_64_RegisterMapper()
 }
 
 
-def compute_register_mapper(lang):
+def compute_register_mapper(lang: str) -> DefaultRegisterMapper:
     if not lang in register_mappers:
         if ':BE:' in lang:
             return DEFAULT_BE_REGISTER_MAPPER

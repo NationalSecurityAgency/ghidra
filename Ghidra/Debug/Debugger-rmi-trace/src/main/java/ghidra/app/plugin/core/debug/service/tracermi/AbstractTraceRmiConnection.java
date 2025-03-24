@@ -44,10 +44,15 @@ public abstract class AbstractTraceRmiConnection implements TraceRmiConnection {
 	protected void doActivate(TraceObject object, Trace trace, TraceSnapshot snapshot) {
 		DebuggerCoordinates coords = getTraceManager().getCurrent();
 		if (coords.getTrace() != trace) {
-			coords = DebuggerCoordinates.NOWHERE;
+			coords = DebuggerCoordinates.NOWHERE.trace(trace);
 		}
 		if (snapshot != null && followsPresent(trace)) {
-			coords = coords.snap(snapshot.getKey());
+			if (snapshot.getKey() > 0 || snapshot.getSchedule() == null) {
+				coords = coords.snap(snapshot.getKey());
+			}
+			else {
+				coords = coords.time(snapshot.getSchedule());
+			}
 		}
 		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
 		Swing.runLater(() -> {
@@ -68,5 +73,4 @@ public abstract class AbstractTraceRmiConnection implements TraceRmiConnection {
 			}
 		});
 	}
-
 }

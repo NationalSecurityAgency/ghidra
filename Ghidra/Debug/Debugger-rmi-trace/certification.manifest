@@ -14,4 +14,5 @@ src/main/help/help/topics/TraceRmiLauncherServicePlugin/images/GdbTerminal.png||
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidratrace/py.typed||GHIDRA||||END|
 src/main/py/tests/EMPTY||GHIDRA||||END|

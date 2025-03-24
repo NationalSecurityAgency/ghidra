@@ -806,6 +806,6 @@ public interface TraceObject extends TraceUniqueObject {
 		if (stateVal == null) {
 			return TraceExecutionState.INACTIVE;
 		}
-		return TraceExecutionState.valueOf((String) stateVal.getValue());
+		return TraceExecutionState.valueOf(stateVal.castValue());
 	}
 }
