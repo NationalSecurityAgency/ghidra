@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -321,9 +321,6 @@ public class DefaultProjectData implements ProjectData {
 
 	private void initLock(boolean creatingProject) throws LockException, IOException {
 		this.projectLock = getProjectLock(localStorageLocator, !creatingProject);
-		if (projectLock == null) {
-			throw new LockException("Unable to lock project! " + localStorageLocator);
-		}
 
 		if (!properties.exists()) {
 			owner = getUserName();
@@ -339,28 +336,31 @@ public class DefaultProjectData implements ProjectData {
 	 * @param locator the project locator
 	 * @param allowInteractiveForce if true, when a lock cannot be obtained, the
 	 *            user will be prompted
-	 * @return A locked ProjectLock or null if lock fails
+	 * @return A locked ProjectLock
+	 * @throws LockException if the lock fails
 	 */
-	private ProjectLock getProjectLock(ProjectLocator locator, boolean allowInteractiveForce) {
+	private ProjectLock getProjectLock(ProjectLocator locator, boolean allowInteractiveForce)
+			throws LockException {
 		ProjectLock lock = new ProjectLock(locator);
 		if (lock.lock()) {
 			return lock;
 		}
 
+		String defaultMsg = "Unable to lock project! " + locator;
+		
 		// in headless mode, just spit out an error
 		if (!allowInteractiveForce || SystemUtilities.isInHeadlessMode()) {
-			return null;
+			throw new LockException(defaultMsg);
 		}
 
 		String projectStr = "Project: " + HTMLUtilities.escapeHTML(locator.getLocation()) +
 			System.getProperty("file.separator") + HTMLUtilities.escapeHTML(locator.getName());
 		String lockInformation = lock.getExistingLockFileInformation();
 		if (!lock.canForceLock()) {
-			Msg.showInfo(getClass(), null, "Project Locked",
-				"<html>Project is locked. You have another instance of Ghidra<br>" +
+			String msg = "<html>Project is locked. You have another instance of Ghidra<br>" +
 					"already running with this project open (locally or remotely).<br><br>" +
-					projectStr + "<br><br>" + "Lock information: " + lockInformation);
-			return null;
+					projectStr + "<br><br>" + "Lock information: " + lockInformation;
+			throw new LockException(msg);
 		}
 
 		int userChoice = OptionDialog.showOptionDialog(null, "Project Locked - Delete Lock?",
@@ -377,7 +377,8 @@ public class DefaultProjectData implements ProjectData {
 
 			Msg.showError(this, null, "Error", "Attempt to force lock failed! " + locator);
 		}
-		return null;
+
+		throw new LockException(defaultMsg);
 	}
 
 	/**

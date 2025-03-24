@@ -151,8 +151,6 @@ public class DefaultProjectManager implements ProjectManager {
 			return currentProject;
 		}
 		catch (LockException e) {
-			Msg.showError(LOG, null, "Locked Project!",
-				"Cannot open locked project: " + projectLocator, e);
 			throw e;
 		}
 		catch (ReadOnlyException e) {
