@@ -15,17 +15,21 @@
  */
 package ghidra.app.plugin.core.debug.gui.memview;
 
+import java.awt.Color;
 import java.util.*;
 
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.util.TraceEvents;
@@ -79,6 +83,8 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointChanged);
 
 		listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
+		
+		listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 	}
 
 	public MemviewProvider getProvider() {
@@ -180,6 +186,14 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		updateLabelDebouncer.contact(null);
 	}
 
+	private void objectRestored(DomainObjectChangeRecord domainObjectChangeRecord) {
+		if (!trackTrace) {
+			return;
+		}
+		processTrace(currentTrace);
+		updateLabelDebouncer.contact(null);
+	}
+
 	private void doUpdate() {
 		provider.addBoxes(updateList);
 	}
@@ -208,6 +222,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 			removeListener();
 		}
 		current = coordinates;
+		currentTrace = current.getTrace();
 		if (doListeners) {
 			addListener();
 		}
@@ -248,7 +263,7 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 	private void processTrace(Trace trace) {
 		updateList.clear();
-		provider.reset();
+		//provider.reset();
 		if (!provider.isVisible()) {
 			return;
 		}
