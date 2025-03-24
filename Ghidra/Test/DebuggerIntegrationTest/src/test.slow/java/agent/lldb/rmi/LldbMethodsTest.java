@@ -15,8 +15,7 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -870,7 +869,9 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				breakRange.invoke(Map.of("process", proc, "range", range));
 
 				String out = conn.executeCapture("watchpoint list");
-				assertThat(out, containsString("0x%x".formatted(address)));
+				assertThat(out, anyOf(
+					containsString("0x%x".formatted(address)),
+					containsString("0x%08x".formatted(address))));
 				assertThat(out, containsString("size = 1"));
 				assertThat(out, containsString("type = r"));
 			}
@@ -889,7 +890,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				breakExpression.invoke(Map.of(
 					"expression", "`(void(*)())main`",
-					"size", 1));
+					"size", "1"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 
 				String out = conn.executeCapture("watchpoint list");
@@ -916,9 +917,13 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				breakRange.invoke(Map.of("process", proc, "range", range));
 
 				String out = conn.executeCapture("watchpoint list");
-				assertThat(out, containsString("0x%x".formatted(address)));
+				assertThat(out, anyOf(
+					containsString("0x%x".formatted(address)),
+					containsString("0x%08x".formatted(address))));
 				assertThat(out, containsString("size = 1"));
-				assertThat(out, containsString("type = w"));
+				assertThat(out, anyOf(
+					containsString("type = w"),
+					containsString("type = m")));
 			}
 		}
 	}
@@ -935,12 +940,14 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				breakExpression.invoke(Map.of(
 					"expression", "`(void(*)())main`",
-					"size", 1));
+					"size", "1"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 
 				String out = conn.executeCapture("watchpoint list");
 				assertThat(out, containsString(Long.toHexString(address)));
-				assertThat(out, containsString("type = w"));
+				assertThat(out, anyOf(
+					containsString("type = w"),
+					containsString("type = m")));
 			}
 		}
 	}
@@ -962,7 +969,9 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 				breakRange.invoke(Map.of("process", proc, "range", range));
 
 				String out = conn.executeCapture("watchpoint list");
-				assertThat(out, containsString("0x%x".formatted(address)));
+				assertThat(out, anyOf(
+					containsString("0x%x".formatted(address)),
+					containsString("0x%08x".formatted(address))));
 				assertThat(out, containsString("size = 1"));
 				assertThat(out, containsString("type = rw"));
 			}
@@ -981,7 +990,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				breakExpression.invoke(Map.of(
 					"expression", "`(void(*)())main`",
-					"size", 1));
+					"size", "1"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 
 				String out = conn.executeCapture("watchpoint list");
@@ -1094,7 +1103,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 				breakExpression.invoke(Map.of(
 					"expression", "`(void(*)())main`",
-					"size", 1));
+					"size", "1"));
 				long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 
 				String out = conn.executeCapture("watchpoint list");

@@ -26,6 +26,7 @@ import ghidra.rmi.trace.TraceRmi.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 
 class OpenTrace implements ValueDecoder {
@@ -79,9 +80,16 @@ class OpenTrace implements ValueDecoder {
 		trace.release(consumer);
 	}
 
-	public TraceSnapshot createSnapshot(Snap snap, String description) {
-		TraceSnapshot snapshot = trace.getTimeManager().getSnapshot(snap.getSnap(), true);
-		snapshot.setDescription(description);
+	public TraceSnapshot createSnapshot(long snap) {
+		TraceSnapshot snapshot = trace.getTimeManager().getSnapshot(snap, true);
+		return this.lastSnapshot = snapshot;
+	}
+
+	public TraceSnapshot createSnapshot(TraceSchedule schedule) {
+		if (schedule.isSnapOnly()) {
+			return createSnapshot(schedule.getSnap());
+		}
+		TraceSnapshot snapshot = trace.getTimeManager().findScratchSnapshot(schedule);
 		return this.lastSnapshot = snapshot;
 	}
 

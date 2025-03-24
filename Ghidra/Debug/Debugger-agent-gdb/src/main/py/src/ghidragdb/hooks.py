@@ -13,68 +13,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from dataclasses import dataclass, field
 import functools
 import time
 import traceback
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, cast
 
 import gdb
+
+from ghidratrace.client import Batch
 
 from . import commands, util
 
 
 class GhidraHookPrefix(gdb.Command):
-    """Commands for exporting data to a Ghidra trace"""
+    """Commands for exporting data to a Ghidra trace."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('hooks-ghidra', gdb.COMMAND_NONE, prefix=True)
 
 
 GhidraHookPrefix()
 
 
+@dataclass(frozen=False)
 class HookState(object):
-    __slots__ = ('installed', 'batch', 'skip_continue', 'in_break_w_cont')
+    installed = False
+    batch: Optional[Batch] = None
+    skip_continue = False
+    in_break_w_cont = False
 
-    def __init__(self):
-        self.installed = False
-        self.batch = None
-        self.skip_continue = False
-        self.in_break_w_cont = False
-
-    def ensure_batch(self):
+    def ensure_batch(self) -> None:
         if self.batch is None:
-            self.batch = commands.STATE.client.start_batch()
+            self.batch = commands.STATE.require_client().start_batch()
 
-    def end_batch(self):
+    def end_batch(self) -> None:
         if self.batch is None:
             return
         self.batch = None
-        commands.STATE.client.end_batch()
+        commands.STATE.require_client().end_batch()
 
-    def check_skip_continue(self):
+    def check_skip_continue(self) -> bool:
         skip = self.skip_continue
         self.skip_continue = False
         return skip
 
 
+@dataclass(frozen=False)
 class InferiorState(object):
-    __slots__ = ('first', 'regions', 'modules', 'threads', 'breaks', 'visited')
+    first = True
+    # For things we can detect changes to between stops
+    regions: List[util.Region] = field(default_factory=list)
+    modules = False
+    threads = False
+    breaks = False
+    # For frames and threads that have already been synced since last stop
+    visited: set[Any] = field(default_factory=set)
 
-    def __init__(self):
-        self.first = True
-        # For things we can detect changes to between stops
-        self.regions = []
-        self.modules = False
-        self.threads = False
-        self.breaks = False
-        # For frames and threads that have already been synced since last stop
-        self.visited = set()
-
-    def record(self, description=None):
+    def record(self, description: Optional[str] = None) -> None:
         first = self.first
         self.first = False
+        trace = commands.STATE.require_trace()
         if description is not None:
-            commands.STATE.trace.snapshot(description)
+            trace.snapshot(description)
         if first:
             commands.put_inferiors()
             commands.put_environment()
@@ -106,7 +107,8 @@ class InferiorState(object):
                     print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
         # NB: These commands (put_modules/put_regions) will fail if the process is running
-        regions_changed, regions = util.REGION_INFO_READER.have_changed(self.regions)
+        regions_changed, regions = util.REGION_INFO_READER.have_changed(
+            self.regions)
         if regions_changed:
             self.regions = commands.put_regions(regions)
         if first or self.modules:
@@ -116,31 +118,29 @@ class InferiorState(object):
             commands.put_breakpoints()
             self.breaks = False
 
-    def record_continued(self):
+    def record_continued(self) -> None:
         commands.put_inferiors()
         commands.put_threads()
 
-    def record_exited(self, exit_code):
+    def record_exited(self, exit_code: int) -> None:
         inf = gdb.selected_inferior()
         ipath = commands.INFERIOR_PATTERN.format(infnum=inf.num)
-        infobj = commands.STATE.trace.proxy_object_path(ipath)
+        infobj = commands.STATE.require_trace().proxy_object_path(ipath)
         infobj.set_value('Exit Code', exit_code)
         infobj.set_value('State', 'TERMINATED')
 
 
+@dataclass(frozen=False)
 class BrkState(object):
-    __slots__ = ('break_loc_counts',)
+    break_loc_counts: Dict[gdb.Breakpoint, int] = field(default_factory=dict)
 
-    def __init__(self):
-        self.break_loc_counts = {}
-
-    def update_brkloc_count(self, b, count):
+    def update_brkloc_count(self, b: gdb.Breakpoint, count: int) -> None:
         self.break_loc_counts[b] = count
 
-    def get_brkloc_count(self, b):
+    def get_brkloc_count(self, b: gdb.Breakpoint) -> int:
         return self.break_loc_counts.get(b, 0)
 
-    def del_brkloc_count(self, b):
+    def del_brkloc_count(self, b: gdb.Breakpoint) -> int:
         if b not in self.break_loc_counts:
             return 0  # TODO: Print a warning?
         count = self.break_loc_counts[b]
@@ -150,40 +150,41 @@ class BrkState(object):
 
 HOOK_STATE = HookState()
 BRK_STATE = BrkState()
-INF_STATES = {}
+INF_STATES: Dict[int, InferiorState] = {}
 
 
-def log_errors(func):
-    '''
-    Wrap a function in a try-except that prints and reraises the
-    exception.
+C = TypeVar('C', bound=Callable)
+
+
+def log_errors(func: C) -> C:
+    """Wrap a function in a try-except that prints and reraises the exception.
 
     This is needed because pybag and/or the COM wrappers do not print
     exceptions that occur during event callbacks.
-    '''
+    """
 
     @functools.wraps(func)
-    def _func(*args, **kwargs):
+    def _func(*args, **kwargs) -> Any:
         try:
             return func(*args, **kwargs)
         except:
             traceback.print_exc()
             raise
 
-    return _func
+    return cast(C, _func)
 
 
 @log_errors
-def on_new_inferior(event):
+def on_new_inferior(event: gdb.NewInferiorEvent) -> None:
     trace = commands.STATE.trace
     if trace is None:
         return
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("New Inferior {}".format(event.inferior.num)):
+    with trace.open_tx(f"New Inferior {event.inferior.num}"):
         commands.put_inferiors()  # TODO: Could put just the one....
 
 
-def on_inferior_selected():
+def on_inferior_selected() -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -191,25 +192,25 @@ def on_inferior_selected():
     if trace is None:
         return
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Inferior {} selected".format(inf.num)):
+    with trace.open_tx(f"Inferior {inf.num} selected"):
         INF_STATES[inf.num].record()
         commands.activate()
 
 
 @log_errors
-def on_inferior_deleted(event):
+def on_inferior_deleted(event: gdb.InferiorDeletedEvent) -> None:
     trace = commands.STATE.trace
     if trace is None:
         return
     if event.inferior.num in INF_STATES:
         del INF_STATES[event.inferior.num]
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Inferior {} deleted".format(event.inferior.num)):
+    with trace.open_tx(f"Inferior {event.inferior.num} deleted"):
         commands.put_inferiors()  # TODO: Could just delete the one....
 
 
 @log_errors
-def on_new_thread(event):
+def on_new_thread(event: gdb.ThreadEvent) -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -217,7 +218,7 @@ def on_new_thread(event):
     # TODO: Syscall clone/exit to detect thread destruction?
 
 
-def on_thread_selected():
+def on_thread_selected(event: Optional[gdb.ThreadEvent]) -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -226,12 +227,12 @@ def on_thread_selected():
         return
     t = gdb.selected_thread()
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Thread {}.{} selected".format(inf.num, t.num)):
+    with trace.open_tx(f"Thread {inf.num}.{t.num} selected"):
         INF_STATES[inf.num].record()
         commands.activate()
 
 
-def on_frame_selected():
+def on_frame_selected() -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -243,13 +244,13 @@ def on_frame_selected():
     if f is None:
         return
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Frame {}.{}.{} selected".format(inf.num, t.num, util.get_level(f))):
+    with trace.open_tx(f"Frame {inf.num}.{t.num}.{util.get_level(f)} selected"):
         INF_STATES[inf.num].record()
         commands.activate()
 
 
 @log_errors
-def on_memory_changed(event):
+def on_memory_changed(event: gdb.MemoryChangedEvent) -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -257,13 +258,15 @@ def on_memory_changed(event):
     if trace is None:
         return
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Memory *0x{:08x} changed".format(event.address)):
-        commands.put_bytes(event.address, event.address + event.length,
+    address = int(event.address)
+    length = int(event.length)
+    with trace.open_tx(f"Memory *0x{address:08x} changed"):
+        commands.put_bytes(address, address + length,
                            pages=False, is_mi=False, from_tty=False)
 
 
 @log_errors
-def on_register_changed(event):
+def on_register_changed(event: gdb.RegisterChangedEvent) -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -274,7 +277,7 @@ def on_register_changed(event):
     # TODO: How do I get the descriptor from the number?
     # For now, just record the lot
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Register {} changed".format(event.regnum)):
+    with trace.open_tx(f"Register {event.regnum} changed"):
         commands.putreg(event.frame, util.get_register_descs(
             event.frame.architecture()))
 
@@ -300,8 +303,9 @@ def on_cont(event):
         state.record_continued()
 
 
-def check_for_continue(event):
-    if hasattr(event, 'breakpoints'):
+def check_for_continue(event: Optional[gdb.StopEvent]) -> bool:
+    # Attribute check because of version differences
+    if isinstance(event, gdb.StopEvent) and hasattr(event, 'breakpoints'):
         if HOOK_STATE.in_break_w_cont:
             return True
         for brk in event.breakpoints:
@@ -315,7 +319,7 @@ def check_for_continue(event):
 
 
 @log_errors
-def on_stop(event):
+def on_stop(event: Optional[gdb.StopEvent]) -> None:
     if check_for_continue(event):
         HOOK_STATE.skip_continue = True
         return
@@ -336,7 +340,7 @@ def on_stop(event):
 
 
 @log_errors
-def on_exited(event):
+def on_exited(event: gdb.ExitedEvent) -> None:
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -358,13 +362,13 @@ def on_exited(event):
     HOOK_STATE.end_batch()
 
 
-def notify_others_breaks(inf):
+def notify_others_breaks(inf: gdb.Inferior) -> None:
     for num, state in INF_STATES.items():
         if num != inf.num:
             state.breaks = True
 
 
-def modules_changed():
+def modules_changed() -> None:
     # Assumption: affects the current inferior
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
@@ -373,22 +377,22 @@ def modules_changed():
 
 
 @log_errors
-def on_clear_objfiles(event):
+def on_clear_objfiles(event: gdb.ClearObjFilesEvent) -> None:
     modules_changed()
 
 
 @log_errors
-def on_new_objfile(event):
+def on_new_objfile(event: gdb.NewObjFileEvent) -> None:
     modules_changed()
 
 
 @log_errors
-def on_free_objfile(event):
+def on_free_objfile(event: gdb.FreeObjFileEvent) -> None:
     modules_changed()
 
 
 @log_errors
-def on_breakpoint_created(b):
+def on_breakpoint_created(b: gdb.Breakpoint) -> None:
     inf = gdb.selected_inferior()
     notify_others_breaks(inf)
     if inf.num not in INF_STATES:
@@ -398,7 +402,7 @@ def on_breakpoint_created(b):
         return
     ibpath = commands.INF_BREAKS_PATTERN.format(infnum=inf.num)
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Breakpoint {} created".format(b.number)):
+    with trace.open_tx(f"Breakpoint {b.number} created"):
         ibobj = trace.create_object(ibpath)
         # Do not use retain_values or it'll remove other locs
         commands.put_single_breakpoint(b, ibobj, inf, [])
@@ -406,7 +410,7 @@ def on_breakpoint_created(b):
 
 
 @log_errors
-def on_breakpoint_modified(b):
+def on_breakpoint_modified(b: gdb.Breakpoint) -> None:
     inf = gdb.selected_inferior()
     notify_others_breaks(inf)
     if inf.num not in INF_STATES:
@@ -429,7 +433,7 @@ def on_breakpoint_modified(b):
 
 
 @log_errors
-def on_breakpoint_deleted(b):
+def on_breakpoint_deleted(b: gdb.Breakpoint) -> None:
     inf = gdb.selected_inferior()
     notify_others_breaks(inf)
     if inf.num not in INF_STATES:
@@ -451,17 +455,28 @@ def on_breakpoint_deleted(b):
 
 
 @log_errors
-def on_before_prompt():
+def on_before_prompt(n: None) -> object:
     HOOK_STATE.end_batch()
+    return None
 
 
-def cmd_hook(name):
+@dataclass(frozen=True)
+class HookFunc(object):
+    wrapped: Callable[[], None]
+    hook: Type[gdb.Command]
+    unhook: Callable[[], None]
 
-    def _cmd_hook(func):
+    def __call__(self) -> None:
+        self.wrapped()
+
+
+def cmd_hook(name: str):
+
+    def _cmd_hook(func: Callable[[], None]) -> HookFunc:
 
         class _ActiveCommand(gdb.Command):
 
-            def __init__(self):
+            def __init__(self) -> None:
                 # It seems we can't hook commands using the Python API....
                 super().__init__(f"hooks-ghidra def-{name}", gdb.COMMAND_USER)
                 gdb.execute(f"""
@@ -470,50 +485,48 @@ def cmd_hook(name):
                 end
                 """)
 
-            def invoke(self, argument, from_tty):
+            def invoke(self, argument: str, from_tty: bool) -> None:
                 self.dont_repeat()
                 func()
 
-        def _unhook_command():
+        def _unhook_command() -> None:
             gdb.execute(f"""
             define {name}
             end
             """)
 
-        func.hook = _ActiveCommand
-        func.unhook = _unhook_command
-        return func
+        return HookFunc(func, _ActiveCommand, _unhook_command)
 
     return _cmd_hook
 
 
 @cmd_hook('hookpost-inferior')
-def hook_inferior():
+def hook_inferior() -> None:
     on_inferior_selected()
 
 
 @cmd_hook('hookpost-thread')
-def hook_thread():
-    on_thread_selected()
+def hook_thread() -> None:
+    on_thread_selected(None)
 
 
 @cmd_hook('hookpost-frame')
-def hook_frame():
+def hook_frame() -> None:
     on_frame_selected()
 
 
 @cmd_hook('hookpost-up')
-def hook_frame_up():
+def hook_frame_up() -> None:
     on_frame_selected()
 
 
 @cmd_hook('hookpost-down')
-def hook_frame_down():
+def hook_frame_down() -> None:
     on_frame_selected()
 
 
 # TODO: Checks and workarounds for events missing in gdb 9
-def install_hooks():
+def install_hooks() -> None:
     if HOOK_STATE.installed:
         return
     HOOK_STATE.installed = True
@@ -548,7 +561,7 @@ def install_hooks():
     gdb.events.before_prompt.connect(on_before_prompt)
 
 
-def remove_hooks():
+def remove_hooks() -> None:
     if not HOOK_STATE.installed:
         return
     HOOK_STATE.installed = False
@@ -582,12 +595,12 @@ def remove_hooks():
     gdb.events.before_prompt.disconnect(on_before_prompt)
 
 
-def enable_current_inferior():
+def enable_current_inferior() -> None:
     inf = gdb.selected_inferior()
     INF_STATES[inf.num] = InferiorState()
 
 
-def disable_current_inferior():
+def disable_current_inferior() -> None:
     inf = gdb.selected_inferior()
     if inf.num in INF_STATES:
         # Silently ignore already disabled

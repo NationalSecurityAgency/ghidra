@@ -13,17 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from ghidratrace.client import Address, RegVal
 
 import gdb
 
 # NOTE: This map is derived from the ldefs using a script
 # i386 is hand-patched
-language_map = {
-    'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
-    'aarch64:ilp32': ['AARCH64:BE:32:ilp32', 'AARCH64:LE:32:ilp32', 'AARCH64:LE:64:AppleSilicon'],
+language_map: Dict[str, List[str]] = {
+    'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon',
+                'AARCH64:LE:64:v8A'],
+    'aarch64:ilp32': ['AARCH64:BE:32:ilp32', 'AARCH64:LE:32:ilp32',
+                      'AARCH64:LE:64:AppleSilicon'],
     'arm': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
-    'arm_any': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
+    'arm_any': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8',
+                'ARM:LE:32:v8T'],
     'armv2': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],
     'armv2a': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],
     'armv3': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],
@@ -55,7 +59,8 @@ language_map = {
     'i386:x86-64': ['x86:LE:64:default'],
     'i386:x86-64:intel': ['x86:LE:64:default'],
     'i8086': ['x86:LE:16:Protected Mode', 'x86:LE:16:Real Mode'],
-    'iwmmxt': ['ARM:BE:32:v7', 'ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v7', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
+    'iwmmxt': ['ARM:BE:32:v7', 'ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v7',
+               'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
     'm68hc12': ['HC-12:BE:16:default'],
     'm68k': ['68000:BE:32:default'],
     'm68k:68020': ['68000:BE:32:MC68020'],
@@ -63,41 +68,51 @@ language_map = {
     'm9s12x': ['HCS-12:BE:24:default', 'HCS-12X:BE:24:default'],
     'mips:3000': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mips:4000': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
-    'mips:5000': ['MIPS:BE:64:64-32addr', 'MIPS:BE:64:default', 'MIPS:LE:64:64-32addr', 'MIPS:LE:64:default'],
+    'mips:5000': ['MIPS:BE:64:64-32addr', 'MIPS:BE:64:default',
+                  'MIPS:LE:64:64-32addr', 'MIPS:LE:64:default'],
     'mips:micromips': ['MIPS:BE:32:micro'],
     'msp:430X': ['TI_MSP430:LE:16:default'],
     'powerpc:403': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
-    'powerpc:MPC8XX': ['PowerPC:BE:32:MPC8270', 'PowerPC:BE:32:QUICC', 'PowerPC:LE:32:QUICC'],
+    'powerpc:MPC8XX': ['PowerPC:BE:32:MPC8270', 'PowerPC:BE:32:QUICC',
+                       'PowerPC:LE:32:QUICC'],
     'powerpc:common': ['PowerPC:BE:32:default', 'PowerPC:LE:32:default'],
-    'powerpc:common64': ['PowerPC:BE:64:64-32addr', 'PowerPC:BE:64:default', 'PowerPC:LE:64:64-32addr', 'PowerPC:LE:64:default'],
+    'powerpc:common64': ['PowerPC:BE:64:64-32addr', 'PowerPC:BE:64:default',
+                         'PowerPC:LE:64:64-32addr', 'PowerPC:LE:64:default'],
     'powerpc:e500': ['PowerPC:BE:32:e500', 'PowerPC:LE:32:e500'],
     'powerpc:e500mc': ['PowerPC:BE:64:A2ALT', 'PowerPC:LE:64:A2ALT'],
-    'powerpc:e500mc64': ['PowerPC:BE:64:A2-32addr', 'PowerPC:BE:64:A2ALT-32addr', 'PowerPC:LE:64:A2-32addr', 'PowerPC:LE:64:A2ALT-32addr'],
-    'riscv:rv32': ['RISCV:LE:32:RV32G', 'RISCV:LE:32:RV32GC', 'RISCV:LE:32:RV32I', 'RISCV:LE:32:RV32IC', 'RISCV:LE:32:RV32IMC', 'RISCV:LE:32:default'],
-    'riscv:rv64': ['RISCV:LE:64:RV64G', 'RISCV:LE:64:RV64GC', 'RISCV:LE:64:RV64I', 'RISCV:LE:64:RV64IC', 'RISCV:LE:64:default'],
+    'powerpc:e500mc64': ['PowerPC:BE:64:A2-32addr',
+                         'PowerPC:BE:64:A2ALT-32addr',
+                         'PowerPC:LE:64:A2-32addr',
+                         'PowerPC:LE:64:A2ALT-32addr'],
+    'riscv:rv32': ['RISCV:LE:32:RV32G', 'RISCV:LE:32:RV32GC',
+                   'RISCV:LE:32:RV32I', 'RISCV:LE:32:RV32IC',
+                   'RISCV:LE:32:RV32IMC', 'RISCV:LE:32:default'],
+    'riscv:rv64': ['RISCV:LE:64:RV64G', 'RISCV:LE:64:RV64GC',
+                   'RISCV:LE:64:RV64I', 'RISCV:LE:64:RV64IC',
+                   'RISCV:LE:64:default'],
     'sh4': ['SuperH4:BE:32:default', 'SuperH4:LE:32:default'],
     'sparc:v9b': ['sparc:BE:32:default', 'sparc:BE:64:default'],
     'xscale': ['ARM:BE:32:v6', 'ARM:LE:32:v6'],
     'z80': ['z80:LE:16:default', 'z8401x:LE:16:default']
 }
 
-data64_compiler_map = {
+data64_compiler_map: Dict[Optional[str], str] = {
     None: 'pointer64',
 }
 
-x86_compiler_map = {
+x86_compiler_map: Dict[Optional[str], str] = {
     'GNU/Linux': 'gcc',
     'Windows': 'windows',
     # This may seem wrong, but Ghidra cspecs really describe the ABI
     'Cygwin': 'windows',
 }
 
-riscv_compiler_map = {
+riscv_compiler_map: Dict[Optional[str], str] = {
     'GNU/Linux': 'gcc',
     'Cygwin': 'gcc',
 }
 
-compiler_map = {
+compiler_map: Dict[str, Dict[Optional[str], str]] = {
     'DATA:BE:64:default': data64_compiler_map,
     'DATA:LE:64:default': data64_compiler_map,
     'x86:LE:32:default': x86_compiler_map,
@@ -107,14 +122,14 @@ compiler_map = {
 }
 
 
-def get_arch():
+def get_arch() -> str:
     return gdb.selected_inferior().architecture().name()
 
 
-def get_endian():
+def get_endian() -> str:
     parm = gdb.parameter('endian')
     if not parm in ['', 'auto', 'default']:
-        return parm
+        return str(parm)
     # Once again, we have to hack using the human-readable 'show'
     show = gdb.execute('show endian', to_string=True)
     if 'little' in show:
@@ -124,10 +139,10 @@ def get_endian():
     return 'unrecognized'
 
 
-def get_osabi():
+def get_osabi() -> str:
     parm = gdb.parameter('osabi')
     if not parm in ['', 'auto', 'default']:
-        return parm
+        return str(parm)
     # We have to hack around the fact the GDB won't give us the current OS ABI
     # via the API if it is "auto" or "default". Using "show", we can get it, but
     # we have to parse output meant for a human. The current value will be on
@@ -138,11 +153,11 @@ def get_osabi():
     return line.split('"')[-2]
 
 
-def compute_ghidra_language():
+def compute_ghidra_language() -> str:
     # First, check if the parameter is set
     lang = gdb.parameter('ghidra-language')
     if not lang in ['', 'auto', 'default']:
-        return lang
+        return str(lang)
 
     # Get the list of possible languages for the arch. We'll need to sift
     # through them by endian and probably prefer default/simpler variants. The
@@ -163,11 +178,11 @@ def compute_ghidra_language():
     return 'DATA' + lebe + '64:default'
 
 
-def compute_ghidra_compiler(lang):
+def compute_ghidra_compiler(lang: str) -> str:
     # First, check if the parameter is set
     comp = gdb.parameter('ghidra-compiler')
     if not comp in ['', 'auto', 'default']:
-        return comp
+        return str(comp)
 
     # Check if the selected lang has specific compiler recommendations
     if not lang in compiler_map:
@@ -185,7 +200,7 @@ def compute_ghidra_compiler(lang):
     return 'default'
 
 
-def compute_ghidra_lcsp():
+def compute_ghidra_lcsp() -> Tuple[str, str]:
     lang = compute_ghidra_language()
     comp = compute_ghidra_compiler(lang)
     return lang, comp
@@ -193,10 +208,10 @@ def compute_ghidra_lcsp():
 
 class DefaultMemoryMapper(object):
 
-    def __init__(self, defaultSpace):
+    def __init__(self, defaultSpace: str) -> None:
         self.defaultSpace = defaultSpace
 
-    def map(self, inf: gdb.Inferior, offset: int):
+    def map(self, inf: gdb.Inferior, offset: int) -> Tuple[str, Address]:
         if inf.num == 1:
             space = self.defaultSpace
         else:
@@ -213,10 +228,10 @@ class DefaultMemoryMapper(object):
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
 
-memory_mappers = {}
+memory_mappers: Dict[str, DefaultMemoryMapper] = {}
 
 
-def compute_memory_mapper(lang):
+def compute_memory_mapper(lang: str) -> DefaultMemoryMapper:
     if not lang in memory_mappers:
         return DEFAULT_MEMORY_MAPPER
     return memory_mappers[lang]
@@ -224,16 +239,16 @@ def compute_memory_mapper(lang):
 
 class DefaultRegisterMapper(object):
 
-    def __init__(self, byte_order):
+    def __init__(self, byte_order: str) -> None:
         if not byte_order in ['big', 'little']:
-            raise ValueError("Invalid byte_order: {}".format(byte_order))
+            raise ValueError(f"Invalid byte_order: {byte_order}")
         self.byte_order = byte_order
-        self.union_winners = {}
 
-    def map_name(self, inf, name):
+    def map_name(self, inf: gdb.Inferior, name: str):
         return name
 
-    def convert_value(self, value, type=None):
+    def convert_value(self, value: gdb.Value,
+                      type: Optional[gdb.Type] = None) -> bytes:
         if type is None:
             type = value.dynamic_type.strip_typedefs()
         l = type.sizeof
@@ -241,39 +256,43 @@ class DefaultRegisterMapper(object):
         # NOTE: Might like to pre-lookup 'unsigned char', but it depends on the
         # architecture *at the time of lookup*.
         cv = value.cast(gdb.lookup_type('unsigned char').array(l - 1))
-        rng = range(l)
-        if self.byte_order == 'little':
-            rng = reversed(rng)
-        return bytes(cv[i] for i in rng)
+        rng: Sequence[int] = range(l)
+        it = reversed(rng) if self.byte_order == 'little' else rng
+        result = bytes(cv[i] for i in it)
+        return result
 
-    def map_value(self, inf, name, value):
+    def map_value(self, inf: gdb.Inferior, name: str,
+                  value: gdb.Value) -> RegVal:
         try:
             av = self.convert_value(value)
         except gdb.error as e:
-            raise gdb.GdbError("Cannot convert {}'s value: '{}', type: '{}'"
-                               .format(name, value, value.type))
+            raise gdb.GdbError(
+                f"Cannot convert {name}'s value: '{value}', type: '{value.type}'")
         return RegVal(self.map_name(inf, name), av)
 
-    def convert_value_back(self, value, size=None):
+    def convert_value_back(self, value: bytes,
+                           size: Optional[int] = None) -> bytes:
         if size is not None:
             value = value[-size:].rjust(size, b'\0')
         if self.byte_order == 'little':
             value = bytes(reversed(value))
         return value
 
-    def map_name_back(self, inf, name):
+    def map_name_back(self, inf: gdb.Inferior, name: str) -> str:
         return name
 
-    def map_value_back(self, inf, name, value):
-        return RegVal(self.map_name_back(inf, name), self.convert_value_back(value))
+    def map_value_back(self, inf: gdb.Inferior, name: str,
+                       value: bytes) -> RegVal:
+        return RegVal(
+            self.map_name_back(inf, name), self.convert_value_back(value))
 
 
 class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('little')
 
-    def map_name(self, inf, name):
+    def map_name(self, inf: gdb.Inferior, name: str) -> str:
         if name == 'eflags':
             return 'rflags'
         if name.startswith('zmm'):
@@ -281,13 +300,14 @@ class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
             return 'ymm' + name[3:]
         return super().map_name(inf, name)
 
-    def map_value(self, inf, name, value):
+    def map_value(self, inf: gdb.Inferior, name: str,
+                  value: gdb.Value) -> RegVal:
         rv = super().map_value(inf, name, value)
         if rv.name.startswith('ymm') and len(rv.value) > 32:
             return RegVal(rv.name, rv.value[-32:])
         return rv
 
-    def map_name_back(self, inf, name):
+    def map_name_back(self, inf: gdb.Inferior, name: str) -> str:
         if name == 'rflags':
             return 'eflags'
         return name
@@ -296,12 +316,12 @@ class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
 DEFAULT_BE_REGISTER_MAPPER = DefaultRegisterMapper('big')
 DEFAULT_LE_REGISTER_MAPPER = DefaultRegisterMapper('little')
 
-register_mappers = {
+register_mappers: Dict[str, DefaultRegisterMapper] = {
     'x86:LE:64:default': Intel_x86_64_RegisterMapper()
 }
 
 
-def compute_register_mapper(lang):
+def compute_register_mapper(lang: str) -> DefaultRegisterMapper:
     if not lang in register_mappers:
         if ':BE:' in lang:
             return DEFAULT_BE_REGISTER_MAPPER

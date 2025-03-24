@@ -53,10 +53,12 @@ def main():
         print("dbgeng requires a target trace - please try again.")
         cmd.ghidra_trace_disconnect()
         return
-    
+
     cmd.ghidra_trace_open(target, start_trace=False)
-    
+
     # TODO: HACK
+    # Also, the wait() must precede sync_enable() or else PROC_STATE will
+    # contain the wrong PID, and later events will get snuffed
     try:
         dbg.wait()
     except KeyboardInterrupt as ki:
@@ -64,8 +66,9 @@ def main():
 
     cmd.ghidra_trace_start(target)
     cmd.ghidra_trace_sync_enable()
-    
-    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS, DbgEng.DEBUG_STATUS_BREAK)
+
+    on_state_changed(DbgEng.DEBUG_CES_EXECUTION_STATUS,
+                     DbgEng.DEBUG_STATUS_BREAK)
     cmd.repl()
 
 

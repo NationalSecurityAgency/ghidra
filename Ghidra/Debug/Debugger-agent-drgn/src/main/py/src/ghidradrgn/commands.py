@@ -21,11 +21,14 @@ import re
 import socket
 import sys
 import time
+from typing import Union
 
 import drgn
 import drgn.cli
 from ghidratrace import sch
-from ghidratrace.client import Client, Address, AddressRange, TraceObject
+from ghidratrace.client import (
+    Client, Address, AddressRange, TraceObject, Schedule)
+from ghidratrace.display import print_tabular_values, wait
 
 from . import util, arch, methods, hooks
 
@@ -62,9 +65,10 @@ SYMBOL_PATTERN = SYMBOLS_PATTERN + SYMBOL_KEY_PATTERN
 
 PROGRAMS = {}
 
+
 class ErrorWithCode(Exception):
 
-    def __init__(self, code):
+    def __init__(self, code: int) -> None:
         self.code = code
 
     def __str__(self) -> str:
@@ -73,10 +77,10 @@ class ErrorWithCode(Exception):
 
 class State(object):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset_client()
 
-    def require_client(self):
+    def require_client(self) -> Client:
         if self.client is None:
             raise RuntimeError("Not connected")
         return self.client
@@ -190,7 +194,8 @@ def start_trace(name):
     language, compiler = arch.compute_ghidra_lcsp()
     if name is None:
         name = 'drgn/noname'
-    STATE.trace = STATE.client.create_trace(name, language, compiler)
+    STATE.trace = STATE.client.create_trace(
+        name, language, compiler, extra=None)
     # TODO: Is adding an attribute like this recommended in Python?
     STATE.trace.memory_mapper = arch.compute_memory_mapper(language)
     STATE.trace.register_mapper = arch.compute_register_mapper(language)
@@ -230,7 +235,6 @@ def ghidra_trace_restart(name=None):
     start_trace(name)
 
 
-
 def ghidra_trace_create(start_trace=True):
     """
     Create a session.
@@ -250,13 +254,13 @@ def ghidra_trace_create(start_trace=True):
         pid = int(os.getenv('OPT_TARGET_PID'))
         prog.set_pid(pid)
         util.selected_pid = pid
-        
+
     default_symbols = {"default": True, "main": True}
     try:
         prog.load_debug_info(None, **default_symbols)
     except drgn.MissingDebugInfoError as e:
         print(e)
-        
+
     if kind == "kernel":
         img = prog.main_module().name
         util.selected_tid = next(prog.threads()).tid
@@ -267,10 +271,10 @@ def ghidra_trace_create(start_trace=True):
         util.selected_tid = prog.main_thread().tid
 
     if start_trace:
-        ghidra_trace_start(img)        
-        
+        ghidra_trace_start(img)
+
     PROGRAMS[util.selected_pid] = prog
-    
+
 
 def ghidra_trace_info():
     """Get info about the Ghidra connection"""
@@ -343,7 +347,7 @@ def ghidra_trace_save():
     STATE.require_trace().save()
 
 
-def ghidra_trace_new_snap(description=None):
+def ghidra_trace_new_snap(description=None, time: Union[int, Schedule, None] = None):
     """
     Create a new snapshot
 
@@ -351,23 +355,14 @@ def ghidra_trace_new_snap(description=None):
     """
 
     description = str(description)
+    if isinstance(time, int):
+        time = Schedule(time)
     STATE.require_tx()
-    return {'snap': STATE.require_trace().snapshot(description)}
-
-
-def ghidra_trace_set_snap(snap=None):
-    """
-    Go to a snapshot
-
-    Subsequent modifications to machine state will affect the given snapshot.
-    """
-
-    STATE.require_trace().set_snap(int(snap))
+    return {'snap': STATE.require_trace().snapshot(description, time=time)}
 
 
 def quantize_pages(start, end):
     return (start // PAGE_SIZE * PAGE_SIZE, (end + PAGE_SIZE - 1) // PAGE_SIZE * PAGE_SIZE)
-
 
 
 def put_bytes(start, end, pages, display_result):
@@ -488,16 +483,16 @@ def putreg():
     except Exception as e:
         print(e)
         return
-    
+
     regs = frames[nframe].registers()
     endian = arch.get_endian()
     sz = int(int(arch.get_size())/8)
     values = []
     for key in regs.keys():
         try:
-         	value = regs[key]
+            value = regs[key]
         except Exception:
-        	value = 0
+            value = 0
         try:
             rv = value.to_bytes(sz, endian)
             values.append(mapper.map_value(nproc, key, rv))
@@ -541,7 +536,7 @@ def ghidra_trace_delreg():
     except Exception as e:
         print(e)
         return
-    
+
     regs = frames[nframe].registers()
     names = []
     for key in regs.keys():
@@ -549,18 +544,19 @@ def ghidra_trace_delreg():
     STATE.trace.delete_registers(space, names)
 
 
-def put_object(lpath, key, value):  
+def put_object(lpath, key, value):
     nproc = util.selected_process()
     lobj = STATE.trace.create_object(lpath+"."+key)
     lobj.insert()
     if hasattr(value, "type_"):
-        vtype = value.type_ 
+        vtype = value.type_
         vkind = vtype.kind
         lobj.set_value('_display', '{} [{}]'.format(key, vtype.type_name()))
         lobj.set_value('Kind', str(vkind))
-        lobj.set_value('Type', str(vtype))      
+        lobj.set_value('Type', str(vtype))
     else:
-        lobj.set_value('_display', '{} [{}:{}]'.format(key, type(value), str(value)))
+        lobj.set_value('_display', '{} [{}:{}]'.format(
+            key, type(value), str(value)))
         lobj.set_value('Value', str(value))
         return
 
@@ -569,29 +565,31 @@ def put_object(lpath, key, value):
             lobj.set_value('Value', '<absent>')
             return
     if hasattr(value, "address_"):
-        vaddr = value.address_ 
+        vaddr = value.address_
         if vaddr is not None:
             base, addr = STATE.trace.memory_mapper.map(nproc, vaddr)
             lobj.set_value('Address', addr)
     if hasattr(value, "value_"):
-        vvalue = value.value_()   
-        
+        vvalue = value.value_()
+
     if vkind is drgn.TypeKind.POINTER:
         base, addr = STATE.trace.memory_mapper.map(nproc, vvalue)
         lobj.set_value('Address', addr)
         return
     if vkind is drgn.TypeKind.TYPEDEF:
-        lobj.set_value('_display', '{} [{}:{}]'.format(key, type(vvalue), str(vvalue)))
+        lobj.set_value('_display', '{} [{}:{}]'.format(
+            key, type(vvalue), str(vvalue)))
         lobj.set_value('Value', str(vvalue))
         return
     if vkind is drgn.TypeKind.UNION or vkind is drgn.TypeKind.STRUCT or vkind is drgn.TypeKind.CLASS:
         for k in vvalue.keys():
             put_object(lobj.path+'.Members', k, vvalue[k])
         return
-    
-    lobj.set_value('_display', '{} [{}:{}]'.format(key, type(vvalue), str(vvalue)))
+
+    lobj.set_value('_display', '{} [{}:{}]'.format(
+        key, type(vvalue), str(vvalue)))
     lobj.set_value('Value', str(vvalue))
-   
+
 
 def put_objects(pobj, parent):
     ppath = pobj.path + '.Members'
@@ -629,7 +627,6 @@ def ghidra_trace_put_locals():
 
     STATE.require_tx()
     put_locals()
-
 
 
 def ghidra_trace_create_obj(path=None):
@@ -798,69 +795,14 @@ def ghidra_trace_get_obj(path):
     print("{}\t{}".format(object.id, object.path))
 
 
-class TableColumn(object):
-
-    def __init__(self, head):
-        self.head = head
-        self.contents = [head]
-        self.is_last = False
-
-    def add_data(self, data):
-        self.contents.append(str(data))
-
-    def finish(self):
-        self.width = max(len(d) for d in self.contents) + 1
-
-    def print_cell(self, i):
-        print(
-            self.contents[i] if self.is_last else self.contents[i].ljust(self.width), end='')
-
-
-class Tabular(object):
-
-    def __init__(self, heads):
-        self.columns = [TableColumn(h) for h in heads]
-        self.columns[-1].is_last = True
-        self.num_rows = 1
-
-    def add_row(self, datas):
-        for c, d in zip(self.columns, datas):
-            c.add_data(d)
-        self.num_rows += 1
-
-    def print_table(self):
-        for c in self.columns:
-            c.finish()
-        for rn in range(self.num_rows):
-            for c in self.columns:
-                c.print_cell(rn)
-            print('')
-
-
-def val_repr(value):
-    if isinstance(value, TraceObject):
-        return value.path
-    elif isinstance(value, Address):
-        return '{}:{:08x}'.format(value.space, value.offset)
-    return repr(value)
-
-
-def print_values(values):
-    table = Tabular(['Parent', 'Key', 'Span', 'Value', 'Type'])
-    for v in values:
-        table.add_row(
-            [v.parent.path, v.key, v.span, val_repr(v.value), v.schema])
-    table.print_table()
-
-
 def ghidra_trace_get_values(pattern):
     """
     List all values matching a given path pattern.
     """
 
     trace = STATE.require_trace()
-    values = trace.get_values(pattern)
-    print_values(values)
+    values = wait(trace.get_values(pattern))
+    print_tabular_values(values, print)
 
 
 def ghidra_trace_get_values_rng(address, length):
@@ -873,8 +815,8 @@ def ghidra_trace_get_values_rng(address, length):
     nproc = util.selected_process()
     base, addr = trace.memory_mapper.map(nproc, start)
     # Do not create the space. We're querying. No tx.
-    values = trace.get_values_intersecting(addr.extend(end - start))
-    print_values(values)
+    values = wait(trace.get_values_intersecting(addr.extend(end - start)))
+    print_tabular_values(values, print)
 
 
 def activate(path=None):
@@ -890,9 +832,10 @@ def activate(path=None):
             else:
                 frame = util.selected_frame()
                 if frame is None:
-                	path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
+                    path = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
                 else:
-                	path = FRAME_PATTERN.format(procnum=nproc, tnum=nthrd, level=frame)
+                    path = FRAME_PATTERN.format(
+                        procnum=nproc, tnum=nthrd, level=frame)
     trace.proxy_object_path(path).activate()
 
 
@@ -951,7 +894,6 @@ def ghidra_trace_put_processes():
         put_processes()
 
 
-
 def put_environment():
     nproc = util.selected_process()
     epath = ENV_PATTERN.format(procnum=nproc)
@@ -979,14 +921,14 @@ if hasattr(drgn, 'RelocatableModule'):
         nproc = util.selected_process()
         if nproc is None:
             return
-    
+
         try:
             regions = prog.loaded_modules()
         except Exception as e:
             regions = []
-        #if len(regions) == 0:
+        # if len(regions) == 0:
         #    regions = util.full_mem()
-            
+
         mapper = STATE.trace.memory_mapper
         keys = []
         # r : MEMORY_BASIC_INFORMATION64
@@ -1009,16 +951,14 @@ if hasattr(drgn, 'RelocatableModule'):
         STATE.trace.proxy_object_path(
             MEMORY_PATTERN.format(procnum=nproc)).retain_values(keys)
 
-
     def ghidra_trace_put_regions():
         """
         Read the memory map, if applicable, and write to the trace's Regions
         """
-    
+
         STATE.require_tx()
         with STATE.client.batch() as b:
             put_regions()
-
 
 
 # Detect whether this is supported before defining the command
@@ -1027,12 +967,12 @@ if hasattr(drgn, 'RelocatableModule'):
         nproc = util.selected_process()
         if nproc is None:
             return
-        
+
         try:
             modules = prog.modules()
         except Exception as e:
             return
-    
+
         mapper = STATE.trace.memory_mapper
         mod_keys = []
         for m in modules:
@@ -1066,12 +1006,11 @@ if hasattr(drgn, 'RelocatableModule'):
         STATE.trace.proxy_object_path(MODULES_PATTERN.format(
             procnum=nproc)).retain_values(mod_keys)
 
-
     def ghidra_trace_put_modules():
         """
         Gather object files, if applicable, and write to the trace's Modules
         """
-    
+
         STATE.require_tx()
         with STATE.client.batch() as b:
             put_modules()
@@ -1079,20 +1018,22 @@ if hasattr(drgn, 'RelocatableModule'):
 
 # Detect whether this is supported before defining the command
 if hasattr(drgn, 'RelocatableModule'):
-    def put_sections(m : drgn.RelocatableModule):
+    def put_sections(m: drgn.RelocatableModule):
         nproc = util.selected_process()
         if nproc is None:
             return
-        
+
         mapper = STATE.trace.memory_mapper
         section_keys = []
         sections = m.section_addresses
         maddr = hex(m.address_range[0])
         for key in sections.keys():
             value = sections[key]
-            spath = SECTION_PATTERN.format(procnum=nproc, modpath=maddr, secname=key)
+            spath = SECTION_PATTERN.format(
+                procnum=nproc, modpath=maddr, secname=key)
             sobj = STATE.trace.create_object(spath)
-            section_keys.append(SECTION_KEY_PATTERN.format(modpath=maddr, secname=key))
+            section_keys.append(SECTION_KEY_PATTERN.format(
+                modpath=maddr, secname=key))
             base_base, base_addr = mapper.map(nproc, value)
             if base_base != base_addr.space:
                 STATE.trace.create_overlay_space(base_base, base_addr.space)
@@ -1102,7 +1043,6 @@ if hasattr(drgn, 'RelocatableModule'):
             sobj.insert()
         STATE.trace.proxy_object_path(SECTIONS_PATTERN.format(
             procnum=nproc, modpath=maddr)).retain_values(section_keys)
-
 
 
 def convert_state(t):
@@ -1126,16 +1066,17 @@ def put_threads(running=False):
         tpath = THREAD_PATTERN.format(procnum=nproc, tnum=nthrd)
         tobj = STATE.trace.create_object(tpath)
         keys.append(THREAD_KEY_PATTERN.format(tnum=nthrd))
-    
+
         tobj.set_value('TID', nthrd)
         short = '{:d} {:x}:{:x}'.format(i, nproc, nthrd)
         tobj.set_value('_short_display', short)
         if hasattr(t, 'name'):
-            tobj.set_value('_display', '{:x} {:x}:{:x} {}'.format(i, nproc, nthrd, t.name))
+            tobj.set_value('_display', '{:x} {:x}:{:x} {}'.format(
+                i, nproc, nthrd, t.name))
             tobj.set_value('Name', t.name)
         else:
             tobj.set_value('_display', short)
-        #tobj.set_value('Object', t.object)
+        # tobj.set_value('Object', t.object)
         tobj.insert()
         stackobj = STATE.trace.create_object(tpath+".Stack")
         stackobj.insert()
@@ -1153,7 +1094,6 @@ def ghidra_trace_put_threads():
         put_threads()
 
 
-
 def put_frames():
     nproc = util.selected_process()
     if nproc < 0:
@@ -1169,10 +1109,10 @@ def put_frames():
         stack = thread.stack_trace()
     except Exception as e:
         return
-    
+
     mapper = STATE.trace.memory_mapper
     keys = []
-    for i,f in enumerate(stack):
+    for i, f in enumerate(stack):
         fpath = FRAME_PATTERN.format(
             procnum=nproc, tnum=nthrd, level=i)
         fobj = STATE.trace.create_object(fpath)
@@ -1186,7 +1126,8 @@ def put_frames():
         fobj.set_value('PC', offset_inst)
         fobj.set_value('SP', offset_stack)
         fobj.set_value('Name', f.name)
-        fobj.set_value('_display', "#{} {} {}".format(i, hex(offset_inst.offset), f.name))
+        fobj.set_value('_display', "#{} {} {}".format(
+            i, hex(offset_inst.offset), f.name))
         fobj.insert()
         aobj = STATE.trace.create_object(fpath+".Attributes")
         aobj.insert()
@@ -1220,19 +1161,18 @@ def ghidra_trace_put_frames():
         put_frames()
 
 
-
 def put_symbols(pattern=None):
     nproc = util.selected_process()
     if nproc is None:
         return
 
-    #keys = []
+    # keys = []
     symbols = prog.symbols(pattern)
     for s in symbols:
         spath = SYMBOL_PATTERN.format(procnum=nproc, sid=hash(str(s)))
         sobj = STATE.trace.create_object(spath)
-        #keys.append(SYMBOL_KEY_PATTERN.format(sid=i))
-    
+        # keys.append(SYMBOL_KEY_PATTERN.format(sid=i))
+
         short = '{:x}'.format(s.address)
         sobj.set_value('_short_display', short)
         if hasattr(s, 'name'):
@@ -1250,7 +1190,7 @@ def put_symbols(pattern=None):
         sobj.set_value('Binding', str(s.binding))
         sobj.set_value('Kind', str(s.kind))
         sobj.insert()
-    #STATE.trace.proxy_object_path(
+    # STATE.trace.proxy_object_path(
     #    SYMBOLS_PATTERN.format(procnum=nproc)).retain_values(keys)
 
 
@@ -1262,7 +1202,6 @@ def ghidra_trace_put_symbols():
     STATE.require_tx()
     with STATE.client.batch() as b:
         put_symbols()
-
 
 
 def set_display(key, value, obj):
@@ -1280,7 +1219,7 @@ def set_display(key, value, obj):
         if hloc is not None:
             key += " @ " + str(hloc)
             obj.set_value('_display', key)
-            (hloc_base, hloc_addr) = map_address(int(hloc,0))
+            (hloc_base, hloc_addr) = map_address(int(hloc, 0))
             obj.set_value('_address', hloc_addr, schema=Address)
     if vstr is not None:
         key += " : " + str(vstr)
@@ -1310,7 +1249,7 @@ def ghidra_trace_put_all():
         syms = SYMBOLS_PATTERN.format(procnum=util.selected_process())
         sobj = STATE.trace.create_object(syms)
         sobj.insert()
-        #put_symbols()
+        # put_symbols()
         put_threads()
         put_frames()
         ghidra_trace_putreg()
@@ -1390,8 +1329,8 @@ def get_pc():
         stack = thread.stack_trace()
     except Exception as e:
         return 0
-    
-    frame = stack[util.selected_frame()]    
+
+    frame = stack[util.selected_frame()]
     return frame.pc
 
 
@@ -1401,7 +1340,6 @@ def get_sp():
         stack = thread.stack_trace()
     except Exception as e:
         return 0
-    
-    frame = stack[util.selected_frame()]    
-    return frame.sp
 
+    frame = stack[util.selected_frame()]
+    return frame.sp

@@ -31,6 +31,7 @@ import java.util.function.*;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
@@ -46,6 +47,7 @@ import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.framework.plugintool.util.*;
 import ghidra.pty.testutil.DummyProc;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import junit.framework.AssertionFailedError;
 
 public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebuggerTest {
@@ -81,14 +83,18 @@ public abstract class AbstractDrgnTraceRmiTest extends AbstractGhidraHeadedDebug
 		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
 	}
 
-	//@BeforeClass
+	@BeforeClass
 	public static void setupPython() throws Throwable {
 		if (didSetupPython) {
 			// Only do this once when running the full suite.
 			return;
 		}
+		if (SystemUtilities.isInTestingBatchMode()) {
+			// Don't run gradle in gradle. It already did this task.
+			return;
+		}
 		String gradle = DummyProc.which("gradle");
-		new ProcessBuilder(gradle, "Debugger-agent-drgn:assemblePyPackage")
+		new ProcessBuilder(gradle, "assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()

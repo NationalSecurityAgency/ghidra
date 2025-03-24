@@ -585,6 +585,9 @@ public class DBTraceMemorySpace
 
 	protected void doPutFutureBytes(OffsetSnap loc, ByteBuffer buf, int dstOffset, int maxLen,
 			OutSnap lastSnap, Set<TraceAddressSnapRange> changed) throws IOException {
+		if (loc.snap == Lifespan.DOMAIN.lmax()) {
+			return;
+		}
 		// NOTE: Do not leave the buffer advanced from here
 		int pos = buf.position();
 		// exclusive?
@@ -616,7 +619,7 @@ public class DBTraceMemorySpace
 			}
 		}
 		if (!remaining.isEmpty()) {
-			lastSnap.snap = Long.MAX_VALUE;
+			lastSnap.snap = Lifespan.DOMAIN.lmax();
 			for (AddressRange rng : remaining) {
 				changed.add(
 					new ImmutableTraceAddressSnapRange(rng, Lifespan.nowOnMaybeScratch(loc.snap)));

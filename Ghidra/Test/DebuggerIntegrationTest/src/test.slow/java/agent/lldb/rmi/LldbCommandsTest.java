@@ -587,7 +587,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace tx-start "Create Object"
 				ghidra trace create-obj Test.Objects[1]
 				ghidra trace insert-obj Test.Objects[1]
-				ghidra trace set-snap 1
+				ghidra trace new-snap 1 "Next"
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
 				kill
@@ -805,7 +805,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra trace set-value Test.Objects[1] [1] 10
 				ghidra trace set-value Test.Objects[1] [2] 20
 				ghidra trace set-value Test.Objects[1] [3] 30
-				ghidra trace set-snap 10
+				ghidra trace new-snap 10 "Snap 10"
 				ghidra trace retain-values Test.Objects[1] [1] [3]
 				ghidra trace tx-commit
 				kill
