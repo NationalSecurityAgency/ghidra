@@ -15,22 +15,12 @@
  */
 package ghidra.app.util.pdb.classtype;
 
+import ghidra.program.model.gclass.ClassID;
+
 /**
  * Represents an entry within a virtual base table
  */
-public interface VBTableEntry {
-
-	/**
-	 * Sets the entry offset value
-	 * @param offset the offset
-	 */
-	public void setOffset(Long offset);
-
-	/**
-	 * Gets the entry offset value
-	 * @return the offset value
-	 */
-	public Long getOffset();
+public interface VBTableEntry extends VXTEntry {
 
 	/**
 	 * Sets the entry class ID

@@ -15,9 +15,13 @@
  */
 package ghidra.app.util.pdb.classtype;
 
+import java.util.List;
+
+import ghidra.program.model.gclass.ClassID;
+
 /**
- * Compiler-generated virtual base table
+ * Owner-Parentage combination for identifying a vxtable, its pointer, or a base class
+ * @param owner the owning class
+ * @param parentage the parentage of the base class or vxtable or vxtable pointer
  */
-public interface VBTable extends VXT {
-	// empty for now
-}
+public record OwnerParentage(ClassID owner, List<ClassID> parentage) {}

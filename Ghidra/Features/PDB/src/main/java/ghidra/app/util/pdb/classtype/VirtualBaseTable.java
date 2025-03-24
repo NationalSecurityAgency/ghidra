@@ -15,10 +15,12 @@
  */
 package ghidra.app.util.pdb.classtype;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.program.model.data.*;
+import ghidra.program.model.gclass.ClassID;
+import ghidra.program.model.gclass.ClassUtils;
 
 /**
  * Abstract class for virtual base tables
@@ -28,14 +30,22 @@ public abstract class VirtualBaseTable implements VBTable {
 	protected ClassID owner; // Does this belong here in this abstract class?
 	protected List<ClassID> parentage; // Not sure this belongs in this abstract class
 	/**
-	 * The number of entries in the table
+	 * The number of entries in the table, as specified by the user
 	 */
-	protected Integer numEntries;
+	protected Integer userSpecifiedNumEntries;
 	/**
 	 * This is the offset within the class where we expect to find the pointer that can point to
 	 *  this table
 	 */
 	protected Long ptrOffsetInClass;
+
+	protected int maxTableIndexSeen;
+	protected Map<Integer, VirtualBaseTableEntry> entryByTableIndex;
+	protected Map<Integer, Long> baseOffsetByTableIndex;
+
+	// result of compile/build
+	private Structure tableStructure;
+	private boolean isBuilt;
 
 	/**
 	 * Virtual Base Table for a base (parent) class within an owner class.  The owner and parent
@@ -47,35 +57,82 @@ public abstract class VirtualBaseTable implements VBTable {
 	public VirtualBaseTable(ClassID owner, List<ClassID> parentage) {
 		this.owner = owner;
 		this.parentage = new ArrayList<>(parentage);
+		maxTableIndexSeen = -1;
+		entryByTableIndex = new HashMap<>();
+		baseOffsetByTableIndex = new HashMap<>();
+	}
+
+	protected abstract VirtualBaseTableEntry getNewEntry(ClassID baseId);
+
+	/**
+	 * Method to add an entry to the virtual base table
+	 * @param tableIndex the index location in the virtual base table for the entry
+	 * @param baseId class id of the base
+	 */
+	public void addEntry(int tableIndex, ClassID baseId) {
+		VirtualBaseTableEntry entry = getNewEntry(baseId);
+		entryByTableIndex.put(tableIndex, entry);
+		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
+	}
+
+	int getMaxTableIndex() {
+		return maxTableIndexSeen;
+	}
+
+	public Map<Integer, VirtualBaseTableEntry> getEntriesByTableIndex() {
+		return entryByTableIndex;
+	}
+
+	/**
+	 * Returns the base class entry for the table tableIndex
+	 * @param tableIndex the index location in the virtual base table for the entry
+	 * @return the entry for the base class
+	 */
+	public VBTableEntry getEntry(int tableIndex) {
+		return entryByTableIndex.get(tableIndex);
 	}
 
 	/**
 	 * Returns the offset of the base class in the layout class pertaining whose entry in the
-	 * VBTable is at the index location
-	 * VBTable
-	 * @param index the index in the table
+	 * VBTable is at the tableIndex location
+	 * @param tableIndex the index location in the virtual base table for the entry
 	 * @return the offset in the layout class
 	 * @throws PdbException if problem retrieving the offset value
 	 */
-	public abstract Long getBaseOffset(int index) throws PdbException;
+	public abstract Long getBaseOffset(int tableIndex) throws PdbException;
+
+	/**
+	 * Sets the base class id for the table index; the table index is based at 1
+	 * @param tableIndex the index location in the table
+	 * @param baseId the base class id
+	 */
+	public void setBaseClassId(int tableIndex, ClassID baseId) {
+		VirtualBaseTableEntry entry = entryByTableIndex.get(tableIndex);
+		if (entry == null) {
+			entry = new VirtualBaseTableEntry(baseId);
+			entryByTableIndex.put(tableIndex, entry);
+		}
+		else {
+			entry.setClassId(baseId);
+		}
+		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
+	}
 
 	/**
 	 * Returns the ClassID of the base class in the layout class pertaining whose entry in the
-	 * VBTable is at the index location
-	 * @param index the index in the table
+	 * VBTable is at the tableIndex location; the table index is based at 1
+	 * @param tableIndex the index location in the virtual base table for the entry
 	 * @return the ClassID of the base class
-	 * @throws PdbException if an entry does not exist for the index
+	 * @throws PdbException if an entry does not exist for the tableIndex
 	 */
-	public abstract ClassID getBaseClassId(int index) throws PdbException;
-
-	/**
-	 * Returns a {@link VBTableEntry} for the base class in the layout class pertaining whose
-	 * entry in the VBTable is at the index location
-	 * @param index the index in the table
-	 * @return the ClassID of the base class
-	 * @throws PdbException if an entry does not exist for the index
-	 */
-	public abstract VBTableEntry getBase(int index) throws PdbException;
+	public ClassID getBaseClassId(int tableIndex) throws PdbException {
+		VBTableEntry entry = entryByTableIndex.get(tableIndex);
+		if (entry == null) {
+			return null;
+		}
+		maxTableIndexSeen = Integer.max(maxTableIndexSeen, tableIndex);
+		return entry.getClassId();
+	}
 
 	/**
 	 * Returns the owning class
@@ -95,10 +152,18 @@ public abstract class VirtualBaseTable implements VBTable {
 
 	/**
 	 * Returns the number of entries in the table
-	 * @return the number of entries; {@code null} if not initialized
+	 * @return the number of entries
 	 */
-	public Integer getNumEntries() {
-		return numEntries;
+	public int getNumEntries() {
+		return entryByTableIndex.size();
+	}
+
+	/**
+	 * Returns the number of entries in the table, as specified by the user
+	 * @return the number of entries
+	 */
+	public int getUserSpecifiedNumEntries() {
+		return userSpecifiedNumEntries;
 	}
 
 	/**
@@ -130,7 +195,7 @@ public abstract class VirtualBaseTable implements VBTable {
 	 * @param numEntriesArg the number of entries
 	 */
 	public void setNumEntries(Integer numEntriesArg) {
-		numEntries = numEntriesArg;
+		userSpecifiedNumEntries = numEntriesArg;
 	}
 
 	/**
@@ -148,6 +213,58 @@ public abstract class VirtualBaseTable implements VBTable {
 			builder.append("   " + id);
 			builder.append("\n");
 		}
+	}
+
+	/**
+	 * Returns the built data type for this vftable for the current entries
+	 * @param dtm the data type manager
+	 * @param categoryPath category path for the table
+	 * @return the structure of the vftable
+	 */
+	public Structure getLayout(DataTypeManager dtm, CategoryPath categoryPath) {
+		if (!isBuilt) { // what if we want to rebuild... what should we do?
+			build(dtm, categoryPath);
+		}
+		return tableStructure;
+	}
+
+	private void build(DataTypeManager dtm, CategoryPath categoryPath) {
+		if (ptrOffsetInClass == null || maxTableIndexSeen == -1) {
+			tableStructure = null;
+			isBuilt = true;
+			return;
+		}
+		String name = ClassUtils.getSpecialVxTableName(ptrOffsetInClass);
+		DataType defaultEntry = ClassUtils.getVbtDefaultEntry(dtm);
+		// Holding onto next line for now
+		//int entrySize = defaultEntry.getLength();
+		// Note that maxTableIndexSeen comes from addEntry() and those have what seems to be
+		//  a base 1 "index" (vs. base 0 vs. offset)
+		int tableNumEntries =
+			(userSpecifiedNumEntries != null) ? userSpecifiedNumEntries : maxTableIndexSeen;
+		// Holding onto next line for now
+		//int tableSize = tableNumEntries * entrySize;
+		StructureDataType dt = new StructureDataType(categoryPath, name, 0, dtm);
+		int masterOrdinal = 0;
+		for (Map.Entry<Integer, VirtualBaseTableEntry> mapEntry : entryByTableIndex.entrySet()) {
+			// Note that entrie's tableIndex is based at 1 instead of 0
+			int ordinal = mapEntry.getKey() - 1;
+			VBTableEntry entry = mapEntry.getValue();
+			while (masterOrdinal < ordinal) {
+				dt.add(defaultEntry, "", "");
+				masterOrdinal++;
+			}
+			String comment = entry.getClassId().getSymbolPath().toString();
+			dt.add(defaultEntry, "", comment); // we could add a comment here
+			masterOrdinal++;
+		}
+		while (masterOrdinal < tableNumEntries) {
+			dt.add(defaultEntry, "", "");
+			masterOrdinal++;
+		}
+		tableStructure = (Structure) dtm.resolve(dt, null);
+		//System.out.println(tableStructure.toString());
+		isBuilt = true;
 	}
 
 }

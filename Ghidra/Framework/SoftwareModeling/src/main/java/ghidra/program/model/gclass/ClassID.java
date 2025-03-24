@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.pdb.classtype;
+package ghidra.program.model.gclass;
 
 import java.util.Objects;
 
@@ -21,10 +21,10 @@ import ghidra.app.util.SymbolPath;
 import ghidra.program.model.data.CategoryPath;
 
 /**
- * Unique ID of a ProgramClassType.  Not sure if there will be different implementation for
- *  definition vs. compiled vs. program vs. debug.  See ClassID.
+ * Unique ID of a Program Class Type.  Not sure if there will be different implementation for
+ *  definition vs. compiled vs. program vs. debug.
  */
-public class ProgramClassID implements ClassID {
+public class ClassID implements Comparable<ClassID> {
 	// All of the internals of this might change, but we need something to work with for now.
 	//  It might end up being a hash/guid/long value.
 	// We were trying to use DataTypePath, but that doesn't work in light of conflicts, as we
@@ -32,14 +32,14 @@ public class ProgramClassID implements ClassID {
 	//  DataTypePath changed out from underneath us).
 	private final SymbolPath symbolPath;
 	private final CategoryPath categoryPath;
-	static final int classNameHash = Objects.hash(ProgramClassID.class.getName());
+	static final int classNameHash = Objects.hash(ClassID.class.getName());
 
 	/**
 	 * Constructor
 	 * @param categoryPath the category path for the claass
 	 * @param symbolPath the symbol path for the class
 	 */
-	public ProgramClassID(CategoryPath categoryPath, SymbolPath symbolPath) {
+	public ClassID(CategoryPath categoryPath, SymbolPath symbolPath) {
 		this.categoryPath = categoryPath;
 		this.symbolPath = symbolPath;
 	}
@@ -70,11 +70,6 @@ public class ProgramClassID implements ClassID {
 //	}
 
 	@Override
-	public int getClassNameHash() {
-		return classNameHash;
-	}
-
-	@Override
 	public String toString() {
 		return String.format("%s --- %s", categoryPath, symbolPath);
 	}
@@ -82,18 +77,11 @@ public class ProgramClassID implements ClassID {
 	@Override
 	public int compareTo(ClassID o) {
 		int ret;
-		if (!(o instanceof ProgramClassID oID)) {
-			ret = getClassNameHash() - o.getClassNameHash();
-			if (ret != 0) {
-				throw new AssertionError("Logic problem with compareTo");
-			}
-			return ret;
-		}
-		ret = symbolPath.compareTo(oID.symbolPath);
+		ret = symbolPath.compareTo(o.symbolPath);
 		if (ret != 0) {
 			return ret;
 		}
-		return categoryPath.compareTo(oID.categoryPath);
+		return categoryPath.compareTo(o.categoryPath);
 	}
 
 	@Override
@@ -112,7 +100,7 @@ public class ProgramClassID implements ClassID {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		ProgramClassID other = (ProgramClassID) obj;
+		ClassID other = (ClassID) obj;
 		return Objects.equals(categoryPath, other.categoryPath) &&
 			Objects.equals(symbolPath, other.symbolPath);
 	}
