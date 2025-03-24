@@ -36,7 +36,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
-import ghidra.app.util.pdb.classtype.*;
+import ghidra.app.util.pdb.classtype.ClassTypeManager;
+import ghidra.app.util.pdb.classtype.MsftVxtManager;
 import ghidra.framework.options.Options;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.disassemble.DisassemblerContextImpl;
@@ -206,7 +207,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	// If we have symbols and memory with VBTs in them, then a better VbtManager is created.
-	private VxtManager vxtManager;
+	private MsftVxtManager vxtManager;
 	private PdbRegisterNameToProgramRegisterMapper registerNameToRegisterMapper;
 
 	//==============================================================================================
@@ -370,6 +371,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			case ALL:
 				processTypes();
 				processSymbols();
+				vxtManager.doTableLayouts(dataTypeManager);
 				break;
 			default:
 				throw new PdbException("PDB: Invalid Application Control: " +
@@ -643,16 +645,16 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (program != null) {
 			// Currently, this must happen after symbolGroups are created.
 			MsftVxtManager msftVxtManager =
-				new MsftVxtManager(getClassTypeManager(), program);
+				new MsftVxtManager(getClassTypeManager(), program); // TODO: need to fix MsftVxtManager to work with or without a program!!!!!!!!!!
 			msftVxtManager.createVirtualTables(getRootPdbCategory(), findVirtualTableSymbols(), log,
 				monitor);
 			vxtManager = msftVxtManager;
 
 			registerNameToRegisterMapper = new PdbRegisterNameToProgramRegisterMapper(program);
 		}
-		else {
-			vxtManager = new VxtManager(getClassTypeManager());
-		}
+//		else {
+//			vxtManager = new VxtManager(getClassTypeManager());
+//		}
 		preWorkDone = true;
 	}
 
@@ -1582,7 +1584,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	// Virtual-Base/Function-Table-related methods.
 	//==============================================================================================
-	VxtManager getVxtManager() {
+	MsftVxtManager getVxtManager() {
 		return vxtManager;
 	}
 
