@@ -107,6 +107,10 @@
 				sortgroup="m"
 				target="help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html" />
 
+			<tocdef id="DebuggerTimeOverviewPlugin" text="Time Overview Sidebar"
+				sortgroup="m"
+				target="help/topics/DebuggerTimeOverviewPlugin/DebuggerTimeOverviewPlugin.html" />
+
 			<tocdef id="DebuggerPcodeStepperPlugin" text="P-code Stepper"
 				sortgroup="m"
 				target="help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html" />
